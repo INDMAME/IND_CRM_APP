@@ -1,4 +1,4 @@
-﻿namespace IND_CRM_APP.Models
+﻿namespace IND_CRM_APP.Models.Shared
 {
     /// <summary>
     /// Modelo que representa un proyecto recuperado desde el sistema Axapta.

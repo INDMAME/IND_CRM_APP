@@ -1,0 +1,37 @@
+﻿@{
+    ViewData["Title"] = "Crear visita";
+}
+
+@section Scripts {
+    <link rel="stylesheet" href="~/css/visitas/create.css" />
+}
+
+
+<div class="p-4">
+    <h2 class="fw-bold mb-4">Crear nueva visita</h2>
+
+    <div class="card shadow-sm p-4" style="max-width: 600px;">
+        <form>
+
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="nombre" placeholder="Nombre">
+                <label for="nombre">Nombre del visitante</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="text" class="form-control" id="empresa" placeholder="Empresa">
+                <label for="empresa">Empresa</label>
+            </div>
+
+            <div class="form-floating mb-3">
+                <input type="datetime-local" class="form-control" id="fecha" placeholder="Fecha">
+                <label for="fecha">Fecha y hora</label>
+            </div>
+
+            <button class="btn btn-primary w-100 mt-3" style="background-color:#00296b;">
+                Guardar visita
+            </button>
+
+        </form>
+    </div>
+</div>

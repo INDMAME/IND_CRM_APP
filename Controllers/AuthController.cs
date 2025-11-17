@@ -2,8 +2,8 @@
 using System.Threading.Tasks;                 // Para uso de métodos asincrónicos Task<IActionResult>
 using System.Collections.Generic;             // Para listas genéricas
 using Microsoft.AspNetCore.Mvc;
-using IND_CRM_APP.Models;
 using IND_CRM_APP.Services;
+using IND_CRM_APP.Models.Shared;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -100,8 +100,9 @@ namespace IND_CRM_APP.Controllers
             HttpContext.Session.SetString("Token", token);
 
 
-            // ⬇️ Redirige a la new ruta/controlador de listado
-            return RedirectToAction("Index", "PersonList");
+            // ⬇️ Redirige a la new ruta/controlador de Home
+            return RedirectToAction("Index", "Home");
+
         }
     }
 }

@@ -1,4 +1,4 @@
-﻿namespace IND_CRM_APP.Models
+﻿namespace IND_CRM_APP.Models.Shared
 {
     /// <summary>
     /// Representa la configuración base para la conexión con la API de Axapta.

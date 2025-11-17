@@ -12,9 +12,21 @@
 		<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
 		<PlatformTarget>x86</PlatformTarget>
 	</PropertyGroup>
+
+  
+	<ItemGroup>
+	  <Compile Remove="Logs\**" />
+	  <Content Remove="Logs\**" />
+	  <EmbeddedResource Remove="Logs\**" />
+	  <None Remove="Logs\**" />
+	</ItemGroup>
  
   <ItemGroup>
     <PackageReference Include="Serilog.Extensions.Logging.File" Version="9.0.0-dev-02303" />
+  </ItemGroup>
+ 
+  <ItemGroup>
+    <Folder Include="wwwroot\images\" />
   </ItemGroup>
 
 </Project>

@@ -1,6 +1,6 @@
 ﻿using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Diagnostics;
-using IND_CRM_APP.Models;
+using IND_CRM_APP.Models.Shared;
 
 
 

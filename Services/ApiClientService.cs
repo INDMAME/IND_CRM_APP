@@ -1,9 +1,12 @@
-﻿using IND_CRM_APP.Models;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options; 
+﻿using Microsoft.Extensions.Caching.Memory;
+using Microsoft.Extensions.Options;
 using System.Net.Http.Headers;
 using System.Text;
-using System.Text.Json; 
+using System.Text.Json;
+using IND_CRM_APP.Models.Activities;
+using IND_CRM_APP.Models.CRM;
+using IND_CRM_APP.Models.Shared;
+
 
 namespace IND_CRM_APP.Services
 {
@@ -195,53 +198,209 @@ namespace IND_CRM_APP.Services
         }
 
 
-        /// <summary>
-        /// Recupera el listado de personas desde Axapta, validando el token y usuario activo.
-        /// </summary>
-        /// <param name="username">Nombre de usuario de sesión.</param>
-        /// <param name="password">Contraseña del usuario.</param>
-        /// <returns>Lista de personas o <c>null</c> si falla la consulta.</returns>
-        public async Task<List<PersonRequest>?> GetPersonsAsync(string username, string password)
+        public async Task<(int Total, List<ActivityResponse> Items)> GetActivitiesAsync(string token,
+                                                                                        string userId,
+                                                                                        string fromDate,
+                                                                                        string toDate,
+                                                                                        string actividadType)
         {
             try
             {
-                var token = await AuthenticateAsync(username, password);
-                if (token == null) return null;
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
 
-                _httpClient.DefaultRequestHeaders.Clear();
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                var payload = new
+                {
+                    userId = userId ?? "",
+                    fromDate = fromDate ?? "",
+                    toDate = toDate ?? "",
+                    actividadType = actividadType ?? ""
+                };
 
-                var resp = await _httpClient.GetAsync($"{_baseUrl}axapta/GetPersonsJson");
-                var body = await resp.Content.ReadAsStringAsync();
-                if (!resp.IsSuccessStatusCode || body.TrimStart().StartsWith("<"))
-                    return null;
+                var content = new StringContent(
+                    JsonSerializer.Serialize(payload),
+                    Encoding.UTF8,
+                    "application/json");
 
-                return JsonSerializer.Deserialize<List<PersonRequest>>(body,
+                var resp = await _httpClient.PostAsync($"{_baseUrl}axapta/GetActivitiesContainer", content);
+                if (!resp.IsSuccessStatusCode)
+                    return (0, new List<ActivityResponse>());
+
+                var json = await resp.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                int total = root.TryGetProperty("total", out var t) ? t.GetInt32() : 0;
+
+                var list = new List<ActivityResponse>();
+
+                if (root.TryGetProperty("items", out var itemsEl))
+                {
+                    list = JsonSerializer.Deserialize<List<ActivityResponse>>(
+                        itemsEl.GetRawText(),
+                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                    ) ?? new List<ActivityResponse>();
+                }
+
+                return (total, list);
+            }
+            catch
+            {
+                return (0, new List<ActivityResponse>());
+            }
+        }
+
+        public async Task<ApiBasicResult> CreateActivityAsync(string token, CreateActivityRequest model)
+        {
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+
+                var content = new StringContent(
+                    JsonSerializer.Serialize(model),
+                    Encoding.UTF8,
+                    "application/json");
+
+                var resp = await _httpClient.PostAsync($"{_baseUrl}axapta/CreateActivity", content);
+
+                var json = await resp.Content.ReadAsStringAsync();
+
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                string message = root.TryGetProperty("message", out var m) ? m.GetString() : "NOK";
+
+                return new ApiBasicResult
+                {
+                    Success = message.StartsWith("OK"),
+                    Message = message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiBasicResult
+                {
+                    Success = false,
+                    Message = $"Error: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<ApiBasicResult> CreateVisitaAsistenteAsync(string token, CreateVisitaAsistenteRequest model)
+        {
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+
+                var content = new StringContent(
+                    JsonSerializer.Serialize(model),
+                    Encoding.UTF8,
+                    "application/json");
+
+                var resp = await _httpClient.PostAsync($"{_baseUrl}axapta/CreateVisitaAsistente", content);
+
+                var json = await resp.Content.ReadAsStringAsync();
+
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                string message = root.TryGetProperty("message", out var m) ? m.GetString() : "NOK";
+
+                return new ApiBasicResult
+                {
+                    Success = message.StartsWith("OK"),
+                    Message = message
+                };
+            }
+            catch (Exception ex)
+            {
+                return new ApiBasicResult
+                {
+                    Success = false,
+                    Message = $"Error: {ex.Message}"
+                };
+            }
+        }
+
+        public async Task<(int Total, List<ContactDto> Items)> GetContactosAsync(string token, string accountNum, int page, int pageSize)
+        {
+            try
+            {
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
+
+                var payload = new
+                {
+                    accountNum = accountNum ?? "",
+                    page = page,
+                    pageSize = pageSize
+                };
+
+                var content = new StringContent(
+                    JsonSerializer.Serialize(payload),
+                    Encoding.UTF8,
+                    "application/json");
+
+                var resp = await _httpClient.PostAsync($"{_baseUrl}axapta/GetContactoContainer", content);
+
+                var json = await resp.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                int total = root.TryGetProperty("total", out var t) ? t.GetInt32() : 0;
+
+                var items = JsonSerializer.Deserialize<List<ContactDto>>(
+                    root.GetProperty("items").GetRawText(),
                     new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return (total, items ?? new List<ContactDto>());
             }
-            catch { return null; }
+            catch
+            {
+                return (0, new List<ContactDto>());
+            }
         }
 
-        /// <summary>
-        /// Envía una solicitud POST a la API para crear un nuevo registro de persona en Axapta.
-        /// </summary>
-        /// <param name="name">Nombre de la persona.</param>
-        /// <param name="token">Token JWT activo.</param>
-        /// <returns>Mensaje de éxito o <c>null</c> en caso de error.</returns>
-        public async Task<string?> CreatePersonAsync(string name, string token)
+        public async Task<(int Total, List<AccountDto> Items)> GetAccountsAsync(string token, string accountNum, int page, int pageSize)
         {
             try
             {
-                _httpClient.DefaultRequestHeaders.Clear();
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
+                _httpClient.DefaultRequestHeaders.Authorization =
+                    new AuthenticationHeaderValue("Bearer", token);
 
-                var content = new StringContent(JsonSerializer.Serialize(new { name }), Encoding.UTF8, "application/json");
-                var resp = await _httpClient.PostAsync($"{_baseUrl}axapta/CreatePerson", content);
-                if (!resp.IsSuccessStatusCode) return null;
+                var payload = new
+                {
+                    accountNum = accountNum ?? "",
+                    page = page,
+                    pageSize = pageSize
+                };
 
-                return await resp.Content.ReadAsStringAsync();
+                var content = new StringContent(
+                    JsonSerializer.Serialize(payload),
+                    Encoding.UTF8,
+                    "application/json");
+
+                var resp = await _httpClient.PostAsync($"{_baseUrl}axapta/GetAccountContainer", content);
+
+                var json = await resp.Content.ReadAsStringAsync();
+                using var doc = JsonDocument.Parse(json);
+                var root = doc.RootElement;
+
+                int total = root.TryGetProperty("total", out var t) ? t.GetInt32() : 0;
+
+                var items = JsonSerializer.Deserialize<List<AccountDto>>(
+                    root.GetProperty("items").GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                return (total, items ?? new List<AccountDto>());
             }
-            catch { return null; }
+            catch
+            {
+                return (0, new List<AccountDto>());
+            }
         }
+
     }
 }

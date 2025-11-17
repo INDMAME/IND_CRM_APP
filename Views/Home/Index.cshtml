@@ -1,23 +1,10 @@
-﻿
+﻿@{
+    ViewData["Title"] = "Inicio";
+}
 
-@model List<IND_CRM_APP.Models.PersonRequest>
-<h4 class="text-end text-muted">@ViewBag.Environment</h4>
+<h2 class="fw-bold">Bienvenido</h2>
+<p>Selecciona una opción del menú izquierdo.</p>
 
-<table class="table table-striped mt-3">
-    <thead>
-        <tr>
-            <th>Código</th>
-            <th>Nombre</th> 
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var p in Model)
-        {
-            <tr>
-                <td>@p.Code</td>
-                <td>@p.Name</td>
-            </tr>
-        }
-    </tbody>
-</table>
-     
+@section Styles {
+    <link rel="stylesheet" href="~/css/index.css" />
+}

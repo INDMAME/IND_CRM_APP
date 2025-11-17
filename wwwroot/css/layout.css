@@ -1,0 +1,255 @@
+﻿/* --- Animación --- */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-4px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* General */
+body {
+    background-color: #f5f6f7;
+    font-family: "Segoe UI", sans-serif;
+    overflow-x: hidden;
+}
+
+/* SIDEBAR */
+.sidebar {
+    width: 260px;
+    min-height: 100vh;
+    background-color: #00296b;
+    position: fixed;
+    top: 0;
+    left: 0;
+    transform: translateX(-260px);
+    transition: 0.35s cubic-bezier(.4, 0, .2, 1);
+    color: white;
+    z-index: 2000;
+}
+
+    .sidebar.open {
+        transform: translateX(0);
+    }
+
+    .sidebar a {
+        color: white;
+        text-decoration: none;
+        display: block;
+        padding: 12px 22px;
+        transition: background 0.2s ease, padding-left 0.2s ease, transform 0.2s ease;
+    }
+
+        .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.15);
+            padding-left: 28px;
+            transform: translateX(2px);
+        }
+
+.submenu {
+    margin-left: 18px;
+    display: none;
+    animation: fadeIn 0.2s;
+}
+
+/* HAMBURGER BUTTON */
+.hamburger {
+    position: fixed;
+    top: 14px;
+    left: 14px;
+    z-index: 3000;
+    background-color: #00296b;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 9px 13px;
+    font-size: 22px;
+    transition: 0.2s;
+}
+
+    .hamburger:hover {
+        background-color: #001e50;
+    }
+
+/* Botón X dentro del menú */
+.close-sidebar {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 28px; /* más fina, más estilizada */
+    cursor: pointer;
+    padding: 4px;
+    transition: .2s ease;
+}
+
+    .close-sidebar:hover {
+        transform: rotate(90deg) scale(1.1);
+        color: #d7dfff;
+    }
+
+
+/* CONTENIDO */
+.content {
+    padding: 30px;
+    margin-top: 70px; /* evita solapamiento con hamburguesa */
+    transition: margin-left 0.35s cubic-bezier(.4, 0, .2, 1);
+}
+
+    .content.shifted {
+        margin-left: 260px;
+    }
+
+/* OVERLAY */
+.overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.45);
+    opacity: 0;
+    visibility: hidden;
+    transition: 0.25s ease-out;
+    z-index: 1500;
+}
+
+    .overlay.visible {
+        opacity: 1;
+        visibility: visible;
+    }
+
+/* PANEL DE USUARIO (solo una vez, corregido) */
+.user-panel {
+    position: absolute;
+    bottom: 20px; /* Lo baja perfectamente al fondo */
+    left: 25px;
+    right: 25px;
+}
+
+/* CHIP DE USUARIO ANIMADO */
+.user-chip {
+    background: rgba(255, 255, 255, 0.12);
+    padding: 9px 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.20);
+    backdrop-filter: blur(8px);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    cursor: pointer;
+}
+
+    .user-chip:hover {
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+        background: rgba(255, 255, 255, 0.20);
+    }
+
+/* Icono del chip */
+.user-chip-icon {
+    font-size: 20px;
+    margin-right: 8px;
+    opacity: 0.95;
+}
+
+/* Username siempre en mayúsculas */
+.username-text {
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+}
+
+/* Chevron del chip */
+.user-chip-chevron {
+    margin-left: auto;
+    font-size: 13px;
+    opacity: 0.85;
+}
+
+/* MENÚ DESPLEGABLE DEL USUARIO */
+.user-menu {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    /* NUEVO: aparece arriba del chip */
+    position: absolute;
+    bottom: 55px;
+    width: 100%;
+    padding: 6px 0;
+    opacity: 0;
+    pointer-events: none;
+    /* empieza abajo y sube */
+    transform: translateY(8px);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+    .user-menu.open {
+        opacity: 1;
+        pointer-events: auto;
+        transform: translateY(0);
+    }
+
+
+/* Elementos del menú usuario */
+.user-menu-item {
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    color: #e5ebff;
+    padding: 6px 10px 6px 12px;
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+    .user-menu-item:hover {
+        background: rgba(255, 255, 255, 0.15);
+        color: #ffffff;
+    }
+
+/* Botón logout dentro del menú */
+.user-menu-logout {
+    width: 100%;
+}
+
+/* RESPONSIVE */
+@media(max-width: 768px) {
+    .content.shifted {
+        margin-left: 0;
+    }
+}
+
+.sidebar-logo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    margin-top: 50px;
+    margin-bottom: 40px;
+}
+
+    .sidebar-logo img {
+        height: 70px;
+    }
+
+    .sidebar-logo span {
+        font-size: 13px;
+        color: white;
+        opacity: .9;
+        margin-top: 5px;
+    }
+
+    .sidebar-logo:hover img {
+        transform: scale(1.04);
+        transition: .2s;
+    }
+

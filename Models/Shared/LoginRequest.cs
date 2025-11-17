@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace IND_CRM_APP.Models
+namespace IND_CRM_APP.Models.Shared
 {
     /// <summary>
     /// Modelo utilizado para representar las credenciales de inicio de sesión del usuario.

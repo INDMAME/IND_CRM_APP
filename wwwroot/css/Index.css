@@ -1,0 +1,5 @@
+﻿.content {
+    padding: 30px;
+    margin-top: 70px; /* ← AÑADIR AQUÍ */
+    transition: margin-left 0.35s cubic-bezier(.4, 0, .2, 1);
+}

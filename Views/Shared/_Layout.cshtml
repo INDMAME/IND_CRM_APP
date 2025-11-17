@@ -1,147 +1,154 @@
-﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
-@using Microsoft.AspNetCore.Http
-
-@*
-    ╔═══════════════════════════════════════════════════════════════════╗
-    ║ LAYOUT GLOBAL DEL SISTEMA                                         ║
-    ║-------------------------------------------------------------------║
-    ║ - Define el diseño base y la barra de navegación principal.        ║
-    ║ - Muestra el usuario actual (sesión).                             ║
-    ║ - Incluye menú a Personas, Nueva Persona y Proyectos.             ║
-    ║ - Se reutiliza en todas las vistas excepto Login.                 ║
-    ╚═══════════════════════════════════════════════════════════════════╝
-*@
-
-
-@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpContextAccessor
-@{
-    var username = HttpContextAccessor.HttpContext?.Session?.GetString("Username") ?? "";
-}
-
+﻿@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpAccessor
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
-    <link rel="dns-prefetch" href="https://cdn.jsdelivr.net" />
 
-    <title>@ViewData["Title"] - IND Personas</title>
+    <title>@ViewData["Title"] - IND CRM</title>
 
-    <!-- ✅ Bootstrap + Icons (solo una carga) -->
+    <!-- Bootstrap + Icons -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
 
-    <style>
-        body {
-            background-color: #f8f9fa;
-            font-family: "Segoe UI", system-ui, sans-serif;
-            padding-top: 4rem;
-        }
+    <!-- CSS GLOBAL DEL LAYOUT -->
+    <link rel="stylesheet" href="~/css/layout.css" />
 
-        .navbar-custom {
-            background: linear-gradient(90deg, #004aad, #0077ff);
-            box-shadow: 0 2px 8px rgba(0, 0, 0, .1);
-        }
-
-        .navbar-brand {
-            font-weight: 600;
-            color: #fff !important;
-            letter-spacing: .5px;
-        }
-
-        .user-label {
-            color: rgba(255, 255, 255, .85);
-            margin-right: 1rem;
-            font-size: .95rem;
-        }
-
-        .btn-logout {
-            background-color: rgba(255, 255, 255, .15);
-            border: none;
-            color: #fff;
-        }
-
-            .btn-logout:hover {
-                background-color: rgba(255, 255, 255, .3);
-            }
-
-        footer {
-            text-align: center;
-            color: #6c757d;
-            font-size: .85rem;
-            padding: 1rem;
-        }
-    </style>
+    <!-- CSS ESPECÍFICO DE CADA VISTA -->
+    @RenderSection("Styles", required: false)
 </head>
 
 <body>
-    @if (ViewData["Title"]?.ToString() != "Iniciar sesión")
-    {
-        
-        <nav class="navbar navbar-expand-lg navbar-dark fixed-top navbar-custom">
-            <div class="container-fluid px-4">
-                <a class="navbar-brand" asp-controller="PersonList" asp-action="Index">
-                    <i class="bi bi-people-fill me-2"></i>IND Personas
+
+    <!-- BOTÓN HAMBURGUESA -->
+    <button id="btnMenu" class="hamburger" aria-label="Abrir menú" onclick="toggleSidebar()">
+        <i class="bi bi-list"></i>
+    </button>
+
+    <!-- OVERLAY -->
+    <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>
+
+    <!-- SIDEBAR -->
+    <div id="sidebar" class="sidebar">
+
+        <!-- BOTÓN X DENTRO DEL SIDEBAR -->
+        <button class="close-sidebar" aria-label="Cerrar menú" onclick="toggleSidebar()">
+            <i class="bi bi-x"></i>
+        </button>
+
+        <!-- LOGO -->
+        <a asp-controller="Home" asp-action="Index" class="sidebar-logo">
+            <img src="~/images/insertec-logo-white.jpg" alt="Logo Insertec" />
+        </a>
+
+        <!-- MENÚ PRINCIPAL -->
+        <a href="#" onclick="toggleVisitas(); return false;">Visitas</a>
+
+        <div id="submenuVisitas" class="submenu">
+            <a asp-controller="Visitas" asp-action="Create">Crear visita</a>
+            <a asp-controller="Visitas" asp-action="Historial">Historial</a>
+        </div>
+
+        <!-- PANEL USUARIO -->
+        <div class="user-panel">
+
+            <!-- CHIP DEL USUARIO -->
+            <div class="user-chip" onclick="toggleUserMenu()">
+                <i class="bi bi-person-fill user-chip-icon"></i>
+
+                <span class="username-text">
+                    @(HttpAccessor.HttpContext.Session.GetString("Username")?.ToUpper())
+                </span>
+
+                <i id="userMenuChevron" class="bi bi-chevron-up ms-2 user-chip-chevron"></i>
+            </div>
+
+            <!-- MENÚ DESPLEGABLE DEL USUARIO -->
+            <div id="userMenu" class="user-menu mt-2">
+
+                <a href="#" class="user-menu-item">
+                    <i class="bi bi-person-lines-fill me-2"></i> Mis datos
                 </a>
 
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
+                <a href="#" class="user-menu-item">
+                    <i class="bi bi-gear-fill me-2"></i> Ajustes
+                </a>
 
-                <div class="collapse navbar-collapse" id="navbarNav">
-                    <ul class="navbar-nav me-auto">
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="PersonList" asp-action="Index">
-                                <i class="bi bi-people-fill me-1"></i> Personas
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="CreatePerson" asp-action="Index">
-                                <i class="bi bi-person-plus-fill me-1"></i> Nueva Persona
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" asp-controller="ProjectList" asp-action="ProjectList">
-                                <i class="bi bi-kanban-fill me-1"></i> Proyectos
-                            </a>
-                        </li>
-                    </ul>
-                </div>
+                <form asp-controller="Auth" asp-action="Logout" method="post" class="mt-1">
+                    <button type="submit" class="user-menu-item user-menu-logout">
+                        <i class="bi bi-box-arrow-right me-2"></i> Cerrar sesión
+                    </button>
+                </form>
 
-                <div class="d-flex ms-auto align-items-center">
-                    @if (!string.IsNullOrEmpty(username))
-                    {
-                        <span class="user-label">
-                            <i class="bi bi-person-circle me-1"></i>@username
-                        </span>
-                    }
-                    <form asp-controller="Auth" asp-action="Logout" method="post" class="mb-0">
-                        <button type="submit" class="btn btn-logout rounded-3 px-3 py-1">
-                            <i class="bi bi-box-arrow-right me-1"></i> Cerrar sesión
-                        </button>
-                    </form>
-                </div>
             </div>
-        </nav>
-    }
 
-    <main role="main" class="pb-4">
+        </div>
+
+    </div>
+
+    <!-- ÁREA DE CONTENIDO PRINCIPAL -->
+    <div id="content" class="content">
         @RenderBody()
-    </main>
+    </div>
 
-    <footer>
-        © @DateTime.Now.Year IND Personas — Integración con Axapta 3.0
-    </footer>
+    <!-- SCRIPTS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+
+    <script>
+        const sidebar = document.getElementById("sidebar");
+        const overlay = document.getElementById("overlay");
+        const content = document.getElementById("content");
+        const btnMenu = document.getElementById("btnMenu");
+
+        let menuOpen = false;
+
+        function toggleSidebar() {
+            menuOpen = !menuOpen;
+
+            if (menuOpen) {
+                sidebar.classList.add("open");
+                overlay.classList.add("visible");
+                btnMenu.style.opacity = "0";
+                btnMenu.style.pointerEvents = "none";
+
+                if (window.innerWidth > 768) {
+                    content.classList.add("shifted");
+                }
+            } else {
+                sidebar.classList.remove("open");
+                overlay.classList.remove("visible");
+                btnMenu.style.opacity = "1";
+                btnMenu.style.pointerEvents = "auto";
+                content.classList.remove("shifted");
+            }
+        }
+
+        // Submenú de Visitas
+        function toggleVisitas() {
+            const sub = document.getElementById("submenuVisitas");
+            sub.style.display = (sub.style.display === "block") ? "none" : "block";
+        }
+
+        // Menú desplegable del usuario
+        function toggleUserMenu() {
+            const menu = document.getElementById("userMenu");
+            const chevron = document.getElementById("userMenuChevron");
+
+            const isOpen = menu.classList.toggle("open");
+
+            if (isOpen) {
+            chevron.classList.remove("bi-chevron-up");
+            chevron.classList.add("bi-chevron-down");
+            } else {
+                chevron.classList.remove("bi-chevron-down");
+                chevron.classList.add("bi-chevron-up");
+            }
+
+        }
+    </script>
 
     @RenderSection("Scripts", required: false)
-
-    <!-- ✅ Scripts al final y diferidos -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" defer></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js" defer></script>
 </body>
 </html>

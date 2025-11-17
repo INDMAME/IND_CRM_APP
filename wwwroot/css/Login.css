@@ -1,0 +1,61 @@
+﻿/* Fondo suave */
+body.login-page {
+    background: #f1f4f9;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Card principal */
+.login-card {
+    width: 380px;
+    background: white;
+    border-radius: 15px;
+    padding: 35px;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.10);
+}
+
+/* Logo */
+.login-logo img {
+    height: 70px;
+}
+
+.login-subtitle {
+    font-size: 14px;
+    color: #6c757d;
+    margin-top: -6px;
+}
+
+/* Floating labels */
+.form-control:focus {
+    border-color: #004aad;
+    box-shadow: 0 0 0 0.2rem rgba(0, 74, 173, 0.25);
+}
+
+/* Botón */
+.btn-login {
+    background-color: #c4001d;
+    color: white;
+    padding: 10px 0;
+    font-size: 17px;
+    border-radius: 8px;
+}
+
+    .btn-login:hover {
+        background-color: #9f0016;
+    }
+
+/* Ojo contraseña */
+.password-eye {
+    cursor: pointer;
+    user-select: none;
+}
+
+/* Responsive */
+@media(max-width: 420px) {
+    .login-card {
+        width: 95%;
+        padding: 25px;
+    }
+}
