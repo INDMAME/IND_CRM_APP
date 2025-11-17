@@ -1,0 +1,17 @@
+﻿@{
+    ViewData["Title"] = "Error del sistema";
+}
+
+<div class="container text-center py-5">
+    <div class="d-flex flex-column align-items-center justify-content-center" style="min-height: 60vh;">
+        <i class="bi bi-exclamation-triangle text-danger" style="font-size:5rem;"></i>
+        <h2 class="fw-bold text-danger mt-3">Ha ocurrido un error</h2>
+        <p class="text-muted mt-2 mb-4">
+            Se produjo un problema al procesar su solicitud. Si el problema persiste, contacte con el administrador del sistema.
+        </p>
+
+        <a asp-controller="Home" asp-action="Index" class="btn btn-primary shadow-sm">
+            <i class="bi bi-arrow-left me-1"></i> Volver al inicio
+        </a>
+    </div>
+</div>

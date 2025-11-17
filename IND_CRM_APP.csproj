@@ -1,0 +1,20 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  
+	<PropertyGroup>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<ProjectGuid>{88345f7d-620f-4503-b871-603df6d6440d}</ProjectGuid>
+		<TargetFramework>net10.0</TargetFramework>
+		<AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+		<MvcRazorCompileOnBuild>true</MvcRazorCompileOnBuild>
+		<MvcRazorCompileOnPublish>true</MvcRazorCompileOnPublish>
+		<PreserveCompilationContext>false</PreserveCompilationContext>
+		<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+		<PlatformTarget>x86</PlatformTarget>
+	</PropertyGroup>
+ 
+  <ItemGroup>
+    <PackageReference Include="Serilog.Extensions.Logging.File" Version="9.0.0-dev-02303" />
+  </ItemGroup>
+
+</Project>
