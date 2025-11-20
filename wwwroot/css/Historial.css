@@ -1,0 +1,84 @@
+﻿.historial-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.crm-filter-box {
+    background: #fff;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    border-left: 6px solid #00296b;
+}
+
+.crm-filter-title {
+    font-weight: 700;
+    color: #00296b;
+    margin-bottom: 20px;
+}
+
+.crm-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: #00296b;
+}
+
+.crm-btn {
+    background: #00296b;
+    color: white;
+    font-weight: 600;
+}
+
+    .crm-btn:hover {
+        background: #001e52;
+    }
+
+/* TIMELINE */
+.timeline-box {
+    margin-top: 30px;
+}
+
+.timeline-item {
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.timeline-date {
+    background: #00296b;
+    color: white;
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 12px;
+    display: inline-block;
+    margin-bottom: 10px;
+}
+
+.timeline-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 18px 25px;
+    border-left: 5px solid #00296b;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.timeline-id {
+    font-weight: 700;
+    font-size: 18px;
+    color: #00296b;
+}
+
+.timeline-name {
+    font-size: 15px;
+    margin-top: 6px;
+    font-weight: 600;
+    color: #333;
+}
+
+.timeline-desc {
+    margin-top: 14px;
+    font-size: 14px;
+}
+
+.timeline-asistentes {
+    font-size: 14px;
+}

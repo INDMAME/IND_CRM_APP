@@ -1,6 +1,6 @@
-﻿using IND_CRM_APP.Services;
+﻿using IND_CRM_APP.Models.Shared;
+using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Diagnostics;
-using IND_CRM_APP.Models.Shared;
 
 
 
@@ -61,6 +61,7 @@ else
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
+app.UseMiddleware<IND_CRM_APP.Middleware.TokenRefreshMiddleware>();
 
 // -----------------------------
 // Rutas MVC
@@ -70,25 +71,5 @@ app.MapControllerRoute(
     pattern: "{controller=Auth}/{action=Login}/{id?}"
 );
 
-// Personas
-app.MapControllerRoute(
-    name: "person_list",
-    pattern: "personas",
-    defaults: new { controller = "PersonList", action = "Index" }
-);
-
-// Crear persona
-app.MapControllerRoute(
-    name: "create_person",
-    pattern: "personas/nueva",
-    defaults: new { controller = "CreatePerson", action = "Index" }
-);
-
-// Proyectos
-app.MapControllerRoute(
-    name: "projects",
-    pattern: "proyectos",
-    defaults: new { controller = "ProjectList", action = "ProjectList" }
-);
 
 app.Run();

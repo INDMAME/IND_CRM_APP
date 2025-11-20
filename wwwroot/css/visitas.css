@@ -1,0 +1,214 @@
+﻿/* ============================================================
+   IND CRM – Wizard de creación de visitas
+   Estilos profesionales 100% responsive
+   ============================================================ */
+
+/* ------------------------------
+   Tarjetas y contenedores
+   ------------------------------ */
+.card {
+    border-radius: 10px;
+}
+
+.card-header {
+    font-weight: 600;
+    font-size: 1rem;
+}
+
+.list-group-item {
+    cursor: pointer;
+}
+
+    .list-group-item:hover {
+        background-color: #f1f4ff;
+    }
+
+/* ------------------------------
+   Step indicators
+   ------------------------------ */
+#step1Indicator,
+#step2Indicator {
+    transition: all 0.25s ease-in-out;
+    box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
+}
+
+/* Paso seleccionado */
+.border-primary {
+    border-width: 2px !important;
+}
+
+/* Paso no seleccionado */
+.border-light {
+    border-color: #eee !important;
+}
+
+/* ------------------------------
+   Spinners
+   ------------------------------ */
+.spinner-border {
+    width: 2rem;
+    height: 2rem;
+}
+
+/* ------------------------------
+   Campos de búsqueda
+   ------------------------------ */
+#clientSearchInput,
+#contactSearchInput {
+    border-radius: 8px;
+}
+
+#clientToggleButton,
+#contactToggleButton {
+    border-radius: 8px;
+    width: 50px;
+}
+
+/* ------------------------------
+   Lista desplegable
+   ------------------------------ */
+#clientList,
+#contactList {
+    max-height: 350px;
+    overflow-y: auto;
+    border-radius: 8px;
+    box-shadow: 0px 3px 12px rgba(0,0,0,0.12);
+}
+
+    /* Scroll suave */
+    #clientList::-webkit-scrollbar,
+    #contactList::-webkit-scrollbar {
+        width: 7px;
+    }
+
+    #clientList::-webkit-scrollbar-thumb,
+    #contactList::-webkit-scrollbar-thumb {
+        background-color: #b8c1ff;
+        border-radius: 5px;
+    }
+
+/* ------------------------------
+   Cards seleccionadas (cliente/contacto)
+   ------------------------------ */
+#selectedClientCard,
+#selectedContactCard {
+    border-radius: 8px;
+    animation: fadeIn 0.25s ease-in-out;
+}
+
+/* ------------------------------
+   Animaciones
+   ------------------------------ */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ------------------------------
+   Botones
+   ------------------------------ */
+#btnGoStep2,
+#btnSubmitActivity,
+#btnBackToStep1 {
+    font-size: 1.1rem;
+    padding: 12px;
+    border-radius: 8px;
+}
+
+/* ------------------------------
+   Campos Step 2
+   ------------------------------ */
+#transDate,
+#actividadType,
+#visitType,
+#origen,
+#asistenteTipo,
+#description,
+#comentarios,
+#antecedentes,
+#conclusiones {
+    border-radius: 8px;
+}
+
+/* Textareas */
+textarea.form-control {
+    min-height: 90px;
+}
+
+/* ------------------------------
+   Estado final
+   ------------------------------ */
+#activityStatus .alert {
+    border-radius: 8px;
+    font-size: 0.95rem;
+}
+
+/* ------------------------------
+   Responsive – Pantallas pequeñas
+   ------------------------------ */
+@media (max-width: 768px) {
+
+    #step1Indicator,
+    #step2Indicator {
+        font-size: 0.9rem;
+    }
+
+    #clientList,
+    #contactList {
+        max-height: 280px;
+    }
+
+    #btnGoStep2,
+    #btnSubmitActivity,
+    #btnBackToStep1 {
+        font-size: 1rem;
+    }
+
+    textarea.form-control {
+        min-height: 70px;
+    }
+}
+
+/* ------------------------------
+   Soporte para modo oscuro
+   ------------------------------ */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #222;
+        color: #e6e6e6;
+    }
+
+    .card {
+        background-color: #2d2d2d;
+        border-color: #3c3c3c;
+    }
+
+    .card-header {
+        background-color: #4a4a4a !important;
+        color: white !important;
+    }
+
+    .list-group-item {
+        background-color: #2b2b2b;
+        color: #e4e4e4;
+        border-color: #444;
+    }
+
+        .list-group-item:hover {
+            background-color: #3b3b3b;
+        }
+
+    .alert-info,
+    .alert-success,
+    .alert-danger,
+    .alert-warning {
+        filter: brightness(0.9);
+    }
+}

@@ -47,8 +47,13 @@
 
         <div id="submenuVisitas" class="submenu">
             <a asp-controller="Visitas" asp-action="Create">Crear visita</a>
-            <a asp-controller="Visitas" asp-action="Historial">Historial</a>
+
+            <!-- ✔ Ruta correcta para historial -->
+            <a asp-controller="Historial" asp-action="History">
+                Historial
+            </a>
         </div>
+
 
         <!-- PANEL USUARIO -->
         <div class="user-panel">

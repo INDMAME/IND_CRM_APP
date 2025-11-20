@@ -2,16 +2,13 @@
 {
     public class CreateActivityRequest
     {
-        public string accountNum { get; set; }
-        public string actividadType { get; set; }
-        public string visitType { get; set; }
-        public string userId { get; set; }
-        public string description { get; set; }
-        public string origen { get; set; }
-        public string transDate { get; set; }
-        public string comentarios { get; set; }
-        public string antecedentes { get; set; }
-        public string conclusiones { get; set; }
+        public string AccountNum { get; set; }
+        public string VisitType { get; set; }
+        public string UserId { get; set; }
+        public string Description { get; set; }
+        public string TransDate { get; set; }
+        public string Comentarios { get; set; }
+        public string Antecedentes { get; set; }
+        public string Conclusiones { get; set; }
     }
 }
-

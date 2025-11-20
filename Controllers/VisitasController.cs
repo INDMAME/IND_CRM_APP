@@ -1,42 +1,131 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
+﻿using IND_CRM_APP.Models.Activities;
+using IND_CRM_APP.Services;
+using IND_CRM_APP.Services.Enums;
+using Microsoft.AspNetCore.Mvc;
 
 namespace IND_CRM_APP.Controllers
 {
     public class VisitasController : Controller
     {
-        // Verifica que la sesión exista antes de mostrar vistas.
-        private bool ValidateSession()
+        private readonly ApiClientService _api;
+
+        public VisitasController(ApiClientService api)
         {
-            var username = HttpContext.Session.GetString("Username");
-            return !string.IsNullOrEmpty(username);
+            _api = api;
         }
 
-        // Página principal (redirección opcional)
-        public IActionResult Index()
+        [HttpGet]
+        public async Task<IActionResult> GetAccountsForDropdown(
+            string term = "",
+            int page = 1,
+            int pageSize = 20)
         {
-            if (!ValidateSession())
-                return RedirectToAction("Login", "Auth");
+            var token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized(new { message = "Sesion expirada" });
 
-            return RedirectToAction("Historial");
+            var result = await _api.GetAccountsAsync(token, term ?? "", page, pageSize);
+
+            return Json(new
+            {
+                total = result.Total,
+                items = result.Items
+            });
         }
 
-        // Crear visita
+        [HttpGet]
+        public async Task<IActionResult> GetContactsForDropdown(
+            string accountNum,
+            int page = 1,
+            int pageSize = 500)
+        {
+            var token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized(new { message = "Sesion expirada" });
+
+            if (string.IsNullOrWhiteSpace(accountNum))
+                return BadRequest(new { message = "Falta accountNum" });
+
+            var result = await _api.GetContactosAsync(token, accountNum, page, pageSize);
+
+            return Json(new
+            {
+                total = result.Total,
+                items = result.Items
+            });
+        }
+
+        [HttpGet]
         public IActionResult Create()
         {
-            if (!ValidateSession())
-                return RedirectToAction("Login", "Auth");
+            try
+            {
+                var token = HttpContext.Session.GetString("Token");
+                if (string.IsNullOrEmpty(token))
+                    return RedirectToAction("Login", "Auth");
 
-            return View("~/Views/Visitas/Create.cshtml");
+                ViewBag.CRMActividadTypeEnum = CrmEnumHelper.GetActividadTypeItems();
+                ViewBag.CRMTipoVisitaEnum = CrmEnumHelper.GetTipoVisitaItems();
+                ViewBag.CRMActividadOrigenEnum = CrmEnumHelper.GetActividadOrigenItems();
+                ViewBag.AsistenteTipoEnum = CrmEnumHelper.GetAsistenteTipoItems();
+
+                ViewBag.Environment = HttpContext.Session.GetString("Environment");
+                ViewBag.Company = HttpContext.Session.GetString("Company");
+                ViewBag.AxUser = HttpContext.Session.GetString("AxUser");
+
+                return View();
+            }
+            catch
+            {
+                return View();
+            }
         }
 
-        // Historial de visitas
-        public IActionResult Historial()
+        [HttpPost]
+        public async Task<IActionResult> CreateActivity([FromBody] CreateActivityRequest req)
         {
-            if (!ValidateSession())
-                return RedirectToAction("Login", "Auth");
+            try
+            {
+                string token = HttpContext.Session.GetString("Token") ?? "";
+                if (string.IsNullOrEmpty(token))
+                    return Json(new { success = false, message = "Token no encontrado en sesion." });
 
-            return View("~/Views/Visitas/Historial.cshtml");
+                var response = await _api.CreateActivityAsync(token, req);
+
+                return Json(new
+                {
+                    success = response.Success,
+                    message = response.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
         }
+
+        [HttpPost]
+        public async Task<IActionResult> CreateVisitaAsistente([FromBody] CreateVisitaAsistenteRequest req)
+        {
+            try
+            {
+                string token = HttpContext.Session.GetString("Token") ?? "";
+                if (string.IsNullOrEmpty(token))
+                    return Json(new { success = false, message = "Token no encontrado en sesion." });
+
+                var response = await _api.CreateVisitaAsistenteAsync(token, req);
+
+                return Json(new
+                {
+                    success = response.Success,
+                    message = response.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
     }
 }

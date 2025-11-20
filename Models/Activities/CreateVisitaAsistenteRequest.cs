@@ -2,9 +2,9 @@
 {
     public class CreateVisitaAsistenteRequest
     {
-        public string refRecIdActividad { get; set; }
-        public string asistenteTipo { get; set; }
-        public string asistenteId { get; set; }
-        public string contactoRecId { get; set; }
+        public string RefRecIdActividad { get; set; }
+        public string AsistenteTipo { get; set; }
+        public string AsistenteId { get; set; }
+        public string ContactoRecId { get; set; }
     }
 }

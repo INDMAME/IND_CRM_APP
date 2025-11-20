@@ -1,8 +1,6 @@
-﻿using IND_CRM_APP.Services;
+﻿using IND_CRM_APP.Models.Activities;
+using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
-using System.Threading.Tasks;
-using IND_CRM_APP.Models.Activities;
 
 namespace IND_CRM_APP.Controllers
 {
