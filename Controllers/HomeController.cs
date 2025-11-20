@@ -6,7 +6,7 @@ namespace IND_CRM_APP.Controllers
     {
         public IActionResult Index()
         {
-            return RedirectToAction("Create", "Visitas");
+            return View();
         }
     }
 }

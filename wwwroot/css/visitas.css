@@ -1,104 +1,97 @@
 ﻿/* ============================================================
-   IND CRM – Wizard de creación de visitas
-   Estilos profesionales 100% responsive
+   IND CRM – Estilos para el wizard de creación de visitas
    ============================================================ */
 
-/* ------------------------------
-   Tarjetas y contenedores
-   ------------------------------ */
+:root {
+    --crm-blue: #00296b;
+    --crm-blue-dark: #001d4a;
+    --crm-gray: #6c757d;
+}
+
+/* -----------------------------------------------
+   Información técnica (ambiente, compañía)
+----------------------------------------------- */
+.crm-env-info {
+    font-size: 0.70rem;
+    color: #777;
+    font-style: italic;
+    user-select: none;
+    opacity: 0.8;
+}
+
+/* -----------------------------------------------
+   Títulos principales
+----------------------------------------------- */
+.crm-main-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--crm-blue);
+}
+
+/* -----------------------------------------------
+   Tarjetas (Bootstrap overrides)
+----------------------------------------------- */
 .card {
-    border-radius: 10px;
+    border-radius: 12px;
+    border: 1px solid #e7e7e7;
 }
 
 .card-header {
+    background: #f8f9fa;
     font-weight: 600;
     font-size: 1rem;
+    border-bottom: 1px solid #e1e1e1;
 }
 
-.list-group-item {
-    cursor: pointer;
-}
-
-    .list-group-item:hover {
-        background-color: #f1f4ff;
-    }
-
-/* ------------------------------
-   Step indicators
-   ------------------------------ */
-#step1Indicator,
-#step2Indicator {
-    transition: all 0.25s ease-in-out;
-    box-shadow: 0px 2px 6px rgba(0,0,0,0.08);
-}
-
-/* Paso seleccionado */
-.border-primary {
-    border-width: 2px !important;
-}
-
-/* Paso no seleccionado */
-.border-light {
-    border-color: #eee !important;
-}
-
-/* ------------------------------
-   Spinners
-   ------------------------------ */
-.spinner-border {
-    width: 2rem;
-    height: 2rem;
-}
-
-/* ------------------------------
+/* -----------------------------------------------
    Campos de búsqueda
-   ------------------------------ */
+----------------------------------------------- */
 #clientSearchInput,
 #contactSearchInput {
-    border-radius: 8px;
+    border-radius: 10px;
+    height: 42px;
 }
 
 #clientToggleButton,
 #contactToggleButton {
-    border-radius: 8px;
+    border-radius: 10px;
     width: 50px;
 }
 
-/* ------------------------------
-   Lista desplegable
-   ------------------------------ */
+/* -----------------------------------------------
+   Dropdowns profesionales
+----------------------------------------------- */
 #clientList,
 #contactList {
     max-height: 350px;
     overflow-y: auto;
-    border-radius: 8px;
-    box-shadow: 0px 3px 12px rgba(0,0,0,0.12);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
+    border: 1px solid #dedede;
+    background: white;
 }
 
-    /* Scroll suave */
     #clientList::-webkit-scrollbar,
     #contactList::-webkit-scrollbar {
-        width: 7px;
+        width: 6px;
     }
 
     #clientList::-webkit-scrollbar-thumb,
     #contactList::-webkit-scrollbar-thumb {
-        background-color: #b8c1ff;
-        border-radius: 5px;
+        background: #9db4d8;
+        border-radius: 20px;
     }
 
-/* ------------------------------
-   Cards seleccionadas (cliente/contacto)
-   ------------------------------ */
-#selectedClientCard,
+/* -----------------------------------------------
+   Tarjetas de selección del contacto
+----------------------------------------------- */
 #selectedContactCard {
-    border-radius: 8px;
+    border-color: var(--crm-blue);
+    border-radius: 10px;
     animation: fadeIn 0.25s ease-in-out;
 }
 
-/* ------------------------------
-   Animaciones
-   ------------------------------ */
+/* Animación */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -111,104 +104,185 @@
     }
 }
 
-/* ------------------------------
-   Botones
-   ------------------------------ */
-#btnGoStep2,
-#btnSubmitActivity,
-#btnBackToStep1 {
+/* -----------------------------------------------
+   Botones principales
+----------------------------------------------- */
+.crm-btn-primary,
+#btnSubmitActivity {
+    background-color: var(--crm-blue);
+    border-color: var(--crm-blue);
+    color: white;
     font-size: 1.1rem;
-    padding: 12px;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
-/* ------------------------------
-   Campos Step 2
-   ------------------------------ */
-#transDate,
-#actividadType,
+    .crm-btn-primary:hover,
+    #btnSubmitActivity:hover {
+        background-color: var(--crm-blue-dark);
+        border-color: var(--crm-blue-dark);
+    }
+
+/* -----------------------------------------------
+   Botón gris (volver)
+----------------------------------------------- */
+#btnBackToStep1 {
+    font-size: 1.1rem;
+    border-radius: 10px;
+}
+
+/* -----------------------------------------------
+   Inputs Step 2
+----------------------------------------------- */
 #visitType,
-#origen,
+#userId,
+#transDate,
 #asistenteTipo,
 #description,
 #comentarios,
 #antecedentes,
 #conclusiones {
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
 /* Textareas */
 textarea.form-control {
-    min-height: 90px;
+    min-height: 80px;
 }
 
-/* ------------------------------
+/* -----------------------------------------------
    Estado final
-   ------------------------------ */
+----------------------------------------------- */
 #activityStatus .alert {
     border-radius: 8px;
     font-size: 0.95rem;
 }
 
-/* ------------------------------
-   Responsive – Pantallas pequeñas
-   ------------------------------ */
-@media (max-width: 768px) {
+/* ============================================================
+   BOTONES FLOTANTES (flechas y crear)
+   Minimalistas – sin fondo – color azul corporativo
+   ============================================================ */
 
-    #step1Indicator,
-    #step2Indicator {
-        font-size: 0.9rem;
+/* Base de todos los botones flotantes */
+.step-floating-btn-right,
+.step-floating-btn-left,
+.step-floating-btn-create {
+    position: fixed;
+    z-index: 9999;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    border: none;
+    background: transparent !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.2s ease;
+}
+
+    /* Íconos */
+    .step-floating-btn-right i,
+    .step-floating-btn-left i,
+    .step-floating-btn-create i {
+        font-size: 2.3rem;
+        color: var(--crm-blue);
+        transition: 0.2s ease;
+    }
+
+    /* Hover */
+    .step-floating-btn-right:hover i,
+    .step-floating-btn-left:hover i,
+    .step-floating-btn-create:hover i {
+        color: var(--crm-blue-dark);
+        transform: scale(1.10);
+    }
+
+/* Flecha derecha – Paso 1 → Paso 2 */
+.step-floating-btn-right {
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Flecha izquierda – Paso 2 → Paso 1 */
+.step-floating-btn-left {
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+}
+
+/* Botón CREAR – parte inferior derecha */
+.step-floating-btn-create {
+    right: 25px;
+    bottom: 35px;
+}
+
+    /* Botón “crear” más potente visualmente */
+    .step-floating-btn-create i {
+        font-size: 2.6rem;
+        color: var(--crm-blue);
+    }
+
+/* -----------------------------------------------
+   Responsive
+----------------------------------------------- */
+@media (max-width: 768px) {
+    .step-floating-btn-right,
+    .step-floating-btn-left {
+        width: 48px;
+        height: 48px;
+    }
+
+        .step-floating-btn-right i,
+        .step-floating-btn-left i {
+            font-size: 2rem;
+        }
+
+    .step-floating-btn-create i {
+        font-size: 2.3rem;
     }
 
     #clientList,
     #contactList {
         max-height: 280px;
     }
-
-    #btnGoStep2,
-    #btnSubmitActivity,
-    #btnBackToStep1 {
-        font-size: 1rem;
-    }
-
-    textarea.form-control {
-        min-height: 70px;
-    }
 }
 
-/* ------------------------------
-   Soporte para modo oscuro
-   ------------------------------ */
-@media (prefers-color-scheme: dark) {
-    body {
-        background-color: #222;
-        color: #e6e6e6;
-    }
 
-    .card {
-        background-color: #2d2d2d;
-        border-color: #3c3c3c;
-    }
-
-    .card-header {
-        background-color: #4a4a4a !important;
-        color: white !important;
-    }
-
-    .list-group-item {
-        background-color: #2b2b2b;
-        color: #e4e4e4;
-        border-color: #444;
-    }
-
-        .list-group-item:hover {
-            background-color: #3b3b3b;
-        }
-
-    .alert-info,
-    .alert-success,
-    .alert-danger,
-    .alert-warning {
-        filter: brightness(0.9);
-    }
+#crmPopup {
+    position: fixed;
+    left: 50%;
+    top: 15%;
+    transform: translateX(-50%);
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity .3s ease;
 }
+
+    #crmPopup.visible {
+        opacity: 1;
+    }
+
+.crm-popup-inner {
+    padding: 18px 26px;
+    border-radius: 12px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0px 6px 20px rgba(0,0,0,.25);
+    font-size: 15px;
+}
+
+    .crm-popup-inner.success {
+        background-color: #198754; /* verde */
+    }
+
+    .crm-popup-inner.error {
+        background-color: #dc3545; /* rojo */
+    }
+
+.crm-popup-icon i {
+    font-size: 22px;
+}
+

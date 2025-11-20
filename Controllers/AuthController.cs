@@ -36,7 +36,7 @@ namespace IND_CRM_APP.Controllers
             // Nuestro middleware usará esta fecha para refrescar el token
             HttpContext.Session.SetString("TokenExpires", DateTime.UtcNow.AddMinutes(15).ToString("o"));
 
-            return RedirectToAction("Create", "Visitas");
+            return RedirectToAction("Index", "Home");
         }
 
 

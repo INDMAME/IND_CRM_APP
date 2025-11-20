@@ -1,31 +1,26 @@
 ﻿// -------------------------------------------------------
 //  IND CRM – Wizard para creación de visitas CRM
-//  Archivo: visitas.client.js
 // -------------------------------------------------------
 
 document.addEventListener("DOMContentLoaded", () => {
     "use strict";
 
-    // ---------------------------------------------------
-    // Helpers
-    // ---------------------------------------------------
     const el = id => document.getElementById(id);
+    const normalize = t => (t ? t.toString().toLowerCase() : "");
 
-    const normalize = text => (text ? text.toString().toLowerCase() : "");
-
-    function cap(text) {
-        if (!text) return "";
-        return text
-            .toLowerCase()
+    const cap = t =>
+    (!t ? "" :
+        t.toLowerCase()
             .split(" ")
             .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-            .join(" ");
-    }
+            .join(" ")
+    );
 
     // ---------------------------------------------------
     // DOM
     // ---------------------------------------------------
-    // Paso 1 – clientes
+    const titleStep1 = el("titleStep1");
+
     const clientSearchInput = el("clientSearchInput");
     const clientToggleButton = el("clientToggleButton");
     const clientToggleIcon = el("clientToggleIcon");
@@ -35,11 +30,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const clientStatus = el("clientStatus");
     const clientLoadMoreBtn = el("clientLoadMoreBtn");
 
-    const selectedClientCard = el("selectedClientCard");
-    const selectedClientMain = el("selectedClientMain");
-    const selectedClientSecondary = el("selectedClientSecondary");
-
-    // Paso 1 – contactos
     const contactSearchInput = el("contactSearchInput");
     const contactToggleButton = el("contactToggleButton");
     const contactToggleIcon = el("contactToggleIcon");
@@ -53,30 +43,24 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedContactSecondary = el("selectedContactSecondary");
 
     const btnGoStep2 = el("btnGoStep2");
+    const btnBackToStep1 = el("btnBackToStep1");
+    const btnSubmitActivity = el("btnSubmitActivity");
 
-    // Paso 2
     const step1Container = el("step1Container");
     const step2Container = el("step2Container");
-    const step1Indicator = el("step1Indicator");
-    const step2Indicator = el("step2Indicator");
 
     const summaryClient = el("summaryClient");
     const summaryContact = el("summaryContact");
 
-    const actividadType = el("actividadType");
     const visitType = el("visitType");
-    const origen = el("origen");
     const userId = el("userId");
     const transDate = el("transDate");
     const asistenteTipo = el("asistenteTipo");
-
     const description = el("description");
     const comentarios = el("comentarios");
     const antecedentes = el("antecedentes");
     const conclusiones = el("conclusiones");
 
-    const btnBackToStep1 = el("btnBackToStep1");
-    const btnSubmitActivity = el("btnSubmitActivity");
     const activityStatus = el("activityStatus");
 
     // ---------------------------------------------------
@@ -91,82 +75,70 @@ document.addEventListener("DOMContentLoaded", () => {
     let clientListVisible = false;
     let contactListVisible = false;
 
-    // Paginación clientes
     let currentClientTerm = "";
     let currentClientPage = 1;
     let currentClientTotal = 0;
 
-    // Cachés
     const CLIENT_CACHE_KEY = "crmClientsCache";
     const CONTACT_CACHE_KEY = "crmContactsCache";
 
     let clientCache = new Map(JSON.parse(sessionStorage.getItem(CLIENT_CACHE_KEY) || "[]"));
     let contactCache = JSON.parse(sessionStorage.getItem(CONTACT_CACHE_KEY) || "{}");
 
-    function saveClientCache() {
-        const arr = Array.from(clientCache.entries());
-        sessionStorage.setItem(CLIENT_CACHE_KEY, JSON.stringify(arr));
-    }
+    const saveClientCache = () =>
+        sessionStorage.setItem(CLIENT_CACHE_KEY, JSON.stringify([...clientCache.entries()]));
 
-    function saveContactCache() {
+    const saveContactCache = () =>
         sessionStorage.setItem(CONTACT_CACHE_KEY, JSON.stringify(contactCache));
-    }
 
     // ---------------------------------------------------
-    // Step helpers
+    // STEP CONTROL
     // ---------------------------------------------------
     function setStep(step) {
         if (step === 1) {
             step1Container.style.display = "";
             step2Container.style.display = "none";
-            step1Indicator.className = "card border-primary";
-            step2Indicator.className = "card border-light";
+
+            btnGoStep2.style.display = "flex";
+            btnBackToStep1.style.display = "none";
+            btnSubmitActivity.style.display = "none";
+
+            titleStep1.style.display = "";
         } else {
             step1Container.style.display = "none";
             step2Container.style.display = "";
-            step1Indicator.className = "card border-light";
-            step2Indicator.className = "card border-primary";
+
+            btnGoStep2.style.display = "none";
+            btnBackToStep1.style.display = "flex";
+            btnSubmitActivity.style.display = "flex";
+
+            titleStep1.style.display = "none";
         }
     }
 
-    function updateStep2Availability() {
+    const updateStep2Availability = () =>
         btnGoStep2.disabled = !(selectedClient && selectedContact);
-    }
 
     // ---------------------------------------------------
-    // Helpers de mapeo datos
+    // Helpers datos
     // ---------------------------------------------------
-    // Clientes
-    const getAccountNum = c =>
-        (c.accountNum || c.AccountNum || "").toString();
+    const getAcc = c => (c.accountNum || c.AccountNum || "").toString();
+    const getNom = c => c.nombreComercial || c.NombreComercial || "";
+    const getRaz = c => c.razonSocial || c.RazonSocial || "";
 
-    const getNombreComercial = c =>
-        c.nombreComercial || c.NombreComercial || "";
-
-    const getRazonSocial = c =>
-        c.razonSocial || c.RazonSocial || "";
-
-    // Contactos
-    const getContactName = c =>
-        c.name || c.Name || "";
-
-    const getContactCargo = c =>
-        c.cargo || c.Cargo || "";
-
-    const getContactEmpresa = c =>
-        c.empresa || c.Empresa || "";
-
-    const getContactRecId = c =>
-        c.recId || c.RecId || "";
+    const getCName = c => c.name || c.Name || "";
+    const getCCargo = c => c.cargo || c.Cargo || "";
+    const getCEmp = c => c.empresa || c.Empresa || "";
+    const getCRec = c => c.recId || c.RecId || "";
 
     // ---------------------------------------------------
     // RENDER CLIENTES
     // ---------------------------------------------------
-    function renderClients(items, total, sourceLabel) {
+    function renderClients(items, total, src) {
         clientInnerSpinner.style.display = "none";
         clientList.innerHTML = "";
 
-        if (!items || !items.length) {
+        if (!items.length) {
             clientList.style.display = "none";
             clientCounter.textContent = "0 clientes";
             clientStatus.textContent = "No se encontraron clientes.";
@@ -174,61 +146,48 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        allClients = items.slice();
+        allClients = items;
 
         items.forEach(c => {
-            const nombre = cap(getNombreComercial(c));
-            const razon = cap(getRazonSocial(c));
-            const acc = getAccountNum(c).toUpperCase();
-
             const li = document.createElement("li");
             li.className = "list-group-item list-group-item-action";
             li.innerHTML = `
                 <div class="d-flex justify-content-between">
-                    <div class="fw-semibold text-primary">${nombre}</div>
-                    <div class="text-muted small">${acc}</div>
+                    <div class="fw-semibold text-primary">${cap(getNom(c))}</div>
+                    <div class="text-muted small">${getAcc(c)}</div>
                 </div>
-                <div class="text-muted small">${razon}</div>
+                <div class="text-muted small">${cap(getRaz(c))}</div>
             `;
-            li.addEventListener("click", () => selectClient(c));
+            li.onclick = () => selectClient(c);
             clientList.appendChild(li);
         });
 
         clientList.style.display = "block";
         clientListVisible = true;
-        clientToggleIcon.className = "bi bi-caret-up-fill";
 
         clientCounter.textContent = `${total} clientes`;
-        clientStatus.textContent =
-            sourceLabel === "cache"
-                ? "Clientes cargados desde cache"
-                : "Clientes cargados desde servidor";
+        clientStatus.textContent = src === "cache" ? "Desde cache" : "Desde servidor";
 
-        if (items.length < total) {
-            clientLoadMoreBtn.style.display = "inline-block";
-        } else {
-            clientLoadMoreBtn.style.display = "none";
-        }
+        clientLoadMoreBtn.style.display = (items.length < total) ? "inline-block" : "none";
+        clientToggleIcon.className = "bi bi-caret-up-fill";
     }
 
-    function hideClientList() {
+    const hideClientList = () => {
         clientListVisible = false;
         clientList.style.display = "none";
         clientToggleIcon.className = "bi bi-caret-down-fill";
-    }
+    };
 
     // ---------------------------------------------------
-    // BUSQUEDA CLIENTES
+    // BUSCAR CLIENTES
     // ---------------------------------------------------
     async function searchClients(firstPage, forceServer) {
-        const term = (clientSearchInput.value || "").trim();
+        const term = clientSearchInput.value.trim();
 
         if (term.length < 4) {
-            clientStatus.textContent = "Escribe al menos 4 caracteres para buscar clientes.";
-            clientList.innerHTML = "";
+            clientStatus.textContent = "Escribe al menos 4 caracteres.";
             clientList.style.display = "none";
             clientCounter.textContent = "0 clientes";
-            clientLoadMoreBtn.style.display = "none";
             return;
         }
 
@@ -237,7 +196,6 @@ document.addEventListener("DOMContentLoaded", () => {
         if (firstPage || term !== currentClientTerm) {
             currentClientTerm = term;
             currentClientPage = 1;
-            currentClientTotal = 0;
         }
 
         const page = currentClientPage;
@@ -245,22 +203,19 @@ document.addEventListener("DOMContentLoaded", () => {
 
         if (!forceServer && page === 1 && clientCache.has(key)) {
             const cached = clientCache.get(key);
-            currentClientTotal = cached.total || cached.items.length || 0;
-            renderClients(cached.items, currentClientTotal, "cache");
+            currentClientTotal = cached.total;
+            renderClients(cached.items, cached.total, "cache");
             return;
         }
 
         clientInnerSpinner.style.display = "block";
-        clientStatus.textContent = "Buscando clientes en servidor...";
-        clientList.innerHTML = "";
-        clientList.style.display = "block";
+        clientStatus.textContent = "Buscando...";
 
         try {
             const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(term)}&page=${page}&pageSize=${pageSize}`;
             const res = await fetch(url);
-            if (!res.ok) throw new Error("HTTP " + res.status);
-
             const data = await res.json();
+
             const items = data.items || [];
             const total = data.total || items.length;
             currentClientTotal = total;
@@ -268,60 +223,36 @@ document.addEventListener("DOMContentLoaded", () => {
             if (page === 1) {
                 clientCache.set(key, { items: items.slice(), total });
             } else {
-                const existing = clientCache.get(key) || { items: [], total };
-                existing.items = existing.items.concat(items);
-                existing.total = total;
-                clientCache.set(key, existing);
+                const old = clientCache.get(key) || { items: [], total };
+                old.items = old.items.concat(items);
+                old.total = total;
+                clientCache.set(key, old);
             }
 
             saveClientCache();
+            renderClients(clientCache.get(key).items, total, "server");
 
-            const cacheEntry = clientCache.get(key);
-            renderClients(cacheEntry.items, cacheEntry.total, "server");
-        } catch (err) {
-            console.error(err);
-            clientInnerSpinner.style.display = "none";
-            clientStatus.textContent = "Error al cargar clientes.";
-            clientList.style.display = "none";
-            clientLoadMoreBtn.style.display = "none";
+        } catch {
+            clientStatus.textContent = "Error al cargar.";
         }
     }
 
-    async function loadMoreClients() {
-        const term = (clientSearchInput.value || "").trim();
-        if (!term || term.length < 4) return;
-
-        const key = term.toLowerCase();
-        const cacheEntry = clientCache.get(key);
-        const alreadyLoaded = cacheEntry ? cacheEntry.items.length : 0;
-
-        if (alreadyLoaded >= currentClientTotal && currentClientTotal > 0) {
-            clientStatus.textContent = "No hay mas clientes que cargar.";
-            clientLoadMoreBtn.style.display = "none";
-            return;
-        }
-
+    const loadMoreClients = async () => {
         currentClientPage++;
-        await searchClients(false, true);
-    }
+        searchClients(false, true);
+    };
 
     // ---------------------------------------------------
-    // CLIENTE – seleccion
+    // SELECCIONAR CLIENTE
     // ---------------------------------------------------
     function selectClient(c) {
-        const acc = getAccountNum(c);
-        const nombre = cap(getNombreComercial(c));
-        const razon = cap(getRazonSocial(c));
-
         selectedClient = {
-            accountNum: acc,
-            nombreComercial: nombre,
-            razonSocial: razon
+            accountNum: getAcc(c),
+            nombreComercial: cap(getNom(c)),
+            razonSocial: cap(getRaz(c))
         };
 
-        selectedClientMain.textContent = `${nombre} (${acc})`;
-        selectedClientSecondary.textContent = razon;
-        selectedClientCard.style.display = "block";
+        clientSearchInput.value = `${selectedClient.nombreComercial} (${selectedClient.accountNum})`;
 
         hideClientList();
         clientStatus.textContent = "Cliente seleccionado.";
@@ -330,91 +261,78 @@ document.addEventListener("DOMContentLoaded", () => {
         selectedContactCard.style.display = "none";
         contactSearchInput.value = "";
         contactList.innerHTML = "";
-        contactCounter.textContent = "0 contactos";
-        contactStatus.textContent = "";
 
         loadContactsForSelectedClient();
         updateStep2Availability();
     }
 
     // ---------------------------------------------------
-    // CONTACTOS – carga + cache
+    // CONTACTOS
     // ---------------------------------------------------
     async function loadContactsForSelectedClient() {
-        if (!selectedClient || !selectedClient.accountNum) {
-            contactStatus.textContent = "Selecciona primero un cliente.";
-            return;
-        }
+        if (!selectedClient) return;
 
         const acc = selectedClient.accountNum;
-
-        contactList.innerHTML = "";
-        contactInnerSpinner.style.display = "block";
-        contactStatus.textContent = "Cargando contactos...";
-        contactCounter.textContent = "0 contactos";
 
         contactSearchInput.disabled = true;
         contactToggleButton.disabled = true;
 
+        contactCounter.textContent = "0 contactos";
+        contactStatus.textContent = "";
+        contactList.innerHTML = "";
+        contactInnerSpinner.style.display = "block";
+
         if (contactCache[acc]) {
             const cached = contactCache[acc];
-            allContacts = cached.items || [];
+            allContacts = cached.items;
             renderContacts(allContacts, cached.total, "cache");
+
             contactSearchInput.disabled = false;
             contactToggleButton.disabled = false;
             return;
         }
 
         try {
-            const url = `/Visitas/GetContactsForDropdown?accountNum=${encodeURIComponent(acc)}&page=1&pageSize=500`;
-            const res = await fetch(url);
-            if (!res.ok) throw new Error("HTTP " + res.status);
-
+            const res = await fetch(`/Visitas/GetContactsForDropdown?accountNum=${acc}&page=1&pageSize=500`);
             const data = await res.json();
+
             const items = data.items || [];
             const total = data.total || items.length;
 
             contactCache[acc] = { items: items.slice(), total };
             saveContactCache();
 
-            allContacts = items.slice();
+            allContacts = items;
             renderContacts(allContacts, total, "server");
-        } catch (err) {
-            console.error(err);
-            contactInnerSpinner.style.display = "none";
-            contactStatus.textContent = "Error al cargar contactos.";
-            contactList.style.display = "none";
+
+        } catch {
+            contactStatus.textContent = "Error al cargar.";
         } finally {
+            contactInnerSpinner.style.display = "none";
             contactSearchInput.disabled = false;
             contactToggleButton.disabled = false;
         }
     }
 
-    function renderContacts(items, total, sourceLabel) {
+    function renderContacts(items, total, src) {
         contactInnerSpinner.style.display = "none";
         contactList.innerHTML = "";
 
-        if (!items || !items.length) {
+        if (!items.length) {
             contactList.style.display = "none";
-            contactCounter.textContent = "0 contactos";
-            contactStatus.textContent = "No se encontraron contactos.";
             return;
         }
 
         contactCounter.textContent = `${total} contactos`;
 
         items.forEach(c => {
-            const name = cap(getContactName(c));
-            const cargo = cap(getContactCargo(c));
-            const empresa = cap(getContactEmpresa(c));
-
             const li = document.createElement("li");
             li.className = "list-group-item list-group-item-action";
             li.innerHTML = `
-                <div class="fw-semibold text-primary">${name} — ${cargo}</div>
-                <div class="text-muted small">Empresa: ${empresa}</div>
+                <div class="fw-semibold text-primary">${cap(getCName(c))} — ${cap(getCCargo(c))}</div>
+                <div class="text-muted small">Empresa: ${cap(getCEmp(c))}</div>
             `;
-            li.addEventListener("click", () => selectContact(c));
+            li.onclick = () => selectContact(c);
             contactList.appendChild(li);
         });
 
@@ -422,31 +340,23 @@ document.addEventListener("DOMContentLoaded", () => {
         contactListVisible = true;
         contactToggleIcon.className = "bi bi-caret-up-fill";
 
-        contactStatus.textContent =
-            sourceLabel === "cache"
-                ? "Contactos cargados desde cache"
-                : "Contactos cargados desde servidor";
+        contactStatus.textContent = src === "cache" ? "Desde cache" : "Desde servidor";
     }
 
-    function hideContactList() {
+    const hideContactList = () => {
         contactListVisible = false;
         contactList.style.display = "none";
         contactToggleIcon.className = "bi bi-caret-down-fill";
-    }
+    };
 
     function filterContactsLocal() {
-        if (!allContacts || !allContacts.length) {
-            contactList.style.display = "none";
-            return;
-        }
-
         const filter = normalize(contactSearchInput.value);
         contactList.innerHTML = "";
 
         const filtered = allContacts.filter(c =>
-            normalize(getContactName(c)).includes(filter) ||
-            normalize(getContactCargo(c)).includes(filter) ||
-            normalize(getContactEmpresa(c)).includes(filter)
+            normalize(getCName(c)).includes(filter) ||
+            normalize(getCCargo(c)).includes(filter) ||
+            normalize(getCEmp(c)).includes(filter)
         );
 
         if (!filtered.length) {
@@ -455,95 +365,82 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         filtered.forEach(c => {
-            const name = cap(getContactName(c));
-            const cargo = cap(getContactCargo(c));
-            const empresa = cap(getContactEmpresa(c));
-
             const li = document.createElement("li");
             li.className = "list-group-item list-group-item-action";
             li.innerHTML = `
-                <div class="fw-semibold text-primary">${name} — ${cargo}</div>
-                <div class="text-muted small">Empresa: ${empresa}</div>
+                <div class="fw-semibold text-primary">${cap(getCName(c))} — ${cap(getCCargo(c))}</div>
+                <div class="text-muted small">Empresa: ${cap(getCEmp(c))}</div>
             `;
-            li.addEventListener("click", () => selectContact(c));
+            li.onclick = () => selectContact(c);
             contactList.appendChild(li);
         });
 
         contactList.style.display = "block";
-        contactListVisible = true;
         contactToggleIcon.className = "bi bi-caret-up-fill";
+        contactListVisible = true;
     }
 
     // ---------------------------------------------------
-    // CONTACTO – seleccion
+    // SELECCIONAR CONTACTO
     // ---------------------------------------------------
     function selectContact(c) {
-        const name = cap(getContactName(c));
-        const cargo = cap(getContactCargo(c));
-        const empresa = cap(getContactEmpresa(c));
-        const recId = getContactRecId(c);
-
         selectedContact = {
-            recId,
-            name,
-            cargo,
-            empresa
+            recId: getCRec(c),
+            name: cap(getCName(c)),
+            cargo: cap(getCCargo(c)),
+            empresa: cap(getCEmp(c))
         };
 
-        selectedContactMain.textContent = `${name} — ${cargo}`;
-        selectedContactSecondary.textContent = `Empresa: ${empresa}`;
-        selectedContactCard.style.display = "block";
+        selectedContactMain.textContent =
+            `${selectedContact.name} — ${selectedContact.cargo}`;
+        selectedContactSecondary.textContent =
+            `Empresa: ${selectedContact.empresa}`;
 
+        selectedContactCard.style.display = "block";
         hideContactList();
-        contactStatus.textContent = "Contacto seleccionado.";
+
         updateStep2Availability();
     }
 
     // ---------------------------------------------------
-    // STEP2 – resumen y envio
+    // STEP 1 → STEP 2
     // ---------------------------------------------------
     btnGoStep2.addEventListener("click", () => {
-        if (!selectedClient || !selectedContact) {
-            activityStatus.innerHTML =
-                `<div class="alert alert-warning">Debe seleccionar cliente y contacto.</div>`;
-            return;
-        }
-
         summaryClient.textContent =
             `${selectedClient.nombreComercial} (${selectedClient.accountNum})`;
+
         summaryContact.textContent =
             `${selectedContact.name} — ${selectedContact.cargo}`;
 
         setStep(2);
     });
 
-    btnBackToStep1.addEventListener("click", () => setStep(1));
+    btnBackToStep1.addEventListener("click", () => {
+        setStep(1);
+    });
 
+    // ---------------------------------------------------
+    // CREAR ACTIVIDAD + VISITA
+    // ---------------------------------------------------
+    // ---------------------------------------------------
+    // CREAR ACTIVIDAD + VISITA (con redirect + popup)
+    // ---------------------------------------------------
     btnSubmitActivity.addEventListener("click", async () => {
 
-        if (!selectedClient || !selectedContact) {
-            activityStatus.innerHTML =
-                `<div class="alert alert-warning">Debe seleccionar cliente y contacto.</div>`;
-            setStep(1);
-            return;
-        }
-
         if (!userId.value || !description.value || !transDate.value) {
-            activityStatus.innerHTML =
-                `<div class="alert alert-warning">Usuario, descripcion y fecha son obligatorios.</div>`;
+            showErrorPopup("Usuario, descripción y fecha son obligatorios.");
             return;
         }
 
         btnSubmitActivity.disabled = true;
-        activityStatus.innerHTML =
-            `<div class="alert alert-info">Creando actividad...</div>`;
 
         try {
+            // 1) Crear actividad --------------------------
             const payloadActivity = {
-                accountNum: selectedClient.accountNum, 
+                accountNum: selectedClient.accountNum,
                 visitType: visitType.value,
                 userId: userId.value,
-                description: description.value, 
+                description: description.value,
                 transDate: transDate.value,
                 comentarios: comentarios.value,
                 antecedentes: antecedentes.value,
@@ -557,28 +454,15 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const dataAct = await resAct.json();
-
             if (!dataAct.success) {
-                activityStatus.innerHTML =
-                    `<div class="alert alert-danger">Error al crear actividad: ${dataAct.message}</div>`;
+                showErrorPopup(dataAct.message);
                 btnSubmitActivity.disabled = false;
                 return;
             }
 
-            const recIdActividad = (dataAct.message || "").trim();
+            const recIdActividad = dataAct.message.trim();
 
-            if (!recIdActividad) {
-                activityStatus.innerHTML =
-                    `<div class="alert alert-danger">
-                        Error: no se obtuvo RecId de actividad.
-                    </div>`;
-                btnSubmitActivity.disabled = false;
-                return;
-            }
-
-            activityStatus.innerHTML =
-                `<div class="alert alert-info">Actividad creada (${recIdActividad}). Creando visita...</div>`;
-
+            // 2) Crear visita (asistente) ------------------
             const payloadVisita = {
                 refRecIdActividad: recIdActividad,
                 asistenteTipo: asistenteTipo.value,
@@ -593,106 +477,113 @@ document.addEventListener("DOMContentLoaded", () => {
             });
 
             const dataVis = await resVis.json();
-
             if (!dataVis.success) {
-                activityStatus.innerHTML =
-                    `<div class="alert alert-danger">Error al crear visita: ${dataVis.message}</div>`;
+                showErrorPopup(dataVis.message);
                 btnSubmitActivity.disabled = false;
                 return;
             }
 
-            activityStatus.innerHTML =
-                `<div class="alert alert-success">
-                    Actividad registrada con exito.<br>
-                    RecId actividad: <strong>${recIdActividad}</strong>
-                </div>`;
+            // 3) Todo OK → redirect ------------------------
+            showSuccessPopup(
+                `Visita creada correctamente.<br>Actividad <strong>${recIdActividad}</strong>`
+            );
 
-        } catch (error) {
-            console.error(error);
-            activityStatus.innerHTML =
-                `<div class="alert alert-danger">
-                    Error de comunicacion con el servidor.
-                </div>`;
+            setTimeout(() => {
+                window.location.href = "/Home/Index";
+            }, 1500);
+
+        } catch (err) {
+            showErrorPopup("Error de comunicación con el servidor.");
         } finally {
             btnSubmitActivity.disabled = false;
         }
     });
 
+
     // ---------------------------------------------------
-    // EVENTOS UI
+    // Eventos UI
     // ---------------------------------------------------
     clientSearchInput.addEventListener("keypress", e => {
         if (e.key === "Enter") {
             currentClientPage = 1;
-            currentClientTerm = clientSearchInput.value.trim();
             searchClients(true, true);
         }
     });
 
     clientToggleButton.addEventListener("click", () => {
-        if (clientListVisible) {
-            hideClientList();
-            return;
-        }
+        if (clientListVisible) return hideClientList();
 
-        const term = clientSearchInput.value.trim();
-        if (term.length < 4) {
+        if (clientSearchInput.value.trim().length < 4) {
             clientStatus.textContent = "Escribe al menos 4 caracteres.";
             return;
         }
 
         currentClientPage = 1;
-        currentClientTerm = term;
-
         searchClients(true, true);
     });
 
-    if (clientLoadMoreBtn) {
-        clientLoadMoreBtn.addEventListener("click", () => {
-            loadMoreClients();
-        });
-    }
+    clientLoadMoreBtn.addEventListener("click", loadMoreClients);
 
-    if (contactSearchInput) {
-        contactSearchInput.addEventListener("input", () => {
-            if (contactListVisible) {
-                filterContactsLocal();
-            }
-        });
-    }
-
-    if (contactToggleButton) {
-        contactToggleButton.addEventListener("click", () => {
-            if (!selectedClient) {
-                contactStatus.textContent = "Selecciona un cliente antes de ver contactos.";
-                return;
-            }
-
-            if (contactListVisible) {
-                hideContactList();
-                return;
-            }
-
-            if (allContacts && allContacts.length > 0) {
-                filterContactsLocal();
-            } else {
-                loadContactsForSelectedClient();
-            }
-        });
-    }
-
-    document.addEventListener("click", e => {
-        if (!e.target.closest("#clientSearchContainer") && clientListVisible) {
-            hideClientList();
-        }
-        if (!e.target.closest("#contactSearchContainer") && contactListVisible) {
-            hideContactList();
-        }
+    contactSearchInput.addEventListener("input", () => {
+        if (contactListVisible) filterContactsLocal();
     });
 
-    if (transDate) {
-        transDate.value = new Date().toISOString().substring(0, 10);
+    contactToggleButton.addEventListener("click", () => {
+        if (!selectedClient) {
+            contactStatus.textContent = "Selecciona un cliente primero.";
+            return;
+        }
+
+        if (contactListVisible) return hideContactList();
+
+        if (allContacts.length > 0) filterContactsLocal();
+        else loadContactsForSelectedClient();
+    });
+
+    document.addEventListener("click", e => {
+        if (!e.target.closest("#clientSearchContainer") && clientListVisible)
+            hideClientList();
+
+        if (!e.target.closest("#contactSearchContainer") && contactListVisible)
+            hideContactList();
+    });
+
+    function showErrorPopup(message) {
+        showPopup(message, false);
     }
+
+    function showSuccessPopup(message) {
+        showPopup(message, true);
+    }
+
+    function showPopup(message, success = false) {
+        const existing = document.getElementById("crmPopup");
+        if (existing) existing.remove();
+
+        const popup = document.createElement("div");
+        popup.id = "crmPopup";
+        popup.innerHTML = `
+        <div class="crm-popup-inner ${success ? "success" : "error"}">
+            <div class="crm-popup-icon">
+                <i class="bi ${success ? "bi-check-circle" : "bi-exclamation-circle"}"></i>
+            </div>
+            <div class="crm-popup-text">${message}</div>
+        </div>
+    `;
+
+        document.body.appendChild(popup);
+
+        setTimeout(() => popup.classList.add("visible"), 20);
+
+        setTimeout(() => {
+            popup.classList.remove("visible");
+            setTimeout(() => popup.remove(), 300);
+        }, 2500);
+    }
+
+
+    transDate.value = new Date().toISOString().substring(0, 10);
+
     setStep(1);
     updateStep2Availability();
 });

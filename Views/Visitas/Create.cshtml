@@ -3,58 +3,45 @@
     ViewData["Title"] = "Crear visita CRM";
 }
 
+@section Styles {
+    <link rel="stylesheet" href="~/css/visitas.css" />
+}
+
 <div class="container py-4">
 
-    <!-- Encabezado -->
-    <div class="text-center mb-4">
-        <h3 class="fw-bold text-primary mb-2">
-            <i class="bi bi-people-fill me-2"></i> Crear visita CRM
-        </h3>
-        <p class="text-muted small">
-            Datos desde Axapta 3.0 —
-            <strong>Ambiente:</strong> @Html.Raw(ViewBag.Environment ?? "Desconocido")
-            <span class="mx-2">|</span>
-            <strong>Compañía:</strong> @Html.Raw(ViewBag.Company ?? "N/A")
-        </p>
-    </div>
+    <!-- Subtítulo técnico -->
+    <p class="crm-env-info mb-3">
+        Datos desde Axapta 3.0 —
+        <strong>Ambiente:</strong> @Html.Raw(ViewBag.Environment ?? "Desconocido")
+        <span class="mx-2">|</span>
+        <strong>Compañía:</strong> @Html.Raw(ViewBag.Company ?? "N/A")
+    </p>
 
-    <!-- Indicadores de pasos -->
-    <div class="row mb-4">
-        <div class="col-md-6 mb-2">
-            <div id="step1Indicator" class="card border-primary">
-                <div class="card-body py-2">
-                    <strong>Paso 1:</strong> Seleccionar cliente y contacto
-                </div>
-            </div>
-        </div>
-        <div class="col-md-6 mb-2">
-            <div id="step2Indicator" class="card border-light">
-                <div class="card-body py-2">
-                    <strong>Paso 2:</strong> Detalles de la visita
-                </div>
-            </div>
-        </div>
-    </div>
+    <!-- Paso 1 - Título (se oculta al entrar en el paso 2) -->
+    <h4 id="titleStep1" class="crm-main-title mb-4">1. Seleccionar cliente y contacto</h4>
 
-    <!-- Paso 1 -->
+    <!-- PASO 1 -->
     <div id="step1Container">
         <div class="row g-4">
 
             <!-- CLIENTE -->
             <div class="col-md-6">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-light fw-semibold">
-                        1. Selecciona un cliente
+                    <div class="card-header fw-semibold">
+                        Selecciona un cliente
                     </div>
                     <div class="card-body position-relative">
 
                         <div id="clientSearchContainer" class="position-relative mb-3">
+
                             <label class="form-label small text-muted">Buscar cliente</label>
+
                             <div class="input-group">
                                 <input id="clientSearchInput"
                                        type="text"
                                        class="form-control"
                                        placeholder="Escribe al menos 4 caracteres..." />
+
                                 <button id="clientToggleButton"
                                         class="btn btn-outline-primary"
                                         type="button">
@@ -74,7 +61,7 @@
 
                             <ul id="clientList"
                                 class="list-group shadow-sm position-absolute"
-                                style="max-height: 350px; overflow-y: auto; width: 100%; display:none; z-index:1000; margin-top:4px;">
+                                style="max-height: 350px; overflow-y: auto; width: 100%; display:none; z-index:1000;">
                             </ul>
 
                             <div class="mt-2 text-end">
@@ -85,16 +72,7 @@
                                     Cargar más
                                 </button>
                             </div>
-                        </div>
 
-                        <!-- Cliente seleccionado -->
-                        <div id="selectedClientCard"
-                             class="card border-primary mt-3"
-                             style="display:none;">
-                            <div class="card-body py-2">
-                                <div id="selectedClientMain" class="fw-semibold text-primary"></div>
-                                <div id="selectedClientSecondary" class="text-muted small"></div>
-                            </div>
                         </div>
 
                     </div>
@@ -104,19 +82,21 @@
             <!-- CONTACTO -->
             <div class="col-md-6">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-light fw-semibold">
-                        2. Selecciona contacto
+                    <div class="card-header fw-semibold">
+                        Selecciona contacto
                     </div>
                     <div class="card-body position-relative">
 
                         <div id="contactSearchContainer" class="position-relative mb-3">
                             <label class="form-label small text-muted">Buscar contacto</label>
+
                             <div class="input-group">
                                 <input id="contactSearchInput"
                                        type="text"
                                        class="form-control"
                                        placeholder="Filtrar por nombre, cargo o empresa..."
                                        disabled />
+
                                 <button id="contactToggleButton"
                                         class="btn btn-outline-primary"
                                         type="button"
@@ -137,7 +117,7 @@
 
                             <ul id="contactList"
                                 class="list-group shadow-sm position-absolute"
-                                style="max-height: 350px; overflow-y: auto; width: 100%; display:none; z-index:1000; margin-top:4px;">
+                                style="max-height: 350px; overflow-y: auto; width: 100%; display:none; z-index:1000;">
                             </ul>
                         </div>
 
@@ -157,27 +137,26 @@
 
         </div>
 
-        <!-- Botón continuar -->
-        <div class="text-end mt-4">
-            <button id="btnGoStep2"
-                    class="btn btn-primary"
-                    type="button"
-                    disabled>
-                Continuar al paso 2
-            </button>
-        </div>
+        <!-- BOTÓN FLOTANTE – Paso 1 → Paso 2 -->
+        <button id="btnGoStep2" class="step-floating-btn-right" disabled>
+            <i class="bi bi-chevron-right"></i>
+        </button>
     </div>
 
-    <!-- Paso 2 -->
-    <div id="step2Container" style="display:none;">
+
+    <!-- ============================================
+         PASO 2 – Detalles de la visita
+    ============================================= -->
+    <div id="step2Container" style="display:none;" class="mt-5">
+
+        <h4 class="crm-main-title mb-4">2. Detalles de la visita</h4>
+
         <div class="row g-4">
 
-            <!-- Resumen -->
+            <!-- RESUMEN -->
             <div class="col-md-4">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-light fw-semibold">
-                        Resumen
-                    </div>
+                    <div class="card-header fw-semibold">Resumen</div>
                     <div class="card-body">
                         <p class="small mb-1 text-muted">Cliente</p>
                         <p id="summaryClient" class="fw-semibold"></p>
@@ -188,15 +167,17 @@
                 </div>
             </div>
 
-            <!-- Datos de actividad -->
+            <!-- FORMULARIO -->
             <div class="col-md-8">
                 <div class="card shadow-sm">
-                    <div class="card-header bg-light fw-semibold">
+                    <div class="card-header fw-semibold">
                         Datos de la visita
                     </div>
+
                     <div class="card-body">
 
                         <div class="row g-3">
+
                             <div class="col-md-4">
                                 <label class="form-label">Tipo de visita</label>
                                 <select id="visitType" class="form-select">
@@ -206,20 +187,22 @@
                                     }
                                 </select>
                             </div>
-                            
+
                             <div class="col-md-4">
                                 <label class="form-label">Usuario</label>
                                 <input id="userId"
                                        class="form-control"
                                        value="@((ViewBag.AxUser ?? "").ToString())"
-                                       readonly style="background-color:#e9ecef;" />
+                                       readonly />
                             </div>
+
                             <div class="col-md-4">
                                 <label class="form-label">Fecha</label>
                                 <input id="transDate"
                                        type="date"
                                        class="form-control" />
                             </div>
+
                             <div class="col-md-4">
                                 <label class="form-label">Tipo asistente</label>
                                 <select id="asistenteTipo" class="form-select">
@@ -232,50 +215,47 @@
 
                             <div class="col-12">
                                 <label class="form-label">Descripción</label>
-                                <input id="description"
-                                       class="form-control"
-                                       maxlength="200" />
+                                <input id="description" class="form-control" maxlength="200" />
                             </div>
 
                             <div class="col-12">
                                 <label class="form-label">Comentarios</label>
-                                <textarea id="comentarios" class="form-control" rows="2"></textarea>
+                                <textarea id="comentarios" class="form-control"></textarea>
                             </div>
+
                             <div class="col-12">
                                 <label class="form-label">Antecedentes</label>
-                                <textarea id="antecedentes" class="form-control" rows="2"></textarea>
+                                <textarea id="antecedentes" class="form-control"></textarea>
                             </div>
+
                             <div class="col-12">
                                 <label class="form-label">Conclusiones</label>
-                                <textarea id="conclusiones" class="form-control" rows="2"></textarea>
+                                <textarea id="conclusiones" class="form-control"></textarea>
                             </div>
+
                         </div>
 
                         <div id="activityStatus" class="mt-3"></div>
 
-                        <div class="d-flex justify-content-between mt-3">
-                            <button id="btnBackToStep1"
-                                    type="button"
-                                    class="btn btn-outline-secondary">
-                                Volver al paso 1
-                            </button>
-
-                            <button id="btnSubmitActivity"
-                                    type="button"
-                                    class="btn btn-success">
-                                Crear visita
-                            </button>
-                        </div>
-
                     </div>
                 </div>
             </div>
-
         </div>
+
+        <!-- BOTÓN FLOTANTE Volver -->
+        <button id="btnBackToStep1" class="step-floating-btn-left" style="display:none;">
+            <i class="bi bi-chevron-left"></i>
+        </button>
+
+        <!-- BOTÓN FLOTANTE Crear -->
+        <button id="btnSubmitActivity" class="step-floating-btn-create">
+            <i class="bi bi-check2-circle"></i>
+        </button>
+
     </div>
 
 </div>
 
 @section Scripts {
-    <script src="~/js/visitas.client.js?ver=@DateTime.Now.Ticks" "></script> 
+    <script src="~/js/visitas.client.js?ver=@DateTime.Now.Ticks"></script>
 }
