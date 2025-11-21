@@ -286,3 +286,39 @@ textarea.form-control {
     font-size: 22px;
 }
 
+#crmPopup {
+    position: fixed;
+    left: 50%;
+    top: 15%;
+    transform: translateX(-50%);
+    z-index: 99999;
+    opacity: 0;
+    transition: opacity .3s ease;
+}
+
+    #crmPopup.visible {
+        opacity: 1;
+    }
+
+.crm-popup-inner {
+    padding: 18px 26px;
+    border-radius: 12px;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0px 6px 20px rgba(0,0,0,.25);
+    font-size: 15px;
+}
+
+    .crm-popup-inner.success {
+        background-color: #198754; /* verde */
+    }
+
+    .crm-popup-inner.error {
+        background-color: #dc3545; /* rojo */
+    }
+
+.crm-popup-icon i {
+    font-size: 22px;
+}

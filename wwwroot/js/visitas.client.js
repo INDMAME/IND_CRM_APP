@@ -425,6 +425,9 @@ document.addEventListener("DOMContentLoaded", () => {
     // ---------------------------------------------------
     // CREAR ACTIVIDAD + VISITA (con redirect + popup)
     // ---------------------------------------------------
+    // ---------------------------------------------------
+    // CREAR ACTIVIDAD + VISITA (con redirect + popup)
+    // ---------------------------------------------------
     btnSubmitActivity.addEventListener("click", async () => {
 
         if (!userId.value || !description.value || !transDate.value) {
@@ -547,6 +550,39 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!e.target.closest("#contactSearchContainer") && contactListVisible)
             hideContactList();
     });
+
+    function showErrorPopup(message) {
+        showPopup(message, false);
+    }
+
+    function showSuccessPopup(message) {
+        showPopup(message, true);
+    }
+
+    function showPopup(message, success = false) {
+        const existing = document.getElementById("crmPopup");
+        if (existing) existing.remove();
+
+        const popup = document.createElement("div");
+        popup.id = "crmPopup";
+        popup.innerHTML = `
+        <div class="crm-popup-inner ${success ? "success" : "error"}">
+            <div class="crm-popup-icon">
+                <i class="bi ${success ? "bi-check-circle" : "bi-exclamation-circle"}"></i>
+            </div>
+            <div class="crm-popup-text">${message}</div>
+        </div>
+    `;
+
+        document.body.appendChild(popup);
+
+        setTimeout(() => popup.classList.add("visible"), 20);
+
+        setTimeout(() => {
+            popup.classList.remove("visible");
+            setTimeout(() => popup.remove(), 300);
+        }, 2500);
+    }
 
     function showErrorPopup(message) {
         showPopup(message, false);
