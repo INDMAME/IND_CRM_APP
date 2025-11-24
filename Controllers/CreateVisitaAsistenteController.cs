@@ -4,21 +4,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IND_CRM_APP.Controllers
 {
-    /// <summary>
-    /// Controlador que gestiona la creación de asistentes asociados a una actividad.
-    /// </summary>
-    public class CreateVisitaAsistenteController : Controller
+    // Controller that manages assistant creation for an activity
+    public class CreateVisitaAsistenteController : BaseMvcController
     {
-        private readonly ApiClientService _apiClient;
-
-        public CreateVisitaAsistenteController(ApiClientService apiClient)
+        public CreateVisitaAsistenteController(ICrmApiClient apiClient)
+            : base(apiClient)
         {
-            _apiClient = apiClient;
         }
 
-        /// <summary>
-        /// Recibe los datos del asistente y llama al endpoint API.
-        /// </summary>
+        // Receives assistant data and calls API to create it
         [HttpPost]
         public async Task<IActionResult> CreateAsistente(CreateVisitaAsistenteRequest model)
         {
@@ -27,7 +21,7 @@ namespace IND_CRM_APP.Controllers
                 return Unauthorized();
 
             if (!ModelState.IsValid)
-                return BadRequest("Datos inválidos.");
+                return BadRequest("Invalid data.");
 
             var result = await _apiClient.CreateVisitaAsistenteAsync(token, model);
 

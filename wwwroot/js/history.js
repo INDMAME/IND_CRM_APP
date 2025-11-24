@@ -11,6 +11,7 @@
     let currentPage = 1;
     const pageSize = 50;
 
+    // Loads activity list from MVC endpoint Historial/GetActivities
     async function loadActivities(page = 1) {
 
         if (!fromDate.value || !toDate.value) {
@@ -49,52 +50,60 @@
 
         loader.style.display = "none";
 
-        renderTimeline(data.items);
-        renderPagination(data.total);
+        const items = data.items || [];
+        renderTimeline(items);
+        renderPagination(data.total || items.length);
     }
 
+    // Renders activity timeline cards
     function renderTimeline(items) {
-
         timeline.innerHTML = "";
 
         items.forEach(x => {
+            const actividadId = x.actividadId ?? x.ActividadId ?? "";
+            const nombre = x.name ?? x.Name ?? "";
+            const fecha = x.transDate ?? x.TransDate ?? "";
+            const descripcion = x.description ?? x.Description ?? "";
+            const asistentes = x.asistentes ?? x.Asistentes ?? [];
 
-            const asistentesHtml = (x.asistentes ?? [])
-                .map(a => `<div>${a.asistenteId} — ${a.asistenteCargo}</div>`)
+            const asistentesHtml = (asistentes || [])
+                .map(a => {
+                    const asistenteId = a.asistenteId ?? a.AsistenteId ?? "";
+                    const asistenteCargo = a.asistenteCargo ?? a.AsistenteCargo ?? "";
+                    return `<div>${asistenteId} — ${asistenteCargo}</div>`;
+                })
                 .join("");
 
             const cardHtml = `
             <div class="timeline-item">
-
-                <div class="timeline-date">${x.transDate ?? ""}</div>
-
+                <div class="timeline-date">${fecha}</div>
                 <div class="timeline-card">
-
-                    <div class="timeline-id">${x.actividadId ?? ""}</div>
-
-                    <div class="timeline-name">${x.name ?? ""}</div>
-
+                    <div class="timeline-id">${actividadId}</div>
+                    <div class="timeline-name">${nombre}</div>
                     <div class="timeline-desc">
-                        <strong>Descripción:</strong> ${x.description ?? ""}
+                        <strong>Descripcion:</strong> ${descripcion}
                     </div>
-
                     <div class="timeline-asistentes mt-2">
                         <strong>Asistentes:</strong><br>
                         ${asistentesHtml}
                     </div>
-
                 </div>
             </div>
-            `;
+        `;
 
             timeline.insertAdjacentHTML("beforeend", cardHtml);
         });
     }
 
 
+    // Builds simple pagination for the bottom bar
     function renderPagination(total) {
         const totalPages = Math.ceil(total / pageSize);
         pagination.innerHTML = "";
+
+        if (!totalPages || totalPages <= 1) {
+            return;
+        }
 
         for (let i = 1; i <= totalPages; i++) {
             const li = document.createElement("li");
@@ -108,7 +117,9 @@
         }
     }
 
+    // Search button click handler
     btnSearch.addEventListener("click", () => loadActivities(1));
 
+    // Initial load with default dates from server
     loadActivities(1);
 });

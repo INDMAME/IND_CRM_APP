@@ -4,19 +4,14 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IND_CRM_APP.Controllers
 {
-    public class HistorialController : Controller
+    // Controller for activity history
+    public class HistorialController : BaseMvcController
     {
-
-        private readonly ApiClientService _apiClient;
-
-        public HistorialController(ApiClientService apiClient)
+        public HistorialController(ICrmApiClient apiClient) : base(apiClient)
         {
-            _apiClient = apiClient;
         }
 
-        // ============================================
-        // VISTA PRINCIPAL
-        // ============================================
+        // Shows main history view with default date range
         [HttpGet]
         public async Task<IActionResult> History()
         {
@@ -24,12 +19,14 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Auth");
 
+            // Load environment and company using API client
             var environment = await _apiClient.GetEnvironmentAsync(token);
             var company = await _apiClient.GetCompanyNameAsync(token);
 
-            ViewBag.Environment = environment ?? "Desconocido";
-            ViewBag.Company = company ?? "N/A";
+            ViewBag.Environment = string.IsNullOrWhiteSpace(environment) ? "Unknown" : environment;
+            ViewBag.Company = string.IsNullOrWhiteSpace(company) ? "N/A" : company;
 
+            // Default period: last month
             var to = DateTime.Today;
             var from = to.AddMonths(-1);
 
@@ -39,26 +36,26 @@ namespace IND_CRM_APP.Controllers
             return View("~/Views/Visitas/History.cshtml");
         }
 
-
-        // ============================================
-        // API JSON - CONSULTAR HISTORIAL
-        // ============================================
+        // Returns activity list as json with simple paging
         [HttpPost]
-        public async Task<IActionResult> GetActivities([FromBody] ActivitiesFilter filter,
-                                                       int page = 1,
-                                                       int pageSize = 50)
+        public async Task<IActionResult> GetActivities(
+            [FromBody] ActivitiesFilter filter,
+            int page = 1,
+            int pageSize = 50)
         {
             var token = HttpContext.Session.GetString("Token");
             if (string.IsNullOrEmpty(token))
                 return Unauthorized();
 
             if (filter == null)
-                return BadRequest("Filtro vacío.");
+                return BadRequest("Empty filter.");
 
-            filter.userId = filter.userId ?? "";
+            // Normalize filter values
+            filter.userId = filter.userId ?? string.Empty;
             filter.fromDate = SanitizeDate(filter.fromDate);
             filter.toDate = SanitizeDate(filter.toDate);
 
+            // Call API client (maps to api/crm/activities/list)
             var result = await _apiClient.GetActivitiesAsync(token, filter);
 
             if (result == null)
@@ -66,24 +63,19 @@ namespace IND_CRM_APP.Controllers
 
             var itemsList = result.Items?.ToList() ?? new List<ActivityDto>();
 
+            // Local paging on client side
             var pageItems = Paginate(itemsList, page, pageSize);
 
             return Json(new { total = itemsList.Count, items = pageItems });
         }
 
-
-
-
-
-
-        // ============================================
-        // HELPERS
-        // ============================================
+        // Helper to normalize date string
         private static string SanitizeDate(string? date)
         {
-            return string.IsNullOrWhiteSpace(date) ? "" : date.Trim();
+            return string.IsNullOrWhiteSpace(date) ? string.Empty : date.Trim();
         }
 
+        // Simple paging helper
         private static List<T> Paginate<T>(List<T> list, int page, int pageSize)
         {
             if (page < 1) page = 1;

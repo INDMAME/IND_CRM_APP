@@ -5,12 +5,13 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/css/visitas.css" />
+    <link rel="stylesheet" href="~/css/technical-info.css" />
 }
 
 <div class="container py-4">
 
     <!-- Subtítulo técnico -->
-    <p class="crm-env-info mb-3">
+    <p class="tech-info mb-3">
         Datos desde Axapta 3.0 —
         <strong>Ambiente:</strong> @Html.Raw(ViewBag.Environment ?? "Desconocido")
         <span class="mx-2">|</span>
@@ -55,7 +56,7 @@
                             </div>
 
                             <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span id="clientCounter" class="badge bg-secondary">0 clientes</span>
+                                <span id="clientCounter" class="tech-badge">0 clientes</span>
                                 <span id="clientStatus" class="small text-muted"></span>
                             </div>
 
@@ -111,7 +112,7 @@
                             </div>
 
                             <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span id="contactCounter" class="badge bg-secondary">0 contactos</span>
+                                <span id="contactCounter" class="tech-badge">0 contactos</span>
                                 <span id="contactStatus" class="small text-muted"></span>
                             </div>
 

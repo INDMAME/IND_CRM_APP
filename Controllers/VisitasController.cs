@@ -5,15 +5,15 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace IND_CRM_APP.Controllers
 {
-    public class VisitasController : Controller
+    // Controller for visit and activity screens
+    public class VisitasController : BaseMvcController
     {
-        private readonly ApiClientService _api;
-
-        public VisitasController(ApiClientService api)
+        public VisitasController(ICrmApiClient apiClient) : base(apiClient)
         {
-            _api = api;
         }
 
+        // Returns accounts for dropdown with paging
+        // Uses api/crm/accounts/listAccounts via ICrmApiClient
         [HttpGet]
         public async Task<IActionResult> GetAccountsForDropdown(
             string term = "",
@@ -22,9 +22,9 @@ namespace IND_CRM_APP.Controllers
         {
             var token = HttpContext.Session.GetString("Token");
             if (string.IsNullOrWhiteSpace(token))
-                return Unauthorized(new { message = "Sesion expirada" });
+                return Unauthorized(new { message = "Session expired" });
 
-            var result = await _api.GetAccountsAsync(token, term ?? "", page, pageSize);
+            var result = await _apiClient.GetAccountsAsync(token, term ?? string.Empty, page, pageSize);
 
             return Json(new
             {
@@ -33,6 +33,8 @@ namespace IND_CRM_APP.Controllers
             });
         }
 
+        // Returns contacts for dropdown given an account number
+        // Uses api/crm/accounts/listContacts via ICrmApiClient
         [HttpGet]
         public async Task<IActionResult> GetContactsForDropdown(
             string accountNum,
@@ -41,12 +43,12 @@ namespace IND_CRM_APP.Controllers
         {
             var token = HttpContext.Session.GetString("Token");
             if (string.IsNullOrWhiteSpace(token))
-                return Unauthorized(new { message = "Sesion expirada" });
+                return Unauthorized(new { message = "Session expired" });
 
             if (string.IsNullOrWhiteSpace(accountNum))
-                return BadRequest(new { message = "Falta accountNum" });
+                return BadRequest(new { message = "Missing accountNum" });
 
-            var result = await _api.GetContactosAsync(token, accountNum, page, pageSize);
+            var result = await _apiClient.GetContactosAsync(token, accountNum, page, pageSize);
 
             return Json(new
             {
@@ -55,6 +57,7 @@ namespace IND_CRM_APP.Controllers
             });
         }
 
+        // Shows main create activity view
         [HttpGet]
         public IActionResult Create()
         {
@@ -64,11 +67,13 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrEmpty(token))
                     return RedirectToAction("Login", "Auth");
 
+                // Load enum lists for selects
                 ViewBag.CRMActividadTypeEnum = CrmEnumHelper.GetActividadTypeItems();
                 ViewBag.CRMTipoVisitaEnum = CrmEnumHelper.GetTipoVisitaItems();
                 ViewBag.CRMActividadOrigenEnum = CrmEnumHelper.GetActividadOrigenItems();
                 ViewBag.AsistenteTipoEnum = CrmEnumHelper.GetAsistenteTipoItems();
 
+                // Optional session info for layout
                 ViewBag.Environment = HttpContext.Session.GetString("Environment");
                 ViewBag.Company = HttpContext.Session.GetString("Company");
                 ViewBag.AxUser = HttpContext.Session.GetString("AxUser");
@@ -77,20 +82,22 @@ namespace IND_CRM_APP.Controllers
             }
             catch
             {
+                // In case of error, still return view
                 return View();
             }
         }
 
+        // Creates a new activity calling api/crm/activities/create
         [HttpPost]
         public async Task<IActionResult> CreateActivity([FromBody] CreateActivityRequest req)
         {
             try
             {
-                string token = HttpContext.Session.GetString("Token") ?? "";
+                string token = HttpContext.Session.GetString("Token") ?? string.Empty;
                 if (string.IsNullOrEmpty(token))
-                    return Json(new { success = false, message = "Token no encontrado en sesion." });
+                    return Json(new { success = false, message = "Token not found in session." });
 
-                var response = await _api.CreateActivityAsync(token, req);
+                var response = await _apiClient.CreateActivityAsync(token, req);
 
                 return Json(new
                 {
@@ -104,16 +111,17 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // Creates a new visit assistant calling api/crm/visits/createVisitaAsistente
         [HttpPost]
         public async Task<IActionResult> CreateVisitaAsistente([FromBody] CreateVisitaAsistenteRequest req)
         {
             try
             {
-                string token = HttpContext.Session.GetString("Token") ?? "";
+                string token = HttpContext.Session.GetString("Token") ?? string.Empty;
                 if (string.IsNullOrEmpty(token))
-                    return Json(new { success = false, message = "Token no encontrado en sesion." });
+                    return Json(new { success = false, message = "Token not found in session." });
 
-                var response = await _api.CreateVisitaAsistenteAsync(token, req);
+                var response = await _apiClient.CreateVisitaAsistenteAsync(token, req);
 
                 return Json(new
                 {
@@ -126,6 +134,5 @@ namespace IND_CRM_APP.Controllers
                 return Json(new { success = false, message = ex.Message });
             }
         }
-
     }
 }

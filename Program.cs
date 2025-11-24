@@ -1,4 +1,5 @@
-﻿using IND_CRM_APP.Models.Shared;
+﻿using IND_CRM_APP.Middleware;
+using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Diagnostics;
 
@@ -11,7 +12,7 @@ var builder = WebApplication.CreateBuilder(args);
 // -----------------------------
 //builder.Services.AddResponseCompression();
 builder.Services.AddControllersWithViews();
-builder.Services.AddHttpClient<ApiClientService>();
+builder.Services.AddHttpClient<ICrmApiClient, ApiClientService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSession(options =>
 {
@@ -61,7 +62,8 @@ else
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
-app.UseMiddleware<IND_CRM_APP.Middleware.TokenRefreshMiddleware>();
+// Middleware de refresco de token
+app.UseMiddleware<TokenRefreshMiddleware>();
 
 // -----------------------------
 // Rutas MVC
