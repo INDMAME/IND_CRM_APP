@@ -14,8 +14,13 @@
 /* General */
 body {
     background-color: #f5f6f7;
-    font-family: "Segoe UI", sans-serif;
+    font-family: "Montserrat", sans-serif;
     overflow-x: hidden;
+}
+
+:root {
+    --bs-primary: #00296b;
+    --bs-primary-rgb: 0, 41, 107;
 }
 
 /* SIDEBAR */
@@ -76,6 +81,8 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
+    position: relative;
+    z-index: 2; /* asegura que hamburguesa y back queden sobre otros elementos */
 }
 
 .topbar-nav {
@@ -112,12 +119,13 @@ body {
 .topbar-right {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
+    margin-left: auto;
 }
 
 /* HAMBURGER BUTTON */
 .hamburger {
-    background-color: #003b8a;
+    background-color: #00296b;
     color: white;
     border: none;
     border-radius: 14px;
@@ -125,10 +133,12 @@ body {
     font-size: 30px;
     transition: 0.2s;
     box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+    position: relative;
+    z-index: 2; /* delante de la flecha */
 }
 
     .hamburger:hover {
-        background-color: #002e6d;
+        background-color: #001f4d;
     }
 
 /* Botón X dentro del menú */
@@ -145,9 +155,9 @@ body {
     transition: .2s ease;
 }
 
-    .close-sidebar:hover {
+.close-sidebar:hover {
         transform: rotate(90deg) scale(1.1);
-        color: #d7dfff;
+        color: #ffffff;
     }
 
 
@@ -191,21 +201,20 @@ body {
 
 /* CHIP DE USUARIO ANIMADO */
 .user-chip {
-    background: rgba(255, 255, 255, 0.12);
+    background: transparent;
     padding: 9px 12px;
     border-radius: 12px;
     display: flex;
     align-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.20);
-    backdrop-filter: blur(8px);
+    border: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     cursor: pointer;
 }
 
     .user-chip:hover {
         transform: translateY(-3px) scale(1.02);
-        box-shadow: 0 10px 20px rgba(0,0,0,0.35);
-        background: rgba(255, 255, 255, 0.20);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        background: rgba(255, 255, 255, 0.08);
     }
 
 /* Icono del chip */
@@ -231,17 +240,15 @@ body {
 
 /* MENÚ DESPLEGABLE DEL USUARIO */
 .user-menu {
-    background: rgba(0, 0, 0, 0.25);
+    background: transparent;
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    /* NUEVO: aparece arriba del chip */
+    border: 1px solid rgba(255, 255, 255, 0.30);
     position: absolute;
     bottom: 55px;
     width: 100%;
     padding: 6px 0;
     opacity: 0;
     pointer-events: none;
-    /* empieza abajo y sube */
     transform: translateY(8px);
     transition: opacity 0.15s ease, transform 0.15s ease;
 }
@@ -259,7 +266,7 @@ body {
     text-align: left;
     background: transparent;
     border: none;
-    color: #e5ebff;
+    color: #ffffff;
     padding: 6px 10px 6px 12px;
     display: flex;
     align-items: center;
@@ -268,7 +275,7 @@ body {
 }
 
     .user-menu-item:hover {
-        background: rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.12);
         color: #ffffff;
     }
 
@@ -295,6 +302,9 @@ body {
 
     .sidebar-logo img {
         height: 70px;
+        width: 90%;
+        max-width: 90%;
+        object-fit: contain;
     }
 
     .sidebar-logo span {

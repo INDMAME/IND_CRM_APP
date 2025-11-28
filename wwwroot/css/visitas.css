@@ -58,6 +58,51 @@
     width: 50px;
 }
 
+/* Input group corporativo */
+.input-group .form-control {
+    border-color: var(--crm-blue);
+}
+
+.input-group .form-control:focus {
+    border-color: var(--crm-blue);
+    box-shadow: 0 0 0 0.2rem rgba(0, 41, 107, 0.2);
+}
+
+.input-group .input-group-text {
+    background: #eef2f8;
+    color: var(--crm-blue);
+    border-color: var(--crm-blue);
+}
+
+/* Icono de la flecha en los toggles */
+#clientToggleButton i,
+#contactToggleButton i,
+.btn-outline-primary i {
+    color: var(--crm-blue);
+}
+
+/* Botones outline primarios → color corporativo */
+.btn-outline-primary {
+    color: var(--crm-blue);
+    border-color: var(--crm-blue);
+}
+
+    .btn-outline-primary:hover,
+    .btn-outline-primary:focus {
+        color: #fff;
+        background-color: var(--crm-blue);
+        border-color: var(--crm-blue);
+    }
+
+    .btn-outline-primary:active,
+    .btn-outline-primary:focus:active,
+    .btn-check:checked + .btn-outline-primary {
+        color: #fff;
+        background-color: var(--crm-blue-dark);
+        border-color: var(--crm-blue-dark);
+        box-shadow: none;
+    }
+
 /* -----------------------------------------------
    Dropdowns profesionales
 ----------------------------------------------- */
@@ -78,7 +123,7 @@
 
     #clientList::-webkit-scrollbar-thumb,
     #contactList::-webkit-scrollbar-thumb {
-        background: #9db4d8;
+        background: rgba(0, 41, 107, 0.35);
         border-radius: 20px;
     }
 
@@ -142,11 +187,22 @@
 #antecedentes,
 #conclusiones {
     border-radius: 10px;
+    color: var(--crm-blue);
 }
 
 /* Textareas */
 textarea.form-control {
     min-height: 80px;
+}
+
+/* Icono y texto de date pickers */
+input[type="date"].form-control {
+    color: var(--crm-blue);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(13%) sepia(78%) saturate(1700%) hue-rotate(186deg) brightness(88%) contrast(90%);
+    cursor: pointer;
 }
 
 /* -----------------------------------------------
@@ -274,12 +330,12 @@ textarea.form-control {
     font-size: 15px;
 }
 
-    .crm-popup-inner.success {
-        background-color: #198754; /* verde */
+.crm-popup-inner.success {
+        background-color: #00296b;
     }
 
     .crm-popup-inner.error {
-        background-color: #dc3545; /* rojo */
+        background-color: #00296b;
     }
 
 .crm-popup-icon i {
@@ -311,12 +367,12 @@ textarea.form-control {
     font-size: 15px;
 }
 
-    .crm-popup-inner.success {
-        background-color: #198754; /* verde */
+.crm-popup-inner.success {
+        background-color: #00296b;
     }
 
     .crm-popup-inner.error {
-        background-color: #dc3545; /* rojo */
+        background-color: #00296b;
     }
 
 .crm-popup-icon i {

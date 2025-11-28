@@ -112,7 +112,8 @@ document.addEventListener("DOMContentLoaded", () => {
             topForward.style.visibility = "visible";
         }
         if (topBack) {
-            topBack.style.display = onStep1 ? "none" : "inline-flex";
+            topBack.style.display = "inline-flex";
+            topBack.disabled = onStep1;
         }
 
         // Botón crear solo en paso 2
@@ -513,9 +514,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
 
             // 3) Todo OK → redirect ------------------------
-            showSuccessPopup(
-                `Visita creada correctamente.<br>Actividad <strong>${recIdActividad}</strong>`
-            );
+            showSuccessPopup("Visita creada correctamente.");
 
             setTimeout(() => {
                 window.location.href = "/Home/Index";

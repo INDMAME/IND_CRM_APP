@@ -1,10 +1,11 @@
-﻿/* Fondo suave */
+/* Fondo suave */
 body.login-page {
-    background: #f1f4f9;
+    background: #f8f9fb;
     display: flex;
     justify-content: center;
     align-items: center;
     min-height: 100vh;
+    font-family: "Montserrat", sans-serif;
 }
 
 /* Card principal */
@@ -18,38 +19,51 @@ body.login-page {
 
 /* Logo */
 .login-logo img {
-    height: 70px;
+    height: 112px;
 }
 
-.login-subtitle {
-    font-size: 14px;
+.login-title {
+    font-size: 24px;
+    font-weight: 600;
+    color: #00296b;
+    letter-spacing: 0.3px;
+    margin-bottom: 6px;
+}
+
+.login-subtext {
+    font-size: 13px;
+    font-style: italic;
     color: #6c757d;
-    margin-top: -6px;
+    margin-top: -2px;
 }
 
-/* Floating labels */
 .form-control:focus {
-    border-color: #004aad;
-    box-shadow: 0 0 0 0.2rem rgba(0, 74, 173, 0.25);
+    border-color: #00296b;
+    box-shadow: 0 0 0 0.2rem rgba(0, 41, 107, 0.25);
 }
 
-/* Botón */
+.minimal-input {
+    border-radius: 10px;
+    padding-right: 44px;
+}
+
 .btn-login {
-    background-color: #c4001d;
+    background-color: #00296b;
     color: white;
     padding: 10px 0;
     font-size: 17px;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
-    .btn-login:hover {
-        background-color: #9f0016;
-    }
+.btn-login:hover {
+    background-color: #001f4d;
+}
 
 /* Ojo contraseña */
 .password-eye {
     cursor: pointer;
     user-select: none;
+    color: #00296b;
 }
 
 /* Responsive */

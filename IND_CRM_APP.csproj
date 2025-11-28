@@ -10,7 +10,7 @@
 		<MvcRazorCompileOnPublish>true</MvcRazorCompileOnPublish>
 		<PreserveCompilationContext>false</PreserveCompilationContext>
 		<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-		<PlatformTarget>x86</PlatformTarget>
+		<PlatformTarget>AnyCPU</PlatformTarget>
 	</PropertyGroup>
 
   

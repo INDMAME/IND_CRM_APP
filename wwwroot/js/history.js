@@ -70,11 +70,11 @@
         timeline.innerHTML = "";
 
         items.forEach(x => {
-            const actividadId = x.actividadId ?? x.ActividadId ?? "";
             const nombre = x.name ?? x.Name ?? "";
             const fecha = x.transDate ?? x.TransDate ?? "";
             const descripcion = x.description ?? x.Description ?? "";
             const asistentes = x.asistentes ?? x.Asistentes ?? [];
+            const fechaFormatted = formatDate(fecha);
 
             const asistentesHtml = (asistentes || [])
                 .map(a => {
@@ -86,16 +86,17 @@
 
             const cardHtml = `
             <div class="timeline-item">
-                <div class="timeline-date">${fecha}</div>
                 <div class="timeline-card">
-                    <div class="timeline-id">${actividadId}</div>
-                    <div class="timeline-name">${nombre}</div>
+                    <div class="timeline-card-head">
+                        <div class="timeline-name">${nombre}</div>
+                        <div class="timeline-date-chip">${fechaFormatted}</div>
+                    </div>
                     <div class="timeline-desc">
-                        <strong>Descripcion:</strong> ${descripcion}
+                        ${descripcion}
                     </div>
                     <div class="timeline-asistentes mt-2">
-                        <strong>Asistentes:</strong><br>
-                        ${asistentesHtml}
+                        <div class="asistentes-title">Asistentes</div>
+                        <div class="asistentes-list">${asistentesHtml || "<span class='text-muted'>Sin asistentes</span>"}</div>
                     </div>
                 </div>
             </div>
@@ -103,6 +104,21 @@
 
             timeline.insertAdjacentHTML("beforeend", cardHtml);
         });
+    }
+
+    function formatDate(value) {
+        if (!value) return "";
+        const d = new Date(value);
+        if (isNaN(d)) return value;
+        // ejemplo: 20 nov 2025 (mes en minúsculas)
+        return d
+            .toLocaleDateString("es-ES", {
+                day: "2-digit",
+                month: "short",
+                year: "2-digit"
+            })
+            .replace(/\./g, "")
+            .toLowerCase();
     }
 
 

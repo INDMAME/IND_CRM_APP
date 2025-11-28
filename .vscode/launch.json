@@ -4,12 +4,29 @@
     // Para más información, visite: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
-        
+        {
+            "name": "Backend (Kestrel)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-with-kill",
+            "program": "${workspaceFolder}/bin/Debug/net10.0/IND_CRM_APP.dll",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development",
+                "ASPNETCORE_URLS": "http://localhost:7702"
+            },
+            "serverReadyAction": {
+                "action": "openExternally",
+                "url": "http://localhost:7702"
+            }
+        },
         {
             "type": "chrome",
             "request": "launch",
             "name": "Iniciar Chrome para localhost",
-            "url": "http://localhost:8080",
+            "url": "http://localhost:7702",
             "webRoot": "${workspaceFolder}"
         }
     ]
