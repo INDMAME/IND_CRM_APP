@@ -74,6 +74,11 @@
 
 
         <!-- PANEL USUARIO -->
+        @{
+            var displayUser = HttpAccessor.HttpContext?.Session.GetString("AxUser")
+                              ?? HttpAccessor.HttpContext?.Session.GetString("Username")
+                              ?? "Usuario";
+        }
         <div class="user-panel">
 
             <!-- CHIP DEL USUARIO -->
@@ -81,7 +86,7 @@
                 <i class="bi bi-person-fill user-chip-icon"></i>
 
                 <span class="username-text">
-                    @(HttpAccessor.HttpContext.Session.GetString("Username")?.ToUpper())
+                    @displayUser.ToUpperInvariant()
                 </span>
 
                 <i id="userMenuChevron" class="bi bi-chevron-up ms-2 user-chip-chevron"></i>
@@ -89,6 +94,9 @@
 
             <!-- MENÚ DESPLEGABLE DEL USUARIO -->
             <div id="userMenu" class="user-menu mt-2">
+                <div class="px-3 py-2 text-white-50 small">
+                    Conectado como <strong>@displayUser</strong>
+                </div>
 
                 <a href="#" class="user-menu-item">
                     <i class="bi bi-person-lines-fill me-2"></i> Mis datos
