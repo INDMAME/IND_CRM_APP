@@ -1,14 +1,19 @@
 ﻿using IND_CRM_APP.Models.Activities;
 using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
+using System.Text.Json;
 
 namespace IND_CRM_APP.Controllers
 {
     // Controller for activity history
     public class HistorialController : BaseMvcController
     {
-        public HistorialController(ICrmApiClient apiClient) : base(apiClient)
+        private readonly ILogger<HistorialController> _logger;
+
+        public HistorialController(ICrmApiClient apiClient, ILogger<HistorialController> logger) : base(apiClient)
         {
+            _logger = logger;
         }
 
         // Shows main history view with default date range
@@ -55,18 +60,40 @@ namespace IND_CRM_APP.Controllers
             filter.fromDate = SanitizeDate(filter.fromDate);
             filter.toDate = SanitizeDate(filter.toDate);
 
-            // Call API client (maps to api/crm/activities/list)
-            var result = await _apiClient.GetActivitiesAsync(token, filter);
+            try
+            {
+                // Call API client (maps to api/crm/activities/list)
+                var result = await _apiClient.GetActivitiesAsync(token, filter);
 
-            if (result == null)
-                return Json(new { total = 0, items = Array.Empty<object>() });
+                if (result == null)
+                    return Json(new { total = 0, items = Array.Empty<object>() });
 
-            var itemsList = result.Items?.ToList() ?? new List<ActivityDto>();
+                var itemsList = result.Items?.ToList() ?? new List<ActivityDto>();
 
-            // Local paging on client side
-            var pageItems = Paginate(itemsList, page, pageSize);
+                // Local paging on client side
+                var pageItems = Paginate(itemsList, page, pageSize);
 
-            return Json(new { total = itemsList.Count, items = pageItems });
+                return Json(new { total = itemsList.Count, items = pageItems });
+            }
+            catch (ApiException ex)
+            {
+                // Error from upstream API (non-success status codes)
+                _logger.LogError(ex, "Upstream API error in GetActivities");
+                // Include status and raw body for diagnostics (avoid leaking sensitive data)
+                return StatusCode(StatusCodes.Status502BadGateway, new { status = (int)ex.StatusCode, error = ex.Message, body = ex.RawBody });
+            }
+            catch (JsonException ex)
+            {
+                // Malformed JSON from upstream
+                _logger.LogError(ex, "JSON deserialization error in GetActivities");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Error al procesar la respuesta del servidor" });
+            }
+            catch (Exception ex)
+            {
+                // Fallback: log and return 500
+                _logger.LogError(ex, "Unexpected error in GetActivities");
+                return StatusCode(StatusCodes.Status500InternalServerError, new { error = "Error interno del servidor" });
+            }
         }
 
         // Helper to normalize date string

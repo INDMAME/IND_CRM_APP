@@ -42,9 +42,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const selectedContactMain = el("selectedContactMain");
     const selectedContactSecondary = el("selectedContactSecondary");
 
-    const btnGoStep2 = el("btnGoStep2");
-    const btnBackToStep1 = el("btnBackToStep1");
     const btnSubmitActivity = el("btnSubmitActivity");
+    const topBack = el("globalBackBtn");
+    const topForward = el("globalForwardBtn");
 
     const step1Container = el("step1Container");
     const step2Container = el("step2Container");
@@ -94,30 +94,36 @@ document.addEventListener("DOMContentLoaded", () => {
     // ---------------------------------------------------
     // STEP CONTROL
     // ---------------------------------------------------
+    let currentStep = 1;
+
     function setStep(step) {
-        if (step === 1) {
-            step1Container.style.display = "";
-            step2Container.style.display = "none";
+        currentStep = step;
+        const onStep1 = step === 1;
 
-            btnGoStep2.style.display = "flex";
-            btnBackToStep1.style.display = "none";
-            btnSubmitActivity.style.display = "none";
+        step1Container.style.display = onStep1 ? "" : "none";
+        step2Container.style.display = onStep1 ? "none" : "";
 
-            titleStep1.style.display = "";
-        } else {
-            step1Container.style.display = "none";
-            step2Container.style.display = "";
+        titleStep1.style.display = onStep1 ? "" : "none";
 
-            btnGoStep2.style.display = "none";
-            btnBackToStep1.style.display = "flex";
-            btnSubmitActivity.style.display = "flex";
-
-            titleStep1.style.display = "none";
+        // Top bar arrows
+        if (topForward) {
+            topForward.style.display = "inline-flex";
+            topForward.disabled = onStep1 ? !(selectedClient && selectedContact) : false;
+            topForward.style.visibility = "visible";
         }
+        if (topBack) {
+            topBack.style.display = onStep1 ? "none" : "inline-flex";
+        }
+
+        // Botón crear solo en paso 2
+        btnSubmitActivity.style.display = onStep1 ? "none" : "inline-flex";
     }
 
-    const updateStep2Availability = () =>
-        btnGoStep2.disabled = !(selectedClient && selectedContact);
+    const updateStep2Availability = () => {
+        if (topForward && currentStep === 1) {
+            topForward.disabled = !(selectedClient && selectedContact);
+        }
+    };
 
     // ---------------------------------------------------
     // Helpers datos
@@ -417,19 +423,27 @@ document.addEventListener("DOMContentLoaded", () => {
     // ---------------------------------------------------
     // STEP 1 → STEP 2
     // ---------------------------------------------------
-    btnGoStep2.addEventListener("click", () => {
-        summaryClient.textContent =
-            `${selectedClient.nombreComercial} (${selectedClient.accountNum})`;
+    if (topForward) {
+        topForward.addEventListener("click", () => {
+            if (topForward.disabled) return;
 
-        summaryContact.textContent =
-            `${selectedContact.name} — ${selectedContact.cargo}`;
+            if (currentStep === 1) {
+                summaryClient.textContent =
+                    `${selectedClient.nombreComercial} (${selectedClient.accountNum})`;
 
-        setStep(2);
-    });
+                summaryContact.textContent =
+                    `${selectedContact.name} - ${selectedContact.cargo}`;
 
-    btnBackToStep1.addEventListener("click", () => {
-        setStep(1);
-    });
+                setStep(2);
+            } else {
+                btnSubmitActivity.click();
+            }
+        });
+    }
+
+    if (topBack) {
+        topBack.addEventListener("click", () => setStep(1));
+    }
 
     // ---------------------------------------------------
     // CREAR ACTIVIDAD + VISITA

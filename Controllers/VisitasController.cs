@@ -2,14 +2,18 @@
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 
 namespace IND_CRM_APP.Controllers
 {
     // Controller for visit and activity screens
     public class VisitasController : BaseMvcController
     {
-        public VisitasController(ICrmApiClient apiClient) : base(apiClient)
+        private readonly ILogger<VisitasController> _logger;
+
+        public VisitasController(ICrmApiClient apiClient, ILogger<VisitasController> logger) : base(apiClient)
         {
+            _logger = logger;
         }
 
         // Returns accounts for dropdown with paging
@@ -24,13 +28,21 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrWhiteSpace(token))
                 return Unauthorized(new { message = "Session expired" });
 
-            var result = await _apiClient.GetAccountsAsync(token, term ?? string.Empty, page, pageSize);
-
-            return Json(new
+            try
             {
-                total = result.Total,
-                items = result.Items
-            });
+                var result = await _apiClient.GetAccountsAsync(token, term ?? string.Empty, page, pageSize);
+
+                return Json(new
+                {
+                    total = result.Total,
+                    items = result.Items
+                });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in GetAccountsForDropdown");
+                return Json(new { total = 0, items = Array.Empty<object>() });
+            }
         }
 
         // Returns contacts for dropdown given an account number
@@ -48,13 +60,21 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrWhiteSpace(accountNum))
                 return BadRequest(new { message = "Missing accountNum" });
 
-            var result = await _apiClient.GetContactosAsync(token, accountNum, page, pageSize);
-
-            return Json(new
+            try
             {
-                total = result.Total,
-                items = result.Items
-            });
+                var result = await _apiClient.GetContactosAsync(token, accountNum, page, pageSize);
+
+                return Json(new
+                {
+                    total = result.Total,
+                    items = result.Items
+                });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in GetContactsForDropdown");
+                return Json(new { total = 0, items = Array.Empty<object>() });
+            }
         }
 
         // Shows main create activity view
@@ -105,6 +125,11 @@ namespace IND_CRM_APP.Controllers
                     message = response.Message
                 });
             }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in CreateActivity");
+                return Json(new { success = false, message = ex.Message });
+            }
             catch (Exception ex)
             {
                 return Json(new { success = false, message = ex.Message });
@@ -128,6 +153,11 @@ namespace IND_CRM_APP.Controllers
                     success = response.Success,
                     message = response.Message
                 });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in CreateVisitaAsistente");
+                return Json(new { success = false, message = ex.Message });
             }
             catch (Exception ex)
             {

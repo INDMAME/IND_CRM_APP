@@ -2,6 +2,8 @@
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Diagnostics;
+using IND_CRM_APP.Infrastructure;
+using System.Reflection;
 
 
 
@@ -31,6 +33,15 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
 builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Information);
 
+// -----------------------------
+// Validación de middlewares
+// -----------------------------
+// Escanea ensamblados cargados y falla en arranque si encuentra middlewares
+// que tengan dependencias registradas con lifetime Scoped en su constructor.
+MiddlewareValidation.ValidateMiddlewares(
+    builder.Services,
+    AppDomain.CurrentDomain.GetAssemblies()
+);
 
 var app = builder.Build();
 

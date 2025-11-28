@@ -21,10 +21,28 @@
 
 <body>
 
-    <!-- BOTÓN HAMBURGUESA -->
-    <button id="btnMenu" class="hamburger" aria-label="Abrir menú" onclick="toggleSidebar()">
-        <i class="bi bi-list"></i>
-    </button>
+    <!-- FRANJA SUPERIOR FIJA -->
+    <div class="topbar shadow-sm">
+        <div class="topbar-left">
+            <!-- BOTÓN HAMBURGUESA -->
+            <button id="btnMenu" class="hamburger" aria-label="Abrir menú" onclick="toggleSidebar()">
+                <i class="bi bi-list"></i>
+            </button>
+
+            <!-- Flechas de navegación -->
+            <div class="topbar-nav">
+                <button id="globalBackBtn" class="topbar-btn" aria-label="Retroceder" style="display:none;">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <button id="globalForwardBtn" class="topbar-btn" aria-label="Avanzar" style="display:none;">
+                    <i class="bi bi-chevron-right"></i>
+                </button>
+            </div>
+        </div>
+        <div class="topbar-right">
+            @RenderSection("TopBarRight", required: false)
+        </div>
+    </div>
 
     <!-- OVERLAY -->
     <div id="overlay" class="overlay" onclick="toggleSidebar()"></div>

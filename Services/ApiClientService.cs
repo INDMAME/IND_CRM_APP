@@ -295,8 +295,8 @@ namespace IND_CRM_APP.Services
                 return;
 
             var message = result.ErrorMessage ?? $"Error en {operation}";
-            _logger.LogError("API call failed: {Message}. Body: {Body}", message, result.Raw);
-            throw new InvalidOperationException(message);
+            _logger.LogError("API call failed: {Message}. Status: {Status}. Body: {Body}", message, result.StatusCode, result.Raw);
+            throw new ApiException(message, result.StatusCode, result.Raw, result.Headers);
         }
 
         private T? Deserialize<T>(string raw)

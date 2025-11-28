@@ -1,7 +1,9 @@
 using System;
+using System.Threading.Tasks;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
@@ -14,21 +16,15 @@ namespace IND_CRM_APP.Middleware
     public class TokenRefreshMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly ICrmApiClient _apiClient;
-        private readonly ITokenSessionService _tokenSession;
         private readonly ILogger<TokenRefreshMiddleware> _logger;
         private readonly double _refreshThresholdMinutes;
 
         public TokenRefreshMiddleware(
             RequestDelegate next,
-            ICrmApiClient apiClient,
-            ITokenSessionService tokenSession,
             ILogger<TokenRefreshMiddleware> logger,
             IOptions<JwtSettings> jwtOptions)
         {
             _next = next;
-            _apiClient = apiClient;
-            _tokenSession = tokenSession;
             _logger = logger;
             _refreshThresholdMinutes = jwtOptions?.Value?.RefreshThresholdMinutes > 0
                 ? jwtOptions.Value.RefreshThresholdMinutes
@@ -37,6 +33,10 @@ namespace IND_CRM_APP.Middleware
 
         public async Task Invoke(HttpContext context)
         {
+            // Resolver servicios por petición (scope de la request)
+            var tokenSession = context.RequestServices.GetRequiredService<ITokenSessionService>();
+            var apiClient = context.RequestServices.GetRequiredService<ICrmApiClient>();
+
             var path = context.Request.Path.Value ?? string.Empty;
             var lowerPath = path.ToLowerInvariant();
 
@@ -53,7 +53,7 @@ namespace IND_CRM_APP.Middleware
                 return;
             }
 
-            var (token, expiresUtc) = _tokenSession.GetToken();
+            var (token, expiresUtc) = tokenSession.GetToken();
 
             if (!string.IsNullOrWhiteSpace(token) &&
                 expiresUtc.HasValue)
@@ -63,7 +63,7 @@ namespace IND_CRM_APP.Middleware
 
                 if (minutesLeft <= 0)
                 {
-                    _tokenSession.Clear();
+                    tokenSession.Clear();
                     _logger.LogInformation("Token expired, redirecting to login.");
                     context.Response.Redirect("/Auth/Login");
                     return;
@@ -77,7 +77,7 @@ namespace IND_CRM_APP.Middleware
                             "Refreshing token. Minutes left before expiration {Minutes}",
                             minutesLeft);
 
-                        var refreshResult = await _apiClient.RefreshTokenAsync(token);
+                        var refreshResult = await apiClient.RefreshTokenAsync(token);
 
                         if (refreshResult != null &&
                             !string.IsNullOrWhiteSpace(refreshResult.Token))
@@ -86,7 +86,7 @@ namespace IND_CRM_APP.Middleware
                                 ? refreshResult.Expires
                                 : expiresUtc.Value.AddMinutes(_refreshThresholdMinutes);
 
-                            _tokenSession.SetToken(refreshResult.Token, newExpires);
+                            tokenSession.SetToken(refreshResult.Token, newExpires);
 
                             _logger.LogInformation("Token refreshed successfully.");
                         }
