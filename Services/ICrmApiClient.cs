@@ -8,7 +8,7 @@ namespace IND_CRM_APP.Services
     public interface ICrmApiClient
     {
         // Login principal
-        Task<string?> AuthenticateAsync(string username, string password);
+        Task<LoginResult?> AuthenticateAsync(string username, string password);
 
         // Entorno y compania
         Task<string> GetEnvironmentAsync(string token);

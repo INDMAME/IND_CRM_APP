@@ -132,6 +132,18 @@ document.addEventListener("DOMContentLoaded", () => {
     const getCRec = c => c.recId || c.RecId || "";
 
     // ---------------------------------------------------
+    // Helper fetch que captura cabecera de token refrescado
+    // ---------------------------------------------------
+    async function fetchWithTokenUpdate(url, options) {
+        const res = await fetch(url, options);
+        const refreshed = res.headers.get("X-Refreshed-Token");
+        if (refreshed) {
+            sessionStorage.setItem("Token", refreshed);
+        }
+        return res;
+    }
+
+    // ---------------------------------------------------
     // RENDER CLIENTES
     // ---------------------------------------------------
     function renderClients(items, total, src) {
@@ -213,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         try {
             const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(term)}&page=${page}&pageSize=${pageSize}`;
-            const res = await fetch(url);
+            const res = await fetchWithTokenUpdate(url);
             const data = await res.json();
 
             const items = data.items || [];
@@ -293,7 +305,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         try {
-            const res = await fetch(`/Visitas/GetContactsForDropdown?accountNum=${acc}&page=1&pageSize=500`);
+            const res = await fetchWithTokenUpdate(`/Visitas/GetContactsForDropdown?accountNum=${acc}&page=1&pageSize=500`);
             const data = await res.json();
 
             const items = data.items || [];
@@ -450,7 +462,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 conclusiones: conclusiones.value
             };
 
-            const resAct = await fetch("/Visitas/CreateActivity", {
+            const resAct = await fetchWithTokenUpdate("/Visitas/CreateActivity", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payloadActivity)
@@ -473,7 +485,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 contactoRecId: selectedContact.recId
             };
 
-            const resVis = await fetch("/Visitas/CreateVisitaAsistente", {
+            const resVis = await fetchWithTokenUpdate("/Visitas/CreateVisitaAsistente", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payloadVisita)

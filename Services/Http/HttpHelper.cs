@@ -1,133 +1,118 @@
-﻿using System.Text;
-using System.Text.Json;
+using System.Net;
+using System.Text;
 
 namespace IND_CRM_APP.Services.Http
 {
     /// <summary>
-    /// Helper centralizado para llamadas HTTP (GET/POST/PUT/DELETE)
-    /// con manejo seguro de errores, logs y validación JSON.
+    /// Resultado estándar de una llamada HTTP (cuerpo + cabeceras).
+    /// </summary>
+    public class HttpResult
+    {
+        public string Raw { get; set; } = string.Empty;
+        public IDictionary<string, IEnumerable<string>> Headers { get; set; } =
+            new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
+        public bool IsSuccessStatusCode { get; set; }
+        public HttpStatusCode StatusCode { get; set; }
+        public string? ErrorMessage { get; set; }
+    }
+
+    /// <summary>
+    /// Helper centralizado para llamadas HTTP devolviendo cabeceras.
     /// </summary>
     public static class HttpHelper
     {
-        private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true
-        };
-
         // ======================================================
         // GET
         // ======================================================
-        public static async Task<string> GetAsync(HttpClient client, string url)
+        public static async Task<HttpResult> GetAsync(HttpClient client, string url)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-
-            try
-            {
-                using var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
-
-                var raw = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                    throw new Exception($"GET {url} → Status: {(int)response.StatusCode} → {raw}");
-
-                return raw;
-            }
-            catch (Exception ex)
-            {
-                return JsonError($"Error en GET {url}: {ex.Message}");
-            }
+            return await SendAsync(client, request, url, "GET");
         }
 
         // ======================================================
         // POST
         // ======================================================
-        public static async Task<string> PostAsync(HttpClient client, string url, string jsonBody)
+        public static async Task<HttpResult> PostAsync(HttpClient client, string url, string jsonBody)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
             };
 
-            try
-            {
-                using var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
-
-                var raw = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                    throw new Exception($"POST {url} → Status: {(int)response.StatusCode} → {raw}");
-
-                return raw;
-            }
-            catch (Exception ex)
-            {
-                return JsonError($"Error en POST {url}: {ex.Message}");
-            }
+            return await SendAsync(client, request, url, "POST");
         }
 
         // ======================================================
         // PUT
         // ======================================================
-        public static async Task<string> PutAsync(HttpClient client, string url, string jsonBody)
+        public static async Task<HttpResult> PutAsync(HttpClient client, string url, string jsonBody)
         {
             var request = new HttpRequestMessage(HttpMethod.Put, url)
             {
                 Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
             };
 
-            try
-            {
-                using var response = await client.SendAsync(request);
-
-                var raw = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                    throw new Exception($"PUT {url} → Status: {(int)response.StatusCode} → {raw}");
-
-                return raw;
-            }
-            catch (Exception ex)
-            {
-                return JsonError($"Error en PUT {url}: {ex.Message}");
-            }
+            return await SendAsync(client, request, url, "PUT");
         }
 
         // ======================================================
         // DELETE
         // ======================================================
-        public static async Task<string> DeleteAsync(HttpClient client, string url)
+        public static async Task<HttpResult> DeleteAsync(HttpClient client, string url)
         {
             var request = new HttpRequestMessage(HttpMethod.Delete, url);
-
-            try
-            {
-                using var response = await client.SendAsync(request);
-
-                var raw = await response.Content.ReadAsStringAsync();
-
-                if (!response.IsSuccessStatusCode)
-                    throw new Exception($"DELETE {url} → Status: {(int)response.StatusCode} → {raw}");
-
-                return raw;
-            }
-            catch (Exception ex)
-            {
-                return JsonError($"Error en DELETE {url}: {ex.Message}");
-            }
+            return await SendAsync(client, request, url, "DELETE");
         }
 
         // ======================================================
-        // Helper privado para devolver errores en JSON estable
+        // Core
         // ======================================================
-        private static string JsonError(string msg)
+        private static async Task<HttpResult> SendAsync(
+            HttpClient client,
+            HttpRequestMessage request,
+            string url,
+            string verb)
         {
-            var obj = new
+            try
             {
-                success = false,
-                message = msg
-            };
+                using var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
 
-            return JsonSerializer.Serialize(obj, _jsonOptions);
+                var raw = await response.Content.ReadAsStringAsync();
+
+                return new HttpResult
+                {
+                    Raw = raw,
+                    Headers = CopyHeaders(response),
+                    IsSuccessStatusCode = response.IsSuccessStatusCode,
+                    StatusCode = response.StatusCode,
+                    ErrorMessage = response.IsSuccessStatusCode ? null : $"{verb} {url} - {(int)response.StatusCode} {response.ReasonPhrase}"
+                };
+            }
+            catch (Exception ex)
+            {
+                return new HttpResult
+                {
+                    Raw = string.Empty,
+                    Headers = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase),
+                    IsSuccessStatusCode = false,
+                    StatusCode = 0,
+                    ErrorMessage = $"Error en {verb} {url}: {ex.Message}"
+                };
+            }
+        }
+
+        private static IDictionary<string, IEnumerable<string>> CopyHeaders(HttpResponseMessage response)
+        {
+            var dict = new Dictionary<string, IEnumerable<string>>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var h in response.Headers)
+                dict[h.Key] = h.Value;
+
+            foreach (var h in response.Content.Headers)
+                dict[h.Key] = h.Value;
+
+            return dict;
         }
     }
 }

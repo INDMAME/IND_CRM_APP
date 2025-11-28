@@ -11,6 +11,16 @@
     let currentPage = 1;
     const pageSize = 50;
 
+    // Captura cabecera X-Refreshed-Token si llega en las respuestas MVC
+    async function fetchWithTokenUpdate(url, options) {
+        const res = await fetch(url, options);
+        const refreshed = res.headers.get("X-Refreshed-Token");
+        if (refreshed) {
+            sessionStorage.setItem("Token", refreshed);
+        }
+        return res;
+    }
+
     // Loads activity list from MVC endpoint Historial/GetActivities
     async function loadActivities(page = 1) {
 
@@ -31,7 +41,7 @@
             toDate: toDate.value
         };
 
-        const response = await fetch(`/Historial/GetActivities?page=${page}&pageSize=${pageSize}`, {
+        const response = await fetchWithTokenUpdate(`/Historial/GetActivities?page=${page}&pageSize=${pageSize}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payload)

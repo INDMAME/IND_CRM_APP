@@ -9,10 +9,12 @@ namespace IND_CRM_APP.Controllers
     public class AuthController : Controller
     {
         private readonly ICrmApiClient _api;
+        private readonly ITokenSessionService _tokenSession;
 
-        public AuthController(ICrmApiClient api)
+        public AuthController(ICrmApiClient api, ITokenSessionService tokenSession)
         {
             _api = api;
+            _tokenSession = tokenSession;
         }
 
         // Shows login page
@@ -29,22 +31,16 @@ namespace IND_CRM_APP.Controllers
             if (!ModelState.IsValid)
                 return View(model);
 
-            // Ask API for token
-            var token = await _api.AuthenticateAsync(model.Username, model.Password);
-            if (string.IsNullOrEmpty(token))
+            var loginResult = await _api.AuthenticateAsync(model.Username, model.Password);
+            if (loginResult == null || string.IsNullOrWhiteSpace(loginResult.Token))
             {
                 ModelState.AddModelError(string.Empty, "Invalid credentials or API error.");
                 return View(model);
             }
 
-            // Store token in session
-            HttpContext.Session.SetString("Token", token);
-            
-            // Soft expiration used by middleware to decide refresh
-            // Here we set 15 minutes window, real JWT expiration is handled in API
-            HttpContext.Session.SetString(
-                "TokenExpires",
-                DateTime.UtcNow.AddMinutes(15).ToString("o")
+            _tokenSession.SetToken(
+                loginResult.Token,
+                loginResult.Expires != default ? loginResult.Expires : null
             );
 
             HttpContext.Session.SetString("AxUser", model.Username);

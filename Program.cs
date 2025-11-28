@@ -27,6 +27,8 @@ builder.Logging.AddDebug();
 builder.Logging.AddFile("Logs/indpersonasapp-{Date}.log");
 builder.Services.AddMemoryCache();
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
+builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
 builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Information);
 
 
