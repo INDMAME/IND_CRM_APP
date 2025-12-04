@@ -3,6 +3,7 @@
   
 	<PropertyGroup>
 		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 		<ProjectGuid>{88345f7d-620f-4503-b871-603df6d6440d}</ProjectGuid>
 		<TargetFramework>net10.0</TargetFramework>
 		<AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>

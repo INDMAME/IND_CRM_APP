@@ -3,6 +3,7 @@ using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Linq;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -32,10 +33,12 @@ namespace IND_CRM_APP.Controllers
             {
                 var result = await _apiClient.GetAccountsAsync(token, term ?? string.Empty, page, pageSize);
 
+                var items = result.GetAnyItems();
+
                 return Json(new
                 {
-                    total = result.Total,
-                    items = result.Items
+                    total = result.Total > 0 ? result.Total : items.Count(),
+                    items
                 });
             }
             catch (ApiException ex)
@@ -64,10 +67,12 @@ namespace IND_CRM_APP.Controllers
             {
                 var result = await _apiClient.GetContactosAsync(token, accountNum, page, pageSize);
 
+                var items = result.GetAnyItems();
+
                 return Json(new
                 {
-                    total = result.Total,
-                    items = result.Items
+                    total = result.Total > 0 ? result.Total : items.Count(),
+                    items
                 });
             }
             catch (ApiException ex)

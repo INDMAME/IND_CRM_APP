@@ -5,10 +5,10 @@
     /// </summary>
     public class ContactoDto
     {
-        public string Name { get; set; }
-        public string Cargo { get; set; }
-        public string Empresa { get; set; }
-        public string RecId { get; set; }
-        public string Origen { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Cargo { get; set; } = string.Empty;
+        public string Empresa { get; set; } = string.Empty;
+        public string RecId { get; set; } = string.Empty;
+        public string Origen { get; set; } = string.Empty;
     }
 }

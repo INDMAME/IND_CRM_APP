@@ -49,9 +49,6 @@ document.addEventListener("DOMContentLoaded", () => {
     const step1Container = el("step1Container");
     const step2Container = el("step2Container");
 
-    const summaryClient = el("summaryClient");
-    const summaryContact = el("summaryContact");
-
     const visitType = el("visitType");
     const userId = el("userId");
     const transDate = el("transDate");
@@ -100,10 +97,10 @@ document.addEventListener("DOMContentLoaded", () => {
         currentStep = step;
         const onStep1 = step === 1;
 
-        step1Container.style.display = onStep1 ? "" : "none";
-        step2Container.style.display = onStep1 ? "none" : "";
+        if (step1Container) step1Container.style.display = onStep1 ? "" : "none";
+        if (step2Container) step2Container.style.display = onStep1 ? "none" : "";
 
-        titleStep1.style.display = onStep1 ? "" : "none";
+        if (titleStep1) titleStep1.style.display = onStep1 ? "" : "none";
 
         // Top bar arrows
         if (topForward) {
@@ -422,19 +419,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ---------------------------------------------------
-    // STEP 1 → STEP 2
+    // STEP 1 ? STEP 2
     // ---------------------------------------------------
     if (topForward) {
         topForward.addEventListener("click", () => {
             if (topForward.disabled) return;
 
             if (currentStep === 1) {
-                summaryClient.textContent =
-                    `${selectedClient.nombreComercial} (${selectedClient.accountNum})`;
-
-                summaryContact.textContent =
-                    `${selectedContact.name} - ${selectedContact.cargo}`;
-
                 setStep(2);
             } else {
                 btnSubmitActivity.click();
@@ -443,7 +434,13 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (topBack) {
-        topBack.addEventListener("click", () => setStep(1));
+        topBack.addEventListener("click", () => {
+            if (currentStep === 2) {
+                setStep(1);
+            } else {
+                window.history.back();
+            }
+        });
     }
 
     // ---------------------------------------------------
@@ -457,8 +454,10 @@ document.addEventListener("DOMContentLoaded", () => {
     // ---------------------------------------------------
     btnSubmitActivity.addEventListener("click", async () => {
 
-        if (!userId.value || !description.value || !transDate.value) {
-            showErrorPopup("Usuario, descripción y fecha son obligatorios.");
+        const userIdVal = userId ? userId.value : (window.CurrentAxUser ?? "");
+
+        if (!userIdVal || !description.value || !transDate.value) {
+            showErrorPopup("Usuario, descripcion y fecha son obligatorios.");
             return;
         }
 
@@ -469,7 +468,7 @@ document.addEventListener("DOMContentLoaded", () => {
             const payloadActivity = {
                 accountNum: selectedClient.accountNum,
                 visitType: visitType.value,
-                userId: userId.value,
+                userId: userIdVal,
                 description: description.value,
                 transDate: transDate.value,
                 comentarios: comentarios.value,
@@ -482,6 +481,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payloadActivity)
             });
+
+            if (!resAct.ok) {
+                const detail = await resAct.text();
+                showErrorPopup(`Crear actividad falló: ${resAct.status} ${resAct.statusText}. ${detail}`);
+                btnSubmitActivity.disabled = false;
+                return;
+            }
 
             const dataAct = await resAct.json();
             if (!dataAct.success) {
@@ -506,6 +512,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 body: JSON.stringify(payloadVisita)
             });
 
+            if (!resVis.ok) {
+                const detail = await resVis.text();
+                showErrorPopup(`Crear visita asistente falló: ${resVis.status} ${resVis.statusText}. ${detail}`);
+                btnSubmitActivity.disabled = false;
+                return;
+            }
+
             const dataVis = await resVis.json();
             if (!dataVis.success) {
                 showErrorPopup(dataVis.message);
@@ -513,7 +526,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 return;
             }
 
-            // 3) Todo OK → redirect ------------------------
+            // 3) Todo OK ? redirect ------------------------
             showSuccessPopup("Visita creada correctamente.");
 
             setTimeout(() => {
@@ -648,3 +661,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setStep(1);
     updateStep2Availability();
 });
+
+
+

@@ -23,7 +23,14 @@ namespace IND_CRM_APP.Services
 
         private static readonly JsonSerializerOptions _jsonOptions = new JsonSerializerOptions
         {
-            PropertyNameCaseInsensitive = true
+            PropertyNameCaseInsensitive = true,
+            Converters =
+            {
+                new IND_CRM_APP.Models.Activities.ActivityDtoArrayConverter(),
+                new IND_CRM_APP.Models.Activities.ActivityAsistenteDtoArrayConverter(),
+                new IND_CRM_APP.Models.CRM.AccountDtoArrayConverter(),
+                new IND_CRM_APP.Models.CRM.ContactoDtoArrayConverter()
+            }
         };
 
         public ApiClientService(
@@ -301,7 +308,18 @@ namespace IND_CRM_APP.Services
 
         private T? Deserialize<T>(string raw)
         {
-            return JsonSerializer.Deserialize<T>(raw, _jsonOptions);
+            if (string.IsNullOrWhiteSpace(raw))
+                return default;
+
+            try
+            {
+                return JsonSerializer.Deserialize<T>(raw, _jsonOptions);
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "JSON deserialization failed. Raw: {Raw}", raw);
+                throw;
+            }
         }
 
         /// <summary>

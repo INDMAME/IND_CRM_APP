@@ -73,22 +73,41 @@ body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 18px;
+    padding: 0 clamp(6px, 1.6vw, 12px); /* aún más cerca de los extremos */
     z-index: 1900;
+    transition: margin-left 0.35s cubic-bezier(.4, 0, .2, 1), width 0.35s cubic-bezier(.4, 0, .2, 1);
 }
 
 .topbar-left {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
     position: relative;
     z-index: 2; /* asegura que hamburguesa y back queden sobre otros elementos */
+    flex: 0 0 clamp(110px, 14vw, 150px); /* reduce ancho para liberar espacio al título */
 }
 
 .topbar-nav {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.topbar-center {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+}
+
+#topbarTitle {
+    color: #fff;
+    font-weight: 500; /* evita negrita */
+    font-size: clamp(22px, 3vw + 10px, 40px); /* escala fluida según ancho de pantalla */
+    letter-spacing: 0.3px;
+    text-transform: capitalize;
+    line-height: 1.05;
 }
 
 .topbar-btn {
@@ -119,8 +138,10 @@ body {
 .topbar-right {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 6px;
+    justify-content: flex-end;
     margin-left: auto;
+    flex: 0 0 clamp(90px, 12vw, 130px); /* flecha más al borde derecho */
 }
 
 /* HAMBURGER BUTTON */
@@ -163,14 +184,19 @@ body {
 
 /* CONTENIDO */
 .content {
-    padding: 30px;
-    margin-top: 96px; /* deja espacio para la topbar más alta */
+    padding: 10px 16px 20px;
+    margin-top: 0px; /* aún más pegado a la topbar */
     transition: margin-left 0.35s cubic-bezier(.4, 0, .2, 1);
 }
 
     .content.shifted {
         margin-left: 260px;
     }
+
+.topbar.shifted {
+    margin-left: 260px;
+    width: calc(100% - 260px);
+}
 
 /* OVERLAY */
 .overlay {
@@ -289,6 +315,11 @@ body {
     .content.shifted {
         margin-left: 0;
     }
+
+    .topbar.shifted {
+        margin-left: 0;
+        width: 100%;
+    }
 }
 
 .sidebar-logo {
@@ -318,4 +349,3 @@ body {
         transform: scale(1.04);
         transition: .2s;
     }
-

@@ -68,7 +68,7 @@ namespace IND_CRM_APP.Controllers
                 if (result == null)
                     return Json(new { total = 0, items = Array.Empty<object>() });
 
-                var itemsList = result.Items?.ToList() ?? new List<ActivityDto>();
+                var itemsList = result.GetAnyItems()?.ToList() ?? new List<ActivityDto>();
 
                 // Local paging on client side
                 var pageItems = Paginate(itemsList, page, pageSize);

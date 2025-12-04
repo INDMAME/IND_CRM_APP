@@ -5,9 +5,9 @@
     /// </summary>
     public class AccountDto
     {
-        public string NombreComercial { get; set; }
-        public string RazonSocial { get; set; }
-        public string AccountNum { get; set; }
-        public string Origen { get; set; }
+        public string NombreComercial { get; set; } = string.Empty;
+        public string RazonSocial { get; set; } = string.Empty;
+        public string AccountNum { get; set; } = string.Empty;
+        public string Origen { get; set; } = string.Empty;
     }
 }

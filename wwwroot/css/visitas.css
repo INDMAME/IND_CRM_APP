@@ -23,9 +23,10 @@
    Títulos principales
 ----------------------------------------------- */
 .crm-main-title {
-    font-size: 1.45rem;
+    font-size: 1.35rem;
     font-weight: 700;
     color: var(--crm-blue);
+    margin-bottom: 10px;
 }
 
 /* -----------------------------------------------
@@ -48,24 +49,54 @@
 ----------------------------------------------- */
 #clientSearchInput,
 #contactSearchInput {
-    border-radius: 10px;
-    height: 42px;
+    border-radius: 14px;
+    height: 46px;
+    border: 1px solid transparent;
+    background: #fff;
+    padding-left: 12px;
+    padding-right: 44px;
+    width: 100%;
+    box-sizing: border-box;
 }
+
 
 #clientToggleButton,
 #contactToggleButton {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
     border-radius: 10px;
-    width: 50px;
+    border: none;
+    background: transparent;
+    transition: background .15s ease, color .15s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
 }
 
+
+#clientToggleButton:hover,
+#contactToggleButton:hover {
+    background: rgba(0,41,107,0.08);
+}
+
+
 /* Input group corporativo */
+.input-group {
+    position: relative;
+}
+
 .input-group .form-control {
-    border-color: var(--crm-blue);
+    border-color: transparent;
 }
 
 .input-group .form-control:focus {
-    border-color: var(--crm-blue);
-    box-shadow: 0 0 0 0.2rem rgba(0, 41, 107, 0.2);
+    border-color: transparent;
+    box-shadow: none;
 }
 
 .input-group .input-group-text {
@@ -80,6 +111,18 @@
 .btn-outline-primary i {
     color: var(--crm-blue);
 }
+
+/* Contenedor del input group (cliente/contacto) */
+#clientSearchContainer .input-group,
+#contactSearchContainer .input-group {
+    border: 1px solid #dfe7f5;
+    border-radius: 14px;
+    background: #f8fbff;
+    overflow: hidden;
+    width: 100%;
+    box-sizing: border-box;
+}
+
 
 /* Botones outline primarios → color corporativo */
 .btn-outline-primary {
@@ -108,13 +151,15 @@
 ----------------------------------------------- */
 #clientList,
 #contactList {
-    max-height: 350px;
+    width: 100%;
+    max-height: 360px;
     overflow-y: auto;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.12);
-    border: 1px solid #dedede;
-    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+    border: 1px solid #dfe7f5;
+    background: #fff;
 }
+
 
     #clientList::-webkit-scrollbar,
     #contactList::-webkit-scrollbar {
@@ -126,6 +171,32 @@
         background: rgba(0, 41, 107, 0.35);
         border-radius: 20px;
     }
+
+/* Items de lista desplegable */
+#clientList .list-group-item,
+#contactList .list-group-item {
+    border: 0;
+    border-bottom: 1px solid #eef2f7;
+    padding: 10px 14px;
+    font-weight: 600;
+    color: #1e293b;
+    display: block;
+    white-space: normal;
+    line-height: 1.35;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+
+#clientList .list-group-item:last-child,
+#contactList .list-group-item:last-child {
+    border-bottom: 0;
+}
+
+#clientList .list-group-item:hover,
+#contactList .list-group-item:hover {
+    background: #f5f8ff;
+}
 
 /* -----------------------------------------------
    Tarjetas de selección del contacto
@@ -300,8 +371,15 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
     #clientList,
     #contactList {
-        max-height: 280px;
-    }
+    width: 100%;
+    max-height: 360px;
+    overflow-y: auto;
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+    border: 1px solid #dfe7f5;
+    background: #fff;
+}
+
 }
 
 
@@ -377,4 +455,81 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .crm-popup-icon i {
     font-size: 22px;
+}
+
+/* Step2 full width fields */
+#step2Container .form-control,
+#step2Container .form-select { width: 100%; box-sizing: border-box; border-radius: 12px; min-height: 44px; }
+#step2Container textarea.form-control { min-height: 90px; }
+/* Layout general de la página de visita */
+.visita-page { padding-left:12px; padding-right:12px; }
+.visita-card { border:1px solid #e7eef9; border-radius:16px; background:#f7f9fb; box-shadow:0 8px 18px rgba(0,0,0,0.06); }
+.visita-card-header { background:transparent; border-bottom:1px solid #e7eef9; font-weight:700; font-size:1rem; padding:14px 16px; }
+.visita-card-body { padding:16px; }
+.visita-page .form-label { font-size:13px; font-weight:600; color:#475569; margin-bottom:6px; }
+.visita-page .form-control, .visita-page .form-select { border:1px solid #dfe7f5; border-radius:12px; min-height:44px; padding:10px 12px; color:#0f172a; }
+.visita-page textarea.form-control { min-height:110px; }
+.visita-page .form-control:focus, .visita-page .form-select:focus { border-color:#00296b; box-shadow:0 0 0 0.15rem rgba(0,41,107,0.18); }
+/* Botón principal CTA */
+#btnSubmitActivity { width:100%; height:48px; border-radius:12px; font-size:1rem; font-weight:700; background-color: var(--crm-blue); border-color: var(--crm-blue); }
+#btnSubmitActivity:hover { background-color: var(--crm-blue-dark); border-color: var(--crm-blue-dark); }
+/* Overrides: truncate long items and CTA text size */
+#clientList .list-group-item,
+#contactList .list-group-item {
+    white-space: nowrap !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#btnSubmitActivity {
+    font-size: 1.15rem;
+    text-align: center;
+    letter-spacing: 0.2px;
+}
+#btnSubmitActivity { display: inline-flex; align-items: center; justify-content: center; text-align: center; }
+#clientList .list-group-item,
+#contactList .list-group-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+/* Dropdown typography tweaks */
+#clientList .list-group-item,
+#contactList .list-group-item {
+    font-size: 13px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+#clientSearchInput,
+#contactSearchInput {
+    font-size: 13px;
+}
+#clientList .list-group-item,
+#contactList .list-group-item {
+    font-size: 12.5px;
+    line-height: 1.25;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+#clientList .list-group-item span,
+#contactList .list-group-item span {
+    display: inline-block;
+    max-width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.tech-info-inline {
+    font-size: 11px;
+    color: #6c757d;
+    font-style: italic;
+    opacity: 0.85;
 }
