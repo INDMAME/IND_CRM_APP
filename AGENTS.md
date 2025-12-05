@@ -1,38 +1,109 @@
-# IND_CRM_APP agent profile
+# Perfil de agente IND_CRM_APP
 
-## Tech constraints
+## Contexto técnico
 
-- Project is ASP.NET Core MVC using Razor views (server side rendering).
-- This app consumes the internal IND_CRM_API via HTTP.
-- Do NOT migrate to a full SPA or rewrite the app in React.
-- Keep the current .NET runtime and hosting model unchanged.
+- Proyecto: Aplicación web ASP.NET Core MVC con vistas Razor (server side rendering).
+- Esta aplicación consume la API interna IND_CRM_API vía HTTP.
+- La API IND_CRM_API está documentada con Swagger 2.0 (OpenAPI) y utiliza envoltorios estándar:
+  - IND_CRM_API.Models.Responses.IndApiResponse<T> para operaciones de comando (login, create, update, delete, etc.).
+  - IND_CRM_API.Models.Responses.IndPagedResponse<T> para listados y resultados paginados.
+- La solución está organizada por módulos CRM: autenticación (auth), actividades (activities), cuentas (accounts), visitas (visits), sistema (system) y salud (health).
+- La aplicación es interna: no hay requisitos de SEO público, pero sí de claridad, robustez y diseño moderno.
 
-## API consumption
+## Consumo de la API IND_CRM_API
 
-- Long term goal: use a typed C# client generated from IND_CRM_API OpenAPI.
-- Short term: wrap HttpClient calls in a clean service interface (for example IIndCrmApiClient).
-- Controllers must call services, not build raw HTTP requests or parse JSON manually.
-- Preserve existing routes and view models unless there is a clear bug.
+- La fuente de verdad del contrato es el OpenAPI de IND_CRM_API (Swagger 2.0) y los DTOs de la propia API (LoginRequest, CreateActivityRequest, UpdateActivityRequest, CreateVisitaAsistenteRequest, etc.).
+- Objetivo a largo plazo:
+  - Usar un cliente C# tipado generado automáticamente desde el documento OpenAPI de IND_CRM_API (por ejemplo con NSwag o herramienta similar).
+- Objetivo a corto plazo:
+  - Encapsular todas las llamadas HTTP en un servicio limpio (por ejemplo IIndCrmApiClient) y dejar los controladores MVC libres de lógica HTTP de bajo nivel.
+- Reglas importantes:
+  - Los controladores NUNCA deben construir manualmente URLs, cabeceras ni parsear JSON.
+  - Los controladores deben depender de interfaces de servicio (por ejemplo IIndCrmApiClient, IAuthService, ICrmActivitiesService, etc.).
+  - Las llamadas a la API deben respetar la estructura de respuesta actual y el contrato JSON que ya usa la colección de Postman:
+    - Para comandos: propiedades Success, Message, ErrorCode, Data, Errors, TraceId.
+    - Para listados paginados: Success, Message, Total, Page, PageSize, Items, TraceId.
+  - No inventar nuevos formatos de respuesta desde la web: la API manda el contrato, la web lo consume y lo mapea a modelos de vista.
 
-## UI and design system
+## Contratos y envoltorios de respuesta
 
-- Define reusable Razor partials/components for layout, cards, page headers, and primary buttons.
-- Move repeated HTML fragments into shared components instead of copy paste.
-- Prepare for Tailwind CSS integration:
-  - Use a single main stylesheet entry where Tailwind can be compiled later.
-  - Start with utility classes and shared CSS without breaking the current look.
-- Keep the layout clean and modern, but avoid complex JS frameworks.
+- Considerar las clases de la API como referencia:
+  - IndApiResponse<T>:
+    - Success (bool)
+    - Message (string)
+    - ErrorCode (string)
+    - Data (T)
+    - Errors (lista de errores de validación)
+    - TraceId (string)
+  - IndPagedResponse<T>:
+    - Success (bool)
+    - Message (string)
+    - Total (int)
+    - Page (int)
+    - PageSize (int)
+    - Items (lista de T)
+    - TraceId (string)
+- En la web:
+  - Definir modelos de respuesta y DTOs que reflejen estos contratos (por ejemplo IndApiResult<TViewModel>, IndPagedResult<TViewModel>) si es necesario, o utilizar directamente los modelos generados a partir del OpenAPI cuando se genere el cliente tipado.
+  - Siempre comprobar Success antes de usar datos de Data o Items.
+  - Extraer Message y ErrorCode para mostrar información clara al usuario cuando haya errores.
+  - Para listados (actividades, cuentas, contactos, etc.) utilizar Total, Page, PageSize e Items como base para paginación en la interfaz.
 
-## Documentation and style
+## Autenticación y tokens
 
-- All comments and docstrings must be in simple English without accents or special characters.
-- Avoid any non ASCII characters in code or comments.
-- Document controllers, services, and shared UI components with short English summaries.
-- Explain what each action does, especially when it calls IND_CRM_API.
+- El flujo de autenticación se basa en:
+  - POST /api/auth/login → devuelve IndApiResponse<object> con token JWT en Data o en campos definidos por la API.
+  - POST /api/auth/refresh → renueva el token.
+- La gestión del token JWT:
+  - Debe concentrarse en un servicio específico (por ejemplo ITokenService o IAuthClient) y no dispersarse por todos los controladores.
+  - Solo ese servicio debe encargarse de:
+    - Guardar/recuperar el token de la sesión o cookies.
+    - Añadir la cabecera Authorization: Bearer {token} a las peticiones HTTP hacia IND_CRM_API.
+- Los controladores no deben manipular directamente el token, solo pedir al servicio autenticado que haga las llamadas necesarias.
 
-## Working style
+## UI y sistema de diseño
 
-- Always prefer small, focused refactors over big rewrites.
-- Keep view logic thin: heavy logic belongs in services or helpers.
-- When changing API usage, clearly explain how errors are handled and surfaced in the UI.
-- Avoid introducing new frontend dependencies unless they clearly reduce complexity.
+- Mantener ASP.NET Core MVC con Razor; NO migrar a SPA completa ni reescribir en React.
+- Objetivo de diseño:
+  - Layout estándar moderno, claro y consistente para todos los módulos CRM.
+  - Tipografía, colores y espaciados definidos de forma centralizada.
+- Reutilización:
+  - Crear parciales/componentes Razor reutilizables para:
+    - Layout general (cabecera, menú, contenido).
+    - Tarjetas de información (cards) para bloques tipo “Datos desde Axapta 3.0…” y resúmenes CRM.
+    - Cabeceras de página (page headers).
+    - Botones principales (botón de acción primaria).
+  - Sustituir HTML duplicado en vistas por estos componentes comunes.
+- Tailwind CSS (preparación):
+  - Usar un único punto de entrada CSS donde más adelante se pueda compilar Tailwind (por ejemplo un archivo base en wwwroot).
+  - Introducir utilidades y clases de diseño de forma progresiva, sin romper el estilo actual.
+  - No introducir frameworks JS complejos si no aportan un beneficio claro.
+
+## Documentación y estilo de código
+
+- Comentarios y docstrings:
+  - Deben ser en inglés sencillo y sin acentos ni caracteres especiales (solo ASCII).
+  - Explicar brevemente:
+    - Qué hace cada controlador y cada acción pública.
+    - Qué hace cada servicio que llama a IND_CRM_API.
+    - Qué representa cada componente de UI compartido (layout, card, header, botón).
+- Cualquier DTO o modelo de vista nuevo:
+  - Debe tener un nombre claro en inglés.
+  - Preferiblemente reflejar el significado funcional (por ejemplo CrmActivityViewModel, CrmAccountListItemViewModel).
+- No introducir caracteres especiales en el código C# ni en los comentarios del código:
+  - Evitar tildes, eñes y símbolos no ASCII dentro de archivos .cs, .cshtml y similares.
+
+## Forma de trabajo con Codex
+
+- Refactorizaciones:
+  - Siempre preferir cambios pequeños y enfocados frente a grandes reescrituras.
+  - Mantener las rutas MVC y modelos de vista actuales salvo que exista una razón clara (bug o inconsistencia grave).
+- Lógica de vistas:
+  - Mantener las vistas Razor lo más ligeras posible.
+  - Lógica de negocio o reglas de integración deben vivir en servicios o helpers.
+- Manejo de errores:
+  - Cuando se cambie la forma de llamar a la API, explicar claramente cómo se transforman los errores de IndApiResponse / IndPagedResponse en mensajes para el usuario.
+  - No ocultar completamente los errores técnicos, pero presentar información adecuada al contexto (usuario interno).
+- Dependencias:
+  - Evitar añadir nuevas dependencias de frontend o backend salvo que reduzcan claramente la complejidad.
+  - Cualquier librería nueva debe ir acompañada de un comentario en inglés sencillo justificando su uso.

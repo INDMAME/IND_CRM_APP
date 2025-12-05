@@ -15,19 +15,8 @@
     <!-- Bootstrap Icons (se mantienen) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
 
-    <!-- Tailwind CDN (config extendida) -->
-    <script>
-        tailwind = window.tailwind || {};
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: { indPrimary: "#00296b" },
-                    fontFamily: { sans: ["Montserrat", "system-ui", "sans-serif"] },
-                },
-            },
-        };
-    </script>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Tailwind local build -->
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
 
     <!-- CSS GLOBAL DEL LAYOUT -->
     <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />

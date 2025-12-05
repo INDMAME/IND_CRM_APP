@@ -14,5 +14,14 @@
 
         // Fecha de expiracion del token en UTC
         public DateTime Expires { get; set; }
+
+        // Codigo de error de negocio cuando Success es false
+        public string? ErrorCode { get; set; }
+
+        // Errores de validacion retornados por la API
+        public List<IndValidationError> Errors { get; set; } = new();
+
+        // Identificador de traza opcional
+        public string? TraceId { get; set; }
     }
 }

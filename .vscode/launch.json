@@ -15,18 +15,18 @@
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
-                "ASPNETCORE_URLS": "http://localhost:7702"
+                "ASPNETCORE_URLS": "http://localhost:5000"
             },
             "serverReadyAction": {
                 "action": "openExternally",
-                "url": "http://localhost:7702"
+                "url": "http://localhost:5000"
             }
         },
         {
             "type": "chrome",
             "request": "launch",
             "name": "Iniciar Chrome para localhost",
-            "url": "http://localhost:7702",
+            "url": "http://localhost:5000",
             "webRoot": "${workspaceFolder}"
         }
     ]

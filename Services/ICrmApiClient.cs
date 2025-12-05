@@ -36,15 +36,36 @@ namespace IND_CRM_APP.Services
             ActivitiesFilter filter
         );
 
-        Task<ApiResponse> CreateActivityAsync(
+        Task<ApiResponse<object>> CreateActivityAsync(
             string token,
             CreateActivityRequest req
         );
 
+        Task<ApiResponse<object>> UpdateActivityAsync(
+            string token,
+            long recId,
+            UpdateActivityRequest req
+        );
+
+        Task<ApiResponse<object>> DeleteActivityAsync(
+            string token,
+            long recId
+        );
+
+        Task<ApiResponse<ActivityDto>> GetActivityByRecIdAsync(
+            string token,
+            long recId
+        );
+
         // Asistentes de visita
-        Task<ApiResponse> CreateVisitaAsistenteAsync(
+        Task<ApiResponse<object>> CreateVisitaAsistenteAsync(
             string token,
             CreateVisitaAsistenteRequest req
+        );
+
+        Task<ApiResponse<object>> DeleteVisitaAsistenteAsync(
+            string token,
+            DeleteVisitaAsistenteRequest req
         );
 
         // Refresh de token

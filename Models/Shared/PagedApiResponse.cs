@@ -1,18 +1,23 @@
-﻿namespace IND_CRM_APP.Models.Shared
-{
-    public class PagedApiResponse<T>
-    {
-        public bool Success { get; set; }
-        public string Message { get; set; } = "";
-        [System.Text.Json.Serialization.JsonPropertyName("items")]
-        public IEnumerable<T> Items { get; set; } = new List<T>();
+using System.Text.Json.Serialization;
+using System.Linq;
 
-        // Algunas API devuelven el listado bajo la clave "data"
-        [System.Text.Json.Serialization.JsonPropertyName("data")]
-        public IEnumerable<T> Data { get; set; } = new List<T>();
+namespace IND_CRM_APP.Models.Shared
+{
+    /// <summary>
+    /// Standard IND paged response envelope for list endpoints.
+    /// Mirrors IndPagedResponse<T> from the backend.
+    /// </summary>
+    public class PagedApiResponse<T> : ApiResponse<IEnumerable<T>>
+    {
+        [JsonPropertyName("items")]
+        public IEnumerable<T>? Items { get; set; }
+
+        public int Total { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
 
         /// <summary>
-        /// Devuelve el listado disponible (Items o Data).
+        /// Returns Items, DataItems or Data (from base) in that order.
         /// </summary>
         public IEnumerable<T> GetAnyItems()
         {
@@ -20,8 +25,5 @@
             if (Data != null && Data.Any()) return Data;
             return Enumerable.Empty<T>();
         }
-        public int Page { get; set; }
-        public int PageSize { get; set; }
-        public int Total { get; set; }
     }
 }

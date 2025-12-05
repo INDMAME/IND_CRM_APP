@@ -65,6 +65,17 @@ namespace IND_CRM_APP.Services.Http
             return await SendAsync(client, request, url, "DELETE");
         }
 
+        // DELETE with JSON body (needed for some IND endpoints)
+        public static async Task<HttpResult> DeleteAsync(HttpClient client, string url, string jsonBody)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Delete, url)
+            {
+                Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
+            };
+
+            return await SendAsync(client, request, url, "DELETE");
+        }
+
         // ======================================================
         // Core
         // ======================================================

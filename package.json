@@ -1,0 +1,25 @@
+{
+  "name": "ind_crm_app",
+  "version": "1.0.0",
+  "description": "",
+  "main": "tailwind.config.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build:css": "tailwindcss -c tailwind.config.js -i ./wwwroot/css/input.css -o ./wwwroot/css/tailwind.css --minify"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/INDMAME/IND_CRM_APP.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/INDMAME/IND_CRM_APP/issues"
+  },
+  "homepage": "https://github.com/INDMAME/IND_CRM_APP#readme",
+  "devDependencies": {
+    "tailwindcss": "^3.4.17"
+  }
+}
