@@ -220,7 +220,7 @@ body {
 /* PANEL DE USUARIO (solo una vez, corregido) */
 .user-panel {
     position: absolute;
-    bottom: 20px; /* Lo baja perfectamente al fondo */
+    bottom: 20px;
     left: 25px;
     right: 25px;
 }
@@ -266,17 +266,19 @@ body {
 
 /* MENÚ DESPLEGABLE DEL USUARIO */
 .user-menu {
-    background: transparent;
+    background: rgba(0, 0, 0, 0.22);
     border-radius: 10px;
-    border: 1px solid rgba(255, 255, 255, 0.30);
+    border: 1px solid rgba(255, 255, 255, 0.15);
     position: absolute;
-    bottom: 55px;
-    width: 100%;
+    left: 0;
+    right: 0;
+    bottom: calc(100% + 10px);
     padding: 6px 0;
     opacity: 0;
     pointer-events: none;
-    transform: translateY(8px);
+    transform: translateY(-6px);
     transition: opacity 0.15s ease, transform 0.15s ease;
+    backdrop-filter: blur(4px);
 }
 
     .user-menu.open {

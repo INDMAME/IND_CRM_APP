@@ -1,0 +1,27 @@
+@model IND_CRM_APP.Models.ViewModels.PageHeaderModel
+
+<div class="page-header">
+    <div class="page-header__title">
+        @if (!string.IsNullOrWhiteSpace(Model.IconClass))
+        {
+            <i class="@Model.IconClass page-header__icon"></i>
+        }
+        <div>
+            <div class="page-header__heading">@Model.Title</div>
+            @if (!string.IsNullOrWhiteSpace(Model.Subtitle))
+            {
+                <div class="page-header__subtitle">@Model.Subtitle</div>
+            }
+        </div>
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Badge))
+    {
+        <span class="page-header__badge">@Model.Badge</span>
+    }
+    @if (!string.IsNullOrWhiteSpace(Model.ActionsHtml))
+    {
+        <div class="page-header__actions">
+            @Html.Raw(Model.ActionsHtml)
+        </div>
+    }
+</div>

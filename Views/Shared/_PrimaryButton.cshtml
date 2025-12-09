@@ -1,0 +1,12 @@
+@model IND_CRM_APP.Models.ViewModels.PrimaryButtonModel
+
+<button id="@Model.Id"
+        type="@Model.Type"
+        class="primary-btn @Model.CssClass">
+    @if (!string.IsNullOrWhiteSpace(Model.IconClass))
+    {
+        <i class="@Model.IconClass me-2"></i>
+    }
+    @Model.Text
+</button>
+

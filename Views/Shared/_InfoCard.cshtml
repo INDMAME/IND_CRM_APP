@@ -1,0 +1,28 @@
+@model IND_CRM_APP.Models.ViewModels.InfoCardModel
+
+<div class="card-surface">
+    <div class="card-surface__head">
+        <span class="card-surface__title">@Model.Title</span>
+        @if (!string.IsNullOrWhiteSpace(Model.Accent))
+        {
+            <span class="card-surface__accent">@Model.Accent</span>
+        }
+    </div>
+    @if (!string.IsNullOrWhiteSpace(Model.Description))
+    {
+        <p class="card-surface__description">@Model.Description</p>
+    }
+    @if (Model.Lines.Any())
+    {
+        <dl class="card-surface__grid">
+            @foreach (var line in Model.Lines)
+            {
+                <div class="card-surface__row">
+                    <dt>@line.Label</dt>
+                    <dd>@line.Value</dd>
+                </div>
+            }
+        </dl>
+    }
+</div>
+

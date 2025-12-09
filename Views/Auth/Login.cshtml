@@ -13,73 +13,110 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet" />
-	<link href="~/css/login.css" rel="stylesheet" />
-     
+    <link href="~/css/tailwind.css" rel="stylesheet" asp-append-version="true" />
 </head>
 
-<body class="login-page">
+<body class="min-h-screen bg-[#00296b] text-slate-100 font-sans">
+    <div class="absolute inset-0 bg-[#00296b]"></div>
 
-    <div class="login-card">
+    <div class="relative flex min-h-screen items-center justify-center px-4">
+        <div class="w-full max-w-sm">
 
-        <!-- LOGO -->
-        <div class="text-center mb-4 login-logo">
-            <img src="~/images/insertec_sin_fondo.png" alt="Insertec" />
+            <div class="bg-white border border-slate-100 rounded-2xl shadow-2xl px-6 py-8">
+                <div class="flex flex-col items-center gap-3 mb-6">
+                    <img src="~/images/insertec_sin_fondo.png" alt="Insertec" class="drop-shadow-lg" style="height: 96px;" />
+                </div>
+
+                <div class="mb-2 text-center">
+                    <h1 class="text-xl font-semibold text-slate-900">Bienvenido</h1>
+                    <p class="text-sm text-slate-600">Ingresa tus credenciales para continuar</p>
+                </div>
+
+                @if (ViewBag.Error != null)
+                {
+                    <div class="bg-red-50 text-red-700 text-sm rounded-xl px-3 py-2 mb-3 border border-red-100">
+                        @ViewBag.Error
+                    </div>
+                }
+
+                <form asp-action="Login" method="post" class="space-y-3">
+
+                    <div class="space-y-1">
+                        <label for="inputUser" class="sr-only">Usuario</label>
+                        <input asp-for="Username"
+                               id="inputUser"
+                               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:border-[--color-primary] placeholder:text-slate-400"
+                               placeholder="Usuario" />
+                        <span asp-validation-for="Username" class="text-sm text-red-100"></span>
+                    </div>
+
+                    <div class="space-y-1">
+                        <label for="inputPassword" class="sr-only">Contrasena</label>
+                        <div class="relative">
+                            <input asp-for="Password"
+                                   id="inputPassword"
+                                   type="password"
+                                   class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-12 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:border-[--color-primary] placeholder:text-slate-400"
+                                   placeholder="Contrasena" />
+                            <button type="button"
+                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-700"
+                                    onclick="togglePassword()"
+                                    aria-label="Mostrar u ocultar contrasena">
+                                👁
+                            </button>
+                        </div>
+                        <span asp-validation-for="Password" class="text-sm text-red-100"></span>
+                    </div>
+
+                    <div class="flex items-center justify-end text-sm text-slate-700">
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                            <input id="rememberMe" type="checkbox" class="rounded border-slate-300 text-[--color-primary] focus:ring-[--color-primary] bg-white" />
+                            <span>Recordarme</span>
+                        </label>
+                    </div>
+
+                    <button type="submit" class="w-full rounded-xl border border-transparent bg-[--color-primary] text-white font-semibold px-4 py-2 shadow-md hover:bg-[#001f4d] transition">
+                        Iniciar sesion
+                    </button>
+                </form>
+
+            </div>
         </div>
-
-        <h4 class="login-title text-center">Bienvenido</h4>
-        <p class="login-subtext text-center">
-            Por favor haz login para continuar
-        </p>
-
-        @if (ViewBag.Error != null)
-        {
-            <div class="alert alert-danger py-2">
-                @ViewBag.Error
-            </div>
-        }
-
-        <form asp-action="Login" method="post">
-
-            <!-- Usuario -->
-            <div class="mb-3 position-relative">
-                <label for="inputUser" class="visually-hidden">Email o usuario</label>
-                <input asp-for="Username" class="form-control minimal-input" id="inputUser" placeholder="Email o usuario" />
-            </div>
-
-            <!-- Contraseña -->
-            <div class="mb-3 position-relative">
-                <label for="inputPassword" class="visually-hidden">Contraseña</label>
-                <input asp-for="Password" type="password" class="form-control minimal-input" id="inputPassword" placeholder="Contraseña" />
-
-                <i class="bi bi-eye password-eye position-absolute top-50 end-0 translate-middle-y me-3"
-                   onclick="togglePassword()" aria-label="Mostrar u ocultar contraseña"></i>
-            </div>
-
-            <!-- Recordarme -->
-            <div class="form-check mb-3">
-                <input class="form-check-input" type="checkbox" id="rememberMe">
-                <label class="form-check-label" for="rememberMe">
-                    Recordarme
-                </label>
-            </div>
-
-            <!-- Botón -->
-            <button type="submit" class="btn btn-login w-100">
-                Iniciar sesión
-            </button>
-
-        </form>
-
     </div>
 
     <script>
         function togglePassword() {
             const input = document.getElementById("inputPassword");
+            if (!input) return;
             input.type = input.type === "password" ? "text" : "password";
         }
+
+        // Remember me: store username in localStorage
+        (function rememberMe() {
+            const userInput = document.getElementById("inputUser");
+            const rememberCheckbox = document.getElementById("rememberMe");
+            if (!userInput || !rememberCheckbox) return;
+
+            const stored = localStorage.getItem("crmRememberUser");
+            if (stored) {
+                userInput.value = stored;
+                rememberCheckbox.checked = true;
+            }
+
+            rememberCheckbox.addEventListener("change", () => {
+                if (rememberCheckbox.checked) {
+                    localStorage.setItem("crmRememberUser", userInput.value || "");
+                } else {
+                    localStorage.removeItem("crmRememberUser");
+                }
+            });
+
+            userInput.addEventListener("input", () => {
+                if (rememberCheckbox.checked) {
+                    localStorage.setItem("crmRememberUser", userInput.value || "");
+                }
+            });
+        })();
     </script>
 
 </body>

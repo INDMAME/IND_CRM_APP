@@ -1,24 +1,29 @@
-﻿/* ============================================================
-   IND CRM – Estilo unificado para información técnica
-   ============================================================ */
-
+/* IND CRM - Estilo unificado para información técnica (minimal) */
 .tech-info {
-    font-size: 0.70rem;
-    color: #777;
+    font-size: 0.8rem;
+    color: #6b7280;
     font-style: italic;
-    opacity: 0.8;
     user-select: none;
 }
 
-/* Variante en "badge" para contadores pequeños */
+.tech-info strong {
+    font-weight: 700;
+    color: #4b5563;
+}
+
+.tech-inline {
+    display: inline-flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
 .tech-badge {
-    font-size: 0.70rem !important;
+    font-size: 0.8rem !important;
     font-style: italic;
     background: transparent !important;
-    color: #777 !important;
+    color: #6b7280 !important;
     padding: 0 !important;
     border: none !important;
     user-select: none;
-    opacity: 0.8;
     box-shadow: none !important;
 }

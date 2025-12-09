@@ -13,7 +13,186 @@
 }
 
 @layer components {
+  /* Bootstrap compatibility layer (Tailwind powered) */
+  .container {
+    @apply mx-auto px-4;
+    max-width: 1140px;
+  }
+  .row {
+    @apply flex flex-wrap -mx-3;
+  }
+  .col-12 {
+    @apply w-full px-3;
+  }
+  .col-md-6 {
+    @apply w-full md:w-1/2 px-3;
+  }
+  .col-md-4 {
+    @apply w-full md:w-1/3 px-3;
+  }
+  .col-md-5 {
+    @apply w-full md:w-5/12 px-3;
+  }
+  .col-md-7 {
+    @apply w-full md:w-7/12 px-3;
+  }
+
+  .form-control,
+  .form-select {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#00296b]/70 focus:border-[#00296b];
+  }
+
+  .form-label {
+    @apply text-sm font-medium text-slate-700;
+  }
+
+  .form-check {
+    @apply flex items-center gap-2;
+  }
+
+  .form-check-input {
+    @apply rounded border-slate-300 text-[--color-primary] focus:ring-[#00296b];
+  }
+
+  .form-check-label {
+    @apply text-sm text-slate-700;
+  }
+
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition shadow-sm;
+  }
+  .btn-primary {
+    @apply bg-[--color-primary] text-white hover:bg-[#001f4d];
+  }
+  .btn-outline-primary {
+    @apply border border-[--color-primary] text-[--color-primary] bg-white hover:bg-[--color-primary] hover:text-white;
+  }
+  .btn-outline-secondary {
+    @apply border border-slate-300 text-slate-700 bg-white hover:bg-slate-100;
+  }
+  .btn-sm {
+    @apply px-3 py-1.5 text-xs;
+  }
+
+  .list-group {
+    @apply divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white;
+  }
+  .list-group-item {
+    @apply px-3 py-2 text-sm text-slate-800 hover:bg-slate-50;
+  }
+
+  .card {
+    @apply rounded-2xl bg-white shadow-card border border-slate-200;
+  }
+  .card-header {
+    @apply px-4 py-3 text-sm font-semibold text-slate-900 border-b border-slate-200;
+  }
+  .card-body {
+    @apply px-4 py-4 text-sm text-slate-800;
+  }
+
+  .input-group {
+    @apply flex items-stretch;
+  }
+  .input-group > .form-control {
+    @apply rounded-r-none;
+  }
+  .input-group .btn {
+    @apply rounded-l-none;
+  }
+
+  .pagination {
+    @apply flex gap-2 mt-4;
+  }
+  .page-item .page-link {
+    @apply inline-flex min-w-[38px] justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100;
+  }
+  .page-item.active .page-link {
+    @apply bg-[--color-primary] text-white border-[--color-primary];
+  }
+
+  .alert {
+    @apply rounded-xl px-3 py-2 text-sm;
+  }
+  .alert-danger {
+    @apply bg-red-50 text-red-700 border border-red-100;
+  }
+
+  .glass-panel {
+    @apply bg-white/70 backdrop-blur-xl border border-white/60 shadow-xl rounded-2xl;
+  }
+
+  .glass-panel--dark {
+    @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl;
+  }
+
+  .focus-ring {
+    @apply focus:outline-none focus:ring-2 focus:ring-[#00296b]/70 focus:ring-offset-1 focus:ring-offset-white;
+  }
+
+  .bg-gradient-brand {
+    @apply bg-gradient-to-br from-[--color-primary] via-indigo-600 to-sky-500;
+  }
+
+  .shadow-card {
+    @apply shadow-lg hover:shadow-xl transition-shadow;
+  }
+
   .btn-primary {
     @apply bg-[--color-primary] text-white font-semibold rounded-xl px-4 py-2 shadow-sm hover:bg-[#001f4d];
+  }
+
+  /* Reusable card surface */
+  .card-surface {
+    @apply bg-white rounded-2xl shadow-md border border-slate-200 p-4;
+  }
+  .card-surface__head {
+    @apply flex items-center justify-between gap-3 mb-2;
+  }
+  .card-surface__title {
+    @apply text-base font-semibold text-slate-900;
+  }
+  .card-surface__accent {
+    @apply text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700;
+  }
+  .card-surface__description {
+    @apply text-sm text-slate-600 mb-3;
+  }
+  .card-surface__grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 gap-2;
+  }
+  .card-surface__row {
+    @apply flex items-center justify-between text-sm text-slate-700 border border-slate-100 rounded-xl px-3 py-2;
+  }
+  .card-surface__row dt {
+    @apply font-medium;
+  }
+  .card-surface__row dd {
+    @apply text-right;
+  }
+
+  /* Page header */
+  .page-header {
+    @apply flex flex-wrap items-center justify-between gap-3 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-sm;
+  }
+  .page-header__title {
+    @apply flex items-center gap-3;
+  }
+  .page-header__icon {
+    @apply text-xl text-[--color-primary];
+  }
+  .page-header__heading {
+    @apply text-xl font-semibold text-slate-900;
+  }
+  .page-header__subtitle {
+    @apply text-sm text-slate-600;
+  }
+  .page-header__badge {
+    @apply text-xs font-semibold bg-slate-100 text-slate-700 px-3 py-1 rounded-full;
+  }
+
+  /* Primary action */
+  .primary-btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-[--color-primary] text-white font-semibold px-4 py-2 shadow-sm hover:bg-[#001f4d] transition;
   }
 }

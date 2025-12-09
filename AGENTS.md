@@ -107,3 +107,18 @@
 - Dependencias:
   - Evitar añadir nuevas dependencias de frontend o backend salvo que reduzcan claramente la complejidad.
   - Cualquier librería nueva debe ir acompañada de un comentario en inglés sencillo justificando su uso.
+
+  ## Regla Anti-Regresión Crítica (Fechas, Calendarios y API)
+
+Codex debe aplicar esta regla en toda modificación que afecte a vistas, scripts o lógica de filtros:
+
+- Nunca alterar la inicialización de componentes interactivos (calendarios, datepickers, dropdowns) sin validar su funcionamiento completo.
+- Toda modificación en filtros de fecha debe comprobar:
+  1) Que el calendario sigue desplegando correctamente.
+  2) Que los eventos onChange, click, blur y validaciones continúan operativos.
+  3) Que las llamadas a IND_CRM_API mantienen exactamente el formato esperado.
+  4) Que no se rompe ningún binding Razor, ViewModel o helper HTML.
+- Si una mejora visual, estructural o de lógica implica riesgo en un calendario o filtro:
+  - Codex debe avisar expresamente y ofrecer una alternativa sin impacto.
+- Ningún cambio se acepta si altera el flujo de filtrado actual.
+- Prioridad absoluta: cero regresiones en componentes de fecha y componentes dependientes de la API.

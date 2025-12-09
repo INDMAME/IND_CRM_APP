@@ -1,4 +1,4 @@
-﻿@{
+@{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Crear Visita";
 }
@@ -10,67 +10,62 @@
 
 <div class="container visita-page pb-4" style="max-width: 1100px;">
 
-    <!-- Subtítulo técnico -->
-    <p class="tech-info mb-2 mt-1">
+    <!-- Info técnica Axapta -->
+    <div class="tech-inline tech-info mb-3">
         Datos desde Axapta 3.0 —
-        <strong>Ambiente:</strong> @Html.Raw(ViewBag.Environment ?? "Desconocido")
-        <span class="mx-2">|</span>
-        <strong>Compañía:</strong> @Html.Raw(ViewBag.Company ?? "N/A")
-    </p>
+        <strong>Ambiente:</strong> @((ViewBag.Environment ?? "Unknown").ToString())
+        |
+        <strong>Compania:</strong> @((ViewBag.Company ?? "N/A").ToString())
+    </div>
 
     <!-- PASO 1 -->
     <div id="step1Container">
-        <div class="row g-4">
+        <div class="row g-3">
 
             <!-- CLIENTE -->
             <div class="col-md-6">
-                <div class="card visita-card shadow-sm">
+                <div class="card visita-card shadow-sm glass-panel mb-3">
                     <div class="card-header visita-card-header">
                         Selecciona un cliente
                     </div>
-                    <div class="card-body visita-card-body position-relative">
+                    <div class="card-body visita-card-body position-relative space-y-2">
 
-                        <div id="clientSearchContainer" class="position-relative mb-3">
+                        <label class="form-label text-sm font-semibold text-slate-700">Buscar cliente</label>
 
-                            <label class="form-label small text-muted">Buscar cliente</label>
+                        <div class="input-group">
+                            <input id="clientSearchInput"
+                                   type="text"
+                                   class="form-control"
+                                   placeholder="Escribe al menos 4 caracteres..." />
 
-                            <div class="input-group">
-                                <input id="clientSearchInput"
-                                       type="text"
-                                       class="form-control"
-                                       placeholder="Escribe al menos 4 caracteres..." />
+                            <button id="clientToggleButton"
+                                    class="btn btn-outline-primary"
+                                    type="button">
+                                <span id="clientToggleIcon">▼</span>
+                            </button>
+                        </div>
 
-                                <button id="clientToggleButton"
-                                        class="btn btn-outline-primary"
-                                        type="button">
-                                    <i id="clientToggleIcon" class="bi bi-caret-down-fill"></i>
-                                </button>
-                            </div>
+                        <div id="clientInnerSpinner" class="mt-1 tech-info" style="display:none;">
+                            Buscando clientes...
+                        </div>
 
-                            <div id="clientInnerSpinner" class="mt-2 small text-muted" style="display:none;">
-                                <div class="spinner-border spinner-border-sm"></div>
-                                <span class="ms-2">Buscando clientes...</span>
-                            </div>
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <span id="clientCounter" class="tech-badge">0 clientes</span>
+                            <span id="clientStatus" class="tech-info-inline"></span>
+                        </div>
 
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span id="clientCounter" class="tech-badge">0 clientes</span>
-                                <span id="clientStatus" class="small text-muted"></span>
-                            </div>
+                        <ul id="clientList"
+                            class="list-group shadow-card position-absolute bg-white"
+                            style="max-height: 260px; overflow-y: auto; width: 100%; left:0; right:0; top:100%; margin-top:8px; display:none; z-index:50; padding:6px;">
+                        </ul>
 
-                            <ul id="clientList"
-                                class="list-group shadow-sm position-absolute"
-                                style="max-height: 350px; overflow-y: auto; width: 100%; display:none; z-index:1000;">
-                            </ul>
-
-                            <div class="mt-2 text-end">
-                                <button id="clientLoadMoreBtn"
-                                        type="button"
-                                        class="btn btn-sm btn-outline-secondary"
-                                        style="display:none;">
-                                    Cargar más
-                                </button>
-                            </div>
-
+                        <div class="mt-1 text-end">
+                            <button id="clientLoadMoreBtn"
+                                    type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    style="display:none;">
+                                Cargar más
+                            </button>
                         </div>
 
                     </div>
@@ -79,49 +74,45 @@
 
             <!-- CONTACTO -->
             <div class="col-md-6">
-                <div class="card visita-card shadow-sm">
+                <div class="card visita-card shadow-sm glass-panel mb-3">
                     <div class="card-header visita-card-header">
                         Selecciona contacto
                     </div>
-                    <div class="card-body visita-card-body position-relative">
+                    <div class="card-body visita-card-body position-relative space-y-2">
 
-                        <div id="contactSearchContainer" class="position-relative mb-3">
-                            <label class="form-label small text-muted">Buscar contacto</label>
+                        <label class="form-label text-sm font-semibold text-slate-700">Buscar contacto</label>
 
-                            <div class="input-group">
-                                <input id="contactSearchInput"
-                                       type="text"
-                                       class="form-control"
-                                       placeholder="Filtrar por nombre, cargo o empresa..."
-                                       disabled />
+                        <div class="input-group">
+                            <input id="contactSearchInput"
+                                   type="text"
+                                   class="form-control"
+                                   placeholder="Filtrar por nombre, cargo o empresa..."
+                                   disabled />
 
-                                <button id="contactToggleButton"
-                                        class="btn btn-outline-primary"
-                                        type="button"
-                                        disabled>
-                                    <i id="contactToggleIcon" class="bi bi-caret-down-fill"></i>
-                                </button>
-                            </div>
-
-                            <div id="contactInnerSpinner" class="mt-2 small text-muted" style="display:none;">
-                                <div class="spinner-border spinner-border-sm"></div>
-                                <span class="ms-2">Cargando contactos...</span>
-                            </div>
-
-                            <div class="d-flex justify-content-between align-items-center mt-2">
-                                <span id="contactCounter" class="tech-badge">0 contactos</span>
-                                <span id="contactStatus" class="small text-muted"></span>
-                            </div>
-
-                            <ul id="contactList"
-                                class="list-group shadow-sm position-absolute"
-                                style="max-height: 350px; overflow-y: auto; width: 100%; display:none; z-index:1000;">
-                            </ul>
+                            <button id="contactToggleButton"
+                                    class="btn btn-outline-primary"
+                                    type="button"
+                                    disabled>
+                                <span id="contactToggleIcon">▼</span>
+                            </button>
                         </div>
 
-                        <!-- Contacto seleccionado -->
+                        <div id="contactInnerSpinner" class="mt-1 tech-info" style="display:none;">
+                            Cargando contactos...
+                        </div>
+
+                        <div class="d-flex justify-content-between align-items-center mt-1">
+                            <span id="contactCounter" class="tech-badge">0 contactos</span>
+                            <span id="contactStatus" class="tech-info-inline"></span>
+                        </div>
+
+                        <ul id="contactList"
+                            class="list-group shadow-card position-absolute bg-white"
+                            style="max-height: 260px; overflow-y: auto; width: 100%; left:0; right:0; top:100%; margin-top:8px; display:none; z-index:50; padding:6px;">
+                        </ul>
+
                         <div id="selectedContactCard"
-                             class="card border-primary mt-3"
+                             class="card border-primary mt-2"
                              style="display:none;">
                             <div class="card-body py-2">
                                 <div id="selectedContactMain" class="fw-semibold text-primary"></div>
@@ -140,11 +131,11 @@
 
 
     <!-- ============================================
-         PASO 2 – Detalles de la visita
+         PASO 2 - Detalles de la visita
     ============================================= -->
     <div id="step2Container" style="display:none;" class="mt-5">
 
-        <div class="card visita-card shadow-sm">
+        <div class="card visita-card shadow-sm glass-panel">
             <div class="card-header visita-card-header">
                 Datos de la visita
             </div>
@@ -209,10 +200,12 @@
             </div>
         </div>
 
-        <!-- Acción principal -->
-        <button id="btnSubmitActivity" class="btn btn-primary mt-4">
-            <i class="bi bi-check2-circle me-1"></i> Crear visita
-        </button>
+        @await Html.PartialAsync("_PrimaryButton", new IND_CRM_APP.Models.ViewModels.PrimaryButtonModel
+        {
+            Id = "btnSubmitActivity",
+            Text = "Crear visita",
+            CssClass = "mt-4"
+        })
 
     </div>
 

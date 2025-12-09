@@ -66,8 +66,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function syncLabels() {
         ensureDefaults();
-        drpStartValue.textContent = startDate ? formatDisplay(startDate) : "Añadir fecha";
-        drpEndValue.textContent = endDate ? formatDisplay(endDate) : "Añadir fecha";
+        drpStartValue.textContent = startDate ? formatDisplay(startDate) : "Aï¿½adir fecha";
+        drpEndValue.textContent = endDate ? formatDisplay(endDate) : "Aï¿½adir fecha";
         drpClear.style.display = (startDate || endDate) ? "inline-flex" : "none";
 
         drpSections.forEach(sec => {
@@ -309,22 +309,37 @@ document.addEventListener("DOMContentLoaded", () => {
         renderPagination(data.total || items.length);
     }
 
+    const shorten = (text, max) => {
+        if (!text) return "";
+        return text.length > max ? text.slice(0, max - 1) + "â€¦" : text;
+    };
+
     // Renders activity timeline cards
     function renderTimeline(items) {
         timeline.innerHTML = "";
 
         items.forEach(x => {
-            const nombre = x.name ?? x.Name ?? "";
+            const narrow = window.innerWidth <= 430;
+            const nameMax = narrow ? 38 : 64;
+            const descMax = narrow ? 70 : 120;
+
+            const nombre = shorten(x.name ?? x.Name ?? "", nameMax);
             const fecha = x.transDate ?? x.TransDate ?? "";
-            const descripcion = x.description ?? x.Description ?? "";
+            const descripcion = shorten(x.description ?? x.Description ?? "", descMax);
             const fechaFormatted = formatDate(fecha);
 
             const cardHtml = `
             <div class="timeline-item">
-                <div class="timeline-card timeline-card-slim">
-                    <div class="timeline-name ellipsis">${nombre}</div>
-                    <div class="timeline-date-block ellipsis">${fechaFormatted}</div>
-                    <div class="timeline-subject ellipsis">${descripcion || "Sin asunto"}</div>
+                <div class="timeline-card">
+                    <div class="timeline-card__content">
+                        <div class="timeline-card-head">
+                            <div>
+                                <div class="timeline-name ellipsis">${nombre}</div>
+                                <div class="timeline-date-chip">${fechaFormatted}</div>
+                            </div>
+                        </div>
+                        <p class="timeline-desc-text">${descripcion || "Sin asunto"}</p>
+                    </div>
                 </div>
             </div>
         `;
@@ -380,6 +395,5 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initial load with default dates from server
     loadActivities(1);
 });
-
 
 
