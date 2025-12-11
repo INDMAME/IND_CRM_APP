@@ -408,7 +408,7 @@ function ClientCombobox({ onSelected, value = null }) {
       <div className="relative">
         <div
           ref={boxRef}
-          className="relative w-full cursor-default rounded-xl border border-slate-300 bg-white text-left shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
+          className="relative w-full cursor-default rounded-xl border-slate-300 bg-white text-left shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
         >
           <input
             className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -754,7 +754,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
       <div className="relative">
         <div
           ref={boxRef}
-          className="relative w-full cursor-default rounded-xl border border-slate-300 bg-white text-left shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
+          className="relative w-full cursor-default rounded-xl border-slate-300 bg-white text-left shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
         >
           <div className="flex flex-wrap gap-1 px-3 py-2 min-h-[40px]">
             {selected.map((c) => (

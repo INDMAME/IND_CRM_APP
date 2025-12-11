@@ -440,26 +440,31 @@
     function renderPagination(total) {
         const totalPages = Math.ceil(total / pageSize);
         pagination.innerHTML = "";
+        pagination.className = "flex flex-wrap gap-2";
 
-        if (!totalPages || totalPages <= 1) {
-            return;
-        }
+        if (!totalPages || totalPages <= 1) return;
 
         for (let i = 1; i <= totalPages; i++) {
-            const li = document.createElement("li");
-            li.className = `page-item ${i === currentPage ? "active" : ""}`;
-            li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-            li.addEventListener("click", e => {
+            const btn = document.createElement("button");
+            const isActive = i === currentPage;
+            btn.type = "button";
+            btn.textContent = i;
+            btn.className = [
+                "min-w-[36px] px-3 py-1.5 rounded-lg border text-sm font-medium transition",
+                isActive
+                    ? "bg-primary border-primary text-white shadow-sm"
+                    : "border-slate-300 text-slate-700 hover:border-primary hover:text-primary"
+            ].join(" ");
+            btn.addEventListener("click", (e) => {
                 e.preventDefault();
                 loadActivities(i);
             });
-            pagination.appendChild(li);
+            pagination.appendChild(btn);
         }
     }
 
     // Estado inicial: sin datos hasta que el usuario seleccione un rango
 });
-
 
 
 
