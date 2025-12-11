@@ -3,7 +3,7 @@
     // Resultado de login o refresh de token
     public class LoginResult
     {
-        // Indica si la operacion tuvo exito
+        // Indica si la operacion tuvo éxito
         public bool Success { get; set; }
 
         // Token JWT recibido desde la API

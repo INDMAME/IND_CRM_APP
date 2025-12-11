@@ -460,7 +460,7 @@ function ClientCombobox({ onSelected, value = null }) {
             <ChevronDownIcon className="h-4 w-4" />
           </button>
         </div>
-        <FloatingList anchorRef={boxRef} open={open} zIndex={400000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl overflow-hidden">
+        <FloatingList anchorRef={boxRef} open={open} zIndex={400000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl">
           <div ref={listRef} id="client-options">
             {loading && (
               <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-500">
@@ -750,7 +750,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      <label className="text-sm font-semibold text-slate-700">Buscar contacto (seleccion multiple)</label>
+      <label className="text-sm font-semibold text-slate-700">Buscar contacto (selección múltiple)</label>
       <div className="relative">
         <div
           ref={boxRef}
@@ -773,7 +773,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
               </span>
             ))}
             <input
-              className="flex-1 min-w-[120px] rounded-xl border-slate-200 px-3 py-2 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className="flex-1 min-w-[120px] bg-transparent text-sm leading-5 text-slate-900 border-none outline-none px-1 py-1 focus:ring-0 focus:border-transparent"
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={selected.length ? "" : "Escribe para filtrar..."}
@@ -806,7 +806,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
             <ChevronDownIcon className="h-4 w-4" />
           </button>
         </div>
-        <FloatingList anchorRef={boxRef} open={open} zIndex={380000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl overflow-hidden">
+        <FloatingList anchorRef={boxRef} open={open} zIndex={380000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl">
           <div ref={listRef} aria-multiselectable="true">
             {loading && (
               <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-500">
@@ -941,7 +941,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder }) {
       <div className="relative">
         <div
           ref={boxRef}
-          className="relative w-full cursor-default rounded-xl border border-slate-200 bg-white text-left shadow-md focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-2 focus-within:ring-offset-white sm:text-sm"
+          className="relative w-full cursor-default rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
         >
           <input
             className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -972,7 +972,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder }) {
             <ChevronDownIcon className="h-4 w-4" />
           </button>
         </div>
-        <FloatingList anchorRef={boxRef} open={open} zIndex={360000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl overflow-hidden">
+        <FloatingList anchorRef={boxRef} open={open} zIndex={360000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl">
           <div id={`select-options-${label}`} ref={listRef} role="listbox" aria-label={label}>
             {filtered.length === 0 && (
               <div className="px-4 py-2 text-sm text-slate-500">Sin resultados</div>
@@ -988,7 +988,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder }) {
                   role="option"
                   aria-selected={sel}
                   className={classNames(
-                    "relative flex w-full cursor-default select-none items-center py-2 pl-8 pr-3 text-left text-sm",
+                    "relative flex w-full cursor-default select-none items-center py-2 pr-3 text-left text-sm type-option",
                     isActive ? "bg-primary text-white" : "text-slate-900"
                   )}
                   onMouseEnter={() => setActiveIndex(idx)}
@@ -1265,7 +1265,7 @@ function VisitasApp() {
     <div className="space-y-4">
       <div className="tech-inline tech-info">
         Datos desde Axapta 3.0 - <strong>Ambiente:</strong> {envInfo.environment} - 
-        <strong>Compania:</strong> {envInfo.company}
+        <strong>Compañía:</strong> {envInfo.company}
       </div>
 
       {step === 1 && (
@@ -1321,7 +1321,7 @@ function VisitasApp() {
 
           <div className="grid grid-cols-1 gap-3">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Descripcion</label>
+              <label className="text-sm font-semibold text-slate-700">Descripción</label>
               <input
                 id="description"
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -1395,7 +1395,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700">
-          Ocurrio un error al mostrar la pagina de visitas. Recarga y vuelve a intentar.
+          Ocurrió un error al mostrar la página de visitas. Recarga y vuelve a intentar.
         </div>
       );
     }

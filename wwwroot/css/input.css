@@ -12,6 +12,11 @@
   }
 }
 
+/* Extra padding for type dropdown items */
+.type-option {
+  padding-left: 10px !important;
+}
+
 @layer components {
   /* Bootstrap compatibility layer (Tailwind powered) */
   .container {
@@ -37,10 +42,10 @@
     @apply w-full md:w-7/12 px-3;
   }
 
-  .form-control,
-  .form-select {
-    @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#00296b]/70 focus:border-[#00296b];
-  }
+.form-control,
+.form-select {
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 text-left focus:outline-none focus:ring-2 focus:ring-[#00296b]/70 focus:border-[#00296b];
+}
 
   .form-label {
     @apply text-sm font-medium text-slate-700;
@@ -78,7 +83,7 @@
     @apply divide-y divide-slate-200 rounded-xl border border-slate-200 bg-white;
   }
   .list-group-item {
-    @apply px-3 py-2 text-sm text-slate-800 hover:bg-slate-50;
+    @apply px-3 py-2 text-sm text-slate-800 text-left truncate hover:bg-slate-50;
   }
 
   .card {
@@ -124,6 +129,11 @@
 
   .glass-panel--dark {
     @apply bg-slate-900/40 backdrop-blur-xl border border-white/10 shadow-2xl rounded-2xl;
+  }
+
+  /* Text truncation helper */
+  .text-ellipsis {
+    @apply overflow-hidden text-ellipsis whitespace-nowrap;
   }
 
   .focus-ring {

@@ -1,5 +1,3 @@
-@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpAccessor
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -21,85 +19,21 @@
     @RenderSection("Styles", required: false)
 </head>
 
-<body class="bg-slate-100 font-sans text-slate-900 overflow-x-hidden">
+@{
+    var bodyClass = ViewData["BodyClass"] as string ?? string.Empty;
+}
+<body class="bg-slate-100 font-sans text-slate-900 overflow-x-hidden @bodyClass">
 
     <!-- TOPBAR -->
-    <div class="topbar sticky top-0 left-0 z-[1900] flex h-[76px] w-full items-center justify-between bg-indPrimary text-white px-2 sm:px-3 shadow-md transition-[margin,width] duration-300">
-        <div class="topbar-left flex items-center gap-2">
-            <button id="btnMenu" class="hamburger inline-flex items-center justify-center rounded-[14px] w-[52px] h-[52px] bg-white/10 text-white text-2xl shadow-lg transition hover:bg-white/15" aria-label="Abrir menu" onclick="toggleSidebar()">
-                <span class="icon-text">☰</span>
-            </button>
-
-            <button id="globalBackBtn" class="topbar-btn inline-flex items-center justify-center rounded-[14px] w-[52px] h-[52px] bg-white/10 text-white text-2xl shadow-lg transition hover:bg-white/15 disabled:opacity-40" aria-label="Retroceder" disabled>
-                <span class="icon-text">←</span>
-            </button>
-        </div>
-
-        <div class="topbar-center flex-1 flex justify-center pointer-events-none">
-            <span id="topbarTitle" class="text-white font-medium text-[22px] sm:text-[26px] leading-tight">@ViewData["Title"]</span>
-        </div>
-
-        <div class="topbar-right flex items-center gap-2 justify-end">
-            @RenderSection("TopBarRight", required: false)
-
-            <button id="globalForwardBtn" class="topbar-btn inline-flex items-center justify-center rounded-[14px] w-[52px] h-[52px] bg-white/10 text-white text-2xl shadow-lg transition hover:bg-white/15 disabled:opacity-40" aria-label="Avanzar" disabled>
-                <span class="icon-text">→</span>
-            </button>
-        </div>
-    </div>
+    @await Html.PartialAsync("_Topbar")
 
     <!-- OVERLAY -->
-    <div id="overlay" class="overlay fixed inset-0 bg-black/45 opacity-0 pointer-events-none transition duration-200" onclick="toggleSidebar()"></div>
+    <div id="overlay" class="overlay fixed inset-0 bg-black/45 opacity-0 pointer-events-none transition duration-200" aria-hidden="true" onclick="toggleSidebar()"></div>
 
     <!-- SIDEBAR -->
-    <div id="sidebar" class="sidebar fixed top-0 left-0 z-[2000] flex min-h-screen w-[260px] flex-col bg-indPrimary text-white transform -translate-x-[260px] transition-transform duration-300">
+    @await Html.PartialAsync("_Sidebar")
 
-        <button class="close-sidebar absolute top-4 right-4 text-2xl hover:rotate-90 transition" aria-label="Cerrar menu" onclick="toggleSidebar()">
-            <span class="icon-text">×</span>
-        </button>
-
-        <a asp-controller="Home" asp-action="Index" class="sidebar-logo mt-12 mb-10 flex flex-col items-center text-center hover:scale-[1.02] transition">
-            <img src="~/images/insertec_logo_blanco.png" alt="Logo Insertec" />
-        </a>
-
-        <a href="#" class="block px-6 py-3 text-sm font-semibold tracking-wide hover:bg-white/15 transition" onclick="toggleVisitas(); return false;">VISITAS</a>
-
-        <div id="submenuVisitas" class="submenu ml-4 hidden">
-            <a asp-controller="Visitas" asp-action="Create" class="block px-6 py-2 text-sm hover:bg-white/15 transition">Creacion</a>
-            <a asp-controller="Historial" asp-action="History" class="block px-6 py-2 text-sm hover:bg-white/15 transition">
-                Historial
-            </a>
-        </div>
-
-        @{
-            var displayUser = HttpAccessor.HttpContext?.Session.GetString("AxUser")
-                              ?? HttpAccessor.HttpContext?.Session.GetString("Username")
-                              ?? "Usuario";
-        }
-            <div class="user-panel mt-auto px-6 pb-8 relative">
-
-            <div class="user-chip flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition hover:bg-white/10" onclick="toggleUserMenu()">
-                <span class="icon-text user-chip-icon">👤</span>
-                <span class="username-text">@displayUser.ToUpperInvariant()</span>
-                <span id="userMenuChevron" class="ms-2 user-chip-chevron icon-text">⌃</span>
-            </div>
-
-            <div id="userMenu" class="user-menu dropup-menu bg-transparent border border-white/30 rounded-lg opacity-0 pointer-events-none transition duration-150 transform translate-y-2">
-                <div class="px-3 py-2 text-white/70 text-xs">
-                    Conectado como <strong>@displayUser</strong>
-                </div>
-                <form asp-controller="Auth" asp-action="Logout" method="post" class="mt-1">
-                    <button type="submit" class="user-menu-item user-menu-logout flex items-center w-full text-left px-3 py-2 text-sm hover:bg-white/15 transition">
-                        <span class="icon-text me-2">⇦</span> Cerrar sesion
-                    </button>
-                </form>
-            </div>
-
-        </div>
-
-    </div>
-
-    <div id="content" class="content">
+    <div id="content" class="content w-full max-w-5xl mx-auto px-4 md:px-6 min-h-screen">
         @RenderBody()
     </div>
 
@@ -109,8 +43,12 @@
         const content = document.getElementById("content");
         const btnMenu = document.getElementById("btnMenu");
         const topbar = document.querySelector(".topbar");
+        const visitasToggle = document.getElementById("visitasToggle");
 
         let menuOpen = false;
+
+        sidebar?.setAttribute("aria-hidden", "true");
+        overlay?.setAttribute("aria-hidden", "true");
 
         function toggleSidebar() {
             menuOpen = !menuOpen;
@@ -118,8 +56,11 @@
             if (menuOpen) {
                 sidebar.classList.add("open");
                 overlay.classList.add("visible");
+                sidebar.setAttribute("aria-hidden", "false");
+                overlay.setAttribute("aria-hidden", "false");
                 btnMenu.style.opacity = "0";
                 btnMenu.style.pointerEvents = "none";
+                btnMenu.setAttribute("aria-expanded", "true");
 
                 if (window.innerWidth > 768) {
                     content.classList.add("shifted");
@@ -128,8 +69,11 @@
             } else {
                 sidebar.classList.remove("open");
                 overlay.classList.remove("visible");
+                sidebar.setAttribute("aria-hidden", "true");
+                overlay.setAttribute("aria-hidden", "true");
                 btnMenu.style.opacity = "1";
                 btnMenu.style.pointerEvents = "auto";
+                btnMenu.setAttribute("aria-expanded", "false");
                 content.classList.remove("shifted");
                 topbar.classList.remove("shifted");
             }
@@ -137,7 +81,10 @@
 
         function toggleVisitas() {
             const sub = document.getElementById("submenuVisitas");
-            sub.style.display = (sub.style.display === "block") ? "none" : "block";
+            if (!sub) return;
+            const isHidden = sub.classList.toggle("hidden");
+            const nowOpen = !isHidden;
+            visitasToggle?.setAttribute("aria-expanded", nowOpen.toString());
         }
 
         function toggleUserMenu() {
@@ -145,8 +92,13 @@
             const chevron = document.getElementById("userMenuChevron");
 
             const isOpen = menu.classList.toggle("open");
-
-            chevron.textContent = isOpen ? "⌄" : "⌃";
+            if (chevron) {
+                chevron.classList.toggle("rotate-180", isOpen);
+            }
+            const userChip = document.querySelector(".user-chip");
+            if (userChip) {
+                userChip.setAttribute("aria-expanded", isOpen.toString());
+            }
         }
     </script>
 

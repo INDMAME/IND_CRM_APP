@@ -1,4 +1,4 @@
-﻿document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", () => {
 
     const fromDate = document.getElementById("fromDate");
     const toDate = document.getElementById("toDate");
@@ -48,15 +48,28 @@
         year: "numeric"
     }).replace(/\./g, "").toLowerCase();
 
+    function ensureDefaults() {
+        if (!startDate) {
+            const today = new Date();
+            startDate = today;
+        }
+        if (!endDate) {
+            endDate = startDate;
+        }
+    }
+
     function syncInputs() {
+        ensureDefaults();
         fromDate.value = startDate ? toISO(startDate) : "";
         toDate.value = endDate ? toISO(endDate) : "";
     }
 
     function syncLabels() {
-        drpStartValue.textContent = startDate ? formatDisplay(startDate) : "Añadir fecha";
-        drpEndValue.textContent = endDate ? formatDisplay(endDate) : "Añadir fecha";
+        ensureDefaults();
+        drpStartValue.textContent = startDate ? formatDisplay(startDate) : "A�adir fecha";
+        drpEndValue.textContent = endDate ? formatDisplay(endDate) : "A�adir fecha";
         drpClear.style.display = (startDate || endDate) ? "inline-flex" : "none";
+
         drpSections.forEach(sec => {
             const section = sec.dataset.section;
             sec.classList.toggle("active", selectingStep === section && isOpen);
@@ -205,10 +218,6 @@
             syncLabels();
             buildCalendar();
             closePopover();
-            loader.style.display = "none";
-            timeline.innerHTML = "";
-            timeline.classList.add("timeline-empty");
-            pagination.innerHTML = "";
         });
     }
 
@@ -242,10 +251,7 @@
     async function loadActivities(page = 1) {
 
         if (!fromDate.value || !toDate.value) {
-            loader.style.display = "none";
-            timeline.innerHTML = "";
-            timeline.classList.add("timeline-empty");
-            pagination.innerHTML = "";
+            alert("Debe seleccionar un rango de fechas.");
             return;
         }
 
@@ -305,8 +311,7 @@
 
     const shorten = (text, max) => {
         if (!text) return "";
-        if (text.length <= max) return text;
-        return text.slice(0, Math.max(0, max - 3)) + "...";
+        return text.length > max ? text.slice(0, max - 1) + "…" : text;
     };
 
     // Renders activity timeline cards
@@ -320,19 +325,19 @@
         }
 
         items.forEach(x => {
-            const narrow = window.innerWidth <= 370;
-            const nameMax = narrow ? 32 : Infinity;
-            const descMax = narrow ? 60 : Infinity;
+            const narrow = window.innerWidth <= 430;
+            const nameMax = narrow ? 38 : 64;
+            const descMax = narrow ? 70 : 120;
 
             const rawName = (x.name ?? x.Name ?? "").toString().trim();
             const fullName = rawName.toUpperCase();
-            const nombre = narrow ? shorten(fullName, nameMax) : fullName;
-            const isNameTruncated = narrow && nombre !== fullName;
+            const nombre = shorten(fullName, nameMax);
+            const isNameTruncated = nombre !== fullName;
             const fecha = x.transDate ?? x.TransDate ?? "";
             const rawDesc = (x.description ?? x.Description ?? "").toString().trim();
             const fullDesc = rawDesc.toUpperCase();
-            const descripcion = narrow ? shorten(fullDesc, descMax) : fullDesc;
-            const isDescTruncated = narrow && fullDesc && descripcion !== fullDesc;
+            const descripcion = shorten(fullDesc, descMax);
+            const isDescTruncated = fullDesc && descripcion !== fullDesc;
             const fechaFormatted = formatDate(fecha);
 
             const cardHtml = `
@@ -359,7 +364,7 @@
                 lastNameEl.dataset.fulltext = fullName;
                 bindTooltip(lastNameEl, fullName);
             }
-            if (lastDescEl && fullDesc) {
+            if (lastDescEl && isDescTruncated) {
                 lastDescEl.dataset.fulltext = fullDesc;
                 bindTooltip(lastDescEl, fullDesc);
             }
@@ -457,11 +462,9 @@
         }
     }
 
-    // Estado inicial: sin datos hasta que el usuario seleccione un rango
+    // Initial load with default dates from server
+    loadActivities(1);
 });
-
-
-
 
 
 

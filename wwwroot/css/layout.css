@@ -16,6 +16,7 @@ body {
     background-color: #f5f6f7;
     font-family: "Montserrat", sans-serif;
     overflow-x: hidden;
+    overflow-y: visible;
 }
 
 :root {
@@ -57,7 +58,6 @@ body {
 
 .submenu {
     margin-left: 18px;
-    display: none;
     animation: fadeIn 0.2s;
 }
 

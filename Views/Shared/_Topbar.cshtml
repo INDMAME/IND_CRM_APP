@@ -1,0 +1,42 @@
+@{
+    var title = ViewData["Title"] as string ?? "IND CRM";
+    var path = Context?.Request?.Path.Value ?? string.Empty;
+    var hideNavArrows = (ViewData["HideNavArrows"] as bool? ?? false) ||
+                        path == "/" ||
+                        path.StartsWith("/Home/Index", StringComparison.OrdinalIgnoreCase);
+}
+
+    <div class="topbar sticky top-0 left-0 z-[1900] flex h-[74px] w-full items-center justify-between bg-primary text-white px-2 sm:px-2.5 shadow-md transition-[margin,width] duration-300">
+        <div class="topbar-left flex items-center gap-1">
+            <button id="btnMenu" type="button" class="hamburger inline-flex items-center justify-center p-2 bg-transparent text-white text-[20px] focus:outline-none transition-transform hover:scale-105" aria-label="Abrir menu" aria-controls="sidebar" aria-expanded="false" onclick="toggleSidebar()">
+                <span class="sr-only">Abrir menu</span>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+                </svg>
+            </button>
+
+            @if (!hideNavArrows)
+            {
+                <button id="globalBackBtn" type="button" class="topbar-btn inline-flex items-center justify-center p-2 bg-transparent text-white text-[20px] focus:outline-none transition-transform hover:-translate-x-[2px]" aria-label="Retroceder" disabled>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+            }
+        </div>
+
+        <div class="topbar-center flex-1 flex justify-center pointer-events-none">
+            <span id="topbarTitle" class="text-white font-medium text-[33px] sm:text-[39px] leading-tight">@title</span>
+        </div>
+
+        <div class="topbar-right flex items-center gap-1 justify-end">
+            @if (!hideNavArrows)
+            {
+                <button id="globalForwardBtn" type="button" class="topbar-btn inline-flex items-center justify-center p-2 bg-transparent text-white text-[20px] focus:outline-none transition-transform hover:translate-x-[2px]" aria-label="Avanzar" disabled>
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-[18px] w-[18px]" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                </svg>
+                </button>
+            }
+        </div>
+    </div>

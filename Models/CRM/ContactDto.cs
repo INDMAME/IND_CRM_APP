@@ -10,5 +10,6 @@
         public string Empresa { get; set; } = string.Empty;
         public string RecId { get; set; } = string.Empty;
         public string Origen { get; set; } = string.Empty;
+        public string AccountNum { get; set; } = string.Empty;
     }
 }

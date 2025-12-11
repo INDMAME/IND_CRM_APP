@@ -5,7 +5,9 @@
   "main": "tailwind.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build:css": "tailwindcss -c tailwind.config.js -i ./wwwroot/css/input.css -o ./wwwroot/css/tailwind.css --minify"
+    "build:css": "tailwindcss -c tailwind.config.js -i ./wwwroot/css/input.css -o ./wwwroot/css/tailwind.css --minify",
+    "build:react": "esbuild wwwroot/react/visitas/visit-type-combobox.jsx wwwroot/react/visitas/create.jsx --bundle --outdir=wwwroot/js --minify --sourcemap --jsx=automatic",
+    "build": "npm run build:css && npm run build:react"
   },
   "repository": {
     "type": "git",
@@ -20,6 +22,12 @@
   },
   "homepage": "https://github.com/INDMAME/IND_CRM_APP#readme",
   "devDependencies": {
+    "esbuild": "^0.27.1",
     "tailwindcss": "^3.4.17"
+  },
+  "dependencies": {
+    "@heroicons/react": "^2.2.0",
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
   }
 }

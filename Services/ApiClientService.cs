@@ -7,6 +7,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Linq;
+using System.Threading;
 
 namespace IND_CRM_APP.Services
 {
@@ -22,6 +23,7 @@ namespace IND_CRM_APP.Services
         private readonly string _baseUrl;
         private readonly ITokenSessionService _tokenSession;
         private readonly ILogger<ApiClientService> _logger;
+        private readonly int _accountsTimeoutSeconds;
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -49,6 +51,20 @@ namespace IND_CRM_APP.Services
             if (int.TryParse(config["ApiSettings:TimeoutSeconds"], out var seconds) && seconds > 0)
             {
                 _client.Timeout = TimeSpan.FromSeconds(seconds);
+            }
+
+            if (int.TryParse(config["ApiSettings:AccountsTimeoutSeconds"], out var accountSeconds) && accountSeconds > 0)
+            {
+                _accountsTimeoutSeconds = accountSeconds;
+                // Ensure the HttpClient-level timeout is not shorter than the account search timeout.
+                if (_client.Timeout < TimeSpan.FromSeconds(accountSeconds))
+                {
+                    _client.Timeout = TimeSpan.FromSeconds(accountSeconds);
+                }
+            }
+            else
+            {
+                _accountsTimeoutSeconds = (int)_client.Timeout.TotalSeconds;
             }
         }
 
@@ -168,10 +184,13 @@ namespace IND_CRM_APP.Services
                 pageSize
             };
 
+            using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(_accountsTimeoutSeconds));
+
             var result = await HttpHelper.PostAsync(
                 _client,
                 BuildUrl("api/crm/accounts/listAccounts"),
-                Serialize(payload)
+                Serialize(payload),
+                cts.Token
             );
 
             ApplyRefreshedToken(result.Headers, null);

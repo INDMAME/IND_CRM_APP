@@ -4,6 +4,7 @@
 #pragma warning disable CS8602
 #pragma warning disable CS8600
     ViewData["Title"] = "Historial";
+    ViewData["HideNavArrows"] = true;
     var userHiddenValue = HttpAccessor?.HttpContext?.Session?.GetString("AxUser") ?? string.Empty;
 }
 
@@ -44,9 +45,17 @@
 
         <div id="drpPopover" class="drp-popover" hidden>
             <div class="drp-head">
-                <button type="button" class="drp-nav" data-dir="prev"><i class="bi bi-chevron-left"></i></button>
+                <button type="button" class="drp-nav" data-dir="prev" aria-label="Mes anterior">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                    </svg>
+                </button>
                 <div id="drpMonthLabel" class="drp-month"></div>
-                <button type="button" class="drp-nav" data-dir="next"><i class="bi bi-chevron-right"></i></button>
+                <button type="button" class="drp-nav" data-dir="next" aria-label="Mes siguiente">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
             </div>
             <div class="drp-weekdays">
                 <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>

@@ -1,0 +1,28 @@
+@using System.Linq
+@model IEnumerable<IND_CRM_APP.Models.ViewModels.BreadcrumbItem>
+
+@if (Model != null && Model.Any())
+{
+    <nav class="flex items-center gap-2 text-sm text-slate-600" aria-label="Breadcrumb">
+        @foreach (var (item, index) in Model.Select((itm, idx) => (itm, idx)))
+        {
+            if (index > 0)
+            {
+                <span class="text-slate-400">/</span>
+            }
+
+            if (!string.IsNullOrWhiteSpace(item.Url) && !item.IsCurrent)
+            {
+                <a href="@item.Url" class="inline-flex items-center gap-1 text-primary hover:text-primary/80">
+                    @item.Text
+                </a>
+            }
+            else
+            {
+                <span class="inline-flex items-center gap-1 text-slate-500 font-semibold" aria-current="page">
+                    @item.Text
+                </span>
+            }
+        }
+    </nav>
+}

@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text;
+using System.Threading;
 
 namespace IND_CRM_APP.Services.Http
 {
@@ -24,56 +25,56 @@ namespace IND_CRM_APP.Services.Http
         // ======================================================
         // GET
         // ======================================================
-        public static async Task<HttpResult> GetAsync(HttpClient client, string url)
+        public static async Task<HttpResult> GetAsync(HttpClient client, string url, CancellationToken cancellationToken = default)
         {
             var request = new HttpRequestMessage(HttpMethod.Get, url);
-            return await SendAsync(client, request, url, "GET");
+            return await SendAsync(client, request, url, "GET", cancellationToken);
         }
 
         // ======================================================
         // POST
         // ======================================================
-        public static async Task<HttpResult> PostAsync(HttpClient client, string url, string jsonBody)
+        public static async Task<HttpResult> PostAsync(HttpClient client, string url, string jsonBody, CancellationToken cancellationToken = default)
         {
             var request = new HttpRequestMessage(HttpMethod.Post, url)
             {
                 Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
             };
 
-            return await SendAsync(client, request, url, "POST");
+            return await SendAsync(client, request, url, "POST", cancellationToken);
         }
 
         // ======================================================
         // PUT
         // ======================================================
-        public static async Task<HttpResult> PutAsync(HttpClient client, string url, string jsonBody)
+        public static async Task<HttpResult> PutAsync(HttpClient client, string url, string jsonBody, CancellationToken cancellationToken = default)
         {
             var request = new HttpRequestMessage(HttpMethod.Put, url)
             {
                 Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
             };
 
-            return await SendAsync(client, request, url, "PUT");
+            return await SendAsync(client, request, url, "PUT", cancellationToken);
         }
 
         // ======================================================
         // DELETE
         // ======================================================
-        public static async Task<HttpResult> DeleteAsync(HttpClient client, string url)
+        public static async Task<HttpResult> DeleteAsync(HttpClient client, string url, CancellationToken cancellationToken = default)
         {
             var request = new HttpRequestMessage(HttpMethod.Delete, url);
-            return await SendAsync(client, request, url, "DELETE");
+            return await SendAsync(client, request, url, "DELETE", cancellationToken);
         }
 
         // DELETE with JSON body (needed for some IND endpoints)
-        public static async Task<HttpResult> DeleteAsync(HttpClient client, string url, string jsonBody)
+        public static async Task<HttpResult> DeleteAsync(HttpClient client, string url, string jsonBody, CancellationToken cancellationToken = default)
         {
             var request = new HttpRequestMessage(HttpMethod.Delete, url)
             {
                 Content = new StringContent(jsonBody, Encoding.UTF8, "application/json")
             };
 
-            return await SendAsync(client, request, url, "DELETE");
+            return await SendAsync(client, request, url, "DELETE", cancellationToken);
         }
 
         // ======================================================
@@ -83,11 +84,12 @@ namespace IND_CRM_APP.Services.Http
             HttpClient client,
             HttpRequestMessage request,
             string url,
-            string verb)
+            string verb,
+            CancellationToken cancellationToken = default)
         {
             try
             {
-                using var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead);
+                using var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
 
                 var raw = await response.Content.ReadAsStringAsync();
 

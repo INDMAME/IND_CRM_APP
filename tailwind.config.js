@@ -7,10 +7,10 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        indPrimary: "#00296b",
+        primary: "#00296b",
       },
       fontFamily: {
-        sans: ["Montserrat", "system-ui", "sans-serif"],
+        sans: ["Montserrat", "sans-serif"],
       },
     },
   },

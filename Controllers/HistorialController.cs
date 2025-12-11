@@ -31,12 +31,9 @@ namespace IND_CRM_APP.Controllers
             ViewBag.Environment = string.IsNullOrWhiteSpace(environment) ? "Unknown" : environment;
             ViewBag.Company = string.IsNullOrWhiteSpace(company) ? "N/A" : company;
 
-            // Default period: last month
-            var to = DateTime.Today;
-            var from = to.AddMonths(-1);
-
-            ViewBag.DefaultFromDate = from.ToString("yyyy-MM-dd");
-            ViewBag.DefaultToDate = to.ToString("yyyy-MM-dd");
+            // Start with empty filters to avoid unnecessary load
+            ViewBag.DefaultFromDate = string.Empty;
+            ViewBag.DefaultToDate = string.Empty;
 
             return View("~/Views/Visitas/History.cshtml");
         }

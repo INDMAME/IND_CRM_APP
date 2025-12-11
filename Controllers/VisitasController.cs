@@ -2,6 +2,7 @@
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using System.Linq;
 
@@ -34,6 +35,12 @@ namespace IND_CRM_APP.Controllers
                 var result = await _apiClient.GetAccountsAsync(token, term ?? string.Empty, page, pageSize);
 
                 var items = result.GetAnyItems();
+
+                if (!result.Success && !items.Any())
+                {
+                    var msg = result.GetMessageOrDefault("No se pudieron obtener clientes. Afina tu b\u00fasqueda e intenta de nuevo.");
+                    return StatusCode(StatusCodes.Status504GatewayTimeout, new { message = msg });
+                }
 
                 return Json(new
                 {

@@ -1,6 +1,8 @@
+@using System.Text.Json
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = "Crear Visita";
+    ViewData["BodyClass"] = "visitas-body";
 }
 
 @section Styles {
@@ -8,209 +10,19 @@
     <link rel="stylesheet" href="~/css/technical-info.css" />
 }
 
-<div class="container visita-page pb-4" style="max-width: 1100px;">
-
-    <!-- Info técnica Axapta -->
-    <div class="tech-inline tech-info mb-3">
-        Datos desde Axapta 3.0 —
-        <strong>Ambiente:</strong> @((ViewBag.Environment ?? "Unknown").ToString())
-        |
-        <strong>Compania:</strong> @((ViewBag.Company ?? "N/A").ToString())
-    </div>
-
-    <!-- PASO 1 -->
-    <div id="step1Container">
-        <div class="row g-3">
-
-            <!-- CLIENTE -->
-            <div class="col-md-6">
-                <div class="card visita-card shadow-sm glass-panel mb-3">
-                    <div class="card-header visita-card-header">
-                        Selecciona un cliente
-                    </div>
-                    <div class="card-body visita-card-body position-relative space-y-2">
-
-                        <label class="form-label text-sm font-semibold text-slate-700">Buscar cliente</label>
-
-                        <div class="input-group">
-                            <input id="clientSearchInput"
-                                   type="text"
-                                   class="form-control"
-                                   placeholder="Escribe al menos 4 caracteres..." />
-
-                            <button id="clientToggleButton"
-                                    class="btn btn-outline-primary"
-                                    type="button">
-                                <span id="clientToggleIcon">▼</span>
-                            </button>
-                        </div>
-
-                        <div id="clientInnerSpinner" class="mt-1 tech-info" style="display:none;">
-                            Buscando clientes...
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mt-1">
-                            <span id="clientCounter" class="tech-badge">0 clientes</span>
-                            <span id="clientStatus" class="tech-info-inline"></span>
-                        </div>
-
-                        <ul id="clientList"
-                            class="list-group shadow-card position-absolute bg-white"
-                            style="max-height: 260px; overflow-y: auto; width: 100%; left:0; right:0; top:100%; margin-top:8px; display:none; z-index:50; padding:6px;">
-                        </ul>
-
-                        <div class="mt-1 text-end">
-                            <button id="clientLoadMoreBtn"
-                                    type="button"
-                                    class="btn btn-sm btn-outline-secondary"
-                                    style="display:none;">
-                                Cargar más
-                            </button>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <!-- CONTACTO -->
-            <div class="col-md-6">
-                <div class="card visita-card shadow-sm glass-panel mb-3">
-                    <div class="card-header visita-card-header">
-                        Selecciona contacto
-                    </div>
-                    <div class="card-body visita-card-body position-relative space-y-2">
-
-                        <label class="form-label text-sm font-semibold text-slate-700">Buscar contacto</label>
-
-                        <div class="input-group">
-                            <input id="contactSearchInput"
-                                   type="text"
-                                   class="form-control"
-                                   placeholder="Filtrar por nombre, cargo o empresa..."
-                                   disabled />
-
-                            <button id="contactToggleButton"
-                                    class="btn btn-outline-primary"
-                                    type="button"
-                                    disabled>
-                                <span id="contactToggleIcon">▼</span>
-                            </button>
-                        </div>
-
-                        <div id="contactInnerSpinner" class="mt-1 tech-info" style="display:none;">
-                            Cargando contactos...
-                        </div>
-
-                        <div class="d-flex justify-content-between align-items-center mt-1">
-                            <span id="contactCounter" class="tech-badge">0 contactos</span>
-                            <span id="contactStatus" class="tech-info-inline"></span>
-                        </div>
-
-                        <ul id="contactList"
-                            class="list-group shadow-card position-absolute bg-white"
-                            style="max-height: 260px; overflow-y: auto; width: 100%; left:0; right:0; top:100%; margin-top:8px; display:none; z-index:50; padding:6px;">
-                        </ul>
-
-                        <div id="selectedContactCard"
-                             class="card border-primary mt-2"
-                             style="display:none;">
-                            <div class="card-body py-2">
-                                <div id="selectedContactMain" class="fw-semibold text-primary"></div>
-                                <div id="selectedContactSecondary" class="text-muted small"></div>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <!-- Navegación manejada desde la topbar -->
-    </div>
-
-
-    <!-- ============================================
-         PASO 2 - Detalles de la visita
-    ============================================= -->
-    <div id="step2Container" style="display:none;" class="mt-5">
-
-        <div class="card visita-card shadow-sm glass-panel">
-            <div class="card-header visita-card-header">
-                Datos de la visita
-            </div>
-
-            <div class="card-body visita-card-body">
-
-                <input type="hidden" id="userId" value="@((ViewBag.AxUser ?? "").ToString())" />
-
-                <div class="row g-3">
-
-                    <div class="col-md-4">
-                        <label class="form-label">Fecha</label>
-                        <input id="transDate"
-                               type="date"
-                               class="form-control" />
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Tipo de visita</label>
-                        <select id="visitType" class="form-select">
-                            @foreach (var item in ViewBag.CRMTipoVisitaEnum)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label class="form-label">Tipo asistente</label>
-                        <select id="asistenteTipo" class="form-select">
-                            @foreach (var item in ViewBag.AsistenteTipoEnum)
-                            {
-                                <option value="@item.Value">@item.Text</option>
-                            }
-                        </select>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Descripción</label>
-                        <input id="description" class="form-control" maxlength="200" />
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Comentarios</label>
-                        <textarea id="comentarios" class="form-control"></textarea>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Antecedentes</label>
-                        <textarea id="antecedentes" class="form-control"></textarea>
-                    </div>
-
-                    <div class="col-12">
-                        <label class="form-label">Conclusiones</label>
-                        <textarea id="conclusiones" class="form-control"></textarea>
-                    </div>
-
-                </div>
-
-                <div id="activityStatus" class="mt-3"></div>
-
-            </div>
-        </div>
-
-        @await Html.PartialAsync("_PrimaryButton", new IND_CRM_APP.Models.ViewModels.PrimaryButtonModel
-        {
-            Id = "btnSubmitActivity",
-            Text = "Crear visita",
-            CssClass = "mt-4"
-        })
-
-    </div>
-
+<div class="visita-page w-full max-w-3xl mx-auto pb-8 px-4 md:px-6 mt-4 md:mt-6 min-h-screen" style="overflow: visible;">
+    <div id="visitas-app-root"></div>
 </div>
 
 @section Scripts {
-    <script src="~/js/visitas.client.js?ver=@DateTime.Now.Ticks"></script>
+    <script>
+        window.__VISIT_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.CRMTipoVisitaEnum ?? new object[] { }));
+        window.__ASISTENTE_TIPOS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.AsistenteTipoEnum ?? new object[] { }));
+        window.__AX_USER__ = "@((ViewBag.AxUser ?? "").ToString())";
+        window.__ENV_INFO__ = {
+            environment: "@((ViewBag.Environment ?? "Unknown").ToString())",
+            company: "@((ViewBag.Company ?? "N/A").ToString())"
+        };
+    </script>
+    <script src="~/js/create.js" asp-append-version="true"></script>
 }
