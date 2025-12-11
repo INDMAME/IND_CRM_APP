@@ -77,9 +77,9 @@
   - Use Heroicons as the default icon set across the UI.
   - Dropdown/combobox rules: follow `docs/dropdown-pattern.md` (cache, portals, keyboard, chevron toggle) for any new selectable field.
 - Static legacy libraries:
-  - Bootstrap v5.3.3, jQuery v3.7.1, jquery-validation and unobtrusive are considered legacy code.
+  - jQuery v3.7.1, jquery-validation and unobtrusive are considered legacy code.
   - Do not write new code that depends on these libs.
-  - Do not add new Bootstrap classes or new jQuery/jq-validation usage.
+  - Do not add new new jQuery/jq-validation usage.
   - Only touch this legacy code to safely migrate it to Tailwind + Tailwind CSS + Heroicons + Montserrat + #00296b, using small and safe refactors without breaking current behavior.
 - Reuse:
   - Create reusable Razor partials/components and React components for:
@@ -161,5 +161,12 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Avoid new dependencies unless clearly justified in a comment.
 - Keep existing behavior stable unless there is a clear bug or requirement.
 - Frontend standard: ASP.NET Core MVC + Razor views, with optional React components; Tailwind CSS only; Tailwind CSS for interactive components; Heroicons for icons; base font "Montserrat", sans-serif; primary color #00296b.
-- Treat Bootstrap, jQuery, and jquery-validation as legacy; do not add new usage.
+- Treat jQuery, and jquery-validation as legacy; do not add new usage.
 - Critical anti regression rule: never change calendars/date filters/dropdowns without validating events, payload formats to IND_CRM_API, and Razor bindings; propose a safe alternative if risk exists.
+
+## Quick design prompt (visitas/historial)
+- Tailwind only; Bootstrap removed (no `spinner-border`, `page-item`, `page-link`, etc.).
+- Inputs/combos: `rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary`.
+- Dropdowns: portal lists `rounded-xl` with visible scrollbar; options usan 10px de padding left (clase `type-option`), hover/active en primary.
+- Spinners: Tailwind ring `border-2 border-primary border-t-transparent rounded-full animate-spin`.
+- Paginación (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).

@@ -70,9 +70,9 @@ UI rules for IND_CRM_APP:
 - Base font: "Montserrat", sans-serif for all new designs/components.
 - Primary color: #00296b for headers, primary buttons, main links, active elements; reflect it in Tailwind palette.
 
-Treat Bootstrap, jQuery, jquery-validation and similar static libs as legacy:
+Treat jQuery, jquery-validation and similar static libs as legacy:
 - Do not add new code depending on them.
-- Do not add new Bootstrap classes or new jQuery/jq-validation uses.
+- Do not add new jQuery/jq-validation uses.
 - Touch legacy only to migrate safely to Tailwind + Tailwind CSS + Heroicons + Montserrat + #00296b without breaking existing functionality.
 
 Deliver only stable, compatible, verified code aligned with the rules above.
