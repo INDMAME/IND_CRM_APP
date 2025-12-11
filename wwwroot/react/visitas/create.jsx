@@ -1016,7 +1016,6 @@ function SelectCombobox({ label, options, value, onChange, placeholder }) {
 }
 
 function VisitasApp() {
-  const envInfo = window.__ENV_INFO__ || {};
   const visitTypes = window.__VISIT_TYPES__ || [];
   const asistenteTipos = window.__ASISTENTE_TIPOS__ || [];
   const axUser = window.__AX_USER__ || "";
@@ -1263,11 +1262,6 @@ function VisitasApp() {
 
   return (
     <div className="space-y-4">
-      <div className="tech-inline tech-info">
-        Datos desde Axapta 3.0 - <strong>Ambiente:</strong> {envInfo.environment} - 
-        <strong>Compañía:</strong> {envInfo.company}
-      </div>
-
       {step === 1 && (
         <div className="space-y-6">
           <ClientCombobox onSelected={setSelectedClient} value={selectedClient} />

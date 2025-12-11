@@ -2,9 +2,22 @@
     ViewData["Title"] = "Home";
 }
 
-<h2 class="fw-bold">Bienvenido</h2>
-<p>Selecciona una opción del menú izquierdo.</p>
+<div class="min-h-screen flex flex-col justify-between gap-8">
+    <div class="space-y-2 pt-2">
+        <h2 class="text-2xl font-semibold text-slate-900">Bienvenido</h2>
+        <p class="text-slate-700">Selecciona una opción del menú izquierdo.</p>
+    </div>
+
+    <div class="w-full flex justify-center pb-6">
+        <div class="tech-info text-center space-y-1 leading-tight">
+            <div>Datos desde Axapta 3.0</div>
+            <div>Ambiente: @((ViewBag.Environment ?? "Unknown").ToString())</div>
+            <div>Compañía: @((ViewBag.Company ?? "N/A").ToString())</div>
+        </div>
+    </div>
+</div>
 
 @section Styles {
     <link rel="stylesheet" href="~/css/index.css" />
+    <link rel="stylesheet" href="~/css/technical-info.css" />
 }

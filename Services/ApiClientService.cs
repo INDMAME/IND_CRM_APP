@@ -128,8 +128,8 @@ namespace IND_CRM_APP.Services
 
             try
             {
-                var envObj = JsonSerializer.Deserialize<EnvironmentResult>(result.Raw, JsonOptions);
-                return envObj?.Environment ?? result.Raw.Replace("\"", string.Empty);
+                var envObj = JsonSerializer.Deserialize<EnvironmentEnvelope>(result.Raw, JsonOptions);
+                return envObj?.Data?.Environment ?? result.Raw.Replace("\"", string.Empty);
             }
             catch
             {
@@ -157,8 +157,11 @@ namespace IND_CRM_APP.Services
 
             try
             {
-                var compObj = JsonSerializer.Deserialize<CompanyResult>(result.Raw, JsonOptions);
-                return compObj?.CompanyName ?? compObj?.Company ?? compObj?.CompanyId ?? result.Raw.Replace("\"", string.Empty);
+                var compObj = JsonSerializer.Deserialize<CompanyEnvelope>(result.Raw, JsonOptions);
+                return compObj?.Data?.CompanyName
+                    ?? compObj?.Data?.Company
+                    ?? compObj?.Data?.CompanyId
+                    ?? result.Raw.Replace("\"", string.Empty);
             }
             catch
             {
@@ -540,12 +543,22 @@ namespace IND_CRM_APP.Services
         // ======================================================
         // Internal DTOs used only for deserialization
         // ======================================================
-        private class EnvironmentResult
+        private class EnvironmentEnvelope
+        {
+            public EnvironmentData? Data { get; set; }
+        }
+
+        private class EnvironmentData
         {
             public string Environment { get; set; } = string.Empty;
         }
 
-        private class CompanyResult
+        private class CompanyEnvelope
+        {
+            public CompanyData? Data { get; set; }
+        }
+
+        private class CompanyData
         {
             public string CompanyId { get; set; } = string.Empty;
             public string CompanyName { get; set; } = string.Empty;

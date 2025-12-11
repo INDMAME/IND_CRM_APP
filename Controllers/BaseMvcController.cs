@@ -35,11 +35,32 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrEmpty(token))
                 return;
 
-            var env = await _apiClient.GetEnvironmentAsync(token);
-            var company = await _apiClient.GetCompanyNameAsync(token);
+            try
+            {
+                var env = await _apiClient.GetEnvironmentAsync(token);
+                var company = await _apiClient.GetCompanyNameAsync(token);
 
-            ViewBag.EnvironmentName = env;
-            ViewBag.CompanyName = company;
+                var envSafe = string.IsNullOrWhiteSpace(env) ? "Unknown" : env;
+                var companySafe = string.IsNullOrWhiteSpace(company) ? "N/A" : company;
+
+                ViewBag.Environment = envSafe;
+                ViewBag.Company = companySafe;
+                ViewBag.EnvironmentName = envSafe;
+                ViewBag.CompanyName = companySafe;
+
+                HttpContext.Session.SetString("Environment", envSafe);
+                HttpContext.Session.SetString("Company", companySafe);
+            }
+            catch (ApiException)
+            {
+                ViewBag.Environment = "Unknown";
+                ViewBag.Company = "N/A";
+            }
+            catch (Exception)
+            {
+                ViewBag.Environment = "Unknown";
+                ViewBag.Company = "N/A";
+            }
         }
     }
 }

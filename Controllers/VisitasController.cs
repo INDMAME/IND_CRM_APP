@@ -91,7 +91,7 @@ namespace IND_CRM_APP.Controllers
 
         // Shows main create activity view
         [HttpGet]
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
             try
             {
@@ -99,15 +99,14 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrEmpty(token))
                     return RedirectToAction("Login", "Auth");
 
+                await LoadEnvironmentInfoAsync();
+
                 // Load enum lists for selects
                 ViewBag.CRMActividadTypeEnum = CrmEnumHelper.GetActividadTypeItems();
                 ViewBag.CRMTipoVisitaEnum = CrmEnumHelper.GetTipoVisitaItems();
                 ViewBag.CRMActividadOrigenEnum = CrmEnumHelper.GetActividadOrigenItems();
                 ViewBag.AsistenteTipoEnum = CrmEnumHelper.GetAsistenteTipoItems();
 
-                // Optional session info for layout
-                ViewBag.Environment = HttpContext.Session.GetString("Environment");
-                ViewBag.Company = HttpContext.Session.GetString("Company");
                 ViewBag.AxUser = HttpContext.Session.GetString("AxUser");
 
                 return View();
