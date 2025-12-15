@@ -52,6 +52,11 @@ namespace IND_CRM_APP.Services
             long recId
         );
 
+        Task<ApiResponse<ActivityDto>> GetActivityByCodeAsync(
+            string token,
+            string actividadId
+        );
+
         Task<ApiResponse<ActivityDto>> GetActivityByRecIdAsync(
             string token,
             long recId

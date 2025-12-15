@@ -1,0 +1,69 @@
+@* IND Action Mark: global, no popup, no text, no backdrop. *@
+
+<div id="indActionMark" class="fixed inset-0 z-[2147483647] hidden pointer-events-none flex items-center justify-center" aria-hidden="true">
+<div id="indActionMarkWrap" class="h-40 w-40">
+
+    @* SVG CHECK: must match the provided path/strokes. *@
+    <svg id="indMarkCheck"
+         class="hidden h-full w-full"
+         xmlns="http://www.w3.org/2000/svg"
+         fill="none"
+         viewBox="0 0 24 24"
+         stroke="currentColor"
+         aria-hidden="true">
+        <rect class="ind-mark-stroke ind-stroke-animate" x="4" y="4" width="16" height="16" rx="4" stroke-width="1.1" />
+        <path class="ind-mark-stroke ind-stroke-animate"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.2"
+              d="M8.2 12.6l2.5 2.5 5.1-6.2" />
+    </svg>
+
+    @* WARNING: exclamation in rounded square. *@
+    <svg id="indMarkWarning"
+         class="hidden h-full w-full"
+         xmlns="http://www.w3.org/2000/svg"
+         fill="none"
+         viewBox="0 0 24 24"
+         stroke="currentColor"
+         aria-hidden="true">
+        <rect class="ind-mark-stroke ind-stroke-animate" x="4" y="4" width="16" height="16" rx="4" stroke-width="1.1" />
+        <path class="ind-mark-stroke ind-stroke-animate"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.2"
+              d="M12 7.2v7.1" />
+        <path class="ind-mark-stroke ind-stroke-animate"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.6"
+              d="M12 17.3h.01" />
+    </svg>
+
+    @* ERROR: X in rounded square. *@
+    <svg id="indMarkError"
+         class="hidden h-full w-full"
+         xmlns="http://www.w3.org/2000/svg"
+         fill="none"
+         viewBox="0 0 24 24"
+         stroke="currentColor"
+         aria-hidden="true">
+        <rect class="ind-mark-stroke ind-stroke-animate" x="4" y="4" width="16" height="16" rx="4" stroke-width="1.1" />
+        <path class="ind-mark-stroke ind-stroke-animate"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.2"
+              d="M8.5 8.5l7 7" />
+        <path class="ind-mark-stroke ind-stroke-animate"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="1.2"
+              d="M15.5 8.5l-7 7" />
+    </svg>
+
+</div>
+
+@* Helper oculto para asegurar que Tailwind no purge estas clases. *@
+<div class="hidden text-emerald-600 text-rose-600 text-amber-500 drop-shadow-[0_18px_24px_rgba(0,0,0,0.15)]"></div>
+
+</div>

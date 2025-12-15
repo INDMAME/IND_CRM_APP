@@ -25,7 +25,7 @@
             {
                 new { Value = "0", Text = "Ninguno" },
                 new { Value = "1", Text = "Comercial" },
-                new { Value = "2", Text = "Tecnica" }
+                new { Value = "2", Text = "Técnica" }
             };
         }
 
@@ -53,7 +53,7 @@
             return new[]
             {
                 new { Value = "0", Text = "Sin asistente" },
-                new { Value = "1", Text = "Tecnico" },
+                new { Value = "1", Text = "Técnico" },
                 new { Value = "2", Text = "Comercial" }
             };
         }

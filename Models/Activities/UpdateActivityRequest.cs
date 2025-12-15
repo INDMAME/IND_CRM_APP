@@ -13,6 +13,10 @@ namespace IND_CRM_APP.Models.Activities
         [JsonPropertyName("visitType")]
         public string VisitType { get; set; } = string.Empty;
 
+        // Assistant type for the first assistant entry (optional).
+        [JsonPropertyName("asistenteTipo")]
+        public string AsistenteTipo { get; set; } = string.Empty;
+
         [JsonPropertyName("userId")]
         public string UserId { get; set; } = string.Empty;
 
@@ -32,4 +36,3 @@ namespace IND_CRM_APP.Models.Activities
         public string Conclusiones { get; set; } = string.Empty;
     }
 }
-

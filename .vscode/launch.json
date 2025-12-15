@@ -5,6 +5,29 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Backend (Kestrel, HTTPS, Debug)",
+            "type": "coreclr",
+            "request": "launch",
+            "preLaunchTask": "build-with-kill",
+            "program": "dotnet",
+            "args": [
+                "run",
+                "--project",
+                "${workspaceFolder}/IND_CRM_APP.csproj",
+                "--launch-profile",
+                "https"
+            ],
+            "cwd": "${workspaceFolder}",
+            "stopAtEntry": false,
+            "env": {
+                "ASPNETCORE_ENVIRONMENT": "Development"
+            },
+            "serverReadyAction": {
+                "action": "openExternally",
+                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+            }
+        },
+        {
             "name": "Backend (Kestrel)",
             "type": "coreclr",
             "request": "launch",

@@ -3,11 +3,19 @@
     public class ActivityDto
     {
         public string? ActividadId { get; set; }
+        public string? RecId { get; set; }
+        public string? AccountNum { get; set; }
         public string? Name { get; set; }
+        // Alias para APIs que envían "Nombre"
+        public string? Nombre { get => Name; set => Name = value; }
         public string? TransDate { get; set; }
         public string? Country { get; set; }
         public string? ActividadType { get; set; }
+        public string? TipoVisita { get; set; }
         public string? Description { get; set; }
+        public string? Comentarios { get; set; }
+        public string? Antecedentes { get; set; }
+        public string? Conclusiones { get; set; }
 
         public List<ActivityAsistenteDto>? Asistentes { get; set; }
     }

@@ -1,0 +1,25 @@
+@using System.Text.Json
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = "Detalle";
+    ViewData["BodyClass"] = "visitas-body";
+    var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+} 
+
+<div class="visita-page w-full max-w-3xl mx-auto pb-8 px-4 md:px-6 mt-4 md:mt-6 min-h-screen" style="overflow: visible;">
+    <div id="visita-detail-root"></div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/visitas.css" />
+}
+
+@section Scripts {
+    <script>
+        window.__VISIT_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.CRMTipoVisitaEnum ?? new object[] { }, jsonOptions));
+        window.__ASISTENTE_TIPOS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.AsistenteTipoEnum ?? new object[] { }, jsonOptions));
+        window.__AX_USER__ = "@((ViewBag.AxUser ?? "").ToString())";
+        window.__ACTIVITY_DETAIL__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ActivityDetail ?? new { }, jsonOptions));
+    </script>
+    <script src="~/js/detail.js" asp-append-version="true"></script>
+}

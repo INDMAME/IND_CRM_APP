@@ -16,6 +16,8 @@
     <!-- Layout CSS -->
     <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
 
+    <link rel="stylesheet" href="~/css/ind-action-mark.css" asp-append-version="true" />
+
     @RenderSection("Styles", required: false)
 </head>
 
@@ -101,6 +103,30 @@
             }
         }
     </script>
+
+    @{
+        try
+        {
+            await Html.PartialAsync("_IndActionMark");
+        }
+        catch
+        {
+            // Defensive: do not break pages if the partial is missing.
+        }
+    }
+
+    <script src="~/js/ind-action-mark.js" asp-append-version="true"></script>
+
+    @{
+        try
+        {
+            await Html.PartialAsync("_IndActionMarkInit");
+        }
+        catch
+        {
+            // Defensive: do not break pages if the partial is missing.
+        }
+    }
 
     @RenderSection("Scripts", required: false)
 </body>

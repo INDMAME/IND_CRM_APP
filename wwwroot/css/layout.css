@@ -135,6 +135,19 @@ body {
     cursor: not-allowed;
 }
 
+.topbar-icon {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: #fff;
+    background: transparent;
+}
+
 .topbar-right {
     display: flex;
     align-items: center;

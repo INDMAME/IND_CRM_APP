@@ -250,6 +250,219 @@ namespace IND_CRM_APP.Services
             return DeserializePagedResponse<ActivityDto>(result, "GetActivities");
         }
 
+        public async Task<ApiResponse<ActivityDto>> GetActivityByCodeAsync(string token, string actividadId)
+        {
+            AddToken(token);
+
+            var safeCode = Uri.EscapeDataString(actividadId ?? string.Empty);
+
+            var result = await HttpHelper.GetAsync(
+                _client,
+                BuildUrl($"api/crm/activities/by-code/{safeCode}")
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            // Si la respuesta no parece JSON, devuelve el cuerpo como mensaje
+            if (!LooksLikeJson(result.Raw))
+            {
+                return new ApiResponse<ActivityDto>
+                {
+                    Success = result.IsSuccessStatusCode,
+                    Message = string.IsNullOrWhiteSpace(result.Raw) ? "Empty response" : result.Raw,
+                    Data = null,
+                    TraceId = TryGetTraceId(result.Headers)
+                };
+            }
+
+            try
+            {
+                // 1) intenta deserializar como ApiResponse<ActivityDto>
+                var parsedEnvelope = JsonSerializer.Deserialize<ApiResponse<ActivityDto>>(result.Raw, JsonOptions);
+                if (parsedEnvelope != null && parsedEnvelope.Data != null && !IsActivityEmpty(parsedEnvelope.Data))
+                {
+                    parsedEnvelope.TraceId ??= TryGetTraceId(result.Headers);
+                    return parsedEnvelope;
+                }
+
+                // 1b) Algunos entornos devuelven un envelope paginado con Items.
+                //     Toma el primer item si existe.
+                try
+                {
+                    var pagedEnvelope = JsonSerializer.Deserialize<PagedApiResponse<ActivityDto>>(result.Raw, JsonOptions);
+                    var firstItem = pagedEnvelope?.GetAnyItems().FirstOrDefault();
+                    if (firstItem != null && !IsActivityEmpty(firstItem))
+                    {
+                        return new ApiResponse<ActivityDto>
+                        {
+                            Success = pagedEnvelope!.Success,
+                            Message = pagedEnvelope.Message,
+                            ErrorCode = pagedEnvelope.ErrorCode,
+                            Errors = pagedEnvelope.Errors ?? new List<IndValidationError>(),
+                            Data = firstItem,
+                            TraceId = pagedEnvelope.TraceId ?? TryGetTraceId(result.Headers)
+                        };
+                    }
+                }
+                catch
+                {
+                    // ignore paged parsing errors and continue with manual parsing
+                }
+
+                using var doc = JsonDocument.Parse(result.Raw);
+                var root = doc.RootElement;
+
+                ActivityDto? data = null;
+                string? message = null;
+
+                if (root.TryGetProperty("Message", out var msgProp) && msgProp.ValueKind == JsonValueKind.String)
+                    message = msgProp.GetString();
+                if (root.TryGetProperty("message", out var msgProp2) && msgProp2.ValueKind == JsonValueKind.String)
+                    message ??= msgProp2.GetString();
+
+                if (root.TryGetProperty("Data", out var dataProp))
+                {
+                    data = ParseActivityFromElement(dataProp);
+                }
+                else if (root.ValueKind == JsonValueKind.Array && root.GetArrayLength() > 0)
+                {
+                    data = ParseActivityFromElement(root[0]);
+                }
+                else if (root.ValueKind == JsonValueKind.Object)
+                {
+                    data = ParseActivityFromElement(root);
+                }
+
+                return new ApiResponse<ActivityDto>
+                {
+                    Success = result.IsSuccessStatusCode && data != null,
+                    Message = data != null ? message ?? "OK" : message ?? "No data",
+                    Data = data,
+                    TraceId = TryGetTraceId(result.Headers)
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetActivityByCode parse error. Raw: {Raw}", result.Raw);
+            }
+
+            // Si llegamos aquí seguimos sin data; intenta parsear JSON embebido en el mensaje
+            try
+            {
+                var embedded = result.Raw;
+
+                // Si el mensaje viene envuelto en el envelope estándar ya deserializado
+                if (LooksLikeJson(result.Raw))
+                {
+                    var envelope = JsonSerializer.Deserialize<ApiResponse<ActivityDto>>(result.Raw, JsonOptions);
+                    if (envelope?.Data != null)
+                    {
+                        envelope.TraceId ??= TryGetTraceId(result.Headers);
+                        return envelope;
+                    }
+                    embedded = envelope?.Message ?? result.Raw;
+                }
+
+                if (!string.IsNullOrWhiteSpace(embedded))
+                {
+                    var normalized = embedded.Replace("\\u0022", "\"");
+                    if (LooksLikeJson(normalized))
+                    {
+                        if (TryParseEnvelope(normalized, out var parsedFromMessage))
+                        {
+                            parsedFromMessage.TraceId ??= TryGetTraceId(result.Headers);
+                            return parsedFromMessage;
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "GetActivityByCode embedded parse error. Raw: {Raw}", result.Raw);
+            }
+
+            return new ApiResponse<ActivityDto>
+            {
+                Success = false,
+                Message = string.IsNullOrWhiteSpace(result.Raw)
+                    ? result.ErrorMessage ?? "Failed to parse response for GetActivityByCode"
+                    : result.Raw,
+                TraceId = TryGetTraceId(result.Headers),
+                Data = null
+            };
+        }
+
+        private ActivityDto? ParseActivityFromElement(JsonElement el)
+        {
+            try
+            {
+                if (el.ValueKind == JsonValueKind.Null || el.ValueKind == JsonValueKind.Undefined)
+                    return null;
+
+                if (el.ValueKind == JsonValueKind.Array)
+                {
+                    if (el.GetArrayLength() == 0)
+                        return null;
+
+                    return ParseActivityFromElement(el[0]);
+                }
+
+                return el.Deserialize<ActivityDto>(JsonOptions);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        // Treat a DTO with no meaningful fields as empty.
+        private static bool IsActivityEmpty(ActivityDto dto)
+        {
+            if (dto == null) return true;
+
+            return string.IsNullOrWhiteSpace(dto.ActividadId) &&
+                   string.IsNullOrWhiteSpace(dto.RecId) &&
+                   string.IsNullOrWhiteSpace(dto.AccountNum) &&
+                   string.IsNullOrWhiteSpace(dto.Description) &&
+                   string.IsNullOrWhiteSpace(dto.TransDate);
+        }
+
+        private static bool LooksLikeJson(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return false;
+            var trimmed = raw.TrimStart();
+            return trimmed.StartsWith("{") || trimmed.StartsWith("[");
+        }
+
+        private bool TryParseEnvelope(string raw, out ApiResponse<ActivityDto> envelope)
+        {
+            envelope = new ApiResponse<ActivityDto>();
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                var root = doc.RootElement;
+
+                envelope.Success = root.TryGetProperty("Success", out var s) && s.GetBoolean();
+                envelope.Message = root.TryGetProperty("Message", out var m) && m.ValueKind == JsonValueKind.String ? m.GetString() : null;
+                envelope.TraceId = root.TryGetProperty("TraceId", out var t) && t.ValueKind == JsonValueKind.String ? t.GetString() : null;
+
+                if (root.TryGetProperty("Data", out var dataEl))
+                {
+                    envelope.Data = ParseActivityFromElement(dataEl);
+                }
+                else if (root.ValueKind == JsonValueKind.Object && root.GetRawText().Contains("ActividadId"))
+                {
+                    envelope.Data = ParseActivityFromElement(root);
+                }
+
+                return envelope.Data != null || envelope.Success;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
         public async Task<ApiResponse<ActivityDto>> GetActivityByRecIdAsync(string token, long recId)
         {
             AddToken(token);
@@ -374,6 +587,40 @@ namespace IND_CRM_APP.Services
                 _logger.LogError(ex, "JSON deserialization failed for {Operation}. Raw: {Raw}", operation, result.Raw);
             }
 
+            // Fallback: intenta extraer Data o deserializar directamente T
+            try
+            {
+                using var doc = JsonDocument.Parse(result.Raw);
+                var root = doc.RootElement;
+
+                // Si root tiene propiedad Data
+                if (root.TryGetProperty("Data", out var dataElement))
+                {
+                    var dataObj = dataElement.Deserialize<T>(JsonOptions);
+                    return new ApiResponse<T>
+                    {
+                        Success = result.IsSuccessStatusCode,
+                        Message = TryGetMessage(root),
+                        Data = dataObj,
+                        TraceId = TryGetTraceId(result.Headers)
+                    };
+                }
+
+                // Si no hay Data, intenta mapear root a T directamente
+                var direct = root.Deserialize<T>(JsonOptions);
+                return new ApiResponse<T>
+                {
+                    Success = result.IsSuccessStatusCode,
+                    Message = TryGetMessage(root),
+                    Data = direct,
+                    TraceId = TryGetTraceId(result.Headers)
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fallback deserialization failed for {Operation}. Raw: {Raw}", operation, result.Raw);
+            }
+
             LogHttpFailure(result, operation);
             return new ApiResponse<T>
             {
@@ -441,6 +688,19 @@ namespace IND_CRM_APP.Services
                 result.ErrorMessage,
                 result.Raw
             );
+        }
+
+        private static string? TryGetMessage(JsonElement root)
+        {
+            if (root.TryGetProperty("Message", out var msgProp) && msgProp.ValueKind == JsonValueKind.String)
+            {
+                return msgProp.GetString();
+            }
+            if (root.TryGetProperty("message", out var msgLower) && msgLower.ValueKind == JsonValueKind.String)
+            {
+                return msgLower.GetString();
+            }
+            return null;
         }
 
         private void ApplyRefreshedToken(IDictionary<string, IEnumerable<string>> headers, DateTime? expires)

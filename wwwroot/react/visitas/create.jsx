@@ -1,7 +1,9 @@
 ﻿import React, { useEffect, useMemo, useState, useRef, useLayoutEffect } from "react";
 import { createRoot } from "react-dom/client";
 import { createPortal } from "react-dom";
-import { ChevronDownIcon, XMarkIcon } from "@heroicons/react/20/solid";
+import { XMarkIcon } from "@heroicons/react/20/solid";
+import SingleDatePicker from "./SingleDatePicker.jsx";
+import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.jsx";
 
 const classNames = (...classes) => classes.filter(Boolean).join(" ");
 
@@ -99,34 +101,60 @@ function makeCache(limit = 10) {
 }
 
 async function fetchJson(url, options) {
-  const res = await fetch(url, options);
+  const merged = {
+    credentials: "same-origin",
+    headers: { Accept: "application/json", ...(options?.headers || {}) },
+    ...options,
+  };
+  const res = await fetch(url, merged);
+  const text = await res.text();
   if (!res.ok) {
-    const t = await res.text();
-    throw new Error(`${res.status} ${res.statusText}: ${t}`);
+    throw new Error(`${res.status} ${res.statusText}: ${text}`);
   }
-  return res.json();
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Invalid JSON from ${url}: ${text}`);
+  }
 }
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function useTopbar(step, canGoNext, onNext, onPrev) {
+function useTopbar(step, canGoNext, onNext, onPrev, busy = false, canSubmitStep2 = true) {
   useEffect(() => {
     const forward = document.getElementById("globalForwardBtn");
     const back = document.getElementById("globalBackBtn");
+    const forwardIcon = document.getElementById("globalForwardIcon");
+    const createIcon = document.getElementById("globalCreateIcon");
 
     if (forward) {
-      const showForward = step === 1 && canGoNext;
+      const isStep2 = step === 2;
+      const showForward = isStep2 || (step === 1 && canGoNext);
       forward.style.visibility = showForward ? "visible" : "hidden";
-      forward.disabled = !showForward;
+      forward.disabled = !showForward || busy;
       forward.onclick = showForward ? () => onNext() : null;
+      forward.setAttribute("aria-label", isStep2 ? "Crear visita" : "Avanzar");
+      forward.setAttribute("aria-disabled", isStep2 && !canSubmitStep2 ? "true" : "false");
+      forward.classList.toggle("opacity-50", isStep2 && !canSubmitStep2);
+      forward.classList.toggle("cursor-not-allowed", isStep2 && !canSubmitStep2);
+
+      if (forwardIcon && createIcon) {
+        if (isStep2) {
+          forwardIcon.classList.add("hidden");
+          createIcon.classList.remove("hidden");
+        } else {
+          forwardIcon.classList.remove("hidden");
+          createIcon.classList.add("hidden");
+        }
+      }
     }
     if (back) {
       const showBack = step === 2;
       back.style.visibility = showBack ? "visible" : "hidden";
-      back.disabled = !showBack;
+      back.disabled = !showBack || busy;
       back.onclick = showBack ? () => onPrev() : null;
     }
-  }, [step, canGoNext, onNext, onPrev]);
+  }, [step, canGoNext, onNext, onPrev, busy, canSubmitStep2]);
 }
 
 const clientCache = makeCache(10);
@@ -134,6 +162,7 @@ const contactsCache = makeCache(10);
 const VISIT_DRAFT_KEY = "visitas_draft";
 const CONTACTS_STORAGE_KEY = "visitas_contacts_cache_v1";
 const CONTACTS_SELECTION_KEY = "visitas_contacts_selected_v1";
+const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
 
 const readStorage = (key) => {
   try {
@@ -194,6 +223,28 @@ const clearStoredSelection = (account) => {
   }
 };
 
+const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
+
+const setHistoryFilterForDate = (isoDate) => {
+  const value = String(isoDate || "").trim();
+  if (!isIsoDate(value)) return;
+  try {
+    sessionStorage.setItem(HISTORY_FILTER_KEY, JSON.stringify({ fromDate: value, toDate: value }));
+  } catch {
+    /* ignore */
+  }
+};
+
+const flashActionMark = (type, durationMs) => {
+  try {
+    if (window.IND && typeof window.IND.flashActionMark === "function") {
+      window.IND.flashActionMark({ type, durationMs });
+    }
+  } catch {
+    /* ignore */
+  }
+};
+
 function ClientCombobox({ onSelected, value = null }) {
   const [query, setQuery] = useState("");
   const [options, setOptions] = useState([]);
@@ -248,17 +299,20 @@ function ClientCombobox({ onSelected, value = null }) {
       setStatus("Escribe al menos 4 caracteres");
       setOptions([]);
       setHasMore(false);
-      setFetchedQuery("");
       return;
     }
     cancelPending();
     setPage(1);
     setHasMore(true);
-    setOpen(true);
-    if (clientCache.has(query.trim().toLowerCase())) {
-      const cached = clientCache.get(query.trim().toLowerCase());
+    setOpen(false);
+    const cacheKey = query.trim().toLowerCase();
+    if (clientCache.has(cacheKey)) {
+      const cached = clientCache.get(cacheKey);
+      setFetchedQuery(currentQuery);
       setOptions(cached);
       setStatus(cached.length ? `${cached.length} cliente(s) (cache)` : "Sin resultados");
+      setHasMore(cached.length === 10);
+      setOpen(true);
       return;
     }
     setLoading(true);
@@ -266,6 +320,7 @@ function ClientCombobox({ onSelected, value = null }) {
     setStatus("Buscando...");
     const controller = new AbortController();
     abortRef.current = controller;
+    let shouldOpenOnFinish = false;
     try {
       const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=1&pageSize=10`;
       const data = await fetchJson(url, { signal: controller.signal });
@@ -295,11 +350,12 @@ function ClientCombobox({ onSelected, value = null }) {
       setOptions(items);
       setStatus(items.length ? `${items.length} cliente(s)` : "Sin resultados");
       setHasMore(items.length === 10);
+      shouldOpenOnFinish = true;
     } catch (err) {
       if (err?.name === "AbortError") {
-        setStatus("B�squeda cancelada");
+        setStatus("Busqueda cancelada");
       } else if (String(err?.message || "").toLowerCase().includes("timeout")) {
-        setStatus("La b�squeda tard� demasiado. Escribe m�s caracteres para acotar.");
+        setStatus("La busqueda tardo demasiado. Escribe mas caracteres para acotar.");
       } else {
         setStatus("Error al cargar clientes");
       }
@@ -307,6 +363,7 @@ function ClientCombobox({ onSelected, value = null }) {
       abortRef.current = null;
       setLoading(false);
       setBlocking(false);
+      if (shouldOpenOnFinish) setOpen(true);
     }
   };
 
@@ -376,16 +433,40 @@ function ClientCombobox({ onSelected, value = null }) {
     setOpen(false);
   };
 
+  const requestSearchOrOpen = () => {
+    if (loading || blocking) return;
+    const trimmed = query.trim();
+    if (trimmed.length < 4) {
+      cancelPending();
+      setOptions([]);
+      setHasMore(false);
+      setStatus("Escribe al menos 4 caracteres");
+      setOpen(true);
+      return;
+    }
+
+    const qKey = trimmed.toLowerCase();
+    const isSelectionDisplay = !!selected && query === (selected.text || "");
+    const shouldSearch = !isSelectionDisplay && qKey !== fetchedQuery;
+
+    if (shouldSearch) {
+      search();
+      return;
+    }
+
+    setOpen(true);
+  };
+
   const handleKeyDown = (ev) => {
     if (ev.key === "ArrowDown") {
+      if (!open) return;
       ev.preventDefault();
-      if (!open) setOpen(true);
       if (filtered.length) setActiveIndex((idx) => (idx + 1) % filtered.length);
       return;
     }
     if (ev.key === "ArrowUp") {
+      if (!open) return;
       ev.preventDefault();
-      if (!open) setOpen(true);
       if (filtered.length) setActiveIndex((idx) => (idx - 1 + filtered.length) % filtered.length);
       return;
     }
@@ -394,13 +475,18 @@ function ClientCombobox({ onSelected, value = null }) {
       if (open && filtered.length) {
         selectOption(filtered[activeIndex] ?? filtered[0]);
       } else {
-        search();
+        requestSearchOrOpen();
       }
     }
     if (ev.key === "Escape") {
       setOpen(false);
     }
   };
+
+  const queryKey = query.trim().toLowerCase();
+  const isSelectionDisplay = !!selected && query === (selected.text || "");
+  const showSearchIcon =
+    !loading && !blocking && !isSelectionDisplay && queryKey.length >= 4 && (fetchedQuery === "" || queryKey !== fetchedQuery);
 
   return (
     <div className="space-y-2" ref={containerRef}>
@@ -411,30 +497,23 @@ function ClientCombobox({ onSelected, value = null }) {
           className="relative w-full cursor-default rounded-xl border-slate-300 bg-white text-left shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
         >
           <input
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-24 text-sm leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
             value={query}
             onChange={(event) => {
               const val = event.target.value;
               setQuery(val);
-              setFetchedQuery("");
+              if (selected && val !== (selected.text || "")) {
+                setSelected(null);
+                onSelected?.(null);
+              }
               cancelPending();
+              setFetchedQuery("");
               setOptions([]);
               setHasMore(false);
-              setStatus(val.trim().length < 4 ? "Escribe al menos 4 caracteres" : "Presiona Enter o la flecha para buscar");
-              setOpen(true);
+              setStatus(val.trim().length < 4 ? "Escribe al menos 4 caracteres" : "Presiona la lupa, Enter o la flecha para buscar");
+              setOpen(false);
             }}
-            onKeyDown={(e) => {
-              handleKeyDown(e);
-              if (e.key === "Enter") {
-                e.preventDefault();
-                if (query.trim().length >= 4) {
-                  search();
-                } else {
-                  setStatus("Escribe al menos 4 caracteres");
-                }
-              }
-            }}
-            onFocus={() => setOpen(true)}
+            onKeyDown={handleKeyDown}
             placeholder="Escribe al menos 4 caracteres..."
             readOnly={loading || blocking}
             aria-busy={loading || blocking}
@@ -445,31 +524,51 @@ function ClientCombobox({ onSelected, value = null }) {
               open && filtered[activeIndex] ? `client-opt-${filtered[activeIndex].value}` : undefined
             }
           />
-          {(loading || blocking) && (
-            <span className="absolute inset-y-0 right-9 flex items-center">
-              <Spinner />
-            </span>
-          )}
-          <button
-            type="button"
-            className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-600"
-            onClick={() => { if (loading || blocking) return; if (open) { setOpen(false); } else { if (query.trim().length >= 4) { search(); } else { setStatus("Escribe al menos 4 caracteres"); } setOpen(true); } }}
-            disabled={loading || blocking}
-            aria-label="Mostrar opciones de cliente"
-          >
-            <ChevronDownIcon className="h-4 w-4" />
-          </button>
+
+          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+            {(loading || blocking) && (
+              <span className="flex items-center px-2" aria-hidden="true">
+                <Spinner />
+              </span>
+            )}
+
+            {showSearchIcon && (
+              <button
+                type="button"
+                className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
+                onClick={requestSearchOrOpen}
+                aria-label="Buscar cliente"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 15.75-2.489-2.489m0 0a3.375 3.375 0 1 0-4.773-4.773 3.375 3.375 0 0 0 4.774 4.774ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </button>
+            )}
+
+            <button
+              type="button"
+              className="flex items-center p-1.5 text-slate-500 hover:text-slate-600"
+              onClick={() => {
+                if (loading || blocking) return;
+                if (open) {
+                  setOpen(false);
+                  return;
+                }
+                requestSearchOrOpen();
+              }}
+              disabled={loading || blocking}
+              aria-label={open ? "Ocultar opciones de cliente" : "Mostrar opciones de cliente"}
+            >
+              {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
         <FloatingList anchorRef={boxRef} open={open} zIndex={400000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl">
           <div ref={listRef} id="client-options">
-            {loading && (
-              <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-500">
-                <Spinner size="h-4 w-4" />
-                Buscando...
+            {options.length === 0 && (
+              <div className="px-4 py-2 text-sm text-slate-500">
+                {query.trim().length < 4 ? "Escribe al menos 4 caracteres" : "Sin resultados"}
               </div>
-            )}
-            {!loading && options.length === 0 && (
-              <div className="px-4 py-2 text-sm text-slate-500">Sin resultados</div>
             )}
             {!loading && options.length > 0 && filtered.length === 0 && (
               <div className="px-4 py-2 text-sm text-slate-500">Sin coincidencias</div>
@@ -507,11 +606,6 @@ function ClientCombobox({ onSelected, value = null }) {
                 );
               })}
           </div>
-          {blocking && (
-            <div className="absolute inset-0 z-[70000] bg-white/70 backdrop-blur-[1px] flex items-center justify-center rounded-xl">
-              <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          )}
         </FloatingList>
       </div>
       <div className="w-full flex justify-end">
@@ -698,16 +792,23 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
     return () => el.removeEventListener("scroll", onScroll);
   }, [open, loadMoreContacts]);
 
+  const selectedValues = useMemo(() => {
+    return new Set((selected || []).map((s) => String(s.value)));
+  }, [selected]);
+
+  const availableOptions = useMemo(() => {
+    // Hide already selected contacts from the dropdown list.
+    return (options || []).filter((o) => !selectedValues.has(String(o.value)));
+  }, [options, selectedValues]);
+
   const filtered = useMemo(() => {
-    if (!query.trim()) return options;
-    const f = options.filter(
-      (o) =>
-        o.text.toLowerCase().includes(query.toLowerCase()) ||
-        o.cargo.toLowerCase().includes(query.toLowerCase()) ||
-        o.empresa.toLowerCase().includes(query.toLowerCase())
+    const q = query.trim().toLowerCase();
+    if (!q) return availableOptions;
+    const f = availableOptions.filter(
+      (o) => o.text.toLowerCase().includes(q) || o.cargo.toLowerCase().includes(q) || o.empresa.toLowerCase().includes(q)
     );
-    return f.length ? f : options;
-  }, [options, query]);
+    return f.length ? f : availableOptions;
+  }, [availableOptions, query]);
 
   useEffect(() => {
     setActiveIndex(0);
@@ -763,13 +864,13 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
                 className="flex items-center gap-1 rounded-full bg-primary/10 text-primary px-2 py-1 text-xs"
               >
                 {c.text}
-                <button
-                  type="button"
-                  onClick={() => setSelected(selected.filter((s) => s.value !== c.value))}
-                  className="text-primary hover:text-primary/70"
-                >
-                  <XMarkIcon className="h-4 w-4" />
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelected((prev) => prev.filter((s) => s.value !== c.value))}
+                    className="text-primary hover:text-primary/70"
+                  >
+                    <XMarkIcon className="h-4 w-4" />
+                  </button>
               </span>
             ))}
             <input
@@ -803,7 +904,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
               }
             }}
           >
-            <ChevronDownIcon className="h-4 w-4" />
+            {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
           </button>
         </div>
         <FloatingList anchorRef={boxRef} open={open} zIndex={380000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl">
@@ -820,7 +921,9 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
               </div>
             )}
             {!loading && options.length > 0 && filtered.length === 0 && (
-              <div className="px-4 py-2 text-sm text-slate-500">Sin coincidencias</div>
+              <div className="px-4 py-2 text-sm text-slate-500">
+                {query.trim() ? "Sin coincidencias" : "No hay mas contactos disponibles"}
+              </div>
             )}
             {!loading &&
               filtered.map((opt, idx) => {
@@ -840,11 +943,8 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
                     onClick={() => toggleOption(opt)}
                   >
                     <div className="relative flex flex-col gap-0.5 pr-2">
-                      <span className={classNames("block truncate", sel ? "font-medium" : "font-normal")}>
-                        {opt.text}
-                      </span>
+                      <span className={classNames("block truncate", sel ? "font-medium" : "font-normal")}>{opt.text}</span>
                       <span className="block text-xs text-slate-600 truncate">{opt.cargo}</span>
-                      <span className="block text-xs text-slate-500 truncate">{opt.empresa}</span>
                     </div>
                   </button>
                 );
@@ -864,7 +964,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
   );
 }
 
-function SelectCombobox({ label, options, value, onChange, placeholder }) {
+function SelectCombobox({ label, options, value, onChange, placeholder, invalid = false }) {
   const data = useMemo(() => {
     return options.map((o) => {
       if (Array.isArray(o)) {
@@ -884,6 +984,10 @@ function SelectCombobox({ label, options, value, onChange, placeholder }) {
   const listRef = useRef(null);
 
   useOutsideClick([containerRef, listRef], () => setOpen(false));
+
+  useEffect(() => {
+    setSelected(data.find((d) => String(d.value) === String(value)) || data[0] || { value: "", text: "" });
+  }, [value, data]);
 
   // Muestra la lista completa al abrir; solo filtra cuando el usuario escribe.
   useEffect(() => {
@@ -937,14 +1041,21 @@ function SelectCombobox({ label, options, value, onChange, placeholder }) {
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      <label className="text-sm font-semibold text-slate-700">{label}</label>
+      <label className={classNames("text-sm font-semibold", invalid ? "text-rose-700" : "text-slate-700")}>
+        {label}
+      </label>
       <div className="relative">
         <div
           ref={boxRef}
           className="relative w-full cursor-default rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
         >
           <input
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            className={classNames(
+              "w-full rounded-xl border px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2",
+              invalid
+                ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
+                : "border-slate-200 focus:ring-primary focus:border-primary"
+            )}
             value={query || selected?.text || ""}
             onChange={(event) => {
               const val = event.target.value;
@@ -967,9 +1078,9 @@ function SelectCombobox({ label, options, value, onChange, placeholder }) {
             type="button"
             className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-600"
             onClick={() => setOpen((prev) => !prev)}
-            aria-label="Mostrar opciones"
+            aria-label={open ? "Ocultar opciones" : "Mostrar opciones"}
           >
-            <ChevronDownIcon className="h-4 w-4" />
+            {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
           </button>
         </div>
         <FloatingList anchorRef={boxRef} open={open} zIndex={360000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl">
@@ -1032,10 +1143,9 @@ function VisitasApp() {
   };
 
   const defaultVisitType = visitTypes[0]?.value ?? visitTypes[0]?.Value ?? "";
-  const defaultAsistenteTipo = asistenteTipos[0]?.value ?? asistenteTipos[0]?.Value ?? "";
+  const defaultAsistenteTipo = asistenteTipos[0]?.value ?? asistenteTipos[0]?.Value ?? "0";
 
   const [visitType, setVisitType] = useState(defaultVisitType);
-  const [asistenteTipo, setAsistenteTipo] = useState(defaultAsistenteTipo);
   const [transDate, setTransDate] = useState(() => todayString());
   const [description, setDescription] = useState("");
   const [comentarios, setComentarios] = useState("");
@@ -1043,6 +1153,38 @@ function VisitasApp() {
   const [conclusiones, setConclusiones] = useState("");
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showRequired, setShowRequired] = useState(false);
+  const [modal, setModal] = useState({
+    open: false,
+    title: "",
+    message: "",
+    confirmText: "Aceptar",
+    cancelText: "Cancelar",
+    onConfirm: null,
+  });
+
+  const closeModal = React.useCallback(() => {
+    setModal((m) => ({ ...m, open: false }));
+  }, []);
+
+  const openConfirmModal = React.useCallback((opts) => {
+    setModal({
+      open: true,
+      title: opts?.title || "",
+      message: opts?.message || "",
+      confirmText: opts?.confirmText || "Aceptar",
+      cancelText: "Cancelar",
+      onConfirm: opts?.onConfirm || null,
+    });
+  }, []);
+
+  const handleModalConfirm = React.useCallback(async () => {
+    const cb = modal.onConfirm;
+    closeModal();
+    if (typeof cb === "function") {
+      await cb();
+    }
+  }, [modal.onConfirm, closeModal]);
 
   // Clear contactos solo si el cliente cambia (evita limpiar al restaurar/vuelta de paso 2)
   const prevClientRef = useRef(null);
@@ -1065,7 +1207,6 @@ function VisitasApp() {
       setStep(1);
       setSelectedContacts([]);
       setVisitType(defaultVisitType);
-      setAsistenteTipo(defaultAsistenteTipo);
       setTransDate(todayString());
       setDescription("");
       setComentarios("");
@@ -1084,7 +1225,6 @@ function VisitasApp() {
       selectedClient,
       selectedContacts,
       visitType,
-      asistenteTipo,
       transDate,
       description,
       comentarios,
@@ -1101,7 +1241,6 @@ function VisitasApp() {
     selectedClient,
     selectedContacts,
     visitType,
-    asistenteTipo,
     transDate,
     description,
     comentarios,
@@ -1119,7 +1258,6 @@ function VisitasApp() {
       if (draft?.selectedClient?.value) setSelectedClient(draft.selectedClient);
       if (Array.isArray(draft?.selectedContacts)) setSelectedContacts(draft.selectedContacts);
       if (draft?.visitType !== undefined) setVisitType(draft.visitType);
-      if (draft?.asistenteTipo !== undefined) setAsistenteTipo(draft.asistenteTipo);
       if (draft?.transDate) setTransDate(draft.transDate);
       if (draft?.description !== undefined) setDescription(draft.description);
       if (draft?.comentarios !== undefined) setComentarios(draft.comentarios);
@@ -1139,6 +1277,13 @@ function VisitasApp() {
   }, [selectedClient?.value, selectedContacts]);
 
   const canGoNext = !!selectedClient && selectedContacts.length > 0;
+  const canCreate =
+    !!selectedClient &&
+    selectedContacts.length > 0 &&
+    String(visitType || "").trim() !== "" &&
+    String(visitType) !== "0" &&
+    description.trim().length > 0 &&
+    comentarios.trim().length > 0;
 
   useTopbar(
     step,
@@ -1147,10 +1292,12 @@ function VisitasApp() {
       if (step === 1 && canGoNext) setStep(2);
       if (step === 2) handleSubmit();
     },
-    () => setStep(1)
+    () => setStep(1),
+    busy,
+    canCreate
   );
 
-  const handleSubmit = async () => {
+  const doCreate = async () => {
     if (busy) return;
     if (!selectedClient) {
       setStatus("Selecciona un cliente.");
@@ -1160,38 +1307,13 @@ function VisitasApp() {
       setStatus("Selecciona al menos un contacto.");
       return;
     }
+    if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {
+      setShowRequired(true);
+      setStatus("Completa los campos obligatorios.");
+      return;
+    }
     setBusy(true);
-      const toast = document.createElement("div");
-      toast.id = "visita-toast";
-      toast.className =
-        "fixed inset-0 z-[120000] flex items-center justify-center bg-black/30 backdrop-blur-[1px]";
-      const box = document.createElement("div");
-      box.className =
-        "rounded-2xl bg-white px-6 py-4 shadow-2xl text-center space-y-2 min-w-[240px] border border-slate-100";
-      const title = document.createElement("div");
-      title.id = "visita-toast-title";
-      title.className = "text-sm font-semibold text-primary";
-      title.textContent = "Procesando...";
-      const subtitle = document.createElement("div");
-      subtitle.id = "visita-toast-sub";
-      subtitle.className = "text-xs text-slate-600";
-      subtitle.textContent = "Creando actividad...";
-      box.appendChild(title);
-      box.appendChild(subtitle);
-      toast.appendChild(box);
-      document.body.appendChild(toast);
-
-      setStatus("Creando actividad...");
-      const toastTitle = () => document.getElementById("visita-toast-title");
-      const toastSub = () => document.getElementById("visita-toast-sub");
-      const updateToast = (t, s) => {
-        const titleEl = toastTitle();
-        const subEl = toastSub();
-        if (t && titleEl) titleEl.textContent = t;
-        if (s && subEl) subEl.textContent = s;
-      };
-      updateToast("Procesando...", "Creando actividad...");
-      await wait(250);
+    setStatus("Creando actividad...");
 
     try {
       const payloadActivity = {
@@ -1214,16 +1336,14 @@ function VisitasApp() {
       if (!resAct.success) throw new Error(resAct.message || "Fallo al crear actividad");
 
       const recIdActividad = (resAct.message || "").trim();
-      let created = 0;
 
-      for (const c of selectedContacts) {
+      for (let idx = 0; idx < selectedContacts.length; idx++) {
+        const c = selectedContacts[idx];
         const msg = `Creando visita para ${c.text}...`;
         setStatus(msg);
-        updateToast("Procesando visitas...", msg);
-        await wait(180);
         const payloadVisita = {
           refRecIdActividad: recIdActividad,
-          asistenteTipo,
+          asistenteTipo: defaultAsistenteTipo,
           asistenteId: c.text,
           contactoRecId: c.value,
         };
@@ -1233,35 +1353,86 @@ function VisitasApp() {
           body: JSON.stringify(payloadVisita),
         });
         if (!resVis.success) throw new Error(resVis.message || "Fallo al crear visita");
-        created++;
       }
 
-      const finalMsg =
-        created > 1
-          ? `Visita creada con ${created} contacto(s)`
-          : "Visita creada correctamente";
-      setStatus(finalMsg + ". Redirigiendo...");
-      updateToast(finalMsg, "Redirigiendo...");
       try {
         sessionStorage.removeItem(VISIT_DRAFT_KEY);
       } catch {
         /* ignore */
       }
-      await wait(400);
-      setTimeout(() => {
-        document.body.removeChild(toast);
-        window.location.href = "/Home/Index";
-      }, 1000);
+
+      setHistoryFilterForDate(transDate);
+      flashActionMark("okProcess", 1500);
+      await wait(1500);
+      window.location.href = "/Historial/History";
     } catch (e) {
       setStatus(e.message || "Error al crear la visita");
       setBusy(false);
-      const existing = document.getElementById("visita-toast");
-      if (existing) existing.remove();
     }
   };
 
+  const handleSubmit = () => {
+    if (busy) return;
+    if (!selectedClient) {
+      setStatus("Selecciona un cliente.");
+      return;
+    }
+    if (!selectedContacts.length) {
+      setStatus("Selecciona al menos un contacto.");
+      return;
+    }
+    if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {
+      setShowRequired(true);
+      setStatus("Completa los campos obligatorios.");
+      return;
+    }
+    openConfirmModal({
+      title: "Confirmar creación",
+      message: "Deseas crear esta visita?",
+      confirmText: "Aceptar",
+      onConfirm: doCreate,
+    });
+  };
+
+  useEffect(() => {
+    if (step === 1) {
+      setShowRequired(false);
+      closeModal();
+    }
+  }, [step, closeModal]);
+
+  const visitTypeInvalid = showRequired && (String(visitType || "") === "" || String(visitType) === "0");
+  const descriptionInvalid = showRequired && description.trim().length === 0;
+  const comentariosInvalid = showRequired && comentarios.trim().length === 0;
+
   return (
     <div className="space-y-4">
+      {modal.open &&
+        createPortal(
+          <div className="fixed inset-0 z-[600000] flex items-center justify-center bg-black/40 backdrop-blur-[1px] px-4">
+            <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
+              <div className="text-lg font-semibold text-slate-900">{modal.title}</div>
+              <div className="text-sm text-slate-700 whitespace-pre-line">{modal.message}</div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:border-primary hover:text-primary transition"
+                  onClick={closeModal}
+                >
+                  {modal.cancelText || "Cancelar"}
+                </button>
+                <button
+                  type="button"
+                  className="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition"
+                  onClick={handleModalConfirm}
+                >
+                  {modal.confirmText || "Aceptar"}
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
       {step === 1 && (
         <div className="space-y-6">
           <ClientCombobox onSelected={setSelectedClient} value={selectedClient} />
@@ -1286,30 +1457,15 @@ function VisitasApp() {
           <div className="text-base font-semibold text-slate-900 border-b border-slate-200 pb-3">
             Datos de la visita
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Fecha</label>
-              <input
-                id="transDate"
-                type="date"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
-                value={transDate}
-                onChange={(e) => setTransDate(e.target.value)}
-              />
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SingleDatePicker label="Fecha" value={transDate} onChange={setTransDate} />
             <SelectCombobox
               label="Tipo de visita"
               options={visitTypes}
               value={visitType}
               onChange={setVisitType}
               placeholder="Selecciona tipo"
-            />
-            <SelectCombobox
-              label="Tipo asistente"
-              options={asistenteTipos}
-              value={asistenteTipo}
-              onChange={setAsistenteTipo}
-              placeholder="Selecciona asistente"
+              invalid={visitTypeInvalid}
             />
           </div>
 
@@ -1318,7 +1474,12 @@ function VisitasApp() {
               <label className="text-sm font-semibold text-slate-700">Descripción</label>
               <input
                 id="description"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className={classNames(
+                  "w-full rounded-xl border px-3 py-2 text-slate-900 focus:outline-none focus:ring-2",
+                  descriptionInvalid
+                    ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
+                    : "border-slate-200 focus:ring-primary focus:border-primary"
+                )}
                 maxLength={200}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
@@ -1328,7 +1489,12 @@ function VisitasApp() {
               <label className="text-sm font-semibold text-slate-700">Comentarios</label>
               <textarea
                 id="comentarios"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className={classNames(
+                  "w-full rounded-xl border px-3 py-2 text-slate-900 focus:outline-none focus:ring-2",
+                  comentariosInvalid
+                    ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
+                    : "border-slate-200 focus:ring-primary focus:border-primary"
+                )}
                 value={comentarios}
                 onChange={(e) => setComentarios(e.target.value)}
               />
@@ -1354,14 +1520,6 @@ function VisitasApp() {
           </div>
 
           <div className="flex items-center gap-3">
-            <button
-              type="button"
-              className="primary-btn"
-              disabled={busy}
-              onClick={handleSubmit}
-            >
-              {busy ? "Creando..." : "Crear visita"}
-            </button>
             <span className="text-sm text-slate-500">{status}</span>
           </div>
         </div>

@@ -66,8 +66,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function syncLabels() {
         ensureDefaults();
-        drpStartValue.textContent = startDate ? formatDisplay(startDate) : "A�adir fecha";
-        drpEndValue.textContent = endDate ? formatDisplay(endDate) : "A�adir fecha";
+        drpStartValue.textContent = startDate ? formatDisplay(startDate) : "Añadir fecha";
+        drpEndValue.textContent = endDate ? formatDisplay(endDate) : "Añadir fecha";
         drpClear.style.display = (startDate || endDate) ? "inline-flex" : "none";
 
         drpSections.forEach(sec => {

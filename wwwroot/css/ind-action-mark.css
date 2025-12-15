@@ -1,0 +1,52 @@
+/* IND Action Mark animations (minimal CSS only). */
+
+#indActionMark.ind-mark-open {
+animation: indFadeIn 320ms ease-in-out forwards;
+}
+
+#indActionMark.ind-mark-leave {
+animation: indFadeOut 320ms ease-in-out forwards;
+}
+
+#indActionMark.ind-mark-open #indActionMarkWrap {
+animation: indPopIn 360ms ease-in-out forwards;
+}
+
+#indActionMark.ind-mark-leave #indActionMarkWrap {
+animation: indPopOut 260ms ease-in-out forwards;
+}
+
+/* Stroke draw animation */
+.ind-mark-stroke {
+stroke-dasharray: 1200;
+stroke-dashoffset: 1200;
+}
+
+/* Applied by JS so we can restart it on repeated calls. */
+.ind-stroke-animate {
+animation: indStrokeDraw 650ms ease-in-out forwards;
+}
+
+@keyframes indFadeIn {
+from { opacity: 0; }
+to { opacity: 1; }
+}
+
+@keyframes indFadeOut {
+from { opacity: 1; }
+to { opacity: 0; }
+}
+
+@keyframes indPopIn {
+from { transform: scale(0.82) translateY(6px); opacity: 0; }
+to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+@keyframes indPopOut {
+from { transform: scale(1); opacity: 1; }
+to { transform: scale(0.92); opacity: 0; }
+}
+
+@keyframes indStrokeDraw {
+to { stroke-dashoffset: 0; }
+}

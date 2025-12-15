@@ -2,6 +2,7 @@
 using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System.Globalization;
 using System.Text.Json;
 
 namespace IND_CRM_APP.Controllers
@@ -67,6 +68,12 @@ namespace IND_CRM_APP.Controllers
 
                 var itemsList = result.GetAnyItems()?.ToList() ?? new List<ActivityDto>();
 
+                // Sort by most recent date before paging.
+                itemsList = itemsList
+                    .OrderByDescending(x => TryParseActivityDate(x.TransDate) ?? DateTime.MinValue)
+                    .ThenByDescending(x => TryParseRecId(x.RecId))
+                    .ToList();
+
                 // Local paging on client side
                 var pageItems = Paginate(itemsList, page, pageSize);
 
@@ -97,6 +104,48 @@ namespace IND_CRM_APP.Controllers
         private static string SanitizeDate(string? date)
         {
             return string.IsNullOrWhiteSpace(date) ? string.Empty : date.Trim();
+        }
+
+        private static long TryParseRecId(string? raw)
+        {
+            return long.TryParse(raw, out var recId) ? recId : 0;
+        }
+
+        private static DateTime? TryParseActivityDate(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return null;
+
+            var value = raw.Trim();
+            var datePart = value.Split('T', ' ')[0];
+
+            var parts = datePart.Split(new[] { '.', '-', '/' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length == 3)
+            {
+                // yyyy-MM-dd
+                if (parts[0].Length == 4 &&
+                    int.TryParse(parts[0], out var y) &&
+                    int.TryParse(parts[1], out var m) &&
+                    int.TryParse(parts[2], out var d))
+                {
+                    return new DateTime(y, m, d);
+                }
+
+                // dd.MM.yyyy (or dd/MM/yyyy)
+                if (parts[2].Length == 4 &&
+                    int.TryParse(parts[2], out var y2) &&
+                    int.TryParse(parts[1], out var m2) &&
+                    int.TryParse(parts[0], out var d2))
+                {
+                    return new DateTime(y2, m2, d2);
+                }
+            }
+
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsed))
+            {
+                return parsed.Date;
+            }
+
+            return null;
         }
 
         // Simple paging helper

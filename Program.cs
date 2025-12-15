@@ -13,7 +13,7 @@ var builder = WebApplication.CreateBuilder(args);
 // Servicios
 // -----------------------------
 //builder.Services.AddResponseCompression();
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews().AddSessionStateTempDataProvider();
 builder.Services.AddHttpClient<ICrmApiClient, ApiClientService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSession(options =>

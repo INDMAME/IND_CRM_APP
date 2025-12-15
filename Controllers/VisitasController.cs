@@ -1,9 +1,11 @@
 ﻿using IND_CRM_APP.Models.Activities;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
+using IND_CRM_APP.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using System;
 using System.Linq;
 
 namespace IND_CRM_APP.Controllers
@@ -149,7 +151,7 @@ namespace IND_CRM_APP.Controllers
 
         // Creates a new visit assistant calling api/crm/visits/createVisitaAsistente
         [HttpPost]
-        public async Task<IActionResult> CreateVisitaAsistente([FromBody] CreateVisitaAsistenteRequest req)
+        public async Task<IActionResult> CreateVisitaAsistente([FromBody] CreateVisitaAsistenteRequest req, [FromQuery] bool IND_SetActionMark = false)
         {
             try
             {
@@ -158,6 +160,11 @@ namespace IND_CRM_APP.Controllers
                     return Json(new { success = false, message = "Token not found in session." });
 
                 var response = await _apiClient.CreateVisitaAsistenteAsync(token, req);
+
+                if (IND_SetActionMark && response.Success)
+                {
+                    TempData.INDSetActionMarkSuccess();
+                }
 
                 return Json(new
                 {
@@ -168,6 +175,279 @@ namespace IND_CRM_APP.Controllers
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Upstream API error in CreateVisitaAsistente");
+                return Json(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Detail view for editing an existing activity (step 2 equivalent)
+        [HttpGet("Visitas/Detalle/{code}")]
+        public async Task<IActionResult> Detail(string code)
+        {
+            var token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrEmpty(token))
+                return RedirectToAction("Login", "Auth");
+
+            await LoadEnvironmentInfoAsync();
+
+            if (string.IsNullOrWhiteSpace(code))
+                return NotFound();
+
+            static string? Pick(string? primary, string? fallback) =>
+                string.IsNullOrWhiteSpace(primary) ? fallback : primary;
+
+            static bool IsActivityEmpty(ActivityDto dto) =>
+                string.IsNullOrWhiteSpace(dto.ActividadId) &&
+                string.IsNullOrWhiteSpace(dto.AccountNum) &&
+                string.IsNullOrWhiteSpace(dto.Description) &&
+                string.IsNullOrWhiteSpace(dto.TransDate);
+
+            try
+            {
+                ActivityDto activity = new();
+                bool byCodeSuccess = false;
+
+                try
+                {
+                    var byCode = await _apiClient.GetActivityByCodeAsync(token, code);
+                    activity = byCode.Data ?? new ActivityDto();
+                    byCodeSuccess = byCode.Success && byCode.Data != null;
+                }
+                catch (ApiException ex)
+                {
+                    _logger.LogWarning(ex, "Upstream API error in GetActivityByCode for {Code}", code);
+                    activity = new ActivityDto();
+                }
+
+                // Fallback to legacy recId lookup if needed or if by-code returned vacío
+                long? recIdFallback = null;
+                if (long.TryParse(code, out var recIdParsedFromCode))
+                {
+                    recIdFallback = recIdParsedFromCode;
+                }
+                else if (long.TryParse(activity.RecId, out var recIdParsedFromActivity))
+                {
+                    recIdFallback = recIdParsedFromActivity;
+                }
+
+                if ((!byCodeSuccess || IsActivityEmpty(activity)) && recIdFallback.HasValue)
+                {
+                    try
+                    {
+                        var byRec = await _apiClient.GetActivityByRecIdAsync(token, recIdFallback.Value);
+                        if (byRec.Data != null)
+                        {
+                            var legacy = byRec.Data;
+                            activity.ActividadId = Pick(activity.ActividadId, legacy.ActividadId);
+                            activity.RecId = Pick(activity.RecId, legacy.RecId);
+                            activity.AccountNum = Pick(activity.AccountNum, legacy.AccountNum);
+                            activity.Name = Pick(activity.Name, legacy.Name);
+                            activity.TransDate = Pick(activity.TransDate, legacy.TransDate);
+                            activity.Country = Pick(activity.Country, legacy.Country);
+                            activity.ActividadType = Pick(activity.ActividadType, legacy.ActividadType);
+                            activity.TipoVisita = Pick(activity.TipoVisita, legacy.TipoVisita);
+                            activity.Description = Pick(activity.Description, legacy.Description);
+                            activity.Comentarios = Pick(activity.Comentarios, legacy.Comentarios);
+                            activity.Antecedentes = Pick(activity.Antecedentes, legacy.Antecedentes);
+                            activity.Conclusiones = Pick(activity.Conclusiones, legacy.Conclusiones);
+                            activity.Asistentes = activity.Asistentes ?? legacy.Asistentes;
+                        }
+                    }
+                    catch (ApiException ex)
+                    {
+                        _logger.LogWarning(ex, "Upstream API error in GetActivityByRecId for {RecId}", recIdFallback);
+                    }
+                }
+
+                string NormalizeDate(string? value)
+                {
+                    if (string.IsNullOrWhiteSpace(value)) return string.Empty;
+                    if (DateTime.TryParse(value, out var dt)) return dt.ToString("yyyy-MM-dd");
+                    var parts = value.Split(new[] { '.', '-', '/' }, StringSplitOptions.RemoveEmptyEntries);
+                    if (parts.Length == 3 &&
+                        int.TryParse(parts[2], out var y) &&
+                        int.TryParse(parts[1], out var m) &&
+                        int.TryParse(parts[0], out var d))
+                    {
+                        return new DateTime(y, m, d).ToString("yyyy-MM-dd");
+                    }
+                    return string.Empty;
+                }
+
+                string NormalizeVisitType(string? raw)
+                {
+                    if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+
+                    var match = CrmEnumHelper.GetTipoVisitaItems()
+                        .FirstOrDefault(x =>
+                            string.Equals(x.Value?.ToString(), raw, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(x.Text?.ToString(), raw, StringComparison.OrdinalIgnoreCase));
+
+                    return match?.Value?.ToString() ?? raw;
+                }
+
+                var recIdValue = activity.RecId
+                    ?? (recIdFallback.HasValue ? recIdFallback.Value.ToString() : string.Empty)
+                    ?? (long.TryParse(code, out var recIdParsed) ? recIdParsed.ToString() : string.Empty);
+
+                var detail = new
+                {
+                    RecId = recIdValue,
+                    ActividadId = activity.ActividadId ?? code,
+                    AccountNum = activity.AccountNum ?? string.Empty,
+                    VisitType = NormalizeVisitType(activity.TipoVisita ?? activity.ActividadType),
+                    UserId = HttpContext.Session.GetString("AxUser") ?? string.Empty,
+                    Description = activity.Description ?? string.Empty,
+                    TransDate = NormalizeDate(activity.TransDate),
+                    Comentarios = activity.Comentarios ?? string.Empty,
+                    Antecedentes = activity.Antecedentes ?? string.Empty,
+                    Conclusiones = activity.Conclusiones ?? string.Empty,
+                    Cliente = activity.Name ?? string.Empty
+                };
+
+                ViewBag.CRMActividadTypeEnum = CrmEnumHelper.GetActividadTypeItems();
+                ViewBag.CRMTipoVisitaEnum = CrmEnumHelper.GetTipoVisitaItems();
+                ViewBag.CRMActividadOrigenEnum = CrmEnumHelper.GetActividadOrigenItems();
+                ViewBag.AsistenteTipoEnum = CrmEnumHelper.GetAsistenteTipoItems();
+                ViewBag.AxUser = HttpContext.Session.GetString("AxUser");
+                ViewData["IsVisitaDetail"] = true;
+                ViewBag.ActivityDetail = detail;
+
+                return View("Detail");
+            }
+            catch (ApiException)
+            {
+                return NotFound();
+            }
+        }
+
+        // Lightweight JSON proxy for by-code lookup (used by React on detail page)
+        [HttpGet("Visitas/GetActivityByCode")]
+        public async Task<IActionResult> GetActivityByCode(string code)
+        {
+            var token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized(new { success = false, message = "Session expired" });
+
+            if (string.IsNullOrWhiteSpace(code))
+                return BadRequest(new { success = false, message = "Missing code" });
+
+            var response = await _apiClient.GetActivityByCodeAsync(token, code);
+            return Json(response);
+        }
+
+        // Updates an activity (PUT api/crm/activities/{recId})
+        [HttpPut("Visitas/UpdateActivity/{recId:long}")]
+        public async Task<IActionResult> UpdateActivity(long recId, [FromBody] UpdateActivityRequest req, [FromQuery] bool IND_SetActionMark = false)
+        {
+            try
+            {
+                var token = HttpContext.Session.GetString("Token");
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized(new { success = false, message = "Session expired" });
+
+                var response = await _apiClient.UpdateActivityAsync(token, recId, req);
+
+                if (IND_SetActionMark && response.Success)
+                {
+                    TempData.INDSetActionMarkSuccess();
+                }
+
+                return Json(new { success = response.Success, message = response.Message, data = response.Data });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in UpdateActivity");
+                return Json(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Updates assistant type for all assistants in a visit.
+        // The API does not expose a dedicated update, so we re-send
+        // existing assistants with the new type using createVisitaAsistente.
+        [HttpPut("Visitas/UpdateAsistenteTipo/{recId:long}")]
+        public async Task<IActionResult> UpdateAsistenteTipo(long recId, [FromBody] UpdateAsistenteTipoRequest req)
+        {
+            try
+            {
+                var token = HttpContext.Session.GetString("Token");
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized(new { success = false, message = "Session expired" });
+
+                if (req == null || string.IsNullOrWhiteSpace(req.AsistenteTipo))
+                    return BadRequest(new { success = false, message = "Missing asistenteTipo" });
+
+                var activityResp = await _apiClient.GetActivityByRecIdAsync(token, recId);
+                var asistentes = activityResp.Data?.Asistentes ?? new List<ActivityAsistenteDto>();
+
+                if (asistentes.Count == 0)
+                    return Json(new { success = true, message = "No asistentes to update" });
+
+                var failures = 0;
+                foreach (var a in asistentes)
+                {
+                    if (string.IsNullOrWhiteSpace(a.AsistenteId))
+                        continue;
+
+                    var upsertReq = new CreateVisitaAsistenteRequest
+                    {
+                        RefRecIdActividad = recId.ToString(),
+                        AsistenteTipo = req.AsistenteTipo.Trim(),
+                        AsistenteId = a.AsistenteId.Trim(),
+                        ContactoRecId = string.Empty
+                    };
+
+                    var upsertResp = await _apiClient.CreateVisitaAsistenteAsync(token, upsertReq);
+                    if (!upsertResp.Success)
+                        failures++;
+                }
+
+                return Json(new
+                {
+                    success = failures == 0,
+                    message = failures == 0 ? "OK" : $"{failures} asistentes failed to update"
+                });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in UpdateAsistenteTipo");
+                return Json(new { success = false, message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // Deletes an activity (DELETE api/crm/activities/{recId})
+        [HttpDelete("Visitas/DeleteActivity/{recId:long}")]
+        public async Task<IActionResult> DeleteActivity(long recId, [FromQuery] bool IND_SetActionMark = false)
+        {
+            try
+            {
+                var token = HttpContext.Session.GetString("Token");
+                if (string.IsNullOrEmpty(token))
+                    return Unauthorized(new { success = false, message = "Session expired" });
+
+                var response = await _apiClient.DeleteActivityAsync(token, recId);
+
+                if (IND_SetActionMark && response.Success)
+                {
+                    TempData.INDSetActionMarkDanger();
+                }
+
+                return Json(new { success = response.Success, message = response.Message, data = response.Data });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in DeleteActivity");
                 return Json(new { success = false, message = ex.Message });
             }
             catch (Exception ex)

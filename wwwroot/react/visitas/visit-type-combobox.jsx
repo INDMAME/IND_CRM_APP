@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
 import ReactDOM, { createPortal } from "react-dom";
-import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.jsx";
 
 function normalizeOption(opt) {
   if (!opt) return { value: "", text: "" };
@@ -172,10 +172,10 @@ const VisitTypeCombobox = ({ options = [], targetId = "visitType" }) => {
           <button
             type="button"
             className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-600"
-            onClick={() => setOpen(true)}
-            aria-label="Mostrar opciones"
+            onClick={() => setOpen((prev) => !prev)}
+            aria-label={open ? "Ocultar opciones" : "Mostrar opciones"}
           >
-            <ChevronDownIcon className="h-4 w-4" />
+            {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
           </button>
         </div>
         <FloatingList anchorRef={boxRef} open={open} zIndex={360000}>

@@ -3,11 +3,18 @@
 Goal: every new combobox/dropdown in `wwwroot/react/visitas` (or future islands) must feel identical and stay stable when navigating steps.
 
 ## Core rules
-- Use Tailwind only; no Bootstrap/jQuery. Icons via `@heroicons/react` (ChevronDownIcon, XMarkIcon).
+- Use Tailwind only; no Bootstrap/jQuery. Chevron icons use the shared inline SVGs in `wwwroot/react/visitas/chevrons.jsx` (ChevronDownSvg, ChevronUpSvg). Other icons can use `@heroicons/react` (XMarkIcon, etc.).
 - Typography inherits project base (“Montserrat”). Primary color `#00296b` maps to `text-primary`, `bg-primary`, etc.
 - Render the floating list with `createPortal` into `document.body` and position using a fixed style computed from the anchor (see `FloatingList` helper).
 - Close on outside click (mousedown/touchstart) via shared `useOutsideClick`.
 - Z-index: keep list above forms (>= 360000) and blockers above list when loading.
+- Chevron standard (todas las listas):
+  - Flecha siempre `h-5 w-5`.
+  - Icono cambia: chevron-down cuando esta cerrada, chevron-up cuando esta abierta.
+  - Usa `ChevronDownSvg` / `ChevronUpSvg` para que el diseno sea identico al de Clientes.
+- Lupa de busqueda:
+  - Solo se muestra en el combobox de **clientes**.
+  - Otros dropdowns no muestran lupa, solo la flecha estandar.
 
 ## Interaction must-haves
 - Arrow click toggles open/close. If data needs loading, arrow triggers load then opens.
@@ -35,7 +42,7 @@ Goal: every new combobox/dropdown in `wwwroot/react/visitas` (or future islands)
 - List items:
   - Active: `bg-primary text-white`.
   - Selected: `bg-primary/10 text-primary`.
-  - Text lines: three-row layout (Title, Cargo, Empresa) for contacts; single line for simple selects.
+  - Text lines: contactos usan dos lineas (Nombre, Cargo); selects simples usan una linea.
 - Loading overlay: semi-transparent white with a small spinner.
 
 ## Error and status messaging

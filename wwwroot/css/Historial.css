@@ -27,6 +27,8 @@
 .timeline-card { background: #ffffff; border-radius: 14px; border: 1px solid #e5e7eb; box-shadow: 0 8px 22px rgba(0,0,0,0.08); width: 100%; overflow: hidden; position: relative; transition: transform .12s ease, box-shadow .12s ease; padding: 0; z-index: 1; }
 .filter-card { overflow: visible; position: sticky; top: 64px; z-index: 70; background: transparent; border: none; box-shadow: none; padding: 6px 2px; margin-bottom: 8px; }
 .timeline-card:hover { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,0,0,0.12); }
+.timeline-card--clickable { cursor: pointer; }
+.timeline-card--clickable:hover { border-color: #00296b; }
 .timeline-card__content { padding: 7px 8px; display: flex; flex-direction: column; gap: 2px; }
 .timeline-card-head { display: flex; justify-content: space-between; gap: 6px; align-items: center; margin-bottom: 1px; }
 .timeline-name { font-size: clamp(13.5px, 3.4vw, 15px); font-weight: 700; color: #0f172a; line-height: 1.12; margin-bottom: 0; text-transform: uppercase; letter-spacing: 0.01em; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 6px; }
@@ -34,6 +36,10 @@
 .timeline-date-block { font-size: 12px; color: #6b7280; line-height: 1.2; display: inline-block; text-transform: uppercase; }
 .timeline-desc-text { margin-top: 0; font-size: 13px; color: #475569; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-transform: uppercase; letter-spacing: 0.01em; padding-right: 6px; text-overflow: ellipsis; cursor: pointer; }
 .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.timeline-card--nodata .timeline-card-head { display: none; }
+.timeline-card--nodata .timeline-card__content { min-height: 86px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.timeline-card--nodata .timeline-desc-text { width: 100%; text-align: center; padding-right: 0; cursor: default; }
 
 .timeline-empty:empty::after {
     content: "No hay visitas en este rango";

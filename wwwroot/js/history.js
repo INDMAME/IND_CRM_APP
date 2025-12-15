@@ -3,6 +3,20 @@
     const fromDate = document.getElementById("fromDate");
     const toDate = document.getElementById("toDate");
 
+    const filterCacheKey = "visitas_history_filter_v1";
+    try {
+        const cachedRaw = sessionStorage.getItem(filterCacheKey);
+        if (cachedRaw) {
+            const cached = JSON.parse(cachedRaw);
+            if (cached && typeof cached === "object") {
+                if (cached.fromDate) fromDate.value = cached.fromDate;
+                if (cached.toDate) toDate.value = cached.toDate;
+            }
+        }
+    } catch {
+        // ignore cache errors
+    }
+
     const drpActivator = document.getElementById("drpActivator");
     const drpPopover = document.getElementById("drpPopover");
     const drpGrid = document.getElementById("drpGrid");
@@ -19,6 +33,7 @@
 
     let currentPage = 1;
     const pageSize = 50;
+    let debugLogged = 0;
 
     // --------------------------
     // Date Range Picker (custom)
@@ -209,6 +224,11 @@
             timeline.innerHTML = "";
             timeline.classList.add("timeline-empty");
             pagination.innerHTML = "";
+            try {
+                sessionStorage.removeItem(filterCacheKey);
+            } catch {
+                // ignore cache errors
+            }
         });
     }
 
@@ -227,6 +247,10 @@
     syncInputs();
     syncLabels();
     buildCalendar();
+
+    if (fromDate.value && toDate.value) {
+        loadActivities(1);
+    }
 
     // Captura cabecera X-Refreshed-Token si llega en las respuestas MVC
     async function fetchWithTokenUpdate(url, options) {
@@ -324,6 +348,16 @@
             const nameMax = narrow ? 32 : Infinity;
             const descMax = narrow ? 60 : Infinity;
 
+            const actividadIdRaw = (x.actividadId ?? x.ActividadId ?? "").toString().trim();
+            const actividadId = actividadIdRaw || "";
+            const recIdRaw = x.recId ?? x.RecId ?? "";
+            const recId = recIdRaw && !isNaN(Number(recIdRaw)) ? Number(recIdRaw) : null;
+            let linkId = actividadId || (recId ? recId.toString() : "");
+            if (debugLogged < 5) {
+                console.debug("activity item", { actividadId, recIdRaw, recId, raw: x });
+                debugLogged++;
+            }
+
             const rawName = (x.name ?? x.Name ?? "").toString().trim();
             const fullName = rawName.toUpperCase();
             const nombre = narrow ? shorten(fullName, nameMax) : fullName;
@@ -331,13 +365,19 @@
             const fecha = x.transDate ?? x.TransDate ?? "";
             const rawDesc = (x.description ?? x.Description ?? "").toString().trim();
             const fullDesc = rawDesc.toUpperCase();
+
+            // Do not allow navigation for placeholder cards with no data.
+            const isNoDataCard = !rawName && !rawDesc;
+            if (isNoDataCard) {
+                linkId = "";
+            }
             const descripcion = narrow ? shorten(fullDesc, descMax) : fullDesc;
             const isDescTruncated = narrow && fullDesc && descripcion !== fullDesc;
             const fechaFormatted = formatDate(fecha);
 
             const cardHtml = `
             <div class="timeline-item">
-                <div class="timeline-card">
+                <div class="timeline-card ${isNoDataCard ? "timeline-card--nodata" : ""} ${linkId ? "timeline-card--clickable" : ""}" data-actividadid="${actividadId}" data-recid="${recId ?? ""}">
                     <div class="timeline-card__content">
                         <div class="timeline-card-head">
                             <div>
@@ -362,6 +402,35 @@
             if (lastDescEl && fullDesc) {
                 lastDescEl.dataset.fulltext = fullDesc;
                 bindTooltip(lastDescEl, fullDesc);
+            }
+
+            const cardEl = timeline.lastElementChild?.querySelector(".timeline-card");
+            if (cardEl && linkId) {
+                let navTimer;
+                const navigate = () => {
+                    navTimer = setTimeout(() => {
+                        try {
+                            sessionStorage.setItem(
+                                filterCacheKey,
+                                JSON.stringify({
+                                    fromDate: fromDate.value || "",
+                                    toDate: toDate.value || ""
+                                })
+                            );
+                        } catch {
+                            // ignore cache errors
+                        }
+                        const target = encodeURIComponent(linkId);
+                        window.location.href = `/Visitas/Detalle/${target}`;
+                    }, 240); // pequeño delay para evitar clics accidentales
+                };
+                const cancel = () => {
+                    if (navTimer) clearTimeout(navTimer);
+                };
+                cardEl.addEventListener("click", navigate);
+                cardEl.addEventListener("mouseleave", cancel);
+                cardEl.addEventListener("touchend", navigate, { passive: true });
+                cardEl.addEventListener("touchmove", cancel, { passive: true });
             }
         });
     }
@@ -465,8 +534,3 @@
 
     // Estado inicial: sin datos hasta que el usuario seleccione un rango
 });
-
-
-
-
-

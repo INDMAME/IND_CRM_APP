@@ -1,0 +1,28 @@
+@using System.Text.Encodings.Web
+@{
+// IND TempData keys (PRG)
+var type = TempData["IND_ActionMark_Type"] as string; // okProcess | okDelProcess | errorProcess | warningProcess
+var duration = TempData["IND_ActionMark_DurationMs"] as string; // e.g. "1500"
+
+type = string.IsNullOrWhiteSpace(type) ? null : type;
+duration = string.IsNullOrWhiteSpace(duration) ? "1500" : duration;
+
+
+}
+
+@if (type != null)
+{
+<script>
+// IND Action Mark init via TempData (PRG). No Bootstrap.
+document.addEventListener('DOMContentLoaded', function () {
+try {
+if (window.IND && typeof window.IND.flashActionMark === 'function') {
+window.IND.flashActionMark({
+type: '@JavaScriptEncoder.Default.Encode(type)',
+durationMs: parseInt('@JavaScriptEncoder.Default.Encode(duration)', 10) || 1500
+});
+}
+} catch (e) { }
+});
+</script>
+}
