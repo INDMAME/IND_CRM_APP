@@ -112,6 +112,15 @@
   - Prefer meaningful names that express function (for example CrmActivityViewModel, CrmAccountListItemViewModel).
 - Do not introduce non ASCII characters in C#, Razor, JSX or comments.
 
+## I18N rules (UI only)
+
+- Supported UI cultures: es-ES (default), en, pt, it, zh-Hans.
+- Any user-facing UI string (labels, titles, placeholders, aria-labels, empty states, error messages) must come from localization resources, not hardcoded text.
+- Razor: use `IStringLocalizer<INDSharedResource>` and resource keys under `Resources/Infrastructure/Localization/INDSharedResource.*.resx`.
+- React islands / JS: inject a per-page `window.__IND_I18N__` dictionary from Razor and read it via `indT(...)` helpers.
+- When adding a new key, add it to all supported culture .resx files in the same change.
+- Do not translate business data from the API; translate only fixed UI strings.
+
 ## How Codex should work
 
 - Refactoring:

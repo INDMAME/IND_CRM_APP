@@ -7,11 +7,82 @@ import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.jsx";
 
 const classNames = (...classes) => classes.filter(Boolean).join(" ");
 
+const IND_I18N = globalThis.__IND_I18N__ || {};
+const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+const indFormat = (key, fallback, ...args) => {
+  const template = indT(key, fallback);
+  return String(template).replace(/\{(\d+)\}/g, (_, idx) => String(args[Number(idx)] ?? ""));
+};
+
+function indExtractId(value) {
+  if (value === null || value === undefined) return "";
+  if (typeof value === "string" || typeof value === "number") return String(value).trim();
+  if (typeof value === "object") {
+    const candidate = value.recId ?? value.RecId ?? value.id ?? value.Id ?? value.value ?? value.Value;
+    if (typeof candidate === "string" || typeof candidate === "number") return String(candidate).trim();
+  }
+  return "";
+}
+
+function indExtractNumericId(value, depth = 0) {
+  if (depth > 3) return "";
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number" && Number.isFinite(value)) return String(Math.trunc(value));
+  if (typeof value === "string") {
+    const raw = value.trim();
+    if (!raw) return "";
+    if (/^\d+$/.test(raw)) return raw;
+    const m = raw.match(/(\d{3,})/);
+    return m ? m[1] : "";
+  }
+  if (typeof value !== "object") return "";
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = indExtractNumericId(item, depth + 1);
+      if (found) return found;
+    }
+    return "";
+  }
+
+  const keys = [
+    "recId",
+    "RecId",
+    "refRecIdActividad",
+    "RefRecIdActividad",
+    "actividadRecId",
+    "ActividadRecId",
+    "id",
+    "Id",
+    "value",
+    "Value",
+    "result",
+    "Result",
+    "data",
+    "Data",
+    "message",
+    "Message"
+  ];
+
+  for (const k of keys) {
+    if (Object.prototype.hasOwnProperty.call(value, k)) {
+      const found = indExtractNumericId(value[k], depth + 1);
+      if (found) return found;
+    }
+  }
+
+  for (const v of Object.values(value)) {
+    const found = indExtractNumericId(v, depth + 1);
+    if (found) return found;
+  }
+
+  return "";
+}
+
 const Spinner = ({ size = "h-4 w-4" }) => (
   <div
     className={`${size} border-2 border-primary border-t-transparent rounded-full animate-spin`}
     role="status"
-    aria-label="Cargando"
+    aria-label={indT("Common_Loading", "Loading")}
   />
 );
 
@@ -109,12 +180,22 @@ async function fetchJson(url, options) {
   const res = await fetch(url, merged);
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+    // Prefer upstream API message when provided.
+    try {
+      const json = JSON.parse(text);
+      const msg = json?.message;
+      if (typeof msg === "string" && msg.trim()) {
+        throw new Error(msg);
+      }
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(indT("Api_RequestFailed", "Request failed. Please try again."));
   }
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error(`Invalid JSON from ${url}: ${text}`);
+    throw new Error(indT("Api_InvalidJson", "Invalid server response."));
   }
 }
 
@@ -133,7 +214,10 @@ function useTopbar(step, canGoNext, onNext, onPrev, busy = false, canSubmitStep2
       forward.style.visibility = showForward ? "visible" : "hidden";
       forward.disabled = !showForward || busy;
       forward.onclick = showForward ? () => onNext() : null;
-      forward.setAttribute("aria-label", isStep2 ? "Crear visita" : "Avanzar");
+      forward.setAttribute(
+        "aria-label",
+        isStep2 ? indT("Common_Create", "Create") : indT("Common_Next", "Next")
+      );
       forward.setAttribute("aria-disabled", isStep2 && !canSubmitStep2 ? "true" : "false");
       forward.classList.toggle("opacity-50", isStep2 && !canSubmitStep2);
       forward.classList.toggle("cursor-not-allowed", isStep2 && !canSubmitStep2);
@@ -251,7 +335,7 @@ function ClientCombobox({ onSelected, value = null }) {
   const [fetchedQuery, setFetchedQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [status, setStatus] = useState("Escribe al menos 4 caracteres");
+  const [status, setStatus] = useState(indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4));
   const [selected, setSelected] = useState(value);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -278,7 +362,7 @@ function ClientCombobox({ onSelected, value = null }) {
     // If the current query differs from the last fetched query, keep showing the last options while the new request arrives.
     if (fetchedQuery && q !== fetchedQuery) return options;
     const match = options.filter((o) => o.text.toLowerCase().includes(q));
-    // If API devolvio items pero el filtro queda vacio (caso mayus/minus/espacios), muestra los items en lugar de "Sin coincidencias".
+    // If the API returned items but the local filter produces an empty list, keep showing items instead of "No matches".
     return match.length > 0 ? match : options;
   }, [options, query, fetchedQuery]);
 
@@ -296,7 +380,7 @@ function ClientCombobox({ onSelected, value = null }) {
   const search = async () => {
     const currentQuery = query.trim().toLowerCase();
     if (currentQuery.length < 4) {
-      setStatus("Escribe al menos 4 caracteres");
+      setStatus(indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4));
       setOptions([]);
       setHasMore(false);
       return;
@@ -310,14 +394,18 @@ function ClientCombobox({ onSelected, value = null }) {
       const cached = clientCache.get(cacheKey);
       setFetchedQuery(currentQuery);
       setOptions(cached);
-      setStatus(cached.length ? `${cached.length} cliente(s) (cache)` : "Sin resultados");
+      setStatus(
+        cached.length
+          ? indFormat("Visits_Create_ClientCountCache", "{0} clients (cache)", cached.length)
+          : indT("Visits_Create_NoResults", "No results")
+      );
       setHasMore(cached.length === 10);
       setOpen(true);
       return;
     }
     setLoading(true);
     setBlocking(true);
-    setStatus("Buscando...");
+    setStatus(indT("Visits_Create_Searching", "Searching..."));
     const controller = new AbortController();
     abortRef.current = controller;
     let shouldOpenOnFinish = false;
@@ -348,16 +436,16 @@ function ClientCombobox({ onSelected, value = null }) {
       setFetchedQuery(currentQuery);
       clientCache.set(query.trim().toLowerCase(), items);
       setOptions(items);
-      setStatus(items.length ? `${items.length} cliente(s)` : "Sin resultados");
+      setStatus(items.length ? indFormat("Visits_Create_ClientCount", "{0} clients", items.length) : indT("Visits_Create_NoResults", "No results"));
       setHasMore(items.length === 10);
       shouldOpenOnFinish = true;
     } catch (err) {
       if (err?.name === "AbortError") {
-        setStatus("Busqueda cancelada");
+        setStatus(indT("Visits_Create_SearchCanceled", "Search canceled."));
       } else if (String(err?.message || "").toLowerCase().includes("timeout")) {
-        setStatus("La busqueda tardo demasiado. Escribe mas caracteres para acotar.");
+        setStatus(indT("Visits_Create_SearchTimeout", "The search took too long. Type more characters to narrow down."));
       } else {
-        setStatus("Error al cargar clientes");
+        setStatus(indT("Visits_Create_LoadClientsError", "Failed to load clients."));
       }
     } finally {
       abortRef.current = null;
@@ -440,7 +528,7 @@ function ClientCombobox({ onSelected, value = null }) {
       cancelPending();
       setOptions([]);
       setHasMore(false);
-      setStatus("Escribe al menos 4 caracteres");
+      setStatus(indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4));
       setOpen(true);
       return;
     }
@@ -490,7 +578,7 @@ function ClientCombobox({ onSelected, value = null }) {
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      <label className="text-sm font-semibold text-slate-700">Buscar cliente</label>
+      <label className="text-sm font-semibold text-slate-700">{indT("Visits_Create_SearchClient", "Search client")}</label>
       <div className="relative">
         <div
           ref={boxRef}
@@ -510,11 +598,15 @@ function ClientCombobox({ onSelected, value = null }) {
               setFetchedQuery("");
               setOptions([]);
               setHasMore(false);
-              setStatus(val.trim().length < 4 ? "Escribe al menos 4 caracteres" : "Presiona la lupa, Enter o la flecha para buscar");
+              setStatus(
+                val.trim().length < 4
+                  ? indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4)
+                  : indT("Visits_Create_PressSearchHint", "Press search, Enter or ArrowDown to search.")
+              );
               setOpen(false);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Escribe al menos 4 caracteres..."
+            placeholder={indFormat("Visits_Create_ClientPlaceholder", "Type at least {0} characters...", 4)}
             readOnly={loading || blocking}
             aria-busy={loading || blocking}
             role="combobox"
@@ -537,7 +629,7 @@ function ClientCombobox({ onSelected, value = null }) {
                 type="button"
                 className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
                 onClick={requestSearchOrOpen}
-                aria-label="Buscar cliente"
+                aria-label={indT("Visits_Create_SearchClient", "Search client")}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 15.75-2.489-2.489m0 0a3.375 3.375 0 1 0-4.773-4.773 3.375 3.375 0 0 0 4.774 4.774ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -557,7 +649,11 @@ function ClientCombobox({ onSelected, value = null }) {
                 requestSearchOrOpen();
               }}
               disabled={loading || blocking}
-              aria-label={open ? "Ocultar opciones de cliente" : "Mostrar opciones de cliente"}
+              aria-label={
+                open
+                  ? indT("Visits_Create_HideClientOptions", "Hide client options")
+                  : indT("Visits_Create_ShowClientOptions", "Show client options")
+              }
             >
               {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
             </button>
@@ -567,11 +663,13 @@ function ClientCombobox({ onSelected, value = null }) {
           <div ref={listRef} id="client-options">
             {options.length === 0 && (
               <div className="px-4 py-2 text-sm text-slate-500">
-                {query.trim().length < 4 ? "Escribe al menos 4 caracteres" : "Sin resultados"}
+                {query.trim().length < 4
+                  ? indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4)
+                  : indT("Visits_Create_NoResults", "No results")}
               </div>
             )}
             {!loading && options.length > 0 && filtered.length === 0 && (
-              <div className="px-4 py-2 text-sm text-slate-500">Sin coincidencias</div>
+              <div className="px-4 py-2 text-sm text-slate-500">{indT("Visits_Create_NoMatches", "No matches")}</div>
             )}
             {!loading &&
               filtered.map((opt, idx) => {
@@ -621,7 +719,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
   const [selected, setSelected] = useState(value);
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [status, setStatus] = useState("Seleccione un cliente primero");
+  const [status, setStatus] = useState(indT("Visits_Create_SelectClientFirst", "Select a client first."));
   const [hasLoaded, setHasLoaded] = useState(false);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -644,7 +742,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
     return as.every((v, i) => v === bs[i]);
   };
 
-  // Sincroniza selección interna con la prop (restauración de draft/cache)
+  // Sync internal selection with the prop (draft/cache restore).
   useEffect(() => {
     if (!isSameSelection(value || [], selected)) {
       setSelected(value || []);
@@ -664,7 +762,11 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
       setOptions(cached);
       setHasLoaded(true);
       setHasMore(cached.length === 10);
-      setStatus(cached.length ? `${cached.length} contacto(s) (cache)` : "Sin contactos");
+      setStatus(
+        cached.length
+          ? indFormat("Visits_Create_ContactCountCache", "{0} contacts (cache)", cached.length)
+          : indT("Visits_Create_NoContacts", "No contacts")
+      );
       return true;
     }
     return false;
@@ -685,7 +787,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
       setOptions([]);
       setSelected([]);
       onChange([]);
-      setStatus("Seleccione un cliente primero");
+      setStatus(indT("Visits_Create_SelectClientFirst", "Select a client first."));
       setHasLoaded(false);
       clearStoredSelection(lastAccountRef.current);
       lastAccountRef.current = "";
@@ -703,7 +805,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
     if (!usedCache) {
       setOptions([]);
       setHasLoaded(false);
-      setStatus("Presiona la flecha para cargar contactos");
+      setStatus(indT("Visits_Create_PressArrowToLoadContacts", "Press ArrowDown to load contacts."));
     }
 
     const storedSelection = getStoredSelection(accountNum);
@@ -737,7 +839,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
     if (!append) {
       setLoading(true);
       setBlocking(true);
-      if (pageToLoad === 1) setStatus("Cargando contactos...");
+      if (pageToLoad === 1) setStatus(indT("Visits_Create_LoadingContacts", "Loading contacts..."));
     } else {
       setLoadingMore(true);
       setBlocking(true);
@@ -759,9 +861,9 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
       setHasLoaded(true);
       setHasMore(mapped.length === 10);
       setPage(pageToLoad);
-      setStatus(mapped.length ? `${mapped.length} contacto(s)` : "Sin contactos");
+      setStatus(mapped.length ? indFormat("Visits_Create_ContactCount", "{0} contacts", mapped.length) : indT("Visits_Create_NoContacts", "No contacts"));
     } catch {
-      setStatus("Error al cargar contactos");
+      setStatus(indT("Visits_Create_LoadContactsError", "Failed to load contacts."));
     } finally {
       abortRef.current = null;
       setLoading(false);
@@ -851,7 +953,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      <label className="text-sm font-semibold text-slate-700">Buscar contacto (selección múltiple)</label>
+      <label className="text-sm font-semibold text-slate-700">{indT("Visits_Create_SearchContact", "Search contact")}</label>
       <div className="relative">
         <div
           ref={boxRef}
@@ -877,7 +979,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
               className="flex-1 min-w-[120px] bg-transparent text-sm leading-5 text-slate-900 border-none outline-none px-1 py-1 focus:ring-0 focus:border-transparent"
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleKeyDown}
-              placeholder={selected.length ? "" : "Escribe para filtrar..."}
+              placeholder={selected.length ? "" : indT("Visits_Create_FilterPlaceholder", "Type to filter...")}
               ref={inputRef}
               readOnly={!accountNum}
               onFocus={() => {
@@ -912,17 +1014,17 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
             {loading && (
               <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-500">
                 <Spinner size="h-4 w-4" />
-                Cargando...
+                {indT("Common_Loading", "Loading")}
               </div>
             )}
             {!loading && options.length === 0 && (
               <div className="px-4 py-2 text-sm text-slate-500">
-                {hasLoaded ? "Sin contactos" : "Seleccione un cliente primero"}
+                {hasLoaded ? indT("Visits_Create_NoContacts", "No contacts") : indT("Visits_Create_SelectClientFirst", "Select a client first.")}
               </div>
             )}
             {!loading && options.length > 0 && filtered.length === 0 && (
               <div className="px-4 py-2 text-sm text-slate-500">
-                {query.trim() ? "Sin coincidencias" : "No hay mas contactos disponibles"}
+                {query.trim() ? indT("Visits_Create_NoMatches", "No matches") : indT("Visits_Create_NoMoreContacts", "No more contacts available")}
               </div>
             )}
             {!loading &&
@@ -1078,7 +1180,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, invalid 
             type="button"
             className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-600"
             onClick={() => setOpen((prev) => !prev)}
-            aria-label={open ? "Ocultar opciones" : "Mostrar opciones"}
+            aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
           >
             {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
           </button>
@@ -1086,7 +1188,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, invalid 
         <FloatingList anchorRef={boxRef} open={open} zIndex={360000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl">
           <div id={`select-options-${label}`} ref={listRef} role="listbox" aria-label={label}>
             {filtered.length === 0 && (
-              <div className="px-4 py-2 text-sm text-slate-500">Sin resultados</div>
+              <div className="px-4 py-2 text-sm text-slate-500">{indT("Dropdown_NoResults", "No results")}</div>
             )}
             {filtered.map((opt, idx) => {
               const sel = selected?.value === opt.value;
@@ -1154,12 +1256,14 @@ function VisitasApp() {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [showRequired, setShowRequired] = useState(false);
+  const modalConfirmInFlightRef = useRef(false);
+  const [modalError, setModalError] = useState("");
   const [modal, setModal] = useState({
     open: false,
     title: "",
     message: "",
-    confirmText: "Aceptar",
-    cancelText: "Cancelar",
+    confirmText: indT("Confirm_Yes", "OK"),
+    cancelText: indT("Confirm_No", "Cancel"),
     onConfirm: null,
   });
 
@@ -1168,23 +1272,41 @@ function VisitasApp() {
   }, []);
 
   const openConfirmModal = React.useCallback((opts) => {
+    setModalError("");
     setModal({
       open: true,
       title: opts?.title || "",
       message: opts?.message || "",
-      confirmText: opts?.confirmText || "Aceptar",
-      cancelText: "Cancelar",
+      confirmText: opts?.confirmText || indT("Confirm_Yes", "OK"),
+      cancelText: indT("Confirm_No", "Cancel"),
       onConfirm: opts?.onConfirm || null,
     });
   }, []);
 
   const handleModalConfirm = React.useCallback(async () => {
+    if (busy) return;
     const cb = modal.onConfirm;
-    closeModal();
-    if (typeof cb === "function") {
-      await cb();
+    if (typeof cb !== "function") {
+      closeModal();
+      return;
     }
-  }, [modal.onConfirm, closeModal]);
+    if (modalConfirmInFlightRef.current) return;
+    modalConfirmInFlightRef.current = true;
+    setModalError("");
+    try {
+      const result = await cb();
+      if (result !== false) {
+        closeModal();
+      }
+    } catch (err) {
+      console.error("Modal confirm failed:", err);
+      const msg = err?.message || indT("Api_RequestFailed", "Request failed. Please try again.");
+      setModalError(msg);
+      setStatus(msg);
+    } finally {
+      modalConfirmInFlightRef.current = false;
+    }
+  }, [busy, modal.onConfirm, closeModal]);
 
   // Clear contactos solo si el cliente cambia (evita limpiar al restaurar/vuelta de paso 2)
   const prevClientRef = useRef(null);
@@ -1269,7 +1391,7 @@ function VisitasApp() {
     }
   }, []);
 
-  // Guarda la selección por cliente en storage para restaurar al volver
+  // Store selection per client to restore on return.
   useEffect(() => {
     if (selectedClient?.value) {
       setStoredSelection(selectedClient.value, selectedContacts);
@@ -1298,22 +1420,23 @@ function VisitasApp() {
   );
 
   const doCreate = async () => {
-    if (busy) return;
+    if (busy) return false;
+    setModalError("");
     if (!selectedClient) {
-      setStatus("Selecciona un cliente.");
-      return;
+      setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
+      return false;
     }
     if (!selectedContacts.length) {
-      setStatus("Selecciona al menos un contacto.");
-      return;
+      setStatus(indT("Visits_Create_SelectContactRequired", "Select at least one contact."));
+      return false;
     }
     if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {
       setShowRequired(true);
-      setStatus("Completa los campos obligatorios.");
-      return;
+      setStatus(indT("Visits_Create_CompleteRequired", "Complete required fields."));
+      return false;
     }
     setBusy(true);
-    setStatus("Creando actividad...");
+    setStatus(indT("Visits_Create_CreatingActivity", "Creating activity..."));
 
     try {
       const payloadActivity = {
@@ -1333,14 +1456,17 @@ function VisitasApp() {
         body: JSON.stringify(payloadActivity),
       });
 
-      if (!resAct.success) throw new Error(resAct.message || "Fallo al crear actividad");
+      if (!resAct.success) throw new Error(resAct.message || indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
 
-      const recIdActividad = (resAct.message || "").trim();
+      const recIdActividad =
+        indExtractNumericId(resAct.data) ||
+        indExtractNumericId(resAct.message) ||
+        indExtractNumericId(indExtractId(resAct.data) || indExtractId(resAct.message));
+      if (!recIdActividad) throw new Error(indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
 
       for (let idx = 0; idx < selectedContacts.length; idx++) {
         const c = selectedContacts[idx];
-        const msg = `Creando visita para ${c.text}...`;
-        setStatus(msg);
+        setStatus(indFormat("Visits_Create_CreatingVisitFor", "Creating visit for {0}...", c.text));
         const payloadVisita = {
           refRecIdActividad: recIdActividad,
           asistenteTipo: defaultAsistenteTipo,
@@ -1352,7 +1478,7 @@ function VisitasApp() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payloadVisita),
         });
-        if (!resVis.success) throw new Error(resVis.message || "Fallo al crear visita");
+        if (!resVis.success) throw new Error(resVis.message || indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
       }
 
       try {
@@ -1362,34 +1488,41 @@ function VisitasApp() {
       }
 
       setHistoryFilterForDate(transDate);
+      closeModal();
       flashActionMark("okProcess", 1500);
       await wait(1500);
       window.location.href = "/Historial/History";
+      return true;
     } catch (e) {
-      setStatus(e.message || "Error al crear la visita");
+      const msg = e.message || indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
+      setModalError(msg);
+      setStatus(msg);
+      flashActionMark("errorProcess", 1500);
       setBusy(false);
+      return false;
     }
   };
 
   const handleSubmit = () => {
     if (busy) return;
+    if (modal.open) return;
     if (!selectedClient) {
-      setStatus("Selecciona un cliente.");
+      setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
       return;
     }
     if (!selectedContacts.length) {
-      setStatus("Selecciona al menos un contacto.");
+      setStatus(indT("Visits_Create_SelectContactRequired", "Select at least one contact."));
       return;
     }
     if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {
       setShowRequired(true);
-      setStatus("Completa los campos obligatorios.");
+      setStatus(indT("Visits_Create_CompleteRequired", "Complete required fields."));
       return;
     }
     openConfirmModal({
-      title: "Confirmar creación",
-      message: "Deseas crear esta visita?",
-      confirmText: "Aceptar",
+      title: indT("Visits_Create_ConfirmCreate_Title", "Confirm create"),
+      message: indT("Visits_Create_ConfirmCreate_Body", "Do you want to create this visit?"),
+      confirmText: indT("Confirm_Yes", "OK"),
       onConfirm: doCreate,
     });
   };
@@ -1411,22 +1544,34 @@ function VisitasApp() {
         createPortal(
           <div className="fixed inset-0 z-[600000] flex items-center justify-center bg-black/40 backdrop-blur-[1px] px-4">
             <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
-              <div className="text-lg font-semibold text-slate-900">{modal.title}</div>
-              <div className="text-sm text-slate-700 whitespace-pre-line">{modal.message}</div>
+               <div className="text-lg font-semibold text-slate-900">{modal.title}</div>
+               <div className="text-sm text-slate-700 whitespace-pre-line">{modal.message}</div>
+              {(busy || !!modalError) && (
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  {busy && <Spinner size="h-4 w-4" />}
+                  <span className={modalError && !busy ? "text-rose-700" : ""}>
+                    {busy ? (status || indT("Common_Loading", "Loading")) : modalError}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
                   className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:border-primary hover:text-primary transition"
                   onClick={closeModal}
+                  disabled={busy}
                 >
-                  {modal.cancelText || "Cancelar"}
+                  {modal.cancelText || indT("Confirm_No", "Cancel")}
                 </button>
                 <button
                   type="button"
                   className="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition"
-                  onClick={handleModalConfirm}
+                  onClick={!busy && !!modalError ? closeModal : handleModalConfirm}
+                  disabled={busy}
                 >
-                  {modal.confirmText || "Aceptar"}
+                  {busy
+                    ? indT("Common_Loading", "Loading")
+                    : (!busy && !!modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")))}
                 </button>
               </div>
             </div>
@@ -1445,7 +1590,7 @@ function VisitasApp() {
             />
             {selectedContacts.length > 0 && (
               <div className="text-xs text-slate-600">
-                {selectedContacts.length} contacto(s) seleccionado(s)
+                {indFormat("Visits_Create_SelectedContactsCount", "{0} selected contact(s)", selectedContacts.length)}
               </div>
             )}
           </div>
@@ -1455,23 +1600,23 @@ function VisitasApp() {
       {step === 2 && (
         <div className="shadow-sm glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
           <div className="text-base font-semibold text-slate-900 border-b border-slate-200 pb-3">
-            Datos de la visita
+            {indT("Visits_Create_VisitData_Title", "Visit details")}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SingleDatePicker label="Fecha" value={transDate} onChange={setTransDate} />
+            <SingleDatePicker label={indT("Visits_Detail_Date_Label", "Date")} value={transDate} onChange={setTransDate} />
             <SelectCombobox
-              label="Tipo de visita"
+              label={indT("Visits_Detail_VisitType_Label", "Visit type")}
               options={visitTypes}
               value={visitType}
               onChange={setVisitType}
-              placeholder="Selecciona tipo"
+              placeholder={indT("Visits_Detail_VisitType_Placeholder", "Select type")}
               invalid={visitTypeInvalid}
             />
           </div>
 
           <div className="grid grid-cols-1 gap-3">
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Descripción</label>
+              <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Description", "Description")}</label>
               <input
                 id="description"
                 className={classNames(
@@ -1486,7 +1631,7 @@ function VisitasApp() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Comentarios</label>
+              <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Comments", "Comments")}</label>
               <textarea
                 id="comentarios"
                 className={classNames(
@@ -1500,7 +1645,7 @@ function VisitasApp() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Antecedentes</label>
+              <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Background", "Background")}</label>
               <textarea
                 id="antecedentes"
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -1509,7 +1654,7 @@ function VisitasApp() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-semibold text-slate-700">Conclusiones</label>
+              <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
               <textarea
                 id="conclusiones"
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -1547,7 +1692,7 @@ class ErrorBoundary extends React.Component {
     if (this.state.hasError) {
       return (
         <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700">
-          Ocurrió un error al mostrar la página de visitas. Recarga y vuelve a intentar.
+          {indT("Visits_Create_ErrorBoundary", "An error occurred while rendering the visits page. Reload and try again.")}
         </div>
       );
     }

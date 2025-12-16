@@ -42,7 +42,7 @@
 .timeline-card--nodata .timeline-desc-text { width: 100%; text-align: center; padding-right: 0; cursor: default; }
 
 .timeline-empty:empty::after {
-    content: "No hay visitas en este rango";
+    content: attr(data-empty-text);
     display: block;
     padding: 32px 12px;
     text-align: center;

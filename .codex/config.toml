@@ -6,9 +6,9 @@ model_reasoning_effort = "xhigh"
 ####################################
 
 [tools]
-# Activa la herramienta de búsqueda web propia de Codex
+# Enable Codex web search tool
 web_search = true
-# alias para compatibilidad antigua:
+# Legacy alias:
 # web_search_request = true
 
 ####################################
@@ -16,21 +16,19 @@ web_search = true
 ####################################
 
 [history]
-# "save-all" guarda el historial local; "none" lo desactiva
+# "save-all" stores local history; "none" disables it
 persistence = "save-all"
-# max_bytes = 10485760   # límite de tamaño del historial en bytes
-
+# max_bytes = 10485760   # Max history size in bytes
 
 ####################################
 # MCP servers
 ####################################
 
-# Ejemplo sencillo: servidor MCP de filesystem via npx
+# Example: filesystem MCP server via npx
 [mcp_servers.filesystem]
 command = "npx"
 args = ["-y", "@modelcontextprotocol/server-filesystem", "C:/INDProjects"]
 env = { "DEBUG" = "false" }
-
 
 ####################################
 # Projects trust
@@ -74,6 +72,12 @@ Treat jQuery, jquery-validation and similar static libs as legacy:
 - Do not add new code depending on them.
 - Do not add new jQuery/jq-validation uses.
 - Touch legacy only to migrate safely to Tailwind + Tailwind CSS + Heroicons + Montserrat + #00296b without breaking existing functionality.
+
+I18N rules (UI only):
+- Supported UI cultures: es-ES (default), en, pt, it, zh-Hans.
+- Do not add hardcoded user-facing UI strings. Use shared resources (INDSharedResource) in Razor and inject per-page __IND_I18N__ dictionaries for React/JS.
+- When adding a new UI string, add the resource key to all supported cultures in the same change.
+- Do not translate dynamic business data from the API; translate only fixed UI strings.
 
 Deliver only stable, compatible, verified code aligned with the rules above.
 """

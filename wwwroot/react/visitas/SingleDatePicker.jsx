@@ -3,6 +3,9 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 // Single date picker matching the Historial DRP visual style.
 // Returns an ISO string (yyyy-MM-dd) via onChange.
 
+const IND_I18N = globalThis.__IND_I18N__ || {};
+const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+
 const pad = (n) => String(n).padStart(2, "0");
 const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
@@ -20,15 +23,30 @@ const parseISO = (s) => {
   return null;
 };
 
-const formatDisplay = (d) =>
-  d
-    ? d
-        .toLocaleDateString("es-ES", { day: "numeric", month: "short", year: "numeric" })
-        .replace(/\./g, "")
-        .toLowerCase()
-    : "Anadir fecha";
+const normalizeUiLocale = (locale) => {
+  const value = String(locale || "").trim();
+  if (!value) return "es-ES";
+  if (/^zh-hans/i.test(value)) return "zh-CN";
+  return value;
+};
 
-export default function SingleDatePicker({ label = "Fecha", value, onChange, disabled = false }) {
+const getUiLocale = () => {
+  const fromHtml = document?.documentElement?.lang;
+  if (fromHtml && String(fromHtml).trim()) return normalizeUiLocale(fromHtml);
+  return "es-ES";
+};
+
+const formatDisplay = (d) => {
+  if (!d) return indT("History_AddDate", "Add date");
+  const locale = getUiLocale();
+  return d
+    .toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
+    .replace(/\./g, "")
+    .toLowerCase();
+};
+
+export default function SingleDatePicker({ label, value, onChange, disabled = false }) {
+  const effectiveLabel = (label && String(label).trim()) ? label : indT("Visits_Detail_Date_Label", "Date");
   const selectedDate = useMemo(() => parseISO(value), [value]);
   const [open, setOpen] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(
@@ -66,9 +84,16 @@ export default function SingleDatePicker({ label = "Fecha", value, onChange, dis
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const offset = (firstDay.getDay() + 6) % 7; // Monday as 0
 
-  const monthLabel = firstDay
-    .toLocaleDateString("es-ES", { month: "long" })
-    .replace(/^\w/, (c) => c.toUpperCase());
+  const monthLabel = (() => {
+    const locale = getUiLocale();
+    if (/^zh/i.test(locale)) {
+      return new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" }).format(firstDay);
+    }
+    const raw = firstDay.toLocaleDateString(locale, { month: "long" });
+    const first = raw.slice(0, 1);
+    const rest = raw.slice(1);
+    return `${first.toUpperCase()}${rest} ${currentYear}`;
+  })();
 
   const sameDay = (a, b) =>
     a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
@@ -115,7 +140,7 @@ export default function SingleDatePicker({ label = "Fecha", value, onChange, dis
         aria-expanded={open}
       >
         <div className={`drp-section ${open ? "active" : ""}`}>
-          <div className="drp-label">{label.toUpperCase()}</div>
+          <div className="drp-label">{String(effectiveLabel).toUpperCase()}</div>
           <div className="drp-value">
             <span>{formatDisplay(selectedDate)}</span>
           </div>
@@ -125,20 +150,20 @@ export default function SingleDatePicker({ label = "Fecha", value, onChange, dis
       {open && (
         <div className="drp-popover" role="dialog" aria-modal="true">
           <div className="drp-head">
-            <button type="button" className="drp-nav" aria-label="Mes anterior" onClick={() => goMonth(-1)}>
+            <button type="button" className="drp-nav" aria-label={indT("History_PrevMonth", "Previous month")} onClick={() => goMonth(-1)}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <div className="drp-month">{monthLabel} {currentYear}</div>
-            <button type="button" className="drp-nav" aria-label="Mes siguiente" onClick={() => goMonth(1)}>
+            <div className="drp-month">{monthLabel}</div>
+            <button type="button" className="drp-nav" aria-label={indT("History_NextMonth", "Next month")} onClick={() => goMonth(1)}>
               <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
           <div className="drp-weekdays">
-            <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sa</span><span>Do</span>
+            <span>{indT("History_Day_Mon", "Mo")}</span><span>{indT("History_Day_Tue", "Tu")}</span><span>{indT("History_Day_Wed", "We")}</span><span>{indT("History_Day_Thu", "Th")}</span><span>{indT("History_Day_Fri", "Fr")}</span><span>{indT("History_Day_Sat", "Sa")}</span><span>{indT("History_Day_Sun", "Su")}</span>
           </div>
           <div className="drp-grid">
             {Array.from({ length: offset }).map((_, i) => (
@@ -166,10 +191,9 @@ export default function SingleDatePicker({ label = "Fecha", value, onChange, dis
               );
             })}
           </div>
-          <div className="drp-status">Selecciona la fecha</div>
+          <div className="drp-status">{indT("DatePicker_SelectDate", "Select date")}</div>
         </div>
       )}
     </div>
   );
 }
-

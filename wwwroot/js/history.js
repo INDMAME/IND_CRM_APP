@@ -4,6 +4,8 @@
     const toDate = document.getElementById("toDate");
 
     const filterCacheKey = "visitas_history_filter_v1";
+    const IND_I18N = (window && window.__IND_I18N__) ? window.__IND_I18N__ : {};
+    const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
     try {
         const cachedRaw = sessionStorage.getItem(filterCacheKey);
         if (cachedRaw) {
@@ -31,6 +33,12 @@
     const loader = document.getElementById("resultsLoader");
     const pagination = document.getElementById("pagination");
 
+    const setTimelineEmptyText = () => {
+        if (!timeline) return;
+        timeline.dataset.emptyText = indT("History_NoDataInRange", "No visits in this range");
+    };
+    setTimelineEmptyText();
+
     let currentPage = 1;
     const pageSize = 50;
     let debugLogged = 0;
@@ -39,6 +47,17 @@
     // Date Range Picker (custom)
     // --------------------------
     const pad = (n) => n.toString().padStart(2, "0");
+    const normalizeUiLocale = (locale) => {
+        const value = String(locale || "").trim();
+        if (!value) return "es-ES";
+        if (/^zh-hans/i.test(value)) return "zh-CN";
+        return value;
+    };
+    const getUiLocale = () => {
+        const fromHtml = document?.documentElement?.lang;
+        if (fromHtml && String(fromHtml).trim()) return normalizeUiLocale(fromHtml);
+        return "es-ES";
+    };
     const parseISO = (s) => {
         if (!s) return null;
         const [y, m, d] = s.split("-").map(Number);
@@ -57,11 +76,14 @@
     const isBefore = (a, b) => a && b && a.getTime() < b.getTime();
     const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
-    const formatDisplay = (d) => d.toLocaleDateString("es-ES", {
-        day: "numeric",
-        month: "short",
-        year: "numeric"
-    }).replace(/\./g, "").toLowerCase();
+    const formatDisplay = (d) => {
+        const locale = getUiLocale();
+        return d.toLocaleDateString(locale, {
+            day: "numeric",
+            month: "short",
+            year: "numeric"
+        }).replace(/\./g, "").toLowerCase();
+    };
 
     function syncInputs() {
         fromDate.value = startDate ? toISO(startDate) : "";
@@ -69,8 +91,8 @@
     }
 
     function syncLabels() {
-        drpStartValue.textContent = startDate ? formatDisplay(startDate) : "Añadir fecha";
-        drpEndValue.textContent = endDate ? formatDisplay(endDate) : "Añadir fecha";
+        drpStartValue.textContent = startDate ? formatDisplay(startDate) : indT("History_AddDate", "Add date");
+        drpEndValue.textContent = endDate ? formatDisplay(endDate) : indT("History_AddDate", "Add date");
         drpClear.style.display = (startDate || endDate) ? "inline-flex" : "none";
         drpSections.forEach(sec => {
             const section = sec.dataset.section;
@@ -80,10 +102,10 @@
         if (drpStatus) {
             drpStatus.textContent =
                 selectingStep === "start"
-                    ? "Selecciona la fecha de inicio"
+                    ? indT("History_Status_SelectStart", "Select start date")
                     : endDate || hoverDate
-                        ? "Selecciona la fecha de fin"
-                        : "Selecciona la fecha de fin";
+                        ? indT("History_Status_SelectEnd", "Select end date")
+                        : indT("History_Status_SelectEnd", "Select end date");
         }
     }
 
@@ -145,7 +167,16 @@
         const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
         const offset = (firstDay.getDay() + 6) % 7; // lunes como 0
 
-        drpMonthLabel.textContent = `${firstDay.toLocaleDateString("es-ES", { month: "long" })} ${currentYear}`.replace(/^\w/, c => c.toUpperCase());
+        const locale = getUiLocale();
+        if (/^zh/i.test(locale)) {
+            drpMonthLabel.textContent = new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" }).format(firstDay);
+        } else {
+            const monthName = firstDay.toLocaleDateString(locale, { month: "long" });
+            const capMonthName = (monthName && monthName.length && /[A-Za-z]/.test(monthName[0]))
+                ? monthName[0].toLocaleUpperCase(locale) + monthName.slice(1)
+                : monthName;
+            drpMonthLabel.textContent = `${capMonthName} ${currentYear}`;
+        }
 
         let html = "";
         for (let i = 0; i < offset; i++) html += `<button class="drp-day empty" disabled></button>`;
@@ -337,6 +368,7 @@
     function renderTimeline(items) {
         timeline.innerHTML = "";
         timeline.classList.remove("timeline-empty");
+        setTimelineEmptyText();
 
         if (!items || items.length === 0) {
             timeline.classList.add("timeline-empty");
@@ -375,6 +407,7 @@
             const isDescTruncated = narrow && fullDesc && descripcion !== fullDesc;
             const fechaFormatted = formatDate(fecha);
 
+            const noDataText = indT("Common_NoData", "No data");
             const cardHtml = `
             <div class="timeline-item">
                 <div class="timeline-card ${isNoDataCard ? "timeline-card--nodata" : ""} ${linkId ? "timeline-card--clickable" : ""}" data-actividadid="${actividadId}" data-recid="${recId ?? ""}">
@@ -385,7 +418,7 @@
                                 <div class="timeline-date-chip">${fechaFormatted}</div>
                             </div>
                         </div>
-                        <p class="timeline-desc-text">${descripcion || "Sin datos"}</p>
+                        <p class="timeline-desc-text">${descripcion || noDataText}</p>
                     </div>
                 </div>
             </div>
@@ -422,7 +455,7 @@
                         }
                         const target = encodeURIComponent(linkId);
                         window.location.href = `/Visitas/Detalle/${target}`;
-                    }, 240); // pequeño delay para evitar clics accidentales
+                    }, 240); // Small delay to avoid accidental clicks.
                 };
                 const cancel = () => {
                     if (navTimer) clearTimeout(navTimer);
@@ -494,9 +527,9 @@
         }
 
         if (isNaN(d)) return value;
-        // ejemplo: 22 de abril de 1993
+        const locale = getUiLocale();
         return d
-            .toLocaleDateString("es-ES", {
+            .toLocaleDateString(locale, {
                 day: "numeric",
                 month: "long",
                 year: "numeric"

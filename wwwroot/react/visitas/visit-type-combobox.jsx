@@ -12,6 +12,9 @@ function normalizeOption(opt) {
 
 const classNames = (...classes) => classes.filter(Boolean).join(" ");
 
+const IND_I18N = globalThis.__IND_I18N__ || {};
+const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+
 function useFloatingPosition(targetRef, open) {
   const [style, setStyle] = useState({ top: 0, left: 0, width: 0 });
 
@@ -161,7 +164,7 @@ const VisitTypeCombobox = ({ options = [], targetId = "visitType" }) => {
             }}
             onFocus={() => setOpen(true)}
             onKeyDown={onKeyDown}
-            aria-label="Tipo de visita"
+            aria-label={indT("Visits_Detail_VisitType_Label", "Visit type")}
             role="combobox"
             aria-expanded={open}
             aria-controls="visit-type-options"
@@ -173,15 +176,15 @@ const VisitTypeCombobox = ({ options = [], targetId = "visitType" }) => {
             type="button"
             className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-600"
             onClick={() => setOpen((prev) => !prev)}
-            aria-label={open ? "Ocultar opciones" : "Mostrar opciones"}
+            aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
           >
             {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
           </button>
         </div>
         <FloatingList anchorRef={boxRef} open={open} zIndex={360000}>
-          <div ref={listRef} role="listbox" aria-label="Tipo de visita">
+          <div ref={listRef} role="listbox" aria-label={indT("Visits_Detail_VisitType_Label", "Visit type")}>
             {filtered.length === 0 ? (
-              <div className="relative cursor-default select-none px-4 py-2 text-slate-700">Sin resultados</div>
+              <div className="relative cursor-default select-none px-4 py-2 text-slate-700">{indT("Dropdown_NoResults", "No results")}</div>
             ) : (
               filtered.map((opt, idx) => {
                 const isActive = idx === activeIndex;

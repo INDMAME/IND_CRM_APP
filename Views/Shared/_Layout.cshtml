@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -92,15 +92,32 @@
         function toggleUserMenu() {
             const menu = document.getElementById("userMenu");
             const chevron = document.getElementById("userMenuChevron");
+            const langSub = document.getElementById("indLangSubmenu");
+            const langBtn = document.getElementById("indLangButton");
 
             const isOpen = menu.classList.toggle("open");
             if (chevron) {
                 chevron.classList.toggle("rotate-180", isOpen);
             }
+
+            // Defensive: close language submenu when the user menu closes.
+            if (!isOpen) {
+                langSub?.classList.add("hidden");
+                langBtn?.setAttribute("aria-expanded", "false");
+            }
             const userChip = document.querySelector(".user-chip");
             if (userChip) {
                 userChip.setAttribute("aria-expanded", isOpen.toString());
             }
+        }
+
+        function toggleIndLanguageMenu() {
+            const langSub = document.getElementById("indLangSubmenu");
+            const langBtn = document.getElementById("indLangButton");
+            if (!langSub || !langBtn) return;
+
+            const nowHidden = langSub.classList.toggle("hidden");
+            langBtn.setAttribute("aria-expanded", (!nowHidden).toString());
         }
     </script>
 

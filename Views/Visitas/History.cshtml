@@ -1,9 +1,11 @@
 @inject Microsoft.AspNetCore.Http.IHttpContextAccessor? HttpAccessor
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
 
 @{
 #pragma warning disable CS8602
 #pragma warning disable CS8600
-    ViewData["Title"] = "Historial";
+    ViewData["Title"] = SR["Visits_History_Title"];
     ViewData["HideNavArrows"] = true;
     var userHiddenValue = HttpAccessor?.HttpContext?.Session?.GetString("AxUser") ?? string.Empty;
 }
@@ -14,14 +16,14 @@
 
 <div class="max-w-3xl mx-auto px-1 sm:px-2 py-4 space-y-4">
 
-    <!-- Selector de fechas compactado -->
+    <!-- Compact date selector -->
     <div class="timeline-card filter-card glass-panel shadow-card p-3 sm:p-4 relative">
         <div id="drpActivator" class="drp w-full">
             <div class="drp-section" data-section="start">
-                <div class="drp-label">DESDE</div>
+                <div class="drp-label">@SR["History_From"].Value.ToUpperInvariant()</div>
                 <div class="drp-value">
                     <i class="bi bi-calendar3 drp-icon"></i>
-                    <span id="drpStartValue">Anadir fecha</span>
+                    <span id="drpStartValue">@SR["History_AddDate"]</span>
                 </div>
             </div>
 
@@ -31,37 +33,37 @@
             <div class="drp-separator-mobile flex sm:hidden"></div>
 
             <div class="drp-section" data-section="end">
-                <div class="drp-label">HASTA</div>
+                <div class="drp-label">@SR["History_To"].Value.ToUpperInvariant()</div>
                 <div class="drp-value">
                     <i class="bi bi-calendar3 drp-icon"></i>
-                    <span id="drpEndValue">Anadir fecha</span>
+                    <span id="drpEndValue">@SR["History_AddDate"]</span>
                 </div>
             </div>
 
-            <button type="button" id="drpClear" class="drp-clear" aria-label="Limpiar rango" style="display:none;">
+            <button type="button" id="drpClear" class="drp-clear" aria-label="@SR["History_ClearRange"]" style="display:none;">
                 <i class="bi bi-x-lg"></i>
             </button>
         </div>
 
         <div id="drpPopover" class="drp-popover" hidden>
             <div class="drp-head">
-                <button type="button" class="drp-nav" data-dir="prev" aria-label="Mes anterior">
+                <button type="button" class="drp-nav" data-dir="prev" aria-label="@SR["History_PrevMonth"]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
                     </svg>
                 </button>
                 <div id="drpMonthLabel" class="drp-month"></div>
-                <button type="button" class="drp-nav" data-dir="next" aria-label="Mes siguiente">
+                <button type="button" class="drp-nav" data-dir="next" aria-label="@SR["History_NextMonth"]">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
                     </svg>
                 </button>
             </div>
             <div class="drp-weekdays">
-                <span>Lu</span><span>Ma</span><span>Mi</span><span>Ju</span><span>Vi</span><span>Sá</span><span>Do</span>
+                <span>@SR["History_Day_Mon"]</span><span>@SR["History_Day_Tue"]</span><span>@SR["History_Day_Wed"]</span><span>@SR["History_Day_Thu"]</span><span>@SR["History_Day_Fri"]</span><span>@SR["History_Day_Sat"]</span><span>@SR["History_Day_Sun"]</span>
             </div>
             <div id="drpGrid" class="drp-grid"></div>
-            <div id="drpStatus" class="drp-status">Selecciona la fecha de llegada</div>
+            <div id="drpStatus" class="drp-status">@SR["History_Status_SelectStart"]</div>
         </div>
     </div>
 
@@ -71,20 +73,28 @@
 
     <!-- Loader -->
     <div id="resultsLoader" class="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700" style="display:none;">
-        <div class="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-label="Cargando"></div>
-        Cargando datos...
+        <div class="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-label="@SR["Common_Loading"]"></div>
+        @SR["History_Loading"]
     </div>
 
     <!-- Timeline -->
     <div id="timelineContainer" class="timeline-box"></div>
 
-    <!-- Paginación -->
+    <!-- Pagination -->
     <ul id="pagination" class="pagination"></ul>
 </div>
 
 @section Scripts {
     <script>
         window.CurrentAxUser = "@(HttpAccessor?.HttpContext.Session.GetString("AxUser"))";
+        window.__IND_I18N__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            History_AddDate = SR["History_AddDate"].Value,
+            History_Status_SelectStart = SR["History_Status_SelectStart"].Value,
+            History_Status_SelectEnd = SR["History_Status_SelectEnd"].Value,
+            History_Loading = SR["History_Loading"].Value,
+            History_NoDataInRange = SR["History_NoDataInRange"].Value,
+            Common_NoData = SR["Common_NoData"].Value
+        }));
     </script>
     <script src="~/js/history.js" asp-append-version="true"></script>
 }

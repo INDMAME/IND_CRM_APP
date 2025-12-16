@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="Common_Save" xml:space="preserve"><value>保存</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>关闭</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>返回</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>删除</value></data>
+  <data name="Common_Search" xml:space="preserve"><value>搜索</value></data>
+  <data name="Common_ClearFilters" xml:space="preserve"><value>清除筛选</value></data>
+  <data name="Common_Loading" xml:space="preserve"><value>加载中</value></data>
+  <data name="Common_NoData" xml:space="preserve"><value>无数据</value></data>
+  <data name="Common_User" xml:space="preserve"><value>用户</value></data>
+  <data name="Common_Unknown" xml:space="preserve"><value>未知</value></data>
+  <data name="Common_NotAvailable" xml:space="preserve"><value>不适用</value></data>
+  <data name="Common_AppLogoAlt" xml:space="preserve"><value>Insertec 标志</value></data>
+
+  <data name="Nav_Visits" xml:space="preserve"><value>拜访</value></data>
+  <data name="Nav_Visits_Create" xml:space="preserve"><value>新建</value></data>
+  <data name="Nav_Visits_History" xml:space="preserve"><value>历史</value></data>
+
+  <data name="Visits_Create_Title" xml:space="preserve"><value>创建</value></data>
+  <data name="Visits_Detail_Title" xml:space="preserve"><value>详情</value></data>
+  <data name="Visits_History_Title" xml:space="preserve"><value>历史</value></data>
+
+  <data name="UserMenu_ConnectedAs" xml:space="preserve"><value>登录为</value></data>
+  <data name="UserMenu_Languages" xml:space="preserve"><value>语言</value></data>
+  <data name="UserMenu_Logout" xml:space="preserve"><value>退出登录</value></data>
+
+  <data name="Language_ES" xml:space="preserve"><value>ES</value></data>
+  <data name="Language_EN" xml:space="preserve"><value>EN</value></data>
+  <data name="Language_PT" xml:space="preserve"><value>PT</value></data>
+  <data name="Language_IT" xml:space="preserve"><value>IT</value></data>
+  <data name="Language_ZH" xml:space="preserve"><value>ZH</value></data>
+  <data name="Language_ES_Name" xml:space="preserve"><value>西班牙语</value></data>
+  <data name="Language_EN_Name" xml:space="preserve"><value>英语</value></data>
+  <data name="Language_PT_Name" xml:space="preserve"><value>葡萄牙语</value></data>
+  <data name="Language_IT_Name" xml:space="preserve"><value>意大利语</value></data>
+  <data name="Language_ZH_Name" xml:space="preserve"><value>中文(简体)</value></data>
+
+  <data name="Login_Title" xml:space="preserve"><value>登录</value></data>
+  <data name="Login_Welcome" xml:space="preserve"><value>欢迎</value></data>
+  <data name="Login_Subtitle" xml:space="preserve"><value>请输入凭据以继续</value></data>
+  <data name="Login_Username" xml:space="preserve"><value>用户名</value></data>
+  <data name="Login_Password" xml:space="preserve"><value>密码</value></data>
+  <data name="Login_RememberMe" xml:space="preserve"><value>记住我</value></data>
+  <data name="Login_Submit" xml:space="preserve"><value>登录</value></data>
+  <data name="Login_TogglePassword" xml:space="preserve"><value>显示或隐藏密码</value></data>
+  <data name="Auth_InvalidCredentials" xml:space="preserve"><value>凭据无效。</value></data>
+  <data name="Auth_LoginApiError" xml:space="preserve"><value>由于 API 错误，登录失败。</value></data>
+
+  <data name="Topbar_OpenMenu" xml:space="preserve"><value>打开菜单</value></data>
+  <data name="Topbar_Back" xml:space="preserve"><value>返回</value></data>
+  <data name="Topbar_Forward" xml:space="preserve"><value>前进</value></data>
+  <data name="Topbar_EditSave" xml:space="preserve"><value>编辑/保存</value></data>
+  <data name="Topbar_Delete" xml:space="preserve"><value>删除</value></data>
+
+  <data name="History_From" xml:space="preserve"><value>从</value></data>
+  <data name="History_To" xml:space="preserve"><value>到</value></data>
+  <data name="History_AddDate" xml:space="preserve"><value>添加日期</value></data>
+  <data name="History_ClearRange" xml:space="preserve"><value>清除范围</value></data>
+  <data name="History_PrevMonth" xml:space="preserve"><value>上个月</value></data>
+  <data name="History_NextMonth" xml:space="preserve"><value>下个月</value></data>
+  <data name="History_Day_Mon" xml:space="preserve"><value>一</value></data>
+  <data name="History_Day_Tue" xml:space="preserve"><value>二</value></data>
+  <data name="History_Day_Wed" xml:space="preserve"><value>三</value></data>
+  <data name="History_Day_Thu" xml:space="preserve"><value>四</value></data>
+  <data name="History_Day_Fri" xml:space="preserve"><value>五</value></data>
+  <data name="History_Day_Sat" xml:space="preserve"><value>六</value></data>
+  <data name="History_Day_Sun" xml:space="preserve"><value>日</value></data>
+  <data name="History_Status_SelectStart" xml:space="preserve"><value>选择开始日期</value></data>
+  <data name="History_Status_SelectEnd" xml:space="preserve"><value>选择结束日期</value></data>
+  <data name="History_Loading" xml:space="preserve"><value>加载中...</value></data>
+  <data name="History_NoDataInRange" xml:space="preserve"><value>此日期范围内没有拜访</value></data>
+
+  <data name="Common_OK" xml:space="preserve"><value>确定</value></data>
+  <data name="Common_Next" xml:space="preserve"><value>下一步</value></data>
+  <data name="Common_Create" xml:space="preserve"><value>创建</value></data>
+
+  <data name="Api_SessionExpired" xml:space="preserve"><value>会话已过期。</value></data>
+  <data name="Api_TokenMissing" xml:space="preserve"><value>会话中未找到令牌。</value></data>
+  <data name="Api_MissingAccountNum" xml:space="preserve"><value>缺少 accountNum。</value></data>
+  <data name="Api_MissingCode" xml:space="preserve"><value>缺少代码。</value></data>
+  <data name="Api_MissingAsistenteTipo" xml:space="preserve"><value>缺少 asistenteTipo。</value></data>
+  <data name="Api_NoAsistentesToUpdate" xml:space="preserve"><value>没有可更新的助手。</value></data>
+  <data name="Api_AsistentesUpdateFailedCount" xml:space="preserve"><value>有 {0} 位参会者未能更新。</value></data>
+  <data name="Api_AsistentesUpdateFailed" xml:space="preserve"><value>{0} 个助手更新失败。</value></data>
+  <data name="Api_AccountsFetchFailed" xml:space="preserve"><value>无法获取客户。请缩小搜索范围后重试。</value></data>
+  <data name="Api_RequestFailed" xml:space="preserve"><value>请求失败。请重试。</value></data>
+  <data name="Api_InvalidJson" xml:space="preserve"><value>服务器响应无效。</value></data>
+
+  <data name="Sidebar_CloseMenu" xml:space="preserve"><value>关闭菜单</value></data>
+  <data name="Home_Title" xml:space="preserve"><value>首页</value></data>
+  <data name="Home_SelectLeftMenu" xml:space="preserve"><value>请选择左侧菜单中的选项。</value></data>
+  <data name="Home_Welcome" xml:space="preserve"><value>欢迎</value></data>
+  <data name="Home_DataFromAx" xml:space="preserve"><value>来自 Axapta 3.0 的数据</value></data>
+  <data name="Home_Environment" xml:space="preserve"><value>环境</value></data>
+  <data name="Home_Company" xml:space="preserve"><value>公司</value></data>
+  <data name="Error_BackHome" xml:space="preserve"><value>返回首页</value></data>
+  <data name="Error_Title" xml:space="preserve"><value>系统错误</value></data>
+  <data name="Error_Heading" xml:space="preserve"><value>发生错误</value></data>
+  <data name="Error_Body" xml:space="preserve"><value>处理您的请求时出现问题。如果问题仍然存在，请联系系统管理员。</value></data>
+
+  <data name="DatePicker_SelectDate" xml:space="preserve"><value>选择日期</value></data>
+
+  <data name="Visits_Create_SearchClient" xml:space="preserve"><value>搜索客户</value></data>
+  <data name="Visits_Create_SearchContact" xml:space="preserve"><value>搜索联系人（多选）</value></data>
+  <data name="Visits_Create_SelectClientRequired" xml:space="preserve"><value>请选择客户。</value></data>
+  <data name="Visits_Create_SelectContactRequired" xml:space="preserve"><value>请至少选择一个联系人。</value></data>
+  <data name="Visits_Create_CompleteRequired" xml:space="preserve"><value>请填写必填字段。</value></data>
+  <data name="Visits_Create_LoadingContacts" xml:space="preserve"><value>正在加载联系人...</value></data>
+  <data name="Visits_Create_ConfirmCreate_Title" xml:space="preserve"><value>确认创建</value></data>
+  <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve"><value>确定要创建此拜访吗？</value></data>
+  <data name="Visits_Create_CreatingVisitFor" xml:space="preserve"><value>正在为 {0} 创建拜访...</value></data>
+
+  <data name="Visits_Create_MinChars" xml:space="preserve"><value>请至少输入 {0} 个字符。</value></data>
+  <data name="Visits_Create_PressSearchHint" xml:space="preserve"><value>点击放大镜、按 Enter 或点击箭头进行搜索。</value></data>
+  <data name="Visits_Create_Searching" xml:space="preserve"><value>正在搜索...</value></data>
+  <data name="Visits_Create_SearchCanceled" xml:space="preserve"><value>搜索已取消。</value></data>
+  <data name="Visits_Create_SearchTimeout" xml:space="preserve"><value>搜索耗时过长。请输入更多字符以缩小范围。</value></data>
+  <data name="Visits_Create_LoadClientsError" xml:space="preserve"><value>加载客户时出错。</value></data>
+  <data name="Visits_Create_ClientPlaceholder" xml:space="preserve"><value>请至少输入 {0} 个字符...</value></data>
+  <data name="Visits_Create_NoResults" xml:space="preserve"><value>无结果。</value></data>
+  <data name="Visits_Create_NoMatches" xml:space="preserve"><value>无匹配项。</value></data>
+  <data name="Visits_Create_ShowClientOptions" xml:space="preserve"><value>显示客户选项</value></data>
+  <data name="Visits_Create_HideClientOptions" xml:space="preserve"><value>隐藏客户选项</value></data>
+  <data name="Visits_Create_SelectClientFirst" xml:space="preserve"><value>请先选择客户。</value></data>
+  <data name="Visits_Create_PressArrowToLoadContacts" xml:space="preserve"><value>点击箭头加载联系人。</value></data>
+  <data name="Visits_Create_LoadContactsError" xml:space="preserve"><value>加载联系人时出错。</value></data>
+  <data name="Visits_Create_NoContacts" xml:space="preserve"><value>无联系人。</value></data>
+  <data name="Visits_Create_NoMoreContacts" xml:space="preserve"><value>没有更多联系人可用。</value></data>
+  <data name="Visits_Create_FilterPlaceholder" xml:space="preserve"><value>输入以筛选...</value></data>
+  <data name="Visits_Create_CreatingActivity" xml:space="preserve"><value>正在创建活动...</value></data>
+  <data name="Visits_Create_CreateActivityFailed" xml:space="preserve"><value>创建活动失败。</value></data>
+  <data name="Visits_Create_CreateVisitFailed" xml:space="preserve"><value>创建拜访失败。</value></data>
+  <data name="Visits_Create_CreateVisitError" xml:space="preserve"><value>创建拜访时出错。</value></data>
+  <data name="Visits_Create_ClientCount" xml:space="preserve"><value>{0} 个客户</value></data>
+  <data name="Visits_Create_ClientCountCache" xml:space="preserve"><value>{0} 个客户（缓存）</value></data>
+  <data name="Visits_Create_ContactCount" xml:space="preserve"><value>{0} 个联系人</value></data>
+  <data name="Visits_Create_ContactCountCache" xml:space="preserve"><value>{0} 个联系人（缓存）</value></data>
+  <data name="Visits_Create_SelectedContactsCount" xml:space="preserve"><value>已选择 {0} 个联系人</value></data>
+
+  <data name="Visits_Create_VisitData_Title" xml:space="preserve"><value>拜访信息</value></data>
+  <data name="Visits_Field_Description" xml:space="preserve"><value>描述</value></data>
+  <data name="Visits_Field_Comments" xml:space="preserve"><value>备注</value></data>
+  <data name="Visits_Field_Background" xml:space="preserve"><value>背景</value></data>
+  <data name="Visits_Field_Conclusions" xml:space="preserve"><value>结论</value></data>
+  <data name="Visits_Create_ErrorBoundary" xml:space="preserve"><value>显示拜访页面时出错。请刷新后重试。</value></data>
+
+  <data name="Visits_Detail_VisitData_Title" xml:space="preserve"><value>拜访信息</value></data>
+  <data name="Visits_Detail_Date_Label" xml:space="preserve"><value>日期</value></data>
+  <data name="Visits_Detail_VisitType_Label" xml:space="preserve"><value>拜访类型</value></data>
+  <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve"><value>请选择类型</value></data>
+  <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve"><value>保存更改</value></data>
+  <data name="Visits_Detail_SaveChanges_Body" xml:space="preserve"><value>确定要保存活动的更改吗？</value></data>
+  <data name="Visits_Detail_DeleteActivity_Title" xml:space="preserve"><value>删除活动</value></data>
+  <data name="Visits_Detail_DeleteActivity_Body" xml:space="preserve"><value>确定要删除此活动吗？此操作无法撤销。</value></data>
+
+  <data name="Visits_Detail_NoResults" xml:space="preserve"><value>无结果。</value></data>
+  <data name="Visits_Detail_ShowOptions" xml:space="preserve"><value>显示选项</value></data>
+  <data name="Visits_Detail_HideOptions" xml:space="preserve"><value>隐藏选项</value></data>
+  <data name="Visits_Detail_LoadActivityFailed" xml:space="preserve"><value>无法获取活动数据。</value></data>
+  <data name="Visits_Detail_EditingEnabled" xml:space="preserve"><value>已启用编辑。</value></data>
+  <data name="Visits_Detail_Updating" xml:space="preserve"><value>正在更新活动...</value></data>
+  <data name="Visits_Detail_Updated" xml:space="preserve"><value>活动已更新。</value></data>
+  <data name="Visits_Detail_UpdateFailed" xml:space="preserve"><value>无法更新。</value></data>
+  <data name="Visits_Detail_UpdateError" xml:space="preserve"><value>更新出错。</value></data>
+  <data name="Visits_Detail_Deleting" xml:space="preserve"><value>正在删除活动...</value></data>
+  <data name="Visits_Detail_Deleted" xml:space="preserve"><value>活动已删除。</value></data>
+  <data name="Visits_Detail_DeleteFailed" xml:space="preserve"><value>无法删除。</value></data>
+  <data name="Visits_Detail_DeleteError" xml:space="preserve"><value>删除出错。</value></data>
+  <data name="Visits_Detail_ErrorBoundary" xml:space="preserve"><value>显示详情页面时出错。请刷新后重试。</value></data>
+
+  <data name="Dropdown_NoResults" xml:space="preserve"><value>无结果。</value></data>
+  <data name="Dropdown_ShowOptions" xml:space="preserve"><value>显示选项</value></data>
+  <data name="Dropdown_HideOptions" xml:space="preserve"><value>隐藏选项</value></data>
+
+  <data name="Enum_None" xml:space="preserve"><value>无</value></data>
+  <data name="Enum_ActividadType_Fax" xml:space="preserve"><value>传真</value></data>
+  <data name="Enum_ActividadType_Email" xml:space="preserve"><value>电子邮件</value></data>
+  <data name="Enum_ActividadType_PhoneCall" xml:space="preserve"><value>电话</value></data>
+  <data name="Enum_ActividadType_Visit" xml:space="preserve"><value>拜访</value></data>
+  <data name="Enum_ActividadType_Task" xml:space="preserve"><value>任务</value></data>
+
+  <data name="Enum_TipoVisita_Commercial" xml:space="preserve"><value>商务</value></data>
+  <data name="Enum_TipoVisita_Technical" xml:space="preserve"><value>技术</value></data>
+
+  <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve"><value>咨询</value></data>
+  <data name="Enum_ActividadOrigen_Oferta" xml:space="preserve"><value>报价</value></data>
+  <data name="Enum_ActividadOrigen_Evento" xml:space="preserve"><value>活动</value></data>
+  <data name="Enum_ActividadOrigen_Usuario" xml:space="preserve"><value>用户</value></data>
+  <data name="Enum_ActividadOrigen_CampanaMarketing" xml:space="preserve"><value>营销活动</value></data>
+  <data name="Enum_ActividadOrigen_ClientePotencial" xml:space="preserve"><value>潜在客户</value></data>
+  <data name="Enum_ActividadOrigen_ContactoEvento" xml:space="preserve"><value>活动联系人</value></data>
+  <data name="Enum_ActividadOrigen_Cliente" xml:space="preserve"><value>客户</value></data>
+  <data name="Enum_ActividadOrigen_Proveedor" xml:space="preserve"><value>供应商</value></data>
+  <data name="Enum_ActividadOrigen_Proyecto" xml:space="preserve"><value>项目</value></data>
+  <data name="Enum_ActividadOrigen_ProveedorPotencial" xml:space="preserve"><value>潜在供应商</value></data>
+
+  <data name="Enum_AsistenteTipo_None" xml:space="preserve"><value>无助手</value></data>
+  <data name="Enum_AsistenteTipo_Tecnico" xml:space="preserve"><value>技术</value></data>
+  <data name="Enum_AsistenteTipo_Commercial" xml:space="preserve"><value>商务</value></data>
+
+  <data name="Confirm_Delete_Title" xml:space="preserve"><value>删除</value></data>
+  <data name="Confirm_Delete_Body" xml:space="preserve"><value>确定要删除此项吗？</value></data>
+  <data name="Confirm_Yes" xml:space="preserve"><value>确定</value></data>
+  <data name="Confirm_No" xml:space="preserve"><value>取消</value></data>
+</root>

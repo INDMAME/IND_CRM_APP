@@ -2,9 +2,11 @@
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using IND_CRM_APP.Extensions;
+using IND_CRM_APP.Infrastructure.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Localization;
 using System;
 using System.Linq;
 
@@ -14,10 +16,18 @@ namespace IND_CRM_APP.Controllers
     public class VisitasController : BaseMvcController
     {
         private readonly ILogger<VisitasController> _logger;
+        private readonly IINDCrmEnumLocalizer _enumLocalizer;
+        private readonly IStringLocalizer<INDSharedResource> _sr;
 
-        public VisitasController(ICrmApiClient apiClient, ILogger<VisitasController> logger) : base(apiClient)
+        public VisitasController(
+            ICrmApiClient apiClient,
+            ILogger<VisitasController> logger,
+            IINDCrmEnumLocalizer enumLocalizer,
+            IStringLocalizer<INDSharedResource> sr) : base(apiClient)
         {
             _logger = logger;
+            _enumLocalizer = enumLocalizer;
+            _sr = sr;
         }
 
         // Returns accounts for dropdown with paging
@@ -30,7 +40,7 @@ namespace IND_CRM_APP.Controllers
         {
             var token = HttpContext.Session.GetString("Token");
             if (string.IsNullOrWhiteSpace(token))
-                return Unauthorized(new { message = "Session expired" });
+                return Unauthorized(new { message = _sr["Api_SessionExpired"].Value });
 
             try
             {
@@ -40,7 +50,7 @@ namespace IND_CRM_APP.Controllers
 
                 if (!result.Success && !items.Any())
                 {
-                    var msg = result.GetMessageOrDefault("No se pudieron obtener clientes. Afina tu b\u00fasqueda e intenta de nuevo.");
+                    var msg = result.GetMessageOrDefault(_sr["Api_AccountsFetchFailed"].Value);
                     return StatusCode(StatusCodes.Status504GatewayTimeout, new { message = msg });
                 }
 
@@ -67,10 +77,10 @@ namespace IND_CRM_APP.Controllers
         {
             var token = HttpContext.Session.GetString("Token");
             if (string.IsNullOrWhiteSpace(token))
-                return Unauthorized(new { message = "Session expired" });
+                return Unauthorized(new { message = _sr["Api_SessionExpired"].Value });
 
             if (string.IsNullOrWhiteSpace(accountNum))
-                return BadRequest(new { message = "Missing accountNum" });
+                return BadRequest(new { message = _sr["Api_MissingAccountNum"].Value });
 
             try
             {
@@ -104,10 +114,10 @@ namespace IND_CRM_APP.Controllers
                 await LoadEnvironmentInfoAsync();
 
                 // Load enum lists for selects
-                ViewBag.CRMActividadTypeEnum = CrmEnumHelper.GetActividadTypeItems();
-                ViewBag.CRMTipoVisitaEnum = CrmEnumHelper.GetTipoVisitaItems();
-                ViewBag.CRMActividadOrigenEnum = CrmEnumHelper.GetActividadOrigenItems();
-                ViewBag.AsistenteTipoEnum = CrmEnumHelper.GetAsistenteTipoItems();
+                ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
+                ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
+                ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
+                ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
 
                 ViewBag.AxUser = HttpContext.Session.GetString("AxUser");
 
@@ -128,14 +138,15 @@ namespace IND_CRM_APP.Controllers
             {
                 string token = HttpContext.Session.GetString("Token") ?? string.Empty;
                 if (string.IsNullOrEmpty(token))
-                    return Json(new { success = false, message = "Token not found in session." });
+                    return Json(new { success = false, message = _sr["Api_TokenMissing"].Value });
 
                 var response = await _apiClient.CreateActivityAsync(token, req);
 
                 return Json(new
                 {
                     success = response.Success,
-                    message = response.Message
+                    message = response.Message,
+                    data = response.Data
                 });
             }
             catch (ApiException ex)
@@ -157,7 +168,7 @@ namespace IND_CRM_APP.Controllers
             {
                 string token = HttpContext.Session.GetString("Token") ?? string.Empty;
                 if (string.IsNullOrEmpty(token))
-                    return Json(new { success = false, message = "Token not found in session." });
+                    return Json(new { success = false, message = _sr["Api_TokenMissing"].Value });
 
                 var response = await _apiClient.CreateVisitaAsistenteAsync(token, req);
 
@@ -169,7 +180,8 @@ namespace IND_CRM_APP.Controllers
                 return Json(new
                 {
                     success = response.Success,
-                    message = response.Message
+                    message = response.Message,
+                    data = response.Data
                 });
             }
             catch (ApiException ex)
@@ -222,7 +234,7 @@ namespace IND_CRM_APP.Controllers
                     activity = new ActivityDto();
                 }
 
-                // Fallback to legacy recId lookup if needed or if by-code returned vacío
+                // Fallback to legacy recId lookup if needed or if by-code returned empty data.
                 long? recIdFallback = null;
                 if (long.TryParse(code, out var recIdParsedFromCode))
                 {
@@ -279,18 +291,11 @@ namespace IND_CRM_APP.Controllers
 
                 string NormalizeVisitType(string? raw)
                 {
-                    if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
-
-                    var match = CrmEnumHelper.GetTipoVisitaItems()
-                        .FirstOrDefault(x =>
-                            string.Equals(x.Value?.ToString(), raw, StringComparison.OrdinalIgnoreCase) ||
-                            string.Equals(x.Text?.ToString(), raw, StringComparison.OrdinalIgnoreCase));
-
-                    return match?.Value?.ToString() ?? raw;
+                    return CrmEnumHelper.NormalizeTipoVisitaValue(raw);
                 }
 
-                var recIdValue = activity.RecId
-                    ?? (recIdFallback.HasValue ? recIdFallback.Value.ToString() : string.Empty)
+                var recIdValue = !string.IsNullOrWhiteSpace(activity.RecId) ? activity.RecId : null
+                    ?? (recIdFallback.HasValue ? recIdFallback.Value.ToString() : null)
                     ?? (long.TryParse(code, out var recIdParsed) ? recIdParsed.ToString() : string.Empty);
 
                 var detail = new
@@ -308,10 +313,10 @@ namespace IND_CRM_APP.Controllers
                     Cliente = activity.Name ?? string.Empty
                 };
 
-                ViewBag.CRMActividadTypeEnum = CrmEnumHelper.GetActividadTypeItems();
-                ViewBag.CRMTipoVisitaEnum = CrmEnumHelper.GetTipoVisitaItems();
-                ViewBag.CRMActividadOrigenEnum = CrmEnumHelper.GetActividadOrigenItems();
-                ViewBag.AsistenteTipoEnum = CrmEnumHelper.GetAsistenteTipoItems();
+                ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
+                ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
+                ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
+                ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
                 ViewBag.AxUser = HttpContext.Session.GetString("AxUser");
                 ViewData["IsVisitaDetail"] = true;
                 ViewBag.ActivityDetail = detail;
@@ -330,10 +335,10 @@ namespace IND_CRM_APP.Controllers
         {
             var token = HttpContext.Session.GetString("Token");
             if (string.IsNullOrWhiteSpace(token))
-                return Unauthorized(new { success = false, message = "Session expired" });
+                return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
             if (string.IsNullOrWhiteSpace(code))
-                return BadRequest(new { success = false, message = "Missing code" });
+                return BadRequest(new { success = false, message = _sr["Api_MissingCode"].Value });
 
             var response = await _apiClient.GetActivityByCodeAsync(token, code);
             return Json(response);
@@ -347,7 +352,7 @@ namespace IND_CRM_APP.Controllers
             {
                 var token = HttpContext.Session.GetString("Token");
                 if (string.IsNullOrEmpty(token))
-                    return Unauthorized(new { success = false, message = "Session expired" });
+                    return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
                 var response = await _apiClient.UpdateActivityAsync(token, recId, req);
 
@@ -379,16 +384,16 @@ namespace IND_CRM_APP.Controllers
             {
                 var token = HttpContext.Session.GetString("Token");
                 if (string.IsNullOrEmpty(token))
-                    return Unauthorized(new { success = false, message = "Session expired" });
+                    return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
                 if (req == null || string.IsNullOrWhiteSpace(req.AsistenteTipo))
-                    return BadRequest(new { success = false, message = "Missing asistenteTipo" });
+                    return BadRequest(new { success = false, message = _sr["Api_MissingAsistenteTipo"].Value });
 
                 var activityResp = await _apiClient.GetActivityByRecIdAsync(token, recId);
                 var asistentes = activityResp.Data?.Asistentes ?? new List<ActivityAsistenteDto>();
 
                 if (asistentes.Count == 0)
-                    return Json(new { success = true, message = "No asistentes to update" });
+                    return Json(new { success = true, message = _sr["Api_NoAsistentesToUpdate"].Value });
 
                 var failures = 0;
                 foreach (var a in asistentes)
@@ -412,7 +417,7 @@ namespace IND_CRM_APP.Controllers
                 return Json(new
                 {
                     success = failures == 0,
-                    message = failures == 0 ? "OK" : $"{failures} asistentes failed to update"
+                    message = failures == 0 ? _sr["Common_OK"].Value : string.Format(_sr["Api_AsistentesUpdateFailedCount"].Value, failures)
                 });
             }
             catch (ApiException ex)
@@ -434,7 +439,7 @@ namespace IND_CRM_APP.Controllers
             {
                 var token = HttpContext.Session.GetString("Token");
                 if (string.IsNullOrEmpty(token))
-                    return Unauthorized(new { success = false, message = "Session expired" });
+                    return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
                 var response = await _apiClient.DeleteActivityAsync(token, recId);
 

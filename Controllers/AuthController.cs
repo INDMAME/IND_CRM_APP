@@ -2,8 +2,9 @@
 using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Localization;
+using IND_CRM_APP.Infrastructure.Localization;
 
-//Probando cambios de APP
 namespace IND_CRM_APP.Controllers
 {
     // MVC controller for login and logout
@@ -12,12 +13,18 @@ namespace IND_CRM_APP.Controllers
         private readonly ICrmApiClient _api;
         private readonly ITokenSessionService _tokenSession;
         private readonly ILogger<AuthController> _logger;
+        private readonly IStringLocalizer<INDSharedResource> _sr;
 
-        public AuthController(ICrmApiClient api, ITokenSessionService tokenSession, ILogger<AuthController> logger)
+        public AuthController(
+            ICrmApiClient api,
+            ITokenSessionService tokenSession,
+            ILogger<AuthController> logger,
+            IStringLocalizer<INDSharedResource> sr)
         {
             _api = api;
             _tokenSession = tokenSession;
             _logger = logger;
+            _sr = sr;
         }
 
         // Shows login page
@@ -39,7 +46,7 @@ namespace IND_CRM_APP.Controllers
                 var loginResult = await _api.AuthenticateAsync(model.Username, model.Password);
                 if (loginResult == null || string.IsNullOrWhiteSpace(loginResult.Token))
                 {
-                    ModelState.AddModelError(string.Empty, "Invalid credentials or API error.");
+                    ViewBag.Error = _sr["Auth_InvalidCredentials"].Value;
                     return View(model);
                 }
 
@@ -55,7 +62,7 @@ namespace IND_CRM_APP.Controllers
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Upstream API error during login");
-                ModelState.AddModelError(string.Empty, "Login failed due to API error.");
+                ViewBag.Error = _sr["Auth_LoginApiError"].Value;
                 return View(model);
             }
         }

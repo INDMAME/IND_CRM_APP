@@ -1,9 +1,13 @@
 ﻿using IND_CRM_APP.Middleware;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
+using IND_CRM_APP.Services.Enums;
 using Microsoft.AspNetCore.Diagnostics;
 using IND_CRM_APP.Infrastructure;
 using System.Reflection;
+using Microsoft.AspNetCore.Localization;
+using Microsoft.Extensions.Options;
+using System.Globalization;
 
 
 
@@ -13,7 +17,33 @@ var builder = WebApplication.CreateBuilder(args);
 // Servicios
 // -----------------------------
 //builder.Services.AddResponseCompression();
-builder.Services.AddControllersWithViews().AddSessionStateTempDataProvider();
+builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+
+builder.Services
+    .AddControllersWithViews()
+    .AddSessionStateTempDataProvider()
+    .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
+    .AddDataAnnotationsLocalization();
+
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    // UI localization only. Do not translate business data.
+    var supportedCultures = new[]
+    {
+        new CultureInfo("es-ES"),
+        new CultureInfo("en"),
+        new CultureInfo("pt"),
+        new CultureInfo("it"),
+        new CultureInfo("zh-Hans")
+    };
+
+    options.DefaultRequestCulture = new RequestCulture("es-ES");
+    options.SupportedCultures = supportedCultures;
+    options.SupportedUICultures = supportedCultures;
+
+    // Ensure cookie-based culture is evaluated first.
+    options.RequestCultureProviders.Insert(0, new CookieRequestCultureProvider());
+});
 builder.Services.AddHttpClient<ICrmApiClient, ApiClientService>();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddSession(options =>
@@ -31,13 +61,13 @@ builder.Services.AddMemoryCache();
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
+builder.Services.AddScoped<IINDCrmEnumLocalizer, INDCrmEnumLocalizer>();
 builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Information);
 
 // -----------------------------
-// Validación de middlewares
+// Middleware validation
 // -----------------------------
-// Escanea ensamblados cargados y falla en arranque si encuentra middlewares
-// que tengan dependencias registradas con lifetime Scoped en su constructor.
+// Scan loaded assemblies and fail startup if a middleware has a scoped dependency in its constructor.
 MiddlewareValidation.ValidateMiddlewares(
     builder.Services,
     AppDomain.CurrentDomain.GetAssemblies()
@@ -59,7 +89,7 @@ if (!app.Environment.IsDevelopment())
 
             if (feature?.Error != null)
             {
-                logger.LogError(feature.Error, "❌ Excepción no controlada en la ruta: {Path}", feature.Path);
+                logger.LogError(feature.Error, "Unhandled exception on path: {Path}", feature.Path);
             }
 
             context.Response.Redirect("/Shared/Error");
@@ -73,9 +103,10 @@ else
 
 //app.UseResponseCompression();
 app.UseStaticFiles();
+app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
 app.UseRouting();
 app.UseSession();
-// Middleware de refresco de token
+// Token refresh middleware
 app.UseMiddleware<TokenRefreshMiddleware>();
 
 // -----------------------------

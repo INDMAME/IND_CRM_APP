@@ -1,7 +1,9 @@
 @using System.Text.Json
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Detalle";
+    ViewData["Title"] = SR["Visits_Detail_Title"];
     ViewData["BodyClass"] = "visitas-body";
     var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
 } 
@@ -20,6 +22,59 @@
         window.__ASISTENTE_TIPOS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.AsistenteTipoEnum ?? new object[] { }, jsonOptions));
         window.__AX_USER__ = "@((ViewBag.AxUser ?? "").ToString())";
         window.__ACTIVITY_DETAIL__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ActivityDetail ?? new { }, jsonOptions));
+        window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
+            Common_Save = SR["Common_Save"].Value,
+            Common_Cancel = SR["Common_Cancel"].Value,
+            Common_Delete = SR["Common_Delete"].Value,
+            Common_Loading = SR["Common_Loading"].Value,
+            Common_OK = SR["Common_OK"].Value,
+            Api_RequestFailed = SR["Api_RequestFailed"].Value,
+            Api_InvalidJson = SR["Api_InvalidJson"].Value,
+            History_AddDate = SR["History_AddDate"].Value,
+            DatePicker_SelectDate = SR["DatePicker_SelectDate"].Value,
+            History_PrevMonth = SR["History_PrevMonth"].Value,
+            History_NextMonth = SR["History_NextMonth"].Value,
+            History_Day_Mon = SR["History_Day_Mon"].Value,
+            History_Day_Tue = SR["History_Day_Tue"].Value,
+            History_Day_Wed = SR["History_Day_Wed"].Value,
+            History_Day_Thu = SR["History_Day_Thu"].Value,
+            History_Day_Fri = SR["History_Day_Fri"].Value,
+            History_Day_Sat = SR["History_Day_Sat"].Value,
+            History_Day_Sun = SR["History_Day_Sun"].Value,
+            Visits_Detail_VisitData_Title = SR["Visits_Detail_VisitData_Title"].Value,
+            Visits_Detail_Date_Label = SR["Visits_Detail_Date_Label"].Value,
+            Visits_Detail_VisitType_Label = SR["Visits_Detail_VisitType_Label"].Value,
+            Visits_Detail_VisitType_Placeholder = SR["Visits_Detail_VisitType_Placeholder"].Value,
+            Visits_Detail_SaveChanges_Title = SR["Visits_Detail_SaveChanges_Title"].Value,
+            Visits_Detail_SaveChanges_Body = SR["Visits_Detail_SaveChanges_Body"].Value,
+            Visits_Detail_DeleteActivity_Title = SR["Visits_Detail_DeleteActivity_Title"].Value,
+            Visits_Detail_DeleteActivity_Body = SR["Visits_Detail_DeleteActivity_Body"].Value,
+            Visits_Detail_NoResults = SR["Visits_Detail_NoResults"].Value,
+            Visits_Detail_ShowOptions = SR["Visits_Detail_ShowOptions"].Value,
+            Visits_Detail_HideOptions = SR["Visits_Detail_HideOptions"].Value,
+            Visits_Detail_LoadActivityFailed = SR["Visits_Detail_LoadActivityFailed"].Value,
+            Visits_Detail_EditingEnabled = SR["Visits_Detail_EditingEnabled"].Value,
+            Visits_Detail_Updating = SR["Visits_Detail_Updating"].Value,
+            Visits_Detail_Updated = SR["Visits_Detail_Updated"].Value,
+            Visits_Detail_UpdateFailed = SR["Visits_Detail_UpdateFailed"].Value,
+            Visits_Detail_UpdateError = SR["Visits_Detail_UpdateError"].Value,
+            Visits_Detail_Deleting = SR["Visits_Detail_Deleting"].Value,
+            Visits_Detail_Deleted = SR["Visits_Detail_Deleted"].Value,
+            Visits_Detail_DeleteFailed = SR["Visits_Detail_DeleteFailed"].Value,
+            Visits_Detail_DeleteError = SR["Visits_Detail_DeleteError"].Value,
+            Visits_Detail_ErrorBoundary = SR["Visits_Detail_ErrorBoundary"].Value,
+            Visits_Field_Description = SR["Visits_Field_Description"].Value,
+            Visits_Field_Comments = SR["Visits_Field_Comments"].Value,
+            Visits_Field_Background = SR["Visits_Field_Background"].Value,
+            Visits_Field_Conclusions = SR["Visits_Field_Conclusions"].Value,
+            Dropdown_NoResults = SR["Dropdown_NoResults"].Value,
+            Dropdown_ShowOptions = SR["Dropdown_ShowOptions"].Value,
+            Dropdown_HideOptions = SR["Dropdown_HideOptions"].Value,
+            Confirm_Delete_Title = SR["Confirm_Delete_Title"].Value,
+            Confirm_Delete_Body = SR["Confirm_Delete_Body"].Value,
+            Confirm_Yes = SR["Confirm_Yes"].Value,
+            Confirm_No = SR["Confirm_No"].Value
+        }));
     </script>
     <script src="~/js/detail.js" asp-append-version="true"></script>
 }

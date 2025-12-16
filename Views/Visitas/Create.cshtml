@@ -1,7 +1,9 @@
 @using System.Text.Json
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
 @{
     Layout = "~/Views/Shared/_Layout.cshtml";
-    ViewData["Title"] = "Crear Visita";
+    ViewData["Title"] = SR["Visits_Create_Title"];
     ViewData["BodyClass"] = "visitas-body";
 }
 
@@ -18,6 +20,78 @@
         window.__VISIT_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.CRMTipoVisitaEnum ?? new object[] { }));
         window.__ASISTENTE_TIPOS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.AsistenteTipoEnum ?? new object[] { }));
         window.__AX_USER__ = "@((ViewBag.AxUser ?? "").ToString())";
+        window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
+            Common_Save = SR["Common_Save"].Value,
+            Common_Cancel = SR["Common_Cancel"].Value,
+            Common_Delete = SR["Common_Delete"].Value,
+            Common_Search = SR["Common_Search"].Value,
+            Common_Next = SR["Common_Next"].Value,
+            Common_Create = SR["Common_Create"].Value,
+            Common_Loading = SR["Common_Loading"].Value,
+            Common_OK = SR["Common_OK"].Value,
+            Api_RequestFailed = SR["Api_RequestFailed"].Value,
+            Api_InvalidJson = SR["Api_InvalidJson"].Value,
+            Confirm_Yes = SR["Confirm_Yes"].Value,
+            Confirm_No = SR["Confirm_No"].Value,
+            History_AddDate = SR["History_AddDate"].Value,
+            DatePicker_SelectDate = SR["DatePicker_SelectDate"].Value,
+            History_PrevMonth = SR["History_PrevMonth"].Value,
+            History_NextMonth = SR["History_NextMonth"].Value,
+            History_Day_Mon = SR["History_Day_Mon"].Value,
+            History_Day_Tue = SR["History_Day_Tue"].Value,
+            History_Day_Wed = SR["History_Day_Wed"].Value,
+            History_Day_Thu = SR["History_Day_Thu"].Value,
+            History_Day_Fri = SR["History_Day_Fri"].Value,
+            History_Day_Sat = SR["History_Day_Sat"].Value,
+            History_Day_Sun = SR["History_Day_Sun"].Value,
+            Visits_Create_SearchClient = SR["Visits_Create_SearchClient"].Value,
+            Visits_Create_SearchContact = SR["Visits_Create_SearchContact"].Value,
+            Visits_Create_SelectClientRequired = SR["Visits_Create_SelectClientRequired"].Value,
+            Visits_Create_SelectContactRequired = SR["Visits_Create_SelectContactRequired"].Value,
+            Visits_Create_CompleteRequired = SR["Visits_Create_CompleteRequired"].Value,
+            Visits_Create_LoadingContacts = SR["Visits_Create_LoadingContacts"].Value,
+            Visits_Create_ConfirmCreate_Title = SR["Visits_Create_ConfirmCreate_Title"].Value,
+            Visits_Create_ConfirmCreate_Body = SR["Visits_Create_ConfirmCreate_Body"].Value,
+            Visits_Create_CreatingVisitFor = SR["Visits_Create_CreatingVisitFor"].Value,
+            Visits_Detail_VisitType_Placeholder = SR["Visits_Detail_VisitType_Placeholder"].Value,
+            Visits_Detail_Date_Label = SR["Visits_Detail_Date_Label"].Value,
+            Visits_Detail_VisitType_Label = SR["Visits_Detail_VisitType_Label"].Value,
+            Visits_Create_MinChars = SR["Visits_Create_MinChars"].Value,
+            Visits_Create_PressSearchHint = SR["Visits_Create_PressSearchHint"].Value,
+            Visits_Create_Searching = SR["Visits_Create_Searching"].Value,
+            Visits_Create_SearchCanceled = SR["Visits_Create_SearchCanceled"].Value,
+            Visits_Create_SearchTimeout = SR["Visits_Create_SearchTimeout"].Value,
+            Visits_Create_LoadClientsError = SR["Visits_Create_LoadClientsError"].Value,
+            Visits_Create_ClientPlaceholder = SR["Visits_Create_ClientPlaceholder"].Value,
+            Visits_Create_NoResults = SR["Visits_Create_NoResults"].Value,
+            Visits_Create_NoMatches = SR["Visits_Create_NoMatches"].Value,
+            Visits_Create_ShowClientOptions = SR["Visits_Create_ShowClientOptions"].Value,
+            Visits_Create_HideClientOptions = SR["Visits_Create_HideClientOptions"].Value,
+            Visits_Create_SelectClientFirst = SR["Visits_Create_SelectClientFirst"].Value,
+            Visits_Create_PressArrowToLoadContacts = SR["Visits_Create_PressArrowToLoadContacts"].Value,
+            Visits_Create_LoadContactsError = SR["Visits_Create_LoadContactsError"].Value,
+            Visits_Create_NoContacts = SR["Visits_Create_NoContacts"].Value,
+            Visits_Create_NoMoreContacts = SR["Visits_Create_NoMoreContacts"].Value,
+            Visits_Create_FilterPlaceholder = SR["Visits_Create_FilterPlaceholder"].Value,
+            Visits_Create_CreatingActivity = SR["Visits_Create_CreatingActivity"].Value,
+            Visits_Create_CreateActivityFailed = SR["Visits_Create_CreateActivityFailed"].Value,
+            Visits_Create_CreateVisitFailed = SR["Visits_Create_CreateVisitFailed"].Value,
+            Visits_Create_CreateVisitError = SR["Visits_Create_CreateVisitError"].Value,
+            Visits_Create_ClientCount = SR["Visits_Create_ClientCount"].Value,
+            Visits_Create_ClientCountCache = SR["Visits_Create_ClientCountCache"].Value,
+            Visits_Create_ContactCount = SR["Visits_Create_ContactCount"].Value,
+            Visits_Create_ContactCountCache = SR["Visits_Create_ContactCountCache"].Value,
+            Visits_Create_SelectedContactsCount = SR["Visits_Create_SelectedContactsCount"].Value,
+            Visits_Create_VisitData_Title = SR["Visits_Create_VisitData_Title"].Value,
+            Visits_Field_Description = SR["Visits_Field_Description"].Value,
+            Visits_Field_Comments = SR["Visits_Field_Comments"].Value,
+            Visits_Field_Background = SR["Visits_Field_Background"].Value,
+            Visits_Field_Conclusions = SR["Visits_Field_Conclusions"].Value,
+            Visits_Create_ErrorBoundary = SR["Visits_Create_ErrorBoundary"].Value,
+            Dropdown_NoResults = SR["Dropdown_NoResults"].Value,
+            Dropdown_ShowOptions = SR["Dropdown_ShowOptions"].Value,
+            Dropdown_HideOptions = SR["Dropdown_HideOptions"].Value
+        }));
     </script>
     <script src="~/js/create.js" asp-append-version="true"></script>
 }

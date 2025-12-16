@@ -8,6 +8,13 @@ const classNames = (...classes) => classes.filter(Boolean).join(" ");
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
 
+const IND_I18N = globalThis.__IND_I18N__ || {};
+const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+const indFormat = (key, fallback, ...args) => {
+  const template = indT(key, fallback);
+  return String(template).replace(/\{(\d+)\}/g, (_, idx) => String(args[Number(idx)] ?? ""));
+};
+
 const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
 
 const setHistoryFilterForDate = (isoDate) => {
@@ -39,12 +46,21 @@ async function fetchJson(url, options) {
   const res = await fetch(url, merged);
   const text = await res.text();
   if (!res.ok) {
-    throw new Error(`${res.status} ${res.statusText}: ${text}`);
+    try {
+      const json = JSON.parse(text);
+      const msg = json?.message;
+      if (typeof msg === "string" && msg.trim()) {
+        throw new Error(msg);
+      }
+    } catch {
+      // ignore parse errors
+    }
+    throw new Error(indT("Api_RequestFailed", "Request failed. Please try again."));
   }
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error(`Invalid JSON from ${url}: ${text}`);
+    throw new Error(indT("Api_InvalidJson", "Invalid server response."));
   }
 }
 
@@ -52,7 +68,7 @@ const Spinner = ({ size = "h-4 w-4" }) => (
   <div
     className={`${size} border-2 border-primary border-t-transparent rounded-full animate-spin`}
     role="status"
-    aria-label="Cargando"
+    aria-label={indT("Common_Loading", "Loading")}
   />
 );
 
@@ -170,7 +186,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, disabled
               if (disabled) return;
               setOpen((prev) => !prev);
             }}
-            aria-label={open ? "Ocultar opciones" : "Mostrar opciones"}
+            aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
             disabled={disabled}
           >
             {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
@@ -183,7 +199,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, disabled
             id={`select-options-${label}`}
             ref={listRef}
           >
-            {filtered.length === 0 && <div className="px-4 py-2 text-sm text-slate-500">Sin resultados</div>}
+            {filtered.length === 0 && <div className="px-4 py-2 text-sm text-slate-500">{indT("Dropdown_NoResults", "No results")}</div>}
             {filtered.map((opt, idx) => {
               const sel = selected?.value === opt.value;
               const isActive = idx === activeIndex;
@@ -295,13 +311,15 @@ const DetailApp = () => {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const modalConfirmInFlightRef = useRef(false);
+  const [modalError, setModalError] = useState("");
 
   const [modal, setModal] = useState({
     open: false,
     title: "",
     message: "",
-    confirmText: "Aceptar",
-    cancelText: "Cancelar",
+    confirmText: indT("Confirm_Yes", "OK"),
+    cancelText: indT("Confirm_No", "Cancel"),
     showCancel: true,
     showConfirm: true,
     onConfirm: null
@@ -312,12 +330,13 @@ const DetailApp = () => {
   }, []);
 
   const openConfirmModal = useCallback((opts) => {
+    setModalError("");
     setModal({
       open: true,
       title: opts?.title || "",
       message: opts?.message || "",
-      confirmText: opts?.confirmText || "Confirmar",
-      cancelText: "Cancelar",
+      confirmText: opts?.confirmText || indT("Confirm_Yes", "OK"),
+      cancelText: indT("Confirm_No", "Cancel"),
       showCancel: true,
       showConfirm: true,
       onConfirm: opts?.onConfirm || null
@@ -325,12 +344,30 @@ const DetailApp = () => {
   }, []);
 
   const handleModalConfirm = useCallback(async () => {
+    if (busy) return;
     const cb = modal.onConfirm;
-    closeModal();
-    if (typeof cb === "function") {
-      await cb();
+    if (typeof cb !== "function") {
+      closeModal();
+      return;
     }
-  }, [modal.onConfirm, closeModal]);
+    if (modalConfirmInFlightRef.current) return;
+    modalConfirmInFlightRef.current = true;
+    setModalError("");
+    try {
+      const result = await cb();
+      if (result !== false) {
+        closeModal();
+      }
+    } catch (err) {
+      console.error("Modal confirm failed:", err);
+      const msg = err?.message || indT("Api_RequestFailed", "Request failed. Please try again.");
+      setModalError(msg);
+      setStatus(msg);
+      flashActionMark("errorProcess", 1500);
+    } finally {
+      modalConfirmInFlightRef.current = false;
+    }
+  }, [busy, modal.onConfirm, closeModal]);
 
   const recId = detail.recId || detail.RecId || "";
   const accountNum = detail.accountNum || detail.AccountNum || "";
@@ -345,7 +382,7 @@ const DetailApp = () => {
       const res = await fetchJson(`/Visitas/GetActivityByCode?code=${encodeURIComponent(actividadId)}`);
       if (!res?.success || !res.data) {
         console.error("GetActivityByCode sin datos", res);
-        setStatus(res?.message || "No se pudo obtener datos de la actividad.");
+        setStatus(res?.message || indT("Visits_Detail_LoadActivityFailed", "Failed to load activity details."));
         return;
       }
       const data = res.data;
@@ -371,7 +408,7 @@ const DetailApp = () => {
       setAntecedentes(data.antecedentes || data.Antecedentes || "");
       setConclusiones(data.conclusiones || data.Conclusiones || "");
     } catch (err) {
-      console.warn("No se pudieron cargar datos del API por código", err);
+      console.warn("Failed to load activity by code", err);
     }
   }, [actividadId, asistenteTipos, visitTypes, matchOptionValue, normalizeDateToInput, initialAsistente]);
 
@@ -396,13 +433,14 @@ const DetailApp = () => {
 
   const handleEnableEdit = useCallback(() => {
     setIsEditing(true);
-    setStatus("Edición habilitada");
+    setStatus(indT("Visits_Detail_EditingEnabled", "Editing enabled"));
   }, []);
 
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
+    setModalError("");
     setBusy(true);
-    setStatus("Actualizando actividad...");
+    setStatus(indT("Visits_Detail_Updating", "Updating activity..."));
     try {
       const normalizedVisitType = matchOptionValue(visitTypes, visitType);
       const normalizedAsistenteTipo = matchOptionValue(asistenteTipos, asistenteTipo);
@@ -424,13 +462,16 @@ const DetailApp = () => {
         body: JSON.stringify(payload)
       });
 
-      if (!res.success) throw new Error(res.message || "No se pudo actualizar");
+      if (!res.success) throw new Error(res.message || indT("Visits_Detail_UpdateFailed", "Update failed."));
 
-      setStatus("Actividad actualizada");
+      setStatus(indT("Visits_Detail_Updated", "Activity updated"));
       setIsEditing(false);
       return true;
     } catch (err) {
-      setStatus(err.message || "Error al actualizar");
+      const msg = err?.message || indT("Visits_Detail_UpdateError", "Update error.");
+      setModalError(msg);
+      setStatus(msg);
+      flashActionMark("errorProcess", 1500);
       return false;
     } finally {
       setBusy(false);
@@ -439,15 +480,19 @@ const DetailApp = () => {
 
   const handleDelete = useCallback(async () => {
     if (busy) return false;
+    setModalError("");
     setBusy(true);
-    setStatus("Eliminando actividad...");
+    setStatus(indT("Visits_Detail_Deleting", "Deleting activity..."));
     try {
       const res = await fetchJson(`/Visitas/DeleteActivity/${recId}`, { method: "DELETE" });
-      if (!res.success) throw new Error(res.message || "No se pudo eliminar");
-      setStatus("Actividad eliminada");
+      if (!res.success) throw new Error(res.message || indT("Visits_Detail_DeleteFailed", "Delete failed."));
+      setStatus(indT("Visits_Detail_Deleted", "Activity deleted"));
       return true;
     } catch (err) {
-      setStatus(err.message || "Error al eliminar");
+      const msg = err?.message || indT("Visits_Detail_DeleteError", "Delete error.");
+      setModalError(msg);
+      setStatus(msg);
+      flashActionMark("errorProcess", 1500);
       return false;
     } finally {
       setBusy(false);
@@ -458,18 +503,22 @@ const DetailApp = () => {
   useEffect(() => {
     const onEdit = () => {
       if (isEditing) {
+        if (busy || modal.open) return;
         openConfirmModal({
-          title: "Guardar cambios",
-          message: "Deseas guardar los cambios de la actividad?",
-          confirmText: "Guardar",
+          title: indT("Visits_Detail_SaveChanges_Title", "Save changes"),
+          message: indT("Visits_Detail_SaveChanges_Body", "Do you want to save changes?"),
+          confirmText: indT("Common_Save", "Save"),
           onConfirm: async () => {
             const ok = await handleUpdate();
             if (ok) {
+              closeModal();
+              setBusy(true);
               setHistoryFilterForDate(transDate);
               flashActionMark("okProcess", 1500);
               await wait(1500);
               window.location.href = "/Historial/History";
             }
+            return ok;
           }
         });
       } else {
@@ -478,18 +527,22 @@ const DetailApp = () => {
     };
 
     const onDelete = () => {
+      if (busy || modal.open) return;
       openConfirmModal({
-        title: "Eliminar actividad",
-        message: "Deseas eliminar esta actividad? Esta accion no se puede deshacer.",
-        confirmText: "Eliminar",
+        title: indT("Visits_Detail_DeleteActivity_Title", "Delete activity"),
+        message: indT("Visits_Detail_DeleteActivity_Body", "Do you want to delete this activity?"),
+        confirmText: indT("Common_Delete", "Delete"),
         onConfirm: async () => {
             const ok = await handleDelete();
             if (ok) {
+            closeModal();
+            setBusy(true);
             setHistoryFilterForDate(transDate);
             flashActionMark("okDelProcess", 1500);
             await wait(1500);
             window.location.href = "/Historial/History";
             }
+            return ok;
           }
         });
     };
@@ -499,7 +552,7 @@ const DetailApp = () => {
       window.removeEventListener("visit-edit", onEdit);
       window.removeEventListener("visit-delete", onDelete);
     };
-  }, [handleDelete, handleEnableEdit, handleUpdate, isEditing, openConfirmModal]);
+  }, [busy, modal.open, handleDelete, handleEnableEdit, handleUpdate, isEditing, openConfirmModal, transDate]);
 
   return (
     <div className="space-y-4">
@@ -509,23 +562,35 @@ const DetailApp = () => {
             <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
               <div className="text-lg font-semibold text-slate-900">{modal.title}</div>
               <div className="text-sm text-slate-700 whitespace-pre-line">{modal.message}</div>
+              {(busy || !!modalError) && (
+                <div className="flex items-center gap-2 text-sm text-slate-600">
+                  {busy && <Spinner size="h-4 w-4" />}
+                  <span className={modalError && !busy ? "text-rose-700" : ""}>
+                    {busy ? (status || indT("Common_Loading", "Loading")) : modalError}
+                  </span>
+                </div>
+              )}
               <div className="flex justify-end gap-2 pt-2">
                 {modal.showCancel && (
                   <button
                     type="button"
                     className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:border-primary hover:text-primary transition"
                     onClick={closeModal}
+                    disabled={busy}
                   >
-                    {modal.cancelText || "Cancelar"}
+                    {modal.cancelText || indT("Confirm_No", "Cancel")}
                   </button>
                 )}
                 {modal.showConfirm && (
                   <button
                     type="button"
                     className="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition"
-                    onClick={handleModalConfirm}
+                    onClick={!busy && !!modalError ? closeModal : handleModalConfirm}
+                    disabled={busy}
                   >
-                    {modal.confirmText || "Aceptar"}
+                    {busy
+                      ? indT("Common_Loading", "Loading")
+                      : (!busy && !!modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")))}
                   </button>
                 )}
               </div>
@@ -535,28 +600,28 @@ const DetailApp = () => {
         )}
       <div className="shadow-sm glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
         <div className="text-base font-semibold text-slate-900 border-b border-slate-200 pb-3">
-          Datos de la visita
+          {indT("Visits_Detail_VisitData_Title", "Visit details")}
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <SingleDatePicker
-            label="Fecha"
+            label={indT("Visits_Detail_Date_Label", "Date")}
             value={transDate}
             onChange={setTransDate}
             disabled={!isEditing}
           />
           <SelectCombobox
-            label="Tipo de visita"
+            label={indT("Visits_Detail_VisitType_Label", "Visit type")}
             options={visitTypes}
             value={visitType}
             onChange={setVisitType}
-            placeholder="Selecciona tipo"
+            placeholder={indT("Visits_Detail_VisitType_Placeholder", "Select type")}
             disabled={!isEditing}
           />
         </div>
 
         <div className="grid grid-cols-1 gap-3">
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Descripción</label>
+            <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Description", "Description")}</label>
             <input
               id="description"
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -567,7 +632,7 @@ const DetailApp = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Comentarios</label>
+            <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Comments", "Comments")}</label>
             <textarea
               id="comentarios"
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -577,7 +642,7 @@ const DetailApp = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Antecedentes</label>
+            <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Background", "Background")}</label>
             <textarea
               id="antecedentes"
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -587,7 +652,7 @@ const DetailApp = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-sm font-semibold text-slate-700">Conclusiones</label>
+            <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
             <textarea
               id="conclusiones"
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
@@ -617,14 +682,14 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, info) {
-    console.error("Detalle visita error:", error, info);
+    console.error("Visit detail render error:", error, info);
   }
 
   render() {
     if (this.state.hasError) {
       return (
         <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700">
-          Ocurrió un error al mostrar la página de detalle. Recarga e intenta de nuevo.
+          {indT("Visits_Detail_ErrorBoundary", "An error occurred while rendering the detail page. Reload and try again.")}
         </div>
       );
     }

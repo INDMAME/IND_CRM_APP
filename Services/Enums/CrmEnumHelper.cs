@@ -1,21 +1,87 @@
-﻿namespace IND_CRM_APP.Services.Enums
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
+
+namespace IND_CRM_APP.Services.Enums
 {
     /// <summary>
-    /// Helper centralizado para todos los enums CRM utilizados
-    /// en la aplicación.
+    /// Legacy helper for CRM enum values.
+    /// UI should use INDCrmEnumLocalizer for translated display text.
     /// </summary>
     public static class CrmEnumHelper
     {
+        // Normalizes raw visit type values from API data to the expected numeric value.
+        public static string NormalizeTipoVisitaValue(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw)) return string.Empty;
+
+            var value = raw.Trim();
+            if (value is "0" or "1" or "2") return value;
+
+            var key = NormalizeKey(value);
+            if (key == "comercial") return "1";
+            if (key == "tecnica") return "2";
+
+            return value;
+        }
+
+        private static string NormalizeKey(string value)
+        {
+            var v = StripDiacritics(value).ToLowerInvariant().Trim();
+
+            // Defensive: handle a few common mojibake variants seen in this repo.
+            // \u201A often shows up instead of 'e' and \u00A4 instead of 'n'.
+            var sb = new StringBuilder(v.Length);
+            foreach (var ch in v)
+            {
+                if (char.IsLetterOrDigit(ch))
+                {
+                    sb.Append(ch);
+                    continue;
+                }
+
+                if (ch == '\u201A')
+                {
+                    sb.Append('e');
+                    continue;
+                }
+
+                if (ch == '\u00A4')
+                {
+                    sb.Append('n');
+                    continue;
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static string StripDiacritics(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+
+            var normalized = input.Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder(normalized.Length);
+            foreach (var c in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(c);
+                }
+            }
+            return sb.ToString().Normalize(NormalizationForm.FormC);
+        }
+
         public static IEnumerable<dynamic> GetActividadTypeItems()
         {
             return new[]
             {
-                new { Value = "0", Text = "Ninguno" },
+                new { Value = "0", Text = "None" },
                 new { Value = "1", Text = "Fax" },
                 new { Value = "2", Text = "Email" },
-                new { Value = "3", Text = "Llamada de Telefono" },
-                new { Value = "4", Text = "Visita" },
-                new { Value = "5", Text = "Tarea" }
+                new { Value = "3", Text = "Phone call" },
+                new { Value = "4", Text = "Visit" },
+                new { Value = "5", Text = "Task" }
             };
         }
 
@@ -23,9 +89,9 @@
         {
             return new[]
             {
-                new { Value = "0", Text = "Ninguno" },
-                new { Value = "1", Text = "Comercial" },
-                new { Value = "2", Text = "Técnica" }
+                new { Value = "0", Text = "None" },
+                new { Value = "1", Text = "Commercial" },
+                new { Value = "2", Text = "Technical" }
             };
         }
 
@@ -33,18 +99,18 @@
         {
             return new[]
             {
-                new { Value = "0", Text = "Ninguno" },
-                new { Value = "1", Text = "Consulta" },
-                new { Value = "2", Text = "Oferta" },
-                new { Value = "3", Text = "Evento" },
-                new { Value = "4", Text = "Usuario" },
-                new { Value = "5", Text = "Campaña Marketing" },
-                new { Value = "6", Text = "Cliente Potencial" },
-                new { Value = "7", Text = "Contacto Evento" },
-                new { Value = "8", Text = "Cliente" },
-                new { Value = "9", Text = "Proveedor" },
-                new { Value = "10", Text = "Proyecto" },
-                new { Value = "11", Text = "Proveedor Potencial" }
+                new { Value = "0", Text = "None" },
+                new { Value = "1", Text = "Inquiry" },
+                new { Value = "2", Text = "Offer" },
+                new { Value = "3", Text = "Event" },
+                new { Value = "4", Text = "User" },
+                new { Value = "5", Text = "Marketing campaign" },
+                new { Value = "6", Text = "Prospect" },
+                new { Value = "7", Text = "Event contact" },
+                new { Value = "8", Text = "Customer" },
+                new { Value = "9", Text = "Supplier" },
+                new { Value = "10", Text = "Project" },
+                new { Value = "11", Text = "Potential supplier" }
             };
         }
 
@@ -52,9 +118,9 @@
         {
             return new[]
             {
-                new { Value = "0", Text = "Sin asistente" },
-                new { Value = "1", Text = "Técnico" },
-                new { Value = "2", Text = "Comercial" }
+                new { Value = "0", Text = "None" },
+                new { Value = "1", Text = "Technical" },
+                new { Value = "2", Text = "Commercial" }
             };
         }
     }

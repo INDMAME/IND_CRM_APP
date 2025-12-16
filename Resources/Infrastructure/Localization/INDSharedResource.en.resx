@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="Common_Save" xml:space="preserve"><value>Save</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Close</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>Delete</value></data>
+  <data name="Common_Search" xml:space="preserve"><value>Search</value></data>
+  <data name="Common_ClearFilters" xml:space="preserve"><value>Clear filters</value></data>
+  <data name="Common_Loading" xml:space="preserve"><value>Loading</value></data>
+  <data name="Common_NoData" xml:space="preserve"><value>No data</value></data>
+  <data name="Common_User" xml:space="preserve"><value>User</value></data>
+  <data name="Common_Unknown" xml:space="preserve"><value>Unknown</value></data>
+  <data name="Common_NotAvailable" xml:space="preserve"><value>N/A</value></data>
+  <data name="Common_AppLogoAlt" xml:space="preserve"><value>Insertec logo</value></data>
+
+  <data name="Nav_Visits" xml:space="preserve"><value>Visits</value></data>
+  <data name="Nav_Visits_Create" xml:space="preserve"><value>Create</value></data>
+  <data name="Nav_Visits_History" xml:space="preserve"><value>History</value></data>
+
+  <data name="Visits_Create_Title" xml:space="preserve"><value>Create</value></data>
+  <data name="Visits_Detail_Title" xml:space="preserve"><value>Details</value></data>
+  <data name="Visits_History_Title" xml:space="preserve"><value>History</value></data>
+
+  <data name="UserMenu_ConnectedAs" xml:space="preserve"><value>Signed in as</value></data>
+  <data name="UserMenu_Languages" xml:space="preserve"><value>Languages</value></data>
+  <data name="UserMenu_Logout" xml:space="preserve"><value>Sign out</value></data>
+
+  <data name="Language_ES" xml:space="preserve"><value>ES</value></data>
+  <data name="Language_EN" xml:space="preserve"><value>EN</value></data>
+  <data name="Language_PT" xml:space="preserve"><value>PT</value></data>
+  <data name="Language_IT" xml:space="preserve"><value>IT</value></data>
+  <data name="Language_ZH" xml:space="preserve"><value>ZH</value></data>
+  <data name="Language_ES_Name" xml:space="preserve"><value>Spanish</value></data>
+  <data name="Language_EN_Name" xml:space="preserve"><value>English</value></data>
+  <data name="Language_PT_Name" xml:space="preserve"><value>Portuguese</value></data>
+  <data name="Language_IT_Name" xml:space="preserve"><value>Italian</value></data>
+  <data name="Language_ZH_Name" xml:space="preserve"><value>Chinese (Simplified)</value></data>
+
+  <data name="Login_Title" xml:space="preserve"><value>Sign in</value></data>
+  <data name="Login_Welcome" xml:space="preserve"><value>Welcome</value></data>
+  <data name="Login_Subtitle" xml:space="preserve"><value>Enter your credentials to continue</value></data>
+  <data name="Login_Username" xml:space="preserve"><value>Username</value></data>
+  <data name="Login_Password" xml:space="preserve"><value>Password</value></data>
+  <data name="Login_RememberMe" xml:space="preserve"><value>Remember me</value></data>
+  <data name="Login_Submit" xml:space="preserve"><value>Sign in</value></data>
+  <data name="Login_TogglePassword" xml:space="preserve"><value>Show or hide password</value></data>
+  <data name="Auth_InvalidCredentials" xml:space="preserve"><value>Invalid credentials.</value></data>
+  <data name="Auth_LoginApiError" xml:space="preserve"><value>Sign-in failed due to an API error.</value></data>
+
+  <data name="Topbar_OpenMenu" xml:space="preserve"><value>Open menu</value></data>
+  <data name="Topbar_Back" xml:space="preserve"><value>Back</value></data>
+  <data name="Topbar_Forward" xml:space="preserve"><value>Forward</value></data>
+  <data name="Topbar_EditSave" xml:space="preserve"><value>Edit/Save</value></data>
+  <data name="Topbar_Delete" xml:space="preserve"><value>Delete</value></data>
+
+  <data name="History_From" xml:space="preserve"><value>From</value></data>
+  <data name="History_To" xml:space="preserve"><value>To</value></data>
+  <data name="History_AddDate" xml:space="preserve"><value>Add date</value></data>
+  <data name="History_ClearRange" xml:space="preserve"><value>Clear range</value></data>
+  <data name="History_PrevMonth" xml:space="preserve"><value>Previous month</value></data>
+  <data name="History_NextMonth" xml:space="preserve"><value>Next month</value></data>
+  <data name="History_Day_Mon" xml:space="preserve"><value>Mo</value></data>
+  <data name="History_Day_Tue" xml:space="preserve"><value>Tu</value></data>
+  <data name="History_Day_Wed" xml:space="preserve"><value>We</value></data>
+  <data name="History_Day_Thu" xml:space="preserve"><value>Th</value></data>
+  <data name="History_Day_Fri" xml:space="preserve"><value>Fr</value></data>
+  <data name="History_Day_Sat" xml:space="preserve"><value>Sa</value></data>
+  <data name="History_Day_Sun" xml:space="preserve"><value>Su</value></data>
+  <data name="History_Status_SelectStart" xml:space="preserve"><value>Select start date</value></data>
+  <data name="History_Status_SelectEnd" xml:space="preserve"><value>Select end date</value></data>
+  <data name="History_Loading" xml:space="preserve"><value>Loading...</value></data>
+  <data name="History_NoDataInRange" xml:space="preserve"><value>No visits in this range</value></data>
+
+  <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
+  <data name="Common_Next" xml:space="preserve"><value>Next</value></data>
+  <data name="Common_Create" xml:space="preserve"><value>Create</value></data>
+
+  <data name="Api_SessionExpired" xml:space="preserve"><value>Your session has expired.</value></data>
+  <data name="Api_TokenMissing" xml:space="preserve"><value>Token was not found in session.</value></data>
+  <data name="Api_MissingAccountNum" xml:space="preserve"><value>Missing accountNum.</value></data>
+  <data name="Api_MissingCode" xml:space="preserve"><value>Missing code.</value></data>
+  <data name="Api_MissingAsistenteTipo" xml:space="preserve"><value>Missing asistenteTipo.</value></data>
+  <data name="Api_NoAsistentesToUpdate" xml:space="preserve"><value>No assistants to update.</value></data>
+  <data name="Api_AsistentesUpdateFailedCount" xml:space="preserve"><value>{0} assistant(s) failed to update.</value></data>
+  <data name="Api_AsistentesUpdateFailed" xml:space="preserve"><value>{0} assistants failed to update.</value></data>
+  <data name="Api_AccountsFetchFailed" xml:space="preserve"><value>Could not fetch clients. Refine your search and try again.</value></data>
+  <data name="Api_RequestFailed" xml:space="preserve"><value>Request failed. Please try again.</value></data>
+  <data name="Api_InvalidJson" xml:space="preserve"><value>Invalid server response.</value></data>
+
+  <data name="Sidebar_CloseMenu" xml:space="preserve"><value>Close menu</value></data>
+  <data name="Home_Title" xml:space="preserve"><value>Home</value></data>
+  <data name="Home_SelectLeftMenu" xml:space="preserve"><value>Select an option from the left menu.</value></data>
+  <data name="Home_Welcome" xml:space="preserve"><value>Welcome</value></data>
+  <data name="Home_DataFromAx" xml:space="preserve"><value>Data from Axapta 3.0</value></data>
+  <data name="Home_Environment" xml:space="preserve"><value>Environment</value></data>
+  <data name="Home_Company" xml:space="preserve"><value>Company</value></data>
+  <data name="Error_BackHome" xml:space="preserve"><value>Back to home</value></data>
+  <data name="Error_Title" xml:space="preserve"><value>System error</value></data>
+  <data name="Error_Heading" xml:space="preserve"><value>An error occurred</value></data>
+  <data name="Error_Body" xml:space="preserve"><value>There was a problem processing your request. If the problem persists, contact the system administrator.</value></data>
+
+  <data name="DatePicker_SelectDate" xml:space="preserve"><value>Select date</value></data>
+
+  <data name="Visits_Create_SearchClient" xml:space="preserve"><value>Search client</value></data>
+  <data name="Visits_Create_SearchContact" xml:space="preserve"><value>Search contact (multi select)</value></data>
+  <data name="Visits_Create_SelectClientRequired" xml:space="preserve"><value>Select a client.</value></data>
+  <data name="Visits_Create_SelectContactRequired" xml:space="preserve"><value>Select at least one contact.</value></data>
+  <data name="Visits_Create_CompleteRequired" xml:space="preserve"><value>Complete the required fields.</value></data>
+  <data name="Visits_Create_LoadingContacts" xml:space="preserve"><value>Loading contacts...</value></data>
+  <data name="Visits_Create_ConfirmCreate_Title" xml:space="preserve"><value>Confirm create</value></data>
+  <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve"><value>Do you want to create this visit?</value></data>
+  <data name="Visits_Create_CreatingVisitFor" xml:space="preserve"><value>Creating visit for {0}...</value></data>
+
+  <data name="Visits_Create_MinChars" xml:space="preserve"><value>Type at least {0} characters.</value></data>
+  <data name="Visits_Create_PressSearchHint" xml:space="preserve"><value>Press the magnifier, Enter or the arrow to search.</value></data>
+  <data name="Visits_Create_Searching" xml:space="preserve"><value>Searching...</value></data>
+  <data name="Visits_Create_SearchCanceled" xml:space="preserve"><value>Search canceled.</value></data>
+  <data name="Visits_Create_SearchTimeout" xml:space="preserve"><value>Search took too long. Type more characters to narrow it down.</value></data>
+  <data name="Visits_Create_LoadClientsError" xml:space="preserve"><value>Error loading clients.</value></data>
+  <data name="Visits_Create_ClientPlaceholder" xml:space="preserve"><value>Type at least {0} characters...</value></data>
+  <data name="Visits_Create_NoResults" xml:space="preserve"><value>No results.</value></data>
+  <data name="Visits_Create_NoMatches" xml:space="preserve"><value>No matches.</value></data>
+  <data name="Visits_Create_ShowClientOptions" xml:space="preserve"><value>Show client options</value></data>
+  <data name="Visits_Create_HideClientOptions" xml:space="preserve"><value>Hide client options</value></data>
+  <data name="Visits_Create_SelectClientFirst" xml:space="preserve"><value>Select a client first.</value></data>
+  <data name="Visits_Create_PressArrowToLoadContacts" xml:space="preserve"><value>Press the arrow to load contacts.</value></data>
+  <data name="Visits_Create_LoadContactsError" xml:space="preserve"><value>Error loading contacts.</value></data>
+  <data name="Visits_Create_NoContacts" xml:space="preserve"><value>No contacts.</value></data>
+  <data name="Visits_Create_NoMoreContacts" xml:space="preserve"><value>No more contacts available.</value></data>
+  <data name="Visits_Create_FilterPlaceholder" xml:space="preserve"><value>Type to filter...</value></data>
+  <data name="Visits_Create_CreatingActivity" xml:space="preserve"><value>Creating activity...</value></data>
+  <data name="Visits_Create_CreateActivityFailed" xml:space="preserve"><value>Failed to create the activity.</value></data>
+  <data name="Visits_Create_CreateVisitFailed" xml:space="preserve"><value>Failed to create the visit.</value></data>
+  <data name="Visits_Create_CreateVisitError" xml:space="preserve"><value>Error creating the visit.</value></data>
+  <data name="Visits_Create_ClientCount" xml:space="preserve"><value>{0} client(s)</value></data>
+  <data name="Visits_Create_ClientCountCache" xml:space="preserve"><value>{0} client(s) (cache)</value></data>
+  <data name="Visits_Create_ContactCount" xml:space="preserve"><value>{0} contact(s)</value></data>
+  <data name="Visits_Create_ContactCountCache" xml:space="preserve"><value>{0} contact(s) (cache)</value></data>
+  <data name="Visits_Create_SelectedContactsCount" xml:space="preserve"><value>{0} selected contact(s)</value></data>
+
+  <data name="Visits_Create_VisitData_Title" xml:space="preserve"><value>Visit details</value></data>
+  <data name="Visits_Field_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="Visits_Field_Comments" xml:space="preserve"><value>Comments</value></data>
+  <data name="Visits_Field_Background" xml:space="preserve"><value>Background</value></data>
+  <data name="Visits_Field_Conclusions" xml:space="preserve"><value>Conclusions</value></data>
+  <data name="Visits_Create_ErrorBoundary" xml:space="preserve"><value>There was an error rendering the visits page. Reload and try again.</value></data>
+
+  <data name="Visits_Detail_VisitData_Title" xml:space="preserve"><value>Visit details</value></data>
+  <data name="Visits_Detail_Date_Label" xml:space="preserve"><value>Date</value></data>
+  <data name="Visits_Detail_VisitType_Label" xml:space="preserve"><value>Visit type</value></data>
+  <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve"><value>Select type</value></data>
+  <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve"><value>Save changes</value></data>
+  <data name="Visits_Detail_SaveChanges_Body" xml:space="preserve"><value>Do you want to save the activity changes?</value></data>
+  <data name="Visits_Detail_DeleteActivity_Title" xml:space="preserve"><value>Delete activity</value></data>
+  <data name="Visits_Detail_DeleteActivity_Body" xml:space="preserve"><value>Do you want to delete this activity? This action cannot be undone.</value></data>
+
+  <data name="Visits_Detail_NoResults" xml:space="preserve"><value>No results.</value></data>
+  <data name="Visits_Detail_ShowOptions" xml:space="preserve"><value>Show options</value></data>
+  <data name="Visits_Detail_HideOptions" xml:space="preserve"><value>Hide options</value></data>
+  <data name="Visits_Detail_LoadActivityFailed" xml:space="preserve"><value>Could not fetch activity data.</value></data>
+  <data name="Visits_Detail_EditingEnabled" xml:space="preserve"><value>Editing enabled.</value></data>
+  <data name="Visits_Detail_Updating" xml:space="preserve"><value>Updating activity...</value></data>
+  <data name="Visits_Detail_Updated" xml:space="preserve"><value>Activity updated.</value></data>
+  <data name="Visits_Detail_UpdateFailed" xml:space="preserve"><value>Could not update.</value></data>
+  <data name="Visits_Detail_UpdateError" xml:space="preserve"><value>Error updating.</value></data>
+  <data name="Visits_Detail_Deleting" xml:space="preserve"><value>Deleting activity...</value></data>
+  <data name="Visits_Detail_Deleted" xml:space="preserve"><value>Activity deleted.</value></data>
+  <data name="Visits_Detail_DeleteFailed" xml:space="preserve"><value>Could not delete.</value></data>
+  <data name="Visits_Detail_DeleteError" xml:space="preserve"><value>Error deleting.</value></data>
+  <data name="Visits_Detail_ErrorBoundary" xml:space="preserve"><value>There was an error rendering the detail page. Reload and try again.</value></data>
+
+  <data name="Dropdown_NoResults" xml:space="preserve"><value>No results.</value></data>
+  <data name="Dropdown_ShowOptions" xml:space="preserve"><value>Show options</value></data>
+  <data name="Dropdown_HideOptions" xml:space="preserve"><value>Hide options</value></data>
+
+  <data name="Enum_None" xml:space="preserve"><value>None</value></data>
+  <data name="Enum_ActividadType_Fax" xml:space="preserve"><value>Fax</value></data>
+  <data name="Enum_ActividadType_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Enum_ActividadType_PhoneCall" xml:space="preserve"><value>Phone call</value></data>
+  <data name="Enum_ActividadType_Visit" xml:space="preserve"><value>Visit</value></data>
+  <data name="Enum_ActividadType_Task" xml:space="preserve"><value>Task</value></data>
+
+  <data name="Enum_TipoVisita_Commercial" xml:space="preserve"><value>Commercial</value></data>
+  <data name="Enum_TipoVisita_Technical" xml:space="preserve"><value>Technical</value></data>
+
+  <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve"><value>Inquiry</value></data>
+  <data name="Enum_ActividadOrigen_Oferta" xml:space="preserve"><value>Offer</value></data>
+  <data name="Enum_ActividadOrigen_Evento" xml:space="preserve"><value>Event</value></data>
+  <data name="Enum_ActividadOrigen_Usuario" xml:space="preserve"><value>User</value></data>
+  <data name="Enum_ActividadOrigen_CampanaMarketing" xml:space="preserve"><value>Marketing campaign</value></data>
+  <data name="Enum_ActividadOrigen_ClientePotencial" xml:space="preserve"><value>Prospect</value></data>
+  <data name="Enum_ActividadOrigen_ContactoEvento" xml:space="preserve"><value>Event contact</value></data>
+  <data name="Enum_ActividadOrigen_Cliente" xml:space="preserve"><value>Client</value></data>
+  <data name="Enum_ActividadOrigen_Proveedor" xml:space="preserve"><value>Supplier</value></data>
+  <data name="Enum_ActividadOrigen_Proyecto" xml:space="preserve"><value>Project</value></data>
+  <data name="Enum_ActividadOrigen_ProveedorPotencial" xml:space="preserve"><value>Potential supplier</value></data>
+
+  <data name="Enum_AsistenteTipo_None" xml:space="preserve"><value>No assistant</value></data>
+  <data name="Enum_AsistenteTipo_Tecnico" xml:space="preserve"><value>Technician</value></data>
+  <data name="Enum_AsistenteTipo_Commercial" xml:space="preserve"><value>Commercial</value></data>
+
+  <data name="Confirm_Delete_Title" xml:space="preserve"><value>Delete</value></data>
+  <data name="Confirm_Delete_Body" xml:space="preserve"><value>Do you want to delete this item?</value></data>
+  <data name="Confirm_Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="Confirm_No" xml:space="preserve"><value>No</value></data>
+</root>
