@@ -226,4 +226,33 @@
   <data name="Speech_Transcribe_Failed" xml:space="preserve"><value>转写失败。</value></data>
 
   <data name="TextEditor_OpenFullScreen" xml:space="preserve"><value>全屏编辑</value></data>
+  <data name="TextEditor_Microphone" xml:space="preserve"><value>麦克风</value></data>
+
+  <data name="Tools_AudioRecorder_Title" xml:space="preserve"><value>录音工具</value></data>
+
+  <data name="AudioRecorder_Play" xml:space="preserve"><value>播放</value></data>
+  <data name="AudioRecorder_Record" xml:space="preserve"><value>录制</value></data>
+  <data name="AudioRecorder_Pause" xml:space="preserve"><value>暂停</value></data>
+  <data name="AudioRecorder_Resume" xml:space="preserve"><value>继续</value></data>
+  <data name="AudioRecorder_Stop" xml:space="preserve"><value>停止</value></data>
+  <data name="AudioRecorder_Cancel" xml:space="preserve"><value>取消</value></data>
+  <data name="AudioRecorder_NoAudio" xml:space="preserve"><value>无音频</value></data>
+
+  <data name="AudioRecorder_Status_Recording" xml:space="preserve"><value>录制中</value></data>
+  <data name="AudioRecorder_Status_Paused" xml:space="preserve"><value>已暂停</value></data>
+  <data name="AudioRecorder_Status_ReadyToPlay" xml:space="preserve"><value>可播放</value></data>
+  <data name="AudioRecorder_Status_Ready" xml:space="preserve"><value>就绪</value></data>
+
+  <data name="AudioRecorder_Error_HttpBlocked" xml:space="preserve"><value>Chrome 会在 HTTP（内网）上阻止麦克风。请使用 HTTPS 或通过 http://localhost 打开。开发环境可配置 Chrome 将该 HTTP 源视为安全。</value></data>
+  <data name="AudioRecorder_Error_PermissionDenied" xml:space="preserve"><value>麦克风权限被拒绝。请在浏览器中允许后刷新页面。</value></data>
+  <data name="AudioRecorder_Error_NoDevice" xml:space="preserve"><value>未找到麦克风设备。如果你在 Remote Desktop 中，请启用会话麦克风重定向。若为 USB 或蓝牙设备，请重新连接后重试。</value></data>
+  <data name="AudioRecorder_Error_DeviceBusy" xml:space="preserve"><value>麦克风被占用或无法启动。请关闭其他应用（Teams、Zoom）后重试。</value></data>
+  <data name="AudioRecorder_Error_Security" xml:space="preserve"><value>被浏览器安全策略阻止。在 Chrome 中请使用 HTTPS，或通过企业策略允许内网麦克风。</value></data>
+  <data name="AudioRecorder_Error_Constraints" xml:space="preserve"><value>无法满足音频约束。请尝试其他麦克风或设置。</value></data>
+  <data name="AudioRecorder_Error_Generic" xml:space="preserve"><value>无法开始录制。请检查麦克风权限。在 Chrome 中通常需要 HTTPS 或 localhost。</value></data>
+  <data name="AudioRecorder_Error_Unsupported" xml:space="preserve"><value>你的浏览器不支持 getUserMedia。</value></data>
+  <data name="AudioRecorder_Error_NoAudioContext" xml:space="preserve"><value>此浏览器不支持 AudioContext。</value></data>
+
+  <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>当前来源：{0}</value></data>
+  <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>技术细节：{0}</value></data>
 </root>

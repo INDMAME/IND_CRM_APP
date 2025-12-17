@@ -226,4 +226,33 @@
   <data name="Speech_Transcribe_Failed" xml:space="preserve"><value>Transcription failed.</value></data>
 
   <data name="TextEditor_OpenFullScreen" xml:space="preserve"><value>Edit full screen</value></data>
+  <data name="TextEditor_Microphone" xml:space="preserve"><value>Microphone</value></data>
+
+  <data name="Tools_AudioRecorder_Title" xml:space="preserve"><value>Audio recorder</value></data>
+
+  <data name="AudioRecorder_Play" xml:space="preserve"><value>Play</value></data>
+  <data name="AudioRecorder_Record" xml:space="preserve"><value>Record</value></data>
+  <data name="AudioRecorder_Pause" xml:space="preserve"><value>Pause</value></data>
+  <data name="AudioRecorder_Resume" xml:space="preserve"><value>Resume</value></data>
+  <data name="AudioRecorder_Stop" xml:space="preserve"><value>Stop</value></data>
+  <data name="AudioRecorder_Cancel" xml:space="preserve"><value>Cancel</value></data>
+  <data name="AudioRecorder_NoAudio" xml:space="preserve"><value>No audio</value></data>
+
+  <data name="AudioRecorder_Status_Recording" xml:space="preserve"><value>Recording</value></data>
+  <data name="AudioRecorder_Status_Paused" xml:space="preserve"><value>Paused</value></data>
+  <data name="AudioRecorder_Status_ReadyToPlay" xml:space="preserve"><value>Ready to play</value></data>
+  <data name="AudioRecorder_Status_Ready" xml:space="preserve"><value>Ready</value></data>
+
+  <data name="AudioRecorder_Error_HttpBlocked" xml:space="preserve"><value>Chrome blocks microphone on HTTP (intranet). Use HTTPS or open the app via http://localhost. For dev, configure Chrome to treat your HTTP origin as secure.</value></data>
+  <data name="AudioRecorder_Error_PermissionDenied" xml:space="preserve"><value>Microphone permission denied. Allow it in the browser and reload the page.</value></data>
+  <data name="AudioRecorder_Error_NoDevice" xml:space="preserve"><value>No microphone device found. If you are on Remote Desktop, enable microphone redirection. If it is USB or Bluetooth, reconnect and try again.</value></data>
+  <data name="AudioRecorder_Error_DeviceBusy" xml:space="preserve"><value>The microphone is busy or could not start. Close other apps (Teams, Zoom) and try again.</value></data>
+  <data name="AudioRecorder_Error_Security" xml:space="preserve"><value>Blocked by browser security. In Chrome, use HTTPS or corporate policy to allow the mic on intranet.</value></data>
+  <data name="AudioRecorder_Error_Constraints" xml:space="preserve"><value>Audio constraints could not be satisfied. Try another microphone or configuration.</value></data>
+  <data name="AudioRecorder_Error_Generic" xml:space="preserve"><value>Could not start recording. Check microphone permissions. In Chrome, it usually requires HTTPS or localhost.</value></data>
+  <data name="AudioRecorder_Error_Unsupported" xml:space="preserve"><value>Your browser does not support getUserMedia.</value></data>
+  <data name="AudioRecorder_Error_NoAudioContext" xml:space="preserve"><value>AudioContext is not available.</value></data>
+
+  <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>Current origin: {0}</value></data>
+  <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>Technical details: {0}</value></data>
 </root>
