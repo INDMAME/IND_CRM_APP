@@ -1,0 +1,29 @@
+@model IND_CRM_APP.Models.ViewModels.TextEditorReactViewModel
+@using System.Text.Json
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+
+@{
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = Model.FieldLabel;
+    ViewData["HideChrome"] = true;
+    ViewData["BodyClass"] = "overflow-hidden";
+    ViewData["ContentClass"] = "w-full h-screen p-0";
+}
+
+<div id="ind-text-editor-root"
+     data-field-id="@Model.FieldId"
+     data-field-label="@Model.FieldLabel"
+     data-field-value="@Model.FieldValue"
+     data-return-url="@Model.ReturnUrl">
+</div>
+
+@section Scripts {
+    <script>
+        window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
+            Topbar_Back = SR["Topbar_Back"].Value,
+            Common_Save = SR["Common_Save"].Value
+        }));
+    </script>
+    <script src="~/js/ind-text-editor.js" asp-append-version="true"></script>
+}

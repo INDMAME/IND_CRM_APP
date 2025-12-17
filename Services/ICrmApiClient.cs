@@ -73,6 +73,18 @@ namespace IND_CRM_APP.Services
             DeleteVisitaAsistenteRequest req
         );
 
+        // Speech transcription (WAV upload)
+        Task<ApiResponse<string>> TranscribeSpeechAsync(
+            string token,
+            string languageId,
+            Stream audioStream,
+            string fileName,
+            string? contentType,
+            double? temperature = null,
+            string? prompt = null,
+            CancellationToken cancellationToken = default
+        );
+
         // Refresh de token
         Task<LoginResult?> RefreshTokenAsync(string currentToken);
     }

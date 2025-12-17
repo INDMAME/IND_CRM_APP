@@ -6,8 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:css": "tailwindcss -c tailwind.config.js -i ./wwwroot/css/input.css -o ./wwwroot/css/tailwind.css --minify",
-    "build:react": "esbuild wwwroot/react/visitas/visit-type-combobox.jsx wwwroot/react/visitas/create.jsx wwwroot/react/visitas/detail.jsx --bundle --outdir=wwwroot/js --sourcemap=inline --jsx=automatic --minify=false",
-    "build:react:prod": "esbuild wwwroot/react/visitas/visit-type-combobox.jsx wwwroot/react/visitas/create.jsx wwwroot/react/visitas/detail.jsx --bundle --outdir=wwwroot/js --minify --sourcemap --jsx=automatic",
+    "build:react": "esbuild wwwroot/react/visitas/visit-type-combobox.jsx wwwroot/react/visitas/create.jsx wwwroot/react/visitas/detail.jsx wwwroot/react/texteditor/ind-text-editor.jsx --bundle --outdir=wwwroot/js --entry-names=[name] --sourcemap=inline --jsx=automatic --minify=false",
+    "build:react:prod": "esbuild wwwroot/react/visitas/visit-type-combobox.jsx wwwroot/react/visitas/create.jsx wwwroot/react/visitas/detail.jsx wwwroot/react/texteditor/ind-text-editor.jsx --bundle --outdir=wwwroot/js --entry-names=[name] --minify --sourcemap --jsx=automatic",
     "build": "npm run build:css && npm run build:react"
   },
   "repository": {

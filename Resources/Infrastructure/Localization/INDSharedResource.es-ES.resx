@@ -217,4 +217,21 @@
   <data name="Confirm_Delete_Body" xml:space="preserve"><value>¿Deseas eliminar este elemento?</value></data>
   <data name="Confirm_Yes" xml:space="preserve"><value>Aceptar</value></data>
   <data name="Confirm_No" xml:space="preserve"><value>Cancelar</value></data>
+
+  <data name="Speech_Transcribe_Title" xml:space="preserve"><value>Transcribir audio (WAV)</value></data>
+  <data name="Speech_Transcribe_Language_Label" xml:space="preserve"><value>Idioma</value></data>
+  <data name="Speech_Transcribe_Language_Auto" xml:space="preserve"><value>Auto</value></data>
+  <data name="Speech_Transcribe_Temperature_Label" xml:space="preserve"><value>Temperatura</value></data>
+  <data name="Speech_Transcribe_Context_Label" xml:space="preserve"><value>Contexto (opcional)</value></data>
+  <data name="Speech_Transcribe_Action" xml:space="preserve"><value>Transcribir</value></data>
+  <data name="Speech_Transcribe_InsertToComments" xml:space="preserve"><value>Insertar en comentarios</value></data>
+  <data name="Speech_Transcribe_Result_Label" xml:space="preserve"><value>Transcripcion</value></data>
+  <data name="Speech_Transcribe_MissingFile" xml:space="preserve"><value>Selecciona un archivo WAV.</value></data>
+  <data name="Speech_Transcribe_OnlyWav" xml:space="preserve"><value>Solo se permite WAV.</value></data>
+  <data name="Speech_Transcribe_FileTooLarge" xml:space="preserve"><value>El archivo supera 25 MB.</value></data>
+  <data name="Speech_Transcribe_InvalidTemperature" xml:space="preserve"><value>La temperatura debe estar entre 0 y 1.</value></data>
+  <data name="Speech_Transcribe_Blocked" xml:space="preserve"><value>Contenido rechazado por politicas de uso.</value></data>
+  <data name="Speech_Transcribe_Failed" xml:space="preserve"><value>No se pudo transcribir el audio.</value></data>
+
+  <data name="TextEditor_OpenFullScreen" xml:space="preserve"><value>Editar en pantalla completa</value></data>
 </root>

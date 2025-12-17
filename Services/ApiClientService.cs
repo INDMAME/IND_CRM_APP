@@ -555,6 +555,64 @@ namespace IND_CRM_APP.Services
         }
 
         // ======================================================
+        // Speech
+        // ======================================================
+        public async Task<ApiResponse<string>> TranscribeSpeechAsync(
+            string token,
+            string languageId,
+            Stream audioStream,
+            string fileName,
+            string? contentType,
+            double? temperature = null,
+            string? prompt = null,
+            CancellationToken cancellationToken = default)
+        {
+            AddToken(token);
+
+            var safeLanguageId = string.IsNullOrWhiteSpace(languageId) ? "auto" : languageId.Trim();
+            var safeFileName = string.IsNullOrWhiteSpace(fileName) ? "audio.wav" : Path.GetFileName(fileName);
+
+            using var form = new MultipartFormDataContent();
+            form.Add(new StringContent(safeLanguageId), "languageId");
+
+            if (temperature.HasValue)
+            {
+                var tempRaw = temperature.Value.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                form.Add(new StringContent(tempRaw), "temperature");
+            }
+
+            if (!string.IsNullOrWhiteSpace(prompt))
+            {
+                form.Add(new StringContent(prompt), "prompt");
+            }
+
+            using var fileContent = new StreamContent(audioStream);
+            var mime = string.IsNullOrWhiteSpace(contentType) ? "audio/wav" : contentType.Trim();
+            var isAllowedMime =
+                mime.Equals("audio/wav", StringComparison.OrdinalIgnoreCase) ||
+                mime.Equals("audio/x-wav", StringComparison.OrdinalIgnoreCase) ||
+                mime.Equals("audio/wave", StringComparison.OrdinalIgnoreCase) ||
+                mime.Equals("audio/vnd.wave", StringComparison.OrdinalIgnoreCase);
+            if (!isAllowedMime)
+            {
+                mime = "audio/wav";
+            }
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(mime);
+            form.Add(fileContent, "audioFile", safeFileName);
+
+            var result = await HttpHelper.PostMultipartAsync(
+                _client,
+                BuildUrl("api/speech/transcribe"),
+                form,
+                cancellationToken
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            return DeserializeApiResponse<string>(result, "SpeechTranscribe");
+        }
+
+        // ======================================================
         // Helpers
         // ======================================================
         private static string Serialize(object payload) =>

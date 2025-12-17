@@ -28,6 +28,8 @@
 - `POST /api/crm/visits/createVisitaAsistente` → `ICrmApiClient.CreateVisitaAsistenteAsync(token, CreateVisitaAsistenteRequest)` → `ApiResponse<object>`
 - `DELETE /api/crm/visits/deleteVisitaAsistente` → `ICrmApiClient.DeleteVisitaAsistenteAsync(token, DeleteVisitaAsistenteRequest)` → `ApiResponse<object>`
 
+- `POST /api/speech/transcribe` (multipart/form-data: `languageId`, `audioFile` (.wav), optional `temperature`, `prompt`/`context`) → `ICrmApiClient.TranscribeSpeechAsync(...)` → `ApiResponse<string>`
+
 - Health: `GET /api/health/ping`, `GET /api/health/health` (not mapped; call via HttpHelper if needed)
 
 ## DTOs used
@@ -35,6 +37,7 @@
 - `ActivitiesFilter` (`userId`, `fromDate`, `toDate`)
 - `CreateActivityRequest` / `UpdateActivityRequest` (accountNum, visitType, userId, description, transDate, comentarios, antecedentes, conclusiones)
 - `CreateVisitaAsistenteRequest`, `DeleteVisitaAsistenteRequest`
+- Speech: no JSON DTO (multipart form upload for WAV audio)
 - `ActivityDto` (+ `ActivityAsistenteDto`)
 - `AccountDto`, `ContactoDto`
 

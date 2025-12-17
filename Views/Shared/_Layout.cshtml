@@ -23,103 +23,114 @@
 
 @{
     var bodyClass = ViewData["BodyClass"] as string ?? string.Empty;
+    var hideChrome = ViewData["HideChrome"] as bool? ?? false;
+    var contentClassOverride = ViewData["ContentClass"] as string;
+    var contentClass = string.IsNullOrWhiteSpace(contentClassOverride)
+        ? "content w-full max-w-5xl mx-auto px-4 md:px-6 min-h-screen"
+        : contentClassOverride!;
 }
 <body class="bg-slate-100 font-sans text-slate-900 overflow-x-hidden @bodyClass">
 
-    <!-- TOPBAR -->
-    @await Html.PartialAsync("_Topbar")
+    @if (!hideChrome)
+    {
+        <!-- TOPBAR -->
+        @await Html.PartialAsync("_Topbar")
 
-    <!-- OVERLAY -->
-    <div id="overlay" class="overlay fixed inset-0 bg-black/45 opacity-0 pointer-events-none transition duration-200" aria-hidden="true" onclick="toggleSidebar()"></div>
+        <!-- OVERLAY -->
+        <div id="overlay" class="overlay fixed inset-0 bg-black/45 opacity-0 pointer-events-none transition duration-200" aria-hidden="true" onclick="toggleSidebar()"></div>
 
-    <!-- SIDEBAR -->
-    @await Html.PartialAsync("_Sidebar")
+        <!-- SIDEBAR -->
+        @await Html.PartialAsync("_Sidebar")
+    }
 
-    <div id="content" class="content w-full max-w-5xl mx-auto px-4 md:px-6 min-h-screen">
+    <div id="content" class="@contentClass">
         @RenderBody()
     </div>
 
-    <script>
-        const sidebar = document.getElementById("sidebar");
-        const overlay = document.getElementById("overlay");
-        const content = document.getElementById("content");
-        const btnMenu = document.getElementById("btnMenu");
-        const topbar = document.querySelector(".topbar");
-        const visitasToggle = document.getElementById("visitasToggle");
+    @if (!hideChrome)
+    {
+        <script>
+            const sidebar = document.getElementById("sidebar");
+            const overlay = document.getElementById("overlay");
+            const content = document.getElementById("content");
+            const btnMenu = document.getElementById("btnMenu");
+            const topbar = document.querySelector(".topbar");
+            const visitasToggle = document.getElementById("visitasToggle");
 
-        let menuOpen = false;
+            let menuOpen = false;
 
-        sidebar?.setAttribute("aria-hidden", "true");
-        overlay?.setAttribute("aria-hidden", "true");
+            sidebar?.setAttribute("aria-hidden", "true");
+            overlay?.setAttribute("aria-hidden", "true");
 
-        function toggleSidebar() {
-            menuOpen = !menuOpen;
+            function toggleSidebar() {
+                menuOpen = !menuOpen;
 
-            if (menuOpen) {
-                sidebar.classList.add("open");
-                overlay.classList.add("visible");
-                sidebar.setAttribute("aria-hidden", "false");
-                overlay.setAttribute("aria-hidden", "false");
-                btnMenu.style.opacity = "0";
-                btnMenu.style.pointerEvents = "none";
-                btnMenu.setAttribute("aria-expanded", "true");
+                if (menuOpen) {
+                    sidebar.classList.add("open");
+                    overlay.classList.add("visible");
+                    sidebar.setAttribute("aria-hidden", "false");
+                    overlay.setAttribute("aria-hidden", "false");
+                    btnMenu.style.opacity = "0";
+                    btnMenu.style.pointerEvents = "none";
+                    btnMenu.setAttribute("aria-expanded", "true");
 
-                if (window.innerWidth > 768) {
-                    content.classList.add("shifted");
-                    topbar.classList.add("shifted");
+                    if (window.innerWidth > 768) {
+                        content.classList.add("shifted");
+                        topbar.classList.add("shifted");
+                    }
+                } else {
+                    sidebar.classList.remove("open");
+                    overlay.classList.remove("visible");
+                    sidebar.setAttribute("aria-hidden", "true");
+                    overlay.setAttribute("aria-hidden", "true");
+                    btnMenu.style.opacity = "1";
+                    btnMenu.style.pointerEvents = "auto";
+                    btnMenu.setAttribute("aria-expanded", "false");
+                    content.classList.remove("shifted");
+                    topbar.classList.remove("shifted");
                 }
-            } else {
-                sidebar.classList.remove("open");
-                overlay.classList.remove("visible");
-                sidebar.setAttribute("aria-hidden", "true");
-                overlay.setAttribute("aria-hidden", "true");
-                btnMenu.style.opacity = "1";
-                btnMenu.style.pointerEvents = "auto";
-                btnMenu.setAttribute("aria-expanded", "false");
-                content.classList.remove("shifted");
-                topbar.classList.remove("shifted");
-            }
-        }
-
-        function toggleVisitas() {
-            const sub = document.getElementById("submenuVisitas");
-            if (!sub) return;
-            const isHidden = sub.classList.toggle("hidden");
-            const nowOpen = !isHidden;
-            visitasToggle?.setAttribute("aria-expanded", nowOpen.toString());
-        }
-
-        function toggleUserMenu() {
-            const menu = document.getElementById("userMenu");
-            const chevron = document.getElementById("userMenuChevron");
-            const langSub = document.getElementById("indLangSubmenu");
-            const langBtn = document.getElementById("indLangButton");
-
-            const isOpen = menu.classList.toggle("open");
-            if (chevron) {
-                chevron.classList.toggle("rotate-180", isOpen);
             }
 
-            // Defensive: close language submenu when the user menu closes.
-            if (!isOpen) {
-                langSub?.classList.add("hidden");
-                langBtn?.setAttribute("aria-expanded", "false");
+            function toggleVisitas() {
+                const sub = document.getElementById("submenuVisitas");
+                if (!sub) return;
+                const isHidden = sub.classList.toggle("hidden");
+                const nowOpen = !isHidden;
+                visitasToggle?.setAttribute("aria-expanded", nowOpen.toString());
             }
-            const userChip = document.querySelector(".user-chip");
-            if (userChip) {
-                userChip.setAttribute("aria-expanded", isOpen.toString());
+
+            function toggleUserMenu() {
+                const menu = document.getElementById("userMenu");
+                const chevron = document.getElementById("userMenuChevron");
+                const langSub = document.getElementById("indLangSubmenu");
+                const langBtn = document.getElementById("indLangButton");
+
+                const isOpen = menu.classList.toggle("open");
+                if (chevron) {
+                    chevron.classList.toggle("rotate-180", isOpen);
+                }
+
+                // Defensive: close language submenu when the user menu closes.
+                if (!isOpen) {
+                    langSub?.classList.add("hidden");
+                    langBtn?.setAttribute("aria-expanded", "false");
+                }
+                const userChip = document.querySelector(".user-chip");
+                if (userChip) {
+                    userChip.setAttribute("aria-expanded", isOpen.toString());
+                }
             }
-        }
 
-        function toggleIndLanguageMenu() {
-            const langSub = document.getElementById("indLangSubmenu");
-            const langBtn = document.getElementById("indLangButton");
-            if (!langSub || !langBtn) return;
+            function toggleIndLanguageMenu() {
+                const langSub = document.getElementById("indLangSubmenu");
+                const langBtn = document.getElementById("indLangButton");
+                if (!langSub || !langBtn) return;
 
-            const nowHidden = langSub.classList.toggle("hidden");
-            langBtn.setAttribute("aria-expanded", (!nowHidden).toString());
-        }
-    </script>
+                const nowHidden = langSub.classList.toggle("hidden");
+                langBtn.setAttribute("aria-expanded", (!nowHidden).toString());
+            }
+        </script>
+    }
 
     @{
         try

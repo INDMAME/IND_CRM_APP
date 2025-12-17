@@ -195,6 +195,88 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // Transcribes a WAV audio file into text using api/speech/transcribe
+        [HttpPost]
+        [RequestSizeLimit(30000000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 30000000)]
+        public async Task<IActionResult> TranscribeSpeech(
+            [FromForm] string languageId,
+            [FromForm] IFormFile? audioFile,
+            [FromForm] string? temperature,
+            [FromForm] string? prompt,
+            [FromForm] string? context)
+        {
+            try
+            {
+                string token = HttpContext.Session.GetString("Token") ?? string.Empty;
+                if (string.IsNullOrEmpty(token))
+                    return Json(new { success = false, message = _sr["Api_TokenMissing"].Value });
+
+                if (audioFile == null || audioFile.Length <= 0)
+                    return Json(new { success = false, message = _sr["Speech_Transcribe_MissingFile"].Value });
+
+                var fileName = audioFile.FileName ?? string.Empty;
+                if (!fileName.EndsWith(".wav", StringComparison.OrdinalIgnoreCase))
+                    return Json(new { success = false, message = _sr["Speech_Transcribe_OnlyWav"].Value });
+
+                const long maxBytes = 25L * 1024 * 1024;
+                if (audioFile.Length > maxBytes)
+                    return Json(new { success = false, message = _sr["Speech_Transcribe_FileTooLarge"].Value });
+
+                double? tempValue = null;
+                var tempRaw = (temperature ?? string.Empty).Trim();
+                if (!string.IsNullOrWhiteSpace(tempRaw))
+                {
+                    if (!double.TryParse(
+                            tempRaw,
+                            System.Globalization.NumberStyles.Float,
+                            System.Globalization.CultureInfo.InvariantCulture,
+                            out var parsed))
+                    {
+                        return Json(new { success = false, message = _sr["Speech_Transcribe_InvalidTemperature"].Value });
+                    }
+
+                    if (parsed < 0 || parsed > 1)
+                        return Json(new { success = false, message = _sr["Speech_Transcribe_InvalidTemperature"].Value });
+
+                    tempValue = parsed;
+                }
+
+                var promptFinal = !string.IsNullOrWhiteSpace(context) ? context : prompt;
+
+                using var stream = audioFile.OpenReadStream();
+                var response = await _apiClient.TranscribeSpeechAsync(
+                    token,
+                    string.IsNullOrWhiteSpace(languageId) ? "auto" : languageId.Trim(),
+                    stream,
+                    audioFile.FileName ?? "audio.wav",
+                    audioFile.ContentType,
+                    tempValue,
+                    promptFinal,
+                    HttpContext.RequestAborted
+                );
+
+                return Json(new
+                {
+                    success = response.Success,
+                    message = response.Message,
+                    data = response.Data,
+                    errorCode = response.ErrorCode,
+                    errors = response.Errors
+                });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in TranscribeSpeech");
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in TranscribeSpeech");
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         // Detail view for editing an existing activity (step 2 equivalent)
         [HttpGet("Visitas/Detalle/{code}")]
         public async Task<IActionResult> Detail(string code)

@@ -7,12 +7,27 @@ import SingleDatePicker from "./SingleDatePicker.jsx";
 const classNames = (...classes) => classes.filter(Boolean).join(" ");
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
+const TEXT_EDITOR_PREFIX = "ind_texteditor_";
 
 const IND_I18N = globalThis.__IND_I18N__ || {};
 const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
 const indFormat = (key, fallback, ...args) => {
   const template = indT(key, fallback);
   return String(template).replace(/\{(\d+)\}/g, (_, idx) => String(args[Number(idx)] ?? ""));
+};
+
+const readAndClearTextEditorValue = (fieldId) => {
+  const id = String(fieldId || "").trim();
+  if (!id) return null;
+  const key = `${TEXT_EDITOR_PREFIX}${id}`;
+  try {
+    const value = sessionStorage.getItem(key);
+    if (value === null) return null;
+    sessionStorage.removeItem(key);
+    return value;
+  } catch {
+    return null;
+  }
 };
 
 const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
@@ -241,6 +256,21 @@ const DetailApp = () => {
   const asistenteTipos = window.__ASISTENTE_TIPOS__ || [];
   const detail = window.__ACTIVITY_DETAIL__ || {};
 
+  const activityRecId = String(
+    detail.recId ||
+      detail.RecId ||
+      detail.refRecIdActividad ||
+      detail.RefRecIdActividad ||
+      detail.actividadRecId ||
+      detail.ActividadRecId ||
+      ""
+  ).trim();
+
+  const textEditorBaseId = activityRecId ? `Visita.${activityRecId}` : "Visita";
+  const fieldIdComentarios = `${textEditorBaseId}.Comentarios`;
+  const fieldIdAntecedentes = `${textEditorBaseId}.Antecedentes`;
+  const fieldIdConclusiones = `${textEditorBaseId}.Conclusiones`;
+
   const normalizeDateToInput = useCallback((value) => {
     if (!value) return "";
     const raw = String(value).trim();
@@ -314,6 +344,54 @@ const DetailApp = () => {
   const modalConfirmInFlightRef = useRef(false);
   const [modalError, setModalError] = useState("");
 
+  const recId = detail.recId || detail.RecId || "";
+  const accountNum = detail.accountNum || detail.AccountNum || "";
+  const userId = detail.userId || detail.UserId || "";
+  const actividadId = detail.actividadId || detail.ActividadId || "";
+
+  const openTextEditor = useCallback((fieldId, fieldLabel, fieldValue) => {
+    const safeId = String(fieldId || "").trim();
+    if (safeId) {
+      const key = `${TEXT_EDITOR_PREFIX}${safeId}`;
+      try {
+        // Prime the editor with the current value without pushing large text into the URL.
+        if (sessionStorage.getItem(key) === null) {
+          sessionStorage.setItem(key, String(fieldValue || ""));
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+
+    const returnUrl = `${window.location.pathname}${window.location.search || ""}`;
+    const url =
+      `/TextEditorReact/EditField?fieldId=${encodeURIComponent(fieldId || "")}` +
+      `&fieldLabel=${encodeURIComponent(fieldLabel || "")}` +
+      `&returnUrl=${encodeURIComponent(returnUrl)}`;
+
+    window.location.href = url;
+  }, []);
+
+  const applyTextEditorValues = useCallback(() => {
+    const valComentarios = readAndClearTextEditorValue(fieldIdComentarios);
+    if (valComentarios !== null) setComentarios(valComentarios);
+
+    const valAntecedentes = readAndClearTextEditorValue(fieldIdAntecedentes);
+    if (valAntecedentes !== null) setAntecedentes(valAntecedentes);
+
+    const valConclusiones = readAndClearTextEditorValue(fieldIdConclusiones);
+    if (valConclusiones !== null) setConclusiones(valConclusiones);
+  }, [fieldIdComentarios, fieldIdAntecedentes, fieldIdConclusiones]);
+
+  useEffect(() => {
+    if (!actividadId) {
+      applyTextEditorValues();
+    }
+    const onPageShow = () => applyTextEditorValues();
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [actividadId, applyTextEditorValues]);
+
   const [modal, setModal] = useState({
     open: false,
     title: "",
@@ -369,11 +447,6 @@ const DetailApp = () => {
     }
   }, [busy, modal.onConfirm, closeModal]);
 
-  const recId = detail.recId || detail.RecId || "";
-  const accountNum = detail.accountNum || detail.AccountNum || "";
-  const userId = detail.userId || detail.UserId || "";
-  const actividadId = detail.actividadId || detail.ActividadId || "";
-
   // hydrate data from server if any field is missing
   const hydrateFromApi = useCallback(async () => {
     if (!actividadId) return;
@@ -409,8 +482,20 @@ const DetailApp = () => {
       setConclusiones(data.conclusiones || data.Conclusiones || "");
     } catch (err) {
       console.warn("Failed to load activity by code", err);
+    } finally {
+      // Apply any pending values coming from the full-screen text editor.
+      applyTextEditorValues();
     }
-  }, [actividadId, asistenteTipos, visitTypes, matchOptionValue, normalizeDateToInput, initialAsistente]);
+  }, [
+    actividadId,
+    asistenteTipos,
+    visitTypes,
+    matchOptionValue,
+    normalizeDateToInput,
+    initialAsistente,
+    defaultVisitType,
+    applyTextEditorValues
+  ]);
 
   useEffect(() => {
     hydrateFromApi();
@@ -635,30 +720,54 @@ const DetailApp = () => {
             <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Comments", "Comments")}</label>
             <textarea
               id="comentarios"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className={classNames(
+                "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+                isEditing ? "cursor-pointer" : ""
+              )}
               value={comentarios}
               disabled={!isEditing}
-              onChange={(e) => setComentarios(e.target.value)}
+              readOnly={isEditing}
+              onPointerDown={(e) => {
+                if (!isEditing) return;
+                e.preventDefault();
+                openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios);
+              }}
             />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Background", "Background")}</label>
             <textarea
               id="antecedentes"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className={classNames(
+                "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+                isEditing ? "cursor-pointer" : ""
+              )}
               value={antecedentes}
               disabled={!isEditing}
-              onChange={(e) => setAntecedentes(e.target.value)}
+              readOnly={isEditing}
+              onPointerDown={(e) => {
+                if (!isEditing) return;
+                e.preventDefault();
+                openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes);
+              }}
             />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
             <textarea
               id="conclusiones"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className={classNames(
+                "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+                isEditing ? "cursor-pointer" : ""
+              )}
               value={conclusiones}
               disabled={!isEditing}
-              onChange={(e) => setConclusiones(e.target.value)}
+              readOnly={isEditing}
+              onPointerDown={(e) => {
+                if (!isEditing) return;
+                e.preventDefault();
+                openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones);
+              }}
             />
           </div>
         </div>

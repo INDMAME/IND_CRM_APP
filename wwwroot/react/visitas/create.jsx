@@ -247,6 +247,21 @@ const VISIT_DRAFT_KEY = "visitas_draft";
 const CONTACTS_STORAGE_KEY = "visitas_contacts_cache_v1";
 const CONTACTS_SELECTION_KEY = "visitas_contacts_selected_v1";
 const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
+const TEXT_EDITOR_PREFIX = "ind_texteditor_";
+
+const readAndClearTextEditorValue = (fieldId) => {
+  const id = String(fieldId || "").trim();
+  if (!id) return null;
+  const key = `${TEXT_EDITOR_PREFIX}${id}`;
+  try {
+    const value = sessionStorage.getItem(key);
+    if (value === null) return null;
+    sessionStorage.removeItem(key);
+    return value;
+  } catch {
+    return null;
+  }
+};
 
 const readStorage = (key) => {
   try {
@@ -1233,6 +1248,10 @@ function VisitasApp() {
   const asistenteTipos = window.__ASISTENTE_TIPOS__ || [];
   const axUser = window.__AX_USER__ || "";
 
+  const fieldIdComentarios = "Visita.Create.Comentarios";
+  const fieldIdAntecedentes = "Visita.Create.Antecedentes";
+  const fieldIdConclusiones = "Visita.Create.Conclusiones";
+
   const [step, setStep] = useState(1);
   const [selectedClient, setSelectedClient] = useState(null);
   const [selectedContacts, setSelectedContacts] = useState([]);
@@ -1258,6 +1277,7 @@ function VisitasApp() {
   const [showRequired, setShowRequired] = useState(false);
   const modalConfirmInFlightRef = useRef(false);
   const [modalError, setModalError] = useState("");
+
   const [modal, setModal] = useState({
     open: false,
     title: "",
@@ -1307,6 +1327,42 @@ function VisitasApp() {
       modalConfirmInFlightRef.current = false;
     }
   }, [busy, modal.onConfirm, closeModal]);
+
+  // Opens the full-screen text editor for a multiline field.
+  const openTextEditor = React.useCallback((fieldId, fieldLabel, fieldValue) => {
+    const safeId = String(fieldId || "").trim();
+    const safeLabel = String(fieldLabel || "").trim();
+    if (!safeId || !safeLabel) return;
+
+    try {
+      const key = `${TEXT_EDITOR_PREFIX}${safeId}`;
+      // Prime the editor with the current value without pushing large text into the URL.
+      if (sessionStorage.getItem(key) === null) {
+        sessionStorage.setItem(key, String(fieldValue || ""));
+      }
+    } catch {
+      /* ignore */
+    }
+
+    const returnUrl = `${window.location.pathname}${window.location.search || ""}`;
+    const url =
+      `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId)}` +
+      `&fieldLabel=${encodeURIComponent(safeLabel)}` +
+      `&returnUrl=${encodeURIComponent(returnUrl)}`;
+
+    window.location.href = url;
+  }, []);
+
+  const applyTextEditorValues = React.useCallback(() => {
+    const valComentarios = readAndClearTextEditorValue(fieldIdComentarios);
+    if (valComentarios !== null) setComentarios(valComentarios);
+
+    const valAntecedentes = readAndClearTextEditorValue(fieldIdAntecedentes);
+    if (valAntecedentes !== null) setAntecedentes(valAntecedentes);
+
+    const valConclusiones = readAndClearTextEditorValue(fieldIdConclusiones);
+    if (valConclusiones !== null) setConclusiones(valConclusiones);
+  }, [fieldIdComentarios, fieldIdAntecedentes, fieldIdConclusiones]);
 
   // Clear contactos solo si el cliente cambia (evita limpiar al restaurar/vuelta de paso 2)
   const prevClientRef = useRef(null);
@@ -1390,6 +1446,14 @@ function VisitasApp() {
       /* ignore parse issues */
     }
   }, []);
+
+  // Apply pending values coming from the full-screen text editor.
+  useEffect(() => {
+    applyTextEditorValues();
+    const onPageShow = () => applyTextEditorValues();
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [applyTextEditorValues]);
 
   // Store selection per client to restore on return.
   useEffect(() => {
@@ -1635,31 +1699,47 @@ function VisitasApp() {
               <textarea
                 id="comentarios"
                 className={classNames(
-                  "w-full rounded-xl border px-3 py-2 text-slate-900 focus:outline-none focus:ring-2",
+                  "w-full cursor-pointer rounded-xl border px-3 py-2 text-slate-900 focus:outline-none focus:ring-2",
                   comentariosInvalid
                     ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
                     : "border-slate-200 focus:ring-primary focus:border-primary"
                 )}
                 value={comentarios}
-                onChange={(e) => setComentarios(e.target.value)}
+                readOnly
+                onPointerDown={(e) => {
+                  if (busy) return;
+                  e.preventDefault();
+                  openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios);
+                }}
               />
             </div>
+
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Background", "Background")}</label>
               <textarea
                 id="antecedentes"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 value={antecedentes}
-                onChange={(e) => setAntecedentes(e.target.value)}
+                readOnly
+                onPointerDown={(e) => {
+                  if (busy) return;
+                  e.preventDefault();
+                  openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes);
+                }}
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
               <textarea
                 id="conclusiones"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 value={conclusiones}
-                onChange={(e) => setConclusiones(e.target.value)}
+                readOnly
+                onPointerDown={(e) => {
+                  if (busy) return;
+                  e.preventDefault();
+                  openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones);
+                }}
               />
             </div>
           </div>

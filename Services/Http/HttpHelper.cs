@@ -44,6 +44,21 @@ namespace IND_CRM_APP.Services.Http
             return await SendAsync(client, request, url, "POST", cancellationToken);
         }
 
+        // POST multipart/form-data (file uploads)
+        public static async Task<HttpResult> PostMultipartAsync(
+            HttpClient client,
+            string url,
+            MultipartFormDataContent formData,
+            CancellationToken cancellationToken = default)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = formData
+            };
+
+            return await SendAsync(client, request, url, "POST", cancellationToken);
+        }
+
         // ======================================================
         // PUT
         // ======================================================
