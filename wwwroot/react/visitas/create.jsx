@@ -1276,6 +1276,7 @@ function VisitasApp() {
   const [busy, setBusy] = useState(false);
   const [showRequired, setShowRequired] = useState(false);
   const modalConfirmInFlightRef = useRef(false);
+  const draftRestoredRef = useRef(false);
   const [modalError, setModalError] = useState("");
 
   const [modal, setModal] = useState({
@@ -1328,6 +1329,32 @@ function VisitasApp() {
     }
   }, [busy, modal.onConfirm, closeModal]);
 
+  // Build a draft snapshot for sessionStorage.
+  const buildDraft = React.useCallback(
+    () => ({
+      selectedClient,
+      selectedContacts,
+      visitType,
+      transDate,
+      description,
+      comentarios,
+      antecedentes,
+      conclusiones,
+      step,
+    }),
+    [selectedClient, selectedContacts, visitType, transDate, description, comentarios, antecedentes, conclusiones, step]
+  );
+
+  // Store the draft before leaving the page to keep step 2 on return.
+  const persistDraftNow = React.useCallback(() => {
+    const draft = buildDraft();
+    try {
+      sessionStorage.setItem(VISIT_DRAFT_KEY, JSON.stringify(draft));
+    } catch {
+      /* ignore quota errors */
+    }
+  }, [buildDraft]);
+
   // Opens the full-screen text editor for a multiline field.
   const openTextEditor = React.useCallback((fieldId, fieldLabel, fieldValue) => {
     const safeId = String(fieldId || "").trim();
@@ -1344,14 +1371,20 @@ function VisitasApp() {
       /* ignore */
     }
 
+    persistDraftNow();
     const returnUrl = `${window.location.pathname}${window.location.search || ""}`;
+    try {
+      sessionStorage.setItem(`${TEXT_EDITOR_PREFIX}${safeId}_returnUrl`, returnUrl);
+    } catch {
+      /* ignore */
+    }
     const url =
       `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId)}` +
       `&fieldLabel=${encodeURIComponent(safeLabel)}` +
       `&returnUrl=${encodeURIComponent(returnUrl)}`;
 
     window.location.href = url;
-  }, []);
+  }, [persistDraftNow]);
 
   const applyTextEditorValues = React.useCallback(() => {
     const valComentarios = readAndClearTextEditorValue(fieldIdComentarios);
@@ -1397,54 +1430,37 @@ function VisitasApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClient?.value]);
 
-  // Persist draft in sessionStorage
+  // Persist draft in sessionStorage (skip until we restored any saved draft).
   useEffect(() => {
-    const draft = {
-      selectedClient,
-      selectedContacts,
-      visitType,
-      transDate,
-      description,
-      comentarios,
-      antecedentes,
-      conclusiones,
-      step,
-    };
+    if (!draftRestoredRef.current) return;
+    const draft = buildDraft();
     try {
       sessionStorage.setItem(VISIT_DRAFT_KEY, JSON.stringify(draft));
     } catch {
       /* ignore quota errors */
     }
-  }, [
-    selectedClient,
-    selectedContacts,
-    visitType,
-    transDate,
-    description,
-    comentarios,
-    antecedentes,
-    conclusiones,
-    step,
-  ]);
+  }, [buildDraft]);
 
   // Restore draft on mount
   useEffect(() => {
     try {
       const raw = sessionStorage.getItem(VISIT_DRAFT_KEY);
-      if (!raw) return;
-      const draft = JSON.parse(raw);
-      if (draft?.selectedClient?.value) setSelectedClient(draft.selectedClient);
-      if (Array.isArray(draft?.selectedContacts)) setSelectedContacts(draft.selectedContacts);
-      if (draft?.visitType !== undefined) setVisitType(draft.visitType);
-      if (draft?.transDate) setTransDate(draft.transDate);
-      if (draft?.description !== undefined) setDescription(draft.description);
-      if (draft?.comentarios !== undefined) setComentarios(draft.comentarios);
-      if (draft?.antecedentes !== undefined) setAntecedentes(draft.antecedentes);
-      if (draft?.conclusiones !== undefined) setConclusiones(draft.conclusiones);
-      if (draft?.step === 2) setStep(2);
+      if (raw) {
+        const draft = JSON.parse(raw);
+        if (draft?.selectedClient?.value) setSelectedClient(draft.selectedClient);
+        if (Array.isArray(draft?.selectedContacts)) setSelectedContacts(draft.selectedContacts);
+        if (draft?.visitType !== undefined) setVisitType(draft.visitType);
+        if (draft?.transDate) setTransDate(draft.transDate);
+        if (draft?.description !== undefined) setDescription(draft.description);
+        if (draft?.comentarios !== undefined) setComentarios(draft.comentarios);
+        if (draft?.antecedentes !== undefined) setAntecedentes(draft.antecedentes);
+        if (draft?.conclusiones !== undefined) setConclusiones(draft.conclusiones);
+        if (draft?.step === 2) setStep(2);
+      }
     } catch {
       /* ignore parse issues */
     }
+    draftRestoredRef.current = true;
   }, []);
 
   // Apply pending values coming from the full-screen text editor.

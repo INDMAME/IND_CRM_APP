@@ -12,7 +12,14 @@
 }
 
 <div class="visita-page w-full max-w-3xl mx-auto pb-8 px-4 md:px-6 mt-4 md:mt-6 min-h-screen" style="overflow: visible;">
-    <div id="visitas-app-root"></div>
+    <div id="visitas-app-root">
+        <div class="w-full rounded-2xl border border-slate-200 bg-white shadow-sm p-6 flex items-center justify-center min-h-[260px]">
+            <div class="flex items-center gap-2 text-sm text-slate-600">
+                <div class="h-10 w-10 rounded-full border-4 border-primary border-t-transparent animate-spin" aria-hidden="true"></div>
+                <span>@SR["Common_Loading"].Value</span>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {

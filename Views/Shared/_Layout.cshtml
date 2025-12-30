@@ -156,6 +156,61 @@
         }
     }
 
+    <script>
+        (function () {
+            // Block swipe back/forward by trapping history entries.
+            const trapState = { indTrap: true };
+
+            function pushTrap() {
+                try {
+                    history.pushState(trapState, "", location.href);
+                } catch {
+                    // ignore
+                }
+            }
+
+            function ensureTrap() {
+                try {
+                    if (!history.state || history.state.indTrap !== true) {
+                        pushTrap();
+                    }
+                } catch {
+                    pushTrap();
+                }
+            }
+
+            window.__indNavigateBack = function (fallbackUrl) {
+                try {
+                    if (history.state && history.state.indTrap === true) {
+                        history.go(-2);
+                        return;
+                    }
+                } catch {
+                    // ignore
+                }
+                if (fallbackUrl) {
+                    window.location.href = fallbackUrl;
+                    return;
+                }
+                try {
+                    history.back();
+                } catch {
+                    if (fallbackUrl) {
+                        window.location.href = fallbackUrl;
+                    }
+                }
+            };
+
+            // Backward compatibility alias.
+            window.__indAllowHistoryOnce = window.__indNavigateBack;
+
+            ensureTrap();
+            window.addEventListener("popstate", function () {
+                ensureTrap();
+            });
+        })();
+    </script>
+
     @RenderSection("Scripts", required: false)
 </body>
 </html>

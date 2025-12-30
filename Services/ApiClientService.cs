@@ -2,6 +2,7 @@ using IND_CRM_APP.Models.Activities;
 using IND_CRM_APP.Models.CRM;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services.Http;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Net;
 using System.Net.Http.Headers;
@@ -41,12 +42,26 @@ namespace IND_CRM_APP.Services
             HttpClient client,
             IConfiguration config,
             ITokenSessionService tokenSession,
+            IHostEnvironment environment,
             ILogger<ApiClientService> logger)
         {
             _client = client;
             _tokenSession = tokenSession;
             _logger = logger;
             _baseUrl = (config["ApiSettings:BaseUrl"] ?? string.Empty).TrimEnd('/');
+
+            // Defensive config check to avoid empty or insecure API base URL.
+            if (string.IsNullOrWhiteSpace(_baseUrl))
+            {
+                throw new InvalidOperationException(
+                    "ApiSettings:BaseUrl is required. Configure it in appsettings.json or environment-specific settings.");
+            }
+
+            if (environment.IsProduction() && _baseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogError("ApiSettings:BaseUrl must use HTTPS in Production. Current value starts with http://");
+                throw new InvalidOperationException("ApiSettings:BaseUrl must use HTTPS in Production.");
+            }
 
             if (int.TryParse(config["ApiSettings:TimeoutSeconds"], out var seconds) && seconds > 0)
             {

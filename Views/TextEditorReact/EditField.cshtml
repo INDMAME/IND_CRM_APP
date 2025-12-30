@@ -16,6 +16,18 @@
      data-field-label="@Model.FieldLabel"
      data-field-value="@Model.FieldValue"
      data-return-url="@Model.ReturnUrl">
+    <div class="min-h-screen h-[100dvh] w-full flex flex-col bg-slate-200">
+        <div class="topbar shadow-md">
+            <div class="flex-1 flex items-center justify-center px-2 text-white text-sm">
+                @SR["Common_Loading"].Value
+            </div>
+        </div>
+        <div class="flex-1 min-h-0 w-full px-4 pb-4 pt-3">
+            <div class="w-full max-w-3xl mx-auto mt-5 rounded-2xl border border-slate-300 bg-white shadow-lg flex items-center justify-center min-h-[260px]">
+                <div class="h-12 w-12 rounded-full border-4 border-primary border-t-transparent animate-spin" aria-hidden="true"></div>
+            </div>
+        </div>
+    </div>
 </div>
 
 @section Scripts {
@@ -24,6 +36,9 @@
             Topbar_Back = SR["Topbar_Back"].Value,
             Common_Save = SR["Common_Save"].Value,
             TextEditor_Microphone = SR["TextEditor_Microphone"].Value,
+            TextEditor_Transcribe = SR["TextEditor_Transcribe"].Value,
+            TextEditor_Transcribing = SR["TextEditor_Transcribing"].Value,
+            TextEditor_TranscribeFailed = SR["TextEditor_TranscribeFailed"].Value,
 
             AudioRecorder_Play = SR["AudioRecorder_Play"].Value,
             AudioRecorder_Record = SR["AudioRecorder_Record"].Value,

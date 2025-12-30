@@ -18,6 +18,26 @@ const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" &
 
 const IND_BRAND = "#00296b";
 const IND_BRAND_RGB = [0, 41, 107]; // #00296b
+const IND_AUDIO_WORKLET_PATH = "/js/ind-audio-worklet.js";
+const IND_AUDIO_LOG_PREFIX = "[AudioRecorderMinimal]";
+
+function logInfo(...args) {
+  if (typeof console !== "undefined" && console.info) {
+    console.info(IND_AUDIO_LOG_PREFIX, ...args);
+  }
+}
+
+function logWarn(...args) {
+  if (typeof console !== "undefined" && console.warn) {
+    console.warn(IND_AUDIO_LOG_PREFIX, ...args);
+  }
+}
+
+function logError(...args) {
+  if (typeof console !== "undefined" && console.error) {
+    console.error(IND_AUDIO_LOG_PREFIX, ...args);
+  }
+}
 
 function brandRgba(alpha) {
   return `rgba(${IND_BRAND_RGB[0]}, ${IND_BRAND_RGB[1]}, ${IND_BRAND_RGB[2]}, ${alpha})`;
@@ -58,6 +78,18 @@ function isHttpIntranetBlocked() {
 
   // http + not localhost: normally blocked for mic.
   return true;
+}
+
+function getAudioWorkletUrl() {
+  if (typeof window === "undefined" || !window.location) {
+    return IND_AUDIO_WORKLET_PATH;
+  }
+
+  try {
+    return new URL(IND_AUDIO_WORKLET_PATH, window.location.origin).toString();
+  } catch {
+    return IND_AUDIO_WORKLET_PATH;
+  }
 }
 
 function formatTimeMs(ms) {
@@ -129,6 +161,46 @@ function encodeWav(args) {
   }
 
   return new Blob([buffer], { type: "audio/wav" });
+}
+
+// Convert PCM float samples into per-second levels for waveform display.
+function buildSecondLevels(samples, sampleRate) {
+  if (!samples || !samples.length || !sampleRate) return [];
+
+  const seconds = Math.max(1, Math.ceil(samples.length / sampleRate));
+  const levels = new Array(seconds).fill(0);
+  let max = 0;
+
+  for (let s = 0; s < seconds; s++) {
+    const start = s * sampleRate;
+    const end = Math.min((s + 1) * sampleRate, samples.length);
+    let sum = 0;
+    const len = end - start;
+
+    for (let i = start; i < end; i++) {
+      const v = samples[i];
+      sum += v * v;
+    }
+
+    const rms = Math.sqrt(sum / Math.max(1, len));
+    levels[s] = rms;
+    if (rms > max) max = rms;
+  }
+
+  if (max <= 0) return levels;
+
+  return levels.map((v) => Math.min(1, Math.pow(v / max, 0.75)));
+}
+
+function drawRoundedRect(ctx, x, y, w, h, r) {
+  if (ctx.roundRect) {
+    ctx.beginPath();
+    ctx.roundRect(x, y, w, h, r);
+    ctx.fill();
+    return;
+  }
+
+  ctx.fillRect(x, y, w, h);
 }
 
 function buildHttpMicBlockedMessage() {
@@ -211,7 +283,15 @@ function runSelfTests() {
   }
 }
 
-export default function AudioRecorderMinimal({ embedded = false }) {
+export default function AudioRecorderMinimal({
+  embedded = false,
+  onAudioReady,
+  onAudioCleared,
+  onTranscribe,
+  transcribeBusy = false,
+  transcribeLabel,
+  transcribeBusyLabel,
+}) {
   const [canRecord, setCanRecord] = useState(false);
   const [uiError, setUiError] = useState("");
   const [uiHint, setUiHint] = useState("");
@@ -223,7 +303,12 @@ export default function AudioRecorderMinimal({ embedded = false }) {
   const [elapsedMs, setElapsedMs] = useState(0);
   const [wavBlob, setWavBlob] = useState(null);
   const [wavUrl, setWavUrl] = useState(null);
+  const [wavLevels, setWavLevels] = useState([]);
+  const [wavDurationSec, setWavDurationSec] = useState(0);
+  const [playbackRemainingSec, setPlaybackRemainingSec] = useState(0);
+  const [playbackSecond, setPlaybackSecond] = useState(0);
   const wavUrlRef = useRef(null);
+  const wavLevelsRef = useRef([]);
 
   const audioElRef = useRef(null);
   const isMountedRef = useRef(false);
@@ -234,6 +319,7 @@ export default function AudioRecorderMinimal({ embedded = false }) {
   const analyserRef = useRef(null);
   const processorRef = useRef(null);
   const zeroGainRef = useRef(null);
+  const workletNodeRef = useRef(null);
 
   const sampleRateRef = useRef(48000);
   const chunksRef = useRef([]);
@@ -311,11 +397,19 @@ export default function AudioRecorderMinimal({ embedded = false }) {
   }, [wavUrl]);
 
   useEffect(() => {
+    wavLevelsRef.current = wavLevels;
+  }, [wavLevels]);
+
+  useEffect(() => {
     const audioEl = audioElRef.current;
     if (!audioEl) return undefined;
 
     function onEnded() {
       setIsPlaying(false);
+      if (wavDurationSec > 0) {
+        setPlaybackRemainingSec(wavDurationSec);
+        setPlaybackSecond(0);
+      }
     }
     function onPause() {
       setIsPlaying(false);
@@ -323,26 +417,56 @@ export default function AudioRecorderMinimal({ embedded = false }) {
     function onPlay() {
       setIsPlaying(true);
     }
+    function onLoadedMetadata() {
+      const duration = Math.ceil(audioEl.duration || 0);
+      if (duration > 0) {
+        setWavDurationSec(duration);
+        setPlaybackRemainingSec(duration);
+        setPlaybackSecond(0);
+      }
+    }
+    function onTimeUpdate() {
+      const total = wavDurationSec > 0 ? wavDurationSec : Math.ceil(audioEl.duration || 0);
+      if (total <= 0) return;
+      const current = audioEl.currentTime || 0;
+      const remaining = Math.max(0, total - current);
+      setPlaybackRemainingSec(remaining);
+      setPlaybackSecond(Math.max(0, Math.min(total - 1, Math.floor(current))));
+    }
 
     audioEl.addEventListener("ended", onEnded);
     audioEl.addEventListener("pause", onPause);
     audioEl.addEventListener("play", onPlay);
+    audioEl.addEventListener("loadedmetadata", onLoadedMetadata);
+    audioEl.addEventListener("timeupdate", onTimeUpdate);
 
     return () => {
       audioEl.removeEventListener("ended", onEnded);
       audioEl.removeEventListener("pause", onPause);
       audioEl.removeEventListener("play", onPlay);
+      audioEl.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audioEl.removeEventListener("timeupdate", onTimeUpdate);
     };
-  }, []);
+  }, [wavDurationSec]);
 
   useEffect(() => {
     if (isRecording && !isPaused) {
       startEqLoop();
     } else {
       stopEqLoop();
-      drawEqIdle();
+      if (wavLevelsRef.current && wavLevelsRef.current.length > 0) {
+        drawEqWaveform(playbackSecond);
+      } else {
+        drawEqIdle();
+      }
     }
   }, [isRecording, isPaused]);
+
+  useEffect(() => {
+    if (!isRecording && wavLevelsRef.current && wavLevelsRef.current.length > 0) {
+      drawEqWaveform(playbackSecond);
+    }
+  }, [playbackSecond, wavLevels, isRecording]);
 
   function safeSetState(fn) {
     if (!isMountedRef.current) return;
@@ -406,6 +530,7 @@ export default function AudioRecorderMinimal({ embedded = false }) {
 
   async function startRecording() {
     if (!canRecord) {
+      logWarn("getUserMedia not available or blocked.");
       safeSetState(() => {
         if (isHttpIntranetBlocked() && !isSecureContextSafe()) {
           setUiError(buildHttpMicBlockedMessage());
@@ -437,6 +562,17 @@ export default function AudioRecorderMinimal({ embedded = false }) {
       setWavUrl(null);
       setWavBlob(null);
     });
+    setWavLevels([]);
+    setWavDurationSec(0);
+    setPlaybackRemainingSec(0);
+    setPlaybackSecond(0);
+    if (typeof onAudioCleared === "function") {
+      try {
+        onAudioCleared();
+      } catch {
+        /* ignore */
+      }
+    }
 
     chunksRef.current = [];
 
@@ -465,22 +601,70 @@ export default function AudioRecorderMinimal({ embedded = false }) {
       analyser.smoothingTimeConstant = 0.88;
       analyserRef.current = analyser;
 
-      const processor = audioCtx.createScriptProcessor(4096, 1, 1);
-      processorRef.current = processor;
-
       const zeroGain = audioCtx.createGain();
       zeroGain.gain.value = 0;
       zeroGainRef.current = zeroGain;
 
-      processor.onaudioprocess = (e) => {
-        if (!isRecordingRef.current || isPausedRef.current) return;
-        const input = e.inputBuffer.getChannelData(0);
-        chunksRef.current.push(new Float32Array(input));
-      };
+      workletNodeRef.current = null;
+      processorRef.current = null;
+
+      let captureNode = null;
+      const canWorklet = !!(audioCtx.audioWorklet && typeof audioCtx.audioWorklet.addModule === "function");
+      if (canWorklet) {
+        try {
+          const workletUrl = getAudioWorkletUrl();
+          await audioCtx.audioWorklet.addModule(workletUrl);
+
+          const workletNode = new AudioWorkletNode(audioCtx, "ind-audio-capture");
+          workletNodeRef.current = workletNode;
+          captureNode = workletNode;
+
+          workletNode.onprocessorerror = (event) => {
+            logError("AudioWorklet processor error", event);
+          };
+          workletNode.port.onmessageerror = (event) => {
+            logError("AudioWorklet message error", event);
+          };
+          workletNode.port.onmessage = (event) => {
+            const data = event && event.data ? event.data : null;
+            if (!data || data.type !== "chunk") return;
+            if (!isRecordingRef.current || isPausedRef.current) return;
+
+            const raw = data.samples;
+            if (!raw) return;
+
+            let chunk = null;
+            if (raw instanceof Float32Array) chunk = raw;
+            else if (raw.buffer) chunk = new Float32Array(raw.buffer);
+            else if (raw.byteLength) chunk = new Float32Array(raw);
+
+            if (!chunk || !chunk.length) return;
+            chunksRef.current.push(chunk);
+          };
+
+          logInfo("AudioWorklet capture enabled", workletUrl);
+        } catch (err) {
+          logWarn("AudioWorklet failed. Falling back to ScriptProcessor.", err);
+        }
+      } else {
+        logWarn("AudioWorklet not supported. Using ScriptProcessor.");
+      }
+
+      if (!captureNode) {
+        const processor = audioCtx.createScriptProcessor(4096, 1, 1);
+        processorRef.current = processor;
+        captureNode = processor;
+
+        processor.onaudioprocess = (e) => {
+          if (!isRecordingRef.current || isPausedRef.current) return;
+          const input = e.inputBuffer.getChannelData(0);
+          chunksRef.current.push(new Float32Array(input));
+        };
+      }
 
       source.connect(analyser);
-      analyser.connect(processor);
-      processor.connect(zeroGain);
+      analyser.connect(captureNode);
+      captureNode.connect(zeroGain);
       zeroGain.connect(audioCtx.destination);
 
       safeSetState(() => {
@@ -505,7 +689,7 @@ export default function AudioRecorderMinimal({ embedded = false }) {
         }
       });
 
-      console.error("Audio recorder start failed:", err);
+      logError("Audio recorder start failed", err);
     }
   }
 
@@ -514,6 +698,13 @@ export default function AudioRecorderMinimal({ embedded = false }) {
     safeSetState(() => {
       setIsPaused(true);
     });
+    if (workletNodeRef.current && workletNodeRef.current.port) {
+      try {
+        workletNodeRef.current.port.postMessage({ type: "setRecording", value: false });
+      } catch {
+        /* ignore */
+      }
+    }
     pauseTimer();
   }
 
@@ -522,6 +713,13 @@ export default function AudioRecorderMinimal({ embedded = false }) {
     safeSetState(() => {
       setIsPaused(false);
     });
+    if (workletNodeRef.current && workletNodeRef.current.port) {
+      try {
+        workletNodeRef.current.port.postMessage({ type: "setRecording", value: true });
+      } catch {
+        /* ignore */
+      }
+    }
     startTimer();
   }
 
@@ -551,11 +749,25 @@ export default function AudioRecorderMinimal({ embedded = false }) {
 
     safeStopRecordingInternal({ keepWav: true, skipUiState: false });
 
+    const levels = buildSecondLevels(merged, sampleRateRef.current);
+    const durationSec = Math.max(1, Math.ceil(merged.length / sampleRateRef.current));
+
     const url = URL.createObjectURL(wav);
     safeSetState(() => {
       setWavBlob(wav);
       setWavUrl(url);
+      setWavLevels(levels);
+      setWavDurationSec(durationSec);
+      setPlaybackRemainingSec(durationSec);
+      setPlaybackSecond(0);
     });
+    if (typeof onAudioReady === "function") {
+      try {
+        onAudioReady(wav);
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   function clearRecording() {
@@ -575,6 +787,17 @@ export default function AudioRecorderMinimal({ embedded = false }) {
       setUiError("");
       setUiHint("");
     });
+    setWavLevels([]);
+    setWavDurationSec(0);
+    setPlaybackRemainingSec(0);
+    setPlaybackSecond(0);
+    if (typeof onAudioCleared === "function") {
+      try {
+        onAudioCleared();
+      } catch {
+        /* ignore */
+      }
+    }
 
     chunksRef.current = [];
     resetTimer();
@@ -588,6 +811,16 @@ export default function AudioRecorderMinimal({ embedded = false }) {
     if (!keepWav) resetTimer();
 
     try {
+      if (workletNodeRef.current) {
+        try {
+          if (workletNodeRef.current.port) {
+            workletNodeRef.current.port.postMessage({ type: "setRecording", value: false });
+          }
+        } catch {
+          /* ignore */
+        }
+        workletNodeRef.current.disconnect();
+      }
       if (processorRef.current) processorRef.current.disconnect();
       if (analyserRef.current) analyserRef.current.disconnect();
       if (sourceRef.current) sourceRef.current.disconnect();
@@ -615,6 +848,7 @@ export default function AudioRecorderMinimal({ embedded = false }) {
     analyserRef.current = null;
     sourceRef.current = null;
     zeroGainRef.current = null;
+    workletNodeRef.current = null;
     audioCtxRef.current = null;
     streamRef.current = null;
 
@@ -753,6 +987,62 @@ export default function AudioRecorderMinimal({ embedded = false }) {
     }
   }
 
+  function drawEqWaveform(activeSecond) {
+    const canvas = barsCanvasRef.current;
+    if (!canvas) return;
+
+    syncCanvasSize();
+
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    const levels = wavLevelsRef.current || [];
+    if (!levels.length) {
+      drawEqIdle();
+      return;
+    }
+
+    const w = canvas.width;
+    const h = canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    ctx.fillStyle = brandRgba(0.10);
+    ctx.fillRect(0, Math.floor(h / 2), w, 1);
+
+    const maxH = Math.floor(h * 0.9);
+    const minH = 3;
+
+    const barW = 3;
+    const gap = 2;
+    const minBars = 48;
+    const maxBars = 140;
+    const fitBars = Math.max(1, Math.floor((w + gap) / (barW + gap)));
+    const count = Math.max(minBars, Math.min(maxBars, Math.max(levels.length, fitBars)));
+    const totalW = count * barW + (count - 1) * gap;
+    const startX = Math.max(0, Math.floor((w - totalW) / 2));
+
+    const durationSec = Math.max(1, wavDurationSec || levels.length || 1);
+    const activeIndex = Math.max(0, Math.min(count - 1, Math.floor((activeSecond / durationSec) * (count - 1))));
+
+    for (let i = 0; i < count; i++) {
+      const t = count > 1 ? i / (count - 1) : 0;
+      const rawIndex = t * Math.max(0, levels.length - 1);
+      const low = Math.floor(rawIndex);
+      const high = Math.min(levels.length - 1, low + 1);
+      const frac = rawIndex - low;
+      const vLow = levels[low] || 0;
+      const vHigh = levels[high] || 0;
+      const v = vLow * (1 - frac) + vHigh * frac;
+      const barH = Math.max(minH, Math.floor(v * (maxH - minH) + minH));
+      const x = startX + i * (barW + gap);
+      const y = Math.floor((h - barH) / 2);
+
+      const isActive = i === activeIndex;
+      ctx.fillStyle = isActive ? brandRgba(0.78) : brandRgba(0.28);
+      drawRoundedRect(ctx, x, y, barW, barH, Math.min(6, Math.floor(barW / 2)));
+    }
+  }
+
   function onCenterClick() {
     if (!isRecording) {
       startRecording();
@@ -776,7 +1066,13 @@ export default function AudioRecorderMinimal({ embedded = false }) {
       ? indT("AudioRecorder_Resume", "Resume")
       : indT("AudioRecorder_Pause", "Pause");
 
-  const timerText = formatTimeMs(elapsedMs);
+  const totalWavMs = wavDurationSec > 0 ? wavDurationSec * 1000 : 0;
+  const remainingWavMs = wavDurationSec > 0 ? Math.max(0, playbackRemainingSec * 1000) : 0;
+  const timerText = isRecording
+    ? formatTimeMs(elapsedMs)
+    : wavUrl
+      ? formatTimeMs(remainingWavMs || totalWavMs)
+      : formatTimeMs(0);
 
   const isActiveRec = isRecording && !isPaused;
   const statusText = uiError
@@ -794,7 +1090,7 @@ export default function AudioRecorderMinimal({ embedded = false }) {
   const cardBg = "radial-gradient(700px circle at 18% 0%, rgba(0, 41, 107, 0.06), transparent 55%)";
 
   const outerClassName = embedded
-    ? "w-full flex justify-center"
+    ? "w-full"
     : "w-full min-h-[280px] flex items-center justify-center p-4 sm:p-6";
 
   const outerStyle = embedded
@@ -805,29 +1101,49 @@ export default function AudioRecorderMinimal({ embedded = false }) {
         fontFamily: '"Montserrat", sans-serif',
       };
 
+  const cardClassName = embedded
+    ? "relative w-full rounded-xl sm:rounded-2xl bg-white border shadow-xl"
+    : "relative w-full max-w-[360px] sm:max-w-[420px] lg:max-w-[520px] rounded-xl sm:rounded-2xl bg-white border shadow-xl";
+
+  const showTranscribeButton = !!wavBlob && typeof onTranscribe === "function";
+  const transcribeText = transcribeLabel || indT("TextEditor_Transcribe", "Transcribe");
+  const transcribeBusyText = transcribeBusyLabel || indT("TextEditor_Transcribing", "Transcribing");
+
   return (
     <div className={outerClassName} style={outerStyle}>
       <div
-        className="w-full max-w-[360px] sm:max-w-[420px] lg:max-w-[520px] rounded-xl sm:rounded-2xl bg-white border shadow-xl"
+        className={cardClassName}
         style={{ borderColor: "rgba(0, 41, 107, 0.18)", backgroundImage: cardBg }}
       >
-        <div className="px-5 sm:px-7 pt-5 sm:pt-6">
-          <div className="flex items-center justify-center">
-            <canvas ref={barsCanvasRef} className="w-full h-16 sm:h-20" />
-          </div>
-
-          <div className="mt-3 flex items-center justify-end">
+        {!wavUrl ? (
+          <div className="absolute right-4 top-4 sm:right-5 sm:top-5">
             <div
-              className="font-light italic tabular-nums text-[22px] sm:text-[24px] leading-none tracking-[0.18em]"
+              className="font-light italic tabular-nums text-[16px] sm:text-[18px] leading-none tracking-[0.14em]"
               style={{ color: brandRgba(timerAlpha) }}
             >
               {timerText}
             </div>
           </div>
+        ) : null}
+
+        <div className="px-5 sm:px-7 pt-3 sm:pt-4">
+          <div className="flex items-center justify-center">
+            <canvas ref={barsCanvasRef} className="w-full h-12 sm:h-16" />
+          </div>
+          {wavUrl ? (
+            <div className="mt-1 flex items-center justify-end">
+              <div
+                className="font-light italic tabular-nums text-[16px] sm:text-[18px] leading-none tracking-[0.14em]"
+                style={{ color: brandRgba(timerAlpha) }}
+              >
+                {timerText}
+              </div>
+            </div>
+          ) : null}
         </div>
 
-        <div className="px-5 sm:px-7 pb-5 sm:pb-6 pt-4 sm:pt-5">
-          <div className="flex items-center justify-center gap-6 sm:gap-8">
+        <div className="px-5 sm:px-7 pb-4 sm:pb-5 pt-3 sm:pt-4">
+          <div className="flex items-center justify-center" style={{ gap: "24px" }}>
             <button
               type="button"
               onClick={togglePlay}
@@ -905,18 +1221,40 @@ export default function AudioRecorderMinimal({ embedded = false }) {
             </button>
           </div>
 
+          {showTranscribeButton ? (
+            <div className="mt-3 flex items-center justify-end">
+              <button
+                type="button"
+                onClick={() => onTranscribe && onTranscribe(wavBlob)}
+                disabled={transcribeBusy}
+                className="px-4 py-1.5 rounded-full border text-[13px] font-medium transition shadow-sm hover:shadow-md active:scale-95"
+                style={{
+                  borderColor: "rgba(0, 41, 107, 0.22)",
+                  backgroundColor: transcribeBusy ? "rgba(0, 41, 107, 0.08)" : "rgba(0, 41, 107, 0.04)",
+                  color: IND_BRAND,
+                  opacity: transcribeBusy ? 0.7 : 1,
+                  cursor: transcribeBusy ? "not-allowed" : "pointer",
+                }}
+                aria-label={transcribeBusy ? transcribeBusyText : transcribeText}
+                title={transcribeBusy ? transcribeBusyText : transcribeText}
+              >
+                {transcribeBusy ? transcribeBusyText : transcribeText}
+              </button>
+            </div>
+          ) : null}
+
           <audio ref={audioElRef} src={wavUrl || undefined} className="hidden" />
 
-          <div className="mt-4 flex flex-col items-center justify-center gap-1 min-h-[34px]">
+          <div className="mt-3 flex flex-col items-center justify-center gap-1 min-h-[22px]">
             {uiError ? (
               <>
-                <div className="text-xs text-rose-700 text-center">{uiError}</div>
+                <div className="text-xs text-rose-700 text-center leading-tight">{uiError}</div>
                 {uiHint ? (
-                  <div className="text-[11px] text-slate-600 text-center">{uiHint}</div>
+                  <div className="text-[11px] text-slate-600 text-center leading-tight">{uiHint}</div>
                 ) : null}
               </>
             ) : (
-              <div className="text-xs" style={{ color: brandRgba(statusAlpha) }}>
+              <div className="text-xs leading-tight" style={{ color: brandRgba(statusAlpha) }}>
                 {statusText}
               </div>
             )}

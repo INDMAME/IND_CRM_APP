@@ -105,6 +105,8 @@ else
 app.UseStaticFiles();
 app.UseRequestLocalization(app.Services.GetRequiredService<IOptions<RequestLocalizationOptions>>().Value);
 app.UseRouting();
+// Friendly 404 page for missing routes.
+app.UseStatusCodePagesWithReExecute("/Home/NotFound", "?code={0}");
 app.UseSession();
 // Token refresh middleware
 app.UseMiddleware<TokenRefreshMiddleware>();

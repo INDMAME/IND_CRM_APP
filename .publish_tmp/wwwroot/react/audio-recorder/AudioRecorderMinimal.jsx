@@ -13,7 +13,7 @@ const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" &
 // - Defensive error messages for common getUserMedia failures.
 //
 // Important constraint (Chrome): microphone capture requires a Secure Context.
-// - Allowed: https://... or http://localhost
+// - Allowed: https://... or https://localhost
 // - Blocked: http://intranet-host (unless corporate policy treats origin as secure)
 
 const IND_BRAND = "#00296b";
@@ -134,7 +134,7 @@ function encodeWav(args) {
 function buildHttpMicBlockedMessage() {
   return indT(
     "AudioRecorder_Error_HttpBlocked",
-    "Chrome blocks microphone on HTTP (intranet). Use HTTPS or open the app via http://localhost. For dev, configure Chrome to treat your HTTP origin as secure."
+    "Chrome blocks microphone on HTTP (intranet). Use HTTPS or open the app via https://localhost. For dev, configure Chrome to treat your HTTP origin as secure."
   );
 }
 

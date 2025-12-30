@@ -16,6 +16,8 @@ const indFormat = (key, fallback, ...args) => {
   return String(template).replace(/\{(\d+)\}/g, (_, idx) => String(args[Number(idx)] ?? ""));
 };
 
+const hasValue = (value) => String(value || "").trim().length > 0;
+
 const readAndClearTextEditorValue = (fieldId) => {
   const id = String(fieldId || "").trim();
   if (!id) return null;
@@ -341,6 +343,7 @@ const DetailApp = () => {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isHydrating, setIsHydrating] = useState(false);
   const modalConfirmInFlightRef = useRef(false);
   const [modalError, setModalError] = useState("");
 
@@ -348,6 +351,13 @@ const DetailApp = () => {
   const accountNum = detail.accountNum || detail.AccountNum || "";
   const userId = detail.userId || detail.UserId || "";
   const actividadId = detail.actividadId || detail.ActividadId || "";
+
+  const hasServerDetail =
+    hasValue(recId) &&
+    hasValue(accountNum) &&
+    hasValue(detail.transDate || detail.TransDate || "");
+
+  const shouldHydrate = !!actividadId && !hasServerDetail;
 
   const openTextEditor = useCallback((fieldId, fieldLabel, fieldValue) => {
     const safeId = String(fieldId || "").trim();
@@ -364,6 +374,13 @@ const DetailApp = () => {
     }
 
     const returnUrl = `${window.location.pathname}${window.location.search || ""}`;
+    try {
+      if (safeId) {
+        sessionStorage.setItem(`${TEXT_EDITOR_PREFIX}${safeId}_returnUrl`, returnUrl);
+      }
+    } catch {
+      /* ignore */
+    }
     const url =
       `/TextEditorReact/EditField?fieldId=${encodeURIComponent(fieldId || "")}` +
       `&fieldLabel=${encodeURIComponent(fieldLabel || "")}` +
@@ -450,6 +467,7 @@ const DetailApp = () => {
   // hydrate data from server if any field is missing
   const hydrateFromApi = useCallback(async () => {
     if (!actividadId) return;
+    setIsHydrating(true);
     try {
       console.debug("Fetching activity by code", actividadId);
       const res = await fetchJson(`/Visitas/GetActivityByCode?code=${encodeURIComponent(actividadId)}`);
@@ -483,6 +501,7 @@ const DetailApp = () => {
     } catch (err) {
       console.warn("Failed to load activity by code", err);
     } finally {
+      setIsHydrating(false);
       // Apply any pending values coming from the full-screen text editor.
       applyTextEditorValues();
     }
@@ -498,9 +517,13 @@ const DetailApp = () => {
   ]);
 
   useEffect(() => {
-    hydrateFromApi();
+    if (shouldHydrate) {
+      hydrateFromApi();
+    } else {
+      applyTextEditorValues();
+    }
     console.debug("Detalle actividad cargado", detail);
-  }, [detail, hydrateFromApi]);
+  }, [detail, hydrateFromApi, shouldHydrate, applyTextEditorValues]);
 
   // Toggle topbar edit/save icons based on editing state.
   useEffect(() => {
@@ -683,7 +706,15 @@ const DetailApp = () => {
           </div>,
           document.body
         )}
-      <div className="shadow-sm glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
+      <div className="relative shadow-sm glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
+        {isHydrating && (
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 rounded-2xl">
+            <div className="flex items-center gap-2 text-sm text-slate-600">
+              <Spinner size="h-5 w-5" />
+              <span>{indT("Common_Loading", "Loading")}</span>
+            </div>
+          </div>
+        )}
         <div className="text-base font-semibold text-slate-900 border-b border-slate-200 pb-3">
           {indT("Visits_Detail_VisitData_Title", "Visit details")}
         </div>

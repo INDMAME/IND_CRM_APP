@@ -100,6 +100,9 @@
   <data name="Home_DataFromAx" xml:space="preserve"><value>Dados do Axapta 3.0</value></data>
   <data name="Home_Environment" xml:space="preserve"><value>Ambiente</value></data>
   <data name="Home_Company" xml:space="preserve"><value>Companhia</value></data>
+  <data name="NotFound_Title" xml:space="preserve"><value>Pagina nao encontrada</value></data>
+  <data name="NotFound_Subtitle" xml:space="preserve"><value>O endereco solicitado nao existe ou foi movido.</value></data>
+  <data name="NotFound_BackHome" xml:space="preserve"><value>Voltar ao inicio</value></data>
   <data name="Error_BackHome" xml:space="preserve"><value>Voltar ao inicio</value></data>
   <data name="Error_Title" xml:space="preserve"><value>Erro do sistema</value></data>
   <data name="Error_Heading" xml:space="preserve"><value>Ocorreu um erro</value></data>
@@ -227,6 +230,9 @@
 
   <data name="TextEditor_OpenFullScreen" xml:space="preserve"><value>Editar em tela cheia</value></data>
   <data name="TextEditor_Microphone" xml:space="preserve"><value>Microfone</value></data>
+  <data name="TextEditor_Transcribe" xml:space="preserve"><value>Transcrever</value></data>
+  <data name="TextEditor_Transcribing" xml:space="preserve"><value>Transcrevendo...</value></data>
+  <data name="TextEditor_TranscribeFailed" xml:space="preserve"><value>Nao foi possivel transcrever o audio.</value></data>
 
   <data name="Tools_AudioRecorder_Title" xml:space="preserve"><value>Gravador de audio</value></data>
 

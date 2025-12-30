@@ -23100,6 +23100,7 @@
         const [busy, setBusy] = (0, import_react3.useState)(false);
         const [showRequired, setShowRequired] = (0, import_react3.useState)(false);
         const modalConfirmInFlightRef = (0, import_react3.useRef)(false);
+        const draftRestoredRef = (0, import_react3.useRef)(false);
         const [modalError, setModalError] = (0, import_react3.useState)("");
         const [modal, setModal] = (0, import_react3.useState)({
           open: false,
@@ -23147,6 +23148,27 @@
             modalConfirmInFlightRef.current = false;
           }
         }, [busy, modal.onConfirm, closeModal]);
+        const buildDraft = import_react3.default.useCallback(
+          () => ({
+            selectedClient,
+            selectedContacts,
+            visitType,
+            transDate,
+            description,
+            comentarios,
+            antecedentes,
+            conclusiones,
+            step
+          }),
+          [selectedClient, selectedContacts, visitType, transDate, description, comentarios, antecedentes, conclusiones, step]
+        );
+        const persistDraftNow = import_react3.default.useCallback(() => {
+          const draft = buildDraft();
+          try {
+            sessionStorage.setItem(VISIT_DRAFT_KEY, JSON.stringify(draft));
+          } catch {
+          }
+        }, [buildDraft]);
         const openTextEditor = import_react3.default.useCallback((fieldId, fieldLabel, fieldValue) => {
           const safeId = String(fieldId || "").trim();
           const safeLabel = String(fieldLabel || "").trim();
@@ -23158,10 +23180,15 @@
             }
           } catch {
           }
+          persistDraftNow();
           const returnUrl = `${window.location.pathname}${window.location.search || ""}`;
+          try {
+            sessionStorage.setItem(`${TEXT_EDITOR_PREFIX}${safeId}_returnUrl`, returnUrl);
+          } catch {
+          }
           const url = `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId)}&fieldLabel=${encodeURIComponent(safeLabel)}&returnUrl=${encodeURIComponent(returnUrl)}`;
           window.location.href = url;
-        }, []);
+        }, [persistDraftNow]);
         const applyTextEditorValues = import_react3.default.useCallback(() => {
           const valComentarios = readAndClearTextEditorValue(fieldIdComentarios);
           if (valComentarios !== null) setComentarios(valComentarios);
@@ -23197,48 +23224,31 @@
           lastClientRef.current = current;
         }, [selectedClient?.value]);
         (0, import_react3.useEffect)(() => {
-          const draft = {
-            selectedClient,
-            selectedContacts,
-            visitType,
-            transDate,
-            description,
-            comentarios,
-            antecedentes,
-            conclusiones,
-            step
-          };
+          if (!draftRestoredRef.current) return;
+          const draft = buildDraft();
           try {
             sessionStorage.setItem(VISIT_DRAFT_KEY, JSON.stringify(draft));
           } catch {
           }
-        }, [
-          selectedClient,
-          selectedContacts,
-          visitType,
-          transDate,
-          description,
-          comentarios,
-          antecedentes,
-          conclusiones,
-          step
-        ]);
+        }, [buildDraft]);
         (0, import_react3.useEffect)(() => {
           try {
             const raw = sessionStorage.getItem(VISIT_DRAFT_KEY);
-            if (!raw) return;
-            const draft = JSON.parse(raw);
-            if (draft?.selectedClient?.value) setSelectedClient(draft.selectedClient);
-            if (Array.isArray(draft?.selectedContacts)) setSelectedContacts(draft.selectedContacts);
-            if (draft?.visitType !== void 0) setVisitType(draft.visitType);
-            if (draft?.transDate) setTransDate(draft.transDate);
-            if (draft?.description !== void 0) setDescription(draft.description);
-            if (draft?.comentarios !== void 0) setComentarios(draft.comentarios);
-            if (draft?.antecedentes !== void 0) setAntecedentes(draft.antecedentes);
-            if (draft?.conclusiones !== void 0) setConclusiones(draft.conclusiones);
-            if (draft?.step === 2) setStep(2);
+            if (raw) {
+              const draft = JSON.parse(raw);
+              if (draft?.selectedClient?.value) setSelectedClient(draft.selectedClient);
+              if (Array.isArray(draft?.selectedContacts)) setSelectedContacts(draft.selectedContacts);
+              if (draft?.visitType !== void 0) setVisitType(draft.visitType);
+              if (draft?.transDate) setTransDate(draft.transDate);
+              if (draft?.description !== void 0) setDescription(draft.description);
+              if (draft?.comentarios !== void 0) setComentarios(draft.comentarios);
+              if (draft?.antecedentes !== void 0) setAntecedentes(draft.antecedentes);
+              if (draft?.conclusiones !== void 0) setConclusiones(draft.conclusiones);
+              if (draft?.step === 2) setStep(2);
+            }
           } catch {
           }
+          draftRestoredRef.current = true;
         }, []);
         (0, import_react3.useEffect)(() => {
           applyTextEditorValues();

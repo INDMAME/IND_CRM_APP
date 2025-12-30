@@ -21812,7 +21812,7 @@
   function buildHttpMicBlockedMessage() {
     return indT(
       "AudioRecorder_Error_HttpBlocked",
-      "Chrome blocks microphone on HTTP (intranet). Use HTTPS or open the app via http://localhost. For dev, configure Chrome to treat your HTTP origin as secure."
+      "Chrome blocks microphone on HTTP (intranet). Use HTTPS or open the app via https://localhost. For dev, configure Chrome to treat your HTTP origin as secure."
     );
   }
   function buildMicErrorMessage(err) {

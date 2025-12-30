@@ -15,13 +15,13 @@
       "group": "build"
     },
     {
-      "label": "kill-7702",
+      "label": "kill-7703",
       "type": "shell",
       "command": "powershell",
       "args": [
         "-NoProfile",
         "-Command",
-        "Get-NetTCPConnection -LocalPort 7702 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { try { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } catch {} }"
+        "Get-NetTCPConnection -LocalPort 7703 -State Listen -ErrorAction SilentlyContinue | ForEach-Object { try { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } catch {} }"
       ],
       "presentation": {
         "reveal": "silent"
@@ -31,7 +31,7 @@
     {
       "label": "build-with-kill",
       "dependsOn": [
-        "kill-7702",
+        "kill-7703",
         "build"
       ],
       "problemMatcher": []

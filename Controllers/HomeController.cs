@@ -14,5 +14,14 @@ namespace IND_CRM_APP.Controllers
             await LoadEnvironmentInfoAsync();
             return View();
         }
+
+        // Shows a friendly 404 page for missing routes.
+        [HttpGet]
+        public IActionResult NotFound(int? code = null)
+        {
+            Response.StatusCode = 404;
+            ViewData["StatusCode"] = code ?? 404;
+            return View("NotFound");
+        }
     }
 }

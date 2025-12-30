@@ -55,7 +55,9 @@
 
             @if (!hideNavArrows)
             {
-                var backOnClick = isVisitaDetail ? "window.location.href='/Historial/History'" : "window.history.back()";
+                var backOnClick = isVisitaDetail
+                    ? "window.location.href='/Historial/History'"
+                    : "window.__indAllowHistoryOnce && window.__indAllowHistoryOnce(); window.history.back()";
                 var backDisabled = isVisitaDetail ? false : true;
                 <button id="globalBackBtn" type="button" class="text-white rounded-md pointer-events-auto"
                         aria-label="@SR["Topbar_Back"]" onclick="@backOnClick" @(backDisabled ? "disabled" : "")

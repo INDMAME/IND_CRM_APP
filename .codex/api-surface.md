@@ -1,7 +1,7 @@
 # IND_CRM_API surface for MVC client (Dec 2025)
 
 ## Base
-- Base URL: `http://localhost:7776/`
+- Base URL: `https://localhost:7776/`
 - Auth: JWT in `Authorization: Bearer {token}`
 - Envelopes:
   - `IndApiResponse<T>`: `Success`, `Message`, `ErrorCode`, `Data`, `Errors[]`, `TraceId`

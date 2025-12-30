@@ -19,6 +19,13 @@ body {
     overflow-y: visible;
 }
 
+/* Block browser pull-to-refresh and swipe overscroll navigation. */
+html, body {
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+}
+
 :root {
     --bs-primary: #00296b;
     --bs-primary-rgb: 0, 41, 107;
