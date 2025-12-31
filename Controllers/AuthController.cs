@@ -46,7 +46,10 @@ namespace IND_CRM_APP.Controllers
                 var loginResult = await _api.AuthenticateAsync(model.Username, model.Password);
                 if (loginResult == null || string.IsNullOrWhiteSpace(loginResult.Token))
                 {
-                    ViewBag.Error = _sr["Auth_InvalidCredentials"].Value;
+                    _tokenSession.Clear();
+                    ViewBag.Error = !string.IsNullOrWhiteSpace(loginResult?.Message)
+                        ? loginResult.Message
+                        : _sr["Auth_InvalidCredentials"].Value;
                     return View(model);
                 }
 
@@ -62,6 +65,7 @@ namespace IND_CRM_APP.Controllers
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Upstream API error during login");
+                _tokenSession.Clear();
                 ViewBag.Error = _sr["Auth_LoginApiError"].Value;
                 return View(model);
             }

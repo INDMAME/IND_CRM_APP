@@ -248,6 +248,11 @@ const CONTACTS_STORAGE_KEY = "visitas_contacts_cache_v1";
 const CONTACTS_SELECTION_KEY = "visitas_contacts_selected_v1";
 const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
 const TEXT_EDITOR_PREFIX = "ind_texteditor_";
+const TAP_MOVE_PX = 14;
+const PREVIEW_HOLD_MS = 160;
+const PREVIEW_MAX_HEIGHT_RATIO = 0.8;
+const PREVIEW_BASE_FONT = 13;
+const PREVIEW_MIN_FONT = 11;
 
 const readAndClearTextEditorValue = (fieldId) => {
   const id = String(fieldId || "").trim();
@@ -262,6 +267,158 @@ const readAndClearTextEditorValue = (fieldId) => {
     return null;
   }
 };
+
+function ensurePreviewTooltip() {
+  let tooltipEl = document.getElementById("indPreviewTooltip");
+  if (tooltipEl) return tooltipEl;
+  tooltipEl = document.createElement("div");
+  tooltipEl.id = "indPreviewTooltip";
+  tooltipEl.className = "ind-preview-tooltip";
+  document.body.appendChild(tooltipEl);
+  return tooltipEl;
+}
+
+let previewAnchor = null;
+let previewCloseBound = false;
+
+function ensurePreviewAutoClose() {
+  if (previewCloseBound) return;
+  previewCloseBound = true;
+  document.addEventListener("pointerdown", (event) => {
+    const tooltipEl = document.getElementById("indPreviewTooltip");
+    if (!tooltipEl || !tooltipEl.classList.contains("visible")) return;
+    if (previewAnchor && previewAnchor.contains(event.target)) return;
+    hidePreviewTooltip();
+  }, true);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") hidePreviewTooltip();
+  });
+}
+
+function showPreviewTooltip(text, clientY) {
+  if (!text) return false;
+  const tooltipEl = ensurePreviewTooltip();
+  tooltipEl.textContent = text;
+  tooltipEl.classList.add("visible");
+  previewAnchor = null;
+  ensurePreviewAutoClose();
+
+  const centerX = Math.round(window.innerWidth / 2);
+  tooltipEl.style.left = `${centerX}px`;
+
+  const margin = 12;
+  tooltipEl.style.maxHeight = `${Math.round(window.innerHeight * PREVIEW_MAX_HEIGHT_RATIO)}px`;
+  tooltipEl.style.overflowY = "auto";
+
+  let fontSize = PREVIEW_BASE_FONT;
+  tooltipEl.style.fontSize = `${fontSize}px`;
+  let rect = tooltipEl.getBoundingClientRect();
+  const maxHeight = window.innerHeight * PREVIEW_MAX_HEIGHT_RATIO;
+  while (rect.height > maxHeight && fontSize > PREVIEW_MIN_FONT) {
+    fontSize -= 1;
+    tooltipEl.style.fontSize = `${fontSize}px`;
+    rect = tooltipEl.getBoundingClientRect();
+  }
+
+  const centerY = Math.round((window.innerHeight - rect.height) / 2);
+  let top = Number.isFinite(centerY) ? centerY : margin;
+  const minTop = margin;
+  const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+  if (top < minTop) top = minTop;
+  if (top > maxTop) top = maxTop;
+  tooltipEl.style.top = `${Math.round(top)}px`;
+  return true;
+}
+
+function hidePreviewTooltip() {
+  const tooltipEl = document.getElementById("indPreviewTooltip");
+  if (!tooltipEl) return;
+  tooltipEl.classList.remove("visible");
+  previewAnchor = null;
+}
+
+function isOverflowing(el) {
+  if (!el) return false;
+  return el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
+}
+
+function useTapGuard(onTap, onHoldStart) {
+  const stateRef = React.useRef({
+    active: false,
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    moved: false,
+    held: false,
+    target: null,
+  });
+  const holdTimerRef = React.useRef(null);
+
+  const reset = React.useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    stateRef.current.active = false;
+    stateRef.current.pointerId = null;
+    stateRef.current.moved = false;
+    stateRef.current.held = false;
+    stateRef.current.target = null;
+  }, []);
+
+  const onPointerDown = React.useCallback((event) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    stateRef.current.active = true;
+    stateRef.current.pointerId = event.pointerId;
+    stateRef.current.startX = event.clientX;
+    stateRef.current.startY = event.clientY;
+    stateRef.current.moved = false;
+    stateRef.current.held = false;
+    stateRef.current.target = event.currentTarget;
+
+    if (onHoldStart) {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+      }
+      holdTimerRef.current = setTimeout(() => {
+        const state = stateRef.current;
+        if (!state.active || state.moved) return;
+        const didShow = onHoldStart(state.target, state.startY);
+        state.held = didShow === true;
+      }, PREVIEW_HOLD_MS);
+    }
+  }, [onHoldStart]);
+
+  const onPointerMove = React.useCallback((event) => {
+    const state = stateRef.current;
+    if (!state.active || state.pointerId !== event.pointerId) return;
+    const dx = Math.abs(event.clientX - state.startX);
+    const dy = Math.abs(event.clientY - state.startY);
+    if (dx > TAP_MOVE_PX || dy > TAP_MOVE_PX) {
+      state.moved = true;
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+        holdTimerRef.current = null;
+      }
+      if (state.held) hidePreviewTooltip();
+    }
+  }, []);
+
+  const onPointerUp = React.useCallback((event) => {
+    const state = stateRef.current;
+    if (!state.active || state.pointerId !== event.pointerId) return;
+    const shouldTap = !state.moved && !state.held;
+    reset();
+    if (shouldTap) onTap(event);
+  }, [onTap, reset]);
+
+  return {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerCancel: reset,
+  };
+}
 
 const readStorage = (key) => {
   try {
@@ -1386,6 +1543,46 @@ function VisitasApp() {
     window.location.href = url;
   }, [persistDraftNow]);
 
+  const handleComentariosTap = React.useCallback((event) => {
+    if (busy) return;
+    event.preventDefault();
+    openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios);
+  }, [busy, comentarios, openTextEditor]);
+
+  const handleComentariosHold = React.useCallback((target, clientY) => {
+    if (!target || !isOverflowing(target)) return false;
+    previewAnchor = target;
+    return showPreviewTooltip(String(comentarios || ""), clientY);
+  }, [comentarios]);
+
+  const handleAntecedentesTap = React.useCallback((event) => {
+    if (busy) return;
+    event.preventDefault();
+    openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes);
+  }, [busy, antecedentes, openTextEditor]);
+
+  const handleAntecedentesHold = React.useCallback((target, clientY) => {
+    if (!target || !isOverflowing(target)) return false;
+    previewAnchor = target;
+    return showPreviewTooltip(String(antecedentes || ""), clientY);
+  }, [antecedentes]);
+
+  const handleConclusionesTap = React.useCallback((event) => {
+    if (busy) return;
+    event.preventDefault();
+    openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones);
+  }, [busy, conclusiones, openTextEditor]);
+
+  const handleConclusionesHold = React.useCallback((target, clientY) => {
+    if (!target || !isOverflowing(target)) return false;
+    previewAnchor = target;
+    return showPreviewTooltip(String(conclusiones || ""), clientY);
+  }, [conclusiones]);
+
+  const comentariosTap = useTapGuard(handleComentariosTap, handleComentariosHold);
+  const antecedentesTap = useTapGuard(handleAntecedentesTap, handleAntecedentesHold);
+  const conclusionesTap = useTapGuard(handleConclusionesTap, handleConclusionesHold);
+
   const applyTextEditorValues = React.useCallback(() => {
     const valComentarios = readAndClearTextEditorValue(fieldIdComentarios);
     if (valComentarios !== null) setComentarios(valComentarios);
@@ -1722,11 +1919,10 @@ function VisitasApp() {
                 )}
                 value={comentarios}
                 readOnly
-                onPointerDown={(e) => {
-                  if (busy) return;
-                  e.preventDefault();
-                  openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios);
-                }}
+                onPointerDown={comentariosTap.onPointerDown}
+                onPointerMove={comentariosTap.onPointerMove}
+                onPointerUp={comentariosTap.onPointerUp}
+                onPointerCancel={comentariosTap.onPointerCancel}
               />
             </div>
 
@@ -1737,11 +1933,10 @@ function VisitasApp() {
                 className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 value={antecedentes}
                 readOnly
-                onPointerDown={(e) => {
-                  if (busy) return;
-                  e.preventDefault();
-                  openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes);
-                }}
+                onPointerDown={antecedentesTap.onPointerDown}
+                onPointerMove={antecedentesTap.onPointerMove}
+                onPointerUp={antecedentesTap.onPointerUp}
+                onPointerCancel={antecedentesTap.onPointerCancel}
               />
             </div>
             <div className="space-y-2">
@@ -1751,11 +1946,10 @@ function VisitasApp() {
                 className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
                 value={conclusiones}
                 readOnly
-                onPointerDown={(e) => {
-                  if (busy) return;
-                  e.preventDefault();
-                  openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones);
-                }}
+                onPointerDown={conclusionesTap.onPointerDown}
+                onPointerMove={conclusionesTap.onPointerMove}
+                onPointerUp={conclusionesTap.onPointerUp}
+                onPointerCancel={conclusionesTap.onPointerCancel}
               />
             </div>
           </div>

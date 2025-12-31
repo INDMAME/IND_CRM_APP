@@ -364,6 +364,123 @@
         return text.slice(0, Math.max(0, max - 3)) + "...";
     };
 
+    const TAP_MOVE_PX = 14;
+    const NAV_DELAY_MS = 320;
+    const TOOLTIP_TOUCH_DELAY_MS = 120;
+    const HOLD_TO_PREVIEW_MS = 160;
+    const TOOLTIP_MAX_HEIGHT_RATIO = 0.8;
+    const TOOLTIP_BASE_FONT = 13;
+    const TOOLTIP_MIN_FONT = 11;
+    const ELLIPSIS = "...";
+
+    // Only trigger tap actions when the pointer did not move beyond the threshold.
+    function bindTapGuard(el, onTap) {
+        if (!el) return;
+        let active = false;
+        let pointerId = null;
+        let startX = 0;
+        let startY = 0;
+        let startTime = 0;
+        let moved = false;
+
+        const reset = () => {
+            active = false;
+            pointerId = null;
+            moved = false;
+        };
+
+        el.addEventListener("pointerdown", (e) => {
+            if (e.pointerType === "mouse" && e.button !== 0) return;
+            active = true;
+            pointerId = e.pointerId;
+            startX = e.clientX;
+            startY = e.clientY;
+            startTime = Date.now();
+            moved = false;
+        }, { passive: true });
+
+        el.addEventListener("pointermove", (e) => {
+            if (!active || e.pointerId !== pointerId) return;
+            const dx = Math.abs(e.clientX - startX);
+            const dy = Math.abs(e.clientY - startY);
+            if (dx > TAP_MOVE_PX || dy > TAP_MOVE_PX) moved = true;
+        }, { passive: true });
+
+        el.addEventListener("pointerup", (e) => {
+            if (!active || e.pointerId !== pointerId) return;
+            const heldMs = Date.now() - startTime;
+            const shouldTap = !moved && heldMs < HOLD_TO_PREVIEW_MS;
+            reset();
+            if (shouldTap) onTap(e);
+        }, { passive: true });
+
+        el.addEventListener("pointercancel", reset, { passive: true });
+        el.addEventListener("pointerleave", reset, { passive: true });
+    }
+
+    // Prevent long-press selection/copy on history cards.
+    function blockCopyActions(el) {
+        if (!el) return;
+        const cancel = (e) => e.preventDefault();
+        el.addEventListener("contextmenu", cancel);
+        el.addEventListener("selectstart", cancel);
+        el.addEventListener("copy", cancel);
+        el.addEventListener("cut", cancel);
+        el.addEventListener("paste", cancel);
+    }
+
+    function applyEllipsis(el, fullText, multiLine) {
+        if (!el || !fullText) return false;
+        if (multiLine && el.clientHeight === 0) return false;
+        if (!multiLine && el.clientWidth === 0) return false;
+
+        if (multiLine) {
+            const computed = window.getComputedStyle(el);
+            let lineHeight = parseFloat(computed.lineHeight);
+            if (!Number.isFinite(lineHeight)) {
+                const rect = el.getBoundingClientRect();
+                lineHeight = rect.height > 0 ? rect.height / 2 : 0;
+            }
+            if (lineHeight > 0) {
+                el.style.maxHeight = `${Math.round(lineHeight * 2)}px`;
+                el.style.overflow = "hidden";
+            }
+        }
+
+        el.textContent = fullText;
+
+        const isOverflowing = () => (
+            multiLine
+                ? el.scrollHeight > el.clientHeight + 1
+                : el.scrollWidth > el.clientWidth + 1
+        );
+
+        if (!isOverflowing()) {
+            el.dataset.preview = "0";
+            return false;
+        }
+
+        let low = 0;
+        let high = fullText.length;
+        let best = 0;
+
+        while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            const candidate = `${fullText.slice(0, Math.max(0, mid)).trimEnd()}${ELLIPSIS}`;
+            el.textContent = candidate;
+            if (isOverflowing()) {
+                high = mid - 1;
+            } else {
+                best = mid;
+                low = mid + 1;
+            }
+        }
+
+        el.textContent = `${fullText.slice(0, Math.max(0, best)).trimEnd()}${ELLIPSIS}`;
+        el.dataset.preview = "1";
+        return true;
+    }
+
     // Renders activity timeline cards
     function renderTimeline(items) {
         timeline.innerHTML = "";
@@ -376,10 +493,6 @@
         }
 
         items.forEach(x => {
-            const narrow = window.innerWidth <= 370;
-            const nameMax = narrow ? 32 : Infinity;
-            const descMax = narrow ? 60 : Infinity;
-
             const actividadIdRaw = (x.actividadId ?? x.ActividadId ?? "").toString().trim();
             const actividadId = actividadIdRaw || "";
             const recIdRaw = x.recId ?? x.RecId ?? "";
@@ -392,8 +505,6 @@
 
             const rawName = (x.name ?? x.Name ?? "").toString().trim();
             const fullName = rawName.toUpperCase();
-            const nombre = narrow ? shorten(fullName, nameMax) : fullName;
-            const isNameTruncated = narrow && nombre !== fullName;
             const fecha = x.transDate ?? x.TransDate ?? "";
             const rawDesc = (x.description ?? x.Description ?? "").toString().trim();
             const fullDesc = rawDesc.toUpperCase();
@@ -403,8 +514,6 @@
             if (isNoDataCard) {
                 linkId = "";
             }
-            const descripcion = narrow ? shorten(fullDesc, descMax) : fullDesc;
-            const isDescTruncated = narrow && fullDesc && descripcion !== fullDesc;
             const fechaFormatted = formatDate(fecha);
 
             const noDataText = indT("Common_NoData", "No data");
@@ -414,11 +523,11 @@
                     <div class="timeline-card__content">
                         <div class="timeline-card-head">
                             <div>
-                                <div class="timeline-name ellipsis">${nombre}</div>
+                                <div class="timeline-name ellipsis">${fullName}</div>
                                 <div class="timeline-date-chip">${fechaFormatted}</div>
                             </div>
                         </div>
-                        <p class="timeline-desc-text">${descripcion || noDataText}</p>
+                        <p class="timeline-desc-text">${fullDesc || noDataText}</p>
                     </div>
                 </div>
             </div>
@@ -428,7 +537,7 @@
 
             const lastNameEl = timeline.lastElementChild?.querySelector(".timeline-name");
             const lastDescEl = timeline.lastElementChild?.querySelector(".timeline-desc-text");
-            if (lastNameEl && isNameTruncated) {
+            if (lastNameEl && fullName) {
                 lastNameEl.dataset.fulltext = fullName;
                 bindTooltip(lastNameEl, fullName);
             }
@@ -439,9 +548,8 @@
 
             const cardEl = timeline.lastElementChild?.querySelector(".timeline-card");
             if (cardEl && linkId) {
-                let navTimer;
                 const navigate = () => {
-                    navTimer = setTimeout(() => {
+                    setTimeout(() => {
                         try {
                             sessionStorage.setItem(
                                 filterCacheKey,
@@ -455,16 +563,18 @@
                         }
                         const target = encodeURIComponent(linkId);
                         window.location.href = `/Visitas/Detalle/${target}`;
-                    }, 240); // Small delay to avoid accidental clicks.
+                    }, NAV_DELAY_MS); // Small delay to avoid accidental taps.
                 };
-                const cancel = () => {
-                    if (navTimer) clearTimeout(navTimer);
-                };
-                cardEl.addEventListener("click", navigate);
-                cardEl.addEventListener("mouseleave", cancel);
-                cardEl.addEventListener("touchend", navigate, { passive: true });
-                cardEl.addEventListener("touchmove", cancel, { passive: true });
+                bindTapGuard(cardEl, navigate);
+                blockCopyActions(cardEl);
             }
+        });
+
+        requestAnimationFrame(() => {
+            const nameEls = timeline.querySelectorAll(".timeline-name");
+            nameEls.forEach((el) => applyEllipsis(el, el.dataset.fulltext || el.textContent, false));
+            const descEls = timeline.querySelectorAll(".timeline-desc-text");
+            descEls.forEach((el) => applyEllipsis(el, el.dataset.fulltext || el.textContent, true));
         });
     }
 
@@ -476,32 +586,85 @@
         tooltipEl.className = "timeline-tooltip";
         document.body.appendChild(tooltipEl);
     }
+    let tooltipAnchor = null;
+    let tooltipCloseBound = false;
 
-    function showTooltip(text, clientX, clientY) {
+    function ensureTooltipAutoClose() {
+        if (tooltipCloseBound) return;
+        tooltipCloseBound = true;
+        document.addEventListener("pointerdown", (e) => {
+            if (!tooltipEl.classList.contains("visible")) return;
+            if (tooltipAnchor && tooltipAnchor.contains(e.target)) return;
+            hideTooltip();
+        }, true);
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") hideTooltip();
+        });
+    }
+
+    function showTooltip(text, clientX, clientY, anchor) {
         tooltipEl.textContent = text;
-        tooltipEl.style.left = `${clientX}px`;
-        tooltipEl.style.top = `${clientY - 12}px`;
         tooltipEl.classList.add("visible");
+        tooltipAnchor = anchor || null;
+        ensureTooltipAutoClose();
+
+        const centerX = Math.round(window.innerWidth / 2);
+        tooltipEl.style.left = `${centerX}px`;
+
+        const margin = 12;
+        tooltipEl.style.maxHeight = `${Math.round(window.innerHeight * TOOLTIP_MAX_HEIGHT_RATIO)}px`;
+        tooltipEl.style.overflowY = "auto";
+
+        let fontSize = TOOLTIP_BASE_FONT;
+        tooltipEl.style.fontSize = `${fontSize}px`;
+
+        let rect = tooltipEl.getBoundingClientRect();
+        const maxHeight = window.innerHeight * TOOLTIP_MAX_HEIGHT_RATIO;
+        while (rect.height > maxHeight && fontSize > TOOLTIP_MIN_FONT) {
+            fontSize -= 1;
+            tooltipEl.style.fontSize = `${fontSize}px`;
+            rect = tooltipEl.getBoundingClientRect();
+        }
+
+        const centerY = Math.round((window.innerHeight - rect.height) / 2);
+        let top = Number.isFinite(centerY) ? centerY : margin;
+        const minTop = margin;
+        const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+        if (top < minTop) top = minTop;
+        if (top > maxTop) top = maxTop;
+        tooltipEl.style.top = `${Math.round(top)}px`;
     }
 
     function hideTooltip() {
         tooltipEl.classList.remove("visible");
+        tooltipAnchor = null;
+    }
+
+    function shouldPreview(el) {
+        if (!el || !el.dataset || !el.dataset.fulltext) return false;
+        if (el.dataset.preview === "1") return true;
+        return el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
     }
 
     function bindTooltip(el, text) {
         let pressTimer;
 
-        el.addEventListener("mouseenter", (e) => showTooltip(text, e.clientX, e.clientY));
+        el.addEventListener("mouseenter", (e) => {
+            if (!shouldPreview(el)) return;
+            showTooltip(text, e.clientX, e.clientY, el);
+        });
         el.addEventListener("mouseleave", hideTooltip);
         el.addEventListener("mousemove", (e) => {
+            if (!shouldPreview(el)) return;
             if (tooltipEl.classList.contains("visible")) {
-                showTooltip(text, e.clientX, e.clientY);
+                showTooltip(text, e.clientX, e.clientY, el);
             }
         });
 
         el.addEventListener("touchstart", (e) => {
+            if (!shouldPreview(el)) return;
             const touch = e.touches[0];
-            pressTimer = setTimeout(() => showTooltip(text, touch.clientX, touch.clientY), 350);
+            pressTimer = setTimeout(() => showTooltip(text, touch.clientX, touch.clientY, el), TOOLTIP_TOUCH_DELAY_MS);
         });
 
         el.addEventListener("touchmove", () => {
@@ -511,7 +674,6 @@
 
         el.addEventListener("touchend", () => {
             clearTimeout(pressTimer);
-            hideTooltip();
         });
     }
 

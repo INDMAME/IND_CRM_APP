@@ -1,33 +1,29 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+    <MvcRazorCompileOnBuild>true</MvcRazorCompileOnBuild>
+    <MvcRazorCompileOnPublish>true</MvcRazorCompileOnPublish>
+    <PreserveCompilationContext>false</PreserveCompilationContext>
+    <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <ProjectGuid>{88345f7d-620f-4503-b871-603df6d6440d}</ProjectGuid>
+  </PropertyGroup>
 
-  
-	<PropertyGroup>
-		<ImplicitUsings>enable</ImplicitUsings>
-		<Nullable>enable</Nullable>
-		<ProjectGuid>{88345f7d-620f-4503-b871-603df6d6440d}</ProjectGuid>
-		<TargetFramework>net10.0</TargetFramework>
-		<AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
-		<MvcRazorCompileOnBuild>true</MvcRazorCompileOnBuild>
-		<MvcRazorCompileOnPublish>true</MvcRazorCompileOnPublish>
-		<PreserveCompilationContext>false</PreserveCompilationContext>
-		<GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
-		<PlatformTarget>AnyCPU</PlatformTarget>
-	</PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Logs\**" />
+    <Content Remove="Logs\**" />
+    <EmbeddedResource Remove="Logs\**" />
+    <None Remove="Logs\**" />
+  </ItemGroup>
 
-  
-	<ItemGroup>
-	  <Compile Remove="Logs\**" />
-	  <Content Remove="Logs\**" />
-	  <EmbeddedResource Remove="Logs\**" />
-	  <None Remove="Logs\**" />
-	</ItemGroup>
- 
   <ItemGroup>
     <PackageReference Include="Serilog.Extensions.Logging.File" Version="9.0.0-dev-02303" />
   </ItemGroup>
- 
+
   <ItemGroup>
     <Folder Include="wwwroot\images\" />
   </ItemGroup>
-
 </Project>

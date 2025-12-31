@@ -58,3 +58,12 @@ Use this prompt when changing popups in Visitas create/edit/detail pages:
   - Debugging: setting `sessionStorage["IND_ActionMark_Debug"] = "1"` enables console logs.
 - Do not create new success popups or toast components for Visitas:
   - Confirm modal (before API) + IND Action Mark (after success) is the only accepted pattern.
+
+## UI overflow preview rule
+- When a text box can overflow its width, enable a centered preview tooltip on press or hold.
+- Only enable the preview when overflow is detected.
+
+## Read-only guard rule
+- When Visitas pages are in read-only or blocked mode, add `ind-readonly-surface` to the container.
+- Block `contextmenu`, `selectstart`, `copy`, `cut`, `paste` on that container to prevent Android copy overlays.
+- Keep tap navigation and overflow preview behavior working.

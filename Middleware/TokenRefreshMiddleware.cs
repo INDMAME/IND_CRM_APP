@@ -90,11 +90,20 @@ namespace IND_CRM_APP.Middleware
 
                             _logger.LogInformation("Token refreshed successfully.");
                         }
+                        else
+                        {
+                            tokenSession.Clear();
+                            _logger.LogWarning("Token refresh returned an empty token. Redirecting to login.");
+                            context.Response.Redirect("/Auth/Login");
+                            return;
+                        }
                     }
                     catch (Exception ex)
                     {
                         _logger.LogError(ex, "Error refreshing token.");
-                        // Continuamos; la siguiente llamada podrá forzar re-login si falla
+                        tokenSession.Clear();
+                        context.Response.Redirect("/Auth/Login");
+                        return;
                     }
                 }
             }

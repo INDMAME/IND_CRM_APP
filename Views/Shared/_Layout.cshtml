@@ -62,11 +62,29 @@
             sidebar?.setAttribute("aria-hidden", "true");
             overlay?.setAttribute("aria-hidden", "true");
 
+            function updateSidebarHeight() {
+                if (!sidebar) return;
+                const doc = document.documentElement;
+                const body = document.body;
+                const pageHeight = Math.max(
+                    body.scrollHeight,
+                    doc.scrollHeight,
+                    body.offsetHeight,
+                    doc.offsetHeight
+                );
+                const viewportHeight = window.innerHeight || doc.clientHeight || 0;
+                const isTallPage = pageHeight > viewportHeight + 24;
+                sidebar.classList.toggle("sidebar--tall", isTallPage);
+                const targetHeight = isTallPage ? pageHeight : viewportHeight;
+                sidebar.style.setProperty("--sidebar-height", `${Math.round(targetHeight)}px`);
+            }
+
             function toggleSidebar() {
                 menuOpen = !menuOpen;
 
                 if (menuOpen) {
                     sidebar.classList.add("open");
+                    sidebar.classList.add("sidebar--dock-user");
                     overlay.classList.add("visible");
                     sidebar.setAttribute("aria-hidden", "false");
                     overlay.setAttribute("aria-hidden", "false");
@@ -78,8 +96,10 @@
                         content.classList.add("shifted");
                         topbar.classList.add("shifted");
                     }
+                    updateSidebarHeight();
                 } else {
                     sidebar.classList.remove("open");
+                    sidebar.classList.remove("sidebar--dock-user");
                     overlay.classList.remove("visible");
                     sidebar.setAttribute("aria-hidden", "true");
                     overlay.setAttribute("aria-hidden", "true");
@@ -129,6 +149,9 @@
                 const nowHidden = langSub.classList.toggle("hidden");
                 langBtn.setAttribute("aria-expanded", (!nowHidden).toString());
             }
+
+            updateSidebarHeight();
+            window.addEventListener("resize", updateSidebarHeight);
         </script>
     }
 

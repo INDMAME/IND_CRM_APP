@@ -119,6 +119,21 @@
                 }
             });
         })();
+
+        // Prevent double submit on slow connections.
+        (function guardSubmit() {
+            const form = document.querySelector("form");
+            if (!form) return;
+            form.addEventListener("submit", (event) => {
+                if (form.dataset.submitting === "1") {
+                    event.preventDefault();
+                    return;
+                }
+                form.dataset.submitting = "1";
+                const submitBtn = form.querySelector("button[type=submit]");
+                if (submitBtn) submitBtn.disabled = true;
+            });
+        })();
     </script>
 </body>
 </html>

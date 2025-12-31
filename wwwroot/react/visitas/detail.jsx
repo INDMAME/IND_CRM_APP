@@ -8,6 +8,11 @@ const classNames = (...classes) => classes.filter(Boolean).join(" ");
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
 const TEXT_EDITOR_PREFIX = "ind_texteditor_";
+const TAP_MOVE_PX = 14;
+const PREVIEW_HOLD_MS = 160;
+const PREVIEW_MAX_HEIGHT_RATIO = 0.8;
+const PREVIEW_BASE_FONT = 13;
+const PREVIEW_MIN_FONT = 11;
 
 const IND_I18N = globalThis.__IND_I18N__ || {};
 const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
@@ -30,6 +35,169 @@ const readAndClearTextEditorValue = (fieldId) => {
   } catch {
     return null;
   }
+};
+
+function ensurePreviewTooltip() {
+  let tooltipEl = document.getElementById("indPreviewTooltip");
+  if (tooltipEl) return tooltipEl;
+  tooltipEl = document.createElement("div");
+  tooltipEl.id = "indPreviewTooltip";
+  tooltipEl.className = "ind-preview-tooltip";
+  document.body.appendChild(tooltipEl);
+  return tooltipEl;
+}
+
+let previewAnchor = null;
+let previewCloseBound = false;
+
+function ensurePreviewAutoClose() {
+  if (previewCloseBound) return;
+  previewCloseBound = true;
+  document.addEventListener("pointerdown", (event) => {
+    const tooltipEl = document.getElementById("indPreviewTooltip");
+    if (!tooltipEl || !tooltipEl.classList.contains("visible")) return;
+    if (previewAnchor && previewAnchor.contains(event.target)) return;
+    hidePreviewTooltip();
+  }, true);
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") hidePreviewTooltip();
+  });
+}
+
+function showPreviewTooltip(text, clientY) {
+  if (!text) return false;
+  const tooltipEl = ensurePreviewTooltip();
+  tooltipEl.textContent = text;
+  tooltipEl.classList.add("visible");
+  previewAnchor = null;
+  ensurePreviewAutoClose();
+
+  const centerX = Math.round(window.innerWidth / 2);
+  tooltipEl.style.left = `${centerX}px`;
+
+  const margin = 12;
+  tooltipEl.style.maxHeight = `${Math.round(window.innerHeight * PREVIEW_MAX_HEIGHT_RATIO)}px`;
+  tooltipEl.style.overflowY = "auto";
+
+  let fontSize = PREVIEW_BASE_FONT;
+  tooltipEl.style.fontSize = `${fontSize}px`;
+  let rect = tooltipEl.getBoundingClientRect();
+  const maxHeight = window.innerHeight * PREVIEW_MAX_HEIGHT_RATIO;
+  while (rect.height > maxHeight && fontSize > PREVIEW_MIN_FONT) {
+    fontSize -= 1;
+    tooltipEl.style.fontSize = `${fontSize}px`;
+    rect = tooltipEl.getBoundingClientRect();
+  }
+
+  const centerY = Math.round((window.innerHeight - rect.height) / 2);
+  let top = Number.isFinite(centerY) ? centerY : margin;
+  const minTop = margin;
+  const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+  if (top < minTop) top = minTop;
+  if (top > maxTop) top = maxTop;
+  tooltipEl.style.top = `${Math.round(top)}px`;
+  return true;
+}
+
+function hidePreviewTooltip() {
+  const tooltipEl = document.getElementById("indPreviewTooltip");
+  if (!tooltipEl) return;
+  tooltipEl.classList.remove("visible");
+  previewAnchor = null;
+}
+
+function isOverflowing(el) {
+  if (!el) return false;
+  return el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
+}
+
+function useTapGuard(onTap, onHoldStart) {
+  const stateRef = React.useRef({
+    active: false,
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    moved: false,
+    held: false,
+    target: null,
+  });
+  const holdTimerRef = React.useRef(null);
+
+  const reset = React.useCallback(() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    stateRef.current.active = false;
+    stateRef.current.pointerId = null;
+    stateRef.current.moved = false;
+    stateRef.current.held = false;
+    stateRef.current.target = null;
+  }, []);
+
+  const onPointerDown = React.useCallback((event) => {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    stateRef.current.active = true;
+    stateRef.current.pointerId = event.pointerId;
+    stateRef.current.startX = event.clientX;
+    stateRef.current.startY = event.clientY;
+    stateRef.current.moved = false;
+    stateRef.current.held = false;
+    stateRef.current.target = event.currentTarget;
+
+    if (onHoldStart) {
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+      }
+      holdTimerRef.current = setTimeout(() => {
+        const state = stateRef.current;
+        if (!state.active || state.moved) return;
+        const didShow = onHoldStart(state.target, state.startY);
+        state.held = didShow === true;
+      }, PREVIEW_HOLD_MS);
+    }
+  }, [onHoldStart]);
+
+  const onPointerMove = React.useCallback((event) => {
+    const state = stateRef.current;
+    if (!state.active || state.pointerId !== event.pointerId) return;
+    const dx = Math.abs(event.clientX - state.startX);
+    const dy = Math.abs(event.clientY - state.startY);
+    if (dx > TAP_MOVE_PX || dy > TAP_MOVE_PX) {
+      state.moved = true;
+      if (holdTimerRef.current) {
+        clearTimeout(holdTimerRef.current);
+        holdTimerRef.current = null;
+      }
+      if (state.held) hidePreviewTooltip();
+    }
+  }, []);
+
+  const onPointerUp = React.useCallback((event) => {
+    const state = stateRef.current;
+    if (!state.active || state.pointerId !== event.pointerId) return;
+    const shouldTap = !state.moved && !state.held;
+    reset();
+    if (shouldTap) onTap(event);
+  }, [onTap, reset]);
+
+  return {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    onPointerCancel: reset,
+  };
+}
+
+// Block text selection and copy actions on read-only surfaces.
+const bindReadOnlyGuard = (el) => {
+  if (!el) return () => {};
+  const cancel = (event) => event.preventDefault();
+  const events = ["contextmenu", "selectstart", "copy", "cut", "paste"];
+  events.forEach((evt) => el.addEventListener(evt, cancel));
+  return () => {
+    events.forEach((evt) => el.removeEventListener(evt, cancel));
+  };
 };
 
 const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
@@ -346,6 +514,7 @@ const DetailApp = () => {
   const [isHydrating, setIsHydrating] = useState(false);
   const modalConfirmInFlightRef = useRef(false);
   const [modalError, setModalError] = useState("");
+  const readOnlySurfaceRef = useRef(null);
 
   const recId = detail.recId || detail.RecId || "";
   const accountNum = detail.accountNum || detail.AccountNum || "";
@@ -388,6 +557,46 @@ const DetailApp = () => {
 
     window.location.href = url;
   }, []);
+
+  const handleComentariosTap = useCallback((event) => {
+    if (!isEditing) return;
+    event.preventDefault();
+    openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios);
+  }, [comentarios, isEditing, openTextEditor]);
+
+  const handleComentariosHold = useCallback((target, clientY) => {
+    if (!target || !isOverflowing(target)) return false;
+    previewAnchor = target;
+    return showPreviewTooltip(String(comentarios || ""), clientY);
+  }, [comentarios]);
+
+  const handleAntecedentesTap = useCallback((event) => {
+    if (!isEditing) return;
+    event.preventDefault();
+    openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes);
+  }, [antecedentes, isEditing, openTextEditor]);
+
+  const handleAntecedentesHold = useCallback((target, clientY) => {
+    if (!target || !isOverflowing(target)) return false;
+    previewAnchor = target;
+    return showPreviewTooltip(String(antecedentes || ""), clientY);
+  }, [antecedentes]);
+
+  const handleConclusionesTap = useCallback((event) => {
+    if (!isEditing) return;
+    event.preventDefault();
+    openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones);
+  }, [conclusiones, isEditing, openTextEditor]);
+
+  const handleConclusionesHold = useCallback((target, clientY) => {
+    if (!target || !isOverflowing(target)) return false;
+    previewAnchor = target;
+    return showPreviewTooltip(String(conclusiones || ""), clientY);
+  }, [conclusiones]);
+
+  const comentariosTap = useTapGuard(handleComentariosTap, handleComentariosHold);
+  const antecedentesTap = useTapGuard(handleAntecedentesTap, handleAntecedentesHold);
+  const conclusionesTap = useTapGuard(handleConclusionesTap, handleConclusionesHold);
 
   const applyTextEditorValues = useCallback(() => {
     const valComentarios = readAndClearTextEditorValue(fieldIdComentarios);
@@ -524,6 +733,21 @@ const DetailApp = () => {
     }
     console.debug("Detalle actividad cargado", detail);
   }, [detail, hydrateFromApi, shouldHydrate, applyTextEditorValues]);
+
+  useEffect(() => {
+    const el = readOnlySurfaceRef.current;
+    if (!el) return;
+    if (!isEditing) {
+      el.classList.add("ind-readonly-surface");
+    } else {
+      el.classList.remove("ind-readonly-surface");
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    if (isEditing) return undefined;
+    return bindReadOnlyGuard(readOnlySurfaceRef.current);
+  }, [isEditing]);
 
   // Toggle topbar edit/save icons based on editing state.
   useEffect(() => {
@@ -706,7 +930,10 @@ const DetailApp = () => {
           </div>,
           document.body
         )}
-      <div className="relative shadow-sm glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
+      <div
+        ref={readOnlySurfaceRef}
+        className="relative shadow-sm glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl"
+      >
         {isHydrating && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 rounded-2xl">
             <div className="flex items-center gap-2 text-sm text-slate-600">
@@ -758,11 +985,10 @@ const DetailApp = () => {
               value={comentarios}
               disabled={!isEditing}
               readOnly={isEditing}
-              onPointerDown={(e) => {
-                if (!isEditing) return;
-                e.preventDefault();
-                openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios);
-              }}
+              onPointerDown={comentariosTap.onPointerDown}
+              onPointerMove={comentariosTap.onPointerMove}
+              onPointerUp={comentariosTap.onPointerUp}
+              onPointerCancel={comentariosTap.onPointerCancel}
             />
           </div>
           <div className="space-y-2">
@@ -776,11 +1002,10 @@ const DetailApp = () => {
               value={antecedentes}
               disabled={!isEditing}
               readOnly={isEditing}
-              onPointerDown={(e) => {
-                if (!isEditing) return;
-                e.preventDefault();
-                openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes);
-              }}
+              onPointerDown={antecedentesTap.onPointerDown}
+              onPointerMove={antecedentesTap.onPointerMove}
+              onPointerUp={antecedentesTap.onPointerUp}
+              onPointerCancel={antecedentesTap.onPointerCancel}
             />
           </div>
           <div className="space-y-2">
@@ -794,11 +1019,10 @@ const DetailApp = () => {
               value={conclusiones}
               disabled={!isEditing}
               readOnly={isEditing}
-              onPointerDown={(e) => {
-                if (!isEditing) return;
-                e.preventDefault();
-                openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones);
-              }}
+              onPointerDown={conclusionesTap.onPointerDown}
+              onPointerMove={conclusionesTap.onPointerMove}
+              onPointerUp={conclusionesTap.onPointerUp}
+              onPointerCancel={conclusionesTap.onPointerCancel}
             />
           </div>
         </div>

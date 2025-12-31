@@ -121,6 +121,17 @@
 - When adding a new key, add it to all supported culture .resx files in the same change.
 - Do not translate business data from the API; translate only fixed UI strings.
 
+## Overflow preview rule
+
+- For any text area or text box that can overflow its width, enable a centered preview tooltip on press or hold.
+- Only enable the preview when overflow is detected (scrollWidth > clientWidth or scrollHeight > clientHeight).
+
+## Read-only guard rule
+
+- When a page or section is in read-only or blocked mode, add `ind-readonly-surface` to the container.
+- Block `contextmenu`, `selectstart`, `copy`, `cut`, `paste` on that container to prevent Android copy overlays.
+- Do not block taps, navigation, or preview tooltips; apply only while read-only.
+
 ## How Codex should work
 
 - Refactoring:
@@ -179,4 +190,4 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Inputs/combos: `rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary`.
 - Dropdowns: portal lists `rounded-xl` with visible scrollbar; options usan 10px de padding left (clase `type-option`), hover/active en primary.
 - Spinners: Tailwind ring `border-2 border-primary border-t-transparent rounded-full animate-spin`.
-- Paginación (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
+- Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).

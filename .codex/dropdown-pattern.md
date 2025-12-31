@@ -4,7 +4,7 @@ Goal: every new combobox/dropdown in `wwwroot/react/visitas` (or future islands)
 
 ## Core rules
 - Use Tailwind only; no Bootstrap/jQuery. Chevron icons use the shared inline SVGs in `wwwroot/react/visitas/chevrons.jsx` (ChevronDownSvg, ChevronUpSvg). Other icons can use `@heroicons/react` (XMarkIcon, etc.).
-- Typography inherits project base (“Montserrat”). Primary color `#00296b` maps to `text-primary`, `bg-primary`, etc.
+- Typography inherits project base (Montserrat). Primary color `#00296b` maps to `text-primary`, `bg-primary`, etc.
 - Render the floating list with `createPortal` into `document.body` and position using a fixed style computed from the anchor (see `FloatingList` helper).
 - Close on outside click (mousedown/touchstart) via shared `useOutsideClick`.
 - Z-index: keep list above forms (>= 360000) and blockers above list when loading.
@@ -28,9 +28,9 @@ Goal: every new combobox/dropdown in `wwwroot/react/visitas` (or future islands)
   - Options per entity: key `visitas_contacts_cache_v1`.
   - Selected items per entity: key `visitas_contacts_selected_v1`.
 - On mount:
-  1) If there is no parent key (e.g., no client), show “Seleccione un cliente primero” and disable input.
+  1) If there is no parent key (e.g., no client), show "Seleccione un cliente primero" and disable input.
   2) Prime from cache/storage; if found, show instantly without flicker.
-  3) If not cached, show “Presiona la flecha para cargar…” and load only when user opens/toggles.
+  3) If not cached, show "Presiona la flecha para cargar..." and load only when user opens/toggles.
 - On parent change (client change):
   - Clear selection and options.
   - Persist new selection after every change with `setStoredSelection`.
@@ -47,7 +47,7 @@ Goal: every new combobox/dropdown in `wwwroot/react/visitas` (or future islands)
 
 ## Error and status messaging
 - Status line aligned to the right in `text-xs text-slate-500`.
-- Network errors: “Error al cargar …”; empty: “Sin resultados” / “Sin contactos”.
+- Network errors: "Error al cargar ..."; empty: "Sin resultados" / "Sin contactos".
 - Keep strings short; Spanish as in current UI.
 
 ## Reusable helpers to import
@@ -64,5 +64,9 @@ Use `ContactsCombobox` in `wwwroot/react/visitas/create.jsx` as the reference im
 
 ## Do not
 - Do not auto-load on every keystroke; load on open/toggle or explicit Enter when no cache.
-- Do not build URLs in controllers; all API calls stay in the React island.
+- Do not call IND_CRM_API directly from the React island; keep MVC controller/service rules intact.
 - Do not add new dependencies for dropdowns.
+
+## UI overflow preview rule
+- When a text box can overflow its width, enable a centered preview tooltip on press or hold.
+- Only enable the preview when overflow is detected.

@@ -37,7 +37,7 @@ env = { "DEBUG" = "false" }
 [projects."C:/INDProjects/IND_CRM_API"]
 trust_level = "trusted"
 
-[projects."C:/INDProjects/IND_CRM_APP"]
+[projects."C:/INDProjects/GitHub Projects/IND_CRM_APP/IND_CRM_APP"]
 trust_level = "trusted"
 
 [system]
