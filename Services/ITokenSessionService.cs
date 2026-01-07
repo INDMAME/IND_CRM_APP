@@ -5,17 +5,17 @@ namespace IND_CRM_APP.Services
     public interface ITokenSessionService
     {
         /// <summary>
-        /// Guarda token y expiración en sesión y propaga cabecera X-Refreshed-Token.
+        /// Guarda token y expiracion en sesion.
         /// </summary>
         void SetToken(string token, DateTime? expiresUtc = null);
 
         /// <summary>
-        /// Obtiene token + expiración actuales desde sesión.
+        /// Obtiene token + expiracion actuales desde sesion.
         /// </summary>
         (string? Token, DateTime? ExpiresUtc) GetToken();
 
         /// <summary>
-        /// Limpia cualquier dato de autenticación de la sesión actual.
+        /// Limpia cualquier dato de autenticacion de la sesion actual.
         /// </summary>
         void Clear();
     }

@@ -132,6 +132,7 @@ namespace IND_CRM_APP.Controllers
 
         // Creates a new activity calling api/crm/activities/create
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateActivity([FromBody] CreateActivityRequest req)
         {
             try
@@ -139,6 +140,9 @@ namespace IND_CRM_APP.Controllers
                 string token = HttpContext.Session.GetString("Token") ?? string.Empty;
                 if (string.IsNullOrEmpty(token))
                     return Json(new { success = false, message = _sr["Api_TokenMissing"].Value });
+
+                if (req == null)
+                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var response = await _apiClient.CreateActivityAsync(token, req);
 
@@ -152,16 +156,18 @@ namespace IND_CRM_APP.Controllers
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Upstream API error in CreateActivity");
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                _logger.LogError(ex, "Unhandled error in CreateActivity");
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
         }
 
         // Creates a new visit assistant calling api/crm/visits/createVisitaAsistente
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateVisitaAsistente([FromBody] CreateVisitaAsistenteRequest req, [FromQuery] bool IND_SetActionMark = false)
         {
             try
@@ -169,6 +175,9 @@ namespace IND_CRM_APP.Controllers
                 string token = HttpContext.Session.GetString("Token") ?? string.Empty;
                 if (string.IsNullOrEmpty(token))
                     return Json(new { success = false, message = _sr["Api_TokenMissing"].Value });
+
+                if (req == null)
+                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var response = await _apiClient.CreateVisitaAsistenteAsync(token, req);
 
@@ -187,16 +196,18 @@ namespace IND_CRM_APP.Controllers
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Upstream API error in CreateVisitaAsistente");
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                _logger.LogError(ex, "Unhandled error in CreateVisitaAsistente");
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
         }
 
         // Transcribes a WAV audio file into text using api/speech/transcribe
         [HttpPost]
+        [ValidateAntiForgeryToken]
         [RequestSizeLimit(30000000)]
         [RequestFormLimits(MultipartBodyLengthLimit = 30000000)]
         public async Task<IActionResult> TranscribeSpeech(
@@ -273,7 +284,7 @@ namespace IND_CRM_APP.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled error in TranscribeSpeech");
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
         }
 
@@ -428,6 +439,7 @@ namespace IND_CRM_APP.Controllers
 
         // Updates an activity (PUT api/crm/activities/{recId})
         [HttpPut("Visitas/UpdateActivity/{recId:long}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateActivity(long recId, [FromBody] UpdateActivityRequest req, [FromQuery] bool IND_SetActionMark = false)
         {
             try
@@ -435,6 +447,9 @@ namespace IND_CRM_APP.Controllers
                 var token = HttpContext.Session.GetString("Token");
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
+
+                if (req == null)
+                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var response = await _apiClient.UpdateActivityAsync(token, recId, req);
 
@@ -448,11 +463,12 @@ namespace IND_CRM_APP.Controllers
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Upstream API error in UpdateActivity");
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                _logger.LogError(ex, "Unhandled error in UpdateActivity");
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
         }
 
@@ -460,6 +476,7 @@ namespace IND_CRM_APP.Controllers
         // The API does not expose a dedicated update, so we re-send
         // existing assistants with the new type using createVisitaAsistente.
         [HttpPut("Visitas/UpdateAsistenteTipo/{recId:long}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateAsistenteTipo(long recId, [FromBody] UpdateAsistenteTipoRequest req)
         {
             try
@@ -505,16 +522,18 @@ namespace IND_CRM_APP.Controllers
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Upstream API error in UpdateAsistenteTipo");
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                _logger.LogError(ex, "Unhandled error in UpdateAsistenteTipo");
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
         }
 
         // Deletes an activity (DELETE api/crm/activities/{recId})
         [HttpDelete("Visitas/DeleteActivity/{recId:long}")]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteActivity(long recId, [FromQuery] bool IND_SetActionMark = false)
         {
             try
@@ -535,11 +554,12 @@ namespace IND_CRM_APP.Controllers
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Upstream API error in DeleteActivity");
-                return Json(new { success = false, message = ex.Message });
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = ex.Message });
+                _logger.LogError(ex, "Unhandled error in DeleteActivity");
+                return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
         }
     }

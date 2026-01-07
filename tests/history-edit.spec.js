@@ -107,7 +107,7 @@ function buildNextEditedText(currentText) {
 
 test("Historial edit updates comments via TextEditor", async ({ page }) => {
   const now = new Date();
-  const year = now.getFullYear();
+  const year = 2025;//now.getFullYear();
   const startIso = `${year}-11-01`;
   const endIso = `${year}-12-30`;
 

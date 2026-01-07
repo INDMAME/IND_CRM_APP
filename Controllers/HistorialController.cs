@@ -1,7 +1,9 @@
 ﻿using IND_CRM_APP.Models.Activities;
 using IND_CRM_APP.Services;
+using IND_CRM_APP.Infrastructure.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Localization;
 using System.Globalization;
 using System.Text.Json;
 
@@ -11,10 +13,15 @@ namespace IND_CRM_APP.Controllers
     public class HistorialController : BaseMvcController
     {
         private readonly ILogger<HistorialController> _logger;
+        private readonly IStringLocalizer<INDSharedResource> _sr;
 
-        public HistorialController(ICrmApiClient apiClient, ILogger<HistorialController> logger) : base(apiClient)
+        public HistorialController(
+            ICrmApiClient apiClient,
+            ILogger<HistorialController> logger,
+            IStringLocalizer<INDSharedResource> sr) : base(apiClient)
         {
             _logger = logger;
+            _sr = sr;
         }
 
         // Shows main history view with default date range
@@ -41,6 +48,7 @@ namespace IND_CRM_APP.Controllers
 
         // Returns activity list as json with simple paging
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> GetActivities(
             [FromBody] ActivitiesFilter filter,
             int page = 1,
@@ -83,8 +91,7 @@ namespace IND_CRM_APP.Controllers
             {
                 // Error from upstream API (non-success status codes)
                 _logger.LogError(ex, "Upstream API error in GetActivities");
-                // Include status and raw body for diagnostics (avoid leaking sensitive data)
-                return StatusCode(StatusCodes.Status502BadGateway, new { status = (int)ex.StatusCode, error = ex.Message, body = ex.RawBody });
+                return StatusCode(StatusCodes.Status502BadGateway, new { status = (int)ex.StatusCode, error = _sr["Api_RequestFailed"].Value });
             }
             catch (JsonException ex)
             {

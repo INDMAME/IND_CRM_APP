@@ -7,12 +7,18 @@ import SingleDatePicker from "./SingleDatePicker.jsx";
 const classNames = (...classes) => classes.filter(Boolean).join(" ");
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
+const HISTORY_RETURN_FLAG_KEY = "visitas_history_return_v1";
 const TEXT_EDITOR_PREFIX = "ind_texteditor_";
 const TAP_MOVE_PX = 14;
 const PREVIEW_HOLD_MS = 160;
 const PREVIEW_MAX_HEIGHT_RATIO = 0.8;
 const PREVIEW_BASE_FONT = 13;
 const PREVIEW_MIN_FONT = 11;
+
+const getCsrfToken = () => {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute("content") : "";
+};
 
 const IND_I18N = globalThis.__IND_I18N__ || {};
 const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
@@ -202,14 +208,39 @@ const bindReadOnlyGuard = (el) => {
 
 const isIsoDate = (value) => /^\d{4}-\d{2}-\d{2}$/.test(String(value || "").trim());
 
-const setHistoryFilterForDate = (isoDate) => {
-  const value = String(isoDate || "").trim();
-  if (!isIsoDate(value)) return;
+const hasHistoryFilterRange = () => {
   try {
-    sessionStorage.setItem(HISTORY_FILTER_KEY, JSON.stringify({ fromDate: value, toDate: value }));
+    const raw = sessionStorage.getItem(HISTORY_FILTER_KEY);
+    if (!raw) return false;
+    const parsed = JSON.parse(raw);
+    return !!(parsed && parsed.fromDate && parsed.toDate);
+  } catch {
+    return false;
+  }
+};
+
+const markHistoryReturn = () => {
+  try {
+    sessionStorage.setItem(HISTORY_RETURN_FLAG_KEY, "1");
   } catch {
     /* ignore */
   }
+};
+
+const setHistoryFilterForDate = (isoDate) => {
+  const value = String(isoDate || "").trim();
+  if (!isIsoDate(value)) {
+    if (hasHistoryFilterRange()) markHistoryReturn();
+    return;
+  }
+  try {
+    if (!hasHistoryFilterRange()) {
+      sessionStorage.setItem(HISTORY_FILTER_KEY, JSON.stringify({ fromDate: value, toDate: value }));
+    }
+  } catch {
+    /* ignore */
+  }
+  markHistoryReturn();
 };
 
 const flashActionMark = (type, durationMs) => {
@@ -223,10 +254,16 @@ const flashActionMark = (type, durationMs) => {
 };
 
 async function fetchJson(url, options) {
+  const csrfToken = getCsrfToken();
+  const headers = {
+    Accept: "application/json",
+    ...(options?.headers || {}),
+    ...(csrfToken ? { RequestVerificationToken: csrfToken } : {})
+  };
   const merged = {
     credentials: "same-origin",
-    headers: { Accept: "application/json", ...(options?.headers || {}) },
-    ...options
+    ...options,
+    headers
   };
   const res = await fetch(url, merged);
   const text = await res.text();

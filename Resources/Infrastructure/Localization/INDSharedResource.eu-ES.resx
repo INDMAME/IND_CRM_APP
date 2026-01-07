@@ -1,0 +1,274 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="Common_Save" xml:space="preserve"><value>Gorde</value></data>
+  <data name="Common_Cancel" xml:space="preserve"><value>Ezeztatu</value></data>
+  <data name="Common_Close" xml:space="preserve"><value>Itxi</value></data>
+  <data name="Common_Back" xml:space="preserve"><value>Atzera</value></data>
+  <data name="Common_Delete" xml:space="preserve"><value>Ezabatu</value></data>
+  <data name="Common_Search" xml:space="preserve"><value>Bilatu</value></data>
+  <data name="Common_ClearFilters" xml:space="preserve"><value>Iragazkiak garbitu</value></data>
+  <data name="Common_Loading" xml:space="preserve"><value>Kargatzen</value></data>
+  <data name="Common_NoData" xml:space="preserve"><value>Daturik ez</value></data>
+  <data name="Common_User" xml:space="preserve"><value>Erabiltzailea</value></data>
+  <data name="Common_Unknown" xml:space="preserve"><value>Ezezaguna</value></data>
+  <data name="Common_NotAvailable" xml:space="preserve"><value>Ez dago erabilgarri</value></data>
+  <data name="Common_AppLogoAlt" xml:space="preserve"><value>Insertec logoa</value></data>
+
+  <data name="Nav_Visits" xml:space="preserve"><value>Bisitak</value></data>
+  <data name="Nav_Visits_Create" xml:space="preserve"><value>Sortu</value></data>
+  <data name="Nav_Visits_History" xml:space="preserve"><value>Historiala</value></data>
+
+  <data name="Visits_Create_Title" xml:space="preserve"><value>Sortu</value></data>
+  <data name="Visits_Detail_Title" xml:space="preserve"><value>Xehetasunak</value></data>
+  <data name="Visits_History_Title" xml:space="preserve"><value>Historiala</value></data>
+
+  <data name="UserMenu_ConnectedAs" xml:space="preserve"><value>Honekin konektatuta</value></data>
+  <data name="UserMenu_Languages" xml:space="preserve"><value>Hizkuntzak</value></data>
+  <data name="UserMenu_Logout" xml:space="preserve"><value>Saioa itxi</value></data>
+
+  <data name="Language_ES" xml:space="preserve"><value>ES</value></data>
+  <data name="Language_EU" xml:space="preserve"><value>EU</value></data>
+  <data name="Language_EN" xml:space="preserve"><value>EN</value></data>
+  <data name="Language_PT" xml:space="preserve"><value>PT</value></data>
+  <data name="Language_IT" xml:space="preserve"><value>IT</value></data>
+  <data name="Language_ZH" xml:space="preserve"><value>ZH</value></data>
+  <data name="Language_ES_Name" xml:space="preserve"><value>Espainiera</value></data>
+  <data name="Language_EU_Name" xml:space="preserve"><value>Euskara</value></data>
+  <data name="Language_EN_Name" xml:space="preserve"><value>Ingelesa</value></data>
+  <data name="Language_PT_Name" xml:space="preserve"><value>Portugesa</value></data>
+  <data name="Language_IT_Name" xml:space="preserve"><value>Italiera</value></data>
+  <data name="Language_ZH_Name" xml:space="preserve"><value>Txinera (sinplifikatua)</value></data>
+
+  <data name="Login_Title" xml:space="preserve"><value>Saioa hasi</value></data>
+  <data name="Login_Welcome" xml:space="preserve"><value>Ongi etorri</value></data>
+  <data name="Login_Subtitle" xml:space="preserve"><value>Sartu zure kredentzialak jarraitzeko</value></data>
+  <data name="Login_Username" xml:space="preserve"><value>Erabiltzailea</value></data>
+  <data name="Login_Password" xml:space="preserve"><value>Pasahitza</value></data>
+  <data name="Login_RememberMe" xml:space="preserve"><value>Gogoratu</value></data>
+  <data name="Login_Submit" xml:space="preserve"><value>Saioa hasi</value></data>
+  <data name="Login_TogglePassword" xml:space="preserve"><value>Erakutsi edo ezkutatu pasahitza</value></data>
+  <data name="Auth_InvalidCredentials" xml:space="preserve"><value>Kredentzial baliogabeak.</value></data>
+  <data name="Auth_LoginApiError" xml:space="preserve"><value>Ezin izan da saioa hasi API errore batengatik.</value></data>
+
+  <data name="Topbar_OpenMenu" xml:space="preserve"><value>Ireki menua</value></data>
+  <data name="Topbar_Back" xml:space="preserve"><value>Atzera</value></data>
+  <data name="Topbar_Forward" xml:space="preserve"><value>Aurrera</value></data>
+  <data name="Topbar_EditSave" xml:space="preserve"><value>Editatu/Gorde</value></data>
+  <data name="Topbar_Delete" xml:space="preserve"><value>Ezabatu</value></data>
+
+  <data name="History_From" xml:space="preserve"><value>Noiztik</value></data>
+  <data name="History_To" xml:space="preserve"><value>Noiz arte</value></data>
+  <data name="History_AddDate" xml:space="preserve"><value>Data gehitu</value></data>
+  <data name="History_ClearRange" xml:space="preserve"><value>Tartea garbitu</value></data>
+  <data name="History_PrevMonth" xml:space="preserve"><value>Aurreko hilabetea</value></data>
+  <data name="History_NextMonth" xml:space="preserve"><value>Hurrengo hilabetea</value></data>
+  <data name="History_Day_Mon" xml:space="preserve"><value>Al</value></data>
+  <data name="History_Day_Tue" xml:space="preserve"><value>Ar</value></data>
+  <data name="History_Day_Wed" xml:space="preserve"><value>Az</value></data>
+  <data name="History_Day_Thu" xml:space="preserve"><value>Og</value></data>
+  <data name="History_Day_Fri" xml:space="preserve"><value>Or</value></data>
+  <data name="History_Day_Sat" xml:space="preserve"><value>La</value></data>
+  <data name="History_Day_Sun" xml:space="preserve"><value>Ig</value></data>
+  <data name="History_Status_SelectStart" xml:space="preserve"><value>Aukeratu hasiera-data</value></data>
+  <data name="History_Status_SelectEnd" xml:space="preserve"><value>Aukeratu amaiera-data</value></data>
+  <data name="History_Loading" xml:space="preserve"><value>Datuak kargatzen...</value></data>
+  <data name="History_NoDataInRange" xml:space="preserve"><value>Ez dago bisitarik tarte honetan</value></data>
+
+  <data name="Common_OK" xml:space="preserve"><value>Ados</value></data>
+  <data name="Common_Next" xml:space="preserve"><value>Hurrengoa</value></data>
+  <data name="Common_Create" xml:space="preserve"><value>Sortu</value></data>
+
+  <data name="Api_SessionExpired" xml:space="preserve"><value>Saioa iraungi da.</value></data>
+  <data name="Api_TokenMissing" xml:space="preserve"><value>Ez da tokenik aurkitu saioan.</value></data>
+  <data name="Api_MissingAccountNum" xml:space="preserve"><value>accountNum falta da.</value></data>
+  <data name="Api_MissingCode" xml:space="preserve"><value>Kodea falta da.</value></data>
+  <data name="Api_MissingAsistenteTipo" xml:space="preserve"><value>asistenteTipo falta da.</value></data>
+  <data name="Api_NoAsistentesToUpdate" xml:space="preserve"><value>Ez dago laguntzailerik eguneratzeko.</value></data>
+  <data name="Api_AsistentesUpdateFailedCount" xml:space="preserve"><value>{0} laguntzaile ezin izan dira eguneratu.</value></data>
+  <data name="Api_AsistentesUpdateFailed" xml:space="preserve"><value>{0} laguntzaile ezin izan dira eguneratu.</value></data>
+  <data name="Api_AccountsFetchFailed" xml:space="preserve"><value>Ezin izan dira bezeroak eskuratu. Zehaztu bilaketa eta saiatu berriro.</value></data>
+  <data name="Api_RequestFailed" xml:space="preserve"><value>Ezin izan da eskaera osatu. Saiatu berriro.</value></data>
+  <data name="Api_InvalidJson" xml:space="preserve"><value>Zerbitzariaren erantzuna baliogabea.</value></data>
+
+  <data name="Sidebar_CloseMenu" xml:space="preserve"><value>Itxi menua</value></data>
+  <data name="Home_Title" xml:space="preserve"><value>Hasiera</value></data>
+  <data name="Home_SelectLeftMenu" xml:space="preserve"><value>Aukeratu ezkerreko menuko aukera bat.</value></data>
+  <data name="Home_Welcome" xml:space="preserve"><value>Ongi etorri</value></data>
+  <data name="Home_DataFromAx" xml:space="preserve"><value>Axapta 3.0-tik datozen datuak</value></data>
+  <data name="Home_Environment" xml:space="preserve"><value>Ingurunea</value></data>
+  <data name="Home_Company" xml:space="preserve"><value>Enpresa</value></data>
+  <data name="NotFound_Title" xml:space="preserve"><value>Orria ez da aurkitu</value></data>
+  <data name="NotFound_Subtitle" xml:space="preserve"><value>Eskatutako helbidea ez dago edo mugitu da.</value></data>
+  <data name="NotFound_BackHome" xml:space="preserve"><value>Itzuli hasierara</value></data>
+  <data name="Error_BackHome" xml:space="preserve"><value>Itzuli hasierara</value></data>
+  <data name="Error_Title" xml:space="preserve"><value>Sistemaren errorea</value></data>
+  <data name="Error_Heading" xml:space="preserve"><value>Errorea gertatu da</value></data>
+  <data name="Error_Body" xml:space="preserve"><value>Arazo bat gertatu da zure eskaera prozesatzean. Arazoa jarraitzen badu, jarri harremanetan sistemaren administratzailearekin.</value></data>
+
+  <data name="DatePicker_SelectDate" xml:space="preserve"><value>Aukeratu data</value></data>
+
+  <data name="Visits_Create_SearchClient" xml:space="preserve"><value>Bezeroa bilatu</value></data>
+  <data name="Visits_Create_SearchContact" xml:space="preserve"><value>Kontaktua bilatu (hautaketa anitza)</value></data>
+  <data name="Visits_Create_SelectClientRequired" xml:space="preserve"><value>Aukeratu bezero bat.</value></data>
+  <data name="Visits_Create_SelectContactRequired" xml:space="preserve"><value>Hautatu gutxienez kontaktu bat.</value></data>
+  <data name="Visits_Create_CompleteRequired" xml:space="preserve"><value>Bete derrigorrezko eremuak.</value></data>
+  <data name="Visits_Create_LoadingContacts" xml:space="preserve"><value>Kontaktuak kargatzen...</value></data>
+  <data name="Visits_Create_ConfirmCreate_Title" xml:space="preserve"><value>Sorrera baieztatu</value></data>
+  <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve"><value>Bisita hau sortu nahi duzu?</value></data>
+  <data name="Visits_Create_CreatingVisitFor" xml:space="preserve"><value>{0}rako bisita sortzen...</value></data>
+
+  <data name="Visits_Create_MinChars" xml:space="preserve"><value>Idatzi gutxienez {0} karaktere.</value></data>
+  <data name="Visits_Create_PressSearchHint" xml:space="preserve"><value>Sakatu lupa, Enter edo gezia bilatzeko.</value></data>
+  <data name="Visits_Create_Searching" xml:space="preserve"><value>Bilatzen...</value></data>
+  <data name="Visits_Create_SearchCanceled" xml:space="preserve"><value>Bilaketa bertan behera utzi da.</value></data>
+  <data name="Visits_Create_SearchTimeout" xml:space="preserve"><value>Bilaketak denbora gehiegi behar izan du. Idatzi karaktere gehiago zehazteko.</value></data>
+  <data name="Visits_Create_LoadClientsError" xml:space="preserve"><value>Errorea bezeroak kargatzean.</value></data>
+  <data name="Visits_Create_ClientPlaceholder" xml:space="preserve"><value>Idatzi gutxienez {0} karaktere...</value></data>
+  <data name="Visits_Create_NoResults" xml:space="preserve"><value>Emaitzarik ez.</value></data>
+  <data name="Visits_Create_NoMatches" xml:space="preserve"><value>Bat datorrenik ez.</value></data>
+  <data name="Visits_Create_ShowClientOptions" xml:space="preserve"><value>Erakutsi bezeroen aukerak</value></data>
+  <data name="Visits_Create_HideClientOptions" xml:space="preserve"><value>Ezkutatu bezeroen aukerak</value></data>
+  <data name="Visits_Create_SelectClientFirst" xml:space="preserve"><value>Aukeratu bezero bat lehenik.</value></data>
+  <data name="Visits_Create_PressArrowToLoadContacts" xml:space="preserve"><value>Sakatu gezia kontaktuak kargatzeko.</value></data>
+  <data name="Visits_Create_LoadContactsError" xml:space="preserve"><value>Errorea kontaktuak kargatzean.</value></data>
+  <data name="Visits_Create_NoContacts" xml:space="preserve"><value>Kontakturik ez.</value></data>
+  <data name="Visits_Create_NoMoreContacts" xml:space="preserve"><value>Ez dago kontaktu gehiagorik.</value></data>
+  <data name="Visits_Create_FilterPlaceholder" xml:space="preserve"><value>Idatzi iragazteko...</value></data>
+  <data name="Visits_Create_CreatingActivity" xml:space="preserve"><value>Jarduera sortzen...</value></data>
+  <data name="Visits_Create_CreateActivityFailed" xml:space="preserve"><value>Ezin izan da jarduera sortu.</value></data>
+  <data name="Visits_Create_CreateVisitFailed" xml:space="preserve"><value>Ezin izan da bisita sortu.</value></data>
+  <data name="Visits_Create_CreateVisitError" xml:space="preserve"><value>Errorea bisita sortzean.</value></data>
+  <data name="Visits_Create_ClientCount" xml:space="preserve"><value>{0} bezero</value></data>
+  <data name="Visits_Create_ClientCountCache" xml:space="preserve"><value>{0} bezero (cache)</value></data>
+  <data name="Visits_Create_ContactCount" xml:space="preserve"><value>{0} kontaktu</value></data>
+  <data name="Visits_Create_ContactCountCache" xml:space="preserve"><value>{0} kontaktu (cache)</value></data>
+  <data name="Visits_Create_SelectedContactsCount" xml:space="preserve"><value>{0} kontaktu hautatuta</value></data>
+
+  <data name="Visits_Create_VisitData_Title" xml:space="preserve"><value>Bisitaren datuak</value></data>
+  <data name="Visits_Field_Description" xml:space="preserve"><value>Deskribapena</value></data>
+  <data name="Visits_Field_Comments" xml:space="preserve"><value>Iruzkinak</value></data>
+  <data name="Visits_Field_Background" xml:space="preserve"><value>Aurrekariak</value></data>
+  <data name="Visits_Field_Conclusions" xml:space="preserve"><value>Ondorioak</value></data>
+  <data name="Visits_Create_ErrorBoundary" xml:space="preserve"><value>Errorea gertatu da bisiten orria erakustean. Berritu eta saiatu berriro.</value></data>
+
+  <data name="Visits_Detail_VisitData_Title" xml:space="preserve"><value>Bisitaren datuak</value></data>
+  <data name="Visits_Detail_Date_Label" xml:space="preserve"><value>Data</value></data>
+  <data name="Visits_Detail_VisitType_Label" xml:space="preserve"><value>Bisita mota</value></data>
+  <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve"><value>Aukeratu mota</value></data>
+  <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve"><value>Aldaketak gorde</value></data>
+  <data name="Visits_Detail_SaveChanges_Body" xml:space="preserve"><value>Jardueraren aldaketak gorde nahi dituzu?</value></data>
+  <data name="Visits_Detail_DeleteActivity_Title" xml:space="preserve"><value>Jarduera ezabatu</value></data>
+  <data name="Visits_Detail_DeleteActivity_Body" xml:space="preserve"><value>Jarduera hau ezabatu nahi duzu? Ekintza hau ezin da desegin.</value></data>
+
+  <data name="Visits_Detail_NoResults" xml:space="preserve"><value>Emaitzarik ez.</value></data>
+  <data name="Visits_Detail_ShowOptions" xml:space="preserve"><value>Aukerak erakutsi</value></data>
+  <data name="Visits_Detail_HideOptions" xml:space="preserve"><value>Aukerak ezkutatu</value></data>
+  <data name="Visits_Detail_LoadActivityFailed" xml:space="preserve"><value>Ezin izan dira jardueraren datuak eskuratu.</value></data>
+  <data name="Visits_Detail_EditingEnabled" xml:space="preserve"><value>Edizioa gaituta.</value></data>
+  <data name="Visits_Detail_Updating" xml:space="preserve"><value>Jarduera eguneratzen...</value></data>
+  <data name="Visits_Detail_Updated" xml:space="preserve"><value>Jarduera eguneratu da.</value></data>
+  <data name="Visits_Detail_UpdateFailed" xml:space="preserve"><value>Ezin izan da eguneratu.</value></data>
+  <data name="Visits_Detail_UpdateError" xml:space="preserve"><value>Errorea eguneratzean.</value></data>
+  <data name="Visits_Detail_Deleting" xml:space="preserve"><value>Jarduera ezabatzen...</value></data>
+  <data name="Visits_Detail_Deleted" xml:space="preserve"><value>Jarduera ezabatu da.</value></data>
+  <data name="Visits_Detail_DeleteFailed" xml:space="preserve"><value>Ezin izan da ezabatu.</value></data>
+  <data name="Visits_Detail_DeleteError" xml:space="preserve"><value>Errorea ezabatzean.</value></data>
+  <data name="Visits_Detail_ErrorBoundary" xml:space="preserve"><value>Errorea gertatu da xehetasun-orria erakustean. Berritu eta saiatu berriro.</value></data>
+
+  <data name="Dropdown_NoResults" xml:space="preserve"><value>Emaitzarik ez.</value></data>
+  <data name="Dropdown_ShowOptions" xml:space="preserve"><value>Aukerak erakutsi</value></data>
+  <data name="Dropdown_HideOptions" xml:space="preserve"><value>Aukerak ezkutatu</value></data>
+
+  <data name="Enum_None" xml:space="preserve"><value>Bat ere ez</value></data>
+  <data name="Enum_ActividadType_Fax" xml:space="preserve"><value>Fax</value></data>
+  <data name="Enum_ActividadType_Email" xml:space="preserve"><value>Email</value></data>
+  <data name="Enum_ActividadType_PhoneCall" xml:space="preserve"><value>Telefono-deia</value></data>
+  <data name="Enum_ActividadType_Visit" xml:space="preserve"><value>Bisita</value></data>
+  <data name="Enum_ActividadType_Task" xml:space="preserve"><value>Zeregina</value></data>
+
+  <data name="Enum_TipoVisita_Commercial" xml:space="preserve"><value>Komertziala</value></data>
+  <data name="Enum_TipoVisita_Technical" xml:space="preserve"><value>Teknikoa</value></data>
+
+  <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve"><value>Kontsulta</value></data>
+  <data name="Enum_ActividadOrigen_Oferta" xml:space="preserve"><value>Eskaintza</value></data>
+  <data name="Enum_ActividadOrigen_Evento" xml:space="preserve"><value>Ekitaldia</value></data>
+  <data name="Enum_ActividadOrigen_Usuario" xml:space="preserve"><value>Erabiltzailea</value></data>
+  <data name="Enum_ActividadOrigen_CampanaMarketing" xml:space="preserve"><value>Marketin kanpaina</value></data>
+  <data name="Enum_ActividadOrigen_ClientePotencial" xml:space="preserve"><value>Bezero potentziala</value></data>
+  <data name="Enum_ActividadOrigen_ContactoEvento" xml:space="preserve"><value>Ekitaldiko kontaktua</value></data>
+  <data name="Enum_ActividadOrigen_Cliente" xml:space="preserve"><value>Bezeroa</value></data>
+  <data name="Enum_ActividadOrigen_Proveedor" xml:space="preserve"><value>Hornitzailea</value></data>
+  <data name="Enum_ActividadOrigen_Proyecto" xml:space="preserve"><value>Proiektua</value></data>
+  <data name="Enum_ActividadOrigen_ProveedorPotencial" xml:space="preserve"><value>Hornitzaile potentziala</value></data>
+
+  <data name="Enum_AsistenteTipo_None" xml:space="preserve"><value>Laguntzailerik ez</value></data>
+  <data name="Enum_AsistenteTipo_Tecnico" xml:space="preserve"><value>Teknikaria</value></data>
+  <data name="Enum_AsistenteTipo_Commercial" xml:space="preserve"><value>Komertziala</value></data>
+
+  <data name="Confirm_Delete_Title" xml:space="preserve"><value>Ezabatu</value></data>
+  <data name="Confirm_Delete_Body" xml:space="preserve"><value>Elementu hau ezabatu nahi duzu?</value></data>
+  <data name="Confirm_Yes" xml:space="preserve"><value>Bai</value></data>
+  <data name="Confirm_No" xml:space="preserve"><value>Ez</value></data>
+
+  <data name="Speech_Transcribe_Title" xml:space="preserve"><value>Audioa transkribatu (WAV)</value></data>
+  <data name="Speech_Transcribe_Language_Label" xml:space="preserve"><value>Hizkuntza</value></data>
+  <data name="Speech_Transcribe_Language_Auto" xml:space="preserve"><value>Auto</value></data>
+  <data name="Speech_Transcribe_Temperature_Label" xml:space="preserve"><value>Tenperatura</value></data>
+  <data name="Speech_Transcribe_Context_Label" xml:space="preserve"><value>Testuingurua (aukerakoa)</value></data>
+  <data name="Speech_Transcribe_Action" xml:space="preserve"><value>Transkribatu</value></data>
+  <data name="Speech_Transcribe_InsertToComments" xml:space="preserve"><value>Txertatu iruzkinetan</value></data>
+  <data name="Speech_Transcribe_Result_Label" xml:space="preserve"><value>Transkripzioa</value></data>
+  <data name="Speech_Transcribe_MissingFile" xml:space="preserve"><value>Hautatu WAV fitxategi bat.</value></data>
+  <data name="Speech_Transcribe_OnlyWav" xml:space="preserve"><value>WAV soilik onartzen da.</value></data>
+  <data name="Speech_Transcribe_FileTooLarge" xml:space="preserve"><value>Fitxategiak 25 MB gainditzen ditu.</value></data>
+  <data name="Speech_Transcribe_InvalidTemperature" xml:space="preserve"><value>Tenperatura 0 eta 1 artean egon behar da.</value></data>
+  <data name="Speech_Transcribe_Blocked" xml:space="preserve"><value>Edukia erabilera-politikek baztertu dute.</value></data>
+  <data name="Speech_Transcribe_Failed" xml:space="preserve"><value>Ezin izan da audioa transkribatu.</value></data>
+
+  <data name="TextEditor_OpenFullScreen" xml:space="preserve"><value>Editatu pantaila osoan</value></data>
+  <data name="TextEditor_Microphone" xml:space="preserve"><value>Mikrofonoa</value></data>
+  <data name="TextEditor_Transcribe" xml:space="preserve"><value>Transkribatu</value></data>
+  <data name="TextEditor_Transcribing" xml:space="preserve"><value>Transkribatzen...</value></data>
+  <data name="TextEditor_TranscribeFailed" xml:space="preserve"><value>Ezin izan da audioa transkribatu.</value></data>
+
+  <data name="Tools_AudioRecorder_Title" xml:space="preserve"><value>Audio grabagailua</value></data>
+
+  <data name="AudioRecorder_Play" xml:space="preserve"><value>Erreproduzitu</value></data>
+  <data name="AudioRecorder_Record" xml:space="preserve"><value>Grabatu</value></data>
+  <data name="AudioRecorder_Pause" xml:space="preserve"><value>Pausatu</value></data>
+  <data name="AudioRecorder_Resume" xml:space="preserve"><value>Berrekin</value></data>
+  <data name="AudioRecorder_Stop" xml:space="preserve"><value>Gelditu</value></data>
+  <data name="AudioRecorder_Cancel" xml:space="preserve"><value>Ezeztatu</value></data>
+  <data name="AudioRecorder_NoAudio" xml:space="preserve"><value>Audiorik ez</value></data>
+
+  <data name="AudioRecorder_Status_Recording" xml:space="preserve"><value>Grabatzen</value></data>
+  <data name="AudioRecorder_Status_Paused" xml:space="preserve"><value>Pausatuta</value></data>
+  <data name="AudioRecorder_Status_ReadyToPlay" xml:space="preserve"><value>Erreproduzitzeko prest</value></data>
+  <data name="AudioRecorder_Status_Ready" xml:space="preserve"><value>Prest</value></data>
+
+  <data name="AudioRecorder_Error_HttpBlocked" xml:space="preserve"><value>Chrome-k mikrofonoa blokeatzen du HTTP-n (intranet). Erabili HTTPS edo ireki app-a http://localhost bidez. DEV-erako, konfiguratu Chrome zure HTTP jatorria segurutzat tratatzeko.</value></data>
+  <data name="AudioRecorder_Error_PermissionDenied" xml:space="preserve"><value>Mikrofonoaren baimena ukatuta. Gaitu nabigatzailean eta berritu orria.</value></data>
+  <data name="AudioRecorder_Error_NoDevice" xml:space="preserve"><value>Ez da mikrofono gailurik aurkitu. Remote Desktop-en bazaude, gaitu mikrofonoa saioan. USB edo Bluetooth bada, berriro konektatu eta saiatu.</value></data>
+  <data name="AudioRecorder_Error_DeviceBusy" xml:space="preserve"><value>Mikrofonoa okupatuta dago edo ezin izan da abiarazi. Itxi beste app batzuk (Teams, Zoom) eta saiatu berriro.</value></data>
+  <data name="AudioRecorder_Error_Security" xml:space="preserve"><value>Nabigatzailearen segurtasunak blokeatua. Chrome-n, erabili HTTPS edo politika korporatiboak intranetean mikrofonoa baimentzeko.</value></data>
+  <data name="AudioRecorder_Error_Constraints" xml:space="preserve"><value>Audio murrizketak ezin izan dira bete. Saiatu beste mikrofono edo konfigurazio batekin.</value></data>
+  <data name="AudioRecorder_Error_Generic" xml:space="preserve"><value>Ezin izan da grabazioa hasi. Egiaztatu mikrofonoaren baimenak. Chrome-n, normalean HTTPS edo localhost behar du.</value></data>
+  <data name="AudioRecorder_Error_Unsupported" xml:space="preserve"><value>Zure nabigatzaileak ez du getUserMedia onartzen edo ez dago erabilgarri.</value></data>
+  <data name="AudioRecorder_Error_NoAudioContext" xml:space="preserve"><value>AudioContext ez dago erabilgarri nabigatzaile honetan.</value></data>
+
+  <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>Uneko jatorria: {0}</value></data>
+  <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>Xehetasun teknikoa: {0}</value></data>
+</root>

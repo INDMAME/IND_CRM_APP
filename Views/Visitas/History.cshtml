@@ -86,14 +86,16 @@
 
 @section Scripts {
     <script>
-        window.CurrentAxUser = "@(HttpAccessor?.HttpContext.Session.GetString("AxUser"))";
+        window.CurrentAxUser = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(HttpAccessor?.HttpContext.Session.GetString("AxUser") ?? string.Empty));
         window.__IND_I18N__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
             History_AddDate = SR["History_AddDate"].Value,
             History_Status_SelectStart = SR["History_Status_SelectStart"].Value,
             History_Status_SelectEnd = SR["History_Status_SelectEnd"].Value,
             History_Loading = SR["History_Loading"].Value,
             History_NoDataInRange = SR["History_NoDataInRange"].Value,
-            Common_NoData = SR["Common_NoData"].Value
+            Common_NoData = SR["Common_NoData"].Value,
+            Api_RequestFailed = SR["Api_RequestFailed"].Value,
+            Api_InvalidJson = SR["Api_InvalidJson"].Value
         }));
     </script>
     <script src="~/js/history.js" asp-append-version="true"></script>

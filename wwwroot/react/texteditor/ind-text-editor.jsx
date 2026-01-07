@@ -12,6 +12,11 @@ const OUTER_MARGIN = 5;
 const MIN_EDITOR_HEIGHT = 240;
 const RECORDER_GAP = 12;
 
+const getCsrfToken = () => {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute("content") : "";
+};
+
 function safeGetSessionValue(key) {
   try {
     return sessionStorage.getItem(key);
@@ -86,10 +91,14 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
         form.append("languageId", "auto");
         form.append("audioFile", wavBlob, "audio.wav");
 
+        const csrfToken = getCsrfToken();
+        const headers = csrfToken ? { RequestVerificationToken: csrfToken } : undefined;
+
         // Send the WAV to MVC (server will call the speech API).
         const response = await fetch("/Visitas/TranscribeSpeech", {
           method: "POST",
           body: form,
+          headers,
         });
 
         const payload = await response.json().catch(() => null);

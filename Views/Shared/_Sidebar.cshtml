@@ -26,12 +26,15 @@
         <img src="~/images/insertec_logo_blanco.png" alt="@SR["Common_AppLogoAlt"]" />
     </a>
 
-    <button id="visitasToggle" type="button" class="w-full text-left px-6 py-3 text-sm font-semibold tracking-wide hover:bg-white/15 transition" aria-controls="submenuVisitas" aria-expanded="false" onclick="toggleVisitas()">
-        @SR["Nav_Visits"].Value.ToUpperInvariant()
+    <button id="visitasToggle" type="button" class="w-full text-left px-6 py-3 text-sm font-semibold tracking-wide hover:bg-white/15 transition flex items-center justify-between" aria-controls="submenuVisitas" aria-expanded="false" onclick="toggleVisitas()">
+        <span>@SR["Nav_Visits"].Value.ToUpperInvariant()</span>
+        <svg id="visitasChevron" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/80 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+        </svg>
     </button>
 
     <div id="submenuVisitas" class="submenu ml-4 hidden" aria-label="@SR["Nav_Visits"].Value">
-        <a asp-controller="Visitas" asp-action="Create" class="block px-6 py-2 text-sm hover:bg-white/15 transition">@SR["Nav_Visits_Create"]</a>
+        <a asp-controller="Visitas" asp-action="Create" asp-route-fresh="1" class="block px-6 py-2 text-sm hover:bg-white/15 transition">@SR["Nav_Visits_Create"]</a>
         <a asp-controller="Historial" asp-action="History" class="block px-6 py-2 text-sm hover:bg-white/15 transition">
             @SR["Nav_Visits_History"]
         </a>
@@ -50,12 +53,6 @@
         </button>
 
         <div id="userMenu" class="user-menu dropup-menu bg-transparent border border-white/30 rounded-lg opacity-0 pointer-events-none transition duration-150 transform translate-y-2">
-            <div class="px-3 py-2 text-white/70 text-xs">
-                @SR["UserMenu_ConnectedAs"] <strong>@displayUser</strong>
-            </div>
-
-            <div class="mt-1 border-t border-white/10"></div>
-
             <div class="mt-1">
                 <button id="indLangButton"
                         type="button"
@@ -78,6 +75,7 @@
                     @foreach (var item in new[]
                     {
                         new { Culture = "es-ES", CodeKey = "Language_ES", NameKey = "Language_ES_Name" },
+                        new { Culture = "eu-ES", CodeKey = "Language_EU", NameKey = "Language_EU_Name" },
                         new { Culture = "en", CodeKey = "Language_EN", NameKey = "Language_EN_Name" },
                         new { Culture = "pt", CodeKey = "Language_PT", NameKey = "Language_PT_Name" },
                         new { Culture = "it", CodeKey = "Language_IT", NameKey = "Language_IT_Name" },
@@ -108,6 +106,7 @@
 
             <div class="mt-1 border-t border-white/10"></div>
             <form asp-controller="Auth" asp-action="Logout" method="post" class="mt-1">
+                @Html.AntiForgeryToken()
                 <button type="submit" class="user-menu-item user-menu-logout flex items-center w-full text-left px-3 py-2 text-sm hover:bg-white/15 transition">
                     <svg xmlns="http://www.w3.org/2000/svg" class="me-2 h-5 w-5" fill="none" viewBox="0 0 30 30" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6A2.25 2.25 0 0 0 5.25 5.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15" />

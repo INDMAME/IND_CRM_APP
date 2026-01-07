@@ -18,8 +18,8 @@
     <link href="~/css/tailwind.css" rel="stylesheet" asp-append-version="true" />
 </head>
 
-<body class="min-h-screen bg-[#00296b] text-slate-100 font-sans">
-    <div class="absolute inset-0 bg-[#00296b]"></div>
+<body class="min-h-screen bg-primary text-slate-100 font-sans">
+    <div class="absolute inset-0 bg-primary"></div>
 
     <div class="relative flex min-h-screen items-center justify-center px-4">
         <div class="w-full max-w-sm">
@@ -41,11 +41,12 @@
                 }
 
                 <form asp-action="Login" method="post" class="space-y-3">
+                    @Html.AntiForgeryToken()
                     <div class="space-y-1">
                         <label for="inputUser" class="sr-only">@SR["Login_Username"]</label>
                         <input asp-for="Username"
                                id="inputUser"
-                               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:border-[--color-primary] placeholder:text-slate-400"
+                               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-slate-400"
                                placeholder="@SR["Login_Username"]" />
                         <span asp-validation-for="Username" class="text-sm text-red-100"></span>
                     </div>
@@ -56,7 +57,7 @@
                             <input asp-for="Password"
                                    id="inputPassword"
                                    type="password"
-                                   class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-12 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[--color-primary] focus:border-[--color-primary] placeholder:text-slate-400"
+                                   class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-12 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-slate-400"
                                    placeholder="@SR["Login_Password"]" />
                             <button type="button"
                                     class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-700"
@@ -71,14 +72,7 @@
                         <span asp-validation-for="Password" class="text-sm text-red-100"></span>
                     </div>
 
-                    <div class="flex items-center justify-end text-sm text-slate-700">
-                        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-                            <input id="rememberMe" type="checkbox" class="rounded border-slate-300 text-[--color-primary] focus:ring-[--color-primary] bg-white" />
-                            <span>@SR["Login_RememberMe"]</span>
-                        </label>
-                    </div>
-
-                    <button type="submit" class="w-full rounded-xl border border-transparent bg-[--color-primary] text-white font-semibold px-4 py-2 shadow-md hover:bg-[#001f4d] transition">
+                    <button type="submit" class="w-full rounded-xl border border-transparent bg-primary text-white font-semibold px-4 py-2 shadow-md hover:bg-primary/90 transition">
                         @SR["Login_Submit"]
                     </button>
                 </form>
@@ -92,33 +86,6 @@
             if (!input) return;
             input.type = input.type === "password" ? "text" : "password";
         }
-
-        // Remember me: store username in localStorage
-        (function rememberMe() {
-            const userInput = document.getElementById("inputUser");
-            const rememberCheckbox = document.getElementById("rememberMe");
-            if (!userInput || !rememberCheckbox) return;
-
-            const stored = localStorage.getItem("crmRememberUser");
-            if (stored) {
-                userInput.value = stored;
-                rememberCheckbox.checked = true;
-            }
-
-            rememberCheckbox.addEventListener("change", () => {
-                if (rememberCheckbox.checked) {
-                    localStorage.setItem("crmRememberUser", userInput.value || "");
-                } else {
-                    localStorage.removeItem("crmRememberUser");
-                }
-            });
-
-            userInput.addEventListener("input", () => {
-                if (rememberCheckbox.checked) {
-                    localStorage.setItem("crmRememberUser", userInput.value || "");
-                }
-            });
-        })();
 
         // Prevent double submit on slow connections.
         (function guardSubmit() {

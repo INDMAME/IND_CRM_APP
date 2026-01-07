@@ -32,11 +32,13 @@
   <data name="UserMenu_Logout" xml:space="preserve"><value>退出登录</value></data>
 
   <data name="Language_ES" xml:space="preserve"><value>ES</value></data>
+  <data name="Language_EU" xml:space="preserve"><value>EU</value></data>
   <data name="Language_EN" xml:space="preserve"><value>EN</value></data>
   <data name="Language_PT" xml:space="preserve"><value>PT</value></data>
   <data name="Language_IT" xml:space="preserve"><value>IT</value></data>
   <data name="Language_ZH" xml:space="preserve"><value>ZH</value></data>
   <data name="Language_ES_Name" xml:space="preserve"><value>西班牙语</value></data>
+  <data name="Language_EU_Name" xml:space="preserve"><value>巴斯克语</value></data>
   <data name="Language_EN_Name" xml:space="preserve"><value>英语</value></data>
   <data name="Language_PT_Name" xml:space="preserve"><value>葡萄牙语</value></data>
   <data name="Language_IT_Name" xml:space="preserve"><value>意大利语</value></data>

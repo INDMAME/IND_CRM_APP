@@ -36,6 +36,7 @@ namespace IND_CRM_APP.Controllers
 
         // Processes login form and stores token in session
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginRequest model)
         {
             if (!ModelState.IsValid)
@@ -72,6 +73,8 @@ namespace IND_CRM_APP.Controllers
         }
 
         // Clears session and redirects to login
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public IActionResult Logout()
         {
             HttpContext.Session.Clear();

@@ -1,7 +1,9 @@
 ﻿using IND_CRM_APP.Models.Activities;
 using IND_CRM_APP.Services;
+using IND_CRM_APP.Infrastructure.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Localization;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -9,15 +11,21 @@ namespace IND_CRM_APP.Controllers
     public class CreateVisitaAsistenteController : BaseMvcController
     {
         private readonly ILogger<CreateVisitaAsistenteController> _logger;
+        private readonly IStringLocalizer<INDSharedResource> _sr;
 
-        public CreateVisitaAsistenteController(ICrmApiClient apiClient, ILogger<CreateVisitaAsistenteController> logger)
+        public CreateVisitaAsistenteController(
+            ICrmApiClient apiClient,
+            ILogger<CreateVisitaAsistenteController> logger,
+            IStringLocalizer<INDSharedResource> sr)
             : base(apiClient)
         {
             _logger = logger;
+            _sr = sr;
         }
 
         // Receives assistant data and calls API to create it
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAsistente(CreateVisitaAsistenteRequest model)
         {
             var token = HttpContext.Session.GetString("Token");
@@ -25,7 +33,7 @@ namespace IND_CRM_APP.Controllers
                 return Unauthorized();
 
             if (!ModelState.IsValid)
-                return BadRequest("Invalid data.");
+                return BadRequest(new { Success = false, Message = _sr["Api_RequestFailed"].Value });
 
             try
             {
@@ -35,7 +43,7 @@ namespace IND_CRM_APP.Controllers
             catch (ApiException ex)
             {
                 _logger.LogError(ex, "Upstream API error in CreateAsistente");
-                return Json(new { Success = false, Message = ex.Message });
+                return Json(new { Success = false, Message = _sr["Api_RequestFailed"].Value });
             }
         }
     }

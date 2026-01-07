@@ -85,6 +85,11 @@ namespace IND_CRM_APP.Services
 
         private string BuildUrl(string relativePath) => $"{_baseUrl}/{relativePath.TrimStart('/')}";
 
+        private static string SafeLogPayload(string? raw)
+        {
+            return string.IsNullOrWhiteSpace(raw) ? "<empty>" : $"len={raw.Length}";
+        }
+
         // ======================================================
         // Authentication
         // ======================================================
@@ -358,7 +363,7 @@ namespace IND_CRM_APP.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetActivityByCode parse error. Raw: {Raw}", result.Raw);
+                _logger.LogError(ex, "GetActivityByCode parse error. Raw: {Raw}", SafeLogPayload(result.Raw));
             }
 
             // Si llegamos aquí seguimos sin data; intenta parsear JSON embebido en el mensaje
@@ -393,7 +398,7 @@ namespace IND_CRM_APP.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "GetActivityByCode embedded parse error. Raw: {Raw}", result.Raw);
+                _logger.LogError(ex, "GetActivityByCode embedded parse error. Raw: {Raw}", SafeLogPayload(result.Raw));
             }
 
             return new ApiResponse<ActivityDto>
@@ -657,7 +662,7 @@ namespace IND_CRM_APP.Services
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "JSON deserialization failed for {Operation}. Raw: {Raw}", operation, result.Raw);
+                _logger.LogError(ex, "JSON deserialization failed for {Operation}. Raw: {Raw}", operation, SafeLogPayload(result.Raw));
             }
 
             // Fallback: intenta extraer Data o deserializar directamente T
@@ -691,7 +696,7 @@ namespace IND_CRM_APP.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Fallback deserialization failed for {Operation}. Raw: {Raw}", operation, result.Raw);
+                _logger.LogError(ex, "Fallback deserialization failed for {Operation}. Raw: {Raw}", operation, SafeLogPayload(result.Raw));
             }
 
             LogHttpFailure(result, operation);
@@ -727,7 +732,7 @@ namespace IND_CRM_APP.Services
             }
             catch (JsonException ex)
             {
-                _logger.LogError(ex, "JSON deserialization failed for {Operation}. Raw: {Raw}", operation, result.Raw);
+                _logger.LogError(ex, "JSON deserialization failed for {Operation}. Raw: {Raw}", operation, SafeLogPayload(result.Raw));
             }
 
             LogHttpFailure(result, operation);
@@ -745,7 +750,7 @@ namespace IND_CRM_APP.Services
                 return;
 
             var message = result.ErrorMessage ?? $"HTTP error in {operation}";
-            _logger.LogError("API call failed: {Message}. Status: {Status}. Body: {Body}", message, result.StatusCode, result.Raw);
+            _logger.LogError("API call failed: {Message}. Status: {Status}. Body: {Body}", message, result.StatusCode, SafeLogPayload(result.Raw));
             throw new ApiException(message, result.StatusCode, result.Raw, result.Headers);
         }
 
@@ -759,7 +764,7 @@ namespace IND_CRM_APP.Services
                 operation,
                 result.StatusCode,
                 result.ErrorMessage,
-                result.Raw
+                SafeLogPayload(result.Raw)
             );
         }
 

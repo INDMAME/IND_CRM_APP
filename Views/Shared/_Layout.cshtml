@@ -1,8 +1,14 @@
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+
 <!DOCTYPE html>
 <html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @{
+        var csrfTokens = Antiforgery.GetAndStoreTokens(Context);
+    }
+    <meta name="csrf-token" content="@csrfTokens.RequestToken" />
 
     <title>@ViewData["Title"] - IND CRM</title>
 
@@ -113,10 +119,12 @@
 
             function toggleVisitas() {
                 const sub = document.getElementById("submenuVisitas");
+                const chevron = document.getElementById("visitasChevron");
                 if (!sub) return;
                 const isHidden = sub.classList.toggle("hidden");
                 const nowOpen = !isHidden;
                 visitasToggle?.setAttribute("aria-expanded", nowOpen.toString());
+                chevron?.classList.toggle("rotate-180", nowOpen);
             }
 
             function toggleUserMenu() {

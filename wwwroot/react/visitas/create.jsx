@@ -172,10 +172,16 @@ function makeCache(limit = 10) {
 }
 
 async function fetchJson(url, options) {
+  const csrfToken = getCsrfToken();
+  const headers = {
+    Accept: "application/json",
+    ...(options?.headers || {}),
+    ...(csrfToken ? { RequestVerificationToken: csrfToken } : {}),
+  };
   const merged = {
     credentials: "same-origin",
-    headers: { Accept: "application/json", ...(options?.headers || {}) },
     ...options,
+    headers,
   };
   const res = await fetch(url, merged);
   const text = await res.text();
@@ -246,6 +252,7 @@ const contactsCache = makeCache(10);
 const VISIT_DRAFT_KEY = "visitas_draft";
 const CONTACTS_STORAGE_KEY = "visitas_contacts_cache_v1";
 const CONTACTS_SELECTION_KEY = "visitas_contacts_selected_v1";
+const CREATE_FRESH_PARAM = "fresh";
 const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
 const TEXT_EDITOR_PREFIX = "ind_texteditor_";
 const TAP_MOVE_PX = 14;
@@ -253,6 +260,11 @@ const PREVIEW_HOLD_MS = 160;
 const PREVIEW_MAX_HEIGHT_RATIO = 0.8;
 const PREVIEW_BASE_FONT = 13;
 const PREVIEW_MIN_FONT = 11;
+
+const getCsrfToken = () => {
+  const meta = document.querySelector('meta[name="csrf-token"]');
+  return meta ? meta.getAttribute("content") : "";
+};
 
 const readAndClearTextEditorValue = (fieldId) => {
   const id = String(fieldId || "").trim();
@@ -265,6 +277,29 @@ const readAndClearTextEditorValue = (fieldId) => {
     return value;
   } catch {
     return null;
+  }
+};
+
+const clearCreateSelectionCache = () => {
+  try {
+    sessionStorage.removeItem(VISIT_DRAFT_KEY);
+    sessionStorage.removeItem(CONTACTS_STORAGE_KEY);
+    sessionStorage.removeItem(CONTACTS_SELECTION_KEY);
+  } catch {
+    /* ignore */
+  }
+};
+
+const stripFreshParam = () => {
+  if (typeof window === "undefined") return;
+  try {
+    const url = new URL(window.location.href);
+    if (!url.searchParams.has(CREATE_FRESH_PARAM)) return;
+    url.searchParams.delete(CREATE_FRESH_PARAM);
+    const next = `${url.pathname}${url.search}${url.hash}`;
+    window.history.replaceState({}, "", next);
+  } catch {
+    /* ignore */
   }
 };
 
@@ -1447,6 +1482,16 @@ function VisitasApp() {
 
   const closeModal = React.useCallback(() => {
     setModal((m) => ({ ...m, open: false }));
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search || "");
+    const isFresh = params.get(CREATE_FRESH_PARAM) === "1";
+    if (isFresh) {
+      clearCreateSelectionCache();
+      stripFreshParam();
+    }
   }, []);
 
   const openConfirmModal = React.useCallback((opts) => {

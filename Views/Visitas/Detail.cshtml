@@ -20,7 +20,7 @@
     <script>
         window.__VISIT_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.CRMTipoVisitaEnum ?? new object[] { }, jsonOptions));
         window.__ASISTENTE_TIPOS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.AsistenteTipoEnum ?? new object[] { }, jsonOptions));
-        window.__AX_USER__ = "@((ViewBag.AxUser ?? "").ToString())";
+        window.__AX_USER__ = @Html.Raw(JsonSerializer.Serialize((ViewBag.AxUser ?? "").ToString()));
         window.__ACTIVITY_DETAIL__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ActivityDetail ?? new { }, jsonOptions));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Save = SR["Common_Save"].Value,

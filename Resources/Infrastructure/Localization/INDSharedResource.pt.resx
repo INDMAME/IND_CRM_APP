@@ -32,11 +32,13 @@
   <data name="UserMenu_Logout" xml:space="preserve"><value>Terminar sessao</value></data>
 
   <data name="Language_ES" xml:space="preserve"><value>ES</value></data>
+  <data name="Language_EU" xml:space="preserve"><value>EU</value></data>
   <data name="Language_EN" xml:space="preserve"><value>EN</value></data>
   <data name="Language_PT" xml:space="preserve"><value>PT</value></data>
   <data name="Language_IT" xml:space="preserve"><value>IT</value></data>
   <data name="Language_ZH" xml:space="preserve"><value>ZH</value></data>
   <data name="Language_ES_Name" xml:space="preserve"><value>Espanhol</value></data>
+  <data name="Language_EU_Name" xml:space="preserve"><value>Basco</value></data>
   <data name="Language_EN_Name" xml:space="preserve"><value>Inglês</value></data>
   <data name="Language_PT_Name" xml:space="preserve"><value>Português</value></data>
   <data name="Language_IT_Name" xml:space="preserve"><value>Italiano</value></data>

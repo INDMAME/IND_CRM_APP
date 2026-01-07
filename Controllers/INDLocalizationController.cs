@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Http;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -9,6 +10,7 @@ namespace IND_CRM_APP.Controllers
         private static readonly HashSet<string> SupportedCultures = new(StringComparer.OrdinalIgnoreCase)
         {
             "es-ES",
+            "eu-ES",
             "en",
             "pt",
             "it",
@@ -38,7 +40,8 @@ namespace IND_CRM_APP.Controllers
                 {
                     Expires = DateTimeOffset.UtcNow.AddYears(1),
                     IsEssential = true,
-                    HttpOnly = false,
+                    HttpOnly = true,
+                    SameSite = SameSiteMode.Lax,
                     Path = "/",
                     Secure = Request.IsHttps
                 }

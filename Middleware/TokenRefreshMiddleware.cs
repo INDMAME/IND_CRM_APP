@@ -10,8 +10,7 @@ using Microsoft.Extensions.Options;
 namespace IND_CRM_APP.Middleware
 {
     /// <summary>
-    /// Middleware que revisa el token JWT en cada petición y lo refresca si está cerca de caducar.
-    /// Propaga X-Refreshed-Token cuando se obtiene un token nuevo.
+    /// Middleware que revisa el token JWT en cada peticion y lo refresca si esta cerca de caducar.
     /// </summary>
     public class TokenRefreshMiddleware
     {
@@ -33,14 +32,14 @@ namespace IND_CRM_APP.Middleware
 
         public async Task Invoke(HttpContext context)
         {
-            // Resolver servicios por petición (scope de la request)
+            // Resolver servicios por peticion (scope de la request)
             var tokenSession = context.RequestServices.GetRequiredService<ITokenSessionService>();
             var apiClient = context.RequestServices.GetRequiredService<ICrmApiClient>();
 
             var path = context.Request.Path.Value ?? string.Empty;
             var lowerPath = path.ToLowerInvariant();
 
-            // Omitir rutas públicas/estáticas
+            // Omitir rutas publicas/estaticas
             if (lowerPath.StartsWith("/auth/login") ||
                 lowerPath.StartsWith("/auth/logout") ||
                 lowerPath.StartsWith("/css") ||

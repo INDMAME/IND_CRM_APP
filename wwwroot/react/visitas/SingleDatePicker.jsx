@@ -36,9 +36,43 @@ const getUiLocale = () => {
   return "es-ES";
 };
 
+const isBasqueLocale = (locale) => /^eu\b/i.test(String(locale || ""));
+const BASQUE_MONTHS = [
+  "urtarrila",
+  "otsaila",
+  "martxoa",
+  "apirila",
+  "maiatza",
+  "ekaina",
+  "uztaila",
+  "abuztua",
+  "iraila",
+  "urria",
+  "azaroa",
+  "abendua"
+];
+const BASQUE_MONTHS_SHORT = [
+  "urt",
+  "ots",
+  "mar",
+  "api",
+  "mai",
+  "eka",
+  "uzt",
+  "abu",
+  "ira",
+  "urr",
+  "aza",
+  "abe"
+];
+
 const formatDisplay = (d) => {
   if (!d) return indT("History_AddDate", "Add date");
   const locale = getUiLocale();
+  if (isBasqueLocale(locale)) {
+    const month = BASQUE_MONTHS_SHORT[d.getMonth()];
+    return `${d.getDate()} ${month} ${d.getFullYear()}`.toLowerCase();
+  }
   return d
     .toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
     .replace(/\./g, "")
@@ -88,6 +122,9 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
     const locale = getUiLocale();
     if (/^zh/i.test(locale)) {
       return new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" }).format(firstDay);
+    }
+    if (isBasqueLocale(locale)) {
+      return `${BASQUE_MONTHS[currentMonth]} ${currentYear}`;
     }
     const raw = firstDay.toLocaleDateString(locale, { month: "long" });
     const first = raw.slice(0, 1);

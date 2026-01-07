@@ -32,9 +32,6 @@ namespace IND_CRM_APP.Services
 
             ctx.Session.SetString("Token", token);
             ctx.Session.SetString("TokenExpires", expiration.ToString("o"));
-
-            // Propaga para que el front pueda actualizarse si consume cabecera
-            ctx.Response.Headers["X-Refreshed-Token"] = token;
         }
 
         public (string? Token, DateTime? ExpiresUtc) GetToken()
