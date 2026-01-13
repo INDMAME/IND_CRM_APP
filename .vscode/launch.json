@@ -15,16 +15,12 @@
                 "--project",
                 "${workspaceFolder}/IND_CRM_APP.csproj",
                 "--launch-profile",
-                "https"
+                "vscode-https"
             ],
             "cwd": "${workspaceFolder}",
             "stopAtEntry": false,
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development"
-            },
-            "serverReadyAction": {
-                "action": "openExternally",
-                "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
             }
         },
         {
@@ -39,18 +35,23 @@
             "env": {
                 "ASPNETCORE_ENVIRONMENT": "Development",
                 "ASPNETCORE_URLS": "https://localhost:7702"
-            },
-            "serverReadyAction": {
-                "action": "openExternally",
-                "url": "https://localhost:7702"
             }
         },
         {
             "type": "chrome",
             "request": "launch",
-            "name": "Iniciar Chrome para localhost",
-            "url": "https://localhost:7702",
+            "name": "Iniciar Chrome para produccion",
+            "url": "https://crm.insertec.biz:7702/",
             "webRoot": "${workspaceFolder}"
+        }
+    ],
+    "compounds": [
+        {
+            "name": "Backend + Produccion",
+            "configurations": [
+                "Backend (Kestrel, HTTPS, Debug)",
+                "Iniciar Chrome para produccion"
+            ]
         }
     ]
 }
