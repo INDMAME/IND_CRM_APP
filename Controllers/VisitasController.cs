@@ -152,7 +152,7 @@ namespace IND_CRM_APP.Controllers
                 }
 
                 // API expects the service user as userId and the actual user as createdByUserId.
-                req.UserId = IndHardcodedAuth.ServiceUser;
+                req.UserId = IndAuthEnv.ServiceUser;
 
                 var response = await _apiClient.CreateActivityAsync(token, req);
 

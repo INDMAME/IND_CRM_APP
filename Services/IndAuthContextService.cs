@@ -148,8 +148,8 @@ namespace IND_CRM_APP.Services
 
             try
             {
-                _logger.LogInformation("Requesting Entra context for OID {EntraOid} and app {AppCode}.", entraOid, IndHardcodedAuth.AppCode);
-                var response = await _apiClient.GetEntraContextAsync(token, entraOid, IndHardcodedAuth.AppCode);
+                _logger.LogInformation("Requesting Entra context for OID {EntraOid} and app {AppCode}.", entraOid, IndAuthEnv.AppCode);
+                var response = await _apiClient.GetEntraContextAsync(token, entraOid, IndAuthEnv.AppCode);
                 if (response == null || response.Items.Count == 0)
                 {
                     _logger.LogWarning("Entra context not available for OID {EntraOid}. Message: {Message}", entraOid, response?.Message);
@@ -213,7 +213,7 @@ namespace IND_CRM_APP.Services
             if (!string.IsNullOrWhiteSpace(token))
                 return token;
 
-            var login = await _apiClient.AuthenticateAsync(IndHardcodedAuth.ServiceUser, IndHardcodedAuth.ServicePass);
+            var login = await _apiClient.AuthenticateAsync(IndAuthEnv.ServiceUser, IndAuthEnv.ServicePass);
             if (login == null || string.IsNullOrWhiteSpace(login.Token))
                 return null;
 
@@ -425,7 +425,7 @@ namespace IND_CRM_APP.Services
             if (user == null)
                 return null;
 
-            var oid = user.FindFirst(IndHardcodedAuth.ClaimOid)?.Value
+            var oid = user.FindFirst(IndAuthEnv.ClaimOid)?.Value
                       ?? user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
 
             return string.IsNullOrWhiteSpace(oid) ? null : oid;

@@ -94,10 +94,10 @@ builder.Services.AddAuthentication(options =>
 })
 .AddOpenIdConnect(options =>
 {
-    options.Authority = IndHardcodedAuth.Authority;
-    options.ClientId = IndHardcodedAuth.ClientId;
-    options.ClientSecret = IndHardcodedAuth.ClientSecret;
-    options.CallbackPath = IndHardcodedAuth.RedirectPath;
+    options.Authority = IndAuthEnv.Authority;
+    options.ClientId = IndAuthEnv.ClientId;
+    options.ClientSecret = IndAuthEnv.ClientSecret;
+    options.CallbackPath = IndAuthEnv.RedirectPath;
     options.ResponseType = "code";
     options.GetClaimsFromUserInfoEndpoint = true;
     options.SaveTokens = false;
@@ -107,7 +107,7 @@ builder.Services.AddAuthentication(options =>
     options.Scope.Add("email");
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        NameClaimType = IndHardcodedAuth.ClaimEmailPreferred
+        NameClaimType = IndAuthEnv.ClaimEmailPreferred
     };
     options.Events = new OpenIdConnectEvents
     {
@@ -116,7 +116,7 @@ builder.Services.AddAuthentication(options =>
             var httpContext = context.HttpContext;
             var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
             var principal = context.Principal;
-            var oid = principal?.FindFirst(IndHardcodedAuth.ClaimOid)?.Value
+            var oid = principal?.FindFirst(IndAuthEnv.ClaimOid)?.Value
                       ?? principal?.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
 
             // Log Entra OID to help diagnose Entra user mapping issues.
@@ -140,7 +140,7 @@ builder.Services.AddAuthentication(options =>
             httpContext.Session.Remove("AxUser");
             logger.LogInformation("Cleared cached context after Entra sign-in.");
 
-            var preferred = principal?.FindFirst(IndHardcodedAuth.ClaimEmailPreferred)?.Value;
+            var preferred = principal?.FindFirst(IndAuthEnv.ClaimEmailPreferred)?.Value;
             var email = preferred
                         ?? principal?.FindFirst("email")?.Value
                         ?? principal?.FindFirst(ClaimTypes.Email)?.Value;

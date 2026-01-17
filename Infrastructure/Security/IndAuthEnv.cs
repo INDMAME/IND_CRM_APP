@@ -2,7 +2,8 @@ using System;
 
 namespace IND_CRM_APP.Infrastructure.Security
 {
-    public static class IndHardcodedAuth
+    // Centralized access to auth environment variables and related constants.
+    public static class IndAuthEnv
     {
         // Read secrets from environment variables to avoid hardcoded values.
         public static string TenantId => GetRequiredEnv("CRM_TENANT_ID");
