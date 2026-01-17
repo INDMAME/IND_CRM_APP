@@ -386,7 +386,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, disabled
           className="relative w-full cursor-default rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
         >
           <input
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-100 disabled:text-slate-600 disabled:border-slate-200 disabled:cursor-not-allowed"
             value={query || selected?.text || ""}
             disabled={disabled}
             onChange={(event) => {
@@ -1053,9 +1053,12 @@ const DetailApp = () => {
         <div className="grid grid-cols-1 gap-3">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Description", "Description")}</label>
-            <input
+          <input
               id="description"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className={classNames(
+                "w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+                isEditing ? "border-slate-200 text-slate-900" : "border-slate-200 bg-slate-100 text-slate-600"
+              )}
               maxLength={200}
               value={description}
               disabled={!isEditing}
@@ -1068,7 +1071,8 @@ const DetailApp = () => {
               id="comentarios"
               className={classNames(
                 "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                "cursor-pointer"
+                "cursor-pointer",
+                !isEditing ? "bg-slate-100 text-slate-600" : ""
               )}
               value={comentarios}
               readOnly
@@ -1084,7 +1088,8 @@ const DetailApp = () => {
               id="antecedentes"
               className={classNames(
                 "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                "cursor-pointer"
+                "cursor-pointer",
+                !isEditing ? "bg-slate-100 text-slate-600" : ""
               )}
               value={antecedentes}
               readOnly
@@ -1100,7 +1105,8 @@ const DetailApp = () => {
               id="conclusiones"
               className={classNames(
                 "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                "cursor-pointer"
+                "cursor-pointer",
+                !isEditing ? "bg-slate-100 text-slate-600" : ""
               )}
               value={conclusiones}
               readOnly

@@ -42,6 +42,13 @@
     touch-action: manipulation;
 }
 .drp:hover { border-color: rgba(0,41,107,0.28); box-shadow: 0 12px 24px rgba(0,0,0,0.10); transform: translateY(-1px); }
+.drp.drp-readonly {
+    background: #f1f5f9;
+    border-color: #e2e8f0;
+    box-shadow: none;
+}
+.drp.drp-readonly .drp-label { color: #94a3b8; }
+.drp.drp-readonly .drp-value { color: #64748b; }
 
 .drp-section {
     flex: 1 1 120px;

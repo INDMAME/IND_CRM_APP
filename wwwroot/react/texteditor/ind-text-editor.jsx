@@ -272,6 +272,10 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     goBackAfterSave();
   };
 
+  const editorBoxClass = isReadOnly
+    ? "relative rounded-2xl border border-slate-200 bg-slate-100 shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary"
+    : "relative rounded-2xl border border-slate-300 bg-white shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary";
+
   return (
     <div className="min-h-screen h-[100dvh] w-full flex flex-col bg-slate-200">
       <div className="topbar shadow-md">
@@ -371,9 +375,9 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
             <div className="mb-3 text-xs text-rose-700 text-center">{transcribeError}</div>
           ) : null}
 
-          <div className="relative rounded-2xl border border-slate-300 bg-white shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary">
+          <div className={editorBoxClass}>
             <textarea
-              className="w-full resize-none bg-transparent px-5 pb-5 pt-10 pr-14 text-slate-900 focus:outline-none"
+              className={`w-full resize-none bg-transparent px-5 pb-5 pt-10 pr-14 focus:outline-none ${isReadOnly ? "text-slate-600" : "text-slate-900"}`}
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={isTranscribing}
