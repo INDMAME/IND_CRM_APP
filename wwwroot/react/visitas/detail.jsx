@@ -593,8 +593,11 @@ const DetailApp = () => {
 
   const shouldHydrate = !!actividadId && !hasServerDetail;
 
-  const openTextEditor = useCallback((fieldId, fieldLabel, fieldValue) => {
+  const openTextEditor = useCallback((fieldId, fieldLabel, fieldValue, options = {}) => {
     const safeId = String(fieldId || "").trim();
+    const safeLabel = String(fieldLabel || "").trim();
+    const readOnly = options?.readOnly === true;
+    const editModeKey = String(options?.editModeKey || "").trim();
     if (safeId) {
       const key = `${TEXT_EDITOR_PREFIX}${safeId}`;
       try {
@@ -616,17 +619,21 @@ const DetailApp = () => {
       /* ignore */
     }
     const url =
-      `/TextEditorReact/EditField?fieldId=${encodeURIComponent(fieldId || "")}` +
-      `&fieldLabel=${encodeURIComponent(fieldLabel || "")}` +
-      `&returnUrl=${encodeURIComponent(returnUrl)}`;
+      `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId || fieldId || "")}` +
+      `&fieldLabel=${encodeURIComponent(safeLabel || fieldLabel || "")}` +
+      `&returnUrl=${encodeURIComponent(returnUrl)}` +
+      `&readOnly=${readOnly ? "1" : "0"}` +
+      (editModeKey ? `&editModeKey=${encodeURIComponent(editModeKey)}` : "");
 
     window.location.href = url;
   }, []);
 
   const handleComentariosTap = useCallback((event) => {
-    if (!isEditing) return;
     event.preventDefault();
-    openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios);
+    openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios, {
+      readOnly: !isEditing,
+      editModeKey: editModeKeyRef.current
+    });
   }, [comentarios, isEditing, openTextEditor]);
 
   const handleComentariosHold = useCallback((target, clientY) => {
@@ -636,9 +643,11 @@ const DetailApp = () => {
   }, [comentarios]);
 
   const handleAntecedentesTap = useCallback((event) => {
-    if (!isEditing) return;
     event.preventDefault();
-    openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes);
+    openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes, {
+      readOnly: !isEditing,
+      editModeKey: editModeKeyRef.current
+    });
   }, [antecedentes, isEditing, openTextEditor]);
 
   const handleAntecedentesHold = useCallback((target, clientY) => {
@@ -648,9 +657,11 @@ const DetailApp = () => {
   }, [antecedentes]);
 
   const handleConclusionesTap = useCallback((event) => {
-    if (!isEditing) return;
     event.preventDefault();
-    openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones);
+    openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones, {
+      readOnly: !isEditing,
+      editModeKey: editModeKeyRef.current
+    });
   }, [conclusiones, isEditing, openTextEditor]);
 
   const handleConclusionesHold = useCallback((target, clientY) => {
@@ -1047,11 +1058,10 @@ const DetailApp = () => {
               id="comentarios"
               className={classNames(
                 "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                isEditing ? "cursor-pointer" : ""
+                "cursor-pointer"
               )}
               value={comentarios}
-              disabled={!isEditing}
-              readOnly={isEditing}
+              readOnly
               onPointerDown={comentariosTap.onPointerDown}
               onPointerMove={comentariosTap.onPointerMove}
               onPointerUp={comentariosTap.onPointerUp}
@@ -1064,11 +1074,10 @@ const DetailApp = () => {
               id="antecedentes"
               className={classNames(
                 "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                isEditing ? "cursor-pointer" : ""
+                "cursor-pointer"
               )}
               value={antecedentes}
-              disabled={!isEditing}
-              readOnly={isEditing}
+              readOnly
               onPointerDown={antecedentesTap.onPointerDown}
               onPointerMove={antecedentesTap.onPointerMove}
               onPointerUp={antecedentesTap.onPointerUp}
@@ -1081,11 +1090,10 @@ const DetailApp = () => {
               id="conclusiones"
               className={classNames(
                 "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                isEditing ? "cursor-pointer" : ""
+                "cursor-pointer"
               )}
               value={conclusiones}
-              disabled={!isEditing}
-              readOnly={isEditing}
+              readOnly
               onPointerDown={conclusionesTap.onPointerDown}
               onPointerMove={conclusionesTap.onPointerMove}
               onPointerUp={conclusionesTap.onPointerUp}

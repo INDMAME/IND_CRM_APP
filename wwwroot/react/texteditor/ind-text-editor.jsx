@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, PencilSquareIcon } from "@heroicons/react/24/outline";
 import AudioRecorderMinimal from "../audio-recorder/AudioRecorderMinimal.jsx";
 
 const IND_I18N = globalThis.__IND_I18N__ || {};
@@ -45,7 +45,27 @@ function safeSetSessionValue(key, value) {
   }
 }
 
-function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
+function parseBool(value) {
+  const normalized = String(value || "").trim().toLowerCase();
+  return normalized === "1" || normalized === "true" || normalized === "yes";
+}
+
+function getQueryParam(key) {
+  if (typeof window === "undefined") return "";
+  try {
+    return new URLSearchParams(window.location.search || "").get(key) || "";
+  } catch {
+    return "";
+  }
+}
+
+function normalizeEditModeKey(value) {
+  const key = String(value || "").trim();
+  if (!key) return "";
+  return key.startsWith("ind_visit_edit_") ? key : "";
+}
+
+function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initialReadOnly = false, editModeKey = "" }) {
   const storageKey = useMemo(() => `${STORAGE_PREFIX}${String(fieldId || "").trim()}`, [fieldId]);
   // Resolve return URL from props or sessionStorage.
   const resolvedReturnUrl = useMemo(() => {
@@ -60,6 +80,8 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
       return "";
     }
   }, [fieldId, returnUrl]);
+  const [isReadOnly, setIsReadOnly] = useState(!!initialReadOnly);
+  const normalizedEditModeKey = useMemo(() => normalizeEditModeKey(editModeKey), [editModeKey]);
   const [recorderOpen, setRecorderOpen] = useState(false);
   const [recorderResetKey, setRecorderResetKey] = useState(0);
   const [recorderHeightPx, setRecorderHeightPx] = useState(0);
@@ -196,6 +218,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
   }, [recorderOpen]);
 
   const toggleRecorder = () => {
+    if (isReadOnly) return;
     setTranscribeError("");
     setRecorderOpen((open) => {
       if (open) setRecorderResetKey((k) => k + 1);
@@ -211,6 +234,12 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
     }
     return false;
   };
+
+  const enableEdit = useCallback(() => {
+    if (!isReadOnly) return;
+    setIsReadOnly(false);
+    if (normalizedEditModeKey) safeSetSessionValue(normalizedEditModeKey, "true");
+  }, [isReadOnly, normalizedEditModeKey]);
 
   const persistDraft = () => {
     // Persist the draft so the previous page can restore it.
@@ -238,6 +267,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
   };
 
   const onSave = () => {
+    if (isReadOnly) return;
     safeSetSessionValue(storageKey, text);
     goBackAfterSave();
   };
@@ -272,28 +302,51 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
           </span>
         </div>
 
-        <button
-          type="button"
-          className="text-white rounded-md"
-          aria-label={indT("Common_Save", "Save")}
-          onClick={onSave}
-          style={{
-            width: "44px",
-            height: "44px",
-            minWidth: "44px",
-            minHeight: "44px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "transparent",
-            border: "none",
-            padding: 0,
-          }}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-[30px] h-[30px]" aria-hidden="true">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-          </svg>
-        </button>
+        {isReadOnly ? (
+          <button
+            type="button"
+            className="text-white rounded-md"
+            aria-label={indT("Common_Edit", "Edit")}
+            onClick={enableEdit}
+            style={{
+              width: "44px",
+              height: "44px",
+              minWidth: "44px",
+              minHeight: "44px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "transparent",
+              border: "none",
+              padding: 0,
+            }}
+          >
+            <PencilSquareIcon className="h-[30px] w-[30px]" aria-hidden="true" />
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="text-white rounded-md"
+            aria-label={indT("Common_Save", "Save")}
+            onClick={onSave}
+            style={{
+              width: "44px",
+              height: "44px",
+              minWidth: "44px",
+              minHeight: "44px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              background: "transparent",
+              border: "none",
+              padding: 0,
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-[30px] h-[30px]" aria-hidden="true">
+              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <div className="flex-1 min-h-0 w-full px-4 pb-4 pt-3">
@@ -322,6 +375,8 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={isTranscribing}
+              readOnly={isReadOnly || isTranscribing}
+              aria-readonly={isReadOnly ? "true" : undefined}
               aria-busy={isTranscribing}
               style={{ height: editorHeight }}
             />
@@ -335,17 +390,19 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
               </div>
             ) : null}
 
-            <button
-              type="button"
-              className="absolute top-4 right-4 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50"
-              aria-label={indT("TextEditor_Microphone", "Microphone")}
-              onClick={toggleRecorder}
-              disabled={isTranscribing}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5" aria-hidden="true">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-              </svg>
-            </button>
+            {!isReadOnly && (
+              <button
+                type="button"
+                className="absolute top-4 right-4 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50"
+                aria-label={indT("TextEditor_Microphone", "Microphone")}
+                onClick={toggleRecorder}
+                disabled={isTranscribing}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -361,6 +418,10 @@ const mount = () => {
   const fieldLabel = rootEl.getAttribute("data-field-label") || "";
   const initialValue = rootEl.getAttribute("data-field-value") || "";
   const returnUrl = rootEl.getAttribute("data-return-url") || "";
+  const readOnlyAttr = rootEl.getAttribute("data-read-only") || "";
+  const initialReadOnly = parseBool(readOnlyAttr) || parseBool(getQueryParam("readOnly")) || parseBool(getQueryParam("readonly"));
+  const editModeKeyAttr = rootEl.getAttribute("data-edit-mode-key") || "";
+  const editModeKey = editModeKeyAttr || getQueryParam("editModeKey") || "";
 
   const root = createRoot(rootEl);
   root.render(
@@ -369,6 +430,8 @@ const mount = () => {
       fieldLabel={fieldLabel}
       initialValue={initialValue}
       returnUrl={returnUrl}
+      initialReadOnly={initialReadOnly}
+      editModeKey={editModeKey}
     />
   );
 };

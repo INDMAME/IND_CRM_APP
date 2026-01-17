@@ -6,6 +6,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="Common_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="Common_Edit" xml:space="preserve"><value>Editar</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Common_Close" xml:space="preserve"><value>Fechar</value></data>
   <data name="Common_Back" xml:space="preserve"><value>Voltar</value></data>

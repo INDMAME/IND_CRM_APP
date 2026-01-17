@@ -14,6 +14,7 @@
   </resheader>
 
   <data name="Common_Save" xml:space="preserve"><value>Gorde</value></data>
+  <data name="Common_Edit" xml:space="preserve"><value>Editatu</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>Ezeztatu</value></data>
   <data name="Common_Close" xml:space="preserve"><value>Itxi</value></data>
   <data name="Common_Back" xml:space="preserve"><value>Atzera</value></data>

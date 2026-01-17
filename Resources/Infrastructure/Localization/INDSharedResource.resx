@@ -14,6 +14,7 @@
   </resheader>
 
   <data name="Common_Save" xml:space="preserve"><value>Guardar</value></data>
+  <data name="Common_Edit" xml:space="preserve"><value>Editar</value></data>
   <data name="Common_Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="Common_Close" xml:space="preserve"><value>Cerrar</value></data>
   <data name="Common_Back" xml:space="preserve"><value>Volver</value></data>
