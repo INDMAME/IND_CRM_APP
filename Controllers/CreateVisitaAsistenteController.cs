@@ -37,6 +37,12 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
+                var axUser = HttpContext.Session.GetString("AxUser") ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(axUser) && string.IsNullOrWhiteSpace(model.CreatedByUserId))
+                {
+                    model.CreatedByUserId = axUser;
+                }
+
                 var result = await _apiClient.CreateVisitaAsistenteAsync(token, model);
                 return Json(result);
             }

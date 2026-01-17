@@ -73,7 +73,9 @@
 
     <!-- Loader -->
     <div id="resultsLoader" class="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700" style="display:none;">
-        <div class="h-5 w-5 border-2 border-primary border-t-transparent rounded-full animate-spin" aria-label="@SR["Common_Loading"]"></div>
+        <svg class="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label="@SR["Common_Loading"]">
+            <circle class="ind-spinner__circle" cx="10" cy="10" r="8" stroke-width="2"></circle>
+        </svg>
         @SR["History_Loading"]
     </div>
 

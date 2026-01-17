@@ -3,6 +3,7 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
 @{
     Layout = null;
+    var forceEntra = ViewBag.ForceEntra == true;
 }
 
 <!DOCTYPE html>
@@ -33,6 +34,13 @@
                     <p class="text-sm text-slate-600">@SR["Login_Subtitle"]</p>
                 </div>
 
+                @if (TempData["AuthError"] != null)
+                {
+                    <div class="bg-red-50 text-red-700 text-sm rounded-xl px-3 py-2 mb-3 border border-red-100">
+                        @TempData["AuthError"]
+                    </div>
+                }
+
                 @if (ViewBag.Error != null)
                 {
                     <div class="bg-red-50 text-red-700 text-sm rounded-xl px-3 py-2 mb-3 border border-red-100">
@@ -40,67 +48,14 @@
                     </div>
                 }
 
-                <form asp-action="Login" method="post" class="space-y-3">
-                    @Html.AntiForgeryToken()
-                    <div class="space-y-1">
-                        <label for="inputUser" class="sr-only">@SR["Login_Username"]</label>
-                        <input asp-for="Username"
-                               id="inputUser"
-                               class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-slate-400"
-                               placeholder="@SR["Login_Username"]" />
-                        <span asp-validation-for="Username" class="text-sm text-red-100"></span>
-                    </div>
-
-                    <div class="space-y-1">
-                        <label for="inputPassword" class="sr-only">@SR["Login_Password"]</label>
-                        <div class="relative">
-                            <input asp-for="Password"
-                                   id="inputPassword"
-                                   type="password"
-                                   class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 pr-12 text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary placeholder:text-slate-400"
-                                   placeholder="@SR["Login_Password"]" />
-                            <button type="button"
-                                    class="absolute inset-y-0 right-0 flex items-center pr-3 text-slate-500 hover:text-slate-700"
-                                    onclick="togglePassword()"
-                                    aria-label="@SR["Login_TogglePassword"]">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.964-7.178Z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
-                                </svg>
-                            </button>
-                        </div>
-                        <span asp-validation-for="Password" class="text-sm text-red-100"></span>
-                    </div>
-
-                    <button type="submit" class="w-full rounded-xl border border-transparent bg-primary text-white font-semibold px-4 py-2 shadow-md hover:bg-primary/90 transition">
-                        @SR["Login_Submit"]
-                    </button>
-                </form>
+                <a asp-controller="Auth"
+                   asp-action="EntraLogin"
+                   asp-route-force="@(forceEntra ? "true" : null)"
+                   class="w-full inline-flex items-center justify-center rounded-xl border border-transparent bg-primary text-white font-semibold px-4 py-2 shadow-md hover:bg-primary/90 transition">
+                    @SR["Login_SignInMicrosoft"]
+                </a>
             </div>
         </div>
     </div>
-
-    <script>
-        function togglePassword() {
-            const input = document.getElementById("inputPassword");
-            if (!input) return;
-            input.type = input.type === "password" ? "text" : "password";
-        }
-
-        // Prevent double submit on slow connections.
-        (function guardSubmit() {
-            const form = document.querySelector("form");
-            if (!form) return;
-            form.addEventListener("submit", (event) => {
-                if (form.dataset.submitting === "1") {
-                    event.preventDefault();
-                    return;
-                }
-                form.dataset.submitting = "1";
-                const submitBtn = form.querySelector("button[type=submit]");
-                if (submitBtn) submitBtn.disabled = true;
-            });
-        })();
-    </script>
 </body>
 </html>

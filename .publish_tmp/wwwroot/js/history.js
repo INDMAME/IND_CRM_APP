@@ -4,19 +4,58 @@
     const toDate = document.getElementById("toDate");
 
     const filterCacheKey = "visitas_history_filter_v1";
+    const returnFlagKey = "visitas_history_return_v1";
     const IND_I18N = (window && window.__IND_I18N__) ? window.__IND_I18N__ : {};
     const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
-    try {
-        const cachedRaw = sessionStorage.getItem(filterCacheKey);
-        if (cachedRaw) {
-            const cached = JSON.parse(cachedRaw);
-            if (cached && typeof cached === "object") {
-                if (cached.fromDate) fromDate.value = cached.fromDate;
-                if (cached.toDate) toDate.value = cached.toDate;
-            }
+    let hasRestoredFilter = false;
+    let retryOnNetworkError = false;
+    let initialPage = 1;
+    const clearFilterCache = () => {
+        try {
+            sessionStorage.removeItem(filterCacheKey);
+        } catch {
+            // ignore cache errors
         }
-    } catch {
-        // ignore cache errors
+    };
+    const readCachedFilter = () => {
+        try {
+            const raw = sessionStorage.getItem(filterCacheKey);
+            if (!raw) return null;
+            const parsed = JSON.parse(raw);
+            if (!parsed || typeof parsed !== "object") return null;
+            return {
+                fromDate: parsed.fromDate || "",
+                toDate: parsed.toDate || "",
+                page: parsed.page
+            };
+        } catch {
+            return null;
+        }
+    };
+    const consumeReturnFlag = () => {
+        try {
+            const raw = sessionStorage.getItem(returnFlagKey);
+            if (raw === "1") {
+                sessionStorage.removeItem(returnFlagKey);
+                return true;
+            }
+        } catch {
+            // ignore cache errors
+        }
+        return false;
+    };
+    const cachedFilter = consumeReturnFlag() ? readCachedFilter() : null;
+    if (cachedFilter && cachedFilter.fromDate && cachedFilter.toDate) {
+        fromDate.value = cachedFilter.fromDate;
+        toDate.value = cachedFilter.toDate;
+        const pageVal = Number(cachedFilter.page);
+        if (Number.isFinite(pageVal) && pageVal > 0) initialPage = pageVal;
+        hasRestoredFilter = true;
+        retryOnNetworkError = true;
+    } else {
+        clearFilterCache();
+        fromDate.value = "";
+        toDate.value = "";
     }
 
     const drpActivator = document.getElementById("drpActivator");
@@ -42,6 +81,9 @@
     let currentPage = 1;
     const pageSize = 50;
     let debugLogged = 0;
+    let activeRequestId = 0;
+    let activeAbort = null;
+    let retryTimer = null;
 
     // --------------------------
     // Date Range Picker (custom)
@@ -53,6 +95,35 @@
         if (/^zh-hans/i.test(value)) return "zh-CN";
         return value;
     };
+    const isBasqueLocale = (locale) => /^eu\b/i.test(String(locale || ""));
+    const BASQUE_MONTHS = [
+        "urtarrila",
+        "otsaila",
+        "martxoa",
+        "apirila",
+        "maiatza",
+        "ekaina",
+        "uztaila",
+        "abuztua",
+        "iraila",
+        "urria",
+        "azaroa",
+        "abendua"
+    ];
+    const BASQUE_MONTHS_SHORT = [
+        "urt",
+        "ots",
+        "mar",
+        "api",
+        "mai",
+        "eka",
+        "uzt",
+        "abu",
+        "ira",
+        "urr",
+        "aza",
+        "abe"
+    ];
     const getUiLocale = () => {
         const fromHtml = document?.documentElement?.lang;
         if (fromHtml && String(fromHtml).trim()) return normalizeUiLocale(fromHtml);
@@ -78,6 +149,10 @@
 
     const formatDisplay = (d) => {
         const locale = getUiLocale();
+        if (isBasqueLocale(locale)) {
+            const month = BASQUE_MONTHS_SHORT[d.getMonth()];
+            return `${d.getDate()} ${month} ${d.getFullYear()}`.toLowerCase();
+        }
         return d.toLocaleDateString(locale, {
             day: "numeric",
             month: "short",
@@ -170,6 +245,8 @@
         const locale = getUiLocale();
         if (/^zh/i.test(locale)) {
             drpMonthLabel.textContent = new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" }).format(firstDay);
+        } else if (isBasqueLocale(locale)) {
+            drpMonthLabel.textContent = `${BASQUE_MONTHS[currentMonth]} ${currentYear}`;
         } else {
             const monthName = firstDay.toLocaleDateString(locale, { month: "long" });
             const capMonthName = (monthName && monthName.length && /[A-Za-z]/.test(monthName[0]))
@@ -280,17 +357,29 @@
     buildCalendar();
 
     if (fromDate.value && toDate.value) {
-        loadActivities(1);
+        loadActivities(initialPage);
     }
 
-    // Captura cabecera X-Refreshed-Token si llega en las respuestas MVC
-    async function fetchWithTokenUpdate(url, options) {
-        const res = await fetch(url, options);
-        const refreshed = res.headers.get("X-Refreshed-Token");
-        if (refreshed) {
-            sessionStorage.setItem("Token", refreshed);
-        }
-        return res;
+    const getCsrfToken = () => {
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta ? meta.getAttribute("content") : "";
+    };
+
+    async function fetchWithCsrf(url, options) {
+        const token = getCsrfToken();
+        const headers = { ...(options?.headers || {}) };
+        if (token) headers.RequestVerificationToken = token;
+        const merged = { credentials: "same-origin", ...options, headers };
+        return fetch(url, merged);
+    }
+
+    function renderTimelineError(message) {
+        if (!timeline) return;
+        timeline.innerHTML = "";
+        const div = document.createElement("div");
+        div.className = "text-danger";
+        div.textContent = message;
+        timeline.appendChild(div);
     }
 
     // Loads activity list from MVC endpoint Historial/GetActivities
@@ -306,6 +395,23 @@
 
         currentPage = page;
 
+        if (retryTimer) {
+            clearTimeout(retryTimer);
+            retryTimer = null;
+        }
+
+        const requestId = ++activeRequestId;
+        if (activeAbort) {
+            try {
+                activeAbort.abort();
+            } catch {
+                // ignore abort errors
+            }
+        }
+        const controller = new AbortController();
+        activeAbort = controller;
+        const filterSignature = `${fromDate.value}|${toDate.value}|${page}`;
+
         loader.style.display = "block";
         timeline.innerHTML = "";
         pagination.innerHTML = "";
@@ -318,25 +424,44 @@
 
         let response;
         try {
-            response = await fetchWithTokenUpdate(`/Historial/GetActivities?page=${page}&pageSize=${pageSize}`, {
+            response = await fetchWithCsrf(`/Historial/GetActivities?page=${page}&pageSize=${pageSize}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
+                body: JSON.stringify(payload),
+                signal: controller.signal
             });
         } catch (err) {
-            loader.style.display = "none";
+            if (requestId !== activeRequestId) return;
+            if (err && err.name === "AbortError") {
+                activeAbort = null;
+                return;
+            }
             console.error("Historial fetch error:", err);
-            timeline.innerHTML = "<div class='text-danger'>No se pudo conectar con el servidor (red).</div>";
+            if (retryOnNetworkError) {
+                retryOnNetworkError = false;
+                activeAbort = null;
+                retryTimer = setTimeout(() => {
+                    if (requestId !== activeRequestId) return;
+                    const currentSignature = `${fromDate.value}|${toDate.value}|${page}`;
+                    if (currentSignature !== filterSignature) return;
+                    loadActivities(page);
+                }, 600);
+                return;
+            }
+            loader.style.display = "none";
+            renderTimelineError(indT("Api_RequestFailed", "No se pudo conectar con el servidor (red)."));
+            activeAbort = null;
             return;
         }
 
+        if (requestId !== activeRequestId) return;
+
         if (!response.ok) {
             const statusText = response.statusText || "Error del servidor";
-            let detail = "";
-            try { detail = await response.text(); } catch { /* ignore */ }
-            console.error("Historial fetch failed", response.status, statusText, detail);
+            console.error("Historial fetch failed", response.status, statusText);
             loader.style.display = "none";
-            timeline.innerHTML = `<div class='text-danger'>${response.status} - ${statusText}. ${detail || "Verifica el backend."}</div>`;
+            renderTimelineError(`${response.status} - ${statusText}. Verifica el backend.`);
+            activeAbort = null;
             return;
         }
 
@@ -347,15 +472,19 @@
             data = JSON.parse(raw);
         } catch {
             loader.style.display = "none";
-            timeline.innerHTML = "<div class='text-danger'>Error procesando datos</div>";
+            renderTimelineError(indT("Api_InvalidJson", "Error procesando datos"));
+            activeAbort = null;
             return;
         }
+
+        if (requestId !== activeRequestId) return;
 
         loader.style.display = "none";
 
         const items = data.items || [];
         renderTimeline(items);
         renderPagination(data.total || items.length);
+        activeAbort = null;
     }
 
     const shorten = (text, max) => {
@@ -363,6 +492,123 @@
         if (text.length <= max) return text;
         return text.slice(0, Math.max(0, max - 3)) + "...";
     };
+
+    const TAP_MOVE_PX = 14;
+    const NAV_DELAY_MS = 320;
+    const TOOLTIP_TOUCH_DELAY_MS = 120;
+    const HOLD_TO_PREVIEW_MS = 160;
+    const TOOLTIP_MAX_HEIGHT_RATIO = 0.8;
+    const TOOLTIP_BASE_FONT = 13;
+    const TOOLTIP_MIN_FONT = 11;
+    const ELLIPSIS = "...";
+
+    // Only trigger tap actions when the pointer did not move beyond the threshold.
+    function bindTapGuard(el, onTap) {
+        if (!el) return;
+        let active = false;
+        let pointerId = null;
+        let startX = 0;
+        let startY = 0;
+        let startTime = 0;
+        let moved = false;
+
+        const reset = () => {
+            active = false;
+            pointerId = null;
+            moved = false;
+        };
+
+        el.addEventListener("pointerdown", (e) => {
+            if (e.pointerType === "mouse" && e.button !== 0) return;
+            active = true;
+            pointerId = e.pointerId;
+            startX = e.clientX;
+            startY = e.clientY;
+            startTime = Date.now();
+            moved = false;
+        }, { passive: true });
+
+        el.addEventListener("pointermove", (e) => {
+            if (!active || e.pointerId !== pointerId) return;
+            const dx = Math.abs(e.clientX - startX);
+            const dy = Math.abs(e.clientY - startY);
+            if (dx > TAP_MOVE_PX || dy > TAP_MOVE_PX) moved = true;
+        }, { passive: true });
+
+        el.addEventListener("pointerup", (e) => {
+            if (!active || e.pointerId !== pointerId) return;
+            const heldMs = Date.now() - startTime;
+            const shouldTap = !moved && heldMs < HOLD_TO_PREVIEW_MS;
+            reset();
+            if (shouldTap) onTap(e);
+        }, { passive: true });
+
+        el.addEventListener("pointercancel", reset, { passive: true });
+        el.addEventListener("pointerleave", reset, { passive: true });
+    }
+
+    // Prevent long-press selection/copy on history cards.
+    function blockCopyActions(el) {
+        if (!el) return;
+        const cancel = (e) => e.preventDefault();
+        el.addEventListener("contextmenu", cancel);
+        el.addEventListener("selectstart", cancel);
+        el.addEventListener("copy", cancel);
+        el.addEventListener("cut", cancel);
+        el.addEventListener("paste", cancel);
+    }
+
+    function applyEllipsis(el, fullText, multiLine) {
+        if (!el || !fullText) return false;
+        if (multiLine && el.clientHeight === 0) return false;
+        if (!multiLine && el.clientWidth === 0) return false;
+
+        if (multiLine) {
+            const computed = window.getComputedStyle(el);
+            let lineHeight = parseFloat(computed.lineHeight);
+            if (!Number.isFinite(lineHeight)) {
+                const rect = el.getBoundingClientRect();
+                lineHeight = rect.height > 0 ? rect.height / 2 : 0;
+            }
+            if (lineHeight > 0) {
+                el.style.maxHeight = `${Math.round(lineHeight * 2)}px`;
+                el.style.overflow = "hidden";
+            }
+        }
+
+        el.textContent = fullText;
+
+        const isOverflowing = () => (
+            multiLine
+                ? el.scrollHeight > el.clientHeight + 1
+                : el.scrollWidth > el.clientWidth + 1
+        );
+
+        if (!isOverflowing()) {
+            el.dataset.preview = "0";
+            return false;
+        }
+
+        let low = 0;
+        let high = fullText.length;
+        let best = 0;
+
+        while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            const candidate = `${fullText.slice(0, Math.max(0, mid)).trimEnd()}${ELLIPSIS}`;
+            el.textContent = candidate;
+            if (isOverflowing()) {
+                high = mid - 1;
+            } else {
+                best = mid;
+                low = mid + 1;
+            }
+        }
+
+        el.textContent = `${fullText.slice(0, Math.max(0, best)).trimEnd()}${ELLIPSIS}`;
+        el.dataset.preview = "1";
+        return true;
+    }
 
     // Renders activity timeline cards
     function renderTimeline(items) {
@@ -376,10 +622,6 @@
         }
 
         items.forEach(x => {
-            const narrow = window.innerWidth <= 370;
-            const nameMax = narrow ? 32 : Infinity;
-            const descMax = narrow ? 60 : Infinity;
-
             const actividadIdRaw = (x.actividadId ?? x.ActividadId ?? "").toString().trim();
             const actividadId = actividadIdRaw || "";
             const recIdRaw = x.recId ?? x.RecId ?? "";
@@ -392,8 +634,6 @@
 
             const rawName = (x.name ?? x.Name ?? "").toString().trim();
             const fullName = rawName.toUpperCase();
-            const nombre = narrow ? shorten(fullName, nameMax) : fullName;
-            const isNameTruncated = narrow && nombre !== fullName;
             const fecha = x.transDate ?? x.TransDate ?? "";
             const rawDesc = (x.description ?? x.Description ?? "").toString().trim();
             const fullDesc = rawDesc.toUpperCase();
@@ -403,68 +643,91 @@
             if (isNoDataCard) {
                 linkId = "";
             }
-            const descripcion = narrow ? shorten(fullDesc, descMax) : fullDesc;
-            const isDescTruncated = narrow && fullDesc && descripcion !== fullDesc;
             const fechaFormatted = formatDate(fecha);
 
             const noDataText = indT("Common_NoData", "No data");
-            const cardHtml = `
-            <div class="timeline-item">
-                <div class="timeline-card ${isNoDataCard ? "timeline-card--nodata" : ""} ${linkId ? "timeline-card--clickable" : ""}" data-actividadid="${actividadId}" data-recid="${recId ?? ""}">
-                    <div class="timeline-card__content">
-                        <div class="timeline-card-head">
-                            <div>
-                                <div class="timeline-name ellipsis">${nombre}</div>
-                                <div class="timeline-date-chip">${fechaFormatted}</div>
-                            </div>
-                        </div>
-                        <p class="timeline-desc-text">${descripcion || noDataText}</p>
-                    </div>
-                </div>
-            </div>
-        `;
 
-            timeline.insertAdjacentHTML("beforeend", cardHtml);
+            const itemEl = document.createElement("div");
+            itemEl.className = "timeline-item";
 
-            const lastNameEl = timeline.lastElementChild?.querySelector(".timeline-name");
-            const lastDescEl = timeline.lastElementChild?.querySelector(".timeline-desc-text");
-            if (lastNameEl && isNameTruncated) {
-                lastNameEl.dataset.fulltext = fullName;
-                bindTooltip(lastNameEl, fullName);
+            const cardEl = document.createElement("div");
+            cardEl.className = [
+                "timeline-card",
+                isNoDataCard ? "timeline-card--nodata" : "",
+                linkId ? "timeline-card--clickable" : ""
+            ].filter(Boolean).join(" ");
+            cardEl.dataset.actividadid = actividadId;
+            cardEl.dataset.recid = recId ?? "";
+
+            const contentEl = document.createElement("div");
+            contentEl.className = "timeline-card__content";
+
+            const headEl = document.createElement("div");
+            headEl.className = "timeline-card-head";
+
+            const headInner = document.createElement("div");
+
+            const nameEl = document.createElement("div");
+            nameEl.className = "timeline-name ellipsis";
+            nameEl.textContent = fullName;
+
+            const dateEl = document.createElement("div");
+            dateEl.className = "timeline-date-chip";
+            dateEl.textContent = fechaFormatted;
+
+            headInner.appendChild(nameEl);
+            headInner.appendChild(dateEl);
+            headEl.appendChild(headInner);
+
+            const descEl = document.createElement("p");
+            descEl.className = "timeline-desc-text";
+            descEl.textContent = fullDesc || noDataText;
+
+            contentEl.appendChild(headEl);
+            contentEl.appendChild(descEl);
+            cardEl.appendChild(contentEl);
+            itemEl.appendChild(cardEl);
+            timeline.appendChild(itemEl);
+
+            if (fullName) {
+                nameEl.dataset.fulltext = fullName;
+                bindTooltip(nameEl, fullName);
             }
-            if (lastDescEl && fullDesc) {
-                lastDescEl.dataset.fulltext = fullDesc;
-                bindTooltip(lastDescEl, fullDesc);
+            if (fullDesc) {
+                descEl.dataset.fulltext = fullDesc;
+                bindTooltip(descEl, fullDesc);
             }
 
-            const cardEl = timeline.lastElementChild?.querySelector(".timeline-card");
-            if (cardEl && linkId) {
-                let navTimer;
+            if (linkId) {
                 const navigate = () => {
-                    navTimer = setTimeout(() => {
+                    setTimeout(() => {
                         try {
                             sessionStorage.setItem(
                                 filterCacheKey,
                                 JSON.stringify({
                                     fromDate: fromDate.value || "",
-                                    toDate: toDate.value || ""
+                                    toDate: toDate.value || "",
+                                    page: currentPage
                                 })
                             );
+                            sessionStorage.setItem(returnFlagKey, "1");
                         } catch {
                             // ignore cache errors
                         }
                         const target = encodeURIComponent(linkId);
                         window.location.href = `/Visitas/Detalle/${target}`;
-                    }, 240); // Small delay to avoid accidental clicks.
+                    }, NAV_DELAY_MS); // Small delay to avoid accidental taps.
                 };
-                const cancel = () => {
-                    if (navTimer) clearTimeout(navTimer);
-                };
-                cardEl.addEventListener("click", navigate);
-                cardEl.addEventListener("mouseleave", cancel);
-                cardEl.addEventListener("touchend", navigate, { passive: true });
-                cardEl.addEventListener("touchmove", cancel, { passive: true });
+                bindTapGuard(cardEl, navigate);
+                blockCopyActions(cardEl);
             }
+        });
+
+        requestAnimationFrame(() => {
+            const nameEls = timeline.querySelectorAll(".timeline-name");
+            nameEls.forEach((el) => applyEllipsis(el, el.dataset.fulltext || el.textContent, false));
+            const descEls = timeline.querySelectorAll(".timeline-desc-text");
+            descEls.forEach((el) => applyEllipsis(el, el.dataset.fulltext || el.textContent, true));
         });
     }
 
@@ -476,32 +739,85 @@
         tooltipEl.className = "timeline-tooltip";
         document.body.appendChild(tooltipEl);
     }
+    let tooltipAnchor = null;
+    let tooltipCloseBound = false;
 
-    function showTooltip(text, clientX, clientY) {
+    function ensureTooltipAutoClose() {
+        if (tooltipCloseBound) return;
+        tooltipCloseBound = true;
+        document.addEventListener("pointerdown", (e) => {
+            if (!tooltipEl.classList.contains("visible")) return;
+            if (tooltipAnchor && tooltipAnchor.contains(e.target)) return;
+            hideTooltip();
+        }, true);
+        document.addEventListener("keydown", (e) => {
+            if (e.key === "Escape") hideTooltip();
+        });
+    }
+
+    function showTooltip(text, clientX, clientY, anchor) {
         tooltipEl.textContent = text;
-        tooltipEl.style.left = `${clientX}px`;
-        tooltipEl.style.top = `${clientY - 12}px`;
         tooltipEl.classList.add("visible");
+        tooltipAnchor = anchor || null;
+        ensureTooltipAutoClose();
+
+        const centerX = Math.round(window.innerWidth / 2);
+        tooltipEl.style.left = `${centerX}px`;
+
+        const margin = 12;
+        tooltipEl.style.maxHeight = `${Math.round(window.innerHeight * TOOLTIP_MAX_HEIGHT_RATIO)}px`;
+        tooltipEl.style.overflowY = "auto";
+
+        let fontSize = TOOLTIP_BASE_FONT;
+        tooltipEl.style.fontSize = `${fontSize}px`;
+
+        let rect = tooltipEl.getBoundingClientRect();
+        const maxHeight = window.innerHeight * TOOLTIP_MAX_HEIGHT_RATIO;
+        while (rect.height > maxHeight && fontSize > TOOLTIP_MIN_FONT) {
+            fontSize -= 1;
+            tooltipEl.style.fontSize = `${fontSize}px`;
+            rect = tooltipEl.getBoundingClientRect();
+        }
+
+        const centerY = Math.round((window.innerHeight - rect.height) / 2);
+        let top = Number.isFinite(centerY) ? centerY : margin;
+        const minTop = margin;
+        const maxTop = Math.max(margin, window.innerHeight - rect.height - margin);
+        if (top < minTop) top = minTop;
+        if (top > maxTop) top = maxTop;
+        tooltipEl.style.top = `${Math.round(top)}px`;
     }
 
     function hideTooltip() {
         tooltipEl.classList.remove("visible");
+        tooltipAnchor = null;
+    }
+
+    function shouldPreview(el) {
+        if (!el || !el.dataset || !el.dataset.fulltext) return false;
+        if (el.dataset.preview === "1") return true;
+        return el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
     }
 
     function bindTooltip(el, text) {
         let pressTimer;
 
-        el.addEventListener("mouseenter", (e) => showTooltip(text, e.clientX, e.clientY));
+        el.addEventListener("mouseenter", (e) => {
+            if (!shouldPreview(el)) return;
+            showTooltip(text, e.clientX, e.clientY, el);
+        });
         el.addEventListener("mouseleave", hideTooltip);
         el.addEventListener("mousemove", (e) => {
+            if (!shouldPreview(el)) return;
             if (tooltipEl.classList.contains("visible")) {
-                showTooltip(text, e.clientX, e.clientY);
+                showTooltip(text, e.clientX, e.clientY, el);
             }
         });
 
         el.addEventListener("touchstart", (e) => {
+            if (!shouldPreview(el)) return;
             const touch = e.touches[0];
-            pressTimer = setTimeout(() => showTooltip(text, touch.clientX, touch.clientY), 350);
+            pressTimer = setTimeout(() => showTooltip(text, touch.clientX, touch.clientY, el), TOOLTIP_TOUCH_DELAY_MS);
         });
 
         el.addEventListener("touchmove", () => {
@@ -511,23 +827,40 @@
 
         el.addEventListener("touchend", () => {
             clearTimeout(pressTimer);
-            hideTooltip();
         });
+    }
+
+    // Parse known date formats before using Date() to avoid US/EU ambiguity.
+    function parseDateValue(value) {
+        if (!value) return null;
+        const raw = String(value).trim();
+        if (!raw) return null;
+
+        const datePart = raw.split("T")[0].split(" ")[0];
+
+        if (/^\d{4}-\d{2}-\d{2}$/.test(datePart)) {
+            const [y, m, d] = datePart.split("-").map(Number);
+            return new Date(y, m - 1, d);
+        }
+
+        if (/^\d{2}[./-]\d{2}[./-]\d{4}$/.test(datePart)) {
+            const parts = datePart.split(/[./-]/).map(Number);
+            const [d, m, y] = parts;
+            return new Date(y, m - 1, d);
+        }
+
+        const parsed = new Date(raw);
+        return Number.isNaN(parsed.getTime()) ? null : parsed;
     }
 
     function formatDate(value) {
         if (!value) return "";
-        let d = new Date(value);
-
-        // Fallback manual parse para formatos dd.MM.yyyy o dd/MM/yyyy
-        if (isNaN(d) && /^\d{2}[./-]\d{2}[./-]\d{4}$/.test(value)) {
-            const parts = value.split(/[./-]/).map(Number);
-            // parts: [dd, MM, yyyy]
-            d = new Date(parts[2], parts[1] - 1, parts[0]);
-        }
-
-        if (isNaN(d)) return value;
+        const d = parseDateValue(value);
+        if (!d) return value;
         const locale = getUiLocale();
+        if (isBasqueLocale(locale)) {
+            return `${d.getDate()} ${BASQUE_MONTHS[d.getMonth()]} ${d.getFullYear()}`.toLowerCase();
+        }
         return d
             .toLocaleDateString(locale, {
                 day: "numeric",
@@ -536,6 +869,55 @@
             })
             .toLowerCase();
     }
+
+    function resetHistoryFilters() {
+        startDate = null;
+        endDate = null;
+        selectingStep = "start";
+        hoverDate = null;
+        currentMonth = new Date().getMonth();
+        currentYear = new Date().getFullYear();
+        syncInputs();
+        syncLabels();
+        buildCalendar();
+        clearFilterCache();
+        loader.style.display = "none";
+        timeline.innerHTML = "";
+        timeline.classList.add("timeline-empty");
+        pagination.innerHTML = "";
+    }
+
+    function applyCachedFilter(filter) {
+        if (!filter || !filter.fromDate || !filter.toDate) return false;
+        fromDate.value = filter.fromDate;
+        toDate.value = filter.toDate;
+        startDate = parseISO(fromDate.value);
+        endDate = parseISO(toDate.value);
+        selectingStep = endDate ? "done" : "end";
+        hoverDate = null;
+        currentMonth = startDate ? startDate.getMonth() : new Date().getMonth();
+        currentYear = startDate ? startDate.getFullYear() : new Date().getFullYear();
+        syncInputs();
+        syncLabels();
+        buildCalendar();
+        const pageVal = Number(filter.page);
+        const pageToLoad = Number.isFinite(pageVal) && pageVal > 0 ? pageVal : 1;
+        retryOnNetworkError = true;
+        loadActivities(pageToLoad);
+        return true;
+    }
+
+    window.addEventListener("pageshow", () => {
+        if (hasRestoredFilter) return;
+        if (consumeReturnFlag()) {
+            const cached = readCachedFilter();
+            if (applyCachedFilter(cached)) {
+                hasRestoredFilter = true;
+                return;
+            }
+        }
+        resetHistoryFilters();
+    });
 
 
     // Builds simple pagination for the bottom bar

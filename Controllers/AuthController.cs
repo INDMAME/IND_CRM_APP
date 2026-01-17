@@ -4,6 +4,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
 using IND_CRM_APP.Infrastructure.Localization;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -29,9 +32,40 @@ namespace IND_CRM_APP.Controllers
 
         // Shows login page
         [HttpGet]
-        public IActionResult Login()
+        public IActionResult Login(bool loggedOut = false)
         {
+            if (User?.Identity?.IsAuthenticated == true && !TempData.ContainsKey("AuthError"))
+                return Redirect("/Home/Index");
+
+            if (loggedOut)
+            {
+                ViewBag.ForceEntra = true;
+            }
+
             return View();
+        }
+
+        // Starts Entra OIDC login
+        [HttpGet]
+        public IActionResult EntraLogin(string? returnUrl = null, bool force = false)
+        {
+            var safeReturnUrl = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
+                ? returnUrl
+                : "/";
+
+            var props = new AuthenticationProperties
+            {
+                RedirectUri = safeReturnUrl
+            };
+
+            if (force)
+            {
+                // Force re-authentication after explicit logout.
+                props.Items["prompt"] = "login";
+                props.Items["max_age"] = "0";
+            }
+
+            return Challenge(props, OpenIdConnectDefaults.AuthenticationScheme);
         }
 
         // Processes login form and stores token in session
@@ -72,13 +106,27 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // Clears session and redirects to login (GET fallback for direct navigation).
+        [HttpGet]
+        [ActionName("Logout")]
+        public async Task<IActionResult> LogoutGet()
+        {
+            return await LogoutCore();
+        }
+
         // Clears session and redirects to login
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Logout()
+        public async Task<IActionResult> Logout()
+        {
+            return await LogoutCore();
+        }
+
+        private async Task<IActionResult> LogoutCore()
         {
             HttpContext.Session.Clear();
-            return RedirectToAction("Login");
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return RedirectToAction("Login", "Auth", new { loggedOut = true });
         }
     }
 }

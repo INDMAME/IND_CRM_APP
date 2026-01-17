@@ -16,6 +16,10 @@ namespace IND_CRM_APP.Models.Activities
         [JsonPropertyName("userId")]
         public string UserId { get; set; } = string.Empty;
 
+        // Mapea CreatedByUserId -> createdByUserId
+        [JsonPropertyName("createdByUserId")]
+        public string CreatedByUserId { get; set; } = string.Empty;
+
         // Mapea Description -> description
         [JsonPropertyName("description")]
         public string Description { get; set; } = string.Empty;

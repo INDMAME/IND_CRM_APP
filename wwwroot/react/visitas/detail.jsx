@@ -286,12 +286,15 @@ async function fetchJson(url, options) {
   }
 }
 
-const Spinner = ({ size = "h-4 w-4" }) => (
-  <div
-    className={`${size} border-2 border-primary border-t-transparent rounded-full animate-spin`}
+const Spinner = ({ size = "h-4 w-4", label }) => (
+  <svg
+    className={`ind-spinner ${size}`}
+    viewBox="0 0 20 20"
     role="status"
-    aria-label={indT("Common_Loading", "Loading")}
-  />
+    aria-label={label || indT("Common_Loading", "Loading")}
+  >
+    <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
+  </svg>
 );
 
 function SelectCombobox({ label, options, value, onChange, placeholder, disabled = false }) {
@@ -552,11 +555,36 @@ const DetailApp = () => {
   const modalConfirmInFlightRef = useRef(false);
   const [modalError, setModalError] = useState("");
   const readOnlySurfaceRef = useRef(null);
+  const editModeKeyRef = useRef("");
 
   const recId = detail.recId || detail.RecId || "";
   const accountNum = detail.accountNum || detail.AccountNum || "";
   const userId = detail.userId || detail.UserId || "";
   const actividadId = detail.actividadId || detail.ActividadId || "";
+
+  // Persist edit mode across navigation to the text editor.
+  const syncEditModeFlag = useCallback((enabled) => {
+    const key = editModeKeyRef.current;
+    if (!key) return;
+    try {
+      if (enabled) sessionStorage.setItem(key, "true");
+      else sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    const key = `ind_visit_edit_${actividadId || recId || "default"}`;
+    editModeKeyRef.current = key;
+    try {
+      if (sessionStorage.getItem(key) === "true") {
+        setIsEditing(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [actividadId, recId]);
 
   const hasServerDetail =
     hasValue(recId) &&
@@ -802,8 +830,9 @@ const DetailApp = () => {
 
   const handleEnableEdit = useCallback(() => {
     setIsEditing(true);
+    syncEditModeFlag(true);
     setStatus(indT("Visits_Detail_EditingEnabled", "Editing enabled"));
-  }, []);
+  }, [syncEditModeFlag]);
 
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
@@ -835,6 +864,7 @@ const DetailApp = () => {
 
       setStatus(indT("Visits_Detail_Updated", "Activity updated"));
       setIsEditing(false);
+      syncEditModeFlag(false);
       return true;
     } catch (err) {
       const msg = err?.message || indT("Visits_Detail_UpdateError", "Update error.");
@@ -845,7 +875,7 @@ const DetailApp = () => {
     } finally {
       setBusy(false);
     }
-  }, [antecedentes, comentarios, conclusiones, description, transDate, visitType, asistenteTipo, visitTypes, asistenteTipos, matchOptionValue, accountNum, userId, busy, isEditing]);
+  }, [antecedentes, comentarios, conclusiones, description, transDate, visitType, asistenteTipo, visitTypes, asistenteTipos, matchOptionValue, accountNum, userId, busy, isEditing, syncEditModeFlag]);
 
   const handleDelete = useCallback(async () => {
     if (busy) return false;

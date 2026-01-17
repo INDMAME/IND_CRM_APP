@@ -10,6 +10,13 @@ namespace IND_CRM_APP.Services
         // Login principal
         Task<LoginResult?> AuthenticateAsync(string username, string password);
 
+        // Entra context
+        Task<IndEntraContextResponse> GetEntraContextAsync(
+            string token,
+            string entraOid,
+            string appCode
+        );
+
         // Entorno y compania
         Task<string> GetEnvironmentAsync(string token);
         Task<string> GetCompanyNameAsync(string token);

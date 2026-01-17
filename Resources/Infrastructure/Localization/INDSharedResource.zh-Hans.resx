@@ -28,6 +28,7 @@
   <data name="Visits_History_Title" xml:space="preserve"><value>历史</value></data>
 
   <data name="UserMenu_ConnectedAs" xml:space="preserve"><value>登录为</value></data>
+  <data name="UserMenu_Companies" xml:space="preserve"><value>公司</value></data>
   <data name="UserMenu_Languages" xml:space="preserve"><value>语言</value></data>
   <data name="UserMenu_Logout" xml:space="preserve"><value>退出登录</value></data>
 
@@ -52,8 +53,11 @@
   <data name="Login_RememberMe" xml:space="preserve"><value>记住我</value></data>
   <data name="Login_Submit" xml:space="preserve"><value>登录</value></data>
   <data name="Login_TogglePassword" xml:space="preserve"><value>显示或隐藏密码</value></data>
+  <data name="Login_SignInMicrosoft" xml:space="preserve"><value>使用 Microsoft 登录</value></data>
   <data name="Auth_InvalidCredentials" xml:space="preserve"><value>凭据无效。</value></data>
   <data name="Auth_LoginApiError" xml:space="preserve"><value>由于 API 错误，登录失败。</value></data>
+  <data name="Auth_AccessDenied" xml:space="preserve"><value>访问被拒绝：{0}</value></data>
+  <data name="Auth_LoginRequired" xml:space="preserve"><value>请先登录以继续。</value></data>
 
   <data name="Topbar_OpenMenu" xml:space="preserve"><value>打开菜单</value></data>
   <data name="Topbar_Back" xml:space="preserve"><value>返回</value></data>
@@ -100,6 +104,7 @@
   <data name="Home_SelectLeftMenu" xml:space="preserve"><value>请选择左侧菜单中的选项。</value></data>
   <data name="Home_Welcome" xml:space="preserve"><value>欢迎</value></data>
   <data name="Home_DataFromAx" xml:space="preserve"><value>来自 Axapta 3.0 的数据</value></data>
+  <data name="Home_PrototypeVersion" xml:space="preserve"><value>原型版本 1.0</value></data>
   <data name="Home_Environment" xml:space="preserve"><value>环境</value></data>
   <data name="Home_Company" xml:space="preserve"><value>公司</value></data>
   <data name="NotFound_Title" xml:space="preserve"><value>页面未找到</value></data>
@@ -245,6 +250,8 @@
   <data name="AudioRecorder_Stop" xml:space="preserve"><value>停止</value></data>
   <data name="AudioRecorder_Cancel" xml:space="preserve"><value>取消</value></data>
   <data name="AudioRecorder_NoAudio" xml:space="preserve"><value>无音频</value></data>
+  <data name="AudioRecorder_Download" xml:space="preserve"><value>下载音频</value></data>
+  <data name="AudioRecorder_Download_FileName" xml:space="preserve"><value>录音</value></data>
 
   <data name="AudioRecorder_Status_Recording" xml:space="preserve"><value>录制中</value></data>
   <data name="AudioRecorder_Status_Paused" xml:space="preserve"><value>已暂停</value></data>

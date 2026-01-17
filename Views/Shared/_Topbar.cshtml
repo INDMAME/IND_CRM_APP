@@ -1,4 +1,8 @@
 @using IND_CRM_APP.Infrastructure.Localization
+@using IND_CRM_APP.Models.Shared
+@using System.Linq
+@using System.Text.Json
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpAccessor
 @inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
 
 @{
@@ -40,6 +44,26 @@
     {
         topbarTitle = SR["Visits_Detail_Title"];
     }
+
+    var selectedCompanyId = HttpAccessor.HttpContext?.Session.GetString("INDCompanySelected");
+    if (string.IsNullOrWhiteSpace(selectedCompanyId))
+    {
+        var contextRaw = HttpAccessor.HttpContext?.Session.GetString("INDWebContext");
+        if (!string.IsNullOrWhiteSpace(contextRaw))
+        {
+            try
+            {
+                var webContext = JsonSerializer.Deserialize<IndWebContext>(contextRaw);
+                selectedCompanyId = !string.IsNullOrWhiteSpace(webContext?.Header?.DefaultCompany)
+                    ? webContext!.Header.DefaultCompany
+                    : webContext?.Companies?.FirstOrDefault()?.CompanyId;
+            }
+            catch
+            {
+                selectedCompanyId = null;
+            }
+        }
+    }
 }
 
     <div class="topbar sticky top-0 left-0 z-[1900] flex h-[74px] w-full items-center justify-between bg-primary text-white px-2 sm:px-2.5 shadow-md transition-[margin,width] duration-300">
@@ -70,7 +94,13 @@
         </div>
 
         <div class="topbar-center flex-1 flex justify-center pointer-events-none">
-            <span id="topbarTitle" class="text-white font-medium text-[33px] sm:text-[39px] leading-tight">@topbarTitle</span>
+            <div class="flex flex-col items-center leading-tight">
+                <span id="topbarTitle" class="text-white font-medium text-[33px] sm:text-[39px] leading-tight">@topbarTitle</span>
+                @if (!string.IsNullOrWhiteSpace(selectedCompanyId))
+                {
+                    <span class="mt-0.5 text-[8px] italic uppercase tracking-wide text-slate-300">@selectedCompanyId</span>
+                }
+            </div>
         </div>
 
         <div class="topbar-right flex items-center gap-1 justify-end">
@@ -112,4 +142,5 @@
                 </button>
             }
         </div>
+
     </div>

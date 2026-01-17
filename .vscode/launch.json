@@ -1,57 +1,37 @@
 {
-    // Use IntelliSense para saber los atributos posibles.
-    // Mantenga el puntero para ver las descripciones de los existentes atributos.
-    // Para más información, visite: https://go.microsoft.com/fwlink/?linkid=830387
-    "version": "0.2.0",
-    "configurations": [
-        {
-            "name": "Backend (Kestrel, HTTPS, Debug)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build-with-kill",
-            "program": "dotnet",
-            "args": [
-                "run",
-                "--project",
-                "${workspaceFolder}/IND_CRM_APP.csproj",
-                "--launch-profile",
-                "vscode-https"
-            ],
-            "cwd": "${workspaceFolder}",
-            "stopAtEntry": false,
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development"
-            }
-        },
-        {
-            "name": "Backend (Kestrel)",
-            "type": "coreclr",
-            "request": "launch",
-            "preLaunchTask": "build-with-kill",
-            "program": "${workspaceFolder}/bin/Debug/net10.0/IND_CRM_APP.dll",
-            "args": [],
-            "cwd": "${workspaceFolder}",
-            "stopAtEntry": false,
-            "env": {
-                "ASPNETCORE_ENVIRONMENT": "Development",
-                "ASPNETCORE_URLS": "https://localhost:7702"
-            }
-        },
-        {
-            "type": "chrome",
-            "request": "launch",
-            "name": "Iniciar Chrome para produccion",
-            "url": "https://crm.insertec.biz:7702/",
-            "webRoot": "${workspaceFolder}"
-        }
-    ],
-    "compounds": [
-        {
-            "name": "Backend + Produccion",
-            "configurations": [
-                "Backend (Kestrel, HTTPS, Debug)",
-                "Iniciar Chrome para produccion"
-            ]
-        }
-    ]
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Backend (Kestrel, HTTPS, Debug)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-with-kill",
+      "program": "dotnet",
+      "args": [
+        "run",
+        "--project",
+        "${workspaceFolder}/IND_CRM_APP.csproj",
+        "--launch-profile",
+        "vscode-https"
+      ],
+      "cwd": "${workspaceFolder}",
+      "stopAtEntry": false,
+      "env": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "serverReadyAction": {
+        "action": "openExternally",
+        "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
+      }
+    }
+  ],
+  "compounds": [
+    {
+      "name": "Backend + Chrome (local)",
+      "configurations": [
+        "Backend (Kestrel, HTTPS, Debug)",
+        "Abrir Chrome (UI local HTTPS 7702)"
+      ]
+    }
+  ]
 }

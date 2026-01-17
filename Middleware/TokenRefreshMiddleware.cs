@@ -42,6 +42,10 @@ namespace IND_CRM_APP.Middleware
             // Omitir rutas publicas/estaticas
             if (lowerPath.StartsWith("/auth/login") ||
                 lowerPath.StartsWith("/auth/logout") ||
+                lowerPath.StartsWith("/auth/entralogin") ||
+                lowerPath.StartsWith("/signin-oidc") ||
+                lowerPath.StartsWith("/signout-callback-oidc") ||
+                lowerPath.StartsWith("/signout-oidc") ||
                 lowerPath.StartsWith("/css") ||
                 lowerPath.StartsWith("/js") ||
                 lowerPath.StartsWith("/lib") ||

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState, useLayoutEffect } from "react";
-import ReactDOM, { createPortal } from "react-dom";
+import { createRoot } from "react-dom/client";
+import { createPortal } from "react-dom";
 import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.jsx";
 
 function normalizeOption(opt) {
@@ -63,20 +64,30 @@ function FloatingList({ anchorRef, open, zIndex = 360000, maxHeightClass = "max-
 }
 
 function useOutsideClick(refs, onClose) {
+  // Mantén la última callback sin re-enganchar listeners en cada render.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  // Evita dependencias inestables como arrays literales.
+  const refsRef = useRef(refs);
+  refsRef.current = refs;
+
   useEffect(() => {
-    const list = Array.isArray(refs) ? refs : [refs];
     const handler = (ev) => {
+      const currentRefs = refsRef.current;
+      const list = Array.isArray(currentRefs) ? currentRefs : [currentRefs];
       const inside = list.some((r) => r?.current && r.current.contains(ev.target));
       if (inside) return;
-      onClose();
+      onCloseRef.current?.();
     };
+
     document.addEventListener("mousedown", handler);
     document.addEventListener("touchstart", handler);
     return () => {
       document.removeEventListener("mousedown", handler);
       document.removeEventListener("touchstart", handler);
     };
-  }, [onClose, refs]);
+  }, []);
 }
 
 const VisitTypeCombobox = ({ options = [], targetId = "visitType" }) => {
@@ -227,13 +238,22 @@ const VisitTypeCombobox = ({ options = [], targetId = "visitType" }) => {
 
 // Mount helper
 const mount = () => {
+  /** @type {HTMLElement & { __indRoot?: import('react-dom/client').Root }} */
   const root = document.getElementById("visit-type-combobox-root");
   if (!root) return;
   const data = window.__VISIT_TYPES__ || [];
-  ReactDOM.render(
-    <VisitTypeCombobox options={data} targetId="visitType" />,
-    root
-  );
+
+  const element = <VisitTypeCombobox options={data} targetId="visitType" />;
+
+  // Evita doble-mount si este script se evalúa más de una vez.
+  if (root.__indRoot) {
+    root.__indRoot.render(element);
+    return;
+  }
+
+  const reactRoot = createRoot(root);
+  root.__indRoot = reactRoot;
+  reactRoot.render(element);
 };
 
 if (document.readyState === "complete") {

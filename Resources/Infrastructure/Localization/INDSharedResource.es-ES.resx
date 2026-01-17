@@ -36,6 +36,7 @@
   <data name="Visits_History_Title" xml:space="preserve"><value>Histórico</value></data>
 
   <data name="UserMenu_ConnectedAs" xml:space="preserve"><value>Conectado como</value></data>
+  <data name="UserMenu_Companies" xml:space="preserve"><value>Compañías</value></data>
   <data name="UserMenu_Languages" xml:space="preserve"><value>Idiomas</value></data>
   <data name="UserMenu_Logout" xml:space="preserve"><value>Cerrar sesión</value></data>
 
@@ -60,8 +61,11 @@
   <data name="Login_RememberMe" xml:space="preserve"><value>Recordarme</value></data>
   <data name="Login_Submit" xml:space="preserve"><value>Iniciar sesión</value></data>
   <data name="Login_TogglePassword" xml:space="preserve"><value>Mostrar u ocultar contraseña</value></data>
+  <data name="Login_SignInMicrosoft" xml:space="preserve"><value>Entrar con Microsoft</value></data>
   <data name="Auth_InvalidCredentials" xml:space="preserve"><value>Credenciales inválidas.</value></data>
   <data name="Auth_LoginApiError" xml:space="preserve"><value>No se pudo iniciar sesión por un error de API.</value></data>
+  <data name="Auth_AccessDenied" xml:space="preserve"><value>Acceso denegado: {0}</value></data>
+  <data name="Auth_LoginRequired" xml:space="preserve"><value>Debes iniciar sesión para continuar.</value></data>
 
   <data name="Topbar_OpenMenu" xml:space="preserve"><value>Abrir menú</value></data>
   <data name="Topbar_Back" xml:space="preserve"><value>Retroceder</value></data>
@@ -108,6 +112,7 @@
   <data name="Home_SelectLeftMenu" xml:space="preserve"><value>Selecciona una opción del menú izquierdo.</value></data>
   <data name="Home_Welcome" xml:space="preserve"><value>Bienvenido</value></data>
   <data name="Home_DataFromAx" xml:space="preserve"><value>Datos desde Axapta 3.0</value></data>
+  <data name="Home_PrototypeVersion" xml:space="preserve"><value>Versión Prototipo 1.0</value></data>
   <data name="Home_Environment" xml:space="preserve"><value>Ambiente</value></data>
   <data name="Home_Company" xml:space="preserve"><value>Compañía</value></data>
   <data name="NotFound_Title" xml:space="preserve"><value>Página no encontrada</value></data>
@@ -253,6 +258,8 @@
   <data name="AudioRecorder_Stop" xml:space="preserve"><value>Terminar</value></data>
   <data name="AudioRecorder_Cancel" xml:space="preserve"><value>Cancelar</value></data>
   <data name="AudioRecorder_NoAudio" xml:space="preserve"><value>Sin audio</value></data>
+  <data name="AudioRecorder_Download" xml:space="preserve"><value>Descargar audio</value></data>
+  <data name="AudioRecorder_Download_FileName" xml:space="preserve"><value>grabacion-audio</value></data>
 
   <data name="AudioRecorder_Status_Recording" xml:space="preserve"><value>Grabando</value></data>
   <data name="AudioRecorder_Status_Paused" xml:space="preserve"><value>En pausa</value></data>

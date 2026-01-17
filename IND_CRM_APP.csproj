@@ -21,6 +21,8 @@
 
   <ItemGroup>
     <PackageReference Include="Serilog.Extensions.Logging.File" Version="9.0.0-dev-02303" />
+    <!-- Required for Microsoft Entra OIDC authentication. -->
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.0" />
   </ItemGroup>
 
   <ItemGroup>

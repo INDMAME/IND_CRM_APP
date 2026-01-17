@@ -4,7 +4,8 @@
 
 @layer base {
   :root {
-    --color-primary: #00296b;
+    /* Fuente de verdad: tailwind.config.js -> theme.extend.colors.primary */
+    --color-primary: theme('colors.primary');
   }
 
   body {
@@ -44,7 +45,7 @@
 
 .form-control,
 .form-select {
-    @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 text-left focus:outline-none focus:ring-2 focus:ring-[#00296b]/70 focus:border-[#00296b];
+    @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 text-left focus:outline-none focus:ring-2 focus:ring-primary/70 focus:border-primary;
 }
 
   .form-label {
@@ -56,7 +57,7 @@
   }
 
   .form-check-input {
-    @apply rounded border-slate-300 text-[--color-primary] focus:ring-[#00296b];
+    @apply rounded border-slate-300 text-primary focus:ring-primary;
   }
 
   .form-check-label {
@@ -67,10 +68,10 @@
     @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold transition shadow-sm;
   }
   .btn-primary {
-    @apply bg-[--color-primary] text-white hover:bg-[#001f4d];
+    @apply bg-primary text-white font-semibold rounded-xl px-4 py-2 shadow-sm hover:bg-primary/90 transition;
   }
   .btn-outline-primary {
-    @apply border border-[--color-primary] text-[--color-primary] bg-white hover:bg-[--color-primary] hover:text-white;
+    @apply border border-primary text-primary bg-white hover:bg-primary hover:text-white transition;
   }
   .btn-outline-secondary {
     @apply border border-slate-300 text-slate-700 bg-white hover:bg-slate-100;
@@ -113,7 +114,7 @@
     @apply inline-flex min-w-[38px] justify-center rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 hover:bg-slate-100;
   }
   .page-item.active .page-link {
-    @apply bg-[--color-primary] text-white border-[--color-primary];
+    @apply bg-primary text-white border-primary;
   }
 
   .alert {
@@ -137,19 +138,15 @@
   }
 
   .focus-ring {
-    @apply focus:outline-none focus:ring-2 focus:ring-[#00296b]/70 focus:ring-offset-1 focus:ring-offset-white;
+    @apply focus:outline-none focus:ring-2 focus:ring-primary/70 focus:ring-offset-1 focus:ring-offset-white;
   }
 
   .bg-gradient-brand {
-    @apply bg-gradient-to-br from-[--color-primary] via-indigo-600 to-sky-500;
+    @apply bg-gradient-to-br from-primary via-indigo-600 to-sky-500;
   }
 
   .shadow-card {
     @apply shadow-lg hover:shadow-xl transition-shadow;
-  }
-
-  .btn-primary {
-    @apply bg-[--color-primary] text-white font-semibold rounded-xl px-4 py-2 shadow-sm hover:bg-[#001f4d];
   }
 
   /* Reusable card surface */
@@ -189,7 +186,7 @@
     @apply flex items-center gap-3;
   }
   .page-header__icon {
-    @apply text-xl text-[--color-primary];
+    @apply text-xl text-primary;
   }
   .page-header__heading {
     @apply text-xl font-semibold text-slate-900;
@@ -203,6 +200,6 @@
 
   /* Primary action */
   .primary-btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-[--color-primary] text-white font-semibold px-4 py-2 shadow-sm hover:bg-[#001f4d] transition;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-primary text-white font-semibold px-4 py-2 shadow-sm hover:bg-primary/90 transition;
   }
 }

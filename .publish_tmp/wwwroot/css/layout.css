@@ -19,6 +19,13 @@ body {
     overflow-y: visible;
 }
 
+/* Block browser pull-to-refresh and swipe overscroll navigation. */
+html, body {
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    overscroll-behavior-x: none;
+}
+
 :root {
     --bs-primary: #00296b;
     --bs-primary-rgb: 0, 41, 107;
@@ -36,10 +43,27 @@ body {
     transition: 0.35s cubic-bezier(.4, 0, .2, 1);
     color: white;
     z-index: 2000;
+    height: var(--sidebar-height, 100dvh);
+    max-height: var(--sidebar-height, 100dvh);
+    overflow-y: auto;
+    overscroll-behavior: contain;
 }
 
     .sidebar.open {
         transform: translateX(0);
+    }
+
+    .sidebar.sidebar--tall {
+        position: absolute;
+        overflow-y: visible;
+        max-height: none;
+    }
+
+    .sidebar.sidebar--dock-user {
+        position: fixed;
+        overflow-y: auto;
+        height: 100dvh;
+        max-height: 100dvh;
     }
 
     .sidebar a {
@@ -108,6 +132,43 @@ body {
     letter-spacing: 0.3px;
     text-transform: capitalize;
     line-height: 1.05;
+}
+
+/* Preview tooltip for overflow text boxes. */
+.ind-preview-tooltip {
+    position: fixed;
+    max-width: 90vw;
+    min-width: 220px;
+    padding: 12px 14px;
+    font-size: 13px;
+    line-height: 1.45;
+    background: rgba(15, 23, 42, 0.96);
+    color: #f8fafc;
+    border-radius: 12px;
+    box-shadow: 0 14px 34px rgba(0,0,0,0.28);
+    pointer-events: none;
+    z-index: 1200;
+    opacity: 0;
+    transform: translate(-50%, -6px) scale(0.98);
+    transition: opacity .12s ease, transform .12s ease;
+    text-transform: none;
+    white-space: normal;
+    word-break: break-word;
+}
+
+.ind-preview-tooltip.visible {
+    opacity: 1;
+    transform: translate(-50%, -6px) scale(1);
+}
+
+/* Read-only surfaces should not allow selection or system callouts. */
+.ind-readonly-surface,
+.ind-readonly-surface * {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .topbar-btn {
@@ -232,10 +293,10 @@ body {
 
 /* PANEL DE USUARIO (solo una vez, corregido) */
 .user-panel {
-    position: absolute;
-    bottom: 20px;
-    left: 25px;
-    right: 25px;
+    position: sticky;
+    bottom: 16px;
+    margin-top: auto;
+    z-index: 3;
 }
 
 /* CHIP DE USUARIO ANIMADO */

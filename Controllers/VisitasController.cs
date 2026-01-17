@@ -3,6 +3,7 @@ using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using IND_CRM_APP.Extensions;
 using IND_CRM_APP.Infrastructure.Localization;
+using IND_CRM_APP.Infrastructure.Security;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -144,6 +145,15 @@ namespace IND_CRM_APP.Controllers
                 if (req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
+                var axUser = (HttpContext.Session.GetString("AxUser") ?? string.Empty).Trim();
+                if (string.IsNullOrWhiteSpace(req.CreatedByUserId) && !string.IsNullOrWhiteSpace(axUser))
+                {
+                    req.CreatedByUserId = axUser;
+                }
+
+                // API expects the service user as userId and the actual user as createdByUserId.
+                req.UserId = IndHardcodedAuth.ServiceUser;
+
                 var response = await _apiClient.CreateActivityAsync(token, req);
 
                 return Json(new
@@ -178,6 +188,12 @@ namespace IND_CRM_APP.Controllers
 
                 if (req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
+
+                var axUser = HttpContext.Session.GetString("AxUser") ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(axUser) && string.IsNullOrWhiteSpace(req.CreatedByUserId))
+                {
+                    req.CreatedByUserId = axUser;
+                }
 
                 var response = await _apiClient.CreateVisitaAsistenteAsync(token, req);
 
@@ -253,12 +269,17 @@ namespace IND_CRM_APP.Controllers
                     tempValue = parsed;
                 }
 
+                var languageFinal = string.IsNullOrWhiteSpace(languageId) ? "auto" : languageId.Trim();
                 var promptFinal = !string.IsNullOrWhiteSpace(context) ? context : prompt;
+                if (!tempValue.HasValue)
+                    tempValue = 0d;
+                if (string.IsNullOrWhiteSpace(promptFinal))
+                    promptFinal = "Return only the transcription of the audio.";
 
                 using var stream = audioFile.OpenReadStream();
                 var response = await _apiClient.TranscribeSpeechAsync(
                     token,
-                    string.IsNullOrWhiteSpace(languageId) ? "auto" : languageId.Trim(),
+                    languageFinal,
                     stream,
                     audioFile.FileName ?? "audio.wav",
                     audioFile.ContentType,
@@ -267,11 +288,27 @@ namespace IND_CRM_APP.Controllers
                     HttpContext.RequestAborted
                 );
 
+                var transcript = response.Data ?? string.Empty;
+                var hasTranscript = !string.IsNullOrWhiteSpace(transcript);
+                var success = response.Success || hasTranscript;
+                var message = response.Message;
+
+                if (!success)
+                {
+                    if (string.IsNullOrWhiteSpace(message))
+                    {
+                        var firstError = response.Errors.FirstOrDefault(e => !string.IsNullOrWhiteSpace(e.Message))?.Message;
+                        message = !string.IsNullOrWhiteSpace(firstError)
+                            ? firstError
+                            : _sr["Speech_Transcribe_Failed"].Value;
+                    }
+                }
+
                 return Json(new
                 {
-                    success = response.Success,
-                    message = response.Message,
-                    data = response.Data,
+                    success,
+                    message,
+                    data = hasTranscript ? transcript : string.Empty,
                     errorCode = response.ErrorCode,
                     errors = response.Errors
                 });
@@ -488,6 +525,8 @@ namespace IND_CRM_APP.Controllers
                 if (req == null || string.IsNullOrWhiteSpace(req.AsistenteTipo))
                     return BadRequest(new { success = false, message = _sr["Api_MissingAsistenteTipo"].Value });
 
+                var axUser = HttpContext.Session.GetString("AxUser") ?? string.Empty;
+
                 var activityResp = await _apiClient.GetActivityByRecIdAsync(token, recId);
                 var asistentes = activityResp.Data?.Asistentes ?? new List<ActivityAsistenteDto>();
 
@@ -505,7 +544,8 @@ namespace IND_CRM_APP.Controllers
                         RefRecIdActividad = recId.ToString(),
                         AsistenteTipo = req.AsistenteTipo.Trim(),
                         AsistenteId = a.AsistenteId.Trim(),
-                        ContactoRecId = string.Empty
+                        ContactoRecId = string.Empty,
+                        CreatedByUserId = axUser
                     };
 
                     var upsertResp = await _apiClient.CreateVisitaAsistenteAsync(token, upsertReq);

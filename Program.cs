@@ -4,12 +4,18 @@ using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using Microsoft.AspNetCore.Diagnostics;
 using IND_CRM_APP.Infrastructure;
+using IND_CRM_APP.Infrastructure.Security;
 using System.Reflection;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
+using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
 
 
 
@@ -31,6 +37,8 @@ builder.Services
     {
         // Enforce antiforgery validation on unsafe HTTP verbs.
         options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute());
+        // Enforce module authorization for MVC actions.
+        options.Filters.AddService<INDModuleAuthorizeFilter>();
     })
     .AddSessionStateTempDataProvider()
     .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
@@ -68,9 +76,110 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 builder.Services.AddHttpClient<ICrmApiClient, ApiClientService>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = OpenIdConnectDefaults.AuthenticationScheme;
+})
+.AddCookie(options =>
+{
+    options.Cookie.Name = "IND_CRM_APP.Auth";
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SecurePolicy = builder.Environment.IsDevelopment()
+        ? CookieSecurePolicy.SameAsRequest
+        : CookieSecurePolicy.Always;
+    options.LoginPath = "/Auth/Login";
+    options.AccessDeniedPath = "/Auth/Login";
+})
+.AddOpenIdConnect(options =>
+{
+    options.Authority = IndHardcodedAuth.Authority;
+    options.ClientId = IndHardcodedAuth.ClientId;
+    options.ClientSecret = IndHardcodedAuth.ClientSecret;
+    options.CallbackPath = IndHardcodedAuth.RedirectPath;
+    options.ResponseType = "code";
+    options.GetClaimsFromUserInfoEndpoint = true;
+    options.SaveTokens = false;
+    options.Scope.Clear();
+    options.Scope.Add("openid");
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        NameClaimType = IndHardcodedAuth.ClaimEmailPreferred
+    };
+    options.Events = new OpenIdConnectEvents
+    {
+        OnTokenValidated = context =>
+        {
+            var httpContext = context.HttpContext;
+            var logger = httpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            var principal = context.Principal;
+            var oid = principal?.FindFirst(IndHardcodedAuth.ClaimOid)?.Value
+                      ?? principal?.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
+
+            // Log Entra OID to help diagnose Entra user mapping issues.
+            if (string.IsNullOrWhiteSpace(oid))
+                logger.LogWarning("Entra OID claim missing in token.");
+            else
+                logger.LogInformation("Entra OID received: {EntraOid}", oid);
+
+            if (!string.IsNullOrWhiteSpace(oid))
+                httpContext.Session.SetString("ENTRAOID", oid);
+
+            // Always clear cached context on a fresh Entra sign-in.
+            const string contextKey = "INDWebContext";
+            const string companyKey = "INDCompanySelected";
+            const string companyNameKey = "INDCompanySelectedName";
+            const string contextOidKey = "INDEntraOidContext";
+            httpContext.Session.Remove(contextKey);
+            httpContext.Session.Remove(companyKey);
+            httpContext.Session.Remove(companyNameKey);
+            httpContext.Session.Remove(contextOidKey);
+            httpContext.Session.Remove("AxUser");
+            logger.LogInformation("Cleared cached context after Entra sign-in.");
+
+            var preferred = principal?.FindFirst(IndHardcodedAuth.ClaimEmailPreferred)?.Value;
+            var email = preferred
+                        ?? principal?.FindFirst("email")?.Value
+                        ?? principal?.FindFirst(ClaimTypes.Email)?.Value;
+            var display = email ?? principal?.Identity?.Name ?? string.Empty;
+
+            if (!string.IsNullOrWhiteSpace(display))
+                httpContext.Session.SetString("Username", display);
+
+            return Task.CompletedTask;
+        },
+        OnRedirectToIdentityProvider = context =>
+        {
+            if (context.Properties?.Items == null)
+                return Task.CompletedTask;
+
+            if (context.Properties.Items.TryGetValue("prompt", out var prompt) && !string.IsNullOrWhiteSpace(prompt))
+            {
+                context.ProtocolMessage.Prompt = prompt;
+            }
+
+            if (context.Properties.Items.TryGetValue("max_age", out var maxAge) && !string.IsNullOrWhiteSpace(maxAge))
+            {
+                context.ProtocolMessage.MaxAge = maxAge;
+            }
+
+            return Task.CompletedTask;
+        }
+    };
+    // OIDC callback is a cross-site POST, so correlation/nonce must be SameSite=None.
+    options.CorrelationCookie.SameSite = SameSiteMode.None;
+    options.NonceCookie.SameSite = SameSiteMode.None;
+    options.CorrelationCookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.NonceCookie.SecurePolicy = CookieSecurePolicy.Always;
+});
+builder.Services.AddAuthorization();
 builder.Services.Configure<CookiePolicyOptions>(options =>
 {
-    options.MinimumSameSitePolicy = SameSiteMode.Lax;
+    // Allow OIDC correlation/nonce cookies to use SameSite=None.
+    options.MinimumSameSitePolicy = SameSiteMode.Unspecified;
     options.Secure = builder.Environment.IsDevelopment()
         ? CookieSecurePolicy.SameAsRequest
         : CookieSecurePolicy.Always;
@@ -94,7 +203,9 @@ builder.Services.AddMemoryCache();
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
 builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
+builder.Services.AddScoped<IIndAuthContextService, IndAuthContextService>();
 builder.Services.AddScoped<IINDCrmEnumLocalizer, INDCrmEnumLocalizer>();
+builder.Services.AddScoped<INDModuleAuthorizeFilter>();
 builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Information);
 
 // -----------------------------
@@ -168,6 +279,8 @@ app.UseRouting();
 app.UseStatusCodePagesWithReExecute("/Home/NotFound", "?code={0}");
 app.UseCookiePolicy();
 app.UseSession();
+app.UseAuthentication();
+app.UseAuthorization();
 // Token refresh middleware
 app.UseMiddleware<TokenRefreshMiddleware>();
 

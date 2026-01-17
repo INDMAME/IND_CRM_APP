@@ -2,6 +2,7 @@ using IND_CRM_APP.Models.Activities;
 using IND_CRM_APP.Models.CRM;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services.Http;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System.Net;
@@ -23,6 +24,7 @@ namespace IND_CRM_APP.Services
         private readonly HttpClient _client;
         private readonly string _baseUrl;
         private readonly ITokenSessionService _tokenSession;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<ApiClientService> _logger;
         private readonly int _accountsTimeoutSeconds;
 
@@ -42,11 +44,13 @@ namespace IND_CRM_APP.Services
             HttpClient client,
             IConfiguration config,
             ITokenSessionService tokenSession,
+            IHttpContextAccessor httpContextAccessor,
             IHostEnvironment environment,
             ILogger<ApiClientService> logger)
         {
             _client = client;
             _tokenSession = tokenSession;
+            _httpContextAccessor = httpContextAccessor;
             _logger = logger;
             _baseUrl = (config["ApiSettings:BaseUrl"] ?? string.Empty).TrimEnd('/');
 
@@ -113,6 +117,7 @@ namespace IND_CRM_APP.Services
         public async Task<LoginResult?> RefreshTokenAsync(string currentToken)
         {
             AddToken(currentToken);
+            LogCompanyHeader("RefreshToken", requireCompany: false);
 
             var result = await HttpHelper.PostAsync(
                 _client,
@@ -129,11 +134,69 @@ namespace IND_CRM_APP.Services
         }
 
         // ======================================================
+        // Entra context
+        // ======================================================
+        public async Task<IndEntraContextResponse> GetEntraContextAsync(string token, string entraOid, string appCode)
+        {
+            AddToken(token);
+            LogCompanyHeader("GetEntraContext", requireCompany: false);
+
+            var payload = new
+            {
+                entraOid = entraOid ?? string.Empty,
+                appCode = appCode ?? string.Empty
+            };
+
+            var result = await HttpHelper.PostAsync(
+                _client,
+                BuildUrl("api/auth/entra/context"),
+                Serialize(payload)
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            if (string.IsNullOrWhiteSpace(result.Raw))
+            {
+                return new IndEntraContextResponse
+                {
+                    Success = result.IsSuccessStatusCode,
+                    Message = result.ErrorMessage ?? "Empty response from entra context."
+                };
+            }
+
+            try
+            {
+                var response = ParseEntraContextResponse(result.Raw, result.IsSuccessStatusCode);
+                if (response.Items.Count == 0)
+                {
+                    _logger.LogWarning(
+                        "Entra context response has no items. Success: {Success}. Message: {Message}. ErrorCode: {ErrorCode}. Raw: {Raw}",
+                        response.Success,
+                        response.Message ?? "<null>",
+                        response.ErrorCode ?? "<null>",
+                        SafeLogPayload(result.Raw));
+                }
+
+                return response;
+            }
+            catch (JsonException ex)
+            {
+                _logger.LogError(ex, "JSON parse error in GetEntraContext. Raw: {Raw}", SafeLogPayload(result.Raw));
+                return new IndEntraContextResponse
+                {
+                    Success = false,
+                    Message = "Failed to parse entra context response."
+                };
+            }
+        }
+
+        // ======================================================
         // Environment
         // ======================================================
         public async Task<string> GetEnvironmentAsync(string token)
         {
             AddToken(token);
+            LogCompanyHeader("GetEnvironment", requireCompany: true);
 
             var result = await HttpHelper.GetAsync(
                 _client,
@@ -149,7 +212,14 @@ namespace IND_CRM_APP.Services
             try
             {
                 var envObj = JsonSerializer.Deserialize<EnvironmentEnvelope>(result.Raw, JsonOptions);
-                return envObj?.Data?.Environment ?? result.Raw.Replace("\"", string.Empty);
+                var envValue = envObj?.Data?.Environment;
+                if (string.IsNullOrWhiteSpace(envValue))
+                {
+                    envValue = envObj?.Items?.FirstOrDefault()?.Environment;
+                }
+                return string.IsNullOrWhiteSpace(envValue)
+                    ? result.Raw.Replace("\"", string.Empty)
+                    : envValue;
             }
             catch
             {
@@ -163,6 +233,7 @@ namespace IND_CRM_APP.Services
         public async Task<string> GetCompanyNameAsync(string token)
         {
             AddToken(token);
+            LogCompanyHeader("GetCompanyName", requireCompany: true);
 
             var result = await HttpHelper.GetAsync(
                 _client,
@@ -178,10 +249,19 @@ namespace IND_CRM_APP.Services
             try
             {
                 var compObj = JsonSerializer.Deserialize<CompanyEnvelope>(result.Raw, JsonOptions);
-                return compObj?.Data?.CompanyName
+                var companyValue = compObj?.Data?.CompanyName
                     ?? compObj?.Data?.Company
-                    ?? compObj?.Data?.CompanyId
-                    ?? result.Raw.Replace("\"", string.Empty);
+                    ?? compObj?.Data?.CompanyId;
+
+                if (string.IsNullOrWhiteSpace(companyValue))
+                {
+                    var item = compObj?.Items?.FirstOrDefault();
+                    companyValue = item?.CompanyName ?? item?.Company ?? item?.CompanyId;
+                }
+
+                return string.IsNullOrWhiteSpace(companyValue)
+                    ? result.Raw.Replace("\"", string.Empty)
+                    : companyValue;
             }
             catch
             {
@@ -199,6 +279,7 @@ namespace IND_CRM_APP.Services
             int pageSize)
         {
             AddToken(token);
+            LogCompanyHeader("GetAccounts", requireCompany: true);
 
             var payload = new
             {
@@ -231,6 +312,7 @@ namespace IND_CRM_APP.Services
             int pageSize)
         {
             AddToken(token);
+            LogCompanyHeader("GetContacts", requireCompany: true);
 
             var payload = new
             {
@@ -258,6 +340,7 @@ namespace IND_CRM_APP.Services
             ActivitiesFilter filter)
         {
             AddToken(token);
+            LogCompanyHeader("GetActivities", requireCompany: true);
 
             var result = await HttpHelper.PostAsync(
                 _client,
@@ -273,6 +356,7 @@ namespace IND_CRM_APP.Services
         public async Task<ApiResponse<ActivityDto>> GetActivityByCodeAsync(string token, string actividadId)
         {
             AddToken(token);
+            LogCompanyHeader("GetActivityByCode", requireCompany: true);
 
             var safeCode = Uri.EscapeDataString(actividadId ?? string.Empty);
 
@@ -486,6 +570,7 @@ namespace IND_CRM_APP.Services
         public async Task<ApiResponse<ActivityDto>> GetActivityByRecIdAsync(string token, long recId)
         {
             AddToken(token);
+            LogCompanyHeader("GetActivityByRecId", requireCompany: true);
 
             var result = await HttpHelper.GetAsync(
                 _client,
@@ -500,6 +585,7 @@ namespace IND_CRM_APP.Services
         public async Task<ApiResponse<object>> CreateActivityAsync(string token, CreateActivityRequest req)
         {
             AddToken(token);
+            LogCompanyHeader("CreateActivity", requireCompany: true);
 
             var result = await HttpHelper.PostAsync(
                 _client,
@@ -515,6 +601,7 @@ namespace IND_CRM_APP.Services
         public async Task<ApiResponse<object>> UpdateActivityAsync(string token, long recId, UpdateActivityRequest req)
         {
             AddToken(token);
+            LogCompanyHeader("UpdateActivity", requireCompany: true);
 
             var result = await HttpHelper.PutAsync(
                 _client,
@@ -530,6 +617,7 @@ namespace IND_CRM_APP.Services
         public async Task<ApiResponse<object>> DeleteActivityAsync(string token, long recId)
         {
             AddToken(token);
+            LogCompanyHeader("DeleteActivity", requireCompany: true);
 
             var result = await HttpHelper.DeleteAsync(
                 _client,
@@ -547,6 +635,7 @@ namespace IND_CRM_APP.Services
         public async Task<ApiResponse<object>> CreateVisitaAsistenteAsync(string token, CreateVisitaAsistenteRequest req)
         {
             AddToken(token);
+            LogCompanyHeader("CreateVisitaAsistente", requireCompany: true);
 
             var result = await HttpHelper.PostAsync(
                 _client,
@@ -562,6 +651,7 @@ namespace IND_CRM_APP.Services
         public async Task<ApiResponse<object>> DeleteVisitaAsistenteAsync(string token, DeleteVisitaAsistenteRequest req)
         {
             AddToken(token);
+            LogCompanyHeader("DeleteVisitaAsistente", requireCompany: true);
 
             var result = await HttpHelper.DeleteAsync(
                 _client,
@@ -588,6 +678,7 @@ namespace IND_CRM_APP.Services
             CancellationToken cancellationToken = default)
         {
             AddToken(token);
+            LogCompanyHeader("TranscribeSpeech", requireCompany: true);
 
             var safeLanguageId = string.IsNullOrWhiteSpace(languageId) ? "auto" : languageId.Trim();
             var safeFileName = string.IsNullOrWhiteSpace(fileName) ? "audio.wav" : Path.GetFileName(fileName);
@@ -629,7 +720,29 @@ namespace IND_CRM_APP.Services
 
             ApplyRefreshedToken(result.Headers, null);
 
-            return DeserializeApiResponse<string>(result, "SpeechTranscribe");
+            var response = DeserializeApiResponse<string>(result, "SpeechTranscribe");
+            if (string.IsNullOrWhiteSpace(response.Data))
+            {
+                var extracted = TryExtractSpeechText(result.Raw);
+                if (!string.IsNullOrWhiteSpace(extracted))
+                {
+                    response.Data = extracted;
+                }
+            }
+
+            if (string.IsNullOrWhiteSpace(response.Data))
+            {
+                _logger.LogWarning(
+                    "Speech transcribe returned empty data. HttpSuccess: {HttpSuccess} StatusCode: {StatusCode} Success: {Success} ErrorCode: {ErrorCode} Message: {Message} RawLen: {RawLen}",
+                    result.IsSuccessStatusCode,
+                    (int)result.StatusCode,
+                    response.Success,
+                    response.ErrorCode,
+                    response.Message,
+                    result.Raw?.Length ?? 0);
+            }
+
+            return response;
         }
 
         // ======================================================
@@ -637,6 +750,319 @@ namespace IND_CRM_APP.Services
         // ======================================================
         private static string Serialize(object payload) =>
             JsonSerializer.Serialize(payload);
+
+        private IndEntraContextResponse ParseEntraContextResponse(string raw, bool httpSuccess)
+        {
+            using var doc = JsonDocument.Parse(raw);
+            var root = doc.RootElement;
+
+            var response = new IndEntraContextResponse
+            {
+                Success = TryGetBool(root, "success") ?? httpSuccess,
+                Message = TryGetString(root, "message"),
+                ErrorCode = TryGetString(root, "errorCode")
+            };
+
+            var items = ExtractContextItems(root);
+            if (items.Count == 0 && TryGetPropertyInsensitive(root, "data", out var dataEl))
+            {
+                items = ExtractContextItems(dataEl);
+            }
+
+            response.Items = items;
+            return response;
+        }
+
+        private List<IndEntraContextItem> ExtractContextItems(JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.Array)
+            {
+                var list = DeserializeContextList(element);
+                if (list.Count > 0)
+                    return list;
+
+                foreach (var entry in element.EnumerateArray())
+                {
+                    var nested = ExtractContextItems(entry);
+                    if (nested.Count > 0)
+                        return nested;
+                }
+
+                return new List<IndEntraContextItem>();
+            }
+
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                if (TryGetPropertyInsensitive(element, "items", out var itemsEl))
+                {
+                    if (itemsEl.ValueKind == JsonValueKind.Array)
+                        return DeserializeContextList(itemsEl);
+
+                    if (itemsEl.ValueKind == JsonValueKind.Object)
+                    {
+                        var item = TryDeserializeContextItem(itemsEl);
+                        if (item != null)
+                            return new List<IndEntraContextItem> { item };
+                    }
+
+                    if (itemsEl.ValueKind == JsonValueKind.String)
+                    {
+                        var fromString = TryParseContextItemsFromString(itemsEl.GetString());
+                        if (fromString.Count > 0)
+                            return fromString;
+                    }
+                }
+
+                if (TryGetPropertyInsensitive(element, "data", out var dataEl))
+                {
+                    var nested = ExtractContextItems(dataEl);
+                    if (nested.Count > 0)
+                        return nested;
+                }
+
+                if (TryGetPropertyInsensitive(element, "result", out var resultEl))
+                {
+                    var nested = ExtractContextItems(resultEl);
+                    if (nested.Count > 0)
+                        return nested;
+                }
+
+                if (TryGetPropertyInsensitive(element, "payload", out var payloadEl))
+                {
+                    var nested = ExtractContextItems(payloadEl);
+                    if (nested.Count > 0)
+                        return nested;
+                }
+
+                if (TryGetPropertyInsensitive(element, "header", out _))
+                {
+                    var item = TryDeserializeContextItem(element);
+                    if (item != null)
+                        return new List<IndEntraContextItem> { item };
+                }
+
+                foreach (var prop in element.EnumerateObject())
+                {
+                    if (prop.Value.ValueKind == JsonValueKind.Object ||
+                        prop.Value.ValueKind == JsonValueKind.Array)
+                    {
+                        var nested = ExtractContextItems(prop.Value);
+                        if (nested.Count > 0)
+                            return nested;
+                    }
+
+                    if (prop.Value.ValueKind == JsonValueKind.String)
+                    {
+                        var fromString = TryParseContextItemsFromString(prop.Value.GetString());
+                        if (fromString.Count > 0)
+                            return fromString;
+                    }
+                }
+            }
+
+            return new List<IndEntraContextItem>();
+        }
+
+        private List<IndEntraContextItem> DeserializeContextList(JsonElement itemsEl)
+        {
+            try
+            {
+                return JsonSerializer.Deserialize<List<IndEntraContextItem>>(itemsEl.GetRawText(), JsonOptions)
+                    ?? new List<IndEntraContextItem>();
+            }
+            catch
+            {
+                return new List<IndEntraContextItem>();
+            }
+        }
+
+        // Tries to deserialize a single context item from a JSON object.
+        private IndEntraContextItem? TryDeserializeContextItem(JsonElement element)
+        {
+            try
+            {
+                return element.Deserialize<IndEntraContextItem>(JsonOptions);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        // Parses context items from a JSON string payload if present.
+        private List<IndEntraContextItem> TryParseContextItemsFromString(string? raw)
+        {
+            if (!LooksLikeJson(raw))
+                return new List<IndEntraContextItem>();
+
+            try
+            {
+                using var doc = JsonDocument.Parse(raw!);
+                return ExtractContextItems(doc.RootElement);
+            }
+            catch
+            {
+                return new List<IndEntraContextItem>();
+            }
+        }
+
+        private static bool? TryGetBool(JsonElement root, string name)
+        {
+            if (!TryGetPropertyInsensitive(root, name, out var el))
+                return null;
+
+            if (el.ValueKind == JsonValueKind.True || el.ValueKind == JsonValueKind.False)
+                return el.GetBoolean();
+
+            if (el.ValueKind == JsonValueKind.Number && el.TryGetInt32(out var number))
+                return number != 0;
+
+            if (el.ValueKind == JsonValueKind.String)
+            {
+                var raw = el.GetString();
+                if (bool.TryParse(raw, out var b))
+                    return b;
+                if (int.TryParse(raw, out var i))
+                    return i != 0;
+            }
+
+            return null;
+        }
+
+        private static string? TryGetString(JsonElement root, string name)
+        {
+            if (!TryGetPropertyInsensitive(root, name, out var el))
+                return null;
+
+            return el.ValueKind == JsonValueKind.String ? el.GetString() : null;
+        }
+
+        private static bool TryGetPropertyInsensitive(JsonElement root, string name, out JsonElement value)
+        {
+            if (root.TryGetProperty(name, out value))
+                return true;
+
+            var alt = char.ToUpperInvariant(name[0]) + name[1..];
+            if (root.TryGetProperty(alt, out value))
+                return true;
+
+            var lower = name.ToLowerInvariant();
+            if (root.TryGetProperty(lower, out value))
+                return true;
+
+            value = default;
+            return false;
+        }
+
+        private static readonly string[] SpeechTextKeys = new[]
+        {
+            "text",
+            "transcript",
+            "transcription"
+        };
+
+        // Try to pull transcription text from non-standard speech responses.
+        private static string? TryExtractSpeechText(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                var root = doc.RootElement;
+
+                if (TryGetPropertyInsensitive(root, "items", out var itemsEl) &&
+                    itemsEl.ValueKind == JsonValueKind.Array)
+                {
+                    var fromItems = ExtractSpeechTextFromArray(itemsEl);
+                    if (!string.IsNullOrWhiteSpace(fromItems))
+                        return fromItems;
+                }
+
+                if (TryGetPropertyInsensitive(root, "data", out var dataEl))
+                {
+                    if (dataEl.ValueKind == JsonValueKind.String)
+                        return dataEl.GetString();
+
+                    if (dataEl.ValueKind == JsonValueKind.Array)
+                    {
+                        var fromData = ExtractSpeechTextFromArray(dataEl);
+                        if (!string.IsNullOrWhiteSpace(fromData))
+                            return fromData;
+                    }
+                }
+
+                return FindSpeechText(root, 0, 5);
+            }
+            catch
+            {
+                // Ignore parsing failures and let the caller handle the empty response.
+            }
+
+            return null;
+        }
+
+        // Extract a transcript from array-based payloads.
+        private static string? ExtractSpeechTextFromArray(JsonElement arrayEl)
+        {
+            foreach (var item in arrayEl.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.String)
+                {
+                    var value = item.GetString();
+                    if (!string.IsNullOrWhiteSpace(value))
+                        return value;
+                    continue;
+                }
+
+                if (item.ValueKind == JsonValueKind.Object || item.ValueKind == JsonValueKind.Array)
+                {
+                    var found = FindSpeechText(item, 0, 5);
+                    if (!string.IsNullOrWhiteSpace(found))
+                        return found;
+                }
+            }
+
+            return null;
+        }
+
+        // Find a text field in nested JSON payloads.
+        private static string? FindSpeechText(JsonElement element, int depth, int maxDepth)
+        {
+            if (depth > maxDepth)
+                return null;
+
+            if (element.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var key in SpeechTextKeys)
+                {
+                    if (TryGetPropertyInsensitive(element, key, out var textEl) &&
+                        textEl.ValueKind == JsonValueKind.String)
+                    {
+                        return textEl.GetString();
+                    }
+                }
+
+                foreach (var prop in element.EnumerateObject())
+                {
+                    var found = FindSpeechText(prop.Value, depth + 1, maxDepth);
+                    if (!string.IsNullOrWhiteSpace(found))
+                        return found;
+                }
+            }
+            else if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    var found = FindSpeechText(item, depth + 1, maxDepth);
+                    if (!string.IsNullOrWhiteSpace(found))
+                        return found;
+                }
+            }
+
+            return null;
+        }
 
         private ApiResponse<T> DeserializeApiResponse<T>(HttpResult result, string operation)
         {
@@ -815,6 +1241,51 @@ namespace IND_CRM_APP.Services
         {
             _client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
+
+            ApplyCompanyHeader();
+        }
+
+        private void ApplyCompanyHeader()
+        {
+            _client.DefaultRequestHeaders.Remove("X-IND-Company");
+
+            var companyId = GetSelectedCompanyId();
+            if (string.IsNullOrWhiteSpace(companyId))
+                return;
+
+            _client.DefaultRequestHeaders.Add("X-IND-Company", companyId);
+        }
+
+        // Reads the current company id from session, if present.
+        private string? GetSelectedCompanyId()
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            if (ctx == null)
+                return null;
+
+            var companyId = ctx.Session.GetString("INDCompanySelected");
+            return string.IsNullOrWhiteSpace(companyId) ? null : companyId;
+        }
+
+        // Logs whether the company header is present for a given operation.
+        private void LogCompanyHeader(string operation, bool requireCompany)
+        {
+            var companyId = GetSelectedCompanyId();
+            if (string.IsNullOrWhiteSpace(companyId))
+            {
+                if (requireCompany)
+                {
+                    _logger.LogWarning("X-IND-Company not set for {Operation}.", operation);
+                }
+                else
+                {
+                    _logger.LogInformation("X-IND-Company not set for {Operation}.", operation);
+                }
+
+                return;
+            }
+
+            _logger.LogInformation("X-IND-Company={CompanyId} for {Operation}.", companyId, operation);
         }
 
         private static string? TryGetTraceId(IDictionary<string, IEnumerable<string>> headers)
@@ -884,6 +1355,7 @@ namespace IND_CRM_APP.Services
         private class EnvironmentEnvelope
         {
             public EnvironmentData? Data { get; set; }
+            public List<EnvironmentData>? Items { get; set; }
         }
 
         private class EnvironmentData
@@ -894,6 +1366,7 @@ namespace IND_CRM_APP.Services
         private class CompanyEnvelope
         {
             public CompanyData? Data { get; set; }
+            public List<CompanyData>? Items { get; set; }
         }
 
         private class CompanyData

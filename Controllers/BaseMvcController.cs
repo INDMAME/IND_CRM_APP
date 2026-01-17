@@ -1,6 +1,10 @@
 ﻿using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Mvc;
 
+using IND_CRM_APP.Models.Shared;
+using System.Linq;
+using System.Text.Json;
+
 namespace IND_CRM_APP.Controllers
 {
     // Base controller for MVC controllers
@@ -8,6 +12,7 @@ namespace IND_CRM_APP.Controllers
     public abstract class BaseMvcController : Controller
     {
         protected readonly ICrmApiClient _apiClient;
+        private const string CompanyNameKey = "INDCompanySelectedName";
 
         protected BaseMvcController(ICrmApiClient apiClient)
         {
@@ -38,7 +43,10 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 var env = await _apiClient.GetEnvironmentAsync(token);
-                var company = await _apiClient.GetCompanyNameAsync(token);
+                var cachedCompany = GetCachedCompanyName();
+                var company = string.IsNullOrWhiteSpace(cachedCompany)
+                    ? await _apiClient.GetCompanyNameAsync(token)
+                    : cachedCompany;
 
                 var envSafe = string.IsNullOrWhiteSpace(env) ? "Unknown" : env;
                 var companySafe = string.IsNullOrWhiteSpace(company) ? "N/A" : company;
@@ -60,6 +68,46 @@ namespace IND_CRM_APP.Controllers
             {
                 ViewBag.Environment = "Unknown";
                 ViewBag.Company = "N/A";
+            }
+        }
+
+        // Resolves the selected company name from cached context, if available.
+        private string? GetCachedCompanyName()
+        {
+            var cached = HttpContext.Session.GetString(CompanyNameKey);
+            if (!string.IsNullOrWhiteSpace(cached))
+                return cached;
+
+            var contextRaw = HttpContext.Session.GetString("INDWebContext");
+            if (string.IsNullOrWhiteSpace(contextRaw))
+                return null;
+
+            try
+            {
+                var context = JsonSerializer.Deserialize<IndWebContext>(contextRaw);
+                if (context == null)
+                    return null;
+
+                var selectedId = HttpContext.Session.GetString("INDCompanySelected");
+                if (!string.IsNullOrWhiteSpace(selectedId))
+                {
+                    return context.Companies
+                        .FirstOrDefault(c => string.Equals(c.CompanyId, selectedId, StringComparison.OrdinalIgnoreCase))
+                        ?.CompanyName;
+                }
+
+                if (!string.IsNullOrWhiteSpace(context.Header.DefaultCompany))
+                {
+                    return context.Companies
+                        .FirstOrDefault(c => string.Equals(c.CompanyId, context.Header.DefaultCompany, StringComparison.OrdinalIgnoreCase))
+                        ?.CompanyName;
+                }
+
+                return context.Companies.FirstOrDefault()?.CompanyName;
+            }
+            catch
+            {
+                return null;
             }
         }
     }

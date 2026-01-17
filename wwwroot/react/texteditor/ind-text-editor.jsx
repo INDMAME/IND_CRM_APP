@@ -12,6 +12,18 @@ const OUTER_MARGIN = 5;
 const MIN_EDITOR_HEIGHT = 240;
 const RECORDER_GAP = 12;
 
+// Shared spinner for local loading states.
+const Spinner = ({ size = "h-6 w-6", label }) => (
+  <svg
+    className={`ind-spinner ${size}`}
+    viewBox="0 0 20 20"
+    role="status"
+    aria-label={label || indT("Common_Loading", "Loading")}
+  >
+    <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
+  </svg>
+);
+
 const getCsrfToken = () => {
   const meta = document.querySelector('meta[name="csrf-token"]');
   return meta ? meta.getAttribute("content") : "";
@@ -110,8 +122,14 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
           return;
         }
 
+        const transcript = payload && typeof payload.data === "string" ? payload.data : "";
+        if (!transcript.trim()) {
+          setTranscribeError(indT("TextEditor_TranscribeFailed", "Transcribe failed."));
+          return;
+        }
+
         // Replace the full textarea content with the new transcription.
-        setText(String(payload.data || ""));
+        setText(transcript);
         // Hide the recorder after a successful transcription.
         setRecorderOpen(false);
         setRecorderResetKey((k) => k + 1);
@@ -311,7 +329,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl }) {
             {isTranscribing ? (
               <div className="absolute inset-0 z-20 flex items-center justify-center bg-slate-200/80">
                 <div className="flex flex-col items-center gap-2">
-                  <div className="h-16 w-16 rounded-full border-4 border-primary border-t-transparent animate-spin" />
+                  <Spinner size="h-16 w-16" />
                   <span className="sr-only">{indT("TextEditor_Transcribing", "Transcribing")}</span>
                 </div>
               </div>

@@ -19,5 +19,9 @@ namespace IND_CRM_APP.Models.Activities
         // Mapea ContactoRecId -> contactoRecId
         [JsonPropertyName("contactoRecId")]
         public string ContactoRecId { get; set; } = string.Empty;
+
+        // Mapea CreatedByUserId -> createdByUserId
+        [JsonPropertyName("createdByUserId")]
+        public string CreatedByUserId { get; set; } = string.Empty;
     }
 }

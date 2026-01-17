@@ -4,8 +4,8 @@ const { test, expect } = require("@playwright/test");
 test.use({ permissions: ["microphone"] });
 
 const credentials = {
-  user: "APIAX",
-  pass: "MaMeAxAp#48",
+  user: process.env.USER_DEFAULT || "",
+  pass: process.env.USER_PASS_DEFAULT || "",
 };
 
 const monthMap = {
@@ -40,6 +40,9 @@ const monthMap = {
 async function loginIfNeeded(page) {
   const userInput = page.locator("#inputUser");
   if (await userInput.isVisible().catch(() => false)) {
+    if (!credentials.user || !credentials.pass) {
+      throw new Error("Missing USER_DEFAULT or USER_PASS_DEFAULT environment variables.");
+    }
     await userInput.fill(credentials.user);
     await page.locator("#inputPassword").fill(credentials.pass);
     await Promise.all([

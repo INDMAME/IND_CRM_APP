@@ -14,6 +14,27 @@ const indFormat = (key, fallback, ...args) => {
   return String(template).replace(/\{(\d+)\}/g, (_, idx) => String(args[Number(idx)] ?? ""));
 };
 
+// Optional global overlay spinner for cache-heavy flows.
+const showGlobalSpinner = (message) => {
+  try {
+    if (typeof window !== "undefined" && typeof window.__indShowGlobalSpinner === "function") {
+      window.__indShowGlobalSpinner(message);
+    }
+  } catch {
+    /* ignore */
+  }
+};
+
+const hideGlobalSpinner = () => {
+  try {
+    if (typeof window !== "undefined" && typeof window.__indHideGlobalSpinner === "function") {
+      window.__indHideGlobalSpinner();
+    }
+  } catch {
+    /* ignore */
+  }
+};
+
 function indExtractId(value) {
   if (value === null || value === undefined) return "";
   if (typeof value === "string" || typeof value === "number") return String(value).trim();
@@ -78,12 +99,15 @@ function indExtractNumericId(value, depth = 0) {
   return "";
 }
 
-const Spinner = ({ size = "h-4 w-4" }) => (
-  <div
-    className={`${size} border-2 border-primary border-t-transparent rounded-full animate-spin`}
+const Spinner = ({ size = "h-4 w-4", label }) => (
+  <svg
+    className={`ind-spinner ${size}`}
+    viewBox="0 0 20 20"
     role="status"
-    aria-label={indT("Common_Loading", "Loading")}
-  />
+    aria-label={label || indT("Common_Loading", "Loading")}
+  >
+    <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
+  </svg>
 );
 
 function useFloatingPosition(targetRef, open) {
@@ -1261,7 +1285,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
           </div>
           {blocking && (
             <div className="absolute inset-0 z-[70000] bg-white/70 backdrop-blur-[1px] flex items-center justify-center rounded-xl">
-              <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <Spinner size="h-6 w-6" />
             </div>
           )}
         </FloatingList>
@@ -1685,6 +1709,19 @@ function VisitasApp() {
 
   // Restore draft on mount
   useEffect(() => {
+    let shouldShow = false;
+    try {
+      shouldShow = !!(
+        sessionStorage.getItem(VISIT_DRAFT_KEY) ||
+        sessionStorage.getItem(CONTACTS_STORAGE_KEY) ||
+        sessionStorage.getItem(CONTACTS_SELECTION_KEY)
+      );
+    } catch {
+      /* ignore storage access */
+    }
+    if (shouldShow) {
+      showGlobalSpinner(indT("Common_Loading", "Loading"));
+    }
     try {
       const raw = sessionStorage.getItem(VISIT_DRAFT_KEY);
       if (raw) {
@@ -1701,6 +1738,10 @@ function VisitasApp() {
       }
     } catch {
       /* ignore parse issues */
+    } finally {
+      if (shouldShow) {
+        hideGlobalSpinner();
+      }
     }
     draftRestoredRef.current = true;
   }, []);
@@ -1760,11 +1801,13 @@ function VisitasApp() {
     setBusy(true);
     setStatus(indT("Visits_Create_CreatingActivity", "Creating activity..."));
 
+    let createdRecId = "";
     try {
       const payloadActivity = {
         accountNum: selectedClient.value,
         visitType,
         userId: axUser,
+        createdByUserId: axUser,
         description,
         transDate,
         comentarios,
@@ -1785,6 +1828,7 @@ function VisitasApp() {
         indExtractNumericId(resAct.message) ||
         indExtractNumericId(indExtractId(resAct.data) || indExtractId(resAct.message));
       if (!recIdActividad) throw new Error(indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
+      createdRecId = String(recIdActividad);
 
       for (let idx = 0; idx < selectedContacts.length; idx++) {
         const c = selectedContacts[idx];
@@ -1794,6 +1838,7 @@ function VisitasApp() {
           asistenteTipo: defaultAsistenteTipo,
           asistenteId: c.text,
           contactoRecId: c.value,
+          createdByUserId: axUser,
         };
         const resVis = await fetchJson("/Visitas/CreateVisitaAsistente", {
           method: "POST",
@@ -1816,6 +1861,16 @@ function VisitasApp() {
       window.location.href = "/Historial/History";
       return true;
     } catch (e) {
+      if (createdRecId) {
+        try {
+          setStatus(indT("Visits_Create_Rollback", "Rolling back activity..."));
+          await fetchJson(`/Visitas/DeleteActivity/${encodeURIComponent(createdRecId)}`, {
+            method: "DELETE",
+          });
+        } catch (cleanupErr) {
+          console.error("Rollback delete activity failed:", cleanupErr);
+        }
+      }
       const msg = e.message || indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
       setModalError(msg);
       setStatus(msg);

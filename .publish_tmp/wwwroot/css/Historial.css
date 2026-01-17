@@ -21,20 +21,28 @@
 .crm-btn:focus:active { background: #001f4d; color: #ffffff !important; border-color: #001f4d; box-shadow: none; }
 
 /* TIMELINE */
-.timeline-box { margin-top: 14px; }
+.timeline-box { margin-top: 6px; }
 .timeline-item { margin-bottom: 6px; position: relative; }
 
 .timeline-card { background: #ffffff; border-radius: 14px; border: 1px solid #e5e7eb; box-shadow: 0 8px 22px rgba(0,0,0,0.08); width: 100%; overflow: hidden; position: relative; transition: transform .12s ease, box-shadow .12s ease; padding: 0; z-index: 1; }
-.filter-card { overflow: visible; position: sticky; top: 64px; z-index: 70; background: transparent; border: none; box-shadow: none; padding: 6px 2px; margin-bottom: 8px; }
+.timeline-card--clickable {
+    -webkit-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.filter-card { overflow: visible; position: sticky; top: 64px; z-index: 70; background: transparent; border: none; box-shadow: none; padding: 6px 2px; margin-bottom: 4px; }
 .timeline-card:hover { transform: translateY(-1px); box-shadow: 0 14px 28px rgba(0,0,0,0.12); }
 .timeline-card--clickable { cursor: pointer; }
 .timeline-card--clickable:hover { border-color: #00296b; }
-.timeline-card__content { padding: 7px 8px; display: flex; flex-direction: column; gap: 2px; }
+.timeline-card__content { padding: 7px 8px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .timeline-card-head { display: flex; justify-content: space-between; gap: 6px; align-items: center; margin-bottom: 1px; }
-.timeline-name { font-size: clamp(13.5px, 3.4vw, 15px); font-weight: 700; color: #0f172a; line-height: 1.12; margin-bottom: 0; text-transform: uppercase; letter-spacing: 0.01em; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 6px; }
+.timeline-card-head > div { min-width: 0; }
+.timeline-name { font-size: clamp(13.5px, 3.4vw, 15px); font-weight: 700; color: #0f172a; line-height: 1.12; margin-bottom: 0; text-transform: uppercase; letter-spacing: 0.01em; width: 100%; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 6px; }
 .timeline-date-chip { display: inline-flex; align-items: center; gap: 4px; background: transparent; color: #475569; border: none; font-size: 12.5px; padding: 0; border-radius: 0; white-space: nowrap; font-weight: 700; text-transform: uppercase; letter-spacing: 0.01em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; }
 .timeline-date-block { font-size: 12px; color: #6b7280; line-height: 1.2; display: inline-block; text-transform: uppercase; }
-.timeline-desc-text { margin-top: 0; font-size: 13px; color: #475569; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-transform: uppercase; letter-spacing: 0.01em; padding-right: 6px; text-overflow: ellipsis; cursor: pointer; }
+.timeline-desc-text { margin-top: 0; font-size: 13px; color: #475569; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-transform: uppercase; letter-spacing: 0.01em; padding-right: 6px; text-overflow: ellipsis; cursor: pointer; max-width: 100%; }
 .ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 .timeline-card--nodata .timeline-card-head { display: none; }

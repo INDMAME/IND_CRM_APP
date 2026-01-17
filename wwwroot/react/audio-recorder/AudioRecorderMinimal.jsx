@@ -104,6 +104,26 @@ function formatTimeMs(ms) {
   return `${mm}:${ss}`;
 }
 
+function sanitizeFileNameBase(value) {
+  if (!value) return "";
+  return String(value)
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/[\\/:*?"<>|]+/g, "")
+    .replace(/-+/g, "-")
+    .replace(/^-+/, "")
+    .replace(/-+$/, "");
+}
+
+// Build a safe, timestamped file name for the WAV download.
+function buildDownloadFileName(baseName) {
+  const safeBase = sanitizeFileNameBase(baseName);
+  const now = new Date();
+  const pad = (n) => String(n).padStart(2, "0");
+  const stamp = `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+  return `${safeBase}-${stamp}.wav`;
+}
+
 function floatTo16BitPCM(float32Array) {
   const out = new Int16Array(float32Array.length);
   for (let i = 0; i < float32Array.length; i++) {
@@ -303,6 +323,7 @@ export default function AudioRecorderMinimal({
   const [elapsedMs, setElapsedMs] = useState(0);
   const [wavBlob, setWavBlob] = useState(null);
   const [wavUrl, setWavUrl] = useState(null);
+  const [wavFileName, setWavFileName] = useState("");
   const [wavLevels, setWavLevels] = useState([]);
   const [wavDurationSec, setWavDurationSec] = useState(0);
   const [playbackRemainingSec, setPlaybackRemainingSec] = useState(0);
@@ -340,6 +361,9 @@ export default function AudioRecorderMinimal({
 
   const isRecordingRef = useRef(false);
   const isPausedRef = useRef(false);
+
+  const downloadLabel = indT("AudioRecorder_Download");
+  const downloadBaseName = indT("AudioRecorder_Download_FileName");
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -561,6 +585,7 @@ export default function AudioRecorderMinimal({
     safeSetState(() => {
       setWavUrl(null);
       setWavBlob(null);
+      setWavFileName("");
     });
     setWavLevels([]);
     setWavDurationSec(0);
@@ -577,7 +602,25 @@ export default function AudioRecorderMinimal({
     chunksRef.current = [];
 
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Prefer raw mono capture and disable browser processing when available.
+      const preferredConstraints = {
+        channelCount: 1,
+        echoCancellation: false,
+        noiseSuppression: false,
+        autoGainControl: false,
+      };
+
+      let stream = null;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: preferredConstraints });
+      } catch (err) {
+        logWarn("Preferred audio constraints failed. Retrying with defaults.", err);
+      }
+
+      if (!stream) {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      }
+
       streamRef.current = stream;
 
       const AudioContextCtor = window.AudioContext || window.webkitAudioContext;
@@ -662,8 +705,10 @@ export default function AudioRecorderMinimal({
         };
       }
 
+      // Keep the analyser out of the recording path to avoid affecting capture.
       source.connect(analyser);
-      analyser.connect(captureNode);
+      analyser.connect(zeroGain);
+      source.connect(captureNode);
       captureNode.connect(zeroGain);
       zeroGain.connect(audioCtx.destination);
 
@@ -723,10 +768,20 @@ export default function AudioRecorderMinimal({
     startTimer();
   }
 
-  function finishRecording() {
+  async function finishRecording() {
     if (!isRecording) return;
 
     pauseTimer();
+
+    // Flush any buffered worklet samples before building the WAV.
+    if (workletNodeRef.current && workletNodeRef.current.port) {
+      try {
+        workletNodeRef.current.port.postMessage({ type: "setRecording", value: false });
+      } catch {
+        /* ignore */
+      }
+      await new Promise((resolve) => window.setTimeout(resolve, 30));
+    }
 
     if (!chunksRef.current.length) {
       safeStopRecordingInternal({ keepWav: false, skipUiState: false });
@@ -753,9 +808,11 @@ export default function AudioRecorderMinimal({
     const durationSec = Math.max(1, Math.ceil(merged.length / sampleRateRef.current));
 
     const url = URL.createObjectURL(wav);
+    const fileName = buildDownloadFileName(downloadBaseName);
     safeSetState(() => {
       setWavBlob(wav);
       setWavUrl(url);
+      setWavFileName(fileName);
       setWavLevels(levels);
       setWavDurationSec(durationSec);
       setPlaybackRemainingSec(durationSec);
@@ -784,6 +841,7 @@ export default function AudioRecorderMinimal({
     safeSetState(() => {
       setWavUrl(null);
       setWavBlob(null);
+      setWavFileName("");
       setUiError("");
       setUiHint("");
     });
@@ -1108,6 +1166,7 @@ export default function AudioRecorderMinimal({
   const showTranscribeButton = !!wavBlob && typeof onTranscribe === "function";
   const transcribeText = transcribeLabel || indT("TextEditor_Transcribe", "Transcribe");
   const transcribeBusyText = transcribeBusyLabel || indT("TextEditor_Transcribing", "Transcribing");
+  const showDownloadButton = !!wavUrl;
 
   return (
     <div className={outerClassName} style={outerStyle}>
@@ -1204,13 +1263,13 @@ export default function AudioRecorderMinimal({
             <button
               type="button"
               onClick={onRightClick}
-              disabled={!isRecording && !wavBlob}
+              disabled={!isRecording}
               className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border flex items-center justify-center transition shadow-sm hover:shadow-md active:scale-95"
               style={{
                 borderColor: isRecording ? "rgba(0, 41, 107, 0.22)" : "rgba(0, 41, 107, 0.18)",
                 backgroundColor: isRecording ? "rgba(0, 41, 107, 0.06)" : "rgba(0, 41, 107, 0.04)",
-                opacity: isRecording || wavBlob ? 1 : 0.45,
-                cursor: isRecording || wavBlob ? "pointer" : "not-allowed",
+                opacity: isRecording ? 1 : 0.45,
+                cursor: isRecording ? "pointer" : "not-allowed",
               }}
               aria-label={isRecording ? indT("AudioRecorder_Stop", "Stop") : indT("AudioRecorder_Cancel", "Cancel")}
               title={isRecording ? indT("AudioRecorder_Stop", "Stop") : indT("AudioRecorder_Cancel", "Cancel")}
@@ -1221,25 +1280,43 @@ export default function AudioRecorderMinimal({
             </button>
           </div>
 
-          {showTranscribeButton ? (
-            <div className="mt-3 flex items-center justify-end">
-              <button
-                type="button"
-                onClick={() => onTranscribe && onTranscribe(wavBlob)}
-                disabled={transcribeBusy}
-                className="px-4 py-1.5 rounded-full border text-[13px] font-medium transition shadow-sm hover:shadow-md active:scale-95"
-                style={{
-                  borderColor: "rgba(0, 41, 107, 0.22)",
-                  backgroundColor: transcribeBusy ? "rgba(0, 41, 107, 0.08)" : "rgba(0, 41, 107, 0.04)",
-                  color: IND_BRAND,
-                  opacity: transcribeBusy ? 0.7 : 1,
-                  cursor: transcribeBusy ? "not-allowed" : "pointer",
-                }}
-                aria-label={transcribeBusy ? transcribeBusyText : transcribeText}
-                title={transcribeBusy ? transcribeBusyText : transcribeText}
-              >
-                {transcribeBusy ? transcribeBusyText : transcribeText}
-              </button>
+          {showDownloadButton || showTranscribeButton ? (
+            <div className="mt-3 flex items-center justify-end gap-2 flex-wrap">
+              {showDownloadButton ? (
+                <a
+                  href={wavUrl || undefined}
+                  download={wavFileName || undefined}
+                  className="px-4 py-1.5 rounded-full border text-[13px] font-medium transition shadow-sm hover:shadow-md active:scale-95"
+                  style={{
+                    borderColor: "rgba(0, 41, 107, 0.22)",
+                    backgroundColor: "rgba(0, 41, 107, 0.04)",
+                    color: IND_BRAND,
+                  }}
+                  aria-label={downloadLabel}
+                  title={downloadLabel}
+                >
+                  {downloadLabel}
+                </a>
+              ) : null}
+              {showTranscribeButton ? (
+                <button
+                  type="button"
+                  onClick={() => onTranscribe && onTranscribe(wavBlob)}
+                  disabled={transcribeBusy}
+                  className="px-4 py-1.5 rounded-full border text-[13px] font-medium transition shadow-sm hover:shadow-md active:scale-95"
+                  style={{
+                    borderColor: "rgba(0, 41, 107, 0.22)",
+                    backgroundColor: transcribeBusy ? "rgba(0, 41, 107, 0.08)" : "rgba(0, 41, 107, 0.04)",
+                    color: IND_BRAND,
+                    opacity: transcribeBusy ? 0.7 : 1,
+                    cursor: transcribeBusy ? "not-allowed" : "pointer",
+                  }}
+                  aria-label={transcribeBusy ? transcribeBusyText : transcribeText}
+                  title={transcribeBusy ? transcribeBusyText : transcribeText}
+                >
+                  {transcribeBusy ? transcribeBusyText : transcribeText}
+                </button>
+              ) : null}
             </div>
           ) : null}
 
@@ -1260,7 +1337,6 @@ export default function AudioRecorderMinimal({
             )}
           </div>
 
-          {/* TODO: In future phases, expose download link and/or upload to backend. */}
         </div>
       </div>
     </div>
