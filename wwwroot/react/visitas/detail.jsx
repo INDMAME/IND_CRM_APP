@@ -533,7 +533,12 @@ const DetailApp = () => {
 
   const initialTransDate = normalizeDateToInput(detail.transDate || detail.TransDate || "");
   const defaultVisitType = visitTypes[0]?.value ?? visitTypes[0]?.Value ?? "";
-  const rawInitialVisitType = detail.tipoVisita || detail.TipoVisita || "";
+  const rawInitialVisitType =
+    detail.tipoVisita ||
+    detail.TipoVisita ||
+    detail.visitType ||
+    detail.VisitType ||
+    "";
   const initialVisitType = matchOptionValue(visitTypes, rawInitialVisitType) || defaultVisitType;
   const rawInitialAsistente =
     detail.asistenteTipo ||
@@ -765,7 +770,12 @@ const DetailApp = () => {
       console.debug("API data", data);
       const rawDate = data.transDate || data.TransDate || "";
       setTransDate(normalizeDateToInput(rawDate));
-      const rawVisitType = data.tipoVisita || data.TipoVisita || "";
+      const rawVisitType =
+        data.tipoVisita ||
+        data.TipoVisita ||
+        data.visitType ||
+        data.VisitType ||
+        "";
       setVisitType(matchOptionValue(visitTypes, rawVisitType) || defaultVisitType);
 
       const asistentesList = data.asistentes || data.Asistentes;

@@ -95,6 +95,8 @@ builder.Services.AddAuthentication(options =>
 .AddOpenIdConnect(options =>
 {
     options.Authority = IndAuthEnv.Authority;
+    // Allow HTTP metadata only in Development.
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     options.ClientId = IndAuthEnv.ClientId;
     options.ClientSecret = IndAuthEnv.ClientSecret;
     options.CallbackPath = IndAuthEnv.RedirectPath;

@@ -1,4 +1,5 @@
 using System.Globalization;
+using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -40,7 +41,9 @@ namespace IND_CRM_APP.Models.Activities
 
             string? recId = null;
             string? accountNum = null;
+            string? tipoVisita = null;
             List<ActivityAsistenteDto>? asistentes = null;
+            var trailingScalars = new List<string?>();
 
             // Lee el resto de elementos hasta cerrar el array principal
             while (reader.TokenType != JsonTokenType.EndArray)
@@ -66,20 +69,49 @@ namespace IND_CRM_APP.Models.Activities
                     continue;
                 }
 
-                // Si encontramos números/strings sueltos, intenta mapear recId y accountNum
-                if (recId == null)
+                // Collect scalar values that can include tipoVisita, recId, accountNum.
+                trailingScalars.Add(ReadValueAsString(ref reader));
+            }
+
+            if (trailingScalars.Count > 0)
+            {
+                var tipoIndex = -1;
+
+                for (var i = 0; i < trailingScalars.Count; i += 1)
                 {
-                    recId = ReadValueAsString(ref reader);
-                    continue;
-                }
-                if (accountNum == null)
-                {
-                    accountNum = ReadValueAsString(ref reader);
-                    continue;
+                    if (IsTipoVisitaTextCandidate(trailingScalars[i]))
+                    {
+                        tipoIndex = i;
+                        break;
+                    }
                 }
 
-                // Cualquier cosa extra: consumir y avanzar
-                reader.Read();
+                if (tipoIndex < 0 && trailingScalars.Count >= 3)
+                {
+                    for (var i = 0; i < trailingScalars.Count; i += 1)
+                    {
+                        if (IsTipoVisitaNumericCandidate(trailingScalars[i]))
+                        {
+                            tipoIndex = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (tipoIndex >= 0)
+                {
+                    tipoVisita = trailingScalars[tipoIndex];
+                }
+
+                var remaining = new List<string?>(trailingScalars.Count);
+                for (var i = 0; i < trailingScalars.Count; i += 1)
+                {
+                    if (i == tipoIndex) continue;
+                    remaining.Add(trailingScalars[i]);
+                }
+
+                if (remaining.Count > 0) recId = remaining[0];
+                if (remaining.Count > 1) accountNum = remaining[1];
             }
 
             return new ActivityDto
@@ -91,6 +123,7 @@ namespace IND_CRM_APP.Models.Activities
                 TransDate = transDate,
                 Country = country,
                 ActividadType = actividadType,
+                TipoVisita = tipoVisita,
                 Description = description,
                 Asistentes = asistentes
             };
@@ -115,6 +148,65 @@ namespace IND_CRM_APP.Models.Activities
             };
             reader.Read();
             return value;
+        }
+
+        private static bool IsTipoVisitaNumericCandidate(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return false;
+            var trimmed = value.Trim();
+            if (trimmed.Length > 2) return false;
+            return trimmed is "0" or "1" or "2";
+        }
+
+        private static bool IsTipoVisitaTextCandidate(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value)) return false;
+            var key = NormalizeKey(value);
+            return key is "comercial" or "tecnica" or "technical" or "commercial";
+        }
+
+        private static string NormalizeKey(string value)
+        {
+            var v = StripDiacritics(value).ToLowerInvariant().Trim();
+            var sb = new StringBuilder(v.Length);
+            foreach (var ch in v)
+            {
+                if (char.IsLetterOrDigit(ch))
+                {
+                    sb.Append(ch);
+                    continue;
+                }
+
+                if (ch == '\u201A')
+                {
+                    sb.Append('e');
+                    continue;
+                }
+
+                if (ch == '\u00A4')
+                {
+                    sb.Append('n');
+                    continue;
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static string StripDiacritics(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return string.Empty;
+
+            var normalized = input.Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder(normalized.Length);
+            foreach (var c in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(c);
+                }
+            }
+            return sb.ToString().Normalize(NormalizationForm.FormC);
         }
 
         public override void Write(Utf8JsonWriter writer, ActivityDto value, JsonSerializerOptions options)
