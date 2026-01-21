@@ -12,6 +12,8 @@ namespace IND_CRM_APP.Services
         IndWebContext? GetCachedContext();
         // Resolves the selected company id from session or defaults.
         string? GetSelectedCompanyId(IndWebContext? context);
+        // Clears cached context values (optionally preserving the selected company).
+        void ClearContextCache(bool preserveCompanySelection = false);
     }
 
     // Result wrapper for context loading.

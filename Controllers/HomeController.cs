@@ -5,12 +5,19 @@ namespace IND_CRM_APP.Controllers
 {
     public class HomeController : BaseMvcController
     {
-        public HomeController(ICrmApiClient apiClient) : base(apiClient)
+        private readonly IIndAuthContextService _authContext;
+
+        public HomeController(ICrmApiClient apiClient, IIndAuthContextService authContext) : base(apiClient)
         {
+            _authContext = authContext;
         }
 
         public async Task<IActionResult> Index()
         {
+            // Refresh context on every Index load to reflect permission changes, preserving company selection.
+            _authContext.ClearContextCache(preserveCompanySelection: true);
+            await _authContext.EnsureContextAsync();
+
             await LoadEnvironmentInfoAsync();
             return View();
         }

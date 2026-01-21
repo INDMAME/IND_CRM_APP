@@ -138,7 +138,7 @@ namespace IND_CRM_APP.Services
         // ======================================================
         public async Task<IndEntraContextResponse> GetEntraContextAsync(string token, string entraOid, string appCode)
         {
-            AddToken(token);
+            AddToken(token, includeCompanyHeader: false);
             LogCompanyHeader("GetEntraContext", requireCompany: false);
 
             var payload = new
@@ -1237,12 +1237,19 @@ namespace IND_CRM_APP.Services
             AddToken(newToken);
         }
 
-        private void AddToken(string token)
+        private void AddToken(string token, bool includeCompanyHeader = true)
         {
             _client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
 
-            ApplyCompanyHeader();
+            if (includeCompanyHeader)
+            {
+                ApplyCompanyHeader();
+            }
+            else
+            {
+                _client.DefaultRequestHeaders.Remove("X-IND-Company");
+            }
         }
 
         private void ApplyCompanyHeader()

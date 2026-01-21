@@ -1,6 +1,8 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using IND_CRM_APP.Infrastructure.Security;
@@ -16,6 +18,9 @@ namespace IND_CRM_APP.Services
         private const string ContextKey = "INDWebContext";
         private const string CompanyKey = "INDCompanySelected";
         private const string CompanyNameKey = "INDCompanySelectedName";
+        private const string CompanySelectionSourceKey = "INDCompanySelectionSource";
+        private const string CompanySelectionSourceDefault = "default";
+        private const string CompanySelectionSourceUser = "user";
         private const string EntraOidKey = "ENTRAOID";
         private const string EntraOidContextKey = "INDEntraOidContext";
 
@@ -63,6 +68,10 @@ namespace IND_CRM_APP.Services
             if (!string.IsNullOrWhiteSpace(selected))
                 return selected;
 
+            var selectionSource = ctx?.Session.GetString(CompanySelectionSourceKey);
+            if (string.Equals(selectionSource, CompanySelectionSourceUser, StringComparison.OrdinalIgnoreCase))
+                return null;
+
             if (context != null)
             {
                 if (!string.IsNullOrWhiteSpace(context.Header.DefaultCompany))
@@ -74,6 +83,20 @@ namespace IND_CRM_APP.Services
             }
 
             return null;
+        }
+
+        // Clears cached context (optionally preserving the selected company).
+        public void ClearContextCache(bool preserveCompanySelection = false)
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            if (ctx == null)
+                return;
+
+            var selected = preserveCompanySelection ? ctx.Session.GetString(CompanyKey) : null;
+            ClearCachedContext(ctx, preserveCompanySelection);
+
+            if (preserveCompanySelection && !string.IsNullOrWhiteSpace(selected))
+                ctx.Session.SetString(CompanyKey, selected);
         }
 
         public async Task<IndAuthContextResult> EnsureContextAsync()
@@ -120,7 +143,7 @@ namespace IND_CRM_APP.Services
                     "Clearing cached context because OID changed. Old: {OldOid} New: {NewOid}",
                     cachedOid,
                     entraOid);
-                ClearCachedContext(ctx);
+                ClearCachedContext(ctx, preserveCompanySelection: false);
             }
 
             var cached = GetCachedContext();
@@ -348,17 +371,77 @@ namespace IND_CRM_APP.Services
             if (int.TryParse(rawString, out var value))
                 return value;
 
-            return null;
+            return MapAccessRight(rawString);
+        }
+
+        // Maps textual access rights into numeric levels.
+        private static int? MapAccessRight(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            var normalized = new string(raw
+                .Trim()
+                .ToLowerInvariant()
+                .Normalize(NormalizationForm.FormD)
+                .Where(c => CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                .ToArray());
+
+            normalized = normalized.Replace(" ", string.Empty)
+                                   .Replace("_", string.Empty)
+                                   .Replace("-", string.Empty)
+                                   .Replace("/", string.Empty);
+
+            switch (normalized)
+            {
+                case "ver":
+                case "view":
+                case "read":
+                case "readonly":
+                    return IndAccessRights.View;
+                case "editar":
+                case "edit":
+                case "modify":
+                case "modifyonly":
+                    return IndAccessRights.Edit;
+                case "crear":
+                case "create":
+                case "add":
+                case "new":
+                    return IndAccessRights.Add;
+                case "full":
+                case "fullaccess":
+                case "total":
+                case "eliminar":
+                case "delete":
+                    return IndAccessRights.FullAccess;
+                default:
+                    return null;
+            }
         }
 
         private static void EnsureCompanySelection(HttpContext ctx, IndWebContext context)
         {
             var selected = ctx.Session.GetString(CompanyKey);
+            var selectionSource = ctx.Session.GetString(CompanySelectionSourceKey);
+            if (!string.IsNullOrWhiteSpace(selected) && string.IsNullOrWhiteSpace(selectionSource))
+            {
+                ctx.Session.SetString(CompanySelectionSourceKey, CompanySelectionSourceUser);
+                selectionSource = CompanySelectionSourceUser;
+            }
+
+            var isUserSelection = string.Equals(selectionSource, CompanySelectionSourceUser, StringComparison.OrdinalIgnoreCase);
             if (!string.IsNullOrWhiteSpace(selected))
             {
                 if (context.Companies.Any(c => string.Equals(c.CompanyId, selected, StringComparison.OrdinalIgnoreCase)))
                 {
                     CacheSelectedCompanyName(ctx, context, selected);
+                    return;
+                }
+
+                if (isUserSelection)
+                {
+                    ctx.Session.Remove(CompanyNameKey);
                     return;
                 }
             }
@@ -370,6 +453,7 @@ namespace IND_CRM_APP.Services
             if (!string.IsNullOrWhiteSpace(fallback))
             {
                 ctx.Session.SetString(CompanyKey, fallback);
+                ctx.Session.SetString(CompanySelectionSourceKey, CompanySelectionSourceDefault);
                 CacheSelectedCompanyName(ctx, context, fallback);
                 return;
             }
@@ -410,13 +494,17 @@ namespace IND_CRM_APP.Services
         }
 
         // Clears cached context and related session values.
-        private static void ClearCachedContext(HttpContext ctx)
+        private static void ClearCachedContext(HttpContext ctx, bool preserveCompanySelection)
         {
             ctx.Session.Remove(ContextKey);
-            ctx.Session.Remove(CompanyKey);
             ctx.Session.Remove(CompanyNameKey);
             ctx.Session.Remove(EntraOidContextKey);
             ctx.Session.Remove("AxUser");
+            if (!preserveCompanySelection)
+            {
+                ctx.Session.Remove(CompanyKey);
+                ctx.Session.Remove(CompanySelectionSourceKey);
+            }
         }
 
         // Extracts Entra OID from the authenticated user claims, if available.

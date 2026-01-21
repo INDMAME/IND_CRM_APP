@@ -1,8 +1,14 @@
 # Dropdown UX pattern (Tailwind + React islands)
 
+## Scope and hierarchy
+- Scope: dropdowns/comboboxes in React islands (Visitas and future).
+- If conflict: system > `.codex/AGENTS.md` > `.codex/core-ui-rules.md` > this doc.
+
 Goal: every new combobox/dropdown in `wwwroot/react/visitas` (or future islands) must feel identical and stay stable when navigating steps.
 
 ## Core rules
+- I18N: any UI text must come from localization. Strings below are copy references only.
+- React: use `indT("Key", "Fallback")`. Razor: use `SR["Key"]`.
 - Use Tailwind only; no Bootstrap/jQuery. Chevron icons use the shared inline SVGs in `wwwroot/react/visitas/chevrons.jsx` (ChevronDownSvg, ChevronUpSvg). Other icons can use `@heroicons/react` (XMarkIcon, etc.).
 - Typography inherits project base (Montserrat). Primary color `#00296b` maps to `text-primary`, `bg-primary`, etc.
 - Render the floating list with `createPortal` into `document.body` and position using a fixed style computed from the anchor (see `FloatingList` helper).
@@ -28,9 +34,9 @@ Goal: every new combobox/dropdown in `wwwroot/react/visitas` (or future islands)
   - Options per entity: key `visitas_contacts_cache_v1`.
   - Selected items per entity: key `visitas_contacts_selected_v1`.
 - On mount:
-  1) If there is no parent key (e.g., no client), show "Seleccione un cliente primero" and disable input.
+  1) If there is no parent key (e.g., no client), show a localized "select a client first" message and disable input.
   2) Prime from cache/storage; if found, show instantly without flicker.
-  3) If not cached, show "Presiona la flecha para cargar..." and load only when user opens/toggles.
+  3) If not cached, show a localized "press arrow to load" message and load only when user opens/toggles.
 - On parent change (client change):
   - Clear selection and options.
   - Persist new selection after every change with `setStoredSelection`.
@@ -38,7 +44,7 @@ Goal: every new combobox/dropdown in `wwwroot/react/visitas` (or future islands)
 - Keep selection in sync with parent prop to restore drafts when returning from page 2.
 
 ## Visual layout
-- Input wrapper: `rounded-md border border-slate-300 bg-white shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary`.
+- Input wrapper: `rounded-xl border border-slate-300 bg-white shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary`.
 - List items:
   - Active: `bg-primary text-white`.
   - Selected: `bg-primary/10 text-primary`.
@@ -47,8 +53,16 @@ Goal: every new combobox/dropdown in `wwwroot/react/visitas` (or future islands)
 
 ## Error and status messaging
 - Status line aligned to the right in `text-xs text-slate-500`.
-- Network errors: "Error al cargar ..."; empty: "Sin resultados" / "Sin contactos".
-- Keep strings short; Spanish as in current UI.
+- Use i18n keys for all copy. Examples (copy only):
+  - Network error: "Error al cargar ..."
+  - Empty: "Sin resultados" / "Sin contactos"
+- Suggested keys if missing (define in all cultures):
+  - `Visits_SelectClientFirst`
+  - `Visits_PressArrowToLoad`
+  - `Visits_LoadError`
+  - `Visits_EmptyResults`
+  - `Visits_EmptyContacts`
+- Keep strings short; Spanish as the default copy.
 
 ## Reusable helpers to import
 - `FloatingList`, `useOutsideClick`, `makeCache`, `fetchJson`, `wait`.
@@ -67,6 +81,8 @@ Use `ContactsCombobox` in `wwwroot/react/visitas/create.jsx` as the reference im
 - Do not call IND_CRM_API directly from the React island; keep MVC controller/service rules intact.
 - Do not add new dependencies for dropdowns.
 
-## UI overflow preview rule
-- When a text box can overflow its width, enable a centered preview tooltip on press or hold.
-- Only enable the preview when overflow is detected.
+## Shared UI rules
+- See `.codex/core-ui-rules.md`.
+
+## Last updated
+- 2026-01-21

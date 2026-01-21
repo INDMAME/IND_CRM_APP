@@ -1,4 +1,9 @@
 @using IND_CRM_APP.Infrastructure.Localization
+@using IND_CRM_APP.Models.Shared
+@using IND_CRM_APP.Infrastructure.Security
+@using System.Collections.Generic
+@using System.Linq
+@using System.Text.Json
 @inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
 @inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
 
@@ -36,6 +41,53 @@
     var contentClass = string.IsNullOrWhiteSpace(contentClassOverride)
         ? "content w-full max-w-5xl mx-auto px-4 md:px-6 min-h-screen"
         : contentClassOverride!;
+
+    IndWebContext? permissionContext = null;
+    var contextRaw = Context?.Session?.GetString("INDWebContext");
+    if (!string.IsNullOrWhiteSpace(contextRaw))
+    {
+        try
+        {
+            permissionContext = JsonSerializer.Deserialize<IndWebContext>(contextRaw);
+        }
+        catch
+        {
+            permissionContext = null;
+        }
+    }
+
+    var selectedCompanyId = Context?.Session?.GetString("INDCompanySelected");
+    var companySelectionSource = Context?.Session?.GetString("INDCompanySelectionSource");
+    if (string.IsNullOrWhiteSpace(selectedCompanyId) &&
+        !string.Equals(companySelectionSource, "user", StringComparison.OrdinalIgnoreCase))
+    {
+        selectedCompanyId = permissionContext?.Header?.DefaultCompany;
+    }
+    var selectedCompany = !string.IsNullOrWhiteSpace(selectedCompanyId)
+        ? permissionContext?.Companies.FirstOrDefault(c => string.Equals(c.CompanyId, selectedCompanyId, StringComparison.OrdinalIgnoreCase))
+        : permissionContext?.Companies.FirstOrDefault();
+
+    var moduleAccess = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    if (selectedCompany?.Modules != null)
+    {
+        foreach (var mod in selectedCompany.Modules)
+        {
+            if (string.IsNullOrWhiteSpace(mod.ModuleCode))
+                continue;
+
+            if (!moduleAccess.ContainsKey(mod.ModuleCode))
+                moduleAccess[mod.ModuleCode] = mod.AccessRightsInt;
+
+            if (INDModuleRegistry.TryGetCanonicalModuleCode(mod.ModuleCode, out var canonical))
+            {
+                if (!moduleAccess.ContainsKey(canonical) || moduleAccess[canonical] < mod.AccessRightsInt)
+                    moduleAccess[canonical] = mod.AccessRightsInt;
+            }
+        }
+    }
+
+    var moduleAccessJson = JsonSerializer.Serialize(moduleAccess);
+    var permissionRedirectMessage = TempData?["IndPermissionRedirectMessage"] as string;
 }
 <body class="bg-slate-100 font-sans text-slate-900 overflow-x-hidden @bodyClass">
     <svg class="ind-spinner-defs" aria-hidden="true" focusable="false">
@@ -70,6 +122,18 @@
 
     <div id="content" class="@contentClass">
         @RenderBody()
+    </div>
+
+    <div id="indPermissionModal" class="fixed inset-0 z-[600000] hidden items-center justify-center bg-black/40 backdrop-blur-[1px] px-4" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
+            <div id="indPermissionModalTitle" class="text-lg font-semibold text-slate-900">@SR["Auth_PermissionDenied_Title"]</div>
+            <div id="indPermissionModalBody" class="text-sm text-slate-700 whitespace-pre-line">@SR["Auth_PermissionDenied_Body"]</div>
+            <div class="flex justify-end pt-2">
+                <button id="indPermissionModalOk" type="button" class="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition">
+                    @SR["Common_OK"]
+                </button>
+            </div>
+        </div>
     </div>
 
     @if (!hideChrome)
@@ -228,7 +292,35 @@
                 companyBtn.setAttribute("aria-expanded", (!nowHidden).toString());
             }
 
+            // Post company selection with fetch so we can use location.replace.
+            function bindCompanyForms() {
+                const forms = document.querySelectorAll(".ind-company-form");
+                if (!forms.length) return;
+
+                forms.forEach((form) => {
+                    if (form.dataset.indBound === "true") return;
+                    form.dataset.indBound = "true";
+                    form.addEventListener("submit", (event) => {
+                        event.preventDefault();
+                        const payload = new FormData(form);
+                        fetch(form.action, {
+                            method: "POST",
+                            body: payload,
+                            headers: { "X-Requested-With": "XMLHttpRequest" }
+                        })
+                            .then((res) => {
+                                if (!res.ok) throw new Error("Company change failed.");
+                                window.location.replace("/");
+                            })
+                            .catch(() => {
+                                form.submit();
+                            });
+                    });
+                });
+            }
+
             updateSidebarHeight();
+            bindCompanyForms();
             window.addEventListener("resize", updateSidebarHeight);
             document.addEventListener("pointerdown", handleOutsidePress, true);
             sidebar?.addEventListener("touchstart", handleSwipeStart, { passive: true });
@@ -254,6 +346,16 @@
     }
 
     <script src="~/js/ind-action-mark.js" asp-append-version="true"></script>
+
+    <script>
+        window.__IND_MODULE_ACCESS__ = @Html.Raw(moduleAccessJson);
+        window.__IND_SELECTED_COMPANY__ = @Html.Raw(JsonSerializer.Serialize(selectedCompanyId ?? string.Empty));
+        window.__IND_PERMISSION_I18N__ = {
+            title: @Html.Raw(JsonSerializer.Serialize(SR["Auth_PermissionDenied_Title"].Value)),
+            message: @Html.Raw(JsonSerializer.Serialize(SR["Auth_PermissionDenied_Body"].Value)),
+            ok: @Html.Raw(JsonSerializer.Serialize(SR["Common_OK"].Value))
+        };
+    </script>
 
     @{
         try
@@ -365,6 +467,53 @@
             }, { once: true });
         })();
     </script>
+
+    <script>
+        (function () {
+            const modal = document.getElementById("indPermissionModal");
+            if (!modal) return;
+            const titleEl = document.getElementById("indPermissionModalTitle");
+            const bodyEl = document.getElementById("indPermissionModalBody");
+            const okBtn = document.getElementById("indPermissionModalOk");
+            const i18n = window.__IND_PERMISSION_I18N__ || {};
+
+            const hide = () => {
+                modal.classList.add("hidden");
+                modal.setAttribute("aria-hidden", "true");
+            };
+
+            const show = (opts) => {
+                const title = opts && typeof opts.title === "string" && opts.title.trim() ? opts.title : i18n.title;
+                const message = opts && typeof opts.message === "string" && opts.message.trim() ? opts.message : i18n.message;
+                if (titleEl && title) titleEl.textContent = title;
+                if (bodyEl && message) bodyEl.textContent = message;
+                if (okBtn && i18n.ok) okBtn.textContent = i18n.ok;
+                modal.classList.remove("hidden");
+                modal.setAttribute("aria-hidden", "false");
+            };
+
+            okBtn?.addEventListener("click", hide);
+            modal.addEventListener("click", (event) => {
+                if (event.target === modal) hide();
+            });
+
+            window.IND = window.IND || {};
+            window.IND.showPermissionModal = show;
+            window.IND.hidePermissionModal = hide;
+        })();
+    </script>
+
+    @if (!string.IsNullOrWhiteSpace(permissionRedirectMessage))
+    {
+        <script>
+            (function () {
+                const message = @Html.Raw(JsonSerializer.Serialize(permissionRedirectMessage));
+                if (window.IND && typeof window.IND.showPermissionModal === "function") {
+                    window.IND.showPermissionModal({ message: message });
+                }
+            })();
+        </script>
+    }
 
     @RenderSection("Scripts", required: false)
 </body>

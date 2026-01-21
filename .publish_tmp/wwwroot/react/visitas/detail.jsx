@@ -22,6 +22,21 @@ const getCsrfToken = () => {
 
 const IND_I18N = globalThis.__IND_I18N__ || {};
 const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+const PERM_I18N = globalThis.__IND_PERMISSION_I18N__ || {};
+const MODULE_ACCESS = globalThis.__IND_MODULE_ACCESS__ || {};
+const ACCESS_RIGHTS = { View: 1, Edit: 2, Add: 3, FullAccess: 4 };
+const getModuleAccess = (code) => Number(MODULE_ACCESS && MODULE_ACCESS[code] != null ? MODULE_ACCESS[code] : 0);
+const historyAccess = getModuleAccess("VISITAS_HISTORIAL");
+const canEditHistory = historyAccess >= ACCESS_RIGHTS.Edit;
+const canDeleteHistory = historyAccess >= ACCESS_RIGHTS.FullAccess;
+const showPermissionModal = (opts) => {
+  if (typeof window !== "undefined" && window.IND && typeof window.IND.showPermissionModal === "function") {
+    window.IND.showPermissionModal(opts || {});
+    return;
+  }
+  const fallback = PERM_I18N.message || indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion.");
+  alert(fallback);
+};
 const indFormat = (key, fallback, ...args) => {
   const template = indT(key, fallback);
   return String(template).replace(/\{(\d+)\}/g, (_, idx) => String(args[Number(idx)] ?? ""));
@@ -268,6 +283,10 @@ async function fetchJson(url, options) {
   const res = await fetch(url, merged);
   const text = await res.text();
   if (!res.ok) {
+    if (res.status === 403) {
+      showPermissionModal();
+      throw new Error(indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion."));
+    }
     try {
       const json = JSON.parse(text);
       const msg = json?.message;
@@ -286,12 +305,15 @@ async function fetchJson(url, options) {
   }
 }
 
-const Spinner = ({ size = "h-4 w-4" }) => (
-  <div
-    className={`${size} border-2 border-primary border-t-transparent rounded-full animate-spin`}
+const Spinner = ({ size = "h-4 w-4", label }) => (
+  <svg
+    className={`ind-spinner ${size}`}
+    viewBox="0 0 20 20"
     role="status"
-    aria-label={indT("Common_Loading", "Loading")}
-  />
+    aria-label={label || indT("Common_Loading", "Loading")}
+  >
+    <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
+  </svg>
 );
 
 function SelectCombobox({ label, options, value, onChange, placeholder, disabled = false }) {
@@ -383,7 +405,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, disabled
           className="relative w-full cursor-default rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
         >
           <input
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-100 disabled:text-slate-600 disabled:border-slate-200 disabled:cursor-not-allowed"
             value={query || selected?.text || ""}
             disabled={disabled}
             onChange={(event) => {
@@ -530,7 +552,12 @@ const DetailApp = () => {
 
   const initialTransDate = normalizeDateToInput(detail.transDate || detail.TransDate || "");
   const defaultVisitType = visitTypes[0]?.value ?? visitTypes[0]?.Value ?? "";
-  const rawInitialVisitType = detail.tipoVisita || detail.TipoVisita || "";
+  const rawInitialVisitType =
+    detail.tipoVisita ||
+    detail.TipoVisita ||
+    detail.visitType ||
+    detail.VisitType ||
+    "";
   const initialVisitType = matchOptionValue(visitTypes, rawInitialVisitType) || defaultVisitType;
   const rawInitialAsistente =
     detail.asistenteTipo ||
@@ -552,11 +579,39 @@ const DetailApp = () => {
   const modalConfirmInFlightRef = useRef(false);
   const [modalError, setModalError] = useState("");
   const readOnlySurfaceRef = useRef(null);
+  const editModeKeyRef = useRef("");
 
   const recId = detail.recId || detail.RecId || "";
   const accountNum = detail.accountNum || detail.AccountNum || "";
   const userId = detail.userId || detail.UserId || "";
   const actividadId = detail.actividadId || detail.ActividadId || "";
+
+  // Persist edit mode across navigation to the text editor.
+  const syncEditModeFlag = useCallback((enabled) => {
+    const key = editModeKeyRef.current;
+    if (!key) return;
+    try {
+      if (enabled) sessionStorage.setItem(key, "true");
+      else sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    const key = `ind_visit_edit_${actividadId || recId || "default"}`;
+    editModeKeyRef.current = key;
+    try {
+      if (canEditHistory && sessionStorage.getItem(key) === "true") {
+        setIsEditing(true);
+      }
+      if (!canEditHistory) {
+        sessionStorage.removeItem(key);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, [actividadId, recId, canEditHistory]);
 
   const hasServerDetail =
     hasValue(recId) &&
@@ -565,8 +620,12 @@ const DetailApp = () => {
 
   const shouldHydrate = !!actividadId && !hasServerDetail;
 
-  const openTextEditor = useCallback((fieldId, fieldLabel, fieldValue) => {
+  const openTextEditor = useCallback((fieldId, fieldLabel, fieldValue, options = {}) => {
     const safeId = String(fieldId || "").trim();
+    const safeLabel = String(fieldLabel || "").trim();
+    const readOnly = options?.readOnly === true;
+    const allowEdit = options?.allowEdit !== false;
+    const editModeKey = String(options?.editModeKey || "").trim();
     if (safeId) {
       const key = `${TEXT_EDITOR_PREFIX}${safeId}`;
       try {
@@ -588,18 +647,24 @@ const DetailApp = () => {
       /* ignore */
     }
     const url =
-      `/TextEditorReact/EditField?fieldId=${encodeURIComponent(fieldId || "")}` +
-      `&fieldLabel=${encodeURIComponent(fieldLabel || "")}` +
-      `&returnUrl=${encodeURIComponent(returnUrl)}`;
+      `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId || fieldId || "")}` +
+      `&fieldLabel=${encodeURIComponent(safeLabel || fieldLabel || "")}` +
+      `&returnUrl=${encodeURIComponent(returnUrl)}` +
+      `&readOnly=${readOnly ? "1" : "0"}` +
+      `&allowEdit=${allowEdit ? "1" : "0"}` +
+      (editModeKey ? `&editModeKey=${encodeURIComponent(editModeKey)}` : "");
 
     window.location.href = url;
   }, []);
 
   const handleComentariosTap = useCallback((event) => {
-    if (!isEditing) return;
     event.preventDefault();
-    openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios);
-  }, [comentarios, isEditing, openTextEditor]);
+    openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios, {
+      readOnly: !isEditing,
+      allowEdit: canEditHistory,
+      editModeKey: editModeKeyRef.current
+    });
+  }, [comentarios, isEditing, canEditHistory, openTextEditor]);
 
   const handleComentariosHold = useCallback((target, clientY) => {
     if (!target || !isOverflowing(target)) return false;
@@ -608,10 +673,13 @@ const DetailApp = () => {
   }, [comentarios]);
 
   const handleAntecedentesTap = useCallback((event) => {
-    if (!isEditing) return;
     event.preventDefault();
-    openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes);
-  }, [antecedentes, isEditing, openTextEditor]);
+    openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes, {
+      readOnly: !isEditing,
+      allowEdit: canEditHistory,
+      editModeKey: editModeKeyRef.current
+    });
+  }, [antecedentes, isEditing, canEditHistory, openTextEditor]);
 
   const handleAntecedentesHold = useCallback((target, clientY) => {
     if (!target || !isOverflowing(target)) return false;
@@ -620,10 +688,13 @@ const DetailApp = () => {
   }, [antecedentes]);
 
   const handleConclusionesTap = useCallback((event) => {
-    if (!isEditing) return;
     event.preventDefault();
-    openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones);
-  }, [conclusiones, isEditing, openTextEditor]);
+    openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones, {
+      readOnly: !isEditing,
+      allowEdit: canEditHistory,
+      editModeKey: editModeKeyRef.current
+    });
+  }, [conclusiones, isEditing, canEditHistory, openTextEditor]);
 
   const handleConclusionesHold = useCallback((target, clientY) => {
     if (!target || !isOverflowing(target)) return false;
@@ -726,7 +797,12 @@ const DetailApp = () => {
       console.debug("API data", data);
       const rawDate = data.transDate || data.TransDate || "";
       setTransDate(normalizeDateToInput(rawDate));
-      const rawVisitType = data.tipoVisita || data.TipoVisita || "";
+      const rawVisitType =
+        data.tipoVisita ||
+        data.TipoVisita ||
+        data.visitType ||
+        data.VisitType ||
+        "";
       setVisitType(matchOptionValue(visitTypes, rawVisitType) || defaultVisitType);
 
       const asistentesList = data.asistentes || data.Asistentes;
@@ -801,18 +877,33 @@ const DetailApp = () => {
   }, [isEditing]);
 
   const handleEnableEdit = useCallback(() => {
+    if (!canEditHistory) {
+      showPermissionModal();
+      return;
+    }
     setIsEditing(true);
+    syncEditModeFlag(true);
     setStatus(indT("Visits_Detail_EditingEnabled", "Editing enabled"));
-  }, []);
+  }, [syncEditModeFlag]);
 
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
+    if (!canEditHistory) {
+      showPermissionModal();
+      return false;
+    }
     setModalError("");
     setBusy(true);
     setStatus(indT("Visits_Detail_Updating", "Updating activity..."));
     try {
-      const normalizedVisitType = matchOptionValue(visitTypes, visitType);
-      const normalizedAsistenteTipo = matchOptionValue(asistenteTipos, asistenteTipo);
+      const normalizedVisitType =
+        matchOptionValue(visitTypes, visitType) ||
+        matchOptionValue(visitTypes, rawInitialVisitType) ||
+        defaultVisitType;
+      const normalizedAsistenteTipo =
+        matchOptionValue(asistenteTipos, asistenteTipo) ||
+        matchOptionValue(asistenteTipos, rawInitialAsistente) ||
+        rawInitialAsistente;
       const payload = {
         accountNum: accountNum,
         visitType: normalizedVisitType,
@@ -835,6 +926,7 @@ const DetailApp = () => {
 
       setStatus(indT("Visits_Detail_Updated", "Activity updated"));
       setIsEditing(false);
+      syncEditModeFlag(false);
       return true;
     } catch (err) {
       const msg = err?.message || indT("Visits_Detail_UpdateError", "Update error.");
@@ -845,10 +937,14 @@ const DetailApp = () => {
     } finally {
       setBusy(false);
     }
-  }, [antecedentes, comentarios, conclusiones, description, transDate, visitType, asistenteTipo, visitTypes, asistenteTipos, matchOptionValue, accountNum, userId, busy, isEditing]);
+  }, [antecedentes, comentarios, conclusiones, description, transDate, visitType, asistenteTipo, visitTypes, asistenteTipos, matchOptionValue, accountNum, userId, busy, isEditing, syncEditModeFlag]);
 
   const handleDelete = useCallback(async () => {
     if (busy) return false;
+    if (!canDeleteHistory) {
+      showPermissionModal();
+      return false;
+    }
     setModalError("");
     setBusy(true);
     setStatus(indT("Visits_Detail_Deleting", "Deleting activity..."));
@@ -871,6 +967,10 @@ const DetailApp = () => {
   // Listen to topbar icon events
   useEffect(() => {
     const onEdit = () => {
+      if (!canEditHistory) {
+        showPermissionModal();
+        return;
+      }
       if (isEditing) {
         if (busy || modal.open) return;
         openConfirmModal({
@@ -896,6 +996,10 @@ const DetailApp = () => {
     };
 
     const onDelete = () => {
+      if (!canDeleteHistory) {
+        showPermissionModal();
+        return;
+      }
       if (busy || modal.open) return;
       openConfirmModal({
         title: indT("Visits_Detail_DeleteActivity_Title", "Delete activity"),
@@ -1002,9 +1106,12 @@ const DetailApp = () => {
         <div className="grid grid-cols-1 gap-3">
           <div className="space-y-2">
             <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Description", "Description")}</label>
-            <input
+          <input
               id="description"
-              className="w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+              className={classNames(
+                "w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+                isEditing ? "border-slate-200 text-slate-900" : "border-slate-200 bg-slate-100 text-slate-600"
+              )}
               maxLength={200}
               value={description}
               disabled={!isEditing}
@@ -1017,11 +1124,11 @@ const DetailApp = () => {
               id="comentarios"
               className={classNames(
                 "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                isEditing ? "cursor-pointer" : ""
+                "cursor-pointer",
+                !isEditing ? "bg-slate-100 text-slate-600" : ""
               )}
               value={comentarios}
-              disabled={!isEditing}
-              readOnly={isEditing}
+              readOnly
               onPointerDown={comentariosTap.onPointerDown}
               onPointerMove={comentariosTap.onPointerMove}
               onPointerUp={comentariosTap.onPointerUp}
@@ -1034,11 +1141,11 @@ const DetailApp = () => {
               id="antecedentes"
               className={classNames(
                 "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                isEditing ? "cursor-pointer" : ""
+                "cursor-pointer",
+                !isEditing ? "bg-slate-100 text-slate-600" : ""
               )}
               value={antecedentes}
-              disabled={!isEditing}
-              readOnly={isEditing}
+              readOnly
               onPointerDown={antecedentesTap.onPointerDown}
               onPointerMove={antecedentesTap.onPointerMove}
               onPointerUp={antecedentesTap.onPointerUp}
@@ -1051,11 +1158,11 @@ const DetailApp = () => {
               id="conclusiones"
               className={classNames(
                 "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
-                isEditing ? "cursor-pointer" : ""
+                "cursor-pointer",
+                !isEditing ? "bg-slate-100 text-slate-600" : ""
               )}
               value={conclusiones}
-              disabled={!isEditing}
-              readOnly={isEditing}
+              readOnly
               onPointerDown={conclusionesTap.onPointerDown}
               onPointerMove={conclusionesTap.onPointerMove}
               onPointerUp={conclusionesTap.onPointerUp}

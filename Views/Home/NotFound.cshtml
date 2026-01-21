@@ -2,7 +2,7 @@
 @inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
 
 @{
-    ViewData["Title"] = SR["NotFound_Title"];
+    ViewData["Title"] = "404";
     ViewData["HideNavArrows"] = true;
 }
 
@@ -11,7 +11,7 @@
         <div class="text-primary text-5xl sm:text-7xl font-extrabold tracking-[0.2em]">404</div>
         <h2 class="text-3xl sm:text-4xl font-semibold text-slate-900">@SR["NotFound_Title"]</h2>
         <p class="text-base sm:text-lg text-slate-700">@SR["NotFound_Subtitle"]</p>
-        <div class="pt-3">
+        <div class="pt-3 flex justify-end">
             <a href="/" class="inline-flex items-center rounded-xl bg-primary px-5 py-2.5 text-white shadow-sm hover:bg-primary/90">
                 @SR["NotFound_BackHome"]
             </a>

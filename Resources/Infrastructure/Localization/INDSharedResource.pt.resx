@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -59,7 +59,8 @@
   <data name="Auth_LoginApiError" xml:space="preserve"><value>Falha ao iniciar sessao devido a erro de API.</value></data>
   <data name="Auth_AccessDenied" xml:space="preserve"><value>Acesso negado: {0}</value></data>
   <data name="Auth_LoginRequired" xml:space="preserve"><value>Tem de iniciar sessao para continuar.</value></data>
-
+  <data name="Auth_PermissionDenied_Title" xml:space="preserve"><value>Acesso negado</value></data>
+  <data name="Auth_PermissionDenied_Body" xml:space="preserve"><value>Voce nao tem permissao para realizar esta acao.</value></data>
   <data name="Topbar_OpenMenu" xml:space="preserve"><value>Abrir menu</value></data>
   <data name="Topbar_Back" xml:space="preserve"><value>Voltar</value></data>
   <data name="Topbar_Forward" xml:space="preserve"><value>Avancar</value></data>
@@ -272,3 +273,4 @@
   <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>Origem atual: {0}</value></data>
   <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>Detalhe tecnico: {0}</value></data>
 </root>
+

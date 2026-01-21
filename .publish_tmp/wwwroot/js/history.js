@@ -7,6 +7,17 @@
     const returnFlagKey = "visitas_history_return_v1";
     const IND_I18N = (window && window.__IND_I18N__) ? window.__IND_I18N__ : {};
     const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+    const MODULE_ACCESS = (window && window.__IND_MODULE_ACCESS__) ? window.__IND_MODULE_ACCESS__ : {};
+    const ACCESS_RIGHTS = { View: 1, Edit: 2, Add: 3, FullAccess: 4 };
+    const getModuleAccess = (code) => Number(MODULE_ACCESS && MODULE_ACCESS[code] != null ? MODULE_ACCESS[code] : 0);
+    const canViewHistory = getModuleAccess("VISITAS_HISTORIAL") >= ACCESS_RIGHTS.View;
+    const showPermissionModal = () => {
+        if (window.IND && typeof window.IND.showPermissionModal === "function") {
+            window.IND.showPermissionModal();
+            return;
+        }
+        alert(indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion."));
+    };
     let hasRestoredFilter = false;
     let retryOnNetworkError = false;
     let initialPage = 1;
@@ -79,7 +90,7 @@
     setTimelineEmptyText();
 
     let currentPage = 1;
-    const pageSize = 50;
+    const pageSize = 5;
     let debugLogged = 0;
     let activeRequestId = 0;
     let activeAbort = null;
@@ -456,6 +467,13 @@
 
         if (requestId !== activeRequestId) return;
 
+        if (response.status === 403) {
+            loader.style.display = "none";
+            showPermissionModal();
+            activeAbort = null;
+            return;
+        }
+
         if (!response.ok) {
             const statusText = response.statusText || "Error del servidor";
             console.error("Historial fetch failed", response.status, statusText);
@@ -501,6 +519,208 @@
     const TOOLTIP_BASE_FONT = 13;
     const TOOLTIP_MIN_FONT = 11;
     const ELLIPSIS = "...";
+    const PIXEL_GAP = 5;
+    const PIXEL_SPEED = 60;
+    const PIXEL_COLORS = ["rgba(0, 41, 107, 0.08)", "rgba(0, 41, 107, 0.16)", "rgba(0, 41, 107, 0.26)"];
+
+    function getEffectiveSpeed(value, reducedMotion) {
+        const min = 0;
+        const max = 100;
+        const throttle = 0.001;
+        const parsed = parseInt(value, 10);
+
+        if (parsed <= min || reducedMotion) return min;
+        if (parsed >= max) return max * throttle;
+        return parsed * throttle;
+    }
+
+    class Pixel {
+        constructor(canvas, context, x, y, color, speed, delay) {
+            this.width = canvas.width;
+            this.height = canvas.height;
+            this.ctx = context;
+            this.x = x;
+            this.y = y;
+            this.color = color;
+            this.speed = this.getRandomValue(0.1, 0.9) * speed;
+            this.size = 0;
+            this.sizeStep = Math.random() * 0.4;
+            this.minSize = 0.5;
+            this.maxSizeInteger = 2;
+            this.maxSize = this.getRandomValue(this.minSize, this.maxSizeInteger);
+            this.delay = delay;
+            this.counter = 0;
+            this.counterStep = Math.random() * 4 + (this.width + this.height) * 0.01;
+            this.isIdle = false;
+            this.isReverse = false;
+            this.isShimmer = false;
+        }
+
+        getRandomValue(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        draw() {
+            const centerOffset = this.maxSizeInteger * 0.5 - this.size * 0.5;
+            this.ctx.fillStyle = this.color;
+            this.ctx.fillRect(this.x + centerOffset, this.y + centerOffset, this.size, this.size);
+        }
+
+        appear() {
+            this.isIdle = false;
+            if (this.counter <= this.delay) {
+                this.counter += this.counterStep;
+                return;
+            }
+            if (this.size >= this.maxSize) {
+                this.isShimmer = true;
+            }
+            if (this.isShimmer) {
+                this.shimmer();
+            } else {
+                this.size += this.sizeStep;
+            }
+            this.draw();
+        }
+
+        disappear() {
+            this.isShimmer = false;
+            this.counter = 0;
+            if (this.size <= 0) {
+                this.isIdle = true;
+                return;
+            }
+            this.size -= 0.1;
+            this.draw();
+        }
+
+        shimmer() {
+            if (this.size >= this.maxSize) {
+                this.isReverse = true;
+            } else if (this.size <= this.minSize) {
+                this.isReverse = false;
+            }
+            if (this.isReverse) {
+                this.size -= this.speed;
+            } else {
+                this.size += this.speed;
+            }
+        }
+    }
+
+    function createPixelEffect(cardEl) {
+        if (!cardEl) return null;
+        const canvas = document.createElement("canvas");
+        canvas.className = "timeline-pixel-canvas";
+        cardEl.appendChild(canvas);
+
+        const reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const state = {
+            canvas,
+            ctx: canvas.getContext("2d"),
+            pixels: [],
+            animId: null,
+            lastTime: performance.now(),
+            reducedMotion,
+            width: 0,
+            height: 0
+        };
+
+        const initPixels = () => {
+            const rect = cardEl.getBoundingClientRect();
+            const width = Math.max(1, Math.floor(rect.width));
+            const height = Math.max(1, Math.floor(rect.height));
+            if (!width || !height || !state.ctx) return;
+
+            state.width = width;
+            state.height = height;
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style.width = `${width}px`;
+            canvas.style.height = `${height}px`;
+
+            const colors = PIXEL_COLORS;
+            const gap = Math.max(3, parseInt(PIXEL_GAP, 10));
+            const speed = getEffectiveSpeed(PIXEL_SPEED, reducedMotion);
+            const pxs = [];
+
+            for (let x = 0; x < width; x += gap) {
+                for (let y = 0; y < height; y += gap) {
+                    const color = colors[Math.floor(Math.random() * colors.length)];
+                    const dx = x - width / 2;
+                    const dy = y - height / 2;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    const delay = reducedMotion ? 0 : distance;
+                    pxs.push(new Pixel(canvas, state.ctx, x, y, color, speed, delay));
+                }
+            }
+
+            state.pixels = pxs;
+        };
+
+        const doAnimate = (fnName) => {
+            state.animId = requestAnimationFrame(() => doAnimate(fnName));
+            const timeNow = performance.now();
+            const timePassed = timeNow - state.lastTime;
+            const timeInterval = 1000 / 60;
+
+            if (timePassed < timeInterval) return;
+            state.lastTime = timeNow - (timePassed % timeInterval);
+
+            const ctx = state.ctx;
+            if (!ctx) return;
+            ctx.clearRect(0, 0, state.width, state.height);
+
+            let allIdle = true;
+            for (let i = 0; i < state.pixels.length; i++) {
+                const pixel = state.pixels[i];
+                pixel[fnName]();
+                if (!pixel.isIdle) allIdle = false;
+            }
+            if (allIdle) {
+                cancelAnimationFrame(state.animId);
+                state.animId = null;
+            }
+        };
+
+        const handleAnimation = (name) => {
+            if (!state.pixels.length) return;
+            if (state.animId) cancelAnimationFrame(state.animId);
+            state.lastTime = performance.now();
+            state.animId = requestAnimationFrame(() => doAnimate(name));
+        };
+
+        const onEnter = () => handleAnimation("appear");
+        const onLeave = () => handleAnimation("disappear");
+
+        cardEl.addEventListener("mouseenter", onEnter);
+        cardEl.addEventListener("mouseleave", onLeave);
+
+        let ro = null;
+        if (typeof ResizeObserver !== "undefined") {
+            ro = new ResizeObserver(initPixels);
+            ro.observe(cardEl);
+        }
+
+        initPixels();
+
+        return () => {
+            cardEl.removeEventListener("mouseenter", onEnter);
+            cardEl.removeEventListener("mouseleave", onLeave);
+            if (state.animId) cancelAnimationFrame(state.animId);
+            if (ro) ro.disconnect();
+        };
+    }
+
+    function cleanupPixelEffects(container) {
+        if (!container) return;
+        const cards = container.querySelectorAll(".timeline-card");
+        cards.forEach(card => {
+            if (card && typeof card.__pixelCleanup === "function") {
+                card.__pixelCleanup();
+            }
+        });
+    }
 
     // Only trigger tap actions when the pointer did not move beyond the threshold.
     function bindTapGuard(el, onTap) {
@@ -612,6 +832,7 @@
 
     // Renders activity timeline cards
     function renderTimeline(items) {
+        cleanupPixelEffects(timeline);
         timeline.innerHTML = "";
         timeline.classList.remove("timeline-empty");
         setTimelineEmptyText();
@@ -633,17 +854,17 @@
             }
 
             const rawName = (x.name ?? x.Name ?? "").toString().trim();
-            const fullName = rawName.toUpperCase();
+            const fullName = toTitleCase(rawName);
             const fecha = x.transDate ?? x.TransDate ?? "";
             const rawDesc = (x.description ?? x.Description ?? "").toString().trim();
-            const fullDesc = rawDesc.toUpperCase();
+            const fullDesc = rawDesc;
 
             // Do not allow navigation for placeholder cards with no data.
             const isNoDataCard = !rawName && !rawDesc;
             if (isNoDataCard) {
                 linkId = "";
             }
-            const fechaFormatted = formatDate(fecha);
+            const fechaParts = formatDateParts(fecha);
 
             const noDataText = indT("Common_NoData", "No data");
 
@@ -659,32 +880,44 @@
             cardEl.dataset.actividadid = actividadId;
             cardEl.dataset.recid = recId ?? "";
 
+            if (!isNoDataCard) {
+                const cleanup = createPixelEffect(cardEl);
+                if (cleanup) cardEl.__pixelCleanup = cleanup;
+            }
+
+            const datePanel = document.createElement("div");
+            datePanel.className = "timeline-date-panel flex flex-col items-center justify-center gap-1 px-3 py-3 bg-slate-50 border-r border-slate-200 text-slate-600";
+
+            const yearEl = document.createElement("div");
+            yearEl.className = "text-xs font-semibold tracking-[0.2em] text-slate-500";
+            yearEl.textContent = fechaParts.year || "";
+
+            const monthEl = document.createElement("div");
+            monthEl.className = "text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500";
+            monthEl.textContent = fechaParts.month || "";
+
+            const dayEl = document.createElement("div");
+            dayEl.className = "text-2xl font-semibold text-primary";
+            dayEl.textContent = fechaParts.day || "";
+
+            datePanel.appendChild(yearEl);
+            datePanel.appendChild(monthEl);
+            datePanel.appendChild(dayEl);
+
             const contentEl = document.createElement("div");
-            contentEl.className = "timeline-card__content";
-
-            const headEl = document.createElement("div");
-            headEl.className = "timeline-card-head";
-
-            const headInner = document.createElement("div");
+            contentEl.className = "timeline-card__content flex-1 py-3 px-4";
 
             const nameEl = document.createElement("div");
-            nameEl.className = "timeline-name ellipsis";
+            nameEl.className = "timeline-name";
             nameEl.textContent = fullName;
-
-            const dateEl = document.createElement("div");
-            dateEl.className = "timeline-date-chip";
-            dateEl.textContent = fechaFormatted;
-
-            headInner.appendChild(nameEl);
-            headInner.appendChild(dateEl);
-            headEl.appendChild(headInner);
 
             const descEl = document.createElement("p");
             descEl.className = "timeline-desc-text";
             descEl.textContent = fullDesc || noDataText;
 
-            contentEl.appendChild(headEl);
+            contentEl.appendChild(nameEl);
             contentEl.appendChild(descEl);
+            cardEl.appendChild(datePanel);
             cardEl.appendChild(contentEl);
             itemEl.appendChild(cardEl);
             timeline.appendChild(itemEl);
@@ -700,6 +933,10 @@
 
             if (linkId) {
                 const navigate = () => {
+                    if (!canViewHistory) {
+                        showPermissionModal();
+                        return;
+                    }
                     setTimeout(() => {
                         try {
                             sessionStorage.setItem(
@@ -725,7 +962,7 @@
 
         requestAnimationFrame(() => {
             const nameEls = timeline.querySelectorAll(".timeline-name");
-            nameEls.forEach((el) => applyEllipsis(el, el.dataset.fulltext || el.textContent, false));
+            nameEls.forEach((el) => applyEllipsis(el, el.dataset.fulltext || el.textContent, true));
             const descEls = timeline.querySelectorAll(".timeline-desc-text");
             descEls.forEach((el) => applyEllipsis(el, el.dataset.fulltext || el.textContent, true));
         });
@@ -868,6 +1105,35 @@
                 year: "numeric"
             })
             .toLowerCase();
+    }
+
+    function toTitleCase(value) {
+        if (!value) return "";
+        const locale = getUiLocale();
+        const lower = value.toLocaleLowerCase(locale);
+        try {
+            return lower.replace(/(^|[^\p{L}])(\p{L})/gu, (match, prefix, ch) => `${prefix}${ch.toLocaleUpperCase(locale)}`);
+        } catch {
+            return lower.replace(/(^|[\s-/])(\S)/g, (match, prefix, ch) => `${prefix}${ch.toLocaleUpperCase(locale)}`);
+        }
+    }
+
+    function formatDateParts(value) {
+        if (!value) return { year: "", month: "", day: "" };
+        const d = parseDateValue(value);
+        if (!d) return { year: "", month: "", day: "" };
+        const locale = getUiLocale();
+        let month = "";
+        if (isBasqueLocale(locale)) {
+            month = BASQUE_MONTHS_SHORT[d.getMonth()] || "";
+        } else {
+            month = d.toLocaleDateString(locale, { month: "short" }).replace(/\./g, "");
+        }
+        return {
+            year: String(d.getFullYear()),
+            month: month.toUpperCase(),
+            day: String(d.getDate()).padStart(2, "0")
+        };
     }
 
     function resetHistoryFilters() {

@@ -160,10 +160,12 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
     setCurrentYear(y);
   };
 
+  const drpClass = disabled ? "drp drp-readonly" : "drp";
+
   return (
     <div className={`relative ${disabled ? "opacity-70 pointer-events-none select-none" : ""}`} ref={containerRef}>
       <div
-        className="drp"
+        className={drpClass}
         role="button"
         tabIndex={0}
         onClick={() => setOpen((v) => !v)}

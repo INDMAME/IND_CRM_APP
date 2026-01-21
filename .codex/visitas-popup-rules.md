@@ -1,5 +1,9 @@
 # Visitas popup + action-mark behavior (Dec 2025)
 
+## Scope and hierarchy
+- Scope: Visitas create/edit/detail pages.
+- If conflict: system > `.codex/AGENTS.md` > `.codex/core-ui-rules.md` > this doc.
+
 Use this prompt when changing popups in Visitas create/edit/detail pages:
 
 ## 1. Edit mode toggle
@@ -14,8 +18,13 @@ Use this prompt when changing popups in Visitas create/edit/detail pages:
 - Confirm modal rules:
   - Tailwind only; rendered in-page (React portal to `document.body`) with high z-index (>= `z-[600000]`).
   - Must darken/blur the background slightly, but the main page remains visible.
-  - Buttons: primary text like `"Aceptar"`, `"Guardar"`, `"Eliminar"` and secondary `"Cancelar"`.
+  - Buttons: use i18n keys (examples: "Aceptar", "Guardar", "Eliminar", "Cancelar").
   - Closing with Cancel must not call the API and must not trigger the action mark.
+  - Suggested keys if missing (define in all cultures):
+    - `Common_OK`
+    - `Common_Save`
+    - `Common_Delete`
+    - `Common_Cancel`
 
 ## 3. Post-action feedback (after the API call)
 - After a successful operation, do **not** show an informational popup with text.
@@ -59,11 +68,8 @@ Use this prompt when changing popups in Visitas create/edit/detail pages:
 - Do not create new success popups or toast components for Visitas:
   - Confirm modal (before API) + IND Action Mark (after success) is the only accepted pattern.
 
-## UI overflow preview rule
-- When a text box can overflow its width, enable a centered preview tooltip on press or hold.
-- Only enable the preview when overflow is detected.
+## Shared UI rules
+- See `.codex/core-ui-rules.md`.
 
-## Read-only guard rule
-- When Visitas pages are in read-only or blocked mode, add `ind-readonly-surface` to the container.
-- Block `contextmenu`, `selectstart`, `copy`, `cut`, `paste` on that container to prevent Android copy overlays.
-- Keep tap navigation and overflow preview behavior working.
+## Last updated
+- 2026-01-21

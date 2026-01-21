@@ -1,5 +1,9 @@
 # IND_CRM_API surface for MVC client (Dec 2025)
 
+## Scope and hierarchy
+- Scope: API surface mapping for the MVC client.
+- If conflict: system > `.codex/AGENTS.md` > this doc.
+
 ## Base
 - Base URL: `ApiSettings:BaseUrl` (default `https://crm.insertec.biz:7776/`)
 - Auth: JWT in `Authorization: Bearer {token}`
@@ -11,6 +15,7 @@
 ## Endpoints and client mapping
 - `POST /api/auth/login` -> `ICrmApiClient.AuthenticateAsync(username, password)` -> `LoginResult`
 - `POST /api/auth/refresh` -> `ICrmApiClient.RefreshTokenAsync(currentToken)` -> `LoginResult`
+- `POST /api/auth/entra/context` -> `ICrmApiClient.GetEntraContextAsync(token, entraOid, appCode)` -> `IndEntraContextResponse`
 
 - `GET /api/system/getEnvironmentName` -> `ICrmApiClient.GetEnvironmentAsync(token)` -> `string`
 - `GET /api/system/getCompanyName` -> `ICrmApiClient.GetCompanyNameAsync(token)` -> `string`
@@ -43,6 +48,7 @@
 
 ## Client behavior notes
 - `ApiClientService` adds bearer token per call and applies refreshed token from header `X-Refreshed-Token` or body (`LoginResult.Token`).
+- `X-IND-Company` header is added for CRM/system calls using the current session company (`INDCompanySelected`).
 - Timeouts: `ApiSettings:TimeoutSeconds` (default 30s in `appsettings.json`) and `ApiSettings:AccountsTimeoutSeconds` (default 120s).
 - Deserialization uses custom converters to parse array-shaped payloads from Axapta for activities, accounts, contacts.
 - `PagedApiResponse<T>.GetAnyItems()` returns `Items` then `Data` (no duplicate property names).
@@ -52,6 +58,8 @@
 - Show `Message`/`ErrorCode` on errors; for 422 list validation `Errors[field,message]`.
 - Paginate with `Total`, `Page`, `PageSize`.
 
-## UI overflow preview rule
-- When a text box can overflow its width, enable a centered preview tooltip on press or hold.
-- Only enable the preview when overflow is detected.
+## Shared UI rules
+- See `.codex/core-ui-rules.md`.
+
+## Last updated
+- 2026-01-21

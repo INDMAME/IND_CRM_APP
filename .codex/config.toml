@@ -44,6 +44,8 @@ trust_level = "trusted"
 instruction = """
 Before generating or modifying code, assess impact on existing functionality. Do not introduce regressions or change working behavior unless explicitly requested.
 
+Project-specific rules live in `.codex/AGENTS.md`. Shared UI rules live in `.codex/core-ui-rules.md`. If conflicts appear, follow instruction hierarchy: system > AGENTS > feature docs.
+
 Validate dependent elements mentally: filters, calendars, dropdowns, validations, forms, JavaScript events, controllers, views, services, models. If a change could affect anything, flag it and propose a safe alternative before implementing.
 
 Do not remove working logic or rewrite functional components. Priority: system stability and avoiding side effects.

@@ -1,5 +1,10 @@
 # IND_CRM_APP agent profile
 
+## Scope and hierarchy
+- Scope: global project rules for IND_CRM_APP.
+- If conflict: system > this file > other `.codex/*.md` feature docs.
+- Shared UI rules live in `.codex/core-ui-rules.md`.
+
 ## Technical context
 
 - Project: ASP.NET Core MVC web application on .NET 10.0 with Razor views (server side rendering).
@@ -75,11 +80,11 @@
 - Interactive components:
   - Use Tailwind CSS components and patterns for modals, menus, dropdown lists, dialogs, steps, etc., integrated with Tailwind (both in Razor and React).
   - Use Heroicons as the default icon set across the UI.
-  - Dropdown/combobox rules: follow `docs/dropdown-pattern.md` (cache, portals, keyboard, chevron toggle) for any new selectable field.
+  - Dropdown/combobox rules: follow `.codex/dropdown-pattern.md` (cache, portals, keyboard, chevron toggle) for any new selectable field.
 - Static legacy libraries:
   - jQuery v3.7.1, jquery-validation and unobtrusive are considered legacy code.
   - Do not write new code that depends on these libs.
-  - Do not add new new jQuery/jq-validation usage.
+  - Do not add new jQuery/jq-validation usage.
   - Only touch this legacy code to safely migrate it to Tailwind + Tailwind CSS + Heroicons + Montserrat + #00296b, using small and safe refactors without breaking current behavior.
 - Reuse:
   - Create reusable Razor partials/components and React components for:
@@ -121,16 +126,9 @@
 - When adding a new key, add it to all supported culture .resx files in the same change.
 - Do not translate business data from the API; translate only fixed UI strings.
 
-## Overflow preview rule
+## Shared UI rules
 
-- For any text area or text box that can overflow its width, enable a centered preview tooltip on press or hold.
-- Only enable the preview when overflow is detected (scrollWidth > clientWidth or scrollHeight > clientHeight).
-
-## Read-only guard rule
-
-- When a page or section is in read-only or blocked mode, add `ind-readonly-surface` to the container.
-- Block `contextmenu`, `selectstart`, `copy`, `cut`, `paste` on that container to prevent Android copy overlays.
-- Do not block taps, navigation, or preview tooltips; apply only while read-only.
+- See `.codex/core-ui-rules.md` for overflow preview and read-only guard rules.
 
 ## How Codex should work
 
@@ -183,7 +181,7 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Frontend standard: ASP.NET Core MVC + Razor views, with optional React components; Tailwind CSS only; Tailwind CSS for interactive components; Heroicons for icons; base font "Montserrat", sans-serif; primary color #00296b.
 - Treat jQuery, and jquery-validation as legacy; do not add new usage.
 - Critical anti regression rule: never change calendars/date filters/dropdowns without validating events, payload formats to IND_CRM_API, and Razor bindings; propose a safe alternative if risk exists.
-- After any change, publish to C:\inetpub\wwwroot\IND_CRM_APP and restart IIS using iisreset.
+- After any change that must be deployed, publish to C:\inetpub\wwwroot\IND_CRM_APP and restart IIS using iisreset.
 
 ## Quick design prompt (visitas/historial)
 - Tailwind only; Bootstrap removed (no `spinner-border`, `page-item`, `page-link`, etc.).
@@ -191,3 +189,6 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Dropdowns: portal lists `rounded-xl` with visible scrollbar; options usan 10px de padding left (clase `type-option`), hover/active en primary.
 - Spinners: Tailwind ring `border-2 border-primary border-t-transparent rounded-full animate-spin`.
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
+
+## Last updated
+- 2026-01-21

@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using IND_CRM_APP.Infrastructure.Localization;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
@@ -58,18 +59,24 @@ namespace IND_CRM_APP.Infrastructure.Security
                 return;
             }
 
-            var moduleCode = ResolveModuleCode(path, http, ctxResult.Context);
-            if (string.IsNullOrWhiteSpace(moduleCode))
-            {
-                Deny(context, AccessDeniedMessage("Module not mapped."));
-                return;
-            }
-
             var companyId = _authContext.GetSelectedCompanyId(ctxResult.Context);
             var company = ResolveCompany(ctxResult.Context, companyId);
             if (company == null)
             {
                 Deny(context, AccessDeniedMessage("Company not selected."));
+                return;
+            }
+
+            if (IsForcedCompanyChange(context, ctxResult.Context, company))
+            {
+                context.Result = new RedirectToActionResult("Index", "Home", null);
+                return;
+            }
+
+            var moduleCode = ResolveModuleCode(path, http, ctxResult.Context, company);
+            if (string.IsNullOrWhiteSpace(moduleCode))
+            {
+                Deny(context, AccessDeniedMessage("Module not mapped."));
                 return;
             }
 
@@ -113,15 +120,15 @@ namespace IND_CRM_APP.Infrastructure.Security
                    string.Equals(action, "Login", StringComparison.OrdinalIgnoreCase);
         }
 
-        private string? ResolveModuleCode(string path, Microsoft.AspNetCore.Http.HttpContext http, IndWebContext context)
+        private string? ResolveModuleCode(string path, Microsoft.AspNetCore.Http.HttpContext http, IndWebContext context, IndWebCompany company)
         {
             if (INDModuleRegistry.TryResolveModule(path, out var moduleCode))
                 return moduleCode;
 
             if (IsHomePath(path))
             {
-                return context.Companies.SelectMany(c => c.Modules)
-                    .FirstOrDefault(m => m.AccessRightsInt >= (int)SysAccessRights.View)?.ModuleCode;
+                return company.Modules
+                    .FirstOrDefault(m => m.AccessRightsInt >= IndAccessRights.View)?.ModuleCode;
             }
 
             if (IsContextActionPath(path))
@@ -133,8 +140,8 @@ namespace IND_CRM_APP.Infrastructure.Security
                     return contextModule;
                 }
 
-                return context.Companies.SelectMany(c => c.Modules)
-                    .FirstOrDefault(m => m.AccessRightsInt >= (int)SysAccessRights.View)?.ModuleCode;
+                return company.Modules
+                    .FirstOrDefault(m => m.AccessRightsInt >= IndAccessRights.View)?.ModuleCode;
             }
 
             var returnUrl = TryGetReturnUrl(http);
@@ -165,8 +172,7 @@ namespace IND_CRM_APP.Infrastructure.Security
             {
                 var match = context.Companies.FirstOrDefault(c =>
                     string.Equals(c.CompanyId, companyId, StringComparison.OrdinalIgnoreCase));
-                if (match != null)
-                    return match;
+                return match;
             }
 
             return context.Companies.FirstOrDefault();
@@ -175,7 +181,7 @@ namespace IND_CRM_APP.Infrastructure.Security
         private static bool HasAccess(IndWebCompany company, string moduleCode, int requiredAccess)
         {
             var module = company.Modules.FirstOrDefault(m =>
-                string.Equals(m.ModuleCode, moduleCode, StringComparison.OrdinalIgnoreCase));
+                INDModuleRegistry.MatchesModuleCode(m.ModuleCode, moduleCode));
             if (module == null)
                 return false;
 
@@ -184,14 +190,166 @@ namespace IND_CRM_APP.Infrastructure.Security
 
         private static int GetRequiredAccess(string path)
         {
+            if (path.StartsWith("/TextEditorReact", StringComparison.OrdinalIgnoreCase))
+                return IndAccessRights.View;
             if (path.Contains("/Create", StringComparison.OrdinalIgnoreCase))
-                return (int)SysAccessRights.Add;
-            if (path.Contains("/Edit", StringComparison.OrdinalIgnoreCase))
-                return (int)SysAccessRights.Edit;
+                return IndAccessRights.Add;
+            if (path.Contains("/Update", StringComparison.OrdinalIgnoreCase) ||
+                path.Contains("/Edit", StringComparison.OrdinalIgnoreCase))
+                return IndAccessRights.Edit;
             if (path.Contains("/Delete", StringComparison.OrdinalIgnoreCase))
-                return (int)SysAccessRights.FullAccess;
+                return IndAccessRights.FullAccess;
 
-            return (int)SysAccessRights.View;
+            return IndAccessRights.View;
+        }
+
+        // Detects attempts to force a different company via URL/query.
+        private static bool IsForcedCompanyChange(ActionExecutingContext context, IndWebContext webContext, IndWebCompany company)
+        {
+            var http = context.HttpContext;
+            if (!HttpMethods.IsGet(http.Request.Method) && !HttpMethods.IsHead(http.Request.Method))
+                return false;
+
+            if (TryGetCompanyFromQuery(http, out var requestedCompany) &&
+                !string.Equals(requestedCompany, company.CompanyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (TryGetCompanyFromRouteValues(context, webContext, out requestedCompany) &&
+                !string.Equals(requestedCompany, company.CompanyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            if (TryGetCompanyFromPath(http, webContext, out requestedCompany) &&
+                !string.Equals(requestedCompany, company.CompanyId, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        // Reads a requested company id from query string parameters.
+        private static bool TryGetCompanyFromQuery(Microsoft.AspNetCore.Http.HttpContext http, out string companyId)
+        {
+            companyId = string.Empty;
+            var query = http.Request.Query;
+            if (query == null || query.Count == 0)
+                return false;
+
+            foreach (var key in new[] { "company", "companyId", "indCompany", "indCompanyId" })
+            {
+                if (query.TryGetValue(key, out var value) && !string.IsNullOrWhiteSpace(value))
+                {
+                    companyId = value.ToString().Trim();
+                    return !string.IsNullOrWhiteSpace(companyId);
+                }
+            }
+
+            return false;
+        }
+
+        // Detects a company value inside route data.
+        private static bool TryGetCompanyFromRouteValues(ActionExecutingContext context, IndWebContext webContext, out string companyId)
+        {
+            companyId = string.Empty;
+            if (webContext?.Companies == null || webContext.Companies.Count == 0)
+                return false;
+
+            var values = context.RouteData?.Values;
+            if (values == null || values.Count == 0)
+                return false;
+
+            foreach (var key in new[] { "company", "companyId", "indCompany", "indCompanyId" })
+            {
+                if (values.TryGetValue(key, out var raw) && raw != null)
+                {
+                    var candidate = raw.ToString()?.Trim();
+                    if (string.IsNullOrWhiteSpace(candidate))
+                        continue;
+
+                    if (webContext.Companies.Any(c =>
+                            string.Equals(c.CompanyId, candidate, StringComparison.OrdinalIgnoreCase)))
+                    {
+                        companyId = candidate;
+                        return true;
+                    }
+                }
+            }
+
+            if (values.TryGetValue("id", out var idRaw) && idRaw != null)
+            {
+                var candidate = idRaw.ToString()?.Trim();
+                if (!string.IsNullOrWhiteSpace(candidate) &&
+                    !ActionHasParameter(context, "id") &&
+                    webContext.Companies.Any(c => string.Equals(c.CompanyId, candidate, StringComparison.OrdinalIgnoreCase)))
+                {
+                    companyId = candidate;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static bool ActionHasParameter(ActionExecutingContext context, string name)
+        {
+            if (context?.ActionDescriptor?.Parameters == null)
+                return false;
+
+            return context.ActionDescriptor.Parameters.Any(p =>
+                string.Equals(p.Name, name, StringComparison.OrdinalIgnoreCase));
+        }
+
+        // Detects a trailing company segment on fixed routes.
+        private static bool TryGetCompanyFromPath(Microsoft.AspNetCore.Http.HttpContext http, IndWebContext webContext, out string companyId)
+        {
+            companyId = string.Empty;
+            if (webContext?.Companies == null || webContext.Companies.Count == 0)
+                return false;
+
+            var path = http.Request.Path.Value ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            var trimmed = path.TrimEnd('/');
+            if (string.IsNullOrWhiteSpace(trimmed))
+                return false;
+
+            var lastSlash = trimmed.LastIndexOf("/", StringComparison.Ordinal);
+            if (lastSlash < 0 || lastSlash == trimmed.Length - 1)
+                return false;
+
+            var candidate = trimmed[(lastSlash + 1)..];
+            if (string.IsNullOrWhiteSpace(candidate))
+                return false;
+
+            var basePath = lastSlash == 0 ? "/" : trimmed[..lastSlash];
+            if (!IsCompanyGuardPath(basePath))
+                return false;
+
+            var match = webContext.Companies.FirstOrDefault(c =>
+                string.Equals(c.CompanyId, candidate, StringComparison.OrdinalIgnoreCase));
+            if (match == null)
+                return false;
+
+            companyId = match.CompanyId;
+            return true;
+        }
+
+        // List of routes where a trailing company segment should trigger a redirect.
+        private static bool IsCompanyGuardPath(string basePath)
+        {
+            if (string.IsNullOrWhiteSpace(basePath))
+                return false;
+
+            return basePath.Equals("/", StringComparison.OrdinalIgnoreCase) ||
+                   basePath.Equals("/Home", StringComparison.OrdinalIgnoreCase) ||
+                   basePath.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase) ||
+                   basePath.Equals("/Historial/History", StringComparison.OrdinalIgnoreCase) ||
+                   basePath.Equals("/Visitas/Create", StringComparison.OrdinalIgnoreCase);
         }
 
         private string? TryGetReturnUrl(Microsoft.AspNetCore.Http.HttpContext http)
@@ -213,6 +371,63 @@ namespace IND_CRM_APP.Infrastructure.Security
                 {
                     _logger.LogWarning(ex, "Failed to read returnUrl from form.");
                 }
+            }
+
+            var referer = http.Request.Headers["Referer"].FirstOrDefault();
+            if (!string.IsNullOrWhiteSpace(referer))
+            {
+                var fromReferer = ExtractReturnUrlFromRaw(referer);
+                if (!string.IsNullOrWhiteSpace(fromReferer))
+                    return fromReferer;
+            }
+
+            return null;
+        }
+
+        private static string? ExtractReturnUrlFromRaw(string raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            string? local = null;
+            if (Uri.TryCreate(raw, UriKind.Absolute, out var uri))
+            {
+                local = uri.PathAndQuery;
+            }
+            else if (IsLocalUrl(raw))
+            {
+                local = raw;
+            }
+
+            if (string.IsNullOrWhiteSpace(local))
+                return null;
+
+            return ExtractReturnUrlFromQuery(local);
+        }
+
+        private static string? ExtractReturnUrlFromQuery(string url)
+        {
+            var idx = url.IndexOf("?", StringComparison.Ordinal);
+            if (idx < 0 || idx == url.Length - 1)
+                return null;
+
+            var query = url[(idx + 1)..];
+            var parts = query.Split('&', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var part in parts)
+            {
+                var kv = part.Split('=', 2);
+                if (kv.Length == 0)
+                    continue;
+
+                var key = Uri.UnescapeDataString(kv[0]);
+                if (!string.Equals(key, "returnUrl", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var value = kv.Length > 1 ? Uri.UnescapeDataString(kv[1]) : string.Empty;
+                if (string.IsNullOrWhiteSpace(value) || !IsLocalUrl(value))
+                    return null;
+
+                return NormalizeReturnUrl(value);
             }
 
             return null;
@@ -240,7 +455,35 @@ namespace IND_CRM_APP.Infrastructure.Security
 
         private void Deny(ActionExecutingContext context, string message)
         {
-            var tempData = _tempDataFactory.GetTempData(context.HttpContext);
+            var http = context.HttpContext;
+            var isAuthenticated = http.User?.Identity?.IsAuthenticated == true;
+
+            if (isAuthenticated && IsJsonRequest(http))
+            {
+                context.Result = new JsonResult(new { success = false, message })
+                {
+                    StatusCode = StatusCodes.Status403Forbidden
+                };
+                return;
+            }
+
+            if (isAuthenticated)
+            {
+                var path = http.Request.Path.Value ?? string.Empty;
+                if (IsHomePath(path))
+                {
+                    context.Result = new StatusCodeResult(StatusCodes.Status403Forbidden);
+                }
+                else
+                {
+                    var tempDataRedirect = _tempDataFactory.GetTempData(http);
+                    tempDataRedirect["IndPermissionRedirectMessage"] = message;
+                    context.Result = new RedirectToActionResult("Index", "Home", null);
+                }
+                return;
+            }
+
+            var tempData = _tempDataFactory.GetTempData(http);
             tempData["AuthError"] = message;
             context.Result = new RedirectToActionResult("Login", "Auth", null);
         }
@@ -251,13 +494,24 @@ namespace IND_CRM_APP.Infrastructure.Security
             return string.Format(template, reason);
         }
 
-        private enum SysAccessRights
+        private static bool IsJsonRequest(Microsoft.AspNetCore.Http.HttpContext http)
         {
-            NoAccess = 0,
-            View = 1,
-            Edit = 2,
-            Add = 3,
-            FullAccess = 4
+            var accept = http.Request.Headers["Accept"].ToString();
+            if (!string.IsNullOrWhiteSpace(accept) &&
+                accept.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var contentType = http.Request.ContentType ?? string.Empty;
+            if (!string.IsNullOrWhiteSpace(contentType) &&
+                contentType.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var requestedWith = http.Request.Headers["X-Requested-With"].ToString();
+            return string.Equals(requestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

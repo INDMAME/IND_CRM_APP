@@ -9,9 +9,46 @@ const classNames = (...classes) => classes.filter(Boolean).join(" ");
 
 const IND_I18N = globalThis.__IND_I18N__ || {};
 const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+const PERM_I18N = globalThis.__IND_PERMISSION_I18N__ || {};
+const MODULE_ACCESS = globalThis.__IND_MODULE_ACCESS__ || {};
+const CURRENT_COMPANY = String(globalThis.__IND_SELECTED_COMPANY__ || "").trim().toUpperCase();
+const COMPANY_STORAGE_SUFFIX = CURRENT_COMPANY ? `_${CURRENT_COMPANY}` : "";
+const ACCESS_RIGHTS = { View: 1, Edit: 2, Add: 3, FullAccess: 4 };
+const getModuleAccess = (code) => Number(MODULE_ACCESS && MODULE_ACCESS[code] != null ? MODULE_ACCESS[code] : 0);
+const canCreateVisit = getModuleAccess("VISITAS_CREACION") >= ACCESS_RIGHTS.Add;
+const canRollbackDelete = getModuleAccess("VISITAS_HISTORIAL") >= ACCESS_RIGHTS.FullAccess;
+const showPermissionModal = (opts) => {
+  if (typeof window !== "undefined" && window.IND && typeof window.IND.showPermissionModal === "function") {
+    window.IND.showPermissionModal(opts || {});
+    return;
+  }
+  const fallback = PERM_I18N.message || indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion.");
+  alert(fallback);
+};
 const indFormat = (key, fallback, ...args) => {
   const template = indT(key, fallback);
   return String(template).replace(/\{(\d+)\}/g, (_, idx) => String(args[Number(idx)] ?? ""));
+};
+
+// Optional global overlay spinner for cache-heavy flows.
+const showGlobalSpinner = (message) => {
+  try {
+    if (typeof window !== "undefined" && typeof window.__indShowGlobalSpinner === "function") {
+      window.__indShowGlobalSpinner(message);
+    }
+  } catch {
+    /* ignore */
+  }
+};
+
+const hideGlobalSpinner = () => {
+  try {
+    if (typeof window !== "undefined" && typeof window.__indHideGlobalSpinner === "function") {
+      window.__indHideGlobalSpinner();
+    }
+  } catch {
+    /* ignore */
+  }
 };
 
 function indExtractId(value) {
@@ -78,12 +115,114 @@ function indExtractNumericId(value, depth = 0) {
   return "";
 }
 
-const Spinner = ({ size = "h-4 w-4" }) => (
-  <div
-    className={`${size} border-2 border-primary border-t-transparent rounded-full animate-spin`}
+function indExtractSignedId(value, depth = 0) {
+  if (depth > 3) return "";
+  if (value === null || value === undefined) return "";
+  if (typeof value === "number" && Number.isFinite(value)) return String(Math.trunc(value));
+  if (typeof value === "string") {
+    const raw = value.trim();
+    if (!raw) return "";
+    const match = raw.match(/-?\d{3,}/);
+    return match ? match[0] : "";
+  }
+  if (typeof value !== "object") return "";
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const found = indExtractSignedId(item, depth + 1);
+      if (found) return found;
+    }
+    return "";
+  }
+
+  const keys = [
+    "recId",
+    "RecId",
+    "refRecIdActividad",
+    "RefRecIdActividad",
+    "actividadRecId",
+    "ActividadRecId",
+    "message",
+    "Message",
+    "result",
+    "Result",
+    "data",
+    "Data"
+  ];
+
+  for (const k of keys) {
+    if (Object.prototype.hasOwnProperty.call(value, k)) {
+      const found = indExtractSignedId(value[k], depth + 1);
+      if (found) return found;
+    }
+  }
+
+  for (const v of Object.values(value)) {
+    const found = indExtractSignedId(v, depth + 1);
+    if (found) return found;
+  }
+
+  return "";
+}
+
+// Filters placeholder rows like "Sin datos." returned by the API.
+function isNoDataText(value) {
+  const raw = String(value || "").trim().toLowerCase();
+  if (!raw) return false;
+  const normalized = raw.replace(/[^a-z0-9]+/g, "");
+  return normalized === "sindatos" || normalized === "nodata";
+}
+
+function isNoDataRow(row) {
+  if (row === null || row === undefined) return true;
+  if (Array.isArray(row)) {
+    return row.length === 1 && isNoDataText(row[0]);
+  }
+  if (typeof row === "string") {
+    return isNoDataText(row);
+  }
+  if (typeof row === "object") {
+    const values = Object.values(row);
+    if (!values.length) return true;
+    return values.some((v) => typeof v === "string" && isNoDataText(v));
+  }
+  return false;
+}
+
+function mapAccountItem(item) {
+  if (isNoDataRow(item)) return null;
+  if (Array.isArray(item)) {
+    const code = (item[0] || "").toString().trim();
+    const desc = (item[2] || item[1] || "").toString().trim();
+    if (!code || isNoDataText(code) || isNoDataText(desc)) return null;
+    const text = desc ? `${desc} (${code})` : code;
+    return {
+      value: code,
+      text,
+      cargo: "",
+      empresa: item[2] || "",
+    };
+  }
+  if (item && typeof item === "object") {
+    const code = (item.accountNum || item.AccountNum || "").toString().trim();
+    const desc = (item.nombreComercial || item.NombreComercial || item.razonSocial || item.RazonSocial || "")
+      .toString()
+      .trim();
+    if (!code || isNoDataText(code) || isNoDataText(desc)) return null;
+    const text = desc ? `${desc} (${code})` : code;
+    return { value: code, text };
+  }
+  return null;
+}
+
+const Spinner = ({ size = "h-4 w-4", label }) => (
+  <svg
+    className={`ind-spinner ${size}`}
+    viewBox="0 0 20 20"
     role="status"
-    aria-label={indT("Common_Loading", "Loading")}
-  />
+    aria-label={label || indT("Common_Loading", "Loading")}
+  >
+    <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
+  </svg>
 );
 
 function useFloatingPosition(targetRef, open) {
@@ -172,20 +311,27 @@ function makeCache(limit = 10) {
 }
 
 async function fetchJson(url, options) {
+  const { suppressPermissionModal, ...fetchOptions } = options || {};
   const csrfToken = getCsrfToken();
   const headers = {
     Accept: "application/json",
-    ...(options?.headers || {}),
+    ...(fetchOptions?.headers || {}),
     ...(csrfToken ? { RequestVerificationToken: csrfToken } : {}),
   };
   const merged = {
     credentials: "same-origin",
-    ...options,
+    ...fetchOptions,
     headers,
   };
   const res = await fetch(url, merged);
   const text = await res.text();
   if (!res.ok) {
+    if (res.status === 403) {
+      if (!suppressPermissionModal) {
+        showPermissionModal();
+      }
+      throw new Error(indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion."));
+    }
     // Prefer upstream API message when provided.
     try {
       const json = JSON.parse(text);
@@ -207,7 +353,7 @@ async function fetchJson(url, options) {
 
 const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-function useTopbar(step, canGoNext, onNext, onPrev, busy = false, canSubmitStep2 = true) {
+function useTopbar(step, canGoNext, onNext, onPrev, busy = false, canSubmitStep2 = true, canAccess = true) {
   useEffect(() => {
     const forward = document.getElementById("globalForwardBtn");
     const back = document.getElementById("globalBackBtn");
@@ -216,7 +362,7 @@ function useTopbar(step, canGoNext, onNext, onPrev, busy = false, canSubmitStep2
 
     if (forward) {
       const isStep2 = step === 2;
-      const showForward = isStep2 || (step === 1 && canGoNext);
+      const showForward = canAccess && (isStep2 || (step === 1 && canGoNext));
       forward.style.visibility = showForward ? "visible" : "hidden";
       forward.disabled = !showForward || busy;
       forward.onclick = showForward ? () => onNext() : null;
@@ -239,7 +385,7 @@ function useTopbar(step, canGoNext, onNext, onPrev, busy = false, canSubmitStep2
       }
     }
     if (back) {
-      const showBack = step === 2;
+      const showBack = canAccess && step === 2;
       back.style.visibility = showBack ? "visible" : "hidden";
       back.disabled = !showBack || busy;
       back.onclick = showBack ? () => onPrev() : null;
@@ -249,9 +395,11 @@ function useTopbar(step, canGoNext, onNext, onPrev, busy = false, canSubmitStep2
 
 const clientCache = makeCache(10);
 const contactsCache = makeCache(10);
-const VISIT_DRAFT_KEY = "visitas_draft";
-const CONTACTS_STORAGE_KEY = "visitas_contacts_cache_v1";
-const CONTACTS_SELECTION_KEY = "visitas_contacts_selected_v1";
+const cacheKeyWithCompany = (key) => `${CURRENT_COMPANY || "DEFAULT"}::${key}`;
+// Keep drafts and caches scoped per company to avoid mixing data.
+const VISIT_DRAFT_KEY = `visitas_draft${COMPANY_STORAGE_SUFFIX}`;
+const CONTACTS_STORAGE_KEY = `visitas_contacts_cache_v1${COMPANY_STORAGE_SUFFIX}`;
+const CONTACTS_SELECTION_KEY = `visitas_contacts_selected_v1${COMPANY_STORAGE_SUFFIX}`;
 const CREATE_FRESH_PARAM = "fresh";
 const HISTORY_FILTER_KEY = "visitas_history_filter_v1";
 const TEXT_EDITOR_PREFIX = "ind_texteditor_";
@@ -475,10 +623,11 @@ const writeStorage = (key, data) => {
 
 const getCachedContacts = (account) => {
   if (!account) return null;
-  if (contactsCache.has(account)) return contactsCache.get(account);
+  const cacheKey = cacheKeyWithCompany(account);
+  if (contactsCache.has(cacheKey)) return contactsCache.get(cacheKey);
   const store = readStorage(CONTACTS_STORAGE_KEY);
   if (store[account]) {
-    contactsCache.set(account, store[account]);
+    contactsCache.set(cacheKey, store[account]);
     return store[account];
   }
   return null;
@@ -486,7 +635,7 @@ const getCachedContacts = (account) => {
 
 const setCachedContacts = (account, items) => {
   if (!account) return;
-  contactsCache.set(account, items);
+  contactsCache.set(cacheKeyWithCompany(account), items);
   const store = readStorage(CONTACTS_STORAGE_KEY);
   store[account] = items;
   writeStorage(CONTACTS_STORAGE_KEY, store);
@@ -596,7 +745,7 @@ function ClientCombobox({ onSelected, value = null }) {
     setPage(1);
     setHasMore(true);
     setOpen(false);
-    const cacheKey = query.trim().toLowerCase();
+    const cacheKey = cacheKeyWithCompany(query.trim().toLowerCase());
     if (clientCache.has(cacheKey)) {
       const cached = clientCache.get(cacheKey);
       setFetchedQuery(currentQuery);
@@ -619,29 +768,9 @@ function ClientCombobox({ onSelected, value = null }) {
     try {
       const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=1&pageSize=10`;
       const data = await fetchJson(url, { signal: controller.signal });
-      const items = (data.items || []).map((o) => {
-        // API puede devolver objetos o arrays. Arrays: [accountNum, desc1, desc2, id]
-        if (Array.isArray(o)) {
-          const code = o[0] || "";
-          const desc = (o[2] || o[1] || "").toString();
-          const text = code && desc ? `${desc} (${code})` : desc || code;
-          return {
-            value: code,
-            text,
-            cargo: "",
-            empresa: o[2] || "",
-          };
-        }
-        const code = o.accountNum || o.AccountNum || "";
-        const desc = o.nombreComercial || o.NombreComercial || o.razonSocial || o.RazonSocial || "";
-        const text = code && desc ? `${desc} (${code})` : desc || code;
-        return {
-          value: code,
-          text,
-        };
-      });
+      const items = (data.items || []).map(mapAccountItem).filter(Boolean);
       setFetchedQuery(currentQuery);
-      clientCache.set(query.trim().toLowerCase(), items);
+      clientCache.set(cacheKeyWithCompany(query.trim().toLowerCase()), items);
       setOptions(items);
       setStatus(items.length ? indFormat("Visits_Create_ClientCount", "{0} clients", items.length) : indT("Visits_Create_NoResults", "No results"));
       setHasMore(items.length === 10);
@@ -672,26 +801,7 @@ function ClientCombobox({ onSelected, value = null }) {
       const nextPage = page + 1;
       const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=${nextPage}&pageSize=10`;
       const data = await fetchJson(url, { signal: controller.signal });
-      const items = (data.items || []).map((o) => {
-        if (Array.isArray(o)) {
-          const code = o[0] || "";
-          const desc = (o[2] || o[1] || "").toString();
-          const text = code && desc ? `${desc} (${code})` : desc || code;
-          return {
-            value: code,
-            text,
-            cargo: "",
-            empresa: o[2] || "",
-          };
-        }
-        const code = o.accountNum || o.AccountNum || "";
-        const desc = o.nombreComercial || o.NombreComercial || o.razonSocial || o.RazonSocial || "";
-        const text = code && desc ? `${desc} (${code})` : desc || code;
-        return {
-          value: code,
-          text,
-        };
-      });
+      const items = (data.items || []).map(mapAccountItem).filter(Boolean);
       setOptions((prev) => [...prev, ...items]);
       setPage(nextPage);
       setHasMore(items.length === 10);
@@ -1031,12 +1141,23 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
   }, [selected, onChange, accountNum]);
 
   const mapContacts = (items = []) =>
-    items.map((c) => ({
-      value: c.recId || c.RecId || "",
-      text: (c.name || c.Name || "").toString().trim().toUpperCase(),
-      cargo: (c.cargo || c.Cargo || "").toString().trim().toUpperCase(),
-      empresa: (c.empresa || c.Empresa || "").toString().trim().toUpperCase(),
-    }));
+    items
+      .map((c) => {
+        if (isNoDataRow(c)) return null;
+        if (Array.isArray(c)) return null;
+        const recId = (c.recId || c.RecId || "").toString().trim();
+        const name = (c.name || c.Name || "").toString().trim();
+        const cargo = (c.cargo || c.Cargo || "").toString().trim();
+        const empresa = (c.empresa || c.Empresa || "").toString().trim();
+        if (!recId || isNoDataText(name)) return null;
+        return {
+          value: recId,
+          text: name.toUpperCase(),
+          cargo: cargo.toUpperCase(),
+          empresa: empresa.toUpperCase(),
+        };
+      })
+      .filter(Boolean);
 
   const load = async (pageToLoad = 1, append = false) => {
     if (!accountNum) return;
@@ -1261,7 +1382,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
           </div>
           {blocking && (
             <div className="absolute inset-0 z-[70000] bg-white/70 backdrop-blur-[1px] flex items-center justify-center rounded-xl">
-              <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <Spinner size="h-6 w-6" />
             </div>
           )}
         </FloatingList>
@@ -1558,9 +1679,10 @@ function VisitasApp() {
   }, [buildDraft]);
 
   // Opens the full-screen text editor for a multiline field.
-  const openTextEditor = React.useCallback((fieldId, fieldLabel, fieldValue) => {
+  const openTextEditor = React.useCallback((fieldId, fieldLabel, fieldValue, options = {}) => {
     const safeId = String(fieldId || "").trim();
     const safeLabel = String(fieldLabel || "").trim();
+    const allowEdit = options?.allowEdit !== false;
     if (!safeId || !safeLabel) return;
 
     try {
@@ -1583,7 +1705,8 @@ function VisitasApp() {
     const url =
       `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId)}` +
       `&fieldLabel=${encodeURIComponent(safeLabel)}` +
-      `&returnUrl=${encodeURIComponent(returnUrl)}`;
+      `&returnUrl=${encodeURIComponent(returnUrl)}` +
+      `&allowEdit=${allowEdit ? "1" : "0"}`;
 
     window.location.href = url;
   }, [persistDraftNow]);
@@ -1685,6 +1808,19 @@ function VisitasApp() {
 
   // Restore draft on mount
   useEffect(() => {
+    let shouldShow = false;
+    try {
+      shouldShow = !!(
+        sessionStorage.getItem(VISIT_DRAFT_KEY) ||
+        sessionStorage.getItem(CONTACTS_STORAGE_KEY) ||
+        sessionStorage.getItem(CONTACTS_SELECTION_KEY)
+      );
+    } catch {
+      /* ignore storage access */
+    }
+    if (shouldShow) {
+      showGlobalSpinner(indT("Common_Loading", "Loading"));
+    }
     try {
       const raw = sessionStorage.getItem(VISIT_DRAFT_KEY);
       if (raw) {
@@ -1701,6 +1837,10 @@ function VisitasApp() {
       }
     } catch {
       /* ignore parse issues */
+    } finally {
+      if (shouldShow) {
+        hideGlobalSpinner();
+      }
     }
     draftRestoredRef.current = true;
   }, []);
@@ -1733,16 +1873,25 @@ function VisitasApp() {
     step,
     canGoNext,
     () => {
+      if (!canCreateVisit) {
+        showPermissionModal();
+        return;
+      }
       if (step === 1 && canGoNext) setStep(2);
       if (step === 2) handleSubmit();
     },
     () => setStep(1),
     busy,
-    canCreate
+    canCreate,
+    canCreateVisit
   );
 
   const doCreate = async () => {
     if (busy) return false;
+    if (!canCreateVisit) {
+      showPermissionModal();
+      return false;
+    }
     setModalError("");
     if (!selectedClient) {
       setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
@@ -1760,11 +1909,13 @@ function VisitasApp() {
     setBusy(true);
     setStatus(indT("Visits_Create_CreatingActivity", "Creating activity..."));
 
+    let createdRecId = "";
     try {
       const payloadActivity = {
         accountNum: selectedClient.value,
         visitType,
         userId: axUser,
+        createdByUserId: axUser,
         description,
         transDate,
         comentarios,
@@ -1781,10 +1932,11 @@ function VisitasApp() {
       if (!resAct.success) throw new Error(resAct.message || indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
 
       const recIdActividad =
-        indExtractNumericId(resAct.data) ||
-        indExtractNumericId(resAct.message) ||
-        indExtractNumericId(indExtractId(resAct.data) || indExtractId(resAct.message));
+        indExtractSignedId(resAct.data) ||
+        indExtractSignedId(resAct.message) ||
+        indExtractSignedId(indExtractId(resAct.data) || indExtractId(resAct.message));
       if (!recIdActividad) throw new Error(indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
+      createdRecId = String(recIdActividad);
 
       for (let idx = 0; idx < selectedContacts.length; idx++) {
         const c = selectedContacts[idx];
@@ -1794,6 +1946,7 @@ function VisitasApp() {
           asistenteTipo: defaultAsistenteTipo,
           asistenteId: c.text,
           contactoRecId: c.value,
+          createdByUserId: axUser,
         };
         const resVis = await fetchJson("/Visitas/CreateVisitaAsistente", {
           method: "POST",
@@ -1816,6 +1969,17 @@ function VisitasApp() {
       window.location.href = "/Historial/History";
       return true;
     } catch (e) {
+      if (createdRecId && canRollbackDelete) {
+        try {
+          setStatus(indT("Visits_Create_Rollback", "Rolling back activity..."));
+          await fetchJson(`/Visitas/DeleteActivity/${encodeURIComponent(createdRecId)}`, {
+            method: "DELETE",
+            suppressPermissionModal: true,
+          });
+        } catch (cleanupErr) {
+          console.error("Rollback delete activity failed:", cleanupErr);
+        }
+      }
       const msg = e.message || indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
       setModalError(msg);
       setStatus(msg);
@@ -1827,6 +1991,10 @@ function VisitasApp() {
 
   const handleSubmit = () => {
     if (busy) return;
+    if (!canCreateVisit) {
+      showPermissionModal();
+      return;
+    }
     if (modal.open) return;
     if (!selectedClient) {
       setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));

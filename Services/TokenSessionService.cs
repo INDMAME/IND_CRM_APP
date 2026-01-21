@@ -58,7 +58,12 @@ namespace IND_CRM_APP.Services
         public void Clear()
         {
             var ctx = _httpContextAccessor.HttpContext;
-            ctx?.Session.Clear();
+            if (ctx == null)
+                return;
+
+            // Only clear token fields so company selection/session context remains intact.
+            ctx.Session.Remove("Token");
+            ctx.Session.Remove("TokenExpires");
         }
     }
 }

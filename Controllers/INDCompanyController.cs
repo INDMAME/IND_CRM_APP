@@ -1,3 +1,4 @@
+using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Mvc;
 
 namespace IND_CRM_APP.Controllers
@@ -5,21 +6,49 @@ namespace IND_CRM_APP.Controllers
     // Handles company selection from the sidebar menu.
     public class INDCompanyController : Controller
     {
+        private readonly IIndAuthContextService _authContext;
+
+        public INDCompanyController(IIndAuthContextService authContext)
+        {
+            _authContext = authContext;
+        }
+
         // Stores the selected company in session and redirects back.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult SetCompany(string? companyId, string? returnUrl)
+        public async Task<IActionResult> SetCompany(string? companyId, string? returnUrl)
         {
-            if (!string.IsNullOrWhiteSpace(companyId))
+            var current = HttpContext.Session.GetString("INDCompanySelected");
+            var trimmed = companyId?.Trim();
+            var changed = !string.IsNullOrWhiteSpace(trimmed) &&
+                          !string.Equals(current, trimmed, StringComparison.OrdinalIgnoreCase);
+
+            if (!string.IsNullOrWhiteSpace(trimmed))
             {
-                HttpContext.Session.SetString("INDCompanySelected", companyId.Trim());
+                HttpContext.Session.SetString("INDCompanySelected", trimmed);
+                HttpContext.Session.SetString("INDCompanySelectionSource", "user");
             }
 
-            var safeReturnUrl = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
-                ? returnUrl
-                : "/";
+            if (changed)
+            {
+                _authContext.ClearContextCache(preserveCompanySelection: true);
+                await _authContext.EnsureContextAsync();
+            }
 
-            return LocalRedirect(safeReturnUrl);
+            // Always send users to Home after a company change to avoid stale pages.
+            if (IsAjaxRequest())
+            {
+                return Ok();
+            }
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        // Checks if the request was sent via AJAX/fetch.
+        private bool IsAjaxRequest()
+        {
+            var requestedWith = Request.Headers["X-Requested-With"].ToString();
+            return string.Equals(requestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
         }
     }
 }
