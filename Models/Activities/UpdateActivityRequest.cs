@@ -17,9 +17,6 @@ namespace IND_CRM_APP.Models.Activities
         [JsonPropertyName("asistenteTipo")]
         public string AsistenteTipo { get; set; } = string.Empty;
 
-        [JsonPropertyName("userId")]
-        public string UserId { get; set; } = string.Empty;
-
         [JsonPropertyName("description")]
         public string Description { get; set; } = string.Empty;
 

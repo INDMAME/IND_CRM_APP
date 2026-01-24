@@ -120,8 +120,6 @@ namespace IND_CRM_APP.Controllers
                 ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
                 ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
 
-                ViewBag.AxUser = HttpContext.Session.GetString("AxUser");
-
                 return View();
             }
             catch
@@ -144,15 +142,6 @@ namespace IND_CRM_APP.Controllers
 
                 if (req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
-
-                var axUser = (HttpContext.Session.GetString("AxUser") ?? string.Empty).Trim();
-                if (string.IsNullOrWhiteSpace(req.CreatedByUserId) && !string.IsNullOrWhiteSpace(axUser))
-                {
-                    req.CreatedByUserId = axUser;
-                }
-
-                // API expects the service user as userId and the actual user as createdByUserId.
-                req.UserId = IndAuthEnv.ServiceUser;
 
                 var response = await _apiClient.CreateActivityAsync(token, req);
 
@@ -188,12 +177,6 @@ namespace IND_CRM_APP.Controllers
 
                 if (req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
-
-                var axUser = HttpContext.Session.GetString("AxUser") ?? string.Empty;
-                if (!string.IsNullOrWhiteSpace(axUser) && string.IsNullOrWhiteSpace(req.CreatedByUserId))
-                {
-                    req.CreatedByUserId = axUser;
-                }
 
                 var response = await _apiClient.CreateVisitaAsistenteAsync(token, req);
 
@@ -434,7 +417,6 @@ namespace IND_CRM_APP.Controllers
                     ActividadId = activity.ActividadId ?? code,
                     AccountNum = activity.AccountNum ?? string.Empty,
                     VisitType = NormalizeVisitType(activity.TipoVisita ?? activity.ActividadType),
-                    UserId = HttpContext.Session.GetString("AxUser") ?? string.Empty,
                     Description = activity.Description ?? string.Empty,
                     TransDate = NormalizeDate(activity.TransDate),
                     Comentarios = activity.Comentarios ?? string.Empty,
@@ -447,7 +429,6 @@ namespace IND_CRM_APP.Controllers
                 ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
                 ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
                 ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
-                ViewBag.AxUser = HttpContext.Session.GetString("AxUser");
                 ViewData["IsVisitaDetail"] = true;
                 ViewBag.ActivityDetail = detail;
 
@@ -525,8 +506,6 @@ namespace IND_CRM_APP.Controllers
                 if (req == null || string.IsNullOrWhiteSpace(req.AsistenteTipo))
                     return BadRequest(new { success = false, message = _sr["Api_MissingAsistenteTipo"].Value });
 
-                var axUser = HttpContext.Session.GetString("AxUser") ?? string.Empty;
-
                 var activityResp = await _apiClient.GetActivityByRecIdAsync(token, recId);
                 var asistentes = activityResp.Data?.Asistentes ?? new List<ActivityAsistenteDto>();
 
@@ -544,8 +523,7 @@ namespace IND_CRM_APP.Controllers
                         RefRecIdActividad = recId.ToString(),
                         AsistenteTipo = req.AsistenteTipo.Trim(),
                         AsistenteId = a.AsistenteId.Trim(),
-                        ContactoRecId = string.Empty,
-                        CreatedByUserId = axUser
+                        ContactoRecId = string.Empty
                     };
 
                     var upsertResp = await _apiClient.CreateVisitaAsistenteAsync(token, upsertReq);

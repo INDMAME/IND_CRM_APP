@@ -583,7 +583,6 @@ const DetailApp = () => {
 
   const recId = detail.recId || detail.RecId || "";
   const accountNum = detail.accountNum || detail.AccountNum || "";
-  const userId = detail.userId || detail.UserId || "";
   const actividadId = detail.actividadId || detail.ActividadId || "";
 
   // Persist edit mode across navigation to the text editor.
@@ -908,7 +907,6 @@ const DetailApp = () => {
         accountNum: accountNum,
         visitType: normalizedVisitType,
         asistenteTipo: normalizedAsistenteTipo,
-        userId,
         description,
         transDate,
         comentarios,
@@ -937,7 +935,7 @@ const DetailApp = () => {
     } finally {
       setBusy(false);
     }
-  }, [antecedentes, comentarios, conclusiones, description, transDate, visitType, asistenteTipo, visitTypes, asistenteTipos, matchOptionValue, accountNum, userId, busy, isEditing, syncEditModeFlag]);
+  }, [antecedentes, comentarios, conclusiones, description, transDate, visitType, asistenteTipo, visitTypes, asistenteTipos, matchOptionValue, accountNum, busy, isEditing, syncEditModeFlag]);
 
   const handleDelete = useCallback(async () => {
     if (busy) return false;

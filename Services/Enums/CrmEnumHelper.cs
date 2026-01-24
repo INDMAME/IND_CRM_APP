@@ -123,5 +123,23 @@ namespace IND_CRM_APP.Services.Enums
                 new { Value = "2", Text = "Commercial" }
             };
         }
+
+        // Expense sheet type items (GastoType).
+        public static IEnumerable<dynamic> GetGastoTypeItems()
+        {
+            return new[]
+            {
+                new { Value = "0", Text = "None" },
+                new { Value = "1", Text = "Toll" },
+                new { Value = "2", Text = "Parking" },
+                new { Value = "3", Text = "Km" },
+                new { Value = "4", Text = "Breakfast" },
+                new { Value = "5", Text = "Lunch" },
+                new { Value = "6", Text = "Dinner" },
+                new { Value = "7", Text = "Hotel" },
+                new { Value = "8", Text = "Miscellaneous" },
+                new { Value = "14", Text = "Taxi" }
+            };
+        }
     }
 }

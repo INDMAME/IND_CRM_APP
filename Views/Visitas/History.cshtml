@@ -7,7 +7,6 @@
 #pragma warning disable CS8600
     ViewData["Title"] = SR["Visits_History_Title"];
     ViewData["HideNavArrows"] = true;
-    var userHiddenValue = HttpAccessor?.HttpContext?.Session?.GetString("AxUser") ?? string.Empty;
 }
 
 @section Styles {
@@ -69,8 +68,6 @@
 
     <input type="hidden" id="fromDate" value="@ViewBag.DefaultFromDate" />
     <input type="hidden" id="toDate" value="@ViewBag.DefaultToDate" />
-    <input type="hidden" id="userHidden" value="@userHiddenValue" />
-
     <!-- Loader -->
     <div id="resultsLoader" class="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700" style="display:none;">
         <svg class="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label="@SR["Common_Loading"]">
@@ -88,7 +85,6 @@
 
 @section Scripts {
     <script>
-        window.CurrentAxUser = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(HttpAccessor?.HttpContext.Session.GetString("AxUser") ?? string.Empty));
         window.__IND_I18N__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
             History_AddDate = SR["History_AddDate"].Value,
             History_Status_SelectStart = SR["History_Status_SelectStart"].Value,

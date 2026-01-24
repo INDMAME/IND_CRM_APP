@@ -138,7 +138,7 @@ namespace IND_CRM_APP.Services
         // ======================================================
         public async Task<IndEntraContextResponse> GetEntraContextAsync(string token, string entraOid, string appCode)
         {
-            AddToken(token, includeCompanyHeader: false);
+            AddToken(token, includeCompanyHeader: false, includeAxUserHeader: false);
             LogCompanyHeader("GetEntraContext", requireCompany: false);
 
             var payload = new
@@ -662,6 +662,153 @@ namespace IND_CRM_APP.Services
             ApplyRefreshedToken(result.Headers, null);
 
             return DeserializeApiResponse<object>(result, "DeleteVisitaAsistente");
+        }
+
+        // ======================================================
+        // Expense sheets
+        // ======================================================
+        public async Task<ApiResponse<ExpenseSheetCreateResponseData>> CreateExpenseSheetAsync(
+            string token,
+            ExpenseSheetCreateRequest req)
+        {
+            AddToken(token);
+            LogCompanyHeader("CreateExpenseSheet", requireCompany: true);
+
+            var result = await HttpHelper.PostAsync(
+                _client,
+                BuildUrl("api/crm/expensesheets"),
+                Serialize(req)
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            return DeserializeApiResponse<ExpenseSheetCreateResponseData>(result, "CreateExpenseSheet");
+        }
+
+        public async Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetDetailAsync(
+            string token,
+            string hojaGastosId)
+        {
+            AddToken(token);
+            LogCompanyHeader("GetExpenseSheetDetail", requireCompany: true);
+
+            var safeId = Uri.EscapeDataString(hojaGastosId ?? string.Empty);
+            var result = await HttpHelper.GetAsync(
+                _client,
+                BuildUrl($"api/crm/expensesheets/{safeId}")
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            return DeserializePagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheetDetail");
+        }
+
+        public async Task<ApiResponse<object>> UpdateExpenseSheetHeaderAsync(
+            string token,
+            string hojaGastosId,
+            ExpenseSheetUpdateRequest req)
+        {
+            AddToken(token);
+            LogCompanyHeader("UpdateExpenseSheetHeader", requireCompany: true);
+
+            var safeId = Uri.EscapeDataString(hojaGastosId ?? string.Empty);
+            var result = await HttpHelper.PutAsync(
+                _client,
+                BuildUrl($"api/crm/expensesheets/{safeId}"),
+                Serialize(req)
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            return DeserializeApiResponse<object>(result, "UpdateExpenseSheetHeader");
+        }
+
+        public async Task<ApiResponse<object>> UpdateExpenseSheetLineAsync(
+            string token,
+            string hojaGastosId,
+            string lineRecId,
+            ExpenseSheetLineRequest req)
+        {
+            AddToken(token);
+            LogCompanyHeader("UpdateExpenseSheetLine", requireCompany: true);
+
+            var safeSheetId = Uri.EscapeDataString(hojaGastosId ?? string.Empty);
+            var safeLineId = Uri.EscapeDataString(lineRecId ?? string.Empty);
+            var result = await HttpHelper.PutAsync(
+                _client,
+                BuildUrl($"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}"),
+                Serialize(req)
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            return DeserializeApiResponse<object>(result, "UpdateExpenseSheetLine");
+        }
+
+        public async Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(
+            string token,
+            string hojaGastosId,
+            string lineRecId,
+            bool deleteWholeSheet)
+        {
+            AddToken(token);
+            LogCompanyHeader("DeleteExpenseSheetLine", requireCompany: true);
+
+            var safeSheetId = Uri.EscapeDataString(hojaGastosId ?? string.Empty);
+            var safeLineId = Uri.EscapeDataString(lineRecId ?? "0");
+            var deleteFlag = deleteWholeSheet ? "1" : "0";
+
+            var result = await HttpHelper.DeleteAsync(
+                _client,
+                BuildUrl($"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}?deleteWholeSheet={deleteFlag}")
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            return DeserializeApiResponse<object>(result, "DeleteExpenseSheetLine");
+        }
+
+        public async Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetsAsync(
+            string token,
+            string? filter,
+            int page,
+            int pageSize)
+        {
+            AddToken(token);
+            LogCompanyHeader("GetExpenseSheets", requireCompany: true);
+
+            var safeFilter = Uri.EscapeDataString(filter ?? string.Empty);
+            var result = await HttpHelper.GetAsync(
+                _client,
+                BuildUrl($"api/crm/expensesheets/list?filter={safeFilter}&page={page}&pageSize={pageSize}")
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            return DeserializePagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheets");
+        }
+
+        // ======================================================
+        // Projects
+        // ======================================================
+        public async Task<PagedApiResponse<ProjectDto>> GetProjectsAsync(
+            string token,
+            string? filter,
+            int page,
+            int pageSize)
+        {
+            AddToken(token);
+            LogCompanyHeader("GetProjects", requireCompany: true);
+
+            var safeFilter = Uri.EscapeDataString(filter ?? string.Empty);
+            var result = await HttpHelper.GetAsync(
+                _client,
+                BuildUrl($"api/crm/projects/list?filter={safeFilter}&page={page}&pageSize={pageSize}")
+            );
+
+            ApplyRefreshedToken(result.Headers, null);
+
+            return DeserializePagedResponse<ProjectDto>(result, "GetProjects");
         }
 
         // ======================================================
@@ -1237,7 +1384,7 @@ namespace IND_CRM_APP.Services
             AddToken(newToken);
         }
 
-        private void AddToken(string token, bool includeCompanyHeader = true)
+        private void AddToken(string token, bool includeCompanyHeader = true, bool includeAxUserHeader = true)
         {
             _client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
@@ -1249,6 +1396,15 @@ namespace IND_CRM_APP.Services
             else
             {
                 _client.DefaultRequestHeaders.Remove("X-IND-Company");
+            }
+
+            if (includeAxUserHeader)
+            {
+                ApplyAxUserHeader();
+            }
+            else
+            {
+                _client.DefaultRequestHeaders.Remove("X-IND-AxUserId");
             }
         }
 
@@ -1263,6 +1419,17 @@ namespace IND_CRM_APP.Services
             _client.DefaultRequestHeaders.Add("X-IND-Company", companyId);
         }
 
+        private void ApplyAxUserHeader()
+        {
+            _client.DefaultRequestHeaders.Remove("X-IND-AxUserId");
+
+            var axUserId = GetAxUserId();
+            if (string.IsNullOrWhiteSpace(axUserId))
+                return;
+
+            _client.DefaultRequestHeaders.Add("X-IND-AxUserId", axUserId);
+        }
+
         // Reads the current company id from session, if present.
         private string? GetSelectedCompanyId()
         {
@@ -1272,6 +1439,17 @@ namespace IND_CRM_APP.Services
 
             var companyId = ctx.Session.GetString("INDCompanySelected");
             return string.IsNullOrWhiteSpace(companyId) ? null : companyId;
+        }
+
+        // Reads the AX user id from session, if present.
+        private string? GetAxUserId()
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            if (ctx == null)
+                return null;
+
+            var axUserId = ctx.Session.GetString("AxUser");
+            return string.IsNullOrWhiteSpace(axUserId) ? null : axUserId;
         }
 
         // Logs whether the company header is present for a given operation.

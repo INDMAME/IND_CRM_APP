@@ -225,6 +225,16 @@
   <data name="Enum_AsistenteTipo_Tecnico" xml:space="preserve"><value>Teknikaria</value></data>
   <data name="Enum_AsistenteTipo_Commercial" xml:space="preserve"><value>Komertziala</value></data>
 
+  <data name="Enum_GastoType_Peaje" xml:space="preserve"><value>Bidesaria</value></data>
+  <data name="Enum_GastoType_Parking" xml:space="preserve"><value>Aparkalekua</value></data>
+  <data name="Enum_GastoType_Km" xml:space="preserve"><value>Km</value></data>
+  <data name="Enum_GastoType_Desayuno" xml:space="preserve"><value>Gosaria</value></data>
+  <data name="Enum_GastoType_Comida" xml:space="preserve"><value>Bazkaria</value></data>
+  <data name="Enum_GastoType_Cena" xml:space="preserve"><value>Afaria</value></data>
+  <data name="Enum_GastoType_Hotel" xml:space="preserve"><value>Hotela</value></data>
+  <data name="Enum_GastoType_Varios" xml:space="preserve"><value>Hainbat</value></data>
+  <data name="Enum_GastoType_Taxi" xml:space="preserve"><value>Taxi</value></data>
+
   <data name="Confirm_Delete_Title" xml:space="preserve"><value>Ezabatu</value></data>
   <data name="Confirm_Delete_Body" xml:space="preserve"><value>Elementu hau ezabatu nahi duzu?</value></data>
   <data name="Confirm_Yes" xml:space="preserve"><value>Bai</value></data>

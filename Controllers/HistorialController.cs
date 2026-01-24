@@ -62,7 +62,6 @@ namespace IND_CRM_APP.Controllers
                 return BadRequest("Empty filter.");
 
             // Normalize filter values
-            filter.userId = filter.userId ?? string.Empty;
             filter.fromDate = SanitizeDate(filter.fromDate);
             filter.toDate = SanitizeDate(filter.toDate);
 

@@ -278,6 +278,9 @@ ServiceFabricBackup/
 # Microsoft Fakes
 FakesAssemblies/
 
+# Codex local artifacts
+.codex/Postman/
+
 # GhostDoc plugin setting file
 *.GhostDoc.xml
 

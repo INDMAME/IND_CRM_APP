@@ -428,7 +428,6 @@
         pagination.innerHTML = "";
 
         const payload = {
-            userId: window.CurrentAxUser ?? "",
             fromDate: fromDate.value,
             toDate: toDate.value
         };

@@ -9,6 +9,8 @@ namespace IND_CRM_APP.Services.Enums
         IEnumerable<dynamic> GetTipoVisitaItems();
         IEnumerable<dynamic> GetActividadOrigenItems();
         IEnumerable<dynamic> GetAsistenteTipoItems();
+        // Expense sheet type items (GastoType).
+        IEnumerable<dynamic> GetGastoTypeItems();
     }
 }
 

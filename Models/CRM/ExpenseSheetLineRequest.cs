@@ -1,0 +1,35 @@
+using System.Text.Json.Serialization;
+
+namespace IND_CRM_APP.Models.CRM
+{
+    // Line payload for expense sheets.
+    public class ExpenseSheetLineRequest
+    {
+        [JsonPropertyName("transDate")]
+        public string TransDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("typeValue")]
+        public int TypeValue { get; set; }
+
+        [JsonPropertyName("description")]
+        public string Description { get; set; } = string.Empty;
+
+        [JsonPropertyName("internacional")]
+        public bool Internacional { get; set; }
+
+        [JsonPropertyName("ticket")]
+        public bool Ticket { get; set; }
+
+        [JsonPropertyName("qty")]
+        public decimal Qty { get; set; }
+
+        [JsonPropertyName("amount")]
+        public decimal Amount { get; set; }
+
+        [JsonPropertyName("projId")]
+        public string? ProjId { get; set; }
+
+        [JsonPropertyName("indAttachFiles")]
+        public string IndAttachFiles { get; set; } = string.Empty;
+    }
+}

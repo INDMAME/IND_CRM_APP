@@ -92,6 +92,52 @@ namespace IND_CRM_APP.Services
             CancellationToken cancellationToken = default
         );
 
+        // Expense sheets
+        Task<ApiResponse<ExpenseSheetCreateResponseData>> CreateExpenseSheetAsync(
+            string token,
+            ExpenseSheetCreateRequest req
+        );
+
+        Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetDetailAsync(
+            string token,
+            string hojaGastosId
+        );
+
+        Task<ApiResponse<object>> UpdateExpenseSheetHeaderAsync(
+            string token,
+            string hojaGastosId,
+            ExpenseSheetUpdateRequest req
+        );
+
+        Task<ApiResponse<object>> UpdateExpenseSheetLineAsync(
+            string token,
+            string hojaGastosId,
+            string lineRecId,
+            ExpenseSheetLineRequest req
+        );
+
+        Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(
+            string token,
+            string hojaGastosId,
+            string lineRecId,
+            bool deleteWholeSheet
+        );
+
+        Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetsAsync(
+            string token,
+            string? filter,
+            int page,
+            int pageSize
+        );
+
+        // Projects
+        Task<PagedApiResponse<ProjectDto>> GetProjectsAsync(
+            string token,
+            string? filter,
+            int page,
+            int pageSize
+        );
+
         // Refresh de token
         Task<LoginResult?> RefreshTokenAsync(string currentToken);
     }

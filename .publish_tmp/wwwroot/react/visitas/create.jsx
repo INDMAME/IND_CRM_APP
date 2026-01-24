@@ -1559,7 +1559,6 @@ function SelectCombobox({ label, options, value, onChange, placeholder, invalid 
 function VisitasApp() {
   const visitTypes = window.__VISIT_TYPES__ || [];
   const asistenteTipos = window.__ASISTENTE_TIPOS__ || [];
-  const axUser = window.__AX_USER__ || "";
 
   const fieldIdComentarios = "Visita.Create.Comentarios";
   const fieldIdAntecedentes = "Visita.Create.Antecedentes";
@@ -1914,8 +1913,6 @@ function VisitasApp() {
       const payloadActivity = {
         accountNum: selectedClient.value,
         visitType,
-        userId: axUser,
-        createdByUserId: axUser,
         description,
         transDate,
         comentarios,
@@ -1946,7 +1943,6 @@ function VisitasApp() {
           asistenteTipo: defaultAsistenteTipo,
           asistenteId: c.text,
           contactoRecId: c.value,
-          createdByUserId: axUser,
         };
         const resVis = await fetchJson("/Visitas/CreateVisitaAsistente", {
           method: "POST",

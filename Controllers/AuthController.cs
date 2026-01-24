@@ -93,8 +93,6 @@ namespace IND_CRM_APP.Controllers
                     loginResult.Expires != default ? loginResult.Expires : null
                 );
 
-                HttpContext.Session.SetString("AxUser", model.Username);
-
                 return RedirectToAction("Index", "Home");
             }
             catch (ApiException ex)

@@ -217,6 +217,16 @@
   <data name="Enum_AsistenteTipo_Tecnico" xml:space="preserve"><value>Tecnico</value></data>
   <data name="Enum_AsistenteTipo_Commercial" xml:space="preserve"><value>Comercial</value></data>
 
+  <data name="Enum_GastoType_Peaje" xml:space="preserve"><value>Portagem</value></data>
+  <data name="Enum_GastoType_Parking" xml:space="preserve"><value>Estacionamento</value></data>
+  <data name="Enum_GastoType_Km" xml:space="preserve"><value>Km</value></data>
+  <data name="Enum_GastoType_Desayuno" xml:space="preserve"><value>Pequeno almoco</value></data>
+  <data name="Enum_GastoType_Comida" xml:space="preserve"><value>Almoco</value></data>
+  <data name="Enum_GastoType_Cena" xml:space="preserve"><value>Jantar</value></data>
+  <data name="Enum_GastoType_Hotel" xml:space="preserve"><value>Hotel</value></data>
+  <data name="Enum_GastoType_Varios" xml:space="preserve"><value>Diversos</value></data>
+  <data name="Enum_GastoType_Taxi" xml:space="preserve"><value>Taxi</value></data>
+
   <data name="Confirm_Delete_Title" xml:space="preserve"><value>Eliminar</value></data>
   <data name="Confirm_Delete_Body" xml:space="preserve"><value>Deseja eliminar este item?</value></data>
   <data name="Confirm_Yes" xml:space="preserve"><value>Sim</value></data>

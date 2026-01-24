@@ -1,0 +1,1034 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Viernes 1/23/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #INDCRMExpenseSheetService
+    PROPERTIES
+      Name                #INDCRMExpenseSheetService
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #// Purpose: Metodos COM para crear, consultar, actualizar y eliminar hojas de gastos.
+        #// Notes: Todos los metodos devuelven containers con un formato estable para la API.
+        #public class INDCRMExpenseSheetService
+        #{
+        #
+        #}
+      ENDSOURCE
+      SOURCE #buildHeader
+        #// Method: buildHeader
+        #// Purpose: Build standard header response: [ [success(0/1), message, extras...] ]
+        #static server container buildHeader(boolean _success, str _message, container _extras)
+        #{
+        #    container row;
+        #    container header;
+        #    int i;
+        #    ;
+        #    row = [_success ? 1 : 0, _message];
+        #
+        #    if (conLen(_extras) > 0)
+        #    {
+        #        for (i = 1; i <= conLen(_extras); i++)
+        #        {
+        #            row = conIns(row, conLen(row) + 1, conPeek(_extras, i));
+        #        }
+        #    }
+        #
+        #    header = [row];
+        #
+        #    return header;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #createExpenseSheet
+        #// Method: indExpenseSheetCreate
+        #// Purpose: Create header + lines in one transaction using one container call.
+        #static server container createExpenseSheet(container _data)
+        #{
+        #    DataAreaId companyId;
+        #    container headerIn;
+        #    container linesIn;
+        #
+        #    CRMHojaGastosTable header;
+        #    CRMHojaGastosLine  line;
+        #
+        #    CRMUserId     crmUserId;
+        #    UserId        axUserId;
+        #    str   descr;
+        #    str   currencyCode;
+        #    real  exchRate;
+        #    str   projId;
+        #    container linesOut = conNull();
+        #    str message;
+        #    int startLine;
+        #    str   msg;
+        #
+        #    int i;
+        #    container lineIn;
+        #
+        #    // Line fields
+        #    str   transDateStr;
+        #    date  transDate;
+        #    int   typeValue;
+        #    str   lineDescr;
+        #    int   internacional;
+        #    int   ticket;
+        #    real  qty;
+        #    real  amount;
+        #    str   lineProjId;
+        #    str   attachFiles;
+        #    NumberSeq           numberSeq;
+        #    ;
+        #    companyId = INDCRMApiClass::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return [INDCRMExpenseSheetService::buildHeader(false, 'CompanyId es obligatorio.', conNull()), conNull()];
+        #
+        #    if (conLen(_data) < 3)
+        #        return [INDCRMExpenseSheetService::buildHeader(false, 'Input container invalido. Se esperan 3 elementos.', conNull()), conNull()];
+        #
+        #    headerIn = conPeek(_data, 2);
+        #    linesIn  = conPeek(_data, 3);
+        #
+        #    if (conLen(headerIn) < 5)
+        #        return [INDCRMExpenseSheetService::buildHeader(false, 'Header input invalido. Se esperan 5 campos.', conNull()), conNull()];
+        #
+        #    axUserId     = conPeek(headerIn, 1);
+        #
+        #    descr        = conPeek(headerIn, 2);
+        #    currencyCode = conPeek(headerIn, 3);
+        #    exchRate     = conPeek(headerIn, 4);
+        #    projId       = conPeek(headerIn, 5);
+        #
+        #    if (!descr)
+        #        return [INDCRMExpenseSheetService::buildHeader(false, 'Description es obligatorio.', conNull()), conNull()];
+        #
+        #    if (!currencyCode)
+        #        return [INDCRMExpenseSheetService::buildHeader(false, 'CurrencyCode es obligatorio.', conNull()), conNull()];
+        #
+        #    currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #
+        #    if (currencyCode == 'EUR')
+        #        exchRate = 1.0;
+        #    else if (exchRate <= 0)
+        #        return [INDCRMExpenseSheetService::buildHeader(false, 'ExchRate debe ser mayor que 0 cuando CurrencyCode no es EUR.', conNull()), conNull()];
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #            if (!crmUserId)
+        #                return [INDCRMExpenseSheetService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
+        #
+        #            ttsbegin;
+        #
+        #            header.clear();
+        #            header.initValue();
+        #            numberSeq           = NumberSeq::newGetNum(CustParameters::numRefCRMHojaGastosId());
+        #            header.HojaGastosId = numberSeq.num();
+        #            header.UserId       = crmUserId;
+        #            header.initFromUsuarioTable();
+        #            header.Description  = descr;
+        #            header.CurrencyCode = currencyCode;
+        #            header.ExchRate     = exchRate;
+        #            header.ProjId       = projId;
+        #            header.DestinoId    = "GENERALES";
+        #            header.Year         = year(today());
+        #            // Must be open sheet
+        #            header.Voucher = '';
+        #
+        #            // Audit
+        #            header.INDCreatedByUserId = axUserId;
+        #
+        #            header.insert();
+        #
+        #            // Insert lines
+        #            for (i = 1; i <= conLen(linesIn); i++)
+        #            {
+        #                lineIn = conPeek(linesIn, i);
+        #
+        #                if (conLen(lineIn) < 9)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMExpenseSheetService::buildHeader(false, 'Linea invalida. Se esperan 9 campos por linea.', conNull()), conNull()];
+        #                }
+        #
+        #                transDateStr  = conPeek(lineIn, 1);
+        #                typeValue     = conPeek(lineIn, 2);
+        #                lineDescr     = conPeek(lineIn, 3);
+        #                internacional = conPeek(lineIn, 4);
+        #                ticket        = conPeek(lineIn, 5);
+        #                qty           = conPeek(lineIn, 6);
+        #                amount        = conPeek(lineIn, 7);
+        #                lineProjId    = conPeek(lineIn, 8);
+        #                attachFiles   = conPeek(lineIn, 9);
+        #
+        #                if (!INDCRMExpenseSheetService::isValidGastoType(typeValue))
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMExpenseSheetService::buildHeader(false, strFmt('Tipo de gasto invalido: %1', typeValue), conNull()), conNull()];
+        #                }
+        #
+        #                transDate = INDCRMExpenseSheetService::parseYmdDate(transDateStr);
+        #                if (!transDate)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMExpenseSheetService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
+        #                }
+        #
+        #                if (qty <= 0)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMExpenseSheetService::buildHeader(false, 'Qty debe ser mayor que 0.', conNull()), conNull()];
+        #                }
+        #
+        #                line.clear();
+        #                line.initValue();
+        #                line.HojaGastosId  = header.HojaGastosId;
+        #                line.InitFromHojaGastosTable();
+        #                line.UserId        = header.UserId;
+        #                line.InitFromUsuarioTable();
+        #                line.TransDate     = transDate;
+        #                line.Type          = typeValue;
+        #                line.InitFromGastoType();
+        #                line.Description   = lineDescr;
+        #                line.Internacional = internacional ? NoYes::Yes : NoYes::No;
+        #                line.Ticket        = ticket ? NoYes::Yes : NoYes::No;
+        #                line.Qty           = qty;
+        #                line.Amount        = amount;
+        #
+        #                // Prefer line project else header project
+        #                if (lineProjId)
+        #                    line.ProjId = lineProjId;
+        #                else
+        #                    line.ProjId = header.ProjId;
+        #
+        #                // Audit and attachments
+        #                line.INDCreatedByUserId = axUserId;
+        #                line.INDAttachFiles     = attachFiles;
+        #                line.insert();
+        #
+        #                linesOut = conIns(linesOut, conLen(linesOut) + 1, line.RecId);
+        #            }
+        #
+        #            ttscommit;
+        #
+        #            message = 'Hoja de gastos creada correctamente.';
+        #
+        #            return [INDCRMExpenseSheetService::buildHeader(true, message, [header.HojaGastosId]), linesOut];
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        startLine = infolog.line();
+        #        // Mensaje desde infolog desde el inicio del try
+        #        return INDCRMExpenseSheetService::buildHeader(false, INDCRMApiClass::getInfologMessagesSince(startLine), conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        // Mensaje desde infolog desde el inicio del try
+        #        msg = INDCRMApiClass::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMExpenseSheetService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return [INDCRMExpenseSheetService::buildHeader(false, 'Error no controlado.', conNull()), conNull()];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #deleteExpenseSheet
+        #// Method: indExpenseSheetDelete
+        #// Purpose: Delete header + lines. Block if Voucher is set.
+        #static server container deleteExpenseSheet(container _data)
+        #{
+        #    DataAreaId companyId;
+        #    CRMUserId     crmUserId;
+        #    UserId        axUserId;
+        #    CRMHojaGastosId hojaId;
+        #
+        #    CRMHojaGastosTable header;
+        #    CRMHojaGastosLine  line;
+        #    int   startLine;
+        #    str   msg;
+        #     ;
+        #    companyId = INDCRMApiClass::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    if (conLen(_data) < 3)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Input container invalido. Se esperan 3 campos.', conNull());
+        #
+        #    axUserId = conPeek(_data, 2);
+        #    hojaId   = conPeek(_data, 3);
+        #
+        #    if (!hojaId)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'HojaGastosId es obligatorio.', conNull());
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #            if (!crmUserId)
+        #                return [INDCRMExpenseSheetService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
+        #
+        #            ttsbegin;
+        #
+        #            header = INDCRMExpenseSheetService::findHeaderForUpdate(crmUserId, hojaId);
+        #
+        #            if (!header.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull());
+        #            }
+        #
+        #            if (INDCRMExpenseSheetService::isHeaderLocked(header))
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
+        #            }
+        #
+        #            while select forupdate line
+        #                where line.UserId       == crmUserId
+        #                   && line.HojaGastosId == hojaId
+        #            {
+        #                line.delete();
+        #            }
+        #
+        #            header.delete();
+        #
+        #            ttscommit;
+        #
+        #            return INDCRMExpenseSheetService::buildHeader(true, 'Hoja de gastos eliminada correctamente.', conNull());
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        startLine = infolog.line();
+        #        // Mensaje desde infolog desde el inicio del try
+        #        return INDCRMExpenseSheetService::buildHeader(false, INDCRMApiClass::getInfologMessagesSince(startLine), conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        // Mensaje desde infolog desde el inicio del try
+        #        msg = INDCRMApiClass::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMExpenseSheetService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return INDCRMExpenseSheetService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
+      SOURCE #deleteExpenseSheetLine
+        #// Method: deleteExpenseSheetLine
+        #// Purpose: Delete one line or delete whole expense sheet (header + lines) depending on flag.
+        #// Input container:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #//  - _data[3] = hojaId
+        #//  - _data[4] = lineRecId (can be 0 if deleteWholeSheet = 1)
+        #//  - _data[5] = deleteWholeSheet (0/1)
+        #static server container deleteExpenseSheetLine(container _data)
+        #{
+        #    DataAreaId       companyId;
+        #
+        #    CRMUserId        crmUserId;
+        #    UserId           axUserId;
+        #    CRMHojaGastosId  hojaId;
+        #    int            lineRecId;
+        #    int              deleteWholeSheet;
+        #
+        #    CRMHojaGastosTable header;
+        #    CRMHojaGastosLine  line;
+        #
+        #    int startLine;
+        #    str msg;
+        #     ;
+        #    companyId = INDCRMApiClass::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    // Now we expect 5 fields minimum
+        #    if (conLen(_data) < 5)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Input container invalido. Se esperan 5 campos.', conNull());
+        #
+        #    axUserId          = conPeek(_data, 2);
+        #    hojaId            = conPeek(_data, 3);
+        #    lineRecId         = conPeek(_data, 4);
+        #    deleteWholeSheet  = conPeek(_data, 5);
+        #
+        #    if (!hojaId)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'HojaGastosId es obligatorio.', conNull());
+        #
+        #    // If not deleting whole sheet, lineRecId must be provided
+        #    if (!deleteWholeSheet && !lineRecId)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'LineRecId es obligatorio cuando deleteWholeSheet es 0.', conNull());
+        #
+        #    // Capture start line before the try for infolog extraction
+        #    startLine = infolog.line();
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #            if (!crmUserId)
+        #                return [INDCRMExpenseSheetService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
+        #
+        #            ttsbegin;
+        #
+        #            header = INDCRMExpenseSheetService::findHeaderForUpdate(crmUserId, hojaId);
+        #
+        #            if (!header.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull());
+        #            }
+        #
+        #            if (INDCRMExpenseSheetService::isHeaderLocked(header))
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
+        #            }
+        #
+        #            // Mode: delete whole sheet (header + all lines)
+        #            if (deleteWholeSheet)
+        #            {
+        #                while select forupdate line
+        #                    where line.UserId       == crmUserId
+        #                       && line.HojaGastosId == hojaId
+        #                {
+        #                    line.delete();
+        #                }
+        #
+        #                header.delete();
+        #
+        #                ttscommit;
+        #
+        #                return INDCRMExpenseSheetService::buildHeader(true, 'Hoja de gastos eliminada correctamente.', conNull());
+        #            }
+        #
+        #            // Mode: delete only one line
+        #            select firstonly forupdate line
+        #                where line.RecId       == lineRecId
+        #                   && line.UserId       == crmUserId
+        #                   && line.HojaGastosId == hojaId;
+        #
+        #            if (!line.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Linea no encontrada para la hoja indicada.', conNull());
+        #            }
+        #
+        #            line.delete();
+        #
+        #            ttscommit;
+        #
+        #            return INDCRMExpenseSheetService::buildHeader(true, 'Linea eliminada correctamente.', conNull());
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        msg = INDCRMApiClass::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error de base de datos. Revisar infolog.';
+        #        return INDCRMExpenseSheetService::buildHeader(false, msg, conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        msg = INDCRMApiClass::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMExpenseSheetService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return INDCRMExpenseSheetService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
+      SOURCE #findHeaderForUpdate
+        #// Method: findHeaderForUpdate
+        #// Purpose: Find CRMHojaGastosTable for update by crmcrmUserId + HojaGastosId in current company
+        #static server CRMHojaGastosTable findHeaderForUpdate(CRMUserId _UserId, CRMHojaGastosId _hojaGastosId)
+        #{
+        #    CRMHojaGastosTable header;
+        #
+        #    select firstonly forupdate header
+        #        where header.UserId       == _UserId
+        #           && header.HojaGastosId == _hojaGastosId;
+        #
+        #    return header;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getExpenseSheet
+        #// Method: indExpenseSheetGet
+        #// Purpose: Get header + lines by CompanyId + crmUserId + HojaGastosId.
+        #static server container getExpenseSheet(container _data)
+        #{
+        #    DataAreaId companyId;
+        #    CRMUserId     crmUserId;
+        #    UserId        axUserId;
+        #    CRMHojaGastosId hojaId;
+        #
+        #    CRMHojaGastosTable header;
+        #    CRMHojaGastosLine  line;
+        #
+        #    container headerOut;
+        #    container linesOut = conNull();
+        #    container lineRow;
+        #    int   startLine;
+        #    str   msg;
+        #    ;
+        #
+        #    companyId = INDCRMApiClass::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return [INDCRMExpenseSheetService::buildHeader(false, 'CompanyId es obligatorio.', conNull()), conNull()];
+        #
+        #    if (conLen(_data) < 3)
+        #        return [INDCRMExpenseSheetService::buildHeader(false, 'Input container invalido. Se esperan 3 campos.', conNull()), conNull()];
+        #
+        #    axUserId  = conPeek(_data, 2);
+        #    hojaId    = conPeek(_data, 3);
+        #
+        #    changecompany(companyId)
+        #    {
+        #
+        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #
+        #        if (!crmUserId || !hojaId)
+        #            return [INDCRMExpenseSheetService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull()), conNull()];
+        #
+        #        select firstonly header
+        #            where header.UserId       == crmUserId
+        #               && header.HojaGastosId == hojaId;
+        #
+        #        if (!header.RecId)
+        #            return [INDCRMExpenseSheetService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull()), conNull()];
+        #
+        #        headerOut = INDCRMExpenseSheetService::buildHeader(true, 'OK', [
+        #            header.HojaGastosId,
+        #            header.UserId,
+        #            header.Description,
+        #            header.CurrencyCode,
+        #            header.ExchRate,
+        #            header.ProjId,
+        #            header.Voucher
+        #        ]);
+        #
+        #        while select line
+        #            where line.UserId       == crmUserId
+        #               && line.HojaGastosId == hojaId
+        #        {
+        #             lineRow = [
+        #                line.RecId,
+        #                date2Str(line.TransDate,  123, 2,2,2,2,4),
+        #                line.Type,
+        #                line.Description,
+        #                line.Internacional,
+        #                line.Ticket,
+        #                line.Qty,
+        #                line.Amount,
+        #                line.ProjId,
+        #                line.INDAttachFiles
+        #            ];
+        #
+        #            linesOut = conIns(linesOut, conLen(linesOut) + 1, lineRow);
+        #        }
+        #
+        #        return [headerOut, linesOut];
+        #    }
+        #
+        #    return [INDCRMExpenseSheetService::buildHeader(false, 'Error no controlado.', conNull()), conNull()];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getExpenseSheetsList
+        #// Method: getExpenseSheetsList
+        #// Purpose: Returns container of open expense sheets (Voucher empty) filtered by INDSearchKey.
+        #// Input container:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = filterTxt (optional)
+        #// Output:
+        #//  - Container items: [[HojaGastosId, Description, ProjId], ...]
+        #static server container getExpenseSheetsList(container _data)
+        #{
+        #    DataAreaId           _company;
+        #    str 1000             filterTxt;
+        #    str 1000             likePattern;
+        #
+        #    CRMHojaGastosTable   hoja;
+        #    container            conResult, conItem;
+        #
+        #    _company = INDCRMApiClass::getCompany(_data);
+        #    if (!_company)
+        #        return conNull();
+        #
+        #    filterTxt = conPeek(_data, 2);
+        #
+        #    // Igual que el metodo base: si no hay filtro, no devolvemos nada (lista vacia).
+        #    if (!filterTxt)
+        #        return conResult;
+        #
+        #    likePattern = strFmt("*%1*", filterTxt);
+        #
+        #    changecompany (_company)
+        #    {
+        #        while select hoja
+        #            index hint INDSearchKeyIdx
+        #            where (hoja.Voucher == '')
+        #               && (hoja.INDSearchKey like likePattern)
+        #        {
+        #            conItem = [[
+        #                strFmt("%1", hoja.HojaGastosId),
+        #                strFmt("%1", hoja.Description),
+        #                strFmt("%1", hoja.ProjId)
+        #            ]];
+        #
+        #            conResult += conItem;
+        #        }
+        #    }
+        #
+        #    return conResult ? conResult : [["Sin datos."]];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getProjectsList
+        #// Method: getProjectsList
+        #// Purpose: Returns container of projects with INDTransDateCierreCostes empty (0D) filtered by INDSearchKey.
+        #// Input container:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = filterTxt (optional)
+        #// Output:
+        #//  - Container items: [[ProjId, ProjectName], ...]
+        #static server container getProjectsList(container _data)
+        #{
+        #    DataAreaId   _company;
+        #    str 1000     filterTxt;
+        #    str 1000     likePattern;
+        #
+        #    ProjTable    proj;
+        #    container    conResult, conItem;
+        #
+        #    _company = INDCRMApiClass::getCompany(_data);
+        #    if (!_company)
+        #        return conNull();
+        #
+        #    filterTxt = conPeek(_data, 2);
+        #
+        #    // Igual que el metodo base: si no hay filtro, no devolvemos nada (lista vacia).
+        #    if (!filterTxt)
+        #        return conResult;
+        #
+        #    likePattern = strFmt("*%1*", filterTxt);
+        #
+        #    changecompany (_company)
+        #    {
+        #        while select proj
+        #            index hint INDSearchKeyIdx
+        #            where (proj.INDTransDateCierreCostes == dateNull())
+        #               && (proj.INDSearchKey like likePattern)
+        #        {
+        #            // Nota: Si el campo de nombre no es Name en tu ProjTable, cambialo aqui.
+        #            conItem = [[
+        #                strFmt("%1", proj.ProjId),
+        #                strFmt("%1", proj.Name)
+        #            ]];
+        #
+        #            conResult += conItem;
+        #        }
+        #    }
+        #
+        #    return conResult ? conResult : [["Sin datos."]];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #isHeaderLocked
+        #// Method: isHeaderLocked
+        #// Purpose: Returns true if header is locked by Voucher
+        #static server boolean isHeaderLocked(CRMHojaGastosTable _header)
+        #{
+        #    if (!_header.RecId)
+        #        return false;
+        #
+        #    return (_header.Voucher != '');
+        #}
+        #
+      ENDSOURCE
+      SOURCE #isValidGastoType
+        #// Method: isValidGastoType
+        #// Purpose: Validate allowed CRMGastoType int values (hardcoded)
+        #static server boolean isValidGastoType(int _typeValue)
+        #{
+        #    switch (_typeValue)
+        #    {
+        #        case 0:  // None
+        #        case 1:  // Peaje
+        #        case 2:  // Parking
+        #        case 3:  // Km
+        #        case 4:  // Desayuno
+        #        case 5:  // Comida
+        #        case 6:  // Cena
+        #        case 7:  // Hotel
+        #        case 8:  // Varios (per requirement)
+        #        case 14: // Taxi (per requirement)
+        #            return true;
+        #
+        #        default:
+        #            return false;
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parseYmdDate
+        #// Method: parseYmdDate
+        #// Purpose: Parse yyyymmdd string to date. Returns 0D if invalid.
+        #static server date parseYmdDate(str _ymd)
+        #{
+        #    date d;
+        #
+        #    if (!strLen(_ymd))
+        #        return dateNull();
+        #
+        #    // 123 = YMD format
+        #    d = str2Date(_ymd, 321);
+        #    return d;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #updateExpenseSheetHeader
+        #// Method: indExpenseSheetUpdateHeader
+        #// Purpose: Update header fields. Block if Voucher is set.
+        #static server container updateExpenseSheetHeader(container _data)
+        #{
+        #    DataAreaId companyId;
+        #
+        #    CRMUserId     crmUserId;
+        #    UserId        axUserId;
+        #    CRMHojaGastosId  hojaId;
+        #    str  descr;
+        #    str  currencyCode;
+        #    real exchRate;
+        #    str  projId;
+        #    int   startLine;
+        #    str   msg;
+        #
+        #    CRMHojaGastosTable header;
+        #    ;
+        #    companyId = INDCRMApiClass::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    if (conLen(_data) < 7)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Input container invalido. Se esperan 7 campos.', conNull());
+        #
+        #    axUserId     = conPeek(_data, 2);
+        #    crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM    hojaId       = conPeek(_data, 3);
+        #    hojaId       = conPeek(_data, 3);
+        #    descr        = conPeek(_data, 4);
+        #    currencyCode = conPeek(_data, 5);
+        #    exchRate     = conPeek(_data, 6);
+        #    projId       = conPeek(_data, 7);
+        #
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #            if (!crmUserId || !hojaId)
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull());
+        #
+        #            ttsbegin;
+        #
+        #            header = INDCRMExpenseSheetService::findHeaderForUpdate(crmUserId, hojaId);
+        #
+        #            if (!header.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull());
+        #            }
+        #
+        #            if (INDCRMExpenseSheetService::isHeaderLocked(header))
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
+        #            }
+        #
+        #            if (currencyCode)
+        #            {
+        #                currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #
+        #                if (currencyCode == 'EUR')
+        #                    exchRate = 1.0;
+        #                else if (exchRate <= 0)
+        #                {
+        #                    ttsabort;
+        #                    return INDCRMExpenseSheetService::buildHeader(false, 'ExchRate debe ser mayor que 0 cuando CurrencyCode no es EUR.', conNull());
+        #                }
+        #
+        #                header.CurrencyCode = currencyCode;
+        #                header.ExchRate     = exchRate;
+        #            }
+        #
+        #            if (descr)
+        #                header.Description = descr;
+        #
+        #            header.ProjId = projId;
+        #
+        #            header.update();
+        #
+        #            ttscommit;
+        #
+        #            return INDCRMExpenseSheetService::buildHeader(true, 'Hoja de gastos actualizada correctamente.', conNull());
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        startLine = infolog.line();
+        #        // Mensaje desde infolog desde el inicio del try
+        #        return INDCRMExpenseSheetService::buildHeader(false, INDCRMApiClass::getInfologMessagesSince(startLine), conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        // Mensaje desde infolog desde el inicio del try
+        #        msg = INDCRMApiClass::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMExpenseSheetService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return INDCRMExpenseSheetService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
+      SOURCE #updateExpenseSheetLine
+        #// Method: indExpenseSheetUpdateLine
+        #// Purpose: Update one line. Block if header Voucher is set.
+        #static server container updateExpenseSheetLine(container _data)
+        #{
+        #    DataAreaId companyId;
+        #
+        #    CRMUserId         crmUserId;
+        #    UserId            axUserId;
+        #    CRMHojaGastosId   hojaId;
+        #    int lineRecId;
+        #
+        #    str   transDateStr;
+        #    date  transDate;
+        #    int   typeValue;
+        #    str   descr;
+        #    int   internacional;
+        #    int   ticket;
+        #    real  qty;
+        #    real  amount;
+        #    str   projId;
+        #    str   attachFiles;
+        #    int   startLine;
+        #    str   msg;
+        #
+        #    CRMHojaGastosTable header;
+        #    CRMHojaGastosLine  line;
+        #    ;
+        #    companyId = INDCRMApiClass::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    if (conLen(_data) < 13)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Input container invalido. Se esperan 13 campos.', conNull());
+        #
+        #    axUserId      = conPeek(_data, 2);
+        #    crmUserId     = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM    hojaId        = conPeek(_data, 3);
+        #    hojaId        = conPeek(_data, 3);
+        #    lineRecId     = conPeek(_data, 4);
+        #    transDateStr  = conPeek(_data, 5);
+        #    typeValue     = conPeek(_data, 6);
+        #    descr         = conPeek(_data, 7);
+        #    internacional = conPeek(_data, 8);
+        #    ticket        = conPeek(_data, 9);
+        #    qty           = conPeek(_data, 10);
+        #    amount        = conPeek(_data, 11);
+        #    projId        = conPeek(_data, 12);
+        #    attachFiles   = conPeek(_data, 13);
+        #
+        #    if (!lineRecId)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'LineRecId es obligatorio.', conNull());
+        #
+        #    if (!INDCRMExpenseSheetService::isValidGastoType(typeValue))
+        #        return INDCRMExpenseSheetService::buildHeader(false, strFmt('Tipo de gasto invalido: %1', typeValue), conNull());
+        #
+        #    transDate = INDCRMExpenseSheetService::parseYmdDate(transDateStr);
+        #    if (!transDate)
+        #        return INDCRMExpenseSheetService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull());
+        #
+        #    if (qty <= 0)
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Qty debe ser mayor que 0.', conNull());
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #            if (!crmUserId || !hojaId)
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull());
+        #
+        #            ttsbegin;
+        #
+        #            header = INDCRMExpenseSheetService::findHeaderForUpdate(crmUserId, hojaId);
+        #
+        #            if (!header.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull());
+        #            }
+        #
+        #            if (INDCRMExpenseSheetService::isHeaderLocked(header))
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
+        #            }
+        #
+        #            select firstonly forupdate line
+        #                where line.RecId       == lineRecId
+        #                   && line.UserId       == crmUserId
+        #                   && line.HojaGastosId == hojaId;
+        #
+        #            if (!line.RecId)
+        #            {
+        #                ttsabort;
+        #                return INDCRMExpenseSheetService::buildHeader(false, 'Linea no encontrada para la hoja indicada.', conNull());
+        #            }
+        #
+        #            line.TransDate     = transDate;
+        #            line.Type          = typeValue;
+        #            line.Description   = descr;
+        #
+        #            line.Internacional = internacional ? NoYes::Yes : NoYes::No;
+        #            line.Ticket        = ticket ? NoYes::Yes : NoYes::No;
+        #
+        #            line.Qty    = qty;
+        #            line.Amount = amount;
+        #
+        #            if (projId)
+        #                line.ProjId = projId;
+        #
+        #            line.INDAttachFiles = attachFiles;
+        #
+        #            line.update();
+        #
+        #            ttscommit;
+        #
+        #            return INDCRMExpenseSheetService::buildHeader(true, 'Linea actualizada correctamente.', conNull());
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        startLine = infolog.line();
+        #        // Mensaje desde infolog desde el inicio del try
+        #        return INDCRMExpenseSheetService::buildHeader(false, INDCRMApiClass::getInfologMessagesSince(startLine), conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMExpenseSheetService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        // Mensaje desde infolog desde el inicio del try
+        #        msg = INDCRMApiClass::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMExpenseSheetService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return INDCRMExpenseSheetService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END
