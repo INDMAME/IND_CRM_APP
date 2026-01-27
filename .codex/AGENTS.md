@@ -3,7 +3,7 @@
 ## Scope and hierarchy
 - Scope: global project rules for IND_CRM_APP.
 - If conflict: system > this file > other `.codex/*.md` feature docs.
-- Shared UI rules live in `.codex/core-ui-rules.md`.
+- Shared UI rules live in `.codex/UI_GUIDE.md`.
 
 ## Technical context
 
@@ -96,7 +96,7 @@
 
 ## Tailwind CSS and frontend build
 
-- Tailwind CSS 3.x is built via CLI (npm run build:css) defined in package.json and tailwind.config.js; main output is wwwroot/css/tailwind.css.
+- Tailwind CSS 3.x is built via CLI (npm run build:css) defined in package.json and tailwind.config.js; main output is Web/wwwroot/css/tailwind.css.
 - There should be a single CSS entry point where Tailwind can grow progressively.
 - Configure Tailwind to:
   - Register "Montserrat" as base font family.
@@ -121,14 +121,14 @@
 
 - Supported UI cultures: es-ES (default), en, pt, it, zh-Hans.
 - Any user-facing UI string (labels, titles, placeholders, aria-labels, empty states, error messages) must come from localization resources, not hardcoded text.
-- Razor: use `IStringLocalizer<INDSharedResource>` and resource keys under `Resources/Infrastructure/Localization/INDSharedResource.*.resx`.
+- Razor: use `IStringLocalizer<INDSharedResource>` and resource keys under `App/Resources/Infrastructure/Localization/INDSharedResource.*.resx`.
 - React islands / JS: inject a per-page `window.__IND_I18N__` dictionary from Razor and read it via `indT(...)` helpers.
 - When adding a new key, add it to all supported culture .resx files in the same change.
 - Do not translate business data from the API; translate only fixed UI strings.
 
 ## Shared UI rules
 
-- See `.codex/core-ui-rules.md` for overflow preview and read-only guard rules.
+- See `.codex/UI_GUIDE.md` for overflow preview, read-only guard, dropdowns, and action mark rules.
 
 ## How Codex should work
 
@@ -185,7 +185,7 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 
 ## Quick design prompt (visitas/historial)
 - Tailwind only; Bootstrap removed (no `spinner-border`, `page-item`, `page-link`, etc.).
-- Inputs/combos: `rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary`.
+- Inputs/combos: `rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary`.
 - Dropdowns: portal lists `rounded-xl` with visible scrollbar; options usan 10px de padding left (clase `type-option`), hover/active en primary.
 - Spinners: Tailwind ring `border-2 border-primary border-t-transparent rounded-full animate-spin`.
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).

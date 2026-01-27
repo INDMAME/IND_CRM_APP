@@ -405,7 +405,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, disabled
           className="relative w-full cursor-default rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
         >
           <input
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-100 disabled:text-slate-600 disabled:border-slate-200 disabled:cursor-not-allowed"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-100 disabled:text-slate-600 disabled:border-slate-200 disabled:cursor-not-allowed"
             value={query || selected?.text || ""}
             disabled={disabled}
             onChange={(event) => {
@@ -438,7 +438,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, disabled
         </div>
         {open && !disabled && (
           <div
-            className="absolute z-[360000] mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-none max-h-72 overflow-auto"
+            className="absolute z-360000 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden max-h-72 overflow-auto"
             role="listbox"
             id={`select-options-${label}`}
             ref={listRef}
@@ -1029,7 +1029,7 @@ const DetailApp = () => {
     <div className="space-y-4">
       {modal.open &&
         createPortal(
-          <div className="fixed inset-0 z-[600000] flex items-center justify-center bg-black/40 backdrop-blur-[1px] px-4">
+          <div className="fixed inset-0 z-600000 flex items-center justify-center bg-black/40 backdrop-blur-[1px] px-4">
             <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
               <div className="text-lg font-semibold text-slate-900">{modal.title}</div>
               <div className="text-sm text-slate-700 whitespace-pre-line">{modal.message}</div>
@@ -1071,7 +1071,7 @@ const DetailApp = () => {
         )}
       <div
         ref={readOnlySurfaceRef}
-        className="relative shadow-sm glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl"
+        className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl"
       >
         {isHydrating && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 rounded-2xl">
@@ -1107,7 +1107,7 @@ const DetailApp = () => {
           <input
               id="description"
               className={classNames(
-                "w-full rounded-xl border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+                "w-full rounded-xl border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary",
                 isEditing ? "border-slate-200 text-slate-900" : "border-slate-200 bg-slate-100 text-slate-600"
               )}
               maxLength={200}
@@ -1121,7 +1121,7 @@ const DetailApp = () => {
             <textarea
               id="comentarios"
               className={classNames(
-                "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+                "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary",
                 "cursor-pointer",
                 !isEditing ? "bg-slate-100 text-slate-600" : ""
               )}
@@ -1138,7 +1138,7 @@ const DetailApp = () => {
             <textarea
               id="antecedentes"
               className={classNames(
-                "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+                "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary",
                 "cursor-pointer",
                 !isEditing ? "bg-slate-100 text-slate-600" : ""
               )}
@@ -1155,7 +1155,7 @@ const DetailApp = () => {
             <textarea
               id="conclusiones"
               className={classNames(
-                "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary",
+                "w-full rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary",
                 "cursor-pointer",
                 !isEditing ? "bg-slate-100 text-slate-600" : ""
               )}

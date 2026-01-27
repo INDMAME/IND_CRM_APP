@@ -266,7 +266,7 @@ function FloatingList({ anchorRef, open, zIndex = 300000, maxHeightClass = "max-
     >
       <div
         role={role}
-        className={`w-full overflow-auto ${roundedClass} bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-none ${maxHeightClass}`}
+        className={`w-full overflow-auto ${roundedClass} bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-hidden ${maxHeightClass}`}
       >
         {children}
       </div>
@@ -899,10 +899,10 @@ function ClientCombobox({ onSelected, value = null }) {
       <div className="relative">
         <div
           ref={boxRef}
-          className="relative w-full cursor-default rounded-xl border-slate-300 bg-white text-left shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
+          className="relative w-full cursor-default rounded-xl border-slate-300 bg-white text-left shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
         >
           <input
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-24 text-sm leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-24 text-sm leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
             value={query}
             onChange={(event) => {
               const val = event.target.value;
@@ -1285,7 +1285,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
       <div className="relative">
         <div
           ref={boxRef}
-          className="relative w-full cursor-default rounded-xl border-slate-300 bg-white text-left shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
+          className="relative w-full cursor-default rounded-xl border-slate-300 bg-white text-left shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
         >
           <div className="flex flex-wrap gap-1 px-3 py-2 min-h-[40px]">
             {selected.map((c) => (
@@ -1304,7 +1304,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
               </span>
             ))}
             <input
-              className="flex-1 min-w-[120px] bg-transparent text-sm leading-5 text-slate-900 border-none outline-none px-1 py-1 focus:ring-0 focus:border-transparent"
+              className="flex-1 min-w-[120px] bg-transparent text-sm leading-5 text-slate-900 border-none outline-hidden px-1 py-1 focus:ring-0 focus:border-transparent"
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={selected.length ? "" : indT("Visits_Create_FilterPlaceholder", "Type to filter...")}
@@ -1381,7 +1381,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
               })}
           </div>
           {blocking && (
-            <div className="absolute inset-0 z-[70000] bg-white/70 backdrop-blur-[1px] flex items-center justify-center rounded-xl">
+            <div className="absolute inset-0 z-70000 bg-white/70 backdrop-blur-[1px] flex items-center justify-center rounded-xl">
               <Spinner size="h-6 w-6" />
             </div>
           )}
@@ -1481,7 +1481,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, invalid 
         >
           <input
             className={classNames(
-              "w-full rounded-xl border px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-none focus:ring-2",
+              "w-full rounded-xl border px-3 py-2 pr-10 text-sm leading-5 text-slate-900 focus:outline-hidden focus:ring-2",
               invalid
                 ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
                 : "border-slate-200 focus:ring-primary focus:border-primary"
@@ -1761,7 +1761,7 @@ function VisitasApp() {
     if (valConclusiones !== null) setConclusiones(valConclusiones);
   }, [fieldIdComentarios, fieldIdAntecedentes, fieldIdConclusiones]);
 
-  // Clear contactos solo si el cliente cambia (evita limpiar al restaurar/vuelta de paso 2)
+  // Clear contacts only when the client changes (avoid clearing on restore/step 2 return).
   const prevClientRef = useRef(null);
   useEffect(() => {
     const current = selectedClient?.value;
@@ -1773,7 +1773,7 @@ function VisitasApp() {
 
   const lastClientRef = useRef(null);
 
-  // Si se cambia de cliente tras haber seleccionado contactos, resetea todo el formulario.
+  // If the client changes after selecting contacts, reset the entire form.
   useEffect(() => {
     const current = selectedClient?.value;
     if (!current) return;
@@ -2028,7 +2028,7 @@ function VisitasApp() {
     <div className="space-y-4">
       {modal.open &&
         createPortal(
-          <div className="fixed inset-0 z-[600000] flex items-center justify-center bg-black/40 backdrop-blur-[1px] px-4">
+          <div className="fixed inset-0 z-600000 flex items-center justify-center bg-black/40 backdrop-blur-[1px] px-4">
             <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
                <div className="text-lg font-semibold text-slate-900">{modal.title}</div>
                <div className="text-sm text-slate-700 whitespace-pre-line">{modal.message}</div>
@@ -2084,7 +2084,7 @@ function VisitasApp() {
       )}
 
       {step === 2 && (
-        <div className="shadow-sm glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
+        <div className="shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
           <div className="text-base font-semibold text-slate-900 border-b border-slate-200 pb-3">
             {indT("Visits_Create_VisitData_Title", "Visit details")}
           </div>
@@ -2106,7 +2106,7 @@ function VisitasApp() {
               <input
                 id="description"
                 className={classNames(
-                  "w-full rounded-xl border px-3 py-2 text-slate-900 focus:outline-none focus:ring-2",
+                  "w-full rounded-xl border px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2",
                   descriptionInvalid
                     ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
                     : "border-slate-200 focus:ring-primary focus:border-primary"
@@ -2121,7 +2121,7 @@ function VisitasApp() {
               <textarea
                 id="comentarios"
                 className={classNames(
-                  "w-full cursor-pointer rounded-xl border px-3 py-2 text-slate-900 focus:outline-none focus:ring-2",
+                  "w-full cursor-pointer rounded-xl border px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2",
                   comentariosInvalid
                     ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
                     : "border-slate-200 focus:ring-primary focus:border-primary"
@@ -2139,7 +2139,7 @@ function VisitasApp() {
               <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Background", "Background")}</label>
               <textarea
                 id="antecedentes"
-                className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
                 value={antecedentes}
                 readOnly
                 onPointerDown={antecedentesTap.onPointerDown}
@@ -2152,7 +2152,7 @@ function VisitasApp() {
               <label className="text-sm font-semibold text-slate-700">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
               <textarea
                 id="conclusiones"
-                className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary focus:border-primary"
+                className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
                 value={conclusiones}
                 readOnly
                 onPointerDown={conclusionesTap.onPointerDown}

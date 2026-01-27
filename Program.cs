@@ -3,12 +3,14 @@ using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using Microsoft.AspNetCore.Diagnostics;
-using IND_CRM_APP.Infrastructure;
-using IND_CRM_APP.Infrastructure.Security;
+using IND_CRM_APP.Infrastructure.Security.Auth;
+using IND_CRM_APP.Infrastructure.Security.Filters;
+using IND_CRM_APP.Infrastructure.Validation;
 using System.Reflection;
 using Microsoft.AspNetCore.Localization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Razor;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.DependencyInjection;
 using System.Globalization;
@@ -16,10 +18,20 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using System.IO;
 
 
 
-var builder = WebApplication.CreateBuilder(args);
+// Resolve the correct web root for dev vs publish output.
+var resolvedWebRoot = Directory.Exists("Web/wwwroot") &&
+                      Directory.EnumerateFileSystemEntries("Web/wwwroot").Any()
+    ? "Web/wwwroot"
+    : "wwwroot";
+var builder = WebApplication.CreateBuilder(new WebApplicationOptions
+{
+    Args = args,
+    WebRootPath = resolvedWebRoot
+});
 builder.WebHost.ConfigureKestrel(options =>
 {
     // Reduce server fingerprinting.
@@ -30,7 +42,8 @@ builder.WebHost.ConfigureKestrel(options =>
 // Servicios
 // -----------------------------
 //builder.Services.AddResponseCompression();
-builder.Services.AddLocalization(options => options.ResourcesPath = "Resources");
+// Point localization to the new Resources root.
+builder.Services.AddLocalization(options => options.ResourcesPath = "App/Resources");
 
 builder.Services
     .AddControllersWithViews(options =>
@@ -43,6 +56,15 @@ builder.Services
     .AddSessionStateTempDataProvider()
     .AddViewLocalization(Microsoft.AspNetCore.Mvc.Razor.LanguageViewLocationExpanderFormat.Suffix)
     .AddDataAnnotationsLocalization();
+
+// Add view locations for Web/Views after reorganizing folders.
+builder.Services.Configure<RazorViewEngineOptions>(options =>
+{
+    options.ViewLocationFormats.Insert(0, "/Web/Views/{1}/{0}.cshtml");
+    options.ViewLocationFormats.Insert(1, "/Web/Views/Shared/{0}.cshtml");
+    options.AreaViewLocationFormats.Insert(0, "/Web/Areas/{2}/Views/{1}/{0}.cshtml");
+    options.AreaViewLocationFormats.Insert(1, "/Web/Areas/{2}/Views/Shared/{0}.cshtml");
+});
 
 builder.Services.AddAntiforgery(options =>
 {
@@ -291,7 +313,7 @@ app.UseMiddleware<TokenRefreshMiddleware>();
 // -----------------------------
 app.MapControllerRoute(
     name: "default",
-    pattern: "{controller=Auth}/{action=Login}/{id?}"
+    pattern: "{controller=Auth}/{action=Login}/{id?}" 
 );
 
 

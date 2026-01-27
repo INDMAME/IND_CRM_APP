@@ -7,18 +7,14 @@
 ## Hierarchy
 - system instructions
 - `.codex/AGENTS.md`
-- `.codex/core-ui-rules.md`
-- feature-specific docs (listed below)
+- grouped context docs (listed below)
 
 ## Files
 - `AGENTS.md`: global project rules, architecture, UI standards, and workflow expectations.
-- `core-ui-rules.md`: shared UI rules (overflow preview, read-only guard, base rounding, i18n reminder).
-- `api-surface.md`: API surface mapping for MVC client calls and envelope rules.
-- `permisos-contexto.md`: permissions + Entra context + company selection flow.
-- `EditorWebPage.md`: TextEditorReact page behavior and integration.
-- `dropdown-pattern.md`: dropdown/combobox UX pattern for React islands.
-- `visitas-popup-rules.md`: confirm modal + action mark rules for Visitas.
-- `PIXEL_HOVER_AND_TYPING.md`: pixel hover and transcription typing effect references.
+- `UI_GUIDE.md`: UI rules, interaction patterns, dropdowns, action mark, and editor behaviors.
+- `TECH_SPECS.md`: architecture, API surface, auth/context, localization, build system.
+- `QUALITY_CHECKLIST.md`: build, validation, and publish checks.
+- `PROJECT_STRUCTURE.md`: folder map + master instruction for future work.
 
 ## Maintenance
 - Keep docs ASCII-only.
@@ -26,4 +22,4 @@
 - Add a `Last updated` line when a doc changes.
 
 ## Last updated
-- 2026-01-21
+- 2026-01-27

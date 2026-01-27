@@ -40,14 +40,14 @@ function ensureMarkup() {
         // ignore
       }
       overlay.className =
-        "fixed inset-0 z-[2147483647] hidden pointer-events-none flex items-center justify-center";
+        "fixed inset-0 z-2147483647 hidden pointer-events-none flex items-center justify-center";
       overlay.setAttribute("aria-hidden", "true");
       overlay.style.zIndex = "2147483647";
     } else {
     overlay = document.createElement("div");
     overlay.id = "indActionMark";
     overlay.className =
-      "fixed inset-0 z-[2147483647] hidden pointer-events-none flex items-center justify-center";
+      "fixed inset-0 z-2147483647 hidden pointer-events-none flex items-center justify-center";
     overlay.setAttribute("aria-hidden", "true");
     overlay.style.zIndex = "2147483647";
     }

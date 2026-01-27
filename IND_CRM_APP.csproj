@@ -4,6 +4,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+    <WebRootPath>Web\wwwroot</WebRootPath>
     <MvcRazorCompileOnBuild>true</MvcRazorCompileOnBuild>
     <MvcRazorCompileOnPublish>true</MvcRazorCompileOnPublish>
     <PreserveCompilationContext>false</PreserveCompilationContext>
@@ -26,6 +27,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="wwwroot\images\" />
+    <Folder Include="Web\wwwroot\images\" />
   </ItemGroup>
 </Project>

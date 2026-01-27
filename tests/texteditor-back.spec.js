@@ -1,4 +1,4 @@
-// Playwright E2E: cover TextEditor return flows from Visitas/Create.
+// Playwright E2E: cover TextEditor return flows from Visits/Create.
 const { test, expect } = require("@playwright/test");
 
 test.use({ permissions: ["microphone"] });

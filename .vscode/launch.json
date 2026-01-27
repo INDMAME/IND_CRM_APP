@@ -23,6 +23,14 @@
         "action": "openExternally",
         "pattern": "\\bNow listening on:\\s+(https?://\\S+)"
       }
+    },
+    {
+      "name": "Abrir Chrome (UI local HTTPS 5001)",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "preLaunchTask": "kill-web-ports",
+      "url": "https://localhost:5001",
+      "webRoot": "${workspaceFolder}"
     }
   ],
   "compounds": [
@@ -30,7 +38,7 @@
       "name": "Backend + Chrome (local)",
       "configurations": [
         "Backend (Kestrel, HTTPS, Debug)",
-        "Abrir Chrome (UI local HTTPS 7702)"
+        "Abrir Chrome (UI local HTTPS 5001)"
       ]
     }
   ]

@@ -1,0 +1,44 @@
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor? HttpAccessor
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+
+@{
+#pragma warning disable CS8602
+#pragma warning disable CS8600
+    ViewData["Title"] = SR["Visits_History_Title"];
+    ViewData["HideNavArrows"] = true;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/historial.css" asp-append-version="true" />
+}
+
+<div id="visitas-history-root" data-default-from="@ViewBag.DefaultFromDate" data-default-to="@ViewBag.DefaultToDate"></div>
+
+@section Scripts {
+    <script>
+        window.__IND_I18N__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
+            History_From = SR["History_From"].Value,
+            History_To = SR["History_To"].Value,
+            History_ClearRange = SR["History_ClearRange"].Value,
+            History_PrevMonth = SR["History_PrevMonth"].Value,
+            History_NextMonth = SR["History_NextMonth"].Value,
+            History_Day_Mon = SR["History_Day_Mon"].Value,
+            History_Day_Tue = SR["History_Day_Tue"].Value,
+            History_Day_Wed = SR["History_Day_Wed"].Value,
+            History_Day_Thu = SR["History_Day_Thu"].Value,
+            History_Day_Fri = SR["History_Day_Fri"].Value,
+            History_Day_Sat = SR["History_Day_Sat"].Value,
+            History_Day_Sun = SR["History_Day_Sun"].Value,
+            History_AddDate = SR["History_AddDate"].Value,
+            History_Status_SelectStart = SR["History_Status_SelectStart"].Value,
+            History_Status_SelectEnd = SR["History_Status_SelectEnd"].Value,
+            History_Loading = SR["History_Loading"].Value,
+            History_NoDataInRange = SR["History_NoDataInRange"].Value,
+            Common_NoData = SR["Common_NoData"].Value,
+            Api_RequestFailed = SR["Api_RequestFailed"].Value,
+            Api_InvalidJson = SR["Api_InvalidJson"].Value
+        }));
+    </script>
+    <script src="~/js/history.js" asp-append-version="true"></script>
+}

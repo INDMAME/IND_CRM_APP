@@ -5550,7 +5550,7 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 			// to change the `type` here.
 			var handle = dataPriv.get( this, "handle" ),
 				event = jQuery.event.fix( nativeEvent );
-			event.type = nativeEvent.type === "focusin" ? "focus" : "blur";
+			event.type = nativeEvent.type === "focusin" ? "focus" : "blur-sm";
 			event.isSimulated = true;
 
 			// First, handle focusin/focusout
@@ -5585,7 +5585,7 @@ jQuery.each( { focus: "focusin", blur: "focusout" }, function( type, delegateTyp
 
 			// Claim the first handler
 			// dataPriv.set( this, "focus", ... )
-			// dataPriv.set( this, "blur", ... )
+			// dataPriv.set( this, "blur-sm", ... )
 			leverageNative( this, type, true );
 
 			if ( document.documentMode ) {
@@ -8468,7 +8468,7 @@ jQuery.fn.extend( {
 } );
 
 jQuery.each(
-	( "blur focus focusin focusout resize scroll click dblclick " +
+	( "blur-sm focus focusin focusout resize scroll click dblclick " +
 	"mousedown mouseup mousemove mouseover mouseout mouseenter mouseleave " +
 	"change select submit keydown keypress keyup contextmenu" ).split( " " ),
 	function( _i, name ) {

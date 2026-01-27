@@ -2,9 +2,9 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    "./Views/**/*.cshtml",
-    "./wwwroot/js/**/*.{js,jsx}",
-    "./wwwroot/react/**/*.{js,jsx}",
+    "./Web/Views/**/*.cshtml",
+    "./Web/wwwroot/js/**/*.{js,jsx,ts,tsx}",
+    "./Web/wwwroot/react/**/*.{js,jsx,ts,tsx}",
   ],
   theme: {
     extend: {

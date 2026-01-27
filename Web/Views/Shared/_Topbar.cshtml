@@ -1,0 +1,182 @@
+@using IND_CRM_APP.Infrastructure.Localization
+@using IND_CRM_APP.Models.Shared
+@using IND_CRM_APP.Infrastructure.Security.Modules
+@using IND_CRM_APP.Infrastructure.Security.Permissions
+@using System.Linq
+@using System.Text.Json
+@inject Microsoft.AspNetCore.Http.IHttpContextAccessor HttpAccessor
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+
+@{
+    var title = ViewData["Title"]?.ToString() ?? "IND CRM";
+    var path = Context?.Request?.Path.Value ?? string.Empty;
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString() ?? string.Empty;
+    var action = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+
+    var isHome = controller.Equals("Home", StringComparison.OrdinalIgnoreCase) &&
+                 action.Equals("Index", StringComparison.OrdinalIgnoreCase);
+
+    var hideNavArrows = (ViewData["HideNavArrows"] as bool? ?? false) ||
+                        path == "/" ||
+                        isHome;
+
+    var isHistory = controller.Equals("Historial", StringComparison.OrdinalIgnoreCase) &&
+                    action.Equals("History", StringComparison.OrdinalIgnoreCase);
+
+    var isCreate = controller.Equals("Visitas", StringComparison.OrdinalIgnoreCase) &&
+                   action.Equals("Create", StringComparison.OrdinalIgnoreCase);
+
+    var isVisitaDetail = (controller.Equals("Visitas", StringComparison.OrdinalIgnoreCase) &&
+                          (action.StartsWith("Detalle", StringComparison.OrdinalIgnoreCase) ||
+                           action.StartsWith("Detail", StringComparison.OrdinalIgnoreCase))) ||
+                         path.StartsWith("/Visitas/Detalle", StringComparison.OrdinalIgnoreCase);
+
+    IndWebContext? webContext = null;
+    var contextRaw = HttpAccessor.HttpContext?.Session.GetString("INDWebContext");
+    if (!string.IsNullOrWhiteSpace(contextRaw))
+    {
+        try
+        {
+            webContext = JsonSerializer.Deserialize<IndWebContext>(contextRaw);
+        }
+        catch
+        {
+            webContext = null;
+        }
+    }
+
+    var selectedCompanyId = HttpAccessor.HttpContext?.Session.GetString("INDCompanySelected");
+    var companySelectionSource = HttpAccessor.HttpContext?.Session.GetString("INDCompanySelectionSource");
+    if (string.IsNullOrWhiteSpace(selectedCompanyId) &&
+        !string.Equals(companySelectionSource, "user", StringComparison.OrdinalIgnoreCase))
+    {
+        selectedCompanyId = !string.IsNullOrWhiteSpace(webContext?.Header?.DefaultCompany)
+            ? webContext!.Header.DefaultCompany
+            : webContext?.Companies?.FirstOrDefault()?.CompanyId;
+    }
+
+    IndWebCompany? selectedCompany = null;
+    if (webContext?.Companies != null)
+    {
+        selectedCompany = !string.IsNullOrWhiteSpace(selectedCompanyId)
+            ? webContext.Companies.FirstOrDefault(c => string.Equals(c.CompanyId, selectedCompanyId, StringComparison.OrdinalIgnoreCase))
+            : webContext.Companies.FirstOrDefault();
+    }
+
+    int GetModuleAccess(string moduleCode)
+    {
+        if (selectedCompany?.Modules == null)
+            return 0;
+
+        var mod = selectedCompany.Modules.FirstOrDefault(m =>
+            INDModuleRegistry.MatchesModuleCode(m.ModuleCode, moduleCode));
+        return mod?.AccessRightsInt ?? 0;
+    }
+
+    var historyAccess = GetModuleAccess(INDModuleRegistry.ModuleVisitasHistorial);
+    var createAccess = GetModuleAccess(INDModuleRegistry.ModuleVisitasCreacion);
+    var canEditHistory = historyAccess >= IndAccessRights.Edit;
+    var canDeleteHistory = historyAccess >= IndAccessRights.FullAccess;
+    var canCreateVisit = createAccess >= IndAccessRights.Add;
+
+    var hideForwardArrow = hideNavArrows || isVisitaDetail || (isCreate && !canCreateVisit);
+
+    var topbarTitle = title;
+    if (isHistory)
+    {
+        topbarTitle = SR["Nav_Visits_History"];
+    }
+    else if (isCreate)
+    {
+        topbarTitle = SR["Common_Create"];
+    }
+    else if (isVisitaDetail)
+    {
+        topbarTitle = SR["Visits_Detail_Title"];
+    }
+}
+
+    <div class="topbar sticky top-0 left-0 z-1900 flex h-[64px] w-full items-center justify-between bg-primary text-white px-2 sm:px-2.5 shadow-md transition-[margin,width] duration-300">
+        <div class="topbar-left flex items-center gap-1">
+                <button id="btnMenu" type="button" class="text-white rounded-md pointer-events-auto"
+                        aria-label="@SR["Topbar_OpenMenu"]" aria-controls="sidebar" aria-expanded="false" onclick="toggleSidebar()"
+                        style="width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;padding:0;">
+                    <span class="sr-only">@SR["Topbar_OpenMenu"]</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[30px] w-[30px]" fill="none" viewBox="0 0 30 30" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
+                    </svg>
+                </button>
+
+            @if (!hideNavArrows)
+            {
+                var backOnClick = isVisitaDetail
+                    ? "window.location.href='/Historial/History'"
+                    : "window.__indAllowHistoryOnce && window.__indAllowHistoryOnce(); window.history.back()";
+                var backDisabled = isVisitaDetail ? false : true;
+                <button id="globalBackBtn" type="button" class="text-white rounded-md pointer-events-auto"
+                        aria-label="@SR["Topbar_Back"]" onclick="@backOnClick" @(backDisabled ? "disabled" : "")
+                        style="width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;padding:0;">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-[30px] w-[30px]" fill="none" viewBox="0 0 30 30" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                    </svg>
+                </button>
+            }
+        </div>
+
+        <div class="topbar-center flex-1 flex justify-center pointer-events-none">
+            <div class="flex flex-col items-center leading-tight">
+                <span id="topbarTitle" class="text-white font-medium text-[33px] sm:text-[39px] leading-tight">@topbarTitle</span>
+                @if (!string.IsNullOrWhiteSpace(selectedCompanyId))
+                {
+                    <span class="mt-0.5 text-[8px] italic uppercase tracking-wide text-slate-300">@selectedCompanyId</span>
+                }
+            </div>
+        </div>
+
+        <div class="topbar-right flex items-center gap-1 justify-end">
+            @if (isVisitaDetail && (canEditHistory || canDeleteHistory))
+            {
+                <div class="flex items-center gap-1 pr-1">
+                    @if (canEditHistory)
+                    {
+                        <button type="button" class="text-white rounded-md pointer-events-auto"
+                                style="width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;padding:0;"
+                                aria-label="@SR["Topbar_EditSave"]"
+                                onclick="window.dispatchEvent(new CustomEvent('visit-edit'))">
+                            <svg id="visitEditIcon" xmlns="http://www.w3.org/2000/svg" class="h-[30px] w-[30px]" fill="none" viewBox="0 0 30 30" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                            </svg>
+                            <svg id="visitSaveIcon" xmlns="http://www.w3.org/2000/svg" class="h-[30px] w-[30px] hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                            </svg>
+                        </button>
+                    }
+                    @if (canDeleteHistory)
+                    {
+                        <button type="button" class="text-white rounded-md pointer-events-auto"
+                                style="width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;padding:0;"
+                                aria-label="@SR["Topbar_Delete"]"
+                                onclick="window.dispatchEvent(new CustomEvent('visit-delete'))">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-[30px] w-[30px]" fill="none" viewBox="0 0 30 30" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0 1 15.916 21H8.084A2.25 2.25 0 0 1 5.84 19.673L4.772 5.79m14.456 0a48.11 48.11 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.111 48.111 0 0 1 3.478-.397m7.5 0V4.5c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0C9.548 2.336 8.638 3.32 8.638 4.5v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                        </button>
+                    }
+                </div>
+            }
+            else if (!hideForwardArrow)
+            {
+                <button id="globalForwardBtn" type="button" class="text-white rounded-md pointer-events-auto"
+                        aria-label="@SR["Topbar_Forward"]" disabled
+                        style="width:44px;height:44px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;padding:0;">
+                    <svg id="globalForwardIcon" xmlns="http://www.w3.org/2000/svg" class="h-[30px] w-[30px]" fill="none" viewBox="0 0 30 30" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                    </svg>
+                    <svg id="globalCreateIcon" xmlns="http://www.w3.org/2000/svg" class="h-[30px] w-[30px] hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                    </svg>
+                </button>
+            }
+        </div>
+
+    </div>

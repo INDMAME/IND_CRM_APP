@@ -1,0 +1,27 @@
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+
+@{
+    ViewData["Title"] = SR["Home_Title"];
+}
+
+<div class="min-h-screen flex flex-col gap-8">
+    <div class="space-y-2 pt-2">
+        <h2 class="text-2xl font-semibold text-slate-900">@SR["Home_Welcome"]</h2>
+        <p class="text-slate-700">@SR["Home_SelectLeftMenu"]</p>
+    </div>
+
+    <div class="w-full flex justify-center pb-6 mt-auto">
+        <div class="tech-info text-center space-y-1 leading-tight">
+            <div>@SR["Home_DataFromAx"]</div>
+            <div>@SR["Home_PrototypeVersion"]</div>
+            <div>@SR["Home_Environment"]: @((ViewBag.Environment ?? SR["Common_Unknown"].Value).ToString())</div>
+            <div>@SR["Home_Company"]: @((ViewBag.Company ?? SR["Common_NotAvailable"].Value).ToString())</div>
+        </div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/index.css" />
+    <link rel="stylesheet" href="~/css/technical-info.css" />
+}

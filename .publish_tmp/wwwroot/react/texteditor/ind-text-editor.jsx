@@ -356,7 +356,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     : "relative rounded-2xl border border-slate-300 bg-white shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary";
 
   return (
-    <div className="min-h-screen h-[100dvh] w-full flex flex-col bg-slate-200">
+    <div className="min-h-screen h-dvh w-full flex flex-col bg-slate-200">
       <div className="topbar shadow-md">
         <button
           type="button"
@@ -461,7 +461,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
           <div className={editorBoxClass}>
             <textarea
               ref={textareaRef}
-              className={`w-full resize-none bg-transparent px-5 pb-5 pt-10 pr-14 focus:outline-none ${isReadOnly ? "text-slate-600" : "text-slate-900"}`}
+              className={`w-full resize-none bg-transparent px-5 pb-5 pt-10 pr-14 focus:outline-hidden ${isReadOnly ? "text-slate-600" : "text-slate-900"}`}
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={isTranscribing || isTyping}
@@ -483,7 +483,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
         {!isReadOnly && (
           <button
             type="button"
-            className="absolute top-4 right-4 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:text-slate-600 focus:outline-none focus:ring-2 focus:ring-primary/50"
+            className="absolute top-4 right-4 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-primary/50"
             aria-label={indT("TextEditor_Microphone", "Microphone")}
             onClick={toggleRecorder}
             disabled={isTranscribing || isTyping}

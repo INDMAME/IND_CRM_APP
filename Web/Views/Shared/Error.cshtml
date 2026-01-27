@@ -1,0 +1,22 @@
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+
+@{
+    ViewData["Title"] = SR["Error_Title"].Value;
+}
+
+<div class="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 py-10">
+    <div class="text-rose-600">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9.303 3.376c.866 1.5-.217 3.374-1.948 3.374H4.645c-1.73 0-2.813-1.874-1.948-3.374L10.052 3.378c.866-1.5 3.03-1.5 3.896 0l7.355 12.748ZM12 15.75h.007v.008H12v-.008Z" />
+        </svg>
+    </div>
+
+    <h2 class="mt-4 text-xl font-semibold text-rose-700">@SR["Error_Heading"]</h2>
+    <p class="mt-2 max-w-xl text-sm text-slate-600">@SR["Error_Body"]</p>
+
+    <a asp-controller="Home" asp-action="Index" class="mt-6 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2 text-white font-semibold shadow-sm hover:bg-primary/90 transition">
+        <span aria-hidden="true">&larr;</span>
+        @SR["Error_BackHome"]
+    </a>
+</div>

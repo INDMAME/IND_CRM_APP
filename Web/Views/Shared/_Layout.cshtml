@@ -1,0 +1,523 @@
+@using IND_CRM_APP.Infrastructure.Localization
+@using IND_CRM_APP.Models.Shared
+@using IND_CRM_APP.Infrastructure.Security.Modules
+@using System.Collections.Generic
+@using System.Linq
+@using System.Text.Json
+@inject Microsoft.AspNetCore.Antiforgery.IAntiforgery Antiforgery
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+
+<!DOCTYPE html>
+<html lang="@System.Globalization.CultureInfo.CurrentUICulture.Name">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    @{
+        var csrfTokens = Antiforgery.GetAndStoreTokens(Context);
+    }
+    <meta name="csrf-token" content="@csrfTokens.RequestToken" />
+
+    <title>@ViewData["Title"] - IND CRM</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind local build -->
+    <link rel="stylesheet" href="~/css/tailwind.css" asp-append-version="true" />
+
+    <!-- Layout CSS -->
+    <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
+
+    <link rel="stylesheet" href="~/css/ind-action-mark.css" asp-append-version="true" />
+
+    @RenderSection("Styles", required: false)
+</head>
+
+@{
+    var bodyClass = ViewData["BodyClass"] as string ?? string.Empty;
+    var hideChrome = ViewData["HideChrome"] as bool? ?? false;
+    var contentClassOverride = ViewData["ContentClass"] as string;
+    var contentClass = string.IsNullOrWhiteSpace(contentClassOverride)
+        ? "content w-full max-w-5xl mx-auto px-4 md:px-6 min-h-screen"
+        : contentClassOverride!;
+
+    IndWebContext? permissionContext = null;
+    var contextRaw = Context?.Session?.GetString("INDWebContext");
+    if (!string.IsNullOrWhiteSpace(contextRaw))
+    {
+        try
+        {
+            permissionContext = JsonSerializer.Deserialize<IndWebContext>(contextRaw);
+        }
+        catch
+        {
+            permissionContext = null;
+        }
+    }
+
+    var selectedCompanyId = Context?.Session?.GetString("INDCompanySelected");
+    var companySelectionSource = Context?.Session?.GetString("INDCompanySelectionSource");
+    if (string.IsNullOrWhiteSpace(selectedCompanyId) &&
+        !string.Equals(companySelectionSource, "user", StringComparison.OrdinalIgnoreCase))
+    {
+        selectedCompanyId = permissionContext?.Header?.DefaultCompany;
+    }
+    var selectedCompany = !string.IsNullOrWhiteSpace(selectedCompanyId)
+        ? permissionContext?.Companies.FirstOrDefault(c => string.Equals(c.CompanyId, selectedCompanyId, StringComparison.OrdinalIgnoreCase))
+        : permissionContext?.Companies.FirstOrDefault();
+
+    var moduleAccess = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+    if (selectedCompany?.Modules != null)
+    {
+        foreach (var mod in selectedCompany.Modules)
+        {
+            if (string.IsNullOrWhiteSpace(mod.ModuleCode))
+                continue;
+
+            if (!moduleAccess.ContainsKey(mod.ModuleCode))
+                moduleAccess[mod.ModuleCode] = mod.AccessRightsInt;
+
+            if (INDModuleRegistry.TryGetCanonicalModuleCode(mod.ModuleCode, out var canonical))
+            {
+                if (!moduleAccess.ContainsKey(canonical) || moduleAccess[canonical] < mod.AccessRightsInt)
+                    moduleAccess[canonical] = mod.AccessRightsInt;
+            }
+        }
+    }
+
+    var moduleAccessJson = JsonSerializer.Serialize(moduleAccess);
+    var permissionRedirectMessage = TempData?["IndPermissionRedirectMessage"] as string;
+}
+<body class="bg-slate-100 font-sans text-slate-900 overflow-x-hidden @bodyClass">
+    <svg class="ind-spinner-defs" aria-hidden="true" focusable="false">
+        <defs>
+            <linearGradient id="indSpinnerGradient">
+                <stop offset="0%" stop-color="currentColor" stop-opacity="1" />
+                <stop offset="100%" stop-color="currentColor" stop-opacity="0.25" />
+            </linearGradient>
+        </defs>
+    </svg>
+
+    <div id="indGlobalLoading" class="ind-global-loading" role="status" aria-live="polite" aria-hidden="false">
+        <div class="ind-global-loading__panel">
+            <svg class="ind-spinner h-12 w-12" viewBox="0 0 20 20" aria-hidden="true">
+                <circle class="ind-spinner__circle" cx="10" cy="10" r="8" stroke-width="2"></circle>
+            </svg>
+            <span class="ind-global-loading__text" data-ind-loading-text>@SR["Common_Loading"].Value</span>
+        </div>
+    </div>
+
+    @if (!hideChrome)
+    {
+        <!-- TOPBAR -->
+        @await Html.PartialAsync("_Topbar")
+
+        <!-- OVERLAY -->
+        <div id="overlay" class="overlay fixed inset-0 bg-black/45 opacity-0 pointer-events-none transition duration-200" aria-hidden="true" onclick="toggleSidebar()"></div>
+
+        <!-- SIDEBAR -->
+        @await Html.PartialAsync("_Sidebar")
+    }
+
+    <div id="content" class="@contentClass">
+        @RenderBody()
+    </div>
+
+    <div id="indPermissionModal" class="fixed inset-0 z-600000 hidden items-center justify-center bg-black/40 backdrop-blur-[1px] px-4" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
+            <div id="indPermissionModalTitle" class="text-lg font-semibold text-slate-900">@SR["Auth_PermissionDenied_Title"]</div>
+            <div id="indPermissionModalBody" class="text-sm text-slate-700 whitespace-pre-line">@SR["Auth_PermissionDenied_Body"]</div>
+            <div class="flex justify-end pt-2">
+                <button id="indPermissionModalOk" type="button" class="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition">
+                    @SR["Common_OK"]
+                </button>
+            </div>
+        </div>
+    </div>
+
+    @if (!hideChrome)
+    {
+        <script>
+            const sidebar = document.getElementById("sidebar");
+            const overlay = document.getElementById("overlay");
+            const content = document.getElementById("content");
+            const btnMenu = document.getElementById("btnMenu");
+            const topbar = document.querySelector(".topbar");
+            const visitasToggle = document.getElementById("visitasToggle");
+            const companySub = document.getElementById("indCompanySubmenu");
+            const companyBtn = document.getElementById("indCompanyButton");
+
+            let menuOpen = false;
+            let touchStartX = 0;
+            let touchStartY = 0;
+            let touchTracking = false;
+
+            sidebar?.setAttribute("aria-hidden", "true");
+            overlay?.setAttribute("aria-hidden", "true");
+
+            function updateSidebarHeight() {
+                if (!sidebar) return;
+                const doc = document.documentElement;
+                const body = document.body;
+                const pageHeight = Math.max(
+                    body.scrollHeight,
+                    doc.scrollHeight,
+                    body.offsetHeight,
+                    doc.offsetHeight
+                );
+                const viewportHeight = window.innerHeight || doc.clientHeight || 0;
+                const isTallPage = pageHeight > viewportHeight + 24;
+                sidebar.classList.toggle("sidebar--tall", isTallPage);
+                const targetHeight = isTallPage ? pageHeight : viewportHeight;
+                sidebar.style.setProperty("--sidebar-height", `${Math.round(targetHeight)}px`);
+            }
+
+            const toggleSidebar = () => {
+                if (!sidebar || !overlay || !content || !btnMenu || !topbar) return;
+
+                menuOpen = !menuOpen;
+
+                if (menuOpen) {
+                    sidebar.classList.add("open");
+                    sidebar.classList.add("sidebar--dock-user");
+                    overlay.classList.add("visible");
+                    sidebar.setAttribute("aria-hidden", "false");
+                    overlay.setAttribute("aria-hidden", "false");
+                    btnMenu.style.opacity = "0";
+                    btnMenu.style.pointerEvents = "none";
+                    btnMenu.setAttribute("aria-expanded", "true");
+
+                    if (window.innerWidth > 768) {
+                        content.classList.add("shifted");
+                        topbar.classList.add("shifted");
+                    }
+                    updateSidebarHeight();
+                } else {
+                    sidebar.classList.remove("open");
+                    sidebar.classList.remove("sidebar--dock-user");
+                    overlay.classList.remove("visible");
+                    sidebar.setAttribute("aria-hidden", "true");
+                    overlay.setAttribute("aria-hidden", "true");
+                    btnMenu.style.opacity = "1";
+                    btnMenu.style.pointerEvents = "auto";
+                    btnMenu.setAttribute("aria-expanded", "false");
+                    content.classList.remove("shifted");
+                    topbar.classList.remove("shifted");
+                }
+            };
+
+            function shouldIgnoreOutsidePress(target) {
+                if (!target) return false;
+                if (sidebar && sidebar.contains(target)) return true;
+                if (btnMenu && btnMenu.contains(target)) return true;
+                return false;
+            }
+
+            function handleOutsidePress(event) {
+                if (!menuOpen) return;
+                if (shouldIgnoreOutsidePress(event.target)) return;
+                toggleSidebar();
+            }
+
+            function handleSwipeStart(event) {
+                if (!menuOpen) return;
+                const touch = event.touches && event.touches[0];
+                if (!touch) return;
+                touchStartX = touch.clientX;
+                touchStartY = touch.clientY;
+                touchTracking = true;
+            }
+
+            function handleSwipeMove(event) {
+                if (!menuOpen || !touchTracking) return;
+                const touch = event.touches && event.touches[0];
+                if (!touch) return;
+                const deltaX = touch.clientX - touchStartX;
+                const deltaY = touch.clientY - touchStartY;
+                if (deltaX < -40 && Math.abs(deltaX) > Math.abs(deltaY) + 6) {
+                    touchTracking = false;
+                    toggleSidebar();
+                }
+            }
+
+            function handleSwipeEnd() {
+                touchTracking = false;
+            }
+
+            function toggleVisitas() {
+                const sub = document.getElementById("submenuVisitas");
+                const chevron = document.getElementById("visitasChevron");
+                if (!sub) return;
+                const isHidden = sub.classList.toggle("hidden");
+                const nowOpen = !isHidden;
+                visitasToggle?.setAttribute("aria-expanded", nowOpen.toString());
+                chevron?.classList.toggle("rotate-180", nowOpen);
+            }
+
+            function toggleUserMenu() {
+                const menu = document.getElementById("userMenu");
+                const chevron = document.getElementById("userMenuChevron");
+                const langSub = document.getElementById("indLangSubmenu");
+                const langBtn = document.getElementById("indLangButton");
+
+                const isOpen = menu.classList.toggle("open");
+                if (chevron) {
+                    chevron.classList.toggle("rotate-180", isOpen);
+                }
+
+                // Defensive: close language submenu when the user menu closes.
+                if (!isOpen) {
+                    langSub?.classList.add("hidden");
+                    langBtn?.setAttribute("aria-expanded", "false");
+                    companySub?.classList.add("hidden");
+                    companyBtn?.setAttribute("aria-expanded", "false");
+                }
+                const userChip = document.querySelector(".user-chip");
+                if (userChip) {
+                    userChip.setAttribute("aria-expanded", isOpen.toString());
+                }
+            }
+
+            function toggleIndLanguageMenu() {
+                const langSub = document.getElementById("indLangSubmenu");
+                const langBtn = document.getElementById("indLangButton");
+                if (!langSub || !langBtn) return;
+
+                const nowHidden = langSub.classList.toggle("hidden");
+                langBtn.setAttribute("aria-expanded", (!nowHidden).toString());
+            }
+
+            function toggleIndCompanyMenu() {
+                if (!companySub || !companyBtn) return;
+                const nowHidden = companySub.classList.toggle("hidden");
+                companyBtn.setAttribute("aria-expanded", (!nowHidden).toString());
+            }
+
+            // Post company selection with fetch so we can use location.replace.
+            function bindCompanyForms() {
+                const forms = document.querySelectorAll(".ind-company-form");
+                if (!forms.length) return;
+
+                forms.forEach((form) => {
+                    if (form.dataset.indBound === "true") return;
+                    form.dataset.indBound = "true";
+                    form.addEventListener("submit", (event) => {
+                        event.preventDefault();
+                        const payload = new FormData(form);
+                        fetch(form.action, {
+                            method: "POST",
+                            body: payload,
+                            headers: { "X-Requested-With": "XMLHttpRequest" }
+                        })
+                            .then((res) => {
+                                if (!res.ok) throw new Error("Company change failed.");
+                                window.location.replace("/");
+                            })
+                            .catch(() => {
+                                form.submit();
+                            });
+                    });
+                });
+            }
+
+            window.toggleSidebar = toggleSidebar;
+            updateSidebarHeight();
+            bindCompanyForms();
+            window.addEventListener("resize", updateSidebarHeight);
+            document.addEventListener("pointerdown", handleOutsidePress, true);
+            sidebar?.addEventListener("touchstart", handleSwipeStart, { passive: true });
+            sidebar?.addEventListener("touchmove", handleSwipeMove, { passive: true });
+            sidebar?.addEventListener("touchend", handleSwipeEnd, { passive: true });
+            sidebar?.addEventListener("touchcancel", handleSwipeEnd, { passive: true });
+            overlay?.addEventListener("touchstart", handleSwipeStart, { passive: true });
+            overlay?.addEventListener("touchmove", handleSwipeMove, { passive: true });
+            overlay?.addEventListener("touchend", handleSwipeEnd, { passive: true });
+            overlay?.addEventListener("touchcancel", handleSwipeEnd, { passive: true });
+        </script>
+    }
+
+    @{
+        try
+        {
+            await Html.PartialAsync("_IndActionMark");
+        }
+        catch
+        {
+            // Defensive: do not break pages if the partial is missing.
+        }
+    }
+
+    <script src="~/js/ind-action-mark.js" asp-append-version="true"></script>
+
+    <script>
+        window.__IND_MODULE_ACCESS__ = @Html.Raw(moduleAccessJson);
+        window.__IND_SELECTED_COMPANY__ = @Html.Raw(JsonSerializer.Serialize(selectedCompanyId ?? string.Empty));
+        window.__IND_PERMISSION_I18N__ = {
+            title: @Html.Raw(JsonSerializer.Serialize(SR["Auth_PermissionDenied_Title"].Value)),
+            message: @Html.Raw(JsonSerializer.Serialize(SR["Auth_PermissionDenied_Body"].Value)),
+            ok: @Html.Raw(JsonSerializer.Serialize(SR["Common_OK"].Value))
+        };
+    </script>
+
+    @{
+        try
+        {
+            await Html.PartialAsync("_IndActionMarkInit");
+        }
+        catch
+        {
+            // Defensive: do not break pages if the partial is missing.
+        }
+    }
+
+    <script>
+        (function () {
+            // Block swipe back/forward by trapping history entries.
+            const trapState = { indTrap: true };
+
+            function pushTrap() {
+                try {
+                    history.pushState(trapState, "", location.href);
+                } catch {
+                    // ignore
+                }
+            }
+
+            function ensureTrap() {
+                try {
+                    if (!history.state || history.state.indTrap !== true) {
+                        pushTrap();
+                    }
+                } catch {
+                    pushTrap();
+                }
+            }
+
+            window.__indNavigateBack = function (fallbackUrl) {
+                try {
+                    if (history.state && history.state.indTrap === true) {
+                        history.go(-2);
+                        return;
+                    }
+                } catch {
+                    // ignore
+                }
+                if (fallbackUrl) {
+                    window.location.href = fallbackUrl;
+                    return;
+                }
+                try {
+                    history.back();
+                } catch {
+                    if (fallbackUrl) {
+                        window.location.href = fallbackUrl;
+                    }
+                }
+            };
+
+            // Backward compatibility alias.
+            window.__indAllowHistoryOnce = window.__indNavigateBack;
+
+            ensureTrap();
+            window.addEventListener("popstate", function () {
+                ensureTrap();
+            });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const overlay = document.getElementById("indGlobalLoading");
+            if (!overlay) return;
+
+            const label = overlay.querySelector("[data-ind-loading-text]");
+            let activeCount = 0;
+
+            const showOverlay = (message) => {
+                if (message && label) {
+                    label.textContent = String(message);
+                }
+                overlay.classList.remove("ind-global-loading--hidden");
+                overlay.setAttribute("aria-hidden", "false");
+            };
+
+            const hideOverlay = () => {
+                overlay.classList.add("ind-global-loading--hidden");
+                overlay.setAttribute("aria-hidden", "true");
+            };
+
+            // Global helpers for cache-heavy flows or long-running actions.
+            window.__indShowGlobalSpinner = function (message) {
+                activeCount += 1;
+                showOverlay(message);
+            };
+
+            window.__indHideGlobalSpinner = function () {
+                activeCount = Math.max(0, activeCount - 1);
+                if (activeCount === 0) {
+                    hideOverlay();
+                }
+            };
+
+            if (document.readyState === "complete") {
+                hideOverlay();
+                return;
+            }
+
+            window.addEventListener("load", function () {
+                hideOverlay();
+            }, { once: true });
+        })();
+    </script>
+
+    <script>
+        (function () {
+            const modal = document.getElementById("indPermissionModal");
+            if (!modal) return;
+            const titleEl = document.getElementById("indPermissionModalTitle");
+            const bodyEl = document.getElementById("indPermissionModalBody");
+            const okBtn = document.getElementById("indPermissionModalOk");
+            const i18n = window.__IND_PERMISSION_I18N__ || {};
+
+            const hide = () => {
+                modal.classList.add("hidden");
+                modal.setAttribute("aria-hidden", "true");
+            };
+
+            const show = (opts) => {
+                const title = opts && typeof opts.title === "string" && opts.title.trim() ? opts.title : i18n.title;
+                const message = opts && typeof opts.message === "string" && opts.message.trim() ? opts.message : i18n.message;
+                if (titleEl && title) titleEl.textContent = title;
+                if (bodyEl && message) bodyEl.textContent = message;
+                if (okBtn && i18n.ok) okBtn.textContent = i18n.ok;
+                modal.classList.remove("hidden");
+                modal.setAttribute("aria-hidden", "false");
+            };
+
+            okBtn?.addEventListener("click", hide);
+            modal.addEventListener("click", (event) => {
+                if (event.target === modal) hide();
+            });
+
+            window.IND = window.IND || {};
+            window.IND.showPermissionModal = show;
+            window.IND.hidePermissionModal = hide;
+        })();
+    </script>
+
+    @if (!string.IsNullOrWhiteSpace(permissionRedirectMessage))
+    {
+        <script>
+            (function () {
+                const message = @Html.Raw(JsonSerializer.Serialize(permissionRedirectMessage));
+                if (window.IND && typeof window.IND.showPermissionModal === "function") {
+                    window.IND.showPermissionModal({ message: message });
+                }
+            })();
+        </script>
+    }
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

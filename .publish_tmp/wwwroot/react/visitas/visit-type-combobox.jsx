@@ -55,7 +55,7 @@ function FloatingList({ anchorRef, open, zIndex = 360000, maxHeightClass = "max-
         zIndex,
       }}
     >
-      <div className={`w-full overflow-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-none ${maxHeightClass}`}>
+      <div className={`w-full overflow-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-hidden ${maxHeightClass}`}>
         {children}
       </div>
     </div>,
@@ -160,14 +160,14 @@ const VisitTypeCombobox = ({ options = [], targetId = "visitType" }) => {
   if (!normalized.length) return null;
 
   return (
-    <div className="relative z-[140000]" ref={containerRef}>
+    <div className="relative z-140000" ref={containerRef}>
       <div className="relative mt-1">
         <div
           ref={boxRef}
-          className="relative w-full cursor-default rounded-md border border-slate-300 bg-white text-left shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary sm:text-sm"
+          className="relative w-full cursor-default rounded-md border border-slate-300 bg-white text-left shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary sm:text-sm"
         >
           <input
-            className="w-full border-none bg-transparent py-2 pl-3 pr-10 text-sm leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-none"
+            className="w-full border-none bg-transparent py-2 pl-3 pr-10 text-sm leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden"
             value={query}
             onChange={(event) => {
               setQuery(event.target.value);
