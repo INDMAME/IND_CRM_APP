@@ -1,0 +1,395 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: INDCRMUtilityService descargados en Jueves 1/29/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #INDCRMUtilityService
+    PROPERTIES
+      Name                #INDCRMUtilityService
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #parseYmdDate
+        #// Method: parseYmdDate
+        #// Purpose: Parse yyyymmdd string to date. Returns 0D if invalid.
+        #static server date parseYmdDate(str _ymd)
+        #{
+        #    date d;
+        #
+        #    if (!strLen(_ymd))
+        #        return dateNull();
+        #
+        #    // 123 = YMD format
+        #    d = str2Date(_ymd, 321);
+        #    return d;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #isHeaderLocked
+        #// Method: isHeaderLocked
+        #// Purpose: Returns true if header is locked by Voucher
+        #static server boolean isHeaderLocked(CRMHojaGastosTable _header)
+        #{
+        #    if (!_header.RecId)
+        #        return false;
+        #
+        #    return (_header.Voucher != '');
+        #}
+        #
+      ENDSOURCE
+      SOURCE #findHeaderForUpdate
+        #// Method: findHeaderForUpdate
+        #// Purpose: Find CRMHojaGastosTable for update by crmcrmUserId + HojaGastosId in current company
+        #static server CRMHojaGastosTable findHeaderForUpdate(CRMUserId _UserId, CRMHojaGastosId _hojaGastosId)
+        #{
+        #    CRMHojaGastosTable header;
+        #
+        #    select firstonly forupdate header
+        #        where header.UserId       == _UserId
+        #           && header.HojaGastosId == _hojaGastosId;
+        #
+        #    return header;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildHeader
+        #// Method: buildHeader
+        #// Purpose: Build standard header response: [ [success(0/1), message, extras...] ]
+        #static server container buildHeader(boolean _success, str _message, container _extras)
+        #{
+        #    container row;
+        #    container header;
+        #    int i;
+        #    ;
+        #    row = [_success ? 1 : 0, _message];
+        #
+        #    if (conLen(_extras) > 0)
+        #    {
+        #        for (i = 1; i <= conLen(_extras); i++)
+        #        {
+        #            row = conIns(row, conLen(row) + 1, conPeek(_extras, i));
+        #        }
+        #    }
+        #
+        #    header = [row];
+        #
+        #    return header;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #public class INDCRMUtilityService
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #buildActionResult
+        #// Devuelve un resultado estandar para acciones (success/message).
+        #static container buildActionResult(boolean _success, str _message)
+        #{
+        #    return [[ strFmt("%1", _success), strFmt("%1", _message) ]];
+        #}
+      ENDSOURCE
+      SOURCE #getCompany
+        #// Devuelve Company del contenedor (indice 1).
+        #static DataAreaId getCompany(container _data)
+        #{
+        #    return conPeek(_data, 1);
+        #}
+      ENDSOURCE
+      SOURCE #getCompanyName
+        #static container getCompanyName()
+        #{
+        #    CompanyInfo  companyInfo   = CompanyInfo::find();
+        #    ;
+        #
+        #    return [[
+        #              strFmt("%1", companyInfo.dataAreaId),
+        #              strFmt("%1", companyInfo.Name)
+        #           ]];
+        #
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getEnvironmentName
+        #static container getEnvironmentName()
+        #{
+        #    return [["TEST"]];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getInfologMessagesSince
+        #// Method: getInfologMessagesSince
+        #// Purpose: Returns concatenated infolog messages added after _startLine.
+        #static server str getInfologMessagesSince(int _startLine)
+        #{
+        #    int i;
+        #    int lastLine = infolog.line();
+        #    str msg = '';
+        #
+        #    if (lastLine <= _startLine)
+        #        return '';
+        #
+        #    for (i = _startLine + 1; i <= lastLine; i++)
+        #    {
+        #        // infolog.text(i) devuelve el texto de esa linea
+        #        msg += infolog.text(i);
+        #    }
+        #
+        #    msg = strRTrim(strLTrim(msg));
+        #
+        #    return msg;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getLastInfologMessage
+        #// Method: getLastInfologMessage
+        #// Purpose: Returns the last infolog line text. AX 3.0 compatible.
+        #static server str getLastInfologMessage()
+        #{
+        #    int n = infolog.line();
+        #    str msg;
+        #
+        #    if (n <= 0)
+        #        return '';
+        #
+        #    msg = infolog.text(n);
+        #    msg = strRTrim(strLTrim(msg));
+        #
+        #    return msg;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #loginEntraContext
+        #// Devuelve el contexto completo para cachearlo en la API.
+        #// Entrada:
+        #//  - _data[1] = EntraOid (OID recibido desde Entra para esta aplicacion o tenant)
+        #//  - _data[2] = AppCode  (codigo de web app, por ejemplo "CRM")
+        #//
+        #// Salida: [ Header, Companies ]
+        #// Header = [[ success, message, axUserId, userActive, appActive, defaultCompany ]]
+        #// Companies = lista de CompanyItem
+        #// CompanyItem = [ companyId, isDefault, companyName, modulesCon ]
+        #// modulesCon = lista de ModuleItem
+        #// ModuleItem = [ moduleCode, description, isActive, accessRightsInt ]
+        #//
+        #// Reglas:
+        #//  - Solo modulos activos (INDWebModule.IsActive=Yes)
+        #//  - Solo modulos con permiso (AccessRights != 0)
+        #//  - Si una compania no tiene modulos resultantes, se omite
+        #//  - Si defaultCompany inicial no tiene acceso, se usa la primera compania con acceso
+        #//
+        #// Nota:
+        #//  - Tablas de contexto se asumen intercompany.
+        #//  - Solo se usa changecompany para CompanyInfo.Name.
+        #//  - Resolucion de usuario: se hace por INDWebUserEntraIdentity (AppCode + EntraOID).
+        #//    Si no hay registro para esa app, no se permite acceso.
+        #static container loginEntraContext(container _data)
+        #{
+        #    str 1000                    _entraOid;
+        #    str 1000                    _appCode;
+        #
+        #    SysUserInfo                 sysUserInfo;
+        #    INDWebApp                   webApp;
+        #    INDWebModule                webModule;
+        #    INDCiasPermitidas           ciasPerm;
+        #    INDWebModuleAccessLevel     modAccess;
+        #
+        #    // Nuevo: tabla de mapeo por aplicacion y oid
+        #    INDWebUserEntraIdentity     userEntraIdentity;
+        #
+        #    DataAreaId                  initialDefaultCompany;
+        #    DataAreaId                  defaultCompany;
+        #    DataAreaId                  firstAllowedCompany;
+        #
+        #    boolean                     initialDefaultAllowed = false;
+        #
+        #    boolean                     success = false;
+        #    str                         message = "";
+        #
+        #    container                   header;
+        #    container                   companiesCon, companyItem;
+        #    container                   companiesConFixed;
+        #    container                   modulesCon, moduleItem;
+        #
+        #    str                         companyName;
+        #    int                         accessInt;
+        #
+        #    int                         i;
+        #    DataAreaId                  tmpCompanyId;
+        #    container                   tmpCompanyItem;
+        #
+        #    _entraOid = conPeek(_data, 1);
+        #    _appCode  = conPeek(_data, 2);
+        #
+        #    if (!_entraOid || !_appCode)
+        #        return [ INDCRMUtilityService::buildActionResult(false, "EntraOid y AppCode son obligatorios."), conNull() ];
+        #
+        #    // 1) Validar app
+        #    select firstonly webApp
+        #        where webApp.AppCode == _appCode;
+        #
+        #    if (!webApp.AppCode)
+        #    {
+        #        // App no existe, no se puede continuar
+        #        header = [[ "0", "AppCode no existe en INDWebApp.", "", "0", "0", "" ]];
+        #        return [ header, conNull() ];
+        #    }
+        #
+        #    if (webApp.IsActive != NoYes::Yes)
+        #    {
+        #        // App existe pero esta deshabilitada
+        #        header = [[ "0", "Aplicacion deshabilitada.", "", "0", "0", "" ]];
+        #        return [ header, conNull() ];
+        #    }
+        #
+        #    // 2) Resolver usuario AX por EntraOid para esta aplicacion
+        #    //    Regla: si no existe mapeo en INDWebUserEntraIdentity, no se permite acceso.
+        #    select firstonly sysUserInfo
+        #        join userEntraIdentity
+        #        where userEntraIdentity.AppCode  == _appCode
+        #           && userEntraIdentity.EntraOID == _entraOid
+        #           && sysUserInfo.Id             == userEntraIdentity.UserId;
+        #
+        #    if (!sysUserInfo.Id)
+        #    {
+        #        // No hay configuracion de oid para esta web app, acceso denegado
+        #        header = [[ "0", "Usuario no vinculado a EntraOid para esta aplicacion.", "", "0", "1", "" ]];
+        #        return [ header, conNull() ];
+        #    }
+        #
+        #    // 3) Default company inicial del usuario
+        #    initialDefaultCompany = sysUserInfo.company();
+        #    defaultCompany        = initialDefaultCompany;
+        #
+        #    // 4) Construir lista de companias + modulos con permisos
+        #    companiesCon        = conNull();
+        #    firstAllowedCompany = "";
+        #
+        #    while select ciasPerm
+        #        where ciasPerm.UserId == sysUserInfo.Id
+        #    {
+        #        // Modulos con acceso real para esta compania
+        #        modulesCon = conNull();
+        #
+        #        // Optimizacion: filtrar modulos activos antes de unir permisos
+        #        while select webModule
+        #            where webModule.AppCode  == _appCode
+        #               && webModule.IsActive == NoYes::Yes
+        #        join modAccess
+        #            where modAccess.ModuleCode           == webModule.ModuleCode
+        #               && modAccess.RefRecIdCiaPermitida == ciasPerm.RecId
+        #               && modAccess.AccessRights         != 0
+        #        {
+        #            // AccessRights es enum, convertir a int estable para la API
+        #            accessInt = modAccess.AccessRights;
+        #
+        #            moduleItem = [
+        #                strFmt("%1", webModule.ModuleCode),
+        #                strFmt("%1", webModule.Description),
+        #                strFmt("%1", 1),
+        #                strFmt("%1", accessInt)
+        #            ];
+        #
+        #            modulesCon = conIns(modulesCon, conLen(modulesCon) + 1, moduleItem);
+        #        }
+        #
+        #        // Si no hay modulos, ocultar la compania
+        #        if (conLen(modulesCon) == 0)
+        #            continue;
+        #
+        #        // Guardar primera compania con acceso
+        #        if (!firstAllowedCompany)
+        #            firstAllowedCompany = ciasPerm.CiaId;
+        #
+        #        // Marcar si la default inicial tiene acceso real
+        #        if (ciasPerm.CiaId == initialDefaultCompany)
+        #            initialDefaultAllowed = true;
+        #
+        #        // Nombre de compania (solo aqui usamos changecompany)
+        #        companyName = "";
+        #        try
+        #        {
+        #            changecompany (ciasPerm.CiaId)
+        #            {
+        #                companyName = CompanyInfo::find().Name;
+        #            }
+        #        }
+        #        catch
+        #        {
+        #            companyName = "";
+        #        }
+        #
+        #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, ModulesCon]
+        #        // Nota: IsDefault se recalcula al final segun defaultCompany final
+        #        companyItem = [
+        #            strFmt("%1", ciasPerm.CiaId),
+        #            "0",
+        #            strFmt("%1", companyName),
+        #            modulesCon
+        #        ];
+        #
+        #        companiesCon = conIns(companiesCon, conLen(companiesCon) + 1, companyItem);
+        #    }
+        #
+        #    // 5) Si no hay ninguna compania con acceso, devolver contexto sin companies
+        #    if (conLen(companiesCon) == 0)
+        #    {
+        #        header = [[
+        #            "0",
+        #            "Usuario sin companias con acceso a modulos de la aplicacion.",
+        #            strFmt("%1", sysUserInfo.Id),
+        #            "1",
+        #            "1",
+        #            ""
+        #        ]];
+        #
+        #        return [ header, conNull() ];
+        #    }
+        #
+        #    // 6) Si la defaultCompany inicial no tiene modulos, seleccionar la primera con acceso
+        #    if (!initialDefaultAllowed)
+        #        defaultCompany = firstAllowedCompany;
+        #
+        #    // 7) Recalcular IsDefault en todas las companias segun defaultCompany final
+        #    companiesConFixed = conNull();
+        #
+        #    for (i = 1; i <= conLen(companiesCon); i++)
+        #    {
+        #        tmpCompanyItem = conPeek(companiesCon, i);
+        #        tmpCompanyId   = conPeek(tmpCompanyItem, 1);
+        #
+        #        tmpCompanyItem = conPoke(tmpCompanyItem, 2, strFmt("%1", (tmpCompanyId == defaultCompany)));
+        #
+        #        companiesConFixed = conIns(companiesConFixed, conLen(companiesConFixed) + 1, tmpCompanyItem);
+        #    }
+        #
+        #    companiesCon = companiesConFixed;
+        #
+        #    // 8) Header final
+        #    success = true;
+        #    message = "OK";
+        #
+        #    header = [[
+        #        strFmt("%1", success),
+        #        strFmt("%1", message),
+        #        strFmt("%1", sysUserInfo.Id),
+        #        "1", // userActive
+        #        "1", // appActive
+        #        strFmt("%1", defaultCompany)
+        #    ]];
+        #
+        #    return [ header, companiesCon ];
+        #}
+        #
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

@@ -5,16 +5,18 @@
       "launchBrowser": true,
       "launchUrl": "/",
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_WEBROOT": "Web\\wwwroot"
       },
       "dotnetRunMessages": true,
-      "applicationUrl": "https://localhost:7703"
+      "applicationUrl": "https://localhost:5001;https://localhost:7703"
     },
     "https": {
       "commandName": "Project",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_WEBROOT": "Web\\wwwroot"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:5001;https://localhost:7703"
@@ -23,7 +25,8 @@
       "commandName": "Project",
       "launchBrowser": false,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_WEBROOT": "Web\\wwwroot"
       },
       "dotnetRunMessages": true,
       "applicationUrl": "https://localhost:5001;https://localhost:7703"
@@ -32,7 +35,8 @@
       "commandName": "IISExpress",
       "launchBrowser": true,
       "environmentVariables": {
-        "ASPNETCORE_ENVIRONMENT": "Development"
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "ASPNETCORE_WEBROOT": "Web\\wwwroot"
       }
     }
   },

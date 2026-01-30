@@ -28,7 +28,6 @@
       "name": "Abrir Chrome (UI local HTTPS 5001)",
       "type": "pwa-chrome",
       "request": "launch",
-      "preLaunchTask": "kill-web-ports",
       "url": "https://localhost:5001",
       "webRoot": "${workspaceFolder}"
     }

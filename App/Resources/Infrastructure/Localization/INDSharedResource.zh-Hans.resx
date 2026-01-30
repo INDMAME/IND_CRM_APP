@@ -39,12 +39,12 @@
   <data name="Language_PT" xml:space="preserve"><value>PT</value></data>
   <data name="Language_IT" xml:space="preserve"><value>IT</value></data>
   <data name="Language_ZH" xml:space="preserve"><value>ZH</value></data>
-  <data name="Language_ES_Name" xml:space="preserve"><value>西班牙语</value></data>
-  <data name="Language_EU_Name" xml:space="preserve"><value>巴斯克语</value></data>
-  <data name="Language_EN_Name" xml:space="preserve"><value>英语</value></data>
-  <data name="Language_PT_Name" xml:space="preserve"><value>葡萄牙语</value></data>
-  <data name="Language_IT_Name" xml:space="preserve"><value>意大利语</value></data>
-  <data name="Language_ZH_Name" xml:space="preserve"><value>中文(简体)</value></data>
+  <data name="Language_ES_Name" xml:space="preserve"><value>Español</value></data>
+  <data name="Language_EU_Name" xml:space="preserve"><value>Euskara</value></data>
+  <data name="Language_EN_Name" xml:space="preserve"><value>English</value></data>
+  <data name="Language_PT_Name" xml:space="preserve"><value>Português</value></data>
+  <data name="Language_IT_Name" xml:space="preserve"><value>Italiano</value></data>
+  <data name="Language_ZH_Name" xml:space="preserve"><value>中文</value></data>
 
   <data name="Login_Title" xml:space="preserve"><value>登录</value></data>
   <data name="Login_Welcome" xml:space="preserve"><value>欢迎</value></data>
@@ -69,6 +69,15 @@
 
   <data name="History_From" xml:space="preserve"><value>从</value></data>
   <data name="History_To" xml:space="preserve"><value>到</value></data>
+  <data name="History_Filter_Date" xml:space="preserve"><value>日期</value></data>
+  <data name="History_Filter_Client" xml:space="preserve"><value>??</value></data>
+  <data name="History_Filter_Clear" xml:space="preserve"><value>清除</value></data>
+  <data name="History_Filter_Apply" xml:space="preserve"><value>应用</value></data>
+  <data name="History_Quick_Custom" xml:space="preserve"><value>日期</value></data>
+  <data name="History_Quick_ThisWeek" xml:space="preserve"><value>本周</value></data>
+  <data name="History_Quick_LastWeek" xml:space="preserve"><value>上周</value></data>
+  <data name="History_Quick_ThisMonth" xml:space="preserve"><value>本月</value></data>
+  <data name="History_Quick_LastMonth" xml:space="preserve"><value>上个月</value></data>
   <data name="History_AddDate" xml:space="preserve"><value>添加日期</value></data>
   <data name="History_ClearRange" xml:space="preserve"><value>清除范围</value></data>
   <data name="History_PrevMonth" xml:space="preserve"><value>上个月</value></data>

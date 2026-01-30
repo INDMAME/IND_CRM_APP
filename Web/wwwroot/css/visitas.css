@@ -60,12 +60,12 @@
     flex-direction: column;
     gap: 6px;
 }
-.drp-section.active { background: #eef2ff; box-shadow: 0 0 0 1px rgba(0,41,107,0.25); }
+.drp-section.active { background: rgba(0, 41, 107, 0.28); box-shadow: none; }
 
-.drp-label { font-size: 12px; letter-spacing: 1px; font-weight: 700; text-transform: uppercase; color: #94a3b8; }
-.drp-value { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #1f2937; font-size: 13.5px; min-width: 0; }
+.drp-label { font-size: 12px; letter-spacing: 1px; font-weight: 700; text-transform: uppercase; color: #00296be0; }
+.drp-value { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #00296be0; font-size: 13.5px; min-width: 0; }
 .drp-value span { display: inline-block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.drp-icon { color: #00296b; font-size: 17px; }
+.drp-icon { color: #00296be0; font-size: 17px; }
 .drp-separator { align-items: center; justify-content: center; color: #cbd5e1; padding: 0 6px; font-size: 18px; }
 
 .drp-popover {
@@ -79,28 +79,42 @@
     z-index: 999;
     overflow: hidden;
     border: 1px solid #e2e8f0;
+    color: #00296be0;
 }
 .drp-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
-.drp-month { font-weight: 700; color: #00296b; text-transform: capitalize; }
+.drp-month { font-weight: 700; color: #00296be0; text-transform: capitalize; font-size: 12px; }
 .drp-nav { background: #e2e8f0; border: none; border-radius: 12px; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #00296b; transition: background .15s ease, transform .15s ease; }
 .drp-nav:hover { background: rgba(0,41,107,0.12); transform: translateY(-1px); }
 
-.drp-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; padding: 10px 14px 6px; }
+.drp-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #00296be0; padding: 10px 14px 6px; }
 .drp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px 4px; padding: 0 14px 14px; }
 
-.drp-day { width: 100%; aspect-ratio: 1 / 1; border: none; background: transparent; border-radius: 12px; font-weight: 600; color: #1f2937; transition: background .12s ease, color .12s ease, transform .12s ease; cursor: pointer; position: relative; }
+.drp-day { width: 100%; aspect-ratio: 1 / 1; border: none; background: transparent; border-radius: 12px; font-weight: 600; color: #00296be0; font-size: 12px; transition: background .12s ease, color .12s ease, transform .12s ease; cursor: pointer; position: relative; }
 .drp-day:hover:not(.disabled):not(.empty) { background: rgba(0,41,107,0.05); }
 .drp-day.empty { cursor: default; background: transparent; }
 .drp-day.disabled { color: #cbd5e1; cursor: not-allowed; }
-.drp-day.in-range { background: rgba(79,70,229,0.18); color: #1f2475; border-radius: 10px; }
+.drp-day.in-range { background: rgba(0, 41, 107, 0.28); color: #00296be0; border-radius: 10px; }
 .drp-day.start,
-.drp-day.end { background: linear-gradient(135deg, #4257e5, #00296b); color: #ffffff; box-shadow: 0 6px 12px rgba(0,41,107,0.25); }
+.drp-day.end { background: linear-gradient(135deg, #00296be0, #00296b); color: #ffffff; box-shadow: none; }
 .drp-day.start.range-start { border-top-left-radius: 14px; border-bottom-left-radius: 14px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
 .drp-day.end.range-end { border-top-right-radius: 14px; border-bottom-right-radius: 14px; border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
 .drp-day.today { border: 1px dashed rgba(0,41,107,0.35); }
-.drp-day.hover-range { background: rgba(79,70,229,0.12); color: #1f2475; border-radius: 8px; }
+.drp-day.hover-range { background: rgba(0, 41, 107, 0.18); color: #00296be0; border-radius: 8px; }
 
-.drp-status { background: rgba(0,41,107,0.06); color: #00296b; font-size: 12px; padding: 10px 14px; border-top: 1px solid #e2e8f0; text-align: center; font-weight: 600; }
+.drp-status { background: rgba(0,41,107,0.06); color: #00296be0; font-size: 12px; padding: 10px 14px; border-top: 1px solid #e2e8f0; text-align: center; font-weight: 600; }
+
+/* Field font size rules for detail/create pages. */
+.visita-field-text .drp-label,
+.visita-field-text .drp-value {
+    font-size: 9.55px;
+}
+
+@media (min-width: 768px) {
+    .visita-field-text .drp-label,
+    .visita-field-text .drp-value {
+        font-size: 16px;
+    }
+}
 
 @media (max-width: 768px) {
     .drp { flex-wrap: nowrap; gap: 6px; padding: 10px; }

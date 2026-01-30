@@ -6,7 +6,6 @@ const entryPoints = {
   create: "Web/wwwroot/react/src/pages/visitas/creacion/CreatePage.tsx",
   detail: "Web/wwwroot/react/src/pages/visitas/detail/DetailPage.tsx",
   history: "Web/wwwroot/react/src/pages/visitas/historial/HistoryPage.tsx",
-  "ind-action-mark": "Web/wwwroot/react/src/legacy/ind-action-mark.ts",
   "ind-text-editor": "Web/wwwroot/react/src/pages/system/TextEditor.tsx",
   "audio-recorder": "Web/wwwroot/react/src/pages/system/AudioRecorder.tsx",
   "ind-audio-worklet": "Web/wwwroot/react/audio-recorder/ind-audio-worklet.ts",

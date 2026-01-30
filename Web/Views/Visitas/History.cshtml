@@ -20,6 +20,15 @@
         window.__IND_I18N__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
             History_From = SR["History_From"].Value,
             History_To = SR["History_To"].Value,
+            History_Filter_Date = SR["History_Filter_Date"].Value,
+            History_Filter_Client = SR["History_Filter_Client"].Value,
+            History_Filter_Clear = SR["History_Filter_Clear"].Value,
+            History_Filter_Apply = SR["History_Filter_Apply"].Value,
+            History_Quick_Custom = SR["History_Quick_Custom"].Value,
+            History_Quick_ThisWeek = SR["History_Quick_ThisWeek"].Value,
+            History_Quick_LastWeek = SR["History_Quick_LastWeek"].Value,
+            History_Quick_ThisMonth = SR["History_Quick_ThisMonth"].Value,
+            History_Quick_LastMonth = SR["History_Quick_LastMonth"].Value,
             History_ClearRange = SR["History_ClearRange"].Value,
             History_PrevMonth = SR["History_PrevMonth"].Value,
             History_NextMonth = SR["History_NextMonth"].Value,
@@ -37,7 +46,20 @@
             History_NoDataInRange = SR["History_NoDataInRange"].Value,
             Common_NoData = SR["Common_NoData"].Value,
             Api_RequestFailed = SR["Api_RequestFailed"].Value,
-            Api_InvalidJson = SR["Api_InvalidJson"].Value
+            Api_InvalidJson = SR["Api_InvalidJson"].Value,
+            Visits_Create_MinChars = SR["Visits_Create_MinChars"].Value,
+            Visits_Create_ClientCount = SR["Visits_Create_ClientCount"].Value,
+            Visits_Create_ClientCountCache = SR["Visits_Create_ClientCountCache"].Value,
+            Visits_Create_NoResults = SR["Visits_Create_NoResults"].Value,
+            Visits_Create_NoMatches = SR["Visits_Create_NoMatches"].Value,
+            Visits_Create_Searching = SR["Visits_Create_Searching"].Value,
+            Visits_Create_SearchCanceled = SR["Visits_Create_SearchCanceled"].Value,
+            Visits_Create_SearchTimeout = SR["Visits_Create_SearchTimeout"].Value,
+            Visits_Create_LoadClientsError = SR["Visits_Create_LoadClientsError"].Value,
+            Visits_Create_PressSearchHint = SR["Visits_Create_PressSearchHint"].Value,
+            Visits_Create_SearchClient = SR["Visits_Create_SearchClient"].Value,
+            Visits_Create_HideClientOptions = SR["Visits_Create_HideClientOptions"].Value,
+            Visits_Create_ShowClientOptions = SR["Visits_Create_ShowClientOptions"].Value
         }));
     </script>
     <script src="~/js/history.js" asp-append-version="true"></script>

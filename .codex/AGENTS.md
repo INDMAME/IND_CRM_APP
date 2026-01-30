@@ -77,6 +77,7 @@
   - Any new HTML/CSHTML/JSX must use Tailwind classes, not Bootstrap classes.
   - Use base font family "Montserrat", sans-serif in the main layout and in all new components.
   - Use color #00296b as the primary/base color in the UI (sidebar, headers, primary buttons, main links, active items) and configure it as the primary color in Tailwind.
+  - Use StarBorder for buttons by default. Standard icon size is 16x16 (h-4 w-4). Active button color #00296be0, inactive #00296bc4, text color #e2e8f0.
 - Interactive components:
   - Use Tailwind CSS components and patterns for modals, menus, dropdown lists, dialogs, steps, etc., integrated with Tailwind (both in Razor and React).
   - Use Heroicons as the default icon set across the UI.
@@ -119,7 +120,7 @@
 
 ## I18N rules (UI only)
 
-- Supported UI cultures: es-ES (default), en, pt, it, zh-Hans.
+- Supported UI cultures: es-ES (default), Basque, en, pt, it, zh-Hans.
 - Any user-facing UI string (labels, titles, placeholders, aria-labels, empty states, error messages) must come from localization resources, not hardcoded text.
 - Razor: use `IStringLocalizer<INDSharedResource>` and resource keys under `App/Resources/Infrastructure/Localization/INDSharedResource.*.resx`.
 - React islands / JS: inject a per-page `window.__IND_I18N__` dictionary from Razor and read it via `indT(...)` helpers.

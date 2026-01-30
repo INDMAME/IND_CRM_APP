@@ -263,17 +263,80 @@
 }
 
 @layer base {
-  :root {
-    /* Fuente de verdad: tailwind.config.js -> theme.extend.colors.primary */
-    --color-primary: var(--color-primary);
-  }
-
   body {
     @apply font-sans bg-slate-100 text-slate-900;
   }
 }
 
 @layer utilities {
+  /* Ensure brand background utility is always available. */
+  .bg-primary {
+    background-color: var(--color-primary);
+  }
+
+  /* Horizontal slider for quick filters (shared component). */
+  .ind-quick-slider {
+    width: 100%;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    scroll-padding-left: 4px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    overscroll-behavior-x: contain;
+  }
+
+  .ind-quick-slider::-webkit-scrollbar {
+    display: none;
+  }
+
+  .ind-quick-slider__track {
+    display: flex;
+    gap: 8px;
+    padding: 2px 4px 6px;
+    width: max-content;
+    min-width: 100%;
+  }
+
+  .ind-quick-slider__item {
+    flex: 0 0 auto;
+    min-width: clamp(108px, 30vw, 150px);
+    scroll-snap-align: start;
+    white-space: nowrap;
+  }
+
+  .ind-quick-slider__item:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 18px rgba(15, 23, 42, 0.14);
+  }
+
+  .ind-quick-slider__item:active:not(:disabled) {
+    transform: translateY(0);
+    box-shadow: inset 0 3px 8px rgba(15, 23, 42, 0.16);
+  }
+
+  .ind-quick-slider__item.is-active:hover:not(:disabled) {
+    box-shadow: 0 12px 22px rgba(0, 41, 107, 0.22);
+  }
+
+  /* Star border animations */
+  @keyframes star-movement-bottom {
+    0% { transform: translate(0%, 0%); opacity: 1; }
+    100% { transform: translate(-100%, 0%); opacity: 0; }
+  }
+
+  @keyframes star-movement-top {
+    0% { transform: translate(0%, 0%); opacity: 1; }
+    100% { transform: translate(100%, 0%); opacity: 0; }
+  }
+
+  .animate-star-movement-bottom {
+    animation: star-movement-bottom linear infinite alternate;
+  }
+
+  .animate-star-movement-top {
+    animation: star-movement-top linear infinite alternate;
+  }
+
   /* Extra padding for type dropdown items */
   .type-option {
     padding-left: 10px !important;

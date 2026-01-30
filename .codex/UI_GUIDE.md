@@ -14,6 +14,11 @@
 - Overflow preview: show centered preview tooltip only if text overflows.
 - Read-only guard: add ind-readonly-surface and block copy/paste/select/contextmenu.
 - Base control rounding: use rounded-xl unless matching an existing component.
+- Buttons and icons:
+  - Use StarBorder for buttons (primary, secondary, and quick actions) unless there is a clear exception.
+  - StarBorder defaults: thickness 2.5px and speed 2.5s.
+  - Button colors: active #00296be0, inactive #00296bc4, text color #e2e8f0.
+  - Icon size standard: 16x16 (Tailwind h-4 w-4) unless a view explicitly needs a larger icon.
 
 ## Dropdown / Combobox pattern
 - Use the shared FloatingList + useOutsideClick + useFloatingPosition.

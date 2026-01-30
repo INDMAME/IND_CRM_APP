@@ -23,10 +23,42 @@ using System.IO;
 
 
 // Resolve the correct web root for dev vs publish output.
-var resolvedWebRoot = Directory.Exists("Web/wwwroot") &&
-                      Directory.EnumerateFileSystemEntries("Web/wwwroot").Any()
-    ? "Web/wwwroot"
-    : "wwwroot";
+static string ResolveWebRoot()
+{
+    var startPaths = new[]
+    {
+        AppContext.BaseDirectory,
+        Directory.GetCurrentDirectory()
+    };
+
+    foreach (var start in startPaths)
+    {
+        var current = start;
+        while (!string.IsNullOrWhiteSpace(current))
+        {
+            var webRoot = Path.Combine(current, "Web", "wwwroot");
+            var root = Path.Combine(current, "wwwroot");
+
+            if (Directory.Exists(webRoot) && Directory.EnumerateFileSystemEntries(webRoot).Any())
+                return webRoot;
+
+            if (Directory.Exists(root) && Directory.EnumerateFileSystemEntries(root).Any())
+                return root;
+
+            if (Directory.Exists(webRoot))
+                return webRoot;
+
+            if (Directory.Exists(root))
+                return root;
+
+            current = Directory.GetParent(current)?.FullName;
+        }
+    }
+
+    return "wwwroot";
+}
+
+var resolvedWebRoot = ResolveWebRoot();
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
     Args = args,

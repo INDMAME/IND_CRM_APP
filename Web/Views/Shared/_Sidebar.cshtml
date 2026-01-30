@@ -12,8 +12,6 @@
     var returnUrl = (Context?.Request?.Path.Value ?? "/") + (Context?.Request?.QueryString.Value ?? string.Empty);
     var cultureFeature = Context?.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>();
     var currentCulture = cultureFeature?.RequestCulture?.UICulture?.Name ?? System.Globalization.CultureInfo.CurrentUICulture.Name;
-    var currentCultureShort = System.Globalization.CultureInfo.CurrentUICulture.TwoLetterISOLanguageName;
-    var isZhHans = string.Equals(currentCulture, "zh-Hans", StringComparison.OrdinalIgnoreCase);
 
     IndWebContext? webContext = null;
     var contextRaw = HttpAccessor.HttpContext?.Session.GetString("INDWebContext");
@@ -48,6 +46,17 @@
         : companies.FirstOrDefault();
 
     var selectedCompanyLabel = selectedCompany?.CompanyId ?? selectedCompany?.CompanyName ?? string.Empty;
+    var selectedLanguageNameKey = currentCulture switch
+    {
+        "es-ES" => "Language_ES_Name",
+        "eu-ES" => "Language_EU_Name",
+        "en" => "Language_EN_Name",
+        "pt" => "Language_PT_Name",
+        "it" => "Language_IT_Name",
+        "zh-Hans" => "Language_ZH_Name",
+        _ => "Language_EN_Name"
+    };
+    var selectedLanguageName = SR[selectedLanguageNameKey].Value;
 
     bool HasModuleAccess(string moduleCode, int minAccess)
     {
@@ -190,7 +199,7 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="m10.5 21 5.25-11.25L21 21m-9-3h7.5M3 5.621a48.474 48.474 0 0 1 6-.371m0 0c1.12 0 2.233.038 3.334.114M9 5.25V3m3.334 2.364C11.176 10.658 7.69 15.08 3 17.502m9.334-12.138c.896.061 1.785.147 2.666.257m-4.589 8.495a18.023 18.023 0 0 1-3.827-5.802" />
                     </svg>
                     <span class="flex-1">@SR["UserMenu_Languages"]</span>
-                    <span class="ml-2 text-xs text-white/80">@(isZhHans ? SR["Language_ZH"].Value : currentCultureShort.ToUpperInvariant())</span>
+                    <span class="ml-2 text-xs text-white/80">@selectedLanguageName</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="ms-2 h-4 w-4 opacity-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
                     </svg>
@@ -216,7 +225,7 @@
                                     class="user-menu-item flex items-center w-full text-left px-3 py-2 text-sm hover:bg-white/15 transition"
                                     style="padding-left: 28px;"
                                     aria-label="@SR[item.NameKey]">
-                                <span class="flex-1">@SR[item.CodeKey]</span>
+                                <span class="flex-1">@SR[item.NameKey]</span>
                                 @if (isActive)
                                 {
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">

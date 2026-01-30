@@ -29,7 +29,6 @@
     <!-- Layout CSS -->
     <link rel="stylesheet" href="~/css/layout.css" asp-append-version="true" />
 
-    <link rel="stylesheet" href="~/css/ind-action-mark.css" asp-append-version="true" />
 
     @RenderSection("Styles", required: false)
 </head>
@@ -89,7 +88,7 @@
     var moduleAccessJson = JsonSerializer.Serialize(moduleAccess);
     var permissionRedirectMessage = TempData?["IndPermissionRedirectMessage"] as string;
 }
-<body class="bg-slate-100 font-sans text-slate-900 overflow-x-hidden @bodyClass">
+<body class="bg-slate-100 font-sans text-[#00296be0] overflow-x-hidden @bodyClass">
     <svg class="ind-spinner-defs" aria-hidden="true" focusable="false">
         <defs>
             <linearGradient id="indSpinnerGradient">
@@ -348,7 +347,6 @@
         }
     }
 
-    <script src="~/js/ind-action-mark.js" asp-append-version="true"></script>
 
     <script>
         window.__IND_MODULE_ACCESS__ = @Html.Raw(moduleAccessJson);

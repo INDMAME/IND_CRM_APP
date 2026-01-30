@@ -6,6 +6,12 @@ param(
     [switch]$RestartIis = $true
 )
 
+# Build frontend assets and sync Web/wwwroot -> wwwroot.
+npm run build
+if ($LASTEXITCODE -ne 0) {
+    throw "Frontend build failed with exit code $LASTEXITCODE."
+}
+
 # Publish the project directly to avoid solution-level output warnings.
 dotnet publish $ProjectPath -c $Configuration -o $OutputPath
 if ($LASTEXITCODE -ne 0) {

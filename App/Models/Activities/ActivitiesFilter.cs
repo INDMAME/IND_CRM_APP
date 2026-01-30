@@ -7,6 +7,7 @@
     {
         public string fromDate { get; set; } = "";
         public string toDate { get; set; } = "";
+        public string accountNum { get; set; } = "";
     }
 
 }

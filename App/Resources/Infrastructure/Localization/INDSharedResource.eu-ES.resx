@@ -47,12 +47,12 @@
   <data name="Language_PT" xml:space="preserve"><value>PT</value></data>
   <data name="Language_IT" xml:space="preserve"><value>IT</value></data>
   <data name="Language_ZH" xml:space="preserve"><value>ZH</value></data>
-  <data name="Language_ES_Name" xml:space="preserve"><value>Espainiera</value></data>
+  <data name="Language_ES_Name" xml:space="preserve"><value>Español</value></data>
   <data name="Language_EU_Name" xml:space="preserve"><value>Euskara</value></data>
-  <data name="Language_EN_Name" xml:space="preserve"><value>Ingelesa</value></data>
-  <data name="Language_PT_Name" xml:space="preserve"><value>Portugesa</value></data>
-  <data name="Language_IT_Name" xml:space="preserve"><value>Italiera</value></data>
-  <data name="Language_ZH_Name" xml:space="preserve"><value>Txinera (sinplifikatua)</value></data>
+  <data name="Language_EN_Name" xml:space="preserve"><value>English</value></data>
+  <data name="Language_PT_Name" xml:space="preserve"><value>Português</value></data>
+  <data name="Language_IT_Name" xml:space="preserve"><value>Italiano</value></data>
+  <data name="Language_ZH_Name" xml:space="preserve"><value>中文</value></data>
 
   <data name="Login_Title" xml:space="preserve"><value>Saioa hasi</value></data>
   <data name="Login_Welcome" xml:space="preserve"><value>Ongi etorri</value></data>
@@ -77,6 +77,15 @@
 
   <data name="History_From" xml:space="preserve"><value>Noiztik</value></data>
   <data name="History_To" xml:space="preserve"><value>Noiz arte</value></data>
+  <data name="History_Filter_Date" xml:space="preserve"><value>Data</value></data>
+  <data name="History_Filter_Client" xml:space="preserve"><value>Bezeroa</value></data>
+  <data name="History_Filter_Clear" xml:space="preserve"><value>Garbitu</value></data>
+  <data name="History_Filter_Apply" xml:space="preserve"><value>Aplikatu</value></data>
+  <data name="History_Quick_Custom" xml:space="preserve"><value>Datak</value></data>
+  <data name="History_Quick_ThisWeek" xml:space="preserve"><value>Aste hau</value></data>
+  <data name="History_Quick_LastWeek" xml:space="preserve"><value>Aurreko astea</value></data>
+  <data name="History_Quick_ThisMonth" xml:space="preserve"><value>Hilabete hau</value></data>
+  <data name="History_Quick_LastMonth" xml:space="preserve"><value>Aurreko hilabetea</value></data>
   <data name="History_AddDate" xml:space="preserve"><value>Data gehitu</value></data>
   <data name="History_ClearRange" xml:space="preserve"><value>Tartea garbitu</value></data>
   <data name="History_PrevMonth" xml:space="preserve"><value>Aurreko hilabetea</value></data>

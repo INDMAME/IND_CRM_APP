@@ -1,50 +1,8 @@
-model = "gpt-5.1-codex-max"
-model_reasoning_effort = "xhigh"
-
-####################################
-# Tools: feature toggles
-####################################
-
-[tools]
-# Enable Codex web search tool
-web_search = true
-# Legacy alias:
-# web_search_request = true
-
-####################################
-# History persistence
-####################################
-
-[history]
-# "save-all" stores local history; "none" disables it
-persistence = "save-all"
-# max_bytes = 10485760   # Max history size in bytes
-
-####################################
-# MCP servers
-####################################
-
-# Example: filesystem MCP server via npx
-[mcp_servers.filesystem]
-command = "npx"
-args = ["-y", "@modelcontextprotocol/server-filesystem", "C:/INDProjects"]
-env = { "DEBUG" = "false" }
-
-####################################
-# Projects trust
-####################################
-
-[projects."C:/INDProjects/IND_CRM_API"]
-trust_level = "trusted"
-
-[projects."C:/INDProjects/GitHub Projects/IND_CRM_APP/IND_CRM_APP"]
-trust_level = "trusted"
-
 [system]
 instruction = """
 Before generating or modifying code, assess impact on existing functionality. Do not introduce regressions or change working behavior unless explicitly requested.
 
-Project-specific rules live in `.codex/AGENTS.md`. Shared UI rules live in `.codex/core-ui-rules.md`. If conflicts appear, follow instruction hierarchy: system > AGENTS > feature docs.
+Project-specific rules live in `.codex/AGENTS.md`. Shared UI rules live in `.codex/UI_GUIDE.md`. If conflicts appear, follow instruction hierarchy: system > AGENTS > feature docs.
 
 Validate dependent elements mentally: filters, calendars, dropdowns, validations, forms, JavaScript events, controllers, views, services, models. If a change could affect anything, flag it and propose a safe alternative before implementing.
 
@@ -76,7 +34,7 @@ Treat jQuery, jquery-validation and similar static libs as legacy:
 - Touch legacy only to migrate safely to Tailwind + Tailwind CSS + Heroicons + Montserrat + #00296b without breaking existing functionality.
 
 I18N rules (UI only):
-- Supported UI cultures: es-ES (default), en, pt, it, zh-Hans.
+- Supported UI cultures: es-ES (default), Basque, en, pt, it, zh-Hans.
 - Do not add hardcoded user-facing UI strings. Use shared resources (INDSharedResource) in Razor and inject per-page __IND_I18N__ dictionaries for React/JS.
 - When adding a new UI string, add the resource key to all supported cultures in the same change.
 - Do not translate dynamic business data from the API; translate only fixed UI strings.

@@ -26,8 +26,11 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@tailwindcss/cli": "^4.1.18",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
     "esbuild": "^0.27.1",
-    "tailwindcss": "^4.1.18"
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

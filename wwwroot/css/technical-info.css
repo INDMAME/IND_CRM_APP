@@ -1,0 +1,29 @@
+/* IND CRM - Estilo unificado para información técnica (minimal) */
+.tech-info {
+    font-size: 10px;
+    color: #9aa8b8;
+    font-style: italic;
+    user-select: none;
+}
+
+.tech-info strong {
+    font-weight: 700;
+    color: #6b7280;
+}
+
+.tech-inline {
+    display: inline-flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.tech-badge {
+    font-size: 10px !important;
+    font-style: italic;
+    background: transparent !important;
+    color: #9aa8b8 !important;
+    padding: 0 !important;
+    border: none !important;
+    user-select: none;
+    box-shadow: none !important;
+}

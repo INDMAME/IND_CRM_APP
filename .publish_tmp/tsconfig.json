@@ -10,7 +10,9 @@
     "skipLibCheck": true,
     "allowJs": true,
     "allowImportingTsExtensions": true,
-    "resolveJsonModule": true
+    "resolveJsonModule": true,
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true
   },
   "include": ["Web/wwwroot/react/**/*"]
 }

@@ -64,6 +64,7 @@ namespace IND_CRM_APP.Controllers
             // Normalize filter values
             filter.fromDate = SanitizeDate(filter.fromDate);
             filter.toDate = SanitizeDate(filter.toDate);
+            filter.accountNum = SanitizeValue(filter.accountNum);
 
             try
             {
@@ -74,6 +75,24 @@ namespace IND_CRM_APP.Controllers
                     return Json(new { total = 0, items = Array.Empty<object>() });
 
                 var itemsList = result.GetAnyItems()?.ToList() ?? new List<ActivityDto>();
+
+                _logger.LogInformation(
+                    "GetActivities filter: from={From} to={To} accountNum={Account} items={Count}",
+                    filter.fromDate,
+                    filter.toDate,
+                    filter.accountNum,
+                    itemsList.Count);
+
+                if (!string.IsNullOrWhiteSpace(filter.accountNum))
+                {
+                    var hasAccountValues = itemsList.Any(x => !string.IsNullOrWhiteSpace(x.AccountNum));
+                    if (hasAccountValues)
+                    {
+                        itemsList = itemsList
+                            .Where(x => string.Equals(x.AccountNum, filter.accountNum, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                    }
+                }
 
                 // Sort by most recent date before paging.
                 itemsList = itemsList
@@ -110,6 +129,11 @@ namespace IND_CRM_APP.Controllers
         private static string SanitizeDate(string? date)
         {
             return string.IsNullOrWhiteSpace(date) ? string.Empty : date.Trim();
+        }
+
+        private static string SanitizeValue(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
         }
 
         private static long TryParseRecId(string? raw)
