@@ -605,7 +605,7 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
           >
             <div className="timeline-date-panel flex flex-col items-center justify-center gap-1 px-3 py-3 bg-slate-50 border-r border-slate-200 text-slate-600">
               <div className="text-xs font-semibold tracking-[0.2em] text-slate-500">{item.dateParts.year}</div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-500">{item.dateParts.month}</div>
+              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{item.dateParts.month}</div>
               <div className="text-2xl font-semibold text-primary">{item.dateParts.day}</div>
             </div>
             <div className="timeline-card__content flex-1 py-3 px-4">

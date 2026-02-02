@@ -7,8 +7,10 @@
 ## Base UI rules
 - Styling: Tailwind only (no Bootstrap/jQuery UI).
 - Typography: Montserrat, sans-serif.
+- Base font size: 14px on mobile. Scale to 16px from 768px and up.
 - Primary color: #00296b (use via Tailwind primary tokens).
 - All user facing text must come from i18n resources.
+- Forms: use `form-label`, `form-control`, and `form-select` utilities for consistent base sizes.
 
 ## Shared UI rules
 - Overflow preview: show centered preview tooltip only if text overflows.
@@ -32,10 +34,13 @@
 ## Visitas confirm + action mark flow
 - No popup on edit toggle. Edit mode is instant.
 - Before create/update/delete: show one confirm modal.
-- On success: show IND action mark only, then optional redirect.
+- Confirm modal: use the dumb `components/commons/ConfirmModal.tsx` and show the spinner inside the modal while the request runs.
+- On success: close the modal, then show IND action mark only, then optional redirect.
 - On error: show inline error message, no action mark.
 - Action mark API:
   window.IND.flashActionMark({ type: 'okProcess'|'okDelProcess'|'errorProcess'|'warningProcess', durationMs })
+- Delete success uses `okDelProcess` (same check icon as okProcess, but red).
+- Action mark container is global in `_Layout.cshtml` via `_IndActionMark`. Do not render extra action mark markup in React to avoid duplicate ids or fixed-position bugs.
 
 ## Pixel hover and typing effect
 - Pixel hover: use the timeline card canvas overlay pattern (see code in History components).
@@ -56,4 +61,4 @@
 - Transcription uses /Visitas/TranscribeSpeech and replaces textarea text.
 
 ## Last updated
-- 2026-01-27
+- 2026-02-02

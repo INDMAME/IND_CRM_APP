@@ -4,6 +4,7 @@
 @{
     Layout = null;
     var forceEntra = ViewBag.ForceEntra == true;
+    var systemVersion = "0.5";
 }
 
 <!DOCTYPE html>
@@ -76,16 +77,16 @@
                 </a>
 
                 <div class="mt-auto w-full border-t border-slate-100 pt-3 text-[10px] uppercase tracking-[0.22em] text-slate-400 flex items-center justify-between">
-                    <span>System v0.5</span>
+                    <span>@SR["Login_SystemVersion", systemVersion]</span>
                     <span class="inline-flex items-center gap-2">
                         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                        Secure
+                        @SR["Login_Secure"]
                     </span>
                 </div>
             </div>
 
             <div class="mt-6 text-center text-[11px] text-white/70">
-                © @DateTime.UtcNow.Year Insertec. All rights reserved.
+                @SR["Login_Copyright", DateTime.UtcNow.Year]
             </div>
         </div>
     </div>

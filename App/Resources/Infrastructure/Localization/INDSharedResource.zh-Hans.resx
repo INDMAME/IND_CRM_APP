@@ -55,6 +55,9 @@
   <data name="Login_Submit" xml:space="preserve"><value>登录</value></data>
   <data name="Login_TogglePassword" xml:space="preserve"><value>显示或隐藏密码</value></data>
   <data name="Login_SignInMicrosoft" xml:space="preserve"><value>使用 Microsoft 登录</value></data>
+  <data name="Login_SystemVersion" xml:space="preserve"><value>?? v{0}</value></data>
+  <data name="Login_Secure" xml:space="preserve"><value>??</value></data>
+  <data name="Login_Copyright" xml:space="preserve"><value>Copyright (c) {0} Insertec. ???????</value></data>
   <data name="Auth_InvalidCredentials" xml:space="preserve"><value>凭据无效。</value></data>
   <data name="Auth_LoginApiError" xml:space="preserve"><value>由于 API 错误，登录失败。</value></data>
   <data name="Auth_AccessDenied" xml:space="preserve"><value>访问被拒绝：{0}</value></data>

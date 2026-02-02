@@ -73,7 +73,7 @@ namespace IND_CRM_APP.Infrastructure.Validation
                     message += $"- {p.MiddlewareType.FullName}\n";
                     foreach (var param in p.Offending)
                     {
-                        message += $"    � {param}\n";
+                        message += $"    - {param}\n";
                     }
                     message += "\n";
                 }

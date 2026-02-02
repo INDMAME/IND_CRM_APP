@@ -1205,9 +1205,9 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
             <span>{endDate ? formatDisplay(endDate, locale) : "--"}</span>
           </div>
           {selectedClient && (
-            <div className="history-filter-summary mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
-              <span className="font-semibold">{clientLabel}:</span>
-              <span className="max-w-full truncate">{selectedClient.text}</span>
+            <div className="history-filter-summary mt-1.5 flex items-center gap-2 text-xs min-w-0">
+              <span className="font-semibold shrink-0">{clientLabel}:</span>
+              <span className="min-w-0 flex-1 truncate">{selectedClient.text}</span>
             </div>
           )}
         </div>
@@ -1396,7 +1396,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
           <HistoryClientCombobox key={clientResetKey} value={selectedClient} onSelected={handleClientSelected} />
 
           {showFilterActions && (
-            <div className="mt-auto grid grid-cols-2 gap-2 pt-1 history-filter-actions">
+            <div className="mt-1 grid grid-cols-2 gap-2 history-filter-actions">
               <StarBorder
                 as="button"
                 type="button"

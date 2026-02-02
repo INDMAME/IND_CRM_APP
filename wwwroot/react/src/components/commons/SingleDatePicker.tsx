@@ -179,7 +179,7 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
         aria-expanded={open}
       >
         <div className={`drp-section ${open ? "active" : ""}`}>
-          <div className="drp-label">{String(effectiveLabel).toUpperCase()}</div>
+          <div className="drp-label">{String(effectiveLabel)}</div>
           <div className="drp-value">
             <span>{formatDisplay(selectedDate)}</span>
           </div>

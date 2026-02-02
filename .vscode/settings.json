@@ -1,4 +1,9 @@
 {
     "chatgpt.openOnStartup": true,
-    "chatgpt.commentCodeLensEnabled": true
+    "chatgpt.commentCodeLensEnabled": true,
+    "chat.mcp.serverSampling": {
+        "IND_CRM_APP/.vscode/mcp.json: shadcn": {
+            "allowedModels": []
+        }
+    }
 }

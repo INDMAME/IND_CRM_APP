@@ -22,6 +22,16 @@
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
   }
+
+  body {
+    font-size: 14px;
+  }
+
+  @media (min-width: 768px) {
+    body {
+      font-size: 16px;
+    }
+  }
 }
 
 @utility container {
@@ -55,18 +65,18 @@
 }
 
 @utility form-control {
-  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 text-left focus:outline-hidden focus:ring-2 focus:ring-primary/70 focus:border-primary;
+  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm sm:text-base text-slate-900 text-left focus:outline-hidden focus:ring-2 focus:ring-primary/70 focus:border-primary;
   .input-group > & {
     @apply rounded-r-none;
   }
 }
 
 @utility form-select {
-  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 text-left focus:outline-hidden focus:ring-2 focus:ring-primary/70 focus:border-primary;
+  @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm sm:text-base text-slate-900 text-left focus:outline-hidden focus:ring-2 focus:ring-primary/70 focus:border-primary;
 }
 
 @utility form-label {
-  @apply text-sm font-medium text-slate-700;
+  @apply text-sm sm:text-base font-medium text-slate-700;
 }
 
 @utility form-check {
@@ -78,7 +88,7 @@
 }
 
 @utility form-check-label {
-  @apply text-sm text-slate-700;
+  @apply text-sm sm:text-base text-slate-700;
 }
 
 @utility btn {

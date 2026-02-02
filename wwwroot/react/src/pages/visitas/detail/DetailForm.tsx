@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { createPortal } from "react-dom";
 import { ChevronDownSvg, ChevronUpSvg } from "../../../components/commons/chevrons.tsx";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
+import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import { fetchJson } from "../../../services/apiService.ts";
 import { useVisitas } from "../../../hooks/useVisitas.ts";
 import Spinner from "../../../components/commons/Spinner.tsx";
@@ -15,6 +15,7 @@ import { readAndClearTextEditorValue, TEXT_EDITOR_PREFIX } from "../../../utils/
 import { setHistoryFilterForDate, flashActionMark } from "../../../utils/visitasHistory.ts";
 import { setPreviewAnchor, showPreviewTooltip, isOverflowing } from "../../../utils/previewTooltip.ts";
 import { useTapGuard } from "../../../hooks/useTapGuard.ts";
+import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 
 function SelectCombobox({ label, options, value, onChange, placeholder, disabled = false }) {
   const data = React.useMemo(() => {
@@ -98,14 +99,14 @@ function SelectCombobox({ label, options, value, onChange, placeholder, disabled
       className={`space-y-2 ${disabled ? "opacity-70 pointer-events-none select-none" : ""}`}
       ref={containerRef}
     >
-      <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{label}</label>
+      <label className="form-label font-semibold">{label}</label>
       <div className="relative">
         <div
           ref={boxRef}
           className="relative w-full cursor-default rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
         >
           <input
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-[9.55px] sm:text-base leading-5 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-100 disabled:text-slate-600 disabled:border-slate-200 disabled:cursor-not-allowed"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm sm:text-base leading-5 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-100 disabled:text-slate-600 disabled:border-slate-200 disabled:cursor-not-allowed"
             value={query || selected?.text || ""}
             disabled={disabled}
             onChange={(event) => {
@@ -286,10 +287,10 @@ const DetailApp = () => {
   const [busy, setBusy] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isHydrating, setIsHydrating] = useState(false);
-  const modalConfirmInFlightRef = useRef(false);
   const [modalError, setModalError] = useState("");
   const readOnlySurfaceRef = useRef(null);
   const editModeKeyRef = useRef("");
+  const draftKeyRef = useRef("");
 
   const recId = String(detail.recId ?? detail.RecId ?? "");
   const accountNum = String(detail.accountNum ?? detail.AccountNum ?? "");
@@ -321,6 +322,65 @@ const DetailApp = () => {
       /* ignore */
     }
   }, [actividadId, recId, canEditHistory]);
+
+  useEffect(() => {
+    const key = `ind_visit_draft_${actividadId || recId || "default"}`;
+    draftKeyRef.current = key;
+  }, [actividadId, recId]);
+
+  const saveDraft = useCallback((draft) => {
+    const key = draftKeyRef.current;
+    if (!key) return;
+    try {
+      sessionStorage.setItem(key, JSON.stringify(draft));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const clearDraft = useCallback(() => {
+    const key = draftKeyRef.current;
+    if (!key) return;
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  const applyDraftValues = useCallback(() => {
+    const key = draftKeyRef.current;
+    if (!key) return;
+    try {
+      const raw = sessionStorage.getItem(key);
+      if (!raw) return;
+      const draft = JSON.parse(raw);
+      if (!draft || typeof draft !== "object") return;
+      if (draft.transDate) setTransDate(String(draft.transDate));
+      if (draft.visitType !== undefined) setVisitType(String(draft.visitType));
+      if (draft.asistenteTipo !== undefined) setAsistenteTipo(String(draft.asistenteTipo));
+      if (draft.description !== undefined) setDescription(String(draft.description));
+      if (draft.comentarios !== undefined) setComentarios(String(draft.comentarios));
+      if (draft.antecedentes !== undefined) setAntecedentes(String(draft.antecedentes));
+      if (draft.conclusiones !== undefined) setConclusiones(String(draft.conclusiones));
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isEditing) {
+      saveDraft({
+        transDate,
+        visitType,
+        asistenteTipo,
+        description,
+        comentarios,
+        antecedentes,
+        conclusiones
+      });
+    }
+  }, [transDate, visitType, asistenteTipo, description, comentarios, antecedentes, conclusiones, isEditing, saveDraft]);
 
   const hasServerDetail =
     hasValue(recId) &&
@@ -443,75 +503,48 @@ const DetailApp = () => {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, [actividadId, applyTextEditorValues]);
 
-  const [modal, setModal] = useState({
-    open: false,
-    title: "",
-    message: "",
-    confirmText: indT("Confirm_Yes", "OK"),
-    cancelText: indT("Confirm_No", "Cancel"),
-    showCancel: true,
-    showConfirm: true,
-    onConfirm: null
+  const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
+    defaultConfirmText: indT("Confirm_Yes", "OK"),
+    defaultCancelText: indT("Confirm_No", "Cancel")
   });
 
-  const closeModal = useCallback(() => {
-    setModal((m) => ({ ...m, open: false }));
-  }, []);
-
-  const openConfirmModal = useCallback((opts) => {
-    setModalError("");
-    setModal({
-      open: true,
-      title: opts?.title || "",
-      message: opts?.message || "",
-      confirmText: opts?.confirmText || indT("Confirm_Yes", "OK"),
-      cancelText: indT("Confirm_No", "Cancel"),
-      showCancel: true,
-      showConfirm: true,
-      onConfirm: opts?.onConfirm || null
-    });
-  }, []);
-
   const handleModalConfirm = useCallback(async () => {
-    if (busy) return;
-    const cb = modal.onConfirm;
-    if (typeof cb !== "function") {
-      closeModal();
+    setModalError("");
+    await handleConfirm({
+      busy,
+      onError: (msg) => {
+        setModalError(msg);
+        setStatus(msg);
+        flashActionMark("errorProcess", 1500);
+      }
+    });
+  }, [busy, handleConfirm]);
+
+  const modalLoadingText = indT("Common_Loading", "Loading");
+  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
+  const modalConfirmText = busy
+    ? modalLoadingText
+    : (!busy && modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")));
+
+  const handleModalButtonConfirm = useCallback(() => {
+    if (!busy && modalError) {
+      closeConfirm();
       return;
     }
-    if (modalConfirmInFlightRef.current) return;
-    modalConfirmInFlightRef.current = true;
-    setModalError("");
-    try {
-      const result = await cb();
-      if (result !== false) {
-        closeModal();
-      }
-    } catch (err) {
-      console.error("Modal confirm failed:", err);
-      const msg = err?.message || indT("Api_RequestFailed", "Request failed. Please try again.");
-      setModalError(msg);
-      setStatus(msg);
-      flashActionMark("errorProcess", 1500);
-    } finally {
-      modalConfirmInFlightRef.current = false;
-    }
-  }, [busy, modal.onConfirm, closeModal]);
+    handleModalConfirm();
+  }, [busy, modalError, closeConfirm, handleModalConfirm]);
 
   // hydrate data from server if any field is missing
   const hydrateFromApi = useCallback(async () => {
     if (!actividadId) return;
     setIsHydrating(true);
     try {
-      console.debug("Fetching activity by code", actividadId);
       const res = await fetchJson(`/Visitas/GetActivityByCode?code=${encodeURIComponent(actividadId)}`);
       if (!res?.success || !res.data) {
-        console.error("GetActivityByCode sin datos", res);
         setStatus(res?.message || indT("Visits_Detail_LoadActivityFailed", "Failed to load activity details."));
         return;
       }
       const data = res.data;
-      console.debug("API data", data);
       const rawDate = String(data.transDate ?? data.TransDate ?? "");
       setTransDate(normalizeDateToInput(rawDate));
       const rawVisitType = String(
@@ -535,11 +568,11 @@ const DetailApp = () => {
       setComentarios(String(data.comentarios ?? data.Comentarios ?? ""));
       setAntecedentes(String(data.antecedentes ?? data.Antecedentes ?? ""));
       setConclusiones(String(data.conclusiones ?? data.Conclusiones ?? ""));
-    } catch (err) {
-      console.warn("Failed to load activity by code", err);
+    } catch {
     } finally {
       setIsHydrating(false);
-      // Apply any pending values coming from the full-screen text editor.
+      // Apply any pending draft values first, then override with text editor values.
+      applyDraftValues();
       applyTextEditorValues();
     }
   }, [
@@ -550,17 +583,18 @@ const DetailApp = () => {
     normalizeDateToInput,
     initialAsistente,
     defaultVisitType,
-    applyTextEditorValues
+    applyTextEditorValues,
+    applyDraftValues
   ]);
 
   useEffect(() => {
     if (shouldHydrate) {
       hydrateFromApi();
     } else {
+      applyDraftValues();
       applyTextEditorValues();
     }
-    console.debug("Detalle actividad cargado", detail);
-  }, [detail, hydrateFromApi, shouldHydrate, applyTextEditorValues]);
+  }, [detail, hydrateFromApi, shouldHydrate, applyTextEditorValues, applyDraftValues]);
 
   useEffect(() => {
     const el = readOnlySurfaceRef.current;
@@ -641,6 +675,7 @@ const DetailApp = () => {
       setStatus(indT("Visits_Detail_Updated", "Activity updated"));
       setIsEditing(false);
       syncEditModeFlag(false);
+      clearDraft();
       return true;
     } catch (err) {
       const msg = err?.message || indT("Visits_Detail_UpdateError", "Update error.");
@@ -687,18 +722,19 @@ const DetailApp = () => {
       }
       if (isEditing) {
         if (busy || modal.open) return;
-        openConfirmModal({
+        setModalError("");
+        openConfirm({
           title: indT("Visits_Detail_SaveChanges_Title", "Save changes"),
           message: indT("Visits_Detail_SaveChanges_Body", "Do you want to save changes?"),
           confirmText: indT("Common_Save", "Save"),
           onConfirm: async () => {
             const ok = await handleUpdate();
             if (ok) {
-              closeModal();
-              setBusy(true);
+              closeConfirm();
               setHistoryFilterForDate(transDate);
-              flashActionMark("okProcess", 1500);
-              await wait(1500);
+              await wait(200);
+              flashActionMark("okProcess", 1200);
+              await wait(1200);
               window.location.href = "/Historial/History";
             }
             return ok;
@@ -715,18 +751,19 @@ const DetailApp = () => {
         return;
       }
       if (busy || modal.open) return;
-      openConfirmModal({
+      setModalError("");
+      openConfirm({
         title: indT("Visits_Detail_DeleteActivity_Title", "Delete activity"),
         message: indT("Visits_Detail_DeleteActivity_Body", "Do you want to delete this activity?"),
         confirmText: indT("Common_Delete", "Delete"),
         onConfirm: async () => {
             const ok = await handleDelete();
             if (ok) {
-            closeModal();
-            setBusy(true);
+            closeConfirm();
             setHistoryFilterForDate(transDate);
-            flashActionMark("okDelProcess", 1500);
-            await wait(1500);
+            await wait(200);
+            flashActionMark("okDelProcess", 1200);
+            await wait(1200);
             window.location.href = "/Historial/History";
             }
             return ok;
@@ -739,52 +776,25 @@ const DetailApp = () => {
       window.removeEventListener("visit-edit", onEdit);
       window.removeEventListener("visit-delete", onDelete);
     };
-  }, [busy, modal.open, handleDelete, handleEnableEdit, handleUpdate, isEditing, openConfirmModal, transDate]);
+  }, [busy, modal.open, handleDelete, handleEnableEdit, handleUpdate, isEditing, openConfirm, transDate]);
 
   return (
     <div className="space-y-4">
-      {modal.open &&
-        createPortal(
-          <div className="fixed inset-0 z-600000 flex items-center justify-center bg-black/40 backdrop-blur-[1px] px-4">
-            <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
-              <div className="text-lg font-semibold text-slate-900">{modal.title}</div>
-              <div className="text-sm text-slate-700 whitespace-pre-line">{modal.message}</div>
-              {(busy || !!modalError) && (
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  {busy && <Spinner size="h-4 w-4" />}
-                  <span className={modalError && !busy ? "text-rose-700" : ""}>
-                    {busy ? (status || indT("Common_Loading", "Loading")) : modalError}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-end gap-2 pt-2">
-                {modal.showCancel && (
-                  <button
-                    type="button"
-                    className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:border-primary hover:text-primary transition"
-                    onClick={closeModal}
-                    disabled={busy}
-                  >
-                    {modal.cancelText || indT("Confirm_No", "Cancel")}
-                  </button>
-                )}
-                {modal.showConfirm && (
-                  <button
-                    type="button"
-                    className="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition"
-                    onClick={!busy && !!modalError ? closeModal : handleModalConfirm}
-                    disabled={busy}
-                  >
-                    {busy
-                      ? indT("Common_Loading", "Loading")
-                      : (!busy && !!modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")))}
-                  </button>
-                )}
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      <ConfirmModal
+        open={modal.open}
+        title={modal.title}
+        message={modal.message}
+        confirmText={modalConfirmText}
+        cancelText={modalCancelText}
+        loadingText={modalLoadingText}
+        showCancel={modal.showCancel}
+        showConfirm={modal.showConfirm}
+        busy={busy}
+        error={modalError}
+        status={status}
+        onConfirm={handleModalButtonConfirm}
+        onCancel={closeConfirm}
+      />
       <div
         ref={readOnlySurfaceRef}
         className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl"
@@ -821,11 +831,11 @@ const DetailApp = () => {
 
         <div className="grid grid-cols-1 gap-3">
           <div className="space-y-2">
-            <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Field_Description", "Description")}</label>
-          <input
+            <label className="form-label font-semibold">{indT("Visits_Field_Description", "Description")}</label>
+            <input
               id="description"
               className={classNames(
-                "w-full rounded-xl border px-3 py-2 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary",
+                "form-control",
                 isEditing ? "border-slate-200 text-slate-900" : "border-slate-200 bg-slate-100 text-slate-600"
               )}
               maxLength={200}
@@ -835,12 +845,11 @@ const DetailApp = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Field_Comments", "Comments")}</label>
+            <label className="form-label font-semibold">{indT("Visits_Field_Comments", "Comments")}</label>
             <textarea
               id="comentarios"
                 className={classNames(
-                  "w-full rounded-xl border border-slate-200 px-3 py-2 text-[9.55px] sm:text-base text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary",
-                  "cursor-pointer",
+                  "form-control cursor-pointer",
                   !isEditing ? "bg-slate-100 text-slate-600" : ""
                 )}
               value={comentarios}
@@ -852,12 +861,11 @@ const DetailApp = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Field_Background", "Background")}</label>
+            <label className="form-label font-semibold">{indT("Visits_Field_Background", "Background")}</label>
             <textarea
               id="antecedentes"
                 className={classNames(
-                  "w-full rounded-xl border border-slate-200 px-3 py-2 text-[9.55px] sm:text-base text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary",
-                  "cursor-pointer",
+                  "form-control cursor-pointer",
                   !isEditing ? "bg-slate-100 text-slate-600" : ""
                 )}
               value={antecedentes}
@@ -869,12 +877,11 @@ const DetailApp = () => {
             />
           </div>
           <div className="space-y-2">
-            <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
+            <label className="form-label font-semibold">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
             <textarea
               id="conclusiones"
                 className={classNames(
-                  "w-full rounded-xl border border-slate-200 px-3 py-2 text-[9.55px] sm:text-base text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary",
-                  "cursor-pointer",
+                  "form-control cursor-pointer",
                   !isEditing ? "bg-slate-100 text-slate-600" : ""
                 )}
               value={conclusiones}
@@ -908,7 +915,6 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, ErrorBo
   }
 
   componentDidCatch(error, info) {
-    console.error("Visit detail render error:", error, info);
   }
 
   render() {

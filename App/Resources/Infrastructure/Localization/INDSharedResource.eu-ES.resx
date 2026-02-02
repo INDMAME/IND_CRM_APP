@@ -63,6 +63,9 @@
   <data name="Login_Submit" xml:space="preserve"><value>Saioa hasi</value></data>
   <data name="Login_TogglePassword" xml:space="preserve"><value>Erakutsi edo ezkutatu pasahitza</value></data>
   <data name="Login_SignInMicrosoft" xml:space="preserve"><value>Sartu Microsoft-ekin</value></data>
+  <data name="Login_SystemVersion" xml:space="preserve"><value>Sistema v{0}</value></data>
+  <data name="Login_Secure" xml:space="preserve"><value>Seguru</value></data>
+  <data name="Login_Copyright" xml:space="preserve"><value>Copyright (c) {0} Insertec. Eskubide guztiak erreserbatuta.</value></data>
   <data name="Auth_InvalidCredentials" xml:space="preserve"><value>Kredentzial baliogabeak.</value></data>
   <data name="Auth_LoginApiError" xml:space="preserve"><value>Ezin izan da saioa hasi API errore batengatik.</value></data>
   <data name="Auth_AccessDenied" xml:space="preserve"><value>Sarbidea ukatuta: {0}</value></data>

@@ -55,6 +55,9 @@
   <data name="Login_Submit" xml:space="preserve"><value>Iniciar sessao</value></data>
   <data name="Login_TogglePassword" xml:space="preserve"><value>Mostrar ou ocultar senha</value></data>
   <data name="Login_SignInMicrosoft" xml:space="preserve"><value>Entrar com Microsoft</value></data>
+  <data name="Login_SystemVersion" xml:space="preserve"><value>Sistema v{0}</value></data>
+  <data name="Login_Secure" xml:space="preserve"><value>Seguro</value></data>
+  <data name="Login_Copyright" xml:space="preserve"><value>Copyright (c) {0} Insertec. Todos os direitos reservados.</value></data>
   <data name="Auth_InvalidCredentials" xml:space="preserve"><value>Credenciais invalidas.</value></data>
   <data name="Auth_LoginApiError" xml:space="preserve"><value>Falha ao iniciar sessao devido a erro de API.</value></data>
   <data name="Auth_AccessDenied" xml:space="preserve"><value>Acesso negado: {0}</value></data>

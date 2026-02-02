@@ -1,4 +1,4 @@
-/* --- Animación --- */
+/* --- Animation --- */
 @keyframes fadeIn {
     from {
         opacity: 0;
@@ -100,7 +100,7 @@ html, body {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 0 clamp(6px, 1.6vw, 12px); /* aún más cerca de los extremos */
+    padding: 0 clamp(6px, 1.6vw, 12px); /* even closer to the edges */
     z-index: 1900;
     transition: margin-left 0.35s cubic-bezier(.4, 0, .2, 1), width 0.35s cubic-bezier(.4, 0, .2, 1);
 }
@@ -110,8 +110,8 @@ html, body {
     align-items: center;
     gap: 6px;
     position: relative;
-    z-index: 2; /* asegura que hamburguesa y back queden sobre otros elementos */
-    flex: 0 0 clamp(110px, 14vw, 150px); /* reduce ancho para liberar espacio al título */
+    z-index: 2; /* keep hamburger and back above other elements */
+    flex: 0 0 clamp(110px, 14vw, 150px); /* reduce width to free space for title */
 }
 
 .topbar-nav {
@@ -130,8 +130,8 @@ html, body {
 
 #topbarTitle {
     color: #fff;
-    font-weight: 500; /* evita negrita */
-    font-size: clamp(22px, 3vw + 10px, 40px); /* escala fluida según ancho de pantalla */
+    font-weight: 500; /* avoid bold */
+    font-size: clamp(22px, 3vw + 10px, 40px); /* fluid scaling by screen width */
     letter-spacing: 0.3px;
     text-transform: capitalize;
     line-height: 1.05;
@@ -218,7 +218,7 @@ html, body {
     gap: 6px;
     justify-content: flex-end;
     margin-left: auto;
-    flex: 0 0 clamp(90px, 12vw, 130px); /* flecha más al borde derecho */
+    flex: 0 0 clamp(90px, 12vw, 130px); /* arrow closer to the right edge */
 }
 
 /* HAMBURGER BUTTON */
@@ -232,14 +232,14 @@ html, body {
     transition: 0.2s;
     box-shadow: 0 6px 18px rgba(0,0,0,0.25);
     position: relative;
-    z-index: 2; /* delante de la flecha */
+    z-index: 2; /* in front of the arrow */
 }
 
     .hamburger:hover {
         background-color: #001f4d;
     }
 
-/* Botón X dentro del menú */
+/* Close button inside the menu */
 .close-sidebar {
     position: absolute;
     top: 8px;
@@ -247,7 +247,7 @@ html, body {
     background: transparent;
     border: none;
     color: white;
-    font-size: 28px; /* más fina, más estilizada */
+    font-size: 28px; /* thinner, more refined */
     cursor: pointer;
     padding: 4px;
     transition: .2s ease;
@@ -259,10 +259,10 @@ html, body {
     }
 
 
-/* CONTENIDO */
+/* CONTENT */
 .content {
     padding: 10px 16px 20px;
-    margin-top: 0px; /* aún más pegado a la topbar */
+    margin-top: 0px; /* even closer to the topbar */
     transition: margin-left 0.35s cubic-bezier(.4, 0, .2, 1);
 }
 
@@ -294,7 +294,7 @@ html, body {
         visibility: visible;
     }
 
-/* PANEL DE USUARIO (solo una vez, corregido) */
+/* USER PANEL (single instance, corrected) */
 .user-panel {
     position: sticky;
     bottom: 16px;
@@ -302,7 +302,7 @@ html, body {
     z-index: 3;
 }
 
-/* CHIP DE USUARIO ANIMADO */
+/* ANIMATED USER CHIP */
 .user-chip {
     background: transparent;
     padding: 9px 12px;
@@ -320,28 +320,28 @@ html, body {
         background: rgba(255, 255, 255, 0.08);
     }
 
-/* Icono del chip */
+/* Chip icon */
 .user-chip-icon {
     font-size: 20px;
     margin-right: 8px;
     opacity: 0.95;
 }
 
-/* Username siempre en mayúsculas */
+/* Username always uppercase */
 .username-text {
     font-weight: 600;
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
 
-/* Chevron del chip */
+/* Chip chevron */
 .user-chip-chevron {
     margin-left: auto;
     font-size: 13px;
     opacity: 0.85;
 }
 
-/* MENÚ DESPLEGABLE DEL USUARIO */
+/* USER DROPDOWN MENU */
 .user-menu {
     background: rgba(0, 0, 0, 0.22);
     border-radius: 10px;
@@ -365,7 +365,7 @@ html, body {
     }
 
 
-/* Elementos del menú usuario */
+/* User menu items */
 .user-menu-item {
     width: 100%;
     text-align: left;
@@ -384,7 +384,7 @@ html, body {
         color: #ffffff;
     }
 
-/* Botón logout dentro del menú */
+/* Logout button inside menu */
 .user-menu-logout {
     width: 100%;
 }

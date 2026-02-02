@@ -1,6 +1,6 @@
 ﻿import React, { useEffect, useMemo, useState, useRef, useLayoutEffect } from "react";
-import { createPortal } from "react-dom";
 import { XMarkIcon } from "@heroicons/react/20/solid";
+import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import { ChevronDownSvg, ChevronUpSvg } from "../../../components/commons/chevrons.tsx";
 import { fetchJson } from "../../../services/apiService.ts";
@@ -10,6 +10,7 @@ import Spinner from "../../../components/commons/Spinner.tsx";
 import { useOutsideClick } from "../../../hooks/useOutsideClick.ts";
 import { useTapGuard } from "../../../hooks/useTapGuard.ts";
 import { useTopbar } from "../../../hooks/useTopbar.ts";
+import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { classNames } from "../../../utils/classNames.ts";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
@@ -248,14 +249,14 @@ function ClientCombobox({ onSelected, value = null }) {
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Create_SearchClient", "Search client")}</label>
+      <label className="form-label font-semibold">{indT("Visits_Create_SearchClient", "Search client")}</label>
       <div className="relative">
         <div
           ref={boxRef}
           className="relative w-full cursor-default rounded-xl border-slate-300 bg-white text-left shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
         >
           <input
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-24 text-[9.55px] sm:text-base leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
+            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-24 text-sm sm:text-base leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
             value={query}
             onChange={(event) => {
               const val = event.target.value;
@@ -634,7 +635,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Create_SearchContact", "Search contact")}</label>
+      <label className="form-label font-semibold">{indT("Visits_Create_SearchContact", "Search contact")}</label>
       <div className="relative">
         <div
           ref={boxRef}
@@ -657,7 +658,7 @@ function ContactsCombobox({ accountNum, value = [], onChange }) {
               </span>
             ))}
             <input
-              className="flex-1 min-w-30 bg-transparent text-[9.55px] sm:text-base leading-5 text-slate-900 border-none outline-hidden px-1 py-1 focus:ring-0 focus:border-transparent"
+              className="flex-1 min-w-30 bg-transparent text-sm sm:text-base leading-5 text-slate-900 border-none outline-hidden px-1 py-1 focus:ring-0 focus:border-transparent"
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={selected.length ? "" : indT("Visits_Create_FilterPlaceholder", "Type to filter...")}
@@ -824,7 +825,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, invalid 
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      <label className={classNames("text-[9.55px] sm:text-base font-semibold", invalid ? "text-rose-700" : "text-slate-700")}>
+      <label className={classNames("text-sm sm:text-base font-semibold", invalid ? "text-rose-700" : "text-slate-700")}>
         {label}
       </label>
       <div className="relative">
@@ -834,7 +835,7 @@ function SelectCombobox({ label, options, value, onChange, placeholder, invalid 
         >
           <input
             className={classNames(
-              "w-full rounded-xl border px-3 py-2 pr-10 text-[9.55px] sm:text-base leading-5 text-slate-900 focus:outline-hidden focus:ring-2",
+              "w-full rounded-xl border px-3 py-2 pr-10 text-sm sm:text-base leading-5 text-slate-900 focus:outline-hidden focus:ring-2",
               invalid
                 ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
                 : "border-slate-200 focus:ring-primary focus:border-primary"
@@ -941,69 +942,39 @@ function VisitasApp() {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [showRequired, setShowRequired] = useState(false);
-  const modalConfirmInFlightRef = useRef(false);
   const draftRestoredRef = useRef(false);
   const [modalError, setModalError] = useState("");
 
-  const [modal, setModal] = useState({
-    open: false,
-    title: "",
-    message: "",
-    confirmText: indT("Confirm_Yes", "OK"),
-    cancelText: indT("Confirm_No", "Cancel"),
-    onConfirm: null,
+  const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
+    defaultConfirmText: indT("Confirm_Yes", "OK"),
+    defaultCancelText: indT("Confirm_No", "Cancel")
   });
 
-  const closeModal = React.useCallback(() => {
-    setModal((m) => ({ ...m, open: false }));
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const params = new URLSearchParams(window.location.search || "");
-    const isFresh = params.get(CREATE_FRESH_PARAM) === "1";
-    if (isFresh) {
-      clearCreateSelectionCache();
-      stripFreshParam();
-    }
-  }, []);
-
-  const openConfirmModal = React.useCallback((opts) => {
-    setModalError("");
-    setModal({
-      open: true,
-      title: opts?.title || "",
-      message: opts?.message || "",
-      confirmText: opts?.confirmText || indT("Confirm_Yes", "OK"),
-      cancelText: indT("Confirm_No", "Cancel"),
-      onConfirm: opts?.onConfirm || null,
-    });
-  }, []);
-
   const handleModalConfirm = React.useCallback(async () => {
-    if (busy) return;
-    const cb = modal.onConfirm;
-    if (typeof cb !== "function") {
-      closeModal();
+    setModalError("");
+    await handleConfirm({
+      busy,
+      onError: (msg) => {
+        setModalError(msg);
+        setStatus(msg);
+        flashActionMark("errorProcess", 1500);
+      }
+    });
+  }, [busy, handleConfirm]);
+
+  const modalLoadingText = indT("Common_Loading", "Loading");
+  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
+  const modalConfirmText = busy
+    ? modalLoadingText
+    : (!busy && modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")));
+
+  const handleModalButtonConfirm = React.useCallback(() => {
+    if (!busy && modalError) {
+      closeConfirm();
       return;
     }
-    if (modalConfirmInFlightRef.current) return;
-    modalConfirmInFlightRef.current = true;
-    setModalError("");
-    try {
-      const result = await cb();
-      if (result !== false) {
-        closeModal();
-      }
-    } catch (err) {
-      console.error("Modal confirm failed:", err);
-      const msg = err?.message || indT("Api_RequestFailed", "Request failed. Please try again.");
-      setModalError(msg);
-      setStatus(msg);
-    } finally {
-      modalConfirmInFlightRef.current = false;
-    }
-  }, [busy, modal.onConfirm, closeModal]);
+    handleModalConfirm();
+  }, [busy, modalError, closeConfirm, handleModalConfirm]);
 
   // Build a draft snapshot for sessionStorage.
   const buildDraft = React.useCallback(
@@ -1316,9 +1287,10 @@ function VisitasApp() {
       }
 
       setHistoryFilterForDate(transDate);
-      closeModal();
-      flashActionMark("okProcess", 1500);
-      await wait(1500);
+      closeConfirm();
+      await wait(200);
+      flashActionMark("okProcess", 1200);
+      await wait(1200);
       window.location.href = "/Historial/History";
       return true;
     } catch (e) {
@@ -1329,8 +1301,7 @@ function VisitasApp() {
             method: "DELETE",
             suppressPermissionModal: true,
           });
-        } catch (cleanupErr) {
-          console.error("Rollback delete activity failed:", cleanupErr);
+        } catch {
         }
       }
       const msg = e.message || indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
@@ -1362,7 +1333,8 @@ function VisitasApp() {
       setStatus(indT("Visits_Create_CompleteRequired", "Complete required fields."));
       return;
     }
-    openConfirmModal({
+    setModalError("");
+    openConfirm({
       title: indT("Visits_Create_ConfirmCreate_Title", "Confirm create"),
       message: indT("Visits_Create_ConfirmCreate_Body", "Do you want to create this visit?"),
       confirmText: indT("Confirm_Yes", "OK"),
@@ -1373,9 +1345,9 @@ function VisitasApp() {
   useEffect(() => {
     if (step === 1) {
       setShowRequired(false);
-      closeModal();
+      closeConfirm();
     }
-  }, [step, closeModal]);
+  }, [step, closeConfirm]);
 
   const visitTypeInvalid = showRequired && (String(visitType || "") === "" || String(visitType) === "0");
   const descriptionInvalid = showRequired && description.trim().length === 0;
@@ -1383,44 +1355,21 @@ function VisitasApp() {
 
   return (
     <div className="space-y-4">
-      {modal.open &&
-        createPortal(
-          <div className="fixed inset-0 z-600000 flex items-center justify-center bg-black/40 backdrop-blur-[1px] px-4">
-            <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
-               <div className="text-lg font-semibold text-slate-900">{modal.title}</div>
-               <div className="text-sm text-slate-700 whitespace-pre-line">{modal.message}</div>
-              {(busy || !!modalError) && (
-                <div className="flex items-center gap-2 text-sm text-slate-600">
-                  {busy && <Spinner size="h-4 w-4" />}
-                  <span className={modalError && !busy ? "text-rose-700" : ""}>
-                    {busy ? (status || indT("Common_Loading", "Loading")) : modalError}
-                  </span>
-                </div>
-              )}
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:border-primary hover:text-primary transition"
-                  onClick={closeModal}
-                  disabled={busy}
-                >
-                  {modal.cancelText || indT("Confirm_No", "Cancel")}
-                </button>
-                <button
-                  type="button"
-                  className="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition"
-                  onClick={!busy && !!modalError ? closeModal : handleModalConfirm}
-                  disabled={busy}
-                >
-                  {busy
-                    ? indT("Common_Loading", "Loading")
-                    : (!busy && !!modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")))}
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
+      <ConfirmModal
+        open={modal.open}
+        title={modal.title}
+        message={modal.message}
+        confirmText={modalConfirmText}
+        cancelText={modalCancelText}
+        loadingText={modalLoadingText}
+        showCancel={modal.showCancel}
+        showConfirm={modal.showConfirm}
+        busy={busy}
+        error={modalError}
+        status={status}
+        onConfirm={handleModalButtonConfirm}
+        onCancel={closeConfirm}
+      />
       {step === 1 && (
         <div className="space-y-6">
           <ClientCombobox onSelected={setSelectedClient} value={selectedClient} />
@@ -1461,11 +1410,11 @@ function VisitasApp() {
 
           <div className="grid grid-cols-1 gap-3">
             <div className="space-y-2">
-              <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Field_Description", "Description")}</label>
+              <label className="form-label font-semibold">{indT("Visits_Field_Description", "Description")}</label>
               <input
                 id="description"
                 className={classNames(
-                  "w-full rounded-xl border px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2",
+                  "form-control",
                   descriptionInvalid
                     ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
                     : "border-slate-200 focus:ring-primary focus:border-primary"
@@ -1476,11 +1425,11 @@ function VisitasApp() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Field_Comments", "Comments")}</label>
+              <label className="form-label font-semibold">{indT("Visits_Field_Comments", "Comments")}</label>
               <textarea
                 id="comentarios"
                   className={classNames(
-                    "w-full cursor-pointer rounded-xl border px-3 py-2 text-[9.55px] sm:text-base text-slate-900 focus:outline-hidden focus:ring-2",
+                    "form-control cursor-pointer",
                     comentariosInvalid
                       ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
                       : "border-slate-200 focus:ring-primary focus:border-primary"
@@ -1495,10 +1444,10 @@ function VisitasApp() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Field_Background", "Background")}</label>
+              <label className="form-label font-semibold">{indT("Visits_Field_Background", "Background")}</label>
                 <textarea
                   id="antecedentes"
-                  className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-[9.55px] sm:text-base text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
+                  className="form-control cursor-pointer"
                 value={antecedentes}
                 readOnly
                 onPointerDown={antecedentesTap.onPointerDown}
@@ -1508,10 +1457,10 @@ function VisitasApp() {
               />
             </div>
             <div className="space-y-2">
-              <label className="text-[9.55px] sm:text-base font-semibold text-slate-700">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
+              <label className="form-label font-semibold">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
                 <textarea
                   id="conclusiones"
-                  className="w-full cursor-pointer rounded-xl border border-slate-200 px-3 py-2 text-[9.55px] sm:text-base text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
+                  className="form-control cursor-pointer"
                 value={conclusiones}
                 readOnly
                 onPointerDown={conclusionesTap.onPointerDown}
@@ -1544,8 +1493,6 @@ class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, ErrorBo
   }
 
   componentDidCatch(error, info) {
-    // Log for diagnostics; prevents the UI from going blank.
-    console.error("Visitas app error:", error, info);
   }
 
   render() {
