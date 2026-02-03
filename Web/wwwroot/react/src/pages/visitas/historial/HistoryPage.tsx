@@ -1,18 +1,12 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { KeyboardEvent as ReactKeyboardEvent, MouseEvent as ReactMouseEvent } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { createRoot } from "react-dom/client";
 import { classNames } from "../../../utils/classNames.ts";
-import { indFormat, indT } from "../../../utils/indI18n.ts";
+import { indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
-import { fetchJson, getCsrfToken } from "../../../services/apiService.ts";
+import { getCsrfToken } from "../../../services/apiService.ts";
 import { HISTORY_FILTER_KEY, HISTORY_RETURN_FLAG_KEY } from "../../../utils/visitasHistory.ts";
-import { getClientCache, hasClientCache, setClientCache } from "../../../utils/visitasStorage.ts";
-import { mapAccountItem } from "../../../utils/visitasMapping.ts";
-import { useOutsideClick } from "../../../hooks/useOutsideClick.ts";
-import { ChevronDownSvg, ChevronUpSvg } from "../../../components/commons/chevrons.tsx";
-import FloatingList from "../../../components/commons/FloatingList.tsx";
-import Spinner from "../../../components/commons/Spinner.tsx";
-import StarBorder from "../../../components/commons/StarBorder.tsx";
+import ClientSearchCombobox, { ClientOption } from "../../../components/visitas/ClientSearchCombobox.tsx";
 import QuickFilterSlider from "../../../components/commons/QuickFilterSlider.tsx";
 import HistoryTable, { TimelineItem } from "./HistoryTable.tsx";
 
@@ -45,13 +39,6 @@ type CachedFilter = {
   page?: number;
   clientAccount?: string;
   clientText?: string;
-};
-
-type ClientOption = {
-  value: string;
-  text: string;
-  cargo?: string;
-  empresa?: string;
 };
 
 type CalendarCell = {
@@ -235,351 +222,6 @@ const logHistory = (message: string, data?: Record<string, unknown>) => {
   } else {
     console.debug("[History]", message);
   }
-};
-
-type HistoryClientComboboxProps = {
-  value: ClientOption | null;
-  onSelected: (value: ClientOption | null) => void;
-};
-
-const HistoryClientCombobox = ({ value, onSelected }: HistoryClientComboboxProps) => {
-  const [query, setQuery] = useState("");
-  const [options, setOptions] = useState<ClientOption[]>([]);
-  const [fetchedQuery, setFetchedQuery] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [status, setStatus] = useState(indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4));
-  const [selected, setSelected] = useState<ClientOption | null>(value);
-  const [open, setOpen] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-  const [blocking, setBlocking] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const listRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const boxRef = useRef<HTMLDivElement>(null);
-  const abortRef = useRef<AbortController | null>(null);
-  const clientLabel = indT("History_Filter_Client", "Client");
-
-  useOutsideClick([containerRef, listRef], () => setOpen(false));
-
-  useEffect(() => {
-    if (!value) {
-      setSelected(null);
-      setQuery("");
-      return;
-    }
-    setSelected(value);
-    setQuery(value.text || "");
-  }, [value]);
-
-  const filtered = useMemo(() => {
-    if (!query.trim()) return options;
-    const q = query.trim().toLowerCase();
-    if (fetchedQuery && q !== fetchedQuery) return options;
-    const match = options.filter((o) => o.text.toLowerCase().includes(q));
-    return match.length > 0 ? match : options;
-  }, [options, query, fetchedQuery]);
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [filtered.length, query]);
-
-  const cancelPending = () => {
-    if (abortRef.current) {
-      abortRef.current.abort();
-      abortRef.current = null;
-    }
-  };
-
-  const search = async () => {
-    const currentQuery = query.trim().toLowerCase();
-    if (currentQuery.length < 4) {
-      setStatus(indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4));
-      setOptions([]);
-      setHasMore(false);
-      return;
-    }
-    cancelPending();
-    setPage(1);
-    setHasMore(true);
-    setOpen(false);
-    const cacheKey = query.trim().toLowerCase();
-    if (hasClientCache(cacheKey)) {
-      const cached = (getClientCache(cacheKey) || []) as ClientOption[];
-      setFetchedQuery(currentQuery);
-      setOptions(cached);
-      setStatus(
-        cached.length
-          ? indFormat("Visits_Create_ClientCountCache", "{0} clients (cache)", cached.length)
-          : indT("Visits_Create_NoResults", "No results")
-      );
-      setHasMore(cached.length === 10);
-      setOpen(true);
-      return;
-    }
-    setLoading(true);
-    setBlocking(true);
-    setStatus(indT("Visits_Create_Searching", "Searching..."));
-    const controller = new AbortController();
-    abortRef.current = controller;
-    let shouldOpenOnFinish = false;
-    try {
-      const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=1&pageSize=10`;
-      const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
-      const items = (data.items || []).map(mapAccountItem).filter(Boolean) as ClientOption[];
-      setFetchedQuery(currentQuery);
-      setClientCache(cacheKey, items);
-      setOptions(items);
-      setStatus(items.length ? indFormat("Visits_Create_ClientCount", "{0} clients", items.length) : indT("Visits_Create_NoResults", "No results"));
-      setHasMore(items.length === 10);
-      shouldOpenOnFinish = true;
-    } catch (err: any) {
-      if (err?.name === "AbortError") {
-        setStatus(indT("Visits_Create_SearchCanceled", "Search canceled."));
-      } else if (String(err?.message || "").toLowerCase().includes("timeout")) {
-        setStatus(indT("Visits_Create_SearchTimeout", "The search took too long. Type more characters to narrow down."));
-      } else {
-        setStatus(indT("Visits_Create_LoadClientsError", "Failed to load clients."));
-      }
-    } finally {
-      abortRef.current = null;
-      setLoading(false);
-      setBlocking(false);
-      if (shouldOpenOnFinish) setOpen(true);
-    }
-  };
-
-  const loadMore = useCallback(async () => {
-    if (loadingMore || loading || !hasMore || query.trim().length < 4) return;
-    setLoadingMore(true);
-    setBlocking(true);
-    const controller = new AbortController();
-    abortRef.current = controller;
-    try {
-      const nextPage = page + 1;
-      const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=${nextPage}&pageSize=10`;
-      const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
-      const items = (data.items || []).map(mapAccountItem).filter(Boolean) as ClientOption[];
-      setOptions((prev) => [...prev, ...items]);
-      setPage(nextPage);
-      setHasMore(items.length === 10);
-    } finally {
-      abortRef.current = null;
-      setLoadingMore(false);
-      setBlocking(false);
-    }
-  }, [loadingMore, loading, hasMore, query, page]);
-
-  useEffect(() => {
-    if (!open || !listRef.current) return;
-    const el = listRef.current;
-    const onScroll = () => {
-      if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) loadMore();
-    };
-    el.addEventListener("scroll", onScroll);
-    return () => el.removeEventListener("scroll", onScroll);
-  }, [open, loadMore]);
-
-  const selectOption = (opt: ClientOption) => {
-    setSelected(opt);
-    setQuery(opt.text);
-    setOpen(false);
-    onSelected(opt);
-  };
-
-  const requestSearchOrOpen = () => {
-    if (loading || blocking) return;
-    const trimmed = query.trim();
-    if (trimmed.length < 4) {
-      cancelPending();
-      setOptions([]);
-      setHasMore(false);
-      setStatus(indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4));
-      setOpen(true);
-      return;
-    }
-
-    const qKey = trimmed.toLowerCase();
-    const isSelectionDisplay = !!selected && query === (selected.text || "");
-    const shouldSearch = !isSelectionDisplay && qKey !== fetchedQuery;
-
-    if (shouldSearch) {
-      search();
-      return;
-    }
-
-    setOpen(true);
-  };
-
-  const handleKeyDown = (ev: ReactKeyboardEvent<HTMLInputElement>) => {
-    if (ev.key === "ArrowDown") {
-      if (!open) return;
-      ev.preventDefault();
-      if (filtered.length) setActiveIndex((idx) => (idx + 1) % filtered.length);
-      return;
-    }
-    if (ev.key === "ArrowUp") {
-      if (!open) return;
-      ev.preventDefault();
-      if (filtered.length) setActiveIndex((idx) => (idx - 1 + filtered.length) % filtered.length);
-      return;
-    }
-    if (ev.key === "Enter") {
-      ev.preventDefault();
-      if (open && filtered.length) {
-        selectOption(filtered[activeIndex] ?? filtered[0]);
-      } else {
-        requestSearchOrOpen();
-      }
-    }
-    if (ev.key === "Escape") {
-      setOpen(false);
-    }
-  };
-
-  const queryKey = query.trim().toLowerCase();
-  const isSelectionDisplay = !!selected && query === (selected.text || "");
-  const showSearchIcon =
-    !loading && !blocking && !isSelectionDisplay && queryKey.length >= 4 && (fetchedQuery === "" || queryKey !== fetchedQuery);
-
-  return (
-    <div className="space-y-1" ref={containerRef}>
-      <div className="relative">
-        <div
-          ref={boxRef}
-          className="relative w-full rounded-xl border border-slate-200/70 bg-transparent text-left focus-within:border-primary/70 focus-within:ring-2 focus-within:ring-primary/20 focus-within:ring-offset-0"
-        >
-          <input
-            className="w-full rounded-xl border border-transparent bg-transparent px-3 pr-24 py-2 text-[11px] leading-5 text-slate-700 placeholder:text-slate-400 focus:outline-hidden"
-            value={query}
-            onChange={(event) => {
-              const val = event.target.value;
-              setQuery(val);
-              if (selected && val !== (selected.text || "")) {
-                setSelected(null);
-                onSelected?.(null);
-              }
-              cancelPending();
-              setFetchedQuery("");
-              setOptions([]);
-              setHasMore(false);
-              setStatus(
-                val.trim().length < 4
-                  ? indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4)
-                  : indT("Visits_Create_PressSearchHint", "Press search, Enter or ArrowDown to search.")
-              );
-              setOpen(false);
-            }}
-            onKeyDown={handleKeyDown}
-            placeholder={clientLabel}
-            aria-label={clientLabel}
-            readOnly={loading || blocking}
-            aria-busy={loading || blocking}
-            role="combobox"
-            aria-expanded={open}
-            aria-controls="history-client-options"
-            aria-activedescendant={open && filtered[activeIndex] ? `history-client-opt-${filtered[activeIndex].value}` : undefined}
-          />
-
-          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
-            {(loading || blocking) && (
-              <span className="flex items-center px-2" aria-hidden="true">
-                <Spinner size="h-4 w-4" />
-              </span>
-            )}
-
-            {showSearchIcon && (
-              <button
-                type="button"
-                className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
-                onClick={requestSearchOrOpen}
-                aria-label={indT("Visits_Create_SearchClient", "Search client")}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 15.75-2.489-2.489m0 0a3.375 3.375 0 1 0-4.773-4.773 3.375 3.375 0 0 0 4.774 4.774ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
-              </button>
-            )}
-
-            <button
-              type="button"
-              className="flex items-center p-1.5 text-slate-500 hover:text-slate-600"
-              onClick={() => {
-                if (loading || blocking) return;
-                if (open) {
-                  setOpen(false);
-                  return;
-                }
-                requestSearchOrOpen();
-              }}
-              disabled={loading || blocking}
-              aria-label={
-                open
-                  ? indT("Visits_Create_HideClientOptions", "Hide client options")
-                  : indT("Visits_Create_ShowClientOptions", "Show client options")
-              }
-            >
-              {open ? <ChevronUpSvg className="h-4 w-4" /> : <ChevronDownSvg className="h-4 w-4" />}
-            </button>
-          </div>
-        </div>
-        <FloatingList anchorRef={boxRef} open={open} zIndex={400000} maxHeightClass="max-h-72" role="listbox" roundedClass="rounded-xl">
-          <div ref={listRef} id="history-client-options">
-            {options.length === 0 && (
-              <div className="px-4 py-2 text-[11px] text-slate-500">
-                {query.trim().length < 4
-                  ? indFormat("Visits_Create_MinChars", "Type at least {0} characters.", 4)
-                  : indT("Visits_Create_NoResults", "No results")}
-              </div>
-            )}
-            {!loading && options.length > 0 && filtered.length === 0 && (
-              <div className="px-4 py-2 text-[11px] text-slate-500">{indT("Visits_Create_NoMatches", "No matches")}</div>
-            )}
-            {!loading &&
-              filtered.map((opt, idx) => {
-                const isActive = idx === activeIndex;
-                const sel = selected?.value === opt.value;
-                return (
-                  <button
-                    type="button"
-                    key={opt.value}
-                    id={`history-client-opt-${opt.value}`}
-                    role="option"
-                    aria-selected={sel}
-                    className={classNames(
-                      "relative flex w-full cursor-default select-none items-start py-2 px-3 text-left text-[11px]",
-                      isActive ? "bg-primary text-white" : sel ? "bg-primary/10 text-primary" : "text-slate-700"
-                    )}
-                    onMouseEnter={() => setActiveIndex(idx)}
-                    onClick={() => selectOption(opt)}
-                  >
-                    <div className="flex flex-col space-y-0.5">
-                      <span className={classNames("block truncate uppercase text-[12px]", sel ? "font-semibold" : "font-normal")}>
-                        {opt.text}
-                      </span>
-                      {opt.cargo && (
-                        <span className="block truncate uppercase text-[10px] text-slate-600">
-                          {opt.cargo}
-                        </span>
-                      )}
-                      {opt.empresa && (
-                        <span className="block truncate uppercase text-[10px] text-slate-500">
-                          {opt.empresa}
-                        </span>
-                      )}
-                    </div>
-                  </button>
-                );
-              })}
-          </div>
-        </FloatingList>
-      </div>
-      <div className="w-full flex justify-end">
-        <span className="text-[10px] text-slate-500 tech-info">{status}</span>
-      </div>
-    </div>
-  );
 };
 
 // History page with React state + effects (no legacy DOM logic).
@@ -1193,6 +835,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   ];
   const showFilterActions = showFilters;
   const showSummary = !showFilters && !!startDate && !!endDate;
+  const showResults = !showFilters;
 
   return (
     <div className="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4 space-y-2">
@@ -1220,7 +863,8 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
             activeId={activeQuickFilter}
             onSelect={handleQuickFilter}
             ariaLabel={filterTitle}
-            useStarBorder={true}
+            className="history-quick-filters"
+            itemClassName="text-[11px] font-semibold py-1 px-3"
           />
 
           {activeQuickFilter === "custom" && (
@@ -1393,19 +1037,23 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
           </div>
           )}
 
-          <HistoryClientCombobox key={clientResetKey} value={selectedClient} onSelected={handleClientSelected} />
+          <ClientSearchCombobox
+            key={clientResetKey}
+            value={selectedClient}
+            onSelected={handleClientSelected}
+            label={indT("History_Filter_Client", "Client")}
+            placeholder={indT("History_Filter_Client", "Client")}
+            variant="compact"
+            showLabel={false}
+            idBase="history-client"
+            portalClassName="visitas-typography"
+          />
 
           {showFilterActions && (
             <div className="mt-1 grid grid-cols-2 gap-2 history-filter-actions">
-              <StarBorder
-                as="button"
+              <button
                 type="button"
-                className="w-full"
-                contentClassName="w-full rounded-full border border-transparent bg-[#00296bc4] text-[11px] font-semibold text-[#e2e8f0] hover:bg-[#00296be0] py-1.5 px-3"
-                color="#00296bc4"
-                speed="2.5s"
-                thickness={2.5}
-                useDefaultStyle={false}
+                className="w-full rounded-full border border-transparent bg-[#00296bc4] text-[11px] font-semibold text-[#e2e8f0] hover:bg-[#00296be0] py-1 px-3"
                 onClick={() => {
                   resetHistoryFilters();
                   setIsOpen(false);
@@ -1413,16 +1061,10 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
                 }}
               >
                 {clearLabel}
-              </StarBorder>
-              <StarBorder
-                as="button"
+              </button>
+              <button
                 type="button"
-                className="w-full"
-                contentClassName="w-full rounded-full border border-transparent bg-[#00296bc4] text-[11px] font-semibold text-[#e2e8f0] hover:bg-[#00296be0] py-1.5 px-3"
-                color="#00296bc4"
-                speed="2.5s"
-                thickness={2.5}
-                useDefaultStyle={false}
+                className="w-full rounded-full border border-transparent bg-[#00296bc4] text-[11px] font-semibold text-[#e2e8f0] hover:bg-[#00296be0] py-1 px-3"
                 onClick={() => {
                   if (!startDate || !endDate) return;
                   const signature = `${fromDateValue}|${toDateValue}|${accountNumValue}|1`;
@@ -1434,7 +1076,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
                 }}
               >
                 {applyLabel}
-              </StarBorder>
+              </button>
             </div>
           )}
         </div>
@@ -1455,38 +1097,42 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
         {indT("History_Loading", "Loading")}
       </div>
 
-      <HistoryTable
-        items={timelineItems}
-        noDataText={indT("History_NoDataInRange", "No visits in this range")}
-        errorMessage={errorMessage}
-        onNavigate={handleNavigate}
-      />
+      {showResults && (
+        <>
+          <HistoryTable
+            items={timelineItems}
+            noDataText={indT("History_NoDataInRange", "No visits in this range")}
+            errorMessage={errorMessage}
+            onNavigate={handleNavigate}
+          />
 
-      <ul id="pagination" className={classNames("pagination", totalPages > 1 ? "flex flex-wrap gap-2 justify-center" : "")}> 
-        {totalPages > 1 &&
-          Array.from({ length: totalPages }, (_val, index) => {
-            const page = index + 1;
-            const isActive = page === currentPage;
-            return (
-              <button
-                key={`page-${page}`}
-                type="button"
-                className={classNames(
-                  "min-w-7.5 px-2.5 py-1 rounded-md border text-[11px] font-semibold transition",
-                  isActive
-                    ? "bg-[#00296be0] border-[#00296be0] text-white shadow-sm"
-                    : "border-slate-300 text-slate-700 hover:border-primary hover:text-primary"
-                )}
-                onClick={(e) => {
-                  e.preventDefault();
-                  loadActivities(page);
-                }}
-              >
-                {page}
-              </button>
-            );
-          })}
-      </ul>
+          <ul id="pagination" className={classNames("pagination", totalPages > 1 ? "flex flex-wrap gap-2 justify-center" : "")}>
+            {totalPages > 1 &&
+              Array.from({ length: totalPages }, (_val, index) => {
+                const page = index + 1;
+                const isActive = page === currentPage;
+                return (
+                  <button
+                    key={`page-${page}`}
+                    type="button"
+                    className={classNames(
+                      "min-w-7.5 px-2.5 py-1 rounded-md border text-[11px] font-semibold transition",
+                      isActive
+                        ? "bg-[#00296be0] border-[#00296be0] text-white shadow-sm"
+                        : "border-slate-300 text-slate-700 hover:border-primary hover:text-primary"
+                    )}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      loadActivities(page);
+                    }}
+                  >
+                    {page}
+                  </button>
+                );
+              })}
+          </ul>
+        </>
+      )}
     </div>
   );
 };

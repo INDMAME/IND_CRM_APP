@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { createRoot } from "react-dom/client";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import AudioRecorderMinimal from "./AudioRecorderMinimal.tsx";
+import PulseRingsMultipleIcon from "../../components/commons/PulseRingsMultipleIcon.tsx";
 
 const IND_I18N = globalThis.__IND_I18N__ || {};
 const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
@@ -361,29 +362,21 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
   const editorBoxClass = isReadOnly
     ? "relative rounded-2xl border border-slate-200 bg-slate-100 shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary"
     : "relative rounded-2xl border border-slate-300 bg-white shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary";
+  const micDisabled = isReadOnly || isTranscribing || isTyping;
+  const micButtonClass = `absolute top-0 right-0 z-20 inline-flex h-[70px] w-[70px] items-center justify-center overflow-visible bg-transparent p-0 m-0 border-0 rounded-none text-primary shadow-none focus:outline-hidden focus:ring-0 focus:ring-offset-0${
+    micDisabled ? " opacity-70 cursor-not-allowed" : " hover:text-primary/80"
+  }`;
 
   return (
     <div className="min-h-screen h-dvh w-full flex flex-col bg-slate-200">
       <div className="topbar shadow-md">
         <button
           type="button"
-          className="text-white rounded-md"
+          className="topbar-btn"
           aria-label={indT("Topbar_Back", "Back")}
           onClick={goBack}
-          style={{
-            width: "44px",
-            height: "44px",
-            minWidth: "44px",
-            minHeight: "44px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "transparent",
-            border: "none",
-            padding: 0,
-          }}
         >
-          <ChevronLeftIcon className="h-[30px] w-[30px]" aria-hidden="true" />
+          <ChevronLeftIcon className="h-6 w-6" aria-hidden="true" />
         </button>
 
         <div className="topbar-center flex-1 flex justify-center pointer-events-none px-2">
@@ -396,49 +389,25 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
           canEdit ? (
             <button
               type="button"
-              className="text-white rounded-md"
+              className="topbar-btn"
               aria-label={indT("Common_Edit", "Edit")}
               onClick={enableEdit}
-              style={{
-                width: "44px",
-                height: "44px",
-                minWidth: "44px",
-                minHeight: "44px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                background: "transparent",
-                border: "none",
-                padding: 0,
-              }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-[30px] w-[30px]" fill="none" viewBox="0 0 30 30" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
               </svg>
             </button>
           ) : (
-            <div aria-hidden="true" style={{ width: "44px", height: "44px" }} />
+            <div aria-hidden="true" style={{ width: "25px", height: "25px" }} />
           )
         ) : (
           <button
             type="button"
-            className="text-white rounded-md"
+            className="topbar-btn"
             aria-label={indT("Common_Save", "Save")}
             onClick={onSave}
-            style={{
-              width: "44px",
-              height: "44px",
-              minWidth: "44px",
-              minHeight: "44px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "transparent",
-              border: "none",
-              padding: 0,
-            }}
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-[30px] h-[30px]" aria-hidden="true">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="h-6 w-6" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
             </svg>
           </button>
@@ -468,7 +437,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
           <div className={editorBoxClass}>
             <textarea
               ref={textareaRef}
-              className={`w-full resize-none bg-transparent px-5 pb-5 pt-10 pr-14 focus:outline-hidden ${isReadOnly ? "text-slate-600" : "text-slate-900"}`}
+              className={`w-full resize-none bg-transparent px-5 pb-5 pt-10 pr-14 focus:outline-hidden ${isReadOnly ? "ind-readonly-field" : "text-slate-900"}`}
               value={text}
               onChange={(e) => setText(e.target.value)}
               disabled={isTranscribing || isTyping}
@@ -487,19 +456,21 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
               </div>
             ) : null}
 
-        {!isReadOnly && (
           <button
             type="button"
-            className="absolute top-4 right-4 z-10 inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:text-slate-600 focus:outline-hidden focus:ring-2 focus:ring-primary/50"
+            className={micButtonClass}
             aria-label={indT("TextEditor_Microphone", "Microphone")}
             onClick={toggleRecorder}
-            disabled={isTranscribing || isTyping}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5" aria-hidden="true">
+            disabled={micDisabled}
+            aria-disabled={micDisabled ? "true" : undefined}
+          >
+                <span className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
+                  <PulseRingsMultipleIcon size={240} padding={12} color="currentColor" strokeWidth={2} opacity={0.3} rotation={90} />
+                </span>
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="h-6 w-6 relative z-10" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
                 </svg>
-              </button>
-            )}
+          </button>
           </div>
         </div>
       </div>

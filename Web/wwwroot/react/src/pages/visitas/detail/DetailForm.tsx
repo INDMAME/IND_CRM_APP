@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { ChevronDownSvg, ChevronUpSvg } from "../../../components/commons/chevrons.tsx";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
+import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { fetchJson } from "../../../services/apiService.ts";
 import { useVisitas } from "../../../hooks/useVisitas.ts";
 import Spinner from "../../../components/commons/Spinner.tsx";
@@ -16,170 +16,6 @@ import { setHistoryFilterForDate, flashActionMark } from "../../../utils/visitas
 import { setPreviewAnchor, showPreviewTooltip, isOverflowing } from "../../../utils/previewTooltip.ts";
 import { useTapGuard } from "../../../hooks/useTapGuard.ts";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
-
-function SelectCombobox({ label, options, value, onChange, placeholder, disabled = false }) {
-  const data = React.useMemo(() => {
-    return options.map((o) => {
-      if (Array.isArray(o)) {
-        return { value: o[0] ?? "", text: o[1] ?? "" };
-      }
-      return { value: o?.value ?? o?.Value ?? "", text: o?.text ?? o?.Text ?? "" };
-    });
-  }, [options]);
-
-  const [query, setQuery] = useState("");
-  const [selected, setSelected] = useState(
-    data.find((d) => String(d.value) === String(value)) || data[0] || { value: "", text: "" }
-  );
-  const [open, setOpen] = useState(false);
-  const [activeIndex, setActiveIndex] = useState(0);
-  const containerRef = useRef(null);
-  const boxRef = useRef(null);
-  const listRef = useRef(null);
-
-  useEffect(() => {
-    setSelected(data.find((d) => String(d.value) === String(value)) || data[0] || { value: "", text: "" });
-  }, [value, data]);
-
-  useEffect(() => {
-    const clickHandler = (ev) => {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(ev.target)) setOpen(false);
-    };
-    document.addEventListener("mousedown", clickHandler);
-    document.addEventListener("touchstart", clickHandler);
-    return () => {
-      document.removeEventListener("mousedown", clickHandler);
-      document.removeEventListener("touchstart", clickHandler);
-    };
-  }, []);
-
-  const filtered = React.useMemo(() => {
-    if (!query.trim()) return data;
-    const f = data.filter((o) => o.text.toLowerCase().includes(query.toLowerCase()));
-    return f.length ? f : data;
-  }, [data, query]);
-
-  useEffect(() => setActiveIndex(0), [filtered.length, query]);
-
-  const selectOption = (opt) => {
-    setSelected(opt);
-    setQuery("");
-    setOpen(false);
-    onChange(opt?.value || "");
-  };
-
-  const handleKeyDown = (ev) => {
-    if (disabled) return;
-    if (ev.key === "ArrowDown") {
-      ev.preventDefault();
-      setOpen(true);
-      if (filtered.length) setActiveIndex((idx) => (idx + 1) % filtered.length);
-      return;
-    }
-    if (ev.key === "ArrowUp") {
-      ev.preventDefault();
-      setOpen(true);
-      if (filtered.length) setActiveIndex((idx) => (idx - 1 + filtered.length) % filtered.length);
-      return;
-    }
-    if (ev.key === "Enter") {
-      ev.preventDefault();
-      if (open && filtered.length) {
-        selectOption(filtered[activeIndex] ?? filtered[0]);
-      } else {
-        setOpen(true);
-      }
-    }
-    if (ev.key === "Escape") setOpen(false);
-  };
-
-  return (
-    <div
-      className={`space-y-2 ${disabled ? "opacity-70 pointer-events-none select-none" : ""}`}
-      ref={containerRef}
-    >
-      <label className="form-label font-semibold">{label}</label>
-      <div className="relative">
-        <div
-          ref={boxRef}
-          className="relative w-full cursor-default rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
-        >
-          <input
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 pr-10 text-sm sm:text-base leading-5 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary disabled:bg-slate-100 disabled:text-slate-600 disabled:border-slate-200 disabled:cursor-not-allowed"
-            value={query || selected?.text || ""}
-            disabled={disabled}
-            onChange={(event) => {
-              const val = event.target.value;
-              setQuery(val);
-              setOpen(true);
-            }}
-            onKeyDown={handleKeyDown}
-            onFocus={() => setOpen(true)}
-            placeholder={placeholder}
-            role="combobox"
-            aria-expanded={open}
-            aria-controls={`select-options-${label}`}
-            aria-activedescendant={
-              open && filtered[activeIndex] ? `select-opt-${label}-${filtered[activeIndex].value}` : undefined
-            }
-          />
-          <button
-            type="button"
-            className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-600"
-            onClick={() => {
-              if (disabled) return;
-              setOpen((prev) => !prev);
-            }}
-            aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
-            disabled={disabled}
-          >
-            {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
-          </button>
-        </div>
-        {open && !disabled && (
-          <div
-            className="absolute z-360000 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden max-h-72 overflow-auto"
-            role="listbox"
-            id={`select-options-${label}`}
-            ref={listRef}
-          >
-            {filtered.length === 0 && <div className="px-4 py-2 text-sm text-slate-500">{indT("Dropdown_NoResults", "No results")}</div>}
-            {filtered.map((opt, idx) => {
-              const sel = selected?.value === opt.value;
-              const isActive = idx === activeIndex;
-              return (
-                <button
-                  type="button"
-                  key={opt.value}
-                  id={`select-opt-${label}-${opt.value}`}
-                  role="option"
-                  aria-selected={sel}
-                  className={classNames(
-                    "relative flex w-full cursor-default select-none items-center py-2 pr-3 text-left text-sm type-option",
-                    isActive ? "bg-primary text-white" : "text-slate-900"
-                  )}
-                  onMouseEnter={() => setActiveIndex(idx)}
-                  onClick={() => selectOption(opt)}
-                >
-                  {sel && (
-                    <span
-                      className={classNames(
-                        "absolute inset-y-0 left-0 flex items-center pl-2",
-                        isActive ? "text-white" : "text-primary"
-                      )}
-                    ></span>
-                  )}
-                  <span className={classNames("block truncate", sel ? "font-medium" : "font-normal")}>{opt.text}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 const DetailApp = () => {
   const { visitTypes, asistenteTipos } = useVisitas();
@@ -817,6 +653,7 @@ const DetailApp = () => {
               value={transDate}
               onChange={setTransDate}
               disabled={!isEditing}
+              readOnly={!isEditing}
             />
           </div>
           <SelectCombobox
@@ -826,6 +663,8 @@ const DetailApp = () => {
             onChange={setVisitType}
             placeholder={indT("Visits_Detail_VisitType_Placeholder", "Select type")}
             disabled={!isEditing}
+            readOnly={!isEditing}
+            usePortal={false}
           />
         </div>
 
@@ -836,7 +675,7 @@ const DetailApp = () => {
               id="description"
               className={classNames(
                 "form-control",
-                isEditing ? "border-slate-200 text-slate-900" : "border-slate-200 bg-slate-100 text-slate-600"
+                isEditing ? "border-slate-200 text-slate-900" : "border-slate-200 ind-readonly-field"
               )}
               maxLength={200}
               value={description}
@@ -850,7 +689,7 @@ const DetailApp = () => {
               id="comentarios"
                 className={classNames(
                   "form-control cursor-pointer",
-                  !isEditing ? "bg-slate-100 text-slate-600" : ""
+                  !isEditing ? "ind-readonly-field" : ""
                 )}
               value={comentarios}
               readOnly
@@ -866,7 +705,7 @@ const DetailApp = () => {
               id="antecedentes"
                 className={classNames(
                   "form-control cursor-pointer",
-                  !isEditing ? "bg-slate-100 text-slate-600" : ""
+                  !isEditing ? "ind-readonly-field" : ""
                 )}
               value={antecedentes}
               readOnly
@@ -882,7 +721,7 @@ const DetailApp = () => {
               id="conclusiones"
                 className={classNames(
                   "form-control cursor-pointer",
-                  !isEditing ? "bg-slate-100 text-slate-600" : ""
+                  !isEditing ? "ind-readonly-field" : ""
                 )}
               value={conclusiones}
               readOnly

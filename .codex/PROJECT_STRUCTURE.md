@@ -79,6 +79,7 @@
 6) Never change date pickers or filters without validating events and payloads.
 7) Keep MVC controllers thin; call services only.
 8) When adding UI strings, update all resource files.
+9) Input-like components must accept a readOnly (or mode) prop and apply label/value colors locally.
 
 ## Last updated
-- 2026-01-27
+- 2026-02-03

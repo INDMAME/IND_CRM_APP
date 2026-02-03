@@ -78,6 +78,10 @@
   - Use base font family "Montserrat", sans-serif in the main layout and in all new components.
   - Use color #00296b as the primary/base color in the UI (sidebar, headers, primary buttons, main links, active items) and configure it as the primary color in Tailwind.
   - Use StarBorder for buttons by default. Standard icon size is 16x16 (h-4 w-4). Active button color #00296be0, inactive #00296bc4, text color #e2e8f0.
+  - Input components must accept a readOnly (or mode) prop and apply label/value colors locally:
+    - Label color is always #00296be0.
+    - Value color: edit = #00296be0, read = #64748b.
+    - Do not rely on global CSS overrides or opacity wrappers for read-only.
 - Interactive components:
   - Use Tailwind CSS components and patterns for modals, menus, dropdown lists, dialogs, steps, etc., integrated with Tailwind (both in Razor and React).
   - Use Heroicons as the default icon set across the UI.
@@ -192,4 +196,4 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-01-21
+- 2026-02-03

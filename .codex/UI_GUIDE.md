@@ -21,6 +21,20 @@
   - StarBorder defaults: thickness 2.5px and speed 2.5s.
   - Button colors: active #00296be0, inactive #00296bc4, text color #e2e8f0.
   - Icon size standard: 16x16 (Tailwind h-4 w-4) unless a view explicitly needs a larger icon.
+  - Topbar icons: 24x24 (Tailwind h-6 w-6) with a 25x25 container via `topbar-btn`.
+- Read-only fields:
+  - Use `ind-readonly-field` for any read-only or disabled input/select/textarea.
+  - Read-only text color standard: #64748b (must be `!important` to override text utilities).
+  - Read-only background/border: #f1f5f9 / #e2e8f0, placeholder #94a3b8.
+  - Component contract (high priority):
+    - Every input-like component must accept a `readOnly` (or `mode`) prop and apply colors locally.
+    - Do not rely on global overrides alone; apply label/value colors in the component.
+    - Label color is always #00296be0 (read or edit).
+    - Value color: edit = #00296be0, read = #64748b.
+    - Avoid wrapper opacity for read-only; it washes the text color.
+    - Examples:
+      - SingleDatePicker: label fixed #00296be0; value uses readOnly for color.
+      - SelectCombobox: label fixed #00296be0; input value uses readOnly for color (no text-slate-900 in readOnly).
 
 ## Dropdown / Combobox pattern
 - Use the shared FloatingList + useOutsideClick + useFloatingPosition.
@@ -61,4 +75,4 @@
 - Transcription uses /Visitas/TranscribeSpeech and replaces textarea text.
 
 ## Last updated
-- 2026-02-02
+- 2026-02-03

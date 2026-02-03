@@ -62,8 +62,8 @@
 }
 .drp-section.active { background: rgba(0, 41, 107, 0.28); box-shadow: none; }
 
-.drp-label { font-size: 12px; letter-spacing: 1px; font-weight: 700; text-transform: uppercase; color: #00296be0; }
-.drp-value { display: flex; align-items: center; gap: 8px; font-weight: 700; color: #00296be0; font-size: 13.5px; min-width: 0; }
+.drp-label { font-size: 14px; letter-spacing: 0; font-weight: 500; text-transform: none; color: #00296be0; }
+.drp-value { display: flex; align-items: center; gap: 8px; font-weight: 400; color: #00296be0; font-size: 13.5px; min-width: 0; }
 .drp-value span { display: inline-block; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .drp-icon { color: #00296be0; font-size: 17px; }
 .drp-separator { align-items: center; justify-content: center; color: #cbd5e1; padding: 0 6px; font-size: 18px; }

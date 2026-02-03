@@ -9,6 +9,8 @@ type Props = {
   maxHeightClass?: string;
   roundedClass?: string;
   role?: string;
+  portalClassName?: string;
+  panelClassName?: string;
   children: React.ReactNode;
 };
 
@@ -19,6 +21,8 @@ const FloatingList = ({
   maxHeightClass = "max-h-72",
   roundedClass = "rounded-md",
   role,
+  portalClassName,
+  panelClassName,
   children,
 }: Props) => {
   const style = useFloatingPosition(anchorRef, open);
@@ -32,10 +36,11 @@ const FloatingList = ({
         width: style.width,
         zIndex,
       }}
+      className={portalClassName}
     >
       <div
         role={role}
-        className={`w-full overflow-auto ${roundedClass} bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-hidden ${maxHeightClass}`}
+        className={`w-full overflow-auto ${roundedClass} bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-hidden ${maxHeightClass} ${panelClassName || ""}`}
       >
         {children}
       </div>

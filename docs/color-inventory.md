@@ -2,6 +2,12 @@
 
 Generated from source files in `Web/` and project root. Excludes generated assets in `Web/wwwroot/js`, top-level `wwwroot`, and `Web/wwwroot/css/tailwind.css`.
 
+## Read-only color contract (high priority)
+- Labels: #00296be0 (always, read or edit).
+- Values: edit = #00296be0, read = #64748b.
+- Background/border: #f1f5f9 / #e2e8f0, placeholder #94a3b8.
+- Apply per-component (do not rely on global overrides alone).
+
 | Color | Usage (file:line) | Context |
 | --- | --- | --- |
 | `#001a3f` | `Web/wwwroot/css/Historial.css:17` | .crm-btn:active -> .crm-btn:active { transform: translateY(1px); box-shadow: inset 0 3px 8px rgba(0,0,0,0.18); background: #001a3f; color: #ffffff !important; } |

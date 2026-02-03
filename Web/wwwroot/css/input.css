@@ -4,6 +4,7 @@
   --color-primary: #00296b;
 
   --font-sans: Montserrat, sans-serif;
+  --ind-text-color: #00296be0;
 }
 
 /*
@@ -66,6 +67,7 @@
 
 @utility form-control {
   @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm sm:text-base text-slate-900 text-left focus:outline-hidden focus:ring-2 focus:ring-primary/70 focus:border-primary;
+  color: var(--ind-text-color, #00296be0) !important;
   .input-group > & {
     @apply rounded-r-none;
   }
@@ -73,10 +75,12 @@
 
 @utility form-select {
   @apply w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm sm:text-base text-slate-900 text-left focus:outline-hidden focus:ring-2 focus:ring-primary/70 focus:border-primary;
+  color: var(--ind-text-color, #00296be0) !important;
 }
 
 @utility form-label {
   @apply text-sm sm:text-base font-medium text-slate-700;
+  color: var(--ind-text-color, #00296be0) !important;
 }
 
 @utility form-check {
@@ -89,6 +93,7 @@
 
 @utility form-check-label {
   @apply text-sm sm:text-base text-slate-700;
+  color: var(--ind-text-color, #00296be0) !important;
 }
 
 @utility btn {
@@ -274,7 +279,22 @@
 
 @layer base {
   body {
-    @apply font-sans bg-slate-100 text-slate-900;
+    @apply font-sans bg-slate-100;
+    color: var(--ind-text-color, #00296be0);
+  }
+
+  /* Keep field text color consistent across pages. */
+  input:not([type]):not(.ind-readonly-field):not(:disabled),
+  input[type="text"]:not(.ind-readonly-field):not(:disabled),
+  input[type="search"]:not(.ind-readonly-field):not(:disabled),
+  input[type="email"]:not(.ind-readonly-field):not(:disabled),
+  input[type="tel"]:not(.ind-readonly-field):not(:disabled),
+  input[type="url"]:not(.ind-readonly-field):not(:disabled),
+  input[type="password"]:not(.ind-readonly-field):not(:disabled),
+  input[type="number"]:not(.ind-readonly-field):not(:disabled),
+  textarea:not(.ind-readonly-field):not(:disabled),
+  select:not(.ind-readonly-field):not(:disabled) {
+    color: var(--ind-text-color, #00296be0) !important;
   }
 }
 
@@ -282,6 +302,27 @@
   /* Ensure brand background utility is always available. */
   .bg-primary {
     background-color: var(--color-primary);
+  }
+  .text-slate-900,
+  .text-slate-800,
+  .text-slate-700,
+  .text-slate-600,
+  .text-slate-500,
+  .text-black {
+    color: var(--ind-text-color, #00296be0) !important;
+  }
+  .ind-readonly-field,
+  .ind-readonly-field.text-slate-900,
+  .ind-readonly-field.text-slate-800,
+  .ind-readonly-field.text-slate-700,
+  .ind-readonly-field.text-slate-600,
+  .ind-readonly-field.text-slate-500 {
+    background-color: #f1f5f9 !important;
+    border-color: #e2e8f0 !important;
+    color: #64748b !important;
+  }
+  .ind-readonly-field::placeholder {
+    color: #94a3b8 !important;
   }
 
   /* Horizontal slider for quick filters (shared component). */
@@ -350,5 +391,55 @@
   /* Extra padding for type dropdown items */
   .type-option {
     padding-left: 10px !important;
+  }
+
+  /* Pulse rings icon animation (SMIL-free). */
+  @keyframes ind-pulse-ring {
+    0% { transform: scale(0.2); opacity: 0.35; }
+    70% { opacity: 0; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+
+  .ind-pulse-ring {
+    transform-origin: center;
+    transform-box: fill-box;
+    animation: ind-pulse-ring 1.2s cubic-bezier(.52,.6,.25,.99) infinite;
+  }
+
+  .ind-pulse-ring--delay-1 { animation-delay: 0.2s; }
+  .ind-pulse-ring--delay-2 { animation-delay: 0.4s; }
+  .ind-pulse-ring--base { animation: none; opacity: 0.08; }
+
+  /* Scoped typography contract for visitas pages. */
+  .visitas-typography {
+    --visita-text-color: #00296be0;
+    --visita-text-muted: #00296be0;
+    --visita-text-muted-strong: #00296be0;
+    --visita-text-xs: 0.75rem;
+    --visita-text-sm: 0.875rem;
+    --visita-text-base: 1rem;
+    --visita-text-lg: 1.125rem;
+    color: var(--visita-text-color);
+    font-family: var(--font-sans, Montserrat, sans-serif);
+  }
+
+  .visitas-typography .text-xs { font-size: var(--visita-text-xs); }
+  .visitas-typography .text-sm { font-size: var(--visita-text-sm); }
+  .visitas-typography .text-base { font-size: var(--visita-text-base); }
+  .visitas-typography .text-lg { font-size: var(--visita-text-lg); }
+
+  .visitas-typography .text-slate-900,
+  .visitas-typography .text-slate-800,
+  .visitas-typography .text-slate-700,
+  .visitas-typography .text-black {
+    color: var(--visita-text-color) !important;
+  }
+
+  .visitas-typography .text-slate-600 {
+    color: var(--visita-text-color) !important;
+  }
+
+  .visitas-typography .text-slate-500 {
+    color: var(--visita-text-color) !important;
   }
 }

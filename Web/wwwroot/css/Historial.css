@@ -106,15 +106,25 @@
     margin-top: 5px;
 }
 
+.filter-card .history-filter-stack > .history-client-combobox {
+    margin-top: 8px;
+}
+
 .filter-card .ind-quick-slider__track {
     gap: 3px;
     padding: 2px 0 2px;
 }
 
-.filter-card .ind-quick-slider__item {
-    font-size: 11px;
-    padding: 0;
+.filter-card .history-quick-filters .ind-quick-slider__track > .ind-quick-slider__item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: clamp(90px, 26vw, 130px);
     min-width: clamp(90px, 26vw, 130px);
+    max-width: clamp(90px, 26vw, 130px);
+    box-sizing: border-box;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .filter-card .ind-quick-slider__item:hover:not(:disabled),

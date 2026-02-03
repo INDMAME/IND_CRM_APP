@@ -79,7 +79,7 @@ const formatDisplay = (d) => {
     .toLowerCase();
 };
 
-export default function SingleDatePicker({ label, value, onChange, disabled = false }) {
+export default function SingleDatePicker({ label, value, onChange, disabled = false, readOnly = false }) {
   const effectiveLabel = (label && String(label).trim()) ? label : indT("Visits_Detail_Date_Label", "Date");
   const selectedDate = useMemo(() => parseISO(value), [value]);
   const [open, setOpen] = useState(false);
@@ -161,9 +161,10 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
   };
 
   const drpClass = disabled ? "drp drp-readonly" : "drp";
+  const valueColor = readOnly ? "#64748b" : "#00296be0";
 
   return (
-    <div className={`relative ${disabled ? "opacity-70 pointer-events-none select-none" : ""}`} ref={containerRef}>
+    <div className={`relative ${disabled ? "pointer-events-none select-none" : ""}`} ref={containerRef}>
       <div
         className={drpClass}
         role="button"
@@ -179,9 +180,20 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
         aria-expanded={open}
       >
         <div className={`drp-section ${open ? "active" : ""}`}>
-          <div className="drp-label">{String(effectiveLabel)}</div>
+          <div
+            className="drp-label"
+            style={{
+              color: "#00296be0",
+              fontSize: "14px",
+              fontWeight: 500,
+              letterSpacing: "0",
+              textTransform: "none"
+            }}
+          >
+            {String(effectiveLabel)}
+          </div>
           <div className="drp-value">
-            <span>{formatDisplay(selectedDate)}</span>
+            <span style={{ color: valueColor, fontWeight: 400 }}>{formatDisplay(selectedDate)}</span>
           </div>
         </div>
       </div>

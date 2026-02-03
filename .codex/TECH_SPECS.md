@@ -38,6 +38,7 @@
 
 ## TypeScript only rule
 - All new frontend source must be TypeScript (.ts / .tsx).
+ - Input-like UI components must accept a readOnly (or mode) prop and apply label/value colors locally.
 
 ## Master reuse rule
 - Every new page must review existing public components first.
@@ -58,4 +59,4 @@
 - Legacy JS must be migrated into Web/wwwroot/react/src/legacy as TS and compiled.
 
 ## Last updated
-- 2026-01-27
+- 2026-02-03

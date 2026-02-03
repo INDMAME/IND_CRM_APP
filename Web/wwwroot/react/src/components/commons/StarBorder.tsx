@@ -12,13 +12,18 @@ export type StarBorderProps<T extends React.ElementType> = React.ComponentPropsW
 };
 
 // Animated star border wrapper, adapted to IND CRM colors.
+/**
+ * Deprecated: StarBorder is deprecated and should not be used in new UI.
+ * Use standard Tailwind button styles instead.
+ * @deprecated
+ */
 const StarBorder = <T extends React.ElementType = "button">({
   as,
   className = "",
   contentClassName = "",
   color = "rgba(0, 41, 107, 0.65)",
-  speed = "2.5s",
-  thickness = 2.5,
+  speed = "5s",
+  thickness = 0.3,
   useDefaultStyle = true,
   children,
   ...rest
@@ -30,7 +35,7 @@ const StarBorder = <T extends React.ElementType = "button">({
   const contentClass = useDefaultStyle
     ? `${baseContent} ${defaultContent} ${contentClassName}`
     : `${baseContent} ${contentClassName}`;
-  const adjustedThickness = Math.max(0, thickness + 2.8);
+  const adjustedThickness = Math.max(0, thickness + 0.3);
 
   return (
     <Component
@@ -42,14 +47,14 @@ const StarBorder = <T extends React.ElementType = "button">({
       }}
     >
       <div
-        className="absolute w-[150%] h-[50%] opacity-70 bottom-[-11px] right-[-125%] rounded-full animate-star-movement-bottom z-0"
+        className="absolute w-[150%] h-[25%] opacity-70 bottom-[-4px] right-[-125%] rounded-full animate-star-movement-bottom z-0"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 12%)`,
           animationDuration: speed,
         }}
       ></div>
       <div
-        className="absolute w-[150%] h-[50%] opacity-70 top-[-10px] left-[-125%] rounded-full animate-star-movement-top z-0"
+        className="absolute w-[150%] h-[25%] opacity-70 top-[-4px] left-[-125%] rounded-full animate-star-movement-top z-0"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 12%)`,
           animationDuration: speed,

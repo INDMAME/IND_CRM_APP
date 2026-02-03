@@ -12,6 +12,7 @@
 ## Files
 - `AGENTS.md`: global project rules, architecture, UI standards, and workflow expectations.
 - `UI_GUIDE.md`: UI rules, interaction patterns, dropdowns, action mark, and editor behaviors.
+- `COMPONENT_CONTRACTS.md`: component contracts and readOnly color templates.
 - `TECH_SPECS.md`: architecture, API surface, auth/context, localization, build system.
 - `QUALITY_CHECKLIST.md`: build, validation, and publish checks.
 - `PROJECT_STRUCTURE.md`: folder map + master instruction for future work.
@@ -22,4 +23,4 @@
 - Add a `Last updated` line when a doc changes.
 
 ## Last updated
-- 2026-01-27
+- 2026-02-03
