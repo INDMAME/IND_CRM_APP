@@ -22,6 +22,8 @@
   - Button colors: active #00296be0, inactive #00296bc4, text color #e2e8f0.
   - Icon size standard: 16x16 (Tailwind h-4 w-4) unless a view explicitly needs a larger icon.
   - Topbar icons: 24x24 (Tailwind h-6 w-6) with a 25x25 container via `topbar-btn`.
+  - Topbar SVG standard: enforce `aspect-ratio: 1 / 1` and `stroke-width: 1.5 !important` on `path/line/polyline` to keep visual parity.
+  - Topbar SVG visibility: use Tailwind `hidden` on the SVG for state swaps (edit/check, trash/X). CSS enforces `.topbar svg.hidden { display: none !important; }` so hidden always wins.
 - Read-only fields:
   - Use `ind-readonly-field` for any read-only or disabled input/select/textarea.
   - Read-only text color standard: #64748b (must be `!important` to override text utilities).

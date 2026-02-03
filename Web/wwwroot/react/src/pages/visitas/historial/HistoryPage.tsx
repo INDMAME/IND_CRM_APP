@@ -632,6 +632,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       setCurrentYear(dateObj.getFullYear());
       setHoverDate(null);
       setIsOpen(false);
+      setShowFilters(false);
       loadActivities(1, { fromDate: toISO(newStart), toDate: toISO(newEnd), accountNum: accountNumValue });
     },
     [accountNumValue, endDate, fromDateValue, loadActivities, selectingStep, startDate, toDateValue]
@@ -672,6 +673,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       setCurrentYear(startDay.getFullYear());
       setIsOpen(false);
       setActiveQuickFilter(filterId);
+      setShowFilters(false);
       loadActivities(1, { fromDate: toISO(startDay), toDate: toISO(endDay), accountNum: accountNumValue });
     },
     [accountNumValue, loadActivities]

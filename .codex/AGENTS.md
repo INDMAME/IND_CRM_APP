@@ -78,6 +78,7 @@
   - Use base font family "Montserrat", sans-serif in the main layout and in all new components.
   - Use color #00296b as the primary/base color in the UI (sidebar, headers, primary buttons, main links, active items) and configure it as the primary color in Tailwind.
   - Use StarBorder for buttons by default. Standard icon size is 16x16 (h-4 w-4). Active button color #00296be0, inactive #00296bc4, text color #e2e8f0.
+  - Topbar icons: 24x24 SVG inside 25x25 container, with `aspect-ratio: 1 / 1` and `stroke-width: 1.5 !important` on `path/line/polyline`. When swapping states, keep `hidden` on the inactive SVG (CSS enforces `.topbar svg.hidden { display: none !important; }`).
   - Input components must accept a readOnly (or mode) prop and apply label/value colors locally:
     - Label color is always #00296be0.
     - Value color: edit = #00296be0, read = #64748b.

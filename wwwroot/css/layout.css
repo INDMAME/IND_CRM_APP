@@ -108,7 +108,7 @@ html, body {
 .topbar-left {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
     position: relative;
     z-index: 2; /* keep hamburger and back above other elements */
     flex: 0 0 clamp(110px, 14vw, 150px); /* reduce width to free space for title */
@@ -191,6 +191,35 @@ html, body {
     box-shadow: none;
 }
 
+.topbar-hidden {
+    display: none !important;
+}
+
+.topbar svg,
+.topbar-icon,
+.topbar .topbar-btn svg {
+    width: 24px !important;
+    height: 24px !important;
+    aspect-ratio: 1 / 1;
+    display: block;
+}
+
+.topbar svg.hidden {
+    display: none !important;
+}
+
+.topbar svg path,
+.topbar svg line,
+.topbar svg polyline,
+.topbar-icon path,
+.topbar-icon line,
+.topbar-icon polyline,
+.topbar .topbar-btn svg path,
+.topbar .topbar-btn svg line,
+.topbar .topbar-btn svg polyline {
+    stroke-width: 1.5 !important;
+}
+
 .topbar-btn:hover:not(:disabled) {
     background: rgba(255,255,255,0.18);
     transform: translateY(-2px);
@@ -217,10 +246,14 @@ html, body {
 .topbar-right {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 10px;
     justify-content: flex-end;
     margin-left: auto;
     flex: 0 0 clamp(90px, 12vw, 130px); /* arrow closer to the right edge */
+}
+
+.topbar-right > .flex {
+    gap: 10px;
 }
 
 /* HAMBURGER BUTTON */

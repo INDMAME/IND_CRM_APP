@@ -127,6 +127,7 @@ const DetailApp = () => {
   const readOnlySurfaceRef = useRef(null);
   const editModeKeyRef = useRef("");
   const draftKeyRef = useRef("");
+  const editSnapshotRef = useRef(null);
 
   const recId = String(detail.recId ?? detail.RecId ?? "");
   const accountNum = String(detail.accountNum ?? detail.AccountNum ?? "");
@@ -443,6 +444,24 @@ const DetailApp = () => {
   }, [isEditing]);
 
   useEffect(() => {
+    if (isEditing) {
+      if (!editSnapshotRef.current) {
+        editSnapshotRef.current = {
+          transDate,
+          visitType,
+          asistenteTipo,
+          description,
+          comentarios,
+          antecedentes,
+          conclusiones
+        };
+      }
+      return;
+    }
+    editSnapshotRef.current = null;
+  }, [isEditing, transDate, visitType, asistenteTipo, description, comentarios, antecedentes, conclusiones]);
+
+  useEffect(() => {
     if (isEditing) return undefined;
     return bindReadOnlyGuard(readOnlySurfaceRef.current);
   }, [isEditing]);
@@ -451,13 +470,19 @@ const DetailApp = () => {
   useEffect(() => {
     const editIcon = document.getElementById("visitEditIcon");
     const saveIcon = document.getElementById("visitSaveIcon");
+    const deleteBtn = document.getElementById("visitDeleteBtn");
+    const cancelBtn = document.getElementById("visitCancelBtn");
     if (!editIcon || !saveIcon) return;
     if (isEditing) {
       editIcon.classList.add("hidden");
       saveIcon.classList.remove("hidden");
+      if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
+      if (cancelBtn) cancelBtn.classList.remove("topbar-hidden");
     } else {
       editIcon.classList.remove("hidden");
       saveIcon.classList.add("hidden");
+      if (deleteBtn) deleteBtn.classList.remove("topbar-hidden");
+      if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
     }
   }, [isEditing]);
 
@@ -470,6 +495,15 @@ const DetailApp = () => {
     syncEditModeFlag(true);
     setStatus(indT("Visits_Detail_EditingEnabled", "Editing enabled"));
   }, [syncEditModeFlag]);
+
+  const handleCancelEdit = useCallback(() => {
+    if (!isEditing) return;
+    setIsEditing(false);
+    syncEditModeFlag(false);
+    clearDraft();
+    setStatus(indT("Common_Cancel", "Cancel"));
+    window.location.reload();
+  }, [isEditing, syncEditModeFlag, clearDraft]);
 
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
@@ -606,13 +640,19 @@ const DetailApp = () => {
           }
         });
     };
+    const onCancelEdit = () => {
+      if (busy || modal.open) return;
+      handleCancelEdit();
+    };
     window.addEventListener("visit-edit", onEdit);
     window.addEventListener("visit-delete", onDelete);
+    window.addEventListener("visit-cancel-edit", onCancelEdit);
     return () => {
       window.removeEventListener("visit-edit", onEdit);
       window.removeEventListener("visit-delete", onDelete);
+      window.removeEventListener("visit-cancel-edit", onCancelEdit);
     };
-  }, [busy, modal.open, handleDelete, handleEnableEdit, handleUpdate, isEditing, openConfirm, transDate]);
+  }, [busy, modal.open, handleCancelEdit, handleDelete, handleEnableEdit, handleUpdate, isEditing, openConfirm, transDate]);
 
   return (
     <div className="space-y-4">
