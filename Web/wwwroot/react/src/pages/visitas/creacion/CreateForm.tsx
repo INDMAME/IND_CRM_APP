@@ -252,6 +252,21 @@ function VisitasApp() {
 
   // Restore draft on mount
   useEffect(() => {
+    let freshLoad = false;
+    try {
+      const url = new URL(window.location.href);
+      freshLoad = url.searchParams.has(CREATE_FRESH_PARAM);
+    } catch {
+      freshLoad = false;
+    }
+
+    if (freshLoad) {
+      clearCreateSelectionCache();
+      stripFreshParam();
+      draftRestoredRef.current = true;
+      return;
+    }
+
     let shouldShow = false;
     try {
       shouldShow = !!(

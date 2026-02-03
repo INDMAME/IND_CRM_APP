@@ -45,8 +45,13 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   const containerRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const lastAccountRef = useRef(accountNum || "");
+  const onChangeRef = useRef(onChange);
 
   useOutsideClick([containerRef, listRef], () => setOpen(false));
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
 
   const isSameSelection = (a: ContactOption[] = [], b: ContactOption[] = []) => {
     if (a.length !== b.length) return false;
@@ -99,7 +104,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     if (!accountNum) {
       setOptions([]);
       setSelected([]);
-      onChange([]);
+      onChangeRef.current([]);
       setStatus(indT("Visits_Create_SelectClientFirst", "Select a client first."));
       setHasLoaded(false);
       clearStoredSelection(lastAccountRef.current);
@@ -110,7 +115,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     const changed = lastAccountRef.current && lastAccountRef.current !== accountNum;
     if (changed) {
       setSelected([]);
-      onChange([]);
+      onChangeRef.current([]);
       clearStoredSelection(lastAccountRef.current);
     }
 
@@ -124,7 +129,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     const storedSelection = getStoredSelection(accountNum);
     if (storedSelection.length && !value?.length) {
       setSelected(storedSelection);
-      onChange(storedSelection);
+      onChangeRef.current(storedSelection);
     }
 
     lastAccountRef.current = accountNum;
@@ -132,9 +137,9 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   }, [accountNum]);
 
   useEffect(() => {
-    onChange(selected);
+    onChangeRef.current(selected);
     if (accountNum) setStoredSelection(accountNum, selected);
-  }, [selected, onChange, accountNum]);
+  }, [selected, accountNum]);
 
   const mapContacts = (items: unknown[] = []) =>
     items

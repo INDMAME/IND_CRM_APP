@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.tsx";
 
 // Single date picker matching the Historial DRP visual style.
 // Returns an ISO string (yyyy-MM-dd) via onChange.
@@ -114,6 +115,12 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
     };
   }, []);
 
+  const readOnlyMode = readOnly || disabled;
+
+  useEffect(() => {
+    if (readOnlyMode) setOpen(false);
+  }, [readOnlyMode]);
+
   const firstDay = new Date(currentYear, currentMonth, 1);
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const offset = (firstDay.getDay() + 6) % 7; // Monday as 0
@@ -160,91 +167,92 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
     setCurrentYear(y);
   };
 
-  const drpClass = disabled ? "drp drp-readonly" : "drp";
-  const valueColor = readOnly ? "#64748b" : "#00296be0";
+  const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
+  const labelColor = "#00296be0";
+  const containerClass = `space-y-2 ${disabled ? "pointer-events-none select-none" : ""}`.trim();
+  const buttonClass = [
+    "form-control",
+    "flex items-center",
+    "pr-10",
+    readOnlyMode ? "ind-readonly-field" : "",
+    readOnlyMode ? "cursor-not-allowed" : "cursor-pointer"
+  ].filter(Boolean).join(" ");
 
   return (
-    <div className={`relative ${disabled ? "pointer-events-none select-none" : ""}`} ref={containerRef}>
-      <div
-        className={drpClass}
-        role="button"
-        tabIndex={0}
-        onClick={() => setOpen((v) => !v)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
+    <div className={containerClass} ref={containerRef}>
+      <label className="form-label font-semibold" style={{ color: labelColor }}>{String(effectiveLabel)}</label>
+      <div className="relative">
+        <button
+          type="button"
+          className={buttonClass}
+          onClick={() => {
+            if (readOnlyMode) return;
             setOpen((v) => !v);
-          }
-          if (e.key === "Escape") setOpen(false);
-        }}
-        aria-expanded={open}
-      >
-        <div className={`drp-section ${open ? "active" : ""}`}>
-          <div
-            className="drp-label"
-            style={{
-              color: "#00296be0",
-              fontSize: "14px",
-              fontWeight: 500,
-              letterSpacing: "0",
-              textTransform: "none"
-            }}
-          >
-            {String(effectiveLabel)}
+          }}
+          onKeyDown={(e) => {
+            if (readOnlyMode) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setOpen((v) => !v);
+            }
+            if (e.key === "Escape") setOpen(false);
+          }}
+          aria-expanded={open}
+          aria-disabled={readOnlyMode ? "true" : undefined}
+        >
+          <span style={{ color: valueColor, fontWeight: 400 }}>{formatDisplay(selectedDate)}</span>
+        </button>
+        <span className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 pointer-events-none">
+          {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
+        </span>
+        {open && (
+          <div className="drp-popover" role="dialog" aria-modal="true">
+            <div className="drp-head">
+              <button type="button" className="drp-nav" aria-label={indT("History_PrevMonth", "Previous month")} onClick={() => goMonth(-1)}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div className="drp-month">{monthLabel}</div>
+              <button type="button" className="drp-nav" aria-label={indT("History_NextMonth", "Next month")} onClick={() => goMonth(1)}>
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+            <div className="drp-weekdays">
+              <span>{indT("History_Day_Mon", "Mo")}</span><span>{indT("History_Day_Tue", "Tu")}</span><span>{indT("History_Day_Wed", "We")}</span><span>{indT("History_Day_Thu", "Th")}</span><span>{indT("History_Day_Fri", "Fr")}</span><span>{indT("History_Day_Sat", "Sa")}</span><span>{indT("History_Day_Sun", "Su")}</span>
+            </div>
+            <div className="drp-grid">
+              {Array.from({ length: offset }).map((_, i) => (
+                <button key={`e-${i}`} className="drp-day empty" disabled type="button" />
+              ))}
+              {Array.from({ length: daysInMonth }).map((_, idx) => {
+                const day = idx + 1;
+                const dateObj = new Date(currentYear, currentMonth, day);
+                const isSelected = sameDay(dateObj, selectedDate);
+                const isToday = sameDay(dateObj, new Date());
+                const cls = [
+                  "drp-day",
+                  isSelected ? "start range-start" : "",
+                  isToday ? "today" : ""
+                ].join(" ");
+                return (
+                  <button
+                    key={toISO(dateObj)}
+                    type="button"
+                    className={cls}
+                    onClick={() => handleSelect(dateObj)}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="drp-status">{indT("DatePicker_SelectDate", "Select date")}</div>
           </div>
-          <div className="drp-value">
-            <span style={{ color: valueColor, fontWeight: 400 }}>{formatDisplay(selectedDate)}</span>
-          </div>
-        </div>
+        )}
       </div>
-
-      {open && (
-        <div className="drp-popover" role="dialog" aria-modal="true">
-          <div className="drp-head">
-            <button type="button" className="drp-nav" aria-label={indT("History_PrevMonth", "Previous month")} onClick={() => goMonth(-1)}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            <div className="drp-month">{monthLabel}</div>
-            <button type="button" className="drp-nav" aria-label={indT("History_NextMonth", "Next month")} onClick={() => goMonth(1)}>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          </div>
-          <div className="drp-weekdays">
-            <span>{indT("History_Day_Mon", "Mo")}</span><span>{indT("History_Day_Tue", "Tu")}</span><span>{indT("History_Day_Wed", "We")}</span><span>{indT("History_Day_Thu", "Th")}</span><span>{indT("History_Day_Fri", "Fr")}</span><span>{indT("History_Day_Sat", "Sa")}</span><span>{indT("History_Day_Sun", "Su")}</span>
-          </div>
-          <div className="drp-grid">
-            {Array.from({ length: offset }).map((_, i) => (
-              <button key={`e-${i}`} className="drp-day empty" disabled type="button" />
-            ))}
-            {Array.from({ length: daysInMonth }).map((_, idx) => {
-              const day = idx + 1;
-              const dateObj = new Date(currentYear, currentMonth, day);
-              const isSelected = sameDay(dateObj, selectedDate);
-              const isToday = sameDay(dateObj, new Date());
-              const cls = [
-                "drp-day",
-                isSelected ? "start range-start" : "",
-                isToday ? "today" : ""
-              ].join(" ");
-              return (
-                <button
-                  key={toISO(dateObj)}
-                  type="button"
-                  className={cls}
-                  onClick={() => handleSelect(dateObj)}
-                >
-                  {day}
-                </button>
-              );
-            })}
-          </div>
-          <div className="drp-status">{indT("DatePicker_SelectDate", "Select date")}</div>
-        </div>
-      )}
     </div>
   );
 }

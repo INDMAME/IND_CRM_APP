@@ -246,14 +246,14 @@ html, body {
 .topbar-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     justify-content: flex-end;
     margin-left: auto;
     flex: 0 0 clamp(90px, 12vw, 130px); /* arrow closer to the right edge */
 }
 
 .topbar-right > .flex {
-    gap: 10px;
+    gap: 14px;
 }
 
 /* HAMBURGER BUTTON */

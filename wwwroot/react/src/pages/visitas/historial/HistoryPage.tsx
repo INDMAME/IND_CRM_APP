@@ -9,6 +9,7 @@ import { HISTORY_FILTER_KEY, HISTORY_RETURN_FLAG_KEY } from "../../../utils/visi
 import ClientSearchCombobox, { ClientOption } from "../../../components/visitas/ClientSearchCombobox.tsx";
 import QuickFilterSlider from "../../../components/commons/QuickFilterSlider.tsx";
 import HistoryTable, { TimelineItem } from "./HistoryTable.tsx";
+import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
 
 type Props = {
   defaultFromDate?: string;
@@ -228,6 +229,7 @@ const logHistory = (message: string, data?: Record<string, unknown>) => {
 export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props) => {
   const locale = useMemo(() => getUiLocale(), []);
   const canViewHistory = canAccess("VISITAS_HISTORIAL", "View");
+  const canCreateVisit = canAccess("VISITAS_CREACION", "Add");
   const noDataText = indT("Common_NoData", "No data");
 
   const activatorRef = useRef<HTMLDivElement | null>(null);
@@ -1134,6 +1136,15 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
               })}
           </ul>
         </>
+      )}
+      {canCreateVisit && (
+        <FloatingActionButton
+          route="/Visitas/Create?fresh=1"
+          ariaLabel={indT("Common_Create", "Create")}
+          size={76}
+          right={24}
+          bottom={24}
+        />
       )}
     </div>
   );
