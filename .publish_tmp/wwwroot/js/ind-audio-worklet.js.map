@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../react/audio-recorder/ind-audio-worklet.ts"],
-  "sourcesContent": [""],
-  "mappings": "oEAAA,IAAAA,EAAAC,EAAA",
-  "names": ["require_ind_audio_worklet", "__commonJSMin"]
-}
