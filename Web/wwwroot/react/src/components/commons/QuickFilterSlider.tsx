@@ -46,7 +46,7 @@ function QuickFilterSlider<T extends string>({
                 "rounded-full border",
                 itemClassName,
                 isActive
-                  ? "border-transparent bg-[#00296be0] text-[#e2e8f0] shadow-sm"
+                  ? "border-transparent bg-[#00296b] text-[#e2e8f0] shadow-sm"
                   : "border-transparent bg-[#00296bc4] text-[#e2e8f0] hover:bg-[#00296be0]"
               )}
               onClick={() => onSelect?.(item.id)}

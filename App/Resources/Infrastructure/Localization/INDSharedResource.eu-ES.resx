@@ -84,7 +84,10 @@
   <data name="History_Filter_Client" xml:space="preserve"><value>Bezeroa</value></data>
   <data name="History_Filter_Clear" xml:space="preserve"><value>Garbitu</value></data>
   <data name="History_Filter_Apply" xml:space="preserve"><value>Aplikatu</value></data>
-  <data name="History_Quick_Custom" xml:space="preserve"><value>Datak</value></data>
+  <data name="History_Quick_Custom" xml:space="preserve"><value>Data</value></data>
+  <data name="History_Quick_7Days" xml:space="preserve"><value>7 egun</value></data>
+  <data name="History_Quick_30Days" xml:space="preserve"><value>30 egun</value></data>
+  <data name="History_Quick_90Days" xml:space="preserve"><value>90 egun</value></data>
   <data name="History_Quick_ThisWeek" xml:space="preserve"><value>Aste hau</value></data>
   <data name="History_Quick_LastWeek" xml:space="preserve"><value>Aurreko astea</value></data>
   <data name="History_Quick_ThisMonth" xml:space="preserve"><value>Hilabete hau</value></data>
@@ -104,6 +107,10 @@
   <data name="History_Status_SelectEnd" xml:space="preserve"><value>Aukeratu amaiera-data</value></data>
   <data name="History_Loading" xml:space="preserve"><value>Datuak kargatzen...</value></data>
   <data name="History_NoDataInRange" xml:space="preserve"><value>Ez dago bisitarik tarte honetan</value></data>
+  <data name="History_Page_First" xml:space="preserve"><value>Lehena</value></data>
+  <data name="History_Page_Prev" xml:space="preserve"><value>Aurrekoa</value></data>
+  <data name="History_Page_Next" xml:space="preserve"><value>Hurrengoa</value></data>
+  <data name="History_Page_Last" xml:space="preserve"><value>Azkena</value></data>
 
   <data name="Common_OK" xml:space="preserve"><value>Ados</value></data>
   <data name="Common_Next" xml:space="preserve"><value>Hurrengoa</value></data>

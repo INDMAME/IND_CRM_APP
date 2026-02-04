@@ -84,7 +84,10 @@
   <data name="History_Filter_Client" xml:space="preserve"><value>Cliente</value></data>
   <data name="History_Filter_Clear" xml:space="preserve"><value>Borrar</value></data>
   <data name="History_Filter_Apply" xml:space="preserve"><value>Aplicar</value></data>
-  <data name="History_Quick_Custom" xml:space="preserve"><value>Fechas</value></data>
+  <data name="History_Quick_Custom" xml:space="preserve"><value>Fecha</value></data>
+  <data name="History_Quick_7Days" xml:space="preserve"><value>7 días</value></data>
+  <data name="History_Quick_30Days" xml:space="preserve"><value>30 días</value></data>
+  <data name="History_Quick_90Days" xml:space="preserve"><value>90 días</value></data>
   <data name="History_Quick_ThisWeek" xml:space="preserve"><value>Esta semana</value></data>
   <data name="History_Quick_LastWeek" xml:space="preserve"><value>Semana pasada</value></data>
   <data name="History_Quick_ThisMonth" xml:space="preserve"><value>Este mes</value></data>
@@ -104,6 +107,10 @@
   <data name="History_Status_SelectEnd" xml:space="preserve"><value>Selecciona la fecha de fin</value></data>
   <data name="History_Loading" xml:space="preserve"><value>Cargando datos...</value></data>
   <data name="History_NoDataInRange" xml:space="preserve"><value>No hay visitas en este rango</value></data>
+  <data name="History_Page_First" xml:space="preserve"><value>Primera</value></data>
+  <data name="History_Page_Prev" xml:space="preserve"><value>Anterior</value></data>
+  <data name="History_Page_Next" xml:space="preserve"><value>Siguiente</value></data>
+  <data name="History_Page_Last" xml:space="preserve"><value>Última</value></data>
 
   <data name="Common_OK" xml:space="preserve"><value>Aceptar</value></data>
   <data name="Common_Next" xml:space="preserve"><value>Avanzar</value></data>

@@ -22,14 +22,15 @@ export const markHistoryReturn = (): void => {
   }
 };
 
-export const setHistoryFilterForDate = (isoDate: string): void => {
+export const setHistoryFilterForDate = (isoDate: string, force = false): void => {
   const value = String(isoDate || "").trim();
   if (!isIsoDate(value)) {
     if (hasHistoryFilterRange()) markHistoryReturn();
     return;
   }
   try {
-    if (!hasHistoryFilterRange()) {
+    // When force is true, replace any existing history range.
+    if (force || !hasHistoryFilterRange()) {
       sessionStorage.setItem(HISTORY_FILTER_KEY, JSON.stringify({ fromDate: value, toDate: value }));
     }
   } catch {

@@ -19,7 +19,7 @@
 - Buttons and icons:
   - Use StarBorder for buttons (primary, secondary, and quick actions) unless there is a clear exception.
   - StarBorder defaults: thickness 2.5px and speed 2.5s.
-  - Button colors: active #00296be0, inactive #00296bc4, text color #e2e8f0.
+  - Button colors: active #00296b, inactive #00296bc4, text color #e2e8f0.
   - Icon size standard: 16x16 (Tailwind h-4 w-4) unless a view explicitly needs a larger icon.
   - Topbar icons: 24x24 (Tailwind h-6 w-6) with a 25x25 container via `topbar-btn`.
   - Topbar SVG standard: enforce `aspect-ratio: 1 / 1` and `stroke-width: 1.5 !important` on `path/line/polyline` to keep visual parity.

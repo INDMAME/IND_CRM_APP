@@ -7,9 +7,9 @@ import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { getCsrfToken } from "../../../services/apiService.ts";
 import { HISTORY_FILTER_KEY, HISTORY_RETURN_FLAG_KEY } from "../../../utils/visitasHistory.ts";
 import ClientSearchCombobox, { ClientOption } from "../../../components/visitas/ClientSearchCombobox.tsx";
-import QuickFilterSlider from "../../../components/commons/QuickFilterSlider.tsx";
 import HistoryTable, { TimelineItem } from "./HistoryTable.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
+import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 
 type Props = {
   defaultFromDate?: string;
@@ -48,10 +48,14 @@ type CalendarCell = {
   isEmpty: boolean;
 };
 
-type QuickFilterId = "custom" | "this-week" | "last-week" | "this-month" | "last-month";
+type QuickFilterId = "custom" | "days-7" | "days-30" | "days-90";
 
 const PAGE_SIZE = 6;
+const PAGE_WINDOW = 6;
 const NAV_DELAY_MS = 320;
+const FAB_BASE_BOTTOM = 32;
+const FAB_CLEARANCE = 24;
+const FAB_GAP = 12;
 
 const normalizeUiLocale = (locale: string) => {
   const value = String(locale || "").trim();
@@ -104,19 +108,6 @@ const toISO = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.
 
 const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
-const startOfWeek = (d: Date) => {
-  const dayOffset = (d.getDay() + 6) % 7;
-  const start = startOfDay(d);
-  start.setDate(start.getDate() - dayOffset);
-  return start;
-};
-
-const endOfWeek = (start: Date) => {
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  return end;
-};
-
 const parseISO = (s: string) => {
   if (!s) return null;
   const parts = s.split("-").map(Number);
@@ -128,7 +119,18 @@ const sameDay = (a: Date | null, b: Date | null) => !!(a && b && a.getTime() ===
 
 const isBefore = (a: Date | null, b: Date | null) => !!(a && b && a.getTime() < b.getTime());
 
-const formatDisplay = (d: Date, locale: string) => {
+  const normalizeRange = (from: string, to: string) => {
+    if (!from || !to) return { from, to };
+    const fromDate = parseISO(from);
+    const toDate = parseISO(to);
+    if (!fromDate || !toDate) return { from, to };
+  if (isBefore(toDate, fromDate)) {
+    return { from: toISO(toDate), to: toISO(fromDate) };
+  }
+  return { from: toISO(fromDate), to: toISO(toDate) };
+};
+
+  const formatDisplay = (d: Date, locale: string) => {
   if (isBasqueLocale(locale)) {
     const month = BASQUE_MONTHS_SHORT[d.getMonth()];
     return `${d.getDate()} ${month} ${d.getFullYear()}`.toLowerCase();
@@ -234,6 +236,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
 
   const activatorRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
+  const paginationRef = useRef<HTMLDivElement | null>(null);
 
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
@@ -245,7 +248,9 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const [activeQuickFilter, setActiveQuickFilter] = useState<QuickFilterId | null>(null);
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null);
   const [clientResetKey, setClientResetKey] = useState(0);
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
+  const [showManualError, setShowManualError] = useState(false);
+  const [fabBottom, setFabBottom] = useState(FAB_BASE_BOTTOM);
 
   const [items, setItems] = useState<ActivityItem[]>([]);
   const [total, setTotal] = useState(0);
@@ -345,7 +350,10 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       const controller = new AbortController();
       activeAbortRef.current = controller;
 
-      const filterSignature = `${fromDateStr}|${toDateStr}|${accountNumStr}|${page}`;
+      const normalized = normalizeRange(fromDateStr, toDateStr);
+      const normalizedFrom = normalized.from;
+      const normalizedTo = normalized.to;
+      const filterSignature = `${normalizedFrom}|${normalizedTo}|${accountNumStr}|${page}`;
       lastSignatureRef.current = filterSignature;
 
       setIsLoading(true);
@@ -354,8 +362,8 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       setErrorMessage("");
 
       const payload = {
-        fromDate: fromDateStr,
-        toDate: toDateStr,
+        fromDate: normalizedFrom,
+        toDate: normalizedTo,
         accountNum: accountNumStr,
       };
 
@@ -440,14 +448,64 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     [fromDateValue, toDateValue, accountNumValue]
   );
 
-  const applyDefaultRange = useCallback(() => {
-    const today = startOfDay(new Date());
-    const defaultStart = new Date(today);
-    defaultStart.setDate(today.getDate() - 7);
+  const validateManualRange = useCallback(() => {
+    if (activeQuickFilter === "custom" && (!startDate || !endDate)) {
+      setShowManualError(true);
+      setSelectingStep(!startDate ? "start" : "end");
+      setIsOpen(true);
+      setShowFilters(true);
+      return false;
+    }
+    return true;
+  }, [activeQuickFilter, endDate, startDate]);
 
-    let start = defaultStart;
-    let end = today;
+  const applyFilters = useCallback(
+    (options?: { closePanel?: boolean; force?: boolean; page?: number }) => {
+      if (!validateManualRange()) return;
+      if (!startDate || !endDate) return;
 
+      const normalized = normalizeRange(fromDateValue, toDateValue);
+      const page = options?.page ?? 1;
+      const signature = `${normalized.from}|${normalized.to}|${accountNumValue}|${page}`;
+
+      if (options?.force || lastSignatureRef.current !== signature) {
+        loadActivities(page, { fromDate: normalized.from, toDate: normalized.to, accountNum: accountNumValue });
+      }
+
+      setShowManualError(false);
+      if (options?.closePanel) {
+        setIsOpen(false);
+        setShowFilters(false);
+      }
+    },
+    [accountNumValue, endDate, fromDateValue, loadActivities, startDate, toDateValue, validateManualRange]
+  );
+
+  const totalPages = Math.ceil((total || 0) / PAGE_SIZE);
+
+  // Keep the floating action button clear of pagination on small screens.
+  const updateFabBottom = useCallback(() => {
+    if (!paginationRef.current || totalPages <= 1) {
+      setFabBottom(FAB_BASE_BOTTOM);
+      return;
+    }
+    const height = paginationRef.current.offsetHeight || 0;
+    const next = Math.max(FAB_BASE_BOTTOM, height + FAB_CLEARANCE + FAB_GAP);
+    setFabBottom((prev) => (Math.abs(prev - next) < 1 ? prev : next));
+  }, [totalPages]);
+
+  // Applies a default range when provided by the server.
+  const applyDefaultRangeFromProps = useCallback(() => {
+    if (!defaultFromDate || !defaultToDate) return false;
+    const startRaw = parseDateValue(defaultFromDate);
+    const endRaw = parseDateValue(defaultToDate);
+    if (!startRaw || !endRaw) return false;
+
+    const startDay = startOfDay(startRaw);
+    const endDay = startOfDay(endRaw);
+
+    let start = startDay;
+    let end = endDay;
     if (isBefore(end, start)) {
       const swap = start;
       start = end;
@@ -463,10 +521,10 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     setActiveQuickFilter(null);
     setSelectedClient(null);
     setIsOpen(false);
-    setShowFilters(false);
     retryOnNetworkErrorRef.current = true;
     loadActivities(1, { fromDate: toISO(start), toDate: toISO(end), accountNum: "" });
-  }, [loadActivities]);
+    return true;
+  }, [defaultFromDate, defaultToDate, loadActivities]);
 
   // Resets filters and clears local state.
   const resetHistoryFilters = useCallback(() => {
@@ -479,6 +537,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     setActiveQuickFilter(null);
     setSelectedClient(null);
     setClientResetKey((prev) => prev + 1);
+    setShowManualError(false);
     clearFilterCache();
     setItems([]);
     setTotal(0);
@@ -499,6 +558,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       setCurrentMonth(start ? start.getMonth() : new Date().getMonth());
       setCurrentYear(start ? start.getFullYear() : new Date().getFullYear());
       setActiveQuickFilter(null);
+      setShowManualError(false);
       if (filter.clientAccount) {
         setSelectedClient({ value: filter.clientAccount, text: filter.clientText || filter.clientAccount });
       } else {
@@ -524,11 +584,18 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       setShowFilters(false);
       setIsOpen(false);
       hasRestoredFilterRef.current = true;
-    } else {
-      clearFilterCache();
-      applyDefaultRange();
+      return;
     }
-  }, [applyCachedFilter, applyDefaultRange, clearFilterCache, consumeReturnFlag, readCachedFilter]);
+    if (applyDefaultRangeFromProps()) {
+      setShowFilters(false);
+      setIsOpen(false);
+      hasRestoredFilterRef.current = true;
+      return;
+    }
+    resetHistoryFilters();
+    setShowFilters(true);
+    setIsOpen(false);
+  }, [applyCachedFilter, applyDefaultRangeFromProps, consumeReturnFlag, readCachedFilter, resetHistoryFilters]);
 
   // Keep the picker step in sync with current selection.
   useEffect(() => {
@@ -570,11 +637,26 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
           return;
         }
       }
-      applyDefaultRange();
+      // Keep current state when no cached filter is available.
     };
     window.addEventListener("pageshow", onPageShow);
     return () => window.removeEventListener("pageshow", onPageShow);
-  }, [applyCachedFilter, applyDefaultRange, consumeReturnFlag, readCachedFilter]);
+  }, [applyCachedFilter, consumeReturnFlag, readCachedFilter]);
+
+  useEffect(() => {
+    updateFabBottom();
+    let observer: ResizeObserver | null = null;
+    const paginationEl = paginationRef.current;
+    if (paginationEl && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => updateFabBottom());
+      observer.observe(paginationEl);
+    }
+    window.addEventListener("resize", updateFabBottom);
+    return () => {
+      window.removeEventListener("resize", updateFabBottom);
+      if (observer) observer.disconnect();
+    };
+  }, [updateFabBottom]);
 
   useEffect(() => {
     const onToggleFilters = () => {
@@ -587,8 +669,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       });
     };
     const onRefresh = () => {
-      if (!fromDateValue || !toDateValue) return;
-      loadActivities(currentPage, { fromDate: fromDateValue, toDate: toDateValue, accountNum: accountNumValue });
+      applyFilters({ page: currentPage, force: true, closePanel: true });
     };
     window.addEventListener("history-toggle-filter", onToggleFilters);
     window.addEventListener("history-refresh", onRefresh);
@@ -596,7 +677,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       window.removeEventListener("history-toggle-filter", onToggleFilters);
       window.removeEventListener("history-refresh", onRefresh);
     };
-  }, [accountNumValue, currentPage, fromDateValue, loadActivities, toDateValue]);
+  }, [applyFilters, currentPage]);
 
   const handleSelect = useCallback(
     (dateObj: Date) => {
@@ -606,6 +687,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
         end: toDateValue,
         selectingStep,
       });
+      setShowManualError(false);
       setActiveQuickFilter("custom");
       if (!startDate || endDate) {
         setStartDate(dateObj);
@@ -634,10 +716,8 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       setCurrentYear(dateObj.getFullYear());
       setHoverDate(null);
       setIsOpen(false);
-      setShowFilters(false);
-      loadActivities(1, { fromDate: toISO(newStart), toDate: toISO(newEnd), accountNum: accountNumValue });
     },
-    [accountNumValue, endDate, fromDateValue, loadActivities, selectingStep, startDate, toDateValue]
+    [endDate, fromDateValue, selectingStep, startDate, toDateValue]
   );
 
   const handleClear = useCallback(
@@ -645,6 +725,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       event.stopPropagation();
       logHistory("clearRange");
       setActiveQuickFilter(null);
+      setShowManualError(false);
       resetHistoryFilters();
       setIsOpen(false);
       setShowFilters(true);
@@ -654,6 +735,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
 
   const openPopover = useCallback((section: "start" | "end") => {
     logHistory("openPopover", { section, start: fromDateValue, end: toDateValue, selectingStep });
+    setShowManualError(false);
     setActiveQuickFilter("custom");
     if (section === "end" && !startDate) {
       setSelectingStep("start");
@@ -675,50 +757,47 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       setCurrentYear(startDay.getFullYear());
       setIsOpen(false);
       setActiveQuickFilter(filterId);
-      setShowFilters(false);
-      loadActivities(1, { fromDate: toISO(startDay), toDate: toISO(endDay), accountNum: accountNumValue });
+      setShowManualError(false);
     },
-    [accountNumValue, loadActivities]
+    []
   );
 
   const handleQuickFilter = useCallback(
     (filterId: QuickFilterId) => {
-      if (filterId === "custom") {
-        openPopover("start");
-        return;
-      }
-
       const today = startOfDay(new Date());
 
-      if (filterId === "this-week") {
-        const start = startOfWeek(today);
-        const end = endOfWeek(start);
-        applyQuickRange(filterId, start, end);
+      if (filterId === "custom") {
+        setActiveQuickFilter("custom");
+        setStartDate(null);
+        setEndDate(null);
+        setSelectingStep("start");
+        setHoverDate(null);
+        setIsOpen(false);
+        setShowManualError(false);
         return;
       }
 
-      if (filterId === "last-week") {
-        const startThisWeek = startOfWeek(today);
-        const start = new Date(startThisWeek);
-        start.setDate(startThisWeek.getDate() - 7);
-        const end = endOfWeek(start);
-        applyQuickRange(filterId, start, end);
+      if (filterId === "days-7") {
+        const end = new Date(today);
+        end.setDate(today.getDate() - 6);
+        applyQuickRange(filterId, today, end);
         return;
       }
 
-      if (filterId === "this-month") {
-        const start = new Date(today.getFullYear(), today.getMonth(), 1);
-        applyQuickRange(filterId, start, today);
+      if (filterId === "days-30") {
+        const end = new Date(today);
+        end.setDate(today.getDate() - 29);
+        applyQuickRange(filterId, today, end);
         return;
       }
 
-      if (filterId === "last-month") {
-        const start = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-        const end = new Date(today.getFullYear(), today.getMonth(), 0);
-        applyQuickRange(filterId, start, end);
+      if (filterId === "days-90") {
+        const end = new Date(today);
+        end.setDate(today.getDate() - 89);
+        applyQuickRange(filterId, today, end);
       }
     },
-    [applyQuickRange, openPopover]
+    [applyQuickRange]
   );
 
   const handleClientSelected = useCallback(
@@ -815,8 +894,6 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     });
   }, [items, locale, noDataText]);
 
-  const totalPages = Math.ceil((total || 0) / PAGE_SIZE);
-
   const labelFrom = toSentenceCase(indT("History_From", "From"), locale);
   const labelTo = toSentenceCase(indT("History_To", "To"), locale);
   const summaryFrom = labelFrom;
@@ -825,17 +902,19 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const clearLabel = indT("History_Filter_Clear", "Clear");
   const applyLabel = indT("History_Filter_Apply", "Apply");
   const clientLabel = indT("History_Filter_Client", "Client");
-  const quickCustomLabel = indT("History_Quick_Custom", "Dates");
-  const quickThisWeekLabel = indT("History_Quick_ThisWeek", "This week");
-  const quickLastWeekLabel = indT("History_Quick_LastWeek", "Last week");
-  const quickThisMonthLabel = indT("History_Quick_ThisMonth", "This month");
-  const quickLastMonthLabel = indT("History_Quick_LastMonth", "Last month");
+  const quickCustomLabel = indT("History_Quick_Custom", "Date");
+  const quick7DaysLabel = indT("History_Quick_7Days", "7 days");
+  const quick30DaysLabel = indT("History_Quick_30Days", "30 days");
+  const quick90DaysLabel = indT("History_Quick_90Days", "90 days");
+  const pageFirstLabel = indT("History_Page_First", "First");
+  const pagePrevLabel = indT("History_Page_Prev", "Previous");
+  const pageNextLabel = indT("History_Page_Next", "Next");
+  const pageLastLabel = indT("History_Page_Last", "Last");
   const quickFilters = [
     { id: "custom" as const, label: quickCustomLabel },
-    { id: "this-week" as const, label: quickThisWeekLabel },
-    { id: "last-week" as const, label: quickLastWeekLabel },
-    { id: "this-month" as const, label: quickThisMonthLabel },
-    { id: "last-month" as const, label: quickLastMonthLabel },
+    { id: "days-7" as const, label: quick7DaysLabel },
+    { id: "days-30" as const, label: quick30DaysLabel },
+    { id: "days-90" as const, label: quick90DaysLabel },
   ];
   const showFilterActions = showFilters;
   const showSummary = !showFilters && !!startDate && !!endDate;
@@ -862,20 +941,41 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       {showFilters && (
       <div className="filter-card filter-card--expanded p-2 sm:p-2.5 relative">
         <div className="space-y-1.5 history-filter-stack flex flex-col">
-          <QuickFilterSlider
-            items={quickFilters}
-            activeId={activeQuickFilter}
-            onSelect={handleQuickFilter}
-            ariaLabel={filterTitle}
-            className="history-quick-filters"
-            itemClassName="text-[11px] font-semibold py-1 px-3"
-          />
+          <div className="grid grid-cols-2 gap-2 history-quick-filters" aria-label={filterTitle}>
+            {quickFilters.map((item) => {
+              const isActive = activeQuickFilter === item.id;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={classNames(
+                    "w-full rounded-full border text-[11px] font-semibold py-1.5 px-3 transition",
+                    isActive
+                      ? "border-transparent bg-[#00296b] text-[#e2e8f0] shadow-sm"
+                      : "border-transparent bg-[#00296bc4] text-[#e2e8f0] hover:bg-[#00296be0]"
+                  )}
+                  onClick={() => handleQuickFilter(item.id)}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
 
           {activeQuickFilter === "custom" && (
           <div className="relative">
-              <div id="drpActivator" ref={activatorRef} className="drp w-full" onClick={() => openPopover("start")}>
+              <div
+                id="drpActivator"
+                ref={activatorRef}
+                className={classNames("drp w-full", showManualError ? "drp-error" : "")}
+                onClick={() => openPopover("start")}
+              >
                 <div
-                  className={classNames("drp-section", selectingStep === "start" && isOpen ? "active" : "")}
+                  className={classNames(
+                    "drp-section",
+                    selectingStep === "start" && isOpen ? "active" : "",
+                    showManualError && !startDate ? "is-error" : ""
+                  )}
                   data-section="start"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -897,7 +997,11 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
                 <div className="drp-separator-mobile flex sm:hidden" />
 
                 <div
-                  className={classNames("drp-section", selectingStep === "end" && isOpen ? "active" : "")}
+                  className={classNames(
+                    "drp-section",
+                    selectingStep === "end" && isOpen ? "active" : "",
+                    showManualError && !endDate ? "is-error" : ""
+                  )}
                   data-section="end"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1070,13 +1174,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
                 type="button"
                 className="w-full rounded-full border border-transparent bg-[#00296bc4] text-[11px] font-semibold text-[#e2e8f0] hover:bg-[#00296be0] py-1 px-3"
                 onClick={() => {
-                  if (!startDate || !endDate) return;
-                  const signature = `${fromDateValue}|${toDateValue}|${accountNumValue}|1`;
-                  if (lastSignatureRef.current !== signature) {
-                    loadActivities(1, { fromDate: fromDateValue, toDate: toDateValue, accountNum: accountNumValue });
-                  }
-                  setIsOpen(false);
-                  setShowFilters(false);
+                  applyFilters({ closePanel: true, page: 1 });
                 }}
               >
                 {applyLabel}
@@ -1110,31 +1208,19 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
             onNavigate={handleNavigate}
           />
 
-          <ul id="pagination" className={classNames("pagination", totalPages > 1 ? "flex flex-wrap gap-2 justify-center" : "")}>
-            {totalPages > 1 &&
-              Array.from({ length: totalPages }, (_val, index) => {
-                const page = index + 1;
-                const isActive = page === currentPage;
-                return (
-                  <button
-                    key={`page-${page}`}
-                    type="button"
-                    className={classNames(
-                      "min-w-7.5 px-2.5 py-1 rounded-md border text-[11px] font-semibold transition",
-                      isActive
-                        ? "bg-[#00296be0] border-[#00296be0] text-white shadow-sm"
-                        : "border-slate-300 text-slate-700 hover:border-primary hover:text-primary"
-                    )}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      loadActivities(page);
-                    }}
-                  >
-                    {page}
-                  </button>
-                );
-              })}
-          </ul>
+          <CompactPagination
+            ref={paginationRef}
+            totalPages={totalPages}
+            currentPage={currentPage}
+            pageWindow={PAGE_WINDOW}
+            onPageChange={(page) => loadActivities(page)}
+            labels={{
+              first: pageFirstLabel,
+              prev: pagePrevLabel,
+              next: pageNextLabel,
+              last: pageLastLabel,
+            }}
+          />
         </>
       )}
       {canCreateVisit && (
@@ -1142,8 +1228,8 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
           route="/Visitas/Create?fresh=1"
           ariaLabel={indT("Common_Create", "Create")}
           size={76}
-          right={24}
-          bottom={24}
+          right={16}
+          bottom={fabBottom}
         />
       )}
     </div>

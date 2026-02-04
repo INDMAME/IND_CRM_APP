@@ -76,7 +76,10 @@
   <data name="History_Filter_Client" xml:space="preserve"><value>Client</value></data>
   <data name="History_Filter_Clear" xml:space="preserve"><value>Clear</value></data>
   <data name="History_Filter_Apply" xml:space="preserve"><value>Apply</value></data>
-  <data name="History_Quick_Custom" xml:space="preserve"><value>Dates</value></data>
+  <data name="History_Quick_Custom" xml:space="preserve"><value>Date</value></data>
+  <data name="History_Quick_7Days" xml:space="preserve"><value>7 days</value></data>
+  <data name="History_Quick_30Days" xml:space="preserve"><value>30 days</value></data>
+  <data name="History_Quick_90Days" xml:space="preserve"><value>90 days</value></data>
   <data name="History_Quick_ThisWeek" xml:space="preserve"><value>This week</value></data>
   <data name="History_Quick_LastWeek" xml:space="preserve"><value>Last week</value></data>
   <data name="History_Quick_ThisMonth" xml:space="preserve"><value>This month</value></data>
@@ -96,6 +99,10 @@
   <data name="History_Status_SelectEnd" xml:space="preserve"><value>Select end date</value></data>
   <data name="History_Loading" xml:space="preserve"><value>Loading...</value></data>
   <data name="History_NoDataInRange" xml:space="preserve"><value>No visits in this range</value></data>
+  <data name="History_Page_First" xml:space="preserve"><value>First</value></data>
+  <data name="History_Page_Prev" xml:space="preserve"><value>Previous</value></data>
+  <data name="History_Page_Next" xml:space="preserve"><value>Next</value></data>
+  <data name="History_Page_Last" xml:space="preserve"><value>Last</value></data>
 
   <data name="Common_OK" xml:space="preserve"><value>OK</value></data>
   <data name="Common_Next" xml:space="preserve"><value>Next</value></data>

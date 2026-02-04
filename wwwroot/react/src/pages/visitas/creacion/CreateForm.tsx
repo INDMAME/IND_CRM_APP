@@ -411,7 +411,7 @@ function VisitasApp() {
         /* ignore */
       }
 
-      setHistoryFilterForDate(transDate);
+      setHistoryFilterForDate(transDate, true);
       closeConfirm();
       await wait(200);
       flashActionMark("okProcess", 1200);

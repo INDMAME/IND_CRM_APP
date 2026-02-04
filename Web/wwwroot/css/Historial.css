@@ -161,6 +161,19 @@
     background: rgba(0, 41, 107, 0.28);
     box-shadow: none;
 }
+.filter-card .drp-error {
+    border-color: rgba(239, 68, 68, 0.6);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
+}
+.filter-card .drp-section.is-error {
+    background: rgba(239, 68, 68, 0.12);
+    box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.35);
+}
+.filter-card .drp-section.is-error .drp-label,
+.filter-card .drp-section.is-error .drp-value,
+.filter-card .drp-section.is-error .drp-icon {
+    color: #b91c1c;
+}
 
 .filter-card .drp-label {
     font-size: 9px;
@@ -280,7 +293,7 @@
 
 .filter-card .drp-day.start,
 .filter-card .drp-day.end {
-    background: linear-gradient(135deg, #00296be0, #00296b);
+    background: #00296b;
     color: #ffffff;
     box-shadow: 0 6px 12px rgba(0,41,107,0.25);
 }
@@ -437,7 +450,7 @@
 .drp-day.disabled { color: #cbd5e1; cursor: not-allowed; }
 .drp-day.in-range { background: rgba(0, 41, 107, 0.28); color: #00296be0; border-radius: 10px; }
 .drp-day.start,
-.drp-day.end { background: linear-gradient(135deg, #00296be0, #00296b); color: #ffffff; box-shadow: 0 6px 12px rgba(0,41,107,0.25); }
+.drp-day.end { background: #00296b; color: #ffffff; box-shadow: 0 6px 12px rgba(0,41,107,0.25); }
 .drp-day.start.range-start { border-top-left-radius: 14px; border-bottom-left-radius: 14px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
 .drp-day.end.range-end { border-top-right-radius: 14px; border-bottom-right-radius: 14px; border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
 .drp-day.today { border: 1px dashed rgba(0,41,107,0.35); }
