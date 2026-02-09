@@ -249,6 +249,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
   const [isOpen, setIsOpen] = useState(false);
+  const [showManualPickerPanel, setShowManualPickerPanel] = useState(false);
   const [activeQuickFilter, setActiveQuickFilter] = useState<QuickFilterId | null>(null);
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null);
   const [clientResetKey, setClientResetKey] = useState(0);
@@ -456,6 +457,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     if (activeQuickFilter === "custom" && (!startDate || !endDate)) {
       setShowManualError(true);
       setSelectingStep(!startDate ? "start" : "end");
+      setShowManualPickerPanel(true);
       setIsOpen(true);
       setShowFilters(true);
       return false;
@@ -541,6 +543,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     setCurrentMonth(new Date().getMonth());
     setCurrentYear(new Date().getFullYear());
     setActiveQuickFilter(null);
+    setShowManualPickerPanel(false);
     setSelectedClient(null);
     setClientResetKey((prev) => prev + 1);
     setShowManualError(false);
@@ -564,6 +567,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       setCurrentMonth(start ? start.getMonth() : new Date().getMonth());
       setCurrentYear(start ? start.getFullYear() : new Date().getFullYear());
       setActiveQuickFilter(null);
+      setShowManualPickerPanel(false);
       setShowManualError(false);
       if (filter.clientAccount) {
         setSelectedClient({ value: filter.clientAccount, text: filter.clientText || filter.clientAccount });
@@ -695,6 +699,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       });
       setShowManualError(false);
       setActiveQuickFilter("custom");
+      setShowManualPickerPanel(true);
       const hasStart = !!startDate;
       const hasEnd = !!endDate;
 
@@ -725,6 +730,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
         setCurrentYear(newEnd.getFullYear());
         setHoverDate(null);
         setIsOpen(false);
+        setShowManualPickerPanel(false);
         return;
       }
 
@@ -746,6 +752,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
         setSelectingStep("done");
         setHoverDate(null);
         setIsOpen(false);
+        setShowManualPickerPanel(false);
       } else {
         setEndDate(null);
         setSelectingStep("end");
@@ -762,6 +769,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       logHistory("clearRange");
       setActiveQuickFilter(null);
       setShowManualError(false);
+      setShowManualPickerPanel(false);
       resetHistoryFilters();
       setIsOpen(false);
       setShowFilters(true);
@@ -773,6 +781,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     logHistory("openPopover", { section, start: fromDateValue, end: toDateValue, selectingStep });
     setShowManualError(false);
     setActiveQuickFilter("custom");
+    setShowManualPickerPanel(true);
     if (section === "end" && !startDate) {
       setSelectingStep("start");
     } else {
@@ -792,6 +801,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       setCurrentMonth(startDay.getMonth());
       setCurrentYear(startDay.getFullYear());
       setIsOpen(false);
+      setShowManualPickerPanel(false);
       setActiveQuickFilter(filterId);
       setShowManualError(false);
     },
@@ -803,18 +813,32 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       const today = startOfDay(new Date());
 
       if (filterId === "custom") {
+        if (showManualPickerPanel) {
+          setShowManualError(false);
+          setHoverDate(null);
+          setIsOpen(false);
+          setShowManualPickerPanel(false);
+          return;
+        }
+
         const nextStart = manualStartDate ? new Date(manualStartDate) : null;
         const nextEnd = manualEndDate ? new Date(manualEndDate) : null;
         setActiveQuickFilter("custom");
+        setShowManualPickerPanel(true);
         setStartDate(nextStart);
         setEndDate(nextEnd);
         if (nextStart) {
           setCurrentMonth(nextStart.getMonth());
           setCurrentYear(nextStart.getFullYear());
         }
-        setSelectingStep(nextStart && !nextEnd ? "end" : "start");
+        if (nextStart && nextEnd) {
+          setSelectingStep("done");
+          setIsOpen(false);
+        } else {
+          setSelectingStep(nextStart && !nextEnd ? "end" : "start");
+          setIsOpen(true);
+        }
         setHoverDate(null);
-        setIsOpen(true);
         setShowManualError(false);
         return;
       }
@@ -839,7 +863,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
         applyQuickRange(filterId, start, today);
       }
     },
-    [applyQuickRange, manualEndDate, manualStartDate]
+    [applyQuickRange, manualEndDate, manualStartDate, showManualPickerPanel]
   );
 
   const handleClientSelected = useCallback(
@@ -967,7 +991,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     !!endDate &&
     !isOpen &&
     (activeQuickFilter !== "custom" || manualRangeReady);
-  const showManualPicker = activeQuickFilter === "custom" && (isOpen || !manualRangeReady);
+  const showManualPicker = activeQuickFilter === "custom" && showManualPickerPanel;
 
   return (
     <div className="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4 space-y-2">

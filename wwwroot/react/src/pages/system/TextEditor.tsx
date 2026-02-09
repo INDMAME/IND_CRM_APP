@@ -146,6 +146,11 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     return initialText;
   });
 
+  const hasActiveProcess = useMemo(
+    () => !isReadOnly && (isTranscribing || isTyping || text !== (initialTextRef.current ?? "")),
+    [isReadOnly, isTranscribing, isTyping, text]
+  );
+
   const stopTyping = useCallback(() => {
     if (typingTimerRef.current) {
       clearTimeout(typingTimerRef.current);
@@ -320,6 +325,13 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
   useEffect(() => stopTyping, [stopTyping]);
 
   useEffect(() => {
+    window.__indSetNavigationGuard?.(hasActiveProcess);
+    return () => {
+      window.__indClearNavigationGuard?.();
+    };
+  }, [hasActiveProcess]);
+
+  useEffect(() => {
     if (!isTyping) return;
     const el = textareaRef.current;
     if (!el) return;
@@ -382,6 +394,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
       safeSetSessionValue(normalizedEditModeKey, "true");
       safeSetSessionValue(`${normalizedEditModeKey}_return`, "1");
     }
+    window.__indBypassNavigationGuardOnce?.();
     goBackAfterSave();
   };
 
@@ -397,6 +410,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
       safeRemoveSessionValue(`${normalizedEditModeKey}_return`);
       safeRemoveSessionValue(normalizedEditModeKey);
     }
+    window.__indBypassNavigationGuardOnce?.();
     goBackAfterSave();
   }, [isReadOnly, isTranscribing, isTyping, stopTyping, storageKey, goBackAfterSave, normalizedEditModeKey]);
 

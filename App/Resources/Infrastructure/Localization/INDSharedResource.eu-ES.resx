@@ -309,5 +309,7 @@
 
   <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>Uneko jatorria: {0}</value></data>
   <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>Xehetasun teknikoa: {0}</value></data>
+  <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve"><value>Zure prozesu aktiboa bertan behera geratuko da eta gorde gabeko aldaketak galduko dira. Jarraitu nahi duzu?</value></data>
 </root>
+
 

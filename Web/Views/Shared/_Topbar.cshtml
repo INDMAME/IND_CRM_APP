@@ -116,7 +116,7 @@
             {
                 var backOnClick = isVisitaDetail
                     ? "window.location.href='/Historial/History'"
-                    : "window.__indAllowHistoryOnce && window.__indAllowHistoryOnce(); window.history.back()";
+                    : "if (window.__indAllowHistoryOnce) { window.__indAllowHistoryOnce(); } else { window.history.back(); }";
                 var backDisabled = isVisitaDetail ? false : true;
                 <button id="globalBackBtn" type="button" class="topbar-btn pointer-events-auto"
                         aria-label="@SR["Topbar_Back"]" onclick="@backOnClick" @(backDisabled ? "disabled" : "")>

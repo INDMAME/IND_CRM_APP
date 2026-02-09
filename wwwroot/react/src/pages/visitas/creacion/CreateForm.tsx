@@ -155,6 +155,7 @@ function VisitasApp() {
       `&returnUrl=${encodeURIComponent(returnUrl)}` +
       `&allowEdit=${allowEdit ? "1" : "0"}`;
 
+    window.__indBypassNavigationGuardOnce?.();
     window.location.href = url;
     },
     [persistDraftNow]
@@ -335,6 +336,26 @@ function VisitasApp() {
     description.trim().length > 0 &&
     comentarios.trim().length > 0;
 
+  const hasActiveProcess = useMemo(() => {
+    if (busy) return true;
+    if (step > 1) return true;
+    if (selectedClient) return true;
+    if (selectedContacts.length > 0) return true;
+    return (
+      description.trim().length > 0 ||
+      comentarios.trim().length > 0 ||
+      antecedentes.trim().length > 0 ||
+      conclusiones.trim().length > 0
+    );
+  }, [antecedentes, busy, comentarios, conclusiones, description, selectedClient, selectedContacts.length, step]);
+
+  useEffect(() => {
+    window.__indSetNavigationGuard?.(hasActiveProcess);
+    return () => {
+      window.__indClearNavigationGuard?.();
+    };
+  }, [hasActiveProcess]);
+
   useTopbar(
     step,
     canGoNext,
@@ -438,6 +459,7 @@ function VisitasApp() {
       await wait(200);
       flashActionMark("okProcess", 1200);
       await wait(1200);
+      window.__indBypassNavigationGuardOnce?.();
       window.location.href = "/Historial/History";
       return true;
     } catch (e) {

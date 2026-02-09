@@ -135,6 +135,20 @@
         </div>
     </div>
 
+    <div id="indNavGuardModal" class="fixed inset-0 z-600000 hidden items-center justify-center bg-black/40 backdrop-blur-[1px] px-4" role="dialog" aria-modal="true" aria-hidden="true">
+        <div class="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
+            <div id="indNavGuardModalBody" class="text-sm text-slate-700 whitespace-pre-line"></div>
+            <div class="flex justify-end gap-2 pt-2">
+                <button id="indNavGuardModalCancel" type="button" class="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:border-primary hover:text-primary transition">
+                    @SR["Confirm_No"]
+                </button>
+                <button id="indNavGuardModalConfirm" type="button" class="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition">
+                    @SR["Confirm_Yes"]
+                </button>
+            </div>
+        </div>
+    </div>
+
     @if (!hideChrome)
     {
         <script>
@@ -311,9 +325,15 @@
                         })
                             .then((res) => {
                                 if (!res.ok) throw new Error("Company change failed.");
+                                if (typeof window.__indBypassNavigationGuardOnce === "function") {
+                                    window.__indBypassNavigationGuardOnce();
+                                }
                                 window.location.replace("/");
                             })
                             .catch(() => {
+                                if (typeof window.__indBypassNavigationGuardOnce === "function") {
+                                    window.__indBypassNavigationGuardOnce();
+                                }
                                 form.submit();
                             });
                     });
@@ -358,6 +378,241 @@
             message: @Html.Raw(JsonSerializer.Serialize(SR["Auth_PermissionDenied_Body"].Value)),
             ok: @Html.Raw(JsonSerializer.Serialize(SR["Common_OK"].Value))
         };
+        window.__IND_NAV_GUARD_I18N__ = {
+            activeProcessMessage: @Html.Raw(JsonSerializer.Serialize(SR["Navigation_ActiveProcess_ConfirmLeave"].Value)),
+            confirm: @Html.Raw(JsonSerializer.Serialize(SR["Confirm_Yes"].Value)),
+            cancel: @Html.Raw(JsonSerializer.Serialize(SR["Confirm_No"].Value))
+        };
+    </script>
+
+    <script>
+        (function () {
+            const i18n = window.__IND_NAV_GUARD_I18N__ || {};
+            const defaultMessage =
+                (typeof i18n.activeProcessMessage === "string" && i18n.activeProcessMessage.trim()) ||
+                "Your active process will be canceled and unsaved changes will be lost. Do you want to continue?";
+            const defaultConfirmText =
+                (typeof i18n.confirm === "string" && i18n.confirm.trim()) || "OK";
+            const defaultCancelText =
+                (typeof i18n.cancel === "string" && i18n.cancel.trim()) || "Cancel";
+
+            const modal = document.getElementById("indNavGuardModal");
+            const modalBody = document.getElementById("indNavGuardModalBody");
+            const modalConfirmBtn = document.getElementById("indNavGuardModalConfirm");
+            const modalCancelBtn = document.getElementById("indNavGuardModalCancel");
+
+            const guard = {
+                active: false,
+                message: defaultMessage,
+                bypass: false,
+                resetTimer: 0,
+                pendingAction: null,
+                modalOpen: false
+            };
+
+            const clearBypassTimer = () => {
+                if (!guard.resetTimer) return;
+                window.clearTimeout(guard.resetTimer);
+                guard.resetTimer = 0;
+            };
+
+            const bypassOnce = () => {
+                clearBypassTimer();
+                guard.bypass = true;
+                guard.resetTimer = window.setTimeout(() => {
+                    guard.bypass = false;
+                    guard.resetTimer = 0;
+                }, 250);
+            };
+
+            const resolveMessage = (candidate) =>
+                (typeof candidate === "string" && candidate.trim()) ? candidate : defaultMessage;
+
+            const setGuard = (activeOrOptions, message) => {
+                if (typeof activeOrOptions === "object" && activeOrOptions !== null) {
+                    guard.active = !!activeOrOptions.active;
+                    guard.message = resolveMessage(activeOrOptions.message);
+                    return;
+                }
+                guard.active = !!activeOrOptions;
+                guard.message = resolveMessage(message);
+            };
+
+            const clearGuard = () => {
+                guard.active = false;
+                guard.message = defaultMessage;
+                guard.pendingAction = null;
+                if (guard.modalOpen && modal) {
+                    modal.classList.add("hidden");
+                    modal.classList.remove("flex");
+                    modal.setAttribute("aria-hidden", "true");
+                    guard.modalOpen = false;
+                }
+            };
+
+            const closeModal = () => {
+                guard.pendingAction = null;
+                if (!modal || !guard.modalOpen) return;
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+                modal.setAttribute("aria-hidden", "true");
+                guard.modalOpen = false;
+            };
+
+            const executeAction = (action) => {
+                if (typeof action !== "function") return;
+                bypassOnce();
+                action();
+            };
+
+            const openModal = (message, action) => {
+                guard.pendingAction = typeof action === "function" ? action : null;
+                const safeMessage = resolveMessage(message);
+
+                if (!modal || !modalBody || !modalConfirmBtn || !modalCancelBtn) {
+                    if (window.confirm(safeMessage)) {
+                        executeAction(guard.pendingAction);
+                    } else {
+                        guard.pendingAction = null;
+                    }
+                    return;
+                }
+
+                modalBody.textContent = safeMessage;
+                modalConfirmBtn.textContent = defaultConfirmText;
+                modalCancelBtn.textContent = defaultCancelText;
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+                modal.setAttribute("aria-hidden", "false");
+                guard.modalOpen = true;
+                window.requestAnimationFrame(() => modalConfirmBtn.focus());
+            };
+
+            const requestNavigation = (action, message) => {
+                if (guard.bypass || !guard.active) {
+                    executeAction(action);
+                    return true;
+                }
+                openModal(message || guard.message, action);
+                return false;
+            };
+
+            const confirmNavigation = () => {
+                return !guard.active || guard.bypass;
+            };
+
+            const isSameDocumentHashNavigation = (url) =>
+                url.origin === window.location.origin &&
+                url.pathname === window.location.pathname &&
+                url.search === window.location.search &&
+                !!url.hash;
+
+            const shouldHandleAnchorClick = (anchor, event) => {
+                if (!anchor) return false;
+                if (anchor.hasAttribute("data-no-nav-guard")) return false;
+                if (anchor.hasAttribute("download")) return false;
+                if (anchor.target && anchor.target !== "_self") return false;
+                if (event.defaultPrevented) return false;
+                if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return false;
+                if (typeof event.button === "number" && event.button !== 0) return false;
+
+                const rawHref = anchor.getAttribute("href");
+                if (!rawHref) return false;
+
+                const href = String(rawHref).trim();
+                if (!href || href.startsWith("#") || href.startsWith("javascript:")) return false;
+                if (href.startsWith("mailto:") || href.startsWith("tel:")) return false;
+
+                try {
+                    const url = new URL(href, window.location.href);
+                    if (isSameDocumentHashNavigation(url)) return false;
+                } catch {
+                    return false;
+                }
+
+                return true;
+            };
+
+            const onDocumentClick = (event) => {
+                const target = event.target;
+                if (!(target instanceof Element)) return;
+                const anchor = target.closest("a[href]");
+                if (!shouldHandleAnchorClick(anchor, event)) return;
+                if (!guard.active || guard.bypass) return;
+
+                const href = anchor.href;
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation?.();
+
+                requestNavigation(() => {
+                    window.location.assign(href);
+                });
+            };
+
+            const onDocumentSubmit = (event) => {
+                const target = event.target;
+                if (!(target instanceof HTMLFormElement)) return;
+                if (target.hasAttribute("data-no-nav-guard")) return;
+                if (target.target && target.target !== "_self") return;
+                if (event.defaultPrevented) return;
+                if (!guard.active || guard.bypass) return;
+
+                event.preventDefault();
+                event.stopPropagation();
+                event.stopImmediatePropagation?.();
+                const form = target;
+
+                requestNavigation(() => {
+                    if (typeof form.requestSubmit === "function") {
+                        form.requestSubmit();
+                        return;
+                    }
+                    form.submit();
+                });
+            };
+
+            const onBeforeUnload = (event) => {
+                if (!guard.active || guard.bypass) return;
+                event.preventDefault();
+                event.returnValue = "";
+            };
+
+            const onModalConfirm = () => {
+                const action = guard.pendingAction;
+                closeModal();
+                executeAction(action);
+            };
+
+            const onModalCancel = () => {
+                closeModal();
+            };
+
+            modalConfirmBtn?.addEventListener("click", onModalConfirm);
+            modalCancelBtn?.addEventListener("click", onModalCancel);
+            modal?.addEventListener("click", (event) => {
+                if (event.target === modal) {
+                    onModalCancel();
+                }
+            });
+            document.addEventListener("keydown", (event) => {
+                if (!guard.modalOpen) return;
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    onModalCancel();
+                }
+            });
+
+            window.__indSetNavigationGuard = setGuard;
+            window.__indClearNavigationGuard = clearGuard;
+            window.__indBypassNavigationGuardOnce = bypassOnce;
+            window.__indConfirmNavigation = confirmNavigation;
+            window.__indRequestNavigation = requestNavigation;
+
+            document.addEventListener("click", onDocumentClick, true);
+            document.addEventListener("submit", onDocumentSubmit, true);
+            window.addEventListener("beforeunload", onBeforeUnload);
+        })();
     </script>
 
     @{
@@ -395,25 +650,33 @@
             }
 
             window.__indNavigateBack = function (fallbackUrl) {
-                try {
-                    if (history.state && history.state.indTrap === true) {
-                        history.go(-2);
-                        return;
+                const run = function () {
+                    try {
+                        if (history.state && history.state.indTrap === true) {
+                            history.go(-2);
+                            return;
+                        }
+                    } catch {
+                        // ignore
                     }
-                } catch {
-                    // ignore
-                }
-                if (fallbackUrl) {
-                    window.location.href = fallbackUrl;
-                    return;
-                }
-                try {
-                    history.back();
-                } catch {
                     if (fallbackUrl) {
                         window.location.href = fallbackUrl;
+                        return;
                     }
+                    try {
+                        history.back();
+                    } catch {
+                        if (fallbackUrl) {
+                            window.location.href = fallbackUrl;
+                        }
+                    }
+                };
+
+                if (typeof window.__indRequestNavigation === "function") {
+                    window.__indRequestNavigation(run);
+                    return;
                 }
+                run();
             };
 
             // Backward compatibility alias.

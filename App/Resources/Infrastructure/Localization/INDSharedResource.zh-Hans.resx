@@ -301,5 +301,7 @@
 
   <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>当前来源：{0}</value></data>
   <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>技术细节：{0}</value></data>
+  <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve"><value>当前流程将被取消，未保存的更改将会丢失。是否继续？</value></data>
 </root>
+
 

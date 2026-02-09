@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
@@ -320,6 +320,7 @@ const DetailApp = () => {
       `&allowEdit=${allowEdit ? "1" : "0"}` +
       (editModeKey ? `&editModeKey=${encodeURIComponent(editModeKey)}` : "");
 
+    window.__indBypassNavigationGuardOnce?.();
     window.location.href = url;
     },
     []
@@ -424,6 +425,15 @@ const DetailApp = () => {
     }
     handleModalConfirm();
   }, [busy, modalError, closeConfirm, handleModalConfirm]);
+
+  const hasActiveProcess = useMemo(() => busy || isEditing, [busy, isEditing]);
+
+  useEffect(() => {
+    window.__indSetNavigationGuard?.(hasActiveProcess);
+    return () => {
+      window.__indClearNavigationGuard?.();
+    };
+  }, [hasActiveProcess]);
 
   // hydrate data from server if any field is missing
   const hydrateFromApi = useCallback(async () => {
@@ -556,6 +566,7 @@ const DetailApp = () => {
     syncEditModeFlag(false);
     clearDraft();
     setStatus(indT("Common_Cancel", "Cancel"));
+    window.__indBypassNavigationGuardOnce?.();
     window.location.reload();
   }, [isEditing, syncEditModeFlag, clearDraft]);
 
@@ -659,6 +670,7 @@ const DetailApp = () => {
               await wait(200);
               flashActionMark("okProcess", 1200);
               await wait(1200);
+              window.__indBypassNavigationGuardOnce?.();
               window.location.href = "/Historial/History";
             }
             return ok;
@@ -688,6 +700,7 @@ const DetailApp = () => {
             await wait(200);
             flashActionMark("okDelProcess", 1200);
             await wait(1200);
+            window.__indBypassNavigationGuardOnce?.();
             window.location.href = "/Historial/History";
             }
             return ok;

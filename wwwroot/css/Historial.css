@@ -1,4 +1,4 @@
-/* Historial styles */
+﻿/* Historial styles */
 .historial-container { max-width: 100%; margin: 0 auto; padding: 0 12px; }
 
 .crm-filter-box {
@@ -434,7 +434,7 @@
     transition: background .15s ease, color .15s ease;
 }
 .drp-clear:hover { background: #fee2e2; color: #ef4444; }
-.drp-clear::before { content: "âœ•"; font-size: 14px; line-height: 1; }
+.drp-clear i { font-size: 14px; line-height: 1; }
 
 .drp-popover {
     position: absolute;
@@ -512,3 +512,5 @@
     opacity: 1;
     transform: translate(-50%, -6px) scale(1);
 }
+
+

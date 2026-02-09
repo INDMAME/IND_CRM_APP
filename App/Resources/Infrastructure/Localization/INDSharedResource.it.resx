@@ -301,5 +301,7 @@
 
   <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>Origine corrente: {0}</value></data>
   <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>Dettaglio tecnico: {0}</value></data>
+  <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve"><value>Il processo attivo verrà annullato e le modifiche non salvate andranno perse. Vuoi continuare?</value></data>
 </root>
+
 
