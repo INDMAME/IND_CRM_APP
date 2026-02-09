@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using System.IO;
+using System.Security.Cryptography;
 
 
 
@@ -307,6 +308,9 @@ app.UseHttpsRedirection();
 
 app.Use(async (context, next) =>
 {
+    var cspNonce = Convert.ToBase64String(RandomNumberGenerator.GetBytes(16));
+    context.Items["CspNonce"] = cspNonce;
+
     context.Response.Headers["X-Content-Type-Options"] = "nosniff";
     context.Response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
     context.Response.Headers["X-Frame-Options"] = "DENY";
@@ -316,7 +320,7 @@ app.Use(async (context, next) =>
         "base-uri 'self'; " +
         "frame-ancestors 'none'; " +
         "form-action 'self'; " +
-        "script-src 'self' 'unsafe-inline'; " +
+        $"script-src 'self' 'nonce-{cspNonce}'; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
         "font-src 'self' https://fonts.gstatic.com data:; " +
         "img-src 'self' data: blob:; " +

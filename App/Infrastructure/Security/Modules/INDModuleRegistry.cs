@@ -41,6 +41,27 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                 }
             };
 
+        // Shared endpoints can be used by multiple modules.
+        private static readonly IReadOnlyDictionary<string, string[]> SharedRouteCandidates =
+            new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["/Visitas/GetAccountsForDropdown"] = new[]
+                {
+                    ModuleVisitasCreacion,
+                    ModuleVisitasHistorial
+                },
+                ["/Visitas/TranscribeSpeech"] = new[]
+                {
+                    ModuleVisitasCreacion,
+                    ModuleVisitasHistorial
+                },
+                ["/TextEditorReact"] = new[]
+                {
+                    ModuleVisitasCreacion,
+                    ModuleVisitasHistorial
+                }
+            };
+
         // Known module code aliases mapped to a canonical module code.
         private static readonly IReadOnlyDictionary<string, string[]> ModuleAliases =
             new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
@@ -75,6 +96,25 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                         path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)))
                 {
                     moduleCode = entry.Key;
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // Returns candidate modules for shared endpoints.
+        public static bool TryResolveSharedRouteCandidates(string path, out string[] moduleCodes)
+        {
+            moduleCodes = Array.Empty<string>();
+            if (string.IsNullOrWhiteSpace(path))
+                return false;
+
+            foreach (var entry in SharedRouteCandidates)
+            {
+                if (path.StartsWith(entry.Key, StringComparison.OrdinalIgnoreCase))
+                {
+                    moduleCodes = entry.Value;
                     return true;
                 }
             }
@@ -166,4 +206,3 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
         }
     }
 }
-

@@ -6,6 +6,7 @@
     ViewData["Title"] = SR["Visits_Detail_Title"];
     ViewData["BodyClass"] = "visitas-body visitas-typography";
     var jsonOptions = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 } 
 
 <div class="visita-page w-full max-w-3xl mx-auto pb-8 px-4 md:px-6 mt-4 md:mt-6 min-h-screen" style="overflow: visible;">
@@ -17,7 +18,7 @@
 }
 
 @section Scripts {
-    <script>
+    <script nonce="@cspNonce">
         window.__VISIT_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.CRMTipoVisitaEnum ?? new object[] { }, jsonOptions));
         window.__ASISTENTE_TIPOS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.AsistenteTipoEnum ?? new object[] { }, jsonOptions));
         window.__ACTIVITY_DETAIL__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ActivityDetail ?? new { }, jsonOptions));
@@ -76,5 +77,5 @@
             TextEditor_OpenFullScreen = SR["TextEditor_OpenFullScreen"].Value
         }));
     </script>
-    <script type="module" src="~/js/detail.js" asp-append-version="true"></script>
+    <script nonce="@cspNonce" type="module" src="~/js/detail.js" asp-append-version="true"></script>
 }

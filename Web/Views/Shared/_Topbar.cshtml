@@ -105,7 +105,7 @@
     <div class="topbar relative sticky top-0 left-0 z-1900 flex h-[64px] w-full items-center justify-between bg-primary text-white px-2 sm:px-2.5 shadow-md transition-[margin,width] duration-300">
         <div class="topbar-left flex items-center gap-1 z-10">
                 <button id="btnMenu" type="button" class="topbar-btn pointer-events-auto"
-                        aria-label="@SR["Topbar_OpenMenu"]" aria-controls="sidebar" aria-expanded="false" onclick="toggleSidebar()">
+                        aria-label="@SR["Topbar_OpenMenu"]" aria-controls="sidebar" aria-expanded="false">
                     <span class="sr-only">@SR["Topbar_OpenMenu"]</span>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 5.25h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5m-16.5 4.5h16.5" />
@@ -114,12 +114,14 @@
 
             @if (!hideNavArrows)
             {
-                var backOnClick = isVisitaDetail
-                    ? "window.location.href='/Historial/History'"
-                    : "if (window.__indAllowHistoryOnce) { window.__indAllowHistoryOnce(); } else { window.history.back(); }";
                 var backDisabled = isVisitaDetail ? false : true;
+                var backUrl = isVisitaDetail ? "/Historial/History" : string.Empty;
+                var backUsesDefault = !isCreate;
                 <button id="globalBackBtn" type="button" class="topbar-btn pointer-events-auto"
-                        aria-label="@SR["Topbar_Back"]" onclick="@backOnClick" @(backDisabled ? "disabled" : "")>
+                        aria-label="@SR["Topbar_Back"]"
+                        data-back-default="@(backUsesDefault ? "true" : "false")"
+                        data-back-url="@backUrl"
+                        @(backDisabled ? "disabled" : "")>
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                     </svg>
@@ -137,14 +139,14 @@
                 <div class="flex items-center gap-1 pr-1">
                     <button id="historyFilterToggleBtn" type="button" class="topbar-btn pointer-events-auto"
                             aria-label="@SR["History_Filter_Toggle"]"
-                            onclick="window.dispatchEvent(new CustomEvent('history-toggle-filter'))">
+                            data-ind-dispatch="history-toggle-filter">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
                         </svg>
                     </button>
                     <button id="historyRefreshBtn" type="button" class="topbar-btn pointer-events-auto"
                             aria-label="@SR["History_Filter_Refresh"]"
-                            onclick="window.dispatchEvent(new CustomEvent('history-refresh'))">
+                            data-ind-dispatch="history-refresh">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                         </svg>
@@ -156,9 +158,9 @@
                 <div class="flex items-center gap-1 pr-1">
                     @if (canEditHistory)
                     {
-                        <button type="button" class="topbar-btn pointer-events-auto"
+                        <button id="visitEditBtn" type="button" class="topbar-btn pointer-events-auto"
                                 aria-label="@SR["Topbar_EditSave"]"
-                                onclick="window.dispatchEvent(new CustomEvent('visit-edit'))">
+                                data-ind-dispatch="visit-edit">
                             <svg id="visitEditIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
                             </svg>
@@ -171,14 +173,14 @@
                     {
                         <button id="visitDeleteBtn" type="button" class="topbar-btn pointer-events-auto"
                                 aria-label="@SR["Topbar_Delete"]"
-                                onclick="window.dispatchEvent(new CustomEvent('visit-delete'))">
+                                data-ind-dispatch="visit-delete">
                             <svg id="visitDeleteIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0 1 15.916 21H8.084A2.25 2.25 0 0 1 5.84 19.673L4.772 5.79m14.456 0a48.11 48.11 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.111 48.111 0 0 1 3.478-.397m7.5 0V4.5c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0C9.548 2.336 8.638 3.32 8.638 4.5v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
                             </svg>
                         </button>
                         <button id="visitCancelBtn" type="button" class="topbar-btn pointer-events-auto topbar-hidden"
                                 aria-label="@SR["Common_Cancel"]"
-                                onclick="window.dispatchEvent(new CustomEvent('visit-cancel-edit'))"
+                                data-ind-dispatch="visit-cancel-edit"
                                 style="padding:0;">
                             <svg id="visitCancelIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />

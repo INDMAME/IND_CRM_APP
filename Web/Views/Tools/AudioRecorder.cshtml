@@ -4,12 +4,13 @@
 
 @{
     ViewData["Title"] = SR["Tools_AudioRecorder_Title"];
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
 
 <div id="ind-audio-recorder-root"></div>
 
 @section Scripts {
-    <script>
+    <script nonce="@cspNonce">
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Tools_AudioRecorder_Title = SR["Tools_AudioRecorder_Title"].Value,
 
@@ -41,6 +42,6 @@
             AudioRecorder_Hint_Technical = SR["AudioRecorder_Hint_Technical"].Value
         }));
     </script>
-    <script type="module" defer src="~/js/audio-recorder.js" asp-append-version="true"></script>
+    <script nonce="@cspNonce" type="module" defer src="~/js/audio-recorder.js" asp-append-version="true"></script>
 }
 

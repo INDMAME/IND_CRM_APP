@@ -4,12 +4,18 @@ const path = require("node:path");
 const { test: base, expect, chromium } = require("@playwright/test");
 
 const repoRoot = path.resolve(__dirname, "..");
-const userDataDir = path.join(repoRoot, ".playwright", "devtools-profile");
+const profileRootDir = path.join(repoRoot, ".playwright", "devtools-profile");
 const authStatePath =
   process.env.IND_E2E_AUTH_STATE || path.join(repoRoot, "tests", ".auth", "entra-storage-state.json");
 const useStoredAuthState = process.env.IND_E2E_USE_AUTH_STATE !== "false" && fs.existsSync(authStatePath);
 const useDevtools = process.env.IND_E2E_DEVTOOLS === "true";
 const useFreshProfile = useDevtools && process.env.IND_E2E_FRESH_DEVTOOLS_PROFILE !== "false";
+
+// Keeps persistent profile directories isolated per worker to avoid lock contention.
+function getUserDataDir(workerIndex) {
+  const safeIndex = Number.isInteger(workerIndex) ? workerIndex : 0;
+  return path.join(profileRootDir, `worker-${safeIndex}`);
+}
 
 // Reads Playwright storage state from disk.
 function readStoredAuthState() {
@@ -58,13 +64,13 @@ async function applyStoredAuthState(context) {
 }
 
 // Resets persisted browser window/devtools placement to avoid stale undocked sessions.
-function resetProfileIfNeeded() {
+function resetProfileIfNeeded(userDataDir) {
   if (!useFreshProfile) return;
   fs.rmSync(userDataDir, { recursive: true, force: true });
 }
 
 // Writes DevTools preferences in Chromium profile to keep DevTools docked and mobile toolbar enabled.
-function ensureDevtoolsPrefs() {
+function ensureDevtoolsPrefs(userDataDir) {
   const defaultDir = path.join(userDataDir, "Default");
   const prefsPath = path.join(defaultDir, "Preferences");
   fs.mkdirSync(defaultDir, { recursive: true });
@@ -109,10 +115,12 @@ function ensureDevtoolsPrefs() {
 }
 
 const test = base.extend({
-  context: async ({ baseURL }, use) => {
+  context: async ({ baseURL }, use, workerInfo) => {
+    const workerIndex = Number.isInteger(workerInfo?.parallelIndex) ? workerInfo.parallelIndex : 0;
+    const userDataDir = getUserDataDir(workerIndex);
     if (useDevtools) {
-      resetProfileIfNeeded();
-      ensureDevtoolsPrefs();
+      resetProfileIfNeeded(userDataDir);
+      ensureDevtoolsPrefs(userDataDir);
     }
 
     const context = await chromium.launchPersistentContext(userDataDir, {

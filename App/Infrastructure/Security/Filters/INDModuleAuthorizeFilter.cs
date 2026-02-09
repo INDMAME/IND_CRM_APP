@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Localization;
-using Microsoft.Extensions.Logging;
 
 namespace IND_CRM_APP.Infrastructure.Security.Filters
 {
@@ -21,18 +20,15 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
         private readonly IIndAuthContextService _authContext;
         private readonly ITempDataDictionaryFactory _tempDataFactory;
         private readonly IStringLocalizer<INDSharedResource> _sr;
-        private readonly ILogger<INDModuleAuthorizeFilter> _logger;
 
         public INDModuleAuthorizeFilter(
             IIndAuthContextService authContext,
             ITempDataDictionaryFactory tempDataFactory,
-            IStringLocalizer<INDSharedResource> sr,
-            ILogger<INDModuleAuthorizeFilter> logger)
+            IStringLocalizer<INDSharedResource> sr)
         {
             _authContext = authContext;
             _tempDataFactory = tempDataFactory;
             _sr = sr;
-            _logger = logger;
         }
 
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -75,17 +71,17 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return;
             }
 
-            var moduleCode = ResolveModuleCode(path, http, ctxResult.Context, company);
-            if (string.IsNullOrWhiteSpace(moduleCode))
+            var moduleCandidates = ResolveModuleCandidates(path, company);
+            if (moduleCandidates.Length == 0)
             {
                 Deny(context, AccessDeniedMessage("Module not mapped."));
                 return;
             }
 
             var required = GetRequiredAccess(path);
-            if (!HasAccess(company, moduleCode, required))
+            if (!HasAnyAccess(company, moduleCandidates, required))
             {
-                var reason = $"Module {moduleCode} requires access {required}.";
+                var reason = $"Modules [{string.Join(",", moduleCandidates)}] require access {required}.";
                 Deny(context, AccessDeniedMessage(reason));
                 return;
             }
@@ -122,38 +118,19 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                    string.Equals(action, "Login", StringComparison.OrdinalIgnoreCase);
         }
 
-        private string? ResolveModuleCode(string path, Microsoft.AspNetCore.Http.HttpContext http, IndWebContext context, IndWebCompany company)
+        // Resolves module candidates only from explicit route mapping or fixed safe fallbacks.
+        private static string[] ResolveModuleCandidates(string path, IndWebCompany company)
         {
+            if (INDModuleRegistry.TryResolveSharedRouteCandidates(path, out var sharedCandidates))
+                return sharedCandidates;
+
             if (INDModuleRegistry.TryResolveModule(path, out var moduleCode))
-                return moduleCode;
+                return new[] { moduleCode };
 
-            if (IsHomePath(path))
-            {
-                return company.Modules
-                    .FirstOrDefault(m => m.AccessRightsInt >= IndAccessRights.View)?.ModuleCode;
-            }
+            if (IsHomePath(path) || IsContextActionPath(path))
+                return GetAccessibleModuleCandidates(company);
 
-            if (IsContextActionPath(path))
-            {
-                var contextReturnUrl = TryGetReturnUrl(http);
-                if (!string.IsNullOrWhiteSpace(contextReturnUrl) &&
-                    INDModuleRegistry.TryResolveModule(contextReturnUrl, out var contextModule))
-                {
-                    return contextModule;
-                }
-
-                return company.Modules
-                    .FirstOrDefault(m => m.AccessRightsInt >= IndAccessRights.View)?.ModuleCode;
-            }
-
-            var returnUrl = TryGetReturnUrl(http);
-            if (!string.IsNullOrWhiteSpace(returnUrl) &&
-                INDModuleRegistry.TryResolveModule(returnUrl, out var fromReturn))
-            {
-                return fromReturn;
-            }
-
-            return null;
+            return Array.Empty<string>();
         }
 
         private static bool IsHomePath(string path)
@@ -168,6 +145,21 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                    path.StartsWith("/INDLocalization", StringComparison.OrdinalIgnoreCase);
         }
 
+        private static string[] GetAccessibleModuleCandidates(IndWebCompany company)
+        {
+            if (company?.Modules == null || company.Modules.Count == 0)
+                return Array.Empty<string>();
+
+            return company.Modules
+                .Where(m => m.AccessRightsInt >= IndAccessRights.View && !string.IsNullOrWhiteSpace(m.ModuleCode))
+                .Select(m => INDModuleRegistry.TryGetCanonicalModuleCode(m.ModuleCode, out var canonical)
+                    ? canonical
+                    : m.ModuleCode)
+                .Where(code => !string.IsNullOrWhiteSpace(code))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+        }
+
         private static IndWebCompany? ResolveCompany(IndWebContext context, string? companyId)
         {
             if (!string.IsNullOrWhiteSpace(companyId))
@@ -180,8 +172,25 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             return context.Companies.FirstOrDefault();
         }
 
+        private static bool HasAnyAccess(IndWebCompany company, string[] moduleCodes, int requiredAccess)
+        {
+            if (moduleCodes == null || moduleCodes.Length == 0)
+                return false;
+
+            foreach (var moduleCode in moduleCodes)
+            {
+                if (HasAccess(company, moduleCode, requiredAccess))
+                    return true;
+            }
+
+            return false;
+        }
+
         private static bool HasAccess(IndWebCompany company, string moduleCode, int requiredAccess)
         {
+            if (company?.Modules == null || company.Modules.Count == 0)
+                return false;
+
             var module = company.Modules.FirstOrDefault(m =>
                 INDModuleRegistry.MatchesModuleCode(m.ModuleCode, moduleCode));
             if (module == null)
@@ -352,107 +361,6 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                    basePath.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase) ||
                    basePath.Equals("/Historial/History", StringComparison.OrdinalIgnoreCase) ||
                    basePath.Equals("/Visitas/Create", StringComparison.OrdinalIgnoreCase);
-        }
-
-        private string? TryGetReturnUrl(Microsoft.AspNetCore.Http.HttpContext http)
-        {
-            var returnUrl = http.Request.Query["returnUrl"].FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(returnUrl) && IsLocalUrl(returnUrl))
-                return NormalizeReturnUrl(returnUrl);
-
-            if (http.Request.HasFormContentType)
-            {
-                try
-                {
-                    var form = http.Request.ReadFormAsync().GetAwaiter().GetResult();
-                    returnUrl = form["returnUrl"].FirstOrDefault();
-                    if (!string.IsNullOrWhiteSpace(returnUrl) && IsLocalUrl(returnUrl))
-                        return NormalizeReturnUrl(returnUrl);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogWarning(ex, "Failed to read returnUrl from form.");
-                }
-            }
-
-            var referer = http.Request.Headers["Referer"].FirstOrDefault();
-            if (!string.IsNullOrWhiteSpace(referer))
-            {
-                var fromReferer = ExtractReturnUrlFromRaw(referer);
-                if (!string.IsNullOrWhiteSpace(fromReferer))
-                    return fromReferer;
-            }
-
-            return null;
-        }
-
-        private static string? ExtractReturnUrlFromRaw(string raw)
-        {
-            if (string.IsNullOrWhiteSpace(raw))
-                return null;
-
-            string? local = null;
-            if (Uri.TryCreate(raw, UriKind.Absolute, out var uri))
-            {
-                local = uri.PathAndQuery;
-            }
-            else if (IsLocalUrl(raw))
-            {
-                local = raw;
-            }
-
-            if (string.IsNullOrWhiteSpace(local))
-                return null;
-
-            return ExtractReturnUrlFromQuery(local);
-        }
-
-        private static string? ExtractReturnUrlFromQuery(string url)
-        {
-            var idx = url.IndexOf("?", StringComparison.Ordinal);
-            if (idx < 0 || idx == url.Length - 1)
-                return null;
-
-            var query = url[(idx + 1)..];
-            var parts = query.Split('&', StringSplitOptions.RemoveEmptyEntries);
-            foreach (var part in parts)
-            {
-                var kv = part.Split('=', 2);
-                if (kv.Length == 0)
-                    continue;
-
-                var key = Uri.UnescapeDataString(kv[0]);
-                if (!string.Equals(key, "returnUrl", StringComparison.OrdinalIgnoreCase))
-                    continue;
-
-                var value = kv.Length > 1 ? Uri.UnescapeDataString(kv[1]) : string.Empty;
-                if (string.IsNullOrWhiteSpace(value) || !IsLocalUrl(value))
-                    return null;
-
-                return NormalizeReturnUrl(value);
-            }
-
-            return null;
-        }
-
-        private static string NormalizeReturnUrl(string returnUrl)
-        {
-            var idx = returnUrl.IndexOf("?", StringComparison.Ordinal);
-            return idx >= 0 ? returnUrl[..idx] : returnUrl;
-        }
-
-        private static bool IsLocalUrl(string url)
-        {
-            if (string.IsNullOrWhiteSpace(url))
-                return false;
-
-            if (url[0] != '/')
-                return false;
-
-            if (url.StartsWith("//", StringComparison.Ordinal) || url.StartsWith("/\\", StringComparison.Ordinal))
-                return false;
-
-            return true;
         }
 
         private void Deny(ActionExecutingContext context, string message)

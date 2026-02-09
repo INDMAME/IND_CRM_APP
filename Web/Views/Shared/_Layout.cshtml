@@ -87,6 +87,7 @@
 
     var moduleAccessJson = JsonSerializer.Serialize(moduleAccess);
     var permissionRedirectMessage = TempData?["IndPermissionRedirectMessage"] as string;
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
 <body class="bg-slate-100 font-sans text-[#00296be0] overflow-x-hidden @bodyClass">
     <svg class="ind-spinner-defs" aria-hidden="true" focusable="false">
@@ -113,7 +114,7 @@
         @await Html.PartialAsync("_Topbar")
 
         <!-- OVERLAY -->
-        <div id="overlay" class="overlay fixed inset-0 bg-black/45 opacity-0 pointer-events-none transition duration-200" aria-hidden="true" onclick="toggleSidebar()"></div>
+        <div id="overlay" class="overlay fixed inset-0 bg-black/45 opacity-0 pointer-events-none transition duration-200" aria-hidden="true"></div>
 
         <!-- SIDEBAR -->
         @await Html.PartialAsync("_Sidebar")
@@ -151,13 +152,18 @@
 
     @if (!hideChrome)
     {
-        <script>
+        <script nonce="@cspNonce">
             const sidebar = document.getElementById("sidebar");
             const overlay = document.getElementById("overlay");
             const content = document.getElementById("content");
             const btnMenu = document.getElementById("btnMenu");
             const topbar = document.querySelector(".topbar");
             const visitasToggle = document.getElementById("visitasToggle");
+            const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
+            const userMenuToggle = document.getElementById("userMenuToggle");
+            const langBtn = document.getElementById("indLangButton");
+            const backBtn = document.getElementById("globalBackBtn");
+            const dispatchButtons = document.querySelectorAll("[data-ind-dispatch]");
             const companySub = document.getElementById("indCompanySubmenu");
             const companyBtn = document.getElementById("indCompanyButton");
 
@@ -340,7 +346,66 @@
                 });
             }
 
+            const runDefaultBack = () => {
+                if (!backBtn || backBtn.getAttribute("data-back-default") !== "true") {
+                    return;
+                }
+
+                const backUrl = backBtn.getAttribute("data-back-url") || "";
+                if (backUrl) {
+                    window.location.href = backUrl;
+                    return;
+                }
+
+                if (typeof window.__indAllowHistoryOnce === "function") {
+                    window.__indAllowHistoryOnce();
+                    return;
+                }
+
+                window.history.back();
+            };
+
+            const dispatchTopbarEvent = (eventName) => {
+                if (!eventName) return;
+                window.dispatchEvent(new CustomEvent(eventName));
+            };
+
+            const hideModal = (modalId) => {
+                if (!modalId) return;
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+                modal.setAttribute("aria-hidden", "true");
+            };
+
+            const showModal = (modalId) => {
+                if (!modalId) return;
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+                modal.setAttribute("aria-hidden", "false");
+            };
+
+            btnMenu?.addEventListener("click", toggleSidebar);
+            sidebarCloseBtn?.addEventListener("click", toggleSidebar);
+            visitasToggle?.addEventListener("click", toggleVisitas);
+            userMenuToggle?.addEventListener("click", toggleUserMenu);
+            langBtn?.addEventListener("click", toggleIndLanguageMenu);
+            companyBtn?.addEventListener("click", toggleIndCompanyMenu);
+            backBtn?.addEventListener("click", runDefaultBack);
+            dispatchButtons.forEach((button) => {
+                button.addEventListener("click", () => {
+                    dispatchTopbarEvent(button.getAttribute("data-ind-dispatch"));
+                });
+            });
+
+            // Backward compatibility for existing scripts that still call these helpers.
             window.toggleSidebar = toggleSidebar;
+            window.hideModal = hideModal;
+            window.showModal = showModal;
+
             updateSidebarHeight();
             bindCompanyForms();
             window.addEventListener("resize", updateSidebarHeight);
@@ -356,6 +421,49 @@
         </script>
     }
 
+    <script nonce="@cspNonce">
+        (function () {
+            const hideModal = function (modalId) {
+                if (!modalId) return;
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+                modal.setAttribute("aria-hidden", "true");
+            };
+
+            const showModal = function (modalId) {
+                if (!modalId) return;
+                const modal = document.getElementById(modalId);
+                if (!modal) return;
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
+                modal.setAttribute("aria-hidden", "false");
+            };
+
+            if (typeof window.hideModal !== "function") {
+                window.hideModal = hideModal;
+            }
+            if (typeof window.showModal !== "function") {
+                window.showModal = showModal;
+            }
+
+            if (window.__indModalCloseBound === true) {
+                return;
+            }
+
+            document.addEventListener("click", function (event) {
+                const target = event.target;
+                if (!(target instanceof Element)) return;
+                const closeBtn = target.closest("[data-ind-modal-close]");
+                if (!closeBtn) return;
+                window.hideModal(closeBtn.getAttribute("data-ind-modal-close"));
+            });
+
+            window.__indModalCloseBound = true;
+        })();
+    </script>
+
     @{
         try
         {
@@ -367,10 +475,10 @@
         }
     }
 
-    <script src="~/js/ind-action-mark.js" asp-append-version="true"></script>
+    <script nonce="@cspNonce" src="~/js/ind-action-mark.js" asp-append-version="true"></script>
 
 
-    <script>
+    <script nonce="@cspNonce">
         window.__IND_MODULE_ACCESS__ = @Html.Raw(moduleAccessJson);
         window.__IND_SELECTED_COMPANY__ = @Html.Raw(JsonSerializer.Serialize(selectedCompanyId ?? string.Empty));
         window.__IND_PERMISSION_I18N__ = {
@@ -385,7 +493,7 @@
         };
     </script>
 
-    <script>
+    <script nonce="@cspNonce">
         (function () {
             const i18n = window.__IND_NAV_GUARD_I18N__ || {};
             const defaultMessage =
@@ -626,7 +734,7 @@
         }
     }
 
-    <script>
+    <script nonce="@cspNonce">
         (function () {
             // Block swipe back/forward by trapping history entries.
             const trapState = { indTrap: true };
@@ -689,7 +797,7 @@
         })();
     </script>
 
-    <script>
+    <script nonce="@cspNonce">
         (function () {
             const overlay = document.getElementById("indGlobalLoading");
             if (!overlay) return;
@@ -734,7 +842,7 @@
         })();
     </script>
 
-    <script>
+    <script nonce="@cspNonce">
         (function () {
             const modal = document.getElementById("indPermissionModal");
             if (!modal) return;
@@ -771,7 +879,7 @@
 
     @if (!string.IsNullOrWhiteSpace(permissionRedirectMessage))
     {
-        <script>
+        <script nonce="@cspNonce">
             (function () {
                 const message = @Html.Raw(JsonSerializer.Serialize(permissionRedirectMessage));
                 if (window.IND && typeof window.IND.showPermissionModal === "function") {

@@ -9,6 +9,7 @@
     ViewData["HideChrome"] = true;
     ViewData["BodyClass"] = "overflow-hidden";
     ViewData["ContentClass"] = "w-full h-screen p-0";
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
 
 <div id="ind-text-editor-root"
@@ -33,7 +34,7 @@
 </div>
 
 @section Scripts {
-    <script>
+    <script nonce="@cspNonce">
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Topbar_Back = SR["Topbar_Back"].Value,
             Common_Edit = SR["Common_Edit"].Value,
@@ -70,5 +71,5 @@
             AudioRecorder_Hint_Technical = SR["AudioRecorder_Hint_Technical"].Value
         }));
     </script>
-    <script type="module" src="~/js/ind-text-editor.js" asp-append-version="true"></script>
+    <script nonce="@cspNonce" type="module" src="~/js/ind-text-editor.js" asp-append-version="true"></script>
 }

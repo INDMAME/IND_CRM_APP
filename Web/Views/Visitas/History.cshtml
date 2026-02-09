@@ -8,6 +8,7 @@
     ViewData["Title"] = SR["Visits_History_Title"];
     ViewData["HideNavArrows"] = true;
     ViewData["BodyClass"] = "visitas-typography";
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
 
 @section Styles {
@@ -17,7 +18,7 @@
 <div id="visitas-history-root" data-default-from="@ViewBag.DefaultFromDate" data-default-to="@ViewBag.DefaultToDate"></div>
 
 @section Scripts {
-    <script>
+    <script nonce="@cspNonce">
         window.__IND_I18N__ = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(new {
             History_From = SR["History_From"].Value,
             History_To = SR["History_To"].Value,
@@ -66,5 +67,5 @@
             Visits_Create_ShowClientOptions = SR["Visits_Create_ShowClientOptions"].Value
         }));
     </script>
-    <script type="module" src="~/js/history.js" asp-append-version="true"></script>
+    <script nonce="@cspNonce" type="module" src="~/js/history.js" asp-append-version="true"></script>
 }

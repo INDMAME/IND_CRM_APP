@@ -61,3 +61,6 @@
 #*.PDF   diff=astextplain
 #*.rtf   diff=astextplain
 #*.RTF   diff=astextplain
+
+# Keep git hooks with LF line endings so shell execution is stable.
+.githooks/* text eol=lf

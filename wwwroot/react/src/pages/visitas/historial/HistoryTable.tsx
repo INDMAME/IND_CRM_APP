@@ -602,6 +602,17 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
             data-actividadid={item.actividadId || ""}
             data-recid={item.recId != null ? String(item.recId) : ""}
             data-link-id={isClickable ? item.id : ""}
+            role={isClickable ? "button" : undefined}
+            tabIndex={isClickable ? 0 : undefined}
+            aria-label={isClickable ? (item.fullName || item.name || noDataText) : undefined}
+            onKeyDown={isClickable
+              ? (event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  onNavigate(item.id);
+                }
+              }
+              : undefined}
           >
             <div className="timeline-date-panel flex flex-col items-center justify-center gap-1 px-3 py-3 bg-slate-50 border-r border-slate-200 text-slate-600">
               <div className="text-xs font-semibold tracking-[0.2em] text-slate-500">{item.dateParts.year}</div>

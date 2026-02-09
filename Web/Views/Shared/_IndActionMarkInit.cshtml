@@ -3,6 +3,7 @@
 // IND TempData keys (PRG)
 var type = TempData["IND_ActionMark_Type"] as string; // okProcess | okDelProcess | errorProcess | warningProcess
 var duration = TempData["IND_ActionMark_DurationMs"] as string; // e.g. "1500"
+var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 
 type = string.IsNullOrWhiteSpace(type) ? null : type;
 duration = string.IsNullOrWhiteSpace(duration) ? "1500" : duration;
@@ -12,7 +13,7 @@ duration = string.IsNullOrWhiteSpace(duration) ? "1500" : duration;
 
 @if (type != null)
 {
-<script>
+<script nonce="@cspNonce">
 // IND Action Mark init via TempData (PRG). No Bootstrap.
 document.addEventListener('DOMContentLoaded', function () {
 try {

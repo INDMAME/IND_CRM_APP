@@ -5,6 +5,7 @@
     Layout = "~/Web/Views/Shared/_Layout.cshtml";
     ViewData["Title"] = SR["Visits_Create_Title"];
     ViewData["BodyClass"] = "visitas-body visitas-typography";
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
 
 @section Styles {
@@ -25,7 +26,7 @@
 </div>
 
 @section Scripts {
-    <script>
+    <script nonce="@cspNonce">
         window.__VISIT_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.CRMTipoVisitaEnum ?? new object[] { }));
         window.__ASISTENTE_TIPOS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.AsistenteTipoEnum ?? new object[] { }));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
@@ -102,5 +103,5 @@
             TextEditor_OpenFullScreen = SR["TextEditor_OpenFullScreen"].Value
         }));
     </script>
-    <script type="module" src="~/js/create.js" asp-append-version="true"></script>
+    <script nonce="@cspNonce" type="module" src="~/js/create.js" asp-append-version="true"></script>
 }

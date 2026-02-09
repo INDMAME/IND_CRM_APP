@@ -104,14 +104,6 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
-        // Clears session and redirects to login (GET fallback for direct navigation).
-        [HttpGet]
-        [ActionName("Logout")]
-        public async Task<IActionResult> LogoutGet()
-        {
-            return await LogoutCore();
-        }
-
         // Clears session and redirects to login
         [HttpPost]
         [ValidateAntiForgeryToken]

@@ -308,6 +308,8 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
                   type="button"
                   onClick={() => setSelected((prev) => prev.filter((s) => s.value !== c.value))}
                   className="text-slate-700 hover:text-slate-700/80"
+                  aria-label={indT("Common_Delete", "Delete")}
+                  title={indT("Common_Delete", "Delete")}
                 >
                   <XMarkIcon className="h-4 w-4" />
                 </button>
@@ -334,6 +336,8 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
           <button
             type="button"
             className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-600"
+            aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
+            aria-expanded={open}
             onClick={() => {
               if (!accountNum) return;
               if (open) {

@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+echo "[pre-commit] Syncing .codex markdown references..."
+node scripts/sync-codex-references.mjs
+
+# Stage markdown reference updates so commit includes synchronized copies.
+git add -- .codex/skills/ind-crm-codex-guardrails/references/*.md
+git add -u -- .codex/skills/ind-crm-codex-guardrails/references/*.md
