@@ -5,13 +5,13 @@
 
 <button id="@Model.Id"
         type="@Model.Type"
-        class="relative inline-block overflow-hidden rounded-[20px] @Model.CssClass"
+        class="relative inline-block overflow-hidden rounded-[5px] @Model.CssClass"
         style="padding: 5.3px 0;">
-    <div class="absolute w-[150%] h-[50%] opacity-70 bottom-[-11px] right-[-125%] rounded-full animate-star-movement-bottom z-0"
+    <div class="absolute w-[150%] h-[50%] opacity-70 bottom-[-11px] right-[-125%] rounded-md animate-star-movement-bottom z-0"
          style="background: radial-gradient(circle, rgba(0, 41, 107, 0.65), transparent 12%); animation-duration: 2.5s;"></div>
-    <div class="absolute w-[150%] h-[50%] opacity-70 top-[-10px] left-[-125%] rounded-full animate-star-movement-top z-0"
+    <div class="absolute w-[150%] h-[50%] opacity-70 top-[-10px] left-[-125%] rounded-md animate-star-movement-top z-0"
          style="background: radial-gradient(circle, rgba(0, 41, 107, 0.65), transparent 12%); animation-duration: 2.5s;"></div>
-    <span class="primary-btn relative z-10 inline-flex items-center gap-2 rounded-[20px] bg-gradient-to-b from-[#00296b] to-[#001f4d] border border-[#001f4d]/70 text-white text-[14px] py-[12px] px-[22px]">
+    <span class="primary-btn relative z-10 inline-flex items-center gap-2 rounded-[5px] bg-gradient-to-b from-[#00296b] to-[#001f4d] border border-[#001f4d]/70 text-white text-[14px] py-[12px] px-[22px]">
         @if (hasIcon)
         {
             <i class="@Model.IconClass" aria-hidden="true"></i>

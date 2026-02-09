@@ -10,6 +10,8 @@ import ClientSearchCombobox, { ClientOption } from "../../../components/visitas/
 import HistoryTable, { TimelineItem } from "./HistoryTable.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
+import FilterButton from "../../../components/commons/FilterButton.tsx";
+import ActionButton from "../../../components/commons/ActionButton.tsx";
 
 type Props = {
   defaultFromDate?: string;
@@ -240,6 +242,8 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
 
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
+  const [manualStartDate, setManualStartDate] = useState<Date | null>(null);
+  const [manualEndDate, setManualEndDate] = useState<Date | null>(null);
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
   const [selectingStep, setSelectingStep] = useState<"start" | "end" | "done">("start");
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
@@ -530,6 +534,8 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const resetHistoryFilters = useCallback(() => {
     setStartDate(null);
     setEndDate(null);
+    setManualStartDate(null);
+    setManualEndDate(null);
     setSelectingStep("start");
     setHoverDate(null);
     setCurrentMonth(new Date().getMonth());
@@ -689,33 +695,63 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       });
       setShowManualError(false);
       setActiveQuickFilter("custom");
-      if (!startDate || endDate) {
-        setStartDate(dateObj);
-        setEndDate(null);
-        setSelectingStep("end");
-        setCurrentMonth(dateObj.getMonth());
-        setCurrentYear(dateObj.getFullYear());
+      const hasStart = !!startDate;
+      const hasEnd = !!endDate;
+
+      if (selectingStep === "end") {
+        if (!hasStart) {
+          setStartDate(dateObj);
+          setEndDate(null);
+          setSelectingStep("end");
+          setCurrentMonth(dateObj.getMonth());
+          setCurrentYear(dateObj.getFullYear());
+          return;
+        }
+
+        let newStart = startDate as Date;
+        let newEnd = dateObj;
+        if (isBefore(newEnd, newStart)) {
+          const swap = newStart;
+          newStart = newEnd;
+          newEnd = swap;
+        }
+
+        setStartDate(newStart);
+        setEndDate(newEnd);
+        setManualStartDate(newStart);
+        setManualEndDate(newEnd);
+        setSelectingStep("done");
+        setCurrentMonth(newEnd.getMonth());
+        setCurrentYear(newEnd.getFullYear());
+        setHoverDate(null);
+        setIsOpen(false);
         return;
       }
 
-      if (startDate && isBefore(dateObj, startDate)) {
-        setStartDate(dateObj);
+      const newStart = dateObj;
+      if (hasEnd && endDate && isBefore(endDate, newStart)) {
+        setStartDate(newStart);
         setEndDate(null);
         setSelectingStep("end");
-        setCurrentMonth(dateObj.getMonth());
-        setCurrentYear(dateObj.getFullYear());
+        setCurrentMonth(newStart.getMonth());
+        setCurrentYear(newStart.getFullYear());
         return;
       }
 
-      const newStart = startDate;
-      const newEnd = dateObj;
       setStartDate(newStart);
-      setEndDate(newEnd);
-      setSelectingStep("done");
-      setCurrentMonth(dateObj.getMonth());
-      setCurrentYear(dateObj.getFullYear());
-      setHoverDate(null);
-      setIsOpen(false);
+      if (hasEnd && endDate) {
+        setEndDate(endDate);
+        setManualStartDate(newStart);
+        setManualEndDate(endDate);
+        setSelectingStep("done");
+        setHoverDate(null);
+        setIsOpen(false);
+      } else {
+        setEndDate(null);
+        setSelectingStep("end");
+      }
+      setCurrentMonth(newStart.getMonth());
+      setCurrentYear(newStart.getFullYear());
     },
     [endDate, fromDateValue, selectingStep, startDate, toDateValue]
   );
@@ -767,37 +803,43 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       const today = startOfDay(new Date());
 
       if (filterId === "custom") {
+        const nextStart = manualStartDate ? new Date(manualStartDate) : null;
+        const nextEnd = manualEndDate ? new Date(manualEndDate) : null;
         setActiveQuickFilter("custom");
-        setStartDate(null);
-        setEndDate(null);
-        setSelectingStep("start");
+        setStartDate(nextStart);
+        setEndDate(nextEnd);
+        if (nextStart) {
+          setCurrentMonth(nextStart.getMonth());
+          setCurrentYear(nextStart.getFullYear());
+        }
+        setSelectingStep(nextStart && !nextEnd ? "end" : "start");
         setHoverDate(null);
-        setIsOpen(false);
+        setIsOpen(true);
         setShowManualError(false);
         return;
       }
 
       if (filterId === "days-7") {
-        const end = new Date(today);
-        end.setDate(today.getDate() - 6);
-        applyQuickRange(filterId, today, end);
+        const start = new Date(today);
+        start.setDate(today.getDate() - 6);
+        applyQuickRange(filterId, start, today);
         return;
       }
 
       if (filterId === "days-30") {
-        const end = new Date(today);
-        end.setDate(today.getDate() - 29);
-        applyQuickRange(filterId, today, end);
+        const start = new Date(today);
+        start.setDate(today.getDate() - 29);
+        applyQuickRange(filterId, start, today);
         return;
       }
 
       if (filterId === "days-90") {
-        const end = new Date(today);
-        end.setDate(today.getDate() - 89);
-        applyQuickRange(filterId, today, end);
+        const start = new Date(today);
+        start.setDate(today.getDate() - 89);
+        applyQuickRange(filterId, start, today);
       }
     },
-    [applyQuickRange]
+    [applyQuickRange, manualEndDate, manualStartDate]
   );
 
   const handleClientSelected = useCallback(
@@ -919,6 +961,13 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const showFilterActions = showFilters;
   const showSummary = !showFilters && !!startDate && !!endDate;
   const showResults = !showFilters;
+  const manualRangeReady = !!manualStartDate && !!manualEndDate;
+  const showInlineSummary =
+    !!startDate &&
+    !!endDate &&
+    !isOpen &&
+    (activeQuickFilter !== "custom" || manualRangeReady);
+  const showManualPicker = activeQuickFilter === "custom" && (isOpen || !manualRangeReady);
 
   return (
     <div className="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4 space-y-2">
@@ -945,24 +994,27 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
             {quickFilters.map((item) => {
               const isActive = activeQuickFilter === item.id;
               return (
-                <button
+                <FilterButton
                   key={item.id}
-                  type="button"
-                  className={classNames(
-                    "w-full rounded-full border text-[11px] font-semibold py-1.5 px-3 transition",
-                    isActive
-                      ? "border-transparent bg-[#00296b] text-[#e2e8f0] shadow-sm"
-                      : "border-transparent bg-[#00296bc4] text-[#e2e8f0] hover:bg-[#00296be0]"
-                  )}
+                  label={item.label}
+                  active={isActive}
+                  className="w-full"
                   onClick={() => handleQuickFilter(item.id)}
-                >
-                  {item.label}
-                </button>
+                />
               );
             })}
           </div>
 
-          {activeQuickFilter === "custom" && (
+          {showInlineSummary && (
+            <div className="history-filter-summary flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] px-1">
+              <span className="font-semibold">{summaryFrom}:</span>
+              <span>{startDate ? formatDisplay(startDate, locale) : "--"}</span>
+              <span className="font-semibold">{summaryTo}:</span>
+              <span>{endDate ? formatDisplay(endDate, locale) : "--"}</span>
+            </div>
+          )}
+
+          {showManualPicker && (
           <div className="relative">
               <div
                 id="drpActivator"
@@ -1159,26 +1211,22 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
 
           {showFilterActions && (
             <div className="mt-1 grid grid-cols-2 gap-2 history-filter-actions">
-              <button
-                type="button"
-                className="w-full rounded-full border border-transparent bg-[#00296bc4] text-[11px] font-semibold text-[#e2e8f0] hover:bg-[#00296be0] py-1 px-3"
+              <ActionButton
+                label={clearLabel}
+                className="w-full"
                 onClick={() => {
                   resetHistoryFilters();
                   setIsOpen(false);
                   setShowFilters(true);
                 }}
-              >
-                {clearLabel}
-              </button>
-              <button
-                type="button"
-                className="w-full rounded-full border border-transparent bg-[#00296bc4] text-[11px] font-semibold text-[#e2e8f0] hover:bg-[#00296be0] py-1 px-3"
+              />
+              <ActionButton
+                label={applyLabel}
+                className="w-full"
                 onClick={() => {
                   applyFilters({ closePanel: true, page: 1 });
                 }}
-              >
-                {applyLabel}
-              </button>
+              />
             </div>
           )}
         </div>

@@ -319,7 +319,7 @@ app.Use(async (context, next) =>
         "script-src 'self' 'unsafe-inline'; " +
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
         "font-src 'self' https://fonts.gstatic.com data:; " +
-        "img-src 'self' data:; " +
+        "img-src 'self' data: blob:; " +
         "connect-src 'self'; " +
         "media-src 'self' blob:; " +
         "worker-src 'self' blob:;";

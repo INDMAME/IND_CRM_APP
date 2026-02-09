@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -33,7 +33,7 @@
   <data name="Nav_Visits_History" xml:space="preserve"><value>Historial</value></data>
 
   <data name="Visits_Create_Title" xml:space="preserve"><value>Creación</value></data>
-  <data name="Visits_Detail_Title" xml:space="preserve"><value>Detalles</value></data>
+  <data name="Visits_Detail_Title" xml:space="preserve"><value>Detalle</value></data>
   <data name="Visits_History_Title" xml:space="preserve"><value>Histórico</value></data>
 
   <data name="UserMenu_ConnectedAs" xml:space="preserve"><value>Conectado como</value></data>

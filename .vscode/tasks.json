@@ -51,6 +51,26 @@
       "problemMatcher": []
     },
     {
+      "label": "npm-build",
+      "command": "npm",
+      "type": "process",
+      "args": [
+        "run",
+        "build"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "build-full",
+      "dependsOn": [
+        "kill-7703",
+        "npm-build",
+        "build"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
       "label": "watch",
       "command": "dotnet",
       "type": "process",

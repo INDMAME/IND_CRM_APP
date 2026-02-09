@@ -4,7 +4,7 @@
 .crm-filter-box {
     background: #fff;
     padding: 25px;
-    border-radius: 16px;
+    border-radius: 5px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.08);
     border-left: 6px solid #00296b;
 }
@@ -26,7 +26,7 @@
 
 .timeline-card {
     background: #ffffff;
-    border-radius: 18px;
+    border-radius: 5px;
     border: 1px solid #e2e8f0;
     box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
     width: 100%;
@@ -57,6 +57,14 @@
     width: 100%;
     background: transparent;
     border: none;
+    --ind-filter-btn-bg: #e2e8f0;
+    --ind-filter-btn-bg-hover: #e2e8f0;
+    --ind-filter-btn-bg-active: #00296bbf;
+    --ind-filter-btn-text: #64748b;
+    --ind-filter-btn-text-active: #f1f5f9;
+    --ind-filter-btn-border: #cbd5e1;
+    --ind-filter-btn-border-active: #cbd5e1;
+    --ind-filter-btn-shadow: none;
 }
 
 .filter-card--expanded {
@@ -108,6 +116,10 @@
 
 .filter-card .history-filter-stack > .history-client-combobox {
     margin-top: 8px;
+}
+
+.filter-card .history-client-combobox input::placeholder {
+    font-size: 15px;
 }
 
 .filter-card .ind-quick-slider__track {
@@ -213,12 +225,12 @@
 .filter-card .primary-btn {
     font-size: 12px;
     padding: 8px 10px;
-    border-radius: 12px;
+    border-radius: 5px;
 }
 
 .filter-card .drp-popover {
     width: 100%;
-    border-radius: 14px;
+    border-radius: 5px;
     background: #ffffff;
     color: #00296be0;
     border: 1px solid #e2e8f0;
@@ -258,7 +270,7 @@
 }
 
 .filter-card .drp-day {
-    border-radius: 12px;
+    border-radius: 5px;
     font-size: 12px;
     color: #00296be0;
 }
@@ -282,13 +294,13 @@
 .filter-card .drp-day.in-range {
     background: rgba(0, 41, 107, 0.28);
     color: #00296be0;
-    border-radius: 10px;
+    border-radius: 5px;
 }
 
 .filter-card .drp-day.hover-range {
     background: rgba(0, 41, 107, 0.18);
     color: #00296be0;
-    border-radius: 8px;
+    border-radius: 5px;
 }
 
 .filter-card .drp-day.start,
@@ -357,7 +369,7 @@
     font-weight: 600;
     background: #f8fafc;
     border: 1px dashed #cbd5e1;
-    border-radius: 12px;
+    border-radius: 5px;
 }
 
 /* ================================
@@ -370,7 +382,7 @@
     flex-wrap: nowrap;
     border: 1px solid #d5e3ff;
     background: #ffffff;
-    border-radius: 12px;
+    border-radius: 5px;
     box-shadow: 0 6px 18px rgba(0,0,0,0.08);
     padding: 10px 12px;
     cursor: pointer;
@@ -390,7 +402,7 @@
     flex: 1 1 120px;
     min-width: 0;
     padding: 8px 10px 6px;
-    border-radius: 10px;
+    border-radius: 5px;
     transition: background .15s ease, box-shadow .15s ease;
     display: flex;
     flex-direction: column;
@@ -415,14 +427,14 @@
     width: 38px;
     height: 38px;
     padding: 0;
-    border-radius: 50%;
+    border-radius: 5px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: background .15s ease, color .15s ease;
 }
 .drp-clear:hover { background: #fee2e2; color: #ef4444; }
-.drp-clear::before { content: "✕"; font-size: 14px; line-height: 1; }
+.drp-clear::before { content: "âœ•"; font-size: 14px; line-height: 1; }
 
 .drp-popover {
     position: absolute;
@@ -430,7 +442,7 @@
     top: calc(100% + 8px);
     width: 100%;
     background: #ffffff;
-    border-radius: 14px;
+    border-radius: 5px;
     box-shadow: 0 18px 44px rgba(0,0,0,0.16);
     z-index: 999;
     overflow: hidden;
@@ -438,23 +450,23 @@
 }
 .drp-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #e2e8f0; background: #f8fafc; }
 .drp-month { font-weight: 700; color: #00296be0; text-transform: capitalize; }
-.drp-nav { background: #e2e8f0; border: none; border-radius: 12px; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #00296b; transition: background .15s ease, transform .15s ease; }
+.drp-nav { background: #e2e8f0; border: none; border-radius: 5px; width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center; color: #00296b; transition: background .15s ease, transform .15s ease; }
 .drp-nav:hover { background: rgba(0,41,107,0.12); transform: translateY(-1px); }
 
 .drp-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .5px; color: #94a3b8; padding: 10px 14px 6px; }
 .drp-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px 4px; padding: 0 14px 14px; }
 
-.drp-day { width: 100%; aspect-ratio: 1 / 1; border: none; background: transparent; border-radius: 12px; font-weight: 600; color: #00296be0; transition: background .12s ease, color .12s ease, transform .12s ease; cursor: pointer; position: relative; }
+.drp-day { width: 100%; aspect-ratio: 1 / 1; border: none; background: transparent; border-radius: 5px; font-weight: 600; color: #00296be0; transition: background .12s ease, color .12s ease, transform .12s ease; cursor: pointer; position: relative; }
 .drp-day:hover:not(.disabled):not(.empty) { background: rgba(0,41,107,0.05); }
 .drp-day.empty { cursor: default; background: transparent; }
 .drp-day.disabled { color: #cbd5e1; cursor: not-allowed; }
-.drp-day.in-range { background: rgba(0, 41, 107, 0.28); color: #00296be0; border-radius: 10px; }
+.drp-day.in-range { background: rgba(0, 41, 107, 0.28); color: #00296be0; border-radius: 5px; }
 .drp-day.start,
 .drp-day.end { background: #00296b; color: #ffffff; box-shadow: 0 6px 12px rgba(0,41,107,0.25); }
-.drp-day.start.range-start { border-top-left-radius: 14px; border-bottom-left-radius: 14px; border-top-right-radius: 10px; border-bottom-right-radius: 10px; }
-.drp-day.end.range-end { border-top-right-radius: 14px; border-bottom-right-radius: 14px; border-top-left-radius: 10px; border-bottom-left-radius: 10px; }
+.drp-day.start.range-start { border-top-left-radius: 5px; border-bottom-left-radius: 5px; border-top-right-radius: 5px; border-bottom-right-radius: 5px; }
+.drp-day.end.range-end { border-top-right-radius: 5px; border-bottom-right-radius: 5px; border-top-left-radius: 5px; border-bottom-left-radius: 5px; }
 .drp-day.today { border: 1px dashed rgba(0,41,107,0.35); }
-.drp-day.hover-range { background: rgba(0, 41, 107, 0.18); color: #00296be0; border-radius: 8px; }
+.drp-day.hover-range { background: rgba(0, 41, 107, 0.18); color: #00296be0; border-radius: 5px; }
 
 .drp-status { background: rgba(0,41,107,0.06); color: #00296be0; font-size: 12px; padding: 10px 14px; border-top: 1px solid #e2e8f0; text-align: center; font-weight: 600; }
 
@@ -484,7 +496,7 @@
     line-height: 1.45;
     background: rgba(15, 23, 42, 0.96);
     color: #f8fafc;
-    border-radius: 12px;
+    border-radius: 5px;
     box-shadow: 0 14px 34px rgba(0,0,0,0.28);
     pointer-events: none;
     z-index: 1200;

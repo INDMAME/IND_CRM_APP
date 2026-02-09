@@ -57,6 +57,15 @@ function safeSetSessionValue(key, value) {
   }
 }
 
+// Remove a session value without throwing for blocked storage.
+function safeRemoveSessionValue(key) {
+  try {
+    sessionStorage.removeItem(key);
+  } catch {
+    // ignore
+  }
+}
+
 function parseBool(value) {
   const normalized = String(value || "").trim().toLowerCase();
   return normalized === "1" || normalized === "true" || normalized === "yes";
@@ -112,6 +121,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
   const typingTimerRef = useRef(null);
   const typingTextRef = useRef("");
   const typingIndexRef = useRef(0);
+  const initialTextRef = useRef("");
   const textareaRef = useRef(null);
   const computeEditorHeight = useCallback(() => {
     if (typeof window === "undefined") {
@@ -131,8 +141,9 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
 
   const [text, setText] = useState(() => {
     const stored = safeGetSessionValue(storageKey);
-    if (stored !== null) return stored;
-    return String(initialValue || "");
+    const initialText = stored !== null ? stored : String(initialValue || "");
+    initialTextRef.current = initialText;
+    return initialText;
   });
 
   const stopTyping = useCallback(() => {
@@ -249,6 +260,17 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     setTranscribeError("");
   }, []);
 
+  const handleRecordingError = useCallback((message) => {
+    // Show a warning action mark; keep the recorder open to display the error label.
+    try {
+      if (window.IND && typeof window.IND.flashActionMark === "function") {
+        window.IND.flashActionMark({ type: "warningProcess", durationMs: 1500 });
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     const updateHeight = () => {
@@ -356,8 +378,27 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
   const onSave = () => {
     if (isReadOnly || isTranscribing || isTyping) return;
     safeSetSessionValue(storageKey, text);
+    if (normalizedEditModeKey) {
+      safeSetSessionValue(normalizedEditModeKey, "true");
+      safeSetSessionValue(`${normalizedEditModeKey}_return`, "1");
+    }
     goBackAfterSave();
   };
+
+  // Restore the initial text value for this session without saving.
+  const onCancelEdit = useCallback(() => {
+    if (isReadOnly || isTranscribing || isTyping) return;
+    stopTyping();
+    setTranscribeError("");
+    const initialText = initialTextRef.current ?? "";
+    setText(initialText);
+    safeSetSessionValue(storageKey, initialText);
+    if (normalizedEditModeKey) {
+      safeRemoveSessionValue(`${normalizedEditModeKey}_return`);
+      safeRemoveSessionValue(normalizedEditModeKey);
+    }
+    goBackAfterSave();
+  }, [isReadOnly, isTranscribing, isTyping, stopTyping, storageKey, goBackAfterSave, normalizedEditModeKey]);
 
   const editorBoxClass = isReadOnly
     ? "relative rounded-2xl border border-slate-200 bg-slate-100 shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary"
@@ -401,16 +442,28 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
             <div aria-hidden="true" style={{ width: "25px", height: "25px" }} />
           )
         ) : (
-          <button
-            type="button"
-            className="topbar-btn"
-            aria-label={indT("Common_Save", "Save")}
-            onClick={onSave}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="h-6 w-6" aria-hidden="true">
-              <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              className="topbar-btn"
+              aria-label={indT("Common_Save", "Save")}
+              onClick={onSave}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="h-6 w-6" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="topbar-btn"
+              aria-label={indT("Common_Cancel", "Cancel")}
+              onClick={onCancelEdit}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="h-6 w-6" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
 
@@ -426,6 +479,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
                 transcribeLabel={indT("TextEditor_Transcribe", "Transcribe")}
                 transcribeBusyLabel={indT("TextEditor_Transcribing", "Transcribing")}
                 onAudioCleared={handleAudioCleared}
+                onRecordingError={handleRecordingError}
               />
             </div>
           )}

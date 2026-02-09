@@ -94,10 +94,16 @@
     {
         topbarTitle = SR["Visits_Detail_Title"];
     }
+
+    if (!string.IsNullOrWhiteSpace(selectedCompanyId))
+    {
+        var companyTitle = selectedCompanyId.ToUpperInvariant();
+        topbarTitle = $"{topbarTitle} ({companyTitle})";
+    }
 }
 
-    <div class="topbar sticky top-0 left-0 z-1900 flex h-[64px] w-full items-center justify-between bg-primary text-white px-2 sm:px-2.5 shadow-md transition-[margin,width] duration-300">
-        <div class="topbar-left flex items-center gap-1">
+    <div class="topbar relative sticky top-0 left-0 z-1900 flex h-[64px] w-full items-center justify-between bg-primary text-white px-2 sm:px-2.5 shadow-md transition-[margin,width] duration-300">
+        <div class="topbar-left flex items-center gap-1 z-10">
                 <button id="btnMenu" type="button" class="topbar-btn pointer-events-auto"
                         aria-label="@SR["Topbar_OpenMenu"]" aria-controls="sidebar" aria-expanded="false" onclick="toggleSidebar()">
                     <span class="sr-only">@SR["Topbar_OpenMenu"]</span>
@@ -121,17 +127,11 @@
             }
         </div>
 
-        <div class="topbar-center flex-1 flex justify-center pointer-events-none">
-            <div class="flex flex-col items-center leading-tight">
-                <span id="topbarTitle" class="text-white font-medium text-[33px] sm:text-[39px] leading-tight">@topbarTitle</span>
-                @if (!string.IsNullOrWhiteSpace(selectedCompanyId))
-                {
-                    <span class="mt-0.5 text-[8px] italic uppercase tracking-wide text-slate-300">@selectedCompanyId</span>
-                }
-            </div>
+        <div class="topbar-center absolute inset-0 flex items-center justify-center pointer-events-none">
+            <span id="topbarTitle" class="text-white font-medium text-[33px] sm:text-[39px] leading-tight">@topbarTitle</span>
         </div>
 
-        <div class="topbar-right flex items-center gap-1 justify-end">
+        <div class="topbar-right flex items-center gap-1 justify-end z-10">
             @if (isHistory)
             {
                 <div class="flex items-center gap-1 pr-1">

@@ -11,6 +11,32 @@
 - Apply colors inside the component, not only via global CSS.
 - Redundant enforcement is required: apply both a readOnly prop and inline style on value text.
 
+## Shared button components (React)
+### FilterButton
+- File: `Web/wwwroot/react/src/components/commons/FilterButton.tsx`
+- Purpose: Dumb filter button with standardized styling.
+- Styling: `.ind-filter-btn` and `.ind-filter-btn--active` with per-page CSS variables.
+- Props:
+  - `label: string` (required)
+  - `active?: boolean`
+  - `disabled?: boolean`
+  - `onClick?: () => void`
+  - `className?: string`
+  - `ariaLabel?: string`
+  - `type?: "button" | "submit" | "reset"`
+
+### ActionButton
+- File: `Web/wwwroot/react/src/components/commons/ActionButton.tsx`
+- Purpose: Dumb action button with standardized styling.
+- Styling: `.ind-action-btn` with per-page CSS variables.
+- Props:
+  - `label: string` (required)
+  - `disabled?: boolean`
+  - `onClick?: () => void`
+  - `className?: string`
+  - `ariaLabel?: string`
+  - `type?: "button" | "submit" | "reset"`
+
 ## Template: input-like component (React)
 ```tsx
 type InputLikeProps = {
@@ -102,4 +128,4 @@ export function DatePickerLike({ label, value, readOnly = false, disabled = fals
 ```
 
 ## Last updated
-- 2026-02-03
+- 2026-02-05

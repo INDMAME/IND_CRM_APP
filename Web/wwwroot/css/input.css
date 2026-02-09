@@ -5,6 +5,11 @@
 
   --font-sans: Montserrat, sans-serif;
   --ind-text-color: #00296be0;
+  --radius-sm: 5px;
+  --radius-md: 5px;
+  --radius-lg: 5px;
+  --radius-xl: 5px;
+  --radius-2xl: 5px;
 }
 
 /*
@@ -22,6 +27,14 @@
   ::backdrop,
   ::file-selector-button {
     border-color: var(--color-gray-200, currentcolor);
+  }
+
+  button,
+  input,
+  select,
+  textarea,
+  ::file-selector-button {
+    border-radius: 5px;
   }
 
   body {
@@ -226,7 +239,7 @@
 }
 
 @utility card-surface__accent {
-  @apply text-xs font-semibold px-2 py-1 rounded-full bg-slate-100 text-slate-700;
+  @apply text-xs font-semibold px-2 py-1 rounded-md bg-slate-100 text-slate-700;
 }
 
 @utility card-surface__description {
@@ -269,7 +282,7 @@
 }
 
 @utility page-header__badge {
-  @apply text-xs font-semibold bg-slate-100 text-slate-700 px-3 py-1 rounded-full;
+  @apply text-xs font-semibold bg-slate-100 text-slate-700 px-3 py-1 rounded-md;
 }
 
 @utility primary-btn {
@@ -367,6 +380,52 @@
 
   .ind-quick-slider__item.is-active:hover:not(:disabled) {
     box-shadow: 0 12px 22px rgba(0, 41, 107, 0.22);
+  }
+
+  /* Standard buttons for filters and actions. */
+  .ind-filter-btn {
+      border-radius: 5px;
+      border: 0.75px solid var(--ind-filter-btn-border, transparent);
+      padding: 5px 12px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.2;
+    color: var(--ind-filter-btn-text, #e2e8f0);
+    background: var(--ind-filter-btn-bg, #00296bc4);
+    transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+  }
+
+  .ind-filter-btn:hover:not(:disabled) {
+    background: var(--ind-filter-btn-bg-hover, #00296be0);
+  }
+
+  .ind-filter-btn--active {
+    background: var(--ind-filter-btn-bg-active, #00296b);
+    color: var(--ind-filter-btn-text-active, #e2e8f0);
+    border-color: var(--ind-filter-btn-border-active, var(--ind-filter-btn-border, transparent));
+    box-shadow: var(--ind-filter-btn-shadow, 0 1px 2px rgba(15, 23, 42, 0.12));
+  }
+
+  .ind-filter-btn--active:hover:not(:disabled) {
+    background: var(--ind-filter-btn-bg-active, #00296b);
+    color: var(--ind-filter-btn-text-active, #e2e8f0);
+    border-color: var(--ind-filter-btn-border-active, var(--ind-filter-btn-border, transparent));
+  }
+
+  .ind-action-btn {
+      border-radius: 5px;
+      border: 1px solid transparent;
+      padding: 4px 12px;
+      font-size: 15px;
+      font-weight: 600;
+      line-height: 1.4;
+      color: var(--ind-action-btn-text, #e2e8f0);
+      background: var(--ind-action-btn-bg, #00296bc4);
+      transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+    }
+
+  .ind-action-btn:hover:not(:disabled) {
+    background: var(--ind-action-btn-bg-hover, #00296be0);
   }
 
   /* Star border animations */

@@ -145,20 +145,50 @@ const DetailApp = () => {
     }
   }, []);
 
-  useEffect(() => {
-    const key = `ind_visit_edit_${actividadId || recId || "default"}`;
+  const syncEditModeOnEntry = useCallback(() => {
+    const baseId = actividadId || recId || "default";
+    const key = `ind_visit_edit_${baseId}`;
+    const returnKey = `${key}_return`;
+    const draftKey = `ind_visit_draft_${baseId}`;
     editModeKeyRef.current = key;
     try {
-      if (canEditHistory && sessionStorage.getItem(key) === "true") {
+      const allowRestore = sessionStorage.getItem(returnKey) === "1";
+      if (allowRestore) {
+        sessionStorage.removeItem(returnKey);
+      }
+      if (canEditHistory && allowRestore && sessionStorage.getItem(key) === "true") {
         setIsEditing(true);
+      } else {
+        setIsEditing(false);
+        sessionStorage.removeItem(key);
+        sessionStorage.removeItem(draftKey);
       }
       if (!canEditHistory) {
         sessionStorage.removeItem(key);
+        sessionStorage.removeItem(draftKey);
       }
     } catch {
       /* ignore */
     }
   }, [actividadId, recId, canEditHistory]);
+
+  useEffect(() => {
+    syncEditModeOnEntry();
+  }, [syncEditModeOnEntry]);
+
+  useEffect(() => {
+    const onPageShow = (event: PageTransitionEvent) => {
+      const navEntry = typeof performance !== "undefined" && performance.getEntriesByType
+        ? (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)
+        : undefined;
+      const isBackForward = navEntry?.type === "back_forward";
+      if (event?.persisted || isBackForward) {
+        syncEditModeOnEntry();
+      }
+    };
+    window.addEventListener("pageshow", onPageShow);
+    return () => window.removeEventListener("pageshow", onPageShow);
+  }, [syncEditModeOnEntry]);
 
   useEffect(() => {
     const key = `ind_visit_draft_${actividadId || recId || "default"}`;
@@ -254,6 +284,9 @@ const DetailApp = () => {
     try {
       if (safeId) {
         sessionStorage.setItem(`${TEXT_EDITOR_PREFIX}${safeId}_returnUrl`, returnUrl);
+      }
+      if (editModeKey) {
+        sessionStorage.setItem(`${editModeKey}_return`, "1");
       }
     } catch {
       /* ignore */
@@ -683,10 +716,7 @@ const DetailApp = () => {
             </div>
           </div>
         )}
-        <div className="text-base font-semibold text-slate-900 border-b border-slate-200 pb-3">
-          {indT("Visits_Detail_VisitData_Title", "Visit details")}
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
           <div className="visita-field-text">
             <SingleDatePicker
               label={indT("Visits_Detail_Date_Label", "Date")}

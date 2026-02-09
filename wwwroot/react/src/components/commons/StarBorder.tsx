@@ -29,7 +29,7 @@ const StarBorder = <T extends React.ElementType = "button">({
   ...rest
 }: StarBorderProps<T>) => {
   const Component = as || "button";
-  const baseContent = "relative z-10 text-center rounded-[20px]";
+  const baseContent = "relative z-10 text-center rounded-[5px]";
   const defaultContent =
     "bg-gradient-to-b from-[#00296b] to-[#001f4d] border border-[#001f4d]/70 text-white text-[14px] py-[12px] px-[22px]";
   const contentClass = useDefaultStyle
@@ -39,7 +39,7 @@ const StarBorder = <T extends React.ElementType = "button">({
 
   return (
     <Component
-      className={`relative inline-block overflow-hidden rounded-[20px] ${className}`}
+      className={`relative inline-block overflow-hidden rounded-[5px] ${className}`}
       {...(rest as any)}
       style={{
         padding: `${adjustedThickness}px 0`,
@@ -47,14 +47,14 @@ const StarBorder = <T extends React.ElementType = "button">({
       }}
     >
       <div
-        className="absolute w-[150%] h-[25%] opacity-70 bottom-[-4px] right-[-125%] rounded-full animate-star-movement-bottom z-0"
+        className="absolute w-[150%] h-[25%] opacity-70 bottom-[-4px] right-[-125%] rounded-md animate-star-movement-bottom z-0"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 12%)`,
           animationDuration: speed,
         }}
       ></div>
       <div
-        className="absolute w-[150%] h-[25%] opacity-70 top-[-4px] left-[-125%] rounded-full animate-star-movement-top z-0"
+        className="absolute w-[150%] h-[25%] opacity-70 top-[-4px] left-[-125%] rounded-md animate-star-movement-top z-0"
         style={{
           background: `radial-gradient(circle, ${color}, transparent 12%)`,
           animationDuration: speed,

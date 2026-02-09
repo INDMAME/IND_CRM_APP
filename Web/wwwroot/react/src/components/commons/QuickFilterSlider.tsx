@@ -43,7 +43,7 @@ function QuickFilterSlider<T extends string>({
               disabled={isDisabled}
               className={classNames(
                 outerBase,
-                "rounded-full border",
+                "rounded-md border",
                 itemClassName,
                 isActive
                   ? "border-transparent bg-[#00296b] text-[#e2e8f0] shadow-sm"

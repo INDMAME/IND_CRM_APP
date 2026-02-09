@@ -11,12 +11,17 @@
 - Primary color: #00296b (use via Tailwind primary tokens).
 - All user facing text must come from i18n resources.
 - Forms: use `form-label`, `form-control`, and `form-select` utilities for consistent base sizes.
+- Global rounding standard: 5px for inputs, buttons, and containers (use `rounded-md` or `rounded-[5px]`).
+- Avoid `rounded-full` unless a component explicitly requires a circle.
 
 ## Shared UI rules
 - Overflow preview: show centered preview tooltip only if text overflows.
 - Read-only guard: add ind-readonly-surface and block copy/paste/select/contextmenu.
-- Base control rounding: use rounded-xl unless matching an existing component.
+- Base control rounding: use 5px (`rounded-md` / `rounded-[5px]`) unless a view explicitly needs a different shape.
 - Buttons and icons:
+  - Use `FilterButton` (`components/commons/FilterButton.tsx`) for quick filters.
+  - Use `ActionButton` (`components/commons/ActionButton.tsx`) for standard action buttons.
+  - Filter button styling uses `.ind-filter-btn` / `.ind-filter-btn--active` with local CSS vars per page.
   - Use StarBorder for buttons (primary, secondary, and quick actions) unless there is a clear exception.
   - StarBorder defaults: thickness 2.5px and speed 2.5s.
   - Button colors: active #00296b, inactive #00296bc4, text color #e2e8f0.
@@ -77,4 +82,4 @@
 - Transcription uses /Visitas/TranscribeSpeech and replaces textarea text.
 
 ## Last updated
-- 2026-02-03
+- 2026-02-05

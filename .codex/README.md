@@ -23,4 +23,4 @@
 - Add a `Last updated` line when a doc changes.
 
 ## Last updated
-- 2026-02-03
+- 2026-02-05

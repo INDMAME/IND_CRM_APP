@@ -12,6 +12,7 @@ type AudioRecorderProps = {
   transcribeBusy?: boolean;
   transcribeLabel?: string;
   transcribeBusyLabel?: string;
+  onRecordingError?: (message: string) => void;
 };
 
 // AudioRecorderMinimal
@@ -322,6 +323,7 @@ export default function AudioRecorderMinimal({
   transcribeBusy = false,
   transcribeLabel,
   transcribeBusyLabel,
+  onRecordingError,
 }: AudioRecorderProps) {
   const [canRecord, setCanRecord] = useState(false);
   const [uiError, setUiError] = useState("");
@@ -508,6 +510,16 @@ export default function AudioRecorderMinimal({
     fn();
   }
 
+  const notifyRecordingError = (message: string) => {
+    // Notify parent so it can surface a warning and close the recorder.
+    if (typeof onRecordingError !== "function") return;
+    try {
+      onRecordingError(message);
+    } catch {
+      /* ignore */
+    }
+  };
+
   function safeStopPlayback() {
     const audioEl = audioElRef.current;
     if (!audioEl) return;
@@ -566,15 +578,20 @@ export default function AudioRecorderMinimal({
   async function startRecording() {
     if (!canRecord) {
       logWarn("getUserMedia not available or blocked.");
+      const loc = getLocationSafe();
+      const blocked = isHttpIntranetBlocked() && !isSecureContextSafe();
+      const errorMessage = blocked
+        ? buildHttpMicBlockedMessage()
+        : indT("AudioRecorder_Error_Unsupported", "Your browser does not support getUserMedia.");
+      const hintMessage =
+        blocked && loc ? indT("AudioRecorder_Hint_Origin", "Current origin: {0}").replace("{0}", loc.origin) : "";
       safeSetState(() => {
-        if (isHttpIntranetBlocked() && !isSecureContextSafe()) {
-          setUiError(buildHttpMicBlockedMessage());
-          const loc = getLocationSafe();
-          if (loc) setUiHint(indT("AudioRecorder_Hint_Origin", "Current origin: {0}").replace("{0}", loc.origin));
-        } else {
-          setUiError(indT("AudioRecorder_Error_Unsupported", "Your browser does not support getUserMedia."));
-        }
+        setUiError(errorMessage);
+        setUiHint(hintMessage);
       });
+      if (errorMessage) {
+        notifyRecordingError(errorMessage);
+      }
       return;
     }
 
@@ -744,6 +761,10 @@ export default function AudioRecorderMinimal({
           setUiHint(indT("AudioRecorder_Hint_Technical", "Technical details: {0}").replace("{0}", detail));
         }
       });
+
+      if (msg) {
+        notifyRecordingError(msg);
+      }
 
       logError("Audio recorder start failed", err);
     }
@@ -1177,7 +1198,7 @@ export default function AudioRecorderMinimal({
   const showTranscribeButton = !!wavBlob && typeof onTranscribe === "function";
   const transcribeText = transcribeLabel || indT("TextEditor_Transcribe", "Transcribe");
   const transcribeBusyText = transcribeBusyLabel || indT("TextEditor_Transcribing", "Transcribing");
-  const showDownloadButton = !!wavUrl;
+    const showDownloadButton = false;
 
   return (
     <div className={outerClassName} style={outerStyle}>
@@ -1196,12 +1217,14 @@ export default function AudioRecorderMinimal({
           </div>
         ) : null}
 
-        <div className="px-5 sm:px-7 pt-3 sm:pt-4">
+        <div
+          className={`px-5 sm:px-7 pt-3 sm:pt-4 ${wavUrl ? "pb-0 sm:pb-1" : "pb-1 sm:pb-2"}`}
+        >
           <div className="flex items-center justify-center">
             <canvas ref={barsCanvasRef} className="w-full h-12 sm:h-16" />
           </div>
           {wavUrl ? (
-            <div className="mt-1 flex items-center justify-end">
+            <div className="mt-0.5 flex items-center justify-end">
               <div
                 className="font-light italic tabular-nums text-[16px] sm:text-[18px] leading-none tracking-[0.14em]"
                 style={{ color: brandRgba(timerAlpha) }}
@@ -1212,13 +1235,13 @@ export default function AudioRecorderMinimal({
           ) : null}
         </div>
 
-        <div className="px-5 sm:px-7 pb-4 sm:pb-5 pt-3 sm:pt-4">
+        <div className={`px-5 sm:px-7 pb-4 sm:pb-5 ${wavUrl ? "pt-1 sm:pt-2" : "pt-2 sm:pt-3"}`}>
           <div className="flex items-center justify-center" style={{ gap: "24px" }}>
             <button
               type="button"
               onClick={togglePlay}
               disabled={!wavUrl}
-              className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
+              className="h-12 w-12 sm:h-14 sm:w-14 rounded-md border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
               style={{
                 borderColor: wavUrl ? "rgba(0, 41, 107, 0.22)" : "rgba(0, 41, 107, 0.18)",
                 backgroundColor: wavUrl ? "rgba(0, 41, 107, 0.06)" : "rgba(0, 41, 107, 0.04)",
@@ -1244,7 +1267,7 @@ export default function AudioRecorderMinimal({
               type="button"
               onClick={onCenterClick}
               disabled={!canRecord}
-              className="h-14 w-14 sm:h-16 sm:w-16 rounded-full border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
+              className="h-14 w-14 sm:h-16 sm:w-16 rounded-md border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
               style={{
                 borderColor: "rgba(0, 41, 107, 0.18)",
                 backgroundColor: canRecord ? "rgba(0, 41, 107, 0.06)" : "rgba(0, 41, 107, 0.04)",
@@ -1258,7 +1281,7 @@ export default function AudioRecorderMinimal({
               title={centerLabel}
             >
               {!isRecording ? (
-                <span className="h-5 w-5 rounded-full bg-red-500" />
+                <span className="h-5 w-5 rounded-md bg-red-500" />
               ) : isPaused ? (
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: IND_BRAND }}>
                   <path d="M9 7L19 12L9 17V7Z" fill="currentColor" />
@@ -1275,7 +1298,7 @@ export default function AudioRecorderMinimal({
               type="button"
               onClick={onRightClick}
               disabled={!isRecording}
-              className="h-12 w-12 sm:h-14 sm:w-14 rounded-full border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
+              className="h-12 w-12 sm:h-14 sm:w-14 rounded-md border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
               style={{
                 borderColor: isRecording ? "rgba(0, 41, 107, 0.22)" : "rgba(0, 41, 107, 0.18)",
                 backgroundColor: isRecording ? "rgba(0, 41, 107, 0.06)" : "rgba(0, 41, 107, 0.04)",
@@ -1297,7 +1320,7 @@ export default function AudioRecorderMinimal({
                 <a
                   href={wavUrl || undefined}
                   download={wavFileName || undefined}
-                  className="px-4 py-1.5 rounded-full border text-[13px] font-medium transition shadow-xs hover:shadow-md active:scale-95"
+                  className="px-4 py-1.5 rounded-md border text-[13px] font-medium transition shadow-xs hover:shadow-md active:scale-95"
                   style={{
                     borderColor: "rgba(0, 41, 107, 0.22)",
                     backgroundColor: "rgba(0, 41, 107, 0.04)",
@@ -1314,7 +1337,7 @@ export default function AudioRecorderMinimal({
                   type="button"
                   onClick={() => onTranscribe && onTranscribe(wavBlob)}
                   disabled={transcribeBusy}
-                  className="px-4 py-1.5 rounded-full border text-[13px] font-medium transition shadow-xs hover:shadow-md active:scale-95"
+                  className="px-4 py-1.5 rounded-md border text-[13px] font-medium transition shadow-xs hover:shadow-md active:scale-95"
                   style={{
                     borderColor: "rgba(0, 41, 107, 0.22)",
                     backgroundColor: transcribeBusy ? "rgba(0, 41, 107, 0.08)" : "rgba(0, 41, 107, 0.04)",

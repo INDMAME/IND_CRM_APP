@@ -114,7 +114,7 @@ const FloatingActionButton = ({
       ref={btnRef}
       type="button"
       aria-label={ariaLabel}
-      className="fixed z-2000 rounded-full p-0 border-0 bg-transparent transition-transform duration-150 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-4"
+      className="fixed z-2000 rounded-md p-0 border-0 bg-transparent transition-transform duration-150 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-4"
       style={{
         width: `${size}px`,
         height: `${size}px`,
@@ -124,7 +124,7 @@ const FloatingActionButton = ({
       }}
       onClick={handleClick}
     >
-      <canvas ref={canvasRef} className="block rounded-full" />
+      <canvas ref={canvasRef} className="block rounded-md" />
     </button>
   );
 };

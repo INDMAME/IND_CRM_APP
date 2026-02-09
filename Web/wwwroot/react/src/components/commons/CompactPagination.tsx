@@ -46,11 +46,11 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
         id="pagination"
         ref={ref}
         className={classNames(
-          "pagination flex items-center justify-between gap-1 flex-nowrap",
+          "pagination grid grid-cols-[1fr_auto_1fr] items-center gap-1",
           className || ""
         )}
       >
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 justify-start">
           {showEdgeNav && canJumpToStart && (
             <button
               type="button"
@@ -83,7 +83,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
           )}
         </div>
 
-        <div className="flex items-center justify-center gap-1 flex-1 min-w-0 flex-nowrap">
+        <div className="flex items-center justify-center gap-1 min-w-0 flex-nowrap">
           {pageNumbers.map((page) => {
             const isActive = page === safeCurrent;
             return (
@@ -107,7 +107,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
           })}
         </div>
 
-        <div className="flex items-center gap-1 shrink-0">
+        <div className="flex items-center gap-1 justify-end">
           {showEdgeNav && canGoNext && (
             <button
               type="button"

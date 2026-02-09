@@ -12,16 +12,16 @@
     root.innerHTML = `
 <div id="indActionMarkWrap" class="h-40 w-40">
   <svg id="indMarkCheck" class="hidden h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-    <rect class="ind-mark-stroke ind-stroke-animate" x="4" y="4" width="16" height="16" rx="4" stroke-width="1.1"></rect>
+    <rect class="ind-mark-stroke ind-stroke-animate" x="4" y="4" width="16" height="16" rx="0.75" stroke-width="1.1"></rect>
     <path class="ind-mark-stroke ind-stroke-animate" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M8.2 12.6l2.5 2.5 5.1-6.2"></path>
   </svg>
   <svg id="indMarkWarning" class="hidden h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-    <rect class="ind-mark-stroke ind-stroke-animate" x="4" y="4" width="16" height="16" rx="4" stroke-width="1.1"></rect>
+    <rect class="ind-mark-stroke ind-stroke-animate" x="4" y="4" width="16" height="16" rx="0.75" stroke-width="1.1"></rect>
     <path class="ind-mark-stroke ind-stroke-animate" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M12 7.2v7.1"></path>
     <path class="ind-mark-stroke ind-stroke-animate" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6" d="M12 17.3h.01"></path>
   </svg>
   <svg id="indMarkError" class="hidden h-full w-full" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-    <rect class="ind-mark-stroke ind-stroke-animate" x="4" y="4" width="16" height="16" rx="4" stroke-width="1.1"></rect>
+    <rect class="ind-mark-stroke ind-stroke-animate" x="4" y="4" width="16" height="16" rx="0.75" stroke-width="1.1"></rect>
     <path class="ind-mark-stroke ind-stroke-animate" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M8.5 8.5l7 7"></path>
     <path class="ind-mark-stroke ind-stroke-animate" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2" d="M15.5 8.5l-7 7"></path>
   </svg>
