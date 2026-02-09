@@ -10,7 +10,10 @@ namespace IND_CRM_APP.Controllers
     {
         private readonly IIndAuthContextService _authContext;
 
-        public HomeController(ICrmApiClient apiClient, IIndAuthContextService authContext) : base(apiClient)
+        public HomeController(
+            ICrmApiClient apiClient,
+            ITokenSessionService tokenSession,
+            IIndAuthContextService authContext) : base(apiClient, tokenSession)
         {
             _authContext = authContext;
         }

@@ -12,18 +12,26 @@ namespace IND_CRM_APP.Controllers
     public abstract class BaseMvcController : Controller
     {
         protected readonly ICrmApiClient _apiClient;
+        private readonly ITokenSessionService _tokenSession;
         private const string CompanyNameKey = "INDCompanySelectedName";
 
-        protected BaseMvcController(ICrmApiClient apiClient)
+        protected BaseMvcController(ICrmApiClient apiClient, ITokenSessionService tokenSession)
         {
             _apiClient = apiClient;
+            _tokenSession = tokenSession;
         }
 
-        // Gets the token from session
+        // Gets the token from token session service.
+        protected string? GetToken()
+        {
+            return _tokenSession.GetToken().Token;
+        }
+
+        // Gets the token from token session service.
         // If it is missing, redirects to login
         protected string? GetTokenOrRedirect()
         {
-            var token = HttpContext.Session.GetString("Token");
+            var token = GetToken();
             if (string.IsNullOrEmpty(token))
             {
                 Response.Redirect("/Auth/Login");

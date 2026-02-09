@@ -2,21 +2,28 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
-import { fetchJson } from "../../../services/apiService.ts";
+import AppErrorBoundary from "../../../components/commons/AppErrorBoundary.tsx";
 import { useVisitas } from "../../../hooks/useVisitas.ts";
 import Spinner from "../../../components/commons/Spinner.tsx";
+import VisitNarrativeFields from "../../../components/visitas/VisitNarrativeFields.tsx";
 import { classNames } from "../../../utils/classNames.ts";
-import { indFormat, indT } from "../../../utils/indI18n.ts";
+import { indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { bindReadOnlyGuard } from "../../../utils/domGuards.ts";
 import { hasValue } from "../../../utils/strings.ts";
-import { readAndClearTextEditorValue, TEXT_EDITOR_PREFIX } from "../../../utils/textEditor.ts";
+import { primeTextEditorValue, setTextEditorReturnUrl } from "../../../utils/textEditor.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
 import { setPreviewAnchor, showPreviewTooltip, isOverflowing } from "../../../utils/previewTooltip.ts";
 import { useTapGuard } from "../../../hooks/useTapGuard.ts";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { useDetailHydration } from "../../../hooks/useDetailHydration.ts";
 import { useDetailTopbarActions } from "../../../hooks/useDetailTopbarActions.ts";
+import { useTextEditorFields } from "../../../hooks/useTextEditorFields.ts";
+import { setSessionValueWithExpiry } from "../../../utils/sessionExpiry.ts";
+import { useDetailEditSession } from "./useDetailEditSession.ts";
+import { useDetailMutations } from "./useDetailMutations.ts";
+
+const EDITOR_RETURN_FLAG_TTL_MS = 2 * 60 * 60 * 1000;
 
 const DetailApp = () => {
   const { visitTypes, asistenteTipos } = useVisitas();
@@ -103,7 +110,7 @@ const DetailApp = () => {
   }, []);
 
   const initialTransDate = normalizeDateToInput(String(detail.transDate ?? detail.TransDate ?? ""));
-  const defaultVisitType = visitTypes[0]?.value ?? visitTypes[0]?.Value ?? "";
+  const defaultVisitType = String(visitTypes[0]?.value ?? visitTypes[0]?.Value ?? "");
   const rawInitialVisitType = String(
     detail.tipoVisita ?? detail.TipoVisita ?? detail.visitType ?? detail.VisitType ?? ""
   );
@@ -126,150 +133,33 @@ const DetailApp = () => {
   const [isHydrating, setIsHydrating] = useState(false);
   const [modalError, setModalError] = useState("");
   const readOnlySurfaceRef = useRef(null);
-  const editModeKeyRef = useRef("");
-  const draftKeyRef = useRef("");
-  const draftPersistTimerRef = useRef<number | null>(null);
   const editSnapshotRef = useRef(null);
 
   const recId = String(detail.recId ?? detail.RecId ?? "");
   const accountNum = String(detail.accountNum ?? detail.AccountNum ?? "");
   const actividadId = String(detail.actividadId ?? detail.ActividadId ?? "");
 
-  // Persist edit mode across navigation to the text editor.
-  const syncEditModeFlag = useCallback((enabled) => {
-    const key = editModeKeyRef.current;
-    if (!key) return;
-    try {
-      if (enabled) sessionStorage.setItem(key, "true");
-      else sessionStorage.removeItem(key);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const syncEditModeOnEntry = useCallback(() => {
-    const baseId = actividadId || recId || "default";
-    const key = `ind_visit_edit_${baseId}`;
-    const returnKey = `${key}_return`;
-    const draftKey = `ind_visit_draft_${baseId}`;
-    editModeKeyRef.current = key;
-    try {
-      const allowRestore = sessionStorage.getItem(returnKey) === "1";
-      if (allowRestore) {
-        sessionStorage.removeItem(returnKey);
-      }
-      if (canEditHistory && allowRestore && sessionStorage.getItem(key) === "true") {
-        setIsEditing(true);
-      } else {
-        setIsEditing(false);
-        sessionStorage.removeItem(key);
-        sessionStorage.removeItem(draftKey);
-      }
-      if (!canEditHistory) {
-        sessionStorage.removeItem(key);
-        sessionStorage.removeItem(draftKey);
-      }
-    } catch {
-      /* ignore */
-    }
-  }, [actividadId, recId, canEditHistory]);
-
-  useEffect(() => {
-    syncEditModeOnEntry();
-  }, [syncEditModeOnEntry]);
-
-  useEffect(() => {
-    const onPageShow = (event: PageTransitionEvent) => {
-      const navEntry = typeof performance !== "undefined" && performance.getEntriesByType
-        ? (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined)
-        : undefined;
-      const isBackForward = navEntry?.type === "back_forward";
-      if (event?.persisted || isBackForward) {
-        syncEditModeOnEntry();
-      }
-    };
-    window.addEventListener("pageshow", onPageShow);
-    return () => window.removeEventListener("pageshow", onPageShow);
-  }, [syncEditModeOnEntry]);
-
-  useEffect(() => {
-    const key = `ind_visit_draft_${actividadId || recId || "default"}`;
-    draftKeyRef.current = key;
-  }, [actividadId, recId]);
-
-  const saveDraft = useCallback((draft) => {
-    const key = draftKeyRef.current;
-    if (!key) return;
-    try {
-      sessionStorage.setItem(key, JSON.stringify(draft));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const clearDraft = useCallback(() => {
-    const key = draftKeyRef.current;
-    if (!key) return;
-    try {
-      sessionStorage.removeItem(key);
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  const applyDraftValues = useCallback(() => {
-    const key = draftKeyRef.current;
-    if (!key) return;
-    try {
-      const raw = sessionStorage.getItem(key);
-      if (!raw) return;
-      const draft = JSON.parse(raw);
-      if (!draft || typeof draft !== "object") return;
-      if (draft.transDate) setTransDate(String(draft.transDate));
-      if (draft.visitType !== undefined) setVisitType(String(draft.visitType));
-      if (draft.asistenteTipo !== undefined) setAsistenteTipo(String(draft.asistenteTipo));
-      if (draft.description !== undefined) setDescription(String(draft.description));
-      if (draft.comentarios !== undefined) setComentarios(String(draft.comentarios));
-      if (draft.antecedentes !== undefined) setAntecedentes(String(draft.antecedentes));
-      if (draft.conclusiones !== undefined) setConclusiones(String(draft.conclusiones));
-    } catch {
-      /* ignore */
-    }
-  }, []);
-
-  useEffect(() => {
-    if (!isEditing) {
-      if (draftPersistTimerRef.current) {
-        clearTimeout(draftPersistTimerRef.current);
-        draftPersistTimerRef.current = null;
-      }
-      return;
-    }
-
-    if (draftPersistTimerRef.current) {
-      clearTimeout(draftPersistTimerRef.current);
-    }
-
-    draftPersistTimerRef.current = window.setTimeout(() => {
-      draftPersistTimerRef.current = null;
-      saveDraft({
-        transDate,
-        visitType,
-        asistenteTipo,
-        description,
-        comentarios,
-        antecedentes,
-        conclusiones
-      });
-    }, 180);
-
-    return () => {
-      if (draftPersistTimerRef.current) {
-        clearTimeout(draftPersistTimerRef.current);
-        draftPersistTimerRef.current = null;
-      }
-    };
-  }, [transDate, visitType, asistenteTipo, description, comentarios, antecedentes, conclusiones, isEditing, saveDraft]);
+  const { editModeKeyRef, syncEditModeFlag, clearDraft, applyDraftValues } = useDetailEditSession({
+    actividadId,
+    recId,
+    canEditHistory,
+    isEditing,
+    setIsEditing,
+    transDate,
+    visitType,
+    asistenteTipo,
+    description,
+    comentarios,
+    antecedentes,
+    conclusiones,
+    setTransDate,
+    setVisitType,
+    setAsistenteTipo,
+    setDescription,
+    setComentarios,
+    setAntecedentes,
+    setConclusiones,
+  });
 
   const hasServerDetail =
     hasValue(recId) &&
@@ -285,44 +175,33 @@ const DetailApp = () => {
       fieldValue: string,
       options: { allowEdit?: boolean; readOnly?: boolean; editModeKey?: string } = {}
     ) => {
-    const safeId = String(fieldId || "").trim();
-    const safeLabel = String(fieldLabel || "").trim();
-    const readOnly = options?.readOnly === true;
-    const allowEdit = options?.allowEdit !== false;
-    const editModeKey = String(options?.editModeKey || "").trim();
-    if (safeId) {
-      const key = `${TEXT_EDITOR_PREFIX}${safeId}`;
-      try {
-        // Prime the editor with the current value without pushing large text into the URL.
-        if (sessionStorage.getItem(key) === null) {
-          sessionStorage.setItem(key, String(fieldValue || ""));
-        }
-      } catch {
-        /* ignore */
-      }
-    }
-
-    const returnUrl = `${window.location.pathname}${window.location.search || ""}`;
-    try {
+      const safeId = String(fieldId || "").trim();
+      const safeLabel = String(fieldLabel || "").trim();
+      const readOnly = options?.readOnly === true;
+      const allowEdit = options?.allowEdit !== false;
+      const editModeKey = String(options?.editModeKey || "").trim();
       if (safeId) {
-        sessionStorage.setItem(`${TEXT_EDITOR_PREFIX}${safeId}_returnUrl`, returnUrl);
+        // Prime the editor with the current value without pushing large text into the URL.
+        primeTextEditorValue(safeId, String(fieldValue || ""));
+      }
+
+      const returnUrl = `${window.location.pathname}${window.location.search || ""}`;
+      if (safeId) {
+        setTextEditorReturnUrl(safeId, returnUrl);
       }
       if (editModeKey) {
-        sessionStorage.setItem(`${editModeKey}_return`, "1");
+        setSessionValueWithExpiry(`${editModeKey}_return`, "1", EDITOR_RETURN_FLAG_TTL_MS);
       }
-    } catch {
-      /* ignore */
-    }
-    const url =
-      `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId || fieldId || "")}` +
-      `&fieldLabel=${encodeURIComponent(safeLabel || fieldLabel || "")}` +
-      `&returnUrl=${encodeURIComponent(returnUrl)}` +
-      `&readOnly=${readOnly ? "1" : "0"}` +
-      `&allowEdit=${allowEdit ? "1" : "0"}` +
-      (editModeKey ? `&editModeKey=${encodeURIComponent(editModeKey)}` : "");
+      const url =
+        `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId || fieldId || "")}` +
+        `&fieldLabel=${encodeURIComponent(safeLabel || fieldLabel || "")}` +
+        `&returnUrl=${encodeURIComponent(returnUrl)}` +
+        `&readOnly=${readOnly ? "1" : "0"}` +
+        `&allowEdit=${allowEdit ? "1" : "0"}` +
+        (editModeKey ? `&editModeKey=${encodeURIComponent(editModeKey)}` : "");
 
-    window.__indBypassNavigationGuardOnce?.();
-    window.location.href = url;
+      window.__indBypassNavigationGuardOnce?.();
+      window.location.href = url;
     },
     []
   );
@@ -376,25 +255,19 @@ const DetailApp = () => {
   const antecedentesTap = useTapGuard(handleAntecedentesTap, handleAntecedentesHold);
   const conclusionesTap = useTapGuard(handleConclusionesTap, handleConclusionesHold);
 
-  const applyTextEditorValues = useCallback(() => {
-    const valComentarios = readAndClearTextEditorValue(fieldIdComentarios);
-    if (valComentarios !== null) setComentarios(valComentarios);
+  const textEditorBindings = useMemo(
+    () => [
+      { fieldId: fieldIdComentarios, applyValue: setComentarios },
+      { fieldId: fieldIdAntecedentes, applyValue: setAntecedentes },
+      { fieldId: fieldIdConclusiones, applyValue: setConclusiones },
+    ],
+    [fieldIdAntecedentes, fieldIdComentarios, fieldIdConclusiones]
+  );
 
-    const valAntecedentes = readAndClearTextEditorValue(fieldIdAntecedentes);
-    if (valAntecedentes !== null) setAntecedentes(valAntecedentes);
-
-    const valConclusiones = readAndClearTextEditorValue(fieldIdConclusiones);
-    if (valConclusiones !== null) setConclusiones(valConclusiones);
-  }, [fieldIdComentarios, fieldIdAntecedentes, fieldIdConclusiones]);
-
-  useEffect(() => {
-    if (!actividadId) {
-      applyTextEditorValues();
-    }
-    const onPageShow = () => applyTextEditorValues();
-    window.addEventListener("pageshow", onPageShow);
-    return () => window.removeEventListener("pageshow", onPageShow);
-  }, [actividadId, applyTextEditorValues]);
+  const { applyValues: applyTextEditorValues } = useTextEditorFields(textEditorBindings, {
+    applyOnMount: !actividadId,
+    listenPageShow: true,
+  });
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -499,7 +372,7 @@ const DetailApp = () => {
     setIsEditing(true);
     syncEditModeFlag(true);
     setStatus(indT("Visits_Detail_EditingEnabled", "Editing enabled"));
-  }, [syncEditModeFlag]);
+  }, [canEditHistory, syncEditModeFlag]);
 
   const handleCancelEdit = useCallback(() => {
     if (!isEditing) return;
@@ -511,83 +384,33 @@ const DetailApp = () => {
     window.location.reload();
   }, [isEditing, syncEditModeFlag, clearDraft]);
 
-  const handleUpdate = useCallback(async () => {
-    if (busy || !isEditing) return false;
-    if (!canEditHistory) {
-      showPermissionModal();
-      return false;
-    }
-    setModalError("");
-    setBusy(true);
-    setStatus(indT("Visits_Detail_Updating", "Updating activity..."));
-    try {
-      const normalizedVisitType =
-        matchOptionValue(visitTypes, visitType) ||
-        matchOptionValue(visitTypes, rawInitialVisitType) ||
-        defaultVisitType;
-      const normalizedAsistenteTipo =
-        matchOptionValue(asistenteTipos, asistenteTipo) ||
-        matchOptionValue(asistenteTipos, rawInitialAsistente) ||
-        rawInitialAsistente;
-      const payload = {
-        accountNum: accountNum,
-        visitType: normalizedVisitType,
-        asistenteTipo: normalizedAsistenteTipo,
-        description,
-        transDate,
-        comentarios,
-        antecedentes,
-        conclusiones
-      };
-
-      const res = await fetchJson(`/Visitas/UpdateActivity/${recId}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.success) throw new Error(res.message || indT("Visits_Detail_UpdateFailed", "Update failed."));
-
-      setStatus(indT("Visits_Detail_Updated", "Activity updated"));
-      setIsEditing(false);
-      syncEditModeFlag(false);
-      clearDraft();
-      return true;
-    } catch (err) {
-      const msg = err?.message || indT("Visits_Detail_UpdateError", "Update error.");
-      setModalError(msg);
-      setStatus(msg);
-      flashActionMark("errorProcess", 1500);
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }, [antecedentes, comentarios, conclusiones, description, transDate, visitType, asistenteTipo, visitTypes, asistenteTipos, matchOptionValue, accountNum, busy, isEditing, syncEditModeFlag]);
-
-  const handleDelete = useCallback(async () => {
-    if (busy) return false;
-    if (!canDeleteHistory) {
-      showPermissionModal();
-      return false;
-    }
-    setModalError("");
-    setBusy(true);
-    setStatus(indT("Visits_Detail_Deleting", "Deleting activity..."));
-    try {
-      const res = await fetchJson(`/Visitas/DeleteActivity/${recId}`, { method: "DELETE" });
-      if (!res.success) throw new Error(res.message || indT("Visits_Detail_DeleteFailed", "Delete failed."));
-      setStatus(indT("Visits_Detail_Deleted", "Activity deleted"));
-      return true;
-    } catch (err) {
-      const msg = err?.message || indT("Visits_Detail_DeleteError", "Delete error.");
-      setModalError(msg);
-      setStatus(msg);
-      flashActionMark("errorProcess", 1500);
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }, [busy, recId]);
+  const { handleUpdate, handleDelete } = useDetailMutations({
+    busy,
+    isEditing,
+    canEditHistory,
+    canDeleteHistory,
+    recId,
+    accountNum,
+    transDate,
+    visitType,
+    asistenteTipo,
+    description,
+    comentarios,
+    antecedentes,
+    conclusiones,
+    visitTypes,
+    asistenteTipos,
+    defaultVisitType,
+    rawInitialVisitType,
+    rawInitialAsistente,
+    matchOptionValue,
+    clearDraft,
+    syncEditModeFlag,
+    setModalError,
+    setBusy,
+    setStatus,
+    setIsEditing,
+  });
 
   useDetailTopbarActions({
     busy,
@@ -604,6 +427,16 @@ const DetailApp = () => {
     openConfirm,
     closeConfirm,
   });
+
+  const descriptionLabel = indT("Visits_Field_Description", "Description");
+  const commentsLabel = indT("Visits_Field_Comments", "Comments");
+  const backgroundLabel = indT("Visits_Field_Background", "Background");
+  const conclusionsLabel = indT("Visits_Field_Conclusions", "Conclusions");
+  const detailDescriptionClassName = classNames(
+    "form-control",
+    isEditing ? "border-slate-200 text-slate-900" : "border-slate-200 ind-readonly-field"
+  );
+  const detailReadOnlyClassName = classNames("form-control cursor-pointer", !isEditing ? "ind-readonly-field" : "");
 
   return (
     <div className="space-y-4">
@@ -656,70 +489,36 @@ const DetailApp = () => {
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-3">
-          <div className="space-y-2">
-            <label className="form-label font-semibold">{indT("Visits_Field_Description", "Description")}</label>
-            <input
-              id="description"
-              className={classNames(
-                "form-control",
-                isEditing ? "border-slate-200 text-slate-900" : "border-slate-200 ind-readonly-field"
-              )}
-              maxLength={200}
-              value={description}
-              disabled={!isEditing}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="form-label font-semibold">{indT("Visits_Field_Comments", "Comments")}</label>
-            <textarea
-              id="comentarios"
-                className={classNames(
-                  "form-control cursor-pointer",
-                  !isEditing ? "ind-readonly-field" : ""
-                )}
-              value={comentarios}
-              readOnly
-              onPointerDown={comentariosTap.onPointerDown}
-              onPointerMove={comentariosTap.onPointerMove}
-              onPointerUp={comentariosTap.onPointerUp}
-              onPointerCancel={comentariosTap.onPointerCancel}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="form-label font-semibold">{indT("Visits_Field_Background", "Background")}</label>
-            <textarea
-              id="antecedentes"
-                className={classNames(
-                  "form-control cursor-pointer",
-                  !isEditing ? "ind-readonly-field" : ""
-                )}
-              value={antecedentes}
-              readOnly
-              onPointerDown={antecedentesTap.onPointerDown}
-              onPointerMove={antecedentesTap.onPointerMove}
-              onPointerUp={antecedentesTap.onPointerUp}
-              onPointerCancel={antecedentesTap.onPointerCancel}
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="form-label font-semibold">{indT("Visits_Field_Conclusions", "Conclusions")}</label>
-            <textarea
-              id="conclusiones"
-                className={classNames(
-                  "form-control cursor-pointer",
-                  !isEditing ? "ind-readonly-field" : ""
-                )}
-              value={conclusiones}
-              readOnly
-              onPointerDown={conclusionesTap.onPointerDown}
-              onPointerMove={conclusionesTap.onPointerMove}
-              onPointerUp={conclusionesTap.onPointerUp}
-              onPointerCancel={conclusionesTap.onPointerCancel}
-            />
-          </div>
-        </div>
+        <VisitNarrativeFields
+          descriptionLabel={descriptionLabel}
+          descriptionValue={description}
+          descriptionClassName={detailDescriptionClassName}
+          descriptionDisabled={!isEditing}
+          onDescriptionChange={setDescription}
+          tapFields={[
+            {
+              id: "comentarios",
+              label: commentsLabel,
+              value: comentarios,
+              className: detailReadOnlyClassName,
+              pointerBindings: comentariosTap,
+            },
+            {
+              id: "antecedentes",
+              label: backgroundLabel,
+              value: antecedentes,
+              className: detailReadOnlyClassName,
+              pointerBindings: antecedentesTap,
+            },
+            {
+              id: "conclusiones",
+              label: conclusionsLabel,
+              value: conclusiones,
+              className: detailReadOnlyClassName,
+              pointerBindings: conclusionesTap,
+            },
+          ]}
+        />
 
         <div className="flex items-center gap-3 text-sm text-slate-600">
           <span>{status}</span>
@@ -729,38 +528,11 @@ const DetailApp = () => {
   );
 };
 
-type ErrorBoundaryState = { hasError: boolean };
-
-class ErrorBoundary extends React.Component<React.PropsWithChildren<{}>, ErrorBoundaryState> {
-  constructor(props: React.PropsWithChildren<{}>) {
-    super(props);
-    this.state = { hasError: false };
-  }
-
-  static getDerivedStateFromError() {
-    return { hasError: true };
-  }
-
-  componentDidCatch(error, info) {
-  }
-
-  render() {
-    if (this.state.hasError) {
-      return (
-        <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700">
-          {indT("Visits_Detail_ErrorBoundary", "An error occurred while rendering the detail page. Reload and try again.")}
-        </div>
-      );
-    }
-    return this.props.children;
-  }
-}
-
 // Detail UI wrapped by the error boundary.
 export default function DetailForm() {
   return (
-    <ErrorBoundary>
+    <AppErrorBoundary fallbackMessage={indT("Visits_Detail_ErrorBoundary", "An error occurred while rendering the detail page. Reload and try again.")}>
       <DetailApp />
-    </ErrorBoundary>
+    </AppErrorBoundary>
   );
 }

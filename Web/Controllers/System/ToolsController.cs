@@ -7,7 +7,7 @@ namespace IND_CRM_APP.Controllers
     [Route("tools")]
     public class ToolsController : BaseMvcController
     {
-        public ToolsController(ICrmApiClient apiClient) : base(apiClient)
+        public ToolsController(ICrmApiClient apiClient, ITokenSessionService tokenSession) : base(apiClient, tokenSession)
         {
         }
 
@@ -15,7 +15,7 @@ namespace IND_CRM_APP.Controllers
         [HttpGet("audio-recorder")]
         public async Task<IActionResult> AudioRecorder()
         {
-            var token = HttpContext.Session.GetString("Token");
+            var token = GetToken();
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Auth");
 

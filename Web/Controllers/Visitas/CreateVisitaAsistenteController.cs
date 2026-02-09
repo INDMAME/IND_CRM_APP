@@ -15,9 +15,10 @@ namespace IND_CRM_APP.Controllers
 
         public CreateVisitaAsistenteController(
             ICrmApiClient apiClient,
+            ITokenSessionService tokenSession,
             ILogger<CreateVisitaAsistenteController> logger,
             IStringLocalizer<INDSharedResource> sr)
-            : base(apiClient)
+            : base(apiClient, tokenSession)
         {
             _logger = logger;
             _sr = sr;
@@ -28,7 +29,7 @@ namespace IND_CRM_APP.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CreateAsistente(CreateVisitaAsistenteRequest model)
         {
-            var token = HttpContext.Session.GetString("Token");
+            var token = GetToken();
             if (string.IsNullOrEmpty(token))
                 return Unauthorized();
 

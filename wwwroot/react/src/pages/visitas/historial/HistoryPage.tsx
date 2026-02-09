@@ -1,17 +1,20 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
-import { createRoot } from "react-dom/client";
 import { classNames } from "../../../utils/classNames.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
-import ClientSearchCombobox, { ClientOption } from "../../../components/visitas/ClientSearchCombobox.tsx";
+import ClientSearchCombobox from "../../../components/visitas/ClientSearchCombobox.tsx";
 import HistoryTable, { TimelineItem } from "./HistoryTable.tsx";
+import HistorySummary from "./HistorySummary.tsx";
+import HistoryManualDatePicker, { HistoryManualDayCell } from "./HistoryManualDatePicker.tsx";
+import { useHistoryPageListeners } from "./useHistoryPageListeners.ts";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import FilterButton from "../../../components/commons/FilterButton.tsx";
 import ActionButton from "../../../components/commons/ActionButton.tsx";
 import { useHistoryActivities } from "../../../hooks/useHistoryActivities.ts";
 import { useHistoryFilterCache } from "../../../hooks/useHistoryFilterCache.ts";
+import { useHistoryFiltersState } from "./useHistoryFiltersState.ts";
+import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 
 type Props = {
   defaultFromDate?: string;
@@ -23,8 +26,6 @@ type CalendarCell = {
   iso: string;
   isEmpty: boolean;
 };
-
-type QuickFilterId = "custom" | "days-7" | "days-30" | "days-90";
 
 const PAGE_SIZE = 6;
 const PAGE_WINDOW = 6;
@@ -195,7 +196,7 @@ const toSentenceCase = (value: string, locale: string) => {
 const logHistory = (message: string, data?: Record<string, unknown>) => {
   if (typeof window === "undefined") return;
   const debugFlag = (window as any).__IND_DEBUG_HISTORY__;
-  if (debugFlag === false) return;
+  if (debugFlag !== true) return;
   if (data) {
     console.debug("[History]", message, data);
   } else {
@@ -214,32 +215,61 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const paginationRef = useRef<HTMLDivElement | null>(null);
 
-  const [startDate, setStartDate] = useState<Date | null>(null);
-  const [endDate, setEndDate] = useState<Date | null>(null);
-  const [manualStartDate, setManualStartDate] = useState<Date | null>(null);
-  const [manualEndDate, setManualEndDate] = useState<Date | null>(null);
-  const [hoverDate, setHoverDate] = useState<Date | null>(null);
-  const [selectingStep, setSelectingStep] = useState<"start" | "end" | "done">("start");
-  const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
-  const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
-  const [isOpen, setIsOpen] = useState(false);
-  const [showManualPickerPanel, setShowManualPickerPanel] = useState(false);
-  const [activeQuickFilter, setActiveQuickFilter] = useState<QuickFilterId | null>(null);
-  const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null);
-  const [clientResetKey, setClientResetKey] = useState(0);
-  const [showFilters, setShowFilters] = useState(true);
-  const [showManualError, setShowManualError] = useState(false);
   const [fabBottom, setFabBottom] = useState(FAB_BASE_BOTTOM);
 
-  const hasRestoredFilterRef = useRef(false);
-  const didInitFilterRef = useRef(false);
   const debugLoggedRef = useRef(0);
 
-  const fromDateValue = useMemo(() => (startDate ? toISO(startDate) : ""), [startDate]);
-  const toDateValue = useMemo(() => (endDate ? toISO(endDate) : ""), [endDate]);
-  const accountNumValue = useMemo(() => (selectedClient ? selectedClient.value : ""), [selectedClient]);
-
   const { readCachedFilter, clearFilterCache, consumeReturnFlag, saveCachedFilter } = useHistoryFilterCache();
+  const {
+    startDate,
+    endDate,
+    manualStartDate,
+    manualEndDate,
+    hoverDate,
+    selectingStep,
+    currentMonth,
+    currentYear,
+    isOpen,
+    showManualPickerPanel,
+    activeQuickFilter,
+    selectedClient,
+    clientResetKey,
+    showFilters,
+    showManualError,
+    fromDateValue,
+    toDateValue,
+    accountNumValue,
+    hasRestoredFilterRef,
+    didInitFilterRef,
+    setHoverDate,
+    setSelectingStep,
+    setCurrentMonth,
+    setCurrentYear,
+    setIsOpen,
+    setShowFilters,
+    setShowManualError,
+    validateManualRange,
+    applyDefaultRangeFromProps,
+    resetHistoryFilters,
+    applyCachedFilter,
+    handleSelect,
+    handleClearState,
+    openPopover,
+    handleActivatorKeyDown,
+    handleSectionKeyDown,
+    handleQuickFilter,
+    handleClientSelected,
+  } = useHistoryFiltersState({
+    defaultFromDate,
+    defaultToDate,
+    logHistory,
+    parseDateValue,
+    parseISO,
+    toISO,
+    startOfDay,
+    isBefore,
+  });
+
   const { items, total, currentPage, isLoading, errorMessage, loadActivities, resetActivities, retryOnNetworkErrorRef, lastSignatureRef } =
     useHistoryActivities({
       fromDateValue,
@@ -254,18 +284,6 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   useEffect(() => {
     logHistory("init", { defaultFromDate, defaultToDate });
   }, [defaultFromDate, defaultToDate]);
-
-  const validateManualRange = useCallback(() => {
-    if (activeQuickFilter === "custom" && (!startDate || !endDate)) {
-      setShowManualError(true);
-      setSelectingStep(!startDate ? "start" : "end");
-      setShowManualPickerPanel(true);
-      setIsOpen(true);
-      setShowFilters(true);
-      return false;
-    }
-    return true;
-  }, [activeQuickFilter, endDate, startDate]);
 
   const applyFilters = useCallback(
     (options?: { closePanel?: boolean; force?: boolean; page?: number }) => {
@@ -302,85 +320,25 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     setFabBottom((prev) => (Math.abs(prev - next) < 1 ? prev : next));
   }, [totalPages]);
 
-  // Applies a default range when provided by the server.
-  const applyDefaultRangeFromProps = useCallback(() => {
-    if (!defaultFromDate || !defaultToDate) return false;
-    const startRaw = parseDateValue(defaultFromDate);
-    const endRaw = parseDateValue(defaultToDate);
-    if (!startRaw || !endRaw) return false;
-
-    const startDay = startOfDay(startRaw);
-    const endDay = startOfDay(endRaw);
-
-    let start = startDay;
-    let end = endDay;
-    if (isBefore(end, start)) {
-      const swap = start;
-      start = end;
-      end = swap;
-    }
-
-    setStartDate(start);
-    setEndDate(end);
-    setSelectingStep("done");
-    setHoverDate(null);
-    setCurrentMonth(start.getMonth());
-    setCurrentYear(start.getFullYear());
-    setActiveQuickFilter(null);
-    setSelectedClient(null);
-    setIsOpen(false);
-    retryOnNetworkErrorRef.current = true;
-    loadActivities(1, { fromDate: toISO(start), toDate: toISO(end), accountNum: "" });
-    return true;
-  }, [defaultFromDate, defaultToDate, loadActivities]);
-
-  // Resets filters and clears local state.
-  const resetHistoryFilters = useCallback(() => {
-    setStartDate(null);
-    setEndDate(null);
-    setManualStartDate(null);
-    setManualEndDate(null);
-    setSelectingStep("start");
-    setHoverDate(null);
-    setCurrentMonth(new Date().getMonth());
-    setCurrentYear(new Date().getFullYear());
-    setActiveQuickFilter(null);
-    setShowManualPickerPanel(false);
-    setSelectedClient(null);
-    setClientResetKey((prev) => prev + 1);
-    setShowManualError(false);
-    clearFilterCache();
-    resetActivities();
-  }, [clearFilterCache, resetActivities]);
-
-  // Applies a cached filter from sessionStorage.
-  const applyCachedFilter = useCallback(
-    (filter: ReturnType<typeof readCachedFilter>) => {
-      if (!filter || !filter.fromDate || !filter.toDate) return false;
-      const start = parseISO(filter.fromDate);
-      const end = parseISO(filter.toDate);
-      setStartDate(start);
-      setEndDate(end);
-      setSelectingStep(end ? "done" : "end");
-      setHoverDate(null);
-      setCurrentMonth(start ? start.getMonth() : new Date().getMonth());
-      setCurrentYear(start ? start.getFullYear() : new Date().getFullYear());
-      setActiveQuickFilter(null);
-      setShowManualPickerPanel(false);
-      setShowManualError(false);
-      if (filter.clientAccount) {
-        setSelectedClient({ value: filter.clientAccount, text: filter.clientText || filter.clientAccount });
-      } else {
-        setSelectedClient(null);
-      }
-      const pageVal = Number(filter.page);
-      const pageToLoad = Number.isFinite(pageVal) && pageVal > 0 ? pageVal : 1;
-      retryOnNetworkErrorRef.current = true;
-      loadActivities(pageToLoad, { fromDate: filter.fromDate, toDate: filter.toDate, accountNum: filter.clientAccount || "" });
-      return true;
-    },
-    [loadActivities, readCachedFilter]
-  );
+  useHistoryPageListeners({
+    isOpen,
+    activatorRef,
+    popoverRef,
+    paginationRef,
+    hasRestoredFilterRef,
+    retryOnNetworkErrorRef,
+    currentPage,
+    updateFabBottom,
+    logHistory,
+    consumeReturnFlag,
+    readCachedFilter,
+    applyCachedFilter,
+    loadActivities,
+    setIsOpen,
+    setHoverDate,
+    setShowFilters,
+    applyFilters,
+  });
 
   // Restore cached filter on initial mount only.
   useEffect(() => {
@@ -389,22 +347,45 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     const cached = consumeReturnFlag() ? readCachedFilter() : null;
     if (cached && cached.fromDate && cached.toDate) {
       logHistory("restoreFilter", cached);
-      applyCachedFilter(cached);
+      const cachedRequest = applyCachedFilter(cached);
+      if (cachedRequest) {
+        retryOnNetworkErrorRef.current = true;
+        loadActivities(cachedRequest.page, cachedRequest.override);
+        setShowFilters(false);
+        setIsOpen(false);
+        hasRestoredFilterRef.current = true;
+        return;
+      }
+    }
+
+    const defaultRequest = applyDefaultRangeFromProps();
+    if (defaultRequest) {
+      retryOnNetworkErrorRef.current = true;
+      loadActivities(defaultRequest.page, defaultRequest.override);
       setShowFilters(false);
       setIsOpen(false);
       hasRestoredFilterRef.current = true;
       return;
     }
-    if (applyDefaultRangeFromProps()) {
-      setShowFilters(false);
-      setIsOpen(false);
-      hasRestoredFilterRef.current = true;
-      return;
-    }
+
     resetHistoryFilters();
+    clearFilterCache();
+    resetActivities();
     setShowFilters(true);
     setIsOpen(false);
-  }, [applyCachedFilter, applyDefaultRangeFromProps, consumeReturnFlag, readCachedFilter, resetHistoryFilters]);
+  }, [
+    applyCachedFilter,
+    applyDefaultRangeFromProps,
+    clearFilterCache,
+    consumeReturnFlag,
+    didInitFilterRef,
+    hasRestoredFilterRef,
+    loadActivities,
+    readCachedFilter,
+    resetActivities,
+    resetHistoryFilters,
+    retryOnNetworkErrorRef,
+  ]);
 
   // Keep the picker step in sync with current selection.
   useEffect(() => {
@@ -417,260 +398,22 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     }
   }, [startDate, endDate, selectingStep]);
 
-  // Close the calendar when clicking outside the picker.
-  useEffect(() => {
-    if (!isOpen) return;
-    const handleOutside = (event: MouseEvent) => {
-      const target = event.target as Node | null;
-      if (!target) return;
-      if (popoverRef.current?.contains(target)) return;
-      if (activatorRef.current?.contains(target)) return;
-      logHistory("closePopover:outside");
-      setIsOpen(false);
-      setHoverDate(null);
-    };
-    document.addEventListener("mousedown", handleOutside);
-    return () => document.removeEventListener("mousedown", handleOutside);
-  }, [isOpen]);
-
-  // Re-apply filters after returning from detail view.
-  useEffect(() => {
-    const onPageShow = () => {
-      if (hasRestoredFilterRef.current) return;
-      if (consumeReturnFlag()) {
-        const cached = readCachedFilter();
-        if (applyCachedFilter(cached)) {
-          setShowFilters(false);
-          setIsOpen(false);
-          hasRestoredFilterRef.current = true;
-          return;
-        }
-      }
-      // Keep current state when no cached filter is available.
-    };
-    window.addEventListener("pageshow", onPageShow);
-    return () => window.removeEventListener("pageshow", onPageShow);
-  }, [applyCachedFilter, consumeReturnFlag, readCachedFilter]);
-
-  useEffect(() => {
-    updateFabBottom();
-    let observer: ResizeObserver | null = null;
-    const paginationEl = paginationRef.current;
-    if (paginationEl && typeof ResizeObserver !== "undefined") {
-      observer = new ResizeObserver(() => updateFabBottom());
-      observer.observe(paginationEl);
-    }
-    window.addEventListener("resize", updateFabBottom);
-    return () => {
-      window.removeEventListener("resize", updateFabBottom);
-      if (observer) observer.disconnect();
-    };
-  }, [updateFabBottom]);
-
-  useEffect(() => {
-    const onToggleFilters = () => {
-      setShowFilters((prev) => {
-        const next = !prev;
-        if (!next) {
-          setIsOpen(false);
-        }
-        return next;
-      });
-    };
-    const onRefresh = () => {
-      applyFilters({ page: currentPage, force: true, closePanel: true });
-    };
-    window.addEventListener("history-toggle-filter", onToggleFilters);
-    window.addEventListener("history-refresh", onRefresh);
-    return () => {
-      window.removeEventListener("history-toggle-filter", onToggleFilters);
-      window.removeEventListener("history-refresh", onRefresh);
-    };
-  }, [applyFilters, currentPage]);
-
-  const handleSelect = useCallback(
-    (dateObj: Date) => {
-      logHistory("handleSelect", {
-        clicked: toISO(dateObj),
-        start: fromDateValue,
-        end: toDateValue,
-        selectingStep,
-      });
-      setShowManualError(false);
-      setActiveQuickFilter("custom");
-      setShowManualPickerPanel(true);
-      const hasStart = !!startDate;
-      const hasEnd = !!endDate;
-
-      if (selectingStep === "end") {
-        if (!hasStart) {
-          setStartDate(dateObj);
-          setEndDate(null);
-          setSelectingStep("end");
-          setCurrentMonth(dateObj.getMonth());
-          setCurrentYear(dateObj.getFullYear());
-          return;
-        }
-
-        let newStart = startDate as Date;
-        let newEnd = dateObj;
-        if (isBefore(newEnd, newStart)) {
-          const swap = newStart;
-          newStart = newEnd;
-          newEnd = swap;
-        }
-
-        setStartDate(newStart);
-        setEndDate(newEnd);
-        setManualStartDate(newStart);
-        setManualEndDate(newEnd);
-        setSelectingStep("done");
-        setCurrentMonth(newEnd.getMonth());
-        setCurrentYear(newEnd.getFullYear());
-        setHoverDate(null);
-        setIsOpen(false);
-        setShowManualPickerPanel(false);
-        return;
-      }
-
-      const newStart = dateObj;
-      if (hasEnd && endDate && isBefore(endDate, newStart)) {
-        setStartDate(newStart);
-        setEndDate(null);
-        setSelectingStep("end");
-        setCurrentMonth(newStart.getMonth());
-        setCurrentYear(newStart.getFullYear());
-        return;
-      }
-
-      setStartDate(newStart);
-      if (hasEnd && endDate) {
-        setEndDate(endDate);
-        setManualStartDate(newStart);
-        setManualEndDate(endDate);
-        setSelectingStep("done");
-        setHoverDate(null);
-        setIsOpen(false);
-        setShowManualPickerPanel(false);
-      } else {
-        setEndDate(null);
-        setSelectingStep("end");
-      }
-      setCurrentMonth(newStart.getMonth());
-      setCurrentYear(newStart.getFullYear());
-    },
-    [endDate, fromDateValue, selectingStep, startDate, toDateValue]
-  );
-
   const handleClear = useCallback(
-    (event: ReactMouseEvent) => {
-      event.stopPropagation();
-      logHistory("clearRange");
-      setActiveQuickFilter(null);
-      setShowManualError(false);
-      setShowManualPickerPanel(false);
-      resetHistoryFilters();
-      setIsOpen(false);
-      setShowFilters(true);
+    (event: React.MouseEvent) => {
+      handleClearState(event);
+      clearFilterCache();
+      resetActivities();
     },
-    [resetHistoryFilters]
+    [clearFilterCache, handleClearState, resetActivities]
   );
 
-  const openPopover = useCallback((section: "start" | "end") => {
-    logHistory("openPopover", { section, start: fromDateValue, end: toDateValue, selectingStep });
-    setShowManualError(false);
-    setActiveQuickFilter("custom");
-    setShowManualPickerPanel(true);
-    if (section === "end" && !startDate) {
-      setSelectingStep("start");
-    } else {
-      setSelectingStep(section);
-    }
-    setIsOpen(true);
-  }, [fromDateValue, selectingStep, startDate, toDateValue]);
-
-  const applyQuickRange = useCallback(
-    (filterId: QuickFilterId, start: Date, end: Date) => {
-      const startDay = startOfDay(start);
-      const endDay = startOfDay(end);
-      setStartDate(startDay);
-      setEndDate(endDay);
-      setSelectingStep("done");
-      setHoverDate(null);
-      setCurrentMonth(startDay.getMonth());
-      setCurrentYear(startDay.getFullYear());
-      setIsOpen(false);
-      setShowManualPickerPanel(false);
-      setActiveQuickFilter(filterId);
-      setShowManualError(false);
-    },
-    []
-  );
-
-  const handleQuickFilter = useCallback(
-    (filterId: QuickFilterId) => {
-      const today = startOfDay(new Date());
-
-      if (filterId === "custom") {
-        if (showManualPickerPanel) {
-          setShowManualError(false);
-          setHoverDate(null);
-          setIsOpen(false);
-          setShowManualPickerPanel(false);
-          return;
-        }
-
-        const nextStart = manualStartDate ? new Date(manualStartDate) : null;
-        const nextEnd = manualEndDate ? new Date(manualEndDate) : null;
-        setActiveQuickFilter("custom");
-        setShowManualPickerPanel(true);
-        setStartDate(nextStart);
-        setEndDate(nextEnd);
-        if (nextStart) {
-          setCurrentMonth(nextStart.getMonth());
-          setCurrentYear(nextStart.getFullYear());
-        }
-        if (nextStart && nextEnd) {
-          setSelectingStep("done");
-          setIsOpen(false);
-        } else {
-          setSelectingStep(nextStart && !nextEnd ? "end" : "start");
-          setIsOpen(true);
-        }
-        setHoverDate(null);
-        setShowManualError(false);
-        return;
-      }
-
-      if (filterId === "days-7") {
-        const start = new Date(today);
-        start.setDate(today.getDate() - 6);
-        applyQuickRange(filterId, start, today);
-        return;
-      }
-
-      if (filterId === "days-30") {
-        const start = new Date(today);
-        start.setDate(today.getDate() - 29);
-        applyQuickRange(filterId, start, today);
-        return;
-      }
-
-      if (filterId === "days-90") {
-        const start = new Date(today);
-        start.setDate(today.getDate() - 89);
-        applyQuickRange(filterId, start, today);
-      }
-    },
-    [applyQuickRange, manualEndDate, manualStartDate, showManualPickerPanel]
-  );
-
-  const handleClientSelected = useCallback(
-    (client: ClientOption | null) => {
-      setSelectedClient(client);
-    },
-    []
-  );
+  const handleResetFilters = useCallback(() => {
+    resetHistoryFilters();
+    clearFilterCache();
+    resetActivities();
+    setIsOpen(false);
+    setShowFilters(true);
+  }, [clearFilterCache, resetActivities, resetHistoryFilters, setIsOpen, setShowFilters]);
 
   const handleNavigate = useCallback(
     (linkId: string) => {
@@ -713,6 +456,95 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
 
   const previewEnd = endDate || (selectingStep === "end" ? hoverDate : null);
 
+  const handlePrevMonth = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+      setCurrentMonth((prev) => {
+        const next = prev - 1;
+        if (next < 0) {
+          setCurrentYear((year) => year - 1);
+          return 11;
+        }
+        return next;
+      });
+    },
+    [setCurrentMonth, setCurrentYear]
+  );
+
+  const handleNextMonth = useCallback(
+    (event: React.MouseEvent<HTMLButtonElement>) => {
+      event.stopPropagation();
+      setCurrentMonth((prev) => {
+        const next = prev + 1;
+        if (next > 11) {
+          setCurrentYear((year) => year + 1);
+          return 0;
+        }
+        return next;
+      });
+    },
+    [setCurrentMonth, setCurrentYear]
+  );
+
+  const handleGridMouseLeave = useCallback(() => {
+    setHoverDate(null);
+  }, [setHoverDate]);
+
+  const handleManualDayClick = useCallback(
+    (cell: HistoryManualDayCell) => {
+      if (!cell.date) return;
+      logHistory("dayClick", { date: cell.iso || "", disabled: !!cell.disabled });
+      handleSelect(cell.date);
+    },
+    [handleSelect]
+  );
+
+  const handleManualDayHover = useCallback(
+    (cell: HistoryManualDayCell) => {
+      if (!cell.date) return;
+      if (selectingStep === "end" && startDate) {
+        setHoverDate(new Date(cell.date));
+      }
+    },
+    [selectingStep, setHoverDate, startDate]
+  );
+
+  const manualDayCells = useMemo<HistoryManualDayCell[]>(() => {
+    return calendar.cells.map((cell, idx) => {
+      if (cell.isEmpty) {
+        return { key: `empty-${idx}`, isEmpty: true };
+      }
+
+      const dateObj = cell.date as Date;
+      const isStart = sameDay(dateObj, startDate);
+      const isEnd = sameDay(dateObj, endDate);
+      const inRange = startDate && previewEnd && isBefore(startDate, dateObj) && isBefore(dateObj, previewEnd);
+      const hoverRange = startDate && !endDate && hoverDate && isBefore(startDate, dateObj) && isBefore(dateObj, hoverDate);
+      const disabled = selectingStep === "end" && !!startDate && isBefore(dateObj, startDate);
+      const isToday = sameDay(dateObj, new Date());
+
+      const dayClass = classNames(
+        "drp-day",
+        isStart ? "start range-start" : "",
+        isEnd ? "end range-end" : "",
+        inRange ? "in-range" : "",
+        hoverRange ? "hover-range" : "",
+        disabled ? "disabled" : "",
+        isToday ? "today" : ""
+      );
+
+      return {
+        key: cell.iso,
+        isEmpty: false,
+        date: dateObj,
+        iso: cell.iso,
+        dayLabel: dateObj.getDate(),
+        dayClass,
+        disabled,
+      };
+    });
+  }, [calendar.cells, endDate, hoverDate, previewEnd, selectingStep, startDate]);
+
   const timelineItems: TimelineItem[] = useMemo(() => {
     return items.map((x) => {
       const actividadIdRaw = (x.actividadId ?? x.ActividadId ?? "").toString().trim();
@@ -722,7 +554,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       let linkId = actividadId || (recId ? recId.toString() : "");
 
       if (debugLoggedRef.current < 5) {
-        console.debug("activity item", { actividadId, recIdRaw, recId, raw: x });
+        logHistory("activity item", { actividadId, recIdRaw, recId });
         debugLoggedRef.current += 1;
       }
 
@@ -756,6 +588,24 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const summaryFrom = labelFrom;
   const summaryTo = labelTo;
   const filterTitle = indT("History_Filter_Date", "Date");
+  const addDateLabel = indT("History_AddDate", "Add date");
+  const clearRangeLabel = indT("History_ClearRange", "Clear range");
+  const prevMonthLabel = indT("History_PrevMonth", "Previous month");
+  const nextMonthLabel = indT("History_NextMonth", "Next month");
+  const statusSelectStartLabel = indT("History_Status_SelectStart", "Select start date");
+  const statusSelectEndLabel = indT("History_Status_SelectEnd", "Select end date");
+  const weekDayLabels = useMemo(
+    () => [
+      indT("History_Day_Mon", "Mon"),
+      indT("History_Day_Tue", "Tue"),
+      indT("History_Day_Wed", "Wed"),
+      indT("History_Day_Thu", "Thu"),
+      indT("History_Day_Fri", "Fri"),
+      indT("History_Day_Sat", "Sat"),
+      indT("History_Day_Sun", "Sun"),
+    ],
+    []
+  );
   const clearLabel = indT("History_Filter_Clear", "Clear");
   const applyLabel = indT("History_Filter_Apply", "Apply");
   const clientLabel = indT("History_Filter_Client", "Client");
@@ -800,18 +650,15 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     <div className="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4 space-y-2">
       {showSummary && (
         <div className="filter-card filter-card--summary p-3 sm:p-4 mt-1 mb-3">
-          <div className="history-filter-summary flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
-            <span className="font-semibold">{summaryFrom}:</span>
-            <span>{startDate ? formatDisplay(startDate, locale) : "--"}</span>
-            <span className="font-semibold">{summaryTo}:</span>
-            <span>{endDate ? formatDisplay(endDate, locale) : "--"}</span>
-          </div>
-          {selectedClient && (
-            <div className="history-filter-summary mt-1.5 flex items-center gap-2 text-xs min-w-0">
-              <span className="font-semibold shrink-0">{clientLabel}:</span>
-              <span className="min-w-0 flex-1 truncate">{selectedClient.text}</span>
-            </div>
-          )}
+          <HistorySummary
+            summaryFromLabel={summaryFrom}
+            summaryToLabel={summaryTo}
+            fromValue={startDate ? formatDisplay(startDate, locale) : "--"}
+            toValue={endDate ? formatDisplay(endDate, locale) : "--"}
+            clientLabel={clientLabel}
+            clientValue={selectedClient?.text || ""}
+            showClient={!!selectedClient}
+          />
         </div>
       )}
       {showFilters && (
@@ -833,195 +680,47 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
           </div>
 
           {showInlineSummary && (
-            <div className="history-filter-summary flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] px-1">
-              <span className="font-semibold">{summaryFrom}:</span>
-              <span>{startDate ? formatDisplay(startDate, locale) : "--"}</span>
-              <span className="font-semibold">{summaryTo}:</span>
-              <span>{endDate ? formatDisplay(endDate, locale) : "--"}</span>
-            </div>
+            <HistorySummary
+              summaryFromLabel={summaryFrom}
+              summaryToLabel={summaryTo}
+              fromValue={startDate ? formatDisplay(startDate, locale) : "--"}
+              toValue={endDate ? formatDisplay(endDate, locale) : "--"}
+              className="gap-y-1 text-[11px] px-1"
+            />
           )}
 
           {showManualPicker && (
-          <div className="relative">
-              <div
-                id="drpActivator"
-                ref={activatorRef}
-                className={classNames("drp w-full", showManualError ? "drp-error" : "")}
-                onClick={() => openPopover("start")}
-              >
-                <div
-                  className={classNames(
-                    "drp-section",
-                    selectingStep === "start" && isOpen ? "active" : "",
-                    showManualError && !startDate ? "is-error" : ""
-                  )}
-                  data-section="start"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openPopover("start");
-                  }}
-                >
-                  <div className="drp-label">{labelFrom}</div>
-                  <div className="drp-value">
-                    <i className="bi bi-calendar3 drp-icon" />
-                    <span id="drpStartValue">
-                      {startDate ? formatDisplay(startDate, locale) : indT("History_AddDate", "Add date")}
-                    </span>
-                  </div>
-                </div>
-
-                <div className="drp-separator hidden sm:flex">
-                  <i className="bi bi-arrow-right" />
-                </div>
-                <div className="drp-separator-mobile flex sm:hidden" />
-
-                <div
-                  className={classNames(
-                    "drp-section",
-                    selectingStep === "end" && isOpen ? "active" : "",
-                    showManualError && !endDate ? "is-error" : ""
-                  )}
-                  data-section="end"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openPopover("end");
-                  }}
-                >
-                  <div className="drp-label">{labelTo}</div>
-                  <div className="drp-value">
-                    <i className="bi bi-calendar3 drp-icon" />
-                    <span id="drpEndValue">
-                      {endDate ? formatDisplay(endDate, locale) : indT("History_AddDate", "Add date")}
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  id="drpClear"
-                  className="drp-clear"
-                  aria-label={indT("History_ClearRange", "Clear range")}
-                  style={{ display: startDate || endDate ? "inline-flex" : "none" }}
-                  onClick={handleClear}
-                >
-                  <i className="bi bi-x-lg" />
-                </button>
-              </div>
-
-              <div id="drpPopover" ref={popoverRef} className="drp-popover" hidden={!isOpen}>
-                <div className="drp-head">
-                  <button
-                    type="button"
-                    className="drp-nav"
-                    data-dir="prev"
-                    aria-label={indT("History_PrevMonth", "Previous month")}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentMonth((prev) => {
-                        const next = prev - 1;
-                        if (next < 0) {
-                          setCurrentYear((year) => year - 1);
-                          return 11;
-                        }
-                        return next;
-                      });
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-                    </svg>
-                  </button>
-                  <div id="drpMonthLabel" className="drp-month">{calendar.label}</div>
-                  <button
-                    type="button"
-                    className="drp-nav"
-                    data-dir="next"
-                    aria-label={indT("History_NextMonth", "Next month")}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCurrentMonth((prev) => {
-                        const next = prev + 1;
-                        if (next > 11) {
-                          setCurrentYear((year) => year + 1);
-                          return 0;
-                        }
-                        return next;
-                      });
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                    </svg>
-                  </button>
-                </div>
-                <div className="drp-weekdays">
-                  <span>{indT("History_Day_Mon", "Mon")}</span>
-                  <span>{indT("History_Day_Tue", "Tue")}</span>
-                  <span>{indT("History_Day_Wed", "Wed")}</span>
-                  <span>{indT("History_Day_Thu", "Thu")}</span>
-                  <span>{indT("History_Day_Fri", "Fri")}</span>
-                  <span>{indT("History_Day_Sat", "Sat")}</span>
-                  <span>{indT("History_Day_Sun", "Sun")}</span>
-                </div>
-                <div
-                  id="drpGrid"
-                  className="drp-grid"
-                  onMouseLeave={() => {
-                    setHoverDate(null);
-                  }}
-                >
-                  {calendar.cells.map((cell, idx) => {
-                    if (cell.isEmpty) {
-                      return <button key={`empty-${idx}`} className="drp-day empty" disabled />;
-                    }
-
-                    const dateObj = cell.date as Date;
-                    const isStart = sameDay(dateObj, startDate);
-                    const isEnd = sameDay(dateObj, endDate);
-                    const inRange = startDate && previewEnd && isBefore(startDate, dateObj) && isBefore(dateObj, previewEnd);
-                    const hoverRange = startDate && !endDate && hoverDate && isBefore(startDate, dateObj) && isBefore(dateObj, hoverDate);
-                    const disabled = selectingStep === "end" && !!startDate && isBefore(dateObj, startDate);
-                    const isToday = sameDay(dateObj, new Date());
-
-                    const dayClass = classNames(
-                      "drp-day",
-                      isStart ? "start range-start" : "",
-                      isEnd ? "end range-end" : "",
-                      inRange ? "in-range" : "",
-                      hoverRange ? "hover-range" : "",
-                      disabled ? "disabled" : "",
-                      isToday ? "today" : ""
-                    );
-
-                    return (
-                      <button
-                        key={cell.iso}
-                        type="button"
-                        className={dayClass}
-                        data-date={cell.iso}
-                        disabled={disabled}
-                        onClick={(e) => {
-                          logHistory("dayClick", { date: cell.iso, disabled });
-                          handleSelect(dateObj);
-                        }}
-                        onMouseEnter={() => {
-                          if (selectingStep === "end" && startDate) {
-                            setHoverDate(new Date(dateObj));
-                          }
-                        }}
-                      >
-                        {dateObj.getDate()}
-                      </button>
-                    );
-                  })}
-                </div>
-                <div id="drpStatus" className="drp-status">
-                  {selectingStep === "start"
-                    ? indT("History_Status_SelectStart", "Select start date")
-                    : indT("History_Status_SelectEnd", "Select end date")}
-                </div>
-              </div>
-          </div>
+            <HistoryManualDatePicker
+              activatorRef={activatorRef}
+              popoverRef={popoverRef}
+              showManualError={showManualError}
+              showStartError={showManualError && !startDate}
+              showEndError={showManualError && !endDate}
+              filterTitle={filterTitle}
+              isOpen={isOpen}
+              selectingStep={selectingStep}
+              labelFrom={labelFrom}
+              labelTo={labelTo}
+              startDateText={startDate ? formatDisplay(startDate, locale) : addDateLabel}
+              endDateText={endDate ? formatDisplay(endDate, locale) : addDateLabel}
+              clearRangeLabel={clearRangeLabel}
+              hasSelectedRange={!!startDate || !!endDate}
+              monthLabel={calendar.label}
+              weekDayLabels={weekDayLabels}
+              statusText={selectingStep === "start" ? statusSelectStartLabel : statusSelectEndLabel}
+              dayCells={manualDayCells}
+              prevMonthLabel={prevMonthLabel}
+              nextMonthLabel={nextMonthLabel}
+              onOpenPopover={openPopover}
+              onActivatorKeyDown={handleActivatorKeyDown}
+              onSectionKeyDown={handleSectionKeyDown}
+              onClear={handleClear}
+              onPrevMonth={handlePrevMonth}
+              onNextMonth={handleNextMonth}
+              onGridMouseLeave={handleGridMouseLeave}
+              onDayClick={handleManualDayClick}
+              onDayHover={handleManualDayHover}
+            />
           )}
 
           <ClientSearchCombobox
@@ -1041,11 +740,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
               <ActionButton
                 label={clearLabel}
                 className="w-full"
-                onClick={() => {
-                  resetHistoryFilters();
-                  setIsOpen(false);
-                  setShowFilters(true);
-                }}
+                onClick={handleResetFilters}
               />
               <ActionButton
                 label={applyLabel}
@@ -1111,17 +806,7 @@ export const mountHistoryPage = (root: HTMLElement) => {
   const defaultFromDate = root.getAttribute("data-default-from") || "";
   const defaultToDate = root.getAttribute("data-default-to") || "";
 
-  const element = <HistoryPage defaultFromDate={defaultFromDate} defaultToDate={defaultToDate} />;
-  const existing = (root as HTMLElement & { __indRoot?: import("react-dom/client").Root }).__indRoot;
-
-  if (existing) {
-    existing.render(element);
-    return;
-  }
-
-  const reactRoot = createRoot(root);
-  (root as HTMLElement & { __indRoot?: import("react-dom/client").Root }).__indRoot = reactRoot;
-  reactRoot.render(element);
+  mountReactIsland(root, <HistoryPage defaultFromDate={defaultFromDate} defaultToDate={defaultToDate} />);
 };
 
 const mount = () => {
@@ -1130,12 +815,6 @@ const mount = () => {
   mountHistoryPage(rootEl);
 };
 
-if (typeof document !== "undefined") {
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    mount();
-  } else {
-    document.addEventListener("DOMContentLoaded", mount);
-  }
-}
+mountWhenDocumentReady(mount);
 
 export default HistoryPage;

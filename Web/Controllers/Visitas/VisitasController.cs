@@ -21,9 +21,10 @@ namespace IND_CRM_APP.Controllers
 
         public VisitasController(
             ICrmApiClient apiClient,
+            ITokenSessionService tokenSession,
             ILogger<VisitasController> logger,
             IINDCrmEnumLocalizer enumLocalizer,
-            IStringLocalizer<INDSharedResource> sr) : base(apiClient)
+            IStringLocalizer<INDSharedResource> sr) : base(apiClient, tokenSession)
         {
             _logger = logger;
             _enumLocalizer = enumLocalizer;
@@ -38,7 +39,7 @@ namespace IND_CRM_APP.Controllers
             int page = 1,
             int pageSize = 20)
         {
-            var token = HttpContext.Session.GetString("Token");
+            var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
                 return Unauthorized(new { message = _sr["Api_SessionExpired"].Value });
 
@@ -75,7 +76,7 @@ namespace IND_CRM_APP.Controllers
             int page = 1,
             int pageSize = 500)
         {
-            var token = HttpContext.Session.GetString("Token");
+            var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
                 return Unauthorized(new { message = _sr["Api_SessionExpired"].Value });
 
@@ -107,7 +108,7 @@ namespace IND_CRM_APP.Controllers
         {
             try
             {
-                var token = HttpContext.Session.GetString("Token");
+                var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                     return RedirectToAction("Login", "Auth");
 
@@ -135,7 +136,7 @@ namespace IND_CRM_APP.Controllers
         {
             try
             {
-                string token = HttpContext.Session.GetString("Token") ?? string.Empty;
+                string token = GetToken() ?? string.Empty;
                 if (string.IsNullOrEmpty(token))
                     return Json(new { success = false, message = _sr["Api_TokenMissing"].Value });
 
@@ -170,7 +171,7 @@ namespace IND_CRM_APP.Controllers
         {
             try
             {
-                string token = HttpContext.Session.GetString("Token") ?? string.Empty;
+                string token = GetToken() ?? string.Empty;
                 if (string.IsNullOrEmpty(token))
                     return Json(new { success = false, message = _sr["Api_TokenMissing"].Value });
 
@@ -217,7 +218,7 @@ namespace IND_CRM_APP.Controllers
         {
             try
             {
-                string token = HttpContext.Session.GetString("Token") ?? string.Empty;
+                string token = GetToken() ?? string.Empty;
                 if (string.IsNullOrEmpty(token))
                     return Json(new { success = false, message = _sr["Api_TokenMissing"].Value });
 
@@ -311,7 +312,7 @@ namespace IND_CRM_APP.Controllers
         [HttpGet("Visitas/Detalle/{code}")]
         public async Task<IActionResult> Detail(string code)
         {
-            var token = HttpContext.Session.GetString("Token");
+            var token = GetToken();
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Auth");
 
@@ -443,7 +444,7 @@ namespace IND_CRM_APP.Controllers
         [HttpGet("Visitas/GetActivityByCode")]
         public async Task<IActionResult> GetActivityByCode(string code)
         {
-            var token = HttpContext.Session.GetString("Token");
+            var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
                 return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
@@ -461,7 +462,7 @@ namespace IND_CRM_APP.Controllers
         {
             try
             {
-                var token = HttpContext.Session.GetString("Token");
+                var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
@@ -498,7 +499,7 @@ namespace IND_CRM_APP.Controllers
         {
             try
             {
-                var token = HttpContext.Session.GetString("Token");
+                var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
@@ -555,7 +556,7 @@ namespace IND_CRM_APP.Controllers
         {
             try
             {
-                var token = HttpContext.Session.GetString("Token");
+                var token = GetToken();
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 

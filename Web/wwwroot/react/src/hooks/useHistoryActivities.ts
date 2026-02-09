@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { getCsrfToken } from "../services/apiService.ts";
+import { ApiFetchError, fetchJson } from "../services/apiService.ts";
 import { indT } from "../utils/indI18n.ts";
 
 export type HistoryActivityItem = {
@@ -126,18 +126,14 @@ export const useHistoryActivities = ({
 
       onDebug?.("loadActivities:request", { page, pageSize, payload });
 
-      let response: Response;
+      let data: HistoryResponse;
       try {
-        const token = getCsrfToken();
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) headers.RequestVerificationToken = token;
-
-        response = await fetch(`/Historial/GetActivities?page=${page}&pageSize=${pageSize}`, {
+        data = await fetchJson<HistoryResponse>(`/Historial/GetActivities?page=${page}&pageSize=${pageSize}`, {
           method: "POST",
-          headers,
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
-          credentials: "same-origin",
           signal: controller.signal,
+          suppressPermissionModal: true,
         });
       } catch (err: any) {
         if (requestId !== activeRequestIdRef.current) return;
@@ -145,7 +141,16 @@ export const useHistoryActivities = ({
           activeAbortRef.current = null;
           return;
         }
-        if (retryOnNetworkErrorRef.current) {
+
+        if (err instanceof ApiFetchError && err.status === 403) {
+          setIsLoading(false);
+          activeAbortRef.current = null;
+          onForbidden();
+          return;
+        }
+
+        const isNetworkError = !(err instanceof ApiFetchError) || typeof err.status !== "number";
+        if (isNetworkError && retryOnNetworkErrorRef.current) {
           retryOnNetworkErrorRef.current = false;
           activeAbortRef.current = null;
           retryTimerRef.current = window.setTimeout(() => {
@@ -160,35 +165,7 @@ export const useHistoryActivities = ({
           return;
         }
         setIsLoading(false);
-        setErrorMessage(indT("Api_RequestFailed", "No se pudo conectar con el servidor (red)."));
-        activeAbortRef.current = null;
-        return;
-      }
-
-      if (requestId !== activeRequestIdRef.current) return;
-
-      if (response.status === 403) {
-        setIsLoading(false);
-        activeAbortRef.current = null;
-        onForbidden();
-        return;
-      }
-
-      if (!response.ok) {
-        const statusText = response.statusText || "Error del servidor";
-        setIsLoading(false);
-        setErrorMessage(`${response.status} - ${statusText}. Verifica el backend.`);
-        activeAbortRef.current = null;
-        return;
-      }
-
-      const raw = await response.text();
-      let data: HistoryResponse;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        setIsLoading(false);
-        setErrorMessage(indT("Api_InvalidJson", "Error procesando datos"));
+        setErrorMessage(err?.message || indT("Api_RequestFailed", "No se pudo conectar con el servidor (red)."));
         activeAbortRef.current = null;
         return;
       }
@@ -196,7 +173,7 @@ export const useHistoryActivities = ({
       if (requestId !== activeRequestIdRef.current) return;
 
       onDebug?.("loadActivities:response", {
-        status: response.status,
+        status: 200,
         total: data?.total ?? 0,
         count: Array.isArray(data?.items) ? data.items.length : 0,
       });

@@ -32,14 +32,10 @@ namespace IND_CRM_APP.Middleware
 
         public async Task Invoke(HttpContext context)
         {
-            // Resolve services per request (request scope).
-            var tokenSession = context.RequestServices.GetRequiredService<ITokenSessionService>();
-            var apiClient = context.RequestServices.GetRequiredService<ICrmApiClient>();
-
             var path = context.Request.Path.Value ?? string.Empty;
             var lowerPath = path.ToLowerInvariant();
 
-            // Omitir rutas publicas/estaticas
+            // Skip public and static routes.
             if (lowerPath.StartsWith("/auth/login") ||
                 lowerPath.StartsWith("/auth/logout") ||
                 lowerPath.StartsWith("/auth/entralogin") ||
@@ -55,6 +51,10 @@ namespace IND_CRM_APP.Middleware
                 await _next(context);
                 return;
             }
+
+            // Resolve scoped services only for protected routes.
+            var tokenSession = context.RequestServices.GetRequiredService<ITokenSessionService>();
+            var apiClient = context.RequestServices.GetRequiredService<ICrmApiClient>();
 
             var (token, expiresUtc) = tokenSession.GetToken();
 

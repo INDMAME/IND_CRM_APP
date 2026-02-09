@@ -17,8 +17,9 @@ namespace IND_CRM_APP.Controllers
 
         public HistorialController(
             ICrmApiClient apiClient,
+            ITokenSessionService tokenSession,
             ILogger<HistorialController> logger,
-            IStringLocalizer<INDSharedResource> sr) : base(apiClient)
+            IStringLocalizer<INDSharedResource> sr) : base(apiClient, tokenSession)
         {
             _logger = logger;
             _sr = sr;
@@ -28,7 +29,7 @@ namespace IND_CRM_APP.Controllers
         [HttpGet]
         public async Task<IActionResult> History()
         {
-            var token = HttpContext.Session.GetString("Token");
+            var token = GetToken();
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Auth");
 
@@ -54,7 +55,7 @@ namespace IND_CRM_APP.Controllers
             int page = 1,
             int pageSize = 50)
         {
-            var token = HttpContext.Session.GetString("Token");
+            var token = GetToken();
             if (string.IsNullOrEmpty(token))
                 return Unauthorized();
 

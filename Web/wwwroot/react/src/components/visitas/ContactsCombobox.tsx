@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useId, useMemo, useRef, useState } from "react";
 import { XMarkIcon } from "@heroicons/react/20/solid";
 import FloatingList from "../commons/FloatingList.tsx";
 import Spinner from "../commons/Spinner.tsx";
@@ -46,6 +46,9 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   const inputRef = useRef<HTMLInputElement | null>(null);
   const lastAccountRef = useRef(accountNum || "");
   const onChangeRef = useRef(onChange);
+  const idBase = useId();
+  const inputId = `${idBase}-contacts-input`;
+  const listId = `${idBase}-contacts-options`;
 
   useOutsideClick([containerRef, listRef], () => setOpen(false));
 
@@ -84,7 +87,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   }, []);
 
   const primeFromCache = () => {
-    const cached = getCachedContacts(accountNum);
+    const cached = getCachedContacts(accountNum) as ContactOption[] | null;
     if (cached) {
       setOptions(cached);
       setHasLoaded(true);
@@ -135,7 +138,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
       setStatus(indT("Visits_Create_PressArrowToLoadContacts", "Press ArrowDown to load contacts."));
     }
 
-    const storedSelection = getStoredSelection(accountNum);
+    const storedSelection = getStoredSelection(accountNum) as ContactOption[];
     if (storedSelection.length && !value?.length) {
       setSelected(storedSelection);
       onChangeRef.current(storedSelection);
@@ -249,6 +252,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     );
     return f.length ? f : availableOptions;
   }, [availableOptions, query]);
+  const activeId = open && filtered[activeIndex] ? `${idBase}-contact-opt-${filtered[activeIndex].value}` : undefined;
 
   useEffect(() => {
     setActiveIndex(0);
@@ -291,7 +295,9 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
 
   return (
     <div className="space-y-2" ref={containerRef}>
-      <label className="form-label font-semibold">{indT("Visits_Create_SearchContact", "Search contact")}</label>
+      <label className="form-label font-semibold" htmlFor={inputId}>
+        {indT("Visits_Create_SearchContact", "Search contact")}
+      </label>
       <div className="relative">
           <div
             ref={boxRef}
@@ -311,17 +317,26 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
                   aria-label={indT("Common_Delete", "Delete")}
                   title={indT("Common_Delete", "Delete")}
                 >
-                  <XMarkIcon className="h-4 w-4" />
+                  <XMarkIcon className="h-4 w-4" aria-hidden="true" />
                 </button>
               </span>
             ))}
             <input
+              id={inputId}
+              name={`${idBase}-contacts-query`}
               className="flex-1 min-w-30 bg-transparent text-sm sm:text-base leading-5 text-slate-900 border-none outline-hidden px-1 py-1 focus:ring-0 focus:border-transparent"
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleKeyDown}
               placeholder={selected.length ? "" : indT("Visits_Create_FilterPlaceholder", "Type to filter...")}
+              autoComplete="off"
               ref={inputRef}
               readOnly={!accountNum}
+              role="combobox"
+              aria-expanded={open}
+              aria-controls={listId}
+              aria-activedescendant={activeId}
+              aria-autocomplete="list"
+              aria-label={indT("Visits_Create_SearchContact", "Search contact")}
               onFocus={() => {
                 ensureLoaded();
                 setOpen(true);
@@ -348,7 +363,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
               }
             }}
           >
-            {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
+            {open ? <ChevronUpSvg className="h-5 w-5" aria-hidden="true" /> : <ChevronDownSvg className="h-5 w-5" aria-hidden="true" />}
           </button>
         </div>
           <FloatingList
@@ -361,7 +376,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
             portalClassName={portalClassName}
             panelClassName={panelClassName}
           >
-          <div ref={listRef} aria-multiselectable="true">
+          <div ref={listRef} id={listId} aria-multiselectable="true">
             {loading && (
               <div className="flex items-center gap-2 px-4 py-2 text-sm text-slate-500">
                 <Spinner size="h-4 w-4" />
@@ -386,6 +401,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
                   <button
                     type="button"
                     key={opt.value}
+                    id={`${idBase}-contact-opt-${opt.value}`}
                     role="option"
                     aria-selected={sel}
                     className={classNames(

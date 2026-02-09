@@ -1,13 +1,15 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { createRoot } from "react-dom/client";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
 import AudioRecorderMinimal from "./AudioRecorderMinimal.tsx";
 import PulseRingsMultipleIcon from "../../components/commons/PulseRingsMultipleIcon.tsx";
+import { TEXT_EDITOR_PREFIX } from "../../utils/textEditor.ts";
+import { getSessionValueWithExpiry, removeSessionValueWithExpiry, setSessionValueWithExpiry } from "../../utils/sessionExpiry.ts";
+import { mountReactIsland, mountWhenDocumentReady } from "../../utils/reactIsland.tsx";
 
 const IND_I18N = globalThis.__IND_I18N__ || {};
 const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
 
-const STORAGE_PREFIX = "ind_texteditor_";
+const STORAGE_PREFIX = TEXT_EDITOR_PREFIX;
 const TOPBAR_HEIGHT = 64;
 const OUTER_MARGIN = 5;
 const MIN_EDITOR_HEIGHT = 240;
@@ -16,8 +18,7 @@ const TYPE_INTERVAL_MS = 28;
 const TYPE_TARGET_MS = 4200;
 const TYPE_MIN_STEP = 1;
 const TYPE_MAX_STEP = 4;
-
-type IndRootElement = HTMLElement & { __indRoot?: import("react-dom/client").Root };
+const TEXT_EDITOR_STORAGE_TTL_MS = 12 * 60 * 60 * 1000;
 
 // Shared spinner for local loading states.
 type SpinnerProps = {
@@ -42,28 +43,16 @@ const getCsrfToken = () => {
 };
 
 function safeGetSessionValue(key) {
-  try {
-    return sessionStorage.getItem(key);
-  } catch {
-    return null;
-  }
+  return getSessionValueWithExpiry(key);
 }
 
 function safeSetSessionValue(key, value) {
-  try {
-    sessionStorage.setItem(key, value);
-  } catch {
-    // ignore
-  }
+  setSessionValueWithExpiry(key, value, TEXT_EDITOR_STORAGE_TTL_MS);
 }
 
 // Remove a session value without throwing for blocked storage.
 function safeRemoveSessionValue(key) {
-  try {
-    sessionStorage.removeItem(key);
-  } catch {
-    // ignore
-  }
+  removeSessionValueWithExpiry(key);
 }
 
 function parseBool(value) {
@@ -102,7 +91,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     const safeId = String(fieldId || "").trim();
     if (!safeId) return "";
     try {
-      const stored = sessionStorage.getItem(`${STORAGE_PREFIX}${safeId}_returnUrl`);
+      const stored = getSessionValueWithExpiry(`${STORAGE_PREFIX}${safeId}_returnUrl`);
       return stored ? String(stored).trim() : "";
     } catch {
       return "";
@@ -548,7 +537,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
 
 // Mount the text editor into the Razor view.
 export const mountTextEditor = () => {
-  const rootEl = document.getElementById("ind-text-editor-root") as IndRootElement | null;
+  const rootEl = document.getElementById("ind-text-editor-root");
   if (!rootEl) return;
 
   const fieldId = rootEl.getAttribute("data-field-id") || "";
@@ -564,8 +553,8 @@ export const mountTextEditor = () => {
   const editModeKeyAttr = rootEl.getAttribute("data-edit-mode-key") || "";
   const editModeKey = editModeKeyAttr || getQueryParam("editModeKey") || "";
 
-  const existing = rootEl.__indRoot;
-  const element = (
+  mountReactIsland(
+    rootEl,
     <IndTextEditorApp
       fieldId={fieldId}
       fieldLabel={fieldLabel}
@@ -576,15 +565,6 @@ export const mountTextEditor = () => {
       allowEdit={allowEdit}
     />
   );
-
-  if (existing) {
-    existing.render(element);
-    return;
-  }
-
-  const root = createRoot(rootEl);
-  rootEl.__indRoot = root;
-  root.render(element);
 };
 
 // Auto-mount when the page bundle loads.
@@ -592,13 +572,5 @@ const mount = () => {
   mountTextEditor();
 };
 
-if (typeof document !== "undefined") {
-  if (document.readyState === "complete" || document.readyState === "interactive") {
-    mount();
-  } else {
-    document.addEventListener("DOMContentLoaded", mount);
-  }
-}
-
-
+mountWhenDocumentReady(mount);
 export default IndTextEditorApp;

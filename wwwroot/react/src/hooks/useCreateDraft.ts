@@ -9,6 +9,9 @@ import {
   stripFreshParam,
 } from "../utils/visitasStorage.ts";
 import { indT } from "../utils/indI18n.ts";
+import { getSessionJsonWithExpiry, getSessionValueWithExpiry, setSessionJsonWithExpiry } from "../utils/sessionExpiry.ts";
+
+const CREATE_DRAFT_TTL_MS = 24 * 60 * 60 * 1000;
 
 type DraftSnapshot = {
   selectedClient: any;
@@ -52,11 +55,7 @@ export const useCreateDraft = ({
   const draftPersistTimerRef = useRef<number | null>(null);
 
   const persistDraftSnapshot = useCallback((draft: DraftSnapshot) => {
-    try {
-      sessionStorage.setItem(VISIT_DRAFT_KEY, JSON.stringify(draft));
-    } catch {
-      // Ignore storage quota errors.
-    }
+    setSessionJsonWithExpiry(VISIT_DRAFT_KEY, draft, CREATE_DRAFT_TTL_MS);
   }, []);
 
   const persistDraftNow = useCallback(() => {
@@ -102,7 +101,7 @@ export const useCreateDraft = ({
     let shouldShow = false;
     try {
       shouldShow = !!(
-        sessionStorage.getItem(VISIT_DRAFT_KEY) ||
+        getSessionValueWithExpiry(VISIT_DRAFT_KEY) ||
         sessionStorage.getItem(CONTACTS_STORAGE_KEY) ||
         sessionStorage.getItem(CONTACTS_SELECTION_KEY)
       );
@@ -113,19 +112,16 @@ export const useCreateDraft = ({
       showGlobalSpinner(indT("Common_Loading", "Loading"));
     }
     try {
-      const raw = sessionStorage.getItem(VISIT_DRAFT_KEY);
-      if (raw) {
-        const draft = JSON.parse(raw);
-        if (draft?.selectedClient?.value) setSelectedClient(draft.selectedClient);
-        if (Array.isArray(draft?.selectedContacts)) setSelectedContacts(draft.selectedContacts);
-        if (draft?.visitType !== undefined) setVisitType(draft.visitType);
-        if (draft?.transDate) setTransDate(draft.transDate);
-        if (draft?.description !== undefined) setDescription(draft.description);
-        if (draft?.comentarios !== undefined) setComentarios(draft.comentarios);
-        if (draft?.antecedentes !== undefined) setAntecedentes(draft.antecedentes);
-        if (draft?.conclusiones !== undefined) setConclusiones(draft.conclusiones);
-        if (draft?.step === 2) setStep(2);
-      }
+      const draft = getSessionJsonWithExpiry<DraftSnapshot>(VISIT_DRAFT_KEY);
+      if (draft?.selectedClient?.value) setSelectedClient(draft.selectedClient);
+      if (Array.isArray(draft?.selectedContacts)) setSelectedContacts(draft.selectedContacts);
+      if (draft?.visitType !== undefined) setVisitType(draft.visitType);
+      if (draft?.transDate) setTransDate(draft.transDate);
+      if (draft?.description !== undefined) setDescription(draft.description);
+      if (draft?.comentarios !== undefined) setComentarios(draft.comentarios);
+      if (draft?.antecedentes !== undefined) setAntecedentes(draft.antecedentes);
+      if (draft?.conclusiones !== undefined) setConclusiones(draft.conclusiones);
+      if (draft?.step === 2) setStep(2);
     } catch {
       // Ignore malformed draft payloads.
     } finally {

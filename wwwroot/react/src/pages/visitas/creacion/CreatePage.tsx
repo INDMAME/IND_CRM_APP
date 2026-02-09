@@ -1,42 +1,24 @@
 import React from "react";
-import { createRoot } from "react-dom/client";
 import CreateForm from "./CreateForm.tsx";
-import { I18nProvider } from "../../../context/I18nContext.tsx";
-import { AuthProvider } from "../../../context/AuthContext.tsx";
-
-type IndRootElement = HTMLElement & { __indRoot?: import("react-dom/client").Root };
+import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
+import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 
 // Page entry for the visitas create island.
 const CreatePage = () => {
   return (
-    <I18nProvider>
-      <AuthProvider>
-        <CreateForm />
-      </AuthProvider>
-    </I18nProvider>
+    <VisitasPageProviders>
+      <CreateForm />
+    </VisitasPageProviders>
   );
 };
 
 const mount = () => {
-  const rootEl = document.getElementById("visitas-app-root") as IndRootElement | null;
+  const rootEl = document.getElementById("visitas-app-root");
   if (!rootEl) return;
 
-  const element = <CreatePage />;
-
-  if (rootEl.__indRoot) {
-    rootEl.__indRoot.render(element);
-    return;
-  }
-
-  const root = createRoot(rootEl);
-  rootEl.__indRoot = root;
-  root.render(element);
+  mountReactIsland(rootEl, <CreatePage />);
 };
 
-if (document.readyState === "complete" || document.readyState === "interactive") {
-  mount();
-} else {
-  document.addEventListener("DOMContentLoaded", mount);
-}
+mountWhenDocumentReady(mount);
 
 export default CreatePage;

@@ -8,6 +8,18 @@ export type ApiFetchOptions = RequestInit & {
   suppressPermissionModal?: boolean;
 };
 
+export class ApiFetchError extends Error {
+  status?: number;
+  responseBody?: string;
+
+  constructor(message: string, status?: number, responseBody?: string) {
+    super(message);
+    this.name = "ApiFetchError";
+    this.status = status;
+    this.responseBody = responseBody;
+  }
+}
+
 const getPermissionI18n = (): PermissionI18n => {
   return (typeof window !== "undefined" && window.__IND_PERMISSION_I18N__) || {};
 };
@@ -38,6 +50,20 @@ export const getCsrfToken = (): string => {
   return meta ? meta.getAttribute("content") || "" : "";
 };
 
+const tryParseJson = (raw: string): any | null => {
+  if (!raw || !raw.trim()) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
+const getMessageFromPayload = (payload: any): string => {
+  const message = payload?.message;
+  return typeof message === "string" && message.trim() ? message : "";
+};
+
 export async function fetchJson<T = any>(url: string, options?: ApiFetchOptions): Promise<T> {
   const { suppressPermissionModal, ...fetchOptions } = options || {};
   const csrfToken = getCsrfToken();
@@ -57,30 +83,34 @@ export async function fetchJson<T = any>(url: string, options?: ApiFetchOptions)
     headers,
   });
 
-  const text = await response.text();
+  const raw = await response.text();
+  const payload = tryParseJson(raw);
 
   if (!response.ok) {
     if (response.status === 403) {
       if (!suppressPermissionModal) showPermissionModal();
-      throw new Error(indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion."));
+      throw new ApiFetchError(
+        indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion."),
+        response.status,
+        raw
+      );
     }
 
-    try {
-      const json = JSON.parse(text);
-      const msg = json?.message;
-      if (typeof msg === "string" && msg.trim()) {
-        throw new Error(msg);
-      }
-    } catch {
-      // ignore parse errors
+    const payloadMessage = getMessageFromPayload(payload);
+    if (payloadMessage) {
+      throw new ApiFetchError(payloadMessage, response.status, raw);
     }
 
-    throw new Error(indT("Api_RequestFailed", "Request failed. Please try again."));
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed. Please try again."), response.status, raw);
   }
 
-  try {
-    return JSON.parse(text) as T;
-  } catch {
-    throw new Error(indT("Api_InvalidJson", "Invalid server response."));
+  if (!raw.trim()) {
+    return {} as T;
   }
+
+  if (payload !== null) {
+    return payload as T;
+  }
+
+  throw new ApiFetchError(indT("Api_InvalidJson", "Invalid server response."), response.status, raw);
 }
