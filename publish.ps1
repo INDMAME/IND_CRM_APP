@@ -7,9 +7,15 @@ param(
 )
 
 # Build frontend assets and sync Web/wwwroot -> wwwroot.
-npm run build
+# Use the production React bundle for publish deployments.
+npm run build:react:prod
 if ($LASTEXITCODE -ne 0) {
-    throw "Frontend build failed with exit code $LASTEXITCODE."
+    throw "React frontend build failed with exit code $LASTEXITCODE."
+}
+
+npm run build:css
+if ($LASTEXITCODE -ne 0) {
+    throw "CSS build failed with exit code $LASTEXITCODE."
 }
 
 # Publish the project directly to avoid solution-level output warnings.

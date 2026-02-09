@@ -523,9 +523,9 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
       el.addEventListener("mouseenter", onMouseEnter);
       el.addEventListener("mouseleave", onMouseLeave);
       el.addEventListener("mousemove", onMouseMove);
-      el.addEventListener("touchstart", onTouchStart);
-      el.addEventListener("touchmove", onTouchMove);
-      el.addEventListener("touchend", onTouchEnd);
+      el.addEventListener("touchstart", onTouchStart, { passive: true });
+      el.addEventListener("touchmove", onTouchMove, { passive: true });
+      el.addEventListener("touchend", onTouchEnd, { passive: true });
 
       return () => {
         el.removeEventListener("mouseenter", onMouseEnter);

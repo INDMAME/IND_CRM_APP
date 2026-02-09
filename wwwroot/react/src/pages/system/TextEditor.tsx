@@ -442,7 +442,7 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
             <div aria-hidden="true" style={{ width: "25px", height: "25px" }} />
           )
         ) : (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-[14px] pr-1">
             <button
               type="button"
               className="topbar-btn"

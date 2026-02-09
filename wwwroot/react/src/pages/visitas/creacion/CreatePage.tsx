@@ -4,6 +4,8 @@ import CreateForm from "./CreateForm.tsx";
 import { I18nProvider } from "../../../context/I18nContext.tsx";
 import { AuthProvider } from "../../../context/AuthContext.tsx";
 
+type IndRootElement = HTMLElement & { __indRoot?: import("react-dom/client").Root };
+
 // Page entry for the visitas create island.
 const CreatePage = () => {
   return (
@@ -16,10 +18,19 @@ const CreatePage = () => {
 };
 
 const mount = () => {
-  const rootEl = document.getElementById("visitas-app-root");
+  const rootEl = document.getElementById("visitas-app-root") as IndRootElement | null;
   if (!rootEl) return;
+
+  const element = <CreatePage />;
+
+  if (rootEl.__indRoot) {
+    rootEl.__indRoot.render(element);
+    return;
+  }
+
   const root = createRoot(rootEl);
-  root.render(<CreatePage />);
+  rootEl.__indRoot = root;
+  root.render(element);
 };
 
 if (document.readyState === "complete" || document.readyState === "interactive") {

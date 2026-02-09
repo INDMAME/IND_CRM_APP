@@ -86,7 +86,7 @@
 - Interactive components:
   - Use Tailwind CSS components and patterns for modals, menus, dropdown lists, dialogs, steps, etc., integrated with Tailwind (both in Razor and React).
   - Use Heroicons as the default icon set across the UI.
-  - Dropdown/combobox rules: follow `.codex/dropdown-pattern.md` (cache, portals, keyboard, chevron toggle) for any new selectable field.
+  - Dropdown/combobox rules: follow `.codex/UI_GUIDE.md` dropdown pattern (cache, portals, keyboard, chevron toggle) for any new selectable field.
 - Static legacy libraries:
   - jQuery v3.7.1, jquery-validation and unobtrusive are considered legacy code.
   - Do not write new code that depends on these libs.
@@ -102,11 +102,13 @@
 
 ## Tailwind CSS and frontend build
 
-- Tailwind CSS 3.x is built via CLI (npm run build:css) defined in package.json and tailwind.config.js; main output is Web/wwwroot/css/tailwind.css.
+- Tailwind CSS 4.x is built via CLI (npm run build:css) defined in package.json and tailwind.config.js; main output is Web/wwwroot/css/tailwind.css.
 - There should be a single CSS entry point where Tailwind can grow progressively.
 - Configure Tailwind to:
   - Register "Montserrat" as base font family.
   - Register #00296b as a primary color in the palette (for example "primary").
+- React islands are bundled by esbuild to ESM entry files under Web/wwwroot/js and shared chunks under Web/wwwroot/js/chunks.
+- Razor pages that load React island bundles must use script type="module".
 - Do not introduce new CSS frameworks or heavy frontend toolchains unless clearly justified.
 - Priority is SSR and utility CSS; React is used only as a complement on top of MVC, not as a full SPA.
 
@@ -161,6 +163,16 @@
     - #00296b as primary corporate color.
   - Do not propose solutions based on Angular, Vue, Blazor, Svelte, Bootstrap, jQuery UI, Material, etc.
 
+## Mandatory skill-first object creation rule
+
+- Before creating any new object of any type, Codex must do a short pre-check:
+  - Object types include (not limited to): class, interface, DTO, view model, controller, service, helper, middleware, React component, hook, context, facade, script, test, Razor view/partial, and resource keys.
+  - First apply the `vercel-react-best-practices` skill when the change touches React, TS/TSX, frontend rendering, fetch flow, bundle output, listeners, or re-render behavior.
+  - Validate destination path against `.codex/PROJECT_STRUCTURE.md` and keep the current folder taxonomy.
+  - Reuse an existing object if the responsibility already exists; do not create parallel duplicates.
+  - Do not create new top-level folders or module trees unless explicitly requested.
+- If a request conflicts with file structure rules, Codex must warn and propose a structure-safe location first.
+
 ## Critical anti regression rule (dates, calendars and API)
 
 Codex must apply this rule for any change that touches views, scripts or filter logic:
@@ -197,4 +209,4 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-02-03
+- 2026-02-09

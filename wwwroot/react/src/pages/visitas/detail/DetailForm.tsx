@@ -127,6 +127,7 @@ const DetailApp = () => {
   const readOnlySurfaceRef = useRef(null);
   const editModeKeyRef = useRef("");
   const draftKeyRef = useRef("");
+  const draftPersistTimerRef = useRef<number | null>(null);
   const editSnapshotRef = useRef(null);
 
   const recId = String(detail.recId ?? detail.RecId ?? "");
@@ -236,7 +237,20 @@ const DetailApp = () => {
   }, []);
 
   useEffect(() => {
-    if (isEditing) {
+    if (!isEditing) {
+      if (draftPersistTimerRef.current) {
+        clearTimeout(draftPersistTimerRef.current);
+        draftPersistTimerRef.current = null;
+      }
+      return;
+    }
+
+    if (draftPersistTimerRef.current) {
+      clearTimeout(draftPersistTimerRef.current);
+    }
+
+    draftPersistTimerRef.current = window.setTimeout(() => {
+      draftPersistTimerRef.current = null;
       saveDraft({
         transDate,
         visitType,
@@ -246,7 +260,14 @@ const DetailApp = () => {
         antecedentes,
         conclusiones
       });
-    }
+    }, 180);
+
+    return () => {
+      if (draftPersistTimerRef.current) {
+        clearTimeout(draftPersistTimerRef.current);
+        draftPersistTimerRef.current = null;
+      }
+    };
   }, [transDate, visitType, asistenteTipo, description, comentarios, antecedentes, conclusiones, isEditing, saveDraft]);
 
   const hasServerDetail =

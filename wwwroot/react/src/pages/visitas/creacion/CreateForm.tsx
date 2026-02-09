@@ -60,6 +60,7 @@ function VisitasApp() {
   const [busy, setBusy] = useState(false);
   const [showRequired, setShowRequired] = useState(false);
   const draftRestoredRef = useRef(false);
+  const draftPersistTimerRef = useRef<number | null>(null);
   const [modalError, setModalError] = useState("");
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
@@ -109,15 +110,19 @@ function VisitasApp() {
     [selectedClient, selectedContacts, visitType, transDate, description, comentarios, antecedentes, conclusiones, step]
   );
 
-  // Store the draft before leaving the page to keep step 2 on return.
-  const persistDraftNow = React.useCallback(() => {
-    const draft = buildDraft();
+  // Persist a draft snapshot with defensive storage guards.
+  const persistDraftSnapshot = React.useCallback((draft) => {
     try {
       sessionStorage.setItem(VISIT_DRAFT_KEY, JSON.stringify(draft));
     } catch {
       /* ignore quota errors */
     }
-  }, [buildDraft]);
+  }, []);
+
+  // Store the draft before leaving the page to keep step 2 on return.
+  const persistDraftNow = React.useCallback(() => {
+    persistDraftSnapshot(buildDraft());
+  }, [buildDraft, persistDraftSnapshot]);
 
   // Opens the full-screen text editor for a multiline field.
   const openTextEditor = React.useCallback(
@@ -242,13 +247,23 @@ function VisitasApp() {
   // Persist draft in sessionStorage (skip until we restored any saved draft).
   useEffect(() => {
     if (!draftRestoredRef.current) return;
-    const draft = buildDraft();
-    try {
-      sessionStorage.setItem(VISIT_DRAFT_KEY, JSON.stringify(draft));
-    } catch {
-      /* ignore quota errors */
+
+    if (draftPersistTimerRef.current) {
+      clearTimeout(draftPersistTimerRef.current);
     }
-  }, [buildDraft]);
+
+    draftPersistTimerRef.current = window.setTimeout(() => {
+      draftPersistTimerRef.current = null;
+      persistDraftSnapshot(buildDraft());
+    }, 180);
+
+    return () => {
+      if (draftPersistTimerRef.current) {
+        clearTimeout(draftPersistTimerRef.current);
+        draftPersistTimerRef.current = null;
+      }
+    };
+  }, [buildDraft, persistDraftSnapshot]);
 
   // Restore draft on mount
   useEffect(() => {
@@ -312,10 +327,9 @@ function VisitasApp() {
     return () => window.removeEventListener("pageshow", onPageShow);
   }, [applyTextEditorValues]);
 
-  const canGoNext = !!selectedClient && selectedContacts.length > 0;
+  const canGoNext = !!selectedClient;
   const canCreate =
     !!selectedClient &&
-    selectedContacts.length > 0 &&
     String(visitType || "").trim() !== "" &&
     String(visitType) !== "0" &&
     description.trim().length > 0 &&
@@ -347,10 +361,6 @@ function VisitasApp() {
     setModalError("");
     if (!selectedClient) {
       setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
-      return false;
-    }
-    if (!selectedContacts.length) {
-      setStatus(indT("Visits_Create_SelectContactRequired", "Select at least one contact."));
       return false;
     }
     if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {
@@ -388,21 +398,33 @@ function VisitasApp() {
       if (!recIdActividad) throw new Error(indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
       createdRecId = String(recIdActividad);
 
-      for (let idx = 0; idx < selectedContacts.length; idx++) {
-        const c = selectedContacts[idx];
-        setStatus(indFormat("Visits_Create_CreatingVisitFor", "Creating visit for {0}...", c.text));
-        const payloadVisita = {
-          refRecIdActividad: recIdActividad,
-          asistenteTipo: defaultAsistenteTipo,
-          asistenteId: c.text,
-          contactoRecId: c.value,
+      if (selectedContacts.length > 0) {
+        const assistantBatchSize = 4;
+        const createAssistant = async (contact) => {
+          const payloadVisita = {
+            refRecIdActividad: recIdActividad,
+            asistenteTipo: defaultAsistenteTipo,
+            asistenteId: contact.text,
+            contactoRecId: contact.value,
+          };
+          const resVis = await fetchJson("/Visitas/CreateVisitaAsistente", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payloadVisita),
+          });
+          if (!resVis.success) {
+            throw new Error(resVis.message || indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
+          }
         };
-        const resVis = await fetchJson("/Visitas/CreateVisitaAsistente", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payloadVisita),
-        });
-        if (!resVis.success) throw new Error(resVis.message || indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
+
+        for (let idx = 0; idx < selectedContacts.length; idx += assistantBatchSize) {
+          const batch = selectedContacts.slice(idx, idx + assistantBatchSize);
+          const first = batch[0];
+          if (first) {
+            setStatus(indFormat("Visits_Create_CreatingVisitFor", "Creating visit for {0}...", first.text));
+          }
+          await Promise.all(batch.map((contact) => createAssistant(contact)));
+        }
       }
 
       try {
@@ -447,10 +469,6 @@ function VisitasApp() {
     if (modal.open) return;
     if (!selectedClient) {
       setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
-      return;
-    }
-    if (!selectedContacts.length) {
-      setStatus(indT("Visits_Create_SelectContactRequired", "Select at least one contact."));
       return;
     }
     if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {

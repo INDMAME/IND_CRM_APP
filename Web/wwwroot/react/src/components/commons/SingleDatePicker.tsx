@@ -108,7 +108,7 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
       }
     };
     document.addEventListener("mousedown", onDocClick);
-    document.addEventListener("touchstart", onDocClick);
+    document.addEventListener("touchstart", onDocClick, { passive: true });
     return () => {
       document.removeEventListener("mousedown", onDocClick);
       document.removeEventListener("touchstart", onDocClick);

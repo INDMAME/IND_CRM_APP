@@ -16,7 +16,7 @@ export const useFloatingPosition = (targetRef: React.RefObject<HTMLElement>, ope
     };
     update();
     const onScroll = () => open && update();
-    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
     window.addEventListener("resize", update);
     return () => {
       window.removeEventListener("scroll", onScroll, true);

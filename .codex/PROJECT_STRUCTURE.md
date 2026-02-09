@@ -21,7 +21,7 @@
 │   └── wwwroot/                        // Static web root
 │       ├── css/                        // CSS outputs (tailwind.css, page css)
 │       ├── images/                     // App images
-│       ├── js/                         // Compiled JS bundles
+│       ├── js/                         // Compiled JS ESM entries + generated chunks
 │       ├── lib/                        // Third party libraries (jquery, validation)
 │       └── react/                      // React source
 │           ├── global.d.ts             // Global TS types for window variables
@@ -72,14 +72,17 @@
 
 ## Master instruction (must follow for new work)
 1) Place new backend code under App/ and new web code under Web/.
-2) Keep React source only in Web/wwwroot/react/src. Do not add new entries in Web/wwwroot/js.
+2) Keep React source only in Web/wwwroot/react/src. Do not add manual source files in Web/wwwroot/js (build outputs and generated chunks only).
 3) Every new class and method must include a short English ASCII comment describing purpose.
 4) Add or update documentation in .codex/ when introducing new patterns.
-5) If you add a new React island, add it to scripts/build-react.mjs.
+5) If you add a new React island, add it to scripts/build-react.mjs and load it from Razor with script type="module".
 6) Never change date pickers or filters without validating events and payloads.
 7) Keep MVC controllers thin; call services only.
 8) When adding UI strings, update all resource files.
 9) Input-like components must accept a readOnly (or mode) prop and apply label/value colors locally.
+10) Before creating any new object (class, component, hook, service, script, test, view), do a pre-check against this structure map and place it in the existing module path.
+11) For any React/frontend object creation or refactor, apply `vercel-react-best-practices` first (waterfalls, bundle size, listener strategy, rerender safety).
+12) Do not create new root folders or parallel module trees unless explicitly required.
 
 ## Last updated
-- 2026-02-03
+- 2026-02-09

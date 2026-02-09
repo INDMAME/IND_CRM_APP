@@ -101,6 +101,15 @@ const ClientSearchCombobox = ({
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+    };
+  }, []);
+
   const search = async () => {
     const currentQuery = query.trim().toLowerCase();
     if (currentQuery.length < minChars) {
@@ -186,7 +195,7 @@ const ClientSearchCombobox = ({
     const onScroll = () => {
       if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) loadMore();
     };
-    el.addEventListener("scroll", onScroll);
+    el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, [open, loadMore]);
 

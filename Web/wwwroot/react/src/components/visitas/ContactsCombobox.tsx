@@ -74,6 +74,15 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     }
   };
 
+  useEffect(() => {
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+        abortRef.current = null;
+      }
+    };
+  }, []);
+
   const primeFromCache = () => {
     const cached = getCachedContacts(accountNum);
     if (cached) {
@@ -219,7 +228,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     const onScroll = () => {
       if (el.scrollTop + el.clientHeight >= el.scrollHeight - 8) loadMoreContacts();
     };
-    el.addEventListener("scroll", onScroll);
+    el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
   }, [open, loadMoreContacts]);
 

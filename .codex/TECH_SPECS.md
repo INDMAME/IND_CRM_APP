@@ -33,8 +33,10 @@
 
 ## Build system
 - Tailwind CLI builds Web/wwwroot/css/tailwind.css.
-- esbuild bundles React islands to Web/wwwroot/js.
+- esbuild bundles React islands to ESM entries in Web/wwwroot/js and shared chunks in Web/wwwroot/js/chunks.
+- Razor views that load React island bundles must use script type="module".
 - JS legacy source lives in Web/wwwroot/react/src/legacy and is compiled to js.
+- For deploy, use publish.ps1 so React/CSS build, dotnet publish, IIS sync, and restart stay consistent.
 
 ## TypeScript only rule
 - All new frontend source must be TypeScript (.ts / .tsx).
@@ -59,4 +61,4 @@
 - Legacy JS must be migrated into Web/wwwroot/react/src/legacy as TS and compiled.
 
 ## Last updated
-- 2026-02-03
+- 2026-02-09

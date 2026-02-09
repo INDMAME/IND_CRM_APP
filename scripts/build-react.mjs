@@ -1,4 +1,5 @@
-﻿import { build } from "esbuild";
+import { rmSync } from "node:fs";
+import { build } from "esbuild";
 
 const isProd = process.argv.includes("--prod");
 
@@ -11,11 +12,18 @@ const entryPoints = {
   "ind-audio-worklet": "Web/wwwroot/react/audio-recorder/ind-audio-worklet.ts",
 };
 
+// Keep the chunk folder clean so old hashed files do not accumulate between builds.
+rmSync("Web/wwwroot/js/chunks", { recursive: true, force: true });
+
 await build({
   entryPoints,
   bundle: true,
+  splitting: true,
+  format: "esm",
+  platform: "browser",
   outdir: "Web/wwwroot/js",
   entryNames: "[name]",
+  chunkNames: "chunks/[name]-[hash]",
   sourcemap: isProd ? true : "inline",
   minify: isProd,
   jsx: "automatic",
