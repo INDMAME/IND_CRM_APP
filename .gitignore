@@ -281,6 +281,9 @@ FakesAssemblies/
 
 # Codex local artifacts
 .codex/Postman/
+tests/.auth/
+.playwright/
+test-results/
 
 # GhostDoc plugin setting file
 *.GhostDoc.xml
