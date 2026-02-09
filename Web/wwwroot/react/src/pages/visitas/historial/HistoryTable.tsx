@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { classNames } from "../../../utils/classNames.ts";
 
 export type TimelineDateParts = {
@@ -319,79 +319,14 @@ const applyEllipsis = (el: HTMLElement, fullText: string, multiLine: boolean) =>
   return true;
 };
 
-// Use pointer movement to avoid accidental taps on scroll.
-const bindTapGuard = (el: HTMLElement, onTap: (event: PointerEvent) => void) => {
-  if (!el) return () => undefined;
-  let active = false;
-  let pointerId: number | null = null;
-  let startX = 0;
-  let startY = 0;
-  let startTime = 0;
-  let moved = false;
-
-  const reset = () => {
-    active = false;
-    pointerId = null;
-    moved = false;
-  };
-
-  const onPointerDown = (e: PointerEvent) => {
-    if (e.pointerType === "mouse" && e.button !== 0) return;
-    active = true;
-    pointerId = e.pointerId;
-    startX = e.clientX;
-    startY = e.clientY;
-    startTime = Date.now();
-    moved = false;
-  };
-
-  const onPointerMove = (e: PointerEvent) => {
-    if (!active || e.pointerId !== pointerId) return;
-    const dx = Math.abs(e.clientX - startX);
-    const dy = Math.abs(e.clientY - startY);
-    if (dx > TAP_MOVE_PX || dy > TAP_MOVE_PX) moved = true;
-  };
-
-  const onPointerUp = (e: PointerEvent) => {
-    if (!active || e.pointerId !== pointerId) return;
-    const heldMs = Date.now() - startTime;
-    const shouldTap = !moved && heldMs < HOLD_TO_PREVIEW_MS;
-    reset();
-    if (shouldTap) onTap(e);
-  };
-
-  el.addEventListener("pointerdown", onPointerDown, { passive: true });
-  el.addEventListener("pointermove", onPointerMove, { passive: true });
-  el.addEventListener("pointerup", onPointerUp, { passive: true });
-  el.addEventListener("pointercancel", reset, { passive: true });
-  el.addEventListener("pointerleave", reset, { passive: true });
-
-  return () => {
-    el.removeEventListener("pointerdown", onPointerDown);
-    el.removeEventListener("pointermove", onPointerMove);
-    el.removeEventListener("pointerup", onPointerUp);
-    el.removeEventListener("pointercancel", reset);
-    el.removeEventListener("pointerleave", reset);
-  };
-};
-
-// Prevent long-press selection and copy on cards.
-const blockCopyActions = (el: HTMLElement) => {
-  if (!el) return () => undefined;
-  const cancel = (event: Event) => event.preventDefault();
-  el.addEventListener("contextmenu", cancel);
-  el.addEventListener("selectstart", cancel);
-  el.addEventListener("copy", cancel);
-  el.addEventListener("cut", cancel);
-  el.addEventListener("paste", cancel);
-
-  return () => {
-    el.removeEventListener("contextmenu", cancel);
-    el.removeEventListener("selectstart", cancel);
-    el.removeEventListener("copy", cancel);
-    el.removeEventListener("cut", cancel);
-    el.removeEventListener("paste", cancel);
-  };
+type TapGuardState = {
+  active: boolean;
+  pointerId: number | null;
+  startX: number;
+  startY: number;
+  startTime: number;
+  moved: boolean;
+  linkId: string;
 };
 
 const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) => {
@@ -399,6 +334,83 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
   const tooltipRef = useRef<HTMLDivElement | null>(null);
   const tooltipAnchorRef = useRef<HTMLElement | null>(null);
   const tooltipCloseBoundRef = useRef(false);
+  const tapGuardRef = useRef<TapGuardState>({
+    active: false,
+    pointerId: null,
+    startX: 0,
+    startY: 0,
+    startTime: 0,
+    moved: false,
+    linkId: "",
+  });
+
+  const resolveClickableCard = useCallback((target: EventTarget | null) => {
+    const node = target as HTMLElement | null;
+    if (!node || typeof node.closest !== "function") return null;
+    const card = node.closest<HTMLElement>(".timeline-card--clickable[data-link-id]");
+    if (!card) return null;
+    if (!containerRef.current?.contains(card)) return null;
+    return card;
+  }, []);
+
+  const resetTapGuard = useCallback(() => {
+    tapGuardRef.current.active = false;
+    tapGuardRef.current.pointerId = null;
+    tapGuardRef.current.moved = false;
+    tapGuardRef.current.linkId = "";
+  }, []);
+
+  const handlePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
+      const card = resolveClickableCard(event.target);
+      if (!card) return;
+      const linkId = card.dataset.linkId || "";
+      if (!linkId) return;
+
+      tapGuardRef.current.active = true;
+      tapGuardRef.current.pointerId = event.pointerId;
+      tapGuardRef.current.startX = event.clientX;
+      tapGuardRef.current.startY = event.clientY;
+      tapGuardRef.current.startTime = Date.now();
+      tapGuardRef.current.moved = false;
+      tapGuardRef.current.linkId = linkId;
+    },
+    [resolveClickableCard]
+  );
+
+  const handlePointerMove = useCallback((event: React.PointerEvent<HTMLDivElement>) => {
+    const state = tapGuardRef.current;
+    if (!state.active || event.pointerId !== state.pointerId) return;
+    const dx = Math.abs(event.clientX - state.startX);
+    const dy = Math.abs(event.clientY - state.startY);
+    if (dx > TAP_MOVE_PX || dy > TAP_MOVE_PX) {
+      state.moved = true;
+    }
+  }, []);
+
+  const handlePointerUp = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      const state = tapGuardRef.current;
+      if (!state.active || event.pointerId !== state.pointerId) return;
+      const linkId = state.linkId;
+      const heldMs = Date.now() - state.startTime;
+      const shouldTap = !state.moved && heldMs < HOLD_TO_PREVIEW_MS;
+      resetTapGuard();
+      if (shouldTap && linkId) {
+        onNavigate(linkId);
+      }
+    },
+    [onNavigate, resetTapGuard]
+  );
+
+  const blockClipboardAction = useCallback(
+    (event: React.ClipboardEvent<HTMLDivElement> | React.MouseEvent<HTMLDivElement>) => {
+      if (!resolveClickableCard(event.target)) return;
+      event.preventDefault();
+    },
+    [resolveClickableCard]
+  );
 
   // Ensure the shared tooltip element exists once.
   useEffect(() => {
@@ -491,96 +503,120 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
       return el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 1;
     };
 
-    // Bind tooltip interactions for a text node.
-    const bindTooltip = (el: HTMLElement, text: string) => {
-      if (!text) return () => undefined;
-      let pressTimer: number | undefined;
-
-      const onMouseEnter = (event: MouseEvent) => {
-        if (!shouldPreview(el)) return;
-        showTooltip(text, el);
-      };
-      const onMouseLeave = () => hideTooltip();
-      const onMouseMove = () => {
-        if (!shouldPreview(el)) return;
-        if (tooltipEl.classList.contains("visible")) {
-          showTooltip(text, el);
-        }
-      };
-      const onTouchStart = (event: TouchEvent) => {
-        if (!shouldPreview(el)) return;
-        const touch = event.touches[0];
-        pressTimer = window.setTimeout(() => showTooltip(text, el), TOOLTIP_TOUCH_DELAY_MS);
-      };
-      const onTouchMove = () => {
-        if (pressTimer) window.clearTimeout(pressTimer);
-        hideTooltip();
-      };
-      const onTouchEnd = () => {
-        if (pressTimer) window.clearTimeout(pressTimer);
-      };
-
-      el.addEventListener("mouseenter", onMouseEnter);
-      el.addEventListener("mouseleave", onMouseLeave);
-      el.addEventListener("mousemove", onMouseMove);
-      el.addEventListener("touchstart", onTouchStart, { passive: true });
-      el.addEventListener("touchmove", onTouchMove, { passive: true });
-      el.addEventListener("touchend", onTouchEnd, { passive: true });
-
-      return () => {
-        el.removeEventListener("mouseenter", onMouseEnter);
-        el.removeEventListener("mouseleave", onMouseLeave);
-        el.removeEventListener("mousemove", onMouseMove);
-        el.removeEventListener("touchstart", onTouchStart);
-        el.removeEventListener("touchmove", onTouchMove);
-        el.removeEventListener("touchend", onTouchEnd);
-      };
+    const resolveTooltipTarget = (target: EventTarget | null) => {
+      const node = target as HTMLElement | null;
+      if (!node || typeof node.closest !== "function") return null;
+      const textEl = node.closest<HTMLElement>(".timeline-name, .timeline-desc-text");
+      if (!textEl || !container.contains(textEl)) return null;
+      return textEl;
     };
 
-    if (errorMessage) {
-      return () => {
-        cleanups.forEach((cleanup) => cleanup());
-      };
-    }
+    const showTooltipForElement = (el: HTMLElement | null) => {
+      if (!el) return;
+      const text = el.dataset.fulltext || el.textContent || "";
+      if (!text || !shouldPreview(el)) return;
+      showTooltip(text, el);
+    };
 
-    const cards = container.querySelectorAll<HTMLElement>(".timeline-card");
-    cards.forEach((card) => {
-      if (!card.classList.contains("timeline-card--nodata")) {
-        const cleanupPixel = createPixelEffect(card);
-        if (cleanupPixel) cleanups.push(cleanupPixel);
-      }
+    let activeTooltipEl: HTMLElement | null = null;
+    let pressTimer: number | null = null;
 
-      if (card.classList.contains("timeline-card--clickable")) {
-        const linkId = card.dataset.linkId || "";
-        if (linkId) {
-          cleanups.push(bindTapGuard(card, () => onNavigate(linkId)));
-          cleanups.push(blockCopyActions(card));
+    const clearPressTimer = () => {
+      if (pressTimer == null) return;
+      window.clearTimeout(pressTimer);
+      pressTimer = null;
+    };
+
+    const onMouseOver = (event: MouseEvent) => {
+      const textEl = resolveTooltipTarget(event.target);
+      if (!textEl) return;
+      activeTooltipEl = textEl;
+      showTooltipForElement(textEl);
+    };
+
+    const onMouseOut = (event: MouseEvent) => {
+      const from = resolveTooltipTarget(event.target);
+      if (!from) return;
+      const to = resolveTooltipTarget(event.relatedTarget);
+      if (to && to === from) return;
+      hideTooltip();
+      activeTooltipEl = null;
+    };
+
+    const onMouseMove = () => {
+      if (!activeTooltipEl) return;
+      if (!tooltipEl.classList.contains("visible")) return;
+      showTooltipForElement(activeTooltipEl);
+    };
+
+    const onTouchStart = (event: TouchEvent) => {
+      const textEl = resolveTooltipTarget(event.target);
+      if (!textEl) return;
+      activeTooltipEl = textEl;
+      clearPressTimer();
+      pressTimer = window.setTimeout(() => {
+        showTooltipForElement(textEl);
+      }, TOOLTIP_TOUCH_DELAY_MS);
+    };
+
+    const onTouchMove = () => {
+      clearPressTimer();
+      hideTooltip();
+      activeTooltipEl = null;
+    };
+
+    const onTouchEnd = () => {
+      clearPressTimer();
+    };
+
+    container.addEventListener("mouseover", onMouseOver);
+    container.addEventListener("mouseout", onMouseOut);
+    container.addEventListener("mousemove", onMouseMove);
+    container.addEventListener("touchstart", onTouchStart, { passive: true });
+    container.addEventListener("touchmove", onTouchMove, { passive: true });
+    container.addEventListener("touchend", onTouchEnd, { passive: true });
+
+    const onSelectStart = (event: Event) => {
+      if (!resolveClickableCard(event.target)) return;
+      event.preventDefault();
+    };
+    container.addEventListener("selectstart", onSelectStart);
+
+    cleanups.push(() => {
+      container.removeEventListener("mouseover", onMouseOver);
+      container.removeEventListener("mouseout", onMouseOut);
+      container.removeEventListener("mousemove", onMouseMove);
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
+      container.removeEventListener("touchend", onTouchEnd);
+      container.removeEventListener("selectstart", onSelectStart);
+      clearPressTimer();
+    });
+
+    if (!errorMessage) {
+      const cards = container.querySelectorAll<HTMLElement>(".timeline-card");
+      cards.forEach((card) => {
+        if (!card.classList.contains("timeline-card--nodata")) {
+          const cleanupPixel = createPixelEffect(card);
+          if (cleanupPixel) cleanups.push(cleanupPixel);
         }
-      }
-    });
-
-    const frameId = window.requestAnimationFrame(() => {
-      const nameEls = container.querySelectorAll<HTMLElement>(".timeline-name");
-      nameEls.forEach((el) => {
-        const text = el.dataset.fulltext || el.textContent || "";
-        applyEllipsis(el, text, true);
-        cleanups.push(bindTooltip(el, text));
       });
 
-      const descEls = container.querySelectorAll<HTMLElement>(".timeline-desc-text");
-      descEls.forEach((el) => {
-        const text = el.dataset.fulltext || el.textContent || "";
-        applyEllipsis(el, text, true);
-        cleanups.push(bindTooltip(el, text));
+      const frameId = window.requestAnimationFrame(() => {
+        const textEls = container.querySelectorAll<HTMLElement>(".timeline-name, .timeline-desc-text");
+        textEls.forEach((el) => {
+          const text = el.dataset.fulltext || el.textContent || "";
+          applyEllipsis(el, text, true);
+        });
       });
-    });
 
-    cleanups.push(() => window.cancelAnimationFrame(frameId));
+      cleanups.push(() => window.cancelAnimationFrame(frameId));
+    }
 
     return () => {
       cleanups.forEach((cleanup) => cleanup());
     };
-  }, [errorMessage, items, onNavigate]);
+  }, [errorMessage, items, resolveClickableCard]);
 
   const hasItems = items.length > 0;
   const showEmpty = !errorMessage && !hasItems;
@@ -635,10 +671,22 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
       ref={containerRef}
       className={classNames("timeline-box", showEmpty ? "timeline-empty" : "")}
       data-empty-text={noDataText}
+      onPointerDownCapture={handlePointerDown}
+      onPointerMoveCapture={handlePointerMove}
+      onPointerUpCapture={handlePointerUp}
+      onPointerCancelCapture={resetTapGuard}
+      onPointerLeave={resetTapGuard}
+      onContextMenuCapture={blockClipboardAction}
+      onCopyCapture={blockClipboardAction}
+      onCutCapture={blockClipboardAction}
+      onPasteCapture={blockClipboardAction}
     >
       {content}
     </div>
   );
 };
 
-export default HistoryTable;
+const MemoizedHistoryTable = React.memo(HistoryTable);
+MemoizedHistoryTable.displayName = "HistoryTable";
+
+export default MemoizedHistoryTable;

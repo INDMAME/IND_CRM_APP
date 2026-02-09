@@ -2,30 +2,20 @@
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
-import { fetchJson } from "../../../services/apiService.ts";
 import { useVisitas } from "../../../hooks/useVisitas.ts";
 import ClientSearchCombobox from "../../../components/visitas/ClientSearchCombobox.tsx";
 import ContactsCombobox from "../../../components/visitas/ContactsCombobox.tsx";
 import { useTapGuard } from "../../../hooks/useTapGuard.ts";
 import { useTopbar } from "../../../hooks/useTopbar.ts";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
+import { useCreateDraft } from "../../../hooks/useCreateDraft.ts";
+import { useCreateSubmit } from "../../../hooks/useCreateSubmit.ts";
 import { classNames } from "../../../utils/classNames.ts";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
-import { showGlobalSpinner, hideGlobalSpinner } from "../../../utils/globalSpinner.ts";
-import { indExtractId, indExtractSignedId } from "../../../utils/indIds.ts";
 import { setPreviewAnchor, showPreviewTooltip, isOverflowing } from "../../../utils/previewTooltip.ts";
 import { readAndClearTextEditorValue, TEXT_EDITOR_PREFIX } from "../../../utils/textEditor.ts";
-import {
-  CREATE_FRESH_PARAM,
-  VISIT_DRAFT_KEY,
-  CONTACTS_STORAGE_KEY,
-  CONTACTS_SELECTION_KEY,
-  clearCreateSelectionCache,
-  stripFreshParam
-} from "../../../utils/visitasStorage.ts";
-import { flashActionMark, setHistoryFilterForDate } from "../../../utils/visitasHistory.ts";
-import { wait } from "../../../utils/wait.ts";
+import { flashActionMark } from "../../../utils/visitasHistory.ts";
 
 function VisitasApp() {
   const { visitTypes, asistenteTipos } = useVisitas();
@@ -59,8 +49,6 @@ function VisitasApp() {
   const [status, setStatus] = useState("");
   const [busy, setBusy] = useState(false);
   const [showRequired, setShowRequired] = useState(false);
-  const draftRestoredRef = useRef(false);
-  const draftPersistTimerRef = useRef<number | null>(null);
   const [modalError, setModalError] = useState("");
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
@@ -94,8 +82,7 @@ function VisitasApp() {
     handleModalConfirm();
   }, [busy, modalError, closeConfirm, handleModalConfirm]);
 
-  // Build a draft snapshot for sessionStorage.
-  const buildDraft = React.useCallback(
+  const draftSnapshot = useMemo(
     () => ({
       selectedClient,
       selectedContacts,
@@ -110,19 +97,18 @@ function VisitasApp() {
     [selectedClient, selectedContacts, visitType, transDate, description, comentarios, antecedentes, conclusiones, step]
   );
 
-  // Persist a draft snapshot with defensive storage guards.
-  const persistDraftSnapshot = React.useCallback((draft) => {
-    try {
-      sessionStorage.setItem(VISIT_DRAFT_KEY, JSON.stringify(draft));
-    } catch {
-      /* ignore quota errors */
-    }
-  }, []);
-
-  // Store the draft before leaving the page to keep step 2 on return.
-  const persistDraftNow = React.useCallback(() => {
-    persistDraftSnapshot(buildDraft());
-  }, [buildDraft, persistDraftSnapshot]);
+  const { persistDraftNow } = useCreateDraft({
+    draftSnapshot,
+    setSelectedClient,
+    setSelectedContacts,
+    setVisitType,
+    setTransDate,
+    setDescription,
+    setComentarios,
+    setAntecedentes,
+    setConclusiones,
+    setStep,
+  });
 
   // Opens the full-screen text editor for a multiline field.
   const openTextEditor = React.useCallback(
@@ -245,81 +231,6 @@ function VisitasApp() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClient?.value]);
 
-  // Persist draft in sessionStorage (skip until we restored any saved draft).
-  useEffect(() => {
-    if (!draftRestoredRef.current) return;
-
-    if (draftPersistTimerRef.current) {
-      clearTimeout(draftPersistTimerRef.current);
-    }
-
-    draftPersistTimerRef.current = window.setTimeout(() => {
-      draftPersistTimerRef.current = null;
-      persistDraftSnapshot(buildDraft());
-    }, 180);
-
-    return () => {
-      if (draftPersistTimerRef.current) {
-        clearTimeout(draftPersistTimerRef.current);
-        draftPersistTimerRef.current = null;
-      }
-    };
-  }, [buildDraft, persistDraftSnapshot]);
-
-  // Restore draft on mount
-  useEffect(() => {
-    let freshLoad = false;
-    try {
-      const url = new URL(window.location.href);
-      freshLoad = url.searchParams.has(CREATE_FRESH_PARAM);
-    } catch {
-      freshLoad = false;
-    }
-
-    if (freshLoad) {
-      clearCreateSelectionCache();
-      stripFreshParam();
-      draftRestoredRef.current = true;
-      return;
-    }
-
-    let shouldShow = false;
-    try {
-      shouldShow = !!(
-        sessionStorage.getItem(VISIT_DRAFT_KEY) ||
-        sessionStorage.getItem(CONTACTS_STORAGE_KEY) ||
-        sessionStorage.getItem(CONTACTS_SELECTION_KEY)
-      );
-    } catch {
-      /* ignore storage access */
-    }
-    if (shouldShow) {
-      showGlobalSpinner(indT("Common_Loading", "Loading"));
-    }
-    try {
-      const raw = sessionStorage.getItem(VISIT_DRAFT_KEY);
-      if (raw) {
-        const draft = JSON.parse(raw);
-        if (draft?.selectedClient?.value) setSelectedClient(draft.selectedClient);
-        if (Array.isArray(draft?.selectedContacts)) setSelectedContacts(draft.selectedContacts);
-        if (draft?.visitType !== undefined) setVisitType(draft.visitType);
-        if (draft?.transDate) setTransDate(draft.transDate);
-        if (draft?.description !== undefined) setDescription(draft.description);
-        if (draft?.comentarios !== undefined) setComentarios(draft.comentarios);
-        if (draft?.antecedentes !== undefined) setAntecedentes(draft.antecedentes);
-        if (draft?.conclusiones !== undefined) setConclusiones(draft.conclusiones);
-        if (draft?.step === 2) setStep(2);
-      }
-    } catch {
-      /* ignore parse issues */
-    } finally {
-      if (shouldShow) {
-        hideGlobalSpinner();
-      }
-    }
-    draftRestoredRef.current = true;
-  }, []);
-
   // Apply pending values coming from the full-screen text editor.
   useEffect(() => {
     applyTextEditorValues();
@@ -356,156 +267,42 @@ function VisitasApp() {
     };
   }, [hasActiveProcess]);
 
-  useTopbar(
-    step,
-    canGoNext,
-    () => {
-      if (!canCreateVisit) {
-        showPermissionModal();
-        return;
-      }
-      if (step === 1 && canGoNext) setStep(2);
-      if (step === 2) handleSubmit();
-    },
-    () => setStep(1),
+  const handleTopbarPrimary = React.useCallback(() => {
+    if (!canCreateVisit) {
+      showPermissionModal();
+      return;
+    }
+    if (step === 1 && canGoNext) setStep(2);
+    if (step === 2) handleSubmit();
+  }, [canCreateVisit, canGoNext, handleSubmit, step]);
+
+  const handleTopbarBack = React.useCallback(() => {
+    setStep(1);
+  }, []);
+
+  useTopbar(step, canGoNext, handleTopbarPrimary, handleTopbarBack, busy, canCreate, canCreateVisit);
+
+  const { handleSubmit } = useCreateSubmit({
     busy,
-    canCreate,
-    canCreateVisit
-  );
-
-  const doCreate = async () => {
-    if (busy) return false;
-    if (!canCreateVisit) {
-      showPermissionModal();
-      return false;
-    }
-    setModalError("");
-    if (!selectedClient) {
-      setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
-      return false;
-    }
-    if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {
-      setShowRequired(true);
-      setStatus(indT("Visits_Create_CompleteRequired", "Complete required fields."));
-      return false;
-    }
-    setBusy(true);
-    setStatus(indT("Visits_Create_CreatingActivity", "Creating activity..."));
-
-    let createdRecId = "";
-    try {
-      const payloadActivity = {
-        accountNum: selectedClient.value,
-        visitType,
-        description,
-        transDate,
-        comentarios,
-        antecedentes,
-        conclusiones,
-      };
-
-      const resAct = await fetchJson("/Visitas/CreateActivity", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payloadActivity),
-      });
-
-      if (!resAct.success) throw new Error(resAct.message || indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
-
-      const recIdActividad =
-        indExtractSignedId(resAct.data) ||
-        indExtractSignedId(resAct.message) ||
-        indExtractSignedId(indExtractId(resAct.data) || indExtractId(resAct.message));
-      if (!recIdActividad) throw new Error(indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
-      createdRecId = String(recIdActividad);
-
-      if (selectedContacts.length > 0) {
-        const assistantBatchSize = 4;
-        const createAssistant = async (contact) => {
-          const payloadVisita = {
-            refRecIdActividad: recIdActividad,
-            asistenteTipo: defaultAsistenteTipo,
-            asistenteId: contact.text,
-            contactoRecId: contact.value,
-          };
-          const resVis = await fetchJson("/Visitas/CreateVisitaAsistente", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payloadVisita),
-          });
-          if (!resVis.success) {
-            throw new Error(resVis.message || indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
-          }
-        };
-
-        for (let idx = 0; idx < selectedContacts.length; idx += assistantBatchSize) {
-          const batch = selectedContacts.slice(idx, idx + assistantBatchSize);
-          const first = batch[0];
-          if (first) {
-            setStatus(indFormat("Visits_Create_CreatingVisitFor", "Creating visit for {0}...", first.text));
-          }
-          await Promise.all(batch.map((contact) => createAssistant(contact)));
-        }
-      }
-
-      try {
-        sessionStorage.removeItem(VISIT_DRAFT_KEY);
-      } catch {
-        /* ignore */
-      }
-
-      setHistoryFilterForDate(transDate, true);
-      closeConfirm();
-      await wait(200);
-      flashActionMark("okProcess", 1200);
-      await wait(1200);
-      window.__indBypassNavigationGuardOnce?.();
-      window.location.href = "/Historial/History";
-      return true;
-    } catch (e) {
-      if (createdRecId && canRollbackDelete) {
-        try {
-          setStatus(indT("Visits_Create_Rollback", "Rolling back activity..."));
-          await fetchJson(`/Visitas/DeleteActivity/${encodeURIComponent(createdRecId)}`, {
-            method: "DELETE",
-            suppressPermissionModal: true,
-          });
-        } catch {
-        }
-      }
-      const msg = e.message || indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
-      setModalError(msg);
-      setStatus(msg);
-      flashActionMark("errorProcess", 1500);
-      setBusy(false);
-      return false;
-    }
-  };
-
-  const handleSubmit = () => {
-    if (busy) return;
-    if (!canCreateVisit) {
-      showPermissionModal();
-      return;
-    }
-    if (modal.open) return;
-    if (!selectedClient) {
-      setStatus(indT("Visits_Create_SelectClientRequired", "Select a client."));
-      return;
-    }
-    if (String(visitType || "") === "" || String(visitType) === "0" || !description.trim() || !comentarios.trim()) {
-      setShowRequired(true);
-      setStatus(indT("Visits_Create_CompleteRequired", "Complete required fields."));
-      return;
-    }
-    setModalError("");
-    openConfirm({
-      title: indT("Visits_Create_ConfirmCreate_Title", "Confirm create"),
-      message: indT("Visits_Create_ConfirmCreate_Body", "Do you want to create this visit?"),
-      confirmText: indT("Confirm_Yes", "OK"),
-      onConfirm: doCreate,
-    });
-  };
+    modalOpen: modal.open,
+    canCreateVisit,
+    canRollbackDelete,
+    selectedClient,
+    selectedContacts,
+    visitType,
+    defaultAsistenteTipo,
+    description,
+    transDate,
+    comentarios,
+    antecedentes,
+    conclusiones,
+    setBusy,
+    setStatus,
+    setModalError,
+    setShowRequired,
+    openConfirm,
+    closeConfirm,
+  });
 
   useEffect(() => {
     if (step === 1) {

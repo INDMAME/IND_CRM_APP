@@ -1,0 +1,150 @@
+import { useEffect } from "react";
+import { wait } from "../utils/wait.ts";
+import { indT } from "../utils/indI18n.ts";
+import { showPermissionModal } from "../utils/permissions.ts";
+import { setHistoryFilterForDate, flashActionMark } from "../utils/visitasHistory.ts";
+
+type UseDetailTopbarActionsArgs = {
+  busy: boolean;
+  modalOpen: boolean;
+  isEditing: boolean;
+  canEditHistory: boolean;
+  canDeleteHistory: boolean;
+  transDate: string;
+  setModalError: (value: string) => void;
+  handleEnableEdit: () => void;
+  handleCancelEdit: () => void;
+  handleUpdate: () => Promise<boolean>;
+  handleDelete: () => Promise<boolean>;
+  openConfirm: (opts: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm?: () => Promise<boolean | void> | boolean | void;
+  }) => void;
+  closeConfirm: () => void;
+};
+
+// Coordinates topbar icon visibility and action events for detail page.
+export const useDetailTopbarActions = ({
+  busy,
+  modalOpen,
+  isEditing,
+  canEditHistory,
+  canDeleteHistory,
+  transDate,
+  setModalError,
+  handleEnableEdit,
+  handleCancelEdit,
+  handleUpdate,
+  handleDelete,
+  openConfirm,
+  closeConfirm,
+}: UseDetailTopbarActionsArgs) => {
+  useEffect(() => {
+    const editIcon = document.getElementById("visitEditIcon");
+    const saveIcon = document.getElementById("visitSaveIcon");
+    const deleteBtn = document.getElementById("visitDeleteBtn");
+    const cancelBtn = document.getElementById("visitCancelBtn");
+    if (!editIcon || !saveIcon) return;
+    if (isEditing) {
+      editIcon.classList.add("hidden");
+      saveIcon.classList.remove("hidden");
+      if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
+      if (cancelBtn) cancelBtn.classList.remove("topbar-hidden");
+    } else {
+      editIcon.classList.remove("hidden");
+      saveIcon.classList.add("hidden");
+      if (deleteBtn) deleteBtn.classList.remove("topbar-hidden");
+      if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
+    const onEdit = () => {
+      if (!canEditHistory) {
+        showPermissionModal();
+        return;
+      }
+      if (isEditing) {
+        if (busy || modalOpen) return;
+        setModalError("");
+        openConfirm({
+          title: indT("Visits_Detail_SaveChanges_Title", "Save changes"),
+          message: indT("Visits_Detail_SaveChanges_Body", "Do you want to save changes?"),
+          confirmText: indT("Common_Save", "Save"),
+          onConfirm: async () => {
+            const ok = await handleUpdate();
+            if (ok) {
+              closeConfirm();
+              setHistoryFilterForDate(transDate);
+              await wait(200);
+              flashActionMark("okProcess", 1200);
+              await wait(1200);
+              window.__indBypassNavigationGuardOnce?.();
+              window.location.href = "/Historial/History";
+            }
+            return ok;
+          },
+        });
+      } else {
+        handleEnableEdit();
+      }
+    };
+
+    const onDelete = () => {
+      if (!canDeleteHistory) {
+        showPermissionModal();
+        return;
+      }
+      if (busy || modalOpen) return;
+      setModalError("");
+      openConfirm({
+        title: indT("Visits_Detail_DeleteActivity_Title", "Delete activity"),
+        message: indT("Visits_Detail_DeleteActivity_Body", "Do you want to delete this activity?"),
+        confirmText: indT("Common_Delete", "Delete"),
+        onConfirm: async () => {
+          const ok = await handleDelete();
+          if (ok) {
+            closeConfirm();
+            setHistoryFilterForDate(transDate);
+            await wait(200);
+            flashActionMark("okDelProcess", 1200);
+            await wait(1200);
+            window.__indBypassNavigationGuardOnce?.();
+            window.location.href = "/Historial/History";
+          }
+          return ok;
+        },
+      });
+    };
+
+    const onCancelEdit = () => {
+      if (busy || modalOpen) return;
+      handleCancelEdit();
+    };
+
+    window.addEventListener("visit-edit", onEdit);
+    window.addEventListener("visit-delete", onDelete);
+    window.addEventListener("visit-cancel-edit", onCancelEdit);
+    return () => {
+      window.removeEventListener("visit-edit", onEdit);
+      window.removeEventListener("visit-delete", onDelete);
+      window.removeEventListener("visit-cancel-edit", onCancelEdit);
+    };
+  }, [
+    busy,
+    canDeleteHistory,
+    canEditHistory,
+    closeConfirm,
+    handleCancelEdit,
+    handleDelete,
+    handleEnableEdit,
+    handleUpdate,
+    isEditing,
+    modalOpen,
+    openConfirm,
+    setModalError,
+    transDate,
+  ]);
+};

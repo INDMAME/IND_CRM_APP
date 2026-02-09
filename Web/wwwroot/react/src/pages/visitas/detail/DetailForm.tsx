@@ -6,16 +6,17 @@ import { fetchJson } from "../../../services/apiService.ts";
 import { useVisitas } from "../../../hooks/useVisitas.ts";
 import Spinner from "../../../components/commons/Spinner.tsx";
 import { classNames } from "../../../utils/classNames.ts";
-import { wait } from "../../../utils/wait.ts";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { bindReadOnlyGuard } from "../../../utils/domGuards.ts";
 import { hasValue } from "../../../utils/strings.ts";
 import { readAndClearTextEditorValue, TEXT_EDITOR_PREFIX } from "../../../utils/textEditor.ts";
-import { setHistoryFilterForDate, flashActionMark } from "../../../utils/visitasHistory.ts";
+import { flashActionMark } from "../../../utils/visitasHistory.ts";
 import { setPreviewAnchor, showPreviewTooltip, isOverflowing } from "../../../utils/previewTooltip.ts";
 import { useTapGuard } from "../../../hooks/useTapGuard.ts";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
+import { useDetailHydration } from "../../../hooks/useDetailHydration.ts";
+import { useDetailTopbarActions } from "../../../hooks/useDetailTopbarActions.ts";
 
 const DetailApp = () => {
   const { visitTypes, asistenteTipos } = useVisitas();
@@ -435,67 +436,27 @@ const DetailApp = () => {
     };
   }, [hasActiveProcess]);
 
-  // hydrate data from server if any field is missing
-  const hydrateFromApi = useCallback(async () => {
-    if (!actividadId) return;
-    setIsHydrating(true);
-    try {
-      const res = await fetchJson(`/Visitas/GetActivityByCode?code=${encodeURIComponent(actividadId)}`);
-      if (!res?.success || !res.data) {
-        setStatus(res?.message || indT("Visits_Detail_LoadActivityFailed", "Failed to load activity details."));
-        return;
-      }
-      const data = res.data;
-      const rawDate = String(data.transDate ?? data.TransDate ?? "");
-      setTransDate(normalizeDateToInput(rawDate));
-      const rawVisitType = String(
-        data.tipoVisita ?? data.TipoVisita ?? data.visitType ?? data.VisitType ?? ""
-      );
-      setVisitType(matchOptionValue(visitTypes, rawVisitType) || defaultVisitType);
-
-      const asistentesList = data.asistentes ?? data.Asistentes;
-      const firstAsistente =
-        Array.isArray(asistentesList) && asistentesList.length ? asistentesList[0] : null;
-      const rawAsistenteTipo = String(
-        data.asistenteTipo ??
-          data.AsistenteTipo ??
-          firstAsistente?.asistenteTipo ??
-          firstAsistente?.AsistenteTipo ??
-          ""
-      );
-      const normalizedAsistenteTipo = matchOptionValue(asistenteTipos, rawAsistenteTipo);
-      setAsistenteTipo(normalizedAsistenteTipo || initialAsistente);
-      setDescription(String(data.description ?? data.Description ?? ""));
-      setComentarios(String(data.comentarios ?? data.Comentarios ?? ""));
-      setAntecedentes(String(data.antecedentes ?? data.Antecedentes ?? ""));
-      setConclusiones(String(data.conclusiones ?? data.Conclusiones ?? ""));
-    } catch {
-    } finally {
-      setIsHydrating(false);
-      // Apply any pending draft values first, then override with text editor values.
-      applyDraftValues();
-      applyTextEditorValues();
-    }
-  }, [
+  useDetailHydration({
     actividadId,
-    asistenteTipos,
+    shouldHydrate,
     visitTypes,
-    matchOptionValue,
-    normalizeDateToInput,
-    initialAsistente,
+    asistenteTipos,
     defaultVisitType,
+    initialAsistente,
+    normalizeDateToInput,
+    matchOptionValue,
+    applyDraftValues,
     applyTextEditorValues,
-    applyDraftValues
-  ]);
-
-  useEffect(() => {
-    if (shouldHydrate) {
-      hydrateFromApi();
-    } else {
-      applyDraftValues();
-      applyTextEditorValues();
-    }
-  }, [detail, hydrateFromApi, shouldHydrate, applyTextEditorValues, applyDraftValues]);
+    setStatus,
+    setIsHydrating,
+    setTransDate,
+    setVisitType,
+    setAsistenteTipo,
+    setDescription,
+    setComentarios,
+    setAntecedentes,
+    setConclusiones,
+  });
 
   useEffect(() => {
     const el = readOnlySurfaceRef.current;
@@ -528,26 +489,6 @@ const DetailApp = () => {
   useEffect(() => {
     if (isEditing) return undefined;
     return bindReadOnlyGuard(readOnlySurfaceRef.current);
-  }, [isEditing]);
-
-  // Toggle topbar edit/save icons based on editing state.
-  useEffect(() => {
-    const editIcon = document.getElementById("visitEditIcon");
-    const saveIcon = document.getElementById("visitSaveIcon");
-    const deleteBtn = document.getElementById("visitDeleteBtn");
-    const cancelBtn = document.getElementById("visitCancelBtn");
-    if (!editIcon || !saveIcon) return;
-    if (isEditing) {
-      editIcon.classList.add("hidden");
-      saveIcon.classList.remove("hidden");
-      if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
-      if (cancelBtn) cancelBtn.classList.remove("topbar-hidden");
-    } else {
-      editIcon.classList.remove("hidden");
-      saveIcon.classList.add("hidden");
-      if (deleteBtn) deleteBtn.classList.remove("topbar-hidden");
-      if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
-    }
   }, [isEditing]);
 
   const handleEnableEdit = useCallback(() => {
@@ -648,78 +589,21 @@ const DetailApp = () => {
     }
   }, [busy, recId]);
 
-  // Listen to topbar icon events
-  useEffect(() => {
-    const onEdit = () => {
-      if (!canEditHistory) {
-        showPermissionModal();
-        return;
-      }
-      if (isEditing) {
-        if (busy || modal.open) return;
-        setModalError("");
-        openConfirm({
-          title: indT("Visits_Detail_SaveChanges_Title", "Save changes"),
-          message: indT("Visits_Detail_SaveChanges_Body", "Do you want to save changes?"),
-          confirmText: indT("Common_Save", "Save"),
-          onConfirm: async () => {
-            const ok = await handleUpdate();
-            if (ok) {
-              closeConfirm();
-              setHistoryFilterForDate(transDate);
-              await wait(200);
-              flashActionMark("okProcess", 1200);
-              await wait(1200);
-              window.__indBypassNavigationGuardOnce?.();
-              window.location.href = "/Historial/History";
-            }
-            return ok;
-          }
-        });
-      } else {
-        handleEnableEdit();
-      }
-    };
-
-    const onDelete = () => {
-      if (!canDeleteHistory) {
-        showPermissionModal();
-        return;
-      }
-      if (busy || modal.open) return;
-      setModalError("");
-      openConfirm({
-        title: indT("Visits_Detail_DeleteActivity_Title", "Delete activity"),
-        message: indT("Visits_Detail_DeleteActivity_Body", "Do you want to delete this activity?"),
-        confirmText: indT("Common_Delete", "Delete"),
-        onConfirm: async () => {
-            const ok = await handleDelete();
-            if (ok) {
-            closeConfirm();
-            setHistoryFilterForDate(transDate);
-            await wait(200);
-            flashActionMark("okDelProcess", 1200);
-            await wait(1200);
-            window.__indBypassNavigationGuardOnce?.();
-            window.location.href = "/Historial/History";
-            }
-            return ok;
-          }
-        });
-    };
-    const onCancelEdit = () => {
-      if (busy || modal.open) return;
-      handleCancelEdit();
-    };
-    window.addEventListener("visit-edit", onEdit);
-    window.addEventListener("visit-delete", onDelete);
-    window.addEventListener("visit-cancel-edit", onCancelEdit);
-    return () => {
-      window.removeEventListener("visit-edit", onEdit);
-      window.removeEventListener("visit-delete", onDelete);
-      window.removeEventListener("visit-cancel-edit", onCancelEdit);
-    };
-  }, [busy, modal.open, handleCancelEdit, handleDelete, handleEnableEdit, handleUpdate, isEditing, openConfirm, transDate]);
+  useDetailTopbarActions({
+    busy,
+    modalOpen: modal.open,
+    isEditing,
+    canEditHistory,
+    canDeleteHistory,
+    transDate,
+    setModalError,
+    handleEnableEdit,
+    handleCancelEdit,
+    handleUpdate,
+    handleDelete,
+    openConfirm,
+    closeConfirm,
+  });
 
   return (
     <div className="space-y-4">

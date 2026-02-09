@@ -4,44 +4,18 @@ import { createRoot } from "react-dom/client";
 import { classNames } from "../../../utils/classNames.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
-import { getCsrfToken } from "../../../services/apiService.ts";
-import { HISTORY_FILTER_KEY, HISTORY_RETURN_FLAG_KEY } from "../../../utils/visitasHistory.ts";
 import ClientSearchCombobox, { ClientOption } from "../../../components/visitas/ClientSearchCombobox.tsx";
 import HistoryTable, { TimelineItem } from "./HistoryTable.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import FilterButton from "../../../components/commons/FilterButton.tsx";
 import ActionButton from "../../../components/commons/ActionButton.tsx";
+import { useHistoryActivities } from "../../../hooks/useHistoryActivities.ts";
+import { useHistoryFilterCache } from "../../../hooks/useHistoryFilterCache.ts";
 
 type Props = {
   defaultFromDate?: string;
   defaultToDate?: string;
-};
-
-type ActivityItem = {
-  actividadId?: string | number;
-  ActividadId?: string | number;
-  recId?: string | number;
-  RecId?: string | number;
-  name?: string;
-  Name?: string;
-  transDate?: string;
-  TransDate?: string;
-  description?: string;
-  Description?: string;
-};
-
-type HistoryResponse = {
-  items?: ActivityItem[];
-  total?: number;
-};
-
-type CachedFilter = {
-  fromDate: string;
-  toDate: string;
-  page?: number;
-  clientAccount?: string;
-  clientText?: string;
 };
 
 type CalendarCell = {
@@ -257,201 +231,29 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const [showManualError, setShowManualError] = useState(false);
   const [fabBottom, setFabBottom] = useState(FAB_BASE_BOTTOM);
 
-  const [items, setItems] = useState<ActivityItem[]>([]);
-  const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
   const hasRestoredFilterRef = useRef(false);
   const didInitFilterRef = useRef(false);
-  const retryOnNetworkErrorRef = useRef(false);
-  const activeAbortRef = useRef<AbortController | null>(null);
-  const activeRequestIdRef = useRef(0);
-  const retryTimerRef = useRef<number | null>(null);
-  const lastSignatureRef = useRef("");
   const debugLoggedRef = useRef(0);
 
   const fromDateValue = useMemo(() => (startDate ? toISO(startDate) : ""), [startDate]);
   const toDateValue = useMemo(() => (endDate ? toISO(endDate) : ""), [endDate]);
   const accountNumValue = useMemo(() => (selectedClient ? selectedClient.value : ""), [selectedClient]);
 
+  const { readCachedFilter, clearFilterCache, consumeReturnFlag, saveCachedFilter } = useHistoryFilterCache();
+  const { items, total, currentPage, isLoading, errorMessage, loadActivities, resetActivities, retryOnNetworkErrorRef, lastSignatureRef } =
+    useHistoryActivities({
+      fromDateValue,
+      toDateValue,
+      accountNumValue,
+      pageSize: PAGE_SIZE,
+      normalizeRange,
+      onForbidden: showPermissionModal,
+      onDebug: logHistory,
+    });
+
   useEffect(() => {
     logHistory("init", { defaultFromDate, defaultToDate });
   }, [defaultFromDate, defaultToDate]);
-
-  // Reads the cached filter from sessionStorage.
-  const readCachedFilter = useCallback((): CachedFilter | null => {
-    try {
-      const raw = sessionStorage.getItem(HISTORY_FILTER_KEY);
-      if (!raw) return null;
-      const parsed = JSON.parse(raw);
-      if (!parsed || typeof parsed !== "object") return null;
-      return {
-        fromDate: parsed.fromDate || "",
-        toDate: parsed.toDate || "",
-        page: parsed.page,
-        clientAccount: parsed.clientAccount || "",
-        clientText: parsed.clientText || "",
-      };
-    } catch {
-      return null;
-    }
-  }, []);
-
-  // Clears the cached filter in sessionStorage.
-  const clearFilterCache = useCallback(() => {
-    try {
-      sessionStorage.removeItem(HISTORY_FILTER_KEY);
-    } catch {
-      // ignore cache errors
-    }
-  }, []);
-
-  // Consumes the return flag used to restore filters after navigation.
-  const consumeReturnFlag = useCallback(() => {
-    try {
-      const raw = sessionStorage.getItem(HISTORY_RETURN_FLAG_KEY);
-      if (raw === "1") {
-        sessionStorage.removeItem(HISTORY_RETURN_FLAG_KEY);
-        return true;
-      }
-    } catch {
-      // ignore cache errors
-    }
-    return false;
-  }, []); 
-
-  // Fetches activities from MVC with CSRF protection and retry on initial network error.
-  const loadActivities = useCallback(
-    async (page: number, override?: { fromDate: string; toDate: string; accountNum?: string }) => {
-      const fromDateStr = override?.fromDate ?? fromDateValue;
-      const toDateStr = override?.toDate ?? toDateValue;
-      const accountNumStr = override?.accountNum ?? accountNumValue;
-
-      if (!fromDateStr || !toDateStr) {
-        setIsLoading(false);
-        setItems([]);
-        setTotal(0);
-        setErrorMessage("");
-        return;
-      }
-
-      setCurrentPage(page);
-
-      if (retryTimerRef.current) {
-        clearTimeout(retryTimerRef.current);
-        retryTimerRef.current = null;
-      }
-
-      const requestId = ++activeRequestIdRef.current;
-      if (activeAbortRef.current) {
-        try {
-          activeAbortRef.current.abort();
-        } catch {
-          // ignore abort errors
-        }
-      }
-      const controller = new AbortController();
-      activeAbortRef.current = controller;
-
-      const normalized = normalizeRange(fromDateStr, toDateStr);
-      const normalizedFrom = normalized.from;
-      const normalizedTo = normalized.to;
-      const filterSignature = `${normalizedFrom}|${normalizedTo}|${accountNumStr}|${page}`;
-      lastSignatureRef.current = filterSignature;
-
-      setIsLoading(true);
-      setItems([]);
-      setTotal(0);
-      setErrorMessage("");
-
-      const payload = {
-        fromDate: normalizedFrom,
-        toDate: normalizedTo,
-        accountNum: accountNumStr,
-      };
-
-      logHistory("loadActivities:request", { page, pageSize: PAGE_SIZE, payload });
-
-      let response: Response;
-      try {
-        const token = getCsrfToken();
-        const headers: Record<string, string> = { "Content-Type": "application/json" };
-        if (token) headers.RequestVerificationToken = token;
-
-        response = await fetch(`/Historial/GetActivities?page=${page}&pageSize=${PAGE_SIZE}`, {
-          method: "POST",
-          headers,
-          body: JSON.stringify(payload),
-          credentials: "same-origin",
-          signal: controller.signal,
-        });
-      } catch (err: any) {
-        if (requestId !== activeRequestIdRef.current) return;
-        if (err?.name === "AbortError") {
-          activeAbortRef.current = null;
-          return;
-        }
-        if (retryOnNetworkErrorRef.current) {
-          retryOnNetworkErrorRef.current = false;
-          activeAbortRef.current = null;
-          retryTimerRef.current = window.setTimeout(() => {
-            if (requestId !== activeRequestIdRef.current) return;
-            if (lastSignatureRef.current !== filterSignature) return;
-            loadActivities(page, { fromDate: fromDateStr, toDate: toDateStr, accountNum: accountNumStr });
-          }, 600);
-          return;
-        }
-        setIsLoading(false);
-        setErrorMessage(indT("Api_RequestFailed", "No se pudo conectar con el servidor (red)."));
-        activeAbortRef.current = null;
-        return;
-      }
-
-      if (requestId !== activeRequestIdRef.current) return;
-
-      if (response.status === 403) {
-        setIsLoading(false);
-        activeAbortRef.current = null;
-        showPermissionModal();
-        return;
-      }
-
-      if (!response.ok) {
-        const statusText = response.statusText || "Error del servidor";
-        setIsLoading(false);
-        setErrorMessage(`${response.status} - ${statusText}. Verifica el backend.`);
-        activeAbortRef.current = null;
-        return;
-      }
-
-      const raw = await response.text();
-      let data: HistoryResponse;
-      try {
-        data = JSON.parse(raw);
-      } catch {
-        setIsLoading(false);
-        setErrorMessage(indT("Api_InvalidJson", "Error procesando datos"));
-        activeAbortRef.current = null;
-        return;
-      }
-
-      if (requestId !== activeRequestIdRef.current) return;
-
-      logHistory("loadActivities:response", {
-        status: response.status,
-        total: data?.total ?? 0,
-        count: Array.isArray(data?.items) ? data.items.length : 0,
-      });
-
-      setIsLoading(false);
-      setItems(data.items || []);
-      setTotal(data.total || (data.items || []).length);
-      activeAbortRef.current = null;
-    },
-    [fromDateValue, toDateValue, accountNumValue]
-  );
 
   const validateManualRange = useCallback(() => {
     if (activeQuickFilter === "custom" && (!startDate || !endDate)) {
@@ -548,15 +350,12 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     setClientResetKey((prev) => prev + 1);
     setShowManualError(false);
     clearFilterCache();
-    setItems([]);
-    setTotal(0);
-    setErrorMessage("");
-    setIsLoading(false);
-  }, [clearFilterCache]);
+    resetActivities();
+  }, [clearFilterCache, resetActivities]);
 
   // Applies a cached filter from sessionStorage.
   const applyCachedFilter = useCallback(
-    (filter: CachedFilter | null) => {
+    (filter: ReturnType<typeof readCachedFilter>) => {
       if (!filter || !filter.fromDate || !filter.toDate) return false;
       const start = parseISO(filter.fromDate);
       const end = parseISO(filter.toDate);
@@ -580,7 +379,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       loadActivities(pageToLoad, { fromDate: filter.fromDate, toDate: filter.toDate, accountNum: filter.clientAccount || "" });
       return true;
     },
-    [loadActivities]
+    [loadActivities, readCachedFilter]
   );
 
   // Restore cached filter on initial mount only.
@@ -880,26 +679,18 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
         return;
       }
       setTimeout(() => {
-        try {
-            sessionStorage.setItem(
-            HISTORY_FILTER_KEY,
-            JSON.stringify({
-              fromDate: fromDateValue || "",
-              toDate: toDateValue || "",
-              page: currentPage,
-              clientAccount: selectedClient?.value || "",
-              clientText: selectedClient?.text || "",
-            })
-          );
-          sessionStorage.setItem(HISTORY_RETURN_FLAG_KEY, "1");
-        } catch {
-          // ignore cache errors
-        }
+        saveCachedFilter({
+          fromDate: fromDateValue || "",
+          toDate: toDateValue || "",
+          page: currentPage,
+          clientAccount: selectedClient?.value || "",
+          clientText: selectedClient?.text || "",
+        });
         const target = encodeURIComponent(linkId);
         window.location.href = `/Visitas/Detalle/${target}`;
       }, NAV_DELAY_MS);
     },
-    [canViewHistory, currentPage, fromDateValue, toDateValue, selectedClient]
+    [canViewHistory, currentPage, fromDateValue, saveCachedFilter, toDateValue, selectedClient]
   );
 
   const calendar = useMemo(() => {
@@ -976,12 +767,24 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const pagePrevLabel = indT("History_Page_Prev", "Previous");
   const pageNextLabel = indT("History_Page_Next", "Next");
   const pageLastLabel = indT("History_Page_Last", "Last");
-  const quickFilters = [
-    { id: "custom" as const, label: quickCustomLabel },
-    { id: "days-7" as const, label: quick7DaysLabel },
-    { id: "days-30" as const, label: quick30DaysLabel },
-    { id: "days-90" as const, label: quick90DaysLabel },
-  ];
+  const quickFilters = useMemo(
+    () => [
+      { id: "custom" as const, label: quickCustomLabel },
+      { id: "days-7" as const, label: quick7DaysLabel },
+      { id: "days-30" as const, label: quick30DaysLabel },
+      { id: "days-90" as const, label: quick90DaysLabel },
+    ],
+    [quick30DaysLabel, quick7DaysLabel, quick90DaysLabel, quickCustomLabel]
+  );
+  const paginationLabels = useMemo(
+    () => ({
+      first: pageFirstLabel,
+      prev: pagePrevLabel,
+      next: pageNextLabel,
+      last: pageLastLabel,
+    }),
+    [pageFirstLabel, pageLastLabel, pageNextLabel, pagePrevLabel]
+  );
   const showFilterActions = showFilters;
   const showSummary = !showFilters && !!startDate && !!endDate;
   const showResults = !showFilters;
@@ -1286,12 +1089,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
             currentPage={currentPage}
             pageWindow={PAGE_WINDOW}
             onPageChange={(page) => loadActivities(page)}
-            labels={{
-              first: pageFirstLabel,
-              prev: pagePrevLabel,
-              next: pageNextLabel,
-              last: pageLastLabel,
-            }}
+            labels={paginationLabels}
           />
         </>
       )}
