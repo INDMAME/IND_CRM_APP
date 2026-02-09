@@ -1,0 +1,178 @@
+[
+  {
+    "ruleId": "migration-shadow-scale",
+    "ruleTitle": "Shadow Scale Shift",
+    "type": "bad",
+    "code": "<div class=\"shadow\">Card</div>",
+    "language": "html",
+    "description": "v3 shadow class - produces smaller shadow in v4"
+  },
+  {
+    "ruleId": "migration-shadow-scale",
+    "ruleTitle": "Shadow Scale Shift",
+    "type": "good",
+    "code": "<div class=\"shadow-sm\">Card</div>",
+    "language": "html",
+    "description": "v4 equivalent of v3 shadow"
+  },
+  {
+    "ruleId": "migration-explicit-var",
+    "ruleTitle": "Explicit var() in Arbitrary Values",
+    "type": "bad",
+    "code": "<div class=\"bg-[--my-color]\">Box</div>",
+    "language": "html",
+    "description": "implicit var - silently fails in v4"
+  },
+  {
+    "ruleId": "migration-explicit-var",
+    "ruleTitle": "Explicit var() in Arbitrary Values",
+    "type": "good",
+    "code": "<div class=\"bg-[var(--my-color)]\">Box</div>",
+    "language": "html",
+    "description": "explicit var() - works in v4"
+  },
+  {
+    "ruleId": "migration-ring-width",
+    "ruleTitle": "Ring Requires Explicit Width",
+    "type": "bad",
+    "code": "<button class=\"focus:ring\">Button</button>",
+    "language": "html",
+    "description": "ring without width - invisible in v4"
+  },
+  {
+    "ruleId": "migration-ring-width",
+    "ruleTitle": "Ring Requires Explicit Width",
+    "type": "good",
+    "code": "<button class=\"focus:ring-3\">Button</button>",
+    "language": "html",
+    "description": "ring with explicit width"
+  },
+  {
+    "ruleId": "setup-entry-point",
+    "ruleTitle": "CSS Entry Point",
+    "type": "bad",
+    "code": "@tailwind base;\n@tailwind components;\n@tailwind utilities;",
+    "language": "css",
+    "description": "v3 directives - error in v4"
+  },
+  {
+    "ruleId": "setup-entry-point",
+    "ruleTitle": "CSS Entry Point",
+    "type": "good",
+    "code": "@import 'tailwindcss';",
+    "language": "css",
+    "description": "v4 single import"
+  },
+  {
+    "ruleId": "setup-theme-config",
+    "ruleTitle": "Theme Configuration",
+    "type": "bad",
+    "code": "module.exports = {\n  theme: {\n    extend: {\n      colors: { primary: '#3b82f6' }\n    }\n  }\n}",
+    "language": "javascript",
+    "description": "JS config as primary - not the v4 way"
+  },
+  {
+    "ruleId": "setup-theme-config",
+    "ruleTitle": "Theme Configuration",
+    "type": "good",
+    "code": "@import 'tailwindcss';\n\n@theme {\n  --color-primary: #3b82f6;\n}",
+    "language": "css",
+    "description": "CSS-first @theme config"
+  },
+  {
+    "ruleId": "customization-utility",
+    "ruleTitle": "Custom Utilities",
+    "type": "bad",
+    "code": "@layer utilities {\n  .content-auto {\n    content-visibility: auto;\n  }\n}",
+    "language": "css",
+    "description": "v3 @layer pattern"
+  },
+  {
+    "ruleId": "customization-utility",
+    "ruleTitle": "Custom Utilities",
+    "type": "good",
+    "code": "@utility content-auto {\n  content-visibility: auto;\n}",
+    "language": "css",
+    "description": "v4 @utility directive"
+  },
+  {
+    "ruleId": "setup-source-detection",
+    "ruleTitle": "Safelisting Classes",
+    "type": "bad",
+    "code": "module.exports = {\n  safelist: ['bg-red-500', 'text-white']\n}",
+    "language": "javascript",
+    "description": "JS safelist - not supported in v4"
+  },
+  {
+    "ruleId": "setup-source-detection",
+    "ruleTitle": "Safelisting Classes",
+    "type": "good",
+    "code": "@source inline(\"bg-red-500 text-white\");",
+    "language": "css",
+    "description": "v4 @source inline safelist"
+  },
+  {
+    "ruleId": "migration-rounded-scale",
+    "ruleTitle": "Rounded Scale Shift",
+    "type": "bad",
+    "code": "<div class=\"rounded\">Card</div>",
+    "language": "html",
+    "description": "v3 rounded - produces smaller radius in v4"
+  },
+  {
+    "ruleId": "migration-rounded-scale",
+    "ruleTitle": "Rounded Scale Shift",
+    "type": "good",
+    "code": "<div class=\"rounded-sm\">Card</div>",
+    "language": "html",
+    "description": "v4 equivalent of v3 rounded"
+  },
+  {
+    "ruleId": "migration-outline-none",
+    "ruleTitle": "Outline None Behavior",
+    "type": "bad",
+    "code": "<button class=\"focus:outline-none\">Button</button>",
+    "language": "html",
+    "description": "outline-none now means width: 0"
+  },
+  {
+    "ruleId": "migration-outline-none",
+    "ruleTitle": "Outline None Behavior",
+    "type": "good",
+    "code": "<button class=\"focus:outline-hidden\">Button</button>",
+    "language": "html",
+    "description": "outline-hidden for visual hiding"
+  },
+  {
+    "ruleId": "migration-flex-grow",
+    "ruleTitle": "Flex Grow/Shrink Rename",
+    "type": "bad",
+    "code": "<div class=\"flex-grow flex-shrink-0\">Item</div>",
+    "language": "html",
+    "description": "old flex-grow/shrink names"
+  },
+  {
+    "ruleId": "migration-flex-grow",
+    "ruleTitle": "Flex Grow/Shrink Rename",
+    "type": "good",
+    "code": "<div class=\"grow shrink-0\">Item</div>",
+    "language": "html",
+    "description": "v4 simplified names"
+  },
+  {
+    "ruleId": "migration-important-modifier",
+    "ruleTitle": "Important Modifier Position",
+    "type": "bad",
+    "code": "<div class=\"!p-4\">Box</div>",
+    "language": "html",
+    "description": "leading ! - deprecated in v4"
+  },
+  {
+    "ruleId": "migration-important-modifier",
+    "ruleTitle": "Important Modifier Position",
+    "type": "good",
+    "code": "<div class=\"p-4!\">Box</div>",
+    "language": "html",
+    "description": "trailing ! - v4 style"
+  }
+]

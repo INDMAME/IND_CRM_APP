@@ -161,6 +161,7 @@
     - Heroicons as icon set.
     - "Montserrat", sans-serif as base font.
     - #00296b as primary corporate color.
+  - Tailwind helper skills (`tailwindcss-v4`, `tailwind-patterns`) are support tools only. They must not override project tokens, spacing rhythm, component contracts, or established page composition.
   - Do not propose solutions based on Angular, Vue, Blazor, Svelte, Bootstrap, jQuery UI, Material, etc.
 
 ## Mandatory skill-first object creation rule

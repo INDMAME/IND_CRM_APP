@@ -9,6 +9,7 @@
 2. Match the task against the matrix below and load every skill whose trigger applies.
 3. If multiple skills apply, use the minimal set and run them in a clear order.
 4. If no additional trigger applies, continue with `ind-crm-codex-guardrails` only.
+5. Tailwind helper skills are advisory only. Project style rules in `.codex/AGENTS.md` and `.codex/UI_GUIDE.md` are mandatory and take precedence.
 
 ## Installed skills matrix
 
@@ -21,6 +22,8 @@
 | `vercel-react-best-practices` | React/TS/TSX rendering, data flow, listeners, bundle, performance tasks. | Required on React tasks |
 | `vercel-composition-patterns` | Refactoring React component APIs, composition, render props, context, boolean prop cleanup. | Required when component API design is involved |
 | `web-design-guidelines` | UI review, accessibility audit, UX or design compliance review. | Required on UI audit requests |
+| `tailwindcss-v4` | Tailwind CSS v4 utility or config syntax questions, migration checks, and compatibility reviews. | Optional helper only |
+| `tailwind-patterns` | Tailwind component/layout pattern discovery when implementing UI details. | Optional helper only |
 | `stride-analysis-patterns` | STRIDE threat modeling and systematic threat discovery. | Required for security analysis |
 | `attack-tree-construction` | Building attack trees to visualize threat paths and defense gaps. | Required when attack trees are requested |
 | `security-requirement-extraction` | Turning threat findings into actionable requirements or security stories. | Required after threat analysis |
@@ -41,3 +44,4 @@
 ## Notes
 - `ind-crm-codex-guardrails` may exist in multiple local paths, but the skill name is the same and should be treated as one routing target.
 - Routing is trigger-based: skills should be loaded when the task context matches, not by manual preference.
+- Never let `tailwindcss-v4` or `tailwind-patterns` override the project visual language: Montserrat, primary `#00296b`, Heroicons, and existing component contracts.

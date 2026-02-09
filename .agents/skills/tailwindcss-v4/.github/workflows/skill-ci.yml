@@ -1,0 +1,36 @@
+name: Skill CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+      - name: Validate rules
+        run: |
+          # Check all rule files have required frontmatter
+          for file in rules/*.md; do
+            if [[ ! "$file" =~ ^rules/_ ]]; then
+              if ! grep -q "^title:" "$file"; then
+                echo "Missing title in $file"
+                exit 1
+              fi
+              if ! grep -q "^impact:" "$file"; then
+                echo "Missing impact in $file"
+                exit 1
+              fi
+            fi
+          done
+          echo "✓ All rules validated"
+      - name: Build AGENTS.md
+        run: bun run src/build.ts
+      - name: Verify AGENTS.md generated
+        run: test -f AGENTS.md && echo "✓ AGENTS.md exists"

@@ -52,6 +52,7 @@ Conflict precedence:
 | API contract | Controllers do not build URLs or headers and do not parse JSON manually; use service interfaces and `IndApiResponse<T>` / `IndPagedResponse<T>`. |
 | i18n | No hardcoded user-facing strings; add resource keys to all supported cultures in the same change. |
 | Anti-regression | Preserve date pickers, date filters, and payload formats unless explicitly requested. |
+| Style ownership | External Tailwind helper skills can suggest syntax or patterns, but local style rules are mandatory. |
 | Completion checks | Run `references/QUALITY_CHECKLIST.md`; publish plus `iisreset` when release tasks require it. |
 
 ## Required Sub-Skill Routing
@@ -65,11 +66,18 @@ Required triggers:
 - `REQUIRED SUB-SKILL: vercel-react-best-practices` for React or TS/TSX rendering, data flow, listener, or performance work.
 - `REQUIRED SUB-SKILL: vercel-composition-patterns` when React component API design or composition patterns are involved.
 - `REQUIRED SUB-SKILL: web-design-guidelines` for UI, UX, or accessibility reviews.
+- `OPTIONAL SUB-SKILLS: tailwindcss-v4 and tailwind-patterns` for Tailwind syntax/pattern references only. They must not override project style rules.
 - `REQUIRED SUB-SKILL CHAIN for security work: stride-analysis-patterns -> attack-tree-construction -> security-requirement-extraction -> threat-mitigation-mapping -> sast-configuration`.
 - `REQUIRED SUB-SKILL: vercel-react-native-skills` for React Native or Expo tasks.
 - `REQUIRED SUB-SKILL: find-skills` for skill discovery requests.
 - `REQUIRED SUB-SKILL: skill-installer` for skill installation requests.
 - `REQUIRED SUB-SKILL: skill-creator` for creating or packaging new skills.
+
+## Style Ownership Rule
+
+- Keep IND_CRM_APP visual identity stable: Montserrat, primary `#00296b`, Heroicons, local component contracts, and existing spacing rhythm.
+- Treat external Tailwind helper skills as advisory references, not design authority.
+- If a helper-suggested pattern conflicts with local rules, keep local rules and adapt the pattern.
 
 ## Implementation Workflow
 

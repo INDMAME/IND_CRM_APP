@@ -22,6 +22,7 @@
 ## Maintenance
 - Keep docs ASCII-only.
 - Use i18n keys for UI copy; examples are copy references only.
+- Keep project style sovereignty explicit: external Tailwind helper skills are advisory and cannot override local design rules.
 - Add a `Last updated` line when a doc changes.
 
 ## Last updated
