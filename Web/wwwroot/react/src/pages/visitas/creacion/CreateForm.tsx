@@ -14,7 +14,7 @@ import { classNames } from "../../../utils/classNames.ts";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { setPreviewAnchor, showPreviewTooltip, isOverflowing } from "../../../utils/previewTooltip.ts";
-import { primeTextEditorValue, setTextEditorReturnUrl } from "../../../utils/textEditor.ts";
+import { navigateToTextEditorField } from "../../../utils/textEditorNavigation.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
 
 function VisitasApp() {
@@ -113,25 +113,13 @@ function VisitasApp() {
   // Opens the full-screen text editor for a multiline field.
   const openTextEditor = React.useCallback(
     (fieldId: string, fieldLabel: string, fieldValue: string, options: { allowEdit?: boolean } = {}) => {
-      const safeId = String(fieldId || "").trim();
-      const safeLabel = String(fieldLabel || "").trim();
-      const allowEdit = options?.allowEdit !== false;
-      if (!safeId || !safeLabel) return;
-
-      // Prime the editor with current value without pushing large text into the URL.
-      primeTextEditorValue(safeId, String(fieldValue || ""));
-
-      persistDraftNow();
-      const returnUrl = `${window.location.pathname}${window.location.search || ""}`;
-      setTextEditorReturnUrl(safeId, returnUrl);
-      const url =
-        `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId)}` +
-        `&fieldLabel=${encodeURIComponent(safeLabel)}` +
-        `&returnUrl=${encodeURIComponent(returnUrl)}` +
-        `&allowEdit=${allowEdit ? "1" : "0"}`;
-
-      window.__indBypassNavigationGuardOnce?.();
-      window.location.href = url;
+      navigateToTextEditorField({
+        fieldId,
+        fieldLabel,
+        fieldValue,
+        allowEdit: options?.allowEdit !== false,
+        beforeNavigate: persistDraftNow,
+      });
     },
     [persistDraftNow]
   );

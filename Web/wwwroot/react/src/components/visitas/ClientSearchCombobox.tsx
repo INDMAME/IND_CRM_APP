@@ -3,6 +3,7 @@ import FloatingList from "../commons/FloatingList.tsx";
 import Spinner from "../commons/Spinner.tsx";
 import { ChevronDownSvg, ChevronUpSvg } from "../commons/chevrons.tsx";
 import { fetchJson } from "../../services/apiService.ts";
+import { handleComboboxKeyDown } from "../../hooks/useComboboxKeyboard.ts";
 import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
 import { classNames } from "../../utils/classNames.ts";
 import { indFormat, indT } from "../../utils/indI18n.ts";
@@ -231,29 +232,17 @@ const ClientSearchCombobox = ({
   };
 
   const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-    if (ev.key === "ArrowDown") {
-      if (!open) return;
-      ev.preventDefault();
-      if (filtered.length) setActiveIndex((idx) => (idx + 1) % filtered.length);
-      return;
-    }
-    if (ev.key === "ArrowUp") {
-      if (!open) return;
-      ev.preventDefault();
-      if (filtered.length) setActiveIndex((idx) => (idx - 1 + filtered.length) % filtered.length);
-      return;
-    }
-    if (ev.key === "Enter") {
-      ev.preventDefault();
-      if (open && filtered.length) {
+    handleComboboxKeyDown(ev, {
+      isOpen: open,
+      setOpen,
+      optionCount: filtered.length,
+      setActiveIndex,
+      requireOpenForArrows: true,
+      onEnterWhenOpen: () => {
         selectOption(filtered[activeIndex] ?? filtered[0]);
-      } else {
-        requestSearchOrOpen();
-      }
-    }
-    if (ev.key === "Escape") {
-      setOpen(false);
-    }
+      },
+      onEnterWhenClosed: requestSearchOrOpen,
+    });
   };
 
   const queryKey = query.trim().toLowerCase();

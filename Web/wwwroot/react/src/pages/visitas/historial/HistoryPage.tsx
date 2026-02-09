@@ -3,10 +3,11 @@ import { classNames } from "../../../utils/classNames.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import ClientSearchCombobox from "../../../components/visitas/ClientSearchCombobox.tsx";
-import HistoryTable, { TimelineItem } from "./HistoryTable.tsx";
+import HistoryTable from "./HistoryTable.tsx";
 import HistorySummary from "./HistorySummary.tsx";
 import HistoryManualDatePicker, { HistoryManualDayCell } from "./HistoryManualDatePicker.tsx";
 import { useHistoryPageListeners } from "./useHistoryPageListeners.ts";
+import { useHistoryTimelineItems } from "./useHistoryTimelineItems.ts";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import FilterButton from "../../../components/commons/FilterButton.tsx";
@@ -216,8 +217,6 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const paginationRef = useRef<HTMLDivElement | null>(null);
 
   const [fabBottom, setFabBottom] = useState(FAB_BASE_BOTTOM);
-
-  const debugLoggedRef = useRef(0);
 
   const { readCachedFilter, clearFilterCache, consumeReturnFlag, saveCachedFilter } = useHistoryFilterCache();
   const {
@@ -545,43 +544,14 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
     });
   }, [calendar.cells, endDate, hoverDate, previewEnd, selectingStep, startDate]);
 
-  const timelineItems: TimelineItem[] = useMemo(() => {
-    return items.map((x) => {
-      const actividadIdRaw = (x.actividadId ?? x.ActividadId ?? "").toString().trim();
-      const actividadId = actividadIdRaw || "";
-      const recIdRaw = x.recId ?? x.RecId ?? "";
-      const recId = recIdRaw && !Number.isNaN(Number(recIdRaw)) ? Number(recIdRaw) : null;
-      let linkId = actividadId || (recId ? recId.toString() : "");
-
-      if (debugLoggedRef.current < 5) {
-        logHistory("activity item", { actividadId, recIdRaw, recId });
-        debugLoggedRef.current += 1;
-      }
-
-      const rawName = (x.name ?? x.Name ?? "").toString().trim();
-      const fullName = toTitleCase(rawName, locale);
-      const fecha = (x.transDate ?? x.TransDate ?? "").toString();
-      const rawDesc = (x.description ?? x.Description ?? "").toString().trim();
-      const fullDesc = rawDesc;
-
-      const isNoDataCard = !rawName && !rawDesc;
-      if (isNoDataCard) {
-        linkId = "";
-      }
-
-      return {
-        id: linkId,
-        actividadId,
-        recId,
-        name: fullName,
-        description: fullDesc || noDataText,
-        fullName,
-        fullDesc,
-        dateParts: formatDateParts(fecha, locale),
-        isNoData: isNoDataCard,
-      };
-    });
-  }, [items, locale, noDataText]);
+  const { timelineItems } = useHistoryTimelineItems({
+    items,
+    locale,
+    noDataText,
+    logHistory,
+    toTitleCase,
+    formatDateParts,
+  });
 
   const labelFrom = toSentenceCase(indT("History_From", "From"), locale);
   const labelTo = toSentenceCase(indT("History_To", "To"), locale);

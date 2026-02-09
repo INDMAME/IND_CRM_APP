@@ -11,7 +11,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { bindReadOnlyGuard } from "../../../utils/domGuards.ts";
 import { hasValue } from "../../../utils/strings.ts";
-import { primeTextEditorValue, setTextEditorReturnUrl } from "../../../utils/textEditor.ts";
+import { navigateToTextEditorField } from "../../../utils/textEditorNavigation.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
 import { setPreviewAnchor, showPreviewTooltip, isOverflowing } from "../../../utils/previewTooltip.ts";
 import { useTapGuard } from "../../../hooks/useTapGuard.ts";
@@ -19,7 +19,6 @@ import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { useDetailHydration } from "../../../hooks/useDetailHydration.ts";
 import { useDetailTopbarActions } from "../../../hooks/useDetailTopbarActions.ts";
 import { useTextEditorFields } from "../../../hooks/useTextEditorFields.ts";
-import { setSessionValueWithExpiry } from "../../../utils/sessionExpiry.ts";
 import { useDetailEditSession } from "./useDetailEditSession.ts";
 import { useDetailMutations } from "./useDetailMutations.ts";
 
@@ -175,33 +174,15 @@ const DetailApp = () => {
       fieldValue: string,
       options: { allowEdit?: boolean; readOnly?: boolean; editModeKey?: string } = {}
     ) => {
-      const safeId = String(fieldId || "").trim();
-      const safeLabel = String(fieldLabel || "").trim();
-      const readOnly = options?.readOnly === true;
-      const allowEdit = options?.allowEdit !== false;
-      const editModeKey = String(options?.editModeKey || "").trim();
-      if (safeId) {
-        // Prime the editor with the current value without pushing large text into the URL.
-        primeTextEditorValue(safeId, String(fieldValue || ""));
-      }
-
-      const returnUrl = `${window.location.pathname}${window.location.search || ""}`;
-      if (safeId) {
-        setTextEditorReturnUrl(safeId, returnUrl);
-      }
-      if (editModeKey) {
-        setSessionValueWithExpiry(`${editModeKey}_return`, "1", EDITOR_RETURN_FLAG_TTL_MS);
-      }
-      const url =
-        `/TextEditorReact/EditField?fieldId=${encodeURIComponent(safeId || fieldId || "")}` +
-        `&fieldLabel=${encodeURIComponent(safeLabel || fieldLabel || "")}` +
-        `&returnUrl=${encodeURIComponent(returnUrl)}` +
-        `&readOnly=${readOnly ? "1" : "0"}` +
-        `&allowEdit=${allowEdit ? "1" : "0"}` +
-        (editModeKey ? `&editModeKey=${encodeURIComponent(editModeKey)}` : "");
-
-      window.__indBypassNavigationGuardOnce?.();
-      window.location.href = url;
+      navigateToTextEditorField({
+        fieldId,
+        fieldLabel,
+        fieldValue,
+        readOnly: options?.readOnly === true,
+        allowEdit: options?.allowEdit !== false,
+        editModeKey: options?.editModeKey,
+        editModeReturnTtlMs: EDITOR_RETURN_FLAG_TTL_MS,
+      });
     },
     []
   );

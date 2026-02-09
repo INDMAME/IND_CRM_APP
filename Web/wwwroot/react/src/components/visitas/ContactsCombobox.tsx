@@ -4,6 +4,7 @@ import FloatingList from "../commons/FloatingList.tsx";
 import Spinner from "../commons/Spinner.tsx";
 import { ChevronDownSvg, ChevronUpSvg } from "../commons/chevrons.tsx";
 import { fetchJson } from "../../services/apiService.ts";
+import { handleComboboxKeyDown } from "../../hooks/useComboboxKeyboard.ts";
 import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
 import { classNames } from "../../utils/classNames.ts";
 import { indFormat, indT } from "../../utils/indI18n.ts";
@@ -267,30 +268,23 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   };
 
   const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-    if (ev.key === "ArrowDown") {
-      ev.preventDefault();
-      setOpen(true);
-      ensureLoaded();
-      if (filtered.length) setActiveIndex((idx) => (idx + 1) % filtered.length);
-      return;
-    }
-    if (ev.key === "ArrowUp") {
-      ev.preventDefault();
-      setOpen(true);
-      ensureLoaded();
-      if (filtered.length) setActiveIndex((idx) => (idx - 1 + filtered.length) % filtered.length);
-      return;
-    }
-    if (ev.key === "Enter") {
-      ev.preventDefault();
-      if (open && filtered.length) {
+    handleComboboxKeyDown(ev, {
+      isOpen: open,
+      setOpen,
+      optionCount: filtered.length,
+      setActiveIndex,
+      openOnArrow: true,
+      onArrowNavigate: ensureLoaded,
+      onEnterWhenOpen: () => {
         toggleOption(filtered[activeIndex] ?? filtered[0]);
-      } else if (accountNum) {
-        ensureLoaded();
-        setOpen(true);
-      }
-    }
-    if (ev.key === "Escape") setOpen(false);
+      },
+      onEnterWhenClosed: accountNum
+        ? () => {
+            ensureLoaded();
+            setOpen(true);
+          }
+        : undefined,
+    });
   };
 
   return (
