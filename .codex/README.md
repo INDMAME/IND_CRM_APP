@@ -20,10 +20,12 @@
 - `skills/ind-crm-codex-guardrails/SKILL.md`: reusable skill that consolidates `.codex` guardrails with local references.
 
 ## Maintenance
+- Root `.codex/*.md` files are the source of truth.
+- Sync references after any `.codex` edit: `npm run sync:codex:references`.
 - Keep docs ASCII-only.
 - Use i18n keys for UI copy; examples are copy references only.
 - Keep project style sovereignty explicit: external Tailwind helper skills are advisory and cannot override local design rules.
 - Add a `Last updated` line when a doc changes.
 
 ## Last updated
-- 2026-02-09
+- 2026-02-10

@@ -108,6 +108,8 @@
   - Register "Montserrat" as base font family.
   - Register #00296b as a primary color in the palette (for example "primary").
 - React islands are bundled by esbuild to ESM entry files under Web/wwwroot/js and shared chunks under Web/wwwroot/js/chunks.
+- Root wwwroot is a compatibility junction to Web/wwwroot. Use Web/wwwroot as the canonical authoring path for source changes.
+- Do not hand-edit generated files under Web/wwwroot/js or Web/wwwroot/js/chunks.
 - Razor pages that load React island bundles must use script type="module".
 - Do not introduce new CSS frameworks or heavy frontend toolchains unless clearly justified.
 - Priority is SSR and utility CSS; React is used only as a complement on top of MVC, not as a full SPA.
@@ -124,6 +126,7 @@
   - Must have a clear English name.
   - Prefer meaningful names that express function (for example CrmActivityViewModel, CrmAccountListItemViewModel).
 - Do not introduce non ASCII characters in C#, Razor, JSX or comments.
+- When updating .codex guardrail docs, edit root .codex/*.md files first and run npm run sync:codex:references to keep skill references aligned.
 
 ## I18N rules (UI only)
 
@@ -210,4 +213,4 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-02-09
+- 2026-02-10

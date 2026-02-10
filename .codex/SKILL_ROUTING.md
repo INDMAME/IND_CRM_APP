@@ -10,6 +10,7 @@
 3. If multiple skills apply, use the minimal set and run them in a clear order.
 4. If no additional trigger applies, continue with `ind-crm-codex-guardrails` only.
 5. Tailwind helper skills are advisory only. Project style rules in `.codex/AGENTS.md` and `.codex/UI_GUIDE.md` are mandatory and take precedence.
+6. When editing `.codex` docs or skill docs, `writing-skills` is required and root `.codex/*.md` is the source of truth.
 
 ## Installed skills matrix
 
@@ -17,7 +18,7 @@
 |---|---|---|
 | `ind-crm-codex-guardrails` | Any change, review, or release in IND_CRM_APP. | Required in-repo |
 | `brainstorming` | Before creative work: new features, behavior changes, component design. | Required on creative tasks |
-| `writing-skills` | Creating, editing, or validating any skill content. | Required on skill work |
+| `writing-skills` | Creating, editing, or validating skill content and `.codex` guardrail docs. | Required on skill/doc rule work |
 | `systematic-debugging` | Any bug, test failure, or unexpected behavior before proposing fixes. | Required on debugging |
 | `vercel-react-best-practices` | React/TS/TSX rendering, data flow, listeners, bundle, performance tasks. | Required on React tasks |
 | `vercel-composition-patterns` | Refactoring React component APIs, composition, render props, context, boolean prop cleanup. | Required when component API design is involved |
@@ -43,5 +44,9 @@
 
 ## Notes
 - `ind-crm-codex-guardrails` may exist in multiple local paths, but the skill name is the same and should be treated as one routing target.
-- Routing is trigger-based: skills should be loaded when the task context matches, not by manual preference.
+- Routing is trigger-based: skills should be loaded when task context matches, not by manual preference.
 - Never let `tailwindcss-v4` or `tailwind-patterns` override the project visual language: Montserrat, primary `#00296b`, Heroicons, and existing component contracts.
+- After editing `.codex/*.md`, run `npm run sync:codex:references`.
+
+## Last updated
+- 2026-02-10

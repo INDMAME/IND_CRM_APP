@@ -1,0 +1,35 @@
+name: Codex References Check
+
+on:
+  pull_request:
+    paths:
+      - ".codex/**"
+      - "scripts/check-codex-references.mjs"
+      - "scripts/sync-codex-references.mjs"
+      - "package.json"
+      - "package-lock.json"
+  push:
+    branches:
+      - DEV
+      - main
+    paths:
+      - ".codex/**"
+      - "scripts/check-codex-references.mjs"
+      - "scripts/sync-codex-references.mjs"
+      - "package.json"
+      - "package-lock.json"
+
+jobs:
+  check-codex-references:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Verify .codex references are in sync
+        run: npm run check:codex:references

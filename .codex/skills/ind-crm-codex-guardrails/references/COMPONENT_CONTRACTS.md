@@ -2,19 +2,39 @@
 
 ## Purpose
 - Single source for reusable UI component rules.
-- Focus on readOnly/edit color handling for input-like components.
+- Focus on readOnly/edit color handling, dumb-component contracts, and React island wrappers.
 
 ## Read-only color contract (high priority)
 - Label color: #00296be0 (always).
 - Value color: edit = #00296be0, read = #64748b.
 - Do not use opacity on read-only wrappers.
 - Apply colors inside the component, not only via global CSS.
-- Redundant enforcement is required: apply both a readOnly prop and inline style on value text.
+- Redundant enforcement is required: apply both a `readOnly` prop and inline style on value text when needed.
+
+## Shared page wrapper contracts (React)
+### VisitasPageProviders
+- File: `Web/wwwroot/react/src/components/commons/VisitasPageProviders.tsx`
+- Purpose: default provider wrapper for Visitas island pages.
+- Contract:
+  - `I18nProvider` and `AuthProvider` are composed once at page-entry level.
+  - Page entries (`CreatePage`, `DetailPage`) should wrap their form root with this component.
+  - Do not duplicate provider trees inside form-level components.
+
+### AppErrorBoundary
+- File: `Web/wwwroot/react/src/components/commons/AppErrorBoundary.tsx`
+- Purpose: isolate React island render failures and show localized fallback.
+- Props:
+  - `fallbackMessage: string` (required, localized with `indT`)
+  - `children: React.ReactNode` (required)
+- Contract:
+  - Wrap top-level form/page container, not each field.
+  - Keep fallback simple and readable.
+  - Log details in `componentDidCatch` for diagnostics.
 
 ## Shared button components (React)
 ### FilterButton
 - File: `Web/wwwroot/react/src/components/commons/FilterButton.tsx`
-- Purpose: Dumb filter button with standardized styling.
+- Purpose: dumb filter button with standardized styling.
 - Styling: `.ind-filter-btn` and `.ind-filter-btn--active` with per-page CSS variables.
 - Props:
   - `label: string` (required)
@@ -27,7 +47,7 @@
 
 ### ActionButton
 - File: `Web/wwwroot/react/src/components/commons/ActionButton.tsx`
-- Purpose: Dumb action button with standardized styling.
+- Purpose: dumb action button with standardized styling.
 - Styling: `.ind-action-btn` with per-page CSS variables.
 - Props:
   - `label: string` (required)
@@ -36,6 +56,22 @@
   - `className?: string`
   - `ariaLabel?: string`
   - `type?: "button" | "submit" | "reset"`
+
+### CompactPagination
+- File: `Web/wwwroot/react/src/components/commons/CompactPagination.tsx`
+- Purpose: reusable compact paginator for timeline/list pages.
+- Contract:
+  - `labels` input must come from i18n keys (`first`, `prev`, `next`, `last`).
+  - Page logic stays in page hook/container; component only emits page changes.
+
+## Shared narrative field contract (React)
+### VisitNarrativeFields
+- File: `Web/wwwroot/react/src/components/visitas/VisitNarrativeFields.tsx`
+- Purpose: reusable presentational block for description/comments/background/conclusions sections.
+- Contract:
+  - Receives labels, values, classes, and pointer bindings via props.
+  - Must stay dumb and avoid API calls or page navigation logic.
+  - Tap/hold handlers are injected from page hooks or page containers.
 
 ## Template: input-like component (React)
 ```tsx
@@ -128,4 +164,4 @@ export function DatePickerLike({ label, value, readOnly = false, disabled = fals
 ```
 
 ## Last updated
-- 2026-02-05
+- 2026-02-10

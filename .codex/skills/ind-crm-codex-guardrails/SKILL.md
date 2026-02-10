@@ -16,6 +16,7 @@ Use this skill when a task touches one or more of:
 - Controllers, services, models, hooks, components, or API integration.
 - Auth/token flow, localization resources, payload formats, or release validation.
 - IIS publish steps (`C:\inetpub\wwwroot\IND_CRM_APP`, `iisreset`).
+- `.codex` guardrail documentation or skill maintenance.
 
 ## When NOT to Use
 
@@ -48,11 +49,14 @@ Conflict precedence:
 | Impact pre-check | Assess effects on filters, calendars, dropdowns, forms, handlers, controllers, services, models. |
 | Object placement | Validate path with `references/PROJECT_STRUCTURE.md`; reuse existing objects first. |
 | Frontend architecture | MVC + Razor first, React islands only, Tailwind only, Heroicons default, Montserrat base, primary `#00296b`. |
+| React entry pattern | Keep page bootstrap thin. Use `mountReactIsland` + `mountWhenDocumentReady`; use `VisitasPageProviders` and `AppErrorBoundary` where applicable. |
 | Legacy JS | Do not add new jQuery or jquery-validation usage. |
 | API contract | Controllers do not build URLs or headers and do not parse JSON manually; use service interfaces and `IndApiResponse<T>` / `IndPagedResponse<T>`. |
 | i18n | No hardcoded user-facing strings; add resource keys to all supported cultures in the same change. |
 | Anti-regression | Preserve date pickers, date filters, and payload formats unless explicitly requested. |
 | Style ownership | External Tailwind helper skills can suggest syntax or patterns, but local style rules are mandatory. |
+| Canonical web path | Treat `Web/wwwroot` as canonical source path. Root `wwwroot` is a compatibility mirror/junction. |
+| Documentation sync | Edit root `.codex/*.md` files and run `npm run sync:codex:references` when docs are changed. |
 | Completion checks | Run `references/QUALITY_CHECKLIST.md`; publish plus `iisreset` when release tasks require it. |
 
 ## Required Sub-Skill Routing
@@ -61,7 +65,7 @@ Before implementation or review, match the task against `references/SKILL_ROUTIN
 
 Required triggers:
 - `REQUIRED SUB-SKILL: brainstorming` before new features, behavior changes, or design work.
-- `REQUIRED SUB-SKILL: writing-skills` when creating or editing any skill document.
+- `REQUIRED SUB-SKILL: writing-skills` when creating or editing any skill document or `.codex` guardrail documentation.
 - `REQUIRED SUB-SKILL: systematic-debugging` for any bug, failing test, or unexpected behavior.
 - `REQUIRED SUB-SKILL: vercel-react-best-practices` for React or TS/TSX rendering, data flow, listener, or performance work.
 - `REQUIRED SUB-SKILL: vercel-composition-patterns` when React component API design or composition patterns are involved.
@@ -88,6 +92,7 @@ Required triggers:
 3. Apply architecture and contract rules during implementation.
 4. Validate i18n and anti-regression critical paths.
 5. Execute quality checks and release steps required by scope.
+6. If guardrail docs changed, sync root `.codex/*.md` to `references/` with `npm run sync:codex:references`.
 
 ## Common Mistakes
 
@@ -96,3 +101,7 @@ Required triggers:
 - Mixing React full-page patterns into areas that must remain MVC plus Razor.
 - Hardcoding labels or messages instead of resource keys in all supported cultures.
 - Treating date behavior changes as harmless refactors without explicit requirement.
+- Editing `wwwroot` mirror paths as primary source instead of `Web/wwwroot`.
+
+## Last updated
+- 2026-02-10
