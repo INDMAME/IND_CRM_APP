@@ -31,6 +31,45 @@
   <data name="Nav_Visits" xml:space="preserve"><value>Visitas</value></data>
   <data name="Nav_Visits_Create" xml:space="preserve"><value>Creación</value></data>
   <data name="Nav_Visits_History" xml:space="preserve"><value>Historial</value></data>
+  <data name="Nav_Expenses" xml:space="preserve"><value>Gastos</value></data>
+  <data name="Nav_ExpenseSheets" xml:space="preserve"><value>Hojas de gastos</value></data>
+  <data name="ExpenseSheets_Title" xml:space="preserve"><value>Hojas de gastos</value></data>
+  <data name="ExpenseSheets_Detail_Title" xml:space="preserve"><value>Detalle hoja de gastos</value></data>
+  <data name="ExpenseSheets_Line_Title" xml:space="preserve"><value>Detalle linea de gasto</value></data>
+  <data name="ExpenseSheets_Header" xml:space="preserve"><value>Cabecera</value></data>
+  <data name="ExpenseSheets_Lines" xml:space="preserve"><value>Lineas</value></data>
+  <data name="ExpenseSheets_NoLines" xml:space="preserve"><value>Sin lineas de gastos.</value></data>
+  <data name="ExpenseSheets_LoadError" xml:space="preserve"><value>No se pudieron cargar las hojas de gastos.</value></data>
+  <data name="ExpenseSheets_NotFound" xml:space="preserve"><value>No se encontro la hoja de gastos.</value></data>
+  <data name="ExpenseSheets_Filter_Project" xml:space="preserve"><value>Proyecto</value></data>
+  <data name="ExpenseSheets_Filter_Sheet" xml:space="preserve"><value>Hoja de gasto</value></data>
+  <data name="ExpenseSheets_Filter_Currency" xml:space="preserve"><value>Divisa</value></data>
+  <data name="ExpenseSheets_Filter_Status" xml:space="preserve"><value>Estado</value></data>
+  <data name="ExpenseSheets_Filter_Project_Placeholder" xml:space="preserve"><value>Id proyecto</value></data>
+  <data name="ExpenseSheets_Filter_Sheet_Placeholder" xml:space="preserve"><value>Id hoja</value></data>
+  <data name="ExpenseSheets_Filter_Currency_Placeholder" xml:space="preserve"><value>Codigo divisa</value></data>
+  <data name="ExpenseSheets_Filter_Status_Placeholder" xml:space="preserve"><value>Estado</value></data>
+  <data name="ExpenseSheets_Filter_Status_Unbilled" xml:space="preserve"><value>No Pagado</value></data>
+  <data name="ExpenseSheets_Filter_Status_Billed" xml:space="preserve"><value>Pagado</value></data>
+  <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve"><value>Ambos</value></data>
+  <data name="ExpenseSheets_Field_SheetId" xml:space="preserve"><value>Id hoja</value></data>
+  <data name="ExpenseSheets_Field_UserId" xml:space="preserve"><value>Usuario</value></data>
+  <data name="ExpenseSheets_Field_Project" xml:space="preserve"><value>Proyecto</value></data>
+  <data name="ExpenseSheets_Field_Voucher" xml:space="preserve"><value>Voucher</value></data>
+  <data name="ExpenseSheets_Field_Currency" xml:space="preserve"><value>Divisa</value></data>
+  <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve"><value>Importe total</value></data>
+  <data name="ExpenseSheets_Field_Description" xml:space="preserve"><value>Descripcion</value></data>
+  <data name="ExpenseSheets_Field_CreatedDate" xml:space="preserve"><value>Fecha</value></data>
+  <data name="ExpenseSheets_Field_ExchangeRate" xml:space="preserve"><value>Tipo cambio</value></data>
+  <data name="ExpenseSheets_Field_LineId" xml:space="preserve"><value>Id linea</value></data>
+  <data name="ExpenseSheets_Field_Type" xml:space="preserve"><value>Tipo</value></data>
+  <data name="ExpenseSheets_Field_Amount" xml:space="preserve"><value>Importe</value></data>
+  <data name="ExpenseSheets_Field_Qty" xml:space="preserve"><value>Cantidad</value></data>
+  <data name="ExpenseSheets_Field_TransDate" xml:space="preserve"><value>Fecha</value></data>
+  <data name="ExpenseSheets_Field_International" xml:space="preserve"><value>Internacional</value></data>
+  <data name="ExpenseSheets_Field_Ticket" xml:space="preserve"><value>Ticket</value></data>
+  <data name="ExpenseSheets_Field_Attachments" xml:space="preserve"><value>Adjuntos</value></data>
+  <data name="ExpenseSheets_Field_LineCount" xml:space="preserve"><value>Lineas</value></data>
 
   <data name="Visits_Create_Title" xml:space="preserve"><value>Creación</value></data>
   <data name="Visits_Detail_Title" xml:space="preserve"><value>Detalle</value></data>
@@ -84,6 +123,8 @@
   <data name="History_Filter_Client" xml:space="preserve"><value>Cliente</value></data>
   <data name="History_Filter_Clear" xml:space="preserve"><value>Borrar</value></data>
   <data name="History_Filter_Apply" xml:space="preserve"><value>Aplicar</value></data>
+  <data name="History_Filter_Toggle" xml:space="preserve"><value>Filtro</value></data>
+  <data name="History_Filter_Refresh" xml:space="preserve"><value>Actualizar</value></data>
   <data name="History_Quick_Custom" xml:space="preserve"><value>Fecha</value></data>
   <data name="History_Quick_7Days" xml:space="preserve"><value>7 días</value></data>
   <data name="History_Quick_30Days" xml:space="preserve"><value>30 días</value></data>

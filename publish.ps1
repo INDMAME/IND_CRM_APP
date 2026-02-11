@@ -6,6 +6,17 @@ param(
     [switch]$RestartIis = $true
 )
 
+# Block deployment if any localization file has encoding corruption markers.
+node scripts/check-resx-encoding.mjs
+if ($LASTEXITCODE -ne 0) {
+    throw "RESX encoding validation failed with exit code $LASTEXITCODE."
+}
+
+node scripts/check-localization-keys.mjs
+if ($LASTEXITCODE -ne 0) {
+    throw "Localization key coverage validation failed with exit code $LASTEXITCODE."
+}
+
 # Build frontend assets and sync Web/wwwroot -> wwwroot.
 # Use the production React bundle for publish deployments.
 npm run build:react:prod

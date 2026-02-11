@@ -1,0 +1,77 @@
+@using System.Text.Json
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+@{
+    Layout = "~/Web/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = SR["ExpenseSheets_Title"];
+    ViewData["BodyClass"] = "visitas-typography";
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/historial.css" asp-append-version="true" />
+}
+
+<div id="expense-sheets-root" class="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4"></div>
+
+@section Scripts {
+    <script nonce="@cspNonce">
+        window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
+            Common_Loading = SR["Common_Loading"].Value,
+            Common_NoData = SR["Common_NoData"].Value,
+            Common_OK = SR["Common_OK"].Value,
+            Api_RequestFailed = SR["Api_RequestFailed"].Value,
+            Api_InvalidJson = SR["Api_InvalidJson"].Value,
+            Auth_PermissionDenied_Body = SR["Auth_PermissionDenied_Body"].Value,
+            History_From = SR["History_From"].Value,
+            History_To = SR["History_To"].Value,
+            History_Filter_Clear = SR["History_Filter_Clear"].Value,
+            History_Filter_Apply = SR["History_Filter_Apply"].Value,
+            History_Filter_Date = SR["History_Filter_Date"].Value,
+            History_Quick_Custom = SR["History_Quick_Custom"].Value,
+            History_Quick_7Days = SR["History_Quick_7Days"].Value,
+            History_Quick_30Days = SR["History_Quick_30Days"].Value,
+            History_Quick_90Days = SR["History_Quick_90Days"].Value,
+            History_PrevMonth = SR["History_PrevMonth"].Value,
+            History_NextMonth = SR["History_NextMonth"].Value,
+            History_Day_Mon = SR["History_Day_Mon"].Value,
+            History_Day_Tue = SR["History_Day_Tue"].Value,
+            History_Day_Wed = SR["History_Day_Wed"].Value,
+            History_Day_Thu = SR["History_Day_Thu"].Value,
+            History_Day_Fri = SR["History_Day_Fri"].Value,
+            History_Day_Sat = SR["History_Day_Sat"].Value,
+            History_Day_Sun = SR["History_Day_Sun"].Value,
+            History_AddDate = SR["History_AddDate"].Value,
+            History_ClearRange = SR["History_ClearRange"].Value,
+            History_Status_SelectStart = SR["History_Status_SelectStart"].Value,
+            History_Status_SelectEnd = SR["History_Status_SelectEnd"].Value,
+            DatePicker_SelectDate = SR["DatePicker_SelectDate"].Value,
+            History_Page_First = SR["History_Page_First"].Value,
+            History_Page_Prev = SR["History_Page_Prev"].Value,
+            History_Page_Next = SR["History_Page_Next"].Value,
+            History_Page_Last = SR["History_Page_Last"].Value,
+            ExpenseSheets_Title = SR["ExpenseSheets_Title"].Value,
+            ExpenseSheets_Filter_Project = SR["ExpenseSheets_Filter_Project"].Value,
+            ExpenseSheets_Filter_Sheet = SR["ExpenseSheets_Filter_Sheet"].Value,
+            ExpenseSheets_Filter_Currency = SR["ExpenseSheets_Filter_Currency"].Value,
+            ExpenseSheets_Filter_Status = SR["ExpenseSheets_Filter_Status"].Value,
+            ExpenseSheets_Filter_Project_Placeholder = SR["ExpenseSheets_Filter_Project_Placeholder"].Value,
+            ExpenseSheets_Filter_Sheet_Placeholder = SR["ExpenseSheets_Filter_Sheet_Placeholder"].Value,
+            ExpenseSheets_Filter_Currency_Placeholder = SR["ExpenseSheets_Filter_Currency_Placeholder"].Value,
+            ExpenseSheets_Filter_Status_Placeholder = SR["ExpenseSheets_Filter_Status_Placeholder"].Value,
+            ExpenseSheets_Filter_Status_Unbilled = SR["ExpenseSheets_Filter_Status_Unbilled"].Value,
+            ExpenseSheets_Filter_Status_Billed = SR["ExpenseSheets_Filter_Status_Billed"].Value,
+            ExpenseSheets_Filter_Status_Both = SR["ExpenseSheets_Filter_Status_Both"].Value,
+            ExpenseSheets_Field_Project = SR["ExpenseSheets_Field_Project"].Value,
+            ExpenseSheets_Field_Currency = SR["ExpenseSheets_Field_Currency"].Value,
+            ExpenseSheets_Field_Voucher = SR["ExpenseSheets_Field_Voucher"].Value,
+            ExpenseSheets_Field_TotalAmount = SR["ExpenseSheets_Field_TotalAmount"].Value,
+            ExpenseSheets_Field_Description = SR["ExpenseSheets_Field_Description"].Value,
+            ExpenseSheets_Field_CreatedDate = SR["ExpenseSheets_Field_CreatedDate"].Value,
+            ExpenseSheets_Field_LineCount = SR["ExpenseSheets_Field_LineCount"].Value,
+            ExpenseSheets_LoadError = SR["ExpenseSheets_LoadError"].Value,
+            ExpenseSheets_NotFound = SR["ExpenseSheets_NotFound"].Value
+        }));
+    </script>
+    <script nonce="@cspNonce" type="module" src="~/js/expense-sheets.js" asp-append-version="true"></script>
+}

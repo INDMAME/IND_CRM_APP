@@ -5,7 +5,7 @@ const getI18n = (): Record<string, string> => {
 export const indT = (key: string, fallback?: string): string => {
   const dict = getI18n();
   const value = dict[key];
-  if (typeof value === "string" && value.trim()) return value;
+  if (typeof value === "string" && value.trim() && value !== key) return value;
   return fallback || key;
 };
 

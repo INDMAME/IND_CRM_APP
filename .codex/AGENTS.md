@@ -126,7 +126,7 @@
   - Must have a clear English name.
   - Prefer meaningful names that express function (for example CrmActivityViewModel, CrmAccountListItemViewModel).
 - Do not introduce non ASCII characters in C#, Razor, JSX or comments.
-- When updating .codex guardrail docs, edit root .codex/*.md files first and run npm run sync:codex:references to keep skill references aligned.
+- When updating .codex guardrail docs, edit root .codex/*.md files or .codex/config.toml first and run npm run sync:skill:local:references to keep skill references aligned.
 
 ## I18N rules (UI only)
 

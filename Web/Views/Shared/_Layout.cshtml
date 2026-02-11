@@ -158,7 +158,11 @@
             const content = document.getElementById("content");
             const btnMenu = document.getElementById("btnMenu");
             const topbar = document.querySelector(".topbar");
+            const topbarLeft = document.querySelector(".topbar-left");
+            const topbarRight = document.querySelector(".topbar-right");
+            const topbarTitle = document.getElementById("topbarTitle");
             const visitasToggle = document.getElementById("visitasToggle");
+            const gastosToggle = document.getElementById("gastosToggle");
             const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
             const userMenuToggle = document.getElementById("userMenuToggle");
             const langBtn = document.getElementById("indLangButton");
@@ -174,6 +178,30 @@
 
             sidebar?.setAttribute("aria-hidden", "true");
             overlay?.setAttribute("aria-hidden", "true");
+
+            function updateTopbarTitleLayout() {
+                if (!topbarTitle) return;
+                if (!topbarTitle.classList.contains("topbar-title--with-company")) {
+                    topbarTitle.classList.remove("topbar-title--stacked");
+                    return;
+                }
+                if (!topbar) return;
+
+                const titleMain = topbarTitle.querySelector(".topbar-title__main");
+                const titleCompany = topbarTitle.querySelector(".topbar-title__company");
+                if (!titleMain || !titleCompany) return;
+
+                topbarTitle.classList.remove("topbar-title--stacked");
+
+                const leftWidth = topbarLeft ? topbarLeft.getBoundingClientRect().width : 0;
+                const rightWidth = topbarRight ? topbarRight.getBoundingClientRect().width : 0;
+                const availableWidth = Math.max(0, topbar.getBoundingClientRect().width - leftWidth - rightWidth - 28);
+                const requiredWidth = titleMain.getBoundingClientRect().width + titleCompany.getBoundingClientRect().width + 8;
+
+                if (requiredWidth > availableWidth) {
+                    topbarTitle.classList.add("topbar-title--stacked");
+                }
+            }
 
             function updateSidebarHeight() {
                 if (!sidebar) return;
@@ -212,6 +240,7 @@
                         topbar.classList.add("shifted");
                     }
                     updateSidebarHeight();
+                    updateTopbarTitleLayout();
                 } else {
                     sidebar.classList.remove("open");
                     sidebar.classList.remove("sidebar--dock-user");
@@ -223,6 +252,7 @@
                     btnMenu.setAttribute("aria-expanded", "false");
                     content.classList.remove("shifted");
                     topbar.classList.remove("shifted");
+                    updateTopbarTitleLayout();
                 }
             };
 
@@ -271,6 +301,16 @@
                 const isHidden = sub.classList.toggle("hidden");
                 const nowOpen = !isHidden;
                 visitasToggle?.setAttribute("aria-expanded", nowOpen.toString());
+                chevron?.classList.toggle("rotate-180", nowOpen);
+            }
+
+            function toggleGastos() {
+                const sub = document.getElementById("submenuGastos");
+                const chevron = document.getElementById("gastosChevron");
+                if (!sub) return;
+                const isHidden = sub.classList.toggle("hidden");
+                const nowOpen = !isHidden;
+                gastosToggle?.setAttribute("aria-expanded", nowOpen.toString());
                 chevron?.classList.toggle("rotate-180", nowOpen);
             }
 
@@ -391,6 +431,7 @@
             btnMenu?.addEventListener("click", toggleSidebar);
             sidebarCloseBtn?.addEventListener("click", toggleSidebar);
             visitasToggle?.addEventListener("click", toggleVisitas);
+            gastosToggle?.addEventListener("click", toggleGastos);
             userMenuToggle?.addEventListener("click", toggleUserMenu);
             langBtn?.addEventListener("click", toggleIndLanguageMenu);
             companyBtn?.addEventListener("click", toggleIndCompanyMenu);
@@ -407,8 +448,13 @@
             window.showModal = showModal;
 
             updateSidebarHeight();
+            updateTopbarTitleLayout();
             bindCompanyForms();
             window.addEventListener("resize", updateSidebarHeight);
+            window.addEventListener("resize", updateTopbarTitleLayout);
+            if (document.fonts && document.fonts.ready) {
+                document.fonts.ready.then(updateTopbarTitleLayout).catch(() => { });
+            }
             document.addEventListener("pointerdown", handleOutsidePress, true);
             sidebar?.addEventListener("touchstart", handleSwipeStart, { passive: true });
             sidebar?.addEventListener("touchmove", handleSwipeMove, { passive: true });

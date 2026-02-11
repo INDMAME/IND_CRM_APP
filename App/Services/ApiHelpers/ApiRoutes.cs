@@ -39,9 +39,8 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public static string ExpenseSheetLineDelete(string safeSheetId, string safeLineId, string deleteFlag) =>
             $"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}?deleteWholeSheet={deleteFlag}";
 
-        // Builds the expense sheets list route with query.
-        public static string ExpenseSheetsList(string safeFilter, int page, int pageSize) =>
-            $"api/crm/expensesheets/list?filter={safeFilter}&page={page}&pageSize={pageSize}";
+        // Expense sheets list route. Filters are sent in POST body.
+        public const string ExpenseSheetsList = "api/crm/expensesheets/list";
 
         // Builds the projects list route with query.
         public static string ProjectsList(string safeFilter, int page, int pageSize) =>

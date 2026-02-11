@@ -1,0 +1,49 @@
+@using System.Text.Json
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+@{
+    Layout = "~/Web/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = SR["ExpenseSheets_Line_Title"];
+    ViewData["BodyClass"] = "visitas-typography";
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/historial.css" asp-append-version="true" />
+}
+
+<div id="expense-line-detail-root" class="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4"></div>
+
+@section Scripts {
+    <script nonce="@cspNonce">
+        window.__EXPENSE_SHEET_ID__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.HojaGastosId ?? string.Empty)));
+        window.__EXPENSE_LINE_ID__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.LineRecId ?? string.Empty)));
+        window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
+            Common_Loading = SR["Common_Loading"].Value,
+            Common_NoData = SR["Common_NoData"].Value,
+            Common_OK = SR["Common_OK"].Value,
+            Api_RequestFailed = SR["Api_RequestFailed"].Value,
+            Api_InvalidJson = SR["Api_InvalidJson"].Value,
+            Auth_PermissionDenied_Body = SR["Auth_PermissionDenied_Body"].Value,
+            ExpenseSheets_Line_Title = SR["ExpenseSheets_Line_Title"].Value,
+            ExpenseSheets_Header = SR["ExpenseSheets_Header"].Value,
+            ExpenseSheets_LoadError = SR["ExpenseSheets_LoadError"].Value,
+            ExpenseSheets_NotFound = SR["ExpenseSheets_NotFound"].Value,
+            ExpenseSheets_Field_SheetId = SR["ExpenseSheets_Field_SheetId"].Value,
+            ExpenseSheets_Field_Project = SR["ExpenseSheets_Field_Project"].Value,
+            ExpenseSheets_Field_Currency = SR["ExpenseSheets_Field_Currency"].Value,
+            ExpenseSheets_Field_Description = SR["ExpenseSheets_Field_Description"].Value,
+            ExpenseSheets_Field_CreatedDate = SR["ExpenseSheets_Field_CreatedDate"].Value,
+            ExpenseSheets_Field_ExchangeRate = SR["ExpenseSheets_Field_ExchangeRate"].Value,
+            ExpenseSheets_Field_LineId = SR["ExpenseSheets_Field_LineId"].Value,
+            ExpenseSheets_Field_Type = SR["ExpenseSheets_Field_Type"].Value,
+            ExpenseSheets_Field_Amount = SR["ExpenseSheets_Field_Amount"].Value,
+            ExpenseSheets_Field_Qty = SR["ExpenseSheets_Field_Qty"].Value,
+            ExpenseSheets_Field_TransDate = SR["ExpenseSheets_Field_TransDate"].Value,
+            ExpenseSheets_Field_International = SR["ExpenseSheets_Field_International"].Value,
+            ExpenseSheets_Field_Ticket = SR["ExpenseSheets_Field_Ticket"].Value,
+            ExpenseSheets_Field_Attachments = SR["ExpenseSheets_Field_Attachments"].Value
+        }));
+    </script>
+    <script nonce="@cspNonce" type="module" src="~/js/expense-line-detail.js" asp-append-version="true"></script>
+}

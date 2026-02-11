@@ -17,14 +17,17 @@
 - `QUALITY_CHECKLIST.md`: build, validation, and publish checks.
 - `PROJECT_STRUCTURE.md`: folder map + master instruction for future work.
 - `SKILL_ROUTING.md`: trigger-based routing map for installed skills and execution order.
-- `skills/ind-crm-codex-guardrails/SKILL.md`: reusable skill that consolidates `.codex` guardrails with local references.
+- `.codex/skills/ind-crm-frontend-guardrails/SKILL.md`: reusable project-local skill that consolidates frontend `.codex` guardrails with local references.
 
 ## Maintenance
-- Root `.codex/*.md` files are the source of truth.
-- Sync references after any `.codex` edit: `npm run sync:codex:references`.
+- Root `.codex/*.md` files and `.codex/config.toml` are the source of truth.
+- Sync local skill references after any `.codex` edit: `npm run sync:skill:local:references`.
+- Pre-commit also runs local reference sync automatically.
 - Keep docs ASCII-only.
 - Use i18n keys for UI copy; examples are copy references only.
 - Keep project style sovereignty explicit: external Tailwind helper skills are advisory and cannot override local design rules.
+- Keep only one project-local skill path: `.codex/skills/ind-crm-frontend-guardrails`.
+- Move all shared helper skills to: `C:\Users\marco.meza\.codex\skills`.
 - Add a `Last updated` line when a doc changes.
 
 ## Last updated

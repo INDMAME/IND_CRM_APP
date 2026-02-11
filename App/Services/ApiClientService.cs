@@ -161,6 +161,12 @@ namespace IND_CRM_APP.Services
             return Uri.EscapeDataString(value ?? string.Empty);
         }
 
+        // Returns a trimmed string or null when it has no value.
+        private static string? NormalizeOptionalText(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
         // Prepares auth headers and logs company header state for an operation.
         private void PrepareRequestHeaders(
             string token,
@@ -683,14 +689,25 @@ namespace IND_CRM_APP.Services
 
         public async Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetsAsync(
             string token,
-            string? filter,
-            int page,
-            int pageSize)
+            ExpenseSheetListApiRequest req)
         {
             PrepareRequestHeaders(token, "GetExpenseSheets", requireCompany: true);
 
-            var safeFilter = EscapeQueryValue(filter);
-            var result = await SendGetAsync(ApiRoutes.ExpenseSheetsList(safeFilter, page, pageSize));
+            req ??= new ExpenseSheetListApiRequest();
+
+            var payload = new ExpenseSheetListApiRequest
+            {
+                Filter = NormalizeOptionalText(req.Filter),
+                BilledMode = req.BilledMode is >= 0 and <= 2 ? req.BilledMode : null,
+                CreatedDateFrom = NormalizeOptionalText(req.CreatedDateFrom),
+                CreatedDateTo = NormalizeOptionalText(req.CreatedDateTo),
+                ProjId = NormalizeOptionalText(req.ProjId),
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
+                Page = req.Page < 1 ? 1 : req.Page,
+                PageSize = req.PageSize <= 0 ? 50 : req.PageSize
+            };
+
+            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetsList, payload);
             return BuildPagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheets");
         }
 

@@ -36,9 +36,10 @@
 - If E2E uses Playwright, ensure auth flow is valid for current login mode (Entra/SSO or local form login)
 
 ## Guardrail documentation checks
-- If `.codex/*.md` changed, run `npm run sync:codex:references`
+- If `.codex/*.md` or `.codex/config.toml` changed, run `npm run sync:skill:local:references`
 - Validate sync locally with `npm run check:codex:references`
-- Confirm root `.codex/*.md` and `.codex/skills/ind-crm-codex-guardrails/references/*.md` stay aligned
+- Confirm root `.codex/*.md` and `.codex/skills/ind-crm-frontend-guardrails/references/*.md` stay aligned
+- Confirm no extra local skills exist under `.codex/skills`; shared skills must be in `C:\Users\marco.meza\.codex\skills`
 - Update `Last updated` date in every touched doc
 
 ## Publish

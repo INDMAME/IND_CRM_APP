@@ -1,9 +1,18 @@
 #!/bin/sh
 set -e
 
-echo "[pre-commit] Syncing .codex markdown references..."
-node scripts/sync-codex-references.mjs
+echo "[pre-commit] Syncing local skill references from root .codex docs..."
+node scripts/sync-local-skill-references.mjs
+
+echo "[pre-commit] Verifying local skill references and local skill layout..."
+node scripts/check-codex-references.mjs
+
+echo "[pre-commit] Validating RESX encoding to prevent mojibake..."
+node scripts/check-resx-encoding.mjs
+
+echo "[pre-commit] Validating Razor localization key coverage..."
+node scripts/check-localization-keys.mjs
 
 # Stage markdown reference updates so commit includes synchronized copies.
-git add -- .codex/skills/ind-crm-codex-guardrails/references/*.md
-git add -u -- .codex/skills/ind-crm-codex-guardrails/references/*.md
+git add -- .codex/skills/ind-crm-frontend-guardrails/references/*.md .codex/skills/ind-crm-frontend-guardrails/references/config.toml
+git add -u -- .codex/skills/ind-crm-frontend-guardrails/references/*.md .codex/skills/ind-crm-frontend-guardrails/references/config.toml

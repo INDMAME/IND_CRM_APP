@@ -5,10 +5,10 @@
 - Defines when each skill must be loaded in addition to project guardrails.
 
 ## Mandatory routing rules
-1. For any task inside this repository, always load `ind-crm-codex-guardrails` first.
+1. For any frontend task inside this repository, always load `ind-crm-frontend-guardrails` first.
 2. Match the task against the matrix below and load every skill whose trigger applies.
 3. If multiple skills apply, use the minimal set and run them in a clear order.
-4. If no additional trigger applies, continue with `ind-crm-codex-guardrails` only.
+4. If no additional trigger applies, continue with `ind-crm-frontend-guardrails` only.
 5. Tailwind helper skills are advisory only. Project style rules in `.codex/AGENTS.md` and `.codex/UI_GUIDE.md` are mandatory and take precedence.
 6. When editing `.codex` docs or skill docs, `writing-skills` is required and root `.codex/*.md` is the source of truth.
 
@@ -16,7 +16,7 @@
 
 | Skill | Use when | Level |
 |---|---|---|
-| `ind-crm-codex-guardrails` | Any change, review, or release in IND_CRM_APP. | Required in-repo |
+| `ind-crm-frontend-guardrails` | Frontend change, review, or release in IND_CRM_APP. | Required on frontend scope |
 | `brainstorming` | Before creative work: new features, behavior changes, component design. | Required on creative tasks |
 | `writing-skills` | Creating, editing, or validating skill content and `.codex` guardrail docs. | Required on skill/doc rule work |
 | `systematic-debugging` | Any bug, test failure, or unexpected behavior before proposing fixes. | Required on debugging |
@@ -43,10 +43,12 @@
 5. `sast-configuration` (when automation is in scope)
 
 ## Notes
-- `ind-crm-codex-guardrails` may exist in multiple local paths, but the skill name is the same and should be treated as one routing target.
+- Project-local required skill path: `.codex/skills/ind-crm-frontend-guardrails/SKILL.md`.
+- Keep only `ind-crm-frontend-guardrails` under `.codex/skills`.
+- Shared helper skills path: `C:\Users\marco.meza\.codex\skills`.
 - Routing is trigger-based: skills should be loaded when task context matches, not by manual preference.
 - Never let `tailwindcss-v4` or `tailwind-patterns` override the project visual language: Montserrat, primary `#00296b`, Heroicons, and existing component contracts.
-- After editing `.codex/*.md`, run `npm run sync:codex:references`.
+- After editing `.codex/*.md` or `.codex/config.toml`, run `npm run sync:skill:local:references` (also enforced by pre-commit).
 
 ## Last updated
 - 2026-02-10

@@ -23,6 +23,15 @@
     var isHistory = controller.Equals("Historial", StringComparison.OrdinalIgnoreCase) &&
                     action.Equals("History", StringComparison.OrdinalIgnoreCase);
 
+    var isExpenseSheets = controller.Equals("Gastos", StringComparison.OrdinalIgnoreCase) &&
+                          action.Equals("ExpenseSheets", StringComparison.OrdinalIgnoreCase);
+
+    var isExpenseSheetDetail = controller.Equals("Gastos", StringComparison.OrdinalIgnoreCase) &&
+                               action.Equals("ExpenseSheetDetail", StringComparison.OrdinalIgnoreCase);
+
+    var isExpenseSheetLineDetail = controller.Equals("Gastos", StringComparison.OrdinalIgnoreCase) &&
+                                   action.Equals("ExpenseSheetLineDetail", StringComparison.OrdinalIgnoreCase);
+
     var isCreate = controller.Equals("Visitas", StringComparison.OrdinalIgnoreCase) &&
                    action.Equals("Create", StringComparison.OrdinalIgnoreCase);
 
@@ -79,12 +88,17 @@
     var canDeleteHistory = historyAccess >= IndAccessRights.FullAccess;
     var canCreateVisit = createAccess >= IndAccessRights.Add;
 
-    var hideForwardArrow = hideNavArrows || isVisitaDetail || isHistory || (isCreate && !canCreateVisit);
+    var hideForwardArrow = hideNavArrows || isVisitaDetail || isHistory || isExpenseSheetDetail || isExpenseSheetLineDetail || (isCreate && !canCreateVisit);
+    var showBackArrow = isVisitaDetail || isExpenseSheetDetail;
 
     var topbarTitle = title;
     if (isHistory)
     {
         topbarTitle = SR["Nav_Visits_History"];
+    }
+    else if (isExpenseSheets)
+    {
+        topbarTitle = SR["Nav_ExpenseSheets"];
     }
     else if (isCreate)
     {
@@ -95,11 +109,9 @@
         topbarTitle = SR["Visits_Detail_Title"];
     }
 
-    if (!string.IsNullOrWhiteSpace(selectedCompanyId))
-    {
-        var companyTitle = selectedCompanyId.ToUpperInvariant();
-        topbarTitle = $"{topbarTitle} ({companyTitle})";
-    }
+    var topbarCompanyTitle = !string.IsNullOrWhiteSpace(selectedCompanyId)
+        ? selectedCompanyId.ToUpperInvariant()
+        : string.Empty;
 }
 
     <div class="topbar relative sticky top-0 left-0 z-1900 flex h-[64px] w-full items-center justify-between bg-primary text-white px-2 sm:px-2.5 shadow-md transition-[margin,width] duration-300">
@@ -112,16 +124,16 @@
                     </svg>
                 </button>
 
-            @if (!hideNavArrows)
+            @if (!hideNavArrows && showBackArrow)
             {
-                var backDisabled = isVisitaDetail ? false : true;
-                var backUrl = isVisitaDetail ? "/Historial/History" : string.Empty;
-                var backUsesDefault = !isCreate;
+                var backUrl = isVisitaDetail
+                    ? "/Historial/History"
+                    : (isExpenseSheetDetail ? "/Gastos/ExpenseSheets" : string.Empty);
+                var backUsesDefault = true;
                 <button id="globalBackBtn" type="button" class="topbar-btn pointer-events-auto"
                         aria-label="@SR["Topbar_Back"]"
                         data-back-default="@(backUsesDefault ? "true" : "false")"
-                        data-back-url="@backUrl"
-                        @(backDisabled ? "disabled" : "")>
+                        data-back-url="@backUrl">
                     <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
                     </svg>
@@ -130,23 +142,31 @@
         </div>
 
         <div class="topbar-center absolute inset-0 flex items-center justify-center pointer-events-none">
-            <span id="topbarTitle" class="text-white font-medium text-[33px] sm:text-[39px] leading-tight">@topbarTitle</span>
+            <span id="topbarTitle" class="topbar-title @(string.IsNullOrWhiteSpace(topbarCompanyTitle) ? string.Empty : "topbar-title--with-company")">
+                <span class="topbar-title__main">@topbarTitle</span>
+                @if (!string.IsNullOrWhiteSpace(topbarCompanyTitle))
+                {
+                    <span class="topbar-title__company">(@topbarCompanyTitle)</span>
+                }
+            </span>
         </div>
 
         <div class="topbar-right flex items-center gap-1 justify-end z-10">
-            @if (isHistory)
+            @if (isHistory || isExpenseSheets)
             {
+                var filterDispatch = isHistory ? "history-toggle-filter" : "expense-sheets-toggle-filter";
+                var refreshDispatch = isHistory ? "history-refresh" : "expense-sheets-refresh";
                 <div class="flex items-center gap-1 pr-1">
                     <button id="historyFilterToggleBtn" type="button" class="topbar-btn pointer-events-auto"
                             aria-label="@SR["History_Filter_Toggle"]"
-                            data-ind-dispatch="history-toggle-filter">
+                            data-ind-dispatch="@filterDispatch">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 3c2.755 0 5.455.232 8.083.678.533.09.917.556.917 1.096v1.044a2.25 2.25 0 0 1-.659 1.591l-5.432 5.432a2.25 2.25 0 0 0-.659 1.591v2.927a2.25 2.25 0 0 1-1.244 2.013L9.75 21v-6.568a2.25 2.25 0 0 0-.659-1.591L3.659 7.409A2.25 2.25 0 0 1 3 5.818V4.774c0-.54.384-1.006.917-1.096A48.32 48.32 0 0 1 12 3Z" />
                         </svg>
                     </button>
                     <button id="historyRefreshBtn" type="button" class="topbar-btn pointer-events-auto"
                             aria-label="@SR["History_Filter_Refresh"]"
-                            data-ind-dispatch="history-refresh">
+                            data-ind-dispatch="@refreshDispatch">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99" />
                         </svg>

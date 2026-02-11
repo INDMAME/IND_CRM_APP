@@ -8,7 +8,7 @@ Date: 2026-02-09
 - Test tooling: Playwright fixture defaults.
 
 ## Skills Applied
-- `ind-crm-codex-guardrails`
+- `ind-crm-frontend-guardrails`
 - `stride-analysis-patterns`
 - `attack-tree-construction`
 - `security-requirement-extraction`
@@ -114,4 +114,3 @@ Path B (OR): exploit insufficient verification in dev/test process
 - Open: `ignoreHTTPSErrors: true` in Playwright fixture should be environment-gated with secure default.
 - Open: no repository-level SAST automation pipeline currently present.
 - Open: maintain route-to-module registry discipline for any new controllers/actions.
-

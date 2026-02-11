@@ -14,6 +14,8 @@ declare global {
     __VISIT_TYPES__?: Array<{ value?: string; Value?: string }>;
     __ASISTENTE_TIPOS__?: Array<{ value?: string; Value?: string }>;
     __ACTIVITY_DETAIL__?: Record<string, unknown>;
+    __EXPENSE_SHEET_ID__?: string;
+    __EXPENSE_LINE_ID__?: string;
     __indAllowHistoryOnce?: (fallbackUrl?: string) => void;
     __indSetNavigationGuard?: (activeOrOptions?: boolean | IndNavigationGuardOptions, message?: string) => void;
     __indClearNavigationGuard?: () => void;

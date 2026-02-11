@@ -127,9 +127,7 @@ namespace IND_CRM_APP.Services
 
         Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetsAsync(
             string token,
-            string? filter,
-            int page,
-            int pageSize
+            ExpenseSheetListApiRequest req
         );
 
         // Projects.

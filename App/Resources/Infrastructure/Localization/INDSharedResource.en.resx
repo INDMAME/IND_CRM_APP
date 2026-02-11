@@ -23,6 +23,45 @@
   <data name="Nav_Visits" xml:space="preserve"><value>Visits</value></data>
   <data name="Nav_Visits_Create" xml:space="preserve"><value>Create</value></data>
   <data name="Nav_Visits_History" xml:space="preserve"><value>History</value></data>
+  <data name="Nav_Expenses" xml:space="preserve"><value>Expenses</value></data>
+  <data name="Nav_ExpenseSheets" xml:space="preserve"><value>Expense sheets</value></data>
+  <data name="ExpenseSheets_Title" xml:space="preserve"><value>Expense sheets</value></data>
+  <data name="ExpenseSheets_Detail_Title" xml:space="preserve"><value>Expense sheet detail</value></data>
+  <data name="ExpenseSheets_Line_Title" xml:space="preserve"><value>Expense line detail</value></data>
+  <data name="ExpenseSheets_Header" xml:space="preserve"><value>Header</value></data>
+  <data name="ExpenseSheets_Lines" xml:space="preserve"><value>Lines</value></data>
+  <data name="ExpenseSheets_NoLines" xml:space="preserve"><value>No expense lines.</value></data>
+  <data name="ExpenseSheets_LoadError" xml:space="preserve"><value>Could not load expense sheets.</value></data>
+  <data name="ExpenseSheets_NotFound" xml:space="preserve"><value>Expense sheet not found.</value></data>
+  <data name="ExpenseSheets_Filter_Project" xml:space="preserve"><value>Project</value></data>
+  <data name="ExpenseSheets_Filter_Sheet" xml:space="preserve"><value>Expense sheet</value></data>
+  <data name="ExpenseSheets_Filter_Currency" xml:space="preserve"><value>Currency</value></data>
+  <data name="ExpenseSheets_Filter_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="ExpenseSheets_Filter_Project_Placeholder" xml:space="preserve"><value>Project id</value></data>
+  <data name="ExpenseSheets_Filter_Sheet_Placeholder" xml:space="preserve"><value>Sheet id</value></data>
+  <data name="ExpenseSheets_Filter_Currency_Placeholder" xml:space="preserve"><value>Currency code</value></data>
+  <data name="ExpenseSheets_Filter_Status_Placeholder" xml:space="preserve"><value>Status</value></data>
+  <data name="ExpenseSheets_Filter_Status_Unbilled" xml:space="preserve"><value>Unbilled</value></data>
+  <data name="ExpenseSheets_Filter_Status_Billed" xml:space="preserve"><value>Billed</value></data>
+  <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve"><value>Both</value></data>
+  <data name="ExpenseSheets_Field_SheetId" xml:space="preserve"><value>Sheet id</value></data>
+  <data name="ExpenseSheets_Field_UserId" xml:space="preserve"><value>User</value></data>
+  <data name="ExpenseSheets_Field_Project" xml:space="preserve"><value>Project</value></data>
+  <data name="ExpenseSheets_Field_Voucher" xml:space="preserve"><value>Voucher</value></data>
+  <data name="ExpenseSheets_Field_Currency" xml:space="preserve"><value>Currency</value></data>
+  <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve"><value>Total amount</value></data>
+  <data name="ExpenseSheets_Field_Description" xml:space="preserve"><value>Description</value></data>
+  <data name="ExpenseSheets_Field_CreatedDate" xml:space="preserve"><value>Date</value></data>
+  <data name="ExpenseSheets_Field_ExchangeRate" xml:space="preserve"><value>Exchange rate</value></data>
+  <data name="ExpenseSheets_Field_LineId" xml:space="preserve"><value>Line id</value></data>
+  <data name="ExpenseSheets_Field_Type" xml:space="preserve"><value>Type</value></data>
+  <data name="ExpenseSheets_Field_Amount" xml:space="preserve"><value>Amount</value></data>
+  <data name="ExpenseSheets_Field_Qty" xml:space="preserve"><value>Quantity</value></data>
+  <data name="ExpenseSheets_Field_TransDate" xml:space="preserve"><value>Date</value></data>
+  <data name="ExpenseSheets_Field_International" xml:space="preserve"><value>International</value></data>
+  <data name="ExpenseSheets_Field_Ticket" xml:space="preserve"><value>Ticket</value></data>
+  <data name="ExpenseSheets_Field_Attachments" xml:space="preserve"><value>Attachments</value></data>
+  <data name="ExpenseSheets_Field_LineCount" xml:space="preserve"><value>Lines</value></data>
 
   <data name="Visits_Create_Title" xml:space="preserve"><value>Create</value></data>
   <data name="Visits_Detail_Title" xml:space="preserve"><value>Detail</value></data>
@@ -76,6 +115,8 @@
   <data name="History_Filter_Client" xml:space="preserve"><value>Client</value></data>
   <data name="History_Filter_Clear" xml:space="preserve"><value>Clear</value></data>
   <data name="History_Filter_Apply" xml:space="preserve"><value>Apply</value></data>
+  <data name="History_Filter_Toggle" xml:space="preserve"><value>Filter</value></data>
+  <data name="History_Filter_Refresh" xml:space="preserve"><value>Refresh</value></data>
   <data name="History_Quick_Custom" xml:space="preserve"><value>Date</value></data>
   <data name="History_Quick_7Days" xml:space="preserve"><value>7 days</value></data>
   <data name="History_Quick_30Days" xml:space="preserve"><value>30 days</value></data>

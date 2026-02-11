@@ -11,6 +11,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
     {
         public const string ModuleVisitasCreacion = "VISITAS_CREACION";
         public const string ModuleVisitasHistorial = "VISITAS_HISTORIAL";
+        public const string ModuleGastosHojaGasto = "GASTOS_HOJA_GASTO";
 
         private static readonly IReadOnlyDictionary<string, string[]> ModulePrefixes =
             new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
@@ -38,6 +39,22 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                     "/Visitas/DeleteActivity",
                     "/Visitas/UpdateAsistenteTipo",
                     "/Visitas/GetActivityByCode"
+                },
+                [ModuleGastosHojaGasto] = new[]
+                {
+                    ModuleGastosHojaGasto,
+                    "GASTOS_HOJA_GASTO",
+                    "GASTO_HOJA_GASTO",
+                    "GASTOS/HOJAS",
+                    "GASTOS_HOJAS_GASTOS",
+                    "/Gastos",
+                    "/Gastos/ExpenseSheets",
+                    "/Gastos/ExpenseSheetDetail",
+                    "/Gastos/ExpenseSheetLineDetail",
+                    "/Gastos/ListExpenseSheets",
+                    "/Gastos/GetExpenseSheetDetail",
+                    "/Gastos/GetExpenseSheetLineDetail",
+                    "/Gastos/GetProjectsForDropdown"
                 }
             };
 
@@ -78,6 +95,14 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                     "VISITAS_HISTORIAL",
                     "VISITAS/HISTORIAL",
                     "VISITAS_VISITAS"
+                },
+                [ModuleGastosHojaGasto] = new[]
+                {
+                    ModuleGastosHojaGasto,
+                    "GASTOS_HOJA_GASTO",
+                    "GASTO_HOJA_GASTO",
+                    "GASTOS/HOJAS",
+                    "GASTOS_HOJAS_GASTOS"
                 }
             };
 

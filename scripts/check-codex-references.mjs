@@ -2,27 +2,74 @@ import { readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
+const REQUIRED_LOCAL_SKILL = "ind-crm-frontend-guardrails";
+const GLOBAL_SKILLS_PATH = "C:\\Users\\marco.meza\\.codex\\skills";
+const REFERENCE_CONFIG_FILE = "config.toml";
+
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDir, "..");
 const codexRoot = join(repositoryRoot, ".codex");
-const referencesDir = join(codexRoot, "skills", "ind-crm-codex-guardrails", "references");
+const localSkillsRoot = join(codexRoot, "skills");
+const referencesDir = join(codexRoot, "skills", "ind-crm-frontend-guardrails", "references");
 
 /**
- * Return sorted top-level markdown files from a directory.
+ * Check whether a top-level file should be mirrored into references.
  */
-function getTopLevelMarkdownFiles(dirPath) {
+function isReferenceSourceFile(fileName) {
+  const normalizedFileName = fileName.toLowerCase();
+  return normalizedFileName.endsWith(".md") || normalizedFileName === REFERENCE_CONFIG_FILE;
+}
+
+/**
+ * Return sorted top-level reference files from a directory.
+ */
+function getTopLevelReferenceFiles(dirPath) {
   return readdirSync(dirPath, { withFileTypes: true })
-    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".md"))
+    .filter((entry) => entry.isFile() && isReferenceSourceFile(entry.name))
     .map((entry) => entry.name)
     .sort((a, b) => a.localeCompare(b));
+}
+
+/**
+ * Validate that only the required local skill exists in this repository.
+ */
+function checkLocalSkillLayout() {
+  const localSkillDirectories = readdirSync(localSkillsRoot, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory())
+    .map((entry) => entry.name)
+    .sort((a, b) => a.localeCompare(b));
+
+  const hasRequiredSkill = localSkillDirectories.includes(REQUIRED_LOCAL_SKILL);
+  const extraSkills = localSkillDirectories.filter((skillName) => skillName !== REQUIRED_LOCAL_SKILL);
+
+  if (!hasRequiredSkill) {
+    console.error(
+      `[error] Missing local required skill '${REQUIRED_LOCAL_SKILL}' in ${localSkillsRoot}.`,
+    );
+    return false;
+  }
+
+  if (extraSkills.length > 0) {
+    console.error(
+      `[error] Unexpected local skill(s): ${extraSkills.join(", ")}. Move shared skills to ${GLOBAL_SKILLS_PATH}.`,
+    );
+    return false;
+  }
+
+  return true;
 }
 
 /**
  * Compare source and reference markdown files and report drift.
  */
 function checkCodexReferenceSync() {
-  const sourceFiles = getTopLevelMarkdownFiles(codexRoot);
-  const referenceFiles = getTopLevelMarkdownFiles(referencesDir);
+  if (!checkLocalSkillLayout()) {
+    process.exitCode = 1;
+    return;
+  }
+
+  const sourceFiles = getTopLevelReferenceFiles(codexRoot);
+  const referenceFiles = getTopLevelReferenceFiles(referencesDir);
 
   const sourceSet = new Set(sourceFiles);
   const referenceSet = new Set(referenceFiles);
@@ -70,7 +117,7 @@ function checkCodexReferenceSync() {
     console.error("- Content mismatch:", contentMismatches.join(", "));
   }
 
-  console.error("Run: npm run sync:codex:references");
+  console.error("Run: npm run sync:skill:local:references");
   process.exitCode = 1;
 }
 

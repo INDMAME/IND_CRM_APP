@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from "react";
 import { classNames } from "../../../utils/classNames.ts";
-import { useHistoryTableEffects } from "./useHistoryTableEffects.ts";
+import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
 
 export type TimelineDateParts = {
   year: string;
@@ -120,7 +120,7 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
     [resolveClickableCard]
   );
 
-  useHistoryTableEffects({ containerRef, errorMessage, items, resolveClickableCard });
+  useTimelineCardEffects({ containerRef, errorMessage, items, resolveClickableCard });
 
   const hasItems = items.length > 0;
   const showEmpty = !errorMessage && !hasItems;

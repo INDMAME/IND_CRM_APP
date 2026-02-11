@@ -4,12 +4,14 @@
 - This map documents the intended folder layout after reorganization.
 - Generated folders (`bin`, `obj`, `node_modules`, `.publish_tmp`) are excluded from details.
 - Canonical static path is `Web/wwwroot`. Root `wwwroot` is a compatibility junction and should not be the authoring target for new source files.
+- Shared Codex helper skills live globally in `C:\Users\marco.meza\.codex\skills`.
 
 ## Structure map (with context)
 ```
 .
-|-- .agents/                            // Local helper skills and optional templates
 |-- .codex/                             // Internal documentation and guardrails (source of truth)
+|   `-- skills/                         // Single project-local Codex guardrail skill only
+|       `-- ind-crm-frontend-guardrails/ // Required local guardrail skill for this repository
 |-- .config/                            // Tooling config
 |-- .githooks/                          // Local git hook scripts
 |-- .github/                            // CI workflows and automation
@@ -89,7 +91,8 @@
 11) Before creating any new object (class, component, hook, service, script, test, view), do a pre-check against this structure map and place it in the existing module path.
 12) For any React/frontend object creation or refactor, apply `vercel-react-best-practices` first (waterfalls, bundle size, listener strategy, rerender safety) and `vercel-composition-patterns` when component APIs are involved.
 13) Do not create new root folders or parallel module trees unless explicitly required.
-14) When `.codex/*.md` changes, run `npm run sync:codex:references` so skill references stay aligned.
+14) When `.codex/*.md` or `.codex/config.toml` changes, run `npm run sync:skill:local:references` so local skill references stay aligned.
+15) Keep only `.codex/skills/ind-crm-frontend-guardrails` in this repo; all other skills must be global in `C:\Users\marco.meza\.codex\skills`.
 
 ## Last updated
 - 2026-02-10
