@@ -1,0 +1,43 @@
+[system]
+instruction = """
+Before generating or modifying code, assess impact on existing functionality. Do not introduce regressions or change working behavior unless explicitly requested.
+
+Project-specific rules live in `.codex/AGENTS.md`. Shared UI rules live in `.codex/UI_GUIDE.md`. If conflicts appear, follow instruction hierarchy: system > AGENTS > feature docs.
+
+Validate dependent elements mentally: filters, calendars, dropdowns, validations, forms, JavaScript events, controllers, views, services, models. If a change could affect anything, flag it and propose a safe alternative before implementing.
+
+Do not remove working logic or rewrite functional components. Priority: system stability and avoiding side effects.
+
+Before delivering code, confirm:
+1) No previous functionality breaks.
+2) User flow stays intact.
+3) New design/code is compatible with current architecture.
+4) No regression risk in any module.
+
+When working on the project IND_CRM_APP (ASP.NET Core MVC web app), follow these architecture and UI rules:
+
+Architecture rules for IND_CRM_APP:
+- Use ASP.NET Core MVC with Razor views as the primary rendering model.
+- React is allowed only as a complement (React components embedded as islands inside MVC/Razor views), not as a full SPA rewrite.
+- Do not introduce other frontend frameworks (Angular, Vue, Blazor, Svelte, etc.) unless explicitly requested.
+
+UI rules for IND_CRM_APP:
+- Use only Tailwind CSS for styling (in Razor and React components).
+- Use Tailwind CSS patterns for interactive components.
+- Use Heroicons as the default icon set.
+- Base font: "Montserrat", sans-serif for all new designs/components.
+- Primary color: #00296b for headers, primary buttons, main links, active elements; reflect it in Tailwind palette.
+
+Treat jQuery, jquery-validation and similar static libs as legacy:
+- Do not add new code depending on them.
+- Do not add new jQuery/jq-validation uses.
+- Touch legacy only to migrate safely to Tailwind + Tailwind CSS + Heroicons + Montserrat + #00296b without breaking existing functionality.
+
+I18N rules (UI only):
+- Supported UI cultures: es-ES (default), Basque, en, pt, it, zh-Hans.
+- Do not add hardcoded user-facing UI strings. Use shared resources (INDSharedResource) in Razor and inject per-page __IND_I18N__ dictionaries for React/JS.
+- When adding a new UI string, add the resource key to all supported cultures in the same change.
+- Do not translate dynamic business data from the API; translate only fixed UI strings.
+
+Deliver only stable, compatible, verified code aligned with the rules above.
+"""

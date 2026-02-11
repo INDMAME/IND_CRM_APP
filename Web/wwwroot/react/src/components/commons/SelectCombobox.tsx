@@ -21,6 +21,9 @@ type SelectComboboxProps = {
   idBase?: string;
   portalClassName?: string;
   panelClassName?: string;
+  showSearchButton?: boolean;
+  allowTextInput?: boolean;
+  showLabel?: boolean;
 };
 
 // Reusable select combobox with optional portal rendering for the list.
@@ -38,6 +41,9 @@ const SelectCombobox = ({
   idBase,
   portalClassName,
   panelClassName,
+  showSearchButton = false,
+  allowTextInput = true,
+  showLabel = true,
 }: SelectComboboxProps) => {
   const readOnlyMode = readOnly || disabled;
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
@@ -164,7 +170,7 @@ const SelectCombobox = ({
       className={classNames("space-y-2", disabled ? "pointer-events-none select-none" : "")}
       ref={containerRef}
     >
-      <label className={classNames("form-label font-semibold", invalid ? "text-rose-700" : "")}>{label}</label>
+      {showLabel ? <label className={classNames("form-label font-semibold", invalid ? "text-rose-700" : "")}>{label}</label> : null}
       <div className="relative">
         <div
           ref={boxRef}
@@ -176,7 +182,8 @@ const SelectCombobox = ({
         >
           <input
             className={classNames(
-              "w-full rounded-xl border px-3 py-2 pr-10 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+              "w-full rounded-xl border px-3 py-2 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+              showSearchButton ? "pr-20" : "pr-10",
               invalid
                 ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
                 : "border-slate-200 focus:ring-primary focus:border-primary",
@@ -186,6 +193,7 @@ const SelectCombobox = ({
             value={query || selected?.text || ""}
             disabled={disabled}
             onChange={(event) => {
+              if (!allowTextInput) return;
               const val = event.target.value;
               setQuery(val);
               setOpen(true);
@@ -195,23 +203,43 @@ const SelectCombobox = ({
               if (!disabled) setOpen(true);
             }}
             placeholder={placeholder}
+            readOnly={readOnlyMode || !allowTextInput}
+            aria-label={label}
             role="combobox"
             aria-expanded={listOpen}
             aria-controls={listId}
             aria-activedescendant={activeId}
           />
-          <button
-            type="button"
-            className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 hover:text-slate-600"
-            onClick={() => {
-              if (disabled) return;
-              setOpen((prev) => !prev);
-            }}
-            aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
-            disabled={disabled}
-          >
-            {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
-          </button>
+          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+            {showSearchButton ? (
+              <button
+                type="button"
+                className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
+                onClick={() => {
+                  if (disabled) return;
+                  setOpen(true);
+                }}
+                aria-label={indT("Common_Search", "Search")}
+                disabled={disabled}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 15.75-2.489-2.489m0 0a3.375 3.375 0 1 0-4.773-4.773 3.375 3.375 0 0 0 4.774 4.774ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+              </button>
+            ) : null}
+            <button
+              type="button"
+              className="flex items-center p-1.5 text-slate-500 hover:text-slate-600"
+              onClick={() => {
+                if (disabled) return;
+                setOpen((prev) => !prev);
+              }}
+              aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
+              disabled={disabled}
+            >
+              {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
+            </button>
+          </div>
         </div>
         {usePortal ? (
           <FloatingList
