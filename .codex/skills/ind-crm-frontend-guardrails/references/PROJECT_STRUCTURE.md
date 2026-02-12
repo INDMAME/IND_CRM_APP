@@ -52,6 +52,14 @@
 |               |-- hooks/              // Cross-page React hooks
 |               |-- legacy/             // TS sources that compile to global JS
 |               |-- pages/              // Page containers (React islands)
+|               |   |-- gastos/         // Gastos module pages
+|               |   |   |-- components/ // Gastos page-local UI blocks
+|               |   |   |-- constants/  // Gastos fixed option sets and constants
+|               |   |   |-- detail/     // Expense sheet detail page and hooks
+|               |   |   |-- hooks/      // Gastos cross-page hooks
+|               |   |   |-- line/       // Expense line detail page and hooks
+|               |   |   |-- list/       // Expense sheets list page and hooks
+|               |   |   `-- utils/      // Gastos helpers, adapters, payload builders
 |               |   |-- system/         // System tools (TextEditor, AudioRecorder)
 |               |   `-- visitas/        // Visitas module pages
 |               |       |-- components/ // Visitas page-local UI blocks
@@ -93,6 +101,8 @@
 13) Do not create new root folders or parallel module trees unless explicitly required.
 14) When `.codex/*.md` or `.codex/config.toml` changes, run `npm run sync:skill:local:references` so local skill references stay aligned.
 15) Keep only `.codex/skills/ind-crm-frontend-guardrails` in this repo; all other skills must be global in `C:\Users\marco.meza\.codex\skills`.
+16) Module-first frontend pattern: pages own module state and orchestration; `components/commons` owns reusable dumb UI primitives.
+17) Promote a module component to shared only when at least two modules reuse the same contract and style behavior.
 
 ## Last updated
-- 2026-02-10
+- 2026-02-12

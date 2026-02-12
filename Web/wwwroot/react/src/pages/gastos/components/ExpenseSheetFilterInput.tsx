@@ -1,8 +1,8 @@
 import React, { useCallback } from "react";
 import RemoteSearchCombobox, { type RemoteSearchOption } from "../../../components/commons/RemoteSearchCombobox.tsx";
-import { ApiFetchError, fetchJson } from "../../../services/apiService.ts";
-import type { ExpenseSheetListResponse } from "../expenseTypes.ts";
+import { ApiFetchError } from "../../../services/apiService.ts";
 import { buildExpenseSheetSuggestPayload } from "../utils/expensePayloadBuilders.ts";
+import { fetchExpenseSheetList } from "../utils/expenseApi.ts";
 
 type ExpenseSheetFilterInputProps = {
   label: string;
@@ -15,7 +15,21 @@ type ExpenseSheetFilterInputProps = {
   showLabel?: boolean;
 };
 
-const SEARCH_PAGE_SIZE = 50;
+const SEARCH_PAGE_SIZE = 10;
+
+const mapSheetOptions = (items: Array<{ hojaGastosId?: string; description?: string }> | undefined): RemoteSearchOption[] => {
+  return (Array.isArray(items) ? items : [])
+    .map((item) => {
+      const id = String(item?.hojaGastosId || "").trim();
+      if (!id) return null;
+      return {
+        value: id,
+        title: id,
+        subtitle: String(item?.description || "").trim() || "-",
+      } as RemoteSearchOption;
+    })
+    .filter(Boolean) as RemoteSearchOption[];
+};
 
 // Expense sheet filter input with remote list suggestions.
 const ExpenseSheetFilterInput = ({
@@ -31,26 +45,27 @@ const ExpenseSheetFilterInput = ({
   const readOnlyMode = readOnly || disabled;
 
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
-    const payload = buildExpenseSheetSuggestPayload(term, SEARCH_PAGE_SIZE);
-    const response = await fetchJson<ExpenseSheetListResponse>("/Gastos/ListExpenseSheets", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+    const payload = buildExpenseSheetSuggestPayload(term, SEARCH_PAGE_SIZE, 1);
+    const response = await fetchExpenseSheetList(payload, {
       suppressPermissionModal: true,
       signal,
     });
 
-    return (Array.isArray(response?.items) ? response.items : [])
-      .map((item) => {
-        const id = String(item?.hojaGastosId || "").trim();
-        if (!id) return null;
-        return {
-          value: id,
-          title: id,
-          subtitle: String(item?.description || "").trim() || "-",
-        } as RemoteSearchOption;
-      })
-      .filter(Boolean) as RemoteSearchOption[];
+    return mapSheetOptions(response?.items);
+  }, []);
+
+  const loadOptionsPage = useCallback(async (term: string, page: number, pageSize: number, signal: AbortSignal) => {
+    // This controller endpoint runs server-side and always forwards auth, company and AxUser headers.
+    const payload = buildExpenseSheetSuggestPayload(term, pageSize, page);
+    const response = await fetchExpenseSheetList(payload, {
+      suppressPermissionModal: true,
+      signal,
+    });
+
+    return {
+      items: mapSheetOptions(response?.items),
+      total: Number(response?.total || 0),
+    };
   }, []);
 
   if (!enableRemoteSuggestions || readOnlyMode) {
@@ -90,8 +105,22 @@ const ExpenseSheetFilterInput = ({
           throw error;
         }
       }}
+      onSearchPage={async (term, page, pageSize, signal) => {
+        try {
+          return await loadOptionsPage(term, page, pageSize, signal);
+        } catch (error) {
+          if (error instanceof ApiFetchError && error.status === 403) {
+            return { items: [], total: 0 };
+          }
+          throw error;
+        }
+      }}
       idBase="expense-sheet-filter"
-      minSearchLength={2}
+      minSearchLength={0}
+      pageSize={SEARCH_PAGE_SIZE}
+      allowEmptySearch
+      loadOnOpen
+      infiniteScroll
       disabled={disabled}
       readOnly={readOnly}
       showLabel={showLabel}

@@ -64,6 +64,7 @@ export type ExpenseSheetLine = {
   lineRecId: string;
   transDate?: string;
   typeValue?: string;
+  typeValueCode?: string;
   description?: string;
   internacional?: boolean | null;
   ticket?: boolean | null;
@@ -93,4 +94,40 @@ export type ExpenseSheetLineDetailResponse = {
   success?: boolean;
   message?: string;
   data?: ExpenseSheetLineDetailData;
+};
+
+// Payload used by /Gastos/UpdateExpenseSheetHeader/{hojaGastosId}.
+export type ExpenseSheetHeaderUpdateRequest = {
+  description: string;
+  currencyCode: string;
+  exchRate: number;
+  projId?: string | null;
+};
+
+// Payload used by /Gastos/UpdateExpenseSheetLine/{hojaGastosId}/{lineRecId}.
+export type ExpenseSheetLineUpdateRequest = {
+  transDate: string;
+  typeValue: number;
+  description: string;
+  internacional: boolean;
+  ticket: boolean;
+  qty: number;
+  amount: number;
+  projId?: string | null;
+  indAttachFiles: string;
+};
+
+export type ExpenseSheetCreateMode = 0 | 1 | 2;
+
+export type ExpenseSheetCreateLineDraft = {
+  localId: string;
+  transDate: string;
+  typeValueCode: string;
+  description: string;
+  internacional: boolean;
+  ticket: boolean;
+  qty: string;
+  amount: string;
+  projId: string;
+  indAttachFiles: string;
 };

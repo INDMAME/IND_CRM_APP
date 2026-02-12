@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miï¿½rcoles 2/11/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 2/12/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -16,110 +16,377 @@ Formatversion: 1
     
     METHODS
       Version: 3
-      SOURCE #getExpenseSheetsList
-        #static server container getExpenseSheetsList(container _data)
+      SOURCE #createExpenseSheet
+        #/*
+        #    Method: indExpenseSheetCreate (createExpenseSheet)
+        #    Purpose:
+        #      - Mode 0 (default): Create header + lines (existing behavior)
+        #      - Mode 1: Create header only
+        #      - Mode 2: Add line(s) to an existing header (by HojaGastosId)
+        #    Input _data (container):
+        #      1) companyId (handled by INDCRMUtilityService::getCompany)
+        #      2) headerIn (container)
+        #         - Mode 0/1: [axUserId, descr, currencyCode, exchRate, projId]
+        #         - Mode 2  : at least [axUserId] (other fields ignored)
+        #      3) linesIn (container of line containers)
+        #         - Each line: [transDateStr, typeValue, lineDescr, internacional, ticket, qty, amount, lineProjId, attachFiles]
+        #      4) optionsIn (optional container): [mode, existingHojaGastosId]
+        #         - mode: 0|1|2
+        #         - existingHojaGastosId required if mode == 2
+        #*/
+        #static server container createExpenseSheet(container _data)
         #{
-        #    DataAreaId           _company;
+        #    #define.ModeCreateHeaderAndLines(0)
+        #    #define.ModeCreateHeaderOnly(1)
+        #    #define.ModeAddLinesToExisting(2)
         #
-        #    UserId               axUserId;
-        #    CRMUserId            crmUserId;
+        #    DataAreaId companyId;
+        #    container  headerIn;
+        #    container  linesIn;
+        #    container  optionsIn;
         #
-        #    str 1000             filterTxt;
-        #    str 1000             likePattern;
+        #    int        mode;
+        #    CRMHojaGastosId  existingHojaGastosId;
         #
-        #    int                  billedMode;
+        #    CRMHojaGastosTable header;
+        #    CRMHojaGastosLine  line;
         #
-        #    // Filtros nuevos
-        #    date                 createdDateFrom;
-        #    date                 createdDateTo;
-        #    ProjId               projId;
-        #    CurrencyCode         currencyCode;
+        #    CRMUserId crmUserId;
+        #    UserId    axUserId;
         #
-        #    CRMHojaGastosTable   hoja;
-        #    container            conResult, conItem;
+        #    str  descr;
+        #    str  currencyCode;
+        #    real exchRate;
+        #    str  projId;
         #
-        #    _company = INDCRMUtilityService::getCompany(_data);
-        #    if (!_company)
-        #        return conNull();
+        #    // Line fields
+        #    container lineIn;
+        #    str       transDateStr;
+        #    date      transDate;
+        #    int       typeValue;
+        #    str       lineDescr;
+        #    int       internacional;
+        #    int       ticket;
+        #    real      qty;
+        #    real      amount;
+        #    str       lineProjId;
+        #    str       attachFiles;
         #
-        #    if (conLen(_data) < 4)
-        #        return conResult;
+        #    container linesOut = conNull();
+        #    str       message;
+        #    str       msg;
+        #    int       i;
+        #    int       lineCount;
         #
-        #    axUserId   = conPeek(_data, 2);
-        #    filterTxt  = conPeek(_data, 3);
-        #    billedMode = conPeek(_data, 4);
+        #    int       startLine;
+        #    NumberSeq numberSeq; // only used when creating a new header
+        #    ;
         #
-        #    // Filtros opcionales nuevos
-        #    if (conLen(_data) >= 5 && conPeek(_data, 5))
-        #        createdDateFrom = str2Date(conPeek(_data, 5), 321);
+        #    // ---- Base validations (backward compatible) ----
+        #    companyId = INDCRMUtilityService::getCompany(_data);
         #
-        #    if (conLen(_data) >= 6 && conPeek(_data, 6))
-        #        createdDateTo = str2Date(conPeek(_data, 6), 321);
+        #    if (!companyId)
+        #        return [INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull()), conNull()];
         #
-        #    if (conLen(_data) >= 7)
-        #        projId = conPeek(_data, 7);
+        #    if (conLen(_data) < 3)
+        #        return [INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan al menos 3 elementos.', conNull()), conNull()];
         #
-        #    if (conLen(_data) >= 8)
-        #        currencyCode = conPeek(_data, 8);
+        #    headerIn = conPeek(_data, 2);
+        #    linesIn  = conPeek(_data, 3);
         #
-        #    // billedMode permitido
-        #    if (billedMode != 0 && billedMode != 1 && billedMode != 2)
-        #        billedMode = 0;
+        #    // Optional optionsIn = 4th element
+        #    optionsIn = conNull();
+        #    if (conLen(_data) >= 4)
+        #        optionsIn = conPeek(_data, 4);
         #
-        #    if (filterTxt)
-        #        likePattern = strFmt("*%1*", filterTxt);
+        #    // Defaults
+        #    mode                = #ModeCreateHeaderAndLines;
+        #    existingHojaGastosId = '';
         #
-        #    changecompany (_company)
+        #    if (conLen(optionsIn) >= 1)
+        #        mode = conPeek(optionsIn, 1);
+        #
+        #    if (conLen(optionsIn) >= 2)
+        #        existingHojaGastosId = conPeek(optionsIn, 2);
+        #
+        #    // Validate mode
+        #    if (mode != #ModeCreateHeaderAndLines &&
+        #        mode != #ModeCreateHeaderOnly &&
+        #        mode != #ModeAddLinesToExisting)
         #    {
-        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
-        #        if (!crmUserId)
-        #            return conResult;
-        #
-        #        while select hoja
-        #            index hint INDSearchKeyIdx
-        #            where hoja.UserId == crmUserId
-        #
-        #               // Texto opcional
-        #               && ( !filterTxt || hoja.INDSearchKey like likePattern )
-        #
-        #               // Facturaciï¿½n
-        #               && (
-        #                      (billedMode == 2)
-        #                   || (billedMode == 0 && hoja.Voucher == '')
-        #                   || (billedMode == 1 && hoja.Voucher != '')
-        #                  )
-        #
-        #               // Fecha creaciï¿½n opcional
-        #               && (
-        #                      (!createdDateFrom && !createdDateTo)
-        #                   || ( createdDateFrom && !createdDateTo && hoja.CreatedDate >= createdDateFrom)
-        #                   || (!createdDateFrom &&  createdDateTo && hoja.CreatedDate <= createdDateTo)
-        #                   || ( createdDateFrom &&  createdDateTo &&
-        #                        hoja.CreatedDate >= createdDateFrom &&
-        #                        hoja.CreatedDate <= createdDateTo)
-        #                  )
-        #
-        #               // Proyecto opcional
-        #               && ( !projId || hoja.ProjId == projId )
-        #
-        #               // Moneda opcional
-        #               && ( !currencyCode || hoja.CurrencyCode == currencyCode )
-        #        {
-        #            conItem = [[
-        #                strFmt("%1", hoja.HojaGastosId),
-        #                strFmt("%1", hoja.Description),
-        #                strFmt("%1", hoja.Voucher),
-        #                strFmt("%1", hoja.ProjId),
-        #                strFmt("%1", hoja.CurrencyCode),
-        #                strFmt("%1", hoja.TotalAmountMST()),
-        #                strFmt("%1", hoja.CreatedDate)
-        #            ]];
-        #
-        #            conResult += conItem;
-        #        }
+        #        return [INDCRMUtilityService::buildHeader(false, strFmt('Mode invalido: %1 (valores: 0|1|2).', mode), conNull()), conNull()];
         #    }
         #
-        #    return conResult ? conResult : [["Sin datos."]];
+        #    // ---- Header parsing / validation depending on mode ----
+        #    if (mode == #ModeAddLinesToExisting)
+        #    {
+        #        // Only need axUserId at position 1
+        #        if (conLen(headerIn) < 1)
+        #            return [INDCRMUtilityService::buildHeader(false, 'Header input invalido para modo AddLines. Se espera al menos AxUserId.', conNull()), conNull()];
+        #
+        #        axUserId = conPeek(headerIn, 1);
+        #
+        #        if (!existingHojaGastosId)
+        #            return [INDCRMUtilityService::buildHeader(false, 'existingHojaGastosId es obligatorio en modo AddLines (options[2]).', conNull()), conNull()];
+        #
+        #        if (conLen(linesIn) <= 0)
+        #            return [INDCRMUtilityService::buildHeader(false, 'Se espera al menos 1 linea en modo AddLines.', conNull()), conNull()];
+        #    }
+        #    else
+        #    {
+        #        // Existing behavior: expect 5 header fields
+        #        if (conLen(headerIn) < 5)
+        #            return [INDCRMUtilityService::buildHeader(false, 'Header input invalido. Se esperan 5 campos.', conNull()), conNull()];
+        #
+        #        axUserId     = conPeek(headerIn, 1);
+        #        descr        = conPeek(headerIn, 2);
+        #        currencyCode = conPeek(headerIn, 3);
+        #        exchRate     = conPeek(headerIn, 4);
+        #        projId       = conPeek(headerIn, 5);
+        #
+        #        if (!descr)
+        #            return [INDCRMUtilityService::buildHeader(false, 'Description es obligatorio.', conNull()), conNull()];
+        #
+        #        if (!currencyCode)
+        #            return [INDCRMUtilityService::buildHeader(false, 'CurrencyCode es obligatorio.', conNull()), conNull()];
+        #
+        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #
+        #        if (currencyCode == 'EUR')
+        #            exchRate = 1.0;
+        #        else if (exchRate <= 0)
+        #            return [INDCRMUtilityService::buildHeader(false, 'ExchRate debe ser mayor que 0 cuando CurrencyCode no es EUR.', conNull()), conNull()];
+        #
+        #        // Strict: header-only should not receive lines
+        #        if (mode == #ModeCreateHeaderOnly && conLen(linesIn) > 0)
+        #            return [INDCRMUtilityService::buildHeader(false, 'Modo CreateHeaderOnly: no se deben enviar lineas.', conNull()), conNull()];
+        #    }
+        #
+        #    // Capture infolog start BEFORE doing anything that may log
+        #    startLine = infolog.line();
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            // Convert AX user -> CRM user
+        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #
+        #            if (!crmUserId)
+        #                return [INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
+        #
+        #            ttsbegin;
+        #
+        #            // ---- Header creation or load existing ----
+        #            if (mode == #ModeAddLinesToExisting)
+        #            {
+        #                // Lock header row while adding lines
+        #                select firstOnly forUpdate header
+        #                    where header.HojaGastosId == existingHojaGastosId;
+        #
+        #                if (!header.RecId)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('No existe la hoja de gastos: %1', existingHojaGastosId), conNull()), conNull()];
+        #                }
+        #
+        #                // Must be open sheet
+        #                if (header.Voucher)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, 'La hoja de gastos no esta abierta (Voucher informado). No se pueden anadir lineas.', conNull()), conNull()];
+        #                }
+        #
+        #                // Optional but recommended: enforce ownership
+        #                if (header.UserId != crmUserId)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, 'No tiene permisos para anadir lineas a esta hoja de gastos.', conNull()), conNull()];
+        #                }
+        #            }
+        #            else
+        #            {
+        #                header.clear();
+        #                header.initValue();
+        #
+        #                numberSeq           = NumberSeq::newGetNum(CustParameters::numRefCRMHojaGastosId());
+        #                header.HojaGastosId = numberSeq.num();
+        #
+        #                header.UserId       = crmUserId;
+        #                header.initFromUsuarioTable();
+        #
+        #                header.Description  = descr;
+        #                header.CurrencyCode = currencyCode;
+        #                header.ExchRate     = exchRate;
+        #                header.ProjId       = projId;
+        #
+        #                header.DestinoId    = "GENERALES";
+        #                header.Year         = year(today());
+        #
+        #                // Must be open sheet
+        #                header.Voucher      = '';
+        #
+        #                // Audit
+        #                header.INDCreatedByUserId = axUserId;
+        #
+        #                header.insert();
+        #            }
+        #
+        #            // ---- Insert lines (unless header-only mode) ----
+        #            if (mode != #ModeCreateHeaderOnly)
+        #            {
+        #                lineCount = conLen(linesIn);
+        #
+        #                for (i = 1; i <= lineCount; i++)
+        #                {
+        #                    lineIn = conPeek(linesIn, i);
+        #
+        #                    if (conLen(lineIn) < 9)
+        #                    {
+        #                        if (appl.ttsLevel() > 0)
+        #                            ttsabort;
+        #                        if (numberSeq)
+        #                            numberSeq.abort();
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, 'Linea invalida. Se esperan 9 campos por linea.', conNull()), conNull()];
+        #                    }
+        #
+        #                    transDateStr  = conPeek(lineIn, 1);
+        #                    typeValue     = conPeek(lineIn, 2);
+        #                    lineDescr     = conPeek(lineIn, 3);
+        #                    internacional = conPeek(lineIn, 4);
+        #                    ticket        = conPeek(lineIn, 5);
+        #                    qty           = conPeek(lineIn, 6);
+        #                    amount        = conPeek(lineIn, 7);
+        #                    lineProjId    = conPeek(lineIn, 8);
+        #                    attachFiles   = conPeek(lineIn, 9);
+        #
+        #                    if (!INDCRMExpenseSheetService::isValidGastoType(typeValue))
+        #                    {
+        #                        if (appl.ttsLevel() > 0)
+        #                            ttsabort;
+        #                        if (numberSeq)
+        #                            numberSeq.abort();
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Tipo de gasto invalido: %1', typeValue), conNull()), conNull()];
+        #                    }
+        #
+        #                    transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
+        #                    if (!transDate)
+        #                    {
+        #                        if (appl.ttsLevel() > 0)
+        #                            ttsabort;
+        #                        if (numberSeq)
+        #                            numberSeq.abort();
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
+        #                    }
+        #
+        #                    if (qty <= 0)
+        #                    {
+        #                        if (appl.ttsLevel() > 0)
+        #                            ttsabort;
+        #                        if (numberSeq)
+        #                            numberSeq.abort();
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, 'Qty debe ser mayor que 0.', conNull()), conNull()];
+        #                    }
+        #
+        #                    line.clear();
+        #                    line.initValue();
+        #
+        #                    line.HojaGastosId = header.HojaGastosId;
+        #                    line.InitFromHojaGastosTable();
+        #
+        #                    line.UserId = header.UserId;
+        #                    line.InitFromUsuarioTable();
+        #
+        #                    line.TransDate = transDate;
+        #                    line.Type      = typeValue;
+        #                    line.InitFromGastoType();
+        #
+        #                    line.Description   = lineDescr;
+        #                    line.Internacional = internacional ? NoYes::Yes : NoYes::No;
+        #                    line.Ticket        = ticket ? NoYes::Yes : NoYes::No;
+        #                    line.Qty           = qty;
+        #                    line.Amount        = amount;
+        #
+        #                    // Prefer line project else header project
+        #                    if (lineProjId)
+        #                        line.ProjId = lineProjId;
+        #                    else
+        #                        line.ProjId = header.ProjId;
+        #
+        #                    // Audit and attachments
+        #                    line.INDCreatedByUserId = axUserId;
+        #                    line.INDAttachFiles     = attachFiles;
+        #
+        #                    line.insert();
+        #
+        #                    // Append at end (avoids conLen + conIns each iteration)
+        #                    linesOut += line.RecId;
+        #                }
+        #            }
+        #
+        #            // Mark number as used only on success path
+        #            if (numberSeq)
+        #                numberSeq.used();
+        #
+        #            ttscommit;
+        #
+        #            // Message per mode
+        #            if (mode == #ModeCreateHeaderOnly)
+        #                message = 'Cabecera de hoja de gastos creada correctamente.';
+        #            else if (mode == #ModeAddLinesToExisting)
+        #                message = strFmt('Lineas creadas correctamente en la hoja %1.', header.HojaGastosId);
+        #            else
+        #                message = 'Hoja de gastos creada correctamente.';
+        #
+        #            return [INDCRMUtilityService::buildHeader(true, message, [header.HojaGastosId]), linesOut];
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #        if (numberSeq)
+        #            numberSeq.abort();
+        #
+        #        return [INDCRMUtilityService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull()), conNull()];
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #        if (numberSeq)
+        #            numberSeq.abort();
+        #
+        #        return [INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull()), conNull()];
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #        if (numberSeq)
+        #            numberSeq.abort();
+        #
+        #        return [INDCRMUtilityService::buildHeader(false, 'Error interno del sistema.', conNull()), conNull()];
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        if (appl.ttsLevel() > 0)
+        #            ttsabort;
+        #        if (numberSeq)
+        #            numberSeq.abort();
+        #
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #    }
+        #
+        #    return [INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull()), conNull()];
         #}
         #
       ENDSOURCE
@@ -131,10 +398,10 @@ Formatversion: 1
         #
         #}
       ENDSOURCE
-      SOURCE #createExpenseSheet
+      SOURCE #createExpenseSheet_deprecated
         #// Method: indExpenseSheetCreate
         #// Purpose: Create header + lines in one transaction using one container call.
-        #static server container createExpenseSheet(container _data)
+        #static server container createExpenseSheet_deprecated(container _data)
         #{
         #    DataAreaId companyId;
         #    container headerIn;
@@ -602,7 +869,7 @@ Formatversion: 1
         #    container headerOut;
         #    container linesOut = conNull();
         #    container lineRow;
-        #    int   startLine;
+        #    int   startLine,gastoTypeInt;
         #    str   msg;
         #    ;
         #
@@ -633,40 +900,149 @@ Formatversion: 1
         #            return [INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull()), conNull()];
         #
         #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK', [
-        #            header.HojaGastosId,
-        #            header.Description,
-        #            header.UserId,
-        #            header.CurrencyCode,
-        #            header.TotalAmountMST(),
-        #            header.ExchRate,
-        #            header.ProjId,
-        #            header.Voucher
+        #             strFmt("%1", header.HojaGastosId),
+        #             strFmt("%1", header.Description),
+        #             strFmt("%1", header.UserId),
+        #             strFmt("%1", header.CurrencyCode),
+        #             strFmt("%1", header.TotalAmountMST()),
+        #             strFmt("%1", header.ExchRate),
+        #             strFmt("%1", header.ProjId),
+        #             strFmt("%1", header.Voucher)
         #        ]);
         #
         #        while select line
         #            where line.UserId       == crmUserId
         #               && line.HojaGastosId == hojaId
         #        {
+        #             gastoTypeInt = line.Type;
         #             lineRow = [
-        #                line.RecId,
-        #                date2Str(line.TransDate,  123, 2,2,2,2,4),
-        #                line.Type,
-        #                line.Description,
-        #                line.Internacional,
-        #                line.Ticket,
-        #                line.Qty,
-        #                line.Amount,
-        #                line.ProjId,
-        #                line.INDAttachFiles
+        #                 strFmt("%1", line.RecId),
+        #                 strFmt("%1", date2Str(line.TransDate,  123, 2,2,2,2,4)),
+        #                 strFmt("%1", gastoTypeInt),
+        #                 strFmt("%1", line.Description),
+        #                 strFmt("%1", line.Internacional),
+        #                 strFmt("%1", line.Ticket),
+        #                 strFmt("%1", line.Qty),
+        #                 strFmt("%1", line.Amount),
+        #                 strFmt("%1", line.ProjId),
+        #                 strFmt("%1", line.INDAttachFiles)
         #            ];
         #
         #            linesOut = conIns(linesOut, conLen(linesOut) + 1, lineRow);
+        #            gastoTypeInt = 0;
         #        }
         #
         #        return [headerOut, linesOut];
         #    }
         #
         #    return [INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull()), conNull()];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getExpenseSheetsList
+        #static server container getExpenseSheetsList(container _data)
+        #{
+        #    DataAreaId           _company;
+        #
+        #    UserId               axUserId;
+        #    CRMUserId            crmUserId;
+        #
+        #    str 1000             filterTxt;
+        #    str 1000             likePattern;
+        #
+        #    int                  billedMode;
+        #
+        #    // Filtros nuevos
+        #    date                 createdDateFrom;
+        #    date                 createdDateTo;
+        #    ProjId               projId;
+        #    CurrencyCode         currencyCode;
+        #
+        #    CRMHojaGastosTable   hoja;
+        #    container            conResult, conItem;
+        #
+        #    _company = INDCRMUtilityService::getCompany(_data);
+        #    if (!_company)
+        #        return conNull();
+        #
+        #    if (conLen(_data) < 4)
+        #        return conResult;
+        #
+        #    axUserId   = conPeek(_data, 2);
+        #    filterTxt  = conPeek(_data, 3);
+        #    billedMode = conPeek(_data, 4);
+        #
+        #    // Filtros opcionales nuevos
+        #    if (conLen(_data) >= 5 && conPeek(_data, 5))
+        #        createdDateFrom = str2Date(conPeek(_data, 5), 321);
+        #
+        #    if (conLen(_data) >= 6 && conPeek(_data, 6))
+        #        createdDateTo = str2Date(conPeek(_data, 6), 321);
+        #
+        #    if (conLen(_data) >= 7)
+        #        projId = conPeek(_data, 7);
+        #
+        #    if (conLen(_data) >= 8)
+        #        currencyCode = conPeek(_data, 8);
+        #
+        #    // billedMode permitido
+        #    if (billedMode != 0 && billedMode != 1 && billedMode != 2)
+        #        billedMode = 0;
+        #
+        #    if (filterTxt)
+        #        likePattern = strFmt("*%1*", filterTxt);
+        #
+        #    changecompany (_company)
+        #    {
+        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #        if (!crmUserId)
+        #            return conResult;
+        #
+        #        while select hoja
+        #            index hint INDSearchKeyIdx
+        #            where hoja.UserId == crmUserId
+        #
+        #               // Texto opcional
+        #               && ( !filterTxt || hoja.INDSearchKey like likePattern )
+        #
+        #               // Facturación
+        #               && (
+        #                      (billedMode == 2)
+        #                   || (billedMode == 0 && hoja.Voucher == '')
+        #                   || (billedMode == 1 && hoja.Voucher != '')
+        #                  )
+        #
+        #               // Fecha creación opcional
+        #               && (
+        #                      (!createdDateFrom && !createdDateTo)
+        #                   || ( createdDateFrom && !createdDateTo && hoja.CreatedDate >= createdDateFrom)
+        #                   || (!createdDateFrom &&  createdDateTo && hoja.CreatedDate <= createdDateTo)
+        #                   || ( createdDateFrom &&  createdDateTo &&
+        #                        hoja.CreatedDate >= createdDateFrom &&
+        #                        hoja.CreatedDate <= createdDateTo)
+        #                  )
+        #
+        #               // Proyecto opcional
+        #               && ( !projId || hoja.ProjId == projId )
+        #
+        #               // Moneda opcional
+        #               && ( !currencyCode || hoja.CurrencyCode == currencyCode )
+        #        {
+        #            conItem = [[
+        #                strFmt("%1", hoja.HojaGastosId),
+        #                strFmt("%1", hoja.Description),
+        #                strFmt("%1", hoja.Voucher),
+        #                strFmt("%1", hoja.ProjId),
+        #                strFmt("%1", hoja.CurrencyCode),
+        #                strFmt("%1", hoja.TotalAmountMST()),
+        #                strFmt("%1", hoja.CreatedDate)
+        #            ]];
+        #
+        #            conResult += conItem;
+        #        }
+        #    }
+        #
+        #    return conResult ? conResult : [["Sin datos."]];
         #}
         #
       ENDSOURCE
@@ -703,7 +1079,8 @@ Formatversion: 1
         #    {
         #        while select proj
         #            index hint INDSearchKeyIdx
-        #            where (proj.INDTransDateCierreCostes == dateNull())
+        #            where proj.INDPermitirImputarGastos
+        #               && (proj.INDTransDateCierreCostes == dateNull())
         #               && (proj.INDSearchKey like likePattern)
         #        {
         #            // Nota: Si el campo de nombre no es Name en tu ProjTable, cambialo aqui.

@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { indT } from "../../../utils/indI18n.ts";
+import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 
 type ExpenseBilledModeFilterSelectProps = {
   label: string;
@@ -22,11 +23,11 @@ const ExpenseBilledModeFilterSelect = ({
   disabled = false,
   showLabel = true,
 }: ExpenseBilledModeFilterSelectProps) => {
-  const options = useMemo(
+  const options = useMemo<ExpenseSelectOption[]>(
     () => [
-      { value: 0, text: indT("ExpenseSheets_Filter_Status_Unbilled", "No Pagado") },
-      { value: 1, text: indT("ExpenseSheets_Filter_Status_Billed", "Pagado") },
-      { value: 2, text: indT("ExpenseSheets_Filter_Status_Both", "Ambos") },
+      { value: "0", text: indT("ExpenseSheets_Filter_Status_Unbilled", "No Pagado") },
+      { value: "1", text: indT("ExpenseSheets_Filter_Status_Billed", "Pagado") },
+      { value: "2", text: indT("ExpenseSheets_Filter_Status_Both", "Ambos") },
     ],
     []
   );

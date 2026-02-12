@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { ExpenseQuickFilterId, AppliedFilterSnapshot } from "./expenseListTypes.ts";
 import { startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { normalizeExpenseFilterSnapshot } from "./expenseFilterSnapshot.ts";
 
 type UseExpenseSheetsFiltersStateArgs = {
   onApplyFilters: (snapshot: AppliedFilterSnapshot) => void;
@@ -59,6 +60,22 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setShowFilters(false);
     onApplyFilters(snapshot);
   }, [billedMode, currencyCode, fromDate, hojaGastosId, onApplyFilters, projectId, toDate]);
+
+  // Rehydrates the list filters from a cached snapshot when returning from detail.
+  const restoreAppliedFilters = useCallback((snapshot: AppliedFilterSnapshot) => {
+    const normalized = normalizeExpenseFilterSnapshot(snapshot);
+    setFromDate(normalized.fromDate);
+    setToDate(normalized.toDate);
+    setProjectId(normalized.projectId);
+    setHojaGastosId(normalized.hojaGastosId);
+    setCurrencyCode(normalized.currencyCode);
+    setBilledMode(normalized.billedMode);
+    setActiveQuickFilter(null);
+    setShowManualDateFilter(false);
+    setShowManualDateError(false);
+    setAppliedFilters(normalized);
+    setShowFilters(false);
+  }, []);
 
   const onClear = useCallback(() => {
     setFromDate("");
@@ -158,6 +175,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setBilledMode,
     onApply,
     onClear,
+    restoreAppliedFilters,
     onDateRangeChange,
     onQuickFilterChange,
     toggleFilterPanel,

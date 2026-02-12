@@ -11,6 +11,44 @@
 - Apply colors inside the component, not only via global CSS.
 - Redundant enforcement is required: apply both a `readOnly` prop and inline style on value text when needed.
 
+## Input type contract (high priority)
+- Before creating a new input-like component, confirm the intended type with the request owner.
+- Reuse an existing shared component whenever possible.
+- Input type matrix:
+  - `remote-search-dropdown`: user can type free text and request remote results manually.
+    - Mandatory magnifier icon inside the input.
+    - Remote endpoint must run only on Enter or magnifier click.
+    - Do not auto-query on each keystroke.
+    - Examples: project picker, expense sheet picker, client picker.
+  - `fixed-enum-instant-search`: local fixed option set with client-side instant filtering.
+    - No magnifier icon.
+    - Editable text only for local filtering, never for free final values.
+    - Example: currency code picker.
+  - `fixed-enum-select`: local fixed option set without text editing.
+    - Input is not editable as plain text.
+    - Selecting a new option replaces the previous value.
+    - Example: billed status (Paid, Unpaid, Both).
+
+## React decomposition contract (high priority)
+- New page work must start with a decomposition map before code:
+  - Container/page component.
+  - Dumb components.
+  - Page hooks (state, listeners, mutations, cache).
+  - Utilities/services.
+- Reuse-first rule:
+  - Check existing shared components/hooks before creating new objects.
+  - Avoid parallel variants with overlapping responsibility.
+- Clarification-first rule:
+  - If decomposition is unclear, ask for clarification before implementation.
+  - Confirm which fields are remote-search-dropdown, fixed-enum-instant-search, or fixed-enum-select.
+
+## Component API design contract (high priority)
+- Avoid boolean prop proliferation for behavior changes.
+- Prefer explicit variant components or composition wrappers over multiple mode flags.
+- Keep shared components dumb and controlled by props.
+- Keep module state orchestration inside page-level hooks/containers, not inside shared visual components.
+- When a component starts serving multiple interaction modes, extract a provider/hook boundary and keep presentational parts stateless.
+
 ## Shared page wrapper contracts (React)
 ### VisitasPageProviders
 - File: `Web/wwwroot/react/src/components/commons/VisitasPageProviders.tsx`
@@ -63,6 +101,23 @@
 - Contract:
   - `labels` input must come from i18n keys (`first`, `prev`, `next`, `last`).
   - Page logic stays in page hook/container; component only emits page changes.
+
+## Shared section title component (React)
+### ExpenseSectionDivider
+- File: `Web/wwwroot/react/src/pages/gastos/components/ExpenseSectionDivider.tsx`
+- Purpose: shared centered section title with side divider lines for expense flows.
+- Props:
+  - `label: string` (required)
+  - `className?: string`
+  - `labelClassName?: string`
+  - `headingLevel?: 1 | 2 | 3 | 4 | 5 | 6` (default `2`)
+- Contract:
+  - Component must stay dumb and prop-driven only.
+  - Render `role=\"heading\"` and use `aria-level` from `headingLevel`.
+  - Visual label must be borderless and background-free (no box or pill frame).
+  - Side lines must come from `.expense-section-divider::before/::after`.
+  - Label text style is uppercase, compact, and high-contrast with the shared palette.
+  - All labels passed to the component must come from i18n resources.
 
 ## Shared narrative field contract (React)
 ### VisitNarrativeFields
@@ -164,4 +219,4 @@ export function DatePickerLike({ label, value, readOnly = false, disabled = fals
 ```
 
 ## Last updated
-- 2026-02-10
+- 2026-02-12

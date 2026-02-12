@@ -1,0 +1,87 @@
+import { indT } from "../../../utils/indI18n.ts";
+import { useExpenseTopbarCrudActions } from "../hooks/useExpenseTopbarCrudActions.ts";
+import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
+
+type UseExpenseSheetDetailTopbarActionsArgs = {
+  busy: boolean;
+  modalOpen: boolean;
+  isEditing: boolean;
+  isCreateMode: boolean;
+  isLocked: boolean;
+  canEditExpense: boolean;
+  canCreateExpense: boolean;
+  canDeleteExpense: boolean;
+  setModalError: (value: string) => void;
+  handleEnableEdit: () => void;
+  handleCancelEdit: () => void;
+  handleUpdate: () => Promise<boolean>;
+  handleDelete: () => Promise<boolean>;
+  onSaveSuccess: () => void;
+  openConfirm: (opts: {
+    title: string;
+    message: string;
+    confirmText?: string;
+    onConfirm?: () => Promise<boolean | void> | boolean | void;
+  }) => void;
+  closeConfirm: () => void;
+};
+
+// Coordinates topbar icon state and dispatch actions for expense sheet detail.
+export const useExpenseSheetDetailTopbarActions = ({
+  busy,
+  modalOpen,
+  isEditing,
+  isCreateMode,
+  isLocked,
+  canEditExpense,
+  canCreateExpense,
+  canDeleteExpense,
+  setModalError,
+  handleEnableEdit,
+  handleCancelEdit,
+  handleUpdate,
+  handleDelete,
+  onSaveSuccess,
+  openConfirm,
+  closeConfirm,
+}: UseExpenseSheetDetailTopbarActionsArgs) => {
+  useExpenseTopbarCrudActions({
+    ids: {
+      editIconId: "expenseEditIcon",
+      saveIconId: "expenseSaveIcon",
+      deleteBtnId: "expenseDeleteBtn",
+      cancelBtnId: "expenseCancelBtn",
+    },
+    events: {
+      editEvent: "expense-detail-edit",
+      deleteEvent: "expense-detail-delete",
+      cancelEvent: "expense-detail-cancel-edit",
+    },
+    busy,
+    modalOpen,
+    isEditing,
+    isCreateMode,
+    isLocked,
+    allowCreateModeActionsWhenLocked: true,
+    canCreate: canCreateExpense,
+    canEdit: canEditExpense,
+    canDelete: canDeleteExpense,
+    setModalError,
+    handleEnableEdit,
+    handleCancelEdit,
+    handleSave: handleUpdate,
+    handleDelete,
+    saveConfirmTitle: indT("ExpenseSheets_Detail_SaveChanges_Title", "Save changes"),
+    saveConfirmMessage: indT("ExpenseSheets_Detail_SaveChanges_Body", "Do you want to save changes?"),
+    saveConfirmText: indT("Common_Save", "Save"),
+    deleteConfirmTitle: indT("ExpenseSheets_Detail_DeleteSheet_Title", "Delete expense sheet"),
+    deleteConfirmMessage: indT("ExpenseSheets_Detail_DeleteSheet_Body", "Do you want to delete this expense sheet?"),
+    deleteConfirmText: indT("Common_Delete", "Delete"),
+    onSaveSuccess,
+    onDeleteSuccess: () => {
+      navigateToExpenseUrl("/Gastos/ExpenseSheets");
+    },
+    openConfirm,
+    closeConfirm,
+  });
+};

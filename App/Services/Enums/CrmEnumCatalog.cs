@@ -1,0 +1,146 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
+
+namespace IND_CRM_APP.Services.Enums
+{
+    // Resolves localized enum labels and normalization helpers for CRM flows.
+    public sealed class CrmEnumCatalog : ICrmEnumCatalog
+    {
+        private readonly IINDCrmEnumLocalizer _enumLocalizer;
+
+        public CrmEnumCatalog(IINDCrmEnumLocalizer enumLocalizer)
+        {
+            _enumLocalizer = enumLocalizer;
+        }
+
+        // Normalizes visit type values from API payloads to numeric catalog values.
+        public string NormalizeTipoVisitaValue(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return string.Empty;
+
+            var value = raw.Trim();
+            if (value is "0" or "1" or "2")
+                return value;
+
+            var key = NormalizeKey(value);
+            if (key == "comercial")
+                return "1";
+            if (key == "tecnica")
+                return "2";
+
+            return value;
+        }
+
+        // Returns a map of gasto type code to localized label.
+        public IReadOnlyDictionary<string, string> GetGastoTypeMap()
+        {
+            var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var items = _enumLocalizer.GetGastoTypeItems();
+
+            foreach (var item in items)
+            {
+                var value = ReadProperty(item, "Value");
+                var text = ReadProperty(item, "Text");
+                if (string.IsNullOrWhiteSpace(value) || string.IsNullOrWhiteSpace(text))
+                    continue;
+
+                map[NormalizeEnumCode(value)] = text.Trim();
+            }
+
+            return map;
+        }
+
+        // Resolves one gasto type value to localized text, preserving the code when no match exists.
+        public string GetGastoTypeLabel(string? rawTypeValue)
+        {
+            var code = NormalizeEnumCode(rawTypeValue);
+            if (string.IsNullOrWhiteSpace(code))
+                return string.Empty;
+
+            var map = GetGastoTypeMap();
+            return map.TryGetValue(code, out var label) && !string.IsNullOrWhiteSpace(label)
+                ? label
+                : code;
+        }
+
+        // Extracts known anonymous object properties from localizer enum items.
+        private static string ReadProperty(dynamic item, string propertyName)
+        {
+            if (item == null)
+                return string.Empty;
+
+            var property = item.GetType().GetProperty(propertyName);
+            var value = property?.GetValue(item);
+            return value?.ToString()?.Trim() ?? string.Empty;
+        }
+
+        // Normalizes enum code values so "14.0" and "14" resolve to the same key.
+        private static string NormalizeEnumCode(string? rawValue)
+        {
+            if (string.IsNullOrWhiteSpace(rawValue))
+                return string.Empty;
+
+            var value = rawValue.Trim();
+            if (long.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var number))
+                return number.ToString(CultureInfo.InvariantCulture);
+
+            if (decimal.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var decimalValue) &&
+                decimal.Truncate(decimalValue) == decimalValue)
+            {
+                return decimal.ToInt64(decimalValue).ToString(CultureInfo.InvariantCulture);
+            }
+
+            return value;
+        }
+
+        private static string NormalizeKey(string value)
+        {
+            var normalized = StripDiacritics(value).ToLowerInvariant().Trim();
+            var sb = new StringBuilder(normalized.Length);
+
+            foreach (var ch in normalized)
+            {
+                if (char.IsLetterOrDigit(ch))
+                {
+                    sb.Append(ch);
+                    continue;
+                }
+
+                if (ch == '\u201A')
+                {
+                    sb.Append('e');
+                    continue;
+                }
+
+                if (ch == '\u00A4')
+                {
+                    sb.Append('n');
+                }
+            }
+
+            return sb.ToString();
+        }
+
+        private static string StripDiacritics(string input)
+        {
+            if (string.IsNullOrEmpty(input))
+                return string.Empty;
+
+            var normalized = input.Normalize(NormalizationForm.FormD);
+            var sb = new StringBuilder(normalized.Length);
+
+            foreach (var c in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
+                {
+                    sb.Append(c);
+                }
+            }
+
+            return sb.ToString().Normalize(NormalizationForm.FormC);
+        }
+    }
+}

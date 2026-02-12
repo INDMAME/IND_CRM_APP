@@ -22,6 +22,7 @@
 | `systematic-debugging` | Any bug, test failure, or unexpected behavior before proposing fixes. | Required on debugging |
 | `vercel-react-best-practices` | React/TS/TSX rendering, data flow, listeners, bundle, performance tasks. | Required on React tasks |
 | `vercel-composition-patterns` | Refactoring React component APIs, composition, render props, context, boolean prop cleanup. | Required when component API design is involved |
+| `code-reviewer` | Code or architecture review requests focused on risks, regressions, maintainability, or security findings. | Required on review/audit requests |
 | `web-design-guidelines` | UI review, accessibility audit, UX or design compliance review. | Required on UI audit requests |
 | `tailwindcss-v4` | Tailwind CSS v4 utility or config syntax questions, migration checks, and compatibility reviews. | Optional helper only |
 | `tailwind-patterns` | Tailwind component/layout pattern discovery when implementing UI details. | Optional helper only |
@@ -51,4 +52,4 @@
 - After editing `.codex/*.md` or `.codex/config.toml`, run `npm run sync:skill:local:references` (also enforced by pre-commit).
 
 ## Last updated
-- 2026-02-10
+- 2026-02-12

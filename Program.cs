@@ -262,6 +262,7 @@ builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSet
 builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
 builder.Services.AddScoped<IIndAuthContextService, IndAuthContextService>();
 builder.Services.AddScoped<IINDCrmEnumLocalizer, INDCrmEnumLocalizer>();
+builder.Services.AddScoped<ICrmEnumCatalog, CrmEnumCatalog>();
 builder.Services.AddScoped<INDModuleAuthorizeFilter>();
 builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Information);
 

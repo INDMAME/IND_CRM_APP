@@ -17,6 +17,7 @@ namespace IND_CRM_APP.Controllers
     {
         private readonly ILogger<VisitasController> _logger;
         private readonly IINDCrmEnumLocalizer _enumLocalizer;
+        private readonly ICrmEnumCatalog _crmEnumCatalog;
         private readonly IStringLocalizer<INDSharedResource> _sr;
 
         public VisitasController(
@@ -24,10 +25,12 @@ namespace IND_CRM_APP.Controllers
             ITokenSessionService tokenSession,
             ILogger<VisitasController> logger,
             IINDCrmEnumLocalizer enumLocalizer,
+            ICrmEnumCatalog crmEnumCatalog,
             IStringLocalizer<INDSharedResource> sr) : base(apiClient, tokenSession)
         {
             _logger = logger;
             _enumLocalizer = enumLocalizer;
+            _crmEnumCatalog = crmEnumCatalog;
             _sr = sr;
         }
 
@@ -404,7 +407,7 @@ namespace IND_CRM_APP.Controllers
 
                 string NormalizeVisitType(string? raw)
                 {
-                    return CrmEnumHelper.NormalizeTipoVisitaValue(raw);
+                    return _crmEnumCatalog.NormalizeTipoVisitaValue(raw);
                 }
 
                 var recIdValue = !string.IsNullOrWhiteSpace(activity.RecId) ? activity.RecId : null

@@ -46,6 +46,7 @@ Conflict precedence:
 
 | Area | Required rule |
 |---|---|
+| Planning gate | Before code, define page decomposition (container, dumb components, hooks, utils/services, file paths) and ask clarifying questions when split is ambiguous. |
 | Impact pre-check | Assess effects on filters, calendars, dropdowns, forms, handlers, hooks, components, and UI services. |
 | Object placement | Validate path with `references/PROJECT_STRUCTURE.md`; reuse existing objects first. |
 | Frontend architecture | MVC + Razor first, React islands only, Tailwind only, Heroicons default, Montserrat base, primary `#00296b`. |
@@ -54,6 +55,11 @@ Conflict precedence:
 | API contract | Frontend services and hooks do not invent response formats; consume `IndApiResponse<T>` / `IndPagedResponse<T>` contracts. |
 | i18n | No hardcoded user-facing strings; add resource keys to all supported cultures in the same change. |
 | Anti-regression | Preserve date pickers, date filters, and payload formats unless explicitly requested. |
+| Security baseline | Permission-gate edit/delete/create controls, keep server as source of truth, and use integrated confirm/unsaved-change modals. |
+| Performance baseline | Avoid client waterfalls, deduplicate global listeners, and keep effect dependencies stable and primitive when possible. |
+| Composition baseline | Avoid boolean prop proliferation; prefer explicit variants/composition and keep shared components dumb. |
+| Module boundary | Keep orchestration state in module page hooks; promote to shared only when two modules reuse same contract. |
+| Section titles | Reuse `ExpenseSectionDivider` for centered section labels with side lines; keep labels borderless (no box/pill frame). |
 | Style ownership | External Tailwind helper skills can suggest syntax or patterns, but local style rules are mandatory. |
 | Canonical web path | Treat `Web/wwwroot` as canonical source path. Root `wwwroot` is a compatibility mirror/junction. |
 | Documentation sync | Edit root `.codex/*.md` files or `.codex/config.toml` and run `npm run sync:skill:local:references` when references are changed. |
@@ -85,14 +91,23 @@ Required triggers:
 
 ## Implementation Workflow
 
-1. Run impact pre-check before editing:
+1. Run planning gate before editing:
+   - Define page decomposition (container, dumb components, hooks, utilities/services, and target paths).
+   - If decomposition is unclear, ask clarifying questions before coding.
+   - Confirm input type for every new input-like field (`remote-search-dropdown`, `fixed-enum-instant-search`, `fixed-enum-select`).
+2. Run impact pre-check before editing:
    - Identify effects on filters, calendars, dropdowns, forms, handlers, hooks, components, and UI services.
    - If risk is not trivial, propose a safe alternative before implementation.
-2. Confirm destination path and ownership before creating or moving files.
-3. Apply architecture and contract rules during implementation.
-4. Validate i18n and anti-regression critical paths.
-5. Execute quality checks and release steps required by scope.
-6. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
+3. Confirm destination path and ownership before creating or moving files.
+   - Keep module-specific objects under `pages/<module>` and avoid parallel trees.
+   - Promote to shared only when behavior contract is reusable across modules.
+4. Apply architecture and contract rules during implementation.
+   - React performance guardrails: parallelize independent async calls, avoid effect-driven mirror state, cleanup listeners.
+   - React composition guardrails: no new boolean mode flags when explicit variant/component composition is cleaner.
+   - Security guardrails: enforce permission-gated actions and integrated app dialogs for destructive or unsaved-change flows.
+5. Validate i18n and anti-regression critical paths.
+6. Execute quality checks and release steps required by scope.
+7. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
 
 ## Common Mistakes
 
@@ -102,6 +117,10 @@ Required triggers:
 - Hardcoding labels or messages instead of resource keys in all supported cultures.
 - Treating date behavior changes as harmless refactors without explicit requirement.
 - Editing `wwwroot` mirror paths as primary source instead of `Web/wwwroot`.
+- Adding behavior through boolean prop stacking instead of composition or explicit variants.
+- Leaving global listeners attached after component unmount.
+- Shipping UI edit/delete actions without checking permission state.
+- Creating ad-hoc section title capsules instead of reusing `ExpenseSectionDivider`.
 
 ## Last updated
-- 2026-02-10
+- 2026-02-12

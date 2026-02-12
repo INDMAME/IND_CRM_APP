@@ -392,17 +392,26 @@
                 }
 
                 const backUrl = backBtn.getAttribute("data-back-url") || "";
-                if (backUrl) {
-                    window.location.href = backUrl;
+                const executeBackNavigation = () => {
+                    if (backUrl) {
+                        window.location.href = backUrl;
+                        return;
+                    }
+
+                    if (typeof window.__indAllowHistoryOnce === "function") {
+                        window.__indAllowHistoryOnce();
+                        return;
+                    }
+
+                    window.history.back();
+                };
+
+                if (typeof window.__indRequestNavigation === "function") {
+                    window.__indRequestNavigation(executeBackNavigation);
                     return;
                 }
 
-                if (typeof window.__indAllowHistoryOnce === "function") {
-                    window.__indAllowHistoryOnce();
-                    return;
-                }
-
-                window.history.back();
+                executeBackNavigation();
             };
 
             const dispatchTopbarEvent = (eventName) => {

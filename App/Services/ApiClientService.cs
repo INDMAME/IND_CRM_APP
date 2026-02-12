@@ -680,10 +680,9 @@ namespace IND_CRM_APP.Services
 
             var safeSheetId = EscapePathSegment(hojaGastosId);
             var safeLineId = EscapePathSegment(lineRecId ?? "0");
-            var deleteFlag = deleteWholeSheet ? "1" : "0";
 
             var result = await SendDeleteAsync(
-                ApiRoutes.ExpenseSheetLineDelete(safeSheetId, safeLineId, deleteFlag));
+                ApiRoutes.ExpenseSheetLineDelete(safeSheetId, safeLineId, deleteWholeSheet));
             return BuildApiResponse<object>(result, "DeleteExpenseSheetLine");
         }
 

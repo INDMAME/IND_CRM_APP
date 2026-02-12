@@ -32,6 +32,13 @@
     var isExpenseSheetLineDetail = controller.Equals("Gastos", StringComparison.OrdinalIgnoreCase) &&
                                    action.Equals("ExpenseSheetLineDetail", StringComparison.OrdinalIgnoreCase);
 
+    var expenseSheetMode = (ViewBag.ExpenseSheetMode?.ToString() ?? string.Empty).Trim();
+    var expenseSheetLineMode = (ViewBag.ExpenseSheetLineMode?.ToString() ?? string.Empty).Trim();
+    var isExpenseSheetCreateMode = isExpenseSheetDetail &&
+                                   expenseSheetMode.Equals("create", StringComparison.OrdinalIgnoreCase);
+    var isExpenseSheetLineCreateMode = isExpenseSheetLineDetail &&
+                                       expenseSheetLineMode.Equals("create", StringComparison.OrdinalIgnoreCase);
+
     var isCreate = controller.Equals("Visitas", StringComparison.OrdinalIgnoreCase) &&
                    action.Equals("Create", StringComparison.OrdinalIgnoreCase);
 
@@ -84,12 +91,17 @@
 
     var historyAccess = GetModuleAccess(INDModuleRegistry.ModuleVisitasHistorial);
     var createAccess = GetModuleAccess(INDModuleRegistry.ModuleVisitasCreacion);
+    var expenseAccess = GetModuleAccess(INDModuleRegistry.ModuleGastosHojaGasto);
     var canEditHistory = historyAccess >= IndAccessRights.Edit;
     var canDeleteHistory = historyAccess >= IndAccessRights.FullAccess;
     var canCreateVisit = createAccess >= IndAccessRights.Add;
+    var canEditExpense = expenseAccess >= IndAccessRights.Edit;
+    var canDeleteExpense = expenseAccess >= IndAccessRights.FullAccess;
+    var canCreateExpense = expenseAccess >= IndAccessRights.Add;
 
     var hideForwardArrow = hideNavArrows || isVisitaDetail || isHistory || isExpenseSheetDetail || isExpenseSheetLineDetail || (isCreate && !canCreateVisit);
-    var showBackArrow = isVisitaDetail || isExpenseSheetDetail;
+    var customBackUrl = ViewData["TopbarBackUrl"]?.ToString() ?? string.Empty;
+    var showBackArrow = isVisitaDetail || isExpenseSheetDetail || isExpenseSheetLineDetail || !string.IsNullOrWhiteSpace(customBackUrl);
 
     var topbarTitle = title;
     if (isHistory)
@@ -126,9 +138,11 @@
 
             @if (!hideNavArrows && showBackArrow)
             {
-                var backUrl = isVisitaDetail
-                    ? "/Historial/History"
-                    : (isExpenseSheetDetail ? "/Gastos/ExpenseSheets" : string.Empty);
+                var backUrl = !string.IsNullOrWhiteSpace(customBackUrl)
+                    ? customBackUrl
+                    : (isVisitaDetail
+                        ? "/Historial/History"
+                        : (isExpenseSheetDetail ? "/Gastos/ExpenseSheets" : "/Gastos/ExpenseSheets"));
                 var backUsesDefault = true;
                 <button id="globalBackBtn" type="button" class="topbar-btn pointer-events-auto"
                         aria-label="@SR["Topbar_Back"]"
@@ -203,6 +217,84 @@
                                 data-ind-dispatch="visit-cancel-edit"
                                 style="padding:0;">
                             <svg id="visitCancelIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    }
+                </div>
+            }
+            else if (isExpenseSheetDetail && (canEditExpense || canDeleteExpense || (isExpenseSheetCreateMode && canCreateExpense)))
+            {
+                <div class="flex items-center gap-1 pr-1">
+                    @if (canEditExpense || (isExpenseSheetCreateMode && canCreateExpense))
+                    {
+                        <button id="expenseEditBtn" type="button" class="topbar-btn pointer-events-auto"
+                                aria-label="@SR["Topbar_EditSave"]"
+                                data-ind-dispatch="expense-detail-edit">
+                            <svg id="expenseEditIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                            </svg>
+                            <svg id="expenseSaveIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                            </svg>
+                        </button>
+                    }
+                    @if (!isExpenseSheetCreateMode && canDeleteExpense)
+                    {
+                        <button id="expenseDeleteBtn" type="button" class="topbar-btn pointer-events-auto"
+                                aria-label="@SR["Topbar_Delete"]"
+                                data-ind-dispatch="expense-detail-delete">
+                            <svg id="expenseDeleteIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0 1 15.916 21H8.084A2.25 2.25 0 0 1 5.84 19.673L4.772 5.79m14.456 0a48.11 48.11 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.111 48.111 0 0 1 3.478-.397m7.5 0V4.5c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0C9.548 2.336 8.638 3.32 8.638 4.5v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                        </button>
+                    }
+                    @if (canEditExpense || (isExpenseSheetCreateMode && canCreateExpense))
+                    {
+                        <button id="expenseCancelBtn" type="button" class="topbar-btn pointer-events-auto topbar-hidden"
+                                aria-label="@SR["Common_Cancel"]"
+                                data-ind-dispatch="expense-detail-cancel-edit"
+                                style="padding:0;">
+                            <svg id="expenseCancelIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    }
+                </div>
+            }
+            else if (isExpenseSheetLineDetail && (canEditExpense || canDeleteExpense || (isExpenseSheetLineCreateMode && canCreateExpense)))
+            {
+                <div class="flex items-center gap-1 pr-1">
+                    @if (canEditExpense || (isExpenseSheetLineCreateMode && canCreateExpense))
+                    {
+                        <button id="expenseLineEditBtn" type="button" class="topbar-btn pointer-events-auto"
+                                aria-label="@SR["Topbar_EditSave"]"
+                                data-ind-dispatch="expense-line-detail-edit">
+                            <svg id="expenseLineEditIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125" />
+                            </svg>
+                            <svg id="expenseLineSaveIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                            </svg>
+                        </button>
+                    }
+                    @if (!isExpenseSheetLineCreateMode && canDeleteExpense)
+                    {
+                        <button id="expenseLineDeleteBtn" type="button" class="topbar-btn pointer-events-auto"
+                                aria-label="@SR["Topbar_Delete"]"
+                                data-ind-dispatch="expense-line-detail-delete">
+                            <svg id="expenseLineDeleteIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673A2.25 2.25 0 0 1 15.916 21H8.084A2.25 2.25 0 0 1 5.84 19.673L4.772 5.79m14.456 0a48.11 48.11 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.111 48.111 0 0 1 3.478-.397m7.5 0V4.5c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0C9.548 2.336 8.638 3.32 8.638 4.5v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" />
+                            </svg>
+                        </button>
+                    }
+                    @if (canEditExpense || (isExpenseSheetLineCreateMode && canCreateExpense))
+                    {
+                        <button id="expenseLineCancelBtn" type="button" class="topbar-btn pointer-events-auto topbar-hidden"
+                                aria-label="@SR["Common_Cancel"]"
+                                data-ind-dispatch="expense-line-detail-cancel-edit"
+                                style="padding:0;">
+                            <svg id="expenseLineCancelIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                             </svg>
                         </button>

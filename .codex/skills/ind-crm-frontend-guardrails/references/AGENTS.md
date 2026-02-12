@@ -12,7 +12,7 @@
 - IND_CRM_API is documented with Swagger 2.0 (OpenAPI) and uses standard wrappers:
   - IND_CRM_API.Models.Responses.IndApiResponse<T> for command operations (login, create, update, delete, etc.).
   - IND_CRM_API.Models.Responses.IndPagedResponse<T> for lists and paged results.
-- Solution is organized by CRM modules: authentication (auth), activities (activities), accounts (accounts), visits (visits), system (system) and health (health).
+- Solution is organized by CRM modules: authentication (auth), activities (activities), accounts (accounts), visits (visits), expenses (gastos), system (system) and health (health).
 - Internal line-of-business app: focus on clarity, robustness and modern design, not public SEO.
 
 ## IND_CRM_API consumption
@@ -176,6 +176,27 @@
   - Reuse an existing object if the responsibility already exists; do not create parallel duplicates.
   - Do not create new top-level folders or module trees unless explicitly requested.
 - If a request conflicts with file structure rules, Codex must warn and propose a structure-safe location first.
+- Before creating any new input-like component, Codex must ask which input type is required:
+  - remote-search-dropdown
+  - fixed-enum-instant-search
+  - fixed-enum-select
+- The selected input type must be confirmed before implementation starts.
+
+## Mandatory planning gate for React page work
+
+- Before implementing or refactoring any React page, Codex must produce a short plan that defines:
+  - Smart containers/pages.
+  - Dumb presentational components.
+  - Page-local hooks (state, listeners, mutations).
+  - Shared utilities/services and what will be reused.
+  - Exact destination paths following `.codex/PROJECT_STRUCTURE.md`.
+- If page decomposition is ambiguous, Codex must ask clarifying questions before coding:
+  - Number of sections/steps in the page.
+  - Which blocks must be shared vs page-local.
+  - Expected input types per field (remote-search-dropdown, fixed-enum-instant-search, fixed-enum-select).
+  - Required apply/refresh/caching behavior for API calls.
+- Do not start implementation with unresolved assumptions unless the user explicitly approves those assumptions.
+- The plan must list required skills to be used for the task (at minimum `ind-crm-frontend-guardrails`, plus triggered sub-skills from routing).
 
 ## Critical anti regression rule (dates, calendars and API)
 
@@ -213,4 +234,4 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-02-10
+- 2026-02-12

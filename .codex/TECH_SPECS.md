@@ -44,6 +44,23 @@
   - combobox keyboard behavior: `hooks/useComboboxKeyboard.ts`
   - text editor navigation and return flow: `utils/textEditorNavigation.ts` + `hooks/useTextEditorFields.ts`
 
+## React performance guardrails (Vercel aligned)
+- Start independent async work in parallel and await late (`Promise.all` where dependencies allow it).
+- Avoid client waterfalls in hooks: do not chain fetch calls when data can be requested together.
+- Keep expensive derivations memoized only when they are truly expensive or passed to memoized children.
+- Keep effect dependencies primitive and stable; move interaction-driven logic to event handlers.
+- Deduplicate global listeners (resize, scroll, keydown) and always clean them in hook teardown.
+- Prefer derived render state over effect-driven mirror state when possible.
+- Avoid large barrel imports in hot paths; prefer direct imports for bundle control.
+
+## Frontend security and permission gates
+- Server authorization remains the source of truth. UI permission checks are defense in depth.
+- Any edit/delete/create control must be gated by module permissions, mirroring the Visitas pattern.
+- Destructive actions must use the site confirm modal flow (not browser-native dialogs).
+- Unsaved-change navigation warnings must use integrated app dialogs, not `beforeunload` browser popups.
+- Never handle or persist JWT tokens directly in React page state; use backend/session abstractions.
+- Validate route/query identifiers before API usage and fail safely with localized user messages.
+
 ## Build system
 - Tailwind CLI builds `Web/wwwroot/css/tailwind.css`.
 - esbuild bundles React islands to ESM entries in `Web/wwwroot/js` and shared chunks in `Web/wwwroot/js/chunks`.
@@ -82,4 +99,4 @@
 - Legacy JS must be migrated into `Web/wwwroot/react/src/legacy` as TS and compiled.
 
 ## Last updated
-- 2026-02-10
+- 2026-02-12

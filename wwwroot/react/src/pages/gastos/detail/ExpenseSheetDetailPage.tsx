@@ -1,15 +1,20 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
-import CompactPagination from "../../../components/commons/CompactPagination.tsx";
+import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
+import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
-import { ApiFetchError, fetchJson } from "../../../services/apiService.ts";
+import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
-import type { ExpenseSheetDetailResponse, ExpenseSheetHeader, ExpenseSheetLine } from "../expenseTypes.ts";
+import type { ExpenseSheetLine } from "../expenseTypes.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
-import ExpenseReadOnlyField from "../components/ExpenseReadOnlyField.tsx";
-import { formatExpenseDateParts, safeText } from "../utils/expenseUiUtils.ts";
+import ExpenseSheetHeaderForm from "../components/ExpenseSheetHeaderForm.tsx";
+import ExpenseLinesTimeline from "../components/ExpenseLinesTimeline.tsx";
+import { safeText } from "../utils/expenseUiUtils.ts";
+import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
+import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
+import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 
 const LINES_PAGE_SIZE = 6;
 
@@ -22,14 +27,14 @@ const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
 
 const ExpenseSheetDetailPageContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
+  const canEditExpense = canAccess("GASTOS_HOJA_GASTO", "Edit");
+  const canDeleteExpense = canAccess("GASTOS_HOJA_GASTO", "FullAccess");
+  const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
+  const sheetMode = safeText(window.__EXPENSE_SHEET_MODE__).toLowerCase();
+  const isCreateMode = sheetMode === "create";
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
-
-  const [header, setHeader] = useState<ExpenseSheetHeader | null>(null);
-  const [lines, setLines] = useState<ExpenseSheetLine[]>([]);
-  const [linePage, setLinePage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
+  const createdSheetIdRef = useRef("");
 
   const paginationLabels = useMemo(
     () => ({
@@ -41,52 +46,81 @@ const ExpenseSheetDetailPageContent = () => {
     []
   );
 
-  useEffect(() => {
-    const loadDetail = async () => {
-      if (!hasAccess) {
-        showPermissionModal();
-        return;
-      }
+  const {
+    header,
+    lines,
+    linePage,
+    isLoading,
+    errorMessage,
+    busy,
+    status,
+    isEditing,
+    modalError,
+    draftDescription,
+    draftProjectId,
+    draftCurrencyCode,
+    draftExchangeRate,
+    projectValue,
+    voucherValue,
+    isSheetPaid,
+    exchangeRateValue,
+    showExchangeRate,
+    normalizedDraftCurrency,
+    exchangeRateValidationMessage,
+    isCurrencyLockedByLines,
+    isExchangeRateLockedByLines,
+    setLinePage,
+    setBusy,
+    setStatus,
+    setIsEditing,
+    setModalError,
+    setDraftDescription,
+    setDraftProjectId,
+    setDraftCurrencyCode,
+    setDraftExchangeRate,
+    handleEnableEdit,
+    handleCancelEdit,
+    handleOpenCreateLineMode,
+    navigateToCreatedSheet,
+    navigateToLineDetail,
+  } = useExpenseSheetDetailState({
+    hasAccess,
+    canCreateExpense,
+    canEditExpense,
+    sheetId,
+    isCreateMode,
+    onForbidden: showPermissionModal,
+  });
 
-      if (!sheetId) {
-        setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet was not found."));
-        return;
-      }
+  const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
+    defaultConfirmText: indT("Confirm_Yes", "OK"),
+    defaultCancelText: indT("Confirm_No", "Cancel"),
+  });
 
-      setIsLoading(true);
-      setErrorMessage("");
+  const handleModalConfirm = useCallback(async () => {
+    setModalError("");
+    await handleConfirm({
+      busy,
+      onError: (msg) => {
+        setModalError(msg);
+        setStatus(msg);
+      },
+    });
+  }, [busy, handleConfirm]);
 
-      try {
-        const response = await fetchJson<ExpenseSheetDetailResponse>(`/Gastos/GetExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`, {
-          method: "GET",
-          suppressPermissionModal: true,
-        });
+  const modalLoadingText = indT("Common_Loading", "Loading");
+  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
+  const modalConfirmText = busy
+    ? modalLoadingText
+    : (!busy && modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")));
 
-        if (response?.success === false || !response?.data) {
-          setErrorMessage(response?.message || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
-          setHeader(null);
-          setLines([]);
-          return;
-        }
-
-        setHeader(response.data.header || null);
-        setLines(Array.isArray(response.data.lines) ? response.data.lines : []);
-      } catch (error) {
-        if (error instanceof ApiFetchError && error.status === 403) {
-          showPermissionModal();
-          return;
-        }
-
-        setErrorMessage(error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
-        setHeader(null);
-        setLines([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadDetail();
-  }, [hasAccess, sheetId]);
+  const handleModalButtonConfirm = useCallback(() => {
+    if (!busy && modalError) {
+      closeConfirm();
+      return;
+    }
+    handleModalConfirm();
+  }, [busy, closeConfirm, handleModalConfirm, modalError]);
 
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
@@ -94,6 +128,60 @@ const ExpenseSheetDetailPageContent = () => {
     () => formatAmountWithCurrency(header?.totalAmountMST ?? null, safeText(header?.currencyCode)),
     [header]
   );
+
+  const { handleUpdate, handleDelete } = useExpenseSheetDetailMutations({
+    busy,
+    isEditing,
+    isCreateMode,
+    isLocked: isSheetPaid,
+    isCurrencyLockedByLines,
+    isExchangeRateLockedByLines,
+    lockedCurrencyCode: safeText(header?.currencyCode),
+    lockedExchangeRate: safeText(header?.exchRate),
+    canCreateExpense,
+    canEditExpense,
+    canDeleteExpense,
+    sheetId,
+    draftDescription,
+    draftCurrencyCode,
+    draftExchangeRate,
+    draftProjectId,
+    onCreateSuccess: (createdSheetId) => {
+      createdSheetIdRef.current = safeText(createdSheetId);
+    },
+    setModalError,
+    setBusy,
+    setStatus,
+    setIsEditing,
+  });
+
+  const handleSaveSuccess = useCallback(() => {
+    if (isCreateMode) {
+      navigateToCreatedSheet(createdSheetIdRef.current);
+      return;
+    }
+
+    window.location.reload();
+  }, [isCreateMode, navigateToCreatedSheet]);
+
+  useExpenseSheetDetailTopbarActions({
+    busy,
+    modalOpen: modal.open,
+    isEditing,
+    isCreateMode,
+    isLocked: isSheetPaid,
+    canCreateExpense,
+    canEditExpense,
+    canDeleteExpense,
+    setModalError,
+    handleEnableEdit,
+    handleCancelEdit,
+    handleUpdate,
+    handleDelete,
+    onSaveSuccess: handleSaveSuccess,
+    openConfirm,
+    closeConfirm,
+  });
 
   const resolveClickableCard = useCallback((target: EventTarget | null) => {
     const node = target as HTMLElement | null;
@@ -111,14 +199,24 @@ const ExpenseSheetDetailPageContent = () => {
     resolveClickableCard,
   });
 
-  const goToLine = (lineRecId: string) => {
-    const safeLineId = safeText(lineRecId);
-    if (!safeLineId) return;
-    window.location.href = `/Gastos/ExpenseSheetLineDetail?hojaGastosId=${encodeURIComponent(sheetId)}&lineRecId=${encodeURIComponent(safeLineId)}`;
-  };
-
   return (
     <div className="space-y-3">
+      <ConfirmModal
+        open={modal.open}
+        title={modal.title}
+        message={modal.message}
+        confirmText={modalConfirmText}
+        cancelText={modalCancelText}
+        loadingText={modalLoadingText}
+        showCancel={modal.showCancel}
+        showConfirm={modal.showConfirm}
+        busy={busy}
+        error={modalError}
+        status={status}
+        onConfirm={handleModalButtonConfirm}
+        onCancel={closeConfirm}
+      />
+
       <div
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
         style={{ display: isLoading ? "flex" : "none" }}
@@ -132,77 +230,55 @@ const ExpenseSheetDetailPageContent = () => {
       {errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
 
       {!isLoading && !errorMessage && header ? (
-        <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_SheetId", "Sheet id")} value={safeText(header.hojaGastosId) || "-"} />
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_UserId", "User id")} value={safeText(header.userId) || "-"} />
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Description", "Description")} value={safeText(header.description) || "-"} fullWidth />
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={safeText(header.projId) || "-"} />
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Voucher", "Voucher")} value={safeText(header.voucher) || "-"} />
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Currency", "Currency")} value={safeText(header.currencyCode) || "-"} />
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")} value={safeText(header.exchRate) || "-"} />
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")} value={totalAmountText} />
-          </div>
-        </section>
+        <ExpenseSheetHeaderForm
+          isCreateMode={isCreateMode}
+          isEditing={isEditing}
+          header={header}
+          projectValue={projectValue}
+          voucherValue={voucherValue}
+          isSheetPaid={isSheetPaid}
+          isCurrencyLockedByLines={isCurrencyLockedByLines}
+          isExchangeRateLockedByLines={isExchangeRateLockedByLines}
+          normalizedDraftCurrency={normalizedDraftCurrency}
+          showExchangeRate={showExchangeRate}
+          exchangeRateValue={exchangeRateValue}
+          exchangeRateValidationMessage={exchangeRateValidationMessage}
+          totalAmountText={totalAmountText}
+          draftDescription={draftDescription}
+          draftProjectId={draftProjectId}
+          draftCurrencyCode={draftCurrencyCode}
+          draftExchangeRate={draftExchangeRate}
+          onDraftDescriptionChange={setDraftDescription}
+          onDraftProjectIdChange={setDraftProjectId}
+          onDraftCurrencyCodeChange={setDraftCurrencyCode}
+          onDraftExchangeRateChange={setDraftExchangeRate}
+        />
       ) : null}
 
-      {!isLoading && !errorMessage ? (
-        <section className="space-y-2">
-          <div className="expense-section-divider" role="heading" aria-level={2}>
-            <span className="expense-section-divider__label">{indT("ExpenseSheets_Lines", "Lines")}</span>
-          </div>
+      {!isCreateMode && !isLoading && !errorMessage ? (
+        <ExpenseLinesTimeline
+          visibleLines={visibleLines}
+          currencyCode={safeText(header?.currencyCode)}
+          totalLinePages={totalLinePages}
+          linePage={linePage}
+          linesLabel={indT("ExpenseSheets_Lines", "Lines")}
+          emptyText={indT("ExpenseSheets_NoLines", "No lines for this expense sheet.")}
+          paginationLabels={paginationLabels}
+          containerRef={lineContainerRef}
+          onLinePageChange={setLinePage}
+          onOpenLine={navigateToLineDetail}
+        />
+      ) : null}
 
-          {visibleLines.length === 0 ? (
-            <div className="timeline-box timeline-empty" data-empty-text={indT("ExpenseSheets_NoLines", "No lines for this expense sheet.")} />
-          ) : (
-            <div ref={lineContainerRef} className="timeline-box">
-              {visibleLines.map((line, index) => {
-                const lineId = safeText(line.lineRecId);
-                const description = safeText(line.description);
-                const amountText = formatAmountWithCurrency(line.amount ?? null, safeText(header?.currencyCode));
-                const dateParts = formatExpenseDateParts(safeText(line.transDate), document?.documentElement?.lang || "es-ES");
-
-                return (
-                  <div key={`${lineId}-${index}`} className="timeline-item">
-                    <div
-                      className="timeline-card timeline-card--clickable"
-                      role="button"
-                      tabIndex={0}
-                      onClick={() => goToLine(lineId)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          goToLine(lineId);
-                        }
-                      }}
-                    >
-                      <div className="timeline-date-panel flex flex-col items-center justify-center gap-1 px-3 py-3 bg-slate-50 border-r border-slate-200 text-slate-600">
-                        <div className="text-xs font-semibold tracking-[0.2em] text-slate-500">{dateParts.year}</div>
-                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{dateParts.month}</div>
-                        <div className="text-2xl font-semibold text-primary">{dateParts.day}</div>
-                      </div>
-                      <div className="timeline-card__content flex-1 py-3 px-4">
-                        <p className="timeline-name expense-line-card__title" data-fulltext={description || lineId || "-"}>
-                          {description || "-"}
-                        </p>
-                        <span className="expense-sheet-card__amount" data-fulltext={amountText}>
-                          {amountText}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-
-          <CompactPagination
-            totalPages={totalLinePages}
-            currentPage={linePage}
-            onPageChange={(page) => setLinePage(page)}
-            labels={paginationLabels}
-          />
-        </section>
+      {canCreateExpense && !isCreateMode ? (
+        <FloatingActionButton
+          route=""
+          ariaLabel={indT("Common_Create", "Create")}
+          size={76}
+          right={16}
+          bottom={24}
+          onClick={handleOpenCreateLineMode}
+        />
       ) : null}
     </div>
   );

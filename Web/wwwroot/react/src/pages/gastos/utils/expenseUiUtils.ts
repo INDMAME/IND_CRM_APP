@@ -4,10 +4,59 @@ export type ExpenseDateParts = {
   day: string;
 };
 
+const BASQUE_MONTHS_SHORT = [
+  "urt",
+  "ots",
+  "mar",
+  "api",
+  "mai",
+  "eka",
+  "uzt",
+  "abu",
+  "ira",
+  "urr",
+  "aza",
+  "abe",
+];
+
+const normalizeUiLocale = (locale: string): string => {
+  const value = String(locale || "").trim();
+  if (!value) return "es-ES";
+  if (/^zh-hans/i.test(value)) return "zh-CN";
+  return value;
+};
+
+const isBasqueLocale = (locale: string): boolean => /^eu\b/i.test(String(locale || ""));
+
 // Normalize unknown values to a trimmed string.
 export const safeText = (value: unknown): string => {
   if (value === null || value === undefined) return "";
   return String(value).trim();
+};
+
+// Normalizes card title text only when it comes in full upper or full lower case.
+export const normalizeCardTitleText = (value: unknown, fallback = "-"): string => {
+  const source = safeText(value);
+  if (!source) return fallback;
+
+  const hasLetters = /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(source);
+  if (!hasLetters) return source;
+
+  const isAllUpper = source === source.toUpperCase() && source !== source.toLowerCase();
+  const isAllLower = source === source.toLowerCase() && source !== source.toUpperCase();
+  if (!isAllUpper && !isAllLower) {
+    return source;
+  }
+
+  const lower = source.toLowerCase();
+  return `${lower.charAt(0).toUpperCase()}${lower.slice(1)}`;
+};
+
+// Returns true only when voucher has a meaningful assigned value.
+export const hasAssignedVoucher = (value: unknown): boolean => {
+  const voucher = safeText(value).toUpperCase();
+  if (!voucher) return false;
+  return voucher !== "-" && voucher !== "." && voucher !== "0";
 };
 
 // Return date at local day start.
@@ -27,8 +76,19 @@ export const parseExpenseDate = (raw?: string): Date | null => {
   if (!value) return null;
 
   const dateOnly = value.split("T")[0].split(" ")[0];
+
+  if (/^\d{2}[./-]\d{2}[./-]\d{4}$/.test(dateOnly)) {
+    const [day, month, year] = dateOnly.split(/[./-]/).map(Number);
+    return new Date(year, month - 1, day);
+  }
+
   if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
     const [year, month, day] = dateOnly.split("-").map(Number);
+    return new Date(year, month - 1, day);
+  }
+
+  if (/^\d{4}[./-]\d{2}[./-]\d{2}$/.test(dateOnly)) {
+    const [year, month, day] = dateOnly.split(/[./-]/).map(Number);
     return new Date(year, month - 1, day);
   }
 
@@ -41,6 +101,26 @@ export const parseExpenseDate = (raw?: string): Date | null => {
 
   const parsed = new Date(value);
   return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+// Format a date for read-only fields using the same output style as visits.
+export const formatExpenseDisplayDate = (raw?: string, locale = "es-ES", fallback = "-"): string => {
+  const date = parseExpenseDate(raw);
+  if (!date) return fallback;
+
+  const safeLocale = normalizeUiLocale(locale);
+  if (isBasqueLocale(safeLocale)) {
+    return `${date.getDate()} ${BASQUE_MONTHS_SHORT[date.getMonth()]} ${date.getFullYear()}`.toLowerCase();
+  }
+
+  return date
+    .toLocaleDateString(safeLocale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+    .replace(/\./g, "")
+    .toLowerCase();
 };
 
 // Build timeline date fragments for card left panel.

@@ -1,9 +1,19 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { classNames } from "../../../utils/classNames.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import HistoryManualDatePicker, {
   HistoryManualDayCell,
 } from "../../visitas/historial/HistoryManualDatePicker.tsx";
+import {
+  buildCalendarMonth,
+  buildDateRangeDayCells,
+  focusDateRangeSection,
+  formatDateRangeDisplay,
+  isBeforeDay,
+  parseIsoDateRangeValue,
+  resolveUiLocale,
+  toIsoDateRangeValue,
+  toSentenceCase,
+} from "../utils/expenseDateRangeUtils.ts";
 
 type ExpenseDateRangeFilterProps = {
   fromDate: string;
@@ -13,115 +23,6 @@ type ExpenseDateRangeFilterProps = {
   showManualError?: boolean;
   showStartError?: boolean;
   showEndError?: boolean;
-};
-
-type CalendarCell = {
-  date: Date | null;
-  iso: string;
-  isEmpty: boolean;
-};
-
-const pad = (n: number) => n.toString().padStart(2, "0");
-
-const toIso = (date: Date) => `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
-
-const parseIso = (value: string): Date | null => {
-  if (!value) return null;
-  const trimmed = String(value).trim();
-  if (!trimmed) return null;
-
-  const datePart = trimmed.split("T")[0].split(" ")[0];
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(datePart)) return null;
-
-  const [year, month, day] = datePart.split("-").map(Number);
-  return new Date(year, month - 1, day);
-};
-
-const focusSection = (container: HTMLDivElement | null, section: "start" | "end") => {
-  if (!container) return;
-  const target = container.querySelector<HTMLElement>(`[data-section="${section}"]`);
-  if (!target) return;
-  window.requestAnimationFrame(() => target.focus());
-};
-
-const sameDay = (a: Date | null, b: Date | null) => !!(a && b && a.getTime() === b.getTime());
-const isBefore = (a: Date | null, b: Date | null) => !!(a && b && a.getTime() < b.getTime());
-
-const toTitleCase = (value: string, locale: string): string => {
-  if (!value) return "";
-  const lower = value.toLocaleLowerCase(locale);
-  return lower[0].toLocaleUpperCase(locale) + lower.slice(1);
-};
-
-const toSentenceCase = (value: string, locale: string): string => {
-  if (!value) return "";
-  const trimmed = value.trim();
-  if (!trimmed) return trimmed;
-  const lower = trimmed.toLocaleLowerCase(locale);
-  return lower[0].toLocaleUpperCase(locale) + lower.slice(1);
-};
-
-const formatDisplay = (date: Date, locale: string): string => {
-  return date
-    .toLocaleDateString(locale, {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-    })
-    .replace(/\./g, "")
-    .toLowerCase();
-};
-
-const formatMonthLabel = (date: Date, locale: string): string => {
-  const monthName = date.toLocaleDateString(locale, { month: "long" });
-  return `${toTitleCase(monthName, locale)} ${date.getFullYear()}`;
-};
-
-const getUiLocale = (): string => {
-  const fromHtml = typeof document !== "undefined" ? document.documentElement.lang : "";
-  return fromHtml && String(fromHtml).trim() ? fromHtml : "es-ES";
-};
-
-const buildDayCells = (
-  cells: CalendarCell[],
-  startDate: Date | null,
-  endDate: Date | null,
-  hoverDate: Date | null,
-  selectingStep: "start" | "end" | "done"
-): HistoryManualDayCell[] => {
-  const previewEnd = endDate || (selectingStep === "end" ? hoverDate : null);
-
-  return cells.map((cell, index) => {
-    if (cell.isEmpty || !cell.date) {
-      return { key: `empty-${index}`, isEmpty: true };
-    }
-
-    const dateObj = cell.date;
-    const isStart = sameDay(dateObj, startDate);
-    const isEnd = sameDay(dateObj, endDate);
-    const inRange = startDate && previewEnd && isBefore(startDate, dateObj) && isBefore(dateObj, previewEnd);
-    const hoverRange = startDate && !endDate && hoverDate && isBefore(startDate, dateObj) && isBefore(dateObj, hoverDate);
-    const disabled = selectingStep === "end" && !!startDate && isBefore(dateObj, startDate);
-    const isToday = sameDay(dateObj, new Date());
-
-    return {
-      key: cell.iso,
-      isEmpty: false,
-      date: dateObj,
-      iso: cell.iso,
-      dayLabel: dateObj.getDate(),
-      dayClass: classNames(
-        "drp-day",
-        isStart ? "start range-start" : "",
-        isEnd ? "end range-end" : "",
-        inRange ? "in-range" : "",
-        hoverRange ? "hover-range" : "",
-        disabled ? "disabled" : "",
-        isToday ? "today" : ""
-      ),
-      disabled,
-    };
-  });
 };
 
 // Shared date range picker for expense filters based on the history date component.
@@ -134,30 +35,30 @@ const ExpenseDateRangeFilter = ({
   showStartError = false,
   showEndError = false,
 }: ExpenseDateRangeFilterProps) => {
-  const locale = useMemo(() => getUiLocale(), []);
+  const locale = useMemo(() => resolveUiLocale(), []);
   const activatorRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
 
-  const [startDate, setStartDate] = useState<Date | null>(() => parseIso(fromDate));
-  const [endDate, setEndDate] = useState<Date | null>(() => parseIso(toDate));
+  const [startDate, setStartDate] = useState<Date | null>(() => parseIsoDateRangeValue(fromDate));
+  const [endDate, setEndDate] = useState<Date | null>(() => parseIsoDateRangeValue(toDate));
   const [hoverDate, setHoverDate] = useState<Date | null>(null);
   const [selectingStep, setSelectingStep] = useState<"start" | "end" | "done">("start");
   const [isOpen, setIsOpen] = useState(false);
 
   const now = useMemo(() => new Date(), []);
-  const [currentMonth, setCurrentMonth] = useState((parseIso(fromDate) || now).getMonth());
-  const [currentYear, setCurrentYear] = useState((parseIso(fromDate) || now).getFullYear());
+  const [currentMonth, setCurrentMonth] = useState((parseIsoDateRangeValue(fromDate) || now).getMonth());
+  const [currentYear, setCurrentYear] = useState((parseIsoDateRangeValue(fromDate) || now).getFullYear());
 
   useEffect(() => {
-    setStartDate(parseIso(fromDate));
+    setStartDate(parseIsoDateRangeValue(fromDate));
   }, [fromDate]);
 
   useEffect(() => {
-    setEndDate(parseIso(toDate));
+    setEndDate(parseIsoDateRangeValue(toDate));
   }, [toDate]);
 
   useEffect(() => {
-    onChange(startDate ? toIso(startDate) : "", endDate ? toIso(endDate) : "");
+    onChange(startDate ? toIsoDateRangeValue(startDate) : "", endDate ? toIsoDateRangeValue(endDate) : "");
   }, [startDate, endDate, onChange]);
 
   useEffect(() => {
@@ -258,18 +159,18 @@ const ExpenseDateRangeFilter = ({
 
       if (!startDate || selectingStep === "start") {
         setStartDate(nextDate);
-        if (endDate && isBefore(endDate, nextDate)) {
+        if (endDate && isBeforeDay(endDate, nextDate)) {
           setEndDate(null);
         }
         setSelectingStep("end");
         setCurrentMonth(nextDate.getMonth());
         setCurrentYear(nextDate.getFullYear());
-        focusSection(activatorRef.current, "end");
+        focusDateRangeSection(activatorRef.current, "end");
         return;
       }
 
       if (selectingStep === "end") {
-        if (isBefore(nextDate, startDate)) {
+        if (isBeforeDay(nextDate, startDate)) {
           setEndDate(startDate);
           setStartDate(nextDate);
         } else {
@@ -296,28 +197,11 @@ const ExpenseDateRangeFilter = ({
   }, []);
 
   const calendar = useMemo(() => {
-    const firstDay = new Date(currentYear, currentMonth, 1);
-    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const offset = (firstDay.getDay() + 6) % 7;
-    const cells: CalendarCell[] = [];
-
-    for (let index = 0; index < offset; index += 1) {
-      cells.push({ date: null, iso: "", isEmpty: true });
-    }
-
-    for (let day = 1; day <= daysInMonth; day += 1) {
-      const dateObj = new Date(currentYear, currentMonth, day);
-      cells.push({ date: dateObj, iso: toIso(dateObj), isEmpty: false });
-    }
-
-    return {
-      monthLabel: formatMonthLabel(firstDay, locale),
-      cells,
-    };
+    return buildCalendarMonth(currentYear, currentMonth, locale);
   }, [currentMonth, currentYear, locale]);
 
   const dayCells = useMemo(
-    () => buildDayCells(calendar.cells, startDate, endDate, hoverDate, selectingStep),
+    () => buildDateRangeDayCells(calendar.cells, startDate, endDate, hoverDate, selectingStep),
     [calendar.cells, endDate, hoverDate, selectingStep, startDate]
   );
 
@@ -336,8 +220,8 @@ const ExpenseDateRangeFilter = ({
       selectingStep={selectingStep}
       labelFrom={labelFrom}
       labelTo={labelTo}
-      startDateText={startDate ? formatDisplay(startDate, locale) : indT("History_AddDate", "Add date")}
-      endDateText={endDate ? formatDisplay(endDate, locale) : indT("History_AddDate", "Add date")}
+      startDateText={startDate ? formatDateRangeDisplay(startDate, locale) : indT("History_AddDate", "Add date")}
+      endDateText={endDate ? formatDateRangeDisplay(endDate, locale) : indT("History_AddDate", "Add date")}
       clearRangeLabel={indT("History_ClearRange", "Clear range")}
       hasSelectedRange={!!startDate || !!endDate}
       monthLabel={calendar.monthLabel}

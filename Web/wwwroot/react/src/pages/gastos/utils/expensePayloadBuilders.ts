@@ -28,10 +28,12 @@ export const buildExpenseListPayload = (
 // Build suggestion payload for expense sheet dropdown search.
 export const buildExpenseSheetSuggestPayload = (
   term: string,
-  pageSize = DEFAULT_SUGGEST_PAGE_SIZE
+  pageSize = DEFAULT_SUGGEST_PAGE_SIZE,
+  page = 1
 ): ExpenseSheetListRequest => {
   const safeTerm = String(term || "").trim();
   const nextPageSize = Number.isFinite(pageSize) && pageSize > 0 ? pageSize : DEFAULT_SUGGEST_PAGE_SIZE;
+  const nextPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
 
   return {
     filter: safeTerm,
@@ -41,7 +43,7 @@ export const buildExpenseSheetSuggestPayload = (
     projectId: "",
     hojaGastosId: "",
     currencyCode: "",
-    page: 1,
+    page: nextPage,
     pageSize: nextPageSize,
   };
 };

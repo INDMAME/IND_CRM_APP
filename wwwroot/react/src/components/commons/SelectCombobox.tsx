@@ -58,7 +58,7 @@ const SelectCombobox = ({
 
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState(
-    data.find((d) => String(d.value) === String(value)) || data[0] || { value: "", text: "" }
+    data.find((d) => String(d.value) === String(value)) || { value: "", text: "" }
   );
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -69,7 +69,7 @@ const SelectCombobox = ({
   useOutsideClick([containerRef, listRef], () => setOpen(false));
 
   useEffect(() => {
-    setSelected(data.find((d) => String(d.value) === String(value)) || data[0] || { value: "", text: "" });
+    setSelected(data.find((d) => String(d.value) === String(value)) || { value: "", text: "" });
   }, [value, data]);
 
   useEffect(() => {
@@ -83,7 +83,13 @@ const SelectCombobox = ({
 
   const filtered = useMemo(() => {
     if (!query.trim()) return data;
-    const f = data.filter((o) => o.text.toLowerCase().includes(query.toLowerCase()));
+    const f = data.filter((o) => {
+      const optionValue = String(o.value ?? "").trim();
+      if (!optionValue) {
+        return false;
+      }
+      return o.text.toLowerCase().includes(query.toLowerCase());
+    });
     return f.length ? f : data;
   }, [data, query]);
 
@@ -129,6 +135,8 @@ const SelectCombobox = ({
   const listId = `select-options-${safeId}`;
   const activeId = open && filtered[activeIndex] ? `select-opt-${safeId}-${filtered[activeIndex].value}` : undefined;
   const listOpen = open && !disabled;
+  const selectedValue = String(selected?.value ?? "").trim();
+  const displayValue = query || (selectedValue ? selected?.text || "" : "");
 
   const listBody = (
     <div id={listId} ref={listRef} role="listbox" aria-label={label}>
@@ -190,7 +198,7 @@ const SelectCombobox = ({
               readOnlyMode ? "ind-readonly-field" : "text-slate-900"
             )}
             style={readOnlyMode ? { color: valueColor } : undefined}
-            value={query || selected?.text || ""}
+            value={displayValue}
             disabled={disabled}
             onChange={(event) => {
               if (!allowTextInput) return;

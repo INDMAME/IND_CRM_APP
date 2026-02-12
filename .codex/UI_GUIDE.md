@@ -39,6 +39,12 @@
     - Label color is always #00296be0 (read or edit).
     - Value color: edit = #00296be0, read = #64748b.
     - Avoid wrapper opacity for read-only; it washes text color.
+- Section title divider:
+  - Use shared `ExpenseSectionDivider` (`pages/gastos/components/ExpenseSectionDivider.tsx`) for centered section titles with side guide lines.
+  - Label style is borderless and background-free (no pill or box frame).
+  - Keep labels uppercase via CSS and source text from i18n keys.
+  - Use `expense-section-divider--compact`, `expense-section-divider--standard`, and `expense-section-divider--spaced` for spacing variants.
+  - Reuse the same pattern for section titles like `LINEAS` and expense header titles in detail pages.
 
 ## Dropdown / Combobox pattern
 - Use the shared `FloatingList` + `useOutsideClick` + `useFloatingPosition`.
@@ -49,6 +55,21 @@
 - Use shared chevrons (`components/commons/chevrons.tsx`) for consistent icon behavior.
 - Cache options and selected items in sessionStorage by parent key.
 - All copy via `indT`.
+
+## Input type matrix
+- `remote-search-dropdown`
+  - Use when results come from API search.
+  - Magnifier icon is required in the input.
+  - Execute API search only on Enter or magnifier click.
+  - Keep placeholder inside the input and hide fixed labels when page style requires placeholder-first UX.
+- `fixed-enum-instant-search`
+  - Use for fixed local lists that still need quick filtering.
+  - No magnifier icon.
+  - Filter locally while typing and keep selection constrained to known options.
+- `fixed-enum-select`
+  - Use for very small fixed lists (for example three statuses).
+  - Disable free text editing.
+  - Picking a new value always replaces the previous one.
 
 ## Visitas confirm + action mark flow
 - No popup on edit toggle. Edit mode is instant.
@@ -62,12 +83,20 @@
 - Action mark container is global in `_Layout.cshtml` via `_IndActionMark`.
 
 ## React page decomposition conventions
+- Run a short architecture plan before coding: page container, dumb components, hooks, shared utilities, and destination paths.
+- If there is any ambiguity in component split or input type selection, ask targeted questions before implementation.
 - Keep page entry files thin: provider composition + one form/page component + mount helper.
 - For Visitas page entries, use `VisitasPageProviders` by default.
 - Wrap complex form roots (`CreateForm`, `DetailForm`) with `AppErrorBoundary` and localized fallback message.
 - Move heavy effect logic to page-local hooks (`useHistoryFiltersState`, `useHistoryPageListeners`, `useHistoryTableEffects`, etc.).
 - Reuse `VisitNarrativeFields` when rendering repeated long-text sections in create/detail flows.
 - Keep shared components dumb (prop-driven) and move stateful behavior to hooks.
+- Reuse-first policy:
+  - If a UI block is repeated across modules with the same behavior, extract it to shared.
+  - If behavior differs by module, keep the component module-local and share only visual primitives.
+- Performance policy:
+  - Avoid auto-fetch on every key stroke unless explicitly required by UX.
+  - For remote-search-dropdown, trigger endpoint calls only on Enter or search icon click.
 
 ## Pixel hover and typing effect
 - Pixel hover: use timeline card canvas overlay pattern (history timeline).
@@ -87,4 +116,4 @@
 - Transcription uses `/Visitas/TranscribeSpeech` and replaces textarea text.
 
 ## Last updated
-- 2026-02-10
+- 2026-02-12

@@ -1,8 +1,9 @@
 import { useCallback, useState } from "react";
-import { ApiFetchError, fetchJson } from "../../../services/apiService.ts";
+import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
-import type { ExpenseSheetCard, ExpenseSheetListFilters, ExpenseSheetListResponse } from "../expenseTypes.ts";
+import type { ExpenseSheetCard, ExpenseSheetListFilters } from "../expenseTypes.ts";
 import { buildExpenseListPayload } from "../utils/expensePayloadBuilders.ts";
+import { fetchExpenseSheetList } from "../utils/expenseApi.ts";
 
 type UseExpenseSheetsListDataArgs = {
   hasAccess: boolean;
@@ -30,10 +31,7 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
       const payload = buildExpenseListPayload(filters, page, pageSize);
 
       try {
-        const response = await fetchJson<ExpenseSheetListResponse>("/Gastos/ListExpenseSheets", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload),
+        const response = await fetchExpenseSheetList(payload, {
           suppressPermissionModal: true,
         });
 

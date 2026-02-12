@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
   <resheader name="version"><value>2.0</value></resheader>
@@ -33,6 +33,24 @@
   <data name="ExpenseSheets_NoLines" xml:space="preserve"><value>No expense lines.</value></data>
   <data name="ExpenseSheets_LoadError" xml:space="preserve"><value>Could not load expense sheets.</value></data>
   <data name="ExpenseSheets_NotFound" xml:space="preserve"><value>Expense sheet not found.</value></data>
+  <data name="ExpenseSheets_Detail_SaveChanges_Title" xml:space="preserve"><value>Save changes</value></data>
+  <data name="ExpenseSheets_Detail_SaveChanges_Body" xml:space="preserve"><value>Do you want to save expense sheet changes?</value></data>
+  <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve"><value>Delete expense sheet</value></data>
+  <data name="ExpenseSheets_Detail_DeleteSheet_Body" xml:space="preserve"><value>Do you want to delete this expense sheet?</value></data>
+  <data name="ExpenseSheets_Detail_EditingEnabled" xml:space="preserve"><value>Editing enabled</value></data>
+  <data name="ExpenseSheets_Detail_Updating" xml:space="preserve"><value>Updating expense sheet...</value></data>
+  <data name="ExpenseSheets_Detail_Updated" xml:space="preserve"><value>Expense sheet updated</value></data>
+  <data name="ExpenseSheets_Detail_UpdateFailed" xml:space="preserve"><value>Could not update the expense sheet.</value></data>
+  <data name="ExpenseSheets_Detail_UpdateError" xml:space="preserve"><value>Error updating expense sheet.</value></data>
+  <data name="ExpenseSheets_Detail_Deleting" xml:space="preserve"><value>Deleting expense sheet...</value></data>
+  <data name="ExpenseSheets_Detail_Deleted" xml:space="preserve"><value>Expense sheet deleted</value></data>
+  <data name="ExpenseSheets_Detail_DeleteFailed" xml:space="preserve"><value>Could not delete the expense sheet.</value></data>
+  <data name="ExpenseSheets_Detail_DeleteError" xml:space="preserve"><value>Error deleting expense sheet.</value></data>
+  <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve"><value>Updating expense line...</value></data>
+  <data name="ExpenseSheets_Line_Detail_Updated" xml:space="preserve"><value>Expense line updated</value></data>
+  <data name="ExpenseSheets_Line_Detail_Deleting" xml:space="preserve"><value>Deleting expense line...</value></data>
+  <data name="ExpenseSheets_Line_Detail_Deleted" xml:space="preserve"><value>Expense line deleted</value></data>
+  <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve"><value>Quantity must be greater than 0 and amount cannot be negative.</value></data>
   <data name="ExpenseSheets_Filter_Project" xml:space="preserve"><value>Project</value></data>
   <data name="ExpenseSheets_Filter_Sheet" xml:space="preserve"><value>Expense sheet</value></data>
   <data name="ExpenseSheets_Filter_Currency" xml:space="preserve"><value>Currency</value></data>
@@ -59,6 +77,9 @@
   <data name="ExpenseSheets_Field_Qty" xml:space="preserve"><value>Quantity</value></data>
   <data name="ExpenseSheets_Field_TransDate" xml:space="preserve"><value>Date</value></data>
   <data name="ExpenseSheets_Field_International" xml:space="preserve"><value>International</value></data>
+  <data name="ExpenseSheets_International_Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="ExpenseSheets_International_No" xml:space="preserve"><value>No</value></data>
+  <data name="ExpenseSheets_Validation_ExchangeRateRequired" xml:space="preserve"><value>Exchange rate is required when currency is different from EUR.</value></data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve"><value>Ticket</value></data>
   <data name="ExpenseSheets_Field_Attachments" xml:space="preserve"><value>Attachments</value></data>
   <data name="ExpenseSheets_Field_LineCount" xml:space="preserve"><value>Lines</value></data>
@@ -83,7 +104,7 @@
   <data name="Language_EN_Name" xml:space="preserve"><value>English</value></data>
   <data name="Language_PT_Name" xml:space="preserve"><value>Português</value></data>
   <data name="Language_IT_Name" xml:space="preserve"><value>Italiano</value></data>
-  <data name="Language_ZH_Name" xml:space="preserve"><value>中文</value></data>
+  <data name="Language_ZH_Name" xml:space="preserve"><value>ä¸­æ–‡</value></data>
 
   <data name="Login_Title" xml:space="preserve"><value>Accedi</value></data>
   <data name="Login_Welcome" xml:space="preserve"><value>Benvenuto</value></data>
@@ -344,5 +365,6 @@
   <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>Dettaglio tecnico: {0}</value></data>
   <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve"><value>Il processo attivo verrà annullato e le modifiche non salvate andranno perse. Vuoi continuare?</value></data>
 </root>
+
 
 

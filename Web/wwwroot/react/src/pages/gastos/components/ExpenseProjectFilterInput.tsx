@@ -1,6 +1,6 @@
 import React, { useCallback } from "react";
 import RemoteSearchCombobox, { type RemoteSearchOption } from "../../../components/commons/RemoteSearchCombobox.tsx";
-import { fetchJson } from "../../../services/apiService.ts";
+import { fetchExpenseProjects } from "../utils/expenseApi.ts";
 
 type ExpenseProjectFilterInputProps = {
   label: string;
@@ -12,11 +12,22 @@ type ExpenseProjectFilterInputProps = {
   showLabel?: boolean;
 };
 
-type ProjectDropdownResponse = {
-  items?: Array<{ value?: string; text?: string }>;
-};
+const SEARCH_PAGE_SIZE = 10;
 
-const SEARCH_PAGE_SIZE = 20;
+const mapProjectOptions = (items: Array<{ value?: string; text?: string }> | undefined): RemoteSearchOption[] => {
+  return (Array.isArray(items) ? items : [])
+    .map((item) => {
+      const valueText = String(item?.value || "").trim();
+      if (!valueText) return null;
+      const subtitle = String(item?.text || "").trim();
+      return {
+        value: valueText,
+        title: valueText,
+        subtitle: subtitle || "-",
+      } as RemoteSearchOption;
+    })
+    .filter(Boolean) as RemoteSearchOption[];
+};
 
 // Project filter input backed by remote dropdown suggestions.
 const ExpenseProjectFilterInput = ({
@@ -29,24 +40,24 @@ const ExpenseProjectFilterInput = ({
   showLabel = true,
 }: ExpenseProjectFilterInputProps) => {
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
-    const url = `/Gastos/GetProjectsForDropdown?term=${encodeURIComponent(term)}&page=1&pageSize=${SEARCH_PAGE_SIZE}`;
-    const response = await fetchJson<ProjectDropdownResponse>(url, {
+    const response = await fetchExpenseProjects(term, 1, SEARCH_PAGE_SIZE, {
       signal,
       suppressPermissionModal: true,
     });
 
-    return (Array.isArray(response?.items) ? response.items : [])
-      .map((item) => {
-        const valueText = String(item?.value || "").trim();
-        if (!valueText) return null;
-        const subtitle = String(item?.text || "").trim();
-        return {
-          value: valueText,
-          title: valueText,
-          subtitle: subtitle || "-",
-        } as RemoteSearchOption;
-      })
-      .filter(Boolean) as RemoteSearchOption[];
+    return mapProjectOptions(response?.items);
+  }, []);
+
+  const loadOptionsPage = useCallback(async (term: string, page: number, pageSize: number, signal: AbortSignal) => {
+    const response = await fetchExpenseProjects(term, page, pageSize, {
+      signal,
+      suppressPermissionModal: true,
+    });
+
+    return {
+      items: mapProjectOptions(response?.items),
+      total: Number(response?.total || 0),
+    };
   }, []);
 
   return (
@@ -56,8 +67,13 @@ const ExpenseProjectFilterInput = ({
       value={value}
       onChange={onChange}
       onSearch={loadOptions}
+      onSearchPage={loadOptionsPage}
       idBase="expense-project-filter"
-      minSearchLength={2}
+      minSearchLength={0}
+      pageSize={SEARCH_PAGE_SIZE}
+      allowEmptySearch
+      loadOnOpen
+      infiniteScroll
       disabled={disabled}
       readOnly={readOnly}
       showLabel={showLabel}

@@ -26,9 +26,10 @@
 - Keep docs ASCII-only.
 - Use i18n keys for UI copy; examples are copy references only.
 - Keep project style sovereignty explicit: external Tailwind helper skills are advisory and cannot override local design rules.
+- Keep module guardrails explicit for both `visitas` and `gastos` flows, promoting shared components only when contracts match.
 - Keep only one project-local skill path: `.codex/skills/ind-crm-frontend-guardrails`.
 - Move all shared helper skills to: `C:\Users\marco.meza\.codex\skills`.
 - Add a `Last updated` line when a doc changes.
 
 ## Last updated
-- 2026-02-10
+- 2026-02-12

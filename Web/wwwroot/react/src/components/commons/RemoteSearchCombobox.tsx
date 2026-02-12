@@ -19,8 +19,18 @@ type RemoteSearchComboboxProps = {
   value: string;
   onChange: (value: string) => void;
   onSearch: (term: string, signal: AbortSignal) => Promise<RemoteSearchOption[]>;
+  onSearchPage?: (
+    term: string,
+    page: number,
+    pageSize: number,
+    signal: AbortSignal
+  ) => Promise<{ items: RemoteSearchOption[]; total?: number }>;
   idBase: string;
   minSearchLength?: number;
+  pageSize?: number;
+  allowEmptySearch?: boolean;
+  loadOnOpen?: boolean;
+  infiniteScroll?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
   showLabel?: boolean;
@@ -42,15 +52,20 @@ const uniqueByValue = (items: RemoteSearchOption[]): RemoteSearchOption[] => {
   return Array.from(map.values());
 };
 
-// Generic remote-search combobox that fetches options only on Enter or search icon.
+// Generic remote-search combobox that supports manual search and optional paged loading on open.
 const RemoteSearchCombobox = ({
   label,
   placeholder,
   value,
   onChange,
   onSearch,
+  onSearchPage,
   idBase,
   minSearchLength = 2,
+  pageSize = 20,
+  allowEmptySearch = false,
+  loadOnOpen = false,
+  infiniteScroll = false,
   disabled = false,
   readOnly = false,
   showLabel = true,
@@ -64,6 +79,8 @@ const RemoteSearchCombobox = ({
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [lastSearchedTerm, setLastSearchedTerm] = useState("");
+  const [currentPage, setCurrentPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -98,45 +115,124 @@ const RemoteSearchCombobox = ({
     setActiveIndex(0);
   }, [filtered.length, query]);
 
+  const canSearchTerm = useCallback(
+    (term: string): boolean => {
+      const trimmed = term.trim();
+      if (!trimmed) return allowEmptySearch;
+      return trimmed.length >= minSearchLength;
+    },
+    [allowEmptySearch, minSearchLength]
+  );
+
+  const executeSearch = useCallback(
+    async (term: string, page: number, append: boolean) => {
+      abortRef.current?.abort();
+      const controller = new AbortController();
+      abortRef.current = controller;
+      setLoading(true);
+
+      const termKey = term.toLowerCase();
+      try {
+        if (onSearchPage) {
+          const response = await onSearchPage(term, page, pageSize, controller.signal);
+          const pageItems = uniqueByValue(Array.isArray(response?.items) ? response.items : []);
+          setOptions((previous) => (append ? uniqueByValue([...(previous || []), ...pageItems]) : pageItems));
+          setCurrentPage(page);
+
+          const apiTotal = Number(response?.total);
+          if (Number.isFinite(apiTotal) && apiTotal > 0) {
+            setHasMore(page * pageSize < apiTotal);
+          } else {
+            setHasMore(pageItems.length >= pageSize);
+          }
+        } else {
+          const response = await onSearch(term, controller.signal);
+          const next = uniqueByValue(response || []);
+          setOptions(next);
+          setCurrentPage(1);
+          setHasMore(false);
+        }
+
+        setLastSearchedTerm(termKey);
+        setOpen(true);
+      } catch {
+        if (!append) {
+          setOptions([]);
+          setCurrentPage(0);
+          setHasMore(false);
+        }
+        setLastSearchedTerm(termKey);
+        setOpen(true);
+      } finally {
+        if (abortRef.current === controller) {
+          abortRef.current = null;
+        }
+        setLoading(false);
+      }
+    },
+    [onSearch, onSearchPage, pageSize]
+  );
+
   const runSearch = useCallback(async () => {
     if (readOnlyMode || loading) return;
     const term = query.trim();
     const termKey = term.toLowerCase();
 
-    if (term.length < minSearchLength) {
+    if (!canSearchTerm(term)) {
       setOptions([]);
+      setCurrentPage(0);
+      setHasMore(false);
       setOpen(false);
       setLastSearchedTerm("");
       return;
     }
 
-    if (termKey === lastSearchedTerm && options.length > 0) {
+    if (termKey === lastSearchedTerm && options.length > 0 && !onSearchPage) {
       setOpen(true);
       return;
     }
 
-    abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
-    setLoading(true);
+    await executeSearch(term, 1, false);
+  }, [canSearchTerm, executeSearch, lastSearchedTerm, loading, onSearchPage, options.length, query, readOnlyMode]);
 
-    try {
-      const response = await onSearch(term, controller.signal);
-      const next = uniqueByValue(response || []);
-      setOptions(next);
-      setLastSearchedTerm(termKey);
-      setOpen(true);
-    } catch {
-      setOptions([]);
-      setLastSearchedTerm(termKey);
-      setOpen(true);
-    } finally {
-      if (abortRef.current === controller) {
-        abortRef.current = null;
-      }
-      setLoading(false);
+  const runLoadMore = useCallback(async () => {
+    if (readOnlyMode || loading || !onSearchPage || !infiniteScroll || !hasMore) {
+      return;
     }
-  }, [lastSearchedTerm, loading, minSearchLength, onSearch, options.length, query, readOnlyMode]);
+
+    const term = query.trim();
+    const termKey = term.toLowerCase();
+    if (termKey !== lastSearchedTerm) {
+      return;
+    }
+
+    const nextPage = currentPage + 1;
+    if (nextPage <= 1) {
+      return;
+    }
+
+    await executeSearch(term, nextPage, true);
+  }, [currentPage, executeSearch, hasMore, infiniteScroll, lastSearchedTerm, loading, onSearchPage, query, readOnlyMode]);
+
+  useEffect(() => {
+    if (!open || !onSearchPage || !infiniteScroll) return;
+    const scroller = listRef.current?.parentElement;
+    if (!scroller) return;
+
+    const onScroll = () => {
+      if (loading || !hasMore) return;
+      const threshold = 40;
+      const isNearBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - threshold;
+      if (isNearBottom) {
+        void runLoadMore();
+      }
+    };
+
+    scroller.addEventListener("scroll", onScroll, { passive: true });
+    return () => {
+      scroller.removeEventListener("scroll", onScroll);
+    };
+  }, [hasMore, infiniteScroll, loading, onSearchPage, open, runLoadMore]);
 
   const selectOption = (option: RemoteSearchOption) => {
     const nextValue = String(option.value || "").trim();
@@ -150,7 +246,7 @@ const RemoteSearchCombobox = ({
   const showSearchIcon =
     !readOnlyMode &&
     !loading &&
-    queryKey.length >= minSearchLength &&
+    canSearchTerm(query) &&
     queryKey !== lastSearchedTerm;
 
   const listId = `${idBase}-options`;
@@ -255,6 +351,11 @@ const RemoteSearchCombobox = ({
                 }
                 if (filtered.length > 0) {
                   setOpen(true);
+                  return;
+                }
+
+                if (!query.trim() && loadOnOpen) {
+                  void runSearch();
                 }
               }}
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}

@@ -13,13 +13,17 @@
 ## Frontend (React + Tailwind)
 - `npm run build` (react + css)
 - Release build: `npm run build:react:prod` and `npm run build:css`
-- Verify critical pages: create, detail, history, text editor, audio recorder
+- Verify critical pages: visitas create/detail/history, gastos list/detail/line-detail, text editor, audio recorder
 - Critical behaviors: date filters, dropdowns, permissions, confirm modal, action mark
 - Read-only color contract verified per `COMPONENT_CONTRACTS.md`
 - Verify ESM loading: each Razor page uses `script type="module"` and `/js/chunks/*` assets resolve without 404
 - Verify page entry pattern:
   - page entry composes providers and mount helper only
   - heavy logic is in hooks/forms, not bootstrap files
+- Verify no client fetch waterfalls were introduced for independent requests
+- Verify global listeners are cleaned up in hook teardown
+- Verify unsaved-change prompts use app modal flow (no browser-native popup fallback)
+- Verify edit/delete/create icons are permission-gated in UI where applicable
 
 ## Backend (.NET)
 - `dotnet build`
@@ -47,4 +51,4 @@
 - For release tasks, run `iisreset` after publish
 
 ## Last updated
-- 2026-02-10
+- 2026-02-12

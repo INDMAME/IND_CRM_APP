@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
+import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
@@ -8,14 +9,18 @@ import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseFiltersPanel from "../components/ExpenseFiltersPanel.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
 import HistorySummary from "../../visitas/historial/HistorySummary.tsx";
-import { formatExpenseDateParts, parseExpenseDate, safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText } from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetsListData } from "./useExpenseSheetsListData.ts";
 import { useExpenseSheetsFiltersState } from "./useExpenseSheetsFiltersState.ts";
+import { useExpenseSheetsFilterCache } from "./useExpenseSheetsFilterCache.ts";
+import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
+import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 
 const PAGE_SIZE = 6;
 
 const ExpenseSheetsPageContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
+  const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
 
   const paginationLabels = useMemo(
@@ -33,6 +38,10 @@ const ExpenseSheetsPageContent = () => {
     pageSize: PAGE_SIZE,
     onForbidden: showPermissionModal,
   });
+
+  const { readCachedState, consumeReturnFlag, saveCachedState, clearCachedState } = useExpenseSheetsFilterCache();
+  const didRestoreOnMountRef = React.useRef(false);
+  const pendingScrollRestoreRef = React.useRef<number | null>(null);
 
   const {
     fromDate,
@@ -54,6 +63,7 @@ const ExpenseSheetsPageContent = () => {
     setBilledMode,
     onApply,
     onClear,
+    restoreAppliedFilters,
     onDateRangeChange,
     onQuickFilterChange,
     toggleFilterPanel,
@@ -61,14 +71,41 @@ const ExpenseSheetsPageContent = () => {
     onApplyFilters: (snapshot) => {
       void loadList(1, snapshot);
     },
-    onClearFilters: resetList,
+    onClearFilters: () => {
+      clearCachedState();
+      resetList();
+    },
   });
 
-  const goToDetail = useCallback((sheetId: string) => {
-    if (!sheetId) return;
-    const id = encodeURIComponent(sheetId);
-    window.location.href = `/Gastos/ExpenseSheetDetail?hojaGastosId=${id}`;
-  }, []);
+  const goToDetail = useCallback(
+    (sheetId: string) => {
+      if (!sheetId) return;
+
+      const snapshot = appliedFilters || currentFilters;
+      saveCachedState({
+        filters: snapshot,
+        page: currentPage < 1 ? 1 : currentPage,
+        scrollY: typeof window !== "undefined" ? window.scrollY || 0 : 0,
+      });
+
+      const id = encodeURIComponent(sheetId);
+      navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${id}`, {
+        bypassGuardOnce: false,
+      });
+    },
+    [appliedFilters, currentFilters, currentPage, saveCachedState]
+  );
+
+  const handleOpenCreateSheetMode = useCallback(() => {
+    if (!canCreateExpense) {
+      showPermissionModal();
+      return;
+    }
+
+    navigateToExpenseUrl("/Gastos/ExpenseSheetDetail?mode=create", {
+      bypassGuardOnce: false,
+    });
+  }, [canCreateExpense]);
 
   const resolveClickableCard = useCallback((target: EventTarget | null) => {
     const node = target as HTMLElement | null;
@@ -92,14 +129,8 @@ const ExpenseSheetsPageContent = () => {
     if (!appliedFilters) return null as { fromValue: string; toValue: string } | null;
 
     const locale = document?.documentElement?.lang || "es-ES";
-    const fromDateText = parseExpenseDate(appliedFilters.fromDate)
-      ?.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
-      .replace(/\./g, "")
-      .toLowerCase();
-    const toDateText = parseExpenseDate(appliedFilters.toDate)
-      ?.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" })
-      .replace(/\./g, "")
-      .toLowerCase();
+    const fromDateText = formatExpenseDisplayDate(appliedFilters.fromDate, locale, "");
+    const toDateText = formatExpenseDisplayDate(appliedFilters.toDate, locale, "");
 
     if (!fromDateText && !toDateText) return null;
     return {
@@ -137,13 +168,47 @@ const ExpenseSheetsPageContent = () => {
   const showSummary = !showFilters && (!!summaryDate || summaryItems.length > 0);
 
   useEffect(() => {
+    if (didRestoreOnMountRef.current) return;
+    didRestoreOnMountRef.current = true;
+
+    if (!consumeReturnFlag()) return;
+
+    const cachedState = readCachedState();
+    if (!cachedState) {
+      clearCachedState();
+      return;
+    }
+
+    restoreAppliedFilters(cachedState.filters);
+    pendingScrollRestoreRef.current = cachedState.scrollY;
+    void loadList(cachedState.page, cachedState.filters);
+  }, [clearCachedState, consumeReturnFlag, loadList, readCachedState, restoreAppliedFilters]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    const pendingScrollY = pendingScrollRestoreRef.current;
+    if (pendingScrollY == null) return;
+
+    pendingScrollRestoreRef.current = null;
+    window.requestAnimationFrame(() => {
+      window.scrollTo({
+        top: Math.max(0, pendingScrollY),
+        behavior: "auto",
+      });
+    });
+  }, [currentPage, isLoading, items.length]);
+
+  useEffect(() => {
     const onToggleFilters = () => {
       toggleFilterPanel();
     };
 
     const onRefresh = () => {
-      const snapshot = appliedFilters || currentFilters;
-      void loadList(currentPage < 1 ? 1 : currentPage, snapshot);
+      if (!appliedFilters) {
+        return;
+      }
+
+      void loadList(currentPage < 1 ? 1 : currentPage, appliedFilters);
     };
 
     window.addEventListener("expense-sheets-toggle-filter", onToggleFilters);
@@ -153,7 +218,7 @@ const ExpenseSheetsPageContent = () => {
       window.removeEventListener("expense-sheets-toggle-filter", onToggleFilters);
       window.removeEventListener("expense-sheets-refresh", onRefresh);
     };
-  }, [appliedFilters, currentFilters, currentPage, loadList, toggleFilterPanel]);
+  }, [appliedFilters, currentPage, loadList, toggleFilterPanel]);
 
   return (
     <div className="space-y-2">
@@ -225,7 +290,7 @@ const ExpenseSheetsPageContent = () => {
             const description = safeText(item.description);
             const voucher = safeText(item.voucher);
             const totalAmountText = formatAmountWithCurrency(item.totalAmountMST ?? null, currency);
-            const isBilled = voucher !== "";
+            const isBilled = hasAssignedVoucher(voucher);
             const statusLabel = isBilled
               ? indT("ExpenseSheets_Filter_Status_Billed", "Pagado")
               : indT("ExpenseSheets_Filter_Status_Unbilled", "No Pagado");
@@ -235,33 +300,15 @@ const ExpenseSheetsPageContent = () => {
 
             return (
               <div key={`${id}-${index}`} className="timeline-item">
-                <div
-                  className="timeline-card timeline-card--clickable"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => goToDetail(id)}
-                  onKeyDown={(event) => {
-                    if (event.key === "Enter" || event.key === " ") {
-                      event.preventDefault();
-                      goToDetail(id);
-                    }
-                  }}
-                >
-                  <div className="timeline-date-panel flex flex-col items-center justify-center gap-1 px-3 py-3 bg-slate-50 border-r border-slate-200 text-slate-600">
-                    <div className="text-xs font-semibold tracking-[0.2em] text-slate-500">{dateParts.year}</div>
-                    <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{dateParts.month}</div>
-                    <div className="text-2xl font-semibold text-primary">{dateParts.day}</div>
-                  </div>
-                  <div className="timeline-card__content flex-1 py-3 px-4">
-                    <span className={statusClass} title={statusLabel} aria-label={statusLabel} />
-                    <p className="expense-sheet-card__title timeline-name" data-fulltext={description || "-"}>
-                      {description || "-"}
-                    </p>
-                    <span className="expense-sheet-card__amount" data-fulltext={totalAmountText}>
-                      {totalAmountText}
-                    </span>
-                  </div>
-                </div>
+                <ExpenseTimelineCard
+                  dateParts={dateParts}
+                  title={description || "-"}
+                  amountText={totalAmountText}
+                  onOpen={() => goToDetail(id)}
+                  titleClassName="expense-sheet-card__title timeline-name"
+                  statusClassName={statusClass}
+                  statusLabel={statusLabel}
+                />
               </div>
             );
           })}
@@ -277,6 +324,17 @@ const ExpenseSheetsPageContent = () => {
         }}
         labels={paginationLabels}
       />
+
+      {canCreateExpense ? (
+        <FloatingActionButton
+          route=""
+          ariaLabel={indT("Common_Create", "Create")}
+          size={76}
+          right={16}
+          bottom={24}
+          onClick={handleOpenCreateSheetMode}
+        />
+      ) : null}
     </div>
   );
 };

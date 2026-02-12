@@ -1,106 +1,208 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
-import { ApiFetchError, fetchJson } from "../../../services/apiService.ts";
+import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
+import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
+import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
-import type { ExpenseSheetHeader, ExpenseSheetLine, ExpenseSheetLineDetailResponse } from "../expenseTypes.ts";
+import type { ExpenseSheetLine } from "../expenseTypes.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
-import ExpenseReadOnlyField from "../components/ExpenseReadOnlyField.tsx";
+import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
+import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "../constants/internationalOptions.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
-
-const toBoolLabel = (value: boolean | null | undefined): string => {
-  if (value === true) return "true";
-  if (value === false) return "false";
-  return "-";
-};
+import {
+  mapBooleanEnumOptions,
+  mapWindowEnumOptions,
+  type ExpenseSelectOption,
+} from "../utils/expenseSelectOptions.ts";
+import { useExpenseSheetLineDetailMutations } from "./useExpenseSheetLineDetailMutations.ts";
+import { useExpenseSheetLineDetailTopbarActions } from "./useExpenseSheetLineDetailTopbarActions.ts";
+import { useExpenseSheetLineDetailState } from "./useExpenseSheetLineDetailState.ts";
 
 const ExpenseSheetLineDetailContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
+  const canEditExpense = canAccess("GASTOS_HOJA_GASTO", "Edit");
+  const canDeleteExpense = canAccess("GASTOS_HOJA_GASTO", "FullAccess");
+  const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
+  const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
+  const isCreateMode = lineMode === "create";
 
-  const [header, setHeader] = useState<ExpenseSheetHeader | null>(null);
-  const [line, setLine] = useState<ExpenseSheetLine | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-
-  useEffect(() => {
-    const loadDetail = async () => {
-      if (!hasAccess) {
-        showPermissionModal();
-        return;
-      }
-
-      if (!sheetId || !lineId) {
-        setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
-        return;
-      }
-
-      setIsLoading(true);
-      setErrorMessage("");
-
-      try {
-        const response = await fetchJson<ExpenseSheetLineDetailResponse>(
-          `/Gastos/GetExpenseSheetLineDetail?hojaGastosId=${encodeURIComponent(sheetId)}&lineRecId=${encodeURIComponent(lineId)}`,
-          {
-            method: "GET",
-            suppressPermissionModal: true,
-          }
-        );
-
-        if (response?.success === false || !response?.data) {
-          setErrorMessage(response?.message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
-          setHeader(null);
-          setLine(null);
-          return;
-        }
-
-        setHeader(response.data.header || null);
-        setLine(response.data.line || null);
-      } catch (error) {
-        if (error instanceof ApiFetchError && error.status === 403) {
-          showPermissionModal();
-          return;
-        }
-
-        setErrorMessage(error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load line detail."));
-        setHeader(null);
-        setLine(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    void loadDetail();
-  }, [hasAccess, lineId, sheetId]);
+  const {
+    header,
+    line,
+    isLoading,
+    errorMessage,
+    busy,
+    status,
+    isEditing,
+    modalError,
+    draftDescription,
+    draftTransDate,
+    draftTypeValueCode,
+    draftAmount,
+    draftQty,
+    draftProjectId,
+    draftInternational,
+    isSheetPaid,
+    setBusy,
+    setStatus,
+    setIsEditing,
+    setModalError,
+    setDraftDescription,
+    setDraftTransDate,
+    setDraftTypeValueCode,
+    setDraftAmount,
+    setDraftQty,
+    setDraftProjectId,
+    setDraftInternational,
+    handleEnableEdit,
+    handleCancelEdit,
+    handleOpenCreateMode,
+    navigateToSheetDetail,
+  } = useExpenseSheetLineDetailState({
+    hasAccess,
+    canCreateExpense,
+    canEditExpense,
+    sheetId,
+    lineId,
+    isCreateMode,
+    onForbidden: showPermissionModal,
+  });
 
   const amountText = useMemo(
     () => formatAmountWithCurrency(line?.amount ?? null, safeText(header?.currencyCode)),
     [header?.currencyCode, line?.amount]
   );
+  const projectValue = safeText(line?.projId || header?.projId);
+  const sheetDescription = safeText(header?.description) || "-";
+  const internacionalLabel = getExpenseInternationalLabel(line?.internacional);
 
-  const detailRows = useMemo(
-    () => [
-      { label: indT("ExpenseSheets_Field_SheetId", "Sheet id"), value: safeText(header?.hojaGastosId) || "-" },
-      { label: indT("ExpenseSheets_Field_LineId", "Line id"), value: safeText(line?.lineRecId) || "-" },
-      { label: indT("ExpenseSheets_Field_Project", "Project"), value: safeText(line?.projId || header?.projId) || "-" },
-      { label: indT("ExpenseSheets_Field_Currency", "Currency"), value: safeText(header?.currencyCode) || "-" },
-      { label: indT("ExpenseSheets_Field_Description", "Description"), value: safeText(line?.description || header?.description) || "-", fullWidth: true },
-      { label: indT("ExpenseSheets_Field_CreatedDate", "Date"), value: safeText(line?.transDate || header?.transDate) || "-" },
-      { label: indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate"), value: safeText(header?.exchRate) || "-" },
-      { label: indT("ExpenseSheets_Field_Type", "Type"), value: safeText(line?.typeValue) || "-" },
-      { label: indT("ExpenseSheets_Field_Amount", "Amount"), value: amountText || "-" },
-      { label: indT("ExpenseSheets_Field_Qty", "Quantity"), value: line?.qty != null ? String(line.qty) : "-" },
-      { label: indT("ExpenseSheets_Field_International", "International"), value: toBoolLabel(line?.internacional) },
-      { label: indT("ExpenseSheets_Field_Ticket", "Ticket"), value: toBoolLabel(line?.ticket) },
-      { label: indT("ExpenseSheets_Field_Attachments", "Attachments"), value: safeText(line?.indAttachFiles) || "-" },
-    ],
-    [amountText, header, line]
+  const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
+    const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
+    const mapped = mapWindowEnumOptions(source);
+
+    const currentTypeCode = safeText(line?.typeValueCode);
+    const currentTypeLabel = safeText(line?.typeValue);
+    if (currentTypeCode && !mapped.some((item) => item.value === currentTypeCode)) {
+      mapped.push({
+        value: currentTypeCode,
+        text: currentTypeLabel || currentTypeCode,
+      });
+    }
+
+    return mapped;
+  }, [line?.typeValue, line?.typeValueCode]);
+
+  const internationalOptions = useMemo<ExpenseSelectOption[]>(
+    () => mapBooleanEnumOptions(getExpenseInternationalOptions()),
+    []
   );
+
+  const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
+    defaultConfirmText: indT("Confirm_Yes", "OK"),
+    defaultCancelText: indT("Confirm_No", "Cancel"),
+  });
+
+  const handleModalConfirm = useCallback(async () => {
+    setModalError("");
+    await handleConfirm({
+      busy,
+      onError: (msg) => {
+        setModalError(msg);
+        setStatus(msg);
+      },
+    });
+  }, [busy, handleConfirm, setModalError, setStatus]);
+
+  const modalLoadingText = indT("Common_Loading", "Loading");
+  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
+  const modalConfirmText = busy
+    ? modalLoadingText
+    : !busy && modalError
+      ? indT("Common_OK", "OK")
+      : modal.confirmText || indT("Confirm_Yes", "OK");
+
+  const handleModalButtonConfirm = useCallback(() => {
+    if (!busy && modalError) {
+      closeConfirm();
+      return;
+    }
+    handleModalConfirm();
+  }, [busy, closeConfirm, handleModalConfirm, modalError]);
+
+  const { handleUpdate, handleDelete } = useExpenseSheetLineDetailMutations({
+    busy,
+    isEditing,
+    isCreateMode,
+    isLocked: isSheetPaid,
+    canCreateExpense,
+    canEditExpense,
+    canDeleteExpense,
+    sheetId,
+    lineId,
+    line,
+    draftDescription,
+    draftTransDate,
+    draftTypeValueCode,
+    draftAmount,
+    draftQty,
+    draftProjectId,
+    draftInternational,
+    setModalError,
+    setBusy,
+    setStatus,
+    setIsEditing,
+    onCreateSuccess: () => {},
+  });
+
+  useExpenseSheetLineDetailTopbarActions({
+    busy,
+    modalOpen: modal.open,
+    isEditing,
+    isCreateMode,
+    isLocked: isSheetPaid,
+    canCreateExpense,
+    canEditExpense,
+    canDeleteExpense,
+    sheetId,
+    setModalError,
+    handleEnableEdit,
+    handleCancelEdit,
+    handleUpdate,
+    handleDelete,
+    onSaveSuccess: () => {
+      if (isCreateMode) {
+        navigateToSheetDetail();
+        return;
+      }
+
+      window.location.reload();
+    },
+    openConfirm,
+    closeConfirm,
+  });
 
   return (
     <div className="space-y-2">
+      <ConfirmModal
+        open={modal.open}
+        title={modal.title}
+        message={modal.message}
+        confirmText={modalConfirmText}
+        cancelText={modalCancelText}
+        loadingText={modalLoadingText}
+        showCancel={modal.showCancel}
+        showConfirm={modal.showConfirm}
+        busy={busy}
+        error={modalError}
+        status={status}
+        onConfirm={handleModalButtonConfirm}
+        onCancel={closeConfirm}
+      />
+
       <div
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
         style={{ display: isLoading ? "flex" : "none" }}
@@ -114,13 +216,43 @@ const ExpenseSheetLineDetailContent = () => {
       {errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
 
       {!isLoading && !errorMessage && line ? (
-        <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {detailRows.map((row) => (
-              <ExpenseReadOnlyField key={row.label} label={row.label} value={row.value} fullWidth={row.fullWidth} />
-            ))}
-          </div>
-        </section>
+        <ExpenseSheetLineForm
+          line={line}
+          fallbackDate={safeText(header?.transDate)}
+          sheetDescription={sheetDescription}
+          projectValue={projectValue}
+          amountText={amountText}
+          internacionalLabel={internacionalLabel}
+          status={status}
+          isEditing={isEditing}
+          gastoTypeOptions={gastoTypeOptions}
+          internationalOptions={internationalOptions}
+          draftDescription={draftDescription}
+          draftTransDate={draftTransDate}
+          draftTypeValueCode={draftTypeValueCode}
+          draftAmount={draftAmount}
+          draftQty={draftQty}
+          draftProjectId={draftProjectId}
+          draftInternational={draftInternational}
+          onDraftDescriptionChange={setDraftDescription}
+          onDraftTransDateChange={setDraftTransDate}
+          onDraftTypeValueCodeChange={setDraftTypeValueCode}
+          onDraftAmountChange={setDraftAmount}
+          onDraftQtyChange={setDraftQty}
+          onDraftProjectIdChange={setDraftProjectId}
+          onDraftInternationalChange={setDraftInternational}
+        />
+      ) : null}
+
+      {canCreateExpense && !isCreateMode ? (
+        <FloatingActionButton
+          route=""
+          ariaLabel={indT("Common_Create", "Create")}
+          size={76}
+          right={16}
+          bottom={24}
+          onClick={handleOpenCreateMode}
+        />
       ) : null}
     </div>
   );
