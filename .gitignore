@@ -188,6 +188,9 @@ publish/
 *.publishproj
 .publish_tmp/
 
+# Codex local temporary work folders (build checks, probes, publish checks)
+.codex/tmp/
+
 # Microsoft Azure Web App publish settings. Comment the next line if you want to
 # checkin your Azure Web App publish settings, but sensitive information contained
 # in these scripts will be unencrypted
