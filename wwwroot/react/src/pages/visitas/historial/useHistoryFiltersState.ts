@@ -316,16 +316,18 @@ export const useHistoryFiltersState = ({
       const today = startOfDay(new Date());
 
       if (filterId === "custom") {
+        // Toggle manual panel on every Date button click.
         if (showManualPickerPanel) {
           setShowManualError(false);
           setHoverDate(null);
+          setSelectingStep(startDate && endDate ? "done" : startDate ? "end" : "start");
           setIsOpen(false);
           setShowManualPickerPanel(false);
           return;
         }
 
-        const nextStart = manualStartDate ? new Date(manualStartDate) : null;
-        const nextEnd = manualEndDate ? new Date(manualEndDate) : null;
+        const nextStart = manualStartDate ? new Date(manualStartDate) : startDate ? new Date(startDate) : null;
+        const nextEnd = manualEndDate ? new Date(manualEndDate) : endDate ? new Date(endDate) : null;
         setActiveQuickFilter("custom");
         setShowManualPickerPanel(true);
         setStartDate(nextStart);
@@ -336,14 +338,9 @@ export const useHistoryFiltersState = ({
           setCurrentYear(nextStart.getFullYear());
         }
 
-        if (nextStart && nextEnd) {
-          setSelectingStep("done");
-          setIsOpen(false);
-        } else {
-          setSelectingStep(nextStart && !nextEnd ? "end" : "start");
-          setIsOpen(true);
-        }
-
+        // Always reopen the manual calendar when the custom date quick filter is pressed.
+        setSelectingStep(nextStart && !nextEnd ? "end" : "start");
+        setIsOpen(true);
         setHoverDate(null);
         setShowManualError(false);
         return;
@@ -369,7 +366,7 @@ export const useHistoryFiltersState = ({
         applyQuickRange(filterId, start, today);
       }
     },
-    [applyQuickRange, manualEndDate, manualStartDate, showManualPickerPanel, startOfDay]
+    [applyQuickRange, endDate, manualEndDate, manualStartDate, showManualPickerPanel, startDate, startOfDay]
   );
 
   const handleClientSelected = useCallback((client: ClientOption | null) => {

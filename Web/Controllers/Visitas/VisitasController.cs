@@ -207,7 +207,7 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
-        // Transcribes a WAV audio file into text using api/speech/transcribe
+        // Transcribes a WAV audio file into text using api/ia/service/speech
         [HttpPost]
         [ValidateAntiForgeryToken]
         [RequestSizeLimit(30000000)]

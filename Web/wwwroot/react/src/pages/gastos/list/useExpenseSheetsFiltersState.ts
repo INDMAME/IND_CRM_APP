@@ -95,32 +95,43 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
 
   const onDateRangeChange = useCallback(
     (nextFromDate: string, nextToDate: string) => {
+      const hasFullRange = !!nextFromDate && !!nextToDate;
       setFromDate(nextFromDate);
       setToDate(nextToDate);
-      setShowManualDateFilter(true);
+      if (!hasFullRange) {
+        setShowManualDateFilter(true);
+      }
       setActiveQuickFilter("custom");
       if (showManualDateError) {
-        setShowManualDateError(!(nextFromDate && nextToDate));
+        setShowManualDateError(!hasFullRange);
       }
     },
     [showManualDateError]
   );
 
+  // Closes the manual date UI once the user finishes selecting a full range.
+  const onManualRangeComplete = useCallback((nextFromDate: string, nextToDate: string) => {
+    setFromDate(nextFromDate);
+    setToDate(nextToDate);
+    setActiveQuickFilter("custom");
+    setShowManualDateError(false);
+    setShowManualDateFilter(false);
+  }, []);
+
   const onQuickFilterChange = useCallback(
     (filterId: ExpenseQuickFilterId) => {
       if (filterId === "custom") {
+        // Toggle manual date controls on every Date button click.
         if (showManualDateFilter) {
           setShowManualDateFilter(false);
           setShowManualDateError(false);
-          if (!fromDate || !toDate) {
-            setActiveQuickFilter(null);
-          }
           return;
         }
 
         setActiveQuickFilter("custom");
         setShowManualDateFilter(true);
         setShowManualDateError(false);
+        // Always ask the date component to open the calendar when Date is pressed.
         setManualDateAutoOpenKey((previous) => previous + 1);
         return;
       }
@@ -177,6 +188,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     onClear,
     restoreAppliedFilters,
     onDateRangeChange,
+    onManualRangeComplete,
     onQuickFilterChange,
     toggleFilterPanel,
   };

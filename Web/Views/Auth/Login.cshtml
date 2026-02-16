@@ -5,6 +5,7 @@
     Layout = null;
     var forceEntra = ViewBag.ForceEntra == true;
     var systemVersion = "0.5";
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
 
 <!DOCTYPE html>
@@ -90,5 +91,29 @@
             </div>
         </div>
     </div>
+
+    @{
+        try
+        {
+            await Html.PartialAsync("_IndActionMark");
+        }
+        catch
+        {
+            // Defensive: do not break login when partial is unavailable.
+        }
+    }
+
+    <script nonce="@cspNonce" src="~/js/ind-action-mark.js" asp-append-version="true"></script>
+
+    @{
+        try
+        {
+            await Html.PartialAsync("_IndActionMarkInit");
+        }
+        catch
+        {
+            // Defensive: do not break login when partial is unavailable.
+        }
+    }
 </body>
 </html>

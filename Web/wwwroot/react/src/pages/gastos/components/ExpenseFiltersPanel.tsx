@@ -46,6 +46,7 @@ type ExpenseFiltersPanelProps = {
   activeQuickFilter: ExpenseQuickFilterId | null;
   showManualDateError: boolean;
   onDateRangeChange: (fromDate: string, toDate: string) => void;
+  onManualRangeComplete: (fromDate: string, toDate: string) => void;
   onQuickFilterChange: (filterId: ExpenseQuickFilterId) => void;
   onProjectIdChange: (value: string) => void;
   onHojaGastosIdChange: (value: string) => void;
@@ -69,6 +70,7 @@ const ExpenseFiltersPanel = ({
   activeQuickFilter,
   showManualDateError,
   onDateRangeChange,
+  onManualRangeComplete,
   onQuickFilterChange,
   onProjectIdChange,
   onHojaGastosIdChange,
@@ -116,6 +118,7 @@ const ExpenseFiltersPanel = ({
             fromDate={fromDate}
             toDate={toDate}
             onChange={onDateRangeChange}
+            onRangeComplete={onManualRangeComplete}
             autoOpenRequestId={manualDateAutoOpenKey}
             showManualError={showManualDateError}
             showStartError={showManualDateError && !fromDate}

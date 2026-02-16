@@ -222,8 +222,6 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const {
     startDate,
     endDate,
-    manualStartDate,
-    manualEndDate,
     hoverDate,
     selectingStep,
     currentMonth,
@@ -608,13 +606,8 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   const showFilterActions = showFilters;
   const showSummary = !showFilters && !!startDate && !!endDate;
   const showResults = !showFilters;
-  const manualRangeReady = !!manualStartDate && !!manualEndDate;
-  const showInlineSummary =
-    !!startDate &&
-    !!endDate &&
-    !isOpen &&
-    (activeQuickFilter !== "custom" || manualRangeReady);
   const showManualPicker = activeQuickFilter === "custom" && showManualPickerPanel;
+  const showInlineSummary = !!startDate && !!endDate && !showManualPicker;
 
   return (
     <div className="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4 space-y-2">

@@ -45,6 +45,15 @@ const showPermissionModal = (opts?: Record<string, unknown>) => {
   alert(fallback);
 };
 
+const CONTEXT_FAILURE_HINTS = [
+  "contexto de companias no inicializado",
+  "/api/auth/entra/context",
+  "company context not initialized",
+  "context not initialized",
+];
+
+let forcedReloginPromise: Promise<string> | null = null;
+
 export const getCsrfToken = (): string => {
   const meta = document.querySelector('meta[name="csrf-token"]');
   return meta ? meta.getAttribute("content") || "" : "";
@@ -62,6 +71,79 @@ const tryParseJson = (raw: string): any | null => {
 const getMessageFromPayload = (payload: any): string => {
   const message = payload?.message;
   return typeof message === "string" && message.trim() ? message : "";
+};
+
+const normalizeForMatch = (value: string): string => {
+  if (!value) return "";
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+};
+
+const isContextBootstrapFailureMessage = (message: string): boolean => {
+  const normalized = normalizeForMatch(message);
+  if (!normalized) return false;
+  return CONTEXT_FAILURE_HINTS.some((hint) => normalized.includes(hint));
+};
+
+const getDefaultLoginUrl = (): string => "/Auth/Login?loggedOut=true";
+
+const requestForcedRelogin = async (reason: string): Promise<string> => {
+  const csrfToken = getCsrfToken();
+  const headers: HeadersInit = {
+    Accept: "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+  };
+
+  if (csrfToken) {
+    (headers as Record<string, string>)["RequestVerificationToken"] = csrfToken;
+  }
+
+  const safeReason = encodeURIComponent(reason || "context-error");
+
+  try {
+    const response = await fetch(`/Auth/ForceRelogin?reason=${safeReason}`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers,
+    });
+
+    const raw = await response.text();
+    const payload = tryParseJson(raw);
+    const loginUrl = typeof payload?.loginUrl === "string" ? payload.loginUrl.trim() : "";
+    return loginUrl || getDefaultLoginUrl();
+  } catch {
+    return getDefaultLoginUrl();
+  }
+};
+
+const shouldForceRelogin = (payload: any, status: number): boolean => {
+  if (status === 401) return true;
+  if (payload?.forceRelogin === true) return true;
+
+  if (payload?.success === false) {
+    const message = getMessageFromPayload(payload);
+    return isContextBootstrapFailureMessage(message);
+  }
+
+  return false;
+};
+
+const forceReloginAndWait = async <T>(reason: string): Promise<T> => {
+  if (typeof window === "undefined") {
+    throw new ApiFetchError(indT("Api_SessionExpired", "Your session has expired."), 401);
+  }
+
+  if (!forcedReloginPromise) {
+    forcedReloginPromise = requestForcedRelogin(reason);
+  }
+
+  const loginUrl = await forcedReloginPromise;
+  window.location.replace(loginUrl || getDefaultLoginUrl());
+
+  // Keep pending until navigation finishes to avoid rendering transient errors.
+  return new Promise<T>(() => {});
 };
 
 export async function fetchJson<T = any>(url: string, options?: ApiFetchOptions): Promise<T> {
@@ -87,6 +169,11 @@ export async function fetchJson<T = any>(url: string, options?: ApiFetchOptions)
   const payload = tryParseJson(raw);
 
   if (!response.ok) {
+    if (shouldForceRelogin(payload, response.status)) {
+      const payloadMessage = getMessageFromPayload(payload);
+      return forceReloginAndWait<T>(payloadMessage || `http-${response.status}`);
+    }
+
     if (response.status === 403) {
       if (!suppressPermissionModal) showPermissionModal();
       throw new ApiFetchError(
@@ -109,6 +196,11 @@ export async function fetchJson<T = any>(url: string, options?: ApiFetchOptions)
   }
 
   if (payload !== null) {
+    if (shouldForceRelogin(payload, response.status)) {
+      const payloadMessage = getMessageFromPayload(payload);
+      return forceReloginAndWait<T>(payloadMessage || "context-error");
+    }
+
     return payload as T;
   }
 

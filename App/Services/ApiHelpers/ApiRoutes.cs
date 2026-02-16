@@ -17,7 +17,7 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string VisitsCreateAsistente = "api/crm/visits/createVisitaAsistente";
         public const string VisitsDeleteAsistente = "api/crm/visits/deleteVisitaAsistente";
         public const string ExpenseSheets = "api/crm/expensesheets";
-        public const string SpeechTranscribe = "api/speech/transcribe";
+        public const string SpeechTranscribe = "api/ia/service/speech";
 
         // Builds the activity by code route.
         public static string ActivityByCode(string safeCode) =>

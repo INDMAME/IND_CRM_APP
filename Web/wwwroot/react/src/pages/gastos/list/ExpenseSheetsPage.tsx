@@ -65,6 +65,7 @@ const ExpenseSheetsPageContent = () => {
     onClear,
     restoreAppliedFilters,
     onDateRangeChange,
+    onManualRangeComplete,
     onQuickFilterChange,
     toggleFilterPanel,
   } = useExpenseSheetsFiltersState({
@@ -256,6 +257,7 @@ const ExpenseSheetsPageContent = () => {
         billedMode={billedMode}
         activeQuickFilter={activeQuickFilter}
         onDateRangeChange={onDateRangeChange}
+        onManualRangeComplete={onManualRangeComplete}
         onQuickFilterChange={onQuickFilterChange}
         onProjectIdChange={setProjectId}
         onHojaGastosIdChange={setHojaGastosId}

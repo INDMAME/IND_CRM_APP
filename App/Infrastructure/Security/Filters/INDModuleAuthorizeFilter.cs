@@ -1,16 +1,20 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using IND_CRM_APP.Extensions;
 using IND_CRM_APP.Infrastructure.Localization;
 using IND_CRM_APP.Infrastructure.Security.Modules;
 using IND_CRM_APP.Infrastructure.Security.Permissions;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.AspNetCore.Mvc.ViewFeatures;
 using Microsoft.Extensions.Localization;
+using Microsoft.Extensions.Logging;
 
 namespace IND_CRM_APP.Infrastructure.Security.Filters
 {
@@ -20,15 +24,18 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
         private readonly IIndAuthContextService _authContext;
         private readonly ITempDataDictionaryFactory _tempDataFactory;
         private readonly IStringLocalizer<INDSharedResource> _sr;
+        private readonly ILogger<INDModuleAuthorizeFilter> _logger;
 
         public INDModuleAuthorizeFilter(
             IIndAuthContextService authContext,
             ITempDataDictionaryFactory tempDataFactory,
-            IStringLocalizer<INDSharedResource> sr)
+            IStringLocalizer<INDSharedResource> sr,
+            ILogger<INDModuleAuthorizeFilter> logger)
         {
             _authContext = authContext;
             _tempDataFactory = tempDataFactory;
             _sr = sr;
+            _logger = logger;
         }
 
         public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
@@ -51,9 +58,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             var ctxResult = await _authContext.EnsureContextAsync();
             if (!ctxResult.Success || ctxResult.Context == null)
             {
-                Deny(context, string.IsNullOrWhiteSpace(ctxResult.Message)
-                    ? AccessDeniedMessage("Context not available.")
-                    : ctxResult.Message);
+                await HandleContextFailureAsync(context, ctxResult.Message);
                 return;
             }
 
@@ -361,6 +366,45 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                    basePath.Equals("/Home/Index", StringComparison.OrdinalIgnoreCase) ||
                    basePath.Equals("/Historial/History", StringComparison.OrdinalIgnoreCase) ||
                    basePath.Equals("/Visitas/Create", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Handles context bootstrap failures by clearing cache and forcing a clean login.
+        private async Task HandleContextFailureAsync(ActionExecutingContext context, string? technicalMessage)
+        {
+            var http = context.HttpContext;
+            var path = http.Request.Path.Value ?? string.Empty;
+            var safeReason = string.IsNullOrWhiteSpace(technicalMessage)
+                ? "Context not available."
+                : technicalMessage;
+
+            _logger.LogError("Context initialization failed for {Path}. Reason: {Reason}", path, safeReason);
+
+            // Clear session cache and auth cookie to prevent stale context loops.
+            http.Session.Clear();
+            await http.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+
+            var tempData = _tempDataFactory.GetTempData(http);
+            tempData.INDSetActionMarkError();
+
+            var loginUrl = "/Auth/Login?loggedOut=true";
+            var publicMessage = _sr["Api_SessionExpired"].Value;
+
+            if (IsJsonRequest(http))
+            {
+                context.Result = new JsonResult(new
+                {
+                    success = false,
+                    message = publicMessage,
+                    forceRelogin = true,
+                    loginUrl
+                })
+                {
+                    StatusCode = StatusCodes.Status401Unauthorized
+                };
+                return;
+            }
+
+            context.Result = new RedirectToActionResult("Login", "Auth", new { loggedOut = true });
         }
 
         private void Deny(ActionExecutingContext context, string message)

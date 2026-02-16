@@ -19,6 +19,7 @@ type ExpenseDateRangeFilterProps = {
   fromDate: string;
   toDate: string;
   onChange: (fromDate: string, toDate: string) => void;
+  onRangeComplete?: (fromDate: string, toDate: string) => void;
   autoOpenRequestId?: number;
   showManualError?: boolean;
   showStartError?: boolean;
@@ -30,6 +31,7 @@ const ExpenseDateRangeFilter = ({
   fromDate,
   toDate,
   onChange,
+  onRangeComplete,
   autoOpenRequestId = 0,
   showManualError = false,
   showStartError = false,
@@ -170,18 +172,25 @@ const ExpenseDateRangeFilter = ({
       }
 
       if (selectingStep === "end") {
+        let finalStart = startDate;
+        let finalEnd = nextDate;
+
         if (isBeforeDay(nextDate, startDate)) {
-          setEndDate(startDate);
-          setStartDate(nextDate);
+          finalStart = nextDate;
+          finalEnd = startDate;
+          setEndDate(finalEnd);
+          setStartDate(finalStart);
         } else {
-          setEndDate(nextDate);
+          setEndDate(finalEnd);
         }
+
+        onRangeComplete?.(toIsoDateRangeValue(finalStart), toIsoDateRangeValue(finalEnd));
         setSelectingStep("done");
         setIsOpen(false);
         setHoverDate(null);
       }
     },
-    [endDate, selectingStep, startDate]
+    [endDate, onRangeComplete, selectingStep, startDate]
   );
 
   const onDayHover = useCallback(
