@@ -100,6 +100,7 @@ export type ExpenseSheetListApiRequest = {
   createdDateTo?: string;
   projId?: string;
   currencyCode?: string;
+  expenseSheetStatus?: number;
 };
 
 // /api/crm/expensesheets/list item contract.

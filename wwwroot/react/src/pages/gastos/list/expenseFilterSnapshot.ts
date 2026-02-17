@@ -5,9 +5,16 @@ import { DEFAULT_EXPENSE_STATUS_FILTER, normalizeExpenseStatusFilterCode } from 
 export const normalizeExpenseFilterSnapshot = (
   value: Partial<AppliedFilterSnapshot> | null | undefined
 ): AppliedFilterSnapshot => {
+  const expenseSheetStatusRaw = Number(
+    (value as { expenseSheetStatus?: unknown } | null | undefined)?.expenseSheetStatus
+  );
   const billedModeRaw = Number((value as { billedMode?: unknown } | null | undefined)?.billedMode);
+  const hasExplicitStatus = Number.isInteger(expenseSheetStatusRaw) && expenseSheetStatusRaw >= 0 && expenseSheetStatusRaw <= 4;
   const legacyStatusFallback = billedModeRaw === 1 ? 4 : billedModeRaw === 0 ? 0 : DEFAULT_EXPENSE_STATUS_FILTER;
-  const statusFilter = normalizeExpenseStatusFilterCode(value?.statusFilter, legacyStatusFallback);
+  const statusFilter = normalizeExpenseStatusFilterCode(
+    hasExplicitStatus ? expenseSheetStatusRaw : value?.statusFilter,
+    legacyStatusFallback
+  );
   const hojaGastosId = String(value?.hojaGastosId || "").trim();
 
   return {

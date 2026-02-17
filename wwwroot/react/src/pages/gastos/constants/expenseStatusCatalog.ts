@@ -10,42 +10,42 @@ type ExpenseStatusUiMeta = {
 };
 
 export const DEFAULT_EXPENSE_STATUS_FILTER: ExpenseStatusFilterCode = 5;
-const EXPENSE_STATUS_CODES: ExpenseStatusFilterCode[] = [0, 1, 2, 3, 4, 5];
+const EXPENSE_STATUS_CODES: ExpenseStatusFilterCode[] = [5, 0, 1, 2, 3, 4];
 
 const STATUS_UI_BY_CODE: Record<ExpenseStatusFilterCode, ExpenseStatusUiMeta> = {
   0: {
     labelKey: "ExpenseSheets_Filter_Status_Draft",
-    fallback: "Borrador",
+    fallback: "Draft",
     colorHex: "#94a3b8",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--draft",
   },
   1: {
     labelKey: "ExpenseSheets_Filter_Status_InReview",
-    fallback: "En Revision",
+    fallback: "InReview",
     colorHex: "#f59e0b",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--review",
   },
   2: {
     labelKey: "ExpenseSheets_Filter_Status_Approved",
-    fallback: "Aprobado",
+    fallback: "Approved",
     colorHex: "#22c55e",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--approved",
   },
   3: {
     labelKey: "ExpenseSheets_Filter_Status_Rejected",
-    fallback: "Rechazado",
+    fallback: "Rejected",
     colorHex: "#ef4444",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--rejected",
   },
   4: {
     labelKey: "ExpenseSheets_Filter_Status_Paid",
-    fallback: "Pagado",
+    fallback: "Paid",
     colorHex: "#00296b",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--paid",
   },
   5: {
     labelKey: "ExpenseSheets_Filter_Status_All",
-    fallback: "Todo",
+    fallback: "Todos",
     colorHex: "#64748b",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--all",
   },

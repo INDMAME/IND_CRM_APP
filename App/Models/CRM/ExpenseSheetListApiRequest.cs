@@ -29,6 +29,10 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? CurrencyCode { get; set; }
 
+        [JsonPropertyName("expenseSheetStatus")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? ExpenseSheetStatus { get; set; }
+
         [JsonPropertyName("page")]
         public int Page { get; set; } = 1;
 

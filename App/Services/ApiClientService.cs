@@ -754,6 +754,7 @@ namespace IND_CRM_APP.Services
                 CreatedDateTo = NormalizeOptionalText(req.CreatedDateTo),
                 ProjId = NormalizeOptionalText(req.ProjId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
+                ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
                 Page = req.Page < 1 ? 1 : req.Page,
                 PageSize = req.PageSize <= 0 ? 50 : req.PageSize
             };

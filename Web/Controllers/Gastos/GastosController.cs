@@ -163,6 +163,7 @@ namespace IND_CRM_APP.Controllers
                 CreatedDateTo = NormalizeListDateFilter(req.CreatedDateTo),
                 ProjId = NormalizeOptionalText(req.ProjId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
+                ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
                 Page = page,
                 PageSize = pageSize
             };
@@ -1143,6 +1144,7 @@ namespace IND_CRM_APP.Controllers
                 CreatedDateTo = NormalizeListDateFilter(req.ToDate),
                 ProjId = NormalizeOptionalText(req.ProjectId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
+                ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
                 Page = page,
                 PageSize = pageSize
             };

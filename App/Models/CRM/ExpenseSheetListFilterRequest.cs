@@ -10,6 +10,7 @@ namespace IND_CRM_APP.Models.CRM
         public string ProjectId { get; set; } = string.Empty;
         public string HojaGastosId { get; set; } = string.Empty;
         public string CurrencyCode { get; set; } = string.Empty;
+        public int? ExpenseSheetStatus { get; set; }
         public int Page { get; set; } = 1;
         public int PageSize { get; set; } = 6;
     }

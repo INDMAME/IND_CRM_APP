@@ -3,11 +3,21 @@ import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog
 
 const DEFAULT_SUGGEST_PAGE_SIZE = 50;
 
-// Maps the new status filter to legacy billedMode while list endpoints are upgraded.
-const resolveLegacyBilledMode = (statusFilter: number): 0 | 1 | 2 => {
-  if (statusFilter === 4) return 1;
-  if (statusFilter === DEFAULT_EXPENSE_STATUS_FILTER) return 2;
-  return 0;
+const isValidExpenseSheetStatus = (value: unknown): value is number => {
+  return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 4;
+};
+
+// Resolves the optional API status filter from UI filter state.
+const resolveExpenseSheetStatus = (statusFilter: number): number | undefined => {
+  if (statusFilter === DEFAULT_EXPENSE_STATUS_FILTER) {
+    return undefined;
+  }
+
+  if (!isValidExpenseSheetStatus(statusFilter)) {
+    throw new Error("expenseSheetStatus filter must be an integer between 0 and 4.");
+  }
+
+  return statusFilter;
 };
 
 const normalizeOptionalText = (value: string | undefined): string | undefined => {
@@ -27,11 +37,12 @@ export const buildExpenseListPayload = (
 
   return {
     filter: safeFilter || "",
-    billedMode: resolveLegacyBilledMode(filters.statusFilter),
+    billedMode: 2,
     createdDateFrom: normalizeOptionalText(filters.fromDate),
     createdDateTo: normalizeOptionalText(filters.toDate),
     projId: normalizeOptionalText(filters.projectId),
     currencyCode: normalizeOptionalText(filters.currencyCode),
+    expenseSheetStatus: resolveExpenseSheetStatus(filters.statusFilter),
     page: nextPage,
     pageSize: nextPageSize,
   };

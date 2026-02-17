@@ -107,6 +107,11 @@ const isNonNegativeNumber = (value: unknown): boolean => {
   return parsed !== null && parsed >= 0;
 };
 
+const isValidListExpenseSheetStatus = (value: unknown): boolean => {
+  const parsed = toNullableNumber(value);
+  return parsed !== null && Number.isInteger(parsed) && parsed >= 0 && parsed <= 4;
+};
+
 const toNullableBool = (value: unknown): boolean | null => {
   if (value === null || value === undefined) return null;
   if (typeof value === "boolean") return value;
@@ -434,11 +439,14 @@ const toLegacyListRequestPayload = (payload: ExpenseSheetListApiRequest) => {
   return {
     filter: safeText(payload.filter),
     hojaGastosId: safeText(payload.filter),
-    billedMode: payload.billedMode ?? 0,
+    billedMode: payload.billedMode ?? 2,
     fromDate: safeText(payload.createdDateFrom),
     toDate: safeText(payload.createdDateTo),
     projectId: safeText(payload.projId),
     currencyCode: safeText(payload.currencyCode),
+    expenseSheetStatus: isValidListExpenseSheetStatus(payload.expenseSheetStatus)
+      ? Number(payload.expenseSheetStatus)
+      : undefined,
     page: Number.isFinite(payload.page) && payload.page > 0 ? payload.page : 1,
     pageSize: Number.isFinite(payload.pageSize) && payload.pageSize > 0 ? payload.pageSize : 50,
   };
@@ -573,6 +581,10 @@ export const fetchExpenseSheetList = async (
   payload: ExpenseSheetListApiRequest,
   options?: ApiFetchOptions
 ): Promise<IndPagedResponse<ExpenseSheetListItemDto>> => {
+  if (payload.expenseSheetStatus !== undefined && !isValidListExpenseSheetStatus(payload.expenseSheetStatus)) {
+    throw new ApiFetchError("expenseSheetStatus must be an integer between 0 and 4.");
+  }
+
   const context = await ensureExpenseApiContext(options);
   try {
     const response = await fetchJson<IndPagedResponse<ExpenseSheetListItemDto>>("/api/crm/expensesheets/list", {
