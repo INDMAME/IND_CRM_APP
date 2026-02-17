@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetHeader, ExpenseSheetLine } from "../expenseTypes.ts";
-import { fetchExpenseSheetDetail, fetchExpenseSheetLineDetail } from "../utils/expenseApi.ts";
+import { fetchExpenseSheetDetail, mapExpenseSheetHeader, mapExpenseSheetLine } from "../utils/expenseApi.ts";
 import {
   clearExpenseNavigationGuard,
   navigateToExpenseUrl,
@@ -77,7 +77,7 @@ export const useExpenseSheetLineDetailState = ({
 
   const hydrateDraftFromLine = useCallback((nextLine: ExpenseSheetLine | null, nextHeader: ExpenseSheetHeader | null) => {
     setDraftDescription(safeText(nextLine?.description));
-    setDraftTransDate(toInputDate(nextLine?.transDate || nextHeader?.transDate));
+    setDraftTransDate(toInputDate(nextLine?.transDate || nextHeader?.createdDate));
     setDraftTypeValueCode(safeText(nextLine?.typeValueCode));
     setDraftAmount(formatEditableNumber(nextLine?.amount));
     setDraftQty(formatEditableNumber(nextLine?.qty));
@@ -113,14 +113,25 @@ export const useExpenseSheetLineDetailState = ({
             suppressPermissionModal: true,
           });
 
-          if (response?.success === false || !response?.data?.header) {
-            setErrorMessage(response?.message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
+          if (response?.Success === false) {
+            setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
             setHeader(null);
             setLine(null);
             return;
           }
 
-          const loadedHeader = response.data.header;
+          const sheets = Array.isArray(response?.Items) ? response.Items : [];
+          const selectedSheet =
+            sheets.find((entry) => safeText(entry?.HojaGastosId).toUpperCase() === sheetId.trim().toUpperCase()) || sheets[0];
+
+          if (!selectedSheet) {
+            setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
+            setHeader(null);
+            setLine(null);
+            return;
+          }
+
+          const loadedHeader = mapExpenseSheetHeader(selectedSheet);
           if (hasAssignedVoucher(loadedHeader.voucher)) {
             setErrorMessage(indT("ExpenseSheets_Detail_PaidReadOnly", "Paid expense sheets are read-only."));
             setHeader(loadedHeader);
@@ -145,19 +156,44 @@ export const useExpenseSheetLineDetailState = ({
           return;
         }
 
-        const response = await fetchExpenseSheetLineDetail(sheetId, lineId, {
+        const response = await fetchExpenseSheetDetail(sheetId, {
           suppressPermissionModal: true,
         });
 
-        if (response?.success === false || !response?.data) {
-          setErrorMessage(response?.message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
+        if (response?.Success === false) {
+          setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
           setHeader(null);
           setLine(null);
           return;
         }
 
-        setHeader(response.data.header || null);
-        setLine(response.data.line || null);
+        const sheets = Array.isArray(response?.Items) ? response.Items : [];
+        const selectedSheet =
+          sheets.find((entry) => safeText(entry?.HojaGastosId).toUpperCase() === sheetId.trim().toUpperCase()) || sheets[0];
+
+        if (!selectedSheet) {
+          setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
+          setHeader(null);
+          setLine(null);
+          return;
+        }
+
+        const mappedHeader = mapExpenseSheetHeader(selectedSheet);
+        const mappedLines = (Array.isArray(selectedSheet.Lines) ? selectedSheet.Lines : []).map((entry) =>
+          mapExpenseSheetLine(entry)
+        );
+        const selectedLine =
+          mappedLines.find((entry) => safeText(entry.lineRecId).toUpperCase() === lineId.trim().toUpperCase()) || null;
+
+        if (!selectedLine) {
+          setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
+          setHeader(mappedHeader);
+          setLine(null);
+          return;
+        }
+
+        setHeader(mappedHeader);
+        setLine(selectedLine);
       } catch (error) {
         if (error instanceof ApiFetchError && error.status === 403) {
           onForbidden();

@@ -1,6 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
-import { expenseCurrencyOptions } from "../constants/currencyCodes.ts";
+import { ApiFetchError } from "../../../services/apiService.ts";
+import { indT } from "../../../utils/indI18n.ts";
+import type { ExpenseSheetCurrencyDto } from "../expenseTypes.ts";
+import { getExpenseSheetCurrencies, getExpenseSheetDefaultCurrencyCode } from "../utils/expenseApi.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 
 type ExpenseCurrencyFilterSelectProps = {
@@ -12,9 +15,34 @@ type ExpenseCurrencyFilterSelectProps = {
   disabled?: boolean;
   showLabel?: boolean;
   idBase?: string;
+  preferDefaultCurrencyFromContext?: boolean;
 };
 
-// Shared fixed currency combobox with local instant search for expense filters.
+const normalizeCurrencyCode = (value: string | number | null | undefined): string => {
+  return String(value || "").trim().toUpperCase();
+};
+
+const mapCurrencyOptions = (items: ExpenseSheetCurrencyDto[] | undefined): ExpenseSelectOption[] => {
+  const source = Array.isArray(items) ? items : [];
+  const seenCodes = new Set<string>();
+
+  return source
+    .map((entry) => {
+      const currencyCodeIso = normalizeCurrencyCode(entry?.CurrencyCodeISO);
+      const effectiveIsoCode = currencyCodeIso || normalizeCurrencyCode(entry?.CurrencyCode);
+      if (!effectiveIsoCode) return null;
+      if (seenCodes.has(effectiveIsoCode)) return null;
+      seenCodes.add(effectiveIsoCode);
+
+      return {
+        value: effectiveIsoCode,
+        text: effectiveIsoCode,
+      } as ExpenseSelectOption;
+    })
+    .filter((entry): entry is ExpenseSelectOption => entry !== null);
+};
+
+// Shared currency combobox backed by /api/crm/expensesheets/currencies.
 const ExpenseCurrencyFilterSelect = ({
   label,
   placeholder,
@@ -24,26 +52,126 @@ const ExpenseCurrencyFilterSelect = ({
   disabled = false,
   showLabel = true,
   idBase = "expense-currency",
+  preferDefaultCurrencyFromContext = false,
 }: ExpenseCurrencyFilterSelectProps) => {
-  const options = useMemo<ExpenseSelectOption[]>(() => expenseCurrencyOptions, []);
+  const [options, setOptions] = useState<ExpenseSelectOption[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
+  const [loadErrorMessage, setLoadErrorMessage] = useState("");
+  const [emptyMessage, setEmptyMessage] = useState("");
+  const onChangeRef = useRef(onChange);
+  const valueRef = useRef(normalizeCurrencyCode(value));
+  const initialDefaultAppliedRef = useRef(false);
+
+  useEffect(() => {
+    onChangeRef.current = onChange;
+  }, [onChange]);
+
+  useEffect(() => {
+    valueRef.current = normalizeCurrencyCode(value);
+  }, [value]);
+
+  useEffect(() => {
+    let isCancelled = false;
+    const controller = new AbortController();
+
+    const loadCurrencies = async () => {
+      setIsLoadingOptions(true);
+      setLoadErrorMessage("");
+      setEmptyMessage("");
+
+      try {
+        const response = await getExpenseSheetCurrencies({
+          suppressPermissionModal: true,
+          signal: controller.signal,
+        });
+
+        if (isCancelled) return;
+
+        if (!response.Success) {
+          setOptions([]);
+          setLoadErrorMessage(response.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheets."));
+          return;
+        }
+
+        const mappedOptions = mapCurrencyOptions(response.Items);
+        setOptions(mappedOptions);
+
+        if (!mappedOptions.length) {
+          setEmptyMessage(response.Message || indT("Common_NoData", "No data"));
+          return;
+        }
+
+        const currentValue = valueRef.current;
+        const hasCurrentInList = mappedOptions.some((option) => normalizeCurrencyCode(option.value) === currentValue);
+        if (currentValue && hasCurrentInList) {
+          return;
+        }
+
+        if (!currentValue && preferDefaultCurrencyFromContext && !initialDefaultAppliedRef.current) {
+          const defaultCurrencyCode = normalizeCurrencyCode(
+            await getExpenseSheetDefaultCurrencyCode({
+              suppressPermissionModal: true,
+              signal: controller.signal,
+            })
+          );
+
+          if (isCancelled) return;
+
+          if (defaultCurrencyCode && mappedOptions.some((option) => normalizeCurrencyCode(option.value) === defaultCurrencyCode)) {
+            initialDefaultAppliedRef.current = true;
+            onChangeRef.current(defaultCurrencyCode);
+          }
+        }
+      } catch (error) {
+        if (isCancelled) return;
+        if (error instanceof DOMException && error.name === "AbortError") return;
+
+        const fallbackError = indT("ExpenseSheets_LoadError", "Could not load expense sheets.");
+        const message = error instanceof ApiFetchError ? error.message || fallbackError : fallbackError;
+        setOptions([]);
+        setLoadErrorMessage(message);
+      } finally {
+        if (!isCancelled) {
+          setIsLoadingOptions(false);
+        }
+      }
+    };
+
+    void loadCurrencies();
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, [preferDefaultCurrencyFromContext]);
+
+  const normalizedValue = useMemo(() => normalizeCurrencyCode(value), [value]);
+  const disableBecauseNoData = !isLoadingOptions && !loadErrorMessage && options.length === 0;
+  const effectiveDisabled = disabled || disableBecauseNoData;
+  const loadingMessage = indT("Common_Loading", "Loading");
 
   return (
-    <SelectCombobox
-      label={label}
-      placeholder={placeholder}
-      options={options}
-      value={String(value || "").trim().toUpperCase()}
-      onChange={(nextValue) => onChange(String(nextValue || "").trim().toUpperCase())}
-      readOnly={readOnly}
-      disabled={disabled}
-      allowTextInput
-      showSearchButton={false}
-      showLabel={showLabel}
-      usePortal={false}
-      idBase={idBase}
-      portalClassName="visitas-typography"
-      panelClassName="visitas-typography"
-    />
+    <div className="space-y-1.5">
+      <SelectCombobox
+        label={label}
+        placeholder={placeholder}
+        options={options}
+        value={normalizedValue}
+        onChange={(nextValue) => onChange(normalizeCurrencyCode(nextValue))}
+        readOnly={readOnly}
+        disabled={effectiveDisabled}
+        allowTextInput
+        showSearchButton={false}
+        showLabel={showLabel}
+        usePortal={false}
+        idBase={idBase}
+        portalClassName="visitas-typography"
+        panelClassName="visitas-typography"
+      />
+      {isLoadingOptions ? <p className="text-xs text-slate-500">{loadingMessage}</p> : null}
+      {!isLoadingOptions && loadErrorMessage ? <p className="text-xs text-danger">{loadErrorMessage}</p> : null}
+      {!isLoadingOptions && !loadErrorMessage && emptyMessage ? <p className="text-xs text-slate-500">{emptyMessage}</p> : null}
+    </div>
   );
 };
 

@@ -1,6 +1,9 @@
+import type { ReactNode } from "react";
+
 export type ExpenseSelectOption = {
   value: string;
   text: string;
+  icon?: ReactNode;
 };
 
 type WindowEnumItem = {

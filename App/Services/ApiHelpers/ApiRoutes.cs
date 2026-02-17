@@ -10,6 +10,9 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string AuthEntraContext = "api/auth/entra/context";
         public const string SystemEnvironment = "api/system/getEnvironmentName";
         public const string SystemCompany = "api/system/getCompanyName";
+        public const string SystemExchangeRate = "api/system/exchange-rate";
+        public const string Health = "api/health/health";
+        public const string HealthPing = "api/health/ping";
         public const string AccountsList = "api/crm/accounts/listAccounts";
         public const string ContactsList = "api/crm/accounts/listContacts";
         public const string ActivitiesList = "api/crm/activities/list";
@@ -18,6 +21,7 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string VisitsDeleteAsistente = "api/crm/visits/deleteVisitaAsistente";
         public const string ExpenseSheets = "api/crm/expensesheets";
         public const string SpeechTranscribe = "api/ia/service/speech";
+        public const string ExpenseFromTicket = "api/ia/service/expensefromticket";
 
         // Builds the activity by code route.
         public static string ActivityByCode(string safeCode) =>
@@ -41,9 +45,20 @@ namespace IND_CRM_APP.Services.ApiHelpers
 
         // Expense sheets list route. Filters are sent in POST body.
         public const string ExpenseSheetsList = "api/crm/expensesheets/list";
+        public const string ExpenseSheetCurrencies = "api/crm/expensesheets/currencies";
 
         // Builds the projects list route with query.
         public static string ProjectsList(string safeFilter, int page, int pageSize) =>
             $"api/crm/projects/list?filter={safeFilter}&page={page}&pageSize={pageSize}";
+
+        // Builds exchange-rate route with query.
+        public static string SystemExchangeRateByQuery(string safeBaseCurrency, string safeTargetCurrency, string? safeDate = null)
+        {
+            var route = $"{SystemExchangeRate}?baseCurrency={safeBaseCurrency}&targetCurrency={safeTargetCurrency}";
+            if (!string.IsNullOrWhiteSpace(safeDate))
+                route = $"{route}&date={safeDate}";
+
+            return route;
+        }
     }
 }

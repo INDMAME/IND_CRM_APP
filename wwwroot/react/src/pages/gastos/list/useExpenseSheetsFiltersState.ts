@@ -1,5 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { ExpenseQuickFilterId, AppliedFilterSnapshot } from "./expenseListTypes.ts";
+import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog.ts";
+import type { ExpenseStatusFilterCode } from "../expenseTypes.ts";
 import { startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { normalizeExpenseFilterSnapshot } from "./expenseFilterSnapshot.ts";
 
@@ -15,7 +17,8 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
   const [projectId, setProjectId] = useState("");
   const [hojaGastosId, setHojaGastosId] = useState("");
   const [currencyCode, setCurrencyCode] = useState("");
-  const [billedMode, setBilledMode] = useState(2);
+  const [statusFilter, setStatusFilter] = useState<ExpenseStatusFilterCode>(DEFAULT_EXPENSE_STATUS_FILTER);
+  const exchangeRateMode = null;
   const [activeQuickFilter, setActiveQuickFilter] = useState<ExpenseQuickFilterId | null>(null);
   const [showManualDateFilter, setShowManualDateFilter] = useState(false);
   const [showManualDateError, setShowManualDateError] = useState(false);
@@ -30,10 +33,11 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
       projectId,
       hojaGastosId,
       currencyCode,
-      billedMode,
+      statusFilter,
+      exchangeRateMode,
       filter: hojaGastosId,
     }),
-    [billedMode, currencyCode, fromDate, hojaGastosId, projectId, toDate]
+    [currencyCode, fromDate, hojaGastosId, projectId, statusFilter, toDate]
   );
 
   const onApply = useCallback(() => {
@@ -50,7 +54,8 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
       projectId,
       hojaGastosId,
       currencyCode,
-      billedMode,
+      statusFilter,
+      exchangeRateMode,
       filter: hojaGastosId,
     };
 
@@ -59,7 +64,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setShowManualDateFilter(false);
     setShowFilters(false);
     onApplyFilters(snapshot);
-  }, [billedMode, currencyCode, fromDate, hojaGastosId, onApplyFilters, projectId, toDate]);
+  }, [currencyCode, fromDate, hojaGastosId, onApplyFilters, projectId, statusFilter, toDate]);
 
   // Rehydrates the list filters from a cached snapshot when returning from detail.
   const restoreAppliedFilters = useCallback((snapshot: AppliedFilterSnapshot) => {
@@ -69,7 +74,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setProjectId(normalized.projectId);
     setHojaGastosId(normalized.hojaGastosId);
     setCurrencyCode(normalized.currencyCode);
-    setBilledMode(normalized.billedMode);
+    setStatusFilter(normalized.statusFilter);
     setActiveQuickFilter(null);
     setShowManualDateFilter(false);
     setShowManualDateError(false);
@@ -83,7 +88,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setProjectId("");
     setHojaGastosId("");
     setCurrencyCode("");
-    setBilledMode(2);
+    setStatusFilter(DEFAULT_EXPENSE_STATUS_FILTER);
     setActiveQuickFilter(null);
     setShowManualDateFilter(false);
     setShowManualDateError(false);
@@ -153,7 +158,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
       setFromDate(toIsoDate(nextFrom));
       setToDate(toIsoDate(today));
     },
-    [fromDate, showManualDateFilter, toDate]
+    [showManualDateFilter]
   );
 
   const toggleFilterPanel = useCallback(() => {
@@ -172,7 +177,8 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     projectId,
     hojaGastosId,
     currencyCode,
-    billedMode,
+    statusFilter,
+    exchangeRateMode,
     activeQuickFilter,
     showManualDateFilter,
     showManualDateError,
@@ -183,7 +189,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setProjectId,
     setHojaGastosId,
     setCurrencyCode,
-    setBilledMode,
+    setStatusFilter,
     onApply,
     onClear,
     restoreAppliedFilters,

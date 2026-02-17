@@ -263,7 +263,8 @@ namespace IND_CRM_APP.Services
                     {
                         CompanyId = c.CompanyId ?? string.Empty,
                         CompanyName = c.CompanyName ?? string.Empty,
-                        IsDefault = ToBool(c.IsDefault)
+                        IsDefault = ToBool(c.IsDefault),
+                        CurrencyCode = c.CurrencyCode ?? string.Empty
                     };
 
                     if (c.Modules != null)
@@ -299,7 +300,8 @@ namespace IND_CRM_APP.Services
                 AxUserId = header.AxUserId ?? string.Empty,
                 UserActive = ToBool(header.UserActive),
                 AppActive = ToBool(header.AppActive),
-                DefaultCompany = header.DefaultCompany ?? string.Empty
+                DefaultCompany = header.DefaultCompany ?? string.Empty,
+                DefaultCurrencyCode = header.DefaultCurrencyCode ?? string.Empty
             };
         }
 

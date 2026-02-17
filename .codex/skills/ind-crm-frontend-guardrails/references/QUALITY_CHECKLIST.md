@@ -30,6 +30,8 @@
 - `dotnet test -v minimal`
 - Verify MVC routes for Visitas and System
 - Confirm OIDC callback and Entra context flow
+- For each new `/api/...` endpoint, verify explicit `Program.cs` route map and verb alignment with controller attributes.
+- For each new `/api/...` endpoint, validate expected verb returns non-404/non-405 and wrong verb returns intentional 405.
 
 ## Regression checks
 - Date range selection works (from/to focus and payload format)
@@ -51,4 +53,4 @@
 - For release tasks, run `iisreset` after publish
 
 ## Last updated
-- 2026-02-12
+- 2026-02-17

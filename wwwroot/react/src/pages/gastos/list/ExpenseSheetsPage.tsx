@@ -6,6 +6,11 @@ import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
+import {
+  getExpenseStatusBadgeClassName,
+  getExpenseStatusLabel,
+  normalizeExpenseStatusFilterCode,
+} from "../constants/expenseStatusCatalog.ts";
 import ExpenseFiltersPanel from "../components/ExpenseFiltersPanel.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
 import HistorySummary from "../../visitas/historial/HistorySummary.tsx";
@@ -15,8 +20,18 @@ import { useExpenseSheetsFiltersState } from "./useExpenseSheetsFiltersState.ts"
 import { useExpenseSheetsFilterCache } from "./useExpenseSheetsFilterCache.ts";
 import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
+import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 
 const PAGE_SIZE = 6;
+
+// Initializes auth seed for expense API calls before island effects run.
+const bootstrapExpenseApiAuth = () => {
+  configureExpenseApiAuth({
+    token: safeText(window.__IND_API_TOKEN__),
+    entraOid: safeText(window.__IND_ENTRA_OID__),
+    appCode: safeText(window.__IND_APP_CODE__),
+  });
+};
 
 const ExpenseSheetsPageContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
@@ -49,7 +64,7 @@ const ExpenseSheetsPageContent = () => {
     projectId,
     hojaGastosId,
     currencyCode,
-    billedMode,
+    statusFilter,
     activeQuickFilter,
     showManualDateFilter,
     showManualDateError,
@@ -60,7 +75,7 @@ const ExpenseSheetsPageContent = () => {
     setProjectId,
     setHojaGastosId,
     setCurrencyCode,
-    setBilledMode,
+    setStatusFilter,
     onApply,
     onClear,
     restoreAppliedFilters,
@@ -141,27 +156,37 @@ const ExpenseSheetsPageContent = () => {
   }, [appliedFilters]);
 
   const summaryItems = useMemo(() => {
-    if (!appliedFilters) return [] as string[];
+    if (!appliedFilters) {
+      return [] as Array<{ key: string; label: string; value: string }>;
+    }
 
-    const summary: string[] = [];
+    const summary: Array<{ key: string; label: string; value: string }> = [];
     if (appliedFilters.projectId.trim()) {
-      summary.push(`${indT("ExpenseSheets_Filter_Project", "Project")}: ${appliedFilters.projectId.trim()}`);
+      summary.push({
+        key: "project",
+        label: indT("ExpenseSheets_Filter_Project", "Project"),
+        value: appliedFilters.projectId.trim(),
+      });
     }
     if (appliedFilters.hojaGastosId.trim()) {
-      summary.push(`${indT("ExpenseSheets_Filter_Sheet", "Expense sheet")}: ${appliedFilters.hojaGastosId.trim()}`);
+      summary.push({
+        key: "sheet",
+        label: indT("ExpenseSheets_Filter_Sheet", "Expense sheet"),
+        value: appliedFilters.hojaGastosId.trim(),
+      });
     }
     if (appliedFilters.currencyCode.trim()) {
-      summary.push(`${indT("ExpenseSheets_Filter_Currency", "Currency")}: ${appliedFilters.currencyCode.trim()}`);
+      summary.push({
+        key: "currency",
+        label: indT("ExpenseSheets_Filter_Currency", "Currency"),
+        value: appliedFilters.currencyCode.trim(),
+      });
     }
-    summary.push(
-      `${indT("ExpenseSheets_Filter_Status", "Estado")}: ${
-        appliedFilters.billedMode === 1
-          ? indT("ExpenseSheets_Filter_Status_Billed", "Pagado")
-          : appliedFilters.billedMode === 2
-            ? indT("ExpenseSheets_Filter_Status_Both", "Ambos")
-            : indT("ExpenseSheets_Filter_Status_Unbilled", "No Pagado")
-      }`
-    );
+    summary.push({
+      key: "status",
+      label: indT("ExpenseSheets_Filter_Status", "Estado"),
+      value: getExpenseStatusLabel(appliedFilters.statusFilter),
+    });
 
     return summary;
   }, [appliedFilters]);
@@ -235,9 +260,10 @@ const ExpenseSheetsPageContent = () => {
             />
           ) : null}
           <div className={`flex flex-col items-start gap-y-1 text-xs ${summaryDate ? "mt-1" : ""}`.trim()}>
-            {summaryItems.map((item) => (
-              <div key={item} className="history-filter-summary leading-5">
-                {item}
+            {summaryItems.map((item, index) => (
+              <div key={`${item.key}-${item.value}-${index}`} className="history-filter-summary leading-5">
+                <span className="font-semibold">{item.label}:</span>{" "}
+                <span>{item.value}</span>
               </div>
             ))}
           </div>
@@ -254,7 +280,7 @@ const ExpenseSheetsPageContent = () => {
         projectId={projectId}
         hojaGastosId={hojaGastosId}
         currencyCode={currencyCode}
-        billedMode={billedMode}
+        statusFilter={statusFilter}
         activeQuickFilter={activeQuickFilter}
         onDateRangeChange={onDateRangeChange}
         onManualRangeComplete={onManualRangeComplete}
@@ -262,7 +288,7 @@ const ExpenseSheetsPageContent = () => {
         onProjectIdChange={setProjectId}
         onHojaGastosIdChange={setHojaGastosId}
         onCurrencyCodeChange={setCurrencyCode}
-        onBilledModeChange={setBilledMode}
+        onStatusFilterChange={setStatusFilter}
         onClear={onClear}
         onApply={onApply}
       />
@@ -287,18 +313,15 @@ const ExpenseSheetsPageContent = () => {
         <div ref={timelineContainerRef} className="timeline-box">
           {items.map((item, index) => {
             const id = safeText(item.hojaGastosId);
-            const dateParts = formatExpenseDateParts(item.createdDate || item.transDate, document?.documentElement?.lang || "es-ES");
+            const dateParts = formatExpenseDateParts(item.createdDate, document?.documentElement?.lang || "es-ES");
             const currency = safeText(item.currencyCode);
             const description = safeText(item.description);
             const voucher = safeText(item.voucher);
-            const totalAmountText = formatAmountWithCurrency(item.totalAmountMST ?? null, currency);
-            const isBilled = hasAssignedVoucher(voucher);
-            const statusLabel = isBilled
-              ? indT("ExpenseSheets_Filter_Status_Billed", "Pagado")
-              : indT("ExpenseSheets_Filter_Status_Unbilled", "No Pagado");
-            const statusClass = isBilled
-              ? "expense-sheet-card__status expense-sheet-card__status--billed"
-              : "expense-sheet-card__status expense-sheet-card__status--unbilled";
+            const totalAmountText = formatAmountWithCurrency(item.totalAmount ?? null, currency);
+            const fallbackStatusCode = hasAssignedVoucher(voucher) ? 4 : 0;
+            const statusCode = normalizeExpenseStatusFilterCode(item.expenseSheetStatus, fallbackStatusCode);
+            const statusLabel = getExpenseStatusLabel(statusCode);
+            const statusClass = getExpenseStatusBadgeClassName(statusCode);
 
             return (
               <div key={`${id}-${index}`} className="timeline-item">
@@ -351,6 +374,7 @@ const ExpenseSheetsPage = () => {
 };
 
 const mount = () => {
+  bootstrapExpenseApiAuth();
   const rootEl = document.getElementById("expense-sheets-root");
   if (!rootEl) return;
   mountReactIsland(rootEl, <ExpenseSheetsPage />);

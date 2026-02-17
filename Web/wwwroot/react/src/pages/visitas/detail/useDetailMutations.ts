@@ -11,6 +11,22 @@ type OptionLike = {
   Text?: string;
 };
 
+type VisitCommandResponse = {
+  success?: boolean;
+  message?: string;
+  Success?: boolean;
+  Message?: string;
+};
+
+const isCommandSuccess = (response: VisitCommandResponse): boolean => {
+  return response.success === true || response.Success === true;
+};
+
+const getCommandMessage = (response: VisitCommandResponse): string => {
+  const raw = response.message ?? response.Message;
+  return typeof raw === "string" ? raw.trim() : "";
+};
+
 type UseDetailMutationsArgs = {
   busy: boolean;
   isEditing: boolean;
@@ -100,14 +116,14 @@ export const useDetailMutations = ({
       };
 
       const safeRecId = encodeURIComponent(recId);
-      const response = await fetchJson(`/Visitas/UpdateActivity/${safeRecId}`, {
+      const response = await fetchJson<VisitCommandResponse>(`/Visitas/UpdateActivity/${safeRecId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
 
-      if (!response.success) {
-        throw new Error(response.message || indT("Visits_Detail_UpdateFailed", "Update failed."));
+      if (!isCommandSuccess(response)) {
+        throw new Error(getCommandMessage(response) || indT("Visits_Detail_UpdateFailed", "Update failed."));
       }
 
       setStatus(indT("Visits_Detail_Updated", "Activity updated"));
@@ -166,9 +182,9 @@ export const useDetailMutations = ({
 
     try {
       const safeRecId = encodeURIComponent(recId);
-      const response = await fetchJson(`/Visitas/DeleteActivity/${safeRecId}`, { method: "DELETE" });
-      if (!response.success) {
-        throw new Error(response.message || indT("Visits_Detail_DeleteFailed", "Delete failed."));
+      const response = await fetchJson<VisitCommandResponse>(`/Visitas/DeleteActivity/${safeRecId}`, { method: "DELETE" });
+      if (!isCommandSuccess(response)) {
+        throw new Error(getCommandMessage(response) || indT("Visits_Detail_DeleteFailed", "Delete failed."));
       }
 
       setStatus(indT("Visits_Detail_Deleted", "Activity deleted"));

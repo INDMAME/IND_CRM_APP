@@ -1,7 +1,11 @@
 import React, { useCallback } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
-import type { ExpenseSheetLine, ExpenseSheetLineUpdateRequest } from "../expenseTypes.ts";
+import type {
+  ExpenseSheetCreateLineRequest,
+  ExpenseSheetLine,
+  ExpenseSheetLineUpdateRequest,
+} from "../expenseTypes.ts";
 import { parseExpenseInternationalValue } from "../constants/internationalOptions.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
@@ -125,32 +129,37 @@ export const useExpenseSheetLineDetailMutations = ({
       setBusy,
       setStatus,
       action: async () => {
-        const payload: ExpenseSheetLineUpdateRequest = {
+        const commonLinePayload = {
           transDate: normalizedDate,
           typeValue: parsedTypeValue,
           description: String(draftDescription || "").trim(),
           internacional: parsedInternational ?? line?.internacional ?? false,
           ticket: line?.ticket === true,
           qty: parsedQty,
-          amount: parsedAmount,
-          projId: String(draftProjectId || "").trim() || null,
+          projId: String(draftProjectId || "").trim() || undefined,
           indAttachFiles: safeText(line?.indAttachFiles),
+        };
+
+        const createLinePayload: ExpenseSheetCreateLineRequest = {
+          ...commonLinePayload,
+          amount: parsedAmount,
+        };
+
+        const updateLinePayload: ExpenseSheetLineUpdateRequest = {
+          ...commonLinePayload,
+          Amount: parsedAmount,
         };
 
         const response = isCreateMode
           ? await createExpenseSheet({
               mode: 2,
               existingHojaGastosId: sheetId,
-              description: "",
-              currencyCode: "",
-              exchRate: 0,
-              projId: null,
-              lines: [payload],
+              lines: [createLinePayload],
             })
-          : await updateExpenseSheetLine(sheetId, lineId, payload);
+          : await updateExpenseSheetLine(sheetId, lineId, updateLinePayload);
 
-        if (!response.success) {
-          throw new Error(response.message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+        if (!response.Success) {
+          throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
         }
 
         if (isCreateMode) {
@@ -206,8 +215,8 @@ export const useExpenseSheetLineDetailMutations = ({
       action: async () => {
         const response = await deleteExpenseSheetLine(sheetId, lineId);
 
-        if (!response.success) {
-          throw new Error(response.message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+        if (!response.Success) {
+          throw new Error(response.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
         }
 
         setStatus(indT("ExpenseSheets_Line_Detail_Deleted", "Expense line deleted"));

@@ -83,7 +83,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return;
             }
 
-            var required = GetRequiredAccess(path);
+            var required = GetRequiredAccess(path, http.Request.Method);
             if (!HasAnyAccess(company, moduleCandidates, required))
             {
                 var reason = $"Modules [{string.Join(",", moduleCandidates)}] require access {required}.";
@@ -100,6 +100,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return true;
 
             return path.StartsWith("/Auth", StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith("/api/auth", StringComparison.OrdinalIgnoreCase) ||
                    path.StartsWith("/signin-oidc", StringComparison.OrdinalIgnoreCase) ||
                    path.StartsWith("/signout-callback-oidc", StringComparison.OrdinalIgnoreCase) ||
                    path.StartsWith("/signout-oidc", StringComparison.OrdinalIgnoreCase) ||
@@ -204,8 +205,24 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             return module.AccessRightsInt >= requiredAccess;
         }
 
-        private static int GetRequiredAccess(string path)
+        private static int GetRequiredAccess(string path, string method)
         {
+            // REST expense endpoints map required access from HTTP verb.
+            if (path.StartsWith("/api/crm/expensesheets", StringComparison.OrdinalIgnoreCase))
+            {
+                if (path.Equals("/api/crm/expensesheets/list", StringComparison.OrdinalIgnoreCase))
+                    return IndAccessRights.View;
+
+                if (HttpMethods.IsPost(method))
+                    return IndAccessRights.Add;
+                if (HttpMethods.IsPut(method) || HttpMethods.IsPatch(method))
+                    return IndAccessRights.Edit;
+                if (HttpMethods.IsDelete(method))
+                    return IndAccessRights.FullAccess;
+
+                return IndAccessRights.View;
+            }
+
             if (path.StartsWith("/TextEditorReact", StringComparison.OrdinalIgnoreCase))
                 return IndAccessRights.View;
             if (path.Contains("/Create", StringComparison.OrdinalIgnoreCase))

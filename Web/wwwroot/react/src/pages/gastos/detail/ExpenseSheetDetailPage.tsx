@@ -12,6 +12,7 @@ import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseSheetHeaderForm from "../components/ExpenseSheetHeaderForm.tsx";
 import ExpenseLinesTimeline from "../components/ExpenseLinesTimeline.tsx";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
@@ -23,6 +24,15 @@ const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   const safePage = Math.max(1, page);
   const start = (safePage - 1) * pageSize;
   return items.slice(start, start + pageSize);
+};
+
+// Initializes auth seed for expense API calls before island effects run.
+const bootstrapExpenseApiAuth = () => {
+  configureExpenseApiAuth({
+    token: safeText(window.__IND_API_TOKEN__),
+    entraOid: safeText(window.__IND_ENTRA_OID__),
+    appCode: safeText(window.__IND_APP_CODE__),
+  });
 };
 
 const ExpenseSheetDetailPageContent = () => {
@@ -60,12 +70,18 @@ const ExpenseSheetDetailPageContent = () => {
     draftProjectId,
     draftCurrencyCode,
     draftExchangeRate,
+    officialExchangeRateValue,
+    isExchangeRateLoading,
+    exchangeRateMessage,
+    exchangeRateMessageIsError,
     projectValue,
     voucherValue,
     isSheetPaid,
     exchangeRateValue,
     showExchangeRate,
     normalizedDraftCurrency,
+    exchangeRateBaseCurrency,
+    exchangeRateReferenceAmount,
     exchangeRateValidationMessage,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
@@ -125,7 +141,7 @@ const ExpenseSheetDetailPageContent = () => {
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
   const totalAmountText = useMemo(
-    () => formatAmountWithCurrency(header?.totalAmountMST ?? null, safeText(header?.currencyCode)),
+    () => formatAmountWithCurrency(header?.totalAmount ?? null, safeText(header?.currencyCode)),
     [header]
   );
 
@@ -145,7 +161,10 @@ const ExpenseSheetDetailPageContent = () => {
     draftDescription,
     draftCurrencyCode,
     draftExchangeRate,
+    officialExchangeRateValue,
     draftProjectId,
+    currentExpenseSheetStatus: header?.expenseSheetStatus,
+    exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
       createdSheetIdRef.current = safeText(createdSheetId);
     },
@@ -240,6 +259,8 @@ const ExpenseSheetDetailPageContent = () => {
           isCurrencyLockedByLines={isCurrencyLockedByLines}
           isExchangeRateLockedByLines={isExchangeRateLockedByLines}
           normalizedDraftCurrency={normalizedDraftCurrency}
+          exchangeRateBaseCurrency={exchangeRateBaseCurrency}
+          exchangeRateReferenceAmount={exchangeRateReferenceAmount}
           showExchangeRate={showExchangeRate}
           exchangeRateValue={exchangeRateValue}
           exchangeRateValidationMessage={exchangeRateValidationMessage}
@@ -248,6 +269,9 @@ const ExpenseSheetDetailPageContent = () => {
           draftProjectId={draftProjectId}
           draftCurrencyCode={draftCurrencyCode}
           draftExchangeRate={draftExchangeRate}
+          isExchangeRateLoading={isExchangeRateLoading}
+          exchangeRateMessage={exchangeRateMessage}
+          exchangeRateMessageIsError={exchangeRateMessageIsError}
           onDraftDescriptionChange={setDraftDescription}
           onDraftProjectIdChange={setDraftProjectId}
           onDraftCurrencyCodeChange={setDraftCurrencyCode}
@@ -294,6 +318,7 @@ const ExpenseSheetDetailPage = () => {
 };
 
 const mount = () => {
+  bootstrapExpenseApiAuth();
   const rootEl = document.getElementById("expense-sheet-detail-root");
   if (!rootEl) return;
   mountReactIsland(rootEl, <ExpenseSheetDetailPage />);

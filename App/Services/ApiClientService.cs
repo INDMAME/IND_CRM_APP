@@ -368,6 +368,58 @@ namespace IND_CRM_APP.Services
         }
 
         // ======================================================
+        // Exchange rate
+        // ======================================================
+        public async Task<ApiResponse<ExchangeRateDto>> GetExchangeRateAsync(
+            string token,
+            string baseCurrency,
+            string targetCurrency,
+            string? date)
+        {
+            PrepareRequestHeaders(token, "GetExchangeRate", requireCompany: true);
+
+            var safeBaseCurrency = EscapeQueryValue((baseCurrency ?? string.Empty).Trim().ToUpperInvariant());
+            var safeTargetCurrency = EscapeQueryValue((targetCurrency ?? string.Empty).Trim().ToUpperInvariant());
+            var safeDate = NormalizeOptionalText(date);
+
+            var route = ApiRoutes.SystemExchangeRateByQuery(
+                safeBaseCurrency,
+                safeTargetCurrency,
+                string.IsNullOrWhiteSpace(safeDate) ? null : EscapeQueryValue(safeDate));
+
+            var result = await SendGetAsync(route);
+            return BuildApiResponse<ExchangeRateDto>(result, "GetExchangeRate");
+        }
+
+        // Gets backend health summary using the health endpoint.
+        public async Task<ApiResponse<object>> GetHealthAsync(string token)
+        {
+            PrepareRequestHeaders(
+                token,
+                "GetHealth",
+                requireCompany: false,
+                includeCompanyHeader: false,
+                includeAxUserHeader: false);
+
+            var result = await SendGetAsync(ApiRoutes.Health);
+            return BuildApiResponse<object>(result, "GetHealth");
+        }
+
+        // Gets backend ping status using the lightweight ping endpoint.
+        public async Task<ApiResponse<object>> GetHealthPingAsync(string token)
+        {
+            PrepareRequestHeaders(
+                token,
+                "GetHealthPing",
+                requireCompany: false,
+                includeCompanyHeader: false,
+                includeAxUserHeader: false);
+
+            var result = await SendGetAsync(ApiRoutes.HealthPing);
+            return BuildApiResponse<object>(result, "GetHealthPing");
+        }
+
+        // ======================================================
         // Accounts
         // ======================================================
         public async Task<PagedApiResponse<AccountDto>> GetAccountsAsync(
@@ -710,6 +762,20 @@ namespace IND_CRM_APP.Services
             return BuildPagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheets");
         }
 
+        public async Task<PagedApiResponse<ExpenseSheetCurrencyDto>> GetExpenseSheetCurrenciesAsync(
+            string token)
+        {
+            PrepareRequestHeaders(
+                token,
+                "GetExpenseSheetCurrencies",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: false);
+
+            var result = await SendGetAsync(ApiRoutes.ExpenseSheetCurrencies);
+            return BuildPagedResponse<ExpenseSheetCurrencyDto>(result, "GetExpenseSheetCurrencies");
+        }
+
         // ======================================================
         // Projects
         // ======================================================
@@ -800,6 +866,32 @@ namespace IND_CRM_APP.Services
             }
 
             return response;
+        }
+
+        // Creates expense data from a ticket image using OCR/AI endpoint.
+        public async Task<ApiResponse<object>> ExpenseFromTicketAsync(
+            string token,
+            Stream ticketImageStream,
+            string fileName,
+            string? contentType,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(token, "ExpenseFromTicket", requireCompany: true);
+
+            var safeFileName = string.IsNullOrWhiteSpace(fileName) ? "ticket.jpg" : Path.GetFileName(fileName);
+            var mime = string.IsNullOrWhiteSpace(contentType) ? "image/jpeg" : contentType.Trim();
+
+            using var form = new MultipartFormDataContent();
+            using var fileContent = new StreamContent(ticketImageStream);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(mime);
+            form.Add(fileContent, "ticketImage", safeFileName);
+
+            var result = await SendPostMultipartAsync(
+                ApiRoutes.ExpenseFromTicket,
+                form,
+                cancellationToken);
+
+            return BuildApiResponse<object>(result, "ExpenseFromTicket");
         }
 
         // ======================================================

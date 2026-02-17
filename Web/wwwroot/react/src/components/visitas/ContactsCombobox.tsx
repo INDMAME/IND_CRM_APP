@@ -18,6 +18,11 @@ type ContactOption = {
   empresa: string;
 };
 
+type ContactsDropdownResponse = {
+  items?: unknown[];
+  Items?: unknown[];
+};
+
 type ContactsComboboxProps = {
   accountNum?: string;
   value?: ContactOption[];
@@ -154,16 +159,30 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     if (accountNum) setStoredSelection(accountNum, selected);
   }, [selected, accountNum]);
 
+  const toText = (value: unknown): string => {
+    if (value === null || value === undefined) return "";
+    return String(value).trim();
+  };
+
+  const asObjectRecord = (value: unknown): Record<string, unknown> | null => {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+    return value as Record<string, unknown>;
+  };
+
   const mapContacts = (items: unknown[] = []) =>
     items
-      .map((c: any) => {
-        if (isNoDataRow(c)) return null;
-        if (Array.isArray(c)) return null;
-        const recId = (c.recId || c.RecId || "").toString().trim();
-        const name = (c.name || c.Name || "").toString().trim();
-        const cargo = (c.cargo || c.Cargo || "").toString().trim();
-        const empresa = (c.empresa || c.Empresa || "").toString().trim();
+      .map((entry) => {
+        if (isNoDataRow(entry)) return null;
+        const record = asObjectRecord(entry);
+        if (!record) return null;
+
+        const recId = toText(record.recId ?? record.RecId);
+        const name = toText(record.name ?? record.Name);
+        const cargo = toText(record.cargo ?? record.Cargo);
+        const empresa = toText(record.empresa ?? record.Empresa);
+
         if (!recId || isNoDataText(name)) return null;
+
         return {
           value: recId,
           text: name.toUpperCase(),
@@ -190,11 +209,12 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     const controller = new AbortController();
     abortRef.current = controller;
     try {
-      const res = await fetchJson(
+      const res = await fetchJson<ContactsDropdownResponse>(
         `/Visitas/GetContactsForDropdown?accountNum=${encodeURIComponent(accountNum)}&page=${pageToLoad}&pageSize=10`,
         { signal: controller.signal }
       );
-      const mapped = mapContacts(res.items || []);
+      const rawItems = Array.isArray(res.items) ? res.items : Array.isArray(res.Items) ? res.Items : [];
+      const mapped = mapContacts(rawItems);
       setOptions((prev) => {
         const next = append ? [...prev, ...mapped] : mapped;
         setCachedContacts(accountNum, next);

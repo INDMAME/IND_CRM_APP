@@ -1,13 +1,12 @@
 import React, { useCallback } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
-import type { ExpenseSheetHeaderUpdateRequest } from "../expenseTypes.ts";
+import type { ExpenseSheetCreateRequest, ExpenseSheetHeaderUpdateRequest } from "../expenseTypes.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import {
   createExpenseSheet,
   deleteExpenseSheet,
   updateExpenseSheetHeader,
-  type ExpenseSheetCreateRequest,
 } from "../utils/expenseApi.ts";
 
 type UseExpenseSheetDetailMutationsArgs = {
@@ -26,7 +25,10 @@ type UseExpenseSheetDetailMutationsArgs = {
   draftDescription: string;
   draftCurrencyCode: string;
   draftExchangeRate: string;
+  officialExchangeRateValue: string;
   draftProjectId: string;
+  exchangeRateBaseCurrency: string;
+  currentExpenseSheetStatus?: number | null;
   onCreateSuccess: (createdSheetId: string) => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -35,6 +37,11 @@ type UseExpenseSheetDetailMutationsArgs = {
 };
 
 const normalizeExchangeRate = (raw: string): number | null => parseDecimalInput(raw);
+// Compares rates with tolerance to avoid floating point mismatch on payload mode.
+const areRatesEquivalent = (left: number | null, right: number | null): boolean => {
+  if (left == null || right == null) return false;
+  return Math.abs(left - right) < 0.000001;
+};
 
 // Encapsulates update and delete mutations for expense sheet header detail.
 export const useExpenseSheetDetailMutations = ({
@@ -53,7 +60,10 @@ export const useExpenseSheetDetailMutations = ({
   draftDescription,
   draftCurrencyCode,
   draftExchangeRate,
+  officialExchangeRateValue,
   draftProjectId,
+  exchangeRateBaseCurrency,
+  currentExpenseSheetStatus,
   onCreateSuccess,
   setModalError,
   setBusy,
@@ -80,9 +90,26 @@ export const useExpenseSheetDetailMutations = ({
     const normalizedExchangeRateRaw = String(
       isExchangeRateLockedByLines ? (lockedExchangeRate || draftExchangeRate || "") : (draftExchangeRate || "")
     );
-    const requiresExchangeRate = normalizedCurrency !== "" && normalizedCurrency !== "EUR";
+    const normalizedBaseCurrency = String(exchangeRateBaseCurrency || "EUR").trim().toUpperCase() || "EUR";
+    const requiresExchangeRate = normalizedCurrency !== "" && normalizedCurrency !== normalizedBaseCurrency;
     const parsedExchangeRate = normalizeExchangeRate(normalizedExchangeRateRaw);
+    const officialExchangeRate = normalizeExchangeRate(officialExchangeRateValue);
+    const originalExchangeRate = normalizeExchangeRate(lockedExchangeRate);
     const hasValidRate = parsedExchangeRate != null && parsedExchangeRate > 0;
+    const hasManualRateEditOnUpdate =
+      !isCreateMode &&
+      hasValidRate &&
+      (originalExchangeRate == null || !areRatesEquivalent(parsedExchangeRate, originalExchangeRate));
+    // Only send exchangeRateMode when the user actually changed the rate manually.
+    const isManualExchangeRate = (() => {
+      if (!requiresExchangeRate || !hasValidRate) return false;
+      if (isExchangeRateLockedByLines) return false;
+      if (!isCreateMode && !hasManualRateEditOnUpdate) return false;
+      if (officialExchangeRate == null) return true;
+      return !areRatesEquivalent(parsedExchangeRate, officialExchangeRate);
+    })();
+    const resolvedExchangeRateMode = isManualExchangeRate ? 1 : undefined;
+    const resolvedExpenseSheetStatus = currentExpenseSheetStatus ?? (isManualExchangeRate ? 0 : undefined);
 
     if (isCreateMode) {
       if (!normalizedDescription) {
@@ -103,7 +130,7 @@ export const useExpenseSheetDetailMutations = ({
     if (requiresExchangeRate && !hasValidRate) {
       const validationMessage = indT(
         "ExpenseSheets_Validation_ExchangeRateRequired",
-        "Exchange rate is required when currency is different from EUR."
+        "Exchange rate is required when currency is different from base currency."
       );
       setModalError(validationMessage);
       setStatus(validationMessage);
@@ -122,21 +149,23 @@ export const useExpenseSheetDetailMutations = ({
         if (isCreateMode) {
           const payload: ExpenseSheetCreateRequest = {
             mode: 1,
-            existingHojaGastosId: null,
+            existingHojaGastosId: undefined,
             description: normalizedDescription,
             currencyCode: normalizedCurrency,
             exchRate: hasValidRate ? Number(parsedExchangeRate) : 1,
-            projId: normalizedProjectId || null,
+            projId: normalizedProjectId || undefined,
+            expenseSheetStatus: 0,
+            exchangeRateMode: resolvedExchangeRateMode,
             lines: [],
           };
 
           const response = await createExpenseSheet(payload);
 
-          if (!response.success) {
-            throw new Error(response.message || indT("Api_RequestFailed", "Request failed."));
+          if (!response.Success) {
+            throw new Error(response.Message || indT("Api_RequestFailed", "Request failed."));
           }
 
-          const createdSheetId = String(response?.data?.hojaGastosId || response?.data?.HojaGastosId || "").trim();
+          const createdSheetId = String(response?.Data?.HojaGastosId || "").trim();
           if (!createdSheetId) {
             throw new Error(indT("Api_RequestFailed", "Request failed."));
           }
@@ -151,13 +180,15 @@ export const useExpenseSheetDetailMutations = ({
           description: String(draftDescription || "").trim(),
           currencyCode: normalizedCurrency,
           exchRate: hasValidRate ? Number(parsedExchangeRate) : 1,
-          projId: String(draftProjectId || "").trim() || null,
+          projId: String(draftProjectId || "").trim() || undefined,
+          expenseSheetStatus: resolvedExpenseSheetStatus,
+          exchangeRateMode: resolvedExchangeRateMode,
         };
 
         const response = await updateExpenseSheetHeader(sheetId, payload);
 
-        if (!response.success) {
-          throw new Error(response.message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+        if (!response.Success) {
+          throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
         }
 
         setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
@@ -174,7 +205,10 @@ export const useExpenseSheetDetailMutations = ({
     draftCurrencyCode,
     draftDescription,
     draftExchangeRate,
+    officialExchangeRateValue,
     draftProjectId,
+    exchangeRateBaseCurrency,
+    currentExpenseSheetStatus,
     isCreateMode,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
@@ -207,8 +241,8 @@ export const useExpenseSheetDetailMutations = ({
       action: async () => {
         const response = await deleteExpenseSheet(sheetId);
 
-        if (!response.success) {
-          throw new Error(response.message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+        if (!response.Success) {
+          throw new Error(response.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
         }
 
         setStatus(indT("ExpenseSheets_Detail_Deleted", "Expense sheet deleted"));

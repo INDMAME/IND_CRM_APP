@@ -344,6 +344,24 @@
 .expense-sheet-card__status--billed {
     border-top-color: #10b981;
 }
+.expense-sheet-card__status--draft {
+    border-top-color: #94a3b8;
+}
+.expense-sheet-card__status--review {
+    border-top-color: #f59e0b;
+}
+.expense-sheet-card__status--approved {
+    border-top-color: #22c55e;
+}
+.expense-sheet-card__status--rejected {
+    border-top-color: #ef4444;
+}
+.expense-sheet-card__status--paid {
+    border-top-color: #00296b;
+}
+.expense-sheet-card__status--all {
+    border-top-color: #64748b;
+}
 .expense-sheet-card__title {
     margin: 0;
     padding: 0 22px 20px 0;

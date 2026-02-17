@@ -3,7 +3,7 @@ import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetCard, ExpenseSheetListFilters } from "../expenseTypes.ts";
 import { buildExpenseListPayload } from "../utils/expensePayloadBuilders.ts";
-import { fetchExpenseSheetList } from "../utils/expenseApi.ts";
+import { fetchExpenseSheetList, mapExpenseSheetListItemToCard } from "../utils/expenseApi.ts";
 
 type UseExpenseSheetsListDataArgs = {
   hasAccess: boolean;
@@ -35,16 +35,18 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
           suppressPermissionModal: true,
         });
 
-        if (response?.success === false) {
-          setErrorMessage(response.message || indT("ExpenseSheets_LoadError", "Could not load expense sheets."));
+        if (response?.Success === false) {
+          setErrorMessage(response.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheets."));
           setItems([]);
           setTotal(0);
           setCurrentPage(page);
           return;
         }
 
-        const nextItems = Array.isArray(response?.items) ? response.items : [];
-        const nextTotal = Number(response?.total || nextItems.length || 0);
+        const nextItems = (Array.isArray(response?.Items) ? response.Items : []).map((item) =>
+          mapExpenseSheetListItemToCard(item)
+        );
+        const nextTotal = Number(response?.Total ?? nextItems.length ?? 0);
         setItems(nextItems);
         setTotal(nextTotal);
         setCurrentPage(page);

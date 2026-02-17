@@ -18,6 +18,7 @@ namespace IND_CRM_APP.Models.Shared
         public bool UserActive { get; set; }
         public bool AppActive { get; set; }
         public string DefaultCompany { get; set; } = string.Empty;
+        public string DefaultCurrencyCode { get; set; } = string.Empty;
     }
 
     // Company data with module permissions.
@@ -26,6 +27,7 @@ namespace IND_CRM_APP.Models.Shared
         public string CompanyId { get; set; } = string.Empty;
         public bool IsDefault { get; set; }
         public string CompanyName { get; set; } = string.Empty;
+        public string CurrencyCode { get; set; } = string.Empty;
         public List<IndWebModule> Modules { get; set; } = new();
     }
 
@@ -68,6 +70,7 @@ namespace IND_CRM_APP.Models.Shared
         public object? UserActive { get; set; }
         public object? AppActive { get; set; }
         public string? DefaultCompany { get; set; }
+        public string? DefaultCurrencyCode { get; set; }
     }
     /// <summary>
     /// Model for ind entra company data.
@@ -78,6 +81,7 @@ namespace IND_CRM_APP.Models.Shared
         public string? CompanyId { get; set; }
         public object? IsDefault { get; set; }
         public string? CompanyName { get; set; }
+        public string? CurrencyCode { get; set; }
         public List<IndEntraModule>? Modules { get; set; }
     }
     /// <summary>

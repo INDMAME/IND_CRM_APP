@@ -54,6 +54,23 @@
   - Use Message and ErrorCode to show clear error information to the user.
   - For lists (activities, accounts, contacts, etc.) use Total, Page, PageSize and Items as the base for UI pagination.
 
+## Mandatory internal MVC API endpoint pattern
+
+- Applies to every endpoint exposed by this app under `/api/...` and consumed by React or JS clients.
+- Define canonical route constants in `App/Services/ApiHelpers/ApiRoutes.cs` and reuse them in service calls. Avoid inline route strings.
+- In controller actions:
+  - Use dedicated API actions (`Api*` naming) separate from page MVC actions.
+  - Declare explicit HTTP verb attributes (`[HttpGet]`, `[HttpPost]`, `[HttpPut]`, `[HttpDelete]`) that exactly match the caller verb.
+  - For JSON API POST endpoints called from React islands, use `[IgnoreAntiforgeryToken]` and validate session/token inside the action.
+  - Return API envelope-compatible payloads (`Success`, `Message`, `Data` or `Items`, `TraceId`) using shared helpers (`CreateApiPagedResponse`, `CreateApiPagedError`, etc.) when available.
+- In routing (`Program.cs`):
+  - Add explicit `app.MapControllerRoute(...)` entries for each `/api/...` endpoint.
+  - Ensure route pattern, controller, and action names match exactly to avoid fallback to `Home/NotFound`.
+- Mandatory validation before completion:
+  - Call each new local endpoint with the expected HTTP verb and confirm no 404/405.
+  - Call the same path with a wrong verb and confirm 405 behavior is intentional.
+  - Confirm response shape matches current API wrapper contracts.
+
 ## Authentication and tokens
 
 - Authentication flow:
@@ -234,4 +251,4 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-02-12
+- 2026-02-17

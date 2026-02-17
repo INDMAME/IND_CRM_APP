@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import RemoteSearchCombobox, { type RemoteSearchOption } from "../../../components/commons/RemoteSearchCombobox.tsx";
 import { ApiFetchError } from "../../../services/apiService.ts";
+import type { ExpenseSheetListItemDto } from "../expenseTypes.ts";
 import { buildExpenseSheetSuggestPayload } from "../utils/expensePayloadBuilders.ts";
 import { fetchExpenseSheetList } from "../utils/expenseApi.ts";
 
@@ -17,15 +18,15 @@ type ExpenseSheetFilterInputProps = {
 
 const SEARCH_PAGE_SIZE = 10;
 
-const mapSheetOptions = (items: Array<{ hojaGastosId?: string; description?: string }> | undefined): RemoteSearchOption[] => {
+const mapSheetOptions = (items: ExpenseSheetListItemDto[] | undefined): RemoteSearchOption[] => {
   return (Array.isArray(items) ? items : [])
     .map((item) => {
-      const id = String(item?.hojaGastosId || "").trim();
+      const id = String(item?.HojaGastosId || "").trim();
       if (!id) return null;
       return {
         value: id,
         title: id,
-        subtitle: String(item?.description || "").trim() || "-",
+        subtitle: String(item?.Description || "").trim() || "-",
       } as RemoteSearchOption;
     })
     .filter(Boolean) as RemoteSearchOption[];
@@ -51,20 +52,30 @@ const ExpenseSheetFilterInput = ({
       signal,
     });
 
-    return mapSheetOptions(response?.items);
+    if (response?.Success === false) {
+      return [];
+    }
+
+    return mapSheetOptions(response?.Items);
   }, []);
 
   const loadOptionsPage = useCallback(async (term: string, page: number, pageSize: number, signal: AbortSignal) => {
-    // This controller endpoint runs server-side and always forwards auth, company and AxUser headers.
     const payload = buildExpenseSheetSuggestPayload(term, pageSize, page);
     const response = await fetchExpenseSheetList(payload, {
       suppressPermissionModal: true,
       signal,
     });
 
+    if (response?.Success === false) {
+      return {
+        items: [],
+        total: 0,
+      };
+    }
+
     return {
-      items: mapSheetOptions(response?.items),
-      total: Number(response?.total || 0),
+      items: mapSheetOptions(response?.Items),
+      total: Number(response?.Total || 0),
     };
   }, []);
 

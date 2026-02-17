@@ -1,14 +1,15 @@
 import React from "react";
 import FilterButton from "../../../components/commons/FilterButton.tsx";
 import { indT } from "../../../utils/indI18n.ts";
-import ExpenseBilledModeFilterSelect from "./ExpenseBilledModeFilterSelect.tsx";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 import ExpenseDateRangeFilter from "./ExpenseDateRangeFilter.tsx";
 import ExpenseFilterActions from "./ExpenseFilterActions.tsx";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseSheetFilterInput from "./ExpenseSheetFilterInput.tsx";
+import ExpenseStatusFilterSelect from "./ExpenseStatusFilterSelect.tsx";
 import HistorySummary from "../../visitas/historial/HistorySummary.tsx";
 import type { ExpenseQuickFilterId } from "../list/expenseListTypes.ts";
+import type { ExpenseStatusFilterCode } from "../expenseTypes.ts";
 
 export type { ExpenseQuickFilterId };
 
@@ -42,7 +43,7 @@ type ExpenseFiltersPanelProps = {
   projectId: string;
   hojaGastosId: string;
   currencyCode: string;
-  billedMode: number;
+  statusFilter: ExpenseStatusFilterCode;
   activeQuickFilter: ExpenseQuickFilterId | null;
   showManualDateError: boolean;
   onDateRangeChange: (fromDate: string, toDate: string) => void;
@@ -51,7 +52,7 @@ type ExpenseFiltersPanelProps = {
   onProjectIdChange: (value: string) => void;
   onHojaGastosIdChange: (value: string) => void;
   onCurrencyCodeChange: (value: string) => void;
-  onBilledModeChange: (value: number) => void;
+  onStatusFilterChange: (value: ExpenseStatusFilterCode) => void;
   onClear: () => void;
   onApply: () => void;
 };
@@ -66,7 +67,7 @@ const ExpenseFiltersPanel = ({
   projectId,
   hojaGastosId,
   currencyCode,
-  billedMode,
+  statusFilter,
   activeQuickFilter,
   showManualDateError,
   onDateRangeChange,
@@ -75,7 +76,7 @@ const ExpenseFiltersPanel = ({
   onProjectIdChange,
   onHojaGastosIdChange,
   onCurrencyCodeChange,
-  onBilledModeChange,
+  onStatusFilterChange,
   onClear,
   onApply,
 }: ExpenseFiltersPanelProps) => {
@@ -134,7 +135,7 @@ const ExpenseFiltersPanel = ({
           />
         ) : null}
 
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
           <ExpenseProjectFilterInput
             label={indT("ExpenseSheets_Filter_Project", "Project")}
             placeholder={indT("ExpenseSheets_Filter_Project", "Project")}
@@ -160,11 +161,11 @@ const ExpenseFiltersPanel = ({
             showLabel={false}
           />
 
-          <ExpenseBilledModeFilterSelect
+          <ExpenseStatusFilterSelect
             label={indT("ExpenseSheets_Filter_Status", "Estado")}
-            placeholder={indT("ExpenseSheets_Filter_Status", "Estado")}
-            value={billedMode}
-            onChange={onBilledModeChange}
+            placeholder={indT("ExpenseSheets_Filter_Status_Placeholder", "Estado")}
+            value={statusFilter}
+            onChange={onStatusFilterChange}
             showLabel={false}
           />
         </div>

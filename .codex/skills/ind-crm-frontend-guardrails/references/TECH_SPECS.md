@@ -16,6 +16,21 @@
   - `IndPagedResponse<T>`: `Success`, `Message`, `Total`, `Page`, `PageSize`, `Items`, `TraceId`.
 - Controllers never build URLs/headers or parse JSON; use `ICrmApiClient`.
 
+## Internal endpoint exposure standard (mandatory)
+- Scope: any endpoint this MVC app exposes under `/api/...` for frontend consumption.
+- Route definitions:
+  - Keep canonical route constants in `App/Services/ApiHelpers/ApiRoutes.cs`.
+  - Add explicit route map in `Program.cs` with `app.MapControllerRoute(...)` per endpoint path.
+- Controller action requirements:
+  - Use dedicated API actions (for example `ApiExpenseSheetsList`) separated from page actions.
+  - Match verb attribute with caller verb exactly (`[HttpGet]`, `[HttpPost]`, etc.).
+  - For JSON POST endpoints consumed by React islands, use `[IgnoreAntiforgeryToken]` and perform token/session validation in action logic.
+  - Return wrapper-compatible payloads for consistency (`Success`, `Message`, `Data`/`Items`, `TraceId`).
+- Regression checks for each new endpoint:
+  - Expected verb must not return 404 or 405.
+  - Wrong verb should return 405 by design.
+  - Response contract must stay aligned with `IndApiResponse<T>` or `IndPagedResponse<T>`-style payloads.
+
 ## Auth and Entra context
 - OIDC is used for Microsoft Entra.
 - Context is cached in session under `INDWebContext` and keyed by OID.
@@ -99,4 +114,4 @@
 - Legacy JS must be migrated into `Web/wwwroot/react/src/legacy` as TS and compiled.
 
 ## Last updated
-- 2026-02-12
+- 2026-02-17

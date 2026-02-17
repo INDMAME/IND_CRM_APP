@@ -62,6 +62,16 @@
   <data name="ExpenseSheets_Filter_Status_Unbilled" xml:space="preserve"><value>Unbilled</value></data>
   <data name="ExpenseSheets_Filter_Status_Billed" xml:space="preserve"><value>Billed</value></data>
   <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve"><value>Both</value></data>
+  <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve"><value>Draft</value></data>
+  <data name="ExpenseSheets_Filter_Status_InReview" xml:space="preserve"><value>In review</value></data>
+  <data name="ExpenseSheets_Filter_Status_Approved" xml:space="preserve"><value>Approved</value></data>
+  <data name="ExpenseSheets_Filter_Status_Rejected" xml:space="preserve"><value>Rejected</value></data>
+  <data name="ExpenseSheets_Filter_Status_Paid" xml:space="preserve"><value>Paid</value></data>
+  <data name="ExpenseSheets_Filter_Status_All" xml:space="preserve"><value>All</value></data>
+  <data name="ExpenseSheets_Filter_ExchangeRateMode" xml:space="preserve"><value>Exchange rate mode</value></data>
+  <data name="ExpenseSheets_Filter_ExchangeRateMode_Placeholder" xml:space="preserve"><value>Exchange rate mode</value></data>
+  <data name="ExpenseSheets_Filter_ExchangeRateMode_Official" xml:space="preserve"><value>T.C. Official</value></data>
+  <data name="ExpenseSheets_Filter_ExchangeRateMode_Manual" xml:space="preserve"><value>T.C. Manual</value></data>
   <data name="ExpenseSheets_Field_SheetId" xml:space="preserve"><value>Sheet id</value></data>
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve"><value>User</value></data>
   <data name="ExpenseSheets_Field_Project" xml:space="preserve"><value>Project</value></data>

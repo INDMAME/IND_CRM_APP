@@ -12,6 +12,28 @@ type ContactOption = {
   text: string;
 };
 
+type LegacyCommandResponse = {
+  success?: boolean;
+  message?: string;
+  data?: unknown;
+  Success?: boolean;
+  Message?: string;
+  Data?: unknown;
+};
+
+const getLegacyResponseSuccess = (response: LegacyCommandResponse): boolean => {
+  return response.success === true || response.Success === true;
+};
+
+const getLegacyResponseMessage = (response: LegacyCommandResponse): string => {
+  const rawMessage = response.message ?? response.Message;
+  return typeof rawMessage === "string" ? rawMessage.trim() : "";
+};
+
+const getLegacyResponseData = (response: LegacyCommandResponse): unknown => {
+  return response.data ?? response.Data;
+};
+
 type UseCreateSubmitArgs = {
   busy: boolean;
   modalOpen: boolean;
@@ -92,18 +114,20 @@ export const useCreateSubmit = ({
         conclusiones,
       };
 
-      const resAct = await fetchJson("/Visitas/CreateActivity", {
+      const resAct = await fetchJson<LegacyCommandResponse>("/Visitas/CreateActivity", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payloadActivity),
       });
 
-      if (!resAct.success) throw new Error(resAct.message || indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
+      if (!getLegacyResponseSuccess(resAct)) {
+        throw new Error(getLegacyResponseMessage(resAct) || indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
+      }
 
       const recIdActividad =
-        indExtractSignedId(resAct.data) ||
-        indExtractSignedId(resAct.message) ||
-        indExtractSignedId(indExtractId(resAct.data) || indExtractId(resAct.message));
+        indExtractSignedId(getLegacyResponseData(resAct)) ||
+        indExtractSignedId(getLegacyResponseMessage(resAct)) ||
+        indExtractSignedId(indExtractId(getLegacyResponseData(resAct)) || indExtractId(getLegacyResponseMessage(resAct)));
       if (!recIdActividad) throw new Error(indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
       createdRecId = String(recIdActividad);
 
@@ -116,13 +140,13 @@ export const useCreateSubmit = ({
             asistenteId: contact.text,
             contactoRecId: contact.value,
           };
-          const resVis = await fetchJson("/Visitas/CreateVisitaAsistente", {
+          const resVis = await fetchJson<LegacyCommandResponse>("/Visitas/CreateVisitaAsistente", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(payloadVisita),
           });
-          if (!resVis.success) {
-            throw new Error(resVis.message || indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
+          if (!getLegacyResponseSuccess(resVis)) {
+            throw new Error(getLegacyResponseMessage(resVis) || indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
           }
         };
 
@@ -150,7 +174,7 @@ export const useCreateSubmit = ({
       window.__indBypassNavigationGuardOnce?.();
       window.location.href = "/Historial/History";
       return true;
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (createdRecId && canRollbackDelete) {
         try {
           setStatus(indT("Visits_Create_Rollback", "Rolling back activity..."));
@@ -162,7 +186,7 @@ export const useCreateSubmit = ({
           // Keep original error flow.
         }
       }
-      const msg = e?.message || indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
+      const msg = e instanceof Error ? e.message : indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
       setModalError(msg);
       setStatus(msg);
       flashActionMark("errorProcess", 1500);

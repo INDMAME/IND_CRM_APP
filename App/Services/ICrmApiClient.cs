@@ -22,6 +22,14 @@ namespace IND_CRM_APP.Services
         // Environment and company.
         Task<string> GetEnvironmentAsync(string token);
         Task<string> GetCompanyNameAsync(string token);
+        Task<ApiResponse<ExchangeRateDto>> GetExchangeRateAsync(
+            string token,
+            string baseCurrency,
+            string targetCurrency,
+            string? date
+        );
+        Task<ApiResponse<object>> GetHealthAsync(string token);
+        Task<ApiResponse<object>> GetHealthPingAsync(string token);
 
         // CRM accounts.
         Task<PagedApiResponse<AccountDto>> GetAccountsAsync(
@@ -93,6 +101,13 @@ namespace IND_CRM_APP.Services
             string? prompt = null,
             CancellationToken cancellationToken = default
         );
+        Task<ApiResponse<object>> ExpenseFromTicketAsync(
+            string token,
+            Stream ticketImageStream,
+            string fileName,
+            string? contentType,
+            CancellationToken cancellationToken = default
+        );
 
         // Expense sheets.
         Task<ApiResponse<ExpenseSheetCreateResponseData>> CreateExpenseSheetAsync(
@@ -128,6 +143,10 @@ namespace IND_CRM_APP.Services
         Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetsAsync(
             string token,
             ExpenseSheetListApiRequest req
+        );
+
+        Task<PagedApiResponse<ExpenseSheetCurrencyDto>> GetExpenseSheetCurrenciesAsync(
+            string token
         );
 
         // Projects.

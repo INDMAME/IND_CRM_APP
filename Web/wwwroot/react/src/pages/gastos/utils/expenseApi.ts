@@ -49,50 +49,6 @@ type LegacyExpenseListResponse = {
   items?: LegacyExpenseListItem[];
 };
 
-type LegacyExpenseDetailLine = {
-  lineRecId?: unknown;
-  transDate?: unknown;
-  typeValue?: unknown;
-  typeValueCode?: unknown;
-  description?: unknown;
-  internacional?: unknown;
-  ticket?: unknown;
-  qty?: unknown;
-  amount?: unknown;
-  projId?: unknown;
-  indAttachFiles?: unknown;
-};
-
-type LegacyExpenseDetailHeader = {
-  hojaGastosId?: unknown;
-  userId?: unknown;
-  description?: unknown;
-  currencyCode?: unknown;
-  totalAmount?: unknown;
-  totalAmountMST?: unknown;
-  exchRate?: unknown;
-  projId?: unknown;
-  voucher?: unknown;
-  createdDate?: unknown;
-  expenseSheetStatus?: unknown;
-  exchangeRateMode?: unknown;
-};
-
-type LegacyExpenseDetailResponse = {
-  success?: boolean;
-  message?: string;
-  data?: {
-    header?: LegacyExpenseDetailHeader;
-    lines?: LegacyExpenseDetailLine[];
-  };
-};
-
-type LegacyCommandResponse<T> = {
-  success?: boolean;
-  message?: string;
-  data?: T;
-};
-
 type ExpenseApiContext = {
   token: string;
   companyId: string;
@@ -106,6 +62,22 @@ type ExpenseApiAuthSeed = {
   appCode: string;
   strictApiRoutes: boolean;
 };
+
+type ExpenseWindowRuntime = {
+  __IND_API_TOKEN__?: string;
+  __IND_ENTRA_OID__?: string;
+  __IND_APP_CODE__?: string;
+  __IND_SELECTED_COMPANY__?: string;
+  __IND_EXPENSE_STRICT_API__?: boolean | string;
+  __EXPENSE_GASTO_TYPES__?: Array<{
+    value?: unknown;
+    Value?: unknown;
+    text?: unknown;
+    Text?: unknown;
+  }>;
+};
+
+type ExpenseGastoTypeEntry = NonNullable<ExpenseWindowRuntime["__EXPENSE_GASTO_TYPES__"]>[number];
 
 const DEFAULT_APP_CODE = "CRM";
 const JSON_HEADERS: Record<string, string> = {
@@ -162,6 +134,11 @@ const toFlagBool = (value: unknown): boolean | null => {
   return null;
 };
 
+const readExpenseWindowRuntime = (): ExpenseWindowRuntime => {
+  if (typeof window === "undefined") return {};
+  return window as unknown as ExpenseWindowRuntime;
+};
+
 const sanitizeHeaders = (headers: HeadersInit | undefined): Record<string, string> => {
   if (!headers) return {};
 
@@ -194,6 +171,13 @@ const getHeaderValue = (headers: HeadersInit | undefined, key: string): string =
   return safeText(match?.[1]);
 };
 
+const removeHeaderValue = (headers: Record<string, string>, key: string): void => {
+  const normalizedKey = key.trim().toLowerCase();
+  const toDelete = Object.keys(headers).find((headerKey) => headerKey.trim().toLowerCase() === normalizedKey);
+  if (!toDelete) return;
+  delete headers[toDelete];
+};
+
 const resolveBearerToken = (headers: HeadersInit | undefined): string => {
   const authorization = getHeaderValue(headers, "Authorization");
   if (!authorization) return "";
@@ -206,38 +190,26 @@ const resolveBearerToken = (headers: HeadersInit | undefined): string => {
 };
 
 const readWindowAuthSeed = (): Partial<ExpenseApiAuthSeed> => {
-  if (typeof window === "undefined") return {};
+  const runtimeWindow = readExpenseWindowRuntime();
 
   return {
-    token: safeText(window.__IND_API_TOKEN__),
-    entraOid: safeText(window.__IND_ENTRA_OID__),
-    appCode: safeText(window.__IND_APP_CODE__),
-    strictApiRoutes: toFlagBool(window.__IND_EXPENSE_STRICT_API__) === true,
+    token: safeText(runtimeWindow.__IND_API_TOKEN__),
+    entraOid: safeText(runtimeWindow.__IND_ENTRA_OID__),
+    appCode: safeText(runtimeWindow.__IND_APP_CODE__),
+    strictApiRoutes: toFlagBool(runtimeWindow.__IND_EXPENSE_STRICT_API__) === true,
   };
 };
 
 const readRuntimeStrictApiFlag = (): boolean => {
   if (typeof window === "undefined") return false;
+  const runtimeWindow = readExpenseWindowRuntime();
 
-  const explicitWindowFlag = toFlagBool(window.__IND_EXPENSE_STRICT_API__);
-  if (explicitWindowFlag !== null) return explicitWindowFlag;
-
-  const queryFlag = toFlagBool(new URLSearchParams(window.location.search).get("strictExpenseApi"));
-  if (queryFlag !== null) return queryFlag;
-
-  try {
-    const localStorageFlag = toFlagBool(window.localStorage?.getItem("ind_expense_strict_api"));
-    if (localStorageFlag !== null) return localStorageFlag;
-  } catch {
-    // Ignore storage read issues and keep default behavior.
-  }
-
-  return false;
+  const explicitWindowFlag = toFlagBool(runtimeWindow.__IND_EXPENSE_STRICT_API__);
+  return explicitWindowFlag === true;
 };
 
 const readWindowSelectedCompany = (): string => {
-  if (typeof window === "undefined") return "";
-  return safeText(window.__IND_SELECTED_COMPANY__).toUpperCase();
+  return safeText(readExpenseWindowRuntime().__IND_SELECTED_COMPANY__).toUpperCase();
 };
 
 const buildContextKey = (seed: ExpenseApiAuthSeed): string => {
@@ -441,8 +413,8 @@ const looksLikeHtmlDocument = (value: unknown): boolean => {
 
 const isApiRouteUnavailable = (error: unknown): error is ApiFetchError => {
   if (!(error instanceof ApiFetchError)) return false;
-  if (error.status !== 404) return false;
-  return looksLikeHtmlDocument(error.responseBody);
+  if (error.status === 404 || error.status === 405) return true;
+  return error.status === undefined && looksLikeHtmlDocument(error.responseBody);
 };
 
 const isStrictApiRoutesEnabled = (): boolean => {
@@ -507,133 +479,14 @@ const mapLegacyListResponse = (
   };
 };
 
-const mapLegacyDetailResponse = (legacy: LegacyExpenseDetailResponse): IndPagedResponse<ExpenseSheetDetailDto> => {
-  const header = legacy?.data?.header ?? {};
-  const lines = Array.isArray(legacy?.data?.lines) ? legacy.data.lines : [];
-  const mappedLines: ExpenseSheetLineDto[] = lines.map((line) => {
-    const rawTypeValueCode = safeText(line.typeValueCode || line.typeValue);
-    const parsedTypeValue = Number(rawTypeValueCode);
-    const typeValue = Number.isFinite(parsedTypeValue) ? parsedTypeValue : null;
-
-    return {
-      RecId: safeText(line.lineRecId),
-      TransDate: safeText(line.transDate),
-      TypeValue: typeValue,
-      Description: safeText(line.description),
-      Internacional: toNullableBool(line.internacional),
-      Ticket: toNullableBool(line.ticket),
-      Qty: toNullableNumber(line.qty),
-      Amount: toNullableNumber(line.amount),
-      ProjId: safeText(line.projId),
-      IndAttachFiles: safeText(line.indAttachFiles),
-    };
-  });
-
-  const mappedItem: ExpenseSheetDetailDto = {
-    HojaGastosId: safeText(header.hojaGastosId),
-    UserId: safeText(header.userId),
-    Description: safeText(header.description),
-    ExpenseSheetStatus: toNullableNumber(header.expenseSheetStatus),
-    CurrencyCode: safeText(header.currencyCode),
-    TotalAmount: toNullableNumber(header.totalAmount ?? header.totalAmountMST),
-    ExchRate: toNullableNumber(header.exchRate),
-    ExchangeRateMode: toNullableNumber(header.exchangeRateMode),
-    ProjId: safeText(header.projId),
-    Voucher: safeText(header.voucher),
-    CreatedDate: safeText(header.createdDate) || null,
-    Lines: mappedLines,
-  };
-
-  return {
-    Success: legacy.success !== false,
-    Message: safeText(legacy.message) || "OK",
-    Total: 1,
-    Page: 1,
-    PageSize: 1,
-    Items: mappedItem.HojaGastosId ? [mappedItem] : [],
-    TraceId: undefined,
-  };
-};
-
-const toMappedCreateResponse = (
-  legacy: LegacyCommandResponse<Record<string, unknown>>
-): IndApiResponse<ExpenseSheetCreateResponseData> => {
-  const rawData = legacy?.data ?? {};
-  const hojaGastosId = safeText(rawData.HojaGastosId ?? rawData.hojaGastosId);
-  const rawLineIds = Array.isArray(rawData.LineRecIds)
-    ? rawData.LineRecIds
-    : (Array.isArray(rawData.lineRecIds) ? rawData.lineRecIds : []);
-  const lineRecIds = rawLineIds
-    .map((entry) => Number(entry))
-    .filter((entry) => Number.isFinite(entry));
-
-  return normalizeApiResponse({
-    Success: legacy.success !== false,
-    Message: safeText(legacy.message) || "",
-    ErrorCode: null,
-    Data: hojaGastosId ? { HojaGastosId: hojaGastosId, LineRecIds: lineRecIds } : null,
-    Errors: null,
-    TraceId: undefined,
-  });
-};
-
-const toMappedHeaderUpdateResponse = (
-  legacy: LegacyCommandResponse<Record<string, unknown>>,
-  hojaGastosId: string
-): IndApiResponse<{ HojaGastosId: string }> => {
-  const rawData = legacy?.data ?? {};
-  const resolvedSheetId = safeText(rawData.HojaGastosId ?? rawData.hojaGastosId) || safeText(hojaGastosId);
-
-  return normalizeApiResponse({
-    Success: legacy.success !== false,
-    Message: safeText(legacy.message) || "",
-    ErrorCode: null,
-    Data: resolvedSheetId ? { HojaGastosId: resolvedSheetId } : null,
-    Errors: null,
-    TraceId: undefined,
-  });
-};
-
-const toMappedLineUpdateResponse = (
-  legacy: LegacyCommandResponse<Record<string, unknown>>,
-  hojaGastosId: string,
-  lineRecId: string
-): IndApiResponse<ExpenseSheetLineUpdateResponseData> => {
-  const rawData = legacy?.data ?? {};
-  const resolvedSheetId = safeText(rawData.HojaGastosId ?? rawData.hojaGastosId) || safeText(hojaGastosId);
-  const resolvedLineRecId =
-    toNullableNumber(rawData.LineRecId ?? rawData.lineRecId) ?? toNullableNumber(lineRecId) ?? 0;
-
-  return normalizeApiResponse({
-    Success: legacy.success !== false,
-    Message: safeText(legacy.message) || "",
-    ErrorCode: null,
-    Data: resolvedSheetId ? { HojaGastosId: resolvedSheetId, LineRecId: resolvedLineRecId } : null,
-    Errors: null,
-    TraceId: undefined,
-  });
-};
-
-const toMappedNullCommandResponse = (
-  legacy: LegacyCommandResponse<unknown>
-): IndApiResponse<null> => {
-  return normalizeApiResponse({
-    Success: legacy.success !== false,
-    Message: safeText(legacy.message) || "",
-    ErrorCode: null,
-    Data: null,
-    Errors: null,
-    TraceId: undefined,
-  });
-};
-
 const resolveTypeLabel = (typeValueCode: string): string => {
   if (!typeValueCode || typeof window === "undefined") {
     return typeValueCode;
   }
 
-  const rawCatalog = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
-  const match = rawCatalog.find((entry) => {
+  const rawCatalogSource = readExpenseWindowRuntime().__EXPENSE_GASTO_TYPES__;
+  const rawCatalog = Array.isArray(rawCatalogSource) ? rawCatalogSource : [];
+  const match = rawCatalog.find((entry: ExpenseGastoTypeEntry) => {
     const entryCode = safeText(entry?.value || entry?.Value);
     return entryCode === typeValueCode;
   });
@@ -750,6 +603,7 @@ export const fetchExpenseSheetList = async (
       Number.isFinite(payload.page) && payload.page > 0 ? payload.page : 1,
       Number.isFinite(payload.pageSize) && payload.pageSize > 0 ? payload.pageSize : 50
     );
+
     return normalizeListPagedResponse(mapped);
   }
 };
@@ -761,31 +615,13 @@ export const fetchExpenseSheetDetail = async (
 ): Promise<IndPagedResponse<ExpenseSheetDetailDto>> => {
   const context = await ensureExpenseApiContext(options);
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
+  const response = await fetchJson<IndPagedResponse<ExpenseSheetDetailDto>>(`/api/crm/expensesheets/${safeSheetId}`, {
+    ...options,
+    method: "GET",
+    headers: buildExpenseHeaders(context, options),
+  });
 
-  try {
-    const response = await fetchJson<IndPagedResponse<ExpenseSheetDetailDto>>(`/api/crm/expensesheets/${safeSheetId}`, {
-      ...options,
-      method: "GET",
-      headers: buildExpenseHeaders(context, options),
-    });
-
-    return normalizeDetailPagedResponse(response);
-  } catch (error) {
-    if (!shouldUseLegacyFallback(error)) {
-      throw error;
-    }
-
-    const legacyResponse = await fetchJson<LegacyExpenseDetailResponse>(
-      `/Gastos/GetExpenseSheetDetail?hojaGastosId=${safeSheetId}`,
-      {
-        ...options,
-        method: "GET",
-      }
-    );
-
-    const mapped = mapLegacyDetailResponse(legacyResponse);
-    return normalizeDetailPagedResponse(mapped);
-  }
+  return normalizeDetailPagedResponse(response);
 };
 
 // Reads available currencies from /api/crm/expensesheets/currencies.
@@ -801,9 +637,8 @@ export const getExpenseSheetCurrencies = async (
     }
   }
 
-  const token = safeText(context?.token || resolveAuthToken(options));
   const companyId = safeText(context?.companyId || readWindowSelectedCompany()).toUpperCase();
-  const cacheKey = `${token}|${companyId || "-"}`;
+  const cacheKey = companyId || "-";
 
   if (cachedCurrencyResponses.has(cacheKey)) {
     return cachedCurrencyResponses.get(cacheKey) as IndPagedResponse<ExpenseSheetCurrencyDto>;
@@ -814,10 +649,10 @@ export const getExpenseSheetCurrencies = async (
   }
 
   const requestPromise = (async () => {
-    const headers = sanitizeHeaders(context ? buildExpenseHeaders(context, options, false, false) : options?.headers);
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
+    const headers = sanitizeHeaders(options?.headers);
+    removeHeaderValue(headers, "Authorization");
+    removeHeaderValue(headers, "X-IND-AxUserId");
+
     if (companyId) {
       headers["X-IND-Company"] = companyId;
     }
@@ -996,32 +831,14 @@ export const createExpenseSheet = async (
     lines: mode === 1 ? [] : lines,
   };
 
-  try {
-    const response = await fetchJson<IndApiResponse<ExpenseSheetCreateResponseData>>("/api/crm/expensesheets", {
-      ...options,
-      method: "POST",
-      headers: buildExpenseHeaders(context, options, true),
-      body: JSON.stringify(normalizedPayload),
-    });
+  const response = await fetchJson<IndApiResponse<ExpenseSheetCreateResponseData>>("/api/crm/expensesheets", {
+    ...options,
+    method: "POST",
+    headers: buildExpenseHeaders(context, options, true),
+    body: JSON.stringify(normalizedPayload),
+  });
 
-    return normalizeApiResponse(response);
-  } catch (error) {
-    if (!shouldUseLegacyFallback(error)) {
-      throw error;
-    }
-
-    const legacyResponse = await fetchJson<LegacyCommandResponse<Record<string, unknown>>>("/Gastos/CreateExpenseSheet", {
-      ...options,
-      method: "POST",
-      headers: {
-        ...sanitizeHeaders(options?.headers),
-        ...JSON_HEADERS,
-      },
-      body: JSON.stringify(normalizedPayload),
-    });
-
-    return toMappedCreateResponse(legacyResponse);
-  }
+  return normalizeApiResponse(response);
 };
 
 // Updates header fields using /api/crm/expensesheets/{hojaGastosId}.
@@ -1045,35 +862,14 @@ export const updateExpenseSheetHeader = async (
     throw new ApiFetchError("exchangeRateMode requires expenseSheetStatus.");
   }
 
-  try {
-    const response = await fetchJson<IndApiResponse<{ HojaGastosId: string }>>(`/api/crm/expensesheets/${safeSheetId}`, {
-      ...options,
-      method: "PUT",
-      headers: buildExpenseHeaders(context, options, true),
-      body: JSON.stringify(payload),
-    });
+  const response = await fetchJson<IndApiResponse<{ HojaGastosId: string }>>(`/api/crm/expensesheets/${safeSheetId}`, {
+    ...options,
+    method: "PUT",
+    headers: buildExpenseHeaders(context, options, true),
+    body: JSON.stringify(payload),
+  });
 
-    return normalizeApiResponse(response);
-  } catch (error) {
-    if (!shouldUseLegacyFallback(error)) {
-      throw error;
-    }
-
-    const legacyResponse = await fetchJson<LegacyCommandResponse<Record<string, unknown>>>(
-      `/Gastos/UpdateExpenseSheetHeader/${safeSheetId}`,
-      {
-        ...options,
-        method: "PUT",
-        headers: {
-          ...sanitizeHeaders(options?.headers),
-          ...JSON_HEADERS,
-        },
-        body: JSON.stringify(payload),
-      }
-    );
-
-    return toMappedHeaderUpdateResponse(legacyResponse, hojaGastosId);
-  }
+  return normalizeApiResponse(response);
 };
 
 // Deletes a full expense sheet using /api/crm/expensesheets/{hojaGastosId}/lines/0?deleteWholeSheet=true.
@@ -1083,30 +879,16 @@ export const deleteExpenseSheet = async (
 ): Promise<IndApiResponse<null>> => {
   const context = await ensureExpenseApiContext(options);
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
-
-  try {
-    const response = await fetchJson<IndApiResponse<null>>(
-      `/api/crm/expensesheets/${safeSheetId}/lines/0?deleteWholeSheet=true`,
-      {
-        ...options,
-        method: "DELETE",
-        headers: buildExpenseHeaders(context, options),
-      }
-    );
-
-    return normalizeApiResponse(response);
-  } catch (error) {
-    if (!shouldUseLegacyFallback(error)) {
-      throw error;
-    }
-
-    const legacyResponse = await fetchJson<LegacyCommandResponse<unknown>>(`/Gastos/DeleteExpenseSheet/${safeSheetId}`, {
+  const response = await fetchJson<IndApiResponse<null>>(
+    `/api/crm/expensesheets/${safeSheetId}/lines/0?deleteWholeSheet=true`,
+    {
       ...options,
       method: "DELETE",
-    });
+      headers: buildExpenseHeaders(context, options),
+    }
+  );
 
-    return toMappedNullCommandResponse(legacyResponse);
-  }
+  return normalizeApiResponse(response);
 };
 
 // Updates one expense line using /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}.
@@ -1120,50 +902,17 @@ export const updateExpenseSheetLine = async (
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
   const safeLineId = encodeURIComponent(String(lineRecId || "").trim());
 
-  try {
-    const response = await fetchJson<IndApiResponse<ExpenseSheetLineUpdateResponseData>>(
-      `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}`,
-      {
-        ...options,
-        method: "PUT",
-        headers: buildExpenseHeaders(context, options, true),
-        body: JSON.stringify(payload),
-      }
-    );
-
-    return normalizeApiResponse(response);
-  } catch (error) {
-    if (!shouldUseLegacyFallback(error)) {
-      throw error;
+  const response = await fetchJson<IndApiResponse<ExpenseSheetLineUpdateResponseData>>(
+    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}`,
+    {
+      ...options,
+      method: "PUT",
+      headers: buildExpenseHeaders(context, options, true),
+      body: JSON.stringify(payload),
     }
+  );
 
-    const legacyPayload = {
-      transDate: payload.transDate,
-      typeValue: payload.typeValue,
-      description: payload.description,
-      internacional: payload.internacional,
-      ticket: payload.ticket,
-      qty: payload.qty,
-      amount: payload.Amount,
-      projId: payload.projId,
-      indAttachFiles: payload.indAttachFiles,
-    };
-
-    const legacyResponse = await fetchJson<LegacyCommandResponse<Record<string, unknown>>>(
-      `/Gastos/UpdateExpenseSheetLine/${safeSheetId}/${safeLineId}`,
-      {
-        ...options,
-        method: "PUT",
-        headers: {
-          ...sanitizeHeaders(options?.headers),
-          ...JSON_HEADERS,
-        },
-        body: JSON.stringify(legacyPayload),
-      }
-    );
-
-    return toMappedLineUpdateResponse(legacyResponse, hojaGastosId, lineRecId);
-  }
+  return normalizeApiResponse(response);
 };
 
 // Deletes one expense line using /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}?deleteWholeSheet=false.
@@ -1175,33 +924,16 @@ export const deleteExpenseSheetLine = async (
   const context = await ensureExpenseApiContext(options);
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
   const safeLineId = encodeURIComponent(String(lineRecId || "").trim());
-
-  try {
-    const response = await fetchJson<IndApiResponse<null>>(
-      `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}?deleteWholeSheet=false`,
-      {
-        ...options,
-        method: "DELETE",
-        headers: buildExpenseHeaders(context, options),
-      }
-    );
-
-    return normalizeApiResponse(response);
-  } catch (error) {
-    if (!shouldUseLegacyFallback(error)) {
-      throw error;
+  const response = await fetchJson<IndApiResponse<null>>(
+    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}?deleteWholeSheet=false`,
+    {
+      ...options,
+      method: "DELETE",
+      headers: buildExpenseHeaders(context, options),
     }
+  );
 
-    const legacyResponse = await fetchJson<LegacyCommandResponse<unknown>>(
-      `/Gastos/DeleteExpenseSheetLine/${safeSheetId}/${safeLineId}`,
-      {
-        ...options,
-        method: "DELETE",
-      }
-    );
-
-    return toMappedNullCommandResponse(legacyResponse);
-  }
+  return normalizeApiResponse(response);
 };
 
 // Searches projects for dropdown usage in filters and edit forms.

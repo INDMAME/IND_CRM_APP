@@ -11,6 +11,7 @@ import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
 import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "../constants/internationalOptions.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import {
   mapBooleanEnumOptions,
   mapWindowEnumOptions,
@@ -19,6 +20,15 @@ import {
 import { useExpenseSheetLineDetailMutations } from "./useExpenseSheetLineDetailMutations.ts";
 import { useExpenseSheetLineDetailTopbarActions } from "./useExpenseSheetLineDetailTopbarActions.ts";
 import { useExpenseSheetLineDetailState } from "./useExpenseSheetLineDetailState.ts";
+
+// Initializes auth seed for expense API calls before island effects run.
+const bootstrapExpenseApiAuth = () => {
+  configureExpenseApiAuth({
+    token: safeText(window.__IND_API_TOKEN__),
+    entraOid: safeText(window.__IND_ENTRA_OID__),
+    appCode: safeText(window.__IND_APP_CODE__),
+  });
+};
 
 const ExpenseSheetLineDetailContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
@@ -218,7 +228,7 @@ const ExpenseSheetLineDetailContent = () => {
       {!isLoading && !errorMessage && line ? (
         <ExpenseSheetLineForm
           line={line}
-          fallbackDate={safeText(header?.transDate)}
+          fallbackDate={safeText(header?.createdDate)}
           sheetDescription={sheetDescription}
           projectValue={projectValue}
           amountText={amountText}
@@ -268,6 +278,7 @@ const ExpenseSheetLineDetailPage = () => {
 };
 
 const mount = () => {
+  bootstrapExpenseApiAuth();
   const rootEl = document.getElementById("expense-line-detail-root");
   if (!rootEl) return;
   mountReactIsland(rootEl, <ExpenseSheetLineDetailPage />);

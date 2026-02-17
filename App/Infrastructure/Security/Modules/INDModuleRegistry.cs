@@ -59,7 +59,9 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                     "/Gastos/UpdateExpenseSheetLine",
                     "/Gastos/DeleteExpenseSheet",
                     "/Gastos/DeleteExpenseSheetLine",
-                    "/Gastos/GetProjectsForDropdown"
+                    "/Gastos/GetProjectsForDropdown",
+                    "/api/crm/expensesheets",
+                    "/api/system/exchange-rate"
                 }
             };
 

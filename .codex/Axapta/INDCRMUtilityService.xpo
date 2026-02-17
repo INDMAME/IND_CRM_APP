@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Jueves 1/29/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Martes 2/17/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -16,48 +16,17 @@ Formatversion: 1
     
     METHODS
       Version: 3
-      SOURCE #parseYmdDate
-        #// Method: parseYmdDate
-        #// Purpose: Parse yyyymmdd string to date. Returns 0D if invalid.
-        #static server date parseYmdDate(str _ymd)
+      SOURCE #classDeclaration
+        #public class INDCRMUtilityService
         #{
-        #    date d;
-        #
-        #    if (!strLen(_ymd))
-        #        return dateNull();
-        #
-        #    // 123 = YMD format
-        #    d = str2Date(_ymd, 321);
-        #    return d;
         #}
-        #
       ENDSOURCE
-      SOURCE #isHeaderLocked
-        #// Method: isHeaderLocked
-        #// Purpose: Returns true if header is locked by Voucher
-        #static server boolean isHeaderLocked(CRMHojaGastosTable _header)
+      SOURCE #buildActionResult
+        #// Devuelve un resultado estandar para acciones (success/message).
+        #static container buildActionResult(boolean _success, str _message)
         #{
-        #    if (!_header.RecId)
-        #        return false;
-        #
-        #    return (_header.Voucher != '');
+        #    return [[ strFmt("%1", _success), strFmt("%1", _message) ]];
         #}
-        #
-      ENDSOURCE
-      SOURCE #findHeaderForUpdate
-        #// Method: findHeaderForUpdate
-        #// Purpose: Find CRMHojaGastosTable for update by crmcrmUserId + HojaGastosId in current company
-        #static server CRMHojaGastosTable findHeaderForUpdate(CRMUserId _UserId, CRMHojaGastosId _hojaGastosId)
-        #{
-        #    CRMHojaGastosTable header;
-        #
-        #    select firstonly forupdate header
-        #        where header.UserId       == _UserId
-        #           && header.HojaGastosId == _hojaGastosId;
-        #
-        #    return header;
-        #}
-        #
       ENDSOURCE
       SOURCE #buildHeader
         #// Method: buildHeader
@@ -84,17 +53,20 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #classDeclaration
-        #public class INDCRMUtilityService
+      SOURCE #findHeaderForUpdate
+        #// Method: findHeaderForUpdate
+        #// Purpose: Find CRMHojaGastosTable for update by crmcrmUserId + HojaGastosId in current company
+        #static server CRMHojaGastosTable findHeaderForUpdate(CRMUserId _UserId, CRMHojaGastosId _hojaGastosId)
         #{
+        #    CRMHojaGastosTable header;
+        #
+        #    select firstonly forupdate header
+        #        where header.UserId       == _UserId
+        #           && header.HojaGastosId == _hojaGastosId;
+        #
+        #    return header;
         #}
-      ENDSOURCE
-      SOURCE #buildActionResult
-        #// Devuelve un resultado estandar para acciones (success/message).
-        #static container buildActionResult(boolean _success, str _message)
-        #{
-        #    return [[ strFmt("%1", _success), strFmt("%1", _message) ]];
-        #}
+        #
       ENDSOURCE
       SOURCE #getCompany
         #// Devuelve Company del contenedor (indice 1).
@@ -166,6 +138,18 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #isHeaderLocked
+        #// Method: isHeaderLocked
+        #// Purpose: Returns true if header is locked by Voucher
+        #static server boolean isHeaderLocked(CRMHojaGastosTable _header)
+        #{
+        #    if (!_header.RecId)
+        #        return false;
+        #
+        #    return (_header.Voucher != '');
+        #}
+        #
+      ENDSOURCE
       SOURCE #loginEntraContext
         #// Devuelve el contexto completo para cachearlo en la API.
         #// Entrada:
@@ -173,9 +157,9 @@ Formatversion: 1
         #//  - _data[2] = AppCode  (codigo de web app, por ejemplo "CRM")
         #//
         #// Salida: [ Header, Companies ]
-        #// Header = [[ success, message, axUserId, userActive, appActive, defaultCompany ]]
+        #// Header = [[ success, message, axUserId, userActive, appActive, defaultCompany, defaultCurrencyCode ]]
         #// Companies = lista de CompanyItem
-        #// CompanyItem = [ companyId, isDefault, companyName, modulesCon ]
+        #// CompanyItem = [ companyId, isDefault, companyName, currencyCode, modulesCon ]
         #// modulesCon = lista de ModuleItem
         #// ModuleItem = [ moduleCode, description, isActive, accessRightsInt ]
         #//
@@ -187,7 +171,7 @@ Formatversion: 1
         #//
         #// Nota:
         #//  - Tablas de contexto se asumen intercompany.
-        #//  - Solo se usa changecompany para CompanyInfo.Name.
+        #//  - Solo se usa changecompany para CompanyInfo.Name y CompanyInfo.CurrencyCode.
         #//  - Resolucion de usuario: se hace por INDWebUserEntraIdentity (AppCode + EntraOID).
         #//    Si no hay registro para esa app, no se permite acceso.
         #static container loginEntraContext(container _data)
@@ -219,6 +203,8 @@ Formatversion: 1
         #    container                   modulesCon, moduleItem;
         #
         #    str                         companyName;
+        #    str                         companyCurrencyCode;
+        #    str                         defaultCompanyCurrencyCode;
         #    int                         accessInt;
         #
         #    int                         i;
@@ -238,14 +224,14 @@ Formatversion: 1
         #    if (!webApp.AppCode)
         #    {
         #        // App no existe, no se puede continuar
-        #        header = [[ "0", "AppCode no existe en INDWebApp.", "", "0", "0", "" ]];
+        #        header = [[ "0", "AppCode no existe en INDWebApp.", "", "0", "0", "", "" ]];
         #        return [ header, conNull() ];
         #    }
         #
         #    if (webApp.IsActive != NoYes::Yes)
         #    {
         #        // App existe pero esta deshabilitada
-        #        header = [[ "0", "Aplicacion deshabilitada.", "", "0", "0", "" ]];
+        #        header = [[ "0", "Aplicacion deshabilitada.", "", "0", "0", "", "" ]];
         #        return [ header, conNull() ];
         #    }
         #
@@ -260,7 +246,7 @@ Formatversion: 1
         #    if (!sysUserInfo.Id)
         #    {
         #        // No hay configuracion de oid para esta web app, acceso denegado
-        #        header = [[ "0", "Usuario no vinculado a EntraOid para esta aplicacion.", "", "0", "1", "" ]];
+        #        header = [[ "0", "Usuario no vinculado a EntraOid para esta aplicacion.", "", "0", "1", "", "" ]];
         #        return [ header, conNull() ];
         #    }
         #
@@ -314,26 +300,30 @@ Formatversion: 1
         #
         #        // Nombre de compania (solo aqui usamos changecompany)
         #        companyName = "";
+        #        companyCurrencyCode = "";
         #        try
         #        {
         #            changecompany (ciasPerm.CiaId)
         #            {
         #                companyName = CompanyInfo::find().Name;
+        #                companyCurrencyCode = CompanyInfo::find().CurrencyCode;
         #            }
         #        }
         #        catch
         #        {
         #            companyName = "";
+        #            companyCurrencyCode = "";
         #        }
         #
-        #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, ModulesCon]
+        #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, CurrencyCode, ModulesCon]
         #        // Nota: IsDefault se recalcula al final segun defaultCompany final
         #        companyItem = [
-        #            strFmt("%1", ciasPerm.CiaId),
-        #            "0",
-        #            strFmt("%1", companyName),
-        #            modulesCon
-        #        ];
+        #                        strFmt("%1", ciasPerm.CiaId),
+        #                        "0",
+        #                        strFmt("%1", companyName),
+        #                        strFmt("%1", companyCurrencyCode),
+        #                        modulesCon
+        #                      ];
         #
         #        companiesCon = conIns(companiesCon, conLen(companiesCon) + 1, companyItem);
         #    }
@@ -347,6 +337,7 @@ Formatversion: 1
         #            strFmt("%1", sysUserInfo.Id),
         #            "1",
         #            "1",
+        #            "",
         #            ""
         #        ]];
         #
@@ -372,7 +363,24 @@ Formatversion: 1
         #
         #    companiesCon = companiesConFixed;
         #
-        #    // 8) Header final
+        #    // 8) Obtener CurrencyCode de la compania por defecto final
+        #    defaultCompanyCurrencyCode = "";
+        #    if (defaultCompany)
+        #    {
+        #        try
+        #        {
+        #            changecompany (defaultCompany)
+        #            {
+        #                defaultCompanyCurrencyCode = CompanyInfo::find().CurrencyCode;
+        #            }
+        #        }
+        #        catch
+        #        {
+        #            defaultCompanyCurrencyCode = "";
+        #        }
+        #    }
+        #
+        #    // 9) Header final
         #    success = true;
         #    message = "OK";
         #
@@ -382,10 +390,27 @@ Formatversion: 1
         #        strFmt("%1", sysUserInfo.Id),
         #        "1", // userActive
         #        "1", // appActive
-        #        strFmt("%1", defaultCompany)
+        #        strFmt("%1", defaultCompany),
+        #        strFmt("%1", defaultCompanyCurrencyCode)
         #    ]];
         #
         #    return [ header, companiesCon ];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #parseYmdDate
+        #// Method: parseYmdDate
+        #// Purpose: Parse yyyymmdd string to date. Returns 0D if invalid.
+        #static server date parseYmdDate(str _ymd)
+        #{
+        #    date d;
+        #
+        #    if (!strLen(_ymd))
+        #        return dateNull();
+        #
+        #    // 123 = YMD format
+        #    d = str2Date(_ymd, 321);
+        #    return d;
         #}
         #
       ENDSOURCE

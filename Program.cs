@@ -17,6 +17,7 @@ using System.Globalization;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Routing.Constraints;
 using System.Security.Claims;
 using System.IO;
 using System.Security.Cryptography;
@@ -348,6 +349,69 @@ app.UseMiddleware<TokenRefreshMiddleware>();
 // -----------------------------
 // Rutas MVC
 // -----------------------------
+app.MapControllerRoute(
+    name: "api-auth-entra-context",
+    pattern: "api/auth/entra/context",
+    defaults: new { controller = "Auth", action = "ApiEntraContext" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-list",
+    pattern: "api/crm/expensesheets/list",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetsList" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-currencies",
+    pattern: "api/crm/expensesheets/currencies",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetsCurrencies" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-system-exchange-rate",
+    pattern: "api/system/exchange-rate",
+    defaults: new { controller = "Gastos", action = "ApiSystemExchangeRate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-create",
+    pattern: "api/crm/expensesheets",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetsCreate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-detail",
+    pattern: "api/crm/expensesheets/{hojaGastosId}",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetDetail" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-update",
+    pattern: "api/crm/expensesheets/{hojaGastosId}",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetUpdate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-line-update",
+    pattern: "api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetLineUpdate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheets-line-delete",
+    pattern: "api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetLineDelete" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") }
+);
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}" 

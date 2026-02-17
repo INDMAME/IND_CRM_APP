@@ -2,15 +2,52 @@ import { useCallback, useEffect } from "react";
 import { fetchJson } from "../services/apiService.ts";
 import { indT } from "../utils/indI18n.ts";
 
+type OptionLike = {
+  value?: string | number;
+  Value?: string | number;
+  text?: string;
+  Text?: string;
+};
+
+type ActivityDetailRecord = Record<string, unknown>;
+
+type ActivityDetailResponse = {
+  success?: boolean;
+  message?: string;
+  data?: ActivityDetailRecord | null;
+  Success?: boolean;
+  Message?: string;
+  Data?: ActivityDetailRecord | null;
+};
+
+const isResponseSuccess = (response: ActivityDetailResponse): boolean => {
+  return response.success === true || response.Success === true;
+};
+
+const getResponseMessage = (response: ActivityDetailResponse): string => {
+  const raw = response.message ?? response.Message;
+  return typeof raw === "string" ? raw.trim() : "";
+};
+
+const getResponseData = (response: ActivityDetailResponse): ActivityDetailRecord | null => {
+  const data = response.data ?? response.Data;
+  return data && typeof data === "object" ? data : null;
+};
+
+const asRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+  return value as Record<string, unknown>;
+};
+
 type UseDetailHydrationArgs = {
   actividadId: string;
   shouldHydrate: boolean;
-  visitTypes: any[];
-  asistenteTipos: any[];
+  visitTypes: OptionLike[];
+  asistenteTipos: OptionLike[];
   defaultVisitType: string;
   initialAsistente: string;
   normalizeDateToInput: (value: string) => string;
-  matchOptionValue: (options: any[], raw: unknown) => string;
+  matchOptionValue: (options: OptionLike[], raw: unknown) => string;
   applyDraftValues: () => void;
   applyTextEditorValues: () => void;
   setStatus: (value: string) => void;
@@ -50,29 +87,37 @@ export const useDetailHydration = ({
     if (!actividadId) return;
     setIsHydrating(true);
     try {
-      const res = await fetchJson(`/Visitas/GetActivityByCode?code=${encodeURIComponent(actividadId)}`);
-      if (!res?.success || !res.data) {
-        setStatus(res?.message || indT("Visits_Detail_LoadActivityFailed", "Failed to load activity details."));
+      const res = await fetchJson<ActivityDetailResponse>(`/Visitas/GetActivityByCode?code=${encodeURIComponent(actividadId)}`);
+      const responseData = getResponseData(res);
+
+      if (!isResponseSuccess(res) || !responseData) {
+        setStatus(getResponseMessage(res) || indT("Visits_Detail_LoadActivityFailed", "Failed to load activity details."));
         return;
       }
-      const data = res.data;
-      const rawDate = String(data.transDate ?? data.TransDate ?? "");
+
+      const rawDate = String(responseData.transDate ?? responseData.TransDate ?? "");
       setTransDate(normalizeDateToInput(rawDate));
 
-      const rawVisitType = String(data.tipoVisita ?? data.TipoVisita ?? data.visitType ?? data.VisitType ?? "");
+      const rawVisitType = String(
+        responseData.tipoVisita ?? responseData.TipoVisita ?? responseData.visitType ?? responseData.VisitType ?? ""
+      );
       setVisitType(matchOptionValue(visitTypes, rawVisitType) || defaultVisitType);
 
-      const asistentesList = data.asistentes ?? data.Asistentes;
-      const firstAsistente = Array.isArray(asistentesList) && asistentesList.length ? asistentesList[0] : null;
+      const asistentesList = responseData.asistentes ?? responseData.Asistentes;
+      const firstAsistente = Array.isArray(asistentesList) && asistentesList.length ? asRecord(asistentesList[0]) : null;
       const rawAsistenteTipo = String(
-        data.asistenteTipo ?? data.AsistenteTipo ?? firstAsistente?.asistenteTipo ?? firstAsistente?.AsistenteTipo ?? ""
+        responseData.asistenteTipo ??
+          responseData.AsistenteTipo ??
+          firstAsistente?.asistenteTipo ??
+          firstAsistente?.AsistenteTipo ??
+          ""
       );
       const normalizedAsistenteTipo = matchOptionValue(asistenteTipos, rawAsistenteTipo);
       setAsistenteTipo(normalizedAsistenteTipo || initialAsistente);
-      setDescription(String(data.description ?? data.Description ?? ""));
-      setComentarios(String(data.comentarios ?? data.Comentarios ?? ""));
-      setAntecedentes(String(data.antecedentes ?? data.Antecedentes ?? ""));
-      setConclusiones(String(data.conclusiones ?? data.Conclusiones ?? ""));
+      setDescription(String(responseData.description ?? responseData.Description ?? ""));
+      setComentarios(String(responseData.comentarios ?? responseData.Comentarios ?? ""));
+      setAntecedentes(String(responseData.antecedentes ?? responseData.Antecedentes ?? ""));
+      setConclusiones(String(responseData.conclusiones ?? responseData.Conclusiones ?? ""));
     } catch {
       // Keep previous UI behavior on hydration errors.
     } finally {

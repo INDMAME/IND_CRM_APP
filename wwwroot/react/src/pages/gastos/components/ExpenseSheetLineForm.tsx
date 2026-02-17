@@ -5,6 +5,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
+import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 
@@ -163,15 +164,14 @@ const ExpenseSheetLineForm = ({
           )}
 
           {isEditing ? (
-            <div className="space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Project", "Project")}</label>
-              <input
-                className="form-control"
-                value={draftProjectId}
-                onChange={(event) => onDraftProjectIdChange(event.target.value || "")}
-                aria-label={indT("ExpenseSheets_Field_Project", "Project")}
-              />
-            </div>
+            <ExpenseProjectFilterInput
+              label={indT("ExpenseSheets_Field_Project", "Project")}
+              placeholder={indT("ExpenseSheets_Filter_Project_Placeholder", "Project id")}
+              value={draftProjectId}
+              onChange={onDraftProjectIdChange}
+              disabled={!isEditing}
+              readOnly={!isEditing}
+            />
           ) : projectValue ? (
             <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
           ) : null}

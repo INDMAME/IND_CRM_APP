@@ -53,6 +53,7 @@ Conflict precedence:
 | React entry pattern | Keep page bootstrap thin. Use `mountReactIsland` + `mountWhenDocumentReady`; use `VisitasPageProviders` and `AppErrorBoundary` where applicable. |
 | Legacy JS | Do not add new jQuery or jquery-validation usage. |
 | API contract | Frontend services and hooks do not invent response formats; consume `IndApiResponse<T>` / `IndPagedResponse<T>` contracts. |
+| Internal API route pattern | Every new `/api/...` endpoint must have explicit controller verb attributes plus `Program.cs` `MapControllerRoute` mapping, with local verb validation to prevent 404/405 regressions. |
 | i18n | No hardcoded user-facing strings; add resource keys to all supported cultures in the same change. |
 | Anti-regression | Preserve date pickers, date filters, and payload formats unless explicitly requested. |
 | Security baseline | Permission-gate edit/delete/create controls, keep server as source of truth, and use integrated confirm/unsaved-change modals. |
@@ -105,9 +106,13 @@ Required triggers:
    - React performance guardrails: parallelize independent async calls, avoid effect-driven mirror state, cleanup listeners.
    - React composition guardrails: no new boolean mode flags when explicit variant/component composition is cleaner.
    - Security guardrails: enforce permission-gated actions and integrated app dialogs for destructive or unsaved-change flows.
-5. Validate i18n and anti-regression critical paths.
-6. Execute quality checks and release steps required by scope.
-7. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
+5. Enforce internal API endpoint exposure pattern for any new `/api/...` route.
+   - Add explicit verb attributes in controller API actions.
+   - Add matching `app.MapControllerRoute(...)` entries in `Program.cs`.
+   - Validate expected and wrong verb behavior locally to catch 404/405 mismatches.
+6. Validate i18n and anti-regression critical paths.
+7. Execute quality checks and release steps required by scope.
+8. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
 
 ## Common Mistakes
 
@@ -121,6 +126,8 @@ Required triggers:
 - Leaving global listeners attached after component unmount.
 - Shipping UI edit/delete actions without checking permission state.
 - Creating ad-hoc section title capsules instead of reusing `ExpenseSectionDivider`.
+- Creating `/api/...` controller actions without explicit `Program.cs` route map.
+- Mismatching frontend HTTP verb versus controller verb attribute on API routes.
 
 ## Last updated
-- 2026-02-12
+- 2026-02-17

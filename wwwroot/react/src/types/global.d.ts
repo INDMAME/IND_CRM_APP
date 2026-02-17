@@ -8,6 +8,12 @@ declare global {
 
   interface Window {
     __IND_I18N__?: Record<string, string>;
+    __IND_MODULE_ACCESS__?: Record<string, number>;
+    __IND_SELECTED_COMPANY__?: string;
+    __IND_API_TOKEN__?: string;
+    __IND_ENTRA_OID__?: string;
+    __IND_APP_CODE__?: string;
+    __IND_EXPENSE_STRICT_API__?: boolean | string;
     __IND_PERMISSION_I18N__?: { title?: string; message?: string; ok?: string };
     __IND_NAV_GUARD_I18N__?: { activeProcessMessage?: string };
     __IND_AUDIO_RECORDER_TESTS__?: boolean;
@@ -36,5 +42,11 @@ declare global {
 
   interface GlobalThis {
     __IND_I18N__?: Record<string, string>;
+    __IND_MODULE_ACCESS__?: Record<string, number>;
+    __IND_SELECTED_COMPANY__?: string;
+    __IND_API_TOKEN__?: string;
+    __IND_ENTRA_OID__?: string;
+    __IND_APP_CODE__?: string;
+    __IND_EXPENSE_STRICT_API__?: boolean | string;
   }
 }

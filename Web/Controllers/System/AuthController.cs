@@ -9,6 +9,8 @@ using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
+using System.Text.Json;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -142,6 +144,98 @@ namespace IND_CRM_APP.Controllers
             return RedirectToAction("Login", "Auth", new { loggedOut = true });
         }
 
+        // Proxies /api/auth/entra/context for React consumers with IND API envelope.
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ApiEntraContext([FromBody] EntraContextRequest? request)
+        {
+            var token = _tokenSession.GetToken().Token;
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return CreateApiPagedResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_SessionExpired"].Value,
+                        Total = 0,
+                        Page = 1,
+                        PageSize = 0,
+                        Items = Array.Empty<object>(),
+                        ErrorCode = "SESSION_EXPIRED"
+                    },
+                    StatusCodes.Status401Unauthorized);
+            }
+
+            var entraOid = (request?.EntraOid ?? string.Empty).Trim();
+            var appCode = (request?.AppCode ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(entraOid) || string.IsNullOrWhiteSpace(appCode))
+            {
+                return CreateApiPagedResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_RequestFailed"].Value,
+                        Total = 0,
+                        Page = 1,
+                        PageSize = 0,
+                        Items = Array.Empty<object>(),
+                        ErrorCode = "INVALID_REQUEST"
+                    },
+                    StatusCodes.Status400BadRequest);
+            }
+
+            try
+            {
+                var response = await _api.GetEntraContextAsync(token, entraOid, appCode);
+                var items = response.Items ?? new List<IndEntraContextItem>();
+                var total = items.Count;
+
+                return CreateApiPagedResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        Total = total,
+                        Page = 1,
+                        PageSize = total,
+                        Items = items,
+                        ErrorCode = response.ErrorCode
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiEntraContext");
+                return CreateApiPagedResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_RequestFailed"].Value,
+                        Total = 0,
+                        Page = 1,
+                        PageSize = 0,
+                        Items = Array.Empty<object>(),
+                        ErrorCode = "UPSTREAM_ERROR"
+                    },
+                    StatusCodes.Status502BadGateway);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiEntraContext");
+                return CreateApiPagedResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_RequestFailed"].Value,
+                        Total = 0,
+                        Page = 1,
+                        PageSize = 0,
+                        Items = Array.Empty<object>(),
+                        ErrorCode = "UNHANDLED_ERROR"
+                    },
+                    StatusCodes.Status500InternalServerError);
+            }
+        }
+
         private async Task<IActionResult> LogoutCore()
         {
             await ClearAuthSessionAsync();
@@ -175,6 +269,23 @@ namespace IND_CRM_APP.Controllers
 
             var requestedWith = request.Headers["X-Requested-With"].ToString();
             return string.Equals(requestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Builds a paged API JSON payload preserving property casing.
+        private static JsonResult CreateApiPagedResponse(object payload, int? statusCode = null)
+        {
+            var result = new JsonResult(
+                payload,
+                new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = null,
+                    DictionaryKeyPolicy = null
+                });
+
+            if (statusCode.HasValue)
+                result.StatusCode = statusCode;
+
+            return result;
         }
     }
 }

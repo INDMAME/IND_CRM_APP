@@ -5,7 +5,22 @@ import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
 import { classNames } from "../../utils/classNames.ts";
 import { indT } from "../../utils/indI18n.ts";
 
-type RawOption = { value?: string | number; Value?: string | number; text?: string; Text?: string } | [string | number, string];
+type RawOption =
+  | {
+      value?: string | number;
+      Value?: string | number;
+      text?: string;
+      Text?: string;
+      icon?: React.ReactNode;
+      Icon?: React.ReactNode;
+    }
+  | [string | number, string];
+
+type NormalizedOption = {
+  value: string | number;
+  text: string;
+  icon?: React.ReactNode;
+};
 
 type SelectComboboxProps = {
   label: string;
@@ -48,15 +63,19 @@ const SelectCombobox = ({
   const readOnlyMode = readOnly || disabled;
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
   const data = useMemo(() => {
-    return (options || []).map((o) => {
+    return (options || []).map<NormalizedOption>((o) => {
       if (Array.isArray(o)) {
         return { value: o[0] ?? "", text: o[1] ?? "" };
       }
-      return { value: o?.value ?? o?.Value ?? "", text: o?.text ?? o?.Text ?? "" };
+      return {
+        value: o?.value ?? o?.Value ?? "",
+        text: o?.text ?? o?.Text ?? "",
+        icon: o?.icon ?? o?.Icon,
+      };
     });
   }, [options]);
 
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState<string | null>(null);
   const [selected, setSelected] = useState(
     data.find((d) => String(d.value) === String(value)) || { value: "", text: "" }
   );
@@ -73,7 +92,8 @@ const SelectCombobox = ({
   }, [value, data]);
 
   useEffect(() => {
-    setQuery("");
+    // Reset typed search text after external value changes.
+    setQuery(null);
   }, [selected]);
 
   useEffect(() => {
@@ -82,7 +102,7 @@ const SelectCombobox = ({
   }, [emitOnValueChange, onChange, selected]);
 
   const filtered = useMemo(() => {
-    if (!query.trim()) return data;
+    if (!query || !query.trim()) return data;
     const f = data.filter((o) => {
       const optionValue = String(o.value ?? "").trim();
       if (!optionValue) {
@@ -97,9 +117,9 @@ const SelectCombobox = ({
     setActiveIndex(0);
   }, [filtered.length, query]);
 
-  const selectOption = (opt: { value: string | number; text: string }) => {
+  const selectOption = (opt: NormalizedOption) => {
     setSelected(opt);
-    setQuery("");
+    setQuery(null);
     setOpen(false);
     if (!emitOnValueChange) {
       onChange(opt?.value ? String(opt.value) : "");
@@ -136,7 +156,8 @@ const SelectCombobox = ({
   const activeId = open && filtered[activeIndex] ? `select-opt-${safeId}-${filtered[activeIndex].value}` : undefined;
   const listOpen = open && !disabled;
   const selectedValue = String(selected?.value ?? "").trim();
-  const displayValue = query || (selectedValue ? selected?.text || "" : "");
+  const displayValue = query !== null ? query : (selectedValue ? selected?.text || "" : "");
+  const showSelectedIcon = query === null && !!selectedValue && !!selected?.icon;
 
   const listBody = (
     <div id={listId} ref={listRef} role="listbox" aria-label={label}>
@@ -166,7 +187,19 @@ const SelectCombobox = ({
                 )}
               ></span>
             )}
-            <span className={classNames("block truncate", sel ? "font-medium" : "font-normal")}>{opt.text}</span>
+            <span className={classNames("flex min-w-0 items-center gap-2", sel ? "font-medium" : "font-normal")}>
+              {opt.icon ? (
+                <span
+                  className={classNames(
+                    "inline-flex h-4 w-4 shrink-0 items-center justify-center",
+                    isActive ? "text-white" : "text-slate-500"
+                  )}
+                >
+                  {opt.icon}
+                </span>
+              ) : null}
+              <span className="block truncate">{opt.text}</span>
+            </span>
           </button>
         );
       })}
@@ -190,7 +223,8 @@ const SelectCombobox = ({
         >
           <input
             className={classNames(
-              "w-full rounded-xl border px-3 py-2 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+              "w-full rounded-xl border py-2 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+              showSelectedIcon ? "pl-9" : "pl-3",
               showSearchButton ? "pr-20" : "pr-10",
               invalid
                 ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
@@ -218,6 +252,11 @@ const SelectCombobox = ({
             aria-controls={listId}
             aria-activedescendant={activeId}
           />
+          {showSelectedIcon ? (
+            <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+              <span className="inline-flex h-4 w-4 items-center justify-center">{selected.icon}</span>
+            </span>
+          ) : null}
           <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
             {showSearchButton ? (
               <button

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 2/12/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Martes 2/17/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -16,6 +16,14 @@ Formatversion: 1
     
     METHODS
       Version: 3
+      SOURCE #classDeclaration
+        #// Purpose: Metodos COM para crear, consultar, actualizar y eliminar hojas de gastos.
+        #// Notes: Todos los metodos devuelven containers con un formato estable para la API.
+        #public class INDCRMExpenseSheetService
+        #{
+        #
+        #}
+      ENDSOURCE
       SOURCE #createExpenseSheet
         #/*
         #    Method: indExpenseSheetCreate (createExpenseSheet)
@@ -26,7 +34,7 @@ Formatversion: 1
         #    Input _data (container):
         #      1) companyId (handled by INDCRMUtilityService::getCompany)
         #      2) headerIn (container)
-        #         - Mode 0/1: [axUserId, descr, currencyCode, exchRate, projId]
+        #         - Mode 0/1: [axUserId, descr, currencyCode, exchRate, projId, expenseSheetStatus, exchangeRateMode]
         #         - Mode 2  : at least [axUserId] (other fields ignored)
         #      3) linesIn (container of line containers)
         #         - Each line: [transDateStr, typeValue, lineDescr, internacional, ticket, qty, amount, lineProjId, attachFiles]
@@ -58,6 +66,10 @@ Formatversion: 1
         #    str  currencyCode;
         #    real exchRate;
         #    str  projId;
+        #    INDExpenseSheetStatus expenseSheetStatus;
+        #    INDExchangeRateMode   exchangeRateMode;
+        #    boolean hasExpenseSheetStatus;
+        #    boolean hasExchangeRateMode;
         #
         #    // Line fields
         #    container lineIn;
@@ -102,6 +114,8 @@ Formatversion: 1
         #    // Defaults
         #    mode                = #ModeCreateHeaderAndLines;
         #    existingHojaGastosId = '';
+        #    hasExpenseSheetStatus = false;
+        #    hasExchangeRateMode   = false;
         #
         #    if (conLen(optionsIn) >= 1)
         #        mode = conPeek(optionsIn, 1);
@@ -134,7 +148,7 @@ Formatversion: 1
         #    }
         #    else
         #    {
-        #        // Existing behavior: expect 5 header fields
+        #        // Existing behavior: expect 5 header fields (plus 2 optional enum fields)
         #        if (conLen(headerIn) < 5)
         #            return [INDCRMUtilityService::buildHeader(false, 'Header input invalido. Se esperan 5 campos.', conNull()), conNull()];
         #
@@ -143,6 +157,18 @@ Formatversion: 1
         #        currencyCode = conPeek(headerIn, 3);
         #        exchRate     = conPeek(headerIn, 4);
         #        projId       = conPeek(headerIn, 5);
+        #
+        #        if (conLen(headerIn) >= 6)
+        #        {
+        #            expenseSheetStatus   = conPeek(headerIn, 6);
+        #            hasExpenseSheetStatus = true;
+        #        }
+        #
+        #        if (conLen(headerIn) >= 7)
+        #        {
+        #            exchangeRateMode   = conPeek(headerIn, 7);
+        #            hasExchangeRateMode = true;
+        #        }
         #
         #        if (!descr)
         #            return [INDCRMUtilityService::buildHeader(false, 'Description es obligatorio.', conNull()), conNull()];
@@ -222,6 +248,12 @@ Formatversion: 1
         #
         #                header.DestinoId    = "GENERALES";
         #                header.Year         = year(today());
+        #
+        #                if (hasExpenseSheetStatus)
+        #                    header.ExpenseSheetStatus = expenseSheetStatus;
+        #
+        #                if (hasExchangeRateMode)
+        #                    header.ExchangeRateMode = exchangeRateMode;
         #
         #                // Must be open sheet
         #                header.Voucher      = '';
@@ -389,14 +421,6 @@ Formatversion: 1
         #    return [INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull()), conNull()];
         #}
         #
-      ENDSOURCE
-      SOURCE #classDeclaration
-        #// Purpose: Metodos COM para crear, consultar, actualizar y eliminar hojas de gastos.
-        #// Notes: Todos los metodos devuelven containers con un formato estable para la API.
-        #public class INDCRMExpenseSheetService
-        #{
-        #
-        #}
       ENDSOURCE
       SOURCE #createExpenseSheet_deprecated
         #// Method: indExpenseSheetCreate
@@ -727,7 +751,7 @@ Formatversion: 1
         #    CRMUserId        crmUserId;
         #    UserId           axUserId;
         #    CRMHojaGastosId  hojaId;
-        #    int            lineRecId;
+        #    RecId            lineRecId;
         #    int              deleteWholeSheet;
         #
         #    CRMHojaGastosTable header;
@@ -853,6 +877,41 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #getCurrencyList
+        #// Method: getCurrencyList
+        #// Purpose: Returns currency list with CurrencyCode and CurrencyCodeISO.
+        #// Input container:
+        #//  - _data[1] = CompanyId
+        #// Output:
+        #//  - Container items: [[CurrencyCode, CurrencyCodeISO], ...]
+        #static server container getCurrencyList(container _data)
+        #{
+        #    DataAreaId   _company;
+        #    Currency     currencyTable;
+        #    container    conResult, conItem;
+        #
+        #    _company = INDCRMUtilityService::getCompany(_data);
+        #    if (!_company)
+        #        return conNull();
+        #
+        #    changecompany (_company)
+        #    {
+        #        while select currencyTable
+        #            where currencyTable.CurrencyCodeISO != ""
+        #        {
+        #            conItem = [[
+        #                strFmt("%1", currencyTable.CurrencyCode),
+        #                strFmt("%1", currencyTable.CurrencyCodeISO)
+        #            ]];
+        #
+        #            conResult += conItem;
+        #        }
+        #    }
+        #
+        #    return conResult ? conResult : [["Sin datos."]];
+        #}
+        #
+      ENDSOURCE
       SOURCE #getExpenseSheet
         #// Method: indExpenseSheetGet
         #// Purpose: Get header + lines by CompanyId + crmUserId + HojaGastosId.
@@ -865,11 +924,11 @@ Formatversion: 1
         #
         #    CRMHojaGastosTable header;
         #    CRMHojaGastosLine  line;
-        #
+        #    Amount             monto;
         #    container headerOut;
         #    container linesOut = conNull();
         #    container lineRow;
-        #    int   startLine,gastoTypeInt;
+        #    int   startLine,gastoTypeInt,expenseSheetStatus,exchangeRateMode;
         #    str   msg;
         #    ;
         #
@@ -899,34 +958,43 @@ Formatversion: 1
         #        if (!header.RecId)
         #            return [INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull()), conNull()];
         #
-        #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK', [
-        #             strFmt("%1", header.HojaGastosId),
-        #             strFmt("%1", header.Description),
-        #             strFmt("%1", header.UserId),
-        #             strFmt("%1", header.CurrencyCode),
-        #             strFmt("%1", header.TotalAmountMST()),
-        #             strFmt("%1", header.ExchRate),
-        #             strFmt("%1", header.ProjId),
-        #             strFmt("%1", header.Voucher)
-        #        ]);
+        #        monto               = header.TotalAmount();
+        #        exchangeRateMode    = header.ExchangeRateMode;
+        #        expenseSheetStatus  = header.ExpenseSheetStatus;
+        #
+        #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK',
+        #                                                     [
+        #                                                      strFmt("%1", header.HojaGastosId),
+        #                                                      strFmt("%1", header.Description),
+        #                                                      strFmt("%1", expenseSheetStatus),
+        #                                                      strFmt("%1", header.UserId),
+        #                                                      strFmt("%1", header.CurrencyCode),
+        #                                                      strFmt("%1", monto),
+        #                                                      strFmt("%1", header.ExchRate),
+        #                                                      strFmt("%1", exchangeRateMode),
+        #                                                      strFmt("%1", header.ProjId),
+        #                                                      strFmt("%1", header.Voucher),
+        #                                                      strFmt("%1", header.CreatedDate)
+        #                                                     ]);
         #
         #        while select line
         #            where line.UserId       == crmUserId
         #               && line.HojaGastosId == hojaId
         #        {
         #             gastoTypeInt = line.Type;
+        #             monto        = line.Amount;
         #             lineRow = [
-        #                 strFmt("%1", line.RecId),
-        #                 strFmt("%1", date2Str(line.TransDate,  123, 2,2,2,2,4)),
-        #                 strFmt("%1", gastoTypeInt),
-        #                 strFmt("%1", line.Description),
-        #                 strFmt("%1", line.Internacional),
-        #                 strFmt("%1", line.Ticket),
-        #                 strFmt("%1", line.Qty),
-        #                 strFmt("%1", line.Amount),
-        #                 strFmt("%1", line.ProjId),
-        #                 strFmt("%1", line.INDAttachFiles)
-        #            ];
+        #                         strFmt("%1", line.RecId),
+        #                         strFmt("%1", date2Str(line.TransDate,  123, 2,2,2,2,4)),
+        #                         strFmt("%1", gastoTypeInt),
+        #                         strFmt("%1", line.Description),
+        #                         strFmt("%1", line.Internacional),
+        #                         strFmt("%1", line.Ticket),
+        #                         strFmt("%1", line.Qty),
+        #                         strFmt("%1", monto),
+        #                         strFmt("%1", line.ProjId),
+        #                         strFmt("%1", line.INDAttachFiles)
+        #                       ];
         #
         #            linesOut = conIns(linesOut, conLen(linesOut) + 1, lineRow);
         #            gastoTypeInt = 0;
@@ -950,8 +1018,8 @@ Formatversion: 1
         #    str 1000             filterTxt;
         #    str 1000             likePattern;
         #
-        #    int                  billedMode;
-        #
+        #    int                  billedMode,expenseSheetStatus,exchangeRateMode;
+        #    Amount               monto;
         #    // Filtros nuevos
         #    date                 createdDateFrom;
         #    date                 createdDateTo;
@@ -999,7 +1067,8 @@ Formatversion: 1
         #            return conResult;
         #
         #        while select hoja
-        #            index hint INDSearchKeyIdx
+        #         index hint INDSearchKeyIdx
+        #           order by createdDate DESC
         #            where hoja.UserId == crmUserId
         #
         #               // Texto opcional
@@ -1028,15 +1097,22 @@ Formatversion: 1
         #               // Moneda opcional
         #               && ( !currencyCode || hoja.CurrencyCode == currencyCode )
         #        {
+        #            monto               = hoja.TotalAmount();
+        #            exchangeRateMode    = hoja.ExchangeRateMode;
+        #            expenseSheetStatus  = hoja.ExpenseSheetStatus;
         #            conItem = [[
-        #                strFmt("%1", hoja.HojaGastosId),
-        #                strFmt("%1", hoja.Description),
-        #                strFmt("%1", hoja.Voucher),
-        #                strFmt("%1", hoja.ProjId),
-        #                strFmt("%1", hoja.CurrencyCode),
-        #                strFmt("%1", hoja.TotalAmountMST()),
-        #                strFmt("%1", hoja.CreatedDate)
-        #            ]];
+        #                         strFmt("%1", hoja.HojaGastosId),
+        #                         strFmt("%1", hoja.Description),
+        #                         strFmt("%1", expenseSheetStatus),
+        #                         strFmt("%1", hoja.UserId),
+        #                         strFmt("%1", hoja.CurrencyCode),
+        #                         strFmt("%1", monto),
+        #                         strFmt("%1", hoja.ExchRate),
+        #                         strFmt("%1", exchangeRateMode),
+        #                         strFmt("%1", hoja.ProjId),
+        #                         strFmt("%1", hoja.Voucher),
+        #                         strFmt("%1", hoja.CreatedDate)
+        #                      ]];
         #
         #            conResult += conItem;
         #        }
@@ -1070,8 +1146,8 @@ Formatversion: 1
         #    filterTxt = conPeek(_data, 2);
         #
         #    // Igual que el metodo base: si no hay filtro, no devolvemos nada (lista vacia).
-        #    if (!filterTxt)
-        #        return conResult;
+        #    //if (!filterTxt)
+        #     //   return conResult;
         #
         #    likePattern = strFmt("*%1*", filterTxt);
         #
@@ -1081,7 +1157,7 @@ Formatversion: 1
         #            index hint INDSearchKeyIdx
         #            where proj.INDPermitirImputarGastos
         #               && (proj.INDTransDateCierreCostes == dateNull())
-        #               && (proj.INDSearchKey like likePattern)
+        #               && (!filterTxt || proj.INDSearchKey like likePattern )
         #        {
         #            // Nota: Si el campo de nombre no es Name en tu ProjTable, cambialo aqui.
         #            conItem = [[
@@ -1125,6 +1201,16 @@ Formatversion: 1
       SOURCE #updateExpenseSheetHeader
         #// Method: indExpenseSheetUpdateHeader
         #// Purpose: Update header fields. Block if Voucher is set.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #//  - _data[3] = HojaGastosId
+        #//  - _data[4] = Description
+        #//  - _data[5] = CurrencyCode
+        #//  - _data[6] = ExchRate
+        #//  - _data[7] = ProjId
+        #//  - _data[8] = ExpenseSheetStatus (opcional)
+        #//  - _data[9] = ExchangeRateMode (opcional)
         #static server container updateExpenseSheetHeader(container _data)
         #{
         #    DataAreaId companyId;
@@ -1136,6 +1222,10 @@ Formatversion: 1
         #    str  currencyCode;
         #    real exchRate;
         #    str  projId;
+        #    INDExpenseSheetStatus expenseSheetStatus;
+        #    INDExchangeRateMode   exchangeRateMode;
+        #    boolean hasExpenseSheetStatus;
+        #    boolean hasExchangeRateMode;
         #    int   startLine;
         #    str   msg;
         #
@@ -1147,22 +1237,35 @@ Formatversion: 1
         #        return INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
         #
         #    if (conLen(_data) < 7)
-        #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan 7 campos.', conNull());
+        #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan al menos 7 campos.', conNull());
         #
         #    axUserId     = conPeek(_data, 2);
-        #    crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM    hojaId       = conPeek(_data, 3);
         #    hojaId       = conPeek(_data, 3);
         #    descr        = conPeek(_data, 4);
         #    currencyCode = conPeek(_data, 5);
         #    exchRate     = conPeek(_data, 6);
         #    projId       = conPeek(_data, 7);
         #
+        #    hasExpenseSheetStatus = false;
+        #    hasExchangeRateMode   = false;
+        #
+        #    if (conLen(_data) >= 8)
+        #    {
+        #        expenseSheetStatus   = conPeek(_data, 8);
+        #        hasExpenseSheetStatus = true;
+        #    }
+        #
+        #    if (conLen(_data) >= 9)
+        #    {
+        #        exchangeRateMode   = conPeek(_data, 9);
+        #        hasExchangeRateMode = true;
+        #    }
         #
         #    try
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #            if (!crmUserId || !hojaId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull());
         #
@@ -1202,6 +1305,12 @@ Formatversion: 1
         #                header.Description = descr;
         #
         #            header.ProjId = projId;
+        #
+        #            if (hasExpenseSheetStatus)
+        #                header.ExpenseSheetStatus = expenseSheetStatus;
+        #
+        #            if (hasExchangeRateMode)
+        #                header.ExchangeRateMode = exchangeRateMode;
         #
         #            header.update();
         #
@@ -1253,7 +1362,7 @@ Formatversion: 1
         #    CRMUserId         crmUserId;
         #    UserId            axUserId;
         #    CRMHojaGastosId   hojaId;
-        #    int lineRecId;
+        #    RecId lineRecId;
         #
         #    str   transDateStr;
         #    date  transDate;
@@ -1280,7 +1389,6 @@ Formatversion: 1
         #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan 13 campos.', conNull());
         #
         #    axUserId      = conPeek(_data, 2);
-        #    crmUserId     = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM    hojaId        = conPeek(_data, 3);
         #    hojaId        = conPeek(_data, 3);
         #    lineRecId     = conPeek(_data, 4);
         #    transDateStr  = conPeek(_data, 5);
