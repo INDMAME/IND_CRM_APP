@@ -6,6 +6,15 @@ param(
     [switch]$RestartIis = $true
 )
 
+# Enforce the canonical IIS deployment directory for this project.
+$CanonicalIisPath = "C:\\inetpub\\wwwroot\\IND_CRM_APP"
+$ResolvedIisPath = [System.IO.Path]::GetFullPath($IisPath).TrimEnd("\\")
+$ResolvedCanonicalIisPath = [System.IO.Path]::GetFullPath($CanonicalIisPath).TrimEnd("\\")
+if (-not [System.StringComparer]::OrdinalIgnoreCase.Equals($ResolvedIisPath, $ResolvedCanonicalIisPath)) {
+    throw "IIS publish path must be '$CanonicalIisPath'. Received '$IisPath'."
+}
+$IisPath = $CanonicalIisPath
+
 # Block deployment if any localization file has encoding corruption markers.
 node scripts/check-resx-encoding.mjs
 if ($LASTEXITCODE -ne 0) {

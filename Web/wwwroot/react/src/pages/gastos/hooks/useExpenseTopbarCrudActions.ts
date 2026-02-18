@@ -130,6 +130,11 @@ export const useExpenseTopbarCrudActions = ({
             const ok = await handleSave();
             if (ok) {
               closeConfirm();
+              // Create mode redirects to a new page; skip delayed success animation to avoid intermediate UI flash.
+              if (isCreateMode) {
+                onSaveSuccess();
+                return ok;
+              }
               await wait(200);
               flashActionMark("okProcess", 1200);
               await wait(1200);
