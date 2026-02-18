@@ -14,9 +14,11 @@ const localizationRoot = join(
 
 const suspiciousPatterns = [
   { name: "replacement-char", regex: /\uFFFD/gu },
-  { name: "c3-mojibake", regex: /Ã[\u00A0-\u00BF]/gu },
-  { name: "c2-mojibake", regex: /Â[\u00A0-\u00BF ]/gu },
-  { name: "e2-mojibake", regex: /â[\u0080-\u00FF\u2000-\u203F]/gu },
+  { name: "cp1252-control-char", regex: /[\u0080-\u009F]/gu },
+  { name: "c3-mojibake", regex: /\u00C3[\u0080-\u00FF]/gu },
+  { name: "c2-mojibake", regex: /\u00C2[\u0080-\u00FF ]/gu },
+  { name: "cjk-mojibake", regex: /\u00E4\u00B8|\u00E5\u2026|\u00E6\u2013|\u00E8\u00AF/gu },
+  { name: "e2-mojibake", regex: /\u00E2[\u0080-\u00FF\u2000-\u203F]/gu },
 ];
 
 /**
@@ -126,3 +128,4 @@ function runCheck() {
 }
 
 runCheck();
+

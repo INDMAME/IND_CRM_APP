@@ -72,11 +72,13 @@
   <data name="ExpenseSheets_Filter_ExchangeRateMode_Placeholder" xml:space="preserve"><value>Exchange rate mode</value></data>
   <data name="ExpenseSheets_Filter_ExchangeRateMode_Official" xml:space="preserve"><value>T.C. Official</value></data>
   <data name="ExpenseSheets_Filter_ExchangeRateMode_Manual" xml:space="preserve"><value>T.C. Manual</value></data>
-  <data name="ExpenseSheets_Field_SheetId" xml:space="preserve"><value>Sheet id</value></data>
+  <data name="ExpenseSheets_Field_SheetId" xml:space="preserve"><value>Expense sheet code</value></data>
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve"><value>User</value></data>
   <data name="ExpenseSheets_Field_Project" xml:space="preserve"><value>Project</value></data>
   <data name="ExpenseSheets_Field_Voucher" xml:space="preserve"><value>Voucher</value></data>
   <data name="ExpenseSheets_Field_Currency" xml:space="preserve"><value>Currency</value></data>
+  <data name="ExpenseSheets_Field_ExpenseCurrency" xml:space="preserve"><value>Expense currency</value></data>
+  <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve"><value>Local currency</value></data>
   <data name="ExpenseSheets_Field_Status" xml:space="preserve"><value>Status</value></data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve"><value>Total amount</value></data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve"><value>Description</value></data>
@@ -115,7 +117,7 @@
   <data name="Language_EN_Name" xml:space="preserve"><value>English</value></data>
   <data name="Language_PT_Name" xml:space="preserve"><value>Português</value></data>
   <data name="Language_IT_Name" xml:space="preserve"><value>Italiano</value></data>
-  <data name="Language_ZH_Name" xml:space="preserve"><value>ä¸­æ–‡</value></data>
+  <data name="Language_ZH_Name" xml:space="preserve"><value>中文</value></data>
 
   <data name="Login_Title" xml:space="preserve"><value>Sign in</value></data>
   <data name="Login_Welcome" xml:space="preserve"><value>Welcome</value></data>
@@ -375,7 +377,20 @@
   <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>Current origin: {0}</value></data>
   <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>Technical details: {0}</value></data>
   <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve"><value>Your active process will be canceled and unsaved changes will be lost. Do you want to continue?</value></data>
+  <data name="Visits_Create_Rollback" xml:space="preserve"><value>Rolling back activity...</value></data>
+  <data name="Common_No" xml:space="preserve"><value>No</value></data>
+  <data name="Common_Yes" xml:space="preserve"><value>Yes</value></data>
+  <data name="ExpenseSheets_Create_Lines" xml:space="preserve"><value>Lines</value></data>
+  <data name="Common_Add" xml:space="preserve"><value>Add</value></data>
+  <data name="ExpenseSheets_Create_NoLines" xml:space="preserve"><value>Add at least one line.</value></data>
+  <data name="ExpenseSheets_Line" xml:space="preserve"><value>Line</value></data>
+  <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve"><value>Loading exchange rate...</value></data>
+  <data name="ExpenseSheets_Validation_DescriptionRequired" xml:space="preserve"><value>Description is required.</value></data>
+  <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve"><value>Currency is required.</value></data>
+  <data name="ExpenseSheets_ExchangeRate_Unavailable" xml:space="preserve"><value>Could not get exchange rate.</value></data>
+  <data name="ExpenseSheets_ExchangeRate_NotFound" xml:space="preserve"><value>No exchange rate found for date</value></data>
+  <data name="ExpenseSheets_Line_Detail_Creating" xml:space="preserve"><value>Creating expense line...</value></data>
+  <data name="ExpenseSheets_Line_Detail_Created" xml:space="preserve"><value>Expense line created</value></data>
+  <data name="ExpenseSheets_Detail_PaidReadOnly" xml:space="preserve"><value>Paid expense sheets are read-only.</value></data>
+
 </root>
-
-
-

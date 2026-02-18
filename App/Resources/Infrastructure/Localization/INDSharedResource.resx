@@ -80,11 +80,13 @@
   <data name="ExpenseSheets_Filter_ExchangeRateMode_Placeholder" xml:space="preserve"><value>Modo registro TC</value></data>
   <data name="ExpenseSheets_Filter_ExchangeRateMode_Official" xml:space="preserve"><value>T.C. Oficial</value></data>
   <data name="ExpenseSheets_Filter_ExchangeRateMode_Manual" xml:space="preserve"><value>T.C. Manual</value></data>
-  <data name="ExpenseSheets_Field_SheetId" xml:space="preserve"><value>Id hoja</value></data>
+  <data name="ExpenseSheets_Field_SheetId" xml:space="preserve"><value>Código hoja de gasto</value></data>
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve"><value>Usuario</value></data>
   <data name="ExpenseSheets_Field_Project" xml:space="preserve"><value>Proyecto</value></data>
   <data name="ExpenseSheets_Field_Voucher" xml:space="preserve"><value>Voucher</value></data>
   <data name="ExpenseSheets_Field_Currency" xml:space="preserve"><value>Divisa</value></data>
+  <data name="ExpenseSheets_Field_ExpenseCurrency" xml:space="preserve"><value>Divisa gasto</value></data>
+  <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve"><value>Divisa local</value></data>
   <data name="ExpenseSheets_Field_Status" xml:space="preserve"><value>Estado</value></data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve"><value>Importe total</value></data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve"><value>Descripción</value></data>
@@ -123,7 +125,7 @@
   <data name="Language_EN_Name" xml:space="preserve"><value>English</value></data>
   <data name="Language_PT_Name" xml:space="preserve"><value>Português</value></data>
   <data name="Language_IT_Name" xml:space="preserve"><value>Italiano</value></data>
-  <data name="Language_ZH_Name" xml:space="preserve"><value>ä¸­æ–‡</value></data>
+  <data name="Language_ZH_Name" xml:space="preserve"><value>中文</value></data>
 
   <data name="Login_Title" xml:space="preserve"><value>Iniciar sesión</value></data>
   <data name="Login_Welcome" xml:space="preserve"><value>Bienvenido</value></data>
@@ -183,7 +185,7 @@
   <data name="History_Page_First" xml:space="preserve"><value>Primera</value></data>
   <data name="History_Page_Prev" xml:space="preserve"><value>Anterior</value></data>
   <data name="History_Page_Next" xml:space="preserve"><value>Siguiente</value></data>
-  <data name="History_Page_Last" xml:space="preserve"><value>Ãšltima</value></data>
+  <data name="History_Page_Last" xml:space="preserve"><value>Última</value></data>
 
   <data name="Common_OK" xml:space="preserve"><value>Aceptar</value></data>
   <data name="Common_Next" xml:space="preserve"><value>Avanzar</value></data>
@@ -318,7 +320,7 @@
   <data name="Enum_AsistenteTipo_Commercial" xml:space="preserve"><value>Comercial</value></data>
 
   <data name="Enum_GastoType_Peaje" xml:space="preserve"><value>Peaje</value></data>
-  <data name="Enum_GastoType_Parking" xml:space="preserve"><value>Parking</value></data>
+  <data name="Enum_GastoType_Parking" xml:space="preserve"><value>Aparcamiento</value></data>
   <data name="Enum_GastoType_Km" xml:space="preserve"><value>Km</value></data>
   <data name="Enum_GastoType_Desayuno" xml:space="preserve"><value>Desayuno</value></data>
   <data name="Enum_GastoType_Comida" xml:space="preserve"><value>Comida</value></data>
@@ -383,7 +385,20 @@
   <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>Origen actual: {0}</value></data>
   <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>Detalle tecnico: {0}</value></data>
   <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve"><value>Tu proceso activo se cancelará y perderás los cambios no guardados. ¿Deseas continuar?</value></data>
+  <data name="Visits_Create_Rollback" xml:space="preserve"><value>Revirtiendo actividad...</value></data>
+  <data name="Common_No" xml:space="preserve"><value>No</value></data>
+  <data name="Common_Yes" xml:space="preserve"><value>Si</value></data>
+  <data name="ExpenseSheets_Create_Lines" xml:space="preserve"><value>Lineas</value></data>
+  <data name="Common_Add" xml:space="preserve"><value>Agregar</value></data>
+  <data name="ExpenseSheets_Create_NoLines" xml:space="preserve"><value>Agrega al menos una linea.</value></data>
+  <data name="ExpenseSheets_Line" xml:space="preserve"><value>Linea</value></data>
+  <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve"><value>Consultando tipo de cambio...</value></data>
+  <data name="ExpenseSheets_Validation_DescriptionRequired" xml:space="preserve"><value>La descripcion es obligatoria.</value></data>
+  <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve"><value>La divisa es obligatoria.</value></data>
+  <data name="ExpenseSheets_ExchangeRate_Unavailable" xml:space="preserve"><value>No se pudo obtener el tipo de cambio.</value></data>
+  <data name="ExpenseSheets_ExchangeRate_NotFound" xml:space="preserve"><value>No hay tipo de cambio para la fecha</value></data>
+  <data name="ExpenseSheets_Line_Detail_Creating" xml:space="preserve"><value>Creando linea de gasto...</value></data>
+  <data name="ExpenseSheets_Line_Detail_Created" xml:space="preserve"><value>Linea de gasto creada</value></data>
+  <data name="ExpenseSheets_Detail_PaidReadOnly" xml:space="preserve"><value>Las hojas de gasto pagadas son de solo lectura.</value></data>
+
 </root>
-
-
-

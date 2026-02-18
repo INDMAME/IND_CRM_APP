@@ -325,8 +325,10 @@ export const useExpenseSheetDetailState = ({
           return;
         }
 
-        const officialRateForAmount100 = Number(response.Data.Rate) * EXCHANGE_RATE_REFERENCE_AMOUNT;
+        const officialRateRaw = Number(response.Data.Rate);
+        const officialRateForAmount100 = officialRateRaw * EXCHANGE_RATE_REFERENCE_AMOUNT;
         const nextExchangeRateValue = formatExchangeRateInputValue(officialRateForAmount100);
+        const officialRateRawValue = formatExchangeRateInputValue(officialRateRaw);
         setOfficialExchangeRateValue(nextExchangeRateValue);
         setDraftExchangeRate(nextExchangeRateValue);
 
@@ -334,7 +336,8 @@ export const useExpenseSheetDetailState = ({
         const source = safeText(response.Data.Source);
         const officialLabel = getExpenseExchangeRateModeLabel(0) || indT("ExpenseSheets_Filter_ExchangeRateMode_Official", "T.C. Oficial");
         const localizedRateDate = formatExpenseDisplayDate(effectiveRateDate, uiLocale) || effectiveRateDate;
-        setExchangeRateMessage(source ? `${officialLabel} ${localizedRateDate} (${source})` : `${officialLabel} ${localizedRateDate}`);
+        const exchangeRateInfoMessage = source ? `${officialLabel} ${localizedRateDate} (${source})` : `${officialLabel} ${localizedRateDate}`;
+        setExchangeRateMessage(officialRateRawValue ? `${exchangeRateInfoMessage} - ${officialRateRawValue}` : exchangeRateInfoMessage);
         setExchangeRateMessageIsError(false);
       } catch (error) {
         if (isCancelled) return;

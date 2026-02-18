@@ -67,6 +67,9 @@ const ExpenseSheetHeaderForm = ({
 }: ExpenseSheetHeaderFormProps) => {
   const isForeignCurrency =
     isEditing && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
+  const expenseCurrencyLabel = isForeignCurrency
+    ? indT("ExpenseSheets_Field_ExpenseCurrency", "Expense currency")
+    : indT("ExpenseSheets_Field_Currency", "Currency");
   const statusValue =
     header.expenseSheetStatus === null || header.expenseSheetStatus === undefined
       ? "-"
@@ -76,7 +79,10 @@ const ExpenseSheetHeaderForm = ({
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {!isCreateMode ? (
-          <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_SheetId", "Sheet id")} value={safeText(header.hojaGastosId) || "-"} />
+          <ExpenseReadOnlyField
+            label={indT("ExpenseSheets_Field_SheetId", "Expense sheet code")}
+            value={safeText(header.hojaGastosId) || "-"}
+          />
         ) : null}
         {!isCreateMode ? (
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} />
@@ -117,7 +123,7 @@ const ExpenseSheetHeaderForm = ({
           <div className="sm:col-span-2 space-y-3">
             <div className={`grid gap-4 ${isForeignCurrency ? "grid-cols-2" : "grid-cols-1"}`.trim()}>
               <ExpenseCurrencyFilterSelect
-                label={indT("ExpenseSheets_Field_Currency", "Currency")}
+                label={expenseCurrencyLabel}
                 placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
                 value={draftCurrencyCode}
                 onChange={onDraftCurrencyCodeChange}
@@ -149,11 +155,11 @@ const ExpenseSheetHeaderForm = ({
             {isForeignCurrency ? (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
-                  <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Currency", "Currency")}</label>
+                  <label className="form-label font-semibold">{indT("ExpenseSheets_Field_LocalCurrency", "Local currency")}</label>
                   <input
                     className="form-control ind-readonly-field"
                     value={exchangeRateBaseCurrency}
-                    aria-label={indT("ExpenseSheets_Field_Currency", "Currency")}
+                    aria-label={indT("ExpenseSheets_Field_LocalCurrency", "Local currency")}
                     readOnly
                     disabled
                   />
