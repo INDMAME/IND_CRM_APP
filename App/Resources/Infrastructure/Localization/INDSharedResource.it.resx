@@ -54,20 +54,20 @@
   <data name="ExpenseSheets_Filter_Project" xml:space="preserve"><value>Project</value></data>
   <data name="ExpenseSheets_Filter_Sheet" xml:space="preserve"><value>Expense sheet</value></data>
   <data name="ExpenseSheets_Filter_Currency" xml:space="preserve"><value>Currency</value></data>
-  <data name="ExpenseSheets_Filter_Status" xml:space="preserve"><value>Status</value></data>
+  <data name="ExpenseSheets_Filter_Status" xml:space="preserve"><value>Stato</value></data>
   <data name="ExpenseSheets_Filter_Project_Placeholder" xml:space="preserve"><value>Project id</value></data>
   <data name="ExpenseSheets_Filter_Sheet_Placeholder" xml:space="preserve"><value>Sheet id</value></data>
   <data name="ExpenseSheets_Filter_Currency_Placeholder" xml:space="preserve"><value>Currency code</value></data>
-  <data name="ExpenseSheets_Filter_Status_Placeholder" xml:space="preserve"><value>Status</value></data>
-  <data name="ExpenseSheets_Filter_Status_Unbilled" xml:space="preserve"><value>Unbilled</value></data>
-  <data name="ExpenseSheets_Filter_Status_Billed" xml:space="preserve"><value>Billed</value></data>
-  <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve"><value>Both</value></data>
-  <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve"><value>Draft</value></data>
-  <data name="ExpenseSheets_Filter_Status_InReview" xml:space="preserve"><value>In review</value></data>
-  <data name="ExpenseSheets_Filter_Status_Approved" xml:space="preserve"><value>Approved</value></data>
-  <data name="ExpenseSheets_Filter_Status_Rejected" xml:space="preserve"><value>Rejected</value></data>
-  <data name="ExpenseSheets_Filter_Status_Paid" xml:space="preserve"><value>Paid</value></data>
-  <data name="ExpenseSheets_Filter_Status_All" xml:space="preserve"><value>All</value></data>
+  <data name="ExpenseSheets_Filter_Status_Placeholder" xml:space="preserve"><value>Stato</value></data>
+  <data name="ExpenseSheets_Filter_Status_Unbilled" xml:space="preserve"><value>Non pagato</value></data>
+  <data name="ExpenseSheets_Filter_Status_Billed" xml:space="preserve"><value>Pagato</value></data>
+  <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve"><value>Entrambi</value></data>
+  <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve"><value>Bozza</value></data>
+  <data name="ExpenseSheets_Filter_Status_InReview" xml:space="preserve"><value>In revisione</value></data>
+  <data name="ExpenseSheets_Filter_Status_Approved" xml:space="preserve"><value>Approvato</value></data>
+  <data name="ExpenseSheets_Filter_Status_Rejected" xml:space="preserve"><value>Rifiutato</value></data>
+  <data name="ExpenseSheets_Filter_Status_Paid" xml:space="preserve"><value>Pagato</value></data>
+  <data name="ExpenseSheets_Filter_Status_All" xml:space="preserve"><value>Tutti</value></data>
   <data name="ExpenseSheets_Filter_ExchangeRateMode" xml:space="preserve"><value>Exchange rate mode</value></data>
   <data name="ExpenseSheets_Filter_ExchangeRateMode_Placeholder" xml:space="preserve"><value>Exchange rate mode</value></data>
   <data name="ExpenseSheets_Filter_ExchangeRateMode_Official" xml:space="preserve"><value>T.C. Official</value></data>
@@ -77,6 +77,7 @@
   <data name="ExpenseSheets_Field_Project" xml:space="preserve"><value>Project</value></data>
   <data name="ExpenseSheets_Field_Voucher" xml:space="preserve"><value>Voucher</value></data>
   <data name="ExpenseSheets_Field_Currency" xml:space="preserve"><value>Currency</value></data>
+  <data name="ExpenseSheets_Field_Status" xml:space="preserve"><value>Stato</value></data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve"><value>Total amount</value></data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve"><value>Description</value></data>
   <data name="ExpenseSheets_Field_CreatedDate" xml:space="preserve"><value>Date</value></data>

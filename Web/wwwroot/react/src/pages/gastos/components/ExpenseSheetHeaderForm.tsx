@@ -4,6 +4,7 @@ import type { ExpenseSheetHeader } from "../expenseTypes.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
+import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 
 type ExpenseSheetHeaderFormProps = {
@@ -66,12 +67,19 @@ const ExpenseSheetHeaderForm = ({
 }: ExpenseSheetHeaderFormProps) => {
   const isForeignCurrency =
     isEditing && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
+  const statusValue =
+    header.expenseSheetStatus === null || header.expenseSheetStatus === undefined
+      ? "-"
+      : getExpenseStatusLabel(header.expenseSheetStatus);
 
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {!isCreateMode ? (
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_SheetId", "Sheet id")} value={safeText(header.hojaGastosId) || "-"} />
+        ) : null}
+        {!isCreateMode ? (
+          <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} />
         ) : null}
         {isEditing ? (
           <div className="sm:col-span-2 space-y-1.5">

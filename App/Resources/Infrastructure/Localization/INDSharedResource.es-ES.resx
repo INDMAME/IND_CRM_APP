@@ -85,6 +85,7 @@
   <data name="ExpenseSheets_Field_Project" xml:space="preserve"><value>Proyecto</value></data>
   <data name="ExpenseSheets_Field_Voucher" xml:space="preserve"><value>Voucher</value></data>
   <data name="ExpenseSheets_Field_Currency" xml:space="preserve"><value>Divisa</value></data>
+  <data name="ExpenseSheets_Field_Status" xml:space="preserve"><value>Estado</value></data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve"><value>Importe total</value></data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve"><value>Descripción</value></data>
   <data name="ExpenseSheets_Field_CreatedDate" xml:space="preserve"><value>Fecha</value></data>
