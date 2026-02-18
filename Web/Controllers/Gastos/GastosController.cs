@@ -404,6 +404,8 @@ namespace IND_CRM_APP.Controllers
                 CurrencyCode = normalizedCurrency,
                 ExchRate = normalizedExchRate,
                 ProjId = NormalizeOptionalText(req.ProjId),
+                ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
+                ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
                 Lines = normalizedLines
             };
 

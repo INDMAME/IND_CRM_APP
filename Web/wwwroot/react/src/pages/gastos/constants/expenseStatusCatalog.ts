@@ -15,31 +15,31 @@ const EXPENSE_STATUS_CODES: ExpenseStatusFilterCode[] = [5, 0, 1, 2, 3, 4];
 const STATUS_UI_BY_CODE: Record<ExpenseStatusFilterCode, ExpenseStatusUiMeta> = {
   0: {
     labelKey: "ExpenseSheets_Filter_Status_Draft",
-    fallback: "Draft",
+    fallback: "Borrador",
     colorHex: "#94a3b8",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--draft",
   },
   1: {
     labelKey: "ExpenseSheets_Filter_Status_InReview",
-    fallback: "InReview",
+    fallback: "En revision",
     colorHex: "#f59e0b",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--review",
   },
   2: {
     labelKey: "ExpenseSheets_Filter_Status_Approved",
-    fallback: "Approved",
+    fallback: "Aprobado",
     colorHex: "#22c55e",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--approved",
   },
   3: {
     labelKey: "ExpenseSheets_Filter_Status_Rejected",
-    fallback: "Rejected",
+    fallback: "Rechazado",
     colorHex: "#ef4444",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--rejected",
   },
   4: {
     labelKey: "ExpenseSheets_Filter_Status_Paid",
-    fallback: "Paid",
+    fallback: "Pagado",
     colorHex: "#00296b",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--paid",
   },

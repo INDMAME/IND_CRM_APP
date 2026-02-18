@@ -24,6 +24,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("projId")]
         public string? ProjId { get; set; }
 
+        [JsonPropertyName("expenseSheetStatus")]
+        public int? ExpenseSheetStatus { get; set; }
+
+        [JsonPropertyName("exchangeRateMode")]
+        public int? ExchangeRateMode { get; set; }
+
         [JsonPropertyName("lines")]
         public List<ExpenseSheetLineRequest> Lines { get; set; } = new();
     }

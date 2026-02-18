@@ -165,7 +165,9 @@ export const useExpenseSheetDetailMutations = ({
             throw new Error(response.Message || indT("Api_RequestFailed", "Request failed."));
           }
 
-          const createdSheetId = String(response?.Data?.HojaGastosId || "").trim();
+          // Accept both casing variants from backend envelopes.
+          const createdData = response?.Data as { HojaGastosId?: unknown; hojaGastosId?: unknown } | null | undefined;
+          const createdSheetId = String(createdData?.HojaGastosId ?? createdData?.hojaGastosId ?? "").trim();
           if (!createdSheetId) {
             throw new Error(indT("Api_RequestFailed", "Request failed."));
           }
