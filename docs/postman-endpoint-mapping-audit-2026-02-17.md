@@ -3,7 +3,7 @@
 Last updated: 2026-02-17
 
 ## Scope
-- Source collection: `.codex/postman/IND_CRM_API V16.postman_collection.json`
+- Source collection: `.codex/postman/IND_CRM_API V17.postman_collection.json`
 - Total endpoints in collection: 30
 - Template endpoint excluded by request: `GET /api/crm/template/sample`
 - Evaluated endpoints: 29
