@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
@@ -45,6 +45,7 @@ const ExpenseSheetDetailPageContent = () => {
   const isCreateMode = sheetMode === "create";
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const createdSheetIdRef = useRef("");
+  const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
 
   const paginationLabels = useMemo(
     () => ({
@@ -176,7 +177,10 @@ const ExpenseSheetDetailPageContent = () => {
 
   const handleSaveSuccess = useCallback(() => {
     if (isCreateMode) {
-      navigateToCreatedSheet(createdSheetIdRef.current);
+      const createdSheetId = safeText(createdSheetIdRef.current);
+      if (!createdSheetId) return;
+      setIsRedirectingAfterCreate(true);
+      navigateToCreatedSheet(createdSheetId);
       return;
     }
 
@@ -184,7 +188,7 @@ const ExpenseSheetDetailPageContent = () => {
   }, [isCreateMode, navigateToCreatedSheet]);
 
   useExpenseSheetDetailTopbarActions({
-    busy,
+    busy: busy || isRedirectingAfterCreate,
     modalOpen: modal.open,
     isEditing,
     isCreateMode,
@@ -229,7 +233,7 @@ const ExpenseSheetDetailPageContent = () => {
         loadingText={modalLoadingText}
         showCancel={modal.showCancel}
         showConfirm={modal.showConfirm}
-        busy={busy}
+        busy={busy || isRedirectingAfterCreate}
         error={modalError}
         status={status}
         onConfirm={handleModalButtonConfirm}
@@ -238,7 +242,7 @@ const ExpenseSheetDetailPageContent = () => {
 
       <div
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
-        style={{ display: isLoading ? "flex" : "none" }}
+        style={{ display: isLoading || isRedirectingAfterCreate ? "flex" : "none" }}
       >
         <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
           <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
@@ -248,7 +252,7 @@ const ExpenseSheetDetailPageContent = () => {
 
       {errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
 
-      {!isLoading && !errorMessage && header ? (
+      {!isLoading && !isRedirectingAfterCreate && !errorMessage && header ? (
         <ExpenseSheetHeaderForm
           isCreateMode={isCreateMode}
           isEditing={isEditing}
@@ -279,7 +283,7 @@ const ExpenseSheetDetailPageContent = () => {
         />
       ) : null}
 
-      {!isCreateMode && !isLoading && !errorMessage ? (
+      {!isCreateMode && !isLoading && !isRedirectingAfterCreate && !errorMessage ? (
         <ExpenseLinesTimeline
           visibleLines={visibleLines}
           currencyCode={safeText(header?.currencyCode)}

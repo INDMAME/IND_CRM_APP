@@ -110,6 +110,25 @@
     line-height: 1.4;
 }
 
+.filter-card--summary .expense-summary-grid {
+    align-items: start;
+}
+
+.filter-card--summary .history-filter-summary--grid-item {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    column-gap: 4px;
+    align-items: start;
+}
+
+.filter-card--summary .history-filter-summary__label {
+    white-space: nowrap;
+}
+
+.filter-card--summary .history-filter-summary__value {
+    min-width: 0;
+}
+
 .filter-card .history-filter-stack > :not([hidden]) ~ :not([hidden]) {
     margin-top: 5px;
 }

@@ -13,7 +13,6 @@ import {
 } from "../constants/expenseStatusCatalog.ts";
 import ExpenseFiltersPanel from "../components/ExpenseFiltersPanel.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
-import HistorySummary from "../../visitas/historial/HistorySummary.tsx";
 import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText } from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetsListData } from "./useExpenseSheetsListData.ts";
 import { useExpenseSheetsFiltersState } from "./useExpenseSheetsFiltersState.ts";
@@ -141,26 +140,29 @@ const ExpenseSheetsPageContent = () => {
 
   const totalPages = Math.ceil((total || 0) / PAGE_SIZE);
 
-  const summaryDate = useMemo(() => {
-    if (!appliedFilters) return null as { fromValue: string; toValue: string } | null;
-
-    const locale = document?.documentElement?.lang || "es-ES";
-    const fromDateText = formatExpenseDisplayDate(appliedFilters.fromDate, locale, "");
-    const toDateText = formatExpenseDisplayDate(appliedFilters.toDate, locale, "");
-
-    if (!fromDateText && !toDateText) return null;
-    return {
-      fromValue: fromDateText || "--",
-      toValue: toDateText || "--",
-    };
-  }, [appliedFilters]);
-
   const summaryItems = useMemo(() => {
     if (!appliedFilters) {
       return [] as Array<{ key: string; label: string; value: string }>;
     }
 
     const summary: Array<{ key: string; label: string; value: string }> = [];
+    const locale = document?.documentElement?.lang || "es-ES";
+    const fromDateText = formatExpenseDisplayDate(appliedFilters.fromDate, locale, "");
+    const toDateText = formatExpenseDisplayDate(appliedFilters.toDate, locale, "");
+
+    if (fromDateText || toDateText) {
+      summary.push({
+        key: "fromDate",
+        label: indT("History_From", "From"),
+        value: fromDateText || "--",
+      });
+      summary.push({
+        key: "toDate",
+        label: indT("History_To", "To"),
+        value: toDateText || "--",
+      });
+    }
+
     if (appliedFilters.projectId.trim()) {
       summary.push({
         key: "project",
@@ -191,7 +193,7 @@ const ExpenseSheetsPageContent = () => {
     return summary;
   }, [appliedFilters]);
 
-  const showSummary = !showFilters && (!!summaryDate || summaryItems.length > 0);
+  const showSummary = !showFilters && summaryItems.length > 0;
 
   useEffect(() => {
     if (didRestoreOnMountRef.current) return;
@@ -250,22 +252,14 @@ const ExpenseSheetsPageContent = () => {
     <div className="space-y-2">
       {showSummary ? (
         <div className="filter-card filter-card--summary p-3 sm:p-4 mt-1 mb-3">
-          {summaryDate ? (
-            <HistorySummary
-              summaryFromLabel={indT("History_From", "From")}
-              summaryToLabel={indT("History_To", "To")}
-              fromValue={summaryDate.fromValue}
-              toValue={summaryDate.toValue}
-              className="gap-y-1 text-[11px]"
-            />
-          ) : null}
-          <div
-            className={`grid grid-cols-1 min-[360px]:grid-cols-2 items-start gap-x-3 gap-y-1 text-xs ${summaryDate ? "mt-1" : ""}`.trim()}
-          >
+          <div className="expense-summary-grid grid grid-cols-1 min-[360px]:grid-cols-2 items-start gap-x-4 gap-y-1 text-xs">
             {summaryItems.map((item, index) => (
-              <div key={`${item.key}-${item.value}-${index}`} className="history-filter-summary leading-5 min-w-0">
-                <span className="font-semibold">{item.label}:</span>{" "}
-                <span className="break-words">{item.value}</span>
+              <div
+                key={`${item.key}-${item.value}-${index}`}
+                className="history-filter-summary history-filter-summary--grid-item leading-5 min-w-0"
+              >
+                <span className="history-filter-summary__label font-semibold">{item.label}:</span>
+                <span className="history-filter-summary__value break-words">{item.value}</span>
               </div>
             ))}
           </div>

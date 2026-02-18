@@ -16,7 +16,7 @@ type ExpenseSheetFilterInputProps = {
   showLabel?: boolean;
 };
 
-const SEARCH_PAGE_SIZE = 10;
+const SEARCH_PAGE_SIZE = 20;
 
 const mapSheetOptions = (items: ExpenseSheetListItemDto[] | undefined): RemoteSearchOption[] => {
   return (Array.isArray(items) ? items : [])

@@ -174,7 +174,6 @@ export const useExpenseSheetDetailMutations = ({
 
           onCreateSuccess(createdSheetId);
           setStatus(indT("Common_Save", "Save"));
-          setIsEditing(false);
           return true;
         }
 

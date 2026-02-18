@@ -12,7 +12,7 @@ type ExpenseProjectFilterInputProps = {
   showLabel?: boolean;
 };
 
-const SEARCH_PAGE_SIZE = 10;
+const SEARCH_PAGE_SIZE = 20;
 
 const mapProjectOptions = (items: Array<{ value?: string; text?: string }> | undefined): RemoteSearchOption[] => {
   return (Array.isArray(items) ? items : [])

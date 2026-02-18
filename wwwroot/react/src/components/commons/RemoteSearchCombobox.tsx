@@ -83,6 +83,7 @@ const RemoteSearchCombobox = ({
   const [hasMore, setHasMore] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
+  const appendRequestRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
@@ -112,6 +113,10 @@ const RemoteSearchCombobox = ({
   }, [options, query]);
 
   useEffect(() => {
+    if (appendRequestRef.current) {
+      return;
+    }
+
     setActiveIndex(0);
   }, [filtered.length, query]);
 
@@ -129,6 +134,7 @@ const RemoteSearchCombobox = ({
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
+      appendRequestRef.current = append;
       setLoading(true);
 
       const termKey = term.toLowerCase();
@@ -167,6 +173,7 @@ const RemoteSearchCombobox = ({
         if (abortRef.current === controller) {
           abortRef.current = null;
         }
+        appendRequestRef.current = false;
         setLoading(false);
       }
     },
@@ -251,6 +258,7 @@ const RemoteSearchCombobox = ({
 
   const listId = `${idBase}-options`;
   const activeId = open && filtered[activeIndex] ? `${idBase}-opt-${filtered[activeIndex].value}` : undefined;
+  const showLoadingOnlyState = loading && filtered.length === 0;
 
   return (
     <div className="space-y-2" ref={containerRef}>
@@ -375,37 +383,42 @@ const RemoteSearchCombobox = ({
           panelClassName={panelClassName}
         >
           <div id={listId} ref={listRef}>
-            {loading ? (
+            {showLoadingOnlyState ? (
               <div className="px-4 py-2 text-sm text-slate-500">{indT("Common_Loading", "Loading")}</div>
             ) : filtered.length === 0 ? (
               <div className="px-4 py-2 text-sm text-slate-500">{indT("Common_NoData", "No data")}</div>
             ) : (
-              filtered.map((option, index) => {
-                const isActive = index === activeIndex;
-                const optionId = option.value || `${index}`;
-                return (
-                  <button
-                    type="button"
-                    key={optionId}
-                    id={`${idBase}-opt-${optionId}`}
-                    role="option"
-                    aria-selected={isActive}
-                    className={classNames(
-                      "relative flex w-full cursor-default select-none items-start py-2 px-3 text-left text-sm",
-                      isActive ? "bg-primary text-white" : "text-slate-900"
-                    )}
-                    onMouseEnter={() => setActiveIndex(index)}
-                    onClick={() => selectOption(option)}
-                  >
-                    <span className="flex flex-col">
-                      <span className="font-medium">{option.title || option.value}</span>
-                      {option.subtitle ? (
-                        <span className={classNames("text-xs", isActive ? "text-white/90" : "text-slate-500")}>{option.subtitle}</span>
-                      ) : null}
-                    </span>
-                  </button>
-                );
-              })
+              <>
+                {filtered.map((option, index) => {
+                  const isActive = index === activeIndex;
+                  const optionId = option.value || `${index}`;
+                  return (
+                    <button
+                      type="button"
+                      key={optionId}
+                      id={`${idBase}-opt-${optionId}`}
+                      role="option"
+                      aria-selected={isActive}
+                      className={classNames(
+                        "relative flex w-full cursor-default select-none items-start py-2 px-3 text-left text-sm",
+                        isActive ? "bg-primary text-white" : "text-slate-900"
+                      )}
+                      onMouseEnter={() => setActiveIndex(index)}
+                      onClick={() => selectOption(option)}
+                    >
+                      <span className="flex flex-col">
+                        <span className="font-medium">{option.title || option.value}</span>
+                        {option.subtitle ? (
+                          <span className={classNames("text-xs", isActive ? "text-white/90" : "text-slate-500")}>{option.subtitle}</span>
+                        ) : null}
+                      </span>
+                    </button>
+                  );
+                })}
+                {loading ? (
+                  <div className="px-4 py-2 text-xs text-slate-500 border-t border-slate-100">{indT("Common_Loading", "Loading")}</div>
+                ) : null}
+              </>
             )}
           </div>
         </FloatingList>

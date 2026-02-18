@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
@@ -39,6 +39,7 @@ const ExpenseSheetLineDetailContent = () => {
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
   const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
   const isCreateMode = lineMode === "create";
+  const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
 
   const {
     header,
@@ -169,7 +170,7 @@ const ExpenseSheetLineDetailContent = () => {
   });
 
   useExpenseSheetLineDetailTopbarActions({
-    busy,
+    busy: busy || isRedirectingAfterCreate,
     modalOpen: modal.open,
     isEditing,
     isCreateMode,
@@ -185,6 +186,7 @@ const ExpenseSheetLineDetailContent = () => {
     handleDelete,
     onSaveSuccess: () => {
       if (isCreateMode) {
+        setIsRedirectingAfterCreate(true);
         navigateToSheetDetail();
         return;
       }
@@ -206,7 +208,7 @@ const ExpenseSheetLineDetailContent = () => {
         loadingText={modalLoadingText}
         showCancel={modal.showCancel}
         showConfirm={modal.showConfirm}
-        busy={busy}
+        busy={busy || isRedirectingAfterCreate}
         error={modalError}
         status={status}
         onConfirm={handleModalButtonConfirm}
@@ -215,7 +217,7 @@ const ExpenseSheetLineDetailContent = () => {
 
       <div
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
-        style={{ display: isLoading ? "flex" : "none" }}
+        style={{ display: isLoading || isRedirectingAfterCreate ? "flex" : "none" }}
       >
         <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
           <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
@@ -225,7 +227,7 @@ const ExpenseSheetLineDetailContent = () => {
 
       {errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
 
-      {!isLoading && !errorMessage && line ? (
+      {!isLoading && !isRedirectingAfterCreate && !errorMessage && line ? (
         <ExpenseSheetLineForm
           line={line}
           fallbackDate={safeText(header?.createdDate)}
