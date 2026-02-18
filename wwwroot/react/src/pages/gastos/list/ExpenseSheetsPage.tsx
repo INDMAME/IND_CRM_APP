@@ -259,11 +259,13 @@ const ExpenseSheetsPageContent = () => {
               className="gap-y-1 text-[11px]"
             />
           ) : null}
-          <div className={`flex flex-col items-start gap-y-1 text-xs ${summaryDate ? "mt-1" : ""}`.trim()}>
+          <div
+            className={`grid grid-cols-1 min-[360px]:grid-cols-2 items-start gap-x-3 gap-y-1 text-xs ${summaryDate ? "mt-1" : ""}`.trim()}
+          >
             {summaryItems.map((item, index) => (
-              <div key={`${item.key}-${item.value}-${index}`} className="history-filter-summary leading-5">
+              <div key={`${item.key}-${item.value}-${index}`} className="history-filter-summary leading-5 min-w-0">
                 <span className="font-semibold">{item.label}:</span>{" "}
-                <span>{item.value}</span>
+                <span className="break-words">{item.value}</span>
               </div>
             ))}
           </div>
