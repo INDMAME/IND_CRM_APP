@@ -98,6 +98,8 @@
     var canEditExpense = expenseAccess >= IndAccessRights.Edit;
     var canDeleteExpense = expenseAccess >= IndAccessRights.FullAccess;
     var canCreateExpense = expenseAccess >= IndAccessRights.Add;
+    var canSelfManageExpense = selectedCompany?.AllowSelfManagement == true;
+    var canEditExpenseSheetDetail = canEditExpense || (!isExpenseSheetCreateMode && canSelfManageExpense);
 
     var hideForwardArrow = hideNavArrows || isVisitaDetail || isHistory || isExpenseSheetDetail || isExpenseSheetLineDetail || (isCreate && !canCreateVisit);
     var customBackUrl = ViewData["TopbarBackUrl"]?.ToString() ?? string.Empty;
@@ -223,10 +225,10 @@
                     }
                 </div>
             }
-            else if (isExpenseSheetDetail && (canEditExpense || canDeleteExpense || (isExpenseSheetCreateMode && canCreateExpense)))
+            else if (isExpenseSheetDetail && (canEditExpenseSheetDetail || canDeleteExpense || (isExpenseSheetCreateMode && canCreateExpense)))
             {
                 <div class="flex items-center gap-1 pr-1">
-                    @if (canEditExpense || (isExpenseSheetCreateMode && canCreateExpense))
+                    @if (canEditExpenseSheetDetail || (isExpenseSheetCreateMode && canCreateExpense))
                     {
                         <button id="expenseEditBtn" type="button" class="topbar-btn pointer-events-auto"
                                 aria-label="@SR["Topbar_EditSave"]"
@@ -249,7 +251,7 @@
                             </svg>
                         </button>
                     }
-                    @if (canEditExpense || (isExpenseSheetCreateMode && canCreateExpense))
+                    @if (canEditExpenseSheetDetail || (isExpenseSheetCreateMode && canCreateExpense))
                     {
                         <button id="expenseCancelBtn" type="button" class="topbar-btn pointer-events-auto topbar-hidden"
                                 aria-label="@SR["Common_Cancel"]"

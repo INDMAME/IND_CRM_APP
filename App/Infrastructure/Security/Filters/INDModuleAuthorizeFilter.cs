@@ -84,7 +84,13 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             }
 
             var required = GetRequiredAccess(path, http.Request.Method);
-            if (!HasAnyAccess(company, moduleCandidates, required))
+            var hasAccess = HasAnyAccess(company, moduleCandidates, required);
+            if (!hasAccess && IsSelfManagementOverrideAllowed(company, path, http.Request.Method, required))
+            {
+                hasAccess = true;
+            }
+
+            if (!hasAccess)
             {
                 var reason = $"Modules [{string.Join(",", moduleCandidates)}] require access {required}.";
                 Deny(context, AccessDeniedMessage(reason));
@@ -234,6 +240,34 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return IndAccessRights.FullAccess;
 
             return IndAccessRights.View;
+        }
+
+        // Allows status management updates for self-management companies on expense sheet headers.
+        private static bool IsSelfManagementOverrideAllowed(
+            IndWebCompany company,
+            string path,
+            string method,
+            int requiredAccess)
+        {
+            if (company?.AllowSelfManagement != true)
+                return false;
+
+            if (requiredAccess < IndAccessRights.Edit)
+                return false;
+
+            if (!HttpMethods.IsPut(method) && !HttpMethods.IsPatch(method))
+                return false;
+
+            if (!path.StartsWith("/api/crm/expensesheets/", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (path.Equals("/api/crm/expensesheets/list", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (path.Contains("/lines/", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return true;
         }
 
         // Detects attempts to force a different company via URL/query.

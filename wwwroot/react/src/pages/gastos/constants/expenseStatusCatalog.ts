@@ -11,6 +11,7 @@ type ExpenseStatusUiMeta = {
 
 export const DEFAULT_EXPENSE_STATUS_FILTER: ExpenseStatusFilterCode = 5;
 const EXPENSE_STATUS_CODES: ExpenseStatusFilterCode[] = [5, 0, 1, 2, 3, 4];
+const EXPENSE_SHEET_STATUS_CODES: ExpenseStatusFilterCode[] = [0, 1, 2, 3, 4];
 
 const STATUS_UI_BY_CODE: Record<ExpenseStatusFilterCode, ExpenseStatusUiMeta> = {
   0: {
@@ -73,6 +74,17 @@ export const getExpenseStatusFilterOptions = (): ExpenseSelectOption[] => {
         text: indT(meta.labelKey, meta.fallback),
       };
     });
+};
+
+// Builds fixed status options for expense sheet state updates (without "all").
+export const getExpenseSheetStatusOptions = (): ExpenseSelectOption[] => {
+  return EXPENSE_SHEET_STATUS_CODES.map((code) => {
+    const meta = STATUS_UI_BY_CODE[code];
+    return {
+      value: String(code),
+      text: indT(meta.labelKey, meta.fallback),
+    };
+  });
 };
 
 // Returns the localized status label for filter summaries and badges.

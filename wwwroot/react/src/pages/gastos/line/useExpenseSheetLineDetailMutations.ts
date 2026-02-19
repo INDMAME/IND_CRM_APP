@@ -25,7 +25,7 @@ type UseExpenseSheetLineDetailMutationsArgs = {
   draftDescription: string;
   draftTransDate: string;
   draftTypeValueCode: string;
-  draftAmount: string;
+  draftPrice: string;
   draftQty: string;
   draftProjectId: string;
   draftInternational: string;
@@ -76,7 +76,7 @@ export const useExpenseSheetLineDetailMutations = ({
   draftDescription,
   draftTransDate,
   draftTypeValueCode,
-  draftAmount,
+  draftPrice,
   draftQty,
   draftProjectId,
   draftInternational,
@@ -98,15 +98,15 @@ export const useExpenseSheetLineDetailMutations = ({
 
     const normalizedDate = normalizeLineDate(draftTransDate);
     const parsedTypeValue = Number.parseInt(String(draftTypeValueCode || "").trim(), 10);
-    const parsedAmount = parseNumber(draftAmount);
+    const parsedPrice = parseNumber(draftPrice);
     const parsedQty = parseNumber(draftQty);
     const parsedInternational = parseExpenseInternationalValue(draftInternational);
 
-    const hasValidQtyAmount = parsedQty != null && parsedQty > 0 && parsedAmount != null && parsedAmount >= 0;
-    if (!hasValidQtyAmount) {
+    const hasValidQtyPrice = parsedQty != null && parsedQty > 0 && parsedPrice != null && parsedPrice > 0;
+    if (!hasValidQtyPrice) {
       const validationMessage = indT(
         "ExpenseSheets_Line_Validation_AmountQty",
-        "Quantity must be greater than 0 and amount cannot be negative."
+        "Quantity and price must be greater than 0."
       );
       setModalError(validationMessage);
       setStatus(validationMessage);
@@ -135,20 +135,14 @@ export const useExpenseSheetLineDetailMutations = ({
           description: String(draftDescription || "").trim(),
           internacional: parsedInternational ?? line?.internacional ?? false,
           ticket: line?.ticket === true,
-          qty: parsedQty,
+          qty: Number(parsedQty),
+          price: Number(parsedPrice),
           projId: String(draftProjectId || "").trim() || undefined,
           indAttachFiles: safeText(line?.indAttachFiles),
         };
 
-        const createLinePayload: ExpenseSheetCreateLineRequest = {
-          ...commonLinePayload,
-          amount: parsedAmount,
-        };
-
-        const updateLinePayload: ExpenseSheetLineUpdateRequest = {
-          ...commonLinePayload,
-          Amount: parsedAmount,
-        };
+        const createLinePayload: ExpenseSheetCreateLineRequest = commonLinePayload;
+        const updateLinePayload: ExpenseSheetLineUpdateRequest = commonLinePayload;
 
         const response = isCreateMode
           ? await createExpenseSheet({
@@ -178,7 +172,7 @@ export const useExpenseSheetLineDetailMutations = ({
     busy,
     canCreateExpense,
     canEditExpense,
-    draftAmount,
+    draftPrice,
     draftDescription,
     draftInternational,
     draftProjectId,

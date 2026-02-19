@@ -5,6 +5,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetCurrencyDto } from "../expenseTypes.ts";
 import { getExpenseSheetCurrencies, getExpenseSheetDefaultCurrencyCode } from "../utils/expenseApi.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
+import ExpenseCurrencyFlagIcon from "./ExpenseCurrencyFlagIcon.tsx";
 
 type ExpenseCurrencyFilterSelectProps = {
   label: string;
@@ -22,7 +23,47 @@ const normalizeCurrencyCode = (value: string | number | null | undefined): strin
   return String(value || "").trim().toUpperCase();
 };
 
-const mapCurrencyOptions = (items: ExpenseSheetCurrencyDto[] | undefined): ExpenseSelectOption[] => {
+const readPreferredLocale = (): string => {
+  if (typeof document !== "undefined") {
+    const fromDocument = String(document.documentElement?.lang || "").trim();
+    if (fromDocument) return fromDocument;
+  }
+
+  if (typeof navigator !== "undefined") {
+    const fromNavigator = String(navigator.language || "").trim();
+    if (fromNavigator) return fromNavigator;
+  }
+
+  return "en";
+};
+
+// Resolves a localized currency display name when Intl.DisplayNames is available.
+const resolveCurrencyDisplayName = (currencyCode: string, locale: string): string => {
+  const normalizedCode = normalizeCurrencyCode(currencyCode);
+  if (!normalizedCode) return "";
+
+  const intlWithDisplayNames = Intl as typeof Intl & {
+    DisplayNames?: new (
+      locales?: string | string[],
+      options?: { type: "currency" }
+    ) => { of: (value: string) => string | undefined };
+  };
+
+  if (typeof intlWithDisplayNames.DisplayNames !== "function") return "";
+
+  try {
+    const displayNames = new intlWithDisplayNames.DisplayNames([locale, "en"], { type: "currency" });
+    const localizedName = String(displayNames.of(normalizedCode) || "").trim();
+    if (!localizedName) return "";
+
+    const normalizedName = localizedName.toUpperCase();
+    return normalizedName === normalizedCode ? "" : localizedName;
+  } catch {
+    return "";
+  }
+};
+
+const mapCurrencyOptions = (items: ExpenseSheetCurrencyDto[] | undefined, locale: string): ExpenseSelectOption[] => {
   const source = Array.isArray(items) ? items : [];
   const seenCodes = new Set<string>();
 
@@ -34,9 +75,13 @@ const mapCurrencyOptions = (items: ExpenseSheetCurrencyDto[] | undefined): Expen
       if (seenCodes.has(effectiveIsoCode)) return null;
       seenCodes.add(effectiveIsoCode);
 
+      const displayName = resolveCurrencyDisplayName(effectiveIsoCode, locale);
+      const optionLabel = displayName ? `${effectiveIsoCode} ${displayName}` : effectiveIsoCode;
+
       return {
         value: effectiveIsoCode,
-        text: effectiveIsoCode,
+        text: optionLabel,
+        icon: <ExpenseCurrencyFlagIcon currencyCode={effectiveIsoCode} />,
       } as ExpenseSelectOption;
     })
     .filter((entry): entry is ExpenseSelectOption => entry !== null);
@@ -54,6 +99,7 @@ const ExpenseCurrencyFilterSelect = ({
   idBase = "expense-currency",
   preferDefaultCurrencyFromContext = false,
 }: ExpenseCurrencyFilterSelectProps) => {
+  const locale = useMemo(() => readPreferredLocale(), []);
   const [options, setOptions] = useState<ExpenseSelectOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
@@ -93,7 +139,7 @@ const ExpenseCurrencyFilterSelect = ({
           return;
         }
 
-        const mappedOptions = mapCurrencyOptions(response.Items);
+        const mappedOptions = mapCurrencyOptions(response.Items, locale);
         setOptions(mappedOptions);
 
         if (!mappedOptions.length) {
@@ -143,7 +189,7 @@ const ExpenseCurrencyFilterSelect = ({
       isCancelled = true;
       controller.abort();
     };
-  }, [preferDefaultCurrencyFromContext]);
+  }, [locale, preferDefaultCurrencyFromContext]);
 
   const normalizedValue = useMemo(() => normalizeCurrencyCode(value), [value]);
   const disableBecauseNoData = !isLoadingOptions && !loadErrorMessage && options.length === 0;

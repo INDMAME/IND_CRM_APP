@@ -50,7 +50,7 @@
   <data name="ExpenseSheets_Line_Detail_Updated" xml:space="preserve"><value>更新的费用行</value></data>
   <data name="ExpenseSheets_Line_Detail_Deleting" xml:space="preserve"><value>消除费用线...</value></data>
   <data name="ExpenseSheets_Line_Detail_Deleted" xml:space="preserve"><value>取消费用线</value></data>
-  <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve"><value>数量必须大于 0 并且金额不能为负数。</value></data>
+  <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve"><value>数量和单价都必须大于 0。</value></data>
   <data name="ExpenseSheets_Filter_Project" xml:space="preserve"><value>项目</value></data>
   <data name="ExpenseSheets_Filter_Sheet" xml:space="preserve"><value>费用表</value></data>
   <data name="ExpenseSheets_Filter_Currency" xml:space="preserve"><value>分裂</value></data>
@@ -87,6 +87,7 @@
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve"><value>线路编号</value></data>
   <data name="ExpenseSheets_Field_Type" xml:space="preserve"><value>类型</value></data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve"><value>进口</value></data>
+  <data name="ExpenseSheets_Field_Price" xml:space="preserve"><value>单价</value></data>
   <data name="ExpenseSheets_Field_Qty" xml:space="preserve"><value>数量</value></data>
   <data name="ExpenseSheets_Field_TransDate" xml:space="preserve"><value>日期</value></data>
   <data name="ExpenseSheets_Field_International" xml:space="preserve"><value>国际的</value></data>

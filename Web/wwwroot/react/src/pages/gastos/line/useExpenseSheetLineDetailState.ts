@@ -2,13 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetHeader, ExpenseSheetLine } from "../expenseTypes.ts";
-import { fetchExpenseSheetDetail, mapExpenseSheetHeader, mapExpenseSheetLine } from "../utils/expenseApi.ts";
+import { fetchExpenseSheetDetail, getFuelPriceKm, mapExpenseSheetHeader, mapExpenseSheetLine } from "../utils/expenseApi.ts";
 import {
   clearExpenseNavigationGuard,
   navigateToExpenseUrl,
   setExpenseNavigationGuard,
 } from "../utils/expenseNavigation.ts";
 import { hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../utils/expenseUiUtils.ts";
+
+const KM_GASTO_TYPE_CODE = "3";
+const FUEL_PRICE_DEBOUNCE_MS = 300;
 
 const toInputDate = (raw?: string): string => {
   const parsed = parseExpenseDate(raw);
@@ -23,6 +26,29 @@ const formatEditableNumber = (value: number | null | undefined): string => {
   return String(value);
 };
 
+const normalizeFuelTransDate = (raw: string): string => {
+  const value = String(raw || "").trim();
+  if (!value) return "";
+
+  if (/^\d{8}$/.test(value)) {
+    return value;
+  }
+
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return value.replace(/-/g, "");
+  }
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  const yyyy = parsed.getFullYear();
+  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
+  const dd = String(parsed.getDate()).padStart(2, "0");
+  return `${yyyy}${mm}${dd}`;
+};
+
 const buildCreateLineDraft = (baseDate: string, projectId: string): ExpenseSheetLine => {
   return {
     lineRecId: "",
@@ -32,8 +58,9 @@ const buildCreateLineDraft = (baseDate: string, projectId: string): ExpenseSheet
     description: "",
     internacional: false,
     ticket: false,
+    price: null,
     qty: 1,
-    amount: 0,
+    amount: null,
     projId: projectId,
     indAttachFiles: "",
   };
@@ -70,16 +97,19 @@ export const useExpenseSheetLineDetailState = ({
   const [draftDescription, setDraftDescription] = useState("");
   const [draftTransDate, setDraftTransDate] = useState("");
   const [draftTypeValueCode, setDraftTypeValueCode] = useState("");
-  const [draftAmount, setDraftAmount] = useState("");
+  const [draftPrice, setDraftPrice] = useState("");
   const [draftQty, setDraftQty] = useState("");
   const [draftProjectId, setDraftProjectId] = useState("");
   const [draftInternational, setDraftInternational] = useState("");
+  const [isFuelPriceLoading, setIsFuelPriceLoading] = useState(false);
+  const [fuelPriceMessage, setFuelPriceMessage] = useState("");
+  const [fuelPriceMessageIsError, setFuelPriceMessageIsError] = useState(false);
 
   const hydrateDraftFromLine = useCallback((nextLine: ExpenseSheetLine | null, nextHeader: ExpenseSheetHeader | null) => {
     setDraftDescription(safeText(nextLine?.description));
     setDraftTransDate(toInputDate(nextLine?.transDate || nextHeader?.createdDate));
     setDraftTypeValueCode(safeText(nextLine?.typeValueCode));
-    setDraftAmount(formatEditableNumber(nextLine?.amount));
+    setDraftPrice(formatEditableNumber(nextLine?.price));
     setDraftQty(formatEditableNumber(nextLine?.qty));
     setDraftProjectId(safeText(nextLine?.projId || nextHeader?.projId));
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
@@ -216,6 +246,101 @@ export const useExpenseSheetLineDetailState = ({
     hydrateDraftFromLine(line, header);
   }, [header, hydrateDraftFromLine, isEditing, line]);
 
+  const normalizedDraftTypeValueCode = useMemo(() => safeText(draftTypeValueCode), [draftTypeValueCode]);
+  const normalizedFuelTransDate = useMemo(() => normalizeFuelTransDate(draftTransDate), [draftTransDate]);
+  const isKmType = normalizedDraftTypeValueCode === KM_GASTO_TYPE_CODE;
+
+  useEffect(() => {
+    let isCancelled = false;
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    let controller: AbortController | null = null;
+
+    const clearPending = () => {
+      if (timer) {
+        clearTimeout(timer);
+        timer = null;
+      }
+      if (controller) {
+        controller.abort();
+        controller = null;
+      }
+    };
+
+    if (!isEditing || !isKmType) {
+      setIsFuelPriceLoading(false);
+      setFuelPriceMessage("");
+      setFuelPriceMessageIsError(false);
+      return () => {
+        clearPending();
+      };
+    }
+
+    if (!normalizedFuelTransDate) {
+      setIsFuelPriceLoading(false);
+      setFuelPriceMessage(indT("Api_RequestFailed", "Request failed."));
+      setFuelPriceMessageIsError(true);
+      return () => {
+        clearPending();
+      };
+    }
+
+    timer = setTimeout(async () => {
+      controller = new AbortController();
+      setIsFuelPriceLoading(true);
+      setFuelPriceMessage("");
+      setFuelPriceMessageIsError(false);
+
+      try {
+        const response = await getFuelPriceKm(normalizedFuelTransDate, {
+          suppressPermissionModal: true,
+          signal: controller.signal,
+        });
+
+        if (isCancelled) return;
+
+        if (!response.Success || !response.Data || !Number.isFinite(Number(response.Data.PriceKm))) {
+          setFuelPriceMessage(
+            safeText(response.Message) || indT("ExpenseSheets_FuelPrice_NotFound", "Could not load fuel price for km.")
+          );
+          setFuelPriceMessageIsError(true);
+          return;
+        }
+
+        const resolvedPrice = Number(response.Data.PriceKm);
+        if (resolvedPrice > 0) {
+          setDraftPrice(formatEditableNumber(resolvedPrice));
+        }
+
+        const source = safeText(response.Data.Source);
+        const effectiveDate = safeText(response.Data.TransDate) || normalizedFuelTransDate;
+        const message = source
+          ? `${indT("ExpenseSheets_FuelPrice_Source", "Fuel price source")}: ${source} (${effectiveDate})`
+          : `${indT("ExpenseSheets_FuelPrice_Source", "Fuel price source")}: ${effectiveDate}`;
+        setFuelPriceMessage(message);
+        setFuelPriceMessageIsError(false);
+      } catch (error) {
+        if (isCancelled) return;
+        if (error instanceof DOMException && error.name === "AbortError") return;
+
+        setFuelPriceMessage(
+          error instanceof Error
+            ? error.message
+            : indT("ExpenseSheets_FuelPrice_NotFound", "Could not load fuel price for km.")
+        );
+        setFuelPriceMessageIsError(true);
+      } finally {
+        if (!isCancelled) {
+          setIsFuelPriceLoading(false);
+        }
+      }
+    }, FUEL_PRICE_DEBOUNCE_MS);
+
+    return () => {
+      isCancelled = true;
+      clearPending();
+    };
+  }, [isEditing, isKmType, normalizedFuelTransDate]);
+
   const hasActiveProcess = useMemo(() => busy || isEditing, [busy, isEditing]);
   useEffect(() => {
     setExpenseNavigationGuard(hasActiveProcess);
@@ -294,10 +419,14 @@ export const useExpenseSheetLineDetailState = ({
     draftDescription,
     draftTransDate,
     draftTypeValueCode,
-    draftAmount,
+    draftPrice,
     draftQty,
     draftProjectId,
     draftInternational,
+    isKmType,
+    isFuelPriceLoading,
+    fuelPriceMessage,
+    fuelPriceMessageIsError,
     isSheetPaid,
     setBusy,
     setStatus,
@@ -306,7 +435,7 @@ export const useExpenseSheetLineDetailState = ({
     setDraftDescription,
     setDraftTransDate,
     setDraftTypeValueCode,
-    setDraftAmount,
+    setDraftPrice,
     setDraftQty,
     setDraftProjectId,
     setDraftInternational,

@@ -23,8 +23,8 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("qty")]
         public decimal Qty { get; set; }
 
-        [JsonPropertyName("amount")]
-        public decimal Amount { get; set; }
+        [JsonPropertyName("price")]
+        public decimal Price { get; set; }
 
         [JsonPropertyName("projId")]
         public string? ProjId { get; set; }

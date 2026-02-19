@@ -14,8 +14,13 @@ type ExpenseSheetLineFormProps = {
   fallbackDate: string;
   sheetDescription: string;
   projectValue: string;
+  priceText: string;
   amountText: string;
   internacionalLabel: string;
+  isKmType: boolean;
+  isFuelPriceLoading: boolean;
+  fuelPriceMessage: string;
+  fuelPriceMessageIsError: boolean;
   status: string;
   isEditing: boolean;
   gastoTypeOptions: ExpenseSelectOption[];
@@ -23,14 +28,14 @@ type ExpenseSheetLineFormProps = {
   draftDescription: string;
   draftTransDate: string;
   draftTypeValueCode: string;
-  draftAmount: string;
+  draftPrice: string;
   draftQty: string;
   draftProjectId: string;
   draftInternational: string;
   onDraftDescriptionChange: (value: string) => void;
   onDraftTransDateChange: (value: string) => void;
   onDraftTypeValueCodeChange: (value: string) => void;
-  onDraftAmountChange: (value: string) => void;
+  onDraftPriceChange: (value: string) => void;
   onDraftQtyChange: (value: string) => void;
   onDraftProjectIdChange: (value: string) => void;
   onDraftInternationalChange: (value: string) => void;
@@ -42,8 +47,13 @@ const ExpenseSheetLineForm = ({
   fallbackDate,
   sheetDescription,
   projectValue,
+  priceText,
   amountText,
   internacionalLabel,
+  isKmType,
+  isFuelPriceLoading,
+  fuelPriceMessage,
+  fuelPriceMessageIsError,
   status,
   isEditing,
   gastoTypeOptions,
@@ -51,14 +61,14 @@ const ExpenseSheetLineForm = ({
   draftDescription,
   draftTransDate,
   draftTypeValueCode,
-  draftAmount,
+  draftPrice,
   draftQty,
   draftProjectId,
   draftInternational,
   onDraftDescriptionChange,
   onDraftTransDateChange,
   onDraftTypeValueCodeChange,
-  onDraftAmountChange,
+  onDraftPriceChange,
   onDraftQtyChange,
   onDraftProjectIdChange,
   onDraftInternationalChange,
@@ -128,19 +138,27 @@ const ExpenseSheetLineForm = ({
 
           {isEditing ? (
             <div className="space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Amount", "Amount")}</label>
+              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Price", "Price")}</label>
               <input
                 className="form-control"
                 type="number"
                 step="any"
                 inputMode="decimal"
-                value={draftAmount}
-                onChange={(event) => onDraftAmountChange(event.target.value || "")}
-                aria-label={indT("ExpenseSheets_Field_Amount", "Amount")}
+                value={draftPrice}
+                onChange={(event) => onDraftPriceChange(event.target.value || "")}
+                aria-label={indT("ExpenseSheets_Field_Price", "Price")}
               />
+              {isKmType && isFuelPriceLoading ? (
+                <p className="text-slate-500 text-xs">
+                  {indT("ExpenseSheets_FuelPrice_Loading", "Loading fuel price...")}
+                </p>
+              ) : null}
+              {isKmType && !isFuelPriceLoading && fuelPriceMessage ? (
+                <p className={fuelPriceMessageIsError ? "text-danger text-sm" : "text-slate-500 text-xs"}>{fuelPriceMessage}</p>
+              ) : null}
             </div>
           ) : (
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Amount", "Amount")} value={amountText || "-"} />
+            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Price", "Price")} value={priceText || "-"} />
           )}
 
           {isEditing ? (
@@ -162,6 +180,8 @@ const ExpenseSheetLineForm = ({
               value={line.qty != null ? String(line.qty) : "-"}
             />
           )}
+
+          <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Amount", "Amount")} value={amountText || "-"} />
 
           {isEditing ? (
             <ExpenseProjectFilterInput

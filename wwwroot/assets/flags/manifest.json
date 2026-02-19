@@ -1,0 +1,728 @@
+{
+  "source": {
+    "isoListOneXml": "https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xml",
+    "fetchedAtUtc": "2026-02-19T11:14:34.145Z",
+    "notes": "List One incluye monedas, fondos y metales preciosos. XE puede no tener SVG para todos."
+  },
+  "totals": {
+    "codes": 178,
+    "downloaded": 157,
+    "missing": 20,
+    "error": 1
+  },
+  "results": {
+    "AED": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/aed.static.svg"
+    },
+    "AFN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/afn.static.svg"
+    },
+    "ALL": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/all.static.svg"
+    },
+    "AMD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/amd.static.svg"
+    },
+    "AOA": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/aoa.static.svg"
+    },
+    "ARS": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/ars.static.svg"
+    },
+    "AUD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/aud.static.svg"
+    },
+    "AWG": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/awg.static.svg"
+    },
+    "AZN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/azn.static.svg"
+    },
+    "BAM": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bam.static.svg"
+    },
+    "BBD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bbd.static.svg"
+    },
+    "BDT": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bdt.static.svg"
+    },
+    "BHD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bhd.static.svg"
+    },
+    "BIF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bif.static.svg"
+    },
+    "BMD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bmd.static.svg"
+    },
+    "BND": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bnd.static.svg"
+    },
+    "BOB": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bob.static.svg"
+    },
+    "BOV": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/bov.static.svg"
+    },
+    "BRL": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/brl.static.svg"
+    },
+    "BSD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bsd.static.svg"
+    },
+    "BTN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/btn.static.svg"
+    },
+    "BWP": {
+      "status": "error",
+      "url": "https://www.xe.com/svgs/flags/bwp.static.svg",
+      "httpStatus": 502
+    },
+    "BYN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/byn.static.svg"
+    },
+    "BZD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/bzd.static.svg"
+    },
+    "CAD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/cad.static.svg"
+    },
+    "CDF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/cdf.static.svg"
+    },
+    "CHE": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/che.static.svg"
+    },
+    "CHF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/chf.static.svg"
+    },
+    "CHW": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/chw.static.svg"
+    },
+    "CLF": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/clf.static.svg"
+    },
+    "CLP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/clp.static.svg"
+    },
+    "CNY": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/cny.static.svg"
+    },
+    "COP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/cop.static.svg"
+    },
+    "COU": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/cou.static.svg"
+    },
+    "CRC": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/crc.static.svg"
+    },
+    "CUP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/cup.static.svg"
+    },
+    "CVE": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/cve.static.svg"
+    },
+    "CZK": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/czk.static.svg"
+    },
+    "DJF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/djf.static.svg"
+    },
+    "DKK": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/dkk.static.svg"
+    },
+    "DOP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/dop.static.svg"
+    },
+    "DZD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/dzd.static.svg"
+    },
+    "EGP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/egp.static.svg"
+    },
+    "ERN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/ern.static.svg"
+    },
+    "ETB": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/etb.static.svg"
+    },
+    "EUR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/eur.static.svg"
+    },
+    "FJD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/fjd.static.svg"
+    },
+    "FKP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/fkp.static.svg"
+    },
+    "GBP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/gbp.static.svg"
+    },
+    "GEL": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/gel.static.svg"
+    },
+    "GHS": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/ghs.static.svg"
+    },
+    "GIP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/gip.static.svg"
+    },
+    "GMD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/gmd.static.svg"
+    },
+    "GNF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/gnf.static.svg"
+    },
+    "GTQ": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/gtq.static.svg"
+    },
+    "GYD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/gyd.static.svg"
+    },
+    "HKD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/hkd.static.svg"
+    },
+    "HNL": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/hnl.static.svg"
+    },
+    "HTG": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/htg.static.svg"
+    },
+    "HUF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/huf.static.svg"
+    },
+    "IDR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/idr.static.svg"
+    },
+    "ILS": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/ils.static.svg"
+    },
+    "INR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/inr.static.svg"
+    },
+    "IQD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/iqd.static.svg"
+    },
+    "IRR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/irr.static.svg"
+    },
+    "ISK": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/isk.static.svg"
+    },
+    "JMD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/jmd.static.svg"
+    },
+    "JOD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/jod.static.svg"
+    },
+    "JPY": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/jpy.static.svg"
+    },
+    "KES": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/kes.static.svg"
+    },
+    "KGS": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/kgs.static.svg"
+    },
+    "KHR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/khr.static.svg"
+    },
+    "KMF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/kmf.static.svg"
+    },
+    "KPW": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/kpw.static.svg"
+    },
+    "KRW": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/krw.static.svg"
+    },
+    "KWD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/kwd.static.svg"
+    },
+    "KYD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/kyd.static.svg"
+    },
+    "KZT": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/kzt.static.svg"
+    },
+    "LAK": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/lak.static.svg"
+    },
+    "LBP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/lbp.static.svg"
+    },
+    "LKR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/lkr.static.svg"
+    },
+    "LRD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/lrd.static.svg"
+    },
+    "LSL": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/lsl.static.svg"
+    },
+    "LYD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/lyd.static.svg"
+    },
+    "MAD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mad.static.svg"
+    },
+    "MDL": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mdl.static.svg"
+    },
+    "MGA": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mga.static.svg"
+    },
+    "MKD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mkd.static.svg"
+    },
+    "MMK": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mmk.static.svg"
+    },
+    "MNT": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mnt.static.svg"
+    },
+    "MOP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mop.static.svg"
+    },
+    "MRU": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mru.static.svg"
+    },
+    "MUR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mur.static.svg"
+    },
+    "MVR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mvr.static.svg"
+    },
+    "MWK": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mwk.static.svg"
+    },
+    "MXN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mxn.static.svg"
+    },
+    "MXV": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/mxv.static.svg"
+    },
+    "MYR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/myr.static.svg"
+    },
+    "MZN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/mzn.static.svg"
+    },
+    "NAD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/nad.static.svg"
+    },
+    "NGN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/ngn.static.svg"
+    },
+    "NIO": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/nio.static.svg"
+    },
+    "NOK": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/nok.static.svg"
+    },
+    "NPR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/npr.static.svg"
+    },
+    "NZD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/nzd.static.svg"
+    },
+    "OMR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/omr.static.svg"
+    },
+    "PAB": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/pab.static.svg"
+    },
+    "PEN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/pen.static.svg"
+    },
+    "PGK": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/pgk.static.svg"
+    },
+    "PHP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/php.static.svg"
+    },
+    "PKR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/pkr.static.svg"
+    },
+    "PLN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/pln.static.svg"
+    },
+    "PYG": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/pyg.static.svg"
+    },
+    "QAR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/qar.static.svg"
+    },
+    "RON": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/ron.static.svg"
+    },
+    "RSD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/rsd.static.svg"
+    },
+    "RUB": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/rub.static.svg"
+    },
+    "RWF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/rwf.static.svg"
+    },
+    "SAR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/sar.static.svg"
+    },
+    "SBD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/sbd.static.svg"
+    },
+    "SCR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/scr.static.svg"
+    },
+    "SDG": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/sdg.static.svg"
+    },
+    "SEK": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/sek.static.svg"
+    },
+    "SGD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/sgd.static.svg"
+    },
+    "SHP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/shp.static.svg"
+    },
+    "SLE": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/sle.static.svg"
+    },
+    "SOS": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/sos.static.svg"
+    },
+    "SRD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/srd.static.svg"
+    },
+    "SSP": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/ssp.static.svg"
+    },
+    "STN": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/stn.static.svg"
+    },
+    "SVC": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/svc.static.svg"
+    },
+    "SYP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/syp.static.svg"
+    },
+    "SZL": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/szl.static.svg"
+    },
+    "THB": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/thb.static.svg"
+    },
+    "TJS": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/tjs.static.svg"
+    },
+    "TMT": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/tmt.static.svg"
+    },
+    "TND": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/tnd.static.svg"
+    },
+    "TOP": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/top.static.svg"
+    },
+    "TRY": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/try.static.svg"
+    },
+    "TTD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/ttd.static.svg"
+    },
+    "TWD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/twd.static.svg"
+    },
+    "TZS": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/tzs.static.svg"
+    },
+    "UAH": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/uah.static.svg"
+    },
+    "UGX": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/ugx.static.svg"
+    },
+    "USD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/usd.static.svg"
+    },
+    "USN": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/usn.static.svg"
+    },
+    "UYI": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/uyi.static.svg"
+    },
+    "UYU": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/uyu.static.svg"
+    },
+    "UYW": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/uyw.static.svg"
+    },
+    "UZS": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/uzs.static.svg"
+    },
+    "VED": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/ved.static.svg"
+    },
+    "VES": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/ves.static.svg"
+    },
+    "VND": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/vnd.static.svg"
+    },
+    "VUV": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/vuv.static.svg"
+    },
+    "WST": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/wst.static.svg"
+    },
+    "XAD": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/xad.static.svg"
+    },
+    "XAF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xaf.static.svg"
+    },
+    "XAG": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xag.static.svg"
+    },
+    "XAU": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xau.static.svg"
+    },
+    "XBA": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/xba.static.svg"
+    },
+    "XBB": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/xbb.static.svg"
+    },
+    "XBC": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/xbc.static.svg"
+    },
+    "XBD": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/xbd.static.svg"
+    },
+    "XCD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xcd.static.svg"
+    },
+    "XCG": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xcg.static.svg"
+    },
+    "XDR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xdr.static.svg"
+    },
+    "XOF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xof.static.svg"
+    },
+    "XPD": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xpd.static.svg"
+    },
+    "XPF": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xpf.static.svg"
+    },
+    "XPT": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/xpt.static.svg"
+    },
+    "XSU": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/xsu.static.svg"
+    },
+    "XTS": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/xts.static.svg"
+    },
+    "XUA": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/xua.static.svg"
+    },
+    "XXX": {
+      "status": "missing",
+      "url": "https://www.xe.com/svgs/flags/xxx.static.svg"
+    },
+    "YER": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/yer.static.svg"
+    },
+    "ZAR": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/zar.static.svg"
+    },
+    "ZMW": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/zmw.static.svg"
+    },
+    "ZWG": {
+      "status": "downloaded",
+      "url": "https://www.xe.com/svgs/flags/zwg.static.svg"
+    }
+  }
+}

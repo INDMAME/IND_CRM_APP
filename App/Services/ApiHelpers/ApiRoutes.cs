@@ -46,10 +46,15 @@ namespace IND_CRM_APP.Services.ApiHelpers
         // Expense sheets list route. Filters are sent in POST body.
         public const string ExpenseSheetsList = "api/crm/expensesheets/list";
         public const string ExpenseSheetCurrencies = "api/crm/expensesheets/currencies";
+        public const string ExpenseSheetFuelPriceKm = "api/crm/expensesheets/fuel-price-km";
 
         // Builds the projects list route with query.
         public static string ProjectsList(string safeFilter, int page, int pageSize) =>
             $"api/crm/projects/list?filter={safeFilter}&page={page}&pageSize={pageSize}";
+
+        // Builds fuel-price-km route with query.
+        public static string ExpenseSheetFuelPriceKmByQuery(string safeTransDate) =>
+            $"{ExpenseSheetFuelPriceKm}?transDate={safeTransDate}";
 
         // Builds exchange-rate route with query.
         public static string SystemExchangeRateByQuery(string safeBaseCurrency, string safeTargetCurrency, string? safeDate = null)

@@ -58,7 +58,7 @@
   <data name="ExpenseSheets_Line_Detail_Updated" xml:space="preserve"><value>Linea de gasto actualizada</value></data>
   <data name="ExpenseSheets_Line_Detail_Deleting" xml:space="preserve"><value>Eliminando linea de gasto...</value></data>
   <data name="ExpenseSheets_Line_Detail_Deleted" xml:space="preserve"><value>Linea de gasto eliminada</value></data>
-  <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve"><value>La cantidad debe ser mayor que 0 y el importe no puede ser negativo.</value></data>
+  <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve"><value>La cantidad y el precio deben ser mayores que 0.</value></data>
   <data name="ExpenseSheets_Filter_Project" xml:space="preserve"><value>Proyecto</value></data>
   <data name="ExpenseSheets_Filter_Sheet" xml:space="preserve"><value>Hoja de gasto</value></data>
   <data name="ExpenseSheets_Filter_Currency" xml:space="preserve"><value>Divisa</value></data>
@@ -95,6 +95,7 @@
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve"><value>Id línea</value></data>
   <data name="ExpenseSheets_Field_Type" xml:space="preserve"><value>Tipo</value></data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve"><value>Importe</value></data>
+  <data name="ExpenseSheets_Field_Price" xml:space="preserve"><value>Precio</value></data>
   <data name="ExpenseSheets_Field_Qty" xml:space="preserve"><value>Cantidad</value></data>
   <data name="ExpenseSheets_Field_TransDate" xml:space="preserve"><value>Fecha</value></data>
   <data name="ExpenseSheets_Field_International" xml:space="preserve"><value>Internacional</value></data>

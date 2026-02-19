@@ -4,12 +4,16 @@ import type { ExpenseSheetHeader } from "../expenseTypes.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
-import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
+import ExpenseCurrencyFlagIcon from "./ExpenseCurrencyFlagIcon.tsx";
+import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
+import { getExpenseSheetStatusOptions, getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 
 type ExpenseSheetHeaderFormProps = {
   isCreateMode: boolean;
   isEditing: boolean;
+  canEditHeaderFields: boolean;
+  canEditStatus: boolean;
   header: ExpenseSheetHeader;
   projectValue: string;
   voucherValue: string;
@@ -27,6 +31,7 @@ type ExpenseSheetHeaderFormProps = {
   draftProjectId: string;
   draftCurrencyCode: string;
   draftExchangeRate: string;
+  draftExpenseSheetStatus: number;
   isExchangeRateLoading: boolean;
   exchangeRateMessage: string;
   exchangeRateMessageIsError: boolean;
@@ -34,12 +39,15 @@ type ExpenseSheetHeaderFormProps = {
   onDraftProjectIdChange: (value: string) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
+  onDraftExpenseSheetStatusChange: (value: number) => void;
 };
 
 // Pure presentational header form for expense sheet detail/create screens.
 const ExpenseSheetHeaderForm = ({
   isCreateMode,
   isEditing,
+  canEditHeaderFields,
+  canEditStatus,
   header,
   projectValue,
   voucherValue,
@@ -57,6 +65,7 @@ const ExpenseSheetHeaderForm = ({
   draftProjectId,
   draftCurrencyCode,
   draftExchangeRate,
+  draftExpenseSheetStatus,
   isExchangeRateLoading,
   exchangeRateMessage,
   exchangeRateMessageIsError,
@@ -64,9 +73,10 @@ const ExpenseSheetHeaderForm = ({
   onDraftProjectIdChange,
   onDraftCurrencyCodeChange,
   onDraftExchangeRateChange,
+  onDraftExpenseSheetStatusChange,
 }: ExpenseSheetHeaderFormProps) => {
   const isForeignCurrency =
-    isEditing && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
+    isEditing && canEditHeaderFields && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
   const expenseCurrencyLabel = isForeignCurrency
     ? indT("ExpenseSheets_Field_ExpenseCurrency", "Expense currency")
     : indT("ExpenseSheets_Field_Currency", "Currency");
@@ -74,6 +84,10 @@ const ExpenseSheetHeaderForm = ({
     header.expenseSheetStatus === null || header.expenseSheetStatus === undefined
       ? "-"
       : getExpenseStatusLabel(header.expenseSheetStatus);
+  const headerCurrencyCode = safeText(header.currencyCode).toUpperCase();
+  const baseCurrencyCode = safeText(exchangeRateBaseCurrency).toUpperCase();
+  const statusOptions = React.useMemo(() => getExpenseSheetStatusOptions(), []);
+  const statusDraftValue = String(Number.isInteger(draftExpenseSheetStatus) ? draftExpenseSheetStatus : 0);
 
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
@@ -85,9 +99,28 @@ const ExpenseSheetHeaderForm = ({
           />
         ) : null}
         {!isCreateMode ? (
-          <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} />
+          isEditing && canEditStatus ? (
+            <SelectCombobox
+              label={indT("ExpenseSheets_Field_Status", "Status")}
+              options={statusOptions}
+              value={statusDraftValue}
+              onChange={(nextValue) => {
+                const parsed = Number(nextValue);
+                if (Number.isInteger(parsed) && parsed >= 0) {
+                  onDraftExpenseSheetStatusChange(parsed);
+                }
+              }}
+              placeholder={indT("ExpenseSheets_Field_Status", "Status")}
+              emitOnValueChange
+              allowTextInput={false}
+              idBase="expense-header-status"
+              portalClassName="visitas-typography"
+            />
+          ) : (
+            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} />
+          )
         ) : null}
-        {isEditing ? (
+        {isEditing && canEditHeaderFields ? (
           <div className="sm:col-span-2 space-y-1.5">
             <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Description", "Description")}</label>
             <input
@@ -104,14 +137,14 @@ const ExpenseSheetHeaderForm = ({
             fullWidth
           />
         )}
-        {isEditing ? (
+        {isEditing && canEditHeaderFields ? (
           <ExpenseProjectFilterInput
             label={indT("ExpenseSheets_Field_Project", "Project")}
             placeholder={indT("ExpenseSheets_Filter_Project_Placeholder", "Project id")}
             value={draftProjectId}
             onChange={onDraftProjectIdChange}
-            disabled={!isEditing}
-            readOnly={!isEditing}
+            disabled={!isEditing || !canEditHeaderFields}
+            readOnly={!isEditing || !canEditHeaderFields}
           />
         ) : projectValue ? (
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
@@ -119,7 +152,7 @@ const ExpenseSheetHeaderForm = ({
         {!isEditing && isSheetPaid ? (
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Voucher", "Voucher")} value={voucherValue || "-"} />
         ) : null}
-        {isEditing ? (
+        {isEditing && canEditHeaderFields ? (
           <div className="sm:col-span-2 space-y-3">
             <div className={`grid gap-4 ${isForeignCurrency ? "grid-cols-2" : "grid-cols-1"}`.trim()}>
               <ExpenseCurrencyFilterSelect
@@ -156,13 +189,20 @@ const ExpenseSheetHeaderForm = ({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <label className="form-label font-semibold">{indT("ExpenseSheets_Field_LocalCurrency", "Local currency")}</label>
-                  <input
-                    className="form-control ind-readonly-field"
-                    value={exchangeRateBaseCurrency}
-                    aria-label={indT("ExpenseSheets_Field_LocalCurrency", "Local currency")}
-                    readOnly
-                    disabled
-                  />
+                  <div className="relative">
+                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
+                      <span className="inline-flex h-4 w-4 items-center justify-center">
+                        <ExpenseCurrencyFlagIcon currencyCode={baseCurrencyCode} />
+                      </span>
+                    </span>
+                    <input
+                      className="form-control ind-readonly-field pl-9"
+                      value={exchangeRateBaseCurrency}
+                      aria-label={indT("ExpenseSheets_Field_LocalCurrency", "Local currency")}
+                      readOnly
+                      disabled
+                    />
+                  </div>
                 </div>
                 <div className="space-y-1.5">
                   <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Amount", "Amount")}</label>
@@ -186,7 +226,11 @@ const ExpenseSheetHeaderForm = ({
             ) : null}
           </div>
         ) : (
-          <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Currency", "Currency")} value={safeText(header.currencyCode) || "-"} />
+          <ExpenseReadOnlyField
+            label={indT("ExpenseSheets_Field_Currency", "Currency")}
+            value={safeText(header.currencyCode) || "-"}
+            leadingIcon={<ExpenseCurrencyFlagIcon currencyCode={headerCurrencyCode} />}
+          />
         )}
         {!isEditing && showExchangeRate ? (
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")} value={exchangeRateValue} />

@@ -28,6 +28,10 @@ namespace IND_CRM_APP.Services
             string targetCurrency,
             string? date
         );
+        Task<ApiResponse<FuelPriceKmDto>> GetFuelPriceKmAsync(
+            string token,
+            string transDate
+        );
         Task<ApiResponse<object>> GetHealthAsync(string token);
         Task<ApiResponse<object>> GetHealthPingAsync(string token);
 

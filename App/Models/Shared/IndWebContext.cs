@@ -28,6 +28,7 @@ namespace IND_CRM_APP.Models.Shared
         public bool IsDefault { get; set; }
         public string CompanyName { get; set; } = string.Empty;
         public string CurrencyCode { get; set; } = string.Empty;
+        public bool AllowSelfManagement { get; set; }
         public List<IndWebModule> Modules { get; set; } = new();
     }
 
@@ -82,6 +83,7 @@ namespace IND_CRM_APP.Models.Shared
         public object? IsDefault { get; set; }
         public string? CompanyName { get; set; }
         public string? CurrencyCode { get; set; }
+        public object? AllowSelfManagement { get; set; }
         public List<IndEntraModule>? Modules { get; set; }
     }
     /// <summary>

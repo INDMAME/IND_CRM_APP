@@ -264,7 +264,8 @@ namespace IND_CRM_APP.Services
                         CompanyId = c.CompanyId ?? string.Empty,
                         CompanyName = c.CompanyName ?? string.Empty,
                         IsDefault = ToBool(c.IsDefault),
-                        CurrencyCode = c.CurrencyCode ?? string.Empty
+                        CurrencyCode = c.CurrencyCode ?? string.Empty,
+                        AllowSelfManagement = ToBool(c.AllowSelfManagement)
                     };
 
                     if (c.Modules != null)

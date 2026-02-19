@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Martes 2/17/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Jueves 2/19/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -159,7 +159,7 @@ Formatversion: 1
         #// Salida: [ Header, Companies ]
         #// Header = [[ success, message, axUserId, userActive, appActive, defaultCompany, defaultCurrencyCode ]]
         #// Companies = lista de CompanyItem
-        #// CompanyItem = [ companyId, isDefault, companyName, currencyCode, modulesCon ]
+        #// CompanyItem = [ companyId, isDefault, companyName, currencyCode, allowSelfManagement, modulesCon ]
         #// modulesCon = lista de ModuleItem
         #// ModuleItem = [ moduleCode, description, isActive, accessRightsInt ]
         #//
@@ -206,6 +206,9 @@ Formatversion: 1
         #    str                         companyCurrencyCode;
         #    str                         defaultCompanyCurrencyCode;
         #    int                         accessInt;
+        #    CRMUserId                   companyCrmUserId;
+        #    CRMUsuarioTable             crmUsuarioTable;
+        #    boolean                     allowSelfManagement;
         #
         #    int                         i;
         #    DataAreaId                  tmpCompanyId;
@@ -301,27 +304,37 @@ Formatversion: 1
         #        // Nombre de compania (solo aqui usamos changecompany)
         #        companyName = "";
         #        companyCurrencyCode = "";
+        #        allowSelfManagement = false;
         #        try
         #        {
         #            changecompany (ciasPerm.CiaId)
         #            {
         #                companyName = CompanyInfo::find().Name;
         #                companyCurrencyCode = CompanyInfo::find().CurrencyCode;
+        #
+        #                companyCrmUserId = SysUserInfo::getCRMUsuarioTable(sysUserInfo.Id).UserId;
+        #                if (companyCrmUserId)
+        #                {
+        #                    crmUsuarioTable = CRMUsuarioTable::Find(companyCrmUserId);
+        #                    if (crmUsuarioTable.RecId)
+        #                        allowSelfManagement = INDPersonaTable::findByCRM(crmUsuarioTable.RecId).AllowSelfManagement;
+        #                }
         #            }
         #        }
         #        catch
         #        {
         #            companyName = "";
         #            companyCurrencyCode = "";
+        #            allowSelfManagement = false;
         #        }
-        #
-        #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, CurrencyCode, ModulesCon]
+        #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, CurrencyCode, allowSelfManagement, ModulesCon]
         #        // Nota: IsDefault se recalcula al final segun defaultCompany final
         #        companyItem = [
         #                        strFmt("%1", ciasPerm.CiaId),
         #                        "0",
         #                        strFmt("%1", companyName),
         #                        strFmt("%1", companyCurrencyCode),
+        #                        strFmt("%1", allowSelfManagement),
         #                        modulesCon
         #                      ];
         #

@@ -329,6 +329,95 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // API route used by React clients for /api/crm/expensesheets/fuel-price-km.
+        [HttpGet]
+        public async Task<IActionResult> ApiExpenseSheetFuelPriceKm(string transDate)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_SessionExpired"].Value,
+                        ErrorCode = "SESSION_EXPIRED",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>()
+                    },
+                    StatusCodes.Status401Unauthorized);
+            }
+
+            var normalizedDate = NormalizeLineTransDate(transDate);
+            if (string.IsNullOrWhiteSpace(normalizedDate))
+            {
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_RequestFailed"].Value,
+                        ErrorCode = "INVALID_REQUEST",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>()
+                    },
+                    StatusCodes.Status400BadRequest);
+            }
+
+            try
+            {
+                var response = await _apiClient.GetFuelPriceKmAsync(token, normalizedDate);
+                var normalizedData = response.Data == null
+                    ? null
+                    : new FuelPriceKmDto
+                    {
+                        PriceKm = response.Data.PriceKm,
+                        Source = response.Data.Source ?? string.Empty,
+                        TransDate = string.IsNullOrWhiteSpace(response.Data.TransDate)
+                            ? normalizedDate
+                            : response.Data.TransDate
+                    };
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = normalizedData,
+                        Errors = response.Errors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetFuelPriceKm");
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_RequestFailed"].Value,
+                        ErrorCode = "UPSTREAM_ERROR",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>()
+                    },
+                    StatusCodes.Status502BadGateway);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetFuelPriceKm");
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_RequestFailed"].Value,
+                        ErrorCode = "UNHANDLED_ERROR",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>()
+                    },
+                    StatusCodes.Status500InternalServerError);
+            }
+        }
+
         // API route used by React clients for /api/crm/expensesheets/{hojaGastosId}.
         [HttpGet]
         public async Task<IActionResult> ApiExpenseSheetDetail(string hojaGastosId)
@@ -395,6 +484,12 @@ namespace IND_CRM_APP.Controllers
             var normalizedExchRate = req.ExchRate > 0 ? req.ExchRate : 1m;
             var normalizedDescription = (req.Description ?? string.Empty).Trim();
             var normalizedLines = req.Lines ?? new List<ExpenseSheetLineRequest>();
+            var hasInvalidLines = normalizedLines.Any(line =>
+                line == null ||
+                string.IsNullOrWhiteSpace(NormalizeLineTransDate(line.TransDate)) ||
+                line.TypeValue <= 0 ||
+                line.Qty <= 0 ||
+                line.Price <= 0);
 
             var request = new ExpenseSheetCreateRequest
             {
@@ -413,6 +508,13 @@ namespace IND_CRM_APP.Controllers
             if (normalizedMode == 1)
             {
                 request.Lines = new List<ExpenseSheetLineRequest>();
+            }
+            else if (hasInvalidLines)
+            {
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
             }
 
             // Mode 2 adds lines to existing header and does not need header fields.
@@ -486,12 +588,21 @@ namespace IND_CRM_APP.Controllers
                     "VALIDATION_ERROR");
             }
 
+            var normalizedExpenseSheetStatus = req.ExpenseSheetStatus.HasValue && req.ExpenseSheetStatus.Value >= 0
+                ? req.ExpenseSheetStatus.Value
+                : (int?)null;
+            var normalizedExchangeRateMode = req.ExchangeRateMode.HasValue && req.ExchangeRateMode.Value >= 0
+                ? req.ExchangeRateMode.Value
+                : (int?)null;
+
             var request = new ExpenseSheetUpdateRequest
             {
                 Description = (req.Description ?? string.Empty).Trim(),
                 CurrencyCode = normalizedCurrency,
                 ExchRate = req.ExchRate,
-                ProjId = NormalizeOptionalText(req.ProjId)
+                ProjId = NormalizeOptionalText(req.ProjId),
+                ExpenseSheetStatus = normalizedExpenseSheetStatus,
+                ExchangeRateMode = normalizedExchangeRateMode
             };
 
             try
@@ -552,7 +663,7 @@ namespace IND_CRM_APP.Controllers
                     "INVALID_REQUEST");
 
             var normalizedDate = NormalizeLineTransDate(req.TransDate);
-            if (string.IsNullOrWhiteSpace(normalizedDate) || req.TypeValue <= 0)
+            if (string.IsNullOrWhiteSpace(normalizedDate) || req.TypeValue <= 0 || req.Qty <= 0 || req.Price <= 0)
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -566,7 +677,7 @@ namespace IND_CRM_APP.Controllers
                 Internacional = req.Internacional,
                 Ticket = req.Ticket,
                 Qty = req.Qty,
-                Amount = req.Amount,
+                Price = req.Price,
                 ProjId = NormalizeOptionalText(req.ProjId),
                 IndAttachFiles = req.IndAttachFiles ?? string.Empty
             };
@@ -788,6 +899,12 @@ namespace IND_CRM_APP.Controllers
                 var normalizedExchRate = req.ExchRate > 0 ? req.ExchRate : 1m;
                 var normalizedDescription = (req.Description ?? string.Empty).Trim();
                 var normalizedLines = req.Lines ?? new List<ExpenseSheetLineRequest>();
+                var hasInvalidLines = normalizedLines.Any(line =>
+                    line == null ||
+                    string.IsNullOrWhiteSpace(NormalizeLineTransDate(line.TransDate)) ||
+                    line.TypeValue <= 0 ||
+                    line.Qty <= 0 ||
+                    line.Price <= 0);
 
                 var request = new ExpenseSheetCreateRequest
                 {
@@ -804,6 +921,10 @@ namespace IND_CRM_APP.Controllers
                 if (normalizedMode == 1)
                 {
                     request.Lines = new List<ExpenseSheetLineRequest>();
+                }
+                else if (hasInvalidLines)
+                {
+                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
                 }
 
                 // Mode 2 adds lines to existing header and does not need header fields.
@@ -860,12 +981,21 @@ namespace IND_CRM_APP.Controllers
                     });
                 }
 
+                var normalizedExpenseSheetStatus = req.ExpenseSheetStatus.HasValue && req.ExpenseSheetStatus.Value >= 0
+                    ? req.ExpenseSheetStatus.Value
+                    : (int?)null;
+                var normalizedExchangeRateMode = req.ExchangeRateMode.HasValue && req.ExchangeRateMode.Value >= 0
+                    ? req.ExchangeRateMode.Value
+                    : (int?)null;
+
                 var request = new ExpenseSheetUpdateRequest
                 {
                     Description = (req.Description ?? string.Empty).Trim(),
                     CurrencyCode = normalizedCurrency,
                     ExchRate = req.ExchRate,
-                    ProjId = NormalizeOptionalText(req.ProjId)
+                    ProjId = NormalizeOptionalText(req.ProjId),
+                    ExpenseSheetStatus = normalizedExpenseSheetStatus,
+                    ExchangeRateMode = normalizedExchangeRateMode
                 };
 
                 var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, hojaGastosId.Trim(), request);
@@ -908,7 +1038,7 @@ namespace IND_CRM_APP.Controllers
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var normalizedDate = NormalizeLineTransDate(req.TransDate);
-                if (string.IsNullOrWhiteSpace(normalizedDate) || req.TypeValue <= 0)
+                if (string.IsNullOrWhiteSpace(normalizedDate) || req.TypeValue <= 0 || req.Qty <= 0 || req.Price <= 0)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var request = new ExpenseSheetLineRequest
@@ -919,7 +1049,7 @@ namespace IND_CRM_APP.Controllers
                     Internacional = req.Internacional,
                     Ticket = req.Ticket,
                     Qty = req.Qty,
-                    Amount = req.Amount,
+                    Price = req.Price,
                     ProjId = NormalizeOptionalText(req.ProjId),
                     IndAttachFiles = req.IndAttachFiles ?? string.Empty
                 };
@@ -1301,6 +1431,7 @@ namespace IND_CRM_APP.Controllers
                 Description = GetExtraString(line.Extra, "description", "descripcion"),
                 Internacional = GetExtraBool(line.Extra, "internacional", "international"),
                 Ticket = GetExtraBool(line.Extra, "ticket"),
+                Price = GetExtraDecimal(line.Extra, "price", "precio"),
                 Qty = GetExtraDecimal(line.Extra, "qty", "cantidad"),
                 Amount = GetExtraDecimal(line.Extra, "amount", "importe"),
                 ProjId = GetExtraString(line.Extra, "projId", "projectId", "proyectoId"),
@@ -1357,6 +1488,7 @@ namespace IND_CRM_APP.Controllers
                 description = GetExtraString(line.Extra, "description", "descripcion"),
                 internacional = GetExtraBool(line.Extra, "internacional", "international"),
                 ticket = GetExtraBool(line.Extra, "ticket"),
+                price = GetExtraDecimal(line.Extra, "price", "precio"),
                 qty = GetExtraDecimal(line.Extra, "qty", "cantidad"),
                 amount = GetExtraDecimal(line.Extra, "amount", "importe"),
                 projId = GetExtraString(line.Extra, "projId", "projectId", "proyectoId"),

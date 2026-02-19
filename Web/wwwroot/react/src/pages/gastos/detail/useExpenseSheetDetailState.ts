@@ -60,6 +60,7 @@ type UseExpenseSheetDetailStateArgs = {
   hasAccess: boolean;
   canCreateExpense: boolean;
   canEditExpense: boolean;
+  canEditHeaderFields: boolean;
   sheetId: string;
   isCreateMode: boolean;
   onForbidden: () => void;
@@ -70,6 +71,7 @@ export const useExpenseSheetDetailState = ({
   hasAccess,
   canCreateExpense,
   canEditExpense,
+  canEditHeaderFields,
   sheetId,
   isCreateMode,
   onForbidden,
@@ -87,6 +89,7 @@ export const useExpenseSheetDetailState = ({
   const [draftProjectId, setDraftProjectId] = useState("");
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
   const [draftExchangeRate, setDraftExchangeRate] = useState("");
+  const [draftExpenseSheetStatus, setDraftExpenseSheetStatus] = useState(0);
   const [defaultCurrencyCode, setDefaultCurrencyCode] = useState("");
   const [isExchangeRateLoading, setIsExchangeRateLoading] = useState(false);
   const [exchangeRateMessage, setExchangeRateMessage] = useState("");
@@ -98,6 +101,8 @@ export const useExpenseSheetDetailState = ({
     setDraftProjectId(safeText(nextHeader?.projId));
     setDraftCurrencyCode(safeText(nextHeader?.currencyCode));
     setDraftExchangeRate(safeText(nextHeader?.exchRate));
+    const nextStatus = Number(nextHeader?.expenseSheetStatus);
+    setDraftExpenseSheetStatus(Number.isInteger(nextStatus) && nextStatus >= 0 ? nextStatus : 0);
   }, []);
 
   useEffect(() => {
@@ -239,7 +244,7 @@ export const useExpenseSheetDetailState = ({
     return toIsoDate(new Date());
   }, [header?.createdDate]);
   const exchangeRateRequired =
-    isEditing && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
+    isEditing && canEditHeaderFields && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
   const exchangeRateValidationMessage =
     exchangeRateRequired && !draftExchangeRate.trim()
       ? indT(
@@ -247,8 +252,8 @@ export const useExpenseSheetDetailState = ({
           "Exchange rate is required when currency is different from base currency."
         )
       : "";
-  const isCurrencyLockedByLines = isEditing && hasLines;
-  const isExchangeRateLockedByLines = isEditing && hasLines && showExchangeRate;
+  const isCurrencyLockedByLines = isEditing && canEditHeaderFields && hasLines;
+  const isExchangeRateLockedByLines = isEditing && canEditHeaderFields && hasLines && showExchangeRate;
 
   useEffect(() => {
     let isCancelled = false;
@@ -266,7 +271,7 @@ export const useExpenseSheetDetailState = ({
       }
     };
 
-    if (!isEditing || isExchangeRateLockedByLines) {
+    if (!isEditing || !canEditHeaderFields || isExchangeRateLockedByLines) {
       setIsExchangeRateLoading(false);
       setExchangeRateMessage("");
       setExchangeRateMessageIsError(false);
@@ -383,6 +388,7 @@ export const useExpenseSheetDetailState = ({
       clearRequestArtifacts();
     };
   }, [
+    canEditHeaderFields,
     formExchangeDate,
     exchangeRateBaseCurrency,
     isEditing,
@@ -494,6 +500,7 @@ export const useExpenseSheetDetailState = ({
     draftProjectId,
     draftCurrencyCode,
     draftExchangeRate,
+    draftExpenseSheetStatus,
     officialExchangeRateValue,
     isExchangeRateLoading,
     exchangeRateMessage,
@@ -519,6 +526,7 @@ export const useExpenseSheetDetailState = ({
     setDraftProjectId,
     setDraftCurrencyCode,
     setDraftExchangeRate,
+    setDraftExpenseSheetStatus,
     handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateSheetMode,

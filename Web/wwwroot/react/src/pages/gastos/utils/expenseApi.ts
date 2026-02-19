@@ -3,6 +3,7 @@ import type {
   EntraContextDto,
   EntraContextRequest,
   ExchangeRateDto,
+  FuelPriceKmDto,
   ExpenseSheetCard,
   ExpenseSheetCurrencyDto,
   ExpenseSheetCreateRequest,
@@ -54,6 +55,7 @@ type ExpenseApiContext = {
   companyId: string;
   axUserId: string;
   defaultCurrencyCode: string;
+  allowSelfManagement: boolean;
 };
 
 type ExpenseApiAuthSeed = {
@@ -105,6 +107,11 @@ const toNullableNumber = (value: unknown): number | null => {
 const isNonNegativeNumber = (value: unknown): boolean => {
   const parsed = toNullableNumber(value);
   return parsed !== null && parsed >= 0;
+};
+
+const isPositiveNumber = (value: unknown): boolean => {
+  const parsed = toNullableNumber(value);
+  return parsed !== null && parsed > 0;
 };
 
 const isValidListExpenseSheetStatus = (value: unknown): boolean => {
@@ -303,6 +310,8 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
   const companies = Array.isArray(first.Companies) ? first.Companies : [];
   const fallbackCompany = safeText(companies.find((item) => item.IsDefault)?.CompanyId);
   const companyId = defaultCompany || fallbackCompany;
+  const selectedCompany = companies.find((item) => safeText(item.CompanyId) === companyId) || companies[0];
+  const allowSelfManagement = selectedCompany?.AllowSelfManagement === true;
 
   if (!axUserId || !companyId) {
     throw new ApiFetchError("Could not resolve Entra company context.");
@@ -313,6 +322,7 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
     companyId,
     axUserId,
     defaultCurrencyCode,
+    allowSelfManagement,
   };
 };
 
@@ -335,6 +345,7 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
       companyId: fallbackCompanyId,
       axUserId: "",
       defaultCurrencyCode: "",
+      allowSelfManagement: globalThis.__IND_ALLOW_SELF_MANAGEMENT__ === true,
     };
 
     cachedContext = fallbackContext;
@@ -365,6 +376,10 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
       ...resolved,
       token: seed.token,
     };
+
+    if (typeof window !== "undefined") {
+      window.__IND_ALLOW_SELF_MANAGEMENT__ = nextContext.allowSelfManagement;
+    }
 
     cachedContext = nextContext;
     return nextContext;
@@ -560,6 +575,7 @@ export const mapExpenseSheetHeader = (sheet: ExpenseSheetDetailDto): ExpenseShee
 // Maps /api/crm/expensesheets/{hojaGastosId} line contract to UI model.
 export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine => {
   const typeValueCode = safeText(line.TypeValue);
+  const legacyPrice = (line as { price?: unknown }).price;
 
   return {
     lineRecId: safeText(line.RecId),
@@ -569,6 +585,7 @@ export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine
     description: safeText(line.Description),
     internacional: toNullableBool(line.Internacional),
     ticket: toNullableBool(line.Ticket),
+    price: toNullableNumber(line.Price ?? legacyPrice),
     qty: toNullableNumber(line.Qty),
     amount: toNullableNumber(line.Amount),
     projId: safeText(line.ProjId),
@@ -790,6 +807,29 @@ export const getExchangeRate = async (
   });
 };
 
+// Reads fuel price per km from /api/crm/expensesheets/fuel-price-km.
+export const getFuelPriceKm = async (
+  transDate: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<FuelPriceKmDto>> => {
+  const context = await ensureExpenseApiContext(options);
+  const normalizedDate = safeText(transDate);
+  const query = new URLSearchParams();
+
+  query.set("transDate", normalizedDate);
+
+  const response = await fetchJson<IndApiResponse<FuelPriceKmDto>>(
+    `/api/crm/expensesheets/fuel-price-km?${query.toString()}`,
+    {
+      ...options,
+      method: "GET",
+      headers: buildExpenseHeaders(context, options),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
 // Creates an expense sheet using /api/crm/expensesheets.
 export const createExpenseSheet = async (
   payload: ExpenseSheetCreateRequest,
@@ -798,6 +838,15 @@ export const createExpenseSheet = async (
   const context = await ensureExpenseApiContext(options);
   const mode = payload.mode ?? 0;
   const lines = Array.isArray(payload.lines) ? payload.lines : [];
+  const hasInvalidLinePayload = lines.some((line) => {
+    return (
+      !safeText(line.transDate) ||
+      !Number.isInteger(Number(line.typeValue)) ||
+      Number(line.typeValue) <= 0 ||
+      !isPositiveNumber(line.qty) ||
+      !isPositiveNumber(line.price)
+    );
+  });
 
   if (payload.expenseSheetStatus !== undefined && !isNonNegativeNumber(payload.expenseSheetStatus)) {
     throw new ApiFetchError("expenseSheetStatus must be greater or equal to 0.");
@@ -809,6 +858,10 @@ export const createExpenseSheet = async (
 
   if (payload.exchangeRateMode !== undefined && payload.expenseSheetStatus === undefined) {
     throw new ApiFetchError("exchangeRateMode requires expenseSheetStatus.");
+  }
+
+  if (hasInvalidLinePayload) {
+    throw new ApiFetchError("Each line requires transDate, typeValue, qty > 0 and price > 0.");
   }
 
   if (mode === 0) {
@@ -910,6 +963,16 @@ export const updateExpenseSheetLine = async (
   payload: ExpenseSheetLineUpdateRequest,
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<ExpenseSheetLineUpdateResponseData>> => {
+  if (
+    !safeText(payload.transDate) ||
+    !Number.isInteger(Number(payload.typeValue)) ||
+    Number(payload.typeValue) <= 0 ||
+    !isPositiveNumber(payload.qty) ||
+    !isPositiveNumber(payload.price)
+  ) {
+    throw new ApiFetchError("transDate, typeValue, qty > 0 and price > 0 are required.");
+  }
+
   const context = await ensureExpenseApiContext(options);
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
   const safeLineId = encodeURIComponent(String(lineRecId || "").trim());

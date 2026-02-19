@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
+import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
@@ -36,13 +37,16 @@ const bootstrapExpenseApiAuth = () => {
 };
 
 const ExpenseSheetDetailPageContent = () => {
+  const { allowSelfManagement } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
-  const canEditExpense = canAccess("GASTOS_HOJA_GASTO", "Edit");
+  const canEditExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Edit");
   const canDeleteExpense = canAccess("GASTOS_HOJA_GASTO", "FullAccess");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const sheetMode = safeText(window.__EXPENSE_SHEET_MODE__).toLowerCase();
   const isCreateMode = sheetMode === "create";
+  const canEditExpenseStatus = allowSelfManagement === true && !isCreateMode;
+  const canEditExpense = canEditExpenseByModule || canEditExpenseStatus;
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const createdSheetIdRef = useRef("");
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
@@ -71,6 +75,7 @@ const ExpenseSheetDetailPageContent = () => {
     draftProjectId,
     draftCurrencyCode,
     draftExchangeRate,
+    draftExpenseSheetStatus,
     officialExchangeRateValue,
     isExchangeRateLoading,
     exchangeRateMessage,
@@ -95,6 +100,7 @@ const ExpenseSheetDetailPageContent = () => {
     setDraftProjectId,
     setDraftCurrencyCode,
     setDraftExchangeRate,
+    setDraftExpenseSheetStatus,
     handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateLineMode,
@@ -104,6 +110,7 @@ const ExpenseSheetDetailPageContent = () => {
     hasAccess,
     canCreateExpense,
     canEditExpense,
+    canEditHeaderFields: canEditExpenseByModule,
     sheetId,
     isCreateMode,
     onForbidden: showPermissionModal,
@@ -164,6 +171,7 @@ const ExpenseSheetDetailPageContent = () => {
     draftExchangeRate,
     officialExchangeRateValue,
     draftProjectId,
+    draftExpenseSheetStatus,
     currentExpenseSheetStatus: header?.expenseSheetStatus,
     exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
@@ -256,6 +264,8 @@ const ExpenseSheetDetailPageContent = () => {
         <ExpenseSheetHeaderForm
           isCreateMode={isCreateMode}
           isEditing={isEditing}
+          canEditHeaderFields={canEditExpenseByModule}
+          canEditStatus={canEditExpenseStatus}
           header={header}
           projectValue={projectValue}
           voucherValue={voucherValue}
@@ -273,6 +283,7 @@ const ExpenseSheetDetailPageContent = () => {
           draftProjectId={draftProjectId}
           draftCurrencyCode={draftCurrencyCode}
           draftExchangeRate={draftExchangeRate}
+          draftExpenseSheetStatus={draftExpenseSheetStatus}
           isExchangeRateLoading={isExchangeRateLoading}
           exchangeRateMessage={exchangeRateMessage}
           exchangeRateMessageIsError={exchangeRateMessageIsError}
@@ -280,6 +291,7 @@ const ExpenseSheetDetailPageContent = () => {
           onDraftProjectIdChange={setDraftProjectId}
           onDraftCurrencyCodeChange={setDraftCurrencyCode}
           onDraftExchangeRateChange={setDraftExchangeRate}
+          onDraftExpenseSheetStatusChange={setDraftExpenseSheetStatus}
         />
       ) : null}
 

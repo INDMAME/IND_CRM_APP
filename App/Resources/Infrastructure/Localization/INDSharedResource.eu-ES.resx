@@ -58,7 +58,7 @@
   <data name="ExpenseSheets_Line_Detail_Updated" xml:space="preserve"><value>Gastu-lerro eguneratua</value></data>
   <data name="ExpenseSheets_Line_Detail_Deleting" xml:space="preserve"><value>Gastu lerroa kentzen...</value></data>
   <data name="ExpenseSheets_Line_Detail_Deleted" xml:space="preserve"><value>Ezabatu da gastu-lerroa</value></data>
-  <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve"><value>Kantitatea 0 baino handiagoa izan behar da eta zenbatekoa ezin da negatiboa izan.</value></data>
+  <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve"><value>Kantitatea eta prezioa 0 baino handiagoak izan behar dira.</value></data>
   <data name="ExpenseSheets_Filter_Project" xml:space="preserve"><value>Proiektua</value></data>
   <data name="ExpenseSheets_Filter_Sheet" xml:space="preserve"><value>gastu-orria</value></data>
   <data name="ExpenseSheets_Filter_Currency" xml:space="preserve"><value>Zatitu</value></data>
@@ -95,6 +95,7 @@
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve"><value>lerroko id</value></data>
   <data name="ExpenseSheets_Field_Type" xml:space="preserve"><value>Mota</value></data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve"><value>Inportatua</value></data>
+  <data name="ExpenseSheets_Field_Price" xml:space="preserve"><value>Prezioa</value></data>
   <data name="ExpenseSheets_Field_Qty" xml:space="preserve"><value>Zenbatekoa</value></data>
   <data name="ExpenseSheets_Field_TransDate" xml:space="preserve"><value>Data</value></data>
   <data name="ExpenseSheets_Field_International" xml:space="preserve"><value>Nazioartekoa</value></data>

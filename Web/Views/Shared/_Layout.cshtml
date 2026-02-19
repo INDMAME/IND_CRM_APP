@@ -86,6 +86,7 @@
     }
 
     var moduleAccessJson = JsonSerializer.Serialize(moduleAccess);
+    var allowSelfManagement = selectedCompany?.AllowSelfManagement == true;
     var permissionRedirectMessage = TempData?["IndPermissionRedirectMessage"] as string;
     var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
@@ -536,6 +537,7 @@
     <script nonce="@cspNonce">
         window.__IND_MODULE_ACCESS__ = @Html.Raw(moduleAccessJson);
         window.__IND_SELECTED_COMPANY__ = @Html.Raw(JsonSerializer.Serialize(selectedCompanyId ?? string.Empty));
+        window.__IND_ALLOW_SELF_MANAGEMENT__ = @Html.Raw(JsonSerializer.Serialize(allowSelfManagement));
         window.__IND_PERMISSION_I18N__ = {
             title: @Html.Raw(JsonSerializer.Serialize(SR["Auth_PermissionDenied_Title"].Value)),
             message: @Html.Raw(JsonSerializer.Serialize(SR["Auth_PermissionDenied_Body"].Value)),

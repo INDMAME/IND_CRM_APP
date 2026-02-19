@@ -27,6 +27,7 @@ type UseExpenseSheetDetailMutationsArgs = {
   draftExchangeRate: string;
   officialExchangeRateValue: string;
   draftProjectId: string;
+  draftExpenseSheetStatus?: number | null;
   exchangeRateBaseCurrency: string;
   currentExpenseSheetStatus?: number | null;
   onCreateSuccess: (createdSheetId: string) => void;
@@ -62,6 +63,7 @@ export const useExpenseSheetDetailMutations = ({
   draftExchangeRate,
   officialExchangeRateValue,
   draftProjectId,
+  draftExpenseSheetStatus,
   exchangeRateBaseCurrency,
   currentExpenseSheetStatus,
   onCreateSuccess,
@@ -96,6 +98,8 @@ export const useExpenseSheetDetailMutations = ({
     const officialExchangeRate = normalizeExchangeRate(officialExchangeRateValue);
     const originalExchangeRate = normalizeExchangeRate(lockedExchangeRate);
     const hasValidRate = parsedExchangeRate != null && parsedExchangeRate > 0;
+    const parsedDraftStatus = Number(draftExpenseSheetStatus);
+    const hasDraftStatus = Number.isInteger(parsedDraftStatus) && parsedDraftStatus >= 0;
     const hasManualRateEditOnUpdate =
       !isCreateMode &&
       hasValidRate &&
@@ -109,7 +113,8 @@ export const useExpenseSheetDetailMutations = ({
       return !areRatesEquivalent(parsedExchangeRate, officialExchangeRate);
     })();
     const resolvedExchangeRateMode = isManualExchangeRate ? 1 : undefined;
-    const resolvedExpenseSheetStatus = currentExpenseSheetStatus ?? (isManualExchangeRate ? 0 : undefined);
+    const resolvedExpenseSheetStatus =
+      (hasDraftStatus ? parsedDraftStatus : currentExpenseSheetStatus) ?? (isManualExchangeRate ? 0 : undefined);
 
     if (isCreateMode) {
       if (!normalizedDescription) {
@@ -206,6 +211,7 @@ export const useExpenseSheetDetailMutations = ({
     draftCurrencyCode,
     draftDescription,
     draftExchangeRate,
+    draftExpenseSheetStatus,
     officialExchangeRateValue,
     draftProjectId,
     exchangeRateBaseCurrency,

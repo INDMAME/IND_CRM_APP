@@ -385,6 +385,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-expense-sheets-fuel-price-km",
+    pattern: "api/crm/expensesheets/fuel-price-km",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetFuelPriceKm" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
     name: "api-expense-sheets-detail",
     pattern: "api/crm/expensesheets/{hojaGastosId}",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetDetail" },

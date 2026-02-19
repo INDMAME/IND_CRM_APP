@@ -391,6 +391,19 @@ namespace IND_CRM_APP.Services
             return BuildApiResponse<ExchangeRateDto>(result, "GetExchangeRate");
         }
 
+        public async Task<ApiResponse<FuelPriceKmDto>> GetFuelPriceKmAsync(
+            string token,
+            string transDate)
+        {
+            PrepareRequestHeaders(token, "GetFuelPriceKm", requireCompany: true);
+
+            var normalizedTransDate = NormalizeOptionalText(transDate) ?? string.Empty;
+            var route = ApiRoutes.ExpenseSheetFuelPriceKmByQuery(EscapeQueryValue(normalizedTransDate));
+
+            var result = await SendGetAsync(route);
+            return BuildApiResponse<FuelPriceKmDto>(result, "GetFuelPriceKm");
+        }
+
         // Gets backend health summary using the health endpoint.
         public async Task<ApiResponse<object>> GetHealthAsync(string token)
         {

@@ -102,6 +102,18 @@ const ExpenseSheetCreateLinesEditor = ({
             </div>
 
             <div className="space-y-1.5">
+              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Price", "Price")}</label>
+              <input
+                className="form-control"
+                type="number"
+                step="any"
+                inputMode="decimal"
+                value={line.price}
+                onChange={(event) => onLineChange(line.localId, { price: event.target.value || "" })}
+              />
+            </div>
+
+            <div className="space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>
               <input
                 className="form-control"
@@ -110,18 +122,6 @@ const ExpenseSheetCreateLinesEditor = ({
                 inputMode="decimal"
                 value={line.qty}
                 onChange={(event) => onLineChange(line.localId, { qty: event.target.value || "" })}
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Amount", "Amount")}</label>
-              <input
-                className="form-control"
-                type="number"
-                step="any"
-                inputMode="decimal"
-                value={line.amount}
-                onChange={(event) => onLineChange(line.localId, { amount: event.target.value || "" })}
               />
             </div>
 

@@ -6,10 +6,10 @@ import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
-import type { ExpenseSheetLine } from "../expenseTypes.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
 import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "../constants/internationalOptions.ts";
+import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import {
@@ -53,10 +53,14 @@ const ExpenseSheetLineDetailContent = () => {
     draftDescription,
     draftTransDate,
     draftTypeValueCode,
-    draftAmount,
+    draftPrice,
     draftQty,
     draftProjectId,
     draftInternational,
+    isKmType,
+    isFuelPriceLoading,
+    fuelPriceMessage,
+    fuelPriceMessageIsError,
     isSheetPaid,
     setBusy,
     setStatus,
@@ -65,7 +69,7 @@ const ExpenseSheetLineDetailContent = () => {
     setDraftDescription,
     setDraftTransDate,
     setDraftTypeValueCode,
-    setDraftAmount,
+    setDraftPrice,
     setDraftQty,
     setDraftProjectId,
     setDraftInternational,
@@ -83,9 +87,19 @@ const ExpenseSheetLineDetailContent = () => {
     onForbidden: showPermissionModal,
   });
 
+  const draftPriceValue = parseDecimalInput(draftPrice);
+  const draftQtyValue = parseDecimalInput(draftQty);
+  const calculatedAmountPreview =
+    isEditing && draftPriceValue != null && draftPriceValue > 0 && draftQtyValue != null && draftQtyValue > 0
+      ? draftPriceValue * draftQtyValue
+      : line?.amount ?? null;
+  const priceText = useMemo(
+    () => formatAmountWithCurrency(line?.price ?? null, safeText(header?.currencyCode)),
+    [header?.currencyCode, line?.price]
+  );
   const amountText = useMemo(
-    () => formatAmountWithCurrency(line?.amount ?? null, safeText(header?.currencyCode)),
-    [header?.currencyCode, line?.amount]
+    () => formatAmountWithCurrency(calculatedAmountPreview, safeText(header?.currencyCode)),
+    [calculatedAmountPreview, header?.currencyCode]
   );
   const projectValue = safeText(line?.projId || header?.projId);
   const sheetDescription = safeText(header?.description) || "-";
@@ -158,7 +172,7 @@ const ExpenseSheetLineDetailContent = () => {
     draftDescription,
     draftTransDate,
     draftTypeValueCode,
-    draftAmount,
+    draftPrice,
     draftQty,
     draftProjectId,
     draftInternational,
@@ -233,8 +247,13 @@ const ExpenseSheetLineDetailContent = () => {
           fallbackDate={safeText(header?.createdDate)}
           sheetDescription={sheetDescription}
           projectValue={projectValue}
+          priceText={priceText}
           amountText={amountText}
           internacionalLabel={internacionalLabel}
+          isKmType={isKmType}
+          isFuelPriceLoading={isFuelPriceLoading}
+          fuelPriceMessage={fuelPriceMessage}
+          fuelPriceMessageIsError={fuelPriceMessageIsError}
           status={status}
           isEditing={isEditing}
           gastoTypeOptions={gastoTypeOptions}
@@ -242,14 +261,14 @@ const ExpenseSheetLineDetailContent = () => {
           draftDescription={draftDescription}
           draftTransDate={draftTransDate}
           draftTypeValueCode={draftTypeValueCode}
-          draftAmount={draftAmount}
+          draftPrice={draftPrice}
           draftQty={draftQty}
           draftProjectId={draftProjectId}
           draftInternational={draftInternational}
           onDraftDescriptionChange={setDraftDescription}
           onDraftTransDateChange={setDraftTransDate}
           onDraftTypeValueCodeChange={setDraftTypeValueCode}
-          onDraftAmountChange={setDraftAmount}
+          onDraftPriceChange={setDraftPrice}
           onDraftQtyChange={setDraftQty}
           onDraftProjectIdChange={setDraftProjectId}
           onDraftInternationalChange={setDraftInternational}

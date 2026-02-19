@@ -57,6 +57,7 @@ export type EntraContextCompanyDto = {
   IsDefault: boolean;
   CompanyName: string;
   CurrencyCode: string;
+  AllowSelfManagement: boolean;
   Modules: EntraContextModuleDto[];
 };
 
@@ -88,6 +89,13 @@ export type ExchangeRateDto = {
   Rate: number;
   Date: string;
   Source: string;
+};
+
+// /api/crm/expensesheets/fuel-price-km response contract.
+export type FuelPriceKmDto = {
+  PriceKm: number | null;
+  Source: string;
+  TransDate: string;
 };
 
 // /api/crm/expensesheets/list request contract.
@@ -126,6 +134,7 @@ export type ExpenseSheetLineDto = {
   Description: string;
   Internacional: boolean | null;
   Ticket: boolean | null;
+  Price: number | null;
   Qty: number | null;
   Amount: number | null;
   ProjId: string;
@@ -155,7 +164,7 @@ export type ExpenseSheetCreateLineRequest = {
   internacional: boolean;
   ticket: boolean;
   qty: number;
-  amount: number;
+  price: number;
   projId?: string;
   indAttachFiles?: string;
 };
@@ -179,6 +188,14 @@ export type ExpenseSheetCreateResponseData = {
   LineRecIds: number[];
 };
 
+// /api/ia/service/expensefromticket response contract.
+export type ExpenseSheetDraftResponse = ExpenseSheetCreateRequest & {
+  Confidence?: number | null;
+  Warnings?: string[] | null;
+  RawCurrency?: string | null;
+  Merchant?: string | null;
+};
+
 // /api/crm/expensesheets/{hojaGastosId} update header request contract.
 export type ExpenseSheetHeaderUpdateRequest = {
   description: string;
@@ -197,7 +214,7 @@ export type ExpenseSheetLineUpdateRequest = {
   internacional: boolean;
   ticket: boolean;
   qty: number;
-  Amount: number;
+  price: number;
   projId?: string;
   indAttachFiles?: string;
 };
@@ -259,6 +276,7 @@ export type ExpenseSheetLine = {
   description?: string;
   internacional?: boolean | null;
   ticket?: boolean | null;
+  price?: number | null;
   qty?: number | null;
   amount?: number | null;
   projId?: string;
@@ -273,7 +291,7 @@ export type ExpenseSheetCreateLineDraft = {
   internacional: boolean;
   ticket: boolean;
   qty: string;
-  amount: string;
+  price: string;
   projId: string;
   indAttachFiles: string;
 };
