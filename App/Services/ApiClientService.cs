@@ -739,7 +739,8 @@ namespace IND_CRM_APP.Services
             string token,
             string hojaGastosId,
             string lineRecId,
-            bool deleteWholeSheet)
+            bool deleteWholeSheet,
+            int? deleteMode = null)
         {
             PrepareRequestHeaders(token, "DeleteExpenseSheetLine", requireCompany: true);
 
@@ -747,7 +748,7 @@ namespace IND_CRM_APP.Services
             var safeLineId = EscapePathSegment(lineRecId ?? "0");
 
             var result = await SendDeleteAsync(
-                ApiRoutes.ExpenseSheetLineDelete(safeSheetId, safeLineId, deleteWholeSheet));
+                ApiRoutes.ExpenseSheetLineDelete(safeSheetId, safeLineId, deleteMode, deleteWholeSheet));
             return BuildApiResponse<object>(result, "DeleteExpenseSheetLine");
         }
 
@@ -788,6 +789,15 @@ namespace IND_CRM_APP.Services
 
             var result = await SendGetAsync(ApiRoutes.ExpenseSheetCurrencies);
             return BuildPagedResponse<ExpenseSheetCurrencyDto>(result, "GetExpenseSheetCurrencies");
+        }
+
+        public async Task<PagedApiResponse<ExpenseSheetSubordinateDto>> GetExpenseSheetSubordinatesAsync(
+            string token)
+        {
+            PrepareRequestHeaders(token, "GetExpenseSheetSubordinates", requireCompany: true);
+
+            var result = await SendGetAsync(ApiRoutes.ExpenseSheetSubordinates);
+            return BuildPagedResponse<ExpenseSheetSubordinateDto>(result, "GetExpenseSheetSubordinates");
         }
 
         // ======================================================

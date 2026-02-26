@@ -39,13 +39,21 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public static string ExpenseSheetLine(string safeSheetId, string safeLineId) =>
             $"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}";
 
-        // Builds the expense sheet line delete route with explicit boolean query.
-        public static string ExpenseSheetLineDelete(string safeSheetId, string safeLineId, bool deleteWholeSheet) =>
-            $"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}?deleteWholeSheet={(deleteWholeSheet ? "true" : "false")}";
+        // Builds the expense sheet line delete route supporting legacy and new query selectors.
+        public static string ExpenseSheetLineDelete(string safeSheetId, string safeLineId, int? deleteMode, bool deleteWholeSheet)
+        {
+            var route = $"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}";
+            var hasMode = deleteMode.HasValue;
+            var modeSegment = hasMode ? $"deleteMode={deleteMode.GetValueOrDefault()}" : string.Empty;
+            var legacySegment = $"deleteWholeSheet={(deleteWholeSheet ? "true" : "false")}";
+            var query = hasMode ? $"{modeSegment}&{legacySegment}" : legacySegment;
+            return $"{route}?{query}";
+        }
 
         // Expense sheets list route. Filters are sent in POST body.
         public const string ExpenseSheetsList = "api/crm/expensesheets/list";
         public const string ExpenseSheetCurrencies = "api/crm/expensesheets/currencies";
+        public const string ExpenseSheetSubordinates = "api/crm/expensesheets/subordinates";
         public const string ExpenseSheetFuelPriceKm = "api/crm/expensesheets/fuel-price-km";
 
         // Builds the projects list route with query.

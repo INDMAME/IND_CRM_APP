@@ -22,5 +22,9 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("exchangeRateMode")]
         public int? ExchangeRateMode { get; set; }
+
+        [JsonPropertyName("estadoComentarios")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? EstadoComentarios { get; set; }
     }
 }

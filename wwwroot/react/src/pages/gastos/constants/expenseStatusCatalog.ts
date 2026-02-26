@@ -22,7 +22,7 @@ const STATUS_UI_BY_CODE: Record<ExpenseStatusFilterCode, ExpenseStatusUiMeta> = 
   },
   1: {
     labelKey: "ExpenseSheets_Filter_Status_InReview",
-    fallback: "En revision",
+    fallback: "Aprobacion solicitada",
     colorHex: "#f59e0b",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--review",
   },

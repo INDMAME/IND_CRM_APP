@@ -71,7 +71,7 @@
   <data name="ExpenseSheets_Filter_Status_Billed" xml:space="preserve"><value>Pagado</value></data>
   <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve"><value>Ambos</value></data>
   <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve"><value>Borrador</value></data>
-  <data name="ExpenseSheets_Filter_Status_InReview" xml:space="preserve"><value>En Revision</value></data>
+  <data name="ExpenseSheets_Filter_Status_InReview" xml:space="preserve"><value>Aprobación solicitada</value></data>
   <data name="ExpenseSheets_Filter_Status_Approved" xml:space="preserve"><value>Aprobado</value></data>
   <data name="ExpenseSheets_Filter_Status_Rejected" xml:space="preserve"><value>Rechazado</value></data>
   <data name="ExpenseSheets_Filter_Status_Paid" xml:space="preserve"><value>Pagado</value></data>

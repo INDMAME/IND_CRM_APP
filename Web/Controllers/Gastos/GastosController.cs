@@ -245,6 +245,49 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // API route used by React clients for /api/crm/expensesheets/subordinates.
+        [HttpGet]
+        public async Task<IActionResult> ApiExpenseSheetsSubordinates()
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiPagedError(StatusCodes.Status401Unauthorized, _sr["Api_SessionExpired"].Value);
+
+            try
+            {
+                var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token);
+                var items = result.GetAnyItems()
+                    .Select(ToExpenseSheetSubordinateApiItem)
+                    .Where(x => !string.IsNullOrWhiteSpace(x.UserId))
+                    .GroupBy(x => x.UserId, StringComparer.OrdinalIgnoreCase)
+                    .Select(x => x.First())
+                    .ToList();
+                var responsePage = result.Page > 0 ? result.Page : 1;
+                var responsePageSize = result.PageSize > 0 ? result.PageSize : items.Count;
+
+                return CreateApiPagedResponse(new
+                {
+                    Success = result.Success || items.Count > 0,
+                    Message = result.Message ?? string.Empty,
+                    Total = result.Total > 0 ? result.Total : items.Count,
+                    Page = responsePage,
+                    PageSize = responsePageSize,
+                    Items = items,
+                    TraceId = result.TraceId
+                });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetsSubordinates");
+                return CreateApiPagedError(StatusCodes.Status502BadGateway, _sr["Api_RequestFailed"].Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetsSubordinates");
+                return CreateApiPagedError(StatusCodes.Status500InternalServerError, _sr["Api_RequestFailed"].Value);
+            }
+        }
+
         // API route used by React clients for /api/system/exchange-rate.
         [HttpGet]
         public async Task<IActionResult> ApiSystemExchangeRate(string baseCurrency, string targetCurrency, string? date)
@@ -493,6 +536,7 @@ namespace IND_CRM_APP.Controllers
 
             var request = new ExpenseSheetCreateRequest
             {
+                UserId = NormalizeOptionalText(req.UserId),
                 Mode = normalizedMode,
                 ExistingHojaGastosId = normalizedExistingSheetId,
                 Description = normalizedDescription,
@@ -594,6 +638,16 @@ namespace IND_CRM_APP.Controllers
             var normalizedExchangeRateMode = req.ExchangeRateMode.HasValue && req.ExchangeRateMode.Value >= 0
                 ? req.ExchangeRateMode.Value
                 : (int?)null;
+            var normalizedEstadoComentarios = NormalizeOptionalText(req.EstadoComentarios);
+
+            if (!string.IsNullOrWhiteSpace(normalizedEstadoComentarios) &&
+                (!normalizedExpenseSheetStatus.HasValue || !normalizedExchangeRateMode.HasValue))
+            {
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+            }
 
             var request = new ExpenseSheetUpdateRequest
             {
@@ -602,7 +656,8 @@ namespace IND_CRM_APP.Controllers
                 ExchRate = req.ExchRate,
                 ProjId = NormalizeOptionalText(req.ProjId),
                 ExpenseSheetStatus = normalizedExpenseSheetStatus,
-                ExchangeRateMode = normalizedExchangeRateMode
+                ExchangeRateMode = normalizedExchangeRateMode,
+                EstadoComentarios = normalizedEstadoComentarios
             };
 
             try
@@ -725,7 +780,8 @@ namespace IND_CRM_APP.Controllers
         public async Task<IActionResult> ApiExpenseSheetLineDelete(
             string hojaGastosId,
             string lineRecId,
-            [FromQuery] bool deleteWholeSheet = false)
+            [FromQuery] bool deleteWholeSheet = false,
+            [FromQuery] int? deleteMode = null)
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -734,8 +790,16 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_SessionExpired"].Value,
                     "SESSION_EXPIRED");
 
+            var resolvedDeleteMode = deleteMode ?? (deleteWholeSheet ? 2 : 0);
+            if (resolvedDeleteMode < 0 || resolvedDeleteMode > 2)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var resolvedDeleteWholeSheet = resolvedDeleteMode == 1 || resolvedDeleteMode == 2;
             var safeSheetId = NormalizeOptionalText(hojaGastosId);
-            var safeLineId = deleteWholeSheet ? "0" : NormalizeOptionalText(lineRecId);
+            var safeLineId = resolvedDeleteWholeSheet ? "0" : NormalizeOptionalText(lineRecId);
             if (string.IsNullOrWhiteSpace(safeSheetId) || string.IsNullOrWhiteSpace(safeLineId))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
@@ -748,7 +812,8 @@ namespace IND_CRM_APP.Controllers
                     token,
                     safeSheetId,
                     safeLineId,
-                    deleteWholeSheet);
+                    resolvedDeleteWholeSheet,
+                    resolvedDeleteMode);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
 
                 return CreateApiResponse(
@@ -908,12 +973,15 @@ namespace IND_CRM_APP.Controllers
 
                 var request = new ExpenseSheetCreateRequest
                 {
+                    UserId = NormalizeOptionalText(req.UserId),
                     Mode = normalizedMode,
                     ExistingHojaGastosId = normalizedExistingSheetId,
                     Description = normalizedDescription,
                     CurrencyCode = normalizedCurrency,
                     ExchRate = normalizedExchRate,
                     ProjId = NormalizeOptionalText(req.ProjId),
+                    ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
+                    ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
                     Lines = normalizedLines
                 };
 
@@ -987,6 +1055,13 @@ namespace IND_CRM_APP.Controllers
                 var normalizedExchangeRateMode = req.ExchangeRateMode.HasValue && req.ExchangeRateMode.Value >= 0
                     ? req.ExchangeRateMode.Value
                     : (int?)null;
+                var normalizedEstadoComentarios = NormalizeOptionalText(req.EstadoComentarios);
+
+                if (!string.IsNullOrWhiteSpace(normalizedEstadoComentarios) &&
+                    (!normalizedExpenseSheetStatus.HasValue || !normalizedExchangeRateMode.HasValue))
+                {
+                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
+                }
 
                 var request = new ExpenseSheetUpdateRequest
                 {
@@ -995,7 +1070,8 @@ namespace IND_CRM_APP.Controllers
                     ExchRate = req.ExchRate,
                     ProjId = NormalizeOptionalText(req.ProjId),
                     ExpenseSheetStatus = normalizedExpenseSheetStatus,
-                    ExchangeRateMode = normalizedExchangeRateMode
+                    ExchangeRateMode = normalizedExchangeRateMode,
+                    EstadoComentarios = normalizedEstadoComentarios
                 };
 
                 var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, hojaGastosId.Trim(), request);
@@ -1100,7 +1176,8 @@ namespace IND_CRM_APP.Controllers
                     token,
                     hojaGastosId.Trim(),
                     lineRecId.Trim(),
-                    deleteWholeSheet: false);
+                    deleteWholeSheet: false,
+                    deleteMode: 0);
 
                 if (IND_SetActionMark && response.Success)
                 {
@@ -1139,7 +1216,8 @@ namespace IND_CRM_APP.Controllers
                     token,
                     hojaGastosId.Trim(),
                     "0",
-                    deleteWholeSheet: true);
+                    deleteWholeSheet: true,
+                    deleteMode: 2);
 
                 if (IND_SetActionMark && response.Success)
                 {
@@ -1387,6 +1465,7 @@ namespace IND_CRM_APP.Controllers
                 HojaGastosId = sheet.HojaGastosId ?? string.Empty,
                 Description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
                 ExpenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
+                EstadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
                 UserId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
                 Voucher = GetExtraString(sheet.Extra, "voucher"),
                 ProjId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
@@ -1407,6 +1486,7 @@ namespace IND_CRM_APP.Controllers
                 Description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
                 UserId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
                 ExpenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
+                EstadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
                 CurrencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
                 TotalAmount = GetExtraDecimal(sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
                 ExchRate = GetExtraString(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"),
@@ -1455,6 +1535,21 @@ namespace IND_CRM_APP.Controllers
             };
         }
 
+        // Maps subordinate items to API contract fields expected by /api/crm/expensesheets/subordinates.
+        private static ExpenseSheetSubordinateDto ToExpenseSheetSubordinateApiItem(ExpenseSheetSubordinateDto item)
+        {
+            var userId = NormalizeOptionalText(item.UserId)
+                         ?? NormalizeOptionalText(GetExtraString(item.Extra, "userId", "UserId"));
+            var name = NormalizeOptionalText(item.Name)
+                       ?? NormalizeOptionalText(GetExtraString(item.Extra, "name", "Name"));
+
+            return new ExpenseSheetSubordinateDto
+            {
+                UserId = userId ?? string.Empty,
+                Name = name ?? string.Empty
+            };
+        }
+
         // Maps one sheet to a detail header payload.
         private static object ToExpenseSheetHeader(ExpenseSheetDetailDto sheet)
         {
@@ -1463,6 +1558,7 @@ namespace IND_CRM_APP.Controllers
                 hojaGastosId = sheet.HojaGastosId ?? string.Empty,
                 description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
                 userId = GetExtraString(sheet.Extra, "userId"),
+                estadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
                 currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
                 totalAmountMST = GetExtraDecimal(sheet.Extra, "totalAmountMST", "totalamountmst"),
                 exchRate = GetExtraString(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"),

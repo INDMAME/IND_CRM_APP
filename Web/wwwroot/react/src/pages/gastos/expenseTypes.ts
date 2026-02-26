@@ -82,6 +82,12 @@ export type ExpenseSheetCurrencyDto = {
   CurrencyCodeISO: string;
 };
 
+// /api/crm/expensesheets/subordinates item contract.
+export type ExpenseSheetSubordinateDto = {
+  UserId: string;
+  Name: string;
+};
+
 // /api/system/exchange-rate response contract.
 export type ExchangeRateDto = {
   BaseCurrency: string;
@@ -116,6 +122,7 @@ export type ExpenseSheetListItemDto = {
   HojaGastosId: string;
   Description: string;
   ExpenseSheetStatus: number | null;
+  EstadoComentarios: string | null;
   UserId: string | null;
   Voucher: string;
   ProjId: string;
@@ -147,6 +154,7 @@ export type ExpenseSheetDetailDto = {
   UserId: string;
   Description: string;
   ExpenseSheetStatus: number | null;
+  EstadoComentarios: string | null;
   CurrencyCode: string;
   TotalAmount: number | null;
   ExchRate: number | null;
@@ -204,6 +212,7 @@ export type ExpenseSheetHeaderUpdateRequest = {
   projId?: string;
   expenseSheetStatus?: number;
   exchangeRateMode?: number;
+  estadoComentarios?: string;
 };
 
 // /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId} update line request contract.
@@ -242,6 +251,7 @@ export type ExpenseSheetCard = {
   hojaGastosId: string;
   description?: string;
   expenseSheetStatus?: number | null;
+  estadoComentarios?: string | null;
   userId?: string;
   voucher?: string;
   projId?: string;
@@ -258,6 +268,7 @@ export type ExpenseSheetHeader = {
   description?: string;
   userId?: string;
   expenseSheetStatus?: number | null;
+  estadoComentarios?: string | null;
   currencyCode?: string;
   totalAmount?: number | null;
   exchRate?: string;

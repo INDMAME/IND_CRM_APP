@@ -23,6 +23,9 @@ const normalizeCurrencyCode = (value: string | number | null | undefined): strin
   return String(value || "").trim().toUpperCase();
 };
 
+const CURRENCY_FLAG_SIZE_CLASS = "h-5 w-5";
+const CURRENCY_DROPDOWN_EXPAND_PX = 84;
+
 const readPreferredLocale = (): string => {
   if (typeof document !== "undefined") {
     const fromDocument = String(document.documentElement?.lang || "").trim();
@@ -81,7 +84,7 @@ const mapCurrencyOptions = (items: ExpenseSheetCurrencyDto[] | undefined, locale
       return {
         value: effectiveIsoCode,
         text: optionLabel,
-        icon: <ExpenseCurrencyFlagIcon currencyCode={effectiveIsoCode} />,
+        icon: <ExpenseCurrencyFlagIcon currencyCode={effectiveIsoCode} sizeClassName={CURRENCY_FLAG_SIZE_CLASS} />,
       } as ExpenseSelectOption;
     })
     .filter((entry): entry is ExpenseSelectOption => entry !== null);
@@ -210,6 +213,11 @@ const ExpenseCurrencyFilterSelect = ({
         showSearchButton={false}
         showLabel={showLabel}
         usePortal={false}
+        selectedTextMode="value"
+        dropdownExpandPx={CURRENCY_DROPDOWN_EXPAND_PX}
+        dropdownMaxHeightClass="max-h-96"
+        selectedIconClassName={CURRENCY_FLAG_SIZE_CLASS}
+        optionIconClassName={CURRENCY_FLAG_SIZE_CLASS}
         idBase={idBase}
         portalClassName="visitas-typography"
         panelClassName="visitas-typography"

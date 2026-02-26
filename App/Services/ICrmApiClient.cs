@@ -141,7 +141,8 @@ namespace IND_CRM_APP.Services
             string token,
             string hojaGastosId,
             string lineRecId,
-            bool deleteWholeSheet
+            bool deleteWholeSheet,
+            int? deleteMode = null
         );
 
         Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetsAsync(
@@ -150,6 +151,10 @@ namespace IND_CRM_APP.Services
         );
 
         Task<PagedApiResponse<ExpenseSheetCurrencyDto>> GetExpenseSheetCurrenciesAsync(
+            string token
+        );
+
+        Task<PagedApiResponse<ExpenseSheetSubordinateDto>> GetExpenseSheetSubordinatesAsync(
             string token
         );
 

@@ -39,6 +39,11 @@ type SelectComboboxProps = {
   showSearchButton?: boolean;
   allowTextInput?: boolean;
   showLabel?: boolean;
+  selectedTextMode?: "text" | "value";
+  dropdownExpandPx?: number;
+  dropdownMaxHeightClass?: string;
+  selectedIconClassName?: string;
+  optionIconClassName?: string;
 };
 
 // Reusable select combobox with optional portal rendering for the list.
@@ -59,6 +64,11 @@ const SelectCombobox = ({
   showSearchButton = false,
   allowTextInput = true,
   showLabel = true,
+  selectedTextMode = "text",
+  dropdownExpandPx = 0,
+  dropdownMaxHeightClass = "max-h-72",
+  selectedIconClassName = "h-4 w-4",
+  optionIconClassName = "h-4 w-4",
 }: SelectComboboxProps) => {
   const readOnlyMode = readOnly || disabled;
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
@@ -156,8 +166,12 @@ const SelectCombobox = ({
   const activeId = open && filtered[activeIndex] ? `select-opt-${safeId}-${filtered[activeIndex].value}` : undefined;
   const listOpen = open && !disabled;
   const selectedValue = String(selected?.value ?? "").trim();
-  const displayValue = query !== null ? query : (selectedValue ? selected?.text || "" : "");
+  const selectedDisplayText = selectedTextMode === "value" ? selectedValue : selected?.text || "";
+  const displayValue = query !== null ? query : (selectedValue ? selectedDisplayText : "");
   const showSelectedIcon = query === null && !!selectedValue && !!selected?.icon;
+  const normalizedDropdownExpandPx = Number.isFinite(dropdownExpandPx) ? Math.max(0, dropdownExpandPx) : 0;
+  const inlineDropdownStyle: React.CSSProperties | undefined =
+    normalizedDropdownExpandPx > 0 ? { width: `calc(100% + ${normalizedDropdownExpandPx}px)` } : undefined;
 
   const listBody = (
     <div id={listId} ref={listRef} role="listbox" aria-label={label}>
@@ -191,7 +205,8 @@ const SelectCombobox = ({
               {opt.icon ? (
                 <span
                   className={classNames(
-                    "inline-flex h-4 w-4 shrink-0 items-center justify-center",
+                    "inline-flex shrink-0 items-center justify-center",
+                    optionIconClassName,
                     isActive ? "text-white" : "text-slate-500"
                   )}
                 >
@@ -254,7 +269,7 @@ const SelectCombobox = ({
           />
           {showSelectedIcon ? (
             <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
-              <span className="inline-flex h-4 w-4 items-center justify-center">{selected.icon}</span>
+              <span className={classNames("inline-flex items-center justify-center", selectedIconClassName)}>{selected.icon}</span>
             </span>
           ) : null}
           <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
@@ -293,7 +308,7 @@ const SelectCombobox = ({
             anchorRef={boxRef}
             open={listOpen}
             zIndex={360000}
-            maxHeightClass="max-h-72"
+            maxHeightClass={dropdownMaxHeightClass}
             role="listbox"
             roundedClass="rounded-xl"
             portalClassName={portalClassName}
@@ -303,7 +318,10 @@ const SelectCombobox = ({
           </FloatingList>
         ) : (
           listOpen && (
-            <div className="absolute z-360000 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden max-h-72 overflow-auto">
+            <div
+              className={`absolute z-360000 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden ${dropdownMaxHeightClass} overflow-auto`}
+              style={inlineDropdownStyle}
+            >
               {listBody}
             </div>
           )

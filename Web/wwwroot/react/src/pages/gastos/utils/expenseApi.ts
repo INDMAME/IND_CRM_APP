@@ -17,6 +17,7 @@ import type {
   ExpenseSheetLineUpdateResponseData,
   ExpenseSheetListApiRequest,
   ExpenseSheetListItemDto,
+  ExpenseSheetSubordinateDto,
   IndApiResponse,
   IndPagedResponse,
 } from "../expenseTypes.ts";
@@ -29,6 +30,7 @@ type ProjectDropdownResponse = {
 type LegacyExpenseListItem = {
   hojaGastosId?: unknown;
   description?: unknown;
+  estadoComentarios?: unknown;
   voucher?: unknown;
   projId?: unknown;
   currencyCode?: unknown;
@@ -426,6 +428,15 @@ const normalizeCurrencyPagedResponse = (
   };
 };
 
+const normalizeSubordinatesPagedResponse = (
+  response: IndPagedResponse<ExpenseSheetSubordinateDto>
+): IndPagedResponse<ExpenseSheetSubordinateDto> => {
+  return {
+    ...response,
+    Items: Array.isArray(response?.Items) ? response.Items : [],
+  };
+};
+
 const looksLikeHtmlDocument = (value: unknown): boolean => {
   const raw = safeText(value).toLowerCase();
   return raw.startsWith("<!doctype html") || raw.startsWith("<html");
@@ -472,6 +483,7 @@ const mapLegacyListItemToApiListItem = (item: LegacyExpenseListItem): ExpenseShe
     HojaGastosId: safeText(item.hojaGastosId),
     Description: safeText(item.description),
     ExpenseSheetStatus: toNullableNumber(item.expenseSheetStatus),
+    EstadoComentarios: safeText(item.estadoComentarios) || null,
     UserId: safeText(item.userId) || null,
     Voucher: safeText(item.voucher),
     ProjId: safeText(item.projId),
@@ -544,6 +556,7 @@ export const mapExpenseSheetListItemToCard = (item: ExpenseSheetListItemDto): Ex
     hojaGastosId: safeText(item.HojaGastosId),
     description: safeText(item.Description),
     expenseSheetStatus: toNullableNumber(item.ExpenseSheetStatus),
+    estadoComentarios: safeText(item.EstadoComentarios) || null,
     userId: safeText(item.UserId),
     voucher: safeText(item.Voucher),
     projId: safeText(item.ProjId),
@@ -562,6 +575,7 @@ export const mapExpenseSheetHeader = (sheet: ExpenseSheetDetailDto): ExpenseShee
     description: safeText(sheet.Description),
     userId: safeText(sheet.UserId),
     expenseSheetStatus: toNullableNumber(sheet.ExpenseSheetStatus),
+    estadoComentarios: safeText(sheet.EstadoComentarios) || null,
     currencyCode: safeText(sheet.CurrencyCode),
     totalAmount: toNullableNumber(sheet.TotalAmount),
     exchRate: safeText(sheet.ExchRate),
@@ -766,6 +780,20 @@ export const getExpenseSheetCurrencies = async (
   }
 };
 
+// Reads available subordinates from /api/crm/expensesheets/subordinates.
+export const getExpenseSheetSubordinates = async (
+  options?: ApiFetchOptions
+): Promise<IndPagedResponse<ExpenseSheetSubordinateDto>> => {
+  const context = await ensureExpenseApiContext(options);
+  const response = await fetchJson<IndPagedResponse<ExpenseSheetSubordinateDto>>("/api/crm/expensesheets/subordinates", {
+    ...options,
+    method: "GET",
+    headers: buildExpenseHeaders(context, options),
+  });
+
+  return normalizeSubordinatesPagedResponse(response);
+};
+
 // Exposes the default currency resolved from Entra context for initial selections.
 export const getExpenseSheetDefaultCurrencyCode = async (options?: ApiFetchOptions): Promise<string> => {
   try {
@@ -927,6 +955,10 @@ export const updateExpenseSheetHeader = async (
     throw new ApiFetchError("exchangeRateMode requires expenseSheetStatus.");
   }
 
+  if (safeText(payload.estadoComentarios) && (payload.expenseSheetStatus === undefined || payload.exchangeRateMode === undefined)) {
+    throw new ApiFetchError("estadoComentarios requires expenseSheetStatus and exchangeRateMode.");
+  }
+
   const response = await fetchJson<IndApiResponse<{ HojaGastosId: string }>>(`/api/crm/expensesheets/${safeSheetId}`, {
     ...options,
     method: "PUT",
@@ -945,7 +977,7 @@ export const deleteExpenseSheet = async (
   const context = await ensureExpenseApiContext(options);
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
   const response = await fetchJson<IndApiResponse<null>>(
-    `/api/crm/expensesheets/${safeSheetId}/lines/0?deleteWholeSheet=true`,
+    `/api/crm/expensesheets/${safeSheetId}/lines/0?deleteMode=2&deleteWholeSheet=true`,
     {
       ...options,
       method: "DELETE",
@@ -1000,7 +1032,7 @@ export const deleteExpenseSheetLine = async (
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
   const safeLineId = encodeURIComponent(String(lineRecId || "").trim());
   const response = await fetchJson<IndApiResponse<null>>(
-    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}?deleteWholeSheet=false`,
+    `/api/crm/expensesheets/${safeSheetId}/lines/${safeLineId}?deleteMode=0&deleteWholeSheet=false`,
     {
       ...options,
       method: "DELETE",

@@ -6,6 +6,10 @@ namespace IND_CRM_APP.Models.CRM
     // Request payload for creating an expense sheet.
     public class ExpenseSheetCreateRequest
     {
+        [JsonPropertyName("userId")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? UserId { get; set; }
+
         [JsonPropertyName("mode")]
         public int Mode { get; set; } = 0;
 

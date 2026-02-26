@@ -24,7 +24,7 @@ import {
 import {
   SelectCombobox_default,
   VisitasPageProviders_default
-} from "./chunks/chunk-XJBPFDRJ.js";
+} from "./chunks/chunk-UJZXAY7R.js";
 import {
   Spinner_default,
   canAccess,
