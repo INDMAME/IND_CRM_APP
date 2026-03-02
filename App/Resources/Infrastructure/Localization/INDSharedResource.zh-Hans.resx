@@ -1118,4 +1118,50 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Exchange rate {0} {1}</value>
-  </data></root>
+  </data>
+  <data name="Nav_ExpenseTickets" xml:space="preserve">
+    <value>票据</value>
+  </data>
+  <data name="Tickets_LoadError" xml:space="preserve">
+    <value>无法加载票据。</value>
+  </data>
+  <data name="Tickets_Filter_All" xml:space="preserve">
+    <value>全部</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey" xml:space="preserve">
+    <value>票据</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey_Placeholder" xml:space="preserve">
+    <value>票据编号、文件名或描述</value>
+  </data>
+  <data name="Tickets_Filter_Status" xml:space="preserve">
+    <value>状态</value>
+  </data>
+  <data name="Tickets_Filter_Status_Pending" xml:space="preserve">
+    <value>待处理</value>
+  </data>
+  <data name="Tickets_Filter_Status_Assigned" xml:space="preserve">
+    <value>已关联</value>
+  </data>
+  <data name="Tickets_Filter_Category" xml:space="preserve">
+    <value>类别</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA" xml:space="preserve">
+    <value>AI 处理</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_Yes" xml:space="preserve">
+    <value>是</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_No" xml:space="preserve">
+    <value>否</value>
+  </data>
+  <data name="Tickets_Field_FileId" xml:space="preserve">
+    <value>票据</value>
+  </data>
+  <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
+    <value>报销单</value>
+  </data>
+  <data name="Tickets_Field_Status" xml:space="preserve">
+    <value>状态</value>
+  </data>
+</root>

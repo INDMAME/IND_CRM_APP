@@ -26,6 +26,9 @@
     var isExpenseSheets = controller.Equals("Gastos", StringComparison.OrdinalIgnoreCase) &&
                           action.Equals("ExpenseSheets", StringComparison.OrdinalIgnoreCase);
 
+    var isExpenseTickets = controller.Equals("Gastos", StringComparison.OrdinalIgnoreCase) &&
+                           action.Equals("Tickets", StringComparison.OrdinalIgnoreCase);
+
     var isExpenseSheetDetail = controller.Equals("Gastos", StringComparison.OrdinalIgnoreCase) &&
                                action.Equals("ExpenseSheetDetail", StringComparison.OrdinalIgnoreCase);
 
@@ -114,6 +117,10 @@
     {
         topbarTitle = SR["Nav_ExpenseSheets"];
     }
+    else if (isExpenseTickets)
+    {
+        topbarTitle = SR["Nav_ExpenseTickets"];
+    }
     else if (isCreate)
     {
         topbarTitle = SR["Common_Create"];
@@ -168,10 +175,14 @@
         </div>
 
         <div class="topbar-right flex items-center gap-1 justify-end z-10">
-            @if (isHistory || isExpenseSheets)
+            @if (isHistory || isExpenseSheets || isExpenseTickets)
             {
-                var filterDispatch = isHistory ? "history-toggle-filter" : "expense-sheets-toggle-filter";
-                var refreshDispatch = isHistory ? "history-refresh" : "expense-sheets-refresh";
+                var filterDispatch = isHistory
+                    ? "history-toggle-filter"
+                    : (isExpenseSheets ? "expense-sheets-toggle-filter" : "expense-tickets-toggle-filter");
+                var refreshDispatch = isHistory
+                    ? "history-refresh"
+                    : (isExpenseSheets ? "expense-sheets-refresh" : "expense-tickets-refresh");
                 <div class="flex items-center gap-1 pr-1">
                     <button id="historyFilterToggleBtn" type="button" class="topbar-btn pointer-events-auto"
                             aria-label="@SR["History_Filter_Toggle"]"

@@ -70,9 +70,9 @@ export const useDetailTopbarActions = ({
         if (busy || modalOpen) return;
         setModalError("");
         openConfirm({
-          title: indT("Visits_Detail_SaveChanges_Title", "Save changes"),
-          message: indT("Visits_Detail_SaveChanges_Body", "Do you want to save changes?"),
-          confirmText: indT("Common_Save", "Save"),
+          title: indT("Visits_Detail_SaveChanges_Title", "Visits_Detail_SaveChanges_Title"),
+          message: indT("Visits_Detail_SaveChanges_Body", "Visits_Detail_SaveChanges_Body"),
+          confirmText: indT("Common_Save", "Common_Save"),
           onConfirm: async () => {
             const ok = await handleUpdate();
             if (ok) {
@@ -100,9 +100,9 @@ export const useDetailTopbarActions = ({
       if (busy || modalOpen) return;
       setModalError("");
       openConfirm({
-        title: indT("Visits_Detail_DeleteActivity_Title", "Delete activity"),
-        message: indT("Visits_Detail_DeleteActivity_Body", "Do you want to delete this activity?"),
-        confirmText: indT("Common_Delete", "Delete"),
+        title: indT("Visits_Detail_DeleteActivity_Title", "Visits_Detail_DeleteActivity_Title"),
+        message: indT("Visits_Detail_DeleteActivity_Body", "Visits_Detail_DeleteActivity_Body"),
+        confirmText: indT("Common_Delete", "Common_Delete"),
         onConfirm: async () => {
           const ok = await handleDelete();
           if (ok) {

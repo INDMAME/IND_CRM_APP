@@ -69,6 +69,51 @@
   <data name="Nav_ExpenseSheets" xml:space="preserve">
     <value>Folhas de despesa</value>
   </data>
+  <data name="Nav_ExpenseTickets" xml:space="preserve">
+    <value>Tickets</value>
+  </data>
+  <data name="Tickets_LoadError" xml:space="preserve">
+    <value>Nao foi possivel carregar os tickets.</value>
+  </data>
+  <data name="Tickets_Filter_All" xml:space="preserve">
+    <value>Todos</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey_Placeholder" xml:space="preserve">
+    <value>ID do ticket, nome do ficheiro ou descricao</value>
+  </data>
+  <data name="Tickets_Filter_Status" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="Tickets_Filter_Status_Pending" xml:space="preserve">
+    <value>Pendente</value>
+  </data>
+  <data name="Tickets_Filter_Status_Assigned" xml:space="preserve">
+    <value>Atribuido</value>
+  </data>
+  <data name="Tickets_Filter_Category" xml:space="preserve">
+    <value>Categoria</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA" xml:space="preserve">
+    <value>Processado por IA</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_Yes" xml:space="preserve">
+    <value>Sim</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_No" xml:space="preserve">
+    <value>Nao</value>
+  </data>
+  <data name="Tickets_Field_FileId" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
+    <value>Folha de despesa</value>
+  </data>
+  <data name="Tickets_Field_Status" xml:space="preserve">
+    <value>Estado</value>
+  </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>planilhas de despesas</value>
   </data>
@@ -178,7 +223,7 @@
     <value>Pago</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve">
-    <value>Ambos</value>
+    <value>Todos</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve">
     <value>Rascunho</value>

@@ -69,6 +69,51 @@
   <data name="Nav_ExpenseSheets" xml:space="preserve">
     <value>Expense sheets</value>
   </data>
+  <data name="Nav_ExpenseTickets" xml:space="preserve">
+    <value>Tickets</value>
+  </data>
+  <data name="Tickets_LoadError" xml:space="preserve">
+    <value>Could not load tickets.</value>
+  </data>
+  <data name="Tickets_Filter_All" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey_Placeholder" xml:space="preserve">
+    <value>Ticket id, file name or description</value>
+  </data>
+  <data name="Tickets_Filter_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
+  <data name="Tickets_Filter_Status_Pending" xml:space="preserve">
+    <value>Pending</value>
+  </data>
+  <data name="Tickets_Filter_Status_Assigned" xml:space="preserve">
+    <value>Assigned</value>
+  </data>
+  <data name="Tickets_Filter_Category" xml:space="preserve">
+    <value>Category</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA" xml:space="preserve">
+    <value>Processed by IA</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Tickets_Field_FileId" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
+    <value>Expense sheet</value>
+  </data>
+  <data name="Tickets_Field_Status" xml:space="preserve">
+    <value>Status</value>
+  </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>Expense sheets</value>
   </data>
@@ -178,7 +223,7 @@
     <value>Billed</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve">
-    <value>Both</value>
+    <value>All</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve">
     <value>Draft</value>

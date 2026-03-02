@@ -175,6 +175,9 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("Status")]
         public int? Status { get; set; }
 
+        [JsonPropertyName("HojaGastosIdDisplay")]
+        public string HojaGastosIdDisplay { get; set; } = string.Empty;
+
         [JsonPropertyName("ProcessedByAI")]
         public bool? ProcessedByAI { get; set; }
 
@@ -236,6 +239,9 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("Status")]
         public int? Status { get; set; }
+
+        [JsonPropertyName("HojaGastosIdDisplay")]
+        public string HojaGastosIdDisplay { get; set; } = string.Empty;
 
         [JsonPropertyName("ProcessedByAI")]
         public bool? ProcessedByAI { get; set; }

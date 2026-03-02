@@ -208,6 +208,19 @@ const toNullableBool = (value: unknown): boolean | null => {
   return null;
 };
 
+const normalizeOptionalTicketProcessedByAI = (value: unknown): boolean | undefined => {
+  if (value === null || value === undefined || safeText(value) === "") {
+    return undefined;
+  }
+
+  const parsed = toNullableBool(value);
+  if (parsed === null) {
+    throw new ApiFetchError("processedByAI must be true or false.");
+  }
+
+  return parsed;
+};
+
 const toFlagBool = (value: unknown): boolean | null => {
   const normalizedBool = toNullableBool(value);
   if (normalizedBool !== null) return normalizedBool;
@@ -521,6 +534,10 @@ const normalizeTicketListPagedResponse = (
   const items = Array.isArray(response?.Items) ? response.Items : [];
   const normalizedItems = items.map((item) => ({
     ...item,
+    HojaGastosIdDisplay: safeText(
+      (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.HojaGastosIdDisplay ??
+        (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.hojaGastosIdDisplay
+    ),
     GastoType: toNullableGastoTypeCode(
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
@@ -539,6 +556,10 @@ const normalizeTicketDetailPagedResponse = (
   const items = Array.isArray(response?.Items) ? response.Items : [];
   const normalizedItems = items.map((item) => ({
     ...item,
+    HojaGastosIdDisplay: safeText(
+      (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.HojaGastosIdDisplay ??
+        (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.hojaGastosIdDisplay
+    ),
     GastoType: toNullableGastoTypeCode(
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
@@ -1252,10 +1273,15 @@ export const fetchExpenseSheetTicketsList = async (
   options?: ApiFetchOptions
 ): Promise<IndPagedResponse<ExpenseSheetTicketListItemDto>> => {
   const context = await ensureExpenseApiContext(options);
-  const createdDateFrom = normalizeTicketListDate(payload?.createdDateFrom);
-  const createdDateTo = normalizeTicketListDate(payload?.createdDateTo);
-  if (!createdDateFrom || !createdDateTo) {
-    throw new ApiFetchError("createdDateFrom and createdDateTo are required in yyyy-MM-dd format.");
+  const rawCreatedDateFrom = safeText(payload?.createdDateFrom);
+  const rawCreatedDateTo = safeText(payload?.createdDateTo);
+  const createdDateFrom = normalizeTicketListDate(rawCreatedDateFrom);
+  const createdDateTo = normalizeTicketListDate(rawCreatedDateTo);
+  if (rawCreatedDateFrom && !createdDateFrom) {
+    throw new ApiFetchError("createdDateFrom must be in yyyy-MM-dd format.");
+  }
+  if (rawCreatedDateTo && !createdDateTo) {
+    throw new ApiFetchError("createdDateTo must be in yyyy-MM-dd format.");
   }
 
   const preferredSearchKey = safeText(payload?.searchKey || payload?.filter);
@@ -1263,13 +1289,14 @@ export const fetchExpenseSheetTicketsList = async (
   const safePayload: ExpenseSheetTicketListRequest = {
     page: Number.isFinite(payload?.page) && payload.page > 0 ? Math.floor(payload.page) : 1,
     pageSize: Number.isFinite(payload?.pageSize) && payload.pageSize > 0 ? Math.floor(payload.pageSize) : 50,
-    createdDateFrom,
-    createdDateTo,
+    createdDateFrom: createdDateFrom || undefined,
+    createdDateTo: createdDateTo || undefined,
     searchKey: preferredSearchKey || undefined,
     filter: legacyFilter || undefined,
     status: normalizeOptionalTicketStatus(payload?.status),
     currencyCode: safeText(payload?.currencyCode).toUpperCase() || undefined,
     gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
+    processedByAI: normalizeOptionalTicketProcessedByAI(payload?.processedByAI),
   };
 
   const response = await fetchJson<IndPagedResponse<ExpenseSheetTicketListItemDto>>(

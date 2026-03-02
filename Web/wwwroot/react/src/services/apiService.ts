@@ -48,7 +48,7 @@ const showPermissionModal = (opts?: Record<string, unknown>) => {
     return;
   }
   const perm = getPermissionI18n();
-  const fallback = perm.message || indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion.");
+  const fallback = perm.message || indT("Auth_PermissionDenied_Body", "Auth_PermissionDenied_Body");
   alert(fallback);
 };
 
@@ -262,7 +262,7 @@ export async function fetchJson<T = unknown>(url: string, options?: ApiFetchOpti
     if (response.status === 403) {
       if (!suppressPermissionModal) showPermissionModal();
       throw new ApiFetchError(
-        indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion."),
+        indT("Auth_PermissionDenied_Body", "Auth_PermissionDenied_Body"),
         response.status,
         raw
       );
@@ -273,7 +273,7 @@ export async function fetchJson<T = unknown>(url: string, options?: ApiFetchOpti
     }
 
     throw new ApiFetchError(
-      indT("Api_RequestFailed", "Request failed. Please try again."),
+      indT("Api_RequestFailed", "Api_RequestFailed"),
       response.status,
       raw,
       validationErrors

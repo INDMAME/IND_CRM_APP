@@ -27,7 +27,7 @@ const ExpenseBilledModeFilterSelect = ({
     () => [
       { value: "0", text: indT("ExpenseSheets_Filter_Status_Unbilled", "No Pagado") },
       { value: "1", text: indT("ExpenseSheets_Filter_Status_Billed", "Pagado") },
-      { value: "2", text: indT("ExpenseSheets_Filter_Status_Both", "Ambos") },
+      { value: "2", text: indT("ExpenseSheets_Filter_Status_Both", "Todo") },
     ],
     []
   );

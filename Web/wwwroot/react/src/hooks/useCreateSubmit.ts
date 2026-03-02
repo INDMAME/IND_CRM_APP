@@ -231,9 +231,9 @@ export const useCreateSubmit = ({
     }
     setModalError("");
     openConfirm({
-      title: indT("Visits_Create_ConfirmCreate_Title", "Confirm create"),
-      message: indT("Visits_Create_ConfirmCreate_Body", "Do you want to create this visit?"),
-      confirmText: indT("Confirm_Yes", "OK"),
+      title: indT("Visits_Create_ConfirmCreate_Title", "Visits_Create_ConfirmCreate_Title"),
+      message: indT("Visits_Create_ConfirmCreate_Body", "Visits_Create_ConfirmCreate_Body"),
+      confirmText: indT("Confirm_Yes", "Confirm_Yes"),
       onConfirm: doCreate,
     });
   }, [

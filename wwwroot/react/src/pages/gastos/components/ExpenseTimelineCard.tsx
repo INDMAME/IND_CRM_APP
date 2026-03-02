@@ -1,6 +1,6 @@
 import React from "react";
 import type { ExpenseDateParts } from "../utils/expenseUiUtils.ts";
-import { normalizeCardTitleText } from "../utils/expenseUiUtils.ts";
+import { normalizeCardTitleText, safeText } from "../utils/expenseUiUtils.ts";
 
 type ExpenseTimelineCardProps = {
   dateParts: ExpenseDateParts;
@@ -11,6 +11,10 @@ type ExpenseTimelineCardProps = {
   amountClassName?: string;
   statusClassName?: string;
   statusLabel?: string;
+  subtitle?: string;
+  subtitleClassName?: string;
+  statusIcon?: React.ReactNode;
+  statusIconClassName?: string;
 };
 
 // Reusable clickable timeline card for expense sheets and expense lines.
@@ -23,9 +27,14 @@ const ExpenseTimelineCard = ({
   amountClassName = "expense-sheet-card__amount",
   statusClassName,
   statusLabel,
+  subtitle = "",
+  subtitleClassName = "expense-sheet-card__subtitle",
+  statusIcon,
+  statusIconClassName = "expense-sheet-card__status-icon",
 }: ExpenseTimelineCardProps) => {
   const safeTitle = normalizeCardTitleText(title, "-");
   const safeAmount = amountText || "-";
+  const safeSubtitle = safeText(subtitle);
 
   return (
     <div
@@ -47,9 +56,15 @@ const ExpenseTimelineCard = ({
       </div>
       <div className="timeline-card__content flex-1 py-3 px-4">
         {statusClassName ? <span className={statusClassName} title={statusLabel} aria-label={statusLabel} /> : null}
+        {statusIcon ? <span className={statusIconClassName} title={statusLabel}>{statusIcon}</span> : null}
         <p className={titleClassName} data-fulltext={safeTitle}>
           {safeTitle}
         </p>
+        {safeSubtitle ? (
+          <p className={subtitleClassName} data-fulltext={safeSubtitle}>
+            {safeSubtitle}
+          </p>
+        ) : null}
         <span className={amountClassName} data-fulltext={safeAmount}>
           {safeAmount}
         </span>

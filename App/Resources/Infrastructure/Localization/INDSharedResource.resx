@@ -69,6 +69,51 @@
   <data name="Nav_ExpenseSheets" xml:space="preserve">
     <value>Hojas de gastos</value>
   </data>
+  <data name="Nav_ExpenseTickets" xml:space="preserve">
+    <value>Tickets</value>
+  </data>
+  <data name="Tickets_LoadError" xml:space="preserve">
+    <value>No se pudieron cargar los tickets.</value>
+  </data>
+  <data name="Tickets_Filter_All" xml:space="preserve">
+    <value>Todo</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey_Placeholder" xml:space="preserve">
+    <value>Id de ticket, nombre de archivo o descripcion</value>
+  </data>
+  <data name="Tickets_Filter_Status" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="Tickets_Filter_Status_Pending" xml:space="preserve">
+    <value>Pendiente</value>
+  </data>
+  <data name="Tickets_Filter_Status_Assigned" xml:space="preserve">
+    <value>Asignado</value>
+  </data>
+  <data name="Tickets_Filter_Category" xml:space="preserve">
+    <value>Categoría</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA" xml:space="preserve">
+    <value>Procesado por IA</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_Yes" xml:space="preserve">
+    <value>Si</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Tickets_Field_FileId" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
+    <value>Hoja de gastos</value>
+  </data>
+  <data name="Tickets_Field_Status" xml:space="preserve">
+    <value>Estado</value>
+  </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>Hojas de gastos</value>
   </data>
@@ -178,7 +223,7 @@
     <value>Pagado</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve">
-    <value>Ambos</value>
+    <value>Todo</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve">
     <value>Borrador</value>

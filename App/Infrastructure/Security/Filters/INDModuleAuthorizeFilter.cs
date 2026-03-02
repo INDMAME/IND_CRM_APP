@@ -216,7 +216,8 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             // REST expense endpoints map required access from HTTP verb.
             if (path.StartsWith("/api/crm/expensesheets", StringComparison.OrdinalIgnoreCase))
             {
-                if (path.Equals("/api/crm/expensesheets/list", StringComparison.OrdinalIgnoreCase))
+                if (path.Equals("/api/crm/expensesheets/list", StringComparison.OrdinalIgnoreCase) ||
+                    path.Equals("/api/crm/expensesheets/tickets/list", StringComparison.OrdinalIgnoreCase))
                     return IndAccessRights.View;
 
                 if (HttpMethods.IsPost(method))
@@ -225,6 +226,15 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                     return IndAccessRights.Edit;
                 if (HttpMethods.IsDelete(method))
                     return IndAccessRights.FullAccess;
+
+                return IndAccessRights.View;
+            }
+
+            // IA draft generation for tickets is a write operation when called via POST.
+            if (path.StartsWith("/api/ia/service/expensefromticket", StringComparison.OrdinalIgnoreCase))
+            {
+                if (HttpMethods.IsPost(method))
+                    return IndAccessRights.Add;
 
                 return IndAccessRights.View;
             }

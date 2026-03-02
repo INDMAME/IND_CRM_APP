@@ -25,13 +25,14 @@ const ExpenseStatusFilterSelect = ({
   showLabel = true,
 }: ExpenseStatusFilterSelectProps) => {
   const options = useMemo<ExpenseSelectOption[]>(() => getExpenseStatusFilterOptions(), []);
+  const uiValue = value === DEFAULT_EXPENSE_STATUS_FILTER ? "" : value;
 
   return (
     <SelectCombobox
       label={label}
       placeholder={placeholder}
       options={options}
-      value={value}
+      value={uiValue}
       onChange={(nextValue) => onChange(normalizeExpenseStatusFilterCode(nextValue, DEFAULT_EXPENSE_STATUS_FILTER))}
       readOnly={readOnly}
       disabled={disabled}

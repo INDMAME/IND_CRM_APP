@@ -8,6 +8,7 @@ const entryPoints = {
   detail: "Web/wwwroot/react/src/pages/visitas/detail/DetailPage.tsx",
   history: "Web/wwwroot/react/src/pages/visitas/historial/HistoryPage.tsx",
   "expense-sheets": "Web/wwwroot/react/src/pages/gastos/list/ExpenseSheetsPage.tsx",
+  "expense-tickets": "Web/wwwroot/react/src/pages/gastos/tickets/ExpenseTicketsPage.tsx",
   "expense-sheet-detail": "Web/wwwroot/react/src/pages/gastos/detail/ExpenseSheetDetailPage.tsx",
   "expense-line-detail": "Web/wwwroot/react/src/pages/gastos/line/ExpenseSheetLineDetailPage.tsx",
   "ind-text-editor": "Web/wwwroot/react/src/pages/system/TextEditor.tsx",

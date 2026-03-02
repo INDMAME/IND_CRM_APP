@@ -316,13 +316,14 @@ export type ExpenseSheetLine = {
 export type ExpenseSheetTicketListRequest = {
   page: number;
   pageSize: number;
-  createdDateFrom: string;
-  createdDateTo: string;
+  createdDateFrom?: string;
+  createdDateTo?: string;
   searchKey?: string;
   filter?: string;
   status?: 0 | 1;
   currencyCode?: string;
   gastoType?: ExpenseGastoTypeCode;
+  processedByAI?: boolean;
 };
 
 export type ExpenseSheetTicketLineRequest = {
@@ -382,6 +383,7 @@ export type ExpenseSheetTicketListItemDto = {
   FileId: string;
   Description: string;
   Status: number | null;
+  HojaGastosIdDisplay: string;
   ProcessedByAI: boolean | null;
   CurrencyCode: string;
   TotalAmount: number | null;
@@ -396,6 +398,7 @@ export type ExpenseSheetTicketDetailDto = {
   FileId: string;
   Description: string;
   Status: number | null;
+  HojaGastosIdDisplay: string;
   ProcessedByAI: boolean | null;
   CurrencyCode: string;
   TotalAmount: number | null;

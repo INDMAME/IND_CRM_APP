@@ -1,4 +1,7 @@
 import {
+  AudioRecorderMinimal
+} from "./chunks/chunk-LVUQ5WFG.js";
+import {
   TEXT_EDITOR_PREFIX
 } from "./chunks/chunk-QO7GVWVB.js";
 import {
@@ -6,9 +9,6 @@ import {
   removeSessionValueWithExpiry,
   setSessionValueWithExpiry
 } from "./chunks/chunk-7SKLSV7K.js";
-import {
-  AudioRecorderMinimal
-} from "./chunks/chunk-LVUQ5WFG.js";
 import {
   mountReactIsland,
   mountWhenDocumentReady,

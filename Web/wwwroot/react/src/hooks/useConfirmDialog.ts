@@ -81,7 +81,7 @@ export const useConfirmDialog = ({ defaultConfirmText, defaultCancelText }: UseC
         const msg =
           err?.message ||
           defaultErrorMessage ||
-          indT("Api_RequestFailed", "Request failed. Please try again.");
+          indT("Api_RequestFailed", "Api_RequestFailed");
         onError(msg);
       } finally {
         confirmInFlightRef.current = false;

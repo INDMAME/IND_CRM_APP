@@ -1,0 +1,228 @@
+import React, { useMemo } from "react";
+import FilterButton from "../../../components/commons/FilterButton.tsx";
+import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
+import { indT } from "../../../utils/indI18n.ts";
+import HistorySummary from "../../visitas/historial/HistorySummary.tsx";
+import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
+import {
+  getExpenseTicketStatusFilterOptions,
+  normalizeExpenseTicketStatusFilterCode,
+  type ExpenseTicketStatusFilterCode,
+} from "../constants/expenseTicketStatusCatalog.ts";
+import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
+import type { ExpenseTicketProcessedByIaFilter, ExpenseTicketQuickFilterId } from "../tickets/expenseTicketListTypes.ts";
+import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
+import ExpenseDateRangeFilter from "./ExpenseDateRangeFilter.tsx";
+import ExpenseFilterActions from "./ExpenseFilterActions.tsx";
+import ExpenseProcessedByIaFilterSelect from "./ExpenseProcessedByIaFilterSelect.tsx";
+import ExpenseTicketFilterKeyInput from "./ExpenseTicketFilterKeyInput.tsx";
+
+const parseIsoDate = (raw: string): Date | null => {
+  if (!raw) return null;
+  const value = String(raw).trim().split("T")[0];
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  return new Date(year, month - 1, day);
+};
+
+const formatDate = (raw: string, locale: string): string => {
+  const date = parseIsoDate(raw);
+  if (!date) return "--";
+  return date
+    .toLocaleDateString(locale, {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    })
+    .replace(/\./g, "")
+    .toLowerCase();
+};
+
+type ExpenseTicketsFiltersPanelProps = {
+  visible: boolean;
+  showManualDateFilter: boolean;
+  manualDateAutoOpenKey: number;
+  fromDate: string;
+  toDate: string;
+  filterKey: string;
+  currencyCode: string;
+  statusFilter: ExpenseTicketStatusFilterCode;
+  gastoTypeFilter: "" | ExpenseGastoTypeCode;
+  processedByIaFilter: ExpenseTicketProcessedByIaFilter;
+  activeQuickFilter: ExpenseTicketQuickFilterId | null;
+  showManualDateError: boolean;
+  gastoTypeOptions: ExpenseSelectOption[];
+  onDateRangeChange: (fromDate: string, toDate: string) => void;
+  onManualRangeComplete: (fromDate: string, toDate: string) => void;
+  onQuickFilterChange: (filterId: ExpenseTicketQuickFilterId) => void;
+  onFilterKeyChange: (value: string) => void;
+  onCurrencyCodeChange: (value: string) => void;
+  onStatusFilterChange: (value: ExpenseTicketStatusFilterCode) => void;
+  onGastoTypeFilterChange: (value: "" | ExpenseGastoTypeCode) => void;
+  onProcessedByIaFilterChange: (value: ExpenseTicketProcessedByIaFilter) => void;
+  onClear: () => void;
+  onApply: () => void;
+};
+
+// Shared tickets filter panel with global quick date filters and fixed ticket filters.
+const ExpenseTicketsFiltersPanel = ({
+  visible,
+  showManualDateFilter,
+  manualDateAutoOpenKey,
+  fromDate,
+  toDate,
+  filterKey,
+  currencyCode,
+  statusFilter,
+  gastoTypeFilter,
+  processedByIaFilter,
+  activeQuickFilter,
+  showManualDateError,
+  gastoTypeOptions,
+  onDateRangeChange,
+  onManualRangeComplete,
+  onQuickFilterChange,
+  onFilterKeyChange,
+  onCurrencyCodeChange,
+  onStatusFilterChange,
+  onGastoTypeFilterChange,
+  onProcessedByIaFilterChange,
+  onClear,
+  onApply,
+}: ExpenseTicketsFiltersPanelProps) => {
+  const statusOptions = useMemo(() => getExpenseTicketStatusFilterOptions(), []);
+
+  const categoryOptions = useMemo<ExpenseSelectOption[]>(() => {
+    return [
+      { value: "", text: indT("Tickets_Filter_All", "All") },
+      ...gastoTypeOptions,
+    ];
+  }, [gastoTypeOptions]);
+
+  if (!visible) return null;
+  const locale = document?.documentElement?.lang || "es-ES";
+  const showInlineDateSummary = !showManualDateFilter && !!fromDate && !!toDate;
+
+  return (
+    <div className="filter-card filter-card--expanded p-2 sm:p-2.5 relative">
+      <div className="history-filter-stack flex flex-col space-y-2">
+        <div className="grid grid-cols-2 gap-2 history-quick-filters" aria-label={indT("History_Filter_Date", "Date")}>
+          <FilterButton
+            label={indT("History_Quick_Custom", "Date")}
+            active={activeQuickFilter === "custom"}
+            className="w-full"
+            onClick={() => onQuickFilterChange("custom")}
+          />
+          <FilterButton
+            label={indT("History_Quick_7Days", "7 days")}
+            active={activeQuickFilter === "days-7"}
+            className="w-full"
+            onClick={() => onQuickFilterChange("days-7")}
+          />
+          <FilterButton
+            label={indT("History_Quick_30Days", "30 days")}
+            active={activeQuickFilter === "days-30"}
+            className="w-full"
+            onClick={() => onQuickFilterChange("days-30")}
+          />
+          <FilterButton
+            label={indT("History_Quick_90Days", "90 days")}
+            active={activeQuickFilter === "days-90"}
+            className="w-full"
+            onClick={() => onQuickFilterChange("days-90")}
+          />
+        </div>
+
+        {showManualDateFilter ? (
+          <ExpenseDateRangeFilter
+            fromDate={fromDate}
+            toDate={toDate}
+            onChange={onDateRangeChange}
+            onRangeComplete={onManualRangeComplete}
+            autoOpenRequestId={manualDateAutoOpenKey}
+            showManualError={showManualDateError}
+            showStartError={showManualDateError && !fromDate}
+            showEndError={showManualDateError && !toDate}
+          />
+        ) : showInlineDateSummary ? (
+          <HistorySummary
+            summaryFromLabel={indT("History_From", "From")}
+            summaryToLabel={indT("History_To", "To")}
+            fromValue={formatDate(fromDate, locale)}
+            toValue={formatDate(toDate, locale)}
+            className="gap-y-1 text-[11px] px-1"
+          />
+        ) : null}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <ExpenseTicketFilterKeyInput
+            label={indT("Tickets_Filter_FilterKey", "Ticket")}
+            placeholder={indT("Tickets_Filter_FilterKey", "Ticket")}
+            value={filterKey}
+            onChange={onFilterKeyChange}
+            enableRemoteSuggestions
+            showLabel={false}
+          />
+
+          <ExpenseCurrencyFilterSelect
+            label={indT("ExpenseSheets_Filter_Currency", "Currency")}
+            placeholder={indT("ExpenseSheets_Filter_Currency", "Currency")}
+            value={currencyCode}
+            onChange={onCurrencyCodeChange}
+            showLabel={false}
+          />
+
+          <SelectCombobox
+            label={indT("Tickets_Filter_Status", "Status")}
+            placeholder={indT("Tickets_Filter_Status", "Status")}
+            options={statusOptions}
+            value={statusFilter}
+            onChange={(nextValue) => onStatusFilterChange(normalizeExpenseTicketStatusFilterCode(nextValue, ""))}
+            allowTextInput={false}
+            idBase="expense-ticket-status-filter"
+            portalClassName="visitas-typography"
+            panelClassName="visitas-typography"
+            showLabel={false}
+          />
+
+          <SelectCombobox
+            label={indT("Tickets_Filter_Category", "Category")}
+            placeholder={indT("Tickets_Filter_Category", "Category")}
+            options={categoryOptions}
+            value={gastoTypeFilter}
+            onChange={(nextValue) => {
+              const parsed = Number(nextValue);
+              if (nextValue === "" || !Number.isInteger(parsed)) {
+                onGastoTypeFilterChange("");
+                return;
+              }
+              onGastoTypeFilterChange(parsed as ExpenseGastoTypeCode);
+            }}
+            allowTextInput={false}
+            idBase="expense-ticket-gastotype-filter"
+            portalClassName="visitas-typography"
+            panelClassName="visitas-typography"
+            showLabel={false}
+          />
+        </div>
+
+        <ExpenseProcessedByIaFilterSelect
+          label={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}
+          placeholder={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}
+          value={processedByIaFilter}
+          onChange={onProcessedByIaFilterChange}
+          showLabel={false}
+        />
+
+        <ExpenseFilterActions
+          clearLabel={indT("History_Filter_Clear", "Clear")}
+          applyLabel={indT("History_Filter_Apply", "Apply")}
+          onClear={onClear}
+          onApply={onApply}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default ExpenseTicketsFiltersPanel;

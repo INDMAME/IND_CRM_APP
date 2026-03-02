@@ -48,6 +48,24 @@ namespace IND_CRM_APP.Controllers
             return View("~/Web/Views/Gastos/ExpenseSheets.cshtml");
         }
 
+        // Shows the expense tickets list page.
+        [HttpGet]
+        public async Task<IActionResult> Tickets()
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return RedirectToAction("Login", "Auth");
+
+            await LoadEnvironmentInfoAsync();
+
+            ViewBag.GastoTypeOptions = _crmEnumCatalog
+                .GetGastoTypeMap()
+                .Select(x => new { value = x.Key, text = x.Value })
+                .OrderBy(x => int.TryParse(x.value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var code) ? code : int.MaxValue)
+                .ToList();
+            return View("~/Web/Views/Gastos/Tickets.cshtml");
+        }
+
         // Shows the expense sheet detail page.
         [HttpGet]
         public async Task<IActionResult> ExpenseSheetDetail(string hojaGastosId, string mode = "")
@@ -2505,6 +2523,7 @@ namespace IND_CRM_APP.Controllers
                 FileId = item.FileId ?? string.Empty,
                 Description = item.Description ?? string.Empty,
                 Status = item.Status,
+                HojaGastosIdDisplay = item.HojaGastosIdDisplay ?? string.Empty,
                 ProcessedByAI = item.ProcessedByAI,
                 CurrencyCode = item.CurrencyCode ?? string.Empty,
                 TotalAmount = item.TotalAmount,
@@ -2524,6 +2543,7 @@ namespace IND_CRM_APP.Controllers
                 FileId = item.FileId ?? string.Empty,
                 Description = item.Description ?? string.Empty,
                 Status = item.Status,
+                HojaGastosIdDisplay = item.HojaGastosIdDisplay ?? string.Empty,
                 ProcessedByAI = item.ProcessedByAI,
                 CurrencyCode = item.CurrencyCode ?? string.Empty,
                 TotalAmount = item.TotalAmount,

@@ -29,6 +29,6 @@ export const showPermissionModal = (opts?: Record<string, unknown>) => {
     return;
   }
   const perm = getPermissionI18n();
-  const fallback = perm.message || indT("Auth_PermissionDenied_Body", "No tienes permisos para realizar esta accion.");
+  const fallback = perm.message || indT("Auth_PermissionDenied_Body", "Auth_PermissionDenied_Body");
   alert(fallback);
 };

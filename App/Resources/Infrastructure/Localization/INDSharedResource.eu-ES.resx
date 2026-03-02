@@ -69,6 +69,51 @@
   <data name="Nav_ExpenseSheets" xml:space="preserve">
     <value>Gastu-orriak</value>
   </data>
+  <data name="Nav_ExpenseTickets" xml:space="preserve">
+    <value>Tickets</value>
+  </data>
+  <data name="Tickets_LoadError" xml:space="preserve">
+    <value>Ezin izan dira ticketak kargatu.</value>
+  </data>
+  <data name="Tickets_Filter_All" xml:space="preserve">
+    <value>Guztiak</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey_Placeholder" xml:space="preserve">
+    <value>Ticket id-a, fitxategi izena edo deskribapena</value>
+  </data>
+  <data name="Tickets_Filter_Status" xml:space="preserve">
+    <value>Egoera</value>
+  </data>
+  <data name="Tickets_Filter_Status_Pending" xml:space="preserve">
+    <value>Zain</value>
+  </data>
+  <data name="Tickets_Filter_Status_Assigned" xml:space="preserve">
+    <value>Esleituta</value>
+  </data>
+  <data name="Tickets_Filter_Category" xml:space="preserve">
+    <value>Kategoria</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA" xml:space="preserve">
+    <value>IAk prozesatua</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_Yes" xml:space="preserve">
+    <value>Bai</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_No" xml:space="preserve">
+    <value>Ez</value>
+  </data>
+  <data name="Tickets_Field_FileId" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
+    <value>Gastu orria</value>
+  </data>
+  <data name="Tickets_Field_Status" xml:space="preserve">
+    <value>Egoera</value>
+  </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>gastu-orriak</value>
   </data>
@@ -178,7 +223,7 @@
     <value>Ordainduta</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve">
-    <value>Biak</value>
+    <value>Guztiak</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve">
     <value>Zirriborroa</value>

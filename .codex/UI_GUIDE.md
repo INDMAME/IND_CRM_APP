@@ -71,6 +71,24 @@
   - Disable free text editing.
   - Picking a new value always replaces the previous one.
 
+## Expense tickets filter patterns
+- Ticket filter key (`FilterKey`):
+  - Must use `remote-search-dropdown` behavior with placeholder-first UX and no external label in the compact filter panel.
+  - Placeholder text must be exactly `Ticket`.
+  - Suggestions must come from `/api/crm/expensesheets/tickets/list`.
+  - Suggestions must only render `FileId` as title and `Description` as subtitle.
+  - Selecting an option must write `FileId` as the filter value.
+  - Use the same suggestion pagination size as expense sheet picker (`pageSize = 20`).
+- Processed by IA:
+  - Must use `fixed-enum-select` with values `Both`, `Yes`, `No`.
+  - In compact filter panels, keep label integrated in the field (placeholder style), not as a separate text block.
+  - `Both` maps to internal `all` and must not add a restrictive API parameter.
+- Expense sheets status filter placeholder:
+  - When UI state is the global option (`All`/default), show empty selected value so the field displays placeholder text (`Status`) until user chooses a specific status.
+
+## Localization note for tickets
+- Spanish `Tickets_Filter_Category` value must keep the accented form of "Categoria" (acute accent on the i).
+
 ## Visitas confirm + action mark flow
 - No popup on edit toggle. Edit mode is instant.
 - Before create/update/delete: show one confirm modal.

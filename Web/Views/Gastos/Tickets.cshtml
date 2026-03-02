@@ -1,0 +1,82 @@
+@using System.Text.Json
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+@{
+    Layout = "~/Web/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = SR["Nav_ExpenseTickets"];
+    ViewData["BodyClass"] = "visitas-typography";
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/historial.css" asp-append-version="true" />
+}
+
+<div id="expense-tickets-root" class="max-w-5xl mx-auto px-1 sm:px-2 pt-3 pb-4"></div>
+
+@section Scripts {
+    <script nonce="@cspNonce">
+        window.__EXPENSE_GASTO_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.GastoTypeOptions ?? new object[0]));
+        window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
+            Common_Loading = SR["Common_Loading"].Value,
+            Common_NoData = SR["Common_NoData"].Value,
+            Common_Yes = SR["Common_Yes"].Value,
+            Common_No = SR["Common_No"].Value,
+            Api_RequestFailed = SR["Api_RequestFailed"].Value,
+            Auth_PermissionDenied_Body = SR["Auth_PermissionDenied_Body"].Value,
+            History_Page_First = SR["History_Page_First"].Value,
+            History_Page_Prev = SR["History_Page_Prev"].Value,
+            History_Page_Next = SR["History_Page_Next"].Value,
+            History_Page_Last = SR["History_Page_Last"].Value,
+            History_From = SR["History_From"].Value,
+            History_To = SR["History_To"].Value,
+            History_Filter_Date = SR["History_Filter_Date"].Value,
+            History_Filter_Clear = SR["History_Filter_Clear"].Value,
+            History_Filter_Apply = SR["History_Filter_Apply"].Value,
+            History_Quick_Custom = SR["History_Quick_Custom"].Value,
+            History_Quick_7Days = SR["History_Quick_7Days"].Value,
+            History_Quick_30Days = SR["History_Quick_30Days"].Value,
+            History_Quick_90Days = SR["History_Quick_90Days"].Value,
+            History_PrevMonth = SR["History_PrevMonth"].Value,
+            History_NextMonth = SR["History_NextMonth"].Value,
+            History_Day_Mon = SR["History_Day_Mon"].Value,
+            History_Day_Tue = SR["History_Day_Tue"].Value,
+            History_Day_Wed = SR["History_Day_Wed"].Value,
+            History_Day_Thu = SR["History_Day_Thu"].Value,
+            History_Day_Fri = SR["History_Day_Fri"].Value,
+            History_Day_Sat = SR["History_Day_Sat"].Value,
+            History_Day_Sun = SR["History_Day_Sun"].Value,
+            History_AddDate = SR["History_AddDate"].Value,
+            History_ClearRange = SR["History_ClearRange"].Value,
+            History_Status_SelectStart = SR["History_Status_SelectStart"].Value,
+            History_Status_SelectEnd = SR["History_Status_SelectEnd"].Value,
+            DatePicker_SelectDate = SR["DatePicker_SelectDate"].Value,
+            ExpenseSheets_Filter_Currency = SR["ExpenseSheets_Filter_Currency"].Value,
+            Tickets_LoadError = SR["Tickets_LoadError"].Value,
+            Tickets_Filter_All = SR["Tickets_Filter_All"].Value,
+            Tickets_Filter_FilterKey = SR["Tickets_Filter_FilterKey"].Value,
+            Tickets_Filter_FilterKey_Placeholder = SR["Tickets_Filter_FilterKey_Placeholder"].Value,
+            Tickets_Filter_Status = SR["Tickets_Filter_Status"].Value,
+            Tickets_Filter_Status_Pending = SR["Tickets_Filter_Status_Pending"].Value,
+            Tickets_Filter_Status_Assigned = SR["Tickets_Filter_Status_Assigned"].Value,
+            Tickets_Filter_Category = SR["Tickets_Filter_Category"].Value,
+            Tickets_Filter_ProcessedByIA = SR["Tickets_Filter_ProcessedByIA"].Value,
+            Tickets_Filter_ProcessedByIA_Yes = SR["Tickets_Filter_ProcessedByIA_Yes"].Value,
+            Tickets_Filter_ProcessedByIA_No = SR["Tickets_Filter_ProcessedByIA_No"].Value,
+            Tickets_Field_FileId = SR["Tickets_Field_FileId"].Value,
+            Tickets_Field_ExpenseSheetDisplay = SR["Tickets_Field_ExpenseSheetDisplay"].Value,
+            Tickets_Field_Status = SR["Tickets_Field_Status"].Value,
+            Enum_None = SR["Enum_None"].Value,
+            Enum_GastoType_Peaje = SR["Enum_GastoType_Peaje"].Value,
+            Enum_GastoType_Parking = SR["Enum_GastoType_Parking"].Value,
+            Enum_GastoType_Km = SR["Enum_GastoType_Km"].Value,
+            Enum_GastoType_Desayuno = SR["Enum_GastoType_Desayuno"].Value,
+            Enum_GastoType_Comida = SR["Enum_GastoType_Comida"].Value,
+            Enum_GastoType_Cena = SR["Enum_GastoType_Cena"].Value,
+            Enum_GastoType_Hotel = SR["Enum_GastoType_Hotel"].Value,
+            Enum_GastoType_Varios = SR["Enum_GastoType_Varios"].Value,
+            Enum_GastoType_Taxi = SR["Enum_GastoType_Taxi"].Value
+        }));
+    </script>
+    <script nonce="@cspNonce" type="module" src="~/js/expense-tickets.js" asp-append-version="true"></script>
+}

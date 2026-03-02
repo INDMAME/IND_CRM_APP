@@ -386,6 +386,23 @@
     padding: 0 22px 20px 0;
     text-align: left;
 }
+.expense-ticket-card__title {
+    margin: 0;
+    padding: 0 22px 0 0;
+    text-align: left;
+}
+.expense-sheet-card__subtitle {
+    margin: 0;
+    padding: 0 22px 20px 0;
+    font-size: 12px;
+    line-height: 1.25;
+    color: #00296bb8;
+    text-align: left;
+    text-transform: none;
+    letter-spacing: 0;
+    white-space: normal;
+    word-break: break-word;
+}
 .expense-line-card__title {
     margin: 0;
     padding: 0 22px 2px 0;
@@ -404,6 +421,39 @@
     color: #00296be0;
     letter-spacing: 0;
     font-variant-numeric: tabular-nums;
+}
+.expense-sheet-card__status-icon {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    transform: rotate(45deg);
+    transform-origin: center;
+    pointer-events: none;
+}
+.expense-ticket-card__status-icons {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 5;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 4px;
+    line-height: 1;
+    pointer-events: none;
+    color: #94a3b8;
+}
+.expense-ticket-card__status-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 18px;
+    height: 18px;
 }
 .expense-section-divider {
     display: flex;

@@ -69,6 +69,51 @@
   <data name="Nav_ExpenseSheets" xml:space="preserve">
     <value>Note spese</value>
   </data>
+  <data name="Nav_ExpenseTickets" xml:space="preserve">
+    <value>Tickets</value>
+  </data>
+  <data name="Tickets_LoadError" xml:space="preserve">
+    <value>Impossibile caricare i ticket.</value>
+  </data>
+  <data name="Tickets_Filter_All" xml:space="preserve">
+    <value>Tutti</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Filter_FilterKey_Placeholder" xml:space="preserve">
+    <value>ID ticket, nome file o descrizione</value>
+  </data>
+  <data name="Tickets_Filter_Status" xml:space="preserve">
+    <value>Stato</value>
+  </data>
+  <data name="Tickets_Filter_Status_Pending" xml:space="preserve">
+    <value>In sospeso</value>
+  </data>
+  <data name="Tickets_Filter_Status_Assigned" xml:space="preserve">
+    <value>Assegnato</value>
+  </data>
+  <data name="Tickets_Filter_Category" xml:space="preserve">
+    <value>Categoria</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA" xml:space="preserve">
+    <value>Elaborato da IA</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_Yes" xml:space="preserve">
+    <value>Si</value>
+  </data>
+  <data name="Tickets_Filter_ProcessedByIA_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="Tickets_Field_FileId" xml:space="preserve">
+    <value>Ticket</value>
+  </data>
+  <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
+    <value>Nota spese</value>
+  </data>
+  <data name="Tickets_Field_Status" xml:space="preserve">
+    <value>Stato</value>
+  </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>fogli di spesa</value>
   </data>
@@ -178,7 +223,7 @@
     <value>Pagato</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve">
-    <value>Entrambi</value>
+    <value>Tutti</value>
   </data>
   <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve">
     <value>Bozza</value>

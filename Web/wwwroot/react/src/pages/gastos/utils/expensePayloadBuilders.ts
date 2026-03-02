@@ -1,5 +1,10 @@
-import type { ExpenseSheetListApiRequest, ExpenseSheetListFilters } from "../expenseTypes.ts";
+import type {
+  ExpenseSheetListApiRequest,
+  ExpenseSheetListFilters,
+  ExpenseSheetTicketListRequest,
+} from "../expenseTypes.ts";
 import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog.ts";
+import type { ExpenseTicketAppliedFilterSnapshot } from "../tickets/expenseTicketListTypes.ts";
 
 const DEFAULT_SUGGEST_PAGE_SIZE = 50;
 
@@ -23,6 +28,20 @@ const resolveExpenseSheetStatus = (statusFilter: number): number | undefined => 
 const normalizeOptionalText = (value: string | undefined): string | undefined => {
   const trimmed = String(value || "").trim();
   return trimmed ? trimmed : undefined;
+};
+
+const resolveProcessedByAiFilter = (
+  value: ExpenseTicketAppliedFilterSnapshot["processedByIaFilter"]
+): boolean | undefined => {
+  if (value === "yes") {
+    return true;
+  }
+
+  if (value === "no") {
+    return false;
+  }
+
+  return undefined;
 };
 
 // Build list payload for /api/crm/expensesheets/list from current filter state.
@@ -67,5 +86,29 @@ export const buildExpenseSheetSuggestPayload = (
     currencyCode: undefined,
     page: nextPage,
     pageSize: nextPageSize,
+  };
+};
+
+// Build list payload for /api/crm/expensesheets/tickets/list from ticket filter state.
+export const buildExpenseTicketListPayload = (
+  filters: ExpenseTicketAppliedFilterSnapshot,
+  page: number,
+  pageSize: number
+): ExpenseSheetTicketListRequest => {
+  const nextPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const nextPageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : DEFAULT_SUGGEST_PAGE_SIZE;
+  const safeFilterKey = normalizeOptionalText(filters.filterKey);
+
+  return {
+    page: nextPage,
+    pageSize: nextPageSize,
+    createdDateFrom: normalizeOptionalText(filters.fromDate),
+    createdDateTo: normalizeOptionalText(filters.toDate),
+    searchKey: safeFilterKey,
+    filter: safeFilterKey,
+    status: filters.statusFilter === "" ? undefined : filters.statusFilter,
+    currencyCode: normalizeOptionalText(filters.currencyCode),
+    gastoType: filters.gastoTypeFilter === "" ? undefined : filters.gastoTypeFilter,
+    processedByAI: resolveProcessedByAiFilter(filters.processedByIaFilter),
   };
 };

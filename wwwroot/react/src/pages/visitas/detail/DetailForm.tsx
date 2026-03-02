@@ -251,8 +251,8 @@ const DetailApp = () => {
   });
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
-    defaultConfirmText: indT("Confirm_Yes", "OK"),
-    defaultCancelText: indT("Confirm_No", "Cancel")
+    defaultConfirmText: indT("Confirm_Yes", "Confirm_Yes"),
+    defaultCancelText: indT("Confirm_No", "Confirm_No")
   });
 
   const handleModalConfirm = useCallback(async () => {
@@ -267,11 +267,11 @@ const DetailApp = () => {
     });
   }, [busy, handleConfirm]);
 
-  const modalLoadingText = indT("Common_Loading", "Loading");
-  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
+  const modalLoadingText = indT("Common_Loading", "Common_Loading");
+  const modalCancelText = modal.cancelText || indT("Confirm_No", "Confirm_No");
   const modalConfirmText = busy
     ? modalLoadingText
-    : (!busy && modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")));
+    : (!busy && modalError ? indT("Common_OK", "Common_OK") : (modal.confirmText || indT("Confirm_Yes", "Confirm_Yes")));
 
   const handleModalButtonConfirm = useCallback(() => {
     if (!busy && modalError) {

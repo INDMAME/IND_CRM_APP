@@ -823,7 +823,14 @@ namespace IND_CRM_APP.Services
                 includeAxUserHeader: false);
 
             var result = await SendGetAsync(ApiRoutes.ExpenseSheetCurrencies);
-            return BuildPagedResponse<ExpenseSheetCurrencyDto>(result, "GetExpenseSheetCurrencies");
+            var parsed = BuildPagedResponse<ExpenseSheetCurrencyDto>(result, "GetExpenseSheetCurrencies");
+            if (parsed.GetAnyItems().Any())
+            {
+                return parsed;
+            }
+
+            var fallback = TryParseExpenseSheetCurrenciesFallback(result);
+            return fallback ?? parsed;
         }
 
         public async Task<PagedApiResponse<ExpenseSheetSubordinateDto>> GetExpenseSheetSubordinatesAsync(
@@ -1347,6 +1354,257 @@ namespace IND_CRM_APP.Services
             {
                 return msgLower.GetString();
             }
+            return null;
+        }
+
+        // Tries to parse currencies payloads from tolerant response shapes.
+        private PagedApiResponse<ExpenseSheetCurrencyDto>? TryParseExpenseSheetCurrenciesFallback(HttpResult result)
+        {
+            if (string.IsNullOrWhiteSpace(result.Raw))
+            {
+                return null;
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(result.Raw);
+                var root = doc.RootElement;
+                var knownEnvelope = root.ValueKind == JsonValueKind.Array || LooksLikeCurrencyEnvelope(root);
+                var items = ExtractCurrencyItems(root);
+                if (!knownEnvelope && items.Count == 0)
+                {
+                    return null;
+                }
+
+                var success = root.ValueKind == JsonValueKind.Object
+                    ? JsonPropertyHelper.TryGetBool(root, "Success") ?? result.IsSuccessStatusCode
+                    : result.IsSuccessStatusCode;
+                var message = root.ValueKind == JsonValueKind.Object
+                    ? TryGetMessage(root) ?? string.Empty
+                    : string.Empty;
+                var total = root.ValueKind == JsonValueKind.Object
+                    ? (TryReadIntProperty(root, "Total") ?? items.Count)
+                    : items.Count;
+                var page = root.ValueKind == JsonValueKind.Object
+                    ? (TryReadIntProperty(root, "Page") ?? 1)
+                    : 1;
+                var pageSize = root.ValueKind == JsonValueKind.Object
+                    ? (TryReadIntProperty(root, "PageSize") ?? items.Count)
+                    : items.Count;
+                var traceId = root.ValueKind == JsonValueKind.Object
+                    ? JsonPropertyHelper.TryGetString(root, "TraceId") ?? TryGetTraceId(result.Headers)
+                    : TryGetTraceId(result.Headers);
+
+                return new PagedApiResponse<ExpenseSheetCurrencyDto>
+                {
+                    Success = success,
+                    Message = message,
+                    Data = items,
+                    Items = items,
+                    Total = total < 0 ? 0 : total,
+                    Page = page < 1 ? 1 : page,
+                    PageSize = pageSize < 0 ? 0 : pageSize,
+                    TraceId = traceId
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Currency fallback parse failed. Raw: {Raw}", SafeLogPayload(result.Raw));
+                return null;
+            }
+        }
+
+        // Detects currencies response envelopes even when they contain no items.
+        private static bool LooksLikeCurrencyEnvelope(JsonElement root)
+        {
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return false;
+            }
+
+            return JsonPropertyHelper.TryGetPropertyInsensitive(root, "Items", out _) ||
+                   JsonPropertyHelper.TryGetPropertyInsensitive(root, "Data", out _) ||
+                   JsonPropertyHelper.TryGetPropertyInsensitive(root, "Success", out _) ||
+                   JsonPropertyHelper.TryGetPropertyInsensitive(root, "Message", out _) ||
+                   JsonPropertyHelper.TryGetPropertyInsensitive(root, "Total", out _) ||
+                   JsonPropertyHelper.TryGetPropertyInsensitive(root, "Page", out _) ||
+                   JsonPropertyHelper.TryGetPropertyInsensitive(root, "PageSize", out _) ||
+                   JsonPropertyHelper.TryGetPropertyInsensitive(root, "TraceId", out _);
+        }
+
+        // Extracts currencies from either envelope objects or direct arrays.
+        private List<ExpenseSheetCurrencyDto> ExtractCurrencyItems(JsonElement root)
+        {
+            var items = new List<ExpenseSheetCurrencyDto>();
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                AddCurrencyElements(root, items);
+                return items;
+            }
+
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return items;
+            }
+
+            if (TryGetArrayProperty(root, "Items", out var itemsArray))
+            {
+                AddCurrencyElements(itemsArray, items);
+                return items;
+            }
+
+            if (JsonPropertyHelper.TryGetPropertyInsensitive(root, "Data", out var dataElement))
+            {
+                if (dataElement.ValueKind == JsonValueKind.Array)
+                {
+                    AddCurrencyElements(dataElement, items);
+                    return items;
+                }
+
+                if (dataElement.ValueKind == JsonValueKind.Object)
+                {
+                    if (TryGetArrayProperty(dataElement, "Items", out var nestedItems))
+                    {
+                        AddCurrencyElements(nestedItems, items);
+                        return items;
+                    }
+
+                    var singleFromData = ParseCurrencyItem(dataElement);
+                    if (singleFromData != null)
+                    {
+                        items.Add(singleFromData);
+                        return items;
+                    }
+                }
+            }
+
+            var singleFromRoot = ParseCurrencyItem(root);
+            if (singleFromRoot != null)
+            {
+                items.Add(singleFromRoot);
+            }
+
+            return items;
+        }
+
+        // Adds currency items from a JSON array while tolerating mixed element shapes.
+        private void AddCurrencyElements(JsonElement arrayElement, List<ExpenseSheetCurrencyDto> target)
+        {
+            if (arrayElement.ValueKind != JsonValueKind.Array)
+            {
+                return;
+            }
+
+            foreach (var item in arrayElement.EnumerateArray())
+            {
+                var parsed = ParseCurrencyItem(item);
+                if (parsed == null)
+                {
+                    continue;
+                }
+
+                target.Add(parsed);
+            }
+        }
+
+        // Parses one currency entry from object or string values.
+        private static ExpenseSheetCurrencyDto? ParseCurrencyItem(JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                var codeFromString = NormalizeOptionalText(element.GetString())?.ToUpperInvariant();
+                if (string.IsNullOrWhiteSpace(codeFromString))
+                {
+                    return null;
+                }
+
+                return new ExpenseSheetCurrencyDto
+                {
+                    CurrencyCode = codeFromString,
+                    CurrencyCodeISO = codeFromString
+                };
+            }
+
+            if (element.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            var code = ReadStringLikeProperty(element, "CurrencyCode", "currencyCode", "Code", "code", "Currency", "currency");
+            var iso = ReadStringLikeProperty(element, "CurrencyCodeISO", "currencyCodeISO", "currencyCodeIso", "IsoCode", "isoCode");
+            var normalizedCode = NormalizeOptionalText(code)?.ToUpperInvariant();
+            var normalizedIso = NormalizeOptionalText(iso)?.ToUpperInvariant();
+
+            if (string.IsNullOrWhiteSpace(normalizedCode) && string.IsNullOrWhiteSpace(normalizedIso))
+            {
+                return null;
+            }
+
+            return new ExpenseSheetCurrencyDto
+            {
+                CurrencyCode = normalizedCode ?? normalizedIso ?? string.Empty,
+                CurrencyCodeISO = normalizedIso ?? normalizedCode ?? string.Empty
+            };
+        }
+
+        // Reads an array property using tolerant key matching.
+        private static bool TryGetArrayProperty(JsonElement root, string propertyName, out JsonElement arrayElement)
+        {
+            if (JsonPropertyHelper.TryGetPropertyInsensitive(root, propertyName, out arrayElement) &&
+                arrayElement.ValueKind == JsonValueKind.Array)
+            {
+                return true;
+            }
+
+            arrayElement = default;
+            return false;
+        }
+
+        // Reads integer properties from number or numeric string values.
+        private static int? TryReadIntProperty(JsonElement root, string propertyName)
+        {
+            if (!JsonPropertyHelper.TryGetPropertyInsensitive(root, propertyName, out var element))
+            {
+                return null;
+            }
+
+            if (element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var fromNumber))
+            {
+                return fromNumber;
+            }
+
+            if (element.ValueKind == JsonValueKind.String &&
+                int.TryParse(element.GetString(), out var fromString))
+            {
+                return fromString;
+            }
+
+            return null;
+        }
+
+        // Reads a property value as text from string or primitive values.
+        private static string? ReadStringLikeProperty(JsonElement root, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (!JsonPropertyHelper.TryGetPropertyInsensitive(root, key, out var value))
+                {
+                    continue;
+                }
+
+                if (value.ValueKind == JsonValueKind.String)
+                {
+                    return value.GetString();
+                }
+
+                if (value.ValueKind == JsonValueKind.Number ||
+                    value.ValueKind == JsonValueKind.True ||
+                    value.ValueKind == JsonValueKind.False)
+                {
+                    return value.ToString();
+                }
+            }
+
             return null;
         }
 

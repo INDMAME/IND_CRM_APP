@@ -12,6 +12,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
         public const string ModuleVisitasCreacion = "VISITAS_CREACION";
         public const string ModuleVisitasHistorial = "VISITAS_HISTORIAL";
         public const string ModuleGastosHojaGasto = "GASTOS_HOJA_GASTO";
+        public const string ModuleGastosTickets = "GASTOS_TICKETS";
 
         private static readonly IReadOnlyDictionary<string, string[]> ModulePrefixes =
             new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
@@ -39,6 +40,17 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                     "/Visitas/DeleteActivity",
                     "/Visitas/UpdateAsistenteTipo",
                     "/Visitas/GetActivityByCode"
+                },
+                [ModuleGastosTickets] = new[]
+                {
+                    ModuleGastosTickets,
+                    "GASTOS_TICKETS",
+                    "GASTO_TICKETS",
+                    "GASTOS/TICKETS",
+                    "/Gastos/Tickets",
+                    "/Gastos/ApiExpenseSheetTicket",
+                    "/Gastos/ApiExpenseSheetTickets",
+                    "/api/crm/expensesheets/tickets"
                 },
                 [ModuleGastosHojaGasto] = new[]
                 {
@@ -84,6 +96,11 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                 {
                     ModuleVisitasCreacion,
                     ModuleVisitasHistorial
+                },
+                ["/api/ia/service/expensefromticket"] = new[]
+                {
+                    ModuleGastosHojaGasto,
+                    ModuleGastosTickets
                 }
             };
 
@@ -104,6 +121,13 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                     "VISITAS/HISTORIAL",
                     "VISITAS_VISITAS"
                 },
+                [ModuleGastosTickets] = new[]
+                {
+                    ModuleGastosTickets,
+                    "GASTOS_TICKETS",
+                    "GASTO_TICKETS",
+                    "GASTOS/TICKETS"
+                },
                 [ModuleGastosHojaGasto] = new[]
                 {
                     ModuleGastosHojaGasto,
@@ -123,6 +147,14 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
             if (string.IsNullOrWhiteSpace(path))
                 return false;
 
+            // Ticket routes must resolve first because "/Gastos" and "/api/crm/expensesheets"
+            // are generic prefixes used by other expense features.
+            if (IsGastosTicketsPath(path))
+            {
+                moduleCode = ModuleGastosTickets;
+                return true;
+            }
+
             foreach (var entry in ModulePrefixes)
             {
                 if (entry.Value.Any(prefix =>
@@ -134,6 +166,15 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
             }
 
             return false;
+        }
+
+        // Detects explicit ticket paths to avoid accidental capture by generic expense prefixes.
+        private static bool IsGastosTicketsPath(string path)
+        {
+            return path.StartsWith("/Gastos/Tickets", StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith("/Gastos/ApiExpenseSheetTicket", StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith("/Gastos/ApiExpenseSheetTickets", StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith("/api/crm/expensesheets/tickets", StringComparison.OrdinalIgnoreCase);
         }
 
         // Returns candidate modules for shared endpoints.

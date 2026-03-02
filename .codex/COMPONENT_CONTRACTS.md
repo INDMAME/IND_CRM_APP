@@ -29,6 +29,33 @@
     - Selecting a new option replaces the previous value.
     - Example: billed status (Paid, Unpaid, Both).
 
+## Expense filter component contracts
+### ExpenseTicketFilterKeyInput
+- File: `Web/wwwroot/react/src/pages/gastos/components/ExpenseTicketFilterKeyInput.tsx`
+- Type: `remote-search-dropdown`
+- Contract:
+  - Placeholder must be exactly `Ticket`.
+  - Suggest API endpoint is `/api/crm/expensesheets/tickets/list`.
+  - Suggest payload must include required date range (`createdDateFrom`, `createdDateTo`).
+  - Suggest list item shape is fixed: title = `FileId`, subtitle = `Description`.
+  - On option select, output value must be `FileId`.
+  - Suggest page size must match expense sheet picker (`20`).
+
+### ExpenseProcessedByIaFilterSelect
+- File: `Web/wwwroot/react/src/pages/gastos/components/ExpenseProcessedByIaFilterSelect.tsx`
+- Type: `fixed-enum-select`
+- Contract:
+  - Allowed values: `all`, `yes`, `no`.
+  - UI labels must map to `Both`, `Yes`, `No`.
+  - In compact filter panels, render without external label when placeholder-first layout is required.
+  - `all` means no restrictive filter should be sent in API payload.
+
+### ExpenseStatusFilterSelect (list page behavior)
+- File: `Web/wwwroot/react/src/pages/gastos/components/ExpenseStatusFilterSelect.tsx`
+- Contract:
+  - When value equals global default (`DEFAULT_EXPENSE_STATUS_FILTER`), component must render empty selected value so placeholder `Status` is visible.
+  - On selection, component must normalize back to canonical status code enum.
+
 ## React decomposition contract (high priority)
 - New page work must start with a decomposition map before code:
   - Container/page component.
