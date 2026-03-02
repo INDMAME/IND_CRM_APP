@@ -6,6 +6,7 @@ using IND_CRM_APP.Services.Http;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -174,6 +175,22 @@ namespace IND_CRM_APP.Services
             return gastoType.HasValue && AllowedGastoTypeCodes.Contains(gastoType.Value)
                 ? gastoType
                 : null;
+        }
+
+        // Builds the explicit token expected by AX list filters: 0/1 when set, "null" when omitted.
+        private static object BuildTicketStatusFilterToken(int? status)
+        {
+            return status.HasValue && (status.Value == 0 || status.Value == 1)
+                ? status.Value
+                : "null";
+        }
+
+        // Builds the explicit token expected by AX list filters: 0/1 when set, "null" when omitted.
+        private static object BuildTicketProcessedByAiFilterToken(bool? processedByAI)
+        {
+            return processedByAI.HasValue
+                ? (processedByAI.Value ? 1 : 0)
+                : "null";
         }
 
         // Prepares auth headers and logs company header state for an operation.
@@ -891,19 +908,41 @@ namespace IND_CRM_APP.Services
             PrepareRequestHeaders(token, "GetExpenseSheetTickets", requireCompany: true);
 
             req ??= new ExpenseSheetTicketListRequest();
+
+            var normalizedPage = req.Page < 1 ? 1 : req.Page;
+            var normalizedPageSize = req.PageSize <= 0 ? 50 : req.PageSize;
+            var normalizedCreatedDateFrom = NormalizeOptionalText(req.CreatedDateFrom);
+            var normalizedCreatedDateTo = NormalizeOptionalText(req.CreatedDateTo);
             var normalizedSearchKey = NormalizeOptionalText(req.SearchKey) ?? NormalizeOptionalText(req.Filter);
-            var payload = new ExpenseSheetTicketListRequest
+            var normalizedFilter = NormalizeOptionalText(req.Filter);
+            var normalizedCurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant();
+            var normalizedGastoType = NormalizeTicketGastoType(req.GastoType);
+
+            var payload = new Dictionary<string, object?>
             {
-                Page = req.Page < 1 ? 1 : req.Page,
-                PageSize = req.PageSize <= 0 ? 50 : req.PageSize,
-                CreatedDateFrom = NormalizeOptionalText(req.CreatedDateFrom) ?? string.Empty,
-                CreatedDateTo = NormalizeOptionalText(req.CreatedDateTo) ?? string.Empty,
-                SearchKey = normalizedSearchKey,
-                Filter = NormalizeOptionalText(req.Filter),
-                Status = req.Status is >= 0 and <= 1 ? req.Status : null,
-                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
-                GastoType = NormalizeTicketGastoType(req.GastoType)
+                ["page"] = normalizedPage,
+                ["pageSize"] = normalizedPageSize,
+                ["status"] = BuildTicketStatusFilterToken(req.Status),
+                ["processedByAI"] = BuildTicketProcessedByAiFilterToken(req.ProcessedByAI)
             };
+
+            if (!string.IsNullOrWhiteSpace(normalizedCreatedDateFrom))
+                payload["createdDateFrom"] = normalizedCreatedDateFrom;
+
+            if (!string.IsNullOrWhiteSpace(normalizedCreatedDateTo))
+                payload["createdDateTo"] = normalizedCreatedDateTo;
+
+            if (!string.IsNullOrWhiteSpace(normalizedSearchKey))
+                payload["searchKey"] = normalizedSearchKey;
+
+            if (!string.IsNullOrWhiteSpace(normalizedFilter))
+                payload["filter"] = normalizedFilter;
+
+            if (!string.IsNullOrWhiteSpace(normalizedCurrencyCode))
+                payload["currencyCode"] = normalizedCurrencyCode;
+
+            if (normalizedGastoType.HasValue)
+                payload["gastoType"] = normalizedGastoType.Value;
 
             var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketsList, payload);
             return BuildPagedResponse<ExpenseSheetTicketListItemDto>(result, "GetExpenseSheetTickets");
@@ -1311,6 +1350,36 @@ namespace IND_CRM_APP.Services
                 _logger.LogError(ex, "JSON deserialization failed for {Operation}. Raw: {Raw}", operation, SafeLogPayload(result.Raw));
             }
 
+            // Fallback: supports envelopes where Data is a single object and direct object/array payloads.
+            try
+            {
+                using var doc = JsonDocument.Parse(result.Raw);
+                var root = doc.RootElement;
+                var fallbackItems = ExtractPagedItems<T>(root);
+                var fallbackSuccess = TryReadBoolProperty(root, "Success", "success") ?? result.IsSuccessStatusCode;
+                var fallbackMessage = TryGetMessage(root) ?? result.ErrorMessage;
+                var fallbackTotal = TryReadIntProperty(root, "Total") ?? TryReadIntProperty(root, "total") ?? fallbackItems.Count;
+                var fallbackPage = TryReadIntProperty(root, "Page") ?? TryReadIntProperty(root, "page") ?? 1;
+                var fallbackPageSize = TryReadIntProperty(root, "PageSize") ?? TryReadIntProperty(root, "pageSize") ?? fallbackItems.Count;
+                var fallbackTraceId = ReadStringLikeProperty(root, "TraceId", "traceId");
+
+                return new PagedApiResponse<T>
+                {
+                    Success = fallbackSuccess,
+                    Message = fallbackMessage,
+                    Items = fallbackItems,
+                    Data = fallbackItems,
+                    Total = Math.Max(0, fallbackTotal),
+                    Page = fallbackPage > 0 ? fallbackPage : 1,
+                    PageSize = Math.Max(0, fallbackPageSize),
+                    TraceId = fallbackTraceId ?? TryGetTraceId(result.Headers)
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Fallback paged deserialization failed for {Operation}. Raw: {Raw}", operation, SafeLogPayload(result.Raw));
+            }
+
             LogHttpFailure(result, operation);
             return new PagedApiResponse<T>
             {
@@ -1355,6 +1424,129 @@ namespace IND_CRM_APP.Services
                 return msgLower.GetString();
             }
             return null;
+        }
+
+        // Reads bool values from bool, numeric or string JSON fields.
+        private static bool? TryReadBoolProperty(JsonElement root, params string[] keys)
+        {
+            foreach (var key in keys)
+            {
+                if (!JsonPropertyHelper.TryGetPropertyInsensitive(root, key, out var element))
+                    continue;
+
+                if (element.ValueKind == JsonValueKind.True) return true;
+                if (element.ValueKind == JsonValueKind.False) return false;
+
+                if (element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var fromNumber))
+                {
+                    if (fromNumber == 1) return true;
+                    if (fromNumber == 0) return false;
+                }
+
+                if (element.ValueKind == JsonValueKind.String)
+                {
+                    var normalized = element.GetString()?.Trim().ToLowerInvariant();
+                    if (normalized == "true" || normalized == "1") return true;
+                    if (normalized == "false" || normalized == "0") return false;
+                }
+            }
+
+            return null;
+        }
+
+        // Extracts paged items from envelopes, nested Data, or direct JSON payloads.
+        private List<T> ExtractPagedItems<T>(JsonElement root)
+        {
+            var items = new List<T>();
+
+            if (root.ValueKind == JsonValueKind.Array)
+            {
+                AddPagedItemsFromArray(items, root);
+                return items;
+            }
+
+            if (root.ValueKind != JsonValueKind.Object)
+                return items;
+
+            if (TryGetArrayProperty(root, "Items", out var itemsArray))
+            {
+                AddPagedItemsFromArray(items, itemsArray);
+                return items;
+            }
+
+            if (JsonPropertyHelper.TryGetPropertyInsensitive(root, "Data", out var dataElement))
+            {
+                if (dataElement.ValueKind == JsonValueKind.Array)
+                {
+                    AddPagedItemsFromArray(items, dataElement);
+                    return items;
+                }
+
+                if (dataElement.ValueKind == JsonValueKind.Object)
+                {
+                    if (TryGetArrayProperty(dataElement, "Items", out var nestedItems))
+                    {
+                        AddPagedItemsFromArray(items, nestedItems);
+                        return items;
+                    }
+
+                    if (TryDeserializeItem(dataElement, out T? singleFromData))
+                    {
+                        items.Add(singleFromData!);
+                    }
+
+                    return items;
+                }
+            }
+
+            var looksLikeEnvelope =
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "Success", out _) ||
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "Message", out _) ||
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "Total", out _) ||
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "Page", out _) ||
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "PageSize", out _) ||
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "Items", out _) ||
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "Data", out _) ||
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "ErrorCode", out _) ||
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "Errors", out _) ||
+                JsonPropertyHelper.TryGetPropertyInsensitive(root, "TraceId", out _);
+
+            if (!looksLikeEnvelope && TryDeserializeItem(root, out T? singleFromRoot))
+            {
+                items.Add(singleFromRoot!);
+            }
+
+            return items;
+        }
+
+        // Adds parsed items from a JSON array while tolerating malformed elements.
+        private void AddPagedItemsFromArray<T>(List<T> target, JsonElement arrayElement)
+        {
+            if (arrayElement.ValueKind != JsonValueKind.Array)
+                return;
+
+            foreach (var element in arrayElement.EnumerateArray())
+            {
+                if (!TryDeserializeItem(element, out T? item))
+                    continue;
+
+                target.Add(item!);
+            }
+        }
+
+        // Safely deserializes one item from a JSON element.
+        private static bool TryDeserializeItem<T>(JsonElement element, out T? item)
+        {
+            try
+            {
+                item = element.Deserialize<T>(JsonOptions);
+                return item != null;
+            }
+            catch
+            {
+                item = default;
+                return false;
+            }
         }
 
         // Tries to parse currencies payloads from tolerant response shapes.

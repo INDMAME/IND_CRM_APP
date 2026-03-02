@@ -10,6 +10,7 @@ import ExpenseTicketsFiltersPanel from "../components/ExpenseTicketsFiltersPanel
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCatalog.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
+import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDateParts, formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import { useExpenseTicketsFiltersState } from "./useExpenseTicketsFiltersState.ts";
@@ -125,10 +126,13 @@ const ExpenseTicketsPageContent = () => {
     },
   });
 
-  const openTicketFile = useCallback((rawUrl: string) => {
-    const url = safeText(rawUrl);
-    if (!url) return;
-    window.open(url, "_blank", "noopener,noreferrer");
+  const openTicketDetail = useCallback((rawFileId: string) => {
+    const fileId = safeText(rawFileId);
+    if (!fileId) return;
+    navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(fileId)}`, {
+      askConfirmation: true,
+      bypassGuardOnce: false,
+    });
   }, []);
 
   const resolveClickableCard = useCallback((target: EventTarget | null) => {
@@ -338,10 +342,10 @@ const ExpenseTicketsPageContent = () => {
                       viewBox="0 0 24 24"
                       fill="none"
                       stroke="currentColor"
-                      strokeWidth="1"
+                      strokeWidth="1.75"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="h-4 w-4"
+                      className="h-5 w-5"
                     >
                       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                       <path d="M8 16v-6a2 2 0 1 1 4 0v6" />
@@ -371,7 +375,7 @@ const ExpenseTicketsPageContent = () => {
                   title={title}
                   subtitle={cardSubtitle}
                   amountText={amountText}
-                  onOpen={() => openTicketFile(item.urlFile)}
+                  onOpen={() => openTicketDetail(fileId)}
                   titleClassName="expense-ticket-card__title timeline-name"
                   statusLabel={statusLabel}
                   statusIcon={statusIcons}

@@ -13,10 +13,12 @@ namespace IND_CRM_APP.Models.CRM
         public int PageSize { get; set; } = 50;
 
         [JsonPropertyName("createdDateFrom")]
-        public string CreatedDateFrom { get; set; } = string.Empty;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CreatedDateFrom { get; set; }
 
         [JsonPropertyName("createdDateTo")]
-        public string CreatedDateTo { get; set; } = string.Empty;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CreatedDateTo { get; set; }
 
         [JsonPropertyName("searchKey")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -37,6 +39,10 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("gastoType")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public int? GastoType { get; set; }
+
+        [JsonPropertyName("processedByAI")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? ProcessedByAI { get; set; }
     }
 
     // Request payload for ticket line create/update.

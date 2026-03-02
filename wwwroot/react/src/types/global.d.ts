@@ -26,6 +26,7 @@ declare global {
     __EXPENSE_SHEET_MODE__?: string;
     __EXPENSE_LINE_ID__?: string;
     __EXPENSE_LINE_MODE__?: string;
+    __EXPENSE_TICKET_FILE_ID__?: string;
     __indAllowHistoryOnce?: (fallbackUrl?: string) => void;
     __indSetNavigationGuard?: (activeOrOptions?: boolean | IndNavigationGuardOptions, message?: string) => void;
     __indClearNavigationGuard?: () => void;

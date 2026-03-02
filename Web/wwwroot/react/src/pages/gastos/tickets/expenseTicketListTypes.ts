@@ -1,7 +1,8 @@
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
 import type { ExpenseTicketStatusFilterCode } from "../constants/expenseTicketStatusCatalog.ts";
+import type { ExpenseQuickDateFilterId } from "../constants/expenseQuickDateFilterCatalog.ts";
 
-export type ExpenseTicketQuickFilterId = "custom" | "days-7" | "days-30" | "days-90";
+export type ExpenseTicketQuickFilterId = ExpenseQuickDateFilterId;
 export type ExpenseTicketProcessedByIaFilter = "all" | "yes" | "no";
 
 export type ExpenseTicketAppliedFilterSnapshot = {

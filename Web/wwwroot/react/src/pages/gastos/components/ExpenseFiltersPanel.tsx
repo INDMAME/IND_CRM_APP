@@ -1,10 +1,10 @@
 import React from "react";
-import FilterButton from "../../../components/commons/FilterButton.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 import ExpenseDateRangeFilter from "./ExpenseDateRangeFilter.tsx";
 import ExpenseFilterActions from "./ExpenseFilterActions.tsx";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
+import ExpenseQuickDateFilters from "./ExpenseQuickDateFilters.tsx";
 import ExpenseSheetFilterInput from "./ExpenseSheetFilterInput.tsx";
 import ExpenseStatusFilterSelect from "./ExpenseStatusFilterSelect.tsx";
 import HistorySummary from "../../visitas/historial/HistorySummary.tsx";
@@ -87,32 +87,7 @@ const ExpenseFiltersPanel = ({
   return (
     <div className="filter-card filter-card--expanded p-2 sm:p-2.5 relative">
       <div className="history-filter-stack flex flex-col space-y-2">
-        <div className="grid grid-cols-2 gap-2 history-quick-filters" aria-label={indT("History_Filter_Date", "Date")}>
-          <FilterButton
-            label={indT("History_Quick_Custom", "Date")}
-            active={activeQuickFilter === "custom"}
-            className="w-full"
-            onClick={() => onQuickFilterChange("custom")}
-          />
-          <FilterButton
-            label={indT("History_Quick_7Days", "7 days")}
-            active={activeQuickFilter === "days-7"}
-            className="w-full"
-            onClick={() => onQuickFilterChange("days-7")}
-          />
-          <FilterButton
-            label={indT("History_Quick_30Days", "30 days")}
-            active={activeQuickFilter === "days-30"}
-            className="w-full"
-            onClick={() => onQuickFilterChange("days-30")}
-          />
-          <FilterButton
-            label={indT("History_Quick_90Days", "90 days")}
-            active={activeQuickFilter === "days-90"}
-            className="w-full"
-            onClick={() => onQuickFilterChange("days-90")}
-          />
-        </div>
+        <ExpenseQuickDateFilters activeQuickFilter={activeQuickFilter} onQuickFilterChange={onQuickFilterChange} />
 
         {showManualDateFilter ? (
           <ExpenseDateRangeFilter

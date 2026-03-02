@@ -114,6 +114,24 @@
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>Egoera</value>
   </data>
+  <data name="Tickets_Detail_Title" xml:space="preserve">
+    <value>Ticketaren xehetasuna</value>
+  </data>
+  <data name="Tickets_Detail_LoadError" xml:space="preserve">
+    <value>Ezin izan da ticketaren xehetasuna kargatu.</value>
+  </data>
+  <data name="Tickets_Detail_NotFound" xml:space="preserve">
+    <value>Ez da ticketa aurkitu.</value>
+  </data>
+  <data name="Tickets_Detail_Header" xml:space="preserve">
+    <value>Goiburua</value>
+  </data>
+  <data name="Tickets_Detail_Lines" xml:space="preserve">
+    <value>Lerroak</value>
+  </data>
+  <data name="Tickets_Detail_NoLines" xml:space="preserve">
+    <value>Ez dago ticket honetarako lerrorik.</value>
+  </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>gastu-orriak</value>
   </data>
@@ -1163,4 +1181,7 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Truke tasa {0} {1}</value>
+  </data>  <data name="Common_Link" xml:space="preserve">
+    <value>Esteka</value>
   </data></root>
+

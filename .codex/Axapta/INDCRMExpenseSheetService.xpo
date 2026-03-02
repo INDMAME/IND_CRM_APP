@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Viernes 2/27/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Lunes 3/2/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -2086,7 +2086,8 @@ Formatversion: 1
         #                                                      strFmt('%1', docuRef.INDURLFile),
         #                                                      strFmt('%1', docuRef.INDFilename),
         #                                                      strFmt('%1', ticketHeader.ProcessedByAI),
-        #                                                      strFmt('%1', ticketHeader.GastoType)
+        #                                                      strFmt('%1', ticketHeader.GastoType),
+        #                                                      strFmt('%1', ticketHeader.hojaGastosIdDisplay())
         #                                                     ]);
         #
         #        while select ticketLine
@@ -2120,13 +2121,14 @@ Formatversion: 1
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = searchKey/filterTxt (optional)
-        #//  - _data[4] = statusFilter (optional, 0|1)
-        #//  - _data[5] = createdDateFrom (required, yyyymmdd)
-        #//  - _data[6] = createdDateTo   (required, yyyymmdd)
+        #//  - _data[4] = statusFilter (optional, 0|1; otros valores = sin filtro)
+        #//  - _data[5] = createdDateFrom (optional, yyyymmdd)
+        #//  - _data[6] = createdDateTo   (optional, yyyymmdd)
         #//  - _data[7] = currencyCode    (optional)
         #//  - _data[8] = gastoType       (optional)
+        #//  - _data[9] = processedByAI   (optional, 0|1; otros valores = sin filtro)
         #// Output rows:
-        #//  - [[FileId, Description, Status, CurrencyCode, TotalAmount, CreatedByUserId, TransDate, UrlFile, FileName, ProcessedByAI, GastoType], ...]
+        #//  - [[FileId, Description, Status, CurrencyCode, TotalAmount, CreatedByUserId, TransDate, UrlFile, FileName, ProcessedByAI, GastoType, HojaGastosIdDisplay], ...]
         #static server container getExpenseSheetTicketsList(container _data)
         #{
         #    DataAreaId         companyId;
@@ -2141,6 +2143,10 @@ Formatversion: 1
         #    CurrencyCode       currencyCode;
         #    int                gastoTypeFilter;
         #    boolean            hasGastoTypeFilter;
+        #    int                processedByAIFilter;
+        #    boolean            hasProcessedByAIFilter;
+        #    str 16             processedByAIRaw;
+        #    str 16             statusFilterRaw;
         #
         #    INDTicketInfoTable ticketHeader;
         #    DocuRef            docuRef;
@@ -2153,9 +2159,6 @@ Formatversion: 1
         #    if (!companyId)
         #        return conNull();
         #
-        #    if (conLen(_data) < 6)
-        #        return [['Sin datos.']];
-        #
         #    axUserId = conPeek(_data, 2);
         #
         #    if (!axUserId)
@@ -2166,18 +2169,20 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 4)
         #    {
-        #        statusFilter = conPeek(_data, 4);
-        #        hasStatusFilter = true;
+        #        statusFilterRaw = strFmt('%1', conPeek(_data, 4));
+        #        statusFilterRaw = strLwr(strLTrim(strRTrim(statusFilterRaw)));
+        #        if (statusFilterRaw == '0' || statusFilterRaw == '1')
+        #        {
+        #            statusFilter = str2Int(statusFilterRaw);
+        #            hasStatusFilter = true;
+        #        }
         #    }
-        #
-        #    if (!conPeek(_data, 5) || !conPeek(_data, 6))
-        #        return [['Sin datos.']];
         #
         #    createdDateFrom = str2Date(conPeek(_data, 5), 321);
         #    createdDateTo   = str2Date(conPeek(_data, 6), 321);
         #
-        #    if (!createdDateFrom || !createdDateTo || createdDateFrom > createdDateTo)
-        #        return [['Sin datos.']];
+        #    if (createdDateFrom && createdDateTo && createdDateFrom > createdDateTo)
+        #        return [['Sin datos, la fecha desde no puede ser mayor a la fecha hasta.']];
         #
         #    if (conLen(_data) >= 7)
         #        currencyCode = conPeek(_data, 7);
@@ -2186,6 +2191,17 @@ Formatversion: 1
         #    {
         #        gastoTypeFilter = conPeek(_data, 8);
         #        hasGastoTypeFilter = true;
+        #    }
+        #
+        #    if (conLen(_data) >= 9)
+        #    {
+        #        processedByAIRaw = strFmt('%1', conPeek(_data, 9));
+        #        processedByAIRaw = strLwr(strLTrim(strRTrim(processedByAIRaw)));
+        #        if (processedByAIRaw == '0' || processedByAIRaw == '1')
+        #        {
+        #            processedByAIFilter = str2Int(processedByAIRaw);
+        #            hasProcessedByAIFilter = true;
+        #        }
         #    }
         #
         #    if (hasStatusFilter &&
@@ -2204,6 +2220,11 @@ Formatversion: 1
         #    if (hasGastoTypeFilter && !INDCRMExpenseSheetService::isValidGastoType(gastoTypeFilter))
         #        return [['Sin datos.']];
         #
+        #    if (hasProcessedByAIFilter &&
+        #        (processedByAIFilter < 0
+        #      || processedByAIFilter > 1))
+        #        return [['Sin datos.']];
+        #
         #    changecompany(companyId)
         #    {
         #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
@@ -2217,6 +2238,7 @@ Formatversion: 1
         #               && (!filterTxt          || ticketHeader.SearchKey like likePattern )
         #               && (!currencyCode       || ticketHeader.CurrencyCode == currencyCode)
         #               && (!hasGastoTypeFilter || ticketHeader.GastoType == gastoTypeFilter)
+        #               && (!hasProcessedByAIFilter || ticketHeader.ProcessedByAI == processedByAIFilter)
         #        {
         #            select firstonly docuRef
         #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)
@@ -2226,10 +2248,10 @@ Formatversion: 1
         #            if (!docuRef.RecId)
         #                continue;
         #
-        #            if (docuRef.INDTransDate < createdDateFrom)
+        #            if (createdDateFrom && docuRef.INDTransDate < createdDateFrom)
         #                continue;
         #
-        #            if (docuRef.INDTransDate > createdDateTo)
+        #            if (createdDateTo && docuRef.INDTransDate > createdDateTo)
         #                continue;
         #
         #            conItem = [[
@@ -2243,7 +2265,8 @@ Formatversion: 1
         #                        strFmt('%1', docuRef.INDURLFile),
         #                        strFmt('%1', docuRef.INDFilename),
         #                        strFmt('%1', ticketHeader.ProcessedByAI),
-        #                        strFmt('%1', ticketHeader.GastoType)
+        #                        strFmt('%1', ticketHeader.GastoType),
+        #                        strFmt('%1', ticketHeader.hojaGastosIdDisplay())
         #                      ]];
         #
         #            conResult += conItem;

@@ -1164,4 +1164,25 @@
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>状态</value>
   </data>
-</root>
+  <data name="Tickets_Detail_Title" xml:space="preserve">
+    <value>票据详情</value>
+  </data>
+  <data name="Tickets_Detail_LoadError" xml:space="preserve">
+    <value>无法加载票据详情。</value>
+  </data>
+  <data name="Tickets_Detail_NotFound" xml:space="preserve">
+    <value>未找到票据。</value>
+  </data>
+  <data name="Tickets_Detail_Header" xml:space="preserve">
+    <value>头部</value>
+  </data>
+  <data name="Tickets_Detail_Lines" xml:space="preserve">
+    <value>行</value>
+  </data>
+  <data name="Tickets_Detail_NoLines" xml:space="preserve">
+    <value>此票据没有行项目。</value>
+  </data>
+  <data name="Common_Link" xml:space="preserve">
+    <value>??</value>
+  </data></root>
+

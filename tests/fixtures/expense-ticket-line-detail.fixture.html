@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ticket Line Detail Fixture</title>
+  <style>
+    .hidden { display: none !important; }
+    .topbar-hidden { display: none !important; }
+  </style>
+  <script>
+    window.__IND_API_TOKEN__ = "fixture-token";
+    window.__IND_ENTRA_OID__ = "";
+    window.__IND_APP_CODE__ = "CRM";
+    window.__IND_SELECTED_COMPANY__ = "TAZ";
+    window.__IND_MODULE_ACCESS__ = { GASTOS_TICKETS: 4, GASTOS_HOJA_GASTO: 4 };
+    window.__EXPENSE_TICKET_FILE_ID__ = "TCK-001";
+    window.__EXPENSE_TICKET_LINE_ID__ = "1001";
+    window.__IND_I18N__ = {};
+
+    window.__dispatchTopbarEvent = function(name) {
+      window.dispatchEvent(new Event(name));
+    };
+  </script>
+</head>
+<body>
+  <button id="expenseTicketLineEditBtn" type="button" onclick="window.__dispatchTopbarEvent('expense-ticket-line-detail-edit')">
+    <span id="expenseTicketLineEditIcon">edit</span>
+    <span id="expenseTicketLineSaveIcon" class="hidden">save</span>
+  </button>
+  <button id="expenseTicketLineDeleteBtn" type="button" onclick="window.__dispatchTopbarEvent('expense-ticket-line-detail-delete')">delete</button>
+  <button id="expenseTicketLineCancelBtn" type="button" class="topbar-hidden" onclick="window.__dispatchTopbarEvent('expense-ticket-line-detail-cancel-edit')">cancel</button>
+
+  <div id="expense-ticket-line-detail-root"></div>
+
+  <script type="module" src="../../Web/wwwroot/js/expense-ticket-line-detail.js"></script>
+</body>
+</html>

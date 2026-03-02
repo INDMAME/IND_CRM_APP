@@ -114,6 +114,24 @@
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>Status</value>
   </data>
+  <data name="Tickets_Detail_Title" xml:space="preserve">
+    <value>Ticket detail</value>
+  </data>
+  <data name="Tickets_Detail_LoadError" xml:space="preserve">
+    <value>Could not load ticket detail.</value>
+  </data>
+  <data name="Tickets_Detail_NotFound" xml:space="preserve">
+    <value>Ticket was not found.</value>
+  </data>
+  <data name="Tickets_Detail_Header" xml:space="preserve">
+    <value>Header</value>
+  </data>
+  <data name="Tickets_Detail_Lines" xml:space="preserve">
+    <value>Lines</value>
+  </data>
+  <data name="Tickets_Detail_NoLines" xml:space="preserve">
+    <value>No lines for this ticket.</value>
+  </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>Expense sheets</value>
   </data>
@@ -1163,4 +1181,7 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Exchange rate {0} {1}</value>
+  </data>  <data name="Common_Link" xml:space="preserve">
+    <value>Link</value>
   </data></root>
+

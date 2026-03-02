@@ -66,6 +66,51 @@ namespace IND_CRM_APP.Controllers
             return View("~/Web/Views/Gastos/Tickets.cshtml");
         }
 
+        // Shows the expense ticket detail page.
+        [HttpGet]
+        public async Task<IActionResult> TicketDetail(string fileId)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return RedirectToAction("Login", "Auth");
+
+            var safeFileId = (fileId ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(safeFileId))
+                return RedirectToAction(nameof(Tickets));
+
+            await LoadEnvironmentInfoAsync();
+
+            ViewBag.TicketFileId = safeFileId;
+            ViewBag.GastoTypeOptions = _crmEnumCatalog
+                .GetGastoTypeMap()
+                .Select(x => new { value = x.Key, text = x.Value })
+                .OrderBy(x => int.TryParse(x.value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var code) ? code : int.MaxValue)
+                .ToList();
+            ViewData["TopbarBackUrl"] = "/Gastos/Tickets";
+            return View("~/Web/Views/Gastos/TicketDetail.cshtml");
+        }
+
+        // Shows one ticket line detail page.
+        [HttpGet]
+        public async Task<IActionResult> TicketLineDetail(string fileId, string lineRecId)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return RedirectToAction("Login", "Auth");
+
+            var safeFileId = (fileId ?? string.Empty).Trim();
+            var safeLineRecId = (lineRecId ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(safeFileId) || string.IsNullOrWhiteSpace(safeLineRecId))
+                return RedirectToAction(nameof(Tickets));
+
+            await LoadEnvironmentInfoAsync();
+
+            ViewBag.TicketFileId = safeFileId;
+            ViewBag.TicketLineRecId = safeLineRecId;
+            ViewData["TopbarBackUrl"] = $"/Gastos/TicketDetail?fileId={Uri.EscapeDataString(safeFileId)}";
+            return View("~/Web/Views/Gastos/TicketLineDetail.cshtml");
+        }
+
         // Shows the expense sheet detail page.
         [HttpGet]
         public async Task<IActionResult> ExpenseSheetDetail(string hojaGastosId, string mode = "")
@@ -1178,7 +1223,10 @@ namespace IND_CRM_APP.Controllers
 
             var normalizedCreatedDateFrom = NormalizeListDateFilter(req.CreatedDateFrom);
             var normalizedCreatedDateTo = NormalizeListDateFilter(req.CreatedDateTo);
-            if (string.IsNullOrWhiteSpace(normalizedCreatedDateFrom) || string.IsNullOrWhiteSpace(normalizedCreatedDateTo))
+            if (!string.IsNullOrWhiteSpace(req.CreatedDateFrom) && string.IsNullOrWhiteSpace(normalizedCreatedDateFrom))
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            if (!string.IsNullOrWhiteSpace(req.CreatedDateTo) && string.IsNullOrWhiteSpace(normalizedCreatedDateTo))
                 return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
 
             if (req.Status.HasValue && (req.Status.Value < 0 || req.Status.Value > 1))
@@ -1195,13 +1243,14 @@ namespace IND_CRM_APP.Controllers
             {
                 Page = page,
                 PageSize = pageSize,
-                CreatedDateFrom = normalizedCreatedDateFrom!,
-                CreatedDateTo = normalizedCreatedDateTo!,
+                CreatedDateFrom = normalizedCreatedDateFrom,
+                CreatedDateTo = normalizedCreatedDateTo,
                 SearchKey = normalizedSearchKey,
                 Filter = NormalizeOptionalText(req.Filter) ?? normalizedSearchKey,
                 Status = req.Status,
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
-                GastoType = NormalizeTicketGastoType(req.GastoType)
+                GastoType = NormalizeTicketGastoType(req.GastoType),
+                ProcessedByAI = req.ProcessedByAI
             };
 
             try
@@ -1253,7 +1302,7 @@ namespace IND_CRM_APP.Controllers
                 var result = await _apiClient.GetExpenseSheetTicketDetailAsync(token, safeFileId);
                 var ticket = SelectTicket(result.GetAnyItems(), safeFileId);
                 if (ticket == null)
-                    return CreateApiPagedError(StatusCodes.Status404NotFound, _sr["ExpenseSheets_NotFound"].Value);
+                    return CreateApiPagedError(StatusCodes.Status404NotFound, _sr["Tickets_Detail_NotFound"].Value);
                 var ticketItem = ticket;
 
                 return CreateApiPagedResponse(new

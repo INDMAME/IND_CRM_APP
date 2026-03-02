@@ -1,0 +1,87 @@
+@using System.Text.Json
+@using IND_CRM_APP.Infrastructure.Localization
+@inject Microsoft.Extensions.Localization.IStringLocalizer<INDSharedResource> SR
+@{
+    Layout = "~/Web/Views/Shared/_Layout.cshtml";
+    ViewData["Title"] = SR["Tickets_Detail_Title"];
+    ViewData["BodyClass"] = "visitas-typography";
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/css/historial.css" asp-append-version="true" />
+}
+
+<div id="expense-ticket-detail-root" class="max-w-3xl mx-auto px-1 sm:px-2 pt-3 pb-4"></div>
+
+@section Scripts {
+    <script nonce="@cspNonce">
+        window.__EXPENSE_TICKET_FILE_ID__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.TicketFileId ?? string.Empty)));
+        window.__EXPENSE_GASTO_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.GastoTypeOptions ?? new object[0]));
+        window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
+            Common_Save = SR["Common_Save"].Value,
+            Common_Cancel = SR["Common_Cancel"].Value,
+            Common_Delete = SR["Common_Delete"].Value,
+            Common_Loading = SR["Common_Loading"].Value,
+            Common_NoData = SR["Common_NoData"].Value,
+            Common_OK = SR["Common_OK"].Value,
+            Common_Yes = SR["Common_Yes"].Value,
+            Common_No = SR["Common_No"].Value,
+            Common_Link = SR["Common_Link"].Value,
+            Common_User = SR["Common_User"].Value,
+            Common_NotAvailable = SR["Common_NotAvailable"].Value,
+            Confirm_Yes = SR["Confirm_Yes"].Value,
+            Confirm_No = SR["Confirm_No"].Value,
+            Confirm_Delete_Title = SR["Confirm_Delete_Title"].Value,
+            Confirm_Delete_Body = SR["Confirm_Delete_Body"].Value,
+            Auth_PermissionDenied_Body = SR["Auth_PermissionDenied_Body"].Value,
+            History_Page_First = SR["History_Page_First"].Value,
+            History_Page_Prev = SR["History_Page_Prev"].Value,
+            History_Page_Next = SR["History_Page_Next"].Value,
+            History_Page_Last = SR["History_Page_Last"].Value,
+            Tickets_LoadError = SR["Tickets_LoadError"].Value,
+            Tickets_Detail_Title = SR["Tickets_Detail_Title"].Value,
+            Tickets_Detail_LoadError = SR["Tickets_Detail_LoadError"].Value,
+            Tickets_Detail_NotFound = SR["Tickets_Detail_NotFound"].Value,
+            Tickets_Detail_Header = SR["Tickets_Detail_Header"].Value,
+            Tickets_Detail_Lines = SR["Tickets_Detail_Lines"].Value,
+            Tickets_Detail_NoLines = SR["Tickets_Detail_NoLines"].Value,
+            Tickets_Filter_Status = SR["Tickets_Filter_Status"].Value,
+            Tickets_Filter_Status_Pending = SR["Tickets_Filter_Status_Pending"].Value,
+            Tickets_Filter_Status_Assigned = SR["Tickets_Filter_Status_Assigned"].Value,
+            Tickets_Filter_Category = SR["Tickets_Filter_Category"].Value,
+            Tickets_Filter_ProcessedByIA = SR["Tickets_Filter_ProcessedByIA"].Value,
+            Tickets_Field_FileId = SR["Tickets_Field_FileId"].Value,
+            Tickets_Field_ExpenseSheetDisplay = SR["Tickets_Field_ExpenseSheetDisplay"].Value,
+            Tickets_Field_Status = SR["Tickets_Field_Status"].Value,
+            ExpenseSheets_Field_Description = SR["ExpenseSheets_Field_Description"].Value,
+            ExpenseSheets_Field_Currency = SR["ExpenseSheets_Field_Currency"].Value,
+            ExpenseSheets_Field_TotalAmount = SR["ExpenseSheets_Field_TotalAmount"].Value,
+            ExpenseSheets_Field_CreatedDate = SR["ExpenseSheets_Field_CreatedDate"].Value,
+            ExpenseSheets_Field_LineId = SR["ExpenseSheets_Field_LineId"].Value,
+            ExpenseSheets_Field_Qty = SR["ExpenseSheets_Field_Qty"].Value,
+            ExpenseSheets_Field_Price = SR["ExpenseSheets_Field_Price"].Value,
+            ExpenseSheets_Field_Amount = SR["ExpenseSheets_Field_Amount"].Value,
+            ExpenseSheets_Field_UserId = SR["ExpenseSheets_Field_UserId"].Value,
+            ExpenseSheets_Field_SheetId = SR["ExpenseSheets_Field_SheetId"].Value,
+            ExpenseSheets_Validation_DescriptionRequired = SR["ExpenseSheets_Validation_DescriptionRequired"].Value,
+            ExpenseSheets_Validation_CurrencyRequired = SR["ExpenseSheets_Validation_CurrencyRequired"].Value,
+            ExpenseSheets_Detail_SaveChanges_Title = SR["ExpenseSheets_Detail_SaveChanges_Title"].Value,
+            ExpenseSheets_Detail_SaveChanges_Body = SR["ExpenseSheets_Detail_SaveChanges_Body"].Value,
+            ExpenseSheets_Detail_EditingEnabled = SR["ExpenseSheets_Detail_EditingEnabled"].Value,
+            ExpenseSheets_Detail_Updating = SR["ExpenseSheets_Detail_Updating"].Value,
+            ExpenseSheets_Detail_Updated = SR["ExpenseSheets_Detail_Updated"].Value,
+            ExpenseSheets_Detail_UpdateFailed = SR["ExpenseSheets_Detail_UpdateFailed"].Value,
+            ExpenseSheets_Detail_UpdateError = SR["ExpenseSheets_Detail_UpdateError"].Value,
+            ExpenseSheets_Detail_Deleting = SR["ExpenseSheets_Detail_Deleting"].Value,
+            ExpenseSheets_Detail_Deleted = SR["ExpenseSheets_Detail_Deleted"].Value,
+            ExpenseSheets_Detail_DeleteFailed = SR["ExpenseSheets_Detail_DeleteFailed"].Value,
+            ExpenseSheets_Detail_DeleteError = SR["ExpenseSheets_Detail_DeleteError"].Value,
+            ExpenseSheets_Line_Validation_AmountQty = SR["ExpenseSheets_Line_Validation_AmountQty"].Value,
+            ExpenseSheets_Validation_ExchangeRateRequired = SR["ExpenseSheets_Validation_ExchangeRateRequired"].Value,
+            AudioRecorder_Download_FileName = SR["AudioRecorder_Download_FileName"].Value,
+            Visits_Field_Comments = SR["Visits_Field_Comments"].Value
+        }));
+    </script>
+    <script nonce="@cspNonce" type="module" src="~/js/expense-ticket-detail.js" asp-append-version="true"></script>
+}
