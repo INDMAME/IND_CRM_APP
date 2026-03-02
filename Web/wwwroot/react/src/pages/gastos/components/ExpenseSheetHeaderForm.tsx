@@ -8,9 +8,10 @@ import ExpenseCurrencyFlagIcon from "./ExpenseCurrencyFlagIcon.tsx";
 import InfoPopoverIconButton from "../../../components/commons/InfoPopoverIconButton.tsx";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { getExpenseSheetStatusOptions, getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
+import { getExpenseExchangeRateModeLabel } from "../constants/exchangeRateEntryModeCatalog.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
-import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
+import { formatExpenseInputNumber, formatExpenseNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
 
 type ExpenseSheetHeaderFormProps = {
   isCreateMode: boolean;
@@ -46,6 +47,8 @@ type ExpenseSheetHeaderFormProps = {
   onDraftExpenseSheetStatusChange: (value: number) => void;
   onDraftEstadoComentariosChange: (value: string) => void;
 };
+
+const EXCHANGE_RATE_MODE_PREFIX_PATTERN = /^T\.?C\.?\s*/i;
 
 // Pure presentational header form for expense sheet detail/create screens.
 const ExpenseSheetHeaderForm = ({
@@ -117,16 +120,55 @@ const ExpenseSheetHeaderForm = ({
     ],
     [headerCurrencyCode]
   );
-  const exchangeRateInfoValue = safeText(officialExchangeRateRawValue) || "0.0000000";
-  const exchangeRateInfoDate = safeText(officialExchangeRateDate) || indT("Common_NotAvailable", "N/A");
-  const exchangeRateInfoSource = safeText(officialExchangeRateSource) || indT("Common_NotAvailable", "N/A");
-  const exchangeRateInfoMessage = indFormat(
+  const parsedDraftExchangeRate = parseExpenseNumericInput(draftExchangeRate);
+  const parsedOfficialRawRate = parseExpenseNumericInput(officialExchangeRateRawValue);
+  const baseExchangeRateValue =
+    parsedDraftExchangeRate != null
+      ? parsedDraftExchangeRate
+      : parsedOfficialRawRate != null
+        ? parsedOfficialRawRate * exchangeRateReferenceAmount
+        : null;
+  const exchangeRateInfoValue = formatExpenseNumber(
+    baseExchangeRateValue != null ? baseExchangeRateValue / exchangeRateReferenceAmount : null,
+    {
+      minimumFractionDigits: 7,
+      maximumFractionDigits: 7,
+      useGrouping: false,
+      fallback: "0.0000000",
+    }
+  );
+  const exchangeRateModeValue = Number(header.exchangeRateMode) === 1 ? 1 : 0;
+  const exchangeRateModeKey =
+    exchangeRateModeValue === 1
+      ? "ExpenseSheets_Filter_ExchangeRateMode_Manual"
+      : "ExpenseSheets_Filter_ExchangeRateMode_Official";
+  const exchangeRateModeFallback = exchangeRateModeValue === 1 ? "T.C. Manual" : "T.C. Oficial";
+  const exchangeRateModeLabel =
+    (getExpenseExchangeRateModeLabel(exchangeRateModeValue) || indT(exchangeRateModeKey, exchangeRateModeFallback))
+      .replace(EXCHANGE_RATE_MODE_PREFIX_PATTERN, "")
+      .trim()
+      .toLowerCase() || (exchangeRateModeValue === 1 ? "manual" : "oficial");
+  const hasEndpointExchangeRateData =
+    !!safeText(officialExchangeRateRawValue) || !!safeText(officialExchangeRateDate) || !!safeText(officialExchangeRateSource);
+  const endpointExchangeRateInfoDate = safeText(officialExchangeRateDate) || indT("Common_NotAvailable", "N/A");
+  const endpointExchangeRateInfoSource = safeText(officialExchangeRateSource)
+    .replace(/\s*\([^()]*\)\s*/g, " ")
+    .replace(/\s{2,}/g, " ")
+    .trim() || indT("Common_NotAvailable", "N/A");
+  const endpointExchangeRateInfoMessage = indFormat(
     "ExpenseSheets_ExchangeRate_InfoPopover_Detail",
     "Tipo de cambio obtenido {0}\nFecha: {1}\nOrigen: {2}",
-    exchangeRateInfoValue,
-    exchangeRateInfoDate,
-    exchangeRateInfoSource
+    safeText(officialExchangeRateRawValue) || "0.0000000",
+    endpointExchangeRateInfoDate,
+    endpointExchangeRateInfoSource
   );
+  const storedExchangeRateInfoMessage = indFormat(
+    "ExpenseSheets_ExchangeRate_InfoPopover_Stored",
+    "Tipo de cambio {0} {1}",
+    exchangeRateModeLabel,
+    exchangeRateInfoValue
+  );
+  const exchangeRateInfoMessage = hasEndpointExchangeRateData ? endpointExchangeRateInfoMessage : storedExchangeRateInfoMessage;
 
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">

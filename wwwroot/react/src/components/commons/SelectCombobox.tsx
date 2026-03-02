@@ -54,6 +54,7 @@ type SelectComboboxProps = {
   optionSelectedClassName?: string;
   selectedInputPaddingClassName?: string;
   panelStyle?: React.CSSProperties;
+  clearOnEmptyInput?: boolean;
 };
 
 // Reusable select combobox with optional portal rendering for the list.
@@ -89,6 +90,7 @@ const SelectCombobox = ({
   optionSelectedClassName = "bg-primary text-white",
   selectedInputPaddingClassName = "pl-9",
   panelStyle,
+  clearOnEmptyInput = false,
 }: SelectComboboxProps) => {
   const readOnlyMode = readOnly || disabled;
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
@@ -173,6 +175,10 @@ const SelectCombobox = ({
     }
     if (ev.key === "Enter") {
       ev.preventDefault();
+      if (clearOnEmptyInput && query !== null && !query.trim()) {
+        setOpen(false);
+        return;
+      }
       if (open && filtered.length) {
         selectOption(filtered[activeIndex] ?? filtered[0]);
       } else {
@@ -313,6 +319,14 @@ const SelectCombobox = ({
               if (!allowTextInput) return;
               const val = event.target.value;
               setQuery(val);
+              if (clearOnEmptyInput && !val.trim()) {
+                setSelected({ value: "", text: "" });
+                setOpen(false);
+                if (!emitOnValueChange) {
+                  onChange("");
+                }
+                return;
+              }
               setOpen(true);
             }}
             onKeyDown={handleKeyDown}

@@ -1115,4 +1115,7 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>Exchange rate obtained {0}\nDate: {1}\nSource: {2}</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
+    <value>Exchange rate {0} {1}</value>
   </data></root>

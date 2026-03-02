@@ -225,6 +225,7 @@ const ExpenseCurrencyFilterSelect = ({
         dropdownMaxHeightClass="max-h-96"
         selectedIconClassName={CURRENCY_FLAG_SIZE_CLASS}
         selectedInputPaddingClassName="pl-12"
+        clearOnEmptyInput
         optionIconClassName={CURRENCY_FLAG_SIZE_CLASS}
         allowOptionHorizontalScroll
         lockDropdownWidthOnFirstOpen

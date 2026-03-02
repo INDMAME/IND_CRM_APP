@@ -96,7 +96,7 @@ async function waitForAuthenticatedSession(page) {
 }
 
 test("Capture authenticated storage state", async ({ page, context }) => {
-  test.setTimeout(loginTimeoutMs + 120000);
+  test.setTimeout(loginTimeoutMs + 30000);
   fs.mkdirSync(path.dirname(authStatePath), { recursive: true });
 
   await page.goto(startPath, { waitUntil: "domcontentloaded" });

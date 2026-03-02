@@ -98,8 +98,8 @@ const ExpenseSheetLineDetailContent = () => {
     [header?.currencyCode, line?.price]
   );
   const amountText = useMemo(
-    () => formatAmountWithCurrency(calculatedAmountPreview, safeText(header?.currencyCode)),
-    [calculatedAmountPreview, header?.currencyCode]
+    () => formatAmountWithCurrency(calculatedAmountPreview),
+    [calculatedAmountPreview]
   );
   const projectValue = safeText(line?.projId || header?.projId);
   const sheetDescription = safeText(header?.description) || "-";

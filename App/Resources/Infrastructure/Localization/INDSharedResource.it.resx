@@ -1115,4 +1115,7 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>Tasso di cambio ottenuto {0}\nData: {1}\nFonte: {2}</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
+    <value>Tasso di cambio {0} {1}</value>
   </data></root>
