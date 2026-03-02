@@ -5,7 +5,7 @@ import type { ExpenseSheetTicketDetailDto } from "../../expenseTypes.ts";
 export type ExpenseTicketDetailHeader = {
   fileId: string;
   description: string;
-  status: number | null;
+  status: 0 | 1 | null;
   hojaGastosIdDisplay: string;
   processedByAI: boolean | null;
   currencyCode: string;
@@ -52,12 +52,20 @@ const toNullableGastoType = (value: unknown): ExpenseGastoTypeCode | null => {
   return null;
 };
 
+const toNullableTicketStatus = (value: unknown): 0 | 1 | null => {
+  const parsed = Number(value);
+  if (parsed === 0 || parsed === 1) {
+    return parsed;
+  }
+  return null;
+};
+
 // Maps one API detail dto to the ticket header model used by detail pages.
 export const mapExpenseTicketDetailHeader = (item: ExpenseSheetTicketDetailDto): ExpenseTicketDetailHeader => {
   return {
     fileId: safeText(item?.FileId),
     description: safeText(item?.Description),
-    status: toNullableNumber(item?.Status),
+    status: toNullableTicketStatus(item?.Status),
     hojaGastosIdDisplay: safeText(item?.HojaGastosIdDisplay),
     processedByAI: toNullableBool(item?.ProcessedByAI),
     currencyCode: safeText(item?.CurrencyCode),

@@ -2039,6 +2039,9 @@ Formatversion: 1
         #    container          headerOut;
         #    container          linesOut = conNull();
         #    container          lineRow;
+        #    int                ticketStatusInt;
+        #    int                processedByAIInt;
+        #    int                gastoTypeInt;
         #    ;
         #
         #    companyId = INDCRMUtilityService::getCompany(_data);
@@ -2073,11 +2076,15 @@ Formatversion: 1
         #               && docuRef.RefRecId   == ticketHeader.RecId
         #               && docuRef.INDFileId  == ticketHeader.FileId;
         #
+        #        ticketStatusInt = ticketHeader.Status;
+        #        processedByAIInt = ticketHeader.ProcessedByAI;
+        #        gastoTypeInt = ticketHeader.GastoType;
+        #
         #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK',
         #                                                     [
         #                                                      strFmt('%1', ticketHeader.FileId),
         #                                                      strFmt('%1', ticketHeader.Description),
-        #                                                      strFmt('%1', ticketHeader.Status),
+        #                                                      strFmt('%1', ticketStatusInt),
         #                                                      strFmt('%1', ticketHeader.CurrencyCode),
         #                                                      strFmt('%1', ticketHeader.TotalAmount),
         #                                                      strFmt('%1', ticketHeader.CreatedByUserId),
@@ -2085,8 +2092,8 @@ Formatversion: 1
         #                                                      strFmt('%1', docuRef.INDComentario),
         #                                                      strFmt('%1', docuRef.INDURLFile),
         #                                                      strFmt('%1', docuRef.INDFilename),
-        #                                                      strFmt('%1', ticketHeader.ProcessedByAI),
-        #                                                      strFmt('%1', ticketHeader.GastoType),
+        #                                                      strFmt('%1', processedByAIInt),
+        #                                                      strFmt('%1', gastoTypeInt),
         #                                                      strFmt('%1', ticketHeader.hojaGastosIdDisplay())
         #                                                     ]);
         #
@@ -2147,6 +2154,9 @@ Formatversion: 1
         #    boolean            hasProcessedByAIFilter;
         #    str 16             processedByAIRaw;
         #    str 16             statusFilterRaw;
+        #    int                ticketStatusInt;
+        #    int                processedByAIInt;
+        #    int                gastoTypeInt;
         #
         #    INDTicketInfoTable ticketHeader;
         #    DocuRef            docuRef;
@@ -2218,12 +2228,12 @@ Formatversion: 1
         #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
         #
         #    if (hasGastoTypeFilter && !INDCRMExpenseSheetService::isValidGastoType(gastoTypeFilter))
-        #        return [['Sin datos.']];
+        #        hasGastoTypeFilter = false;
         #
         #    if (hasProcessedByAIFilter &&
         #        (processedByAIFilter < 0
         #      || processedByAIFilter > 1))
-        #        return [['Sin datos.']];
+        #        hasProcessedByAIFilter = false;
         #
         #    changecompany(companyId)
         #    {
@@ -2254,18 +2264,22 @@ Formatversion: 1
         #            if (createdDateTo && docuRef.INDTransDate > createdDateTo)
         #                continue;
         #
+        #            ticketStatusInt = ticketHeader.Status;
+        #            processedByAIInt = ticketHeader.ProcessedByAI;
+        #            gastoTypeInt = ticketHeader.GastoType;
+        #
         #            conItem = [[
         #                        strFmt('%1', ticketHeader.FileId),
         #                        strFmt('%1', ticketHeader.Description),
-        #                        strFmt('%1', ticketHeader.Status),
+        #                        strFmt('%1', ticketStatusInt),
         #                        strFmt('%1', ticketHeader.CurrencyCode),
         #                        strFmt('%1', ticketHeader.TotalAmount),
         #                        strFmt('%1', ticketHeader.CreatedByUserId),
         #                        strFmt('%1', date2Str(docuRef.INDTransDate, 123, 2,2,2,2,4)),
         #                        strFmt('%1', docuRef.INDURLFile),
         #                        strFmt('%1', docuRef.INDFilename),
-        #                        strFmt('%1', ticketHeader.ProcessedByAI),
-        #                        strFmt('%1', ticketHeader.GastoType),
+        #                        strFmt('%1', processedByAIInt),
+        #                        strFmt('%1', gastoTypeInt),
         #                        strFmt('%1', ticketHeader.hojaGastosIdDisplay())
         #                      ]];
         #
@@ -2433,7 +2447,7 @@ Formatversion: 1
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #// Output rows:
-        #//  - [[crmUserId, subordinateUserId], ...]
+        #//  - [[subordinateUserId, subordinateName], ...]
         #static server container getSubordinatesByUser(container _data)
         #{
         #    DataAreaId                 companyId;
@@ -2563,8 +2577,8 @@ Formatversion: 1
         #//  - _data[5] = CurrencyCode
         #//  - _data[6] = ExchRate
         #//  - _data[7] = ProjId
-        #//  - _data[8] = ExpenseSheetStatus (opcional)
-        #//  - _data[9] = ExchangeRateMode (opcional)
+        #//  - _data[8] = ExpenseSheetStatus (opcional, entero >= 0; otros valores = sin cambio)
+        #//  - _data[9] = ExchangeRateMode (opcional, entero >= 0; otros valores = sin cambio)
         #//  - _data[10] = estadoComentarios (opcional)
         #static server container updateExpenseSheetHeader(container _data)
         #{
@@ -2585,6 +2599,8 @@ Formatversion: 1
         #    INDExpenseSheetStatus expenseSheetStatus;
         #    INDExchangeRateMode   exchangeRateMode;
         #    CRMHojaGastosTable    header;
+        #    str 16                expenseSheetStatusRaw;
+        #    str 16                exchangeRateModeRaw;
         #    ;
         #    companyId = INDCRMUtilityService::getCompany(_data);
         #
@@ -2607,14 +2623,26 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 8)
         #    {
-        #        expenseSheetStatus   = conPeek(_data, 8);
-        #        hasExpenseSheetStatus = true;
+        #        expenseSheetStatusRaw = strFmt('%1', conPeek(_data, 8));
+        #        expenseSheetStatusRaw = strLwr(strLTrim(strRTrim(expenseSheetStatusRaw)));
+        #        if (expenseSheetStatusRaw == '0' || str2Int(expenseSheetStatusRaw) != 0)
+        #        {
+        #            expenseSheetStatus = str2Int(expenseSheetStatusRaw);
+        #            if (expenseSheetStatus >= 0)
+        #                hasExpenseSheetStatus = true;
+        #        }
         #    }
         #
         #    if (conLen(_data) >= 9)
         #    {
-        #        exchangeRateMode   = conPeek(_data, 9);
-        #        hasExchangeRateMode = true;
+        #        exchangeRateModeRaw = strFmt('%1', conPeek(_data, 9));
+        #        exchangeRateModeRaw = strLwr(strLTrim(strRTrim(exchangeRateModeRaw)));
+        #        if (exchangeRateModeRaw == '0' || str2Int(exchangeRateModeRaw) != 0)
+        #        {
+        #            exchangeRateMode = str2Int(exchangeRateModeRaw);
+        #            if (exchangeRateMode >= 0)
+        #                hasExchangeRateMode = true;
+        #        }
         #    }
         #
         #    if (conLen(_data) >= 10)
@@ -2947,6 +2975,7 @@ Formatversion: 1
         #    int                startLine;
         #    str                msg;
         #    boolean            createDocuRef;
+        #    int                outputProcessedByAI;
         #
         #    INDTicketInfoTable ticketHeader;
         #    DocuRef            docuRef;
@@ -3137,10 +3166,12 @@ Formatversion: 1
         #            else
         #                docuRef.update();
         #
+        #            outputProcessedByAI = ticketHeader.ProcessedByAI;
+        #
         #            ttscommit;
         #
         #            return INDCRMUtilityService::buildHeader(true, 'Ticket actualizado correctamente.',
-        #                                                     [ticketHeader.FileId, strFmt('%1', ticketHeader.ProcessedByAI)]);
+        #                                                     [ticketHeader.FileId, strFmt('%1', outputProcessedByAI)]);
         #        }
         #    }
         #    catch (Exception::Deadlock)
@@ -3220,6 +3251,7 @@ Formatversion: 1
         #    int                startLine;
         #    str                msg;
         #    boolean            createDocuRef;
+        #    int                outputProcessedByAI;
         #
         #    INDTicketInfoTable ticketHeader;
         #    INDTicketInfoLine  ticketLine;
@@ -3429,13 +3461,15 @@ Formatversion: 1
         #
         #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
         #
+        #            outputProcessedByAI = ticketHeader.ProcessedByAI;
+        #
         #            ttscommit;
         #
         #            return [INDCRMUtilityService::buildHeader(true, 'Ticket actualizado desde IA correctamente.',
         #                                                     [ticketHeader.FileId,
         #                                                      strFmt('%1', ticketHeader.RecId),
         #                                                      strFmt('%1', ticketHeader.TotalAmount),
-        #                                                      strFmt('%1', ticketHeader.ProcessedByAI)]),
+        #                                                      strFmt('%1', outputProcessedByAI)]),
         #                    linesOut];
         #        }
         #    }

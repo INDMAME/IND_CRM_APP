@@ -896,15 +896,6 @@ namespace IND_CRM_APP.Controllers
                 : (int?)null;
             var normalizedEstadoComentarios = NormalizeOptionalText(req.EstadoComentarios);
 
-            if (!string.IsNullOrWhiteSpace(normalizedEstadoComentarios) &&
-                (!normalizedExpenseSheetStatus.HasValue || !normalizedExchangeRateMode.HasValue))
-            {
-                return CreateApiCommandError(
-                    StatusCodes.Status400BadRequest,
-                    _sr["Api_RequestFailed"].Value,
-                    "INVALID_REQUEST");
-            }
-
             var request = new ExpenseSheetUpdateRequest
             {
                 Description = (req.Description ?? string.Empty).Trim(),
@@ -2054,12 +2045,6 @@ namespace IND_CRM_APP.Controllers
                     ? req.ExchangeRateMode.Value
                     : (int?)null;
                 var normalizedEstadoComentarios = NormalizeOptionalText(req.EstadoComentarios);
-
-                if (!string.IsNullOrWhiteSpace(normalizedEstadoComentarios) &&
-                    (!normalizedExpenseSheetStatus.HasValue || !normalizedExchangeRateMode.HasValue))
-                {
-                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
-                }
 
                 var request = new ExpenseSheetUpdateRequest
                 {

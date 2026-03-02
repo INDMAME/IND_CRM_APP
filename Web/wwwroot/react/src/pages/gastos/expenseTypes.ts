@@ -115,7 +115,7 @@ export type ExpenseSheetListApiRequest = {
   createdDateTo?: string;
   projId?: string;
   currencyCode?: string;
-  expenseSheetStatus?: number;
+  expenseSheetStatus?: number | null;
 };
 
 // /api/crm/expensesheets/list item contract.
@@ -320,10 +320,10 @@ export type ExpenseSheetTicketListRequest = {
   createdDateTo?: string;
   searchKey?: string;
   filter?: string;
-  status?: 0 | 1;
+  status?: 0 | 1 | null;
   currencyCode?: string;
-  gastoType?: ExpenseGastoTypeCode;
-  processedByAI?: boolean;
+  gastoType?: ExpenseGastoTypeCode | null;
+  processedByAI?: boolean | null;
 };
 
 export type ExpenseSheetTicketLineRequest = {

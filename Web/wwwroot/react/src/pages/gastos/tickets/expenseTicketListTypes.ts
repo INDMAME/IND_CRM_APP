@@ -18,7 +18,7 @@ export type ExpenseTicketAppliedFilterSnapshot = {
 export type ExpenseTicketCard = {
   fileId: string;
   description: string;
-  status: number | null;
+  status: 0 | 1 | null;
   hojaGastosIdDisplay: string;
   processedByAI: boolean | null;
   currencyCode: string;

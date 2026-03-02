@@ -319,12 +319,12 @@ const ExpenseTicketsPageContent = () => {
             const isAssignedToExpenseSheet = statusCode === 1;
             const showProcessedByAiIcon = item.processedByAI === true;
             const gastoTypeCode = item.gastoType === null ? "" : String(item.gastoType);
-            const gastoTypeLabel = gastoTypeCode ? gastoTypeLabelMap.get(gastoTypeCode) || gastoTypeCode : "";
+            const gastoTypeLabel = gastoTypeCode
+              ? gastoTypeLabelMap.get(gastoTypeCode) || gastoTypeCode
+              : indT("Common_NotAvailable", "N/A");
             const hojaGastosIdDisplay = safeText(item.hojaGastosIdDisplay);
             const subtitleParts: string[] = [];
-            if (gastoTypeLabel) {
-              subtitleParts.push(`${indT("Tickets_Filter_Category", "Category")}: ${gastoTypeLabel}`);
-            }
+            subtitleParts.push(`${indT("Tickets_Filter_Category", "Category")}: ${gastoTypeLabel}`);
             if (hojaGastosIdDisplay) {
               subtitleParts.push(
                 `${indT("Tickets_Field_ExpenseSheetDisplay", "Expense sheet")}: ${hojaGastosIdDisplay}`

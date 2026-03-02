@@ -177,20 +177,20 @@ namespace IND_CRM_APP.Services
                 : null;
         }
 
-        // Builds the explicit token expected by AX list filters: 0/1 when set, "null" when omitted.
-        private static object BuildTicketStatusFilterToken(int? status)
+        // Builds the optional token expected by AX list filters: 0/1 when set, null when omitted.
+        private static int? BuildTicketStatusFilterToken(int? status)
         {
             return status.HasValue && (status.Value == 0 || status.Value == 1)
                 ? status.Value
-                : "null";
+                : null;
         }
 
-        // Builds the explicit token expected by AX list filters: 0/1 when set, "null" when omitted.
-        private static object BuildTicketProcessedByAiFilterToken(bool? processedByAI)
+        // Builds the optional token expected by AX list filters: 0/1 when set, null when omitted.
+        private static int? BuildTicketProcessedByAiFilterToken(bool? processedByAI)
         {
             return processedByAI.HasValue
                 ? (processedByAI.Value ? 1 : 0)
-                : "null";
+                : null;
         }
 
         // Prepares auth headers and logs company header state for an operation.

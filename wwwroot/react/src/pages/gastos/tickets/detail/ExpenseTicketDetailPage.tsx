@@ -74,7 +74,7 @@ const ExpenseTicketDetailPageContent = () => {
   const [linePage, setLinePage] = useState(1);
 
   const [draftDescription, setDraftDescription] = useState("");
-  const [draftStatus, setDraftStatus] = useState("0");
+  const [draftStatus, setDraftStatus] = useState("");
   const [draftGastoType, setDraftGastoType] = useState("");
   const [draftProcessedByAI, setDraftProcessedByAI] = useState("");
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
@@ -147,9 +147,9 @@ const ExpenseTicketDetailPageContent = () => {
     if (isEditing || !header) return;
 
     setDraftDescription(safeText(header.description));
-    setDraftStatus(header.status === 1 ? "1" : "0");
+    setDraftStatus(header.status === 1 ? "1" : header.status === 0 ? "0" : "");
     setDraftGastoType(header.gastoType === null ? "" : String(header.gastoType));
-    setDraftProcessedByAI(header.processedByAI === true ? "true" : header.processedByAI === false ? "false" : "false");
+    setDraftProcessedByAI(header.processedByAI === true ? "true" : header.processedByAI === false ? "false" : "");
     setDraftCurrencyCode(safeText(header.currencyCode).toUpperCase());
     setDraftTotalAmount(
       formatExpenseInputNumber(header.totalAmount, {
@@ -197,9 +197,9 @@ const ExpenseTicketDetailPageContent = () => {
     setIsEditing(false);
     setModalError("");
     setDraftDescription(safeText(header.description));
-    setDraftStatus(header.status === 1 ? "1" : "0");
+    setDraftStatus(header.status === 1 ? "1" : header.status === 0 ? "0" : "");
     setDraftGastoType(header.gastoType === null ? "" : String(header.gastoType));
-    setDraftProcessedByAI(header.processedByAI === true ? "true" : header.processedByAI === false ? "false" : "false");
+    setDraftProcessedByAI(header.processedByAI === true ? "true" : header.processedByAI === false ? "false" : "");
     setDraftCurrencyCode(safeText(header.currencyCode).toUpperCase());
     setDraftTotalAmount(
       formatExpenseInputNumber(header.totalAmount, {

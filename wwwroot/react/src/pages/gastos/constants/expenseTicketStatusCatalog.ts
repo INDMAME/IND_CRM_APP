@@ -23,13 +23,22 @@ const STATUS_META_BY_CODE: Record<ExpenseTicketStatusCode, ExpenseTicketStatusUi
   },
 };
 
+const toNullableExpenseTicketStatusCode = (value: unknown): ExpenseTicketStatusCode | null => {
+  const parsed = Number(value);
+  if (parsed === 0 || parsed === 1) {
+    return parsed;
+  }
+
+  return null;
+};
+
 // Normalizes unknown values to the supported ticket status filter values.
 export const normalizeExpenseTicketStatusFilterCode = (
   value: unknown,
   fallback: ExpenseTicketStatusFilterCode = ""
 ): ExpenseTicketStatusFilterCode => {
-  const parsed = Number(value);
-  if (parsed === 0 || parsed === 1) {
+  const parsed = toNullableExpenseTicketStatusCode(value);
+  if (parsed !== null) {
     return parsed;
   }
   return fallback;
@@ -55,14 +64,21 @@ export const getExpenseTicketStatusFilterOptions = (): ExpenseSelectOption[] => 
 
 // Returns localized status label for cards and filter summary.
 export const getExpenseTicketStatusLabel = (value: unknown): string => {
-  const normalized = normalizeExpenseTicketStatusFilterCode(value, 0);
+  const normalized = toNullableExpenseTicketStatusCode(value);
+  if (normalized === null) {
+    return indT("Common_NotAvailable", "N/A");
+  }
+
   const meta = STATUS_META_BY_CODE[normalized];
   return indT(meta.labelKey, meta.fallback);
 };
 
 // Returns status badge class used by ticket cards.
 export const getExpenseTicketStatusBadgeClassName = (value: unknown): string => {
-  const normalized = normalizeExpenseTicketStatusFilterCode(value, 0);
+  const normalized = toNullableExpenseTicketStatusCode(value);
+  if (normalized === null) {
+    return "expense-sheet-card__status expense-sheet-card__status--all";
+  }
+
   return STATUS_META_BY_CODE[normalized].badgeClassName;
 };
-

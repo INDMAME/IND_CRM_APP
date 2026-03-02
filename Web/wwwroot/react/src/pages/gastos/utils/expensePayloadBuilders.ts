@@ -7,19 +7,20 @@ import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog
 import type { ExpenseTicketAppliedFilterSnapshot } from "../tickets/expenseTicketListTypes.ts";
 
 const DEFAULT_SUGGEST_PAGE_SIZE = 50;
+const ALLOWED_TICKET_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 const isValidExpenseSheetStatus = (value: unknown): value is number => {
   return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 4;
 };
 
 // Resolves the optional API status filter from UI filter state.
-const resolveExpenseSheetStatus = (statusFilter: number): number | undefined => {
+const resolveExpenseSheetStatus = (statusFilter: number): number | null => {
   if (statusFilter === DEFAULT_EXPENSE_STATUS_FILTER) {
-    return undefined;
+    return null;
   }
 
   if (!isValidExpenseSheetStatus(statusFilter)) {
-    throw new Error("expenseSheetStatus filter must be an integer between 0 and 4.");
+    return null;
   }
 
   return statusFilter;
@@ -32,7 +33,7 @@ const normalizeOptionalText = (value: string | undefined): string | undefined =>
 
 const resolveProcessedByAiFilter = (
   value: ExpenseTicketAppliedFilterSnapshot["processedByIaFilter"]
-): boolean | undefined => {
+): boolean | null => {
   if (value === "yes") {
     return true;
   }
@@ -41,7 +42,28 @@ const resolveProcessedByAiFilter = (
     return false;
   }
 
-  return undefined;
+  return null;
+};
+
+const resolveTicketStatusFilter = (
+  value: ExpenseTicketAppliedFilterSnapshot["statusFilter"]
+): 0 | 1 | null => {
+  return value === 0 || value === 1 ? value : null;
+};
+
+const resolveTicketGastoTypeFilter = (
+  value: ExpenseTicketAppliedFilterSnapshot["gastoTypeFilter"]
+): ExpenseSheetTicketListRequest["gastoType"] => {
+  if (value === "" || value === null || value === undefined) {
+    return null;
+  }
+
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || !ALLOWED_TICKET_GASTO_TYPES.has(parsed)) {
+    return null;
+  }
+
+  return parsed as ExpenseSheetTicketListRequest["gastoType"];
 };
 
 // Build list payload for /api/crm/expensesheets/list from current filter state.
@@ -106,9 +128,9 @@ export const buildExpenseTicketListPayload = (
     createdDateTo: normalizeOptionalText(filters.toDate),
     searchKey: safeFilterKey,
     filter: safeFilterKey,
-    status: filters.statusFilter === "" ? undefined : filters.statusFilter,
+    status: resolveTicketStatusFilter(filters.statusFilter),
     currencyCode: normalizeOptionalText(filters.currencyCode),
-    gastoType: filters.gastoTypeFilter === "" ? undefined : filters.gastoTypeFilter,
+    gastoType: resolveTicketGastoTypeFilter(filters.gastoTypeFilter),
     processedByAI: resolveProcessedByAiFilter(filters.processedByIaFilter),
   };
 };

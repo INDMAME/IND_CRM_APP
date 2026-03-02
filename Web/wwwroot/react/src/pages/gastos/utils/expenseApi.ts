@@ -131,6 +131,15 @@ const isValidListExpenseSheetStatus = (value: unknown): boolean => {
   return parsed !== null && Number.isInteger(parsed) && parsed >= 0 && parsed <= 4;
 };
 
+const toNullableTicketStatusCode = (value: unknown): 0 | 1 | null => {
+  const parsed = toNullableNumber(value);
+  if (parsed === 0 || parsed === 1) {
+    return parsed;
+  }
+
+  return null;
+};
+
 const toNullableGastoTypeCode = (value: unknown): ExpenseGastoTypeCode | null => {
   const parsed = toNullableNumber(value);
   if (parsed === null || !Number.isInteger(parsed) || !ALLOWED_GASTO_TYPE_CODES.has(parsed)) {
@@ -153,17 +162,20 @@ const normalizeOptionalTicketGastoType = (value: unknown): ExpenseGastoTypeCode 
   return parsed;
 };
 
-const normalizeOptionalTicketStatus = (value: unknown): 0 | 1 | undefined => {
+const normalizeTicketListGastoType = (value: unknown): ExpenseSheetTicketListRequest["gastoType"] => {
   if (value === null || value === undefined || safeText(value) === "") {
-    return undefined;
+    return null;
   }
 
-  const parsed = toNullableNumber(value);
-  if (parsed === 0 || parsed === 1) {
-    return parsed;
+  return toNullableGastoTypeCode(value);
+};
+
+const normalizeOptionalTicketStatus = (value: unknown): 0 | 1 | null => {
+  if (value === null || value === undefined || safeText(value) === "") {
+    return null;
   }
 
-  throw new ApiFetchError("status must be 0 or 1.");
+  return toNullableTicketStatusCode(value);
 };
 
 const normalizeTicketListDate = (value: unknown): string => {
@@ -208,17 +220,16 @@ const toNullableBool = (value: unknown): boolean | null => {
   return null;
 };
 
-const normalizeOptionalTicketProcessedByAI = (value: unknown): boolean | undefined => {
+const normalizeOptionalTicketProcessedByAI = (value: unknown): boolean | null => {
   if (value === null || value === undefined || safeText(value) === "") {
-    return undefined;
+    return null;
   }
 
-  const parsed = toNullableBool(value);
-  if (parsed === null) {
-    throw new ApiFetchError("processedByAI must be true or false.");
-  }
+  return toNullableBool(value);
+};
 
-  return parsed;
+const normalizeExpenseSheetListStatusFilter = (value: unknown): number | null => {
+  return isValidListExpenseSheetStatus(value) ? Number(value) : null;
 };
 
 const toFlagBool = (value: unknown): boolean | null => {
@@ -534,6 +545,14 @@ const normalizeTicketListPagedResponse = (
   const items = Array.isArray(response?.Items) ? response.Items : [];
   const normalizedItems = items.map((item) => ({
     ...item,
+    Status: toNullableTicketStatusCode(
+      (item as { Status?: unknown; status?: unknown })?.Status ??
+        (item as { Status?: unknown; status?: unknown })?.status
+    ),
+    ProcessedByAI: toNullableBool(
+      (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.ProcessedByAI ??
+        (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.processedByAI
+    ),
     HojaGastosIdDisplay: safeText(
       (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.HojaGastosIdDisplay ??
         (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.hojaGastosIdDisplay
@@ -556,6 +575,14 @@ const normalizeTicketDetailPagedResponse = (
   const items = Array.isArray(response?.Items) ? response.Items : [];
   const normalizedItems = items.map((item) => ({
     ...item,
+    Status: toNullableTicketStatusCode(
+      (item as { Status?: unknown; status?: unknown })?.Status ??
+        (item as { Status?: unknown; status?: unknown })?.status
+    ),
+    ProcessedByAI: toNullableBool(
+      (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.ProcessedByAI ??
+        (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.processedByAI
+    ),
     HojaGastosIdDisplay: safeText(
       (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.HojaGastosIdDisplay ??
         (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.hojaGastosIdDisplay
@@ -606,9 +633,7 @@ const toLegacyListRequestPayload = (payload: ExpenseSheetListApiRequest) => {
     toDate: safeText(payload.createdDateTo),
     projectId: safeText(payload.projId),
     currencyCode: safeText(payload.currencyCode),
-    expenseSheetStatus: isValidListExpenseSheetStatus(payload.expenseSheetStatus)
-      ? Number(payload.expenseSheetStatus)
-      : undefined,
+    expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
     page: Number.isFinite(payload.page) && payload.page > 0 ? payload.page : 1,
     pageSize: Number.isFinite(payload.pageSize) && payload.pageSize > 0 ? payload.pageSize : 50,
   };
@@ -750,9 +775,10 @@ export const fetchExpenseSheetList = async (
   payload: ExpenseSheetListApiRequest,
   options?: ApiFetchOptions
 ): Promise<IndPagedResponse<ExpenseSheetListItemDto>> => {
-  if (payload.expenseSheetStatus !== undefined && !isValidListExpenseSheetStatus(payload.expenseSheetStatus)) {
-    throw new ApiFetchError("expenseSheetStatus must be an integer between 0 and 4.");
-  }
+  const safePayload: ExpenseSheetListApiRequest = {
+    ...payload,
+    expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
+  };
 
   const context = await ensureExpenseApiContext(options);
   try {
@@ -760,7 +786,7 @@ export const fetchExpenseSheetList = async (
       ...options,
       method: "POST",
       headers: buildExpenseHeaders(context, options, true),
-      body: JSON.stringify(payload),
+      body: JSON.stringify(safePayload),
     });
 
     return normalizeListPagedResponse(response);
@@ -776,13 +802,13 @@ export const fetchExpenseSheetList = async (
         ...sanitizeHeaders(options?.headers),
         ...JSON_HEADERS,
       },
-      body: JSON.stringify(toLegacyListRequestPayload(payload)),
+      body: JSON.stringify(toLegacyListRequestPayload(safePayload)),
     });
 
     const mapped = mapLegacyListResponse(
       legacyResponse,
-      Number.isFinite(payload.page) && payload.page > 0 ? payload.page : 1,
-      Number.isFinite(payload.pageSize) && payload.pageSize > 0 ? payload.pageSize : 50
+      Number.isFinite(safePayload.page) && safePayload.page > 0 ? safePayload.page : 1,
+      Number.isFinite(safePayload.pageSize) && safePayload.pageSize > 0 ? safePayload.pageSize : 50
     );
 
     return normalizeListPagedResponse(mapped);
@@ -1120,14 +1146,6 @@ export const updateExpenseSheetHeader = async (
     throw new ApiFetchError("exchangeRateMode must be greater or equal to 0.");
   }
 
-  if (payload.exchangeRateMode !== undefined && payload.expenseSheetStatus === undefined) {
-    throw new ApiFetchError("exchangeRateMode requires expenseSheetStatus.");
-  }
-
-  if (safeText(payload.estadoComentarios) && (payload.expenseSheetStatus === undefined || payload.exchangeRateMode === undefined)) {
-    throw new ApiFetchError("estadoComentarios requires expenseSheetStatus and exchangeRateMode.");
-  }
-
   const response = await fetchJson<IndApiResponse<{ HojaGastosId: string }>>(`/api/crm/expensesheets/${safeSheetId}`, {
     ...options,
     method: "PUT",
@@ -1295,7 +1313,7 @@ export const fetchExpenseSheetTicketsList = async (
     filter: legacyFilter || undefined,
     status: normalizeOptionalTicketStatus(payload?.status),
     currencyCode: safeText(payload?.currencyCode).toUpperCase() || undefined,
-    gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
+    gastoType: normalizeTicketListGastoType(payload?.gastoType),
     processedByAI: normalizeOptionalTicketProcessedByAI(payload?.processedByAI),
   };
 

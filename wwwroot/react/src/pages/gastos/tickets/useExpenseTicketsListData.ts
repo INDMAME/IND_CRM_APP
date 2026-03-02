@@ -11,6 +11,7 @@ type UseExpenseTicketsListDataArgs = {
   pageSize: number;
   onForbidden: () => void;
 };
+const ALLOWED_GASTO_TYPE_CODES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 const toNullableNumber = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -28,13 +29,25 @@ const toNullableBool = (value: unknown): boolean | null => {
   return null;
 };
 
+const toNullableTicketStatus = (value: unknown): 0 | 1 | null => {
+  const parsed = Number(value);
+  return parsed === 0 || parsed === 1 ? parsed : null;
+};
+
+const toNullableTicketGastoType = (value: unknown): ExpenseGastoTypeCode | null => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || !ALLOWED_GASTO_TYPE_CODES.has(parsed)) {
+    return null;
+  }
+
+  return parsed as ExpenseGastoTypeCode;
+};
+
 const mapTicketItemToCard = (item: Record<string, unknown>): ExpenseTicketCard => {
-  const rawGastoType = toNullableNumber(item?.GastoType ?? item?.gastoType);
-  const gastoType = rawGastoType === null ? null : (rawGastoType as ExpenseGastoTypeCode);
   return {
     fileId: String(item?.FileId || "").trim(),
     description: String(item?.Description || "").trim(),
-    status: toNullableNumber(item?.Status),
+    status: toNullableTicketStatus(item?.Status),
     hojaGastosIdDisplay: String(item?.HojaGastosIdDisplay ?? item?.hojaGastosIdDisplay ?? "").trim(),
     processedByAI: toNullableBool(item?.ProcessedByAI),
     currencyCode: String(item?.CurrencyCode || "").trim(),
@@ -43,7 +56,7 @@ const mapTicketItemToCard = (item: Record<string, unknown>): ExpenseTicketCard =
     transDate: String(item?.TransDate || "").trim(),
     urlFile: String(item?.UrlFile || "").trim(),
     fileName: String(item?.FileName || "").trim(),
-    gastoType,
+    gastoType: toNullableTicketGastoType(item?.GastoType ?? item?.gastoType),
   };
 };
 

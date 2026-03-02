@@ -124,8 +124,7 @@ export const useExpenseSheetDetailMutations = ({
     const resolvedExchangeRateMode = isManualExchangeRate
       ? 1
       : (normalizedEstadoComentarios ? (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : 0) : undefined);
-    const resolvedExpenseSheetStatus =
-      (hasDraftStatus ? parsedDraftStatus : currentExpenseSheetStatus) ?? ((isManualExchangeRate || normalizedEstadoComentarios) ? 0 : undefined);
+    const resolvedExpenseSheetStatus = hasDraftStatus ? parsedDraftStatus : (currentExpenseSheetStatus ?? undefined);
 
     if (isCreateMode) {
       if (!normalizedDescription) {
