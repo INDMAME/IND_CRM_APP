@@ -56,7 +56,9 @@ Conflict precedence:
 | Internal API route pattern | Every new `/api/...` endpoint must have explicit controller verb attributes plus `Program.cs` `MapControllerRoute` mapping, with local verb validation to prevent 404/405 regressions. |
 | i18n | No hardcoded user-facing strings; add resource keys to all supported cultures in the same change. |
 | Anti-regression | Preserve date pickers, date filters, and payload formats unless explicitly requested. |
-| Security baseline | Permission-gate edit/delete/create controls, keep server as source of truth, and use integrated confirm/unsaved-change modals. |
+| Numeric format baseline | Currency/price/qty/amount/exchange-rate fields must render as `#,##0.00` (comma thousands, dot decimals, always 2 decimal digits). Use shared formatter/parser utilities and normalize editable values on blur. |
+| Security baseline | Permission-gate edit/delete/create controls, gate self-management flows with AuthContext `allowSelfManagement`, keep server as source of truth, and use integrated confirm/unsaved-change modals. |
+| Self-management permission | Read `allowSelfManagement` from `useAuthContext()` only (selected company source) and gate both editable UI states and protected mutation payload fields. |
 | Performance baseline | Avoid client waterfalls, deduplicate global listeners, and keep effect dependencies stable and primitive when possible. |
 | Composition baseline | Avoid boolean prop proliferation; prefer explicit variants/composition and keep shared components dumb. |
 | Module boundary | Keep orchestration state in module page hooks; promote to shared only when two modules reuse same contract. |
@@ -105,7 +107,8 @@ Required triggers:
 4. Apply architecture and contract rules during implementation.
    - React performance guardrails: parallelize independent async calls, avoid effect-driven mirror state, cleanup listeners.
    - React composition guardrails: no new boolean mode flags when explicit variant/component composition is cleaner.
-   - Security guardrails: enforce permission-gated actions and integrated app dialogs for destructive or unsaved-change flows.
+   - Numeric format guardrails: for currency/price/qty/amount/exchange-rate fields, enforce `#,##0.00` display with grouped thousands and exactly 2 decimals.
+   - Security guardrails: enforce permission-gated actions, require AuthContext `allowSelfManagement` for self-management scoped actions, and use integrated app dialogs for destructive or unsaved-change flows.
 5. Enforce internal API endpoint exposure pattern for any new `/api/...` route.
    - Add explicit verb attributes in controller API actions.
    - Add matching `app.MapControllerRoute(...)` entries in `Program.cs`.
@@ -123,6 +126,7 @@ Required triggers:
 - Treating date behavior changes as harmless refactors without explicit requirement.
 - Editing `wwwroot` mirror paths as primary source instead of `Web/wwwroot`.
 - Adding behavior through boolean prop stacking instead of composition or explicit variants.
+- Leaving numeric fields with locale-dependent or mixed formats instead of the required `#,##0.00`.
 - Leaving global listeners attached after component unmount.
 - Shipping UI edit/delete actions without checking permission state.
 - Creating ad-hoc section title capsules instead of reusing `ExpenseSectionDivider`.
@@ -130,4 +134,4 @@ Required triggers:
 - Mismatching frontend HTTP verb versus controller verb attribute on API routes.
 
 ## Last updated
-- 2026-02-17
+- 2026-02-26

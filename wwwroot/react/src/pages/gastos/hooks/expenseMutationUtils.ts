@@ -1,5 +1,6 @@
 import type React from "react";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
+import { parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
 
 type MutationSetters = {
   setModalError: React.Dispatch<React.SetStateAction<string>>;
@@ -14,17 +15,9 @@ type ExecuteExpenseMutationArgs<T> = MutationSetters & {
   flashOnError?: boolean;
 };
 
-// Parses decimal text input that may contain comma or dot separators.
+// Parses decimal text input supporting grouped and decimal separators.
 export const parseDecimalInput = (raw: string): number | null => {
-  const value = String(raw || "").trim().replace(",", ".");
-  if (!value) return null;
-
-  const parsed = Number(value);
-  if (!Number.isFinite(parsed)) {
-    return null;
-  }
-
-  return parsed;
+  return parseExpenseNumericInput(raw);
 };
 
 // Runs an expense mutation with shared busy/error/status handling.

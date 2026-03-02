@@ -2,6 +2,7 @@ export type ExpenseStatusCode = 0 | 1 | 2 | 3 | 4;
 export type ExpenseStatusFilterCode = ExpenseStatusCode | 5;
 export type ExpenseExchangeRateModeCode = 0 | 1;
 export type ExpenseSheetCreateMode = 0 | 1 | 2;
+export type ExpenseGastoTypeCode = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 14;
 
 // Shared validation envelope item used by IndApiResponse errors.
 export type IndValidationError = {
@@ -140,6 +141,7 @@ export type ExpenseSheetLineDto = {
   TypeValue: number | null;
   Description: string;
   Internacional: boolean | null;
+  FileId: string;
   Ticket: boolean | null;
   Price: number | null;
   Qty: number | null;
@@ -170,6 +172,7 @@ export type ExpenseSheetCreateLineRequest = {
   typeValue: number;
   description: string;
   internacional: boolean;
+  fileId?: string;
   ticket: boolean;
   qty: number;
   price: number;
@@ -198,10 +201,24 @@ export type ExpenseSheetCreateResponseData = {
 
 // /api/ia/service/expensefromticket response contract.
 export type ExpenseSheetDraftResponse = ExpenseSheetCreateRequest & {
+  gastoType?: ExpenseGastoTypeCode | null;
   Confidence?: number | null;
   Warnings?: string[] | null;
   RawCurrency?: string | null;
   Merchant?: string | null;
+  TicketCreation?: ExpenseSheetDraftTicketCreationResult | null;
+};
+
+export type ExpenseSheetDraftTicketCreationResult = {
+  Persisted?: boolean;
+  ProcessedByAI?: boolean;
+  FileId?: string;
+  TicketRecId?: string;
+  LineRecIds?: Array<number | string>;
+  UrlFile?: string;
+  FileName?: string;
+  FileNameFinalized?: boolean;
+  Message?: string;
 };
 
 // /api/crm/expensesheets/{hojaGastosId} update header request contract.
@@ -221,6 +238,7 @@ export type ExpenseSheetLineUpdateRequest = {
   typeValue: number;
   description: string;
   internacional: boolean;
+  fileId?: string;
   ticket: boolean;
   qty: number;
   price: number;
@@ -286,12 +304,108 @@ export type ExpenseSheetLine = {
   typeValueCode?: string;
   description?: string;
   internacional?: boolean | null;
+  fileId?: string;
   ticket?: boolean | null;
   price?: number | null;
   qty?: number | null;
   amount?: number | null;
   projId?: string;
   indAttachFiles?: string;
+};
+
+export type ExpenseSheetTicketListRequest = {
+  page: number;
+  pageSize: number;
+  createdDateFrom: string;
+  createdDateTo: string;
+  searchKey?: string;
+  filter?: string;
+  status?: 0 | 1;
+  currencyCode?: string;
+  gastoType?: ExpenseGastoTypeCode;
+};
+
+export type ExpenseSheetTicketLineRequest = {
+  description: string;
+  qty: number;
+  price: number;
+  totalAmount?: number;
+};
+
+export type ExpenseSheetTicketCreateRequest = {
+  mode: 0 | 1 | 2;
+  existingFileId?: string;
+  description?: string;
+  currencyCode?: string;
+  totalAmount?: number;
+  status?: number;
+  transDate?: string;
+  comentario?: string;
+  urlFile?: string;
+  fileName?: string;
+  fileExtension?: string;
+  processedByAI?: boolean;
+  gastoType?: ExpenseGastoTypeCode;
+  lines?: ExpenseSheetTicketLineRequest[] | null;
+};
+
+export type ExpenseSheetTicketUpdateRequest = {
+  description?: string;
+  currencyCode?: string;
+  totalAmount?: number;
+  status?: number;
+  transDate?: string;
+  comentario?: string;
+  urlFile?: string;
+  fileName?: string;
+  processedByAI?: boolean;
+  fileExtension?: string;
+  gastoType?: ExpenseGastoTypeCode;
+};
+
+export type ExpenseSheetTicketIaRequest = {
+  gastoType?: ExpenseGastoTypeCode;
+  [key: string]: unknown;
+};
+
+export type ExpenseSheetTicketLineDto = {
+  RecId: string;
+  Description: string;
+  Qty: number | null;
+  Price: number | null;
+  TotalAmount: number | null;
+  RefRecIdTable: string;
+  CreatedByUserId: string;
+};
+
+export type ExpenseSheetTicketListItemDto = {
+  FileId: string;
+  Description: string;
+  Status: number | null;
+  ProcessedByAI: boolean | null;
+  CurrencyCode: string;
+  TotalAmount: number | null;
+  CreatedByUserId: string;
+  TransDate: string;
+  UrlFile: string;
+  FileName: string;
+  GastoType: ExpenseGastoTypeCode | null;
+};
+
+export type ExpenseSheetTicketDetailDto = {
+  FileId: string;
+  Description: string;
+  Status: number | null;
+  ProcessedByAI: boolean | null;
+  CurrencyCode: string;
+  TotalAmount: number | null;
+  CreatedByUserId: string;
+  TransDate: string;
+  Comentario: string;
+  UrlFile: string;
+  FileName: string;
+  GastoType: ExpenseGastoTypeCode | null;
+  Lines: ExpenseSheetTicketLineDto[];
 };
 
 export type ExpenseSheetCreateLineDraft = {

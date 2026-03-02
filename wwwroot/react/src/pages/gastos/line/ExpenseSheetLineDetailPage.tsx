@@ -61,7 +61,7 @@ const ExpenseSheetLineDetailContent = () => {
     isFuelPriceLoading,
     fuelPriceMessage,
     fuelPriceMessageIsError,
-    isSheetPaid,
+    isSheetLocked,
     setBusy,
     setStatus,
     setIsEditing,
@@ -162,7 +162,7 @@ const ExpenseSheetLineDetailContent = () => {
     busy,
     isEditing,
     isCreateMode,
-    isLocked: isSheetPaid,
+    isLocked: isSheetLocked,
     canCreateExpense,
     canEditExpense,
     canDeleteExpense,
@@ -188,7 +188,7 @@ const ExpenseSheetLineDetailContent = () => {
     modalOpen: modal.open,
     isEditing,
     isCreateMode,
-    isLocked: isSheetPaid,
+    isLocked: isSheetLocked,
     canCreateExpense,
     canEditExpense,
     canDeleteExpense,
@@ -275,7 +275,7 @@ const ExpenseSheetLineDetailContent = () => {
         />
       ) : null}
 
-      {canCreateExpense && !isCreateMode ? (
+      {canCreateExpense && !isCreateMode && !isSheetLocked ? (
         <FloatingActionButton
           route=""
           ariaLabel={indT("Common_Create", "Create")}

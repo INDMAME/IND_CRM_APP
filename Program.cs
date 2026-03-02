@@ -25,6 +25,21 @@ using System.Security.Cryptography;
 
 
 // Resolve the correct web root for dev vs publish output.
+static bool HasExpectedStaticAssets(string path)
+{
+    if (!Directory.Exists(path))
+        return false;
+
+    // Detect a usable web root by checking canonical static asset folders/files.
+    var cssTailwind = Path.Combine(path, "css", "tailwind.css");
+    var jsDir = Path.Combine(path, "js");
+    var imagesDir = Path.Combine(path, "images");
+
+    return File.Exists(cssTailwind)
+           || Directory.Exists(jsDir)
+           || Directory.Exists(imagesDir);
+}
+
 static string ResolveWebRoot()
 {
     var startPaths = new[]
@@ -40,6 +55,13 @@ static string ResolveWebRoot()
         {
             var webRoot = Path.Combine(current, "Web", "wwwroot");
             var root = Path.Combine(current, "wwwroot");
+
+            // In publish output both folders may exist, but only one contains full static assets.
+            if (HasExpectedStaticAssets(root))
+                return root;
+
+            if (HasExpectedStaticAssets(webRoot))
+                return webRoot;
 
             if (Directory.Exists(webRoot) && Directory.EnumerateFileSystemEntries(webRoot).Any())
                 return webRoot;
@@ -385,6 +407,20 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-system-exchange-rate-public-direct",
+    pattern: "api/system/exchange-rate/public-direct",
+    defaults: new { controller = "Gastos", action = "ApiSystemExchangeRatePublicDirect" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-from-ticket",
+    pattern: "api/ia/service/expensefromticket",
+    defaults: new { controller = "Gastos", action = "ApiExpenseFromTicket" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
     name: "api-expense-sheets-create",
     pattern: "api/crm/expensesheets",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetsCreate" },
@@ -396,6 +432,83 @@ app.MapControllerRoute(
     pattern: "api/crm/expensesheets/fuel-price-km",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetFuelPriceKm" },
     constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-tickets-create",
+    pattern: "api/crm/expensesheets/tickets",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketsCreate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-tickets-list",
+    pattern: "api/crm/expensesheets/tickets/list",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketsList" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-detail",
+    pattern: "api/crm/expensesheets/tickets/{fileId}",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketDetail" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-update",
+    pattern: "api/crm/expensesheets/tickets/{fileId}",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketUpdate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-delete",
+    pattern: "api/crm/expensesheets/tickets/{fileId}",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketDelete" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-apply-ia",
+    pattern: "api/crm/expensesheets/tickets/{fileId}/ia",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketApplyIa" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-line-create",
+    pattern: "api/crm/expensesheets/tickets/{fileId}/lines",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketLineCreate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-line-update",
+    pattern: "api/crm/expensesheets/tickets/{fileId}/lines/{lineRecId}",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketLineUpdate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("PUT") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-line-delete",
+    pattern: "api/crm/expensesheets/tickets/{fileId}/lines/{lineRecId}",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketLineDelete" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-file-upload",
+    pattern: "api/crm/expensesheets/tickets/{fileId}/file",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketFileUpload" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-file-delete",
+    pattern: "api/crm/expensesheets/tickets/{fileId}/file",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketFileDelete" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") }
 );
 
 app.MapControllerRoute(

@@ -36,6 +36,8 @@
 - Context is cached in session under `INDWebContext` and keyed by OID.
 - Company selection is preserved in `INDCompanySelected` + `INDCompanySelectionSource`.
 - Module access is enforced by `INDModuleAuthorizeFilter` + `INDModuleRegistry`.
+- `AllowSelfManagement` is company-scoped and must come from the selected company in Entra context.
+- `_Layout.cshtml` injects this value into `window.__IND_ALLOW_SELF_MANAGEMENT__`, and React must consume it through `AuthProvider` -> `useAuthContext().allowSelfManagement`.
 
 ## Localization
 - UI localization only. Use `App/Resources/Infrastructure/Localization/INDSharedResource.*.resx`.
@@ -71,6 +73,8 @@
 ## Frontend security and permission gates
 - Server authorization remains the source of truth. UI permission checks are defense in depth.
 - Any edit/delete/create control must be gated by module permissions, mirroring the Visitas pattern.
+- Self-management sensitive actions must require `allowSelfManagement === true` in addition to module rights.
+- If `allowSelfManagement` is false, keep sensitive fields read-only or hidden per business rule and do not send protected payload fields in updates.
 - Destructive actions must use the site confirm modal flow (not browser-native dialogs).
 - Unsaved-change navigation warnings must use integrated app dialogs, not `beforeunload` browser popups.
 - Never handle or persist JWT tokens directly in React page state; use backend/session abstractions.

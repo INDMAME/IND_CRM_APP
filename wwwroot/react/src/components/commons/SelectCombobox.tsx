@@ -44,6 +44,16 @@ type SelectComboboxProps = {
   dropdownMaxHeightClass?: string;
   selectedIconClassName?: string;
   optionIconClassName?: string;
+  allowOptionHorizontalScroll?: boolean;
+  lockDropdownWidthOnFirstOpen?: boolean;
+  disableDefaultOptionPadding?: boolean;
+  optionLeftPaddingClassName?: string;
+  optionTextClassName?: string;
+  optionDefaultClassName?: string;
+  optionActiveClassName?: string;
+  optionSelectedClassName?: string;
+  selectedInputPaddingClassName?: string;
+  panelStyle?: React.CSSProperties;
 };
 
 // Reusable select combobox with optional portal rendering for the list.
@@ -69,6 +79,16 @@ const SelectCombobox = ({
   dropdownMaxHeightClass = "max-h-72",
   selectedIconClassName = "h-4 w-4",
   optionIconClassName = "h-4 w-4",
+  allowOptionHorizontalScroll = false,
+  lockDropdownWidthOnFirstOpen = false,
+  disableDefaultOptionPadding = false,
+  optionLeftPaddingClassName = "",
+  optionTextClassName = "",
+  optionDefaultClassName = "text-slate-900",
+  optionActiveClassName = "bg-primary text-white",
+  optionSelectedClassName = "bg-primary text-white",
+  selectedInputPaddingClassName = "pl-9",
+  panelStyle,
 }: SelectComboboxProps) => {
   const readOnlyMode = readOnly || disabled;
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
@@ -94,6 +114,7 @@ const SelectCombobox = ({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const initialDropdownWidthRef = useRef<number | null>(null);
 
   useOutsideClick([containerRef, listRef], () => setOpen(false));
 
@@ -170,8 +191,28 @@ const SelectCombobox = ({
   const displayValue = query !== null ? query : (selectedValue ? selectedDisplayText : "");
   const showSelectedIcon = query === null && !!selectedValue && !!selected?.icon;
   const normalizedDropdownExpandPx = Number.isFinite(dropdownExpandPx) ? Math.max(0, dropdownExpandPx) : 0;
+
+  useEffect(() => {
+    if (!lockDropdownWidthOnFirstOpen) return;
+    if (!listOpen) return;
+    if (initialDropdownWidthRef.current !== null) return;
+
+    const width = boxRef.current?.getBoundingClientRect().width;
+    if (!Number.isFinite(width) || !width || width <= 0) return;
+    initialDropdownWidthRef.current = width;
+  }, [listOpen, lockDropdownWidthOnFirstOpen]);
+
+  const fixedDropdownBaseWidth = lockDropdownWidthOnFirstOpen ? initialDropdownWidthRef.current : null;
+  const resolvedDropdownWidthPx =
+    fixedDropdownBaseWidth !== null && Number.isFinite(fixedDropdownBaseWidth)
+      ? fixedDropdownBaseWidth + normalizedDropdownExpandPx
+      : null;
   const inlineDropdownStyle: React.CSSProperties | undefined =
-    normalizedDropdownExpandPx > 0 ? { width: `calc(100% + ${normalizedDropdownExpandPx}px)` } : undefined;
+    resolvedDropdownWidthPx !== null && resolvedDropdownWidthPx > 0
+      ? { width: `${resolvedDropdownWidthPx}px` }
+      : normalizedDropdownExpandPx > 0
+        ? { width: `calc(100% + ${normalizedDropdownExpandPx}px)` }
+        : undefined;
 
   const listBody = (
     <div id={listId} ref={listRef} role="listbox" aria-label={label}>
@@ -179,6 +220,7 @@ const SelectCombobox = ({
       {filtered.map((opt, idx) => {
         const sel = selected?.value === opt.value;
         const isActive = idx === activeIndex;
+        const optionStateClassName = sel ? optionSelectedClassName : isActive ? optionActiveClassName : optionDefaultClassName;
         return (
           <button
             type="button"
@@ -187,9 +229,16 @@ const SelectCombobox = ({
             role="option"
             aria-selected={sel}
             className={classNames(
-              "relative flex w-full cursor-default select-none items-center py-2 pr-3 text-left text-sm type-option",
-              isActive ? "bg-primary text-white" : "text-slate-900"
+              "relative flex w-full cursor-default select-none items-center py-2 pr-3 text-left text-sm",
+              optionLeftPaddingClassName,
+              disableDefaultOptionPadding ? "" : "type-option",
+              optionStateClassName
             )}
+            style={
+              allowOptionHorizontalScroll
+                ? { overflowX: "auto", overflowY: "hidden", WebkitOverflowScrolling: "touch" }
+                : undefined
+            }
             onMouseEnter={() => setActiveIndex(idx)}
             onClick={() => selectOption(opt)}
           >
@@ -201,7 +250,13 @@ const SelectCombobox = ({
                 )}
               ></span>
             )}
-            <span className={classNames("flex min-w-0 items-center gap-2", sel ? "font-medium" : "font-normal")}>
+            <span
+              className={classNames(
+                allowOptionHorizontalScroll ? "inline-flex items-center gap-2" : "flex min-w-0 items-center gap-2",
+                sel ? "font-medium" : "font-normal"
+              )}
+              style={allowOptionHorizontalScroll ? { minWidth: "max-content" } : undefined}
+            >
               {opt.icon ? (
                 <span
                   className={classNames(
@@ -213,7 +268,12 @@ const SelectCombobox = ({
                   {opt.icon}
                 </span>
               ) : null}
-              <span className="block truncate">{opt.text}</span>
+              <span
+                className={classNames(allowOptionHorizontalScroll ? "block" : "block truncate", optionTextClassName)}
+                style={allowOptionHorizontalScroll ? { whiteSpace: "nowrap" } : undefined}
+              >
+                {opt.text}
+              </span>
             </span>
           </button>
         );
@@ -239,7 +299,7 @@ const SelectCombobox = ({
           <input
             className={classNames(
               "w-full rounded-xl border py-2 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
-              showSelectedIcon ? "pl-9" : "pl-3",
+              showSelectedIcon ? selectedInputPaddingClassName : "pl-3",
               showSearchButton ? "pr-20" : "pr-10",
               invalid
                 ? "border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400"
@@ -308,6 +368,8 @@ const SelectCombobox = ({
             anchorRef={boxRef}
             open={listOpen}
             zIndex={360000}
+            fixedWidthPx={resolvedDropdownWidthPx ?? undefined}
+            panelStyle={panelStyle}
             maxHeightClass={dropdownMaxHeightClass}
             role="listbox"
             roundedClass="rounded-xl"
@@ -319,8 +381,8 @@ const SelectCombobox = ({
         ) : (
           listOpen && (
             <div
-              className={`absolute z-360000 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden ${dropdownMaxHeightClass} overflow-auto`}
-              style={inlineDropdownStyle}
+              className={`absolute z-360000 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden ${dropdownMaxHeightClass} overflow-auto ${panelClassName || ""}`}
+              style={{ ...inlineDropdownStyle, ...(panelStyle || {}) }}
             >
               {listBody}
             </div>

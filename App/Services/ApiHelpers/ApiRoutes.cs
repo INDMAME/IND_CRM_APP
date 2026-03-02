@@ -11,6 +11,7 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string SystemEnvironment = "api/system/getEnvironmentName";
         public const string SystemCompany = "api/system/getCompanyName";
         public const string SystemExchangeRate = "api/system/exchange-rate";
+        public const string SystemExchangeRatePublicDirect = "api/system/exchange-rate/public-direct";
         public const string Health = "api/health/health";
         public const string HealthPing = "api/health/ping";
         public const string AccountsList = "api/crm/accounts/listAccounts";
@@ -20,6 +21,8 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string VisitsCreateAsistente = "api/crm/visits/createVisitaAsistente";
         public const string VisitsDeleteAsistente = "api/crm/visits/deleteVisitaAsistente";
         public const string ExpenseSheets = "api/crm/expensesheets";
+        public const string ExpenseSheetTickets = "api/crm/expensesheets/tickets";
+        public const string ExpenseSheetTicketsList = "api/crm/expensesheets/tickets/list";
         public const string SpeechTranscribe = "api/ia/service/speech";
         public const string ExpenseFromTicket = "api/ia/service/expensefromticket";
 
@@ -38,6 +41,42 @@ namespace IND_CRM_APP.Services.ApiHelpers
         // Builds the expense sheet line route.
         public static string ExpenseSheetLine(string safeSheetId, string safeLineId) =>
             $"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}";
+
+        // Builds the expense sheet ticket by file id route.
+        public static string ExpenseSheetTicketByFileId(string safeFileId) =>
+            $"api/crm/expensesheets/tickets/{safeFileId}";
+
+        // Builds the expense sheet ticket IA apply route.
+        public static string ExpenseSheetTicketIa(string safeFileId) =>
+            $"api/crm/expensesheets/tickets/{safeFileId}/ia";
+
+        // Builds the expense sheet ticket file route with optional extension query.
+        public static string ExpenseSheetTicketFile(string safeFileId, string? safeExtension = null)
+        {
+            var route = $"api/crm/expensesheets/tickets/{safeFileId}/file";
+            if (string.IsNullOrWhiteSpace(safeExtension))
+                return route;
+
+            return $"{route}?extension={safeExtension}";
+        }
+
+        // Builds the expense sheet ticket line route.
+        public static string ExpenseSheetTicketLine(string safeFileId, string safeLineId) =>
+            $"api/crm/expensesheets/tickets/{safeFileId}/lines/{safeLineId}";
+
+        // Builds the expense sheet ticket lines create route.
+        public static string ExpenseSheetTicketLines(string safeFileId) =>
+            $"api/crm/expensesheets/tickets/{safeFileId}/lines";
+
+        // Builds the expense sheet ticket delete route with optional line selector.
+        public static string ExpenseSheetTicketDelete(string safeFileId, int? lineRecId = null)
+        {
+            var route = ExpenseSheetTicketByFileId(safeFileId);
+            if (!lineRecId.HasValue)
+                return route;
+
+            return $"{route}?lineRecId={lineRecId.Value}";
+        }
 
         // Builds the expense sheet line delete route supporting legacy and new query selectors.
         public static string ExpenseSheetLineDelete(string safeSheetId, string safeLineId, int? deleteMode, bool deleteWholeSheet)
@@ -68,6 +107,16 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public static string SystemExchangeRateByQuery(string safeBaseCurrency, string safeTargetCurrency, string? safeDate = null)
         {
             var route = $"{SystemExchangeRate}?baseCurrency={safeBaseCurrency}&targetCurrency={safeTargetCurrency}";
+            if (!string.IsNullOrWhiteSpace(safeDate))
+                route = $"{route}&date={safeDate}";
+
+            return route;
+        }
+
+        // Builds public-direct exchange-rate route with query.
+        public static string SystemExchangeRatePublicDirectByQuery(string safeBaseCurrency, string safeTargetCurrency, string? safeDate = null)
+        {
+            var route = $"{SystemExchangeRatePublicDirect}?baseCurrency={safeBaseCurrency}&targetCurrency={safeTargetCurrency}";
             if (!string.IsNullOrWhiteSpace(safeDate))
                 route = $"{route}&date={safeDate}";
 

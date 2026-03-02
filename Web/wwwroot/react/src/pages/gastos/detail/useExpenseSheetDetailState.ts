@@ -19,14 +19,22 @@ import {
 } from "../utils/expenseNavigation.ts";
 import { getExpenseExchangeRateModeLabel } from "../constants/exchangeRateEntryModeCatalog.ts";
 import { formatExpenseDisplayDate, hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { formatExpenseInputNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
 
 const EXCHANGE_RATE_DEBOUNCE_MS = 400;
 const EXCHANGE_RATE_REFERENCE_AMOUNT = 100;
+const EXCHANGE_RATE_DECIMAL_DIGITS = 7;
+const EXPENSE_STATUS_APPROVED = 2;
+const EXPENSE_STATUS_PAID = 4;
 
 // Normalizes exchange-rate numbers for numeric input controls.
 const formatExchangeRateInputValue = (value: number): string => {
-  if (!Number.isFinite(value)) return "";
-  return String(Number(value.toFixed(6)));
+  return formatExpenseInputNumber(value, {
+    minimumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+    maximumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+    useGrouping: true,
+    fallback: "",
+  });
 };
 
 const buildCreateHeaderDraft = (): ExpenseSheetHeader => {
@@ -46,14 +54,9 @@ const buildCreateHeaderDraft = (): ExpenseSheetHeader => {
 
 const shouldShowExchangeRate = (value: string): boolean => {
   if (!value) return false;
-
-  const normalized = value.replace(/\s+/g, "").replace(",", ".");
-  const parsed = Number(normalized);
-  if (Number.isFinite(parsed)) {
-    return Math.abs(parsed) > 0;
-  }
-
-  return true;
+  const parsed = parseExpenseNumericInput(value);
+  if (parsed === null) return true;
+  return Math.abs(parsed) > 0;
 };
 
 type UseExpenseSheetDetailStateArgs = {
@@ -90,19 +93,31 @@ export const useExpenseSheetDetailState = ({
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
   const [draftExchangeRate, setDraftExchangeRate] = useState("");
   const [draftExpenseSheetStatus, setDraftExpenseSheetStatus] = useState(0);
+  const [draftEstadoComentarios, setDraftEstadoComentarios] = useState("");
   const [defaultCurrencyCode, setDefaultCurrencyCode] = useState("");
   const [isExchangeRateLoading, setIsExchangeRateLoading] = useState(false);
   const [exchangeRateMessage, setExchangeRateMessage] = useState("");
   const [exchangeRateMessageIsError, setExchangeRateMessageIsError] = useState(false);
   const [officialExchangeRateValue, setOfficialExchangeRateValue] = useState("");
+  const [officialExchangeRateRawValue, setOfficialExchangeRateRawValue] = useState("");
+  const [officialExchangeRateDate, setOfficialExchangeRateDate] = useState("");
+  const [officialExchangeRateSource, setOfficialExchangeRateSource] = useState("");
 
   const hydrateDraftFromHeader = useCallback((nextHeader: ExpenseSheetHeader | null) => {
     setDraftDescription(safeText(nextHeader?.description));
     setDraftProjectId(safeText(nextHeader?.projId));
     setDraftCurrencyCode(safeText(nextHeader?.currencyCode));
-    setDraftExchangeRate(safeText(nextHeader?.exchRate));
+    setDraftExchangeRate(
+      formatExpenseInputNumber(nextHeader?.exchRate, {
+        minimumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+        maximumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+        useGrouping: true,
+        fallback: "",
+      })
+    );
     const nextStatus = Number(nextHeader?.expenseSheetStatus);
     setDraftExpenseSheetStatus(Number.isInteger(nextStatus) && nextStatus >= 0 ? nextStatus : 0);
+    setDraftEstadoComentarios(safeText(nextHeader?.estadoComentarios));
   }, []);
 
   useEffect(() => {
@@ -227,9 +242,19 @@ export const useExpenseSheetDetailState = ({
 
   const projectValue = safeText(header?.projId);
   const voucherValue = safeText(header?.voucher);
-  const isSheetPaid = hasAssignedVoucher(voucherValue);
+  const statusCode = typeof header?.expenseSheetStatus === "number" ? header.expenseSheetStatus : null;
+  const isSheetApproved = statusCode === EXPENSE_STATUS_APPROVED;
+  const isSheetPaidByStatus = statusCode === EXPENSE_STATUS_PAID;
+  const isSheetPaidByVoucher = hasAssignedVoucher(voucherValue);
+  const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
+  const isSheetLocked = isSheetApproved || isSheetPaid;
   const hasLines = lines.length > 0;
-  const exchangeRateValue = safeText(header?.exchRate);
+  const exchangeRateValue = formatExpenseInputNumber(safeText(header?.exchRate), {
+    minimumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+    maximumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
+    useGrouping: true,
+    fallback: "",
+  });
   const showExchangeRate = useMemo(() => shouldShowExchangeRate(exchangeRateValue), [exchangeRateValue]);
   const normalizedDraftCurrency = useMemo(() => draftCurrencyCode.trim().toUpperCase(), [draftCurrencyCode]);
   const normalizedDefaultCurrency = useMemo(() => safeText(defaultCurrencyCode).toUpperCase(), [defaultCurrencyCode]);
@@ -276,6 +301,9 @@ export const useExpenseSheetDetailState = ({
       setExchangeRateMessage("");
       setExchangeRateMessageIsError(false);
       setOfficialExchangeRateValue("");
+      setOfficialExchangeRateRawValue("");
+      setOfficialExchangeRateDate("");
+      setOfficialExchangeRateSource("");
       return () => {
         clearRequestArtifacts();
       };
@@ -286,6 +314,9 @@ export const useExpenseSheetDetailState = ({
       setExchangeRateMessage("");
       setExchangeRateMessageIsError(false);
       setOfficialExchangeRateValue("");
+      setOfficialExchangeRateRawValue("");
+      setOfficialExchangeRateDate("");
+      setOfficialExchangeRateSource("");
       return () => {
         clearRequestArtifacts();
       };
@@ -297,6 +328,9 @@ export const useExpenseSheetDetailState = ({
       setIsExchangeRateLoading(false);
       setExchangeRateMessage("");
       setExchangeRateMessageIsError(false);
+      setOfficialExchangeRateRawValue("");
+      setOfficialExchangeRateDate("");
+      setOfficialExchangeRateSource("");
       return () => {
         clearRequestArtifacts();
       };
@@ -308,6 +342,9 @@ export const useExpenseSheetDetailState = ({
       setExchangeRateMessage("");
       setExchangeRateMessageIsError(false);
       setOfficialExchangeRateValue("");
+      setOfficialExchangeRateRawValue("");
+      setOfficialExchangeRateDate("");
+      setOfficialExchangeRateSource("");
 
       try {
         const response = await getExchangeRate(
@@ -323,6 +360,9 @@ export const useExpenseSheetDetailState = ({
         if (isCancelled) return;
 
         if (!response.Success || !response.Data || !Number.isFinite(Number(response.Data.Rate))) {
+          setOfficialExchangeRateRawValue("");
+          setOfficialExchangeRateDate("");
+          setOfficialExchangeRateSource("");
           setExchangeRateMessage(
             safeText(response.Message) || indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio.")
           );
@@ -335,10 +375,13 @@ export const useExpenseSheetDetailState = ({
         const nextExchangeRateValue = formatExchangeRateInputValue(officialRateForAmount100);
         const officialRateRawValue = formatExchangeRateInputValue(officialRateRaw);
         setOfficialExchangeRateValue(nextExchangeRateValue);
+        setOfficialExchangeRateRawValue(officialRateRawValue);
         setDraftExchangeRate(nextExchangeRateValue);
 
         const effectiveRateDate = safeText(response.Data.Date) || formExchangeDate;
         const source = safeText(response.Data.Source);
+        setOfficialExchangeRateDate(effectiveRateDate);
+        setOfficialExchangeRateSource(source);
         const officialLabel = getExpenseExchangeRateModeLabel(0) || indT("ExpenseSheets_Filter_ExchangeRateMode_Official", "T.C. Oficial");
         const localizedRateDate = formatExpenseDisplayDate(effectiveRateDate, uiLocale) || effectiveRateDate;
         const exchangeRateInfoMessage = source ? `${officialLabel} ${localizedRateDate} (${source})` : `${officialLabel} ${localizedRateDate}`;
@@ -351,6 +394,9 @@ export const useExpenseSheetDetailState = ({
         if (error instanceof ApiFetchError) {
           if (error.status === 404) {
             setOfficialExchangeRateValue("");
+            setOfficialExchangeRateRawValue("");
+            setOfficialExchangeRateDate("");
+            setOfficialExchangeRateSource("");
             setExchangeRateMessage(indT("ExpenseSheets_ExchangeRate_NotFound", "No hay tipo de cambio para la fecha"));
             setExchangeRateMessageIsError(true);
             return;
@@ -358,6 +404,9 @@ export const useExpenseSheetDetailState = ({
 
           if (error.status === 422 || error.status === 500) {
             setOfficialExchangeRateValue("");
+            setOfficialExchangeRateRawValue("");
+            setOfficialExchangeRateDate("");
+            setOfficialExchangeRateSource("");
             setExchangeRateMessage(
               safeText(error.message) || indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio.")
             );
@@ -366,6 +415,9 @@ export const useExpenseSheetDetailState = ({
           }
 
           setOfficialExchangeRateValue("");
+          setOfficialExchangeRateRawValue("");
+          setOfficialExchangeRateDate("");
+          setOfficialExchangeRateSource("");
           setExchangeRateMessage(
             safeText(error.message) || indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio.")
           );
@@ -374,6 +426,9 @@ export const useExpenseSheetDetailState = ({
         }
 
         setOfficialExchangeRateValue("");
+        setOfficialExchangeRateRawValue("");
+        setOfficialExchangeRateDate("");
+        setOfficialExchangeRateSource("");
         setExchangeRateMessage(indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio."));
         setExchangeRateMessageIsError(true);
       } finally {
@@ -399,7 +454,7 @@ export const useExpenseSheetDetailState = ({
   ]);
 
   const handleEnableEdit = useCallback(() => {
-    if (isCreateMode || isLoading || !header || isSheetPaid) {
+    if (isCreateMode || isLoading || !header || isSheetLocked) {
       return;
     }
 
@@ -412,7 +467,7 @@ export const useExpenseSheetDetailState = ({
     setIsEditing(true);
     hydrateDraftFromHeader(header);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditExpense, header, hydrateDraftFromHeader, isCreateMode, isLoading, isSheetPaid, onForbidden]);
+  }, [canEditExpense, header, hydrateDraftFromHeader, isCreateMode, isLoading, isSheetLocked, onForbidden]);
 
   const handleCancelEdit = useCallback(() => {
     if (isCreateMode) {
@@ -448,7 +503,7 @@ export const useExpenseSheetDetailState = ({
 
   // Opens expense line create mode from an existing expense sheet detail.
   const handleOpenCreateLineMode = useCallback(() => {
-    if (!canCreateExpense || !sheetId) {
+    if (!canCreateExpense || !sheetId || isSheetLocked) {
       onForbidden();
       return;
     }
@@ -461,7 +516,7 @@ export const useExpenseSheetDetailState = ({
     navigateToExpenseUrl(targetUrl, {
       askConfirmation: isEditing,
     });
-  }, [canCreateExpense, isCreateMode, isEditing, onForbidden, sheetId]);
+  }, [canCreateExpense, isCreateMode, isEditing, isSheetLocked, onForbidden, sheetId]);
 
   const navigateToCreatedSheet = useCallback((createdSheetId: string) => {
     const safeCreatedSheetId = safeText(createdSheetId);
@@ -501,13 +556,18 @@ export const useExpenseSheetDetailState = ({
     draftCurrencyCode,
     draftExchangeRate,
     draftExpenseSheetStatus,
+    draftEstadoComentarios,
     officialExchangeRateValue,
+    officialExchangeRateRawValue,
+    officialExchangeRateDate,
+    officialExchangeRateSource,
     isExchangeRateLoading,
     exchangeRateMessage,
     exchangeRateMessageIsError,
     projectValue,
     voucherValue,
     isSheetPaid,
+    isSheetLocked,
     exchangeRateValue,
     showExchangeRate,
     normalizedDraftCurrency,
@@ -527,6 +587,7 @@ export const useExpenseSheetDetailState = ({
     setDraftCurrencyCode,
     setDraftExchangeRate,
     setDraftExpenseSheetStatus,
+    setDraftEstadoComentarios,
     handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateSheetMode,

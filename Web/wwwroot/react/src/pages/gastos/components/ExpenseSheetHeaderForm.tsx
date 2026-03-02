@@ -1,13 +1,16 @@
 import React from "react";
-import { indT } from "../../../utils/indI18n.ts";
+import { indFormat, indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetHeader } from "../expenseTypes.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 import ExpenseCurrencyFlagIcon from "./ExpenseCurrencyFlagIcon.tsx";
+import InfoPopoverIconButton from "../../../components/commons/InfoPopoverIconButton.tsx";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { getExpenseSheetStatusOptions, getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
+import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 
 type ExpenseSheetHeaderFormProps = {
   isCreateMode: boolean;
@@ -32,14 +35,16 @@ type ExpenseSheetHeaderFormProps = {
   draftCurrencyCode: string;
   draftExchangeRate: string;
   draftExpenseSheetStatus: number;
-  isExchangeRateLoading: boolean;
-  exchangeRateMessage: string;
-  exchangeRateMessageIsError: boolean;
+  draftEstadoComentarios: string;
+  officialExchangeRateRawValue: string;
+  officialExchangeRateDate: string;
+  officialExchangeRateSource: string;
   onDraftDescriptionChange: (value: string) => void;
   onDraftProjectIdChange: (value: string) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
   onDraftExpenseSheetStatusChange: (value: number) => void;
+  onDraftEstadoComentariosChange: (value: string) => void;
 };
 
 // Pure presentational header form for expense sheet detail/create screens.
@@ -66,14 +71,16 @@ const ExpenseSheetHeaderForm = ({
   draftCurrencyCode,
   draftExchangeRate,
   draftExpenseSheetStatus,
-  isExchangeRateLoading,
-  exchangeRateMessage,
-  exchangeRateMessageIsError,
+  draftEstadoComentarios,
+  officialExchangeRateRawValue,
+  officialExchangeRateDate,
+  officialExchangeRateSource,
   onDraftDescriptionChange,
   onDraftProjectIdChange,
   onDraftCurrencyCodeChange,
   onDraftExchangeRateChange,
   onDraftExpenseSheetStatusChange,
+  onDraftEstadoComentariosChange,
 }: ExpenseSheetHeaderFormProps) => {
   const isForeignCurrency =
     isEditing && canEditHeaderFields && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
@@ -88,6 +95,38 @@ const ExpenseSheetHeaderForm = ({
   const baseCurrencyCode = safeText(exchangeRateBaseCurrency).toUpperCase();
   const statusOptions = React.useMemo(() => getExpenseSheetStatusOptions(), []);
   const statusDraftValue = String(Number.isInteger(draftExpenseSheetStatus) ? draftExpenseSheetStatus : 0);
+  const statusCommentValue = safeText(header.estadoComentarios);
+  const showStatusCommentField = !isCreateMode && ((isEditing && canEditStatus) || !!statusCommentValue);
+  const localCurrencyOptions = React.useMemo<ExpenseSelectOption[]>(
+    () => [
+      {
+        value: baseCurrencyCode,
+        text: baseCurrencyCode,
+        icon: <ExpenseCurrencyFlagIcon currencyCode={baseCurrencyCode} sizeClassName="h-6 w-6" />,
+      },
+    ],
+    [baseCurrencyCode]
+  );
+  const headerCurrencyOptions = React.useMemo<ExpenseSelectOption[]>(
+    () => [
+      {
+        value: headerCurrencyCode || "-",
+        text: headerCurrencyCode || "-",
+        icon: <ExpenseCurrencyFlagIcon currencyCode={headerCurrencyCode || "-"} sizeClassName="h-6 w-6" />,
+      },
+    ],
+    [headerCurrencyCode]
+  );
+  const exchangeRateInfoValue = safeText(officialExchangeRateRawValue) || "0.0000000";
+  const exchangeRateInfoDate = safeText(officialExchangeRateDate) || indT("Common_NotAvailable", "N/A");
+  const exchangeRateInfoSource = safeText(officialExchangeRateSource) || indT("Common_NotAvailable", "N/A");
+  const exchangeRateInfoMessage = indFormat(
+    "ExpenseSheets_ExchangeRate_InfoPopover_Detail",
+    "Tipo de cambio obtenido {0}\nFecha: {1}\nOrigen: {2}",
+    exchangeRateInfoValue,
+    exchangeRateInfoDate,
+    exchangeRateInfoSource
+  );
 
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
@@ -118,6 +157,26 @@ const ExpenseSheetHeaderForm = ({
             />
           ) : (
             <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} />
+          )
+        ) : null}
+        {showStatusCommentField ? (
+          isEditing && canEditStatus ? (
+            <div className="md:col-span-2 space-y-1.5">
+              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_StatusComment", "Status comment")}</label>
+              <textarea
+                className="form-control resize-none"
+                rows={3}
+                value={draftEstadoComentarios}
+                onChange={(event) => onDraftEstadoComentariosChange(event.target.value || "")}
+                aria-label={indT("ExpenseSheets_Field_StatusComment", "Status comment")}
+              />
+            </div>
+          ) : (
+            <ExpenseReadOnlyField
+              label={indT("ExpenseSheets_Field_StatusComment", "Status comment")}
+              value={statusCommentValue || "-"}
+              fullWidth
+            />
           )
         ) : null}
         {isEditing && canEditHeaderFields ? (
@@ -155,60 +214,101 @@ const ExpenseSheetHeaderForm = ({
         {isEditing && canEditHeaderFields ? (
           <div className="sm:col-span-2 space-y-3">
             <div className={`grid gap-4 ${isForeignCurrency ? "grid-cols-2" : "grid-cols-1"}`.trim()}>
-              <ExpenseCurrencyFilterSelect
-                label={expenseCurrencyLabel}
-                placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
-                value={draftCurrencyCode}
-                onChange={onDraftCurrencyCodeChange}
-                disabled={!isEditing || isCurrencyLockedByLines}
-                readOnly={!isEditing || isCurrencyLockedByLines}
-                idBase="expense-header-currency"
-                preferDefaultCurrencyFromContext={isCreateMode}
-              />
-
               {isForeignCurrency ? (
-                <div className="space-y-1.5">
-                  <label className="form-label font-semibold">{indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}</label>
-                  <input
-                    className={`form-control ${exchangeRateValidationMessage ? "border-danger ring-1 ring-danger" : ""} ${isExchangeRateLockedByLines ? "ind-readonly-field" : ""}`}
-                    type="number"
-                    step="any"
-                    inputMode="decimal"
-                    value={draftExchangeRate}
-                    onChange={(event) => onDraftExchangeRateChange(event.target.value || "")}
-                    aria-label={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}
-                    placeholder={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}
-                    readOnly={isExchangeRateLockedByLines}
-                    disabled={isExchangeRateLockedByLines}
-                  />
-                </div>
-              ) : null}
+                <>
+                  <div className="space-y-1.5">
+                    <label className="form-label font-semibold">{expenseCurrencyLabel}</label>
+                    <ExpenseCurrencyFilterSelect
+                      label={expenseCurrencyLabel}
+                      placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
+                      value={draftCurrencyCode}
+                      onChange={onDraftCurrencyCodeChange}
+                      disabled={!isEditing || isCurrencyLockedByLines}
+                      readOnly={!isEditing || isCurrencyLockedByLines}
+                      showLabel={false}
+                      idBase="expense-header-currency"
+                      preferDefaultCurrencyFromContext={isCreateMode}
+                    />
+                  </div>
+                  <div className="relative space-y-1.5">
+                    <label className="form-label pr-8 font-semibold">{indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}</label>
+                    <InfoPopoverIconButton
+                      ariaLabel={indT("ExpenseSheets_ExchangeRate_InfoPopover_Aria", "Show exchange rate information")}
+                      content={exchangeRateInfoMessage}
+                      className="absolute right-0 -top-1 z-20"
+                    />
+                    <div>
+                      <input
+                        className={`form-control ${exchangeRateValidationMessage ? "border-danger ring-1 ring-danger" : ""} ${isExchangeRateLockedByLines ? "ind-readonly-field" : ""}`}
+                        type="text"
+                        inputMode="decimal"
+                        value={draftExchangeRate}
+                        onChange={(event) => onDraftExchangeRateChange(event.target.value || "")}
+                        onBlur={(event) =>
+                          onDraftExchangeRateChange(
+                            formatExpenseInputNumber(event.target.value, {
+                              minimumFractionDigits: 7,
+                              maximumFractionDigits: 7,
+                              useGrouping: true,
+                              fallback: "",
+                            })
+                          )
+                        }
+                        aria-label={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}
+                        placeholder={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}
+                        readOnly={isExchangeRateLockedByLines}
+                        disabled={isExchangeRateLockedByLines}
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <ExpenseCurrencyFilterSelect
+                  label={expenseCurrencyLabel}
+                  placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
+                  value={draftCurrencyCode}
+                  onChange={onDraftCurrencyCodeChange}
+                  disabled={!isEditing || isCurrencyLockedByLines}
+                  readOnly={!isEditing || isCurrencyLockedByLines}
+                  idBase="expense-header-currency"
+                  preferDefaultCurrencyFromContext={isCreateMode}
+                />
+              )}
             </div>
 
             {isForeignCurrency ? (
               <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="form-label font-semibold">{indT("ExpenseSheets_Field_LocalCurrency", "Local currency")}</label>
-                  <div className="relative">
-                    <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3 text-slate-500">
-                      <span className="inline-flex h-4 w-4 items-center justify-center">
-                        <ExpenseCurrencyFlagIcon currencyCode={baseCurrencyCode} />
-                      </span>
-                    </span>
-                    <input
-                      className="form-control ind-readonly-field pl-9"
-                      value={exchangeRateBaseCurrency}
-                      aria-label={indT("ExpenseSheets_Field_LocalCurrency", "Local currency")}
-                      readOnly
-                      disabled
-                    />
-                  </div>
-                </div>
+                <SelectCombobox
+                  label={indT("ExpenseSheets_Field_LocalCurrency", "Local currency")}
+                  options={localCurrencyOptions}
+                  value={baseCurrencyCode}
+                  onChange={() => undefined}
+                  placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
+                  readOnly
+                  disabled
+                  allowTextInput={false}
+                  showSearchButton={false}
+                  showLabel
+                  usePortal={false}
+                  selectedTextMode="value"
+                  dropdownMaxHeightClass="max-h-96"
+                  selectedIconClassName="h-6 w-6"
+                  optionIconClassName="h-6 w-6"
+                  selectedInputPaddingClassName="pl-12"
+                  idBase="expense-header-local-currency"
+                  portalClassName="visitas-typography"
+                  panelClassName="visitas-typography"
+                />
                 <div className="space-y-1.5">
                   <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Amount", "Amount")}</label>
                   <input
                     className="form-control ind-readonly-field"
-                    value={String(exchangeRateReferenceAmount)}
+                    value={formatExpenseNumber(exchangeRateReferenceAmount, {
+                      minimumFractionDigits: 7,
+                      maximumFractionDigits: 7,
+                      useGrouping: true,
+                      fallback: "-",
+                    })}
                     aria-label={indT("ExpenseSheets_Field_Amount", "Amount")}
                     readOnly
                     disabled
@@ -217,19 +317,29 @@ const ExpenseSheetHeaderForm = ({
               </div>
             ) : null}
 
-            {isForeignCurrency && isExchangeRateLoading ? (
-              <p className="text-slate-500 text-xs">{indT("ExpenseSheets_ExchangeRate_Loading", "Consultando tipo de cambio...")}</p>
-            ) : null}
             {isForeignCurrency && exchangeRateValidationMessage ? <p className="text-danger text-sm">{exchangeRateValidationMessage}</p> : null}
-            {isForeignCurrency && !isExchangeRateLoading && exchangeRateMessage ? (
-              <p className={exchangeRateMessageIsError ? "text-danger text-sm" : "text-slate-500 text-xs"}>{exchangeRateMessage}</p>
-            ) : null}
           </div>
         ) : (
-          <ExpenseReadOnlyField
+          <SelectCombobox
             label={indT("ExpenseSheets_Field_Currency", "Currency")}
-            value={safeText(header.currencyCode) || "-"}
-            leadingIcon={<ExpenseCurrencyFlagIcon currencyCode={headerCurrencyCode} />}
+            options={headerCurrencyOptions}
+            value={headerCurrencyCode || "-"}
+            onChange={() => undefined}
+            placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
+            readOnly
+            disabled
+            allowTextInput={false}
+            showSearchButton={false}
+            showLabel
+            usePortal={false}
+            selectedTextMode="value"
+            dropdownMaxHeightClass="max-h-96"
+            selectedIconClassName="h-6 w-6"
+            optionIconClassName="h-6 w-6"
+            selectedInputPaddingClassName="pl-12"
+            idBase="expense-header-currency-readonly"
+            portalClassName="visitas-typography"
+            panelClassName="visitas-typography"
           />
         )}
         {!isEditing && showExchangeRate ? (

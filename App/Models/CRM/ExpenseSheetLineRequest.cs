@@ -17,6 +17,10 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("internacional")]
         public bool Internacional { get; set; }
 
+        [JsonPropertyName("fileId")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? FileId { get; set; }
+
         [JsonPropertyName("ticket")]
         public bool Ticket { get; set; }
 

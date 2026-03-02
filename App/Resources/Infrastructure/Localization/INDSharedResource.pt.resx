@@ -1,397 +1,1118 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
-  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
-  <resheader name="version"><value>2.0</value></resheader>
-  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
-
-  <data name="Common_Save" xml:space="preserve"><value>Manter</value></data>
-  <data name="Common_Edit" xml:space="preserve"><value>Editar</value></data>
-  <data name="Common_Cancel" xml:space="preserve"><value>Cancelar</value></data>
-  <data name="Common_Close" xml:space="preserve"><value>Fechar</value></data>
-  <data name="Common_Back" xml:space="preserve"><value>Voltar</value></data>
-  <data name="Common_Delete" xml:space="preserve"><value>Eliminar</value></data>
-  <data name="Common_Search" xml:space="preserve"><value>Pesquisar</value></data>
-  <data name="Common_ClearFilters" xml:space="preserve"><value>Limpar filtros</value></data>
-  <data name="Common_Loading" xml:space="preserve"><value>A carregar</value></data>
-  <data name="Common_NoData" xml:space="preserve"><value>Sem dados</value></data>
-  <data name="Common_User" xml:space="preserve"><value>Usuário</value></data>
-  <data name="Common_Unknown" xml:space="preserve"><value>Desconhecido</value></data>
-  <data name="Common_NotAvailable" xml:space="preserve"><value>N/D</value></data>
-  <data name="Common_AppLogoAlt" xml:space="preserve"><value>Logotipo da Insertec</value></data>
-
-  <data name="Nav_Visits" xml:space="preserve"><value>Visitas</value></data>
-  <data name="Nav_Visits_Create" xml:space="preserve"><value>Criar</value></data>
-  <data name="Nav_Visits_History" xml:space="preserve"><value>Historico</value></data>
-  <data name="Nav_Expenses" xml:space="preserve"><value>Despesas</value></data>
-  <data name="Nav_ExpenseSheets" xml:space="preserve"><value>Folhas de despesa</value></data>
-  <data name="ExpenseSheets_Title" xml:space="preserve"><value>planilhas de despesas</value></data>
-  <data name="ExpenseSheets_Detail_Title" xml:space="preserve"><value>Folha de despesas detalhada</value></data>
-  <data name="ExpenseSheets_Line_Title" xml:space="preserve"><value>Detalhe da linha</value></data>
-  <data name="ExpenseSheets_Header" xml:space="preserve"><value>Cabeça</value></data>
-  <data name="ExpenseSheets_Lines" xml:space="preserve"><value>Linhas</value></data>
-  <data name="ExpenseSheets_NoLines" xml:space="preserve"><value>Sem linhas de despesas.</value></data>
-  <data name="ExpenseSheets_LoadError" xml:space="preserve"><value>Não foi possível carregar as planilhas de despesas.</value></data>
-  <data name="ExpenseSheets_NotFound" xml:space="preserve"><value>A planilha de despesas não foi encontrada.</value></data>
-  <data name="ExpenseSheets_Detail_SaveChanges_Title" xml:space="preserve"><value>Salvar alterações</value></data>
-  <data name="ExpenseSheets_Detail_SaveChanges_Body" xml:space="preserve"><value>Deseja salvar as alterações na planilha de despesas?</value></data>
-  <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve"><value>Excluir planilha de despesas</value></data>
-  <data name="ExpenseSheets_Detail_DeleteSheet_Body" xml:space="preserve"><value>Deseja excluir esta planilha de despesas?</value></data>
-  <data name="ExpenseSheets_Detail_EditingEnabled" xml:space="preserve"><value>Edição ativada</value></data>
-  <data name="ExpenseSheets_Detail_Updating" xml:space="preserve"><value>Atualizando planilha de despesas...</value></data>
-  <data name="ExpenseSheets_Detail_Updated" xml:space="preserve"><value>Planilha de despesas atualizada</value></data>
-  <data name="ExpenseSheets_Detail_UpdateFailed" xml:space="preserve"><value>A planilha de despesas não pôde ser atualizada.</value></data>
-  <data name="ExpenseSheets_Detail_UpdateError" xml:space="preserve"><value>Erro ao atualizar a planilha de despesas.</value></data>
-  <data name="ExpenseSheets_Detail_Deleting" xml:space="preserve"><value>Excluindo planilha de despesas...</value></data>
-  <data name="ExpenseSheets_Detail_Deleted" xml:space="preserve"><value>Planilha de despesas excluída</value></data>
-  <data name="ExpenseSheets_Detail_DeleteFailed" xml:space="preserve"><value>A planilha de despesas não pôde ser excluída.</value></data>
-  <data name="ExpenseSheets_Detail_DeleteError" xml:space="preserve"><value>Erro ao excluir planilha de despesas.</value></data>
-  <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve"><value>Atualizando linha de despesas...</value></data>
-  <data name="ExpenseSheets_Line_Detail_Updated" xml:space="preserve"><value>Linha de despesas atualizada</value></data>
-  <data name="ExpenseSheets_Line_Detail_Deleting" xml:space="preserve"><value>Eliminando linha de despesas...</value></data>
-  <data name="ExpenseSheets_Line_Detail_Deleted" xml:space="preserve"><value>Linha de despesas eliminada</value></data>
-  <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve"><value>A quantidade e o preco devem ser maiores que 0.</value></data>
-  <data name="ExpenseSheets_Filter_Project" xml:space="preserve"><value>Projeto</value></data>
-  <data name="ExpenseSheets_Filter_Sheet" xml:space="preserve"><value>planilha de despesas</value></data>
-  <data name="ExpenseSheets_Filter_Currency" xml:space="preserve"><value>Dividir</value></data>
-  <data name="ExpenseSheets_Filter_Status" xml:space="preserve"><value>Estado</value></data>
-  <data name="ExpenseSheets_Filter_Project_Placeholder" xml:space="preserve"><value>ID do projeto</value></data>
-  <data name="ExpenseSheets_Filter_Sheet_Placeholder" xml:space="preserve"><value>ID da folha</value></data>
-  <data name="ExpenseSheets_Filter_Currency_Placeholder" xml:space="preserve"><value>Código da moeda</value></data>
-  <data name="ExpenseSheets_Filter_Status_Placeholder" xml:space="preserve"><value>Estado</value></data>
-  <data name="ExpenseSheets_Filter_Status_Unbilled" xml:space="preserve"><value>Nao pago</value></data>
-  <data name="ExpenseSheets_Filter_Status_Billed" xml:space="preserve"><value>Pago</value></data>
-  <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve"><value>Ambos</value></data>
-  <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve"><value>Rascunho</value></data>
-  <data name="ExpenseSheets_Filter_Status_InReview" xml:space="preserve"><value>Em revisao</value></data>
-  <data name="ExpenseSheets_Filter_Status_Approved" xml:space="preserve"><value>Aprovado</value></data>
-  <data name="ExpenseSheets_Filter_Status_Rejected" xml:space="preserve"><value>Rejeitado</value></data>
-  <data name="ExpenseSheets_Filter_Status_Paid" xml:space="preserve"><value>Pago</value></data>
-  <data name="ExpenseSheets_Filter_Status_All" xml:space="preserve"><value>Todos</value></data>
-  <data name="ExpenseSheets_Filter_ExchangeRateMode" xml:space="preserve"><value>Modo registro TC</value></data>
-  <data name="ExpenseSheets_Filter_ExchangeRateMode_Placeholder" xml:space="preserve"><value>Modo registro TC</value></data>
-  <data name="ExpenseSheets_Filter_ExchangeRateMode_Official" xml:space="preserve"><value>TC. Oficial</value></data>
-  <data name="ExpenseSheets_Filter_ExchangeRateMode_Manual" xml:space="preserve"><value>TC. Manual</value></data>
-  <data name="ExpenseSheets_Field_SheetId" xml:space="preserve"><value>Código da planilha de despesas</value></data>
-  <data name="ExpenseSheets_Field_UserId" xml:space="preserve"><value>Usuário</value></data>
-  <data name="ExpenseSheets_Field_Project" xml:space="preserve"><value>Projeto</value></data>
-  <data name="ExpenseSheets_Field_Voucher" xml:space="preserve"><value>Voucher</value></data>
-  <data name="ExpenseSheets_Field_Currency" xml:space="preserve"><value>Dividir</value></data>
-  <data name="ExpenseSheets_Field_ExpenseCurrency" xml:space="preserve"><value>Moeda de despesas</value></data>
-  <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve"><value>Divisa local</value></data>
-  <data name="ExpenseSheets_Field_Status" xml:space="preserve"><value>Estado</value></data>
-  <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve"><value>Montante total</value></data>
-  <data name="ExpenseSheets_Field_Description" xml:space="preserve"><value>Descrição</value></data>
-  <data name="ExpenseSheets_Field_CreatedDate" xml:space="preserve"><value>Data</value></data>
-  <data name="ExpenseSheets_Field_ExchangeRate" xml:space="preserve"><value>Taxa de câmbio</value></data>
-  <data name="ExpenseSheets_Field_LineId" xml:space="preserve"><value>ID da linha</value></data>
-  <data name="ExpenseSheets_Field_Type" xml:space="preserve"><value>Tipo</value></data>
-  <data name="ExpenseSheets_Field_Amount" xml:space="preserve"><value>Importado</value></data>
-  <data name="ExpenseSheets_Field_Price" xml:space="preserve"><value>Preco</value></data>
-  <data name="ExpenseSheets_Field_Qty" xml:space="preserve"><value>Quantia</value></data>
-  <data name="ExpenseSheets_Field_TransDate" xml:space="preserve"><value>Data</value></data>
-  <data name="ExpenseSheets_Field_International" xml:space="preserve"><value>Internacional</value></data>
-  <data name="ExpenseSheets_International_Yes" xml:space="preserve"><value>E</value></data>
-  <data name="ExpenseSheets_International_No" xml:space="preserve"><value>Não</value></data>
-  <data name="ExpenseSheets_Validation_ExchangeRateRequired" xml:space="preserve"><value>Taxa de câmbio obrigatória para moeda diferente de EUR.</value></data>
-  <data name="ExpenseSheets_Field_Ticket" xml:space="preserve"><value>Bilhete</value></data>
-  <data name="ExpenseSheets_Field_Attachments" xml:space="preserve"><value>Anexos</value></data>
-  <data name="ExpenseSheets_Field_LineCount" xml:space="preserve"><value>Linhas</value></data>
-
-  <data name="Visits_Create_Title" xml:space="preserve"><value>Criação</value></data>
-  <data name="Visits_Detail_Title" xml:space="preserve"><value>Detalhe</value></data>
-  <data name="Visits_History_Title" xml:space="preserve"><value>Histórico</value></data>
-
-  <data name="UserMenu_ConnectedAs" xml:space="preserve"><value>Conectado como</value></data>
-  <data name="UserMenu_Companies" xml:space="preserve"><value>Empresas</value></data>
-  <data name="UserMenu_Languages" xml:space="preserve"><value>Idiomas</value></data>
-  <data name="UserMenu_Logout" xml:space="preserve"><value>Terminar sessao</value></data>
-
-  <data name="Language_ES" xml:space="preserve"><value>ES</value></data>
-  <data name="Language_EU" xml:space="preserve"><value>EU</value></data>
-  <data name="Language_EN" xml:space="preserve"><value>EN</value></data>
-  <data name="Language_PT" xml:space="preserve"><value>PT</value></data>
-  <data name="Language_IT" xml:space="preserve"><value>IT</value></data>
-  <data name="Language_ZH" xml:space="preserve"><value>ZH</value></data>
-  <data name="Language_ES_Name" xml:space="preserve"><value>Español</value></data>
-  <data name="Language_EU_Name" xml:space="preserve"><value>Euskara</value></data>
-  <data name="Language_EN_Name" xml:space="preserve"><value>English</value></data>
-  <data name="Language_PT_Name" xml:space="preserve"><value>Português</value></data>
-  <data name="Language_IT_Name" xml:space="preserve"><value>Italiano</value></data>
-  <data name="Language_ZH_Name" xml:space="preserve"><value>中文</value></data>
-
-  <data name="Login_Title" xml:space="preserve"><value>Iniciar sessao</value></data>
-  <data name="Login_Welcome" xml:space="preserve"><value>Bem-vindo</value></data>
-  <data name="Login_Subtitle" xml:space="preserve"><value>Insira as suas credenciais para continuar</value></data>
-  <data name="Login_Username" xml:space="preserve"><value>Usuário</value></data>
-  <data name="Login_Password" xml:space="preserve"><value>Senha</value></data>
-  <data name="Login_RememberMe" xml:space="preserve"><value>Lembrar-me</value></data>
-  <data name="Login_Submit" xml:space="preserve"><value>Iniciar sessao</value></data>
-  <data name="Login_TogglePassword" xml:space="preserve"><value>Mostrar ou ocultar senha</value></data>
-  <data name="Login_SignInMicrosoft" xml:space="preserve"><value>Entrar com Microsoft</value></data>
-  <data name="Login_SystemVersion" xml:space="preserve"><value>Sistemas em{0}</value></data>
-  <data name="Login_Secure" xml:space="preserve"><value>Seguro</value></data>
-  <data name="Login_Copyright" xml:space="preserve"><value>Copyright (c) {0} Insertec. Todos os direitos reservados.</value></data>
-  <data name="Auth_InvalidCredentials" xml:space="preserve"><value>Credenciais invalidas.</value></data>
-  <data name="Auth_LoginApiError" xml:space="preserve"><value>Falha ao iniciar sessao devido a erro de API.</value></data>
-  <data name="Auth_AccessDenied" xml:space="preserve"><value>Acesso negado: {0}</value></data>
-  <data name="Auth_LoginRequired" xml:space="preserve"><value>Tem de iniciar sessao para continuar.</value></data>
-  <data name="Auth_PermissionDenied_Title" xml:space="preserve"><value>Acesso negado</value></data>
-  <data name="Auth_PermissionDenied_Body" xml:space="preserve"><value>Voce nao tem permissao para realizar esta acao.</value></data>
-  <data name="Topbar_OpenMenu" xml:space="preserve"><value>Abrir menu</value></data>
-  <data name="Topbar_Back" xml:space="preserve"><value>Voltar</value></data>
-  <data name="Topbar_Forward" xml:space="preserve"><value>Avancar</value></data>
-  <data name="Topbar_EditSave" xml:space="preserve"><value>Editar/Guardar</value></data>
-  <data name="Topbar_Delete" xml:space="preserve"><value>Eliminar</value></data>
-
-  <data name="History_From" xml:space="preserve"><value>De</value></data>
-  <data name="History_To" xml:space="preserve"><value>Ate</value></data>
-  <data name="History_Filter_Date" xml:space="preserve"><value>Data</value></data>
-  <data name="History_Filter_Client" xml:space="preserve"><value>Cliente</value></data>
-  <data name="History_Filter_Clear" xml:space="preserve"><value>Limpar</value></data>
-  <data name="History_Filter_Apply" xml:space="preserve"><value>Aplicar</value></data>
-  <data name="History_Filter_Toggle" xml:space="preserve"><value>Filtrar</value></data>
-  <data name="History_Filter_Refresh" xml:space="preserve"><value>Atualizar</value></data>
-  <data name="History_Quick_Custom" xml:space="preserve"><value>Data</value></data>
-  <data name="History_Quick_7Days" xml:space="preserve"><value>7 dias</value></data>
-  <data name="History_Quick_30Days" xml:space="preserve"><value>30 dias</value></data>
-  <data name="History_Quick_90Days" xml:space="preserve"><value>90 dias</value></data>
-  <data name="History_Quick_ThisWeek" xml:space="preserve"><value>Essa semana</value></data>
-  <data name="History_Quick_LastWeek" xml:space="preserve"><value>Semana passada</value></data>
-  <data name="History_Quick_ThisMonth" xml:space="preserve"><value>Este mês</value></data>
-  <data name="History_Quick_LastMonth" xml:space="preserve"><value>Mes passado</value></data>
-  <data name="History_AddDate" xml:space="preserve"><value>Adicionar data</value></data>
-  <data name="History_ClearRange" xml:space="preserve"><value>Limpar intervalo</value></data>
-  <data name="History_PrevMonth" xml:space="preserve"><value>Mês anterior</value></data>
-  <data name="History_NextMonth" xml:space="preserve"><value>Mes seguinte</value></data>
-  <data name="History_Day_Mon" xml:space="preserve"><value>Seg</value></data>
-  <data name="History_Day_Tue" xml:space="preserve"><value>Ter</value></data>
-  <data name="History_Day_Wed" xml:space="preserve"><value>Qua</value></data>
-  <data name="History_Day_Thu" xml:space="preserve"><value>Qui</value></data>
-  <data name="History_Day_Fri" xml:space="preserve"><value>Sex</value></data>
-  <data name="History_Day_Sat" xml:space="preserve"><value>Sab</value></data>
-  <data name="History_Day_Sun" xml:space="preserve"><value>Dom</value></data>
-  <data name="History_Status_SelectStart" xml:space="preserve"><value>Selecione a data de inicio</value></data>
-  <data name="History_Status_SelectEnd" xml:space="preserve"><value>Selecione a data de fim</value></data>
-  <data name="History_Loading" xml:space="preserve"><value>A carregar...</value></data>
-  <data name="History_NoDataInRange" xml:space="preserve"><value>Nao ha visitas neste intervalo</value></data>
-  <data name="History_Page_First" xml:space="preserve"><value>Primeira</value></data>
-  <data name="History_Page_Prev" xml:space="preserve"><value>Anterior</value></data>
-  <data name="History_Page_Next" xml:space="preserve"><value>Seguinte</value></data>
-  <data name="History_Page_Last" xml:space="preserve"><value>Ultima</value></data>
-
-  <data name="Common_OK" xml:space="preserve"><value>Aceitar</value></data>
-  <data name="Common_Next" xml:space="preserve"><value>Avancar</value></data>
-  <data name="Common_Create" xml:space="preserve"><value>Criar</value></data>
-
-  <data name="Api_SessionExpired" xml:space="preserve"><value>A sua sessao expirou.</value></data>
-  <data name="Api_TokenMissing" xml:space="preserve"><value>Nao foi encontrado o token na sessao.</value></data>
-  <data name="Api_MissingAccountNum" xml:space="preserve"><value>Falta contaNum.</value></data>
-  <data name="Api_MissingCode" xml:space="preserve"><value>Falta o codigo.</value></data>
-  <data name="Api_MissingAsistenteTipo" xml:space="preserve"><value>AssistantType ausente.</value></data>
-  <data name="Api_NoAsistentesToUpdate" xml:space="preserve"><value>Nao ha assistentes para atualizar.</value></data>
-  <data name="Api_AsistentesUpdateFailedCount" xml:space="preserve"><value>{0} assistente(s) falharam ao atualizar.</value></data>
-  <data name="Api_AsistentesUpdateFailed" xml:space="preserve"><value>{0} assistentes falharam ao atualizar.</value></data>
-  <data name="Api_AccountsFetchFailed" xml:space="preserve"><value>Nao foi possivel obter clientes. Refine a pesquisa e tente novamente.</value></data>
-  <data name="Api_RequestFailed" xml:space="preserve"><value>O pedido falhou. Tente novamente.</value></data>
-  <data name="Api_InvalidJson" xml:space="preserve"><value>Resposta invalida do servidor.</value></data>
-
-  <data name="Sidebar_CloseMenu" xml:space="preserve"><value>Fechar menu</value></data>
-  <data name="Home_Title" xml:space="preserve"><value>Começar</value></data>
-  <data name="Home_SelectLeftMenu" xml:space="preserve"><value>Selecione uma opcao do menu esquerdo.</value></data>
-  <data name="Home_Welcome" xml:space="preserve"><value>Bem-vindo</value></data>
-  <data name="Home_DataFromAx" xml:space="preserve"><value>Dados do Axapta 3.0</value></data>
-  <data name="Home_PrototypeVersion" xml:space="preserve"><value>Versao Prototipo 1.0</value></data>
-  <data name="Home_Environment" xml:space="preserve"><value>Ambiente</value></data>
-  <data name="Home_Company" xml:space="preserve"><value>Companhia</value></data>
-  <data name="NotFound_Title" xml:space="preserve"><value>Pagina nao encontrada</value></data>
-  <data name="NotFound_Subtitle" xml:space="preserve"><value>O endereco solicitado nao existe ou foi movido.</value></data>
-  <data name="NotFound_BackHome" xml:space="preserve"><value>Voltar ao inicio</value></data>
-  <data name="Error_BackHome" xml:space="preserve"><value>Voltar ao inicio</value></data>
-  <data name="Error_Title" xml:space="preserve"><value>Erro do sistema</value></data>
-  <data name="Error_Heading" xml:space="preserve"><value>Ocorreu um erro</value></data>
-  <data name="Error_Body" xml:space="preserve"><value>Ocorreu um problema ao processar o seu pedido. Se o problema persistir, contacte o administrador do sistema.</value></data>
-
-  <data name="DatePicker_SelectDate" xml:space="preserve"><value>Selecione a data</value></data>
-
-  <data name="Visits_Create_SearchClient" xml:space="preserve"><value>Pesquisar cliente</value></data>
-  <data name="Visits_Create_SearchContact" xml:space="preserve"><value>Pesquisar contacto (selecao multipla)</value></data>
-  <data name="Visits_Create_SelectClientRequired" xml:space="preserve"><value>Selecione um cliente.</value></data>
-  <data name="Visits_Create_SelectContactRequired" xml:space="preserve"><value>Selecione pelo menos um contacto.</value></data>
-  <data name="Visits_Create_CompleteRequired" xml:space="preserve"><value>Preencha os campos obrigatorios.</value></data>
-  <data name="Visits_Create_LoadingContacts" xml:space="preserve"><value>A carregar contactos...</value></data>
-  <data name="Visits_Create_ConfirmCreate_Title" xml:space="preserve"><value>Confirmar criacao</value></data>
-  <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve"><value>Deseja criar esta visita?</value></data>
-  <data name="Visits_Create_CreatingVisitFor" xml:space="preserve"><value>A criar visita para {0}...</value></data>
-
-  <data name="Visits_Create_MinChars" xml:space="preserve"><value>Escreva pelo menos {0} caracteres.</value></data>
-  <data name="Visits_Create_PressSearchHint" xml:space="preserve"><value>Pressione a lupa, Enter ou a seta para pesquisar.</value></data>
-  <data name="Visits_Create_Searching" xml:space="preserve"><value>A pesquisar...</value></data>
-  <data name="Visits_Create_SearchCanceled" xml:space="preserve"><value>Pesquisa cancelada.</value></data>
-  <data name="Visits_Create_SearchTimeout" xml:space="preserve"><value>A pesquisa demorou demasiado. Escreva mais caracteres para filtrar.</value></data>
-  <data name="Visits_Create_LoadClientsError" xml:space="preserve"><value>Erro ao carregar clientes.</value></data>
-  <data name="Visits_Create_ClientPlaceholder" xml:space="preserve"><value>Escreva pelo menos {0} caracteres...</value></data>
-  <data name="Visits_Create_NoResults" xml:space="preserve"><value>Sem resultados.</value></data>
-  <data name="Visits_Create_NoMatches" xml:space="preserve"><value>Sem correspondencias.</value></data>
-  <data name="Visits_Create_ShowClientOptions" xml:space="preserve"><value>Mostrar opcoes de cliente</value></data>
-  <data name="Visits_Create_HideClientOptions" xml:space="preserve"><value>Ocultar opcoes de cliente</value></data>
-  <data name="Visits_Create_SelectClientFirst" xml:space="preserve"><value>Selecione um cliente primeiro.</value></data>
-  <data name="Visits_Create_PressArrowToLoadContacts" xml:space="preserve"><value>Pressione a seta para carregar contactos.</value></data>
-  <data name="Visits_Create_LoadContactsError" xml:space="preserve"><value>Erro ao carregar contactos.</value></data>
-  <data name="Visits_Create_NoContacts" xml:space="preserve"><value>Sem contactos.</value></data>
-  <data name="Visits_Create_NoMoreContacts" xml:space="preserve"><value>Nao ha mais contactos disponiveis.</value></data>
-  <data name="Visits_Create_FilterPlaceholder" xml:space="preserve"><value>Escreva para filtrar...</value></data>
-  <data name="Visits_Create_CreatingActivity" xml:space="preserve"><value>A criar atividade...</value></data>
-  <data name="Visits_Create_CreateActivityFailed" xml:space="preserve"><value>Falha ao criar a atividade.</value></data>
-  <data name="Visits_Create_CreateVisitFailed" xml:space="preserve"><value>Falha ao criar a visita.</value></data>
-  <data name="Visits_Create_CreateVisitError" xml:space="preserve"><value>Erro ao criar a visita.</value></data>
-  <data name="Visits_Create_ClientCount" xml:space="preserve"><value>{0} cliente(s)</value></data>
-  <data name="Visits_Create_ClientCountCache" xml:space="preserve"><value>{0} cliente(s) (cache)</value></data>
-  <data name="Visits_Create_ContactCount" xml:space="preserve"><value>{0} contato(s)</value></data>
-  <data name="Visits_Create_ContactCountCache" xml:space="preserve"><value>{0} contato(s) (cache)</value></data>
-  <data name="Visits_Create_SelectedContactsCount" xml:space="preserve"><value>{0} contacto(s) selecionado(s)</value></data>
-
-  <data name="Visits_Create_VisitData_Title" xml:space="preserve"><value>Dados da visita</value></data>
-  <data name="Visits_Field_Description" xml:space="preserve"><value>Descricao</value></data>
-  <data name="Visits_Field_Comments" xml:space="preserve"><value>Comentários</value></data>
-  <data name="Visits_Field_Background" xml:space="preserve"><value>Fundo</value></data>
-  <data name="Visits_Field_Conclusions" xml:space="preserve"><value>Conclusoes</value></data>
-  <data name="Visits_Create_ErrorBoundary" xml:space="preserve"><value>Ocorreu um erro ao mostrar a pagina de visitas. Recarregue e tente novamente.</value></data>
-
-  <data name="Visits_Detail_VisitData_Title" xml:space="preserve"><value>Dados da visita</value></data>
-  <data name="Visits_Detail_Date_Label" xml:space="preserve"><value>Data</value></data>
-  <data name="Visits_Detail_VisitType_Label" xml:space="preserve"><value>Tipo de visita</value></data>
-  <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve"><value>Selecione tipo</value></data>
-  <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve"><value>Guardar alteracoes</value></data>
-  <data name="Visits_Detail_SaveChanges_Body" xml:space="preserve"><value>Deseja guardar as alteracoes da atividade?</value></data>
-  <data name="Visits_Detail_DeleteActivity_Title" xml:space="preserve"><value>Eliminar atividade</value></data>
-  <data name="Visits_Detail_DeleteActivity_Body" xml:space="preserve"><value>Deseja eliminar esta atividade? Esta acao nao pode ser desfeita.</value></data>
-
-  <data name="Visits_Detail_NoResults" xml:space="preserve"><value>Sem resultados.</value></data>
-  <data name="Visits_Detail_ShowOptions" xml:space="preserve"><value>Mostrar opcoes</value></data>
-  <data name="Visits_Detail_HideOptions" xml:space="preserve"><value>Ocultar opcoes</value></data>
-  <data name="Visits_Detail_LoadActivityFailed" xml:space="preserve"><value>Nao foi possivel obter dados da atividade.</value></data>
-  <data name="Visits_Detail_EditingEnabled" xml:space="preserve"><value>Edicao ativada.</value></data>
-  <data name="Visits_Detail_Updating" xml:space="preserve"><value>A atualizar atividade...</value></data>
-  <data name="Visits_Detail_Updated" xml:space="preserve"><value>Atividade atualizada.</value></data>
-  <data name="Visits_Detail_UpdateFailed" xml:space="preserve"><value>Nao foi possivel atualizar.</value></data>
-  <data name="Visits_Detail_UpdateError" xml:space="preserve"><value>Erro ao atualizar.</value></data>
-  <data name="Visits_Detail_Deleting" xml:space="preserve"><value>A eliminar atividade...</value></data>
-  <data name="Visits_Detail_Deleted" xml:space="preserve"><value>Atividade eliminada.</value></data>
-  <data name="Visits_Detail_DeleteFailed" xml:space="preserve"><value>Nao foi possivel eliminar.</value></data>
-  <data name="Visits_Detail_DeleteError" xml:space="preserve"><value>Erro ao eliminar.</value></data>
-  <data name="Visits_Detail_ErrorBoundary" xml:space="preserve"><value>Ocorreu um erro ao mostrar a pagina de detalhe. Recarregue e tente novamente.</value></data>
-
-  <data name="Dropdown_NoResults" xml:space="preserve"><value>Sem resultados.</value></data>
-  <data name="Dropdown_ShowOptions" xml:space="preserve"><value>Mostrar opcoes</value></data>
-  <data name="Dropdown_HideOptions" xml:space="preserve"><value>Ocultar opcoes</value></data>
-
-  <data name="Enum_None" xml:space="preserve"><value>Nenhum</value></data>
-  <data name="Enum_ActividadType_Fax" xml:space="preserve"><value>Fax</value></data>
-  <data name="Enum_ActividadType_Email" xml:space="preserve"><value>Email</value></data>
-  <data name="Enum_ActividadType_PhoneCall" xml:space="preserve"><value>Chamada telefonica</value></data>
-  <data name="Enum_ActividadType_Visit" xml:space="preserve"><value>Visita</value></data>
-  <data name="Enum_ActividadType_Task" xml:space="preserve"><value>Tarefa</value></data>
-
-  <data name="Enum_TipoVisita_Commercial" xml:space="preserve"><value>Comercial</value></data>
-  <data name="Enum_TipoVisita_Technical" xml:space="preserve"><value>Tecnica</value></data>
-
-  <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve"><value>Consulta</value></data>
-  <data name="Enum_ActividadOrigen_Oferta" xml:space="preserve"><value>Oferta</value></data>
-  <data name="Enum_ActividadOrigen_Evento" xml:space="preserve"><value>Evento</value></data>
-  <data name="Enum_ActividadOrigen_Usuario" xml:space="preserve"><value>Utilizador</value></data>
-  <data name="Enum_ActividadOrigen_CampanaMarketing" xml:space="preserve"><value>Campanha de marketing</value></data>
-  <data name="Enum_ActividadOrigen_ClientePotencial" xml:space="preserve"><value>Cliente potencial</value></data>
-  <data name="Enum_ActividadOrigen_ContactoEvento" xml:space="preserve"><value>Contacto do evento</value></data>
-  <data name="Enum_ActividadOrigen_Cliente" xml:space="preserve"><value>Cliente</value></data>
-  <data name="Enum_ActividadOrigen_Proveedor" xml:space="preserve"><value>Fornecedor</value></data>
-  <data name="Enum_ActividadOrigen_Proyecto" xml:space="preserve"><value>Projeto</value></data>
-  <data name="Enum_ActividadOrigen_ProveedorPotencial" xml:space="preserve"><value>Fornecedor potencial</value></data>
-
-  <data name="Enum_AsistenteTipo_None" xml:space="preserve"><value>Sem assistente</value></data>
-  <data name="Enum_AsistenteTipo_Tecnico" xml:space="preserve"><value>Tecnico</value></data>
-  <data name="Enum_AsistenteTipo_Commercial" xml:space="preserve"><value>Comercial</value></data>
-
-  <data name="Enum_GastoType_Peaje" xml:space="preserve"><value>Portagem</value></data>
-  <data name="Enum_GastoType_Parking" xml:space="preserve"><value>Estacionamento</value></data>
-  <data name="Enum_GastoType_Km" xml:space="preserve"><value>Km</value></data>
-  <data name="Enum_GastoType_Desayuno" xml:space="preserve"><value>Pequeno almoco</value></data>
-  <data name="Enum_GastoType_Comida" xml:space="preserve"><value>Almoco</value></data>
-  <data name="Enum_GastoType_Cena" xml:space="preserve"><value>Jantar</value></data>
-  <data name="Enum_GastoType_Hotel" xml:space="preserve"><value>Hotel</value></data>
-  <data name="Enum_GastoType_Varios" xml:space="preserve"><value>Diversos</value></data>
-  <data name="Enum_GastoType_Taxi" xml:space="preserve"><value>Taxi</value></data>
-
-  <data name="Confirm_Delete_Title" xml:space="preserve"><value>Eliminar</value></data>
-  <data name="Confirm_Delete_Body" xml:space="preserve"><value>Deseja eliminar este item?</value></data>
-  <data name="Confirm_Yes" xml:space="preserve"><value>Sim</value></data>
-  <data name="Confirm_No" xml:space="preserve"><value>Nao</value></data>
-
-  <data name="Speech_Transcribe_Title" xml:space="preserve"><value>Transcrever audio (WAV)</value></data>
-  <data name="Speech_Transcribe_Language_Label" xml:space="preserve"><value>Idioma</value></data>
-  <data name="Speech_Transcribe_Language_Auto" xml:space="preserve"><value>Auto</value></data>
-  <data name="Speech_Transcribe_Temperature_Label" xml:space="preserve"><value>Temperatura</value></data>
-  <data name="Speech_Transcribe_Context_Label" xml:space="preserve"><value>Contexto (opcional)</value></data>
-  <data name="Speech_Transcribe_Action" xml:space="preserve"><value>Transcrever</value></data>
-  <data name="Speech_Transcribe_InsertToComments" xml:space="preserve"><value>Inserir nos comentarios</value></data>
-  <data name="Speech_Transcribe_Result_Label" xml:space="preserve"><value>Transcricao</value></data>
-  <data name="Speech_Transcribe_MissingFile" xml:space="preserve"><value>Selecione um arquivo WAV.</value></data>
-  <data name="Speech_Transcribe_OnlyWav" xml:space="preserve"><value>Apenas arquivos WAV sao permitidos.</value></data>
-  <data name="Speech_Transcribe_FileTooLarge" xml:space="preserve"><value>O arquivo excede 25 MB.</value></data>
-  <data name="Speech_Transcribe_InvalidTemperature" xml:space="preserve"><value>A temperatura deve estar entre 0 e 1.</value></data>
-  <data name="Speech_Transcribe_Blocked" xml:space="preserve"><value>Conteudo rejeitado pela politica de uso.</value></data>
-  <data name="Speech_Transcribe_Failed" xml:space="preserve"><value>Falha na transcricao.</value></data>
-
-  <data name="TextEditor_OpenFullScreen" xml:space="preserve"><value>Editar em tela cheia</value></data>
-  <data name="TextEditor_Microphone" xml:space="preserve"><value>Microfone</value></data>
-  <data name="TextEditor_Transcribe" xml:space="preserve"><value>Transcrever</value></data>
-  <data name="TextEditor_Transcribing" xml:space="preserve"><value>Transcrevendo...</value></data>
-  <data name="TextEditor_TranscribeFailed" xml:space="preserve"><value>Nao foi possivel transcrever o audio.</value></data>
-
-  <data name="Tools_AudioRecorder_Title" xml:space="preserve"><value>Gravador de audio</value></data>
-
-  <data name="AudioRecorder_Play" xml:space="preserve"><value>Reproduzir</value></data>
-  <data name="AudioRecorder_Record" xml:space="preserve"><value>Gravar</value></data>
-  <data name="AudioRecorder_Pause" xml:space="preserve"><value>Pausar</value></data>
-  <data name="AudioRecorder_Resume" xml:space="preserve"><value>Retomar</value></data>
-  <data name="AudioRecorder_Stop" xml:space="preserve"><value>Parar</value></data>
-  <data name="AudioRecorder_Cancel" xml:space="preserve"><value>Cancelar</value></data>
-  <data name="AudioRecorder_NoAudio" xml:space="preserve"><value>Sem audio</value></data>
-  <data name="AudioRecorder_Download" xml:space="preserve"><value>Baixar audio</value></data>
-  <data name="AudioRecorder_Download_FileName" xml:space="preserve"><value>gravacao-audio</value></data>
-
-  <data name="AudioRecorder_Status_Recording" xml:space="preserve"><value>Gravando</value></data>
-  <data name="AudioRecorder_Status_Paused" xml:space="preserve"><value>Em pausa</value></data>
-  <data name="AudioRecorder_Status_ReadyToPlay" xml:space="preserve"><value>Pronto para reproduzir</value></data>
-  <data name="AudioRecorder_Status_Ready" xml:space="preserve"><value>Pronto</value></data>
-
-  <data name="AudioRecorder_Error_HttpBlocked" xml:space="preserve"><value>O Chrome bloqueia o microfone em HTTP (intranet). Use HTTPS ou abra a app via http://localhost. Para DEV, configure o Chrome para tratar sua origem HTTP como segura.</value></data>
-  <data name="AudioRecorder_Error_PermissionDenied" xml:space="preserve"><value>Permissao do microfone negada. Ative no navegador e recarregue a pagina.</value></data>
-  <data name="AudioRecorder_Error_NoDevice" xml:space="preserve"><value>Nenhum dispositivo de microfone encontrado. Se estiver em Remote Desktop, ative o microfone na sessao. Se for USB ou Bluetooth, reconecte e tente novamente.</value></data>
-  <data name="AudioRecorder_Error_DeviceBusy" xml:space="preserve"><value>O microfone esta ocupado ou nao foi possivel iniciar. Feche outros apps (Teams, Zoom) e tente novamente.</value></data>
-  <data name="AudioRecorder_Error_Security" xml:space="preserve"><value>Bloqueado pela seguranca do navegador. No Chrome, use HTTPS ou politica corporativa para permitir o microfone na intranet.</value></data>
-  <data name="AudioRecorder_Error_Constraints" xml:space="preserve"><value>Nao foi possivel cumprir as restricoes de audio. Tente outro microfone ou configuracao.</value></data>
-  <data name="AudioRecorder_Error_Generic" xml:space="preserve"><value>Nao foi possivel iniciar a gravacao. Verifique as permissoes. No Chrome, normalmente requer HTTPS ou localhost.</value></data>
-  <data name="AudioRecorder_Error_Unsupported" xml:space="preserve"><value>Seu navegador nao suporta getUserMedia.</value></data>
-  <data name="AudioRecorder_Error_NoAudioContext" xml:space="preserve"><value>AudioContext nao esta disponivel neste navegador.</value></data>
-
-  <data name="AudioRecorder_Hint_Origin" xml:space="preserve"><value>Origem atual: {0}</value></data>
-  <data name="AudioRecorder_Hint_Technical" xml:space="preserve"><value>Detalhe tecnico: {0}</value></data>
-  <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve"><value>Seu processo ativo será cancelado e as alterações não guardadas serão perdidas. Deseja continuar?</value></data>
-  <data name="Visits_Create_Rollback" xml:space="preserve"><value>Atividade reversa...</value></data>
-  <data name="Common_No" xml:space="preserve"><value>Não</value></data>
-  <data name="Common_Yes" xml:space="preserve"><value>Sim</value></data>
-  <data name="ExpenseSheets_Create_Lines" xml:space="preserve"><value>Linhas</value></data>
-  <data name="Common_Add" xml:space="preserve"><value>Adicionar</value></data>
-  <data name="ExpenseSheets_Create_NoLines" xml:space="preserve"><value>Adicione pelo menos uma linha.</value></data>
-  <data name="ExpenseSheets_Line" xml:space="preserve"><value>Linha</value></data>
-  <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve"><value>Verificando taxa de câmbio...</value></data>
-  <data name="ExpenseSheets_Validation_DescriptionRequired" xml:space="preserve"><value>A descrição é obrigatória.</value></data>
-  <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve"><value>A moeda é obrigatória.</value></data>
-  <data name="ExpenseSheets_ExchangeRate_Unavailable" xml:space="preserve"><value>Não foi possível obter a taxa de câmbio.</value></data>
-  <data name="ExpenseSheets_ExchangeRate_NotFound" xml:space="preserve"><value>Não há taxa de câmbio para a data</value></data>
-  <data name="ExpenseSheets_Line_Detail_Creating" xml:space="preserve"><value>Criando linha de despesas...</value></data>
-  <data name="ExpenseSheets_Line_Detail_Created" xml:space="preserve"><value>Linha de despesas criada</value></data>
-  <data name="ExpenseSheets_Detail_PaidReadOnly" xml:space="preserve"><value>As planilhas de despesas pagas são somente leitura.</value></data>
-
-</root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Manter</value>
+  </data>
+  <data name="Common_Edit" xml:space="preserve">
+    <value>Editar</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Fechar</value>
+  </data>
+  <data name="Common_Back" xml:space="preserve">
+    <value>Voltar</value>
+  </data>
+  <data name="Common_Delete" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="Common_Search" xml:space="preserve">
+    <value>Pesquisar</value>
+  </data>
+  <data name="Common_ClearFilters" xml:space="preserve">
+    <value>Limpar filtros</value>
+  </data>
+  <data name="Common_Loading" xml:space="preserve">
+    <value>A carregar</value>
+  </data>
+  <data name="Common_NoData" xml:space="preserve">
+    <value>Sem dados</value>
+  </data>
+  <data name="Common_User" xml:space="preserve">
+    <value>Usuário</value>
+  </data>
+  <data name="Common_Unknown" xml:space="preserve">
+    <value>Desconhecido</value>
+  </data>
+  <data name="Common_NotAvailable" xml:space="preserve">
+    <value>N/D</value>
+  </data>
+  <data name="Common_AppLogoAlt" xml:space="preserve">
+    <value>Logotipo da Insertec</value>
+  </data>
+  <data name="Nav_Visits" xml:space="preserve">
+    <value>Visitas</value>
+  </data>
+  <data name="Nav_Visits_Create" xml:space="preserve">
+    <value>Criar</value>
+  </data>
+  <data name="Nav_Visits_History" xml:space="preserve">
+    <value>Historico</value>
+  </data>
+  <data name="Nav_Expenses" xml:space="preserve">
+    <value>Despesas</value>
+  </data>
+  <data name="Nav_ExpenseSheets" xml:space="preserve">
+    <value>Folhas de despesa</value>
+  </data>
+  <data name="ExpenseSheets_Title" xml:space="preserve">
+    <value>planilhas de despesas</value>
+  </data>
+  <data name="ExpenseSheets_Detail_Title" xml:space="preserve">
+    <value>Folha de despesas detalhada</value>
+  </data>
+  <data name="ExpenseSheets_Line_Title" xml:space="preserve">
+    <value>Detalhe da linha</value>
+  </data>
+  <data name="ExpenseSheets_Header" xml:space="preserve">
+    <value>Cabeça</value>
+  </data>
+  <data name="ExpenseSheets_Lines" xml:space="preserve">
+    <value>Linhas</value>
+  </data>
+  <data name="ExpenseSheets_NoLines" xml:space="preserve">
+    <value>Sem linhas de despesas.</value>
+  </data>
+  <data name="ExpenseSheets_LoadError" xml:space="preserve">
+    <value>Não foi possível carregar as planilhas de despesas.</value>
+  </data>
+  <data name="ExpenseSheets_NotFound" xml:space="preserve">
+    <value>A planilha de despesas não foi encontrada.</value>
+  </data>
+  <data name="ExpenseSheets_Detail_SaveChanges_Title" xml:space="preserve">
+    <value>Salvar alterações</value>
+  </data>
+  <data name="ExpenseSheets_Detail_SaveChanges_Body" xml:space="preserve">
+    <value>Deseja salvar as alterações na planilha de despesas?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
+    <value>Excluir planilha de despesas</value>
+  </data>
+  <data name="ExpenseSheets_Detail_DeleteSheet_Body" xml:space="preserve">
+    <value>Deseja excluir esta planilha de despesas?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_EditingEnabled" xml:space="preserve">
+    <value>Edição ativada</value>
+  </data>
+  <data name="ExpenseSheets_Detail_Updating" xml:space="preserve">
+    <value>Atualizando planilha de despesas...</value>
+  </data>
+  <data name="ExpenseSheets_Detail_Updated" xml:space="preserve">
+    <value>Planilha de despesas atualizada</value>
+  </data>
+  <data name="ExpenseSheets_Detail_UpdateFailed" xml:space="preserve">
+    <value>A planilha de despesas não pôde ser atualizada.</value>
+  </data>
+  <data name="ExpenseSheets_Detail_UpdateError" xml:space="preserve">
+    <value>Erro ao atualizar a planilha de despesas.</value>
+  </data>
+  <data name="ExpenseSheets_Detail_Deleting" xml:space="preserve">
+    <value>Excluindo planilha de despesas...</value>
+  </data>
+  <data name="ExpenseSheets_Detail_Deleted" xml:space="preserve">
+    <value>Planilha de despesas excluída</value>
+  </data>
+  <data name="ExpenseSheets_Detail_DeleteFailed" xml:space="preserve">
+    <value>A planilha de despesas não pôde ser excluída.</value>
+  </data>
+  <data name="ExpenseSheets_Detail_DeleteError" xml:space="preserve">
+    <value>Erro ao excluir planilha de despesas.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
+    <value>Atualizando linha de despesas...</value>
+  </data>
+  <data name="ExpenseSheets_Line_Detail_Updated" xml:space="preserve">
+    <value>Linha de despesas atualizada</value>
+  </data>
+  <data name="ExpenseSheets_Line_Detail_Deleting" xml:space="preserve">
+    <value>Eliminando linha de despesas...</value>
+  </data>
+  <data name="ExpenseSheets_Line_Detail_Deleted" xml:space="preserve">
+    <value>Linha de despesas eliminada</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve">
+    <value>A quantidade e o preco devem ser maiores que 0.</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Project" xml:space="preserve">
+    <value>Projeto</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Sheet" xml:space="preserve">
+    <value>planilha de despesas</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Currency" xml:space="preserve">
+    <value>Dividir</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Project_Placeholder" xml:space="preserve">
+    <value>ID do projeto</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Sheet_Placeholder" xml:space="preserve">
+    <value>ID da folha</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Currency_Placeholder" xml:space="preserve">
+    <value>Código da moeda</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_Placeholder" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_Unbilled" xml:space="preserve">
+    <value>Nao pago</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_Billed" xml:space="preserve">
+    <value>Pago</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_Both" xml:space="preserve">
+    <value>Ambos</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_Draft" xml:space="preserve">
+    <value>Rascunho</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_InReview" xml:space="preserve">
+    <value>Em revisao</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_Approved" xml:space="preserve">
+    <value>Aprovado</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_Rejected" xml:space="preserve">
+    <value>Rejeitado</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_Paid" xml:space="preserve">
+    <value>Pago</value>
+  </data>
+  <data name="ExpenseSheets_Filter_Status_All" xml:space="preserve">
+    <value>Todos</value>
+  </data>
+  <data name="ExpenseSheets_Filter_ExchangeRateMode" xml:space="preserve">
+    <value>Modo registro TC</value>
+  </data>
+  <data name="ExpenseSheets_Filter_ExchangeRateMode_Placeholder" xml:space="preserve">
+    <value>Modo registro TC</value>
+  </data>
+  <data name="ExpenseSheets_Filter_ExchangeRateMode_Official" xml:space="preserve">
+    <value>TC. Oficial</value>
+  </data>
+  <data name="ExpenseSheets_Filter_ExchangeRateMode_Manual" xml:space="preserve">
+    <value>TC. Manual</value>
+  </data>
+  <data name="ExpenseSheets_Field_SheetId" xml:space="preserve">
+    <value>Código da planilha de despesas</value>
+  </data>
+  <data name="ExpenseSheets_Field_UserId" xml:space="preserve">
+    <value>Usuário</value>
+  </data>
+  <data name="ExpenseSheets_Field_Project" xml:space="preserve">
+    <value>Projeto</value>
+  </data>
+  <data name="ExpenseSheets_Field_Voucher" xml:space="preserve">
+    <value>Voucher</value>
+  </data>
+  <data name="ExpenseSheets_Field_Currency" xml:space="preserve">
+    <value>Dividir</value>
+  </data>
+  <data name="ExpenseSheets_Field_ExpenseCurrency" xml:space="preserve">
+    <value>Moeda de despesas</value>
+  </data>
+  <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve">
+    <value>Divisa local</value>
+  </data>
+  <data name="ExpenseSheets_Field_Status" xml:space="preserve">
+    <value>Estado</value>
+  </data>
+  <data name="ExpenseSheets_Field_StatusComment" xml:space="preserve">
+    <value>Comentario do estado</value>
+  </data>
+  <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
+    <value>Montante total</value>
+  </data>
+  <data name="ExpenseSheets_Field_Description" xml:space="preserve">
+    <value>Descrição</value>
+  </data>
+  <data name="ExpenseSheets_Field_CreatedDate" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="ExpenseSheets_Field_ExchangeRate" xml:space="preserve">
+    <value>Taxa de câmbio</value>
+  </data>
+  <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
+    <value>ID da linha</value>
+  </data>
+  <data name="ExpenseSheets_Field_Type" xml:space="preserve">
+    <value>Tipo</value>
+  </data>
+  <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
+    <value>Importado</value>
+  </data>
+  <data name="ExpenseSheets_Field_Price" xml:space="preserve">
+    <value>Preco</value>
+  </data>
+  <data name="ExpenseSheets_Field_Qty" xml:space="preserve">
+    <value>Quantia</value>
+  </data>
+  <data name="ExpenseSheets_Field_TransDate" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="ExpenseSheets_Field_International" xml:space="preserve">
+    <value>Internacional</value>
+  </data>
+  <data name="ExpenseSheets_International_Yes" xml:space="preserve">
+    <value>E</value>
+  </data>
+  <data name="ExpenseSheets_International_No" xml:space="preserve">
+    <value>Não</value>
+  </data>
+  <data name="ExpenseSheets_Validation_ExchangeRateRequired" xml:space="preserve">
+    <value>Taxa de câmbio obrigatória para moeda diferente de EUR.</value>
+  </data>
+  <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
+    <value>Bilhete</value>
+  </data>
+  <data name="ExpenseSheets_Field_Attachments" xml:space="preserve">
+    <value>Anexos</value>
+  </data>
+  <data name="ExpenseSheets_Field_LineCount" xml:space="preserve">
+    <value>Linhas</value>
+  </data>
+  <data name="Visits_Create_Title" xml:space="preserve">
+    <value>Criação</value>
+  </data>
+  <data name="Visits_Detail_Title" xml:space="preserve">
+    <value>Detalhe</value>
+  </data>
+  <data name="Visits_History_Title" xml:space="preserve">
+    <value>Histórico</value>
+  </data>
+  <data name="UserMenu_ConnectedAs" xml:space="preserve">
+    <value>Conectado como</value>
+  </data>
+  <data name="UserMenu_Companies" xml:space="preserve">
+    <value>Empresas</value>
+  </data>
+  <data name="UserMenu_Languages" xml:space="preserve">
+    <value>Idiomas</value>
+  </data>
+  <data name="UserMenu_Logout" xml:space="preserve">
+    <value>Terminar sessao</value>
+  </data>
+  <data name="Language_ES" xml:space="preserve">
+    <value>ES</value>
+  </data>
+  <data name="Language_EU" xml:space="preserve">
+    <value>EU</value>
+  </data>
+  <data name="Language_EN" xml:space="preserve">
+    <value>EN</value>
+  </data>
+  <data name="Language_PT" xml:space="preserve">
+    <value>PT</value>
+  </data>
+  <data name="Language_IT" xml:space="preserve">
+    <value>IT</value>
+  </data>
+  <data name="Language_ZH" xml:space="preserve">
+    <value>ZH</value>
+  </data>
+  <data name="Language_ES_Name" xml:space="preserve">
+    <value>Español</value>
+  </data>
+  <data name="Language_EU_Name" xml:space="preserve">
+    <value>Euskara</value>
+  </data>
+  <data name="Language_EN_Name" xml:space="preserve">
+    <value>English</value>
+  </data>
+  <data name="Language_PT_Name" xml:space="preserve">
+    <value>Português</value>
+  </data>
+  <data name="Language_IT_Name" xml:space="preserve">
+    <value>Italiano</value>
+  </data>
+  <data name="Language_ZH_Name" xml:space="preserve">
+    <value>中文</value>
+  </data>
+  <data name="Login_Title" xml:space="preserve">
+    <value>Iniciar sessao</value>
+  </data>
+  <data name="Login_Welcome" xml:space="preserve">
+    <value>Bem-vindo</value>
+  </data>
+  <data name="Login_Subtitle" xml:space="preserve">
+    <value>Insira as suas credenciais para continuar</value>
+  </data>
+  <data name="Login_Username" xml:space="preserve">
+    <value>Usuário</value>
+  </data>
+  <data name="Login_Password" xml:space="preserve">
+    <value>Senha</value>
+  </data>
+  <data name="Login_RememberMe" xml:space="preserve">
+    <value>Lembrar-me</value>
+  </data>
+  <data name="Login_Submit" xml:space="preserve">
+    <value>Iniciar sessao</value>
+  </data>
+  <data name="Login_TogglePassword" xml:space="preserve">
+    <value>Mostrar ou ocultar senha</value>
+  </data>
+  <data name="Login_SignInMicrosoft" xml:space="preserve">
+    <value>Entrar com Microsoft</value>
+  </data>
+  <data name="Login_SystemVersion" xml:space="preserve">
+    <value>Sistemas em{0}</value>
+  </data>
+  <data name="Login_Secure" xml:space="preserve">
+    <value>Seguro</value>
+  </data>
+  <data name="Login_Copyright" xml:space="preserve">
+    <value>Copyright (c) {0} Insertec. Todos os direitos reservados.</value>
+  </data>
+  <data name="Auth_InvalidCredentials" xml:space="preserve">
+    <value>Credenciais invalidas.</value>
+  </data>
+  <data name="Auth_LoginApiError" xml:space="preserve">
+    <value>Falha ao iniciar sessao devido a erro de API.</value>
+  </data>
+  <data name="Auth_AccessDenied" xml:space="preserve">
+    <value>Acesso negado: {0}</value>
+  </data>
+  <data name="Auth_LoginRequired" xml:space="preserve">
+    <value>Tem de iniciar sessao para continuar.</value>
+  </data>
+  <data name="Auth_PermissionDenied_Title" xml:space="preserve">
+    <value>Acesso negado</value>
+  </data>
+  <data name="Auth_PermissionDenied_Body" xml:space="preserve">
+    <value>Voce nao tem permissao para realizar esta acao.</value>
+  </data>
+  <data name="Topbar_OpenMenu" xml:space="preserve">
+    <value>Abrir menu</value>
+  </data>
+  <data name="Topbar_Back" xml:space="preserve">
+    <value>Voltar</value>
+  </data>
+  <data name="Topbar_Forward" xml:space="preserve">
+    <value>Avancar</value>
+  </data>
+  <data name="Topbar_EditSave" xml:space="preserve">
+    <value>Editar/Guardar</value>
+  </data>
+  <data name="Topbar_Delete" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="History_From" xml:space="preserve">
+    <value>De</value>
+  </data>
+  <data name="History_To" xml:space="preserve">
+    <value>Ate</value>
+  </data>
+  <data name="History_Filter_Date" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="History_Filter_Client" xml:space="preserve">
+    <value>Cliente</value>
+  </data>
+  <data name="History_Filter_Clear" xml:space="preserve">
+    <value>Limpar</value>
+  </data>
+  <data name="History_Filter_Apply" xml:space="preserve">
+    <value>Aplicar</value>
+  </data>
+  <data name="History_Filter_Toggle" xml:space="preserve">
+    <value>Filtrar</value>
+  </data>
+  <data name="History_Filter_Refresh" xml:space="preserve">
+    <value>Atualizar</value>
+  </data>
+  <data name="History_Quick_Custom" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="History_Quick_7Days" xml:space="preserve">
+    <value>7 dias</value>
+  </data>
+  <data name="History_Quick_30Days" xml:space="preserve">
+    <value>30 dias</value>
+  </data>
+  <data name="History_Quick_90Days" xml:space="preserve">
+    <value>90 dias</value>
+  </data>
+  <data name="History_Quick_ThisWeek" xml:space="preserve">
+    <value>Essa semana</value>
+  </data>
+  <data name="History_Quick_LastWeek" xml:space="preserve">
+    <value>Semana passada</value>
+  </data>
+  <data name="History_Quick_ThisMonth" xml:space="preserve">
+    <value>Este mês</value>
+  </data>
+  <data name="History_Quick_LastMonth" xml:space="preserve">
+    <value>Mes passado</value>
+  </data>
+  <data name="History_AddDate" xml:space="preserve">
+    <value>Adicionar data</value>
+  </data>
+  <data name="History_ClearRange" xml:space="preserve">
+    <value>Limpar intervalo</value>
+  </data>
+  <data name="History_PrevMonth" xml:space="preserve">
+    <value>Mês anterior</value>
+  </data>
+  <data name="History_NextMonth" xml:space="preserve">
+    <value>Mes seguinte</value>
+  </data>
+  <data name="History_Day_Mon" xml:space="preserve">
+    <value>Seg</value>
+  </data>
+  <data name="History_Day_Tue" xml:space="preserve">
+    <value>Ter</value>
+  </data>
+  <data name="History_Day_Wed" xml:space="preserve">
+    <value>Qua</value>
+  </data>
+  <data name="History_Day_Thu" xml:space="preserve">
+    <value>Qui</value>
+  </data>
+  <data name="History_Day_Fri" xml:space="preserve">
+    <value>Sex</value>
+  </data>
+  <data name="History_Day_Sat" xml:space="preserve">
+    <value>Sab</value>
+  </data>
+  <data name="History_Day_Sun" xml:space="preserve">
+    <value>Dom</value>
+  </data>
+  <data name="History_Status_SelectStart" xml:space="preserve">
+    <value>Selecione a data de inicio</value>
+  </data>
+  <data name="History_Status_SelectEnd" xml:space="preserve">
+    <value>Selecione a data de fim</value>
+  </data>
+  <data name="History_Loading" xml:space="preserve">
+    <value>A carregar...</value>
+  </data>
+  <data name="History_NoDataInRange" xml:space="preserve">
+    <value>Nao ha visitas neste intervalo</value>
+  </data>
+  <data name="History_Page_First" xml:space="preserve">
+    <value>Primeira</value>
+  </data>
+  <data name="History_Page_Prev" xml:space="preserve">
+    <value>Anterior</value>
+  </data>
+  <data name="History_Page_Next" xml:space="preserve">
+    <value>Seguinte</value>
+  </data>
+  <data name="History_Page_Last" xml:space="preserve">
+    <value>Ultima</value>
+  </data>
+  <data name="Common_OK" xml:space="preserve">
+    <value>Aceitar</value>
+  </data>
+  <data name="Common_Next" xml:space="preserve">
+    <value>Avancar</value>
+  </data>
+  <data name="Common_Create" xml:space="preserve">
+    <value>Criar</value>
+  </data>
+  <data name="Api_SessionExpired" xml:space="preserve">
+    <value>A sua sessao expirou.</value>
+  </data>
+  <data name="Api_TokenMissing" xml:space="preserve">
+    <value>Nao foi encontrado o token na sessao.</value>
+  </data>
+  <data name="Api_MissingAccountNum" xml:space="preserve">
+    <value>Falta contaNum.</value>
+  </data>
+  <data name="Api_MissingCode" xml:space="preserve">
+    <value>Falta o codigo.</value>
+  </data>
+  <data name="Api_MissingAsistenteTipo" xml:space="preserve">
+    <value>AssistantType ausente.</value>
+  </data>
+  <data name="Api_NoAsistentesToUpdate" xml:space="preserve">
+    <value>Nao ha assistentes para atualizar.</value>
+  </data>
+  <data name="Api_AsistentesUpdateFailedCount" xml:space="preserve">
+    <value>{0} assistente(s) falharam ao atualizar.</value>
+  </data>
+  <data name="Api_AsistentesUpdateFailed" xml:space="preserve">
+    <value>{0} assistentes falharam ao atualizar.</value>
+  </data>
+  <data name="Api_AccountsFetchFailed" xml:space="preserve">
+    <value>Nao foi possivel obter clientes. Refine a pesquisa e tente novamente.</value>
+  </data>
+  <data name="Api_RequestFailed" xml:space="preserve">
+    <value>O pedido falhou. Tente novamente.</value>
+  </data>
+  <data name="Api_InvalidJson" xml:space="preserve">
+    <value>Resposta invalida do servidor.</value>
+  </data>
+  <data name="Sidebar_CloseMenu" xml:space="preserve">
+    <value>Fechar menu</value>
+  </data>
+  <data name="Home_Title" xml:space="preserve">
+    <value>Começar</value>
+  </data>
+  <data name="Home_SelectLeftMenu" xml:space="preserve">
+    <value>Selecione uma opcao do menu esquerdo.</value>
+  </data>
+  <data name="Home_Welcome" xml:space="preserve">
+    <value>Bem-vindo</value>
+  </data>
+  <data name="Home_DataFromAx" xml:space="preserve">
+    <value>Dados do Axapta 3.0</value>
+  </data>
+  <data name="Home_PrototypeVersion" xml:space="preserve">
+    <value>Versao Prototipo 1.0</value>
+  </data>
+  <data name="Home_Environment" xml:space="preserve">
+    <value>Ambiente</value>
+  </data>
+  <data name="Home_Company" xml:space="preserve">
+    <value>Companhia</value>
+  </data>
+  <data name="NotFound_Title" xml:space="preserve">
+    <value>Pagina nao encontrada</value>
+  </data>
+  <data name="NotFound_Subtitle" xml:space="preserve">
+    <value>O endereco solicitado nao existe ou foi movido.</value>
+  </data>
+  <data name="NotFound_BackHome" xml:space="preserve">
+    <value>Voltar ao inicio</value>
+  </data>
+  <data name="Error_BackHome" xml:space="preserve">
+    <value>Voltar ao inicio</value>
+  </data>
+  <data name="Error_Title" xml:space="preserve">
+    <value>Erro do sistema</value>
+  </data>
+  <data name="Error_Heading" xml:space="preserve">
+    <value>Ocorreu um erro</value>
+  </data>
+  <data name="Error_Body" xml:space="preserve">
+    <value>Ocorreu um problema ao processar o seu pedido. Se o problema persistir, contacte o administrador do sistema.</value>
+  </data>
+  <data name="DatePicker_SelectDate" xml:space="preserve">
+    <value>Selecione a data</value>
+  </data>
+  <data name="Visits_Create_SearchClient" xml:space="preserve">
+    <value>Pesquisar cliente</value>
+  </data>
+  <data name="Visits_Create_SearchContact" xml:space="preserve">
+    <value>Pesquisar contacto (selecao multipla)</value>
+  </data>
+  <data name="Visits_Create_SelectClientRequired" xml:space="preserve">
+    <value>Selecione um cliente.</value>
+  </data>
+  <data name="Visits_Create_SelectContactRequired" xml:space="preserve">
+    <value>Selecione pelo menos um contacto.</value>
+  </data>
+  <data name="Visits_Create_CompleteRequired" xml:space="preserve">
+    <value>Preencha os campos obrigatorios.</value>
+  </data>
+  <data name="Visits_Create_LoadingContacts" xml:space="preserve">
+    <value>A carregar contactos...</value>
+  </data>
+  <data name="Visits_Create_ConfirmCreate_Title" xml:space="preserve">
+    <value>Confirmar criacao</value>
+  </data>
+  <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve">
+    <value>Deseja criar esta visita?</value>
+  </data>
+  <data name="Visits_Create_CreatingVisitFor" xml:space="preserve">
+    <value>A criar visita para {0}...</value>
+  </data>
+  <data name="Visits_Create_MinChars" xml:space="preserve">
+    <value>Escreva pelo menos {0} caracteres.</value>
+  </data>
+  <data name="Visits_Create_PressSearchHint" xml:space="preserve">
+    <value>Pressione a lupa, Enter ou a seta para pesquisar.</value>
+  </data>
+  <data name="Visits_Create_Searching" xml:space="preserve">
+    <value>A pesquisar...</value>
+  </data>
+  <data name="Visits_Create_SearchCanceled" xml:space="preserve">
+    <value>Pesquisa cancelada.</value>
+  </data>
+  <data name="Visits_Create_SearchTimeout" xml:space="preserve">
+    <value>A pesquisa demorou demasiado. Escreva mais caracteres para filtrar.</value>
+  </data>
+  <data name="Visits_Create_LoadClientsError" xml:space="preserve">
+    <value>Erro ao carregar clientes.</value>
+  </data>
+  <data name="Visits_Create_ClientPlaceholder" xml:space="preserve">
+    <value>Escreva pelo menos {0} caracteres...</value>
+  </data>
+  <data name="Visits_Create_NoResults" xml:space="preserve">
+    <value>Sem resultados.</value>
+  </data>
+  <data name="Visits_Create_NoMatches" xml:space="preserve">
+    <value>Sem correspondencias.</value>
+  </data>
+  <data name="Visits_Create_ShowClientOptions" xml:space="preserve">
+    <value>Mostrar opcoes de cliente</value>
+  </data>
+  <data name="Visits_Create_HideClientOptions" xml:space="preserve">
+    <value>Ocultar opcoes de cliente</value>
+  </data>
+  <data name="Visits_Create_SelectClientFirst" xml:space="preserve">
+    <value>Selecione um cliente primeiro.</value>
+  </data>
+  <data name="Visits_Create_PressArrowToLoadContacts" xml:space="preserve">
+    <value>Pressione a seta para carregar contactos.</value>
+  </data>
+  <data name="Visits_Create_LoadContactsError" xml:space="preserve">
+    <value>Erro ao carregar contactos.</value>
+  </data>
+  <data name="Visits_Create_NoContacts" xml:space="preserve">
+    <value>Sem contactos.</value>
+  </data>
+  <data name="Visits_Create_NoMoreContacts" xml:space="preserve">
+    <value>Nao ha mais contactos disponiveis.</value>
+  </data>
+  <data name="Visits_Create_FilterPlaceholder" xml:space="preserve">
+    <value>Escreva para filtrar...</value>
+  </data>
+  <data name="Visits_Create_CreatingActivity" xml:space="preserve">
+    <value>A criar atividade...</value>
+  </data>
+  <data name="Visits_Create_CreateActivityFailed" xml:space="preserve">
+    <value>Falha ao criar a atividade.</value>
+  </data>
+  <data name="Visits_Create_CreateVisitFailed" xml:space="preserve">
+    <value>Falha ao criar a visita.</value>
+  </data>
+  <data name="Visits_Create_CreateVisitError" xml:space="preserve">
+    <value>Erro ao criar a visita.</value>
+  </data>
+  <data name="Visits_Create_ClientCount" xml:space="preserve">
+    <value>{0} cliente(s)</value>
+  </data>
+  <data name="Visits_Create_ClientCountCache" xml:space="preserve">
+    <value>{0} cliente(s) (cache)</value>
+  </data>
+  <data name="Visits_Create_ContactCount" xml:space="preserve">
+    <value>{0} contato(s)</value>
+  </data>
+  <data name="Visits_Create_ContactCountCache" xml:space="preserve">
+    <value>{0} contato(s) (cache)</value>
+  </data>
+  <data name="Visits_Create_SelectedContactsCount" xml:space="preserve">
+    <value>{0} contacto(s) selecionado(s)</value>
+  </data>
+  <data name="Visits_Create_VisitData_Title" xml:space="preserve">
+    <value>Dados da visita</value>
+  </data>
+  <data name="Visits_Field_Description" xml:space="preserve">
+    <value>Descricao</value>
+  </data>
+  <data name="Visits_Field_Comments" xml:space="preserve">
+    <value>Comentários</value>
+  </data>
+  <data name="Visits_Field_Background" xml:space="preserve">
+    <value>Fundo</value>
+  </data>
+  <data name="Visits_Field_Conclusions" xml:space="preserve">
+    <value>Conclusoes</value>
+  </data>
+  <data name="Visits_Create_ErrorBoundary" xml:space="preserve">
+    <value>Ocorreu um erro ao mostrar a pagina de visitas. Recarregue e tente novamente.</value>
+  </data>
+  <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
+    <value>Dados da visita</value>
+  </data>
+  <data name="Visits_Detail_Date_Label" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="Visits_Detail_VisitType_Label" xml:space="preserve">
+    <value>Tipo de visita</value>
+  </data>
+  <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve">
+    <value>Selecione tipo</value>
+  </data>
+  <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve">
+    <value>Guardar alteracoes</value>
+  </data>
+  <data name="Visits_Detail_SaveChanges_Body" xml:space="preserve">
+    <value>Deseja guardar as alteracoes da atividade?</value>
+  </data>
+  <data name="Visits_Detail_DeleteActivity_Title" xml:space="preserve">
+    <value>Eliminar atividade</value>
+  </data>
+  <data name="Visits_Detail_DeleteActivity_Body" xml:space="preserve">
+    <value>Deseja eliminar esta atividade? Esta acao nao pode ser desfeita.</value>
+  </data>
+  <data name="Visits_Detail_NoResults" xml:space="preserve">
+    <value>Sem resultados.</value>
+  </data>
+  <data name="Visits_Detail_ShowOptions" xml:space="preserve">
+    <value>Mostrar opcoes</value>
+  </data>
+  <data name="Visits_Detail_HideOptions" xml:space="preserve">
+    <value>Ocultar opcoes</value>
+  </data>
+  <data name="Visits_Detail_LoadActivityFailed" xml:space="preserve">
+    <value>Nao foi possivel obter dados da atividade.</value>
+  </data>
+  <data name="Visits_Detail_EditingEnabled" xml:space="preserve">
+    <value>Edicao ativada.</value>
+  </data>
+  <data name="Visits_Detail_Updating" xml:space="preserve">
+    <value>A atualizar atividade...</value>
+  </data>
+  <data name="Visits_Detail_Updated" xml:space="preserve">
+    <value>Atividade atualizada.</value>
+  </data>
+  <data name="Visits_Detail_UpdateFailed" xml:space="preserve">
+    <value>Nao foi possivel atualizar.</value>
+  </data>
+  <data name="Visits_Detail_UpdateError" xml:space="preserve">
+    <value>Erro ao atualizar.</value>
+  </data>
+  <data name="Visits_Detail_Deleting" xml:space="preserve">
+    <value>A eliminar atividade...</value>
+  </data>
+  <data name="Visits_Detail_Deleted" xml:space="preserve">
+    <value>Atividade eliminada.</value>
+  </data>
+  <data name="Visits_Detail_DeleteFailed" xml:space="preserve">
+    <value>Nao foi possivel eliminar.</value>
+  </data>
+  <data name="Visits_Detail_DeleteError" xml:space="preserve">
+    <value>Erro ao eliminar.</value>
+  </data>
+  <data name="Visits_Detail_ErrorBoundary" xml:space="preserve">
+    <value>Ocorreu um erro ao mostrar a pagina de detalhe. Recarregue e tente novamente.</value>
+  </data>
+  <data name="Dropdown_NoResults" xml:space="preserve">
+    <value>Sem resultados.</value>
+  </data>
+  <data name="Dropdown_ShowOptions" xml:space="preserve">
+    <value>Mostrar opcoes</value>
+  </data>
+  <data name="Dropdown_HideOptions" xml:space="preserve">
+    <value>Ocultar opcoes</value>
+  </data>
+  <data name="Enum_None" xml:space="preserve">
+    <value>Nenhum</value>
+  </data>
+  <data name="Enum_ActividadType_Fax" xml:space="preserve">
+    <value>Fax</value>
+  </data>
+  <data name="Enum_ActividadType_Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="Enum_ActividadType_PhoneCall" xml:space="preserve">
+    <value>Chamada telefonica</value>
+  </data>
+  <data name="Enum_ActividadType_Visit" xml:space="preserve">
+    <value>Visita</value>
+  </data>
+  <data name="Enum_ActividadType_Task" xml:space="preserve">
+    <value>Tarefa</value>
+  </data>
+  <data name="Enum_TipoVisita_Commercial" xml:space="preserve">
+    <value>Comercial</value>
+  </data>
+  <data name="Enum_TipoVisita_Technical" xml:space="preserve">
+    <value>Tecnica</value>
+  </data>
+  <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve">
+    <value>Consulta</value>
+  </data>
+  <data name="Enum_ActividadOrigen_Oferta" xml:space="preserve">
+    <value>Oferta</value>
+  </data>
+  <data name="Enum_ActividadOrigen_Evento" xml:space="preserve">
+    <value>Evento</value>
+  </data>
+  <data name="Enum_ActividadOrigen_Usuario" xml:space="preserve">
+    <value>Utilizador</value>
+  </data>
+  <data name="Enum_ActividadOrigen_CampanaMarketing" xml:space="preserve">
+    <value>Campanha de marketing</value>
+  </data>
+  <data name="Enum_ActividadOrigen_ClientePotencial" xml:space="preserve">
+    <value>Cliente potencial</value>
+  </data>
+  <data name="Enum_ActividadOrigen_ContactoEvento" xml:space="preserve">
+    <value>Contacto do evento</value>
+  </data>
+  <data name="Enum_ActividadOrigen_Cliente" xml:space="preserve">
+    <value>Cliente</value>
+  </data>
+  <data name="Enum_ActividadOrigen_Proveedor" xml:space="preserve">
+    <value>Fornecedor</value>
+  </data>
+  <data name="Enum_ActividadOrigen_Proyecto" xml:space="preserve">
+    <value>Projeto</value>
+  </data>
+  <data name="Enum_ActividadOrigen_ProveedorPotencial" xml:space="preserve">
+    <value>Fornecedor potencial</value>
+  </data>
+  <data name="Enum_AsistenteTipo_None" xml:space="preserve">
+    <value>Sem assistente</value>
+  </data>
+  <data name="Enum_AsistenteTipo_Tecnico" xml:space="preserve">
+    <value>Tecnico</value>
+  </data>
+  <data name="Enum_AsistenteTipo_Commercial" xml:space="preserve">
+    <value>Comercial</value>
+  </data>
+  <data name="Enum_GastoType_Peaje" xml:space="preserve">
+    <value>Portagem</value>
+  </data>
+  <data name="Enum_GastoType_Parking" xml:space="preserve">
+    <value>Estacionamento</value>
+  </data>
+  <data name="Enum_GastoType_Km" xml:space="preserve">
+    <value>Km</value>
+  </data>
+  <data name="Enum_GastoType_Desayuno" xml:space="preserve">
+    <value>Pequeno almoco</value>
+  </data>
+  <data name="Enum_GastoType_Comida" xml:space="preserve">
+    <value>Almoco</value>
+  </data>
+  <data name="Enum_GastoType_Cena" xml:space="preserve">
+    <value>Jantar</value>
+  </data>
+  <data name="Enum_GastoType_Hotel" xml:space="preserve">
+    <value>Hotel</value>
+  </data>
+  <data name="Enum_GastoType_Varios" xml:space="preserve">
+    <value>Diversos</value>
+  </data>
+  <data name="Enum_GastoType_Taxi" xml:space="preserve">
+    <value>Taxi</value>
+  </data>
+  <data name="Confirm_Delete_Title" xml:space="preserve">
+    <value>Eliminar</value>
+  </data>
+  <data name="Confirm_Delete_Body" xml:space="preserve">
+    <value>Deseja eliminar este item?</value>
+  </data>
+  <data name="Confirm_Yes" xml:space="preserve">
+    <value>Sim</value>
+  </data>
+  <data name="Confirm_No" xml:space="preserve">
+    <value>Nao</value>
+  </data>
+  <data name="Speech_Transcribe_Title" xml:space="preserve">
+    <value>Transcrever audio (WAV)</value>
+  </data>
+  <data name="Speech_Transcribe_Language_Label" xml:space="preserve">
+    <value>Idioma</value>
+  </data>
+  <data name="Speech_Transcribe_Language_Auto" xml:space="preserve">
+    <value>Auto</value>
+  </data>
+  <data name="Speech_Transcribe_Temperature_Label" xml:space="preserve">
+    <value>Temperatura</value>
+  </data>
+  <data name="Speech_Transcribe_Context_Label" xml:space="preserve">
+    <value>Contexto (opcional)</value>
+  </data>
+  <data name="Speech_Transcribe_Action" xml:space="preserve">
+    <value>Transcrever</value>
+  </data>
+  <data name="Speech_Transcribe_InsertToComments" xml:space="preserve">
+    <value>Inserir nos comentarios</value>
+  </data>
+  <data name="Speech_Transcribe_Result_Label" xml:space="preserve">
+    <value>Transcricao</value>
+  </data>
+  <data name="Speech_Transcribe_MissingFile" xml:space="preserve">
+    <value>Selecione um arquivo WAV.</value>
+  </data>
+  <data name="Speech_Transcribe_OnlyWav" xml:space="preserve">
+    <value>Apenas arquivos WAV sao permitidos.</value>
+  </data>
+  <data name="Speech_Transcribe_FileTooLarge" xml:space="preserve">
+    <value>O arquivo excede 25 MB.</value>
+  </data>
+  <data name="Speech_Transcribe_InvalidTemperature" xml:space="preserve">
+    <value>A temperatura deve estar entre 0 e 1.</value>
+  </data>
+  <data name="Speech_Transcribe_Blocked" xml:space="preserve">
+    <value>Conteudo rejeitado pela politica de uso.</value>
+  </data>
+  <data name="Speech_Transcribe_Failed" xml:space="preserve">
+    <value>Falha na transcricao.</value>
+  </data>
+  <data name="TextEditor_OpenFullScreen" xml:space="preserve">
+    <value>Editar em tela cheia</value>
+  </data>
+  <data name="TextEditor_Microphone" xml:space="preserve">
+    <value>Microfone</value>
+  </data>
+  <data name="TextEditor_Transcribe" xml:space="preserve">
+    <value>Transcrever</value>
+  </data>
+  <data name="TextEditor_Transcribing" xml:space="preserve">
+    <value>Transcrevendo...</value>
+  </data>
+  <data name="TextEditor_TranscribeFailed" xml:space="preserve">
+    <value>Nao foi possivel transcrever o audio.</value>
+  </data>
+  <data name="Tools_AudioRecorder_Title" xml:space="preserve">
+    <value>Gravador de audio</value>
+  </data>
+  <data name="AudioRecorder_Play" xml:space="preserve">
+    <value>Reproduzir</value>
+  </data>
+  <data name="AudioRecorder_Record" xml:space="preserve">
+    <value>Gravar</value>
+  </data>
+  <data name="AudioRecorder_Pause" xml:space="preserve">
+    <value>Pausar</value>
+  </data>
+  <data name="AudioRecorder_Resume" xml:space="preserve">
+    <value>Retomar</value>
+  </data>
+  <data name="AudioRecorder_Stop" xml:space="preserve">
+    <value>Parar</value>
+  </data>
+  <data name="AudioRecorder_Cancel" xml:space="preserve">
+    <value>Cancelar</value>
+  </data>
+  <data name="AudioRecorder_NoAudio" xml:space="preserve">
+    <value>Sem audio</value>
+  </data>
+  <data name="AudioRecorder_Download" xml:space="preserve">
+    <value>Baixar audio</value>
+  </data>
+  <data name="AudioRecorder_Download_FileName" xml:space="preserve">
+    <value>gravacao-audio</value>
+  </data>
+  <data name="AudioRecorder_Status_Recording" xml:space="preserve">
+    <value>Gravando</value>
+  </data>
+  <data name="AudioRecorder_Status_Paused" xml:space="preserve">
+    <value>Em pausa</value>
+  </data>
+  <data name="AudioRecorder_Status_ReadyToPlay" xml:space="preserve">
+    <value>Pronto para reproduzir</value>
+  </data>
+  <data name="AudioRecorder_Status_Ready" xml:space="preserve">
+    <value>Pronto</value>
+  </data>
+  <data name="AudioRecorder_Error_HttpBlocked" xml:space="preserve">
+    <value>O Chrome bloqueia o microfone em HTTP (intranet). Use HTTPS ou abra a app via http://localhost. Para DEV, configure o Chrome para tratar sua origem HTTP como segura.</value>
+  </data>
+  <data name="AudioRecorder_Error_PermissionDenied" xml:space="preserve">
+    <value>Permissao do microfone negada. Ative no navegador e recarregue a pagina.</value>
+  </data>
+  <data name="AudioRecorder_Error_NoDevice" xml:space="preserve">
+    <value>Nenhum dispositivo de microfone encontrado. Se estiver em Remote Desktop, ative o microfone na sessao. Se for USB ou Bluetooth, reconecte e tente novamente.</value>
+  </data>
+  <data name="AudioRecorder_Error_DeviceBusy" xml:space="preserve">
+    <value>O microfone esta ocupado ou nao foi possivel iniciar. Feche outros apps (Teams, Zoom) e tente novamente.</value>
+  </data>
+  <data name="AudioRecorder_Error_Security" xml:space="preserve">
+    <value>Bloqueado pela seguranca do navegador. No Chrome, use HTTPS ou politica corporativa para permitir o microfone na intranet.</value>
+  </data>
+  <data name="AudioRecorder_Error_Constraints" xml:space="preserve">
+    <value>Nao foi possivel cumprir as restricoes de audio. Tente outro microfone ou configuracao.</value>
+  </data>
+  <data name="AudioRecorder_Error_Generic" xml:space="preserve">
+    <value>Nao foi possivel iniciar a gravacao. Verifique as permissoes. No Chrome, normalmente requer HTTPS ou localhost.</value>
+  </data>
+  <data name="AudioRecorder_Error_Unsupported" xml:space="preserve">
+    <value>Seu navegador nao suporta getUserMedia.</value>
+  </data>
+  <data name="AudioRecorder_Error_NoAudioContext" xml:space="preserve">
+    <value>AudioContext nao esta disponivel neste navegador.</value>
+  </data>
+  <data name="AudioRecorder_Hint_Origin" xml:space="preserve">
+    <value>Origem atual: {0}</value>
+  </data>
+  <data name="AudioRecorder_Hint_Technical" xml:space="preserve">
+    <value>Detalhe tecnico: {0}</value>
+  </data>
+  <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve">
+    <value>Seu processo ativo será cancelado e as alterações não guardadas serão perdidas. Deseja continuar?</value>
+  </data>
+  <data name="Visits_Create_Rollback" xml:space="preserve">
+    <value>Atividade reversa...</value>
+  </data>
+  <data name="Common_No" xml:space="preserve">
+    <value>Não</value>
+  </data>
+  <data name="Common_Yes" xml:space="preserve">
+    <value>Sim</value>
+  </data>
+  <data name="ExpenseSheets_Create_Lines" xml:space="preserve">
+    <value>Linhas</value>
+  </data>
+  <data name="Common_Add" xml:space="preserve">
+    <value>Adicionar</value>
+  </data>
+  <data name="ExpenseSheets_Create_NoLines" xml:space="preserve">
+    <value>Adicione pelo menos uma linha.</value>
+  </data>
+  <data name="ExpenseSheets_Line" xml:space="preserve">
+    <value>Linha</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve">
+    <value>Verificando taxa de câmbio...</value>
+  </data>
+  <data name="ExpenseSheets_Validation_DescriptionRequired" xml:space="preserve">
+    <value>A descrição é obrigatória.</value>
+  </data>
+  <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
+    <value>A moeda é obrigatória.</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_Unavailable" xml:space="preserve">
+    <value>Não foi possível obter a taxa de câmbio.</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_NotFound" xml:space="preserve">
+    <value>Não há taxa de câmbio para a data</value>
+  </data>
+  <data name="ExpenseSheets_Line_Detail_Creating" xml:space="preserve">
+    <value>Criando linha de despesas...</value>
+  </data>
+  <data name="ExpenseSheets_Line_Detail_Created" xml:space="preserve">
+    <value>Linha de despesas criada</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PaidReadOnly" xml:space="preserve">
+    <value>As planilhas de despesas pagas são somente leitura.</value>
+  </data>
+  <data name="ExpenseSheets_FuelPrice_Loading" xml:space="preserve">
+    <value>Carregando preco do combustivel...</value>
+  </data>
+  <data name="ExpenseSheets_FuelPrice_NotFound" xml:space="preserve">
+    <value>Nao foi possivel obter o preco do combustivel por km.</value>
+  </data>
+  <data name="ExpenseSheets_FuelPrice_Source" xml:space="preserve">
+    <value>Origem do preco do combustivel</value>
+  </data>
+  <data name="ExpenseSheets_FuelPrice_Source_UserConfig" xml:space="preserve">
+    <value>Obtido pela configuracao do utilizador.</value>
+  </data>
+  <data name="ExpenseSheets_FuelPrice_Source_GlobalConfig" xml:space="preserve">
+    <value>Obtido pela configuracao global.</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Text" xml:space="preserve">
+    <value>Taxa de cambio obtida 0.0000000</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Aria" xml:space="preserve">
+    <value>Mostrar informacao da taxa de cambio</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
+    <value>Taxa de cambio obtida {0}\nData: {1}\nOrigem: {2}</value>
+  </data></root>

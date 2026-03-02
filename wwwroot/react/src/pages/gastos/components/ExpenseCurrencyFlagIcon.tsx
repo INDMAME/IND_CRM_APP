@@ -23,7 +23,7 @@ const ExpenseCurrencyFlagIcon = ({ currencyCode, className = "", sizeClassName =
     return (
       <span
         aria-hidden="true"
-        className={`inline-flex items-center justify-center rounded-[3px] border border-slate-200 bg-slate-100 text-[9px] font-semibold text-slate-500 ${sizeClassName} ${className}`.trim()}
+        className={`inline-flex items-center justify-center rounded-lg text-[10px] font-semibold leading-none text-slate-500 ${sizeClassName} ${className}`.trim()}
       >
         $
       </span>
@@ -36,7 +36,7 @@ const ExpenseCurrencyFlagIcon = ({ currencyCode, className = "", sizeClassName =
       alt=""
       aria-hidden="true"
       loading="lazy"
-      className={`${sizeClassName} rounded-[3px] border border-slate-200 bg-white object-contain ${className}`.trim()}
+      className={`${sizeClassName} rounded-lg object-contain ${className}`.trim()}
       onError={() => setLoadFailed(true)}
     />
   );

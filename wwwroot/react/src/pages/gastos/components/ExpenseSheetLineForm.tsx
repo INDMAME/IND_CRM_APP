@@ -5,6 +5,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
@@ -39,6 +40,15 @@ type ExpenseSheetLineFormProps = {
   onDraftQtyChange: (value: string) => void;
   onDraftProjectIdChange: (value: string) => void;
   onDraftInternationalChange: (value: string) => void;
+};
+
+const formatQtyValue = (value: number | null | undefined): string => {
+  return formatExpenseNumber(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+    fallback: "-",
+  });
 };
 
 // Pure form renderer for expense line detail in read and edit modes.
@@ -140,12 +150,24 @@ const ExpenseSheetLineForm = ({
             <div className="space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Price", "Price")}</label>
               <input
-                className="form-control"
-                type="number"
-                step="any"
+                className={isKmType ? "form-control ind-readonly-field" : "form-control"}
+                type="text"
                 inputMode="decimal"
                 value={draftPrice}
                 onChange={(event) => onDraftPriceChange(event.target.value || "")}
+                onBlur={(event) =>
+                  onDraftPriceChange(
+                    formatExpenseInputNumber(event.target.value, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                      useGrouping: true,
+                      fallback: "",
+                    })
+                  )
+                }
+                readOnly={isKmType}
+                disabled={isKmType}
+                aria-readonly={isKmType}
                 aria-label={indT("ExpenseSheets_Field_Price", "Price")}
               />
               {isKmType && isFuelPriceLoading ? (
@@ -166,18 +188,27 @@ const ExpenseSheetLineForm = ({
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>
               <input
                 className="form-control"
-                type="number"
-                step="any"
+                type="text"
                 inputMode="decimal"
                 value={draftQty}
                 onChange={(event) => onDraftQtyChange(event.target.value || "")}
+                onBlur={(event) =>
+                  onDraftQtyChange(
+                    formatExpenseInputNumber(event.target.value, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                      useGrouping: true,
+                      fallback: "",
+                    })
+                  )
+                }
                 aria-label={indT("ExpenseSheets_Field_Qty", "Quantity")}
               />
             </div>
           ) : (
             <ExpenseReadOnlyField
               label={indT("ExpenseSheets_Field_Qty", "Quantity")}
-              value={line.qty != null ? String(line.qty) : "-"}
+              value={formatQtyValue(line.qty)}
             />
           )}
 

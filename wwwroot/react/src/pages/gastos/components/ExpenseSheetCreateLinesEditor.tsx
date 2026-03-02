@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetCreateLineDraft } from "../expenseTypes.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
+import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 
 type ExpenseSheetCreateLinesEditorProps = {
   lines: ExpenseSheetCreateLineDraft[];
@@ -105,11 +106,20 @@ const ExpenseSheetCreateLinesEditor = ({
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Price", "Price")}</label>
               <input
                 className="form-control"
-                type="number"
-                step="any"
+                type="text"
                 inputMode="decimal"
                 value={line.price}
                 onChange={(event) => onLineChange(line.localId, { price: event.target.value || "" })}
+                onBlur={(event) =>
+                  onLineChange(line.localId, {
+                    price: formatExpenseInputNumber(event.target.value, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                      useGrouping: true,
+                      fallback: "",
+                    }),
+                  })
+                }
               />
             </div>
 
@@ -117,11 +127,20 @@ const ExpenseSheetCreateLinesEditor = ({
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>
               <input
                 className="form-control"
-                type="number"
-                step="any"
+                type="text"
                 inputMode="decimal"
                 value={line.qty}
                 onChange={(event) => onLineChange(line.localId, { qty: event.target.value || "" })}
+                onBlur={(event) =>
+                  onLineChange(line.localId, {
+                    qty: formatExpenseInputNumber(event.target.value, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                      useGrouping: true,
+                      fallback: "",
+                    }),
+                  })
+                }
               />
             </div>
 

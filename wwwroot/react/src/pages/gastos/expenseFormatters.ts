@@ -1,37 +1,35 @@
-// Formats a numeric amount using the provided currency code when possible.
+import { formatExpenseNumber } from "./utils/expenseNumberFormat.ts";
+
+// Formats a numeric amount with fixed UI number style and optional currency code.
 export const formatAmountWithCurrency = (
   amount: number | null | undefined,
   currencyCode?: string,
-  locale?: string
+  _locale?: string
 ): string => {
   if (amount === null || amount === undefined || Number.isNaN(Number(amount))) {
     return "-";
   }
 
-  const safeLocale =
-    locale ||
-    (typeof document !== "undefined" && document.documentElement.lang
-      ? document.documentElement.lang
-      : "es-ES");
   const safeCurrency = String(currencyCode || "").trim().toUpperCase();
+  const decimalText = formatExpenseNumber(amount, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+    fallback: "-",
+  });
 
   if (safeCurrency) {
     try {
-      return new Intl.NumberFormat(safeLocale, {
+      return new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: safeCurrency,
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }).format(amount);
     } catch {
-      // Fall through to decimal fallback when currency code is invalid.
+      // Fall back to decimal + code when currency code is invalid.
     }
   }
-
-  const decimalText = new Intl.NumberFormat(safeLocale, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
 
   return safeCurrency ? `${decimalText} ${safeCurrency}` : decimalText;
 };

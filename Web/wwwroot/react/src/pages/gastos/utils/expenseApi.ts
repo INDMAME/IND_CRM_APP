@@ -3,12 +3,14 @@ import type {
   EntraContextDto,
   EntraContextRequest,
   ExchangeRateDto,
+  ExpenseGastoTypeCode,
   FuelPriceKmDto,
   ExpenseSheetCard,
   ExpenseSheetCurrencyDto,
   ExpenseSheetCreateRequest,
   ExpenseSheetCreateResponseData,
   ExpenseSheetDetailDto,
+  ExpenseSheetDraftResponse,
   ExpenseSheetHeader,
   ExpenseSheetHeaderUpdateRequest,
   ExpenseSheetLine,
@@ -17,6 +19,13 @@ import type {
   ExpenseSheetLineUpdateResponseData,
   ExpenseSheetListApiRequest,
   ExpenseSheetListItemDto,
+  ExpenseSheetTicketCreateRequest,
+  ExpenseSheetTicketDetailDto,
+  ExpenseSheetTicketLineRequest,
+  ExpenseSheetTicketListItemDto,
+  ExpenseSheetTicketListRequest,
+  ExpenseSheetTicketIaRequest,
+  ExpenseSheetTicketUpdateRequest,
   ExpenseSheetSubordinateDto,
   IndApiResponse,
   IndPagedResponse,
@@ -87,6 +96,7 @@ const DEFAULT_APP_CODE = "CRM";
 const JSON_HEADERS: Record<string, string> = {
   "Content-Type": "application/json",
 };
+const ALLOWED_GASTO_TYPE_CODES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 let runtimeAuthSeed: Partial<ExpenseApiAuthSeed> = {};
 let cachedContext: ExpenseApiContext | null = null;
@@ -119,6 +129,68 @@ const isPositiveNumber = (value: unknown): boolean => {
 const isValidListExpenseSheetStatus = (value: unknown): boolean => {
   const parsed = toNullableNumber(value);
   return parsed !== null && Number.isInteger(parsed) && parsed >= 0 && parsed <= 4;
+};
+
+const toNullableGastoTypeCode = (value: unknown): ExpenseGastoTypeCode | null => {
+  const parsed = toNullableNumber(value);
+  if (parsed === null || !Number.isInteger(parsed) || !ALLOWED_GASTO_TYPE_CODES.has(parsed)) {
+    return null;
+  }
+
+  return parsed as ExpenseGastoTypeCode;
+};
+
+const normalizeOptionalTicketGastoType = (value: unknown): ExpenseGastoTypeCode | undefined => {
+  if (value === null || value === undefined || safeText(value) === "") {
+    return undefined;
+  }
+
+  const parsed = toNullableGastoTypeCode(value);
+  if (parsed === null) {
+    throw new ApiFetchError("gastoType must be one of: 0,1,2,3,4,5,6,7,8,14.");
+  }
+
+  return parsed;
+};
+
+const normalizeOptionalTicketStatus = (value: unknown): 0 | 1 | undefined => {
+  if (value === null || value === undefined || safeText(value) === "") {
+    return undefined;
+  }
+
+  const parsed = toNullableNumber(value);
+  if (parsed === 0 || parsed === 1) {
+    return parsed;
+  }
+
+  throw new ApiFetchError("status must be 0 or 1.");
+};
+
+const normalizeTicketListDate = (value: unknown): string => {
+  const raw = safeText(value);
+  if (!raw) return "";
+
+  const dateOnly = raw.split("T")[0].split(" ")[0];
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+    return dateOnly;
+  }
+
+  if (/^\d{8}$/.test(dateOnly)) {
+    const year = dateOnly.slice(0, 4);
+    const month = dateOnly.slice(4, 6);
+    const day = dateOnly.slice(6, 8);
+    return `${year}-${month}-${day}`;
+  }
+
+  const parsed = new Date(raw);
+  if (Number.isNaN(parsed.getTime())) {
+    return "";
+  }
+
+  const year = String(parsed.getFullYear());
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const day = String(parsed.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 };
 
 const toNullableBool = (value: unknown): boolean | null => {
@@ -256,6 +328,12 @@ const buildExpenseHeaders = (
   }
 
   return merged;
+};
+
+const buildExpenseFormHeaders = (context: ExpenseApiContext, options?: ApiFetchOptions): HeadersInit => {
+  const headers = sanitizeHeaders(buildExpenseHeaders(context, options, false));
+  removeHeaderValue(headers, "Content-Type");
+  return headers;
 };
 
 const buildContextHeaders = (token: string, options?: ApiFetchOptions): HeadersInit => {
@@ -437,6 +515,43 @@ const normalizeSubordinatesPagedResponse = (
   };
 };
 
+const normalizeTicketListPagedResponse = (
+  response: IndPagedResponse<ExpenseSheetTicketListItemDto>
+): IndPagedResponse<ExpenseSheetTicketListItemDto> => {
+  const items = Array.isArray(response?.Items) ? response.Items : [];
+  const normalizedItems = items.map((item) => ({
+    ...item,
+    GastoType: toNullableGastoTypeCode(
+      (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
+        (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
+    ),
+  }));
+
+  return {
+    ...response,
+    Items: normalizedItems,
+  };
+};
+
+const normalizeTicketDetailPagedResponse = (
+  response: IndPagedResponse<ExpenseSheetTicketDetailDto>
+): IndPagedResponse<ExpenseSheetTicketDetailDto> => {
+  const items = Array.isArray(response?.Items) ? response.Items : [];
+  const normalizedItems = items.map((item) => ({
+    ...item,
+    GastoType: toNullableGastoTypeCode(
+      (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
+        (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
+    ),
+    Lines: Array.isArray(item?.Lines) ? item.Lines : [],
+  }));
+
+  return {
+    ...response,
+    Items: normalizedItems,
+  };
+};
+
 const looksLikeHtmlDocument = (value: unknown): boolean => {
   const raw = safeText(value).toLowerCase();
   return raw.startsWith("<!doctype html") || raw.startsWith("<html");
@@ -590,6 +705,7 @@ export const mapExpenseSheetHeader = (sheet: ExpenseSheetDetailDto): ExpenseShee
 export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine => {
   const typeValueCode = safeText(line.TypeValue);
   const legacyPrice = (line as { price?: unknown }).price;
+  const legacyFileId = (line as { fileId?: unknown }).fileId;
 
   return {
     lineRecId: safeText(line.RecId),
@@ -598,6 +714,7 @@ export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine
     typeValue: resolveTypeLabel(typeValueCode),
     description: safeText(line.Description),
     internacional: toNullableBool(line.Internacional),
+    fileId: safeText(line.FileId ?? legacyFileId),
     ticket: toNullableBool(line.Ticket),
     price: toNullableNumber(line.Price ?? legacyPrice),
     qty: toNullableNumber(line.Qty),
@@ -835,6 +952,37 @@ export const getExchangeRate = async (
   });
 };
 
+// Reads exchange rate from /api/system/exchange-rate/public-direct.
+export const getExchangeRatePublicDirect = async (
+  baseCurrency: string,
+  targetCurrency: string,
+  date?: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<ExchangeRateDto>> => {
+  const token = resolveAuthToken(options);
+  const normalizedBaseCurrency = safeText(baseCurrency).toUpperCase();
+  const normalizedTargetCurrency = safeText(targetCurrency).toUpperCase();
+  const normalizedDate = safeText(date);
+  const query = new URLSearchParams();
+
+  query.set("baseCurrency", normalizedBaseCurrency);
+  query.set("targetCurrency", normalizedTargetCurrency);
+  if (normalizedDate) {
+    query.set("date", normalizedDate);
+  }
+
+  const headers = sanitizeHeaders(options?.headers);
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  return fetchJson<IndApiResponse<ExchangeRateDto>>(`/api/system/exchange-rate/public-direct?${query.toString()}`, {
+    ...options,
+    method: "GET",
+    headers,
+  });
+};
+
 // Reads fuel price per km from /api/crm/expensesheets/fuel-price-km.
 export const getFuelPriceKm = async (
   transDate: string,
@@ -1039,6 +1187,318 @@ export const deleteExpenseSheetLine = async (
       headers: buildExpenseHeaders(context, options),
     }
   );
+
+  return normalizeApiResponse(response);
+};
+
+// Extracts an expense draft from a ticket image using /api/ia/service/expensefromticket.
+export const extractExpenseFromTicketDraft = async (
+  ticketImage: File | Blob,
+  persistTicket?: boolean,
+  ticketUrlFile?: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<ExpenseSheetDraftResponse>> => {
+  const context = await ensureExpenseApiContext(options);
+  const form = new FormData();
+  const safeTicketUrl = safeText(ticketUrlFile);
+
+  if (ticketImage instanceof File) {
+    form.append("ticketImage", ticketImage, safeText(ticketImage.name) || "ticket.jpg");
+  } else {
+    form.append("ticketImage", ticketImage, "ticket.jpg");
+  }
+
+  if (typeof persistTicket === "boolean") {
+    form.append("persistTicket", persistTicket ? "true" : "false");
+  }
+
+  if (safeTicketUrl) {
+    form.append("ticketUrlFile", safeTicketUrl);
+  }
+
+  const response = await fetchJson<IndApiResponse<ExpenseSheetDraftResponse>>("/api/ia/service/expensefromticket", {
+    ...options,
+    method: "POST",
+    headers: buildExpenseFormHeaders(context, options),
+    body: form,
+  });
+
+  return normalizeApiResponse(response);
+};
+
+// Creates a ticket header/lines using /api/crm/expensesheets/tickets.
+export const createExpenseSheetTicket = async (
+  payload: ExpenseSheetTicketCreateRequest,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<object>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safePayload: ExpenseSheetTicketCreateRequest = {
+    ...payload,
+    gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
+  };
+  const response = await fetchJson<IndApiResponse<object>>("/api/crm/expensesheets/tickets", {
+    ...options,
+    method: "POST",
+    headers: buildExpenseHeaders(context, options, true),
+    body: JSON.stringify(safePayload),
+  });
+
+  return normalizeApiResponse(response);
+};
+
+// Loads ticket list using /api/crm/expensesheets/tickets/list.
+export const fetchExpenseSheetTicketsList = async (
+  payload: ExpenseSheetTicketListRequest,
+  options?: ApiFetchOptions
+): Promise<IndPagedResponse<ExpenseSheetTicketListItemDto>> => {
+  const context = await ensureExpenseApiContext(options);
+  const createdDateFrom = normalizeTicketListDate(payload?.createdDateFrom);
+  const createdDateTo = normalizeTicketListDate(payload?.createdDateTo);
+  if (!createdDateFrom || !createdDateTo) {
+    throw new ApiFetchError("createdDateFrom and createdDateTo are required in yyyy-MM-dd format.");
+  }
+
+  const preferredSearchKey = safeText(payload?.searchKey || payload?.filter);
+  const legacyFilter = safeText(payload?.filter || preferredSearchKey);
+  const safePayload: ExpenseSheetTicketListRequest = {
+    page: Number.isFinite(payload?.page) && payload.page > 0 ? Math.floor(payload.page) : 1,
+    pageSize: Number.isFinite(payload?.pageSize) && payload.pageSize > 0 ? Math.floor(payload.pageSize) : 50,
+    createdDateFrom,
+    createdDateTo,
+    searchKey: preferredSearchKey || undefined,
+    filter: legacyFilter || undefined,
+    status: normalizeOptionalTicketStatus(payload?.status),
+    currencyCode: safeText(payload?.currencyCode).toUpperCase() || undefined,
+    gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
+  };
+
+  const response = await fetchJson<IndPagedResponse<ExpenseSheetTicketListItemDto>>(
+    "/api/crm/expensesheets/tickets/list",
+    {
+      ...options,
+      method: "POST",
+      headers: buildExpenseHeaders(context, options, true),
+      body: JSON.stringify(safePayload),
+    }
+  );
+
+  return normalizeTicketListPagedResponse(response);
+};
+
+// Loads one ticket detail using /api/crm/expensesheets/tickets/{fileId}.
+export const fetchExpenseSheetTicket = async (
+  fileId: string,
+  options?: ApiFetchOptions
+): Promise<IndPagedResponse<ExpenseSheetTicketDetailDto>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const response = await fetchJson<IndPagedResponse<ExpenseSheetTicketDetailDto>>(
+    `/api/crm/expensesheets/tickets/${safeFileId}`,
+    {
+      ...options,
+      method: "GET",
+      headers: buildExpenseHeaders(context, options),
+    }
+  );
+
+  return normalizeTicketDetailPagedResponse(response);
+};
+
+// Updates ticket header metadata using /api/crm/expensesheets/tickets/{fileId}.
+export const updateExpenseSheetTicket = async (
+  fileId: string,
+  payload: ExpenseSheetTicketUpdateRequest,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<object>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const safePayload: ExpenseSheetTicketUpdateRequest = {
+    ...payload,
+    gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
+  };
+  const response = await fetchJson<IndApiResponse<object>>(`/api/crm/expensesheets/tickets/${safeFileId}`, {
+    ...options,
+    method: "PUT",
+    headers: buildExpenseHeaders(context, options, true),
+    body: JSON.stringify(safePayload),
+  });
+
+  return normalizeApiResponse(response);
+};
+
+// Deletes one ticket or one ticket line via query using /api/crm/expensesheets/tickets/{fileId}.
+export const deleteExpenseSheetTicket = async (
+  fileId: string,
+  lineRecId?: number,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<null>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const query = new URLSearchParams();
+  if (Number.isInteger(Number(lineRecId)) && Number(lineRecId) > 0) {
+    query.set("lineRecId", String(lineRecId));
+  }
+
+  const suffix = query.toString();
+  const url = suffix
+    ? `/api/crm/expensesheets/tickets/${safeFileId}?${suffix}`
+    : `/api/crm/expensesheets/tickets/${safeFileId}`;
+  const response = await fetchJson<IndApiResponse<null>>(url, {
+    ...options,
+    method: "DELETE",
+    headers: buildExpenseHeaders(context, options),
+  });
+
+  return normalizeApiResponse(response);
+};
+
+// Applies IA payload over an existing ticket using /api/crm/expensesheets/tickets/{fileId}/ia.
+export const applyExpenseSheetTicketIa = async (
+  fileId: string,
+  payload: ExpenseSheetTicketIaRequest,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<object>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const rawPayload = (payload || {}) as ExpenseSheetTicketIaRequest;
+  const safePayload: ExpenseSheetTicketIaRequest = {
+    ...rawPayload,
+  };
+  const gastoType = normalizeOptionalTicketGastoType(rawPayload.gastoType);
+  if (gastoType === undefined) {
+    delete safePayload.gastoType;
+  } else {
+    safePayload.gastoType = gastoType;
+  }
+
+  const response = await fetchJson<IndApiResponse<object>>(`/api/crm/expensesheets/tickets/${safeFileId}/ia`, {
+    ...options,
+    method: "POST",
+    headers: buildExpenseHeaders(context, options, true),
+    body: JSON.stringify(safePayload),
+  });
+
+  return normalizeApiResponse(response);
+};
+
+// Creates one ticket line using /api/crm/expensesheets/tickets/{fileId}/lines.
+export const createExpenseSheetTicketLine = async (
+  fileId: string,
+  payload: ExpenseSheetTicketLineRequest,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<object>> => {
+  if (!safeText(payload?.description) || !isPositiveNumber(payload?.qty) || !isPositiveNumber(payload?.price)) {
+    throw new ApiFetchError("description, qty > 0 and price > 0 are required.");
+  }
+
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const response = await fetchJson<IndApiResponse<object>>(`/api/crm/expensesheets/tickets/${safeFileId}/lines`, {
+    ...options,
+    method: "POST",
+    headers: buildExpenseHeaders(context, options, true),
+    body: JSON.stringify(payload),
+  });
+
+  return normalizeApiResponse(response);
+};
+
+// Updates one ticket line using /api/crm/expensesheets/tickets/{fileId}/lines/{lineRecId}.
+export const updateExpenseSheetTicketLine = async (
+  fileId: string,
+  lineRecId: string | number,
+  payload: ExpenseSheetTicketLineRequest,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<object>> => {
+  if (!safeText(payload?.description) || !isPositiveNumber(payload?.qty) || !isPositiveNumber(payload?.price)) {
+    throw new ApiFetchError("description, qty > 0 and price > 0 are required.");
+  }
+
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const safeLineId = encodeURIComponent(String(lineRecId || "").trim());
+  const response = await fetchJson<IndApiResponse<object>>(
+    `/api/crm/expensesheets/tickets/${safeFileId}/lines/${safeLineId}`,
+    {
+      ...options,
+      method: "PUT",
+      headers: buildExpenseHeaders(context, options, true),
+      body: JSON.stringify(payload),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
+// Deletes one ticket line using /api/crm/expensesheets/tickets/{fileId}/lines/{lineRecId}.
+export const deleteExpenseSheetTicketLine = async (
+  fileId: string,
+  lineRecId: string | number,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<null>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const safeLineId = encodeURIComponent(String(lineRecId || "").trim());
+  const response = await fetchJson<IndApiResponse<null>>(
+    `/api/crm/expensesheets/tickets/${safeFileId}/lines/${safeLineId}`,
+    {
+      ...options,
+      method: "DELETE",
+      headers: buildExpenseHeaders(context, options),
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
+// Uploads/replaces ticket file content using /api/crm/expensesheets/tickets/{fileId}/file.
+export const uploadExpenseSheetTicketFile = async (
+  fileId: string,
+  file: File | Blob,
+  extension?: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<object>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const safeExtension = safeText(extension).replace(/^\./, "");
+  const query = new URLSearchParams();
+  if (safeExtension) {
+    query.set("extension", safeExtension);
+  }
+
+  const suffix = query.toString();
+  const url = suffix
+    ? `/api/crm/expensesheets/tickets/${safeFileId}/file?${suffix}`
+    : `/api/crm/expensesheets/tickets/${safeFileId}/file`;
+  const form = new FormData();
+  if (file instanceof File) {
+    form.append("file", file, safeText(file.name) || `ticket.${safeExtension || "jpg"}`);
+  } else {
+    form.append("file", file, `ticket.${safeExtension || "jpg"}`);
+  }
+
+  const response = await fetchJson<IndApiResponse<object>>(url, {
+    ...options,
+    method: "POST",
+    headers: buildExpenseFormHeaders(context, options),
+    body: form,
+  });
+
+  return normalizeApiResponse(response);
+};
+
+// Deletes ticket file content using /api/crm/expensesheets/tickets/{fileId}/file.
+export const deleteExpenseSheetTicketFile = async (
+  fileId: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<null>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const response = await fetchJson<IndApiResponse<null>>(`/api/crm/expensesheets/tickets/${safeFileId}/file`, {
+    ...options,
+    method: "DELETE",
+    headers: buildExpenseHeaders(context, options),
+  });
 
   return normalizeApiResponse(response);
 };

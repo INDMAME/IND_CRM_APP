@@ -21,6 +21,7 @@ namespace IND_CRM_APP.Controllers
         private readonly ILogger<GastosController> _logger;
         private readonly ICrmEnumCatalog _crmEnumCatalog;
         private readonly IStringLocalizer<INDSharedResource> _sr;
+        private static readonly HashSet<int> AllowedTicketGastoTypes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
 
         public GastosController(
             ICrmApiClient apiClient,
@@ -372,6 +373,90 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // API route used by React clients for /api/system/exchange-rate/public-direct.
+        [HttpGet]
+        public async Task<IActionResult> ApiSystemExchangeRatePublicDirect(string baseCurrency, string targetCurrency, string? date)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_SessionExpired"].Value,
+                        ErrorCode = "SESSION_EXPIRED",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>()
+                    },
+                    StatusCodes.Status401Unauthorized);
+
+            var normalizedBaseCurrency = (baseCurrency ?? string.Empty).Trim().ToUpperInvariant();
+            var normalizedTargetCurrency = (targetCurrency ?? string.Empty).Trim().ToUpperInvariant();
+            var normalizedDate = NormalizeListDateFilter(date) ?? DateTime.Now.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            if (string.IsNullOrWhiteSpace(normalizedBaseCurrency) || string.IsNullOrWhiteSpace(normalizedTargetCurrency))
+            {
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_RequestFailed"].Value,
+                        ErrorCode = "INVALID_REQUEST",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>()
+                    },
+                    StatusCodes.Status400BadRequest);
+            }
+
+            try
+            {
+                var response = await _apiClient.GetExchangeRatePublicDirectAsync(
+                    token,
+                    normalizedBaseCurrency,
+                    normalizedTargetCurrency,
+                    normalizedDate);
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = response.Errors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiSystemExchangeRatePublicDirect");
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_RequestFailed"].Value,
+                        ErrorCode = "UPSTREAM_ERROR",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>()
+                    },
+                    StatusCodes.Status502BadGateway);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiSystemExchangeRatePublicDirect");
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_RequestFailed"].Value,
+                        ErrorCode = "UNHANDLED_ERROR",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>()
+                    },
+                    StatusCodes.Status500InternalServerError);
+            }
+        }
+
         // API route used by React clients for /api/crm/expensesheets/fuel-price-km.
         [HttpGet]
         public async Task<IActionResult> ApiExpenseSheetFuelPriceKm(string transDate)
@@ -461,6 +546,99 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // API route used by React clients for /api/ia/service/expensefromticket.
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        [RequestSizeLimit(30000000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 30000000)]
+        public async Task<IActionResult> ApiExpenseFromTicket(
+            [FromForm] IFormFile? ticketImage,
+            [FromForm] string? persistTicket,
+            [FromForm] string? ticketUrlFile)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = _sr["Api_SessionExpired"].Value,
+                        ErrorCode = "SESSION_EXPIRED",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>()
+                    },
+                    StatusCodes.Status401Unauthorized);
+            }
+
+            if (ticketImage == null || ticketImage.Length <= 0)
+            {
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+            }
+
+            var persistRaw = (persistTicket ?? string.Empty).Trim();
+            bool? persistValue = null;
+            if (!string.IsNullOrWhiteSpace(persistRaw))
+            {
+                if (string.Equals(persistRaw, "1", StringComparison.OrdinalIgnoreCase))
+                {
+                    persistValue = true;
+                }
+                else if (string.Equals(persistRaw, "0", StringComparison.OrdinalIgnoreCase))
+                {
+                    persistValue = false;
+                }
+                else if (bool.TryParse(persistRaw, out var parsedPersist))
+                {
+                    persistValue = parsedPersist;
+                }
+            }
+
+            try
+            {
+                using var stream = ticketImage.OpenReadStream();
+                var response = await _apiClient.ExpenseFromTicketAsync(
+                    token,
+                    stream,
+                    ticketImage.FileName ?? "ticket.jpg",
+                    ticketImage.ContentType,
+                    persistValue,
+                    NormalizeOptionalText(ticketUrlFile),
+                    HttpContext.RequestAborted);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseFromTicket");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseFromTicket");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
         // API route used by React clients for /api/crm/expensesheets/{hojaGastosId}.
         [HttpGet]
         public async Task<IActionResult> ApiExpenseSheetDetail(string hojaGastosId)
@@ -526,7 +704,22 @@ namespace IND_CRM_APP.Controllers
 
             var normalizedExchRate = req.ExchRate > 0 ? req.ExchRate : 1m;
             var normalizedDescription = (req.Description ?? string.Empty).Trim();
-            var normalizedLines = req.Lines ?? new List<ExpenseSheetLineRequest>();
+            var normalizedLines = (req.Lines ?? new List<ExpenseSheetLineRequest>())
+                .Where(line => line != null)
+                .Select(line => new ExpenseSheetLineRequest
+                {
+                    TransDate = line.TransDate,
+                    TypeValue = line.TypeValue,
+                    Description = (line.Description ?? string.Empty).Trim(),
+                    Internacional = line.Internacional,
+                    FileId = NormalizeOptionalText(line.FileId),
+                    Ticket = line.Ticket,
+                    Qty = line.Qty,
+                    Price = line.Price,
+                    ProjId = NormalizeOptionalText(line.ProjId),
+                    IndAttachFiles = line.IndAttachFiles ?? string.Empty
+                })
+                .ToList();
             var hasInvalidLines = normalizedLines.Any(line =>
                 line == null ||
                 string.IsNullOrWhiteSpace(NormalizeLineTransDate(line.TransDate)) ||
@@ -730,6 +923,7 @@ namespace IND_CRM_APP.Controllers
                 TypeValue = req.TypeValue,
                 Description = (req.Description ?? string.Empty).Trim(),
                 Internacional = req.Internacional,
+                FileId = NormalizeOptionalText(req.FileId),
                 Ticket = req.Ticket,
                 Qty = req.Qty,
                 Price = req.Price,
@@ -838,6 +1032,728 @@ namespace IND_CRM_APP.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled error in ApiExpenseSheetLineDelete");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets.
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ApiExpenseSheetTicketsCreate([FromBody] ExpenseSheetTicketCreateRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            req ??= new ExpenseSheetTicketCreateRequest();
+            if (req.Mode < 0 || req.Mode > 2)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var normalizedLines = (req.Lines ?? new List<ExpenseSheetTicketLineRequest>())
+                .Where(line => line != null)
+                .Select(line => new ExpenseSheetTicketLineRequest
+                {
+                    Description = (line.Description ?? string.Empty).Trim(),
+                    Qty = line.Qty,
+                    Price = line.Price,
+                    TotalAmount = line.TotalAmount.HasValue && line.TotalAmount.Value > 0
+                        ? line.TotalAmount.Value
+                        : null
+                })
+                .ToList();
+
+            var hasInvalidLines = normalizedLines.Any(line =>
+                string.IsNullOrWhiteSpace(line.Description) ||
+                line.Qty <= 0 ||
+                line.Price <= 0);
+
+            if (hasInvalidLines)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            if (req.Mode == 2 && string.IsNullOrWhiteSpace(NormalizeOptionalText(req.ExistingFileId)))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            if (!IsValidTicketGastoType(req.GastoType))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var request = new ExpenseSheetTicketCreateRequest
+            {
+                Mode = req.Mode,
+                ExistingFileId = NormalizeOptionalText(req.ExistingFileId),
+                Description = NormalizeOptionalText(req.Description),
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                TotalAmount = req.TotalAmount,
+                Status = req.Status is >= 0 ? req.Status : null,
+                TransDate = NormalizeListDateFilter(req.TransDate) ?? NormalizeOptionalText(req.TransDate),
+                Comentario = NormalizeOptionalText(req.Comentario),
+                UrlFile = NormalizeOptionalText(req.UrlFile),
+                FileName = NormalizeOptionalText(req.FileName),
+                FileExtension = NormalizeOptionalText(req.FileExtension),
+                ProcessedByAI = req.ProcessedByAI,
+                GastoType = NormalizeTicketGastoType(req.GastoType),
+                Lines = normalizedLines.Count > 0 ? normalizedLines : null
+            };
+
+            try
+            {
+                var response = await _apiClient.CreateExpenseSheetTicketAsync(token, request);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketsCreate");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketsCreate");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/list.
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ApiExpenseSheetTicketsList([FromBody] ExpenseSheetTicketListRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiPagedError(StatusCodes.Status401Unauthorized, _sr["Api_SessionExpired"].Value);
+
+            if (req == null || req.Page < 1 || req.PageSize <= 0)
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            var normalizedCreatedDateFrom = NormalizeListDateFilter(req.CreatedDateFrom);
+            var normalizedCreatedDateTo = NormalizeListDateFilter(req.CreatedDateTo);
+            if (string.IsNullOrWhiteSpace(normalizedCreatedDateFrom) || string.IsNullOrWhiteSpace(normalizedCreatedDateTo))
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            if (req.Status.HasValue && (req.Status.Value < 0 || req.Status.Value > 1))
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            if (!IsValidTicketGastoType(req.GastoType))
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            var page = req.Page;
+            var pageSize = req.PageSize;
+            var normalizedSearchKey = NormalizeOptionalText(req.SearchKey) ?? NormalizeOptionalText(req.Filter);
+
+            var request = new ExpenseSheetTicketListRequest
+            {
+                Page = page,
+                PageSize = pageSize,
+                CreatedDateFrom = normalizedCreatedDateFrom!,
+                CreatedDateTo = normalizedCreatedDateTo!,
+                SearchKey = normalizedSearchKey,
+                Filter = NormalizeOptionalText(req.Filter) ?? normalizedSearchKey,
+                Status = req.Status,
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                GastoType = NormalizeTicketGastoType(req.GastoType)
+            };
+
+            try
+            {
+                var result = await _apiClient.GetExpenseSheetTicketsAsync(token, request);
+                var items = result.GetAnyItems()
+                    .Select(ToExpenseSheetTicketApiListItem)
+                    .ToList();
+                var responsePage = result.Page > 0 ? result.Page : page;
+                var responsePageSize = result.PageSize > 0 ? result.PageSize : pageSize;
+
+                return CreateApiPagedResponse(new
+                {
+                    Success = result.Success || items.Count > 0,
+                    Message = result.Message ?? string.Empty,
+                    Total = result.Total > 0 ? result.Total : items.Count,
+                    Page = responsePage,
+                    PageSize = responsePageSize,
+                    Items = items,
+                    TraceId = result.TraceId
+                });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketsList");
+                return CreateApiPagedError(StatusCodes.Status502BadGateway, _sr["Api_RequestFailed"].Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketsList");
+                return CreateApiPagedError(StatusCodes.Status500InternalServerError, _sr["Api_RequestFailed"].Value);
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}.
+        [HttpGet]
+        public async Task<IActionResult> ApiExpenseSheetTicketDetail(string fileId)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiPagedError(StatusCodes.Status401Unauthorized, _sr["Api_SessionExpired"].Value);
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            if (string.IsNullOrWhiteSpace(safeFileId))
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            try
+            {
+                var result = await _apiClient.GetExpenseSheetTicketDetailAsync(token, safeFileId);
+                var ticket = SelectTicket(result.GetAnyItems(), safeFileId);
+                if (ticket == null)
+                    return CreateApiPagedError(StatusCodes.Status404NotFound, _sr["ExpenseSheets_NotFound"].Value);
+                var ticketItem = ticket;
+
+                return CreateApiPagedResponse(new
+                {
+                    Success = result.Success || ticketItem != null,
+                    Message = result.Message ?? string.Empty,
+                    Total = 1,
+                    Page = 1,
+                    PageSize = 1,
+                    Items = new[] { ToExpenseSheetTicketApiDetailItem(ticketItem!) },
+                    TraceId = result.TraceId
+                });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketDetail");
+                return CreateApiPagedError(StatusCodes.Status502BadGateway, _sr["Api_RequestFailed"].Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketDetail");
+                return CreateApiPagedError(StatusCodes.Status500InternalServerError, _sr["Api_RequestFailed"].Value);
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}.
+        [HttpPut]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ApiExpenseSheetTicketUpdate(string fileId, [FromBody] ExpenseSheetTicketUpdateRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            if (string.IsNullOrWhiteSpace(safeFileId) || req == null)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            if (!IsValidTicketGastoType(req.GastoType))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var request = new ExpenseSheetTicketUpdateRequest
+            {
+                Description = NormalizeOptionalText(req.Description),
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                TotalAmount = req.TotalAmount,
+                Status = req.Status is >= 0 ? req.Status : null,
+                TransDate = NormalizeListDateFilter(req.TransDate) ?? NormalizeOptionalText(req.TransDate),
+                Comentario = NormalizeOptionalText(req.Comentario),
+                UrlFile = NormalizeOptionalText(req.UrlFile),
+                FileName = NormalizeOptionalText(req.FileName),
+                ProcessedByAI = req.ProcessedByAI,
+                FileExtension = NormalizeOptionalText(req.FileExtension),
+                GastoType = NormalizeTicketGastoType(req.GastoType)
+            };
+
+            try
+            {
+                var response = await _apiClient.UpdateExpenseSheetTicketAsync(token, safeFileId, request);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketUpdate");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketUpdate");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}.
+        [HttpDelete]
+        public async Task<IActionResult> ApiExpenseSheetTicketDelete(string fileId, [FromQuery] int? lineRecId = null)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            if (string.IsNullOrWhiteSpace(safeFileId) || (lineRecId.HasValue && lineRecId.Value <= 0))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            try
+            {
+                var response = await _apiClient.DeleteExpenseSheetTicketAsync(token, safeFileId, lineRecId);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketDelete");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketDelete");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/ia.
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ApiExpenseSheetTicketApplyIa(string fileId, [FromBody] JsonElement req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            if (string.IsNullOrWhiteSpace(safeFileId) || req.ValueKind == JsonValueKind.Undefined || req.ValueKind == JsonValueKind.Null)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            if (req.ValueKind == JsonValueKind.Object &&
+                req.TryGetProperty("gastoType", out var gastoTypeElement) &&
+                !IsValidTicketGastoTypeElement(gastoTypeElement))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            try
+            {
+                var response = await _apiClient.UpdateExpenseSheetTicketFromIAAsync(token, safeFileId, req);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketApplyIa");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketApplyIa");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/lines.
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ApiExpenseSheetTicketLineCreate(string fileId, [FromBody] ExpenseSheetTicketLineRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            if (string.IsNullOrWhiteSpace(safeFileId) || req == null)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var request = new ExpenseSheetTicketLineRequest
+            {
+                Description = (req.Description ?? string.Empty).Trim(),
+                Qty = req.Qty,
+                Price = req.Price,
+                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
+                    ? req.TotalAmount.Value
+                    : null
+            };
+
+            if (string.IsNullOrWhiteSpace(request.Description) || request.Qty <= 0 || request.Price <= 0)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            try
+            {
+                var response = await _apiClient.CreateExpenseSheetTicketLineAsync(token, safeFileId, request);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketLineCreate");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketLineCreate");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/lines/{lineRecId}.
+        [HttpPut]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ApiExpenseSheetTicketLineUpdate(
+            string fileId,
+            string lineRecId,
+            [FromBody] ExpenseSheetTicketLineRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            var safeLineId = NormalizeOptionalText(lineRecId);
+            if (string.IsNullOrWhiteSpace(safeFileId) || string.IsNullOrWhiteSpace(safeLineId) || req == null)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var request = new ExpenseSheetTicketLineRequest
+            {
+                Description = (req.Description ?? string.Empty).Trim(),
+                Qty = req.Qty,
+                Price = req.Price,
+                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
+                    ? req.TotalAmount.Value
+                    : null
+            };
+
+            if (string.IsNullOrWhiteSpace(request.Description) || request.Qty <= 0 || request.Price <= 0)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            try
+            {
+                var response = await _apiClient.UpdateExpenseSheetTicketLineAsync(token, safeFileId, safeLineId, request);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketLineUpdate");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketLineUpdate");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/lines/{lineRecId}.
+        [HttpDelete]
+        public async Task<IActionResult> ApiExpenseSheetTicketLineDelete(string fileId, string lineRecId)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            var safeLineId = NormalizeOptionalText(lineRecId);
+            if (string.IsNullOrWhiteSpace(safeFileId) || string.IsNullOrWhiteSpace(safeLineId))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            try
+            {
+                var response = await _apiClient.DeleteExpenseSheetTicketLineAsync(token, safeFileId, safeLineId);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketLineDelete");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketLineDelete");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/file.
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        [RequestSizeLimit(30000000)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 30000000)]
+        public async Task<IActionResult> ApiExpenseSheetTicketFileUpload(
+            string fileId,
+            [FromQuery] string? extension,
+            [FromForm] IFormFile? file)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            if (string.IsNullOrWhiteSpace(safeFileId) || file == null || file.Length <= 0)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            try
+            {
+                using var stream = file.OpenReadStream();
+                var response = await _apiClient.UploadExpenseSheetTicketFileAsync(
+                    token,
+                    safeFileId,
+                    stream,
+                    file.FileName ?? "ticket.jpg",
+                    file.ContentType,
+                    NormalizeOptionalText(extension),
+                    HttpContext.RequestAborted);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketFileUpload");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketFileUpload");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/file.
+        [HttpDelete]
+        public async Task<IActionResult> ApiExpenseSheetTicketFileDelete(string fileId)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            if (string.IsNullOrWhiteSpace(safeFileId))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            try
+            {
+                var response = await _apiClient.DeleteExpenseSheetTicketFileAsync(token, safeFileId);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketFileDelete");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketFileDelete");
                 return CreateApiCommandError(
                     StatusCodes.Status500InternalServerError,
                     _sr["Api_RequestFailed"].Value,
@@ -963,7 +1879,22 @@ namespace IND_CRM_APP.Controllers
 
                 var normalizedExchRate = req.ExchRate > 0 ? req.ExchRate : 1m;
                 var normalizedDescription = (req.Description ?? string.Empty).Trim();
-                var normalizedLines = req.Lines ?? new List<ExpenseSheetLineRequest>();
+                var normalizedLines = (req.Lines ?? new List<ExpenseSheetLineRequest>())
+                    .Where(line => line != null)
+                    .Select(line => new ExpenseSheetLineRequest
+                    {
+                        TransDate = line.TransDate,
+                        TypeValue = line.TypeValue,
+                        Description = (line.Description ?? string.Empty).Trim(),
+                        Internacional = line.Internacional,
+                        FileId = NormalizeOptionalText(line.FileId),
+                        Ticket = line.Ticket,
+                        Qty = line.Qty,
+                        Price = line.Price,
+                        ProjId = NormalizeOptionalText(line.ProjId),
+                        IndAttachFiles = line.IndAttachFiles ?? string.Empty
+                    })
+                    .ToList();
                 var hasInvalidLines = normalizedLines.Any(line =>
                     line == null ||
                     string.IsNullOrWhiteSpace(NormalizeLineTransDate(line.TransDate)) ||
@@ -1123,6 +2054,7 @@ namespace IND_CRM_APP.Controllers
                     TypeValue = req.TypeValue,
                     Description = (req.Description ?? string.Empty).Trim(),
                     Internacional = req.Internacional,
+                    FileId = NormalizeOptionalText(req.FileId),
                     Ticket = req.Ticket,
                     Qty = req.Qty,
                     Price = req.Price,
@@ -1371,6 +2303,32 @@ namespace IND_CRM_APP.Controllers
                 : req.HojaGastosId.Trim();
         }
 
+        // Validates optional ticket gasto type values against the fixed enum set.
+        private static bool IsValidTicketGastoType(int? gastoType)
+        {
+            return !gastoType.HasValue || AllowedTicketGastoTypes.Contains(gastoType.Value);
+        }
+
+        // Normalizes optional ticket gasto type values before proxying upstream.
+        private static int? NormalizeTicketGastoType(int? gastoType)
+        {
+            return IsValidTicketGastoType(gastoType) ? gastoType : null;
+        }
+
+        // Validates an optional gastoType field read from a raw JSON payload.
+        private static bool IsValidTicketGastoTypeElement(JsonElement value)
+        {
+            if (value.ValueKind == JsonValueKind.Null || value.ValueKind == JsonValueKind.Undefined)
+                return true;
+
+            var raw = JsonElementToString(value);
+            var normalized = NormalizeEnumCode(raw);
+            if (!int.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
+                return false;
+
+            return AllowedTicketGastoTypes.Contains(parsed);
+        }
+
         // Normalizes date filters to accepted API formats.
         private static string? NormalizeListDateFilter(string? raw)
         {
@@ -1503,19 +2461,96 @@ namespace IND_CRM_APP.Controllers
         // Maps one line detail to API contract fields expected by /api/crm/expensesheets/{hojaGastosId}.
         private static object ToExpenseSheetApiDetailLine(ExpenseSheetLineDto line)
         {
+            var typeValueRaw = line.TypeValue.HasValue
+                ? line.TypeValue.Value.ToString(CultureInfo.InvariantCulture)
+                : GetExtraString(line.Extra, "typeValue", "tipo", "gastoType");
+            var fileId = NormalizeOptionalText(line.FileId)
+                         ?? NormalizeOptionalText(GetExtraString(line.Extra, "fileId", "FileId"));
+
             return new
             {
                 RecId = ResolveLineRecId(line),
-                TransDate = NormalizeDate(GetExtraString(line.Extra, "transDate", "fecha")),
-                TypeValue = NormalizeEnumCode(GetExtraString(line.Extra, "typeValue", "tipo", "gastoType")),
-                Description = GetExtraString(line.Extra, "description", "descripcion"),
-                Internacional = GetExtraBool(line.Extra, "internacional", "international"),
+                TransDate = NormalizeDate(!string.IsNullOrWhiteSpace(line.TransDate) ? line.TransDate : GetExtraString(line.Extra, "transDate", "fecha")),
+                TypeValue = NormalizeEnumCode(typeValueRaw),
+                Description = !string.IsNullOrWhiteSpace(line.Description) ? line.Description : GetExtraString(line.Extra, "description", "descripcion"),
+                Internacional = line.Internacional ?? GetExtraBool(line.Extra, "internacional", "international"),
+                FileId = fileId ?? string.Empty,
                 Ticket = GetExtraBool(line.Extra, "ticket"),
-                Price = GetExtraDecimal(line.Extra, "price", "precio"),
-                Qty = GetExtraDecimal(line.Extra, "qty", "cantidad"),
-                Amount = GetExtraDecimal(line.Extra, "amount", "importe"),
-                ProjId = GetExtraString(line.Extra, "projId", "projectId", "proyectoId"),
+                Price = line.Price ?? GetExtraDecimal(line.Extra, "price", "precio"),
+                Qty = line.Qty ?? GetExtraDecimal(line.Extra, "qty", "cantidad"),
+                Amount = line.Amount ?? GetExtraDecimal(line.Extra, "amount", "importe"),
+                ProjId = !string.IsNullOrWhiteSpace(line.ProjId) ? line.ProjId : GetExtraString(line.Extra, "projId", "projectId", "proyectoId"),
                 IndAttachFiles = GetExtraString(line.Extra, "indAttachFiles", "attachFiles", "attachments")
+            };
+        }
+
+        // Selects one ticket by file id or falls back to the first item.
+        private static ExpenseSheetTicketDetailDto? SelectTicket(IEnumerable<ExpenseSheetTicketDetailDto> items, string fileId)
+        {
+            var list = (items ?? Enumerable.Empty<ExpenseSheetTicketDetailDto>()).ToList();
+            if (list.Count == 0)
+                return null;
+
+            var match = list.FirstOrDefault(x =>
+                string.Equals((x.FileId ?? string.Empty).Trim(), fileId.Trim(), StringComparison.OrdinalIgnoreCase));
+
+            return match ?? list[0];
+        }
+
+        // Maps one ticket list item to API contract fields expected by /api/crm/expensesheets/tickets/list.
+        private static object ToExpenseSheetTicketApiListItem(ExpenseSheetTicketListItemDto item)
+        {
+            return new
+            {
+                FileId = item.FileId ?? string.Empty,
+                Description = item.Description ?? string.Empty,
+                Status = item.Status,
+                ProcessedByAI = item.ProcessedByAI,
+                CurrencyCode = item.CurrencyCode ?? string.Empty,
+                TotalAmount = item.TotalAmount,
+                CreatedByUserId = item.CreatedByUserId ?? string.Empty,
+                TransDate = NormalizeDate(item.TransDate),
+                UrlFile = item.UrlFile ?? string.Empty,
+                FileName = item.FileName ?? string.Empty,
+                GastoType = NormalizeTicketGastoType(item.GastoType)
+            };
+        }
+
+        // Maps one ticket detail item to API contract fields expected by /api/crm/expensesheets/tickets/{fileId}.
+        private static object ToExpenseSheetTicketApiDetailItem(ExpenseSheetTicketDetailDto item)
+        {
+            return new
+            {
+                FileId = item.FileId ?? string.Empty,
+                Description = item.Description ?? string.Empty,
+                Status = item.Status,
+                ProcessedByAI = item.ProcessedByAI,
+                CurrencyCode = item.CurrencyCode ?? string.Empty,
+                TotalAmount = item.TotalAmount,
+                CreatedByUserId = item.CreatedByUserId ?? string.Empty,
+                TransDate = NormalizeDate(item.TransDate),
+                Comentario = item.Comentario ?? string.Empty,
+                UrlFile = item.UrlFile ?? string.Empty,
+                FileName = item.FileName ?? string.Empty,
+                GastoType = NormalizeTicketGastoType(item.GastoType),
+                Lines = (item.Lines ?? new List<ExpenseSheetTicketLineDto>())
+                    .Select(ToExpenseSheetTicketApiDetailLine)
+                    .ToList()
+            };
+        }
+
+        // Maps one ticket line detail to API contract fields expected by /api/crm/expensesheets/tickets/{fileId}.
+        private static object ToExpenseSheetTicketApiDetailLine(ExpenseSheetTicketLineDto line)
+        {
+            return new
+            {
+                RecId = line.RecId ?? string.Empty,
+                Description = line.Description ?? string.Empty,
+                Qty = line.Qty,
+                Price = line.Price,
+                TotalAmount = line.TotalAmount,
+                RefRecIdTable = line.RefRecIdTable ?? string.Empty,
+                CreatedByUserId = line.CreatedByUserId ?? string.Empty
             };
         }
 
@@ -1571,23 +2606,28 @@ namespace IND_CRM_APP.Controllers
         // Resolves typeValue text from fixed gasto type enums and preserves typeValueCode.
         private object ToExpenseSheetLine(ExpenseSheetLineDto line)
         {
-            var rawTypeValue = GetExtraString(line.Extra, "typeValue", "tipo", "gastoType");
+            var rawTypeValue = line.TypeValue.HasValue
+                ? line.TypeValue.Value.ToString(CultureInfo.InvariantCulture)
+                : GetExtraString(line.Extra, "typeValue", "tipo", "gastoType");
             var typeValueCode = NormalizeEnumCode(rawTypeValue);
             var typeValueLabel = _crmEnumCatalog.GetGastoTypeLabel(typeValueCode);
+            var fileId = NormalizeOptionalText(line.FileId)
+                         ?? NormalizeOptionalText(GetExtraString(line.Extra, "fileId", "FileId"));
 
             return new
             {
                 lineRecId = ResolveLineRecId(line),
-                transDate = NormalizeDate(GetExtraString(line.Extra, "transDate", "fecha")),
+                transDate = NormalizeDate(!string.IsNullOrWhiteSpace(line.TransDate) ? line.TransDate : GetExtraString(line.Extra, "transDate", "fecha")),
                 typeValue = string.IsNullOrWhiteSpace(typeValueLabel) ? typeValueCode : typeValueLabel,
                 typeValueCode = typeValueCode,
-                description = GetExtraString(line.Extra, "description", "descripcion"),
-                internacional = GetExtraBool(line.Extra, "internacional", "international"),
+                description = !string.IsNullOrWhiteSpace(line.Description) ? line.Description : GetExtraString(line.Extra, "description", "descripcion"),
+                internacional = line.Internacional ?? GetExtraBool(line.Extra, "internacional", "international"),
+                fileId = fileId ?? string.Empty,
                 ticket = GetExtraBool(line.Extra, "ticket"),
-                price = GetExtraDecimal(line.Extra, "price", "precio"),
-                qty = GetExtraDecimal(line.Extra, "qty", "cantidad"),
-                amount = GetExtraDecimal(line.Extra, "amount", "importe"),
-                projId = GetExtraString(line.Extra, "projId", "projectId", "proyectoId"),
+                price = line.Price ?? GetExtraDecimal(line.Extra, "price", "precio"),
+                qty = line.Qty ?? GetExtraDecimal(line.Extra, "qty", "cantidad"),
+                amount = line.Amount ?? GetExtraDecimal(line.Extra, "amount", "importe"),
+                projId = !string.IsNullOrWhiteSpace(line.ProjId) ? line.ProjId : GetExtraString(line.Extra, "projId", "projectId", "proyectoId"),
                 indAttachFiles = GetExtraString(line.Extra, "indAttachFiles", "attachFiles", "attachments")
             };
         }
@@ -1595,6 +2635,10 @@ namespace IND_CRM_APP.Controllers
         // Resolves line record id from dto property or fallback extension keys.
         private static string ResolveLineRecId(ExpenseSheetLineDto line)
         {
+            var directRecId = (line.RecId ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(directRecId))
+                return directRecId;
+
             var direct = (line.LineRecId ?? string.Empty).Trim();
             if (!string.IsNullOrWhiteSpace(direct))
                 return direct;

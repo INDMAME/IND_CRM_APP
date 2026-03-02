@@ -28,6 +28,12 @@ namespace IND_CRM_APP.Services
             string targetCurrency,
             string? date
         );
+        Task<ApiResponse<ExchangeRateDto>> GetExchangeRatePublicDirectAsync(
+            string token,
+            string baseCurrency,
+            string targetCurrency,
+            string? date
+        );
         Task<ApiResponse<FuelPriceKmDto>> GetFuelPriceKmAsync(
             string token,
             string transDate
@@ -110,6 +116,8 @@ namespace IND_CRM_APP.Services
             Stream ticketImageStream,
             string fileName,
             string? contentType,
+            bool? persistTicket = null,
+            string? ticketUrlFile = null,
             CancellationToken cancellationToken = default
         );
 
@@ -156,6 +164,74 @@ namespace IND_CRM_APP.Services
 
         Task<PagedApiResponse<ExpenseSheetSubordinateDto>> GetExpenseSheetSubordinatesAsync(
             string token
+        );
+
+        // Expense sheet tickets.
+        Task<ApiResponse<object>> CreateExpenseSheetTicketAsync(
+            string token,
+            ExpenseSheetTicketCreateRequest req
+        );
+
+        Task<PagedApiResponse<ExpenseSheetTicketListItemDto>> GetExpenseSheetTicketsAsync(
+            string token,
+            ExpenseSheetTicketListRequest req
+        );
+
+        Task<PagedApiResponse<ExpenseSheetTicketDetailDto>> GetExpenseSheetTicketDetailAsync(
+            string token,
+            string fileId
+        );
+
+        Task<ApiResponse<object>> UpdateExpenseSheetTicketAsync(
+            string token,
+            string fileId,
+            ExpenseSheetTicketUpdateRequest req
+        );
+
+        Task<ApiResponse<object>> DeleteExpenseSheetTicketAsync(
+            string token,
+            string fileId,
+            int? lineRecId = null
+        );
+
+        Task<ApiResponse<object>> UpdateExpenseSheetTicketFromIAAsync(
+            string token,
+            string fileId,
+            object req
+        );
+
+        Task<ApiResponse<object>> CreateExpenseSheetTicketLineAsync(
+            string token,
+            string fileId,
+            ExpenseSheetTicketLineRequest req
+        );
+
+        Task<ApiResponse<object>> UpdateExpenseSheetTicketLineAsync(
+            string token,
+            string fileId,
+            string lineRecId,
+            ExpenseSheetTicketLineRequest req
+        );
+
+        Task<ApiResponse<object>> DeleteExpenseSheetTicketLineAsync(
+            string token,
+            string fileId,
+            string lineRecId
+        );
+
+        Task<ApiResponse<object>> UploadExpenseSheetTicketFileAsync(
+            string token,
+            string fileId,
+            Stream fileStream,
+            string fileName,
+            string? contentType,
+            string? extension = null,
+            CancellationToken cancellationToken = default
+        );
+
+        Task<ApiResponse<object>> DeleteExpenseSheetTicketFileAsync(
+            string token,
+            string fileId
         );
 
         // Projects.

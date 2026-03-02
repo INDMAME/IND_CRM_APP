@@ -9,10 +9,10 @@ import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
-import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseSheetHeaderForm from "../components/ExpenseSheetHeaderForm.tsx";
 import ExpenseLinesTimeline from "../components/ExpenseLinesTimeline.tsx";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
@@ -45,8 +45,8 @@ const ExpenseSheetDetailPageContent = () => {
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const sheetMode = safeText(window.__EXPENSE_SHEET_MODE__).toLowerCase();
   const isCreateMode = sheetMode === "create";
-  const canEditExpenseStatus = allowSelfManagement === true && !isCreateMode;
-  const canEditExpense = canEditExpenseByModule || canEditExpenseStatus;
+  const canEditExpenseStatusByPermission = allowSelfManagement === true && !isCreateMode;
+  const canEditExpense = canEditExpenseByModule || canEditExpenseStatusByPermission;
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const createdSheetIdRef = useRef("");
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
@@ -76,13 +76,15 @@ const ExpenseSheetDetailPageContent = () => {
     draftCurrencyCode,
     draftExchangeRate,
     draftExpenseSheetStatus,
+    draftEstadoComentarios,
     officialExchangeRateValue,
-    isExchangeRateLoading,
-    exchangeRateMessage,
-    exchangeRateMessageIsError,
+    officialExchangeRateRawValue,
+    officialExchangeRateDate,
+    officialExchangeRateSource,
     projectValue,
     voucherValue,
     isSheetPaid,
+    isSheetLocked,
     exchangeRateValue,
     showExchangeRate,
     normalizedDraftCurrency,
@@ -101,6 +103,7 @@ const ExpenseSheetDetailPageContent = () => {
     setDraftCurrencyCode,
     setDraftExchangeRate,
     setDraftExpenseSheetStatus,
+    setDraftEstadoComentarios,
     handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateLineMode,
@@ -115,6 +118,8 @@ const ExpenseSheetDetailPageContent = () => {
     isCreateMode,
     onForbidden: showPermissionModal,
   });
+
+  const canEditExpenseStatus = canEditExpenseStatusByPermission && !isSheetLocked;
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -149,15 +154,21 @@ const ExpenseSheetDetailPageContent = () => {
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
   const totalAmountText = useMemo(
-    () => formatAmountWithCurrency(header?.totalAmount ?? null, safeText(header?.currencyCode)),
-    [header]
+    () =>
+      formatExpenseNumber(header?.totalAmount, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        useGrouping: true,
+        fallback: "-",
+      }),
+    [header?.totalAmount]
   );
 
   const { handleUpdate, handleDelete } = useExpenseSheetDetailMutations({
     busy,
     isEditing,
     isCreateMode,
-    isLocked: isSheetPaid,
+    isLocked: isSheetLocked,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
     lockedCurrencyCode: safeText(header?.currencyCode),
@@ -165,6 +176,7 @@ const ExpenseSheetDetailPageContent = () => {
     canCreateExpense,
     canEditExpense,
     canDeleteExpense,
+    canEditStatus: canEditExpenseStatus,
     sheetId,
     draftDescription,
     draftCurrencyCode,
@@ -172,7 +184,9 @@ const ExpenseSheetDetailPageContent = () => {
     officialExchangeRateValue,
     draftProjectId,
     draftExpenseSheetStatus,
+    draftEstadoComentarios,
     currentExpenseSheetStatus: header?.expenseSheetStatus,
+    currentExchangeRateMode: header?.exchangeRateMode,
     exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
       createdSheetIdRef.current = safeText(createdSheetId);
@@ -200,7 +214,7 @@ const ExpenseSheetDetailPageContent = () => {
     modalOpen: modal.open,
     isEditing,
     isCreateMode,
-    isLocked: isSheetPaid,
+    isLocked: isSheetLocked,
     canCreateExpense,
     canEditExpense,
     canDeleteExpense,
@@ -284,14 +298,16 @@ const ExpenseSheetDetailPageContent = () => {
           draftCurrencyCode={draftCurrencyCode}
           draftExchangeRate={draftExchangeRate}
           draftExpenseSheetStatus={draftExpenseSheetStatus}
-          isExchangeRateLoading={isExchangeRateLoading}
-          exchangeRateMessage={exchangeRateMessage}
-          exchangeRateMessageIsError={exchangeRateMessageIsError}
+          draftEstadoComentarios={draftEstadoComentarios}
+          officialExchangeRateRawValue={officialExchangeRateRawValue}
+          officialExchangeRateDate={officialExchangeRateDate}
+          officialExchangeRateSource={officialExchangeRateSource}
           onDraftDescriptionChange={setDraftDescription}
           onDraftProjectIdChange={setDraftProjectId}
           onDraftCurrencyCodeChange={setDraftCurrencyCode}
           onDraftExchangeRateChange={setDraftExchangeRate}
           onDraftExpenseSheetStatusChange={setDraftExpenseSheetStatus}
+          onDraftEstadoComentariosChange={setDraftEstadoComentarios}
         />
       ) : null}
 
@@ -310,7 +326,7 @@ const ExpenseSheetDetailPageContent = () => {
         />
       ) : null}
 
-      {canCreateExpense && !isCreateMode ? (
+      {canCreateExpense && !isCreateMode && !isSheetLocked ? (
         <FloatingActionButton
           route=""
           ariaLabel={indT("Common_Create", "Create")}

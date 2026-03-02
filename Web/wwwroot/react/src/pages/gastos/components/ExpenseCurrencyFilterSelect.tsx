@@ -23,8 +23,16 @@ const normalizeCurrencyCode = (value: string | number | null | undefined): strin
   return String(value || "").trim().toUpperCase();
 };
 
-const CURRENCY_FLAG_SIZE_CLASS = "h-5 w-5";
-const CURRENCY_DROPDOWN_EXPAND_PX = 84;
+const CURRENCY_FLAG_SIZE_CLASS = "h-6 w-6";
+const CURRENCY_DROPDOWN_PANEL_CLASS = "visitas-typography ring-[#A9B8CC]/70";
+const CURRENCY_DROPDOWN_PANEL_STYLE: React.CSSProperties = {
+  backgroundColor: "#DCE3ED",
+  border: "1px solid #A9B8CC",
+  boxShadow: "0 10px 24px rgba(15, 41, 69, 0.14)",
+};
+const CURRENCY_OPTION_DEFAULT_CLASS = "text-[#0F2945]";
+const CURRENCY_OPTION_ACTIVE_CLASS = "bg-[#C6D2E3] text-[#0F2945]";
+const CURRENCY_OPTION_SELECTED_CLASS = "bg-primary text-white";
 
 const readPreferredLocale = (): string => {
   if (typeof document !== "undefined") {
@@ -214,13 +222,21 @@ const ExpenseCurrencyFilterSelect = ({
         showLabel={showLabel}
         usePortal={false}
         selectedTextMode="value"
-        dropdownExpandPx={CURRENCY_DROPDOWN_EXPAND_PX}
         dropdownMaxHeightClass="max-h-96"
         selectedIconClassName={CURRENCY_FLAG_SIZE_CLASS}
+        selectedInputPaddingClassName="pl-12"
         optionIconClassName={CURRENCY_FLAG_SIZE_CLASS}
+        allowOptionHorizontalScroll
+        lockDropdownWidthOnFirstOpen
+        disableDefaultOptionPadding
+        optionLeftPaddingClassName="pl-1"
+        optionDefaultClassName={CURRENCY_OPTION_DEFAULT_CLASS}
+        optionActiveClassName={CURRENCY_OPTION_ACTIVE_CLASS}
+        optionSelectedClassName={CURRENCY_OPTION_SELECTED_CLASS}
         idBase={idBase}
         portalClassName="visitas-typography"
-        panelClassName="visitas-typography"
+        panelClassName={CURRENCY_DROPDOWN_PANEL_CLASS}
+        panelStyle={CURRENCY_DROPDOWN_PANEL_STYLE}
       />
       {isLoadingOptions ? <p className="text-xs text-slate-500">{loadingMessage}</p> : null}
       {!isLoadingOptions && loadErrorMessage ? <p className="text-xs text-danger">{loadErrorMessage}</p> : null}

@@ -21,6 +21,7 @@ type UseExpenseSheetDetailMutationsArgs = {
   canCreateExpense: boolean;
   canEditExpense: boolean;
   canDeleteExpense: boolean;
+  canEditStatus: boolean;
   sheetId: string;
   draftDescription: string;
   draftCurrencyCode: string;
@@ -28,8 +29,10 @@ type UseExpenseSheetDetailMutationsArgs = {
   officialExchangeRateValue: string;
   draftProjectId: string;
   draftExpenseSheetStatus?: number | null;
+  draftEstadoComentarios: string;
   exchangeRateBaseCurrency: string;
   currentExpenseSheetStatus?: number | null;
+  currentExchangeRateMode?: number | null;
   onCreateSuccess: (createdSheetId: string) => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -41,7 +44,7 @@ const normalizeExchangeRate = (raw: string): number | null => parseDecimalInput(
 // Compares rates with tolerance to avoid floating point mismatch on payload mode.
 const areRatesEquivalent = (left: number | null, right: number | null): boolean => {
   if (left == null || right == null) return false;
-  return Math.abs(left - right) < 0.000001;
+  return Math.abs(left - right) < 0.0000001;
 };
 
 // Encapsulates update and delete mutations for expense sheet header detail.
@@ -57,6 +60,7 @@ export const useExpenseSheetDetailMutations = ({
   canCreateExpense,
   canEditExpense,
   canDeleteExpense,
+  canEditStatus,
   sheetId,
   draftDescription,
   draftCurrencyCode,
@@ -64,8 +68,10 @@ export const useExpenseSheetDetailMutations = ({
   officialExchangeRateValue,
   draftProjectId,
   draftExpenseSheetStatus,
+  draftEstadoComentarios,
   exchangeRateBaseCurrency,
   currentExpenseSheetStatus,
+  currentExchangeRateMode,
   onCreateSuccess,
   setModalError,
   setBusy,
@@ -89,6 +95,7 @@ export const useExpenseSheetDetailMutations = ({
       .toUpperCase();
     const normalizedDescription = String(draftDescription || "").trim();
     const normalizedProjectId = String(draftProjectId || "").trim();
+    const normalizedEstadoComentarios = canEditStatus ? String(draftEstadoComentarios || "").trim() : "";
     const normalizedExchangeRateRaw = String(
       isExchangeRateLockedByLines ? (lockedExchangeRate || draftExchangeRate || "") : (draftExchangeRate || "")
     );
@@ -97,6 +104,8 @@ export const useExpenseSheetDetailMutations = ({
     const parsedExchangeRate = normalizeExchangeRate(normalizedExchangeRateRaw);
     const officialExchangeRate = normalizeExchangeRate(officialExchangeRateValue);
     const originalExchangeRate = normalizeExchangeRate(lockedExchangeRate);
+    const parsedCurrentExchangeRateMode = Number(currentExchangeRateMode);
+    const hasCurrentExchangeRateMode = Number.isInteger(parsedCurrentExchangeRateMode) && parsedCurrentExchangeRateMode >= 0;
     const hasValidRate = parsedExchangeRate != null && parsedExchangeRate > 0;
     const parsedDraftStatus = Number(draftExpenseSheetStatus);
     const hasDraftStatus = Number.isInteger(parsedDraftStatus) && parsedDraftStatus >= 0;
@@ -112,9 +121,11 @@ export const useExpenseSheetDetailMutations = ({
       if (officialExchangeRate == null) return true;
       return !areRatesEquivalent(parsedExchangeRate, officialExchangeRate);
     })();
-    const resolvedExchangeRateMode = isManualExchangeRate ? 1 : undefined;
+    const resolvedExchangeRateMode = isManualExchangeRate
+      ? 1
+      : (normalizedEstadoComentarios ? (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : 0) : undefined);
     const resolvedExpenseSheetStatus =
-      (hasDraftStatus ? parsedDraftStatus : currentExpenseSheetStatus) ?? (isManualExchangeRate ? 0 : undefined);
+      (hasDraftStatus ? parsedDraftStatus : currentExpenseSheetStatus) ?? ((isManualExchangeRate || normalizedEstadoComentarios) ? 0 : undefined);
 
     if (isCreateMode) {
       if (!normalizedDescription) {
@@ -189,6 +200,7 @@ export const useExpenseSheetDetailMutations = ({
           projId: String(draftProjectId || "").trim() || undefined,
           expenseSheetStatus: resolvedExpenseSheetStatus,
           exchangeRateMode: resolvedExchangeRateMode,
+          estadoComentarios: canEditStatus ? normalizedEstadoComentarios : undefined,
         };
 
         const response = await updateExpenseSheetHeader(sheetId, payload);
@@ -212,10 +224,13 @@ export const useExpenseSheetDetailMutations = ({
     draftDescription,
     draftExchangeRate,
     draftExpenseSheetStatus,
+    draftEstadoComentarios,
     officialExchangeRateValue,
     draftProjectId,
     exchangeRateBaseCurrency,
     currentExpenseSheetStatus,
+    currentExchangeRateMode,
+    canEditStatus,
     isCreateMode,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,

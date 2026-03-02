@@ -9,9 +9,14 @@ import {
   setExpenseNavigationGuard,
 } from "../utils/expenseNavigation.ts";
 import { hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 
 const KM_GASTO_TYPE_CODE = "3";
 const FUEL_PRICE_DEBOUNCE_MS = 300;
+const FUEL_PRICE_SOURCE_USER_CONFIG = "CRMHojaGastosUserPriceKmFechaTable";
+const FUEL_PRICE_SOURCE_GLOBAL_CONFIG = "CRMParameters";
+const EXPENSE_STATUS_APPROVED = 2;
+const EXPENSE_STATUS_PAID = 4;
 
 const toInputDate = (raw?: string): string => {
   const parsed = parseExpenseDate(raw);
@@ -19,11 +24,21 @@ const toInputDate = (raw?: string): string => {
 };
 
 const formatEditableNumber = (value: number | null | undefined): string => {
-  if (value === null || value === undefined || Number.isNaN(Number(value))) {
-    return "";
-  }
+  return formatExpenseInputNumber(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+    fallback: "",
+  });
+};
 
-  return String(value);
+const formatEditableQuantity = (value: number | null | undefined): string => {
+  return formatExpenseInputNumber(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+    fallback: "",
+  });
 };
 
 const normalizeFuelTransDate = (raw: string): string => {
@@ -47,6 +62,27 @@ const normalizeFuelTransDate = (raw: string): string => {
   const mm = String(parsed.getMonth() + 1).padStart(2, "0");
   const dd = String(parsed.getDate()).padStart(2, "0");
   return `${yyyy}${mm}${dd}`;
+};
+
+// Resolves localized fuel price source messages for known backend sources.
+const resolveFuelPriceSourceMessage = (source: string, effectiveDate: string): string => {
+  const normalizedSource = safeText(source);
+  if (normalizedSource === FUEL_PRICE_SOURCE_USER_CONFIG) {
+    return indT("ExpenseSheets_FuelPrice_Source_UserConfig", "Obtained by user configuration.");
+  }
+
+  if (normalizedSource === FUEL_PRICE_SOURCE_GLOBAL_CONFIG) {
+    return indT("ExpenseSheets_FuelPrice_Source_GlobalConfig", "Obtained by global configuration.");
+  }
+
+  const sourceLabel = indT("ExpenseSheets_FuelPrice_Source", "Fuel price source");
+  if (!normalizedSource) {
+    return effectiveDate ? `${sourceLabel}: ${effectiveDate}` : sourceLabel;
+  }
+
+  return effectiveDate
+    ? `${sourceLabel}: ${normalizedSource} (${effectiveDate})`
+    : `${sourceLabel}: ${normalizedSource}`;
 };
 
 const buildCreateLineDraft = (baseDate: string, projectId: string): ExpenseSheetLine => {
@@ -110,7 +146,7 @@ export const useExpenseSheetLineDetailState = ({
     setDraftTransDate(toInputDate(nextLine?.transDate || nextHeader?.createdDate));
     setDraftTypeValueCode(safeText(nextLine?.typeValueCode));
     setDraftPrice(formatEditableNumber(nextLine?.price));
-    setDraftQty(formatEditableNumber(nextLine?.qty));
+    setDraftQty(formatEditableQuantity(nextLine?.qty));
     setDraftProjectId(safeText(nextLine?.projId || nextHeader?.projId));
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
   }, []);
@@ -162,7 +198,9 @@ export const useExpenseSheetLineDetailState = ({
           }
 
           const loadedHeader = mapExpenseSheetHeader(selectedSheet);
-          if (hasAssignedVoucher(loadedHeader.voucher)) {
+          const loadedStatusCode = typeof loadedHeader.expenseSheetStatus === "number" ? loadedHeader.expenseSheetStatus : null;
+          const isCreateLockedStatus = loadedStatusCode === EXPENSE_STATUS_APPROVED || loadedStatusCode === EXPENSE_STATUS_PAID;
+          if (isCreateLockedStatus || hasAssignedVoucher(loadedHeader.voucher)) {
             setErrorMessage(indT("ExpenseSheets_Detail_PaidReadOnly", "Paid expense sheets are read-only."));
             setHeader(loadedHeader);
             setLine(null);
@@ -313,9 +351,7 @@ export const useExpenseSheetLineDetailState = ({
 
         const source = safeText(response.Data.Source);
         const effectiveDate = safeText(response.Data.TransDate) || normalizedFuelTransDate;
-        const message = source
-          ? `${indT("ExpenseSheets_FuelPrice_Source", "Fuel price source")}: ${source} (${effectiveDate})`
-          : `${indT("ExpenseSheets_FuelPrice_Source", "Fuel price source")}: ${effectiveDate}`;
+        const message = resolveFuelPriceSourceMessage(source, effectiveDate);
         setFuelPriceMessage(message);
         setFuelPriceMessageIsError(false);
       } catch (error) {
@@ -349,10 +385,15 @@ export const useExpenseSheetLineDetailState = ({
     };
   }, [hasActiveProcess]);
 
-  const isSheetPaid = hasAssignedVoucher(header?.voucher);
+  const statusCode = typeof header?.expenseSheetStatus === "number" ? header.expenseSheetStatus : null;
+  const isSheetApproved = statusCode === EXPENSE_STATUS_APPROVED;
+  const isSheetPaidByStatus = statusCode === EXPENSE_STATUS_PAID;
+  const isSheetPaidByVoucher = hasAssignedVoucher(header?.voucher);
+  const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
+  const isSheetLocked = isSheetApproved || isSheetPaid;
 
   const handleEnableEdit = useCallback(() => {
-    if (isCreateMode || isLoading || !header || !line || isSheetPaid) {
+    if (isCreateMode || isLoading || !header || !line || isSheetLocked) {
       return;
     }
 
@@ -365,7 +406,7 @@ export const useExpenseSheetLineDetailState = ({
     setIsEditing(true);
     hydrateDraftFromLine(line, header);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditExpense, header, hydrateDraftFromLine, isCreateMode, isLoading, isSheetPaid, line, onForbidden]);
+  }, [canEditExpense, header, hydrateDraftFromLine, isCreateMode, isLoading, isSheetLocked, line, onForbidden]);
 
   const handleCancelEdit = useCallback(() => {
     const targetUrl = `/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`;
@@ -385,7 +426,7 @@ export const useExpenseSheetLineDetailState = ({
   }, [header, hydrateDraftFromLine, isCreateMode, isEditing, line, sheetId]);
 
   const handleOpenCreateMode = useCallback(() => {
-    if (!canCreateExpense || !sheetId) {
+    if (!canCreateExpense || !sheetId || isSheetLocked) {
       onForbidden();
       return;
     }
@@ -398,7 +439,7 @@ export const useExpenseSheetLineDetailState = ({
     navigateToExpenseUrl(targetUrl, {
       askConfirmation: isEditing,
     });
-  }, [canCreateExpense, isCreateMode, isEditing, onForbidden, sheetId]);
+  }, [canCreateExpense, isCreateMode, isEditing, isSheetLocked, onForbidden, sheetId]);
 
   const navigateToSheetDetail = useCallback(() => {
     const safeSheetId = safeText(sheetId);
@@ -428,6 +469,7 @@ export const useExpenseSheetLineDetailState = ({
     fuelPriceMessage,
     fuelPriceMessageIsError,
     isSheetPaid,
+    isSheetLocked,
     setBusy,
     setStatus,
     setIsEditing,

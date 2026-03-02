@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 2/26/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Viernes 2/27/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -498,7 +498,7 @@ Formatversion: 1
         #    Input _data (container):
         #      1) companyId
         #      2) headerIn
-        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName]
+        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional)]
         #         - Mode 2  : at least [axUserId]
         #      3) linesIn (container of line containers)
         #         - Each line: [lineDescr, qty, price, lineTotal(optional)]
@@ -539,8 +539,10 @@ Formatversion: 1
         #    real               price;
         #    real               lineTotal;
         #    int                processedByAI;
+        #    int                gastoType;
         #    boolean            hasHeaderTotalAmount;
         #    boolean            hasProcessedByAI;
+        #    boolean            hasGastoType;
         #
         #    INDTicketInfoTable ticketHeader;
         #    INDTicketInfoLine  ticketLine;
@@ -569,8 +571,10 @@ Formatversion: 1
         #    mode                 = #ModeCreateHeaderAndLines;
         #    existingFileId       = '';
         #    processedByAI        = NoYes::No;
+        #    gastoType           = 0;
         #    hasHeaderTotalAmount = false;
         #    hasProcessedByAI     = false;
+        #    hasGastoType        = false;
         #
         #    if (conLen(optionsIn) >= 1)
         #        mode = conPeek(optionsIn, 1);
@@ -625,6 +629,12 @@ Formatversion: 1
         #        urlFile      = conPeek(headerIn, 7);
         #        fileName     = conPeek(headerIn, 8);
         #
+        #        if (conLen(headerIn) >= 9)
+        #        {
+        #            gastoType = conPeek(headerIn, 9);
+        #            hasGastoType = true;
+        #        }
+        #
         #        hasHeaderTotalAmount = true;
         #
         #        if (!descr)
@@ -644,6 +654,9 @@ Formatversion: 1
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
         #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #
+        #        if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
+        #            return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
         #
         #        if (mode == #ModeCreateHeaderOnly && conLen(linesIn) > 0)
         #            return [INDCRMUtilityService::buildHeader(false, 'Modo CreateHeaderOnly: no se deben enviar lineas.', conNull()), conNull()];
@@ -700,6 +713,7 @@ Formatversion: 1
         #                ticketHeader.Status          = INDTicketStatus::Pending;
         #                ticketHeader.CurrencyCode    = currencyCode;
         #                ticketHeader.TotalAmount     = totalAmount;
+        #                ticketHeader.GastoType       = hasGastoType ? gastoType : 0;
         #                ticketHeader.ProcessedByAI   = processedByAI;
         #                ticketHeader.CreatedByUserId = axUserId;
         #                ticketHeader.insert();
@@ -841,7 +855,7 @@ Formatversion: 1
         #    Input _data (container):
         #      1) companyId
         #      2) headerIn
-        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName]
+        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional)]
         #         - Mode 2  : at least [axUserId]
         #      3) linesIn (container of line containers)
         #         - Each line: [lineDescr, qty, price, lineTotal(optional)]
@@ -881,7 +895,9 @@ Formatversion: 1
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
+        #    int                gastoType;
         #    boolean            hasHeaderTotalAmount;
+        #    boolean            hasGastoType;
         #
         #    INDTicketInfoTable ticketHeader;
         #    INDTicketInfoLine  ticketLine;
@@ -909,7 +925,9 @@ Formatversion: 1
         #
         #    mode                 = #ModeCreateHeaderAndLines;
         #    existingFileId       = '';
+        #    gastoType            = 0;
         #    hasHeaderTotalAmount = false;
+        #    hasGastoType         = false;
         #
         #    if (conLen(optionsIn) >= 1)
         #        mode = conPeek(optionsIn, 1);
@@ -951,6 +969,12 @@ Formatversion: 1
         #        urlFile      = conPeek(headerIn, 7);
         #        fileName     = conPeek(headerIn, 8);
         #
+        #        if (conLen(headerIn) >= 9)
+        #        {
+        #            gastoType = conPeek(headerIn, 9);
+        #            hasGastoType = true;
+        #        }
+        #
         #        hasHeaderTotalAmount = true;
         #
         #        if (!descr)
@@ -970,6 +994,9 @@ Formatversion: 1
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
         #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #
+        #        if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
+        #            return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
         #
         #        if (mode == #ModeCreateHeaderOnly && conLen(linesIn) > 0)
         #            return [INDCRMUtilityService::buildHeader(false, 'Modo CreateHeaderOnly: no se deben enviar lineas.', conNull()), conNull()];
@@ -1028,6 +1055,7 @@ Formatversion: 1
         #                ticketHeader.Status          = INDTicketStatus::Pending;
         #                ticketHeader.CurrencyCode    = currencyCode;
         #                ticketHeader.TotalAmount     = totalAmount;
+        #                ticketHeader.GastoType       = hasGastoType ? gastoType : 0;
         #                ticketHeader.CreatedByUserId = axUserId;
         #                ticketHeader.insert();
         #                ttscommit;
@@ -2057,7 +2085,8 @@ Formatversion: 1
         #                                                      strFmt('%1', docuRef.INDComentario),
         #                                                      strFmt('%1', docuRef.INDURLFile),
         #                                                      strFmt('%1', docuRef.INDFilename),
-        #                                                      strFmt('%1', ticketHeader.ProcessedByAI)
+        #                                                      strFmt('%1', ticketHeader.ProcessedByAI),
+        #                                                      strFmt('%1', ticketHeader.GastoType)
         #                                                     ]);
         #
         #        while select ticketLine
@@ -2090,10 +2119,14 @@ Formatversion: 1
         #// Input:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
-        #//  - _data[3] = filterTxt (optional)
+        #//  - _data[3] = searchKey/filterTxt (optional)
         #//  - _data[4] = statusFilter (optional, 0|1)
+        #//  - _data[5] = createdDateFrom (required, yyyymmdd)
+        #//  - _data[6] = createdDateTo   (required, yyyymmdd)
+        #//  - _data[7] = currencyCode    (optional)
+        #//  - _data[8] = gastoType       (optional)
         #// Output rows:
-        #//  - [[FileId, Description, Status, CurrencyCode, TotalAmount, CreatedByUserId, TransDate, UrlFile, FileName, ProcessedByAI], ...]
+        #//  - [[FileId, Description, Status, CurrencyCode, TotalAmount, CreatedByUserId, TransDate, UrlFile, FileName, ProcessedByAI, GastoType], ...]
         #static server container getExpenseSheetTicketsList(container _data)
         #{
         #    DataAreaId         companyId;
@@ -2103,6 +2136,11 @@ Formatversion: 1
         #    str 1000           likePattern;
         #    int                statusFilter;
         #    boolean            hasStatusFilter;
+        #    date               createdDateFrom;
+        #    date               createdDateTo;
+        #    CurrencyCode       currencyCode;
+        #    int                gastoTypeFilter;
+        #    boolean            hasGastoTypeFilter;
         #
         #    INDTicketInfoTable ticketHeader;
         #    DocuRef            docuRef;
@@ -2115,10 +2153,13 @@ Formatversion: 1
         #    if (!companyId)
         #        return conNull();
         #
-        #    if (conLen(_data) < 2)
-        #        return conResult;
+        #    if (conLen(_data) < 6)
+        #        return [['Sin datos.']];
         #
         #    axUserId = conPeek(_data, 2);
+        #
+        #    if (!axUserId)
+        #        return [['Sin datos.']];
         #
         #    if (conLen(_data) >= 3)
         #        filterTxt = conPeek(_data, 3);
@@ -2127,6 +2168,24 @@ Formatversion: 1
         #    {
         #        statusFilter = conPeek(_data, 4);
         #        hasStatusFilter = true;
+        #    }
+        #
+        #    if (!conPeek(_data, 5) || !conPeek(_data, 6))
+        #        return [['Sin datos.']];
+        #
+        #    createdDateFrom = str2Date(conPeek(_data, 5), 321);
+        #    createdDateTo   = str2Date(conPeek(_data, 6), 321);
+        #
+        #    if (!createdDateFrom || !createdDateTo || createdDateFrom > createdDateTo)
+        #        return [['Sin datos.']];
+        #
+        #    if (conLen(_data) >= 7)
+        #        currencyCode = conPeek(_data, 7);
+        #
+        #    if (conLen(_data) >= 8 && conPeek(_data, 8))
+        #    {
+        #        gastoTypeFilter = conPeek(_data, 8);
+        #        hasGastoTypeFilter = true;
         #    }
         #
         #    if (hasStatusFilter &&
@@ -2139,6 +2198,12 @@ Formatversion: 1
         #    if (filterTxt)
         #        likePattern = strFmt('*%1*', filterTxt);
         #
+        #    if (currencyCode)
+        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #
+        #    if (hasGastoTypeFilter && !INDCRMExpenseSheetService::isValidGastoType(gastoTypeFilter))
+        #        return [['Sin datos.']];
+        #
         #    changecompany(companyId)
         #    {
         #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
@@ -2148,13 +2213,24 @@ Formatversion: 1
         #        while select ticketHeader
         #            order by RecId desc
         #            where ticketHeader.CreatedByUserId == axUserId
-        #               && (!hasStatusFilter || ticketHeader.Status == statusFilter)
-        #               && (!filterTxt || ticketHeader.Description like likePattern || ticketHeader.FileId like likePattern)
+        #               && (!hasStatusFilter    || ticketHeader.Status == statusFilter)
+        #               && (!filterTxt          || ticketHeader.SearchKey like likePattern )
+        #               && (!currencyCode       || ticketHeader.CurrencyCode == currencyCode)
+        #               && (!hasGastoTypeFilter || ticketHeader.GastoType == gastoTypeFilter)
         #        {
         #            select firstonly docuRef
         #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)
         #                   && docuRef.RefRecId   == ticketHeader.RecId
         #                   && docuRef.INDFileId  == ticketHeader.FileId;
+        #
+        #            if (!docuRef.RecId)
+        #                continue;
+        #
+        #            if (docuRef.INDTransDate < createdDateFrom)
+        #                continue;
+        #
+        #            if (docuRef.INDTransDate > createdDateTo)
+        #                continue;
         #
         #            conItem = [[
         #                        strFmt('%1', ticketHeader.FileId),
@@ -2166,7 +2242,8 @@ Formatversion: 1
         #                        strFmt('%1', date2Str(docuRef.INDTransDate, 123, 2,2,2,2,4)),
         #                        strFmt('%1', docuRef.INDURLFile),
         #                        strFmt('%1', docuRef.INDFilename),
-        #                        strFmt('%1', ticketHeader.ProcessedByAI)
+        #                        strFmt('%1', ticketHeader.ProcessedByAI),
+        #                        strFmt('%1', ticketHeader.GastoType)
         #                      ]];
         #
         #            conResult += conItem;
@@ -2815,6 +2892,7 @@ Formatversion: 1
         #//  - _data[10] = urlFile (optional)
         #//  - _data[11] = fileName (optional)
         #//  - _data[12] = processedByAI (optional: 0|1)
+        #//  - _data[13] = gastoType (optional)
         #static server container updateExpenseSheetTicket(container _data)
         #{
         #    DataAreaId         companyId;
@@ -2832,6 +2910,7 @@ Formatversion: 1
         #    str                urlFile;
         #    str                fileName;
         #    int                processedByAI;
+        #    int                gastoType;
         #
         #    boolean            hasTotalAmount;
         #    boolean            hasStatus;
@@ -2840,6 +2919,7 @@ Formatversion: 1
         #    boolean            hasUrlFile;
         #    boolean            hasFileName;
         #    boolean            hasProcessedByAI;
+        #    boolean            hasGastoType;
         #
         #    int                startLine;
         #    str                msg;
@@ -2918,6 +2998,12 @@ Formatversion: 1
         #        hasProcessedByAI = true;
         #    }
         #
+        #    if (conLen(_data) >= 13)
+        #    {
+        #        gastoType = conPeek(_data, 13);
+        #        hasGastoType = true;
+        #    }
+        #
         #    if (currencyCode)
         #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
         #
@@ -2934,6 +3020,9 @@ Formatversion: 1
         #    {
         #        return INDCRMUtilityService::buildHeader(false, strFmt('ProcessedByAI invalido: %1 (valores: 0|1).', processedByAI), conNull());
         #    }
+        #
+        #    if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
+        #        return INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull());
         #
         #    startLine = infolog.line();
         #
@@ -2971,6 +3060,9 @@ Formatversion: 1
         #
         #            if (hasProcessedByAI)
         #                ticketHeader.ProcessedByAI = processedByAI;
+        #
+        #            if (hasGastoType)
+        #                ticketHeader.GastoType = gastoType;
         #
         #            ticketHeader.update();
         #
@@ -3067,7 +3159,7 @@ Formatversion: 1
         #//  - Marks ticket as ProcessedByAI = 1.
         #// Input:
         #//  - _data[1] = CompanyId
-        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName]
+        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional)]
         #//  - _data[3] = linesIn  = container of lines [lineDescr, qty, price, lineTotal(optional)]
         #// Output:
         #//  - [header, linesOutRecIds]
@@ -3090,6 +3182,7 @@ Formatversion: 1
         #    str                comentario;
         #    str                urlFile;
         #    str                fileName;
+        #    int                gastoType;
         #
         #    str                lineDescr;
         #    real               qty;
@@ -3097,6 +3190,7 @@ Formatversion: 1
         #    real               lineTotal;
         #    real               linesTotalAmount;
         #    boolean            hasTotalAmount;
+        #    boolean            hasGastoType;
         #
         #    int                i;
         #    int                lineCount;
@@ -3135,6 +3229,12 @@ Formatversion: 1
         #    urlFile      = conPeek(headerIn, 8);
         #    fileName     = conPeek(headerIn, 9);
         #
+        #    if (conLen(headerIn) >= 10)
+        #    {
+        #        gastoType = conPeek(headerIn, 10);
+        #        hasGastoType = true;
+        #    }
+        #
         #    hasTotalAmount = true;
         #
         #    if (!axUserId)
@@ -3163,6 +3263,9 @@ Formatversion: 1
         #        return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
         #    currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #
+        #    if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
+        #        return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
         #
         #    lineCount = conLen(linesIn);
         #    if (lineCount <= 0)
@@ -3193,6 +3296,9 @@ Formatversion: 1
         #            ticketHeader.Description   = descr;
         #            ticketHeader.CurrencyCode  = currencyCode;
         #            ticketHeader.ProcessedByAI = NoYes::Yes;
+        #
+        #            if (hasGastoType)
+        #                ticketHeader.GastoType = gastoType;
         #
         #            select firstonly forupdate docuRef
         #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)

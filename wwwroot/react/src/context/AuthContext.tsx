@@ -35,6 +35,8 @@ type ProviderProps = {
 export const AuthProvider = ({ children, moduleAccess, selectedCompany, allowSelfManagement }: ProviderProps) => {
   const access = moduleAccess || (globalThis.__IND_MODULE_ACCESS__ || {});
   const company = selectedCompany || String(globalThis.__IND_SELECTED_COMPANY__ || "");
+  // Company-scoped permission injected by Razor layout from selected company context.
+  // Sensitive edit flows must gate with this value in addition to module access rights.
   const selfManagement = allowSelfManagement ?? globalThis.__IND_ALLOW_SELF_MANAGEMENT__ === true;
 
   const value = useMemo<AuthValue>(() => {

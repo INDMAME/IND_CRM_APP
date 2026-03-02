@@ -58,6 +58,15 @@
   - Page entries (`CreatePage`, `DetailPage`) should wrap their form root with this component.
   - Do not duplicate provider trees inside form-level components.
 
+### AuthContext permission gate
+- File: `Web/wwwroot/react/src/context/AuthContext.tsx`
+- Purpose: expose module access and company-scoped self-management permission to React islands.
+- Contract:
+  - Sensitive frontend flows must read `allowSelfManagement` only from `useAuthContext()`.
+  - Runtime source of truth is `_Layout.cshtml` injecting `window.__IND_ALLOW_SELF_MANAGEMENT__` for the selected company.
+  - Gate both editable UI states and protected mutation payload fields with this flag when the feature is self-management scoped.
+  - Do not infer this permission from module access values or ad-hoc local flags.
+
 ### AppErrorBoundary
 - File: `Web/wwwroot/react/src/components/commons/AppErrorBoundary.tsx`
 - Purpose: isolate React island render failures and show localized fallback.

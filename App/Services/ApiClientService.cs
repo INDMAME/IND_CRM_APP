@@ -28,6 +28,7 @@ namespace IND_CRM_APP.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<ApiClientService> _logger;
         private readonly int _accountsTimeoutSeconds;
+        private static readonly HashSet<int> AllowedGastoTypeCodes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -165,6 +166,14 @@ namespace IND_CRM_APP.Services
         private static string? NormalizeOptionalText(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        // Normalizes optional gasto type values against the fixed enum set.
+        private static int? NormalizeTicketGastoType(int? gastoType)
+        {
+            return gastoType.HasValue && AllowedGastoTypeCodes.Contains(gastoType.Value)
+                ? gastoType
+                : null;
         }
 
         // Prepares auth headers and logs company header state for an operation.
@@ -389,6 +398,32 @@ namespace IND_CRM_APP.Services
 
             var result = await SendGetAsync(route);
             return BuildApiResponse<ExchangeRateDto>(result, "GetExchangeRate");
+        }
+
+        public async Task<ApiResponse<ExchangeRateDto>> GetExchangeRatePublicDirectAsync(
+            string token,
+            string baseCurrency,
+            string targetCurrency,
+            string? date)
+        {
+            PrepareRequestHeaders(
+                token,
+                "GetExchangeRatePublicDirect",
+                requireCompany: false,
+                includeCompanyHeader: false,
+                includeAxUserHeader: false);
+
+            var safeBaseCurrency = EscapeQueryValue((baseCurrency ?? string.Empty).Trim().ToUpperInvariant());
+            var safeTargetCurrency = EscapeQueryValue((targetCurrency ?? string.Empty).Trim().ToUpperInvariant());
+            var safeDate = NormalizeOptionalText(date);
+
+            var route = ApiRoutes.SystemExchangeRatePublicDirectByQuery(
+                safeBaseCurrency,
+                safeTargetCurrency,
+                string.IsNullOrWhiteSpace(safeDate) ? null : EscapeQueryValue(safeDate));
+
+            var result = await SendGetAsync(route);
+            return BuildApiResponse<ExchangeRateDto>(result, "GetExchangeRatePublicDirect");
         }
 
         public async Task<ApiResponse<FuelPriceKmDto>> GetFuelPriceKmAsync(
@@ -800,6 +835,241 @@ namespace IND_CRM_APP.Services
             return BuildPagedResponse<ExpenseSheetSubordinateDto>(result, "GetExpenseSheetSubordinates");
         }
 
+        public async Task<ApiResponse<object>> CreateExpenseSheetTicketAsync(
+            string token,
+            ExpenseSheetTicketCreateRequest req)
+        {
+            PrepareRequestHeaders(token, "CreateExpenseSheetTicket", requireCompany: true);
+
+            req ??= new ExpenseSheetTicketCreateRequest();
+            var lines = req.Lines?
+                .Where(x => x != null)
+                .Select(x => new ExpenseSheetTicketLineRequest
+                {
+                    Description = (x.Description ?? string.Empty).Trim(),
+                    Qty = x.Qty,
+                    Price = x.Price,
+                    TotalAmount = x.TotalAmount.HasValue && x.TotalAmount.Value > 0
+                        ? x.TotalAmount.Value
+                        : null
+                })
+                .ToList();
+
+            var payload = new ExpenseSheetTicketCreateRequest
+            {
+                Mode = req.Mode,
+                ExistingFileId = NormalizeOptionalText(req.ExistingFileId),
+                Description = NormalizeOptionalText(req.Description),
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                TotalAmount = req.TotalAmount,
+                Status = req.Status,
+                TransDate = NormalizeOptionalText(req.TransDate),
+                Comentario = NormalizeOptionalText(req.Comentario),
+                UrlFile = NormalizeOptionalText(req.UrlFile),
+                FileName = NormalizeOptionalText(req.FileName),
+                FileExtension = NormalizeOptionalText(req.FileExtension),
+                ProcessedByAI = req.ProcessedByAI,
+                GastoType = NormalizeTicketGastoType(req.GastoType),
+                Lines = lines != null && lines.Count > 0 ? lines : null
+            };
+
+            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTickets, payload);
+            return BuildApiResponse<object>(result, "CreateExpenseSheetTicket");
+        }
+
+        public async Task<PagedApiResponse<ExpenseSheetTicketListItemDto>> GetExpenseSheetTicketsAsync(
+            string token,
+            ExpenseSheetTicketListRequest req)
+        {
+            PrepareRequestHeaders(token, "GetExpenseSheetTickets", requireCompany: true);
+
+            req ??= new ExpenseSheetTicketListRequest();
+            var normalizedSearchKey = NormalizeOptionalText(req.SearchKey) ?? NormalizeOptionalText(req.Filter);
+            var payload = new ExpenseSheetTicketListRequest
+            {
+                Page = req.Page < 1 ? 1 : req.Page,
+                PageSize = req.PageSize <= 0 ? 50 : req.PageSize,
+                CreatedDateFrom = NormalizeOptionalText(req.CreatedDateFrom) ?? string.Empty,
+                CreatedDateTo = NormalizeOptionalText(req.CreatedDateTo) ?? string.Empty,
+                SearchKey = normalizedSearchKey,
+                Filter = NormalizeOptionalText(req.Filter),
+                Status = req.Status is >= 0 and <= 1 ? req.Status : null,
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                GastoType = NormalizeTicketGastoType(req.GastoType)
+            };
+
+            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketsList, payload);
+            return BuildPagedResponse<ExpenseSheetTicketListItemDto>(result, "GetExpenseSheetTickets");
+        }
+
+        public async Task<PagedApiResponse<ExpenseSheetTicketDetailDto>> GetExpenseSheetTicketDetailAsync(
+            string token,
+            string fileId)
+        {
+            PrepareRequestHeaders(token, "GetExpenseSheetTicketDetail", requireCompany: true);
+
+            var safeFileId = EscapePathSegment(fileId);
+            var result = await SendGetAsync(ApiRoutes.ExpenseSheetTicketByFileId(safeFileId));
+            return BuildPagedResponse<ExpenseSheetTicketDetailDto>(result, "GetExpenseSheetTicketDetail");
+        }
+
+        public async Task<ApiResponse<object>> UpdateExpenseSheetTicketAsync(
+            string token,
+            string fileId,
+            ExpenseSheetTicketUpdateRequest req)
+        {
+            PrepareRequestHeaders(token, "UpdateExpenseSheetTicket", requireCompany: true);
+
+            req ??= new ExpenseSheetTicketUpdateRequest();
+            var payload = new ExpenseSheetTicketUpdateRequest
+            {
+                Description = NormalizeOptionalText(req.Description),
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                TotalAmount = req.TotalAmount,
+                Status = req.Status,
+                TransDate = NormalizeOptionalText(req.TransDate),
+                Comentario = NormalizeOptionalText(req.Comentario),
+                UrlFile = NormalizeOptionalText(req.UrlFile),
+                FileName = NormalizeOptionalText(req.FileName),
+                ProcessedByAI = req.ProcessedByAI,
+                FileExtension = NormalizeOptionalText(req.FileExtension),
+                GastoType = NormalizeTicketGastoType(req.GastoType)
+            };
+
+            var safeFileId = EscapePathSegment(fileId);
+            var result = await SendPutJsonAsync(ApiRoutes.ExpenseSheetTicketByFileId(safeFileId), payload);
+            return BuildApiResponse<object>(result, "UpdateExpenseSheetTicket");
+        }
+
+        public async Task<ApiResponse<object>> DeleteExpenseSheetTicketAsync(
+            string token,
+            string fileId,
+            int? lineRecId = null)
+        {
+            PrepareRequestHeaders(token, "DeleteExpenseSheetTicket", requireCompany: true);
+
+            var safeFileId = EscapePathSegment(fileId);
+            var result = await SendDeleteAsync(ApiRoutes.ExpenseSheetTicketDelete(safeFileId, lineRecId));
+            return BuildApiResponse<object>(result, "DeleteExpenseSheetTicket");
+        }
+
+        public async Task<ApiResponse<object>> UpdateExpenseSheetTicketFromIAAsync(
+            string token,
+            string fileId,
+            object req)
+        {
+            PrepareRequestHeaders(token, "UpdateExpenseSheetTicketFromIA", requireCompany: true);
+
+            var safeFileId = EscapePathSegment(fileId);
+            var payload = req ?? new { };
+            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketIa(safeFileId), payload);
+            return BuildApiResponse<object>(result, "UpdateExpenseSheetTicketFromIA");
+        }
+
+        public async Task<ApiResponse<object>> CreateExpenseSheetTicketLineAsync(
+            string token,
+            string fileId,
+            ExpenseSheetTicketLineRequest req)
+        {
+            PrepareRequestHeaders(token, "CreateExpenseSheetTicketLine", requireCompany: true);
+
+            req ??= new ExpenseSheetTicketLineRequest();
+            var payload = new ExpenseSheetTicketLineRequest
+            {
+                Description = (req.Description ?? string.Empty).Trim(),
+                Qty = req.Qty,
+                Price = req.Price,
+                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
+                    ? req.TotalAmount.Value
+                    : null
+            };
+
+            var safeFileId = EscapePathSegment(fileId);
+            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketLines(safeFileId), payload);
+            return BuildApiResponse<object>(result, "CreateExpenseSheetTicketLine");
+        }
+
+        public async Task<ApiResponse<object>> UpdateExpenseSheetTicketLineAsync(
+            string token,
+            string fileId,
+            string lineRecId,
+            ExpenseSheetTicketLineRequest req)
+        {
+            PrepareRequestHeaders(token, "UpdateExpenseSheetTicketLine", requireCompany: true);
+
+            req ??= new ExpenseSheetTicketLineRequest();
+            var payload = new ExpenseSheetTicketLineRequest
+            {
+                Description = (req.Description ?? string.Empty).Trim(),
+                Qty = req.Qty,
+                Price = req.Price,
+                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
+                    ? req.TotalAmount.Value
+                    : null
+            };
+
+            var safeFileId = EscapePathSegment(fileId);
+            var safeLineId = EscapePathSegment(lineRecId);
+            var result = await SendPutJsonAsync(ApiRoutes.ExpenseSheetTicketLine(safeFileId, safeLineId), payload);
+            return BuildApiResponse<object>(result, "UpdateExpenseSheetTicketLine");
+        }
+
+        public async Task<ApiResponse<object>> DeleteExpenseSheetTicketLineAsync(
+            string token,
+            string fileId,
+            string lineRecId)
+        {
+            PrepareRequestHeaders(token, "DeleteExpenseSheetTicketLine", requireCompany: true);
+
+            var safeFileId = EscapePathSegment(fileId);
+            var safeLineId = EscapePathSegment(lineRecId);
+            var result = await SendDeleteAsync(ApiRoutes.ExpenseSheetTicketLine(safeFileId, safeLineId));
+            return BuildApiResponse<object>(result, "DeleteExpenseSheetTicketLine");
+        }
+
+        public async Task<ApiResponse<object>> UploadExpenseSheetTicketFileAsync(
+            string token,
+            string fileId,
+            Stream fileStream,
+            string fileName,
+            string? contentType,
+            string? extension = null,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(token, "UploadExpenseSheetTicketFile", requireCompany: true);
+
+            var safeFileId = EscapePathSegment(fileId);
+            var safeFileName = string.IsNullOrWhiteSpace(fileName) ? "ticket.jpg" : Path.GetFileName(fileName);
+            var normalizedExtension = NormalizeOptionalText(extension);
+            var safeExtension = string.IsNullOrWhiteSpace(normalizedExtension)
+                ? null
+                : EscapeQueryValue(normalizedExtension.TrimStart('.').ToLowerInvariant());
+            var mime = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType.Trim();
+
+            using var form = new MultipartFormDataContent();
+            using var fileContent = new StreamContent(fileStream);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(mime);
+            form.Add(fileContent, "file", safeFileName);
+
+            var result = await SendPostMultipartAsync(
+                ApiRoutes.ExpenseSheetTicketFile(safeFileId, safeExtension),
+                form,
+                cancellationToken);
+
+            return BuildApiResponse<object>(result, "UploadExpenseSheetTicketFile");
+        }
+
+        public async Task<ApiResponse<object>> DeleteExpenseSheetTicketFileAsync(
+            string token,
+            string fileId)
+        {
+            PrepareRequestHeaders(token, "DeleteExpenseSheetTicketFile", requireCompany: true);
+
+            var safeFileId = EscapePathSegment(fileId);
+            var result = await SendDeleteAsync(ApiRoutes.ExpenseSheetTicketFile(safeFileId));
+            return BuildApiResponse<object>(result, "DeleteExpenseSheetTicketFile");
+        }
+
         // ======================================================
         // Projects
         // ======================================================
@@ -898,17 +1168,30 @@ namespace IND_CRM_APP.Services
             Stream ticketImageStream,
             string fileName,
             string? contentType,
+            bool? persistTicket = null,
+            string? ticketUrlFile = null,
             CancellationToken cancellationToken = default)
         {
             PrepareRequestHeaders(token, "ExpenseFromTicket", requireCompany: true);
 
             var safeFileName = string.IsNullOrWhiteSpace(fileName) ? "ticket.jpg" : Path.GetFileName(fileName);
             var mime = string.IsNullOrWhiteSpace(contentType) ? "image/jpeg" : contentType.Trim();
+            var safeTicketUrlFile = NormalizeOptionalText(ticketUrlFile);
 
             using var form = new MultipartFormDataContent();
             using var fileContent = new StreamContent(ticketImageStream);
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(mime);
             form.Add(fileContent, "ticketImage", safeFileName);
+
+            if (persistTicket.HasValue)
+            {
+                form.Add(new StringContent(persistTicket.Value ? "true" : "false"), "persistTicket");
+            }
+
+            if (!string.IsNullOrWhiteSpace(safeTicketUrlFile))
+            {
+                form.Add(new StringContent(safeTicketUrlFile), "ticketUrlFile");
+            }
 
             var result = await SendPostMultipartAsync(
                 ApiRoutes.ExpenseFromTicket,
