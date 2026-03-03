@@ -27,6 +27,30 @@ const getCommandMessage = (response: VisitCommandResponse): string => {
   return typeof raw === "string" ? raw.trim() : "";
 };
 
+// Keep recId as a normalized signed integer string to avoid long precision loss in JS numbers.
+const resolveSafeRecId = (rawRecId: string): string | null => {
+  const normalized = String(rawRecId ?? "").trim();
+  if (!normalized) return null;
+
+  if (!/^-?\d+$/.test(normalized)) return null;
+
+  const absoluteDigits = normalized.startsWith("-") ? normalized.slice(1) : normalized;
+  if (!absoluteDigits || /^0+$/.test(absoluteDigits)) return null;
+
+  return normalized;
+};
+
+const shouldLogRecIdInDev = (): boolean => {
+  if (typeof window === "undefined" || !window.location) return false;
+  const host = String(window.location.hostname || "").trim().toLowerCase();
+  return host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
+};
+
+const logSafeRecIdInDev = (operation: "update" | "delete", safeRecId: string): void => {
+  if (!shouldLogRecIdInDev()) return;
+  console.info(`[visitas-detail] ${operation} recId`, safeRecId);
+};
+
 type UseDetailMutationsArgs = {
   busy: boolean;
   isEditing: boolean;
@@ -90,6 +114,15 @@ export const useDetailMutations = ({
       return false;
     }
 
+    const safeRecIdValue = resolveSafeRecId(recId);
+    if (safeRecIdValue === null) {
+      const message = indT("Visits_Detail_InvalidRecId", "Could not resolve activity identifier. Reload and try again.");
+      setModalError(message);
+      setStatus(message);
+      flashActionMark("errorProcess", 1500);
+      return false;
+    }
+
     setModalError("");
     setBusy(true);
     setStatus(indT("Visits_Detail_Updating", "Updating activity..."));
@@ -115,7 +148,8 @@ export const useDetailMutations = ({
         conclusiones,
       };
 
-      const safeRecId = encodeURIComponent(recId);
+      logSafeRecIdInDev("update", safeRecIdValue);
+      const safeRecId = encodeURIComponent(safeRecIdValue);
       const response = await fetchJson<VisitCommandResponse>(`/Visitas/UpdateActivity/${safeRecId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -176,12 +210,22 @@ export const useDetailMutations = ({
       return false;
     }
 
+    const safeRecIdValue = resolveSafeRecId(recId);
+    if (safeRecIdValue === null) {
+      const message = indT("Visits_Detail_InvalidRecId", "Could not resolve activity identifier. Reload and try again.");
+      setModalError(message);
+      setStatus(message);
+      flashActionMark("errorProcess", 1500);
+      return false;
+    }
+
     setModalError("");
     setBusy(true);
     setStatus(indT("Visits_Detail_Deleting", "Deleting activity..."));
 
     try {
-      const safeRecId = encodeURIComponent(recId);
+      logSafeRecIdInDev("delete", safeRecIdValue);
+      const safeRecId = encodeURIComponent(safeRecIdValue);
       const response = await fetchJson<VisitCommandResponse>(`/Visitas/DeleteActivity/${safeRecId}`, { method: "DELETE" });
       if (!isCommandSuccess(response)) {
         throw new Error(getCommandMessage(response) || indT("Visits_Detail_DeleteFailed", "Delete failed."));

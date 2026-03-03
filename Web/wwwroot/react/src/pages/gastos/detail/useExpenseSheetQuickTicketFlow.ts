@@ -287,22 +287,25 @@ const buildSheetLinePayload = (
   projectId: string
 ): ExpenseSheetCreateLineRequest | null => {
   const lineFromDraft = draft.lines[0];
-  const fallbackTotal = lineFromDraft?.totalAmount || draft.totalAmount;
-  if (!(fallbackTotal > 0)) return null;
+  // Build a single expense line from ticket header data to avoid line-level description leakage.
+  const headerTotal = draft.totalAmount > 0 ? draft.totalAmount : 0;
+  const fallbackTotal = lineFromDraft?.totalAmount || 0;
+  const effectiveTotal = headerTotal > 0 ? headerTotal : fallbackTotal;
+  if (!(effectiveTotal > 0)) return null;
 
-  const typeValueCandidate = lineFromDraft?.typeValue || draft.gastoType || DEFAULT_TICKET_GASTO_TYPE;
+  const typeValueCandidate = draft.gastoType || lineFromDraft?.typeValue || DEFAULT_TICKET_GASTO_TYPE;
   const safeTypeValue = Number(typeValueCandidate);
   const typeValue = Number.isInteger(safeTypeValue) && safeTypeValue > 0 ? safeTypeValue : DEFAULT_TICKET_GASTO_TYPE;
 
   return {
-    transDate: lineFromDraft?.transDate || draft.transDate || getTodayYyyyMMdd(),
+    transDate: draft.transDate || lineFromDraft?.transDate || getTodayYyyyMMdd(),
     typeValue,
-    description: safeText(lineFromDraft?.description || draft.description) || "Ticket",
+    description: safeText(draft.description) || "Ticket",
     internacional: false,
     fileId,
     ticket: true,
     qty: 1,
-    price: fallbackTotal,
+    price: effectiveTotal,
     projId: safeText(projectId) || undefined,
   };
 };

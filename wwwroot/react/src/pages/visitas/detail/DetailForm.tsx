@@ -43,15 +43,27 @@ const DetailApp = () => {
 
   const detail = (window.__ACTIVITY_DETAIL__ as ActivityDetailPayload) || {};
 
-  const activityRecId = String(
-    detail.recId ||
-      detail.RecId ||
-      detail.refRecIdActividad ||
-      detail.RefRecIdActividad ||
-      detail.actividadRecId ||
-      detail.ActividadRecId ||
-      ""
-  ).trim();
+  const resolveActivityRecId = (payload: ActivityDetailPayload): string => {
+    const candidates = [
+      payload.recId,
+      payload.RecId,
+      payload.refRecIdActividad,
+      payload.RefRecIdActividad,
+      payload.actividadRecId,
+      payload.ActividadRecId,
+    ];
+
+    for (const candidate of candidates) {
+      const normalized = String(candidate ?? "").trim();
+      if (normalized) {
+        return normalized;
+      }
+    }
+
+    return "";
+  };
+
+  const activityRecId = resolveActivityRecId(detail);
 
   const textEditorBaseId = activityRecId ? `Visita.${activityRecId}` : "Visita";
   const fieldIdComentarios = `${textEditorBaseId}.Comentarios`;
@@ -134,7 +146,7 @@ const DetailApp = () => {
   const readOnlySurfaceRef = useRef(null);
   const editSnapshotRef = useRef(null);
 
-  const recId = String(detail.recId ?? detail.RecId ?? "");
+  const recId = activityRecId;
   const accountNum = String(detail.accountNum ?? detail.AccountNum ?? "");
   const actividadId = String(detail.actividadId ?? detail.ActividadId ?? "");
 
