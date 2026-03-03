@@ -1,7 +1,8 @@
 import React, { useCallback, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
-import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
+import FloatingActionButton, { type FloatingActionButtonMenuItem } from "../../../components/commons/FloatingActionButton.tsx";
+import Spinner from "../../../components/commons/Spinner.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
@@ -17,6 +18,7 @@ import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
+import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
 
 const LINES_PAGE_SIZE = 6;
 
@@ -36,6 +38,30 @@ const bootstrapExpenseApiAuth = () => {
   });
 };
 
+const NewTicketIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="h-5 w-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10 20h-5a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v2" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14.362 11.15a3 3 0 1 0 -4.144 4.263" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14 21v-4a2 2 0 1 1 4 0v4" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14 19h4" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v6" />
+  </svg>
+);
+
+const LinkTicketIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="h-5 w-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
+  </svg>
+);
+
+const NewLineIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="h-5 w-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 19c3.333 -2 5 -4 5 -6c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 2.877 2.5 4c1.5 2 2.5 2.5 3.5 1c.667 -1 1.167 -1.833 1.5 -2.5c1 2.333 2.333 3.5 4 3.5h2.5" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7h4" />
+  </svg>
+);
+
 const ExpenseSheetDetailPageContent = () => {
   const { allowSelfManagement } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
@@ -49,6 +75,8 @@ const ExpenseSheetDetailPageContent = () => {
   const canEditExpense = canEditExpenseByModule || canEditExpenseStatusByPermission;
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const createdSheetIdRef = useRef("");
+  const cameraInputRef = useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
 
   const paginationLabels = useMemo(
@@ -107,6 +135,7 @@ const ExpenseSheetDetailPageContent = () => {
     handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateLineMode,
+    handleOpenLinkTicketMode,
     navigateToCreatedSheet,
     navigateToLineDetail,
   } = useExpenseSheetDetailState({
@@ -244,6 +273,57 @@ const ExpenseSheetDetailPageContent = () => {
     resolveClickableCard,
   });
 
+  const {
+    sourcePickerOpen,
+    busy: quickTicketBusy,
+    progressMessage: quickTicketProgressMessage,
+    errorMessage: quickTicketErrorMessage,
+    hasPendingUploadRetry,
+    traceList: quickTicketTraceList,
+    openSourcePicker,
+    closeSourcePicker,
+    selectFromCamera,
+    selectFromGallery,
+    handleSelectedFile,
+    retryPendingUpload,
+    clearError: clearQuickTicketError,
+  } = useExpenseSheetQuickTicketFlow({
+    sheetId: safeText(header?.hojaGastosId || sheetId),
+    projectId: projectValue,
+    currencyCode: safeText(header?.currencyCode),
+    canCreateExpense,
+    isCreateMode,
+    isSheetLocked,
+    onForbidden: showPermissionModal,
+    onCompleted: () => {
+      window.location.reload();
+    },
+  });
+
+  const fabMenuItems = useMemo<FloatingActionButtonMenuItem[]>(
+    () => [
+      {
+        id: "new-ticket",
+        label: indT("ExpenseSheets_Fab_NewTicket", "Nuevo Ticket"),
+        icon: <NewTicketIcon />,
+        onClick: openSourcePicker,
+      },
+      {
+        id: "link-ticket",
+        label: indT("ExpenseSheets_Fab_LinkTicket", "Vincular Ticket"),
+        icon: <LinkTicketIcon />,
+        onClick: handleOpenLinkTicketMode,
+      },
+      {
+        id: "new-line",
+        label: indT("ExpenseSheets_Fab_NewLine", "Nueva Linea"),
+        icon: <NewLineIcon />,
+        onClick: handleOpenCreateLineMode,
+      },
+    ],
+    [handleOpenCreateLineMode, handleOpenLinkTicketMode, openSourcePicker]
+  );
+
   return (
     <div className="space-y-3">
       <ConfirmModal
@@ -261,6 +341,110 @@ const ExpenseSheetDetailPageContent = () => {
         onConfirm={handleModalButtonConfirm}
         onCancel={closeConfirm}
       />
+
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/*"
+        capture="environment"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0] || null;
+          event.currentTarget.value = "";
+          void handleSelectedFile(file, "camera");
+        }}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0] || null;
+          event.currentTarget.value = "";
+          void handleSelectedFile(file, "gallery");
+        }}
+      />
+
+      {sourcePickerOpen ? (
+        <div className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/45 px-4 py-6">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+            <h3 className="text-[16px] font-semibold text-slate-800">
+              {indT("ExpenseSheets_NewTicket_Source_Title", "Nuevo ticket")}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              {indT(
+                "ExpenseSheets_NewTicket_Source_Body",
+                "Selecciona una fuente para capturar o elegir la imagen del ticket."
+              )}
+            </p>
+
+            <div className="mt-4 grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                className="ind-action-btn w-full px-3 py-2 text-sm"
+                onClick={() => {
+                  void selectFromCamera(cameraInputRef.current);
+                }}
+              >
+                {indT("ExpenseSheets_NewTicket_Source_Camera", "Usar camara")}
+              </button>
+              <button
+                type="button"
+                className="ind-action-btn w-full px-3 py-2 text-sm"
+                onClick={() => selectFromGallery(galleryInputRef.current)}
+              >
+                {indT("ExpenseSheets_NewTicket_Source_Gallery", "Elegir imagen")}
+              </button>
+              <button
+                type="button"
+                className="ind-action-btn w-full px-3 py-2 text-sm"
+                onClick={closeSourcePicker}
+              >
+                {indT("Common_Cancel", "Cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {quickTicketBusy ? (
+        <div className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/35 px-4">
+          <div className="glass-panel shadow-card flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-sm text-slate-700">
+            <Spinner size="h-5 w-5" label={indT("Common_Loading", "Loading")} />
+            <span>{quickTicketProgressMessage || indT("Common_Loading", "Loading")}</span>
+          </div>
+        </div>
+      ) : null}
+
+      {quickTicketErrorMessage ? (
+        <div className="glass-panel shadow-card space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+          <p>{quickTicketErrorMessage}</p>
+          {quickTicketTraceList.length > 0 ? (
+            <div className="rounded-lg border border-rose-200 bg-white p-2 text-xs text-rose-700">
+              {quickTicketTraceList.map((entry) => (
+                <p key={`${entry.step}-${entry.at}`}>{`${entry.step}: ${entry.traceId}`}</p>
+              ))}
+            </div>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            {hasPendingUploadRetry ? (
+              <button
+                type="button"
+                className="ind-action-btn px-3 py-1.5 text-xs"
+                onClick={() => {
+                  void retryPendingUpload();
+                }}
+              >
+                {indT("ExpenseSheets_NewTicket_RetryUpload", "Reintentar upload")}
+              </button>
+            ) : null}
+            <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={clearQuickTicketError}>
+              {indT("Common_Close", "Close")}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <div
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
@@ -328,12 +512,12 @@ const ExpenseSheetDetailPageContent = () => {
 
       {canCreateExpense && !isCreateMode && !isSheetLocked ? (
         <FloatingActionButton
-          route=""
-          ariaLabel={indT("Common_Create", "Create")}
+          ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
           size={76}
           right={16}
           bottom={24}
-          onClick={handleOpenCreateLineMode}
+          menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
+          menuItems={fabMenuItems}
         />
       ) : null}
     </div>

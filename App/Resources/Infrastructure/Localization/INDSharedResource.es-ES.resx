@@ -1181,7 +1181,81 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Tipo de cambio {0} {1}</value>
-  </data>  <data name="Common_Link" xml:space="preserve">
+  </data>
+  <data name="Common_Link" xml:space="preserve">
     <value>Enlace</value>
-  </data></root>
+  </data>
+  <data name="ExpenseSheets_Fab_Actions" xml:space="preserve">
+    <value>Acciones rapidas</value>
+  </data>
+  <data name="ExpenseSheets_Fab_NewTicket" xml:space="preserve">
+    <value>Nuevo ticket</value>
+  </data>
+  <data name="ExpenseSheets_Fab_LinkTicket" xml:space="preserve">
+    <value>Vincular ticket</value>
+  </data>
+  <data name="ExpenseSheets_Fab_NewLine" xml:space="preserve">
+    <value>Nueva linea</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Source_Title" xml:space="preserve">
+    <value>Nuevo ticket</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Source_Body" xml:space="preserve">
+    <value>Selecciona una fuente para capturar o elegir la imagen del ticket.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Source_Camera" xml:space="preserve">
+    <value>Usar camara</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Source_Gallery" xml:space="preserve">
+    <value>Elegir imagen</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Status_UploadingImage" xml:space="preserve">
+    <value>Subiendo imagen...</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Status_CreatingTicket" xml:space="preserve">
+    <value>Creando ticket...</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Status_SyncingFile" xml:space="preserve">
+    <value>Sincronizando archivo...</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Status_Finalizing" xml:space="preserve">
+    <value>Finalizando IA...</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Status_LinkingLine" xml:space="preserve">
+    <value>Vinculando linea de gasto...</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Status_Done" xml:space="preserve">
+    <value>Completado</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_FileType" xml:space="preserve">
+    <value>Formato de imagen no soportado.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_FileSize" xml:space="preserve">
+    <value>La imagen supera el maximo de 50MB.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_NoFileId" xml:space="preserve">
+    <value>No se pudo resolver el fileId del ticket.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_UploadRetry" xml:space="preserve">
+    <value>Ticket creado, pero fallo la sincronizacion del archivo. Reintenta la subida.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_RetryFileMissing" xml:space="preserve">
+    <value>La imagen en cache ya no esta disponible.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_CameraPermission" xml:space="preserve">
+    <value>Se requiere permiso de camara.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_Validation" xml:space="preserve">
+    <value>Error de validacion.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_NotFound" xml:space="preserve">
+    <value>Registro no encontrado.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_Server" xml:space="preserve">
+    <value>Error de servidor.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
+    <value>Reintentar upload</value>
+  </data>
+</root>
 

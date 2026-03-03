@@ -1,2 +1,29 @@
-import{a as o}from"./chunks/chunk-N2ISMPQQ.js";import{c as r,d as n,e as m}from"./chunks/chunk-C75BZM5W.js";import{b as e}from"./chunks/chunk-RNLUE6RG.js";var d=e(r()),u=()=>{let t=document.getElementById("ind-audio-recorder-root");t&&n(t,(0,d.jsx)(o,{}))},c=()=>{u()};m(c);var f=o;export{f as default,u as mountAudioRecorder};
-//# sourceMappingURL=audio-recorder.js.map
+import {
+  AudioRecorderMinimal
+} from "./chunks/chunk-F7INXRGB.js";
+import {
+  mountReactIsland,
+  mountWhenDocumentReady,
+  require_jsx_runtime
+} from "./chunks/chunk-KJNAPDCZ.js";
+import {
+  __toESM
+} from "./chunks/chunk-45FWCHS2.js";
+
+// Web/wwwroot/react/src/pages/system/AudioRecorder.tsx
+var import_jsx_runtime = __toESM(require_jsx_runtime());
+var mountAudioRecorder = () => {
+  const el = document.getElementById("ind-audio-recorder-root");
+  if (!el) return;
+  mountReactIsland(el, /* @__PURE__ */ (0, import_jsx_runtime.jsx)(AudioRecorderMinimal, {}));
+};
+var mount = () => {
+  mountAudioRecorder();
+};
+mountWhenDocumentReady(mount);
+var AudioRecorder_default = AudioRecorderMinimal;
+export {
+  AudioRecorder_default as default,
+  mountAudioRecorder
+};
+//# sourceMappingURL=data:application/json;base64,ewogICJ2ZXJzaW9uIjogMywKICAic291cmNlcyI6IFsiLi4vcmVhY3Qvc3JjL3BhZ2VzL3N5c3RlbS9BdWRpb1JlY29yZGVyLnRzeCJdLAogICJzb3VyY2VzQ29udGVudCI6IFsiaW1wb3J0IFJlYWN0IGZyb20gXCJyZWFjdFwiO1xuaW1wb3J0IEF1ZGlvUmVjb3JkZXJNaW5pbWFsIGZyb20gXCIuL0F1ZGlvUmVjb3JkZXJNaW5pbWFsLnRzeFwiO1xuaW1wb3J0IHsgbW91bnRSZWFjdElzbGFuZCwgbW91bnRXaGVuRG9jdW1lbnRSZWFkeSB9IGZyb20gXCIuLi8uLi91dGlscy9yZWFjdElzbGFuZC50c3hcIjtcblxuLy8gTW91bnQgdGhlIGF1ZGlvIHJlY29yZGVyIGludG8gdGhlIFJhem9yIHZpZXcgcm9vdC5cbmV4cG9ydCBjb25zdCBtb3VudEF1ZGlvUmVjb3JkZXIgPSAoKSA9PiB7XG4gIGNvbnN0IGVsID0gZG9jdW1lbnQuZ2V0RWxlbWVudEJ5SWQoXCJpbmQtYXVkaW8tcmVjb3JkZXItcm9vdFwiKTtcbiAgaWYgKCFlbCkgcmV0dXJuO1xuXG4gIG1vdW50UmVhY3RJc2xhbmQoZWwsIDxBdWRpb1JlY29yZGVyTWluaW1hbCAvPik7XG59O1xuXG4vLyBBdXRvLW1vdW50IHdoZW4gdGhlIHBhZ2UgYnVuZGxlIGxvYWRzLlxuY29uc3QgbW91bnQgPSAoKSA9PiB7XG4gIG1vdW50QXVkaW9SZWNvcmRlcigpO1xufTtcblxubW91bnRXaGVuRG9jdW1lbnRSZWFkeShtb3VudCk7XG5cbmV4cG9ydCBkZWZhdWx0IEF1ZGlvUmVjb3JkZXJNaW5pbWFsO1xuIl0sCiAgIm1hcHBpbmdzIjogIjs7Ozs7Ozs7Ozs7OztBQVN1QjtBQUpoQixJQUFNLHFCQUFxQixNQUFNO0FBQ3RDLFFBQU0sS0FBSyxTQUFTLGVBQWUseUJBQXlCO0FBQzVELE1BQUksQ0FBQyxHQUFJO0FBRVQsbUJBQWlCLElBQUksNENBQUMsd0JBQXFCLENBQUU7QUFDL0M7QUFHQSxJQUFNLFFBQVEsTUFBTTtBQUNsQixxQkFBbUI7QUFDckI7QUFFQSx1QkFBdUIsS0FBSztBQUU1QixJQUFPLHdCQUFROyIsCiAgIm5hbWVzIjogW10KfQo=

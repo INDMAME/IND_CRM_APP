@@ -21,6 +21,13 @@ import { useExpenseTicketDetailTopbarActions } from "./useExpenseTicketDetailTop
 
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const LINES_PAGE_SIZE = 6;
+const PREVIEW_MAX_SCALE = 4;
+const PREVIEW_SCALE_STEP = 0.25;
+
+type PreviewPoint = {
+  x: number;
+  y: number;
+};
 
 const GASTO_TYPE_LABEL_KEYS: Record<number, { key: string; fallback: string }> = {
   0: { key: "Enum_None", fallback: "None" },
@@ -41,6 +48,22 @@ const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   const start = (safePage - 1) * pageSize;
   return items.slice(start, start + pageSize);
 };
+
+const clampPreviewScale = (value: number): number => {
+  if (!Number.isFinite(value)) return 1;
+  return Math.min(PREVIEW_MAX_SCALE, Math.max(1, value));
+};
+
+const getPreviewPointDistance = (left: PreviewPoint, right: PreviewPoint): number => {
+  const deltaX = right.x - left.x;
+  const deltaY = right.y - left.y;
+  return Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+};
+
+const getPreviewPointCenter = (left: PreviewPoint, right: PreviewPoint): PreviewPoint => ({
+  x: (left.x + right.x) / 2,
+  y: (left.y + right.y) / 2,
+});
 
 // Initializes auth seed for expense API calls before island effects run.
 const bootstrapExpenseApiAuth = () => {
@@ -84,6 +107,19 @@ const ExpenseTicketDetailPageContent = () => {
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewError, setPreviewError] = useState("");
   const [previewImageUrl, setPreviewImageUrl] = useState("");
+  const [previewScale, setPreviewScale] = useState(1);
+  const [previewTranslate, setPreviewTranslate] = useState<PreviewPoint>({ x: 0, y: 0 });
+  const previewScaleRef = useRef(1);
+  const previewTranslateRef = useRef<PreviewPoint>({ x: 0, y: 0 });
+  const previewPointersRef = useRef<Map<number, PreviewPoint>>(new Map());
+  const previewPanPointerRef = useRef<number | null>(null);
+  const previewPanLastPointRef = useRef<PreviewPoint | null>(null);
+  const previewPinchSnapshotRef = useRef<{
+    distance: number;
+    scale: number;
+    center: PreviewPoint;
+    translate: PreviewPoint;
+  } | null>(null);
 
   const paginationLabels = useMemo(
     () => ({
@@ -290,17 +326,52 @@ const ExpenseTicketDetailPageContent = () => {
     resolveClickableCard,
   });
 
+  const applyPreviewTransform = useCallback((nextScale: number, nextTranslate: PreviewPoint) => {
+    const normalizedScale = clampPreviewScale(nextScale);
+    const normalizedTranslate = normalizedScale <= 1 ? { x: 0, y: 0 } : nextTranslate;
+
+    previewScaleRef.current = normalizedScale;
+    previewTranslateRef.current = normalizedTranslate;
+    setPreviewScale(normalizedScale);
+    setPreviewTranslate(normalizedTranslate);
+  }, []);
+
+  const resetPreviewGesture = useCallback(() => {
+    previewPointersRef.current.clear();
+    previewPanPointerRef.current = null;
+    previewPanLastPointRef.current = null;
+    previewPinchSnapshotRef.current = null;
+    applyPreviewTransform(1, { x: 0, y: 0 });
+  }, [applyPreviewTransform]);
+
+  const rebuildPinchSnapshot = useCallback(() => {
+    const pointerPoints = Array.from(previewPointersRef.current.values());
+    if (pointerPoints.length < 2) {
+      previewPinchSnapshotRef.current = null;
+      return;
+    }
+
+    const [left, right] = pointerPoints;
+    previewPinchSnapshotRef.current = {
+      distance: Math.max(1, getPreviewPointDistance(left, right)),
+      scale: previewScaleRef.current,
+      center: getPreviewPointCenter(left, right),
+      translate: previewTranslateRef.current,
+    };
+  }, []);
+
   const closePreview = useCallback(() => {
     setPreviewOpen(false);
     setPreviewBusy(false);
     setPreviewError("");
+    resetPreviewGesture();
     setPreviewImageUrl((previous) => {
       if (previous) {
         URL.revokeObjectURL(previous);
       }
       return "";
     });
-  }, []);
+  }, [resetPreviewGesture]);
 
   useEffect(() => {
     if (!previewOpen) return;
@@ -315,10 +386,136 @@ const ExpenseTicketDetailPageContent = () => {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [previewOpen, closePreview]);
 
+  const handlePreviewPointerDown = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!previewImageUrl || previewBusy) return;
+      const point: PreviewPoint = { x: event.clientX, y: event.clientY };
+      previewPointersRef.current.set(event.pointerId, point);
+      if (typeof event.currentTarget.setPointerCapture === "function") {
+        try {
+          event.currentTarget.setPointerCapture(event.pointerId);
+        } catch {
+          // Ignore capture failures on browsers that do not fully support pointer capture.
+        }
+      }
+
+      if (previewPointersRef.current.size === 1) {
+        previewPanPointerRef.current = event.pointerId;
+        previewPanLastPointRef.current = point;
+        previewPinchSnapshotRef.current = null;
+        return;
+      }
+
+      previewPanPointerRef.current = null;
+      previewPanLastPointRef.current = null;
+      rebuildPinchSnapshot();
+    },
+    [previewBusy, previewImageUrl, rebuildPinchSnapshot]
+  );
+
+  const handlePreviewPointerMove = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!previewPointersRef.current.has(event.pointerId)) return;
+
+      event.preventDefault();
+      const point: PreviewPoint = { x: event.clientX, y: event.clientY };
+      previewPointersRef.current.set(event.pointerId, point);
+
+      const pointerEntries = Array.from(previewPointersRef.current.entries());
+      const pointerPoints = pointerEntries.map((entry) => entry[1]);
+
+      if (pointerPoints.length >= 2) {
+        if (!previewPinchSnapshotRef.current) {
+          rebuildPinchSnapshot();
+        }
+
+        const snapshot = previewPinchSnapshotRef.current;
+        if (!snapshot) return;
+
+        const [left, right] = pointerPoints;
+        const distance = Math.max(1, getPreviewPointDistance(left, right));
+        const ratio = distance / Math.max(1, snapshot.distance);
+        const nextScale = clampPreviewScale(snapshot.scale * ratio);
+        const center = getPreviewPointCenter(left, right);
+        const nextTranslate: PreviewPoint = {
+          x: snapshot.translate.x + (center.x - snapshot.center.x),
+          y: snapshot.translate.y + (center.y - snapshot.center.y),
+        };
+        applyPreviewTransform(nextScale, nextTranslate);
+        return;
+      }
+
+      if (pointerPoints.length !== 1 || previewScaleRef.current <= 1 || previewPanPointerRef.current !== event.pointerId) {
+        return;
+      }
+
+      const lastPoint = previewPanLastPointRef.current;
+      previewPanLastPointRef.current = point;
+      if (!lastPoint) return;
+
+      const nextTranslate: PreviewPoint = {
+        x: previewTranslateRef.current.x + (point.x - lastPoint.x),
+        y: previewTranslateRef.current.y + (point.y - lastPoint.y),
+      };
+      applyPreviewTransform(previewScaleRef.current, nextTranslate);
+    },
+    [applyPreviewTransform, rebuildPinchSnapshot]
+  );
+
+  const handlePreviewPointerEnd = useCallback(
+    (event: React.PointerEvent<HTMLDivElement>) => {
+      if (!previewPointersRef.current.has(event.pointerId)) return;
+      previewPointersRef.current.delete(event.pointerId);
+      if (
+        typeof event.currentTarget.hasPointerCapture === "function" &&
+        event.currentTarget.hasPointerCapture(event.pointerId)
+      ) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
+
+      const pointerEntries = Array.from(previewPointersRef.current.entries());
+      if (pointerEntries.length >= 2) {
+        previewPanPointerRef.current = null;
+        previewPanLastPointRef.current = null;
+        rebuildPinchSnapshot();
+        return;
+      }
+
+      if (pointerEntries.length === 1) {
+        const [pointerId, pointerPoint] = pointerEntries[0];
+        previewPanPointerRef.current = pointerId;
+        previewPanLastPointRef.current = pointerPoint;
+        previewPinchSnapshotRef.current = null;
+        return;
+      }
+
+      previewPanPointerRef.current = null;
+      previewPanLastPointRef.current = null;
+      previewPinchSnapshotRef.current = null;
+      if (previewScaleRef.current <= 1) {
+        applyPreviewTransform(1, { x: 0, y: 0 });
+      }
+    },
+    [applyPreviewTransform, rebuildPinchSnapshot]
+  );
+
+  const handlePreviewWheel = useCallback(
+    (event: React.WheelEvent<HTMLDivElement>) => {
+      if (!previewImageUrl || previewBusy) return;
+      event.preventDefault();
+
+      const direction = event.deltaY < 0 ? 1 : -1;
+      const nextScale = clampPreviewScale(previewScaleRef.current + direction * PREVIEW_SCALE_STEP);
+      applyPreviewTransform(nextScale, previewTranslateRef.current);
+    },
+    [applyPreviewTransform, previewBusy, previewImageUrl]
+  );
+
   const openFile = useCallback(async () => {
     const currentUrl = safeText(isEditing ? draftUrlFile : header?.urlFile);
     if (!currentUrl) return;
 
+    resetPreviewGesture();
     setPreviewOpen(true);
     setPreviewBusy(true);
     setPreviewError("");
@@ -340,7 +537,7 @@ const ExpenseTicketDetailPageContent = () => {
     } finally {
       setPreviewBusy(false);
     }
-  }, [draftUrlFile, header?.urlFile, isEditing]);
+  }, [draftUrlFile, header?.urlFile, isEditing, resetPreviewGesture]);
 
   const statusLabel = useMemo(() => getExpenseTicketStatusLabel(header?.status), [header?.status]);
   const gastoTypeLabel = useMemo(() => {
@@ -382,6 +579,26 @@ const ExpenseTicketDetailPageContent = () => {
               className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/45 backdrop-blur-md px-4 py-6"
               onClick={closePreview}
             >
+              <button
+                type="button"
+                aria-label={indT("Common_Close", "Close")}
+                className="absolute right-4 top-4 inline-flex h-10 w-10 items-center justify-center rounded-full border border-slate-200/60 bg-slate-900/55 text-slate-100 transition hover:bg-slate-900/70 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-200/80"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  closePreview();
+                }}
+              >
+                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d="M6 6L18 18M18 6L6 18"
+                    stroke="currentColor"
+                    strokeWidth="1.75"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </button>
+
               <div className="max-h-[92vh] max-w-[92vw] flex items-center justify-center" onClick={(event) => event.stopPropagation()}>
                 {previewBusy ? (
                   <div className="flex items-center gap-2 text-sm text-slate-100">
@@ -393,11 +610,26 @@ const ExpenseTicketDetailPageContent = () => {
                 ) : previewError ? (
                   <p className="text-sm text-rose-200">{previewError}</p>
                 ) : previewImageUrl ? (
-                  <img
-                    src={previewImageUrl}
-                    alt={safeText(isEditing ? draftFileName : header?.fileName) || indT("Tickets_Field_FileId", "Ticket")}
-                    className="max-h-[90vh] w-auto max-w-[92vw] rounded-lg object-contain shadow-2xl"
-                  />
+                  <div
+                    className="relative max-h-[90vh] max-w-[92vw] overflow-hidden rounded-lg touch-none"
+                    onPointerDown={handlePreviewPointerDown}
+                    onPointerMove={handlePreviewPointerMove}
+                    onPointerUp={handlePreviewPointerEnd}
+                    onPointerCancel={handlePreviewPointerEnd}
+                    onWheel={handlePreviewWheel}
+                  >
+                    <img
+                      src={previewImageUrl}
+                      alt={safeText(isEditing ? draftFileName : header?.fileName) || indT("Tickets_Field_FileId", "Ticket")}
+                      className="pointer-events-none max-h-[90vh] w-auto max-w-[92vw] select-none rounded-lg object-contain shadow-2xl"
+                      style={{
+                        transform: `translate3d(${previewTranslate.x}px, ${previewTranslate.y}px, 0) scale(${previewScale})`,
+                        transformOrigin: "center center",
+                        transition: previewScale <= 1 ? "transform 140ms ease-out" : "none",
+                      }}
+                      draggable={false}
+                    />
+                  </div>
                 ) : (
                   <p className="text-sm text-slate-100">{indT("Common_NotAvailable", "N/A")}</p>
                 )}

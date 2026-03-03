@@ -519,6 +519,37 @@ export const useExpenseSheetDetailState = ({
     });
   }, [canCreateExpense, isCreateMode, isEditing, isSheetLocked, onForbidden, sheetId]);
 
+  // Opens tickets page from expense sheet context to create or link tickets.
+  const openTicketsFromSheet = useCallback(
+    (action: "new" | "link") => {
+      if (!canCreateExpense || !sheetId || isSheetLocked) {
+        onForbidden();
+        return;
+      }
+
+      if (isCreateMode) {
+        return;
+      }
+
+      const query = new URLSearchParams({
+        action,
+        hojaGastosId: sheetId,
+      });
+      navigateToExpenseUrl(`/Gastos/Tickets?${query.toString()}`, {
+        askConfirmation: isEditing,
+      });
+    },
+    [canCreateExpense, isCreateMode, isEditing, isSheetLocked, onForbidden, sheetId]
+  );
+
+  const handleOpenCreateTicketMode = useCallback(() => {
+    openTicketsFromSheet("new");
+  }, [openTicketsFromSheet]);
+
+  const handleOpenLinkTicketMode = useCallback(() => {
+    openTicketsFromSheet("link");
+  }, [openTicketsFromSheet]);
+
   const navigateToCreatedSheet = useCallback((createdSheetId: string) => {
     const safeCreatedSheetId = safeText(createdSheetId);
     if (!safeCreatedSheetId) return;
@@ -593,6 +624,8 @@ export const useExpenseSheetDetailState = ({
     handleCancelEdit,
     handleOpenCreateSheetMode,
     handleOpenCreateLineMode,
+    handleOpenCreateTicketMode,
+    handleOpenLinkTicketMode,
     navigateToCreatedSheet,
     navigateToLineDetail,
   };
