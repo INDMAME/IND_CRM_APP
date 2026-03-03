@@ -1091,6 +1091,16 @@ namespace IND_CRM_APP.Services
                 ? null
                 : EscapeQueryValue(normalizedExtension.TrimStart('.').ToLowerInvariant());
             var mime = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType.Trim();
+            var canReportLength = fileStream.CanSeek;
+            var streamLength = canReportLength ? fileStream.Length : -1;
+
+            _logger.LogInformation(
+                "UploadExpenseSheetTicketFile request. FileId: {FileId}. FileName: {FileName}. ContentType: {ContentType}. Extension: {Extension}. StreamLength: {StreamLength}",
+                safeFileId,
+                safeFileName,
+                mime,
+                normalizedExtension ?? "<empty>",
+                streamLength);
 
             using var form = new MultipartFormDataContent();
             using var fileContent = new StreamContent(fileStream);
@@ -1102,7 +1112,17 @@ namespace IND_CRM_APP.Services
                 form,
                 cancellationToken);
 
-            return BuildApiResponse<object>(result, "UploadExpenseSheetTicketFile");
+            var response = BuildApiResponse<object>(result, "UploadExpenseSheetTicketFile");
+            _logger.LogInformation(
+                "UploadExpenseSheetTicketFile upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. Raw: {Raw}",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                SafeLogPayload(result.Raw));
+
+            return response;
         }
 
         public async Task<ApiResponse<object>> DeleteExpenseSheetTicketFileAsync(
@@ -1223,6 +1243,16 @@ namespace IND_CRM_APP.Services
             var safeFileName = string.IsNullOrWhiteSpace(fileName) ? "ticket.jpg" : Path.GetFileName(fileName);
             var mime = string.IsNullOrWhiteSpace(contentType) ? "image/jpeg" : contentType.Trim();
             var safeTicketUrlFile = NormalizeOptionalText(ticketUrlFile);
+            var canReportLength = ticketImageStream.CanSeek;
+            var streamLength = canReportLength ? ticketImageStream.Length : -1;
+
+            _logger.LogInformation(
+                "ExpenseFromTicket request. FileName: {FileName}. ContentType: {ContentType}. PersistTicket: {PersistTicket}. TicketUrlFilePresent: {HasTicketUrlFile}. StreamLength: {StreamLength}",
+                safeFileName,
+                mime,
+                persistTicket.HasValue ? persistTicket.Value.ToString() : "<null>",
+                !string.IsNullOrWhiteSpace(safeTicketUrlFile),
+                streamLength);
 
             using var form = new MultipartFormDataContent();
             using var fileContent = new StreamContent(ticketImageStream);
@@ -1244,7 +1274,17 @@ namespace IND_CRM_APP.Services
                 form,
                 cancellationToken);
 
-            return BuildApiResponse<object>(result, "ExpenseFromTicket");
+            var response = BuildApiResponse<object>(result, "ExpenseFromTicket");
+            _logger.LogInformation(
+                "ExpenseFromTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. Raw: {Raw}",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                SafeLogPayload(result.Raw));
+
+            return response;
         }
 
         // ======================================================
@@ -1336,6 +1376,8 @@ namespace IND_CRM_APP.Services
                 };
             }
 
+            LogNullPagedMetricsIfAny(result.Raw, operation, result.StatusCode);
+
             try
             {
                 var parsed = JsonSerializer.Deserialize<PagedApiResponse<T>>(result.Raw, JsonOptions);
@@ -1362,6 +1404,15 @@ namespace IND_CRM_APP.Services
                 var fallbackPage = TryReadIntProperty(root, "Page") ?? TryReadIntProperty(root, "page") ?? 1;
                 var fallbackPageSize = TryReadIntProperty(root, "PageSize") ?? TryReadIntProperty(root, "pageSize") ?? fallbackItems.Count;
                 var fallbackTraceId = ReadStringLikeProperty(root, "TraceId", "traceId");
+                _logger.LogWarning(
+                    "Using paged fallback parser for {Operation}. ItemCount: {ItemCount}. Total: {Total}. Page: {Page}. PageSize: {PageSize}. StatusCode: {StatusCode}. TraceId: {TraceId}",
+                    operation,
+                    fallbackItems.Count,
+                    fallbackTotal,
+                    fallbackPage,
+                    fallbackPageSize,
+                    (int)result.StatusCode,
+                    fallbackTraceId ?? TryGetTraceId(result.Headers) ?? "<null>");
 
                 return new PagedApiResponse<T>
                 {
@@ -1424,6 +1475,50 @@ namespace IND_CRM_APP.Services
                 return msgLower.GetString();
             }
             return null;
+        }
+
+        // Logs when paged envelopes arrive with null metrics to make backend regressions visible.
+        private void LogNullPagedMetricsIfAny(string raw, string operation, HttpStatusCode statusCode)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+            {
+                return;
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(raw);
+                var root = doc.RootElement;
+                if (root.ValueKind != JsonValueKind.Object)
+                {
+                    return;
+                }
+
+                var totalNull = JsonPropertyHelper.TryGetPropertyInsensitive(root, "Total", out var totalElement) &&
+                                totalElement.ValueKind == JsonValueKind.Null;
+                var pageNull = JsonPropertyHelper.TryGetPropertyInsensitive(root, "Page", out var pageElement) &&
+                               pageElement.ValueKind == JsonValueKind.Null;
+                var pageSizeNull = JsonPropertyHelper.TryGetPropertyInsensitive(root, "PageSize", out var pageSizeElement) &&
+                                   pageSizeElement.ValueKind == JsonValueKind.Null;
+
+                if (!totalNull && !pageNull && !pageSizeNull)
+                {
+                    return;
+                }
+
+                _logger.LogWarning(
+                    "Paged response includes null metrics for {Operation}. StatusCode: {StatusCode}. TotalNull: {TotalNull}. PageNull: {PageNull}. PageSizeNull: {PageSizeNull}. Raw: {Raw}",
+                    operation,
+                    (int)statusCode,
+                    totalNull,
+                    pageNull,
+                    pageSizeNull,
+                    SafeLogPayload(raw));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "Could not inspect paged metrics for {Operation}.", operation);
+            }
         }
 
         // Reads bool values from bool, numeric or string JSON fields.

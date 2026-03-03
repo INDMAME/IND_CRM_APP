@@ -12,8 +12,11 @@ namespace IND_CRM_APP.Models.Shared
         [JsonPropertyName("items")]
         public IEnumerable<T>? Items { get; set; }
 
+        [JsonConverter(typeof(JsonIntNullToZeroConverter))]
         public int Total { get; set; }
+        [JsonConverter(typeof(JsonIntNullToZeroConverter))]
         public int Page { get; set; }
+        [JsonConverter(typeof(JsonIntNullToZeroConverter))]
         public int PageSize { get; set; }
 
         /// <summary>

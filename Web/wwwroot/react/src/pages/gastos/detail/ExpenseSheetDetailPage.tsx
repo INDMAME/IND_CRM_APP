@@ -345,7 +345,7 @@ const ExpenseSheetDetailPageContent = () => {
       <input
         ref={cameraInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
         capture="environment"
         className="hidden"
         onChange={(event) => {
@@ -357,7 +357,7 @@ const ExpenseSheetDetailPageContent = () => {
       <input
         ref={galleryInputRef}
         type="file"
-        accept="image/*"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
         className="hidden"
         onChange={(event) => {
           const file = event.currentTarget.files?.[0] || null;

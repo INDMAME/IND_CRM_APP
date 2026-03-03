@@ -21,9 +21,11 @@ const TICKET_IMAGE_CACHE_NAME = "ind-expense-ticket-image-v1";
 const TICKET_IMAGE_CACHE_PREFIX = "/__ind_cache__/ticket-image/";
 const TICKET_TRACE_STORAGE_KEY = "expense_sheet_ticket_quick_flow_trace_v1";
 const MAX_TICKET_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
+const ALLOWED_TICKET_IMAGE_MIME_TYPES = new Set<string>(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
+const ALLOWED_TICKET_IMAGE_EXTENSIONS = new Set<string>(["jpg", "jpeg", "png", "webp"]);
 const ALLOWED_TICKET_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const DEFAULT_TICKET_GASTO_TYPE = 8;
-const DEFAULT_CREATE_MODE = "ia" as "ia" | "manual";
+const DEFAULT_CREATE_MODE = "manual" as "ia" | "manual";
 
 type TicketImageSource = "camera" | "gallery";
 
@@ -153,6 +155,16 @@ const inferExtension = (file: File): string => {
   if (type === "image/heic") return "heic";
   if (type === "image/heif") return "heif";
   return "jpg";
+};
+
+const isSupportedTicketImageFile = (file: File): boolean => {
+  const normalizedType = safeText(file.type).toLowerCase();
+  if (normalizedType) {
+    return ALLOWED_TICKET_IMAGE_MIME_TYPES.has(normalizedType);
+  }
+
+  const extension = inferExtension(file);
+  return ALLOWED_TICKET_IMAGE_EXTENSIONS.has(extension);
 };
 
 const resolveRandomKey = (): string => {
@@ -666,6 +678,10 @@ export const useExpenseSheetQuickTicketFlow = ({
 
       const safeType = safeText(file.type).toLowerCase();
       if (safeType && !safeType.startsWith("image/")) {
+        setErrorMessage(indT("ExpenseSheets_NewTicket_Error_FileType", "Unsupported image format."));
+        return;
+      }
+      if (!isSupportedTicketImageFile(file)) {
         setErrorMessage(indT("ExpenseSheets_NewTicket_Error_FileType", "Unsupported image format."));
         return;
       }

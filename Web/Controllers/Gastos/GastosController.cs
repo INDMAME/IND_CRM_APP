@@ -23,6 +23,20 @@ namespace IND_CRM_APP.Controllers
         private readonly ITicketBlobPreviewService _ticketBlobPreviewService;
         private readonly IStringLocalizer<INDSharedResource> _sr;
         private static readonly HashSet<int> AllowedTicketGastoTypes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
+        private static readonly HashSet<string> AllowedTicketImageContentTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "image/jpeg",
+            "image/jpg",
+            "image/png",
+            "image/webp"
+        };
+        private static readonly HashSet<string> AllowedTicketImageExtensions = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "jpg",
+            "jpeg",
+            "png",
+            "webp"
+        };
 
         public GastosController(
             ICrmApiClient apiClient,
@@ -615,8 +629,8 @@ namespace IND_CRM_APP.Controllers
         // API route used by React clients for /api/ia/service/expensefromticket.
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        [RequestSizeLimit(30000000)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 30000000)]
+        [RequestSizeLimit(52428800)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 52428800)]
         public async Task<IActionResult> ApiExpenseFromTicket(
             [FromForm] IFormFile? ticketImage,
             [FromForm] string? persistTicket,
@@ -645,6 +659,37 @@ namespace IND_CRM_APP.Controllers
                     "INVALID_REQUEST");
             }
 
+            var safeTicketFileName = Path.GetFileName(ticketImage.FileName ?? "ticket.jpg");
+            var normalizedContentType = (ticketImage.ContentType ?? string.Empty).Trim();
+            var normalizedExtension = Path.GetExtension(ticketImage.FileName ?? string.Empty).TrimStart('.').Trim();
+            var hasAllowedContentType = !string.IsNullOrWhiteSpace(normalizedContentType) &&
+                                        AllowedTicketImageContentTypes.Contains(normalizedContentType);
+            var hasAllowedExtension = !string.IsNullOrWhiteSpace(normalizedExtension) &&
+                                      AllowedTicketImageExtensions.Contains(normalizedExtension);
+
+            _logger.LogInformation(
+                "ApiExpenseFromTicket request received. FileName: {FileName}. SizeBytes: {SizeBytes}. ContentType: {ContentType}. Extension: {Extension}. PersistRaw: {PersistRaw}. TicketUrlFilePresent: {HasTicketUrlFile}",
+                safeTicketFileName,
+                ticketImage.Length,
+                string.IsNullOrWhiteSpace(normalizedContentType) ? "<empty>" : normalizedContentType,
+                string.IsNullOrWhiteSpace(normalizedExtension) ? "<empty>" : normalizedExtension,
+                string.IsNullOrWhiteSpace(persistTicket) ? "<empty>" : persistTicket,
+                !string.IsNullOrWhiteSpace(NormalizeOptionalText(ticketUrlFile)));
+
+            if (!hasAllowedContentType && !hasAllowedExtension)
+            {
+                _logger.LogWarning(
+                    "ApiExpenseFromTicket validation rejected file. FileName: {FileName}. ContentType: {ContentType}. Extension: {Extension}.",
+                    safeTicketFileName,
+                    string.IsNullOrWhiteSpace(normalizedContentType) ? "<empty>" : normalizedContentType,
+                    string.IsNullOrWhiteSpace(normalizedExtension) ? "<empty>" : normalizedExtension);
+
+                return CreateApiCommandError(
+                    StatusCodes.Status422UnprocessableEntity,
+                    _sr["ExpenseSheets_NewTicket_Error_FileType"].Value,
+                    "VALIDATION_ERROR");
+            }
+
             var persistRaw = (persistTicket ?? string.Empty).Trim();
             bool? persistValue = null;
             if (!string.IsNullOrWhiteSpace(persistRaw))
@@ -669,12 +714,19 @@ namespace IND_CRM_APP.Controllers
                 var response = await _apiClient.ExpenseFromTicketAsync(
                     token,
                     stream,
-                    ticketImage.FileName ?? "ticket.jpg",
+                    safeTicketFileName,
                     ticketImage.ContentType,
                     persistValue,
                     NormalizeOptionalText(ticketUrlFile),
                     HttpContext.RequestAborted);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                _logger.LogInformation(
+                    "ApiExpenseFromTicket completed. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. PersistValue: {PersistValue}.",
+                    response.Success,
+                    response.ErrorCode ?? "<null>",
+                    response.TraceId ?? "<null>",
+                    persistValue.HasValue ? persistValue.Value.ToString() : "<null>");
 
                 return CreateApiResponse(
                     new
@@ -689,7 +741,13 @@ namespace IND_CRM_APP.Controllers
             }
             catch (ApiException ex)
             {
-                _logger.LogError(ex, "Upstream API error in ApiExpenseFromTicket");
+                _logger.LogError(
+                    ex,
+                    "Upstream API error in ApiExpenseFromTicket. FileName: {FileName}. ContentType: {ContentType}. Extension: {Extension}. PersistValue: {PersistValue}.",
+                    safeTicketFileName,
+                    string.IsNullOrWhiteSpace(normalizedContentType) ? "<empty>" : normalizedContentType,
+                    string.IsNullOrWhiteSpace(normalizedExtension) ? "<empty>" : normalizedExtension,
+                    persistValue.HasValue ? persistValue.Value.ToString() : "<null>");
                 return CreateApiCommandError(
                     StatusCodes.Status502BadGateway,
                     _sr["Api_RequestFailed"].Value,
@@ -697,7 +755,13 @@ namespace IND_CRM_APP.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unhandled error in ApiExpenseFromTicket");
+                _logger.LogError(
+                    ex,
+                    "Unhandled error in ApiExpenseFromTicket. FileName: {FileName}. ContentType: {ContentType}. Extension: {Extension}. PersistValue: {PersistValue}.",
+                    safeTicketFileName,
+                    string.IsNullOrWhiteSpace(normalizedContentType) ? "<empty>" : normalizedContentType,
+                    string.IsNullOrWhiteSpace(normalizedExtension) ? "<empty>" : normalizedExtension,
+                    persistValue.HasValue ? persistValue.Value.ToString() : "<null>");
                 return CreateApiCommandError(
                     StatusCodes.Status500InternalServerError,
                     _sr["Api_RequestFailed"].Value,
@@ -1750,8 +1814,8 @@ namespace IND_CRM_APP.Controllers
         // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/file.
         [HttpPost]
         [IgnoreAntiforgeryToken]
-        [RequestSizeLimit(30000000)]
-        [RequestFormLimits(MultipartBodyLengthLimit = 30000000)]
+        [RequestSizeLimit(52428800)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 52428800)]
         public async Task<IActionResult> ApiExpenseSheetTicketFileUpload(
             string fileId,
             [FromQuery] string? extension,
@@ -1771,6 +1835,18 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
 
+            var safeUploadFileName = Path.GetFileName(file.FileName ?? "ticket.jpg");
+            var normalizedUploadContentType = NormalizeOptionalText(file.ContentType) ?? "<empty>";
+            var normalizedUploadExtension = NormalizeOptionalText(extension) ?? "<empty>";
+
+            _logger.LogInformation(
+                "ApiExpenseSheetTicketFileUpload request received. FileId: {FileId}. FileName: {FileName}. SizeBytes: {SizeBytes}. ContentType: {ContentType}. Extension: {Extension}.",
+                safeFileId,
+                safeUploadFileName,
+                file.Length,
+                normalizedUploadContentType,
+                normalizedUploadExtension);
+
             try
             {
                 using var stream = file.OpenReadStream();
@@ -1778,11 +1854,18 @@ namespace IND_CRM_APP.Controllers
                     token,
                     safeFileId,
                     stream,
-                    file.FileName ?? "ticket.jpg",
+                    safeUploadFileName,
                     file.ContentType,
                     NormalizeOptionalText(extension),
                     HttpContext.RequestAborted);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                _logger.LogInformation(
+                    "ApiExpenseSheetTicketFileUpload completed. FileId: {FileId}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}.",
+                    safeFileId,
+                    response.Success,
+                    response.ErrorCode ?? "<null>",
+                    response.TraceId ?? "<null>");
 
                 return CreateApiResponse(
                     new
@@ -1797,7 +1880,13 @@ namespace IND_CRM_APP.Controllers
             }
             catch (ApiException ex)
             {
-                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketFileUpload");
+                _logger.LogError(
+                    ex,
+                    "Upstream API error in ApiExpenseSheetTicketFileUpload. FileId: {FileId}. FileName: {FileName}. ContentType: {ContentType}. Extension: {Extension}.",
+                    safeFileId,
+                    safeUploadFileName,
+                    normalizedUploadContentType,
+                    normalizedUploadExtension);
                 return CreateApiCommandError(
                     StatusCodes.Status502BadGateway,
                     _sr["Api_RequestFailed"].Value,
@@ -1805,7 +1894,13 @@ namespace IND_CRM_APP.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketFileUpload");
+                _logger.LogError(
+                    ex,
+                    "Unhandled error in ApiExpenseSheetTicketFileUpload. FileId: {FileId}. FileName: {FileName}. ContentType: {ContentType}. Extension: {Extension}.",
+                    safeFileId,
+                    safeUploadFileName,
+                    normalizedUploadContentType,
+                    normalizedUploadExtension);
                 return CreateApiCommandError(
                     StatusCodes.Status500InternalServerError,
                     _sr["Api_RequestFailed"].Value,
