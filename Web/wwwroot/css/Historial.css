@@ -455,6 +455,10 @@
     width: 18px;
     height: 18px;
 }
+.expense-ticket-card__status-icon--ai {
+    width: 28px;
+    height: 28px;
+}
 .expense-section-divider {
     display: flex;
     align-items: center;

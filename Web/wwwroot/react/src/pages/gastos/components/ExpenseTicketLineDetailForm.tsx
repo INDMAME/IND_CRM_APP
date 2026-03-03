@@ -59,11 +59,6 @@ const ExpenseTicketLineDetailForm = ({
             value={header.fileId || "-"}
           />
 
-          <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_LineId", "Line")}
-            value={line.recId || "-"}
-          />
-
           {isEditing ? (
             <div className="sm:col-span-2 space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Description", "Description")}</label>
@@ -143,16 +138,6 @@ const ExpenseTicketLineDetailForm = ({
           <ExpenseReadOnlyField
             label={indT("ExpenseSheets_Field_Amount", "Amount")}
             value={amountText || "-"}
-          />
-
-          <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_SheetId", "Sheet")}
-            value={line.refRecIdTable || "-"}
-          />
-
-          <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_UserId", "User")}
-            value={line.createdByUserId || "-"}
           />
         </div>
 

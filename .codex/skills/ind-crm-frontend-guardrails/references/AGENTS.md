@@ -241,6 +241,11 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Frontend standard: ASP.NET Core MVC + Razor views, with optional React components; Tailwind CSS only; Tailwind CSS for interactive components; Heroicons for icons; base font "Montserrat", sans-serif; primary color #00296b.
 - Treat jQuery, and jquery-validation as legacy; do not add new usage.
 - Critical anti regression rule: never change calendars/date filters/dropdowns without validating events, payload formats to IND_CRM_API, and Razor bindings; propose a safe alternative if risk exists.
+- Always run a full compile at the end of every task before responding to the user:
+  - npm run build:react
+  - npm run build:css
+  - npm run build
+  - dotnet build
 - After any change that must be deployed, publish to C:\inetpub\wwwroot\IND_CRM_APP and restart IIS using iisreset.
 
 ## Quick design prompt (visitas/historial)

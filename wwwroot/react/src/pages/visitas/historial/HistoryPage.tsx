@@ -746,6 +746,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
             totalPages={totalPages}
             currentPage={currentPage}
             pageWindow={PAGE_WINDOW}
+            loading={isLoading}
             onPageChange={(page) => loadActivities(page)}
             labels={paginationLabels}
           />

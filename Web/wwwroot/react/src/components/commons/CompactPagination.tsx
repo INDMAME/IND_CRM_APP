@@ -1,5 +1,6 @@
-import React, { forwardRef, useMemo } from "react";
+import React, { forwardRef, useEffect, useMemo, useState } from "react";
 import { classNames } from "../../utils/classNames.ts";
+import Spinner from "./Spinner.tsx";
 
 type PaginationLabels = {
   first?: string;
@@ -15,16 +16,20 @@ type CompactPaginationProps = {
   onPageChange: (page: number) => void;
   labels?: PaginationLabels;
   className?: string;
+  loading?: boolean;
 };
 
 const DEFAULT_WINDOW = 6;
 
 // Compact pagination with 6-page window and edge controls.
 const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
-  ({ totalPages, currentPage, pageWindow = DEFAULT_WINDOW, onPageChange, labels, className }, ref) => {
+  ({ totalPages, currentPage, pageWindow = DEFAULT_WINDOW, onPageChange, labels, className, loading }, ref) => {
     const safeTotal = Math.max(0, totalPages || 0);
     const safeCurrent = Math.min(Math.max(1, currentPage || 1), safeTotal || 1);
     const windowSize = Math.max(1, pageWindow || DEFAULT_WINDOW);
+    const hasLoadingSignal = typeof loading === "boolean";
+    const isLoading = loading === true;
+    const [isPageTransitionPending, setIsPageTransitionPending] = useState(false);
 
     const showPagination = safeTotal > 1;
     const showEdgeNav = safeTotal > windowSize;
@@ -39,107 +44,137 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
       return Array.from({ length: windowEnd - windowStart + 1 }, (_val, idx) => windowStart + idx);
     }, [safeCurrent, safeTotal, windowSize]);
 
+    useEffect(() => {
+      if (!hasLoadingSignal || !isPageTransitionPending) return;
+      if (isLoading) return;
+      setIsPageTransitionPending(false);
+    }, [hasLoadingSignal, isLoading, isPageTransitionPending]);
+
+    const requestPageChange = (page: number) => {
+      if (page < 1 || page > safeTotal) return;
+      if (page === safeCurrent) return;
+      if (hasLoadingSignal) {
+        setIsPageTransitionPending(true);
+      }
+      onPageChange(page);
+    };
+
+    const showPageSpinner = hasLoadingSignal && isPageTransitionPending;
+
     if (!showPagination) return null;
 
     return (
-      <div
-        id="pagination"
-        ref={ref}
-        className={classNames(
-          "pagination grid grid-cols-[1fr_auto_1fr] items-center gap-1",
-          className || ""
-        )}
-      >
-        <div className="flex items-center gap-1 justify-start">
-          {showEdgeNav && canJumpToStart && (
-            <button
-              type="button"
-              className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
-              aria-label={labels?.first}
-              onClick={(e) => {
-                e.preventDefault();
-                onPageChange(1);
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
-              </svg>
-            </button>
+      <>
+        {showPageSpinner ? (
+          <div className="fixed inset-0 z-600000 flex items-center justify-center bg-white/45 backdrop-blur-[1px] pointer-events-none">
+            <Spinner size="h-10 w-10" />
+          </div>
+        ) : null}
+        <div
+          id="pagination"
+          ref={ref}
+          className={classNames(
+            "pagination grid grid-cols-[1fr_auto_1fr] items-center gap-1",
+            className || ""
           )}
-          {showEdgeNav && canGoPrev && (
-            <button
-              type="button"
-              className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
-              aria-label={labels?.prev}
-              onClick={(e) => {
-                e.preventDefault();
-                onPageChange(safeCurrent - 1);
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-              </svg>
-            </button>
-          )}
-        </div>
-
-        <div className="flex items-center justify-center gap-1 min-w-0 flex-nowrap">
-          {pageNumbers.map((page) => {
-            const isActive = page === safeCurrent;
-            return (
+        >
+          <div className="flex items-center gap-1 justify-start">
+            {showEdgeNav && canJumpToStart && (
               <button
-                key={`page-${page}`}
                 type="button"
-                className={classNames(
-                  "min-w-[26px] px-2 py-0.5 rounded-md border text-[10px] font-semibold transition",
-                  isActive
-                    ? "bg-primary border-primary text-white shadow-sm"
-                    : "border-slate-300 text-slate-700 hover:border-primary hover:text-primary"
-                )}
+                className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
+                aria-label={labels?.first}
+                disabled={isLoading}
                 onClick={(e) => {
                   e.preventDefault();
-                  onPageChange(page);
+                  requestPageChange(1);
                 }}
               >
-                {page}
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m18.75 4.5-7.5 7.5 7.5 7.5m-6-15L5.25 12l7.5 7.5" />
+                </svg>
               </button>
-            );
-          })}
-        </div>
+            )}
+            {showEdgeNav && canGoPrev && (
+              <button
+                type="button"
+                className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
+                aria-label={labels?.prev}
+                disabled={isLoading}
+                onClick={(e) => {
+                  e.preventDefault();
+                  requestPageChange(safeCurrent - 1);
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+                </svg>
+              </button>
+            )}
+          </div>
 
-        <div className="flex items-center gap-1 justify-end">
-          {showEdgeNav && canGoNext && (
-            <button
-              type="button"
-              className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
-              aria-label={labels?.next}
-              onClick={(e) => {
-                e.preventDefault();
-                onPageChange(safeCurrent + 1);
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-              </svg>
-            </button>
-          )}
-          {showEdgeNav && canGoNext && (
-            <button
-              type="button"
-              className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
-              aria-label={labels?.last}
-              onClick={(e) => {
-                e.preventDefault();
-                onPageChange(safeTotal);
-              }}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
-              </svg>
-            </button>
-          )}
+          <div className="flex items-center justify-center gap-1 min-w-0 flex-nowrap">
+            {pageNumbers.map((page) => {
+              const isActive = page === safeCurrent;
+              return (
+                <button
+                  key={`page-${page}`}
+                  type="button"
+                  disabled={isLoading}
+                  className={classNames(
+                    "min-w-[26px] px-2 py-0.5 rounded-md border text-[10px] font-semibold transition",
+                    isActive
+                      ? "bg-primary border-primary text-white shadow-sm"
+                      : "border-slate-300 text-slate-700 hover:border-primary hover:text-primary",
+                    isLoading ? "opacity-60 cursor-not-allowed" : ""
+                  )}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    requestPageChange(page);
+                  }}
+                >
+                  {page}
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="flex items-center gap-1 justify-end">
+            {showEdgeNav && canGoNext && (
+              <button
+                type="button"
+                className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
+                aria-label={labels?.next}
+                disabled={isLoading}
+                onClick={(e) => {
+                  e.preventDefault();
+                  requestPageChange(safeCurrent + 1);
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            )}
+            {showEdgeNav && canGoNext && (
+              <button
+                type="button"
+                className="w-7 h-7 p-0 border-0 bg-transparent text-slate-500 hover:text-primary transition"
+                aria-label={labels?.last}
+                disabled={isLoading}
+                onClick={(e) => {
+                  e.preventDefault();
+                  requestPageChange(safeTotal);
+                }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-5 h-5 mx-auto">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="m5.25 4.5 7.5 7.5-7.5 7.5m6-15 7.5 7.5-7.5 7.5" />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
-      </div>
+      </>
     );
   }
 );

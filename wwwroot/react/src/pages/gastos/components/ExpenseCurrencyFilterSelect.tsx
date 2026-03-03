@@ -17,6 +17,8 @@ type ExpenseCurrencyFilterSelectProps = {
   showLabel?: boolean;
   idBase?: string;
   preferDefaultCurrencyFromContext?: boolean;
+  dropdownExpandPx?: number;
+  dropdownMinWidthPx?: number;
 };
 
 const normalizeCurrencyCode = (value: string | number | null | undefined): string => {
@@ -109,6 +111,8 @@ const ExpenseCurrencyFilterSelect = ({
   showLabel = true,
   idBase = "expense-currency",
   preferDefaultCurrencyFromContext = false,
+  dropdownExpandPx = 0,
+  dropdownMinWidthPx = 320,
 }: ExpenseCurrencyFilterSelectProps) => {
   const locale = useMemo(() => readPreferredLocale(), []);
   const [options, setOptions] = useState<ExpenseSelectOption[]>([]);
@@ -222,6 +226,8 @@ const ExpenseCurrencyFilterSelect = ({
         showLabel={showLabel}
         usePortal={false}
         selectedTextMode="value"
+        dropdownExpandPx={dropdownExpandPx}
+        dropdownMinWidthPx={dropdownMinWidthPx}
         dropdownMaxHeightClass="max-h-96"
         selectedIconClassName={CURRENCY_FLAG_SIZE_CLASS}
         selectedInputPaddingClassName="pl-12"

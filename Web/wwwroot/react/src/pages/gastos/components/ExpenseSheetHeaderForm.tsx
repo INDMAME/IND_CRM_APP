@@ -269,7 +269,7 @@ const ExpenseSheetHeaderForm = ({
                       readOnly={!isEditing || isCurrencyLockedByLines}
                       showLabel={false}
                       idBase="expense-header-currency"
-                      preferDefaultCurrencyFromContext={isCreateMode}
+                      preferDefaultCurrencyFromContext
                     />
                   </div>
                   <div className="relative space-y-1.5">
@@ -313,7 +313,7 @@ const ExpenseSheetHeaderForm = ({
                   disabled={!isEditing || isCurrencyLockedByLines}
                   readOnly={!isEditing || isCurrencyLockedByLines}
                   idBase="expense-header-currency"
-                  preferDefaultCurrencyFromContext={isCreateMode}
+                  preferDefaultCurrencyFromContext
                 />
               )}
             </div>

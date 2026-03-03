@@ -154,6 +154,9 @@ export const useExpenseTicketLineDetailState = ({
     if (isLoading || !header || !line) {
       return;
     }
+    if (header.status === 1) {
+      return;
+    }
 
     if (!canEditTicket) {
       onForbidden();

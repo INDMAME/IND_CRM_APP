@@ -41,6 +41,7 @@ type SelectComboboxProps = {
   showLabel?: boolean;
   selectedTextMode?: "text" | "value";
   dropdownExpandPx?: number;
+  dropdownMinWidthPx?: number;
   dropdownMaxHeightClass?: string;
   selectedIconClassName?: string;
   optionIconClassName?: string;
@@ -77,6 +78,7 @@ const SelectCombobox = ({
   showLabel = true,
   selectedTextMode = "text",
   dropdownExpandPx = 0,
+  dropdownMinWidthPx = 0,
   dropdownMaxHeightClass = "max-h-72",
   selectedIconClassName = "h-4 w-4",
   optionIconClassName = "h-4 w-4",
@@ -197,6 +199,7 @@ const SelectCombobox = ({
   const displayValue = query !== null ? query : (selectedValue ? selectedDisplayText : "");
   const showSelectedIcon = query === null && !!selectedValue && !!selected?.icon;
   const normalizedDropdownExpandPx = Number.isFinite(dropdownExpandPx) ? Math.max(0, dropdownExpandPx) : 0;
+  const normalizedDropdownMinWidthPx = Number.isFinite(dropdownMinWidthPx) ? Math.max(0, dropdownMinWidthPx) : 0;
 
   useEffect(() => {
     if (!lockDropdownWidthOnFirstOpen) return;
@@ -209,15 +212,27 @@ const SelectCombobox = ({
   }, [listOpen, lockDropdownWidthOnFirstOpen]);
 
   const fixedDropdownBaseWidth = lockDropdownWidthOnFirstOpen ? initialDropdownWidthRef.current : null;
-  const resolvedDropdownWidthPx =
+  const fixedDropdownExpandedWidth =
     fixedDropdownBaseWidth !== null && Number.isFinite(fixedDropdownBaseWidth)
       ? fixedDropdownBaseWidth + normalizedDropdownExpandPx
       : null;
+  const resolvedDropdownWidthPx =
+    fixedDropdownExpandedWidth !== null
+      ? Math.max(fixedDropdownExpandedWidth, normalizedDropdownMinWidthPx || 0)
+      : null;
   const inlineDropdownStyle: React.CSSProperties | undefined =
     resolvedDropdownWidthPx !== null && resolvedDropdownWidthPx > 0
-      ? { width: `${resolvedDropdownWidthPx}px` }
+      ? {
+          width: `${resolvedDropdownWidthPx}px`,
+          ...(normalizedDropdownMinWidthPx > 0 ? { minWidth: `${normalizedDropdownMinWidthPx}px` } : {}),
+        }
       : normalizedDropdownExpandPx > 0
-        ? { width: `calc(100% + ${normalizedDropdownExpandPx}px)` }
+        ? {
+            width: `calc(100% + ${normalizedDropdownExpandPx}px)`,
+            ...(normalizedDropdownMinWidthPx > 0 ? { minWidth: `${normalizedDropdownMinWidthPx}px` } : {}),
+          }
+        : normalizedDropdownMinWidthPx > 0
+          ? { minWidth: `${normalizedDropdownMinWidthPx}px` }
         : undefined;
 
   const listBody = (

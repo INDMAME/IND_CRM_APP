@@ -15,6 +15,7 @@ type ExpenseTimelineCardProps = {
   subtitleClassName?: string;
   statusIcon?: React.ReactNode;
   statusIconClassName?: string;
+  datePanelContent?: React.ReactNode;
 };
 
 // Reusable clickable timeline card for expense sheets and expense lines.
@@ -31,6 +32,7 @@ const ExpenseTimelineCard = ({
   subtitleClassName = "expense-sheet-card__subtitle",
   statusIcon,
   statusIconClassName = "expense-sheet-card__status-icon",
+  datePanelContent,
 }: ExpenseTimelineCardProps) => {
   const safeTitle = normalizeCardTitleText(title, "-");
   const safeAmount = amountText || "-";
@@ -50,9 +52,15 @@ const ExpenseTimelineCard = ({
       }}
     >
       <div className="timeline-date-panel flex flex-col items-center justify-center gap-1 px-3 py-3 bg-slate-50 border-r border-slate-200 text-slate-600">
-        <div className="text-xs font-semibold tracking-[0.2em] text-slate-500">{dateParts.year}</div>
-        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{dateParts.month}</div>
-        <div className="text-2xl font-semibold text-primary">{dateParts.day}</div>
+        {datePanelContent ? (
+          datePanelContent
+        ) : (
+          <>
+            <div className="text-xs font-semibold tracking-[0.2em] text-slate-500">{dateParts.year}</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{dateParts.month}</div>
+            <div className="text-2xl font-semibold text-primary">{dateParts.day}</div>
+          </>
+        )}
       </div>
       <div className="timeline-card__content flex-1 py-3 px-4">
         {statusClassName ? <span className={statusClassName} title={statusLabel} aria-label={statusLabel} /> : null}

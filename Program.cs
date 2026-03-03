@@ -154,6 +154,7 @@ builder.Services.Configure<RequestLocalizationOptions>(options =>
 });
 builder.Services.AddHttpClient<ICrmApiClient, ApiClientService>();
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddSingleton<ITicketBlobPreviewService, TicketBlobPreviewService>();
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
@@ -445,6 +446,13 @@ app.MapControllerRoute(
     name: "api-expense-sheet-tickets-list",
     pattern: "api/crm/expensesheets/tickets/list",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketsList" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-preview",
+    pattern: "api/crm/expensesheets/tickets/preview",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketPreview" },
     constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
 );
 

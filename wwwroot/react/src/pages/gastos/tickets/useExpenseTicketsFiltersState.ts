@@ -6,6 +6,7 @@ import type {
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
 import type { ExpenseTicketStatusFilterCode } from "../constants/expenseTicketStatusCatalog.ts";
 import { startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { normalizeExpenseTicketFilterSnapshot } from "./expenseTicketFilterSnapshot.ts";
 
 type UseExpenseTicketsFiltersStateArgs = {
   onApplyFilters: (snapshot: ExpenseTicketAppliedFilterSnapshot) => void;
@@ -65,6 +66,23 @@ export const useExpenseTicketsFiltersState = ({ onApplyFilters, onClearFilters }
     setShowFilters(false);
     onApplyFilters(snapshot);
   }, [currencyCode, filterKey, fromDate, gastoTypeFilter, onApplyFilters, processedByIaFilter, statusFilter, toDate]);
+
+  // Rehydrates ticket filters from a cached snapshot when returning from detail.
+  const restoreAppliedFilters = useCallback((snapshot: ExpenseTicketAppliedFilterSnapshot) => {
+    const normalized = normalizeExpenseTicketFilterSnapshot(snapshot);
+    setFromDate(normalized.fromDate);
+    setToDate(normalized.toDate);
+    setFilterKey(normalized.filterKey);
+    setCurrencyCode(normalized.currencyCode);
+    setStatusFilter(normalized.statusFilter);
+    setGastoTypeFilter(normalized.gastoTypeFilter);
+    setProcessedByIaFilter(normalized.processedByIaFilter);
+    setActiveQuickFilter(null);
+    setShowManualDateFilter(false);
+    setShowManualDateError(false);
+    setAppliedFilters(normalized);
+    setShowFilters(false);
+  }, []);
 
   const onClear = useCallback(() => {
     setFromDate("");
@@ -175,6 +193,7 @@ export const useExpenseTicketsFiltersState = ({ onApplyFilters, onClearFilters }
     setProcessedByIaFilter,
     onApply,
     onClear,
+    restoreAppliedFilters,
     onDateRangeChange,
     onManualRangeComplete,
     onQuickFilterChange,

@@ -74,6 +74,7 @@ const ExpenseTicketLineDetailContent = () => {
     () => formatAmountWithCurrency(line?.price ?? null, safeText(header?.currencyCode)),
     [header?.currencyCode, line?.price]
   );
+  const isAssignedTicket = header?.status === 1;
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -127,6 +128,7 @@ const ExpenseTicketLineDetailContent = () => {
     busy,
     modalOpen: modal.open,
     isEditing,
+    isLocked: isAssignedTicket,
     canEditTicket,
     canDeleteTicket,
     fileId,

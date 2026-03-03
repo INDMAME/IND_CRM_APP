@@ -15,6 +15,7 @@ import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expense
 import { formatExpenseDateParts, formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import { useExpenseTicketsFiltersState } from "./useExpenseTicketsFiltersState.ts";
 import { useExpenseTicketsListData } from "./useExpenseTicketsListData.ts";
+import { useExpenseTicketsFilterCache } from "./useExpenseTicketsFilterCache.ts";
 
 const PAGE_SIZE = 10;
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
@@ -53,6 +54,9 @@ const buildFallbackGastoTypeOptions = (): ExpenseSelectOption[] => {
 const ExpenseTicketsPageContent = () => {
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const didRestoreOnMountRef = React.useRef(false);
+  const pendingScrollRestoreRef = React.useRef<number | null>(null);
+  const pendingFocusFileIdRef = React.useRef("");
 
   const paginationLabels = useMemo(
     () => ({
@@ -91,6 +95,7 @@ const ExpenseTicketsPageContent = () => {
     pageSize: PAGE_SIZE,
     onForbidden: showPermissionModal,
   });
+  const { readCachedState, consumeReturnFlag, saveCachedState, clearCachedState } = useExpenseTicketsFilterCache();
 
   const {
     fromDate,
@@ -106,6 +111,7 @@ const ExpenseTicketsPageContent = () => {
     manualDateAutoOpenKey,
     appliedFilters,
     showFilters,
+    currentFilters,
     setFilterKey,
     setCurrencyCode,
     setStatusFilter,
@@ -113,6 +119,7 @@ const ExpenseTicketsPageContent = () => {
     setProcessedByIaFilter,
     onApply,
     onClear,
+    restoreAppliedFilters,
     onDateRangeChange,
     onManualRangeComplete,
     onQuickFilterChange,
@@ -122,18 +129,31 @@ const ExpenseTicketsPageContent = () => {
       void loadList(1, snapshot);
     },
     onClearFilters: () => {
+      clearCachedState();
       resetList();
     },
   });
 
-  const openTicketDetail = useCallback((rawFileId: string) => {
-    const fileId = safeText(rawFileId);
-    if (!fileId) return;
-    navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(fileId)}`, {
-      askConfirmation: true,
-      bypassGuardOnce: false,
-    });
-  }, []);
+  const openTicketDetail = useCallback(
+    (rawFileId: string) => {
+      const fileId = safeText(rawFileId);
+      if (!fileId) return;
+
+      const snapshot = appliedFilters || currentFilters;
+      saveCachedState({
+        filters: snapshot,
+        page: currentPage < 1 ? 1 : currentPage,
+        scrollY: typeof window !== "undefined" ? window.scrollY || 0 : 0,
+        focusFileId: fileId,
+      });
+
+      navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(fileId)}`, {
+        askConfirmation: true,
+        bypassGuardOnce: false,
+      });
+    },
+    [appliedFilters, currentPage, currentFilters, saveCachedState]
+  );
 
   const resolveClickableCard = useCallback((target: EventTarget | null) => {
     const node = target as HTMLElement | null;
@@ -226,8 +246,63 @@ const ExpenseTicketsPageContent = () => {
   const showSummary = !showFilters && summaryItems.length > 0;
 
   useEffect(() => {
+    if (didRestoreOnMountRef.current) return;
+    didRestoreOnMountRef.current = true;
+
+    if (!consumeReturnFlag()) return;
+
+    const cachedState = readCachedState();
+    if (!cachedState) {
+      clearCachedState();
+      return;
+    }
+
+    restoreAppliedFilters(cachedState.filters);
+    pendingScrollRestoreRef.current = cachedState.scrollY;
+    pendingFocusFileIdRef.current = cachedState.focusFileId;
+    void loadList(cachedState.page, cachedState.filters);
+  }, [clearCachedState, consumeReturnFlag, loadList, readCachedState, restoreAppliedFilters]);
+
+  useEffect(() => {
+    if (isLoading) return;
+    if (pendingScrollRestoreRef.current == null && !pendingFocusFileIdRef.current) return;
+
+    const pendingScrollY = pendingScrollRestoreRef.current;
+    const pendingFocusFileId = pendingFocusFileIdRef.current;
+    pendingScrollRestoreRef.current = null;
+    pendingFocusFileIdRef.current = "";
+
+    window.requestAnimationFrame(() => {
+      if (pendingScrollY != null) {
+        window.scrollTo({
+          top: Math.max(0, pendingScrollY),
+          behavior: "auto",
+        });
+      }
+
+      if (!pendingFocusFileId || !timelineContainerRef.current) return;
+
+      const normalizedFocusId = pendingFocusFileId.toUpperCase();
+      const timelineItems = Array.from(
+        timelineContainerRef.current.querySelectorAll<HTMLElement>(".timeline-item[data-ticket-file-id]")
+      );
+      const matchingItem = timelineItems.find((item) => {
+        return safeText(item.dataset.ticketFileId).toUpperCase() === normalizedFocusId;
+      });
+      const targetCard = matchingItem?.querySelector<HTMLElement>(".timeline-card--clickable");
+      if (!targetCard) return;
+
+      targetCard.focus({ preventScroll: true });
+    });
+  }, [isLoading, items.length]);
+
+  useEffect(() => {
     const onToggleFilters = () => {
+      const willOpen = !showFilters;
       toggleFilterPanel();
+      if (willOpen) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     };
 
     const onRefresh = () => {
@@ -245,7 +320,7 @@ const ExpenseTicketsPageContent = () => {
       window.removeEventListener("expense-tickets-toggle-filter", onToggleFilters);
       window.removeEventListener("expense-tickets-refresh", onRefresh);
     };
-  }, [appliedFilters, currentPage, loadList, toggleFilterPanel]);
+  }, [appliedFilters, currentPage, loadList, showFilters, toggleFilterPanel]);
 
   return (
     <div className="space-y-2">
@@ -334,7 +409,7 @@ const ExpenseTicketsPageContent = () => {
             const statusIcons = isAssignedToExpenseSheet || showProcessedByAiIcon ? (
               <>
                 {showProcessedByAiIcon ? (
-                  <span className="expense-ticket-card__status-icon" title={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}>
+                  <span className="expense-ticket-card__status-icon expense-ticket-card__status-icon--ai" title={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       width="24"
@@ -345,7 +420,7 @@ const ExpenseTicketsPageContent = () => {
                       strokeWidth="1.75"
                       strokeLinecap="round"
                       strokeLinejoin="round"
-                      className="h-5 w-5"
+                      className="h-7 w-7"
                     >
                       <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                       <path d="M8 16v-6a2 2 0 1 1 4 0v6" />
@@ -369,7 +444,7 @@ const ExpenseTicketsPageContent = () => {
             ) : null;
 
             return (
-              <div key={`${fileId}-${index}`} className="timeline-item">
+              <div key={`${fileId}-${index}`} className="timeline-item" data-ticket-file-id={fileId || undefined}>
                 <ExpenseTimelineCard
                   dateParts={dateParts}
                   title={title}
@@ -390,6 +465,7 @@ const ExpenseTicketsPageContent = () => {
       <CompactPagination
         totalPages={totalPages}
         currentPage={currentPage}
+        loading={isLoading}
         onPageChange={(page) => {
           if (!appliedFilters?.fromDate || !appliedFilters?.toDate) {
             return;

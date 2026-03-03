@@ -2,7 +2,7 @@ import React, { useCallback } from "react";
 import { indT } from "../../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../../utils/permissions.ts";
 import type { ExpenseSheetTicketUpdateRequest } from "../../expenseTypes.ts";
-import { executeExpenseMutation, parseDecimalInput } from "../../hooks/expenseMutationUtils.ts";
+import { executeExpenseMutation } from "../../hooks/expenseMutationUtils.ts";
 import { deleteExpenseSheetTicket, updateExpenseSheetTicket } from "../../utils/expenseApi.ts";
 
 type UseExpenseTicketDetailMutationsArgs = {
@@ -12,11 +12,8 @@ type UseExpenseTicketDetailMutationsArgs = {
   canDeleteTicket: boolean;
   fileId: string;
   draftDescription: string;
-  draftStatus: string;
   draftGastoType: string;
-  draftProcessedByAI: string;
   draftCurrencyCode: string;
-  draftTotalAmount: string;
   draftTransDate: string;
   draftComentario: string;
   draftUrlFile: string;
@@ -32,14 +29,6 @@ const parseOptionalInteger = (raw: string): number | undefined => {
   if (!value) return undefined;
   const parsed = Number.parseInt(value, 10);
   return Number.isInteger(parsed) ? parsed : undefined;
-};
-
-const parseOptionalBoolean = (raw: string): boolean | undefined => {
-  const value = String(raw || "").trim().toLowerCase();
-  if (!value) return undefined;
-  if (value === "true") return true;
-  if (value === "false") return false;
-  return undefined;
 };
 
 // Tries to infer a safe extension for update payload from file name or URL.
@@ -58,11 +47,8 @@ export const useExpenseTicketDetailMutations = ({
   canDeleteTicket,
   fileId,
   draftDescription,
-  draftStatus,
   draftGastoType,
-  draftProcessedByAI,
   draftCurrencyCode,
-  draftTotalAmount,
   draftTransDate,
   draftComentario,
   draftUrlFile,
@@ -95,22 +81,6 @@ export const useExpenseTicketDetailMutations = ({
       return false;
     }
 
-    const parsedTotalAmount = parseDecimalInput(draftTotalAmount);
-    if (parsedTotalAmount === null || parsedTotalAmount < 0) {
-      const message = indT("ExpenseSheets_Line_Validation_AmountQty", "Quantity and price must be greater than 0.");
-      setModalError(message);
-      setStatus(message);
-      return false;
-    }
-
-    const parsedStatus = parseOptionalInteger(draftStatus);
-    if (parsedStatus !== undefined && parsedStatus !== 0 && parsedStatus !== 1) {
-      const message = indT("Api_RequestFailed", "Request failed.");
-      setModalError(message);
-      setStatus(message);
-      return false;
-    }
-
     const parsedGastoType = parseOptionalInteger(draftGastoType);
     if (parsedGastoType !== undefined && ![0, 1, 2, 3, 4, 5, 6, 7, 8, 14].includes(parsedGastoType)) {
       const message = indT("Api_RequestFailed", "Request failed.");
@@ -122,13 +92,10 @@ export const useExpenseTicketDetailMutations = ({
     const payload: ExpenseSheetTicketUpdateRequest = {
       description: normalizedDescription,
       currencyCode: normalizedCurrency,
-      totalAmount: Number(parsedTotalAmount),
-      status: parsedStatus,
       transDate: String(draftTransDate || "").trim() || undefined,
       comentario: String(draftComentario || "").trim() || undefined,
       urlFile: String(draftUrlFile || "").trim() || undefined,
       fileName: String(draftFileName || "").trim() || undefined,
-      processedByAI: parseOptionalBoolean(draftProcessedByAI),
       fileExtension: resolveTicketFileExtension(draftFileName, draftUrlFile),
       gastoType: parsedGastoType as ExpenseSheetTicketUpdateRequest["gastoType"],
     };
@@ -160,9 +127,6 @@ export const useExpenseTicketDetailMutations = ({
     draftDescription,
     draftFileName,
     draftGastoType,
-    draftProcessedByAI,
-    draftStatus,
-    draftTotalAmount,
     draftTransDate,
     draftUrlFile,
     fileId,

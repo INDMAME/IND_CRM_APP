@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import { fetchExpenseSheetTicket } from "../../utils/expenseApi.ts";
@@ -19,74 +19,75 @@ export const useExpenseTicketDetailState = ({ hasAccess, fileId, onForbidden }: 
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
-  useEffect(() => {
-    const loadDetail = async () => {
-      if (!hasAccess) {
-        onForbidden();
+  const reloadDetail = useCallback(async () => {
+    if (!hasAccess) {
+      onForbidden();
+      return;
+    }
+
+    const safeFileId = safeText(fileId);
+    if (!safeFileId) {
+      setErrorMessage(indT("Tickets_Detail_NotFound", "Ticket was not found."));
+      setHeader(null);
+      setLines([]);
+      return;
+    }
+
+    setIsLoading(true);
+    setErrorMessage("");
+
+    try {
+      const response = await fetchExpenseSheetTicket(safeFileId, {
+        suppressPermissionModal: true,
+      });
+
+      if (response?.Success === false) {
+        setErrorMessage(response?.Message || indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
+        setHeader(null);
+        setLines([]);
         return;
       }
 
-      const safeFileId = safeText(fileId);
-      if (!safeFileId) {
+      const items = Array.isArray(response?.Items) ? response.Items : [];
+      const selected =
+        items.find((entry) => safeText(entry?.FileId).toUpperCase() === safeFileId.toUpperCase()) || items[0] || null;
+
+      if (!selected) {
         setErrorMessage(indT("Tickets_Detail_NotFound", "Ticket was not found."));
         setHeader(null);
         setLines([]);
         return;
       }
 
-      setIsLoading(true);
-      setErrorMessage("");
-
-      try {
-        const response = await fetchExpenseSheetTicket(safeFileId, {
-          suppressPermissionModal: true,
-        });
-
-        if (response?.Success === false) {
-          setErrorMessage(response?.Message || indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
-          setHeader(null);
-          setLines([]);
-          return;
-        }
-
-        const items = Array.isArray(response?.Items) ? response.Items : [];
-        const selected =
-          items.find((entry) => safeText(entry?.FileId).toUpperCase() === safeFileId.toUpperCase()) || items[0] || null;
-
-        if (!selected) {
-          setErrorMessage(indT("Tickets_Detail_NotFound", "Ticket was not found."));
-          setHeader(null);
-          setLines([]);
-          return;
-        }
-
-        const mappedHeader = mapExpenseTicketDetailHeader(selected);
-        const mappedLines = (Array.isArray(selected.Lines) ? selected.Lines : []).map((line) =>
-          mapExpenseTicketDetailLine(line)
-        );
-        setHeader(mappedHeader);
-        setLines(mappedLines);
-      } catch (error) {
-        if (error instanceof ApiFetchError && error.status === 403) {
-          onForbidden();
-          return;
-        }
-
-        setErrorMessage(error instanceof Error ? error.message : indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
-        setHeader(null);
-        setLines([]);
-      } finally {
-        setIsLoading(false);
+      const mappedHeader = mapExpenseTicketDetailHeader(selected);
+      const mappedLines = (Array.isArray(selected.Lines) ? selected.Lines : []).map((line) =>
+        mapExpenseTicketDetailLine(line)
+      );
+      setHeader(mappedHeader);
+      setLines(mappedLines);
+    } catch (error) {
+      if (error instanceof ApiFetchError && error.status === 403) {
+        onForbidden();
+        return;
       }
-    };
 
-    void loadDetail();
+      setErrorMessage(error instanceof Error ? error.message : indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
+      setHeader(null);
+      setLines([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [fileId, hasAccess, onForbidden]);
+
+  useEffect(() => {
+    void reloadDetail();
+  }, [reloadDetail]);
 
   return {
     header,
     lines,
     isLoading,
     errorMessage,
+    reloadDetail,
   };
 };

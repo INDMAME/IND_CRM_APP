@@ -24,6 +24,8 @@
     <PackageReference Include="Serilog.Extensions.Logging.File" Version="9.0.0-dev-02303" />
     <!-- Required for Microsoft Entra OIDC authentication. -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.OpenIdConnect" Version="10.0.0" />
+    <!-- Official Azure SDK for safe Blob download streaming in ticket preview endpoint. -->
+    <PackageReference Include="Azure.Storage.Blobs" Version="12.25.1" />
   </ItemGroup>
 
   <ItemGroup>

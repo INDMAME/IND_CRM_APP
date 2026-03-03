@@ -115,6 +115,8 @@ export const useHistoryPageListeners = ({
         const next = !prev;
         if (!next) {
           setIsOpen(false);
+        } else {
+          window.scrollTo({ top: 0, behavior: "smooth" });
         }
         return next;
       });

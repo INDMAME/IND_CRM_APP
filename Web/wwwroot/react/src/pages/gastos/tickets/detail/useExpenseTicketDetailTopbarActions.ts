@@ -6,6 +6,7 @@ type UseExpenseTicketDetailTopbarActionsArgs = {
   busy: boolean;
   modalOpen: boolean;
   isEditing: boolean;
+  isLocked: boolean;
   canEditTicket: boolean;
   canDeleteTicket: boolean;
   fileId: string;
@@ -29,6 +30,7 @@ export const useExpenseTicketDetailTopbarActions = ({
   busy,
   modalOpen,
   isEditing,
+  isLocked,
   canEditTicket,
   canDeleteTicket,
   fileId,
@@ -57,7 +59,7 @@ export const useExpenseTicketDetailTopbarActions = ({
     modalOpen,
     isEditing,
     isCreateMode: false,
-    isLocked: false,
+    isLocked,
     canCreate: false,
     canEdit: canEditTicket,
     canDelete: canDeleteTicket,

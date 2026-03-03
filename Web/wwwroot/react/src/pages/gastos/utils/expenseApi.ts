@@ -1,4 +1,4 @@
-import { ApiFetchError, fetchJson, type ApiFetchOptions } from "../../../services/apiService.ts";
+import { ApiFetchError, fetchJson, getCsrfToken, type ApiFetchOptions } from "../../../services/apiService.ts";
 import type {
   EntraContextDto,
   EntraContextRequest,
@@ -108,6 +108,24 @@ const pendingCurrencyRequests = new Map<string, Promise<IndPagedResponse<Expense
 const safeText = (value: unknown): string => {
   if (value === null || value === undefined) return "";
   return String(value).trim();
+};
+
+const tryParseJsonRecord = (raw: string): Record<string, unknown> | null => {
+  if (!raw || !raw.trim()) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
+  } catch {
+    return null;
+  }
+};
+
+const readApiMessage = (raw: string): string => {
+  const payload = tryParseJsonRecord(raw);
+  if (!payload) return "";
+
+  const value = payload.Message ?? payload.message;
+  return typeof value === "string" ? value.trim() : "";
 };
 
 const toNullableNumber = (value: unknown): number | null => {
@@ -1347,6 +1365,50 @@ export const fetchExpenseSheetTicket = async (
   );
 
   return normalizeTicketDetailPagedResponse(response);
+};
+
+// Downloads one ticket image preview blob through the internal proxy endpoint.
+export const fetchExpenseSheetTicketPreviewBlob = async (
+  urlFile: string,
+  options?: ApiFetchOptions
+): Promise<Blob> => {
+  const safeUrlFile = safeText(urlFile);
+  if (!safeUrlFile) {
+    throw new ApiFetchError("Missing ticket urlFile.");
+  }
+
+  const { suppressPermissionModal: _suppressPermissionModal, ...fetchOptions } = options || {};
+  const csrfToken = getCsrfToken();
+  const headers: HeadersInit = {
+    Accept: "image/*",
+    "Content-Type": "application/json",
+    ...(fetchOptions.headers || {}),
+  };
+
+  if (csrfToken) {
+    (headers as Record<string, string>)["RequestVerificationToken"] = csrfToken;
+  }
+
+  const response = await fetch("/api/crm/expensesheets/tickets/preview", {
+    credentials: "same-origin",
+    ...fetchOptions,
+    method: "POST",
+    headers,
+    body: JSON.stringify({ urlFile: safeUrlFile }),
+  });
+
+  if (!response.ok) {
+    const raw = await response.text();
+    const message = readApiMessage(raw);
+    throw new ApiFetchError(message || "Could not load ticket preview.", response.status, raw);
+  }
+
+  const blob = await response.blob();
+  if (!blob || blob.size === 0) {
+    throw new ApiFetchError("Could not load ticket preview.");
+  }
+
+  return blob;
 };
 
 // Updates ticket header metadata using /api/crm/expensesheets/tickets/{fileId}.

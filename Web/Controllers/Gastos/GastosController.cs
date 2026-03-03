@@ -20,6 +20,7 @@ namespace IND_CRM_APP.Controllers
     {
         private readonly ILogger<GastosController> _logger;
         private readonly ICrmEnumCatalog _crmEnumCatalog;
+        private readonly ITicketBlobPreviewService _ticketBlobPreviewService;
         private readonly IStringLocalizer<INDSharedResource> _sr;
         private static readonly HashSet<int> AllowedTicketGastoTypes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
 
@@ -28,10 +29,12 @@ namespace IND_CRM_APP.Controllers
             ITokenSessionService tokenSession,
             ILogger<GastosController> logger,
             ICrmEnumCatalog crmEnumCatalog,
+            ITicketBlobPreviewService ticketBlobPreviewService,
             IStringLocalizer<INDSharedResource> sr) : base(apiClient, tokenSession)
         {
             _logger = logger;
             _crmEnumCatalog = crmEnumCatalog;
+            _ticketBlobPreviewService = ticketBlobPreviewService;
             _sr = sr;
         }
 
@@ -1316,6 +1319,49 @@ namespace IND_CRM_APP.Controllers
             {
                 _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketDetail");
                 return CreateApiPagedError(StatusCodes.Status500InternalServerError, _sr["Api_RequestFailed"].Value);
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/preview.
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ApiExpenseSheetTicketPreview([FromBody] ExpenseSheetTicketPreviewRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeUrl = NormalizeOptionalText(req?.UrlFile);
+            if (string.IsNullOrWhiteSpace(safeUrl))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            try
+            {
+                var preview = await _ticketBlobPreviewService.DownloadAsync(safeUrl, HttpContext.RequestAborted);
+                if (preview == null)
+                    return CreateApiCommandError(
+                        StatusCodes.Status404NotFound,
+                        _sr["Api_RequestFailed"].Value,
+                        "NOT_FOUND");
+
+                Response.Headers.CacheControl = "no-store";
+                Response.Headers.Pragma = "no-cache";
+                Response.Headers["X-Content-Type-Options"] = "nosniff";
+                return File(preview.Content, preview.ContentType);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketPreview");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
             }
         }
 

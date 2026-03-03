@@ -169,6 +169,13 @@ namespace IND_CRM_APP.Models.CRM
         public int? GastoType { get; set; }
     }
 
+    // Request payload for ticket file preview loading.
+    public class ExpenseSheetTicketPreviewRequest
+    {
+        [JsonPropertyName("urlFile")]
+        public string? UrlFile { get; set; }
+    }
+
     // Ticket item returned by list endpoint.
     public class ExpenseSheetTicketListItemDto
     {

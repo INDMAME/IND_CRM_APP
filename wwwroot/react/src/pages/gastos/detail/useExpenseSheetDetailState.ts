@@ -277,7 +277,8 @@ export const useExpenseSheetDetailState = ({
           "Exchange rate is required when currency is different from base currency."
         )
       : "";
-  const isCurrencyLockedByLines = isEditing && canEditHeaderFields && hasLines;
+  // Currency type can be edited whenever the sheet itself is editable (not approved/paid).
+  const isCurrencyLockedByLines = false;
   const isExchangeRateLockedByLines = isEditing && canEditHeaderFields && hasLines && showExchangeRate;
 
   useEffect(() => {

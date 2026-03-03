@@ -228,7 +228,11 @@ const ExpenseSheetsPageContent = () => {
 
   useEffect(() => {
     const onToggleFilters = () => {
+      const willOpen = !showFilters;
       toggleFilterPanel();
+      if (willOpen) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
     };
 
     const onRefresh = () => {
@@ -246,7 +250,7 @@ const ExpenseSheetsPageContent = () => {
       window.removeEventListener("expense-sheets-toggle-filter", onToggleFilters);
       window.removeEventListener("expense-sheets-refresh", onRefresh);
     };
-  }, [appliedFilters, currentPage, loadList, toggleFilterPanel]);
+  }, [appliedFilters, currentPage, loadList, showFilters, toggleFilterPanel]);
 
   return (
     <div className="space-y-2">
@@ -339,6 +343,7 @@ const ExpenseSheetsPageContent = () => {
       <CompactPagination
         totalPages={totalPages}
         currentPage={currentPage}
+        loading={isLoading}
         onPageChange={(page) => {
           const snapshot = appliedFilters || currentFilters;
           void loadList(page, snapshot);

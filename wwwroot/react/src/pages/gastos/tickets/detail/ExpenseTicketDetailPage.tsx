@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import VisitasPageProviders from "../../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../../components/commons/ConfirmModal.tsx";
 import { useTimelineCardEffects } from "../../../../hooks/useTimelineCardEffects.ts";
@@ -10,11 +11,10 @@ import ExpenseTicketDetailHeaderForm from "../../components/ExpenseTicketDetailH
 import ExpenseTicketLinesList from "../../components/ExpenseTicketLinesList.tsx";
 import { formatAmountWithCurrency } from "../../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../../constants/expenseTicketStatusCatalog.ts";
-import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
+import { configureExpenseApiAuth, fetchExpenseSheetTicketPreviewBlob } from "../../utils/expenseApi.ts";
 import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
 import { formatExpenseDisplayDate, safeText } from "../../utils/expenseUiUtils.ts";
-import { formatExpenseInputNumber, parseExpenseNumericInput } from "../../utils/expenseNumberFormat.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
 import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutations.ts";
 import { useExpenseTicketDetailTopbarActions } from "./useExpenseTicketDetailTopbarActions.ts";
@@ -74,15 +74,16 @@ const ExpenseTicketDetailPageContent = () => {
   const [linePage, setLinePage] = useState(1);
 
   const [draftDescription, setDraftDescription] = useState("");
-  const [draftStatus, setDraftStatus] = useState("");
   const [draftGastoType, setDraftGastoType] = useState("");
-  const [draftProcessedByAI, setDraftProcessedByAI] = useState("");
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
-  const [draftTotalAmount, setDraftTotalAmount] = useState("");
   const [draftTransDate, setDraftTransDate] = useState("");
   const [draftComentario, setDraftComentario] = useState("");
   const [draftUrlFile, setDraftUrlFile] = useState("");
   const [draftFileName, setDraftFileName] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewBusy, setPreviewBusy] = useState(false);
+  const [previewError, setPreviewError] = useState("");
+  const [previewImageUrl, setPreviewImageUrl] = useState("");
 
   const paginationLabels = useMemo(
     () => ({
@@ -116,28 +117,12 @@ const ExpenseTicketDetailPageContent = () => {
     return map;
   }, [gastoTypeOptions]);
 
-  const statusOptions = useMemo<ExpenseSelectOption[]>(
-    () => [
-      { value: "0", text: indT("Tickets_Filter_Status_Pending", "Pending") },
-      { value: "1", text: indT("Tickets_Filter_Status_Assigned", "Assigned") },
-    ],
-    []
-  );
-
-  const processedByAiOptions = useMemo<ExpenseSelectOption[]>(
-    () => [
-      { value: "true", text: indT("Tickets_Filter_ProcessedByIA_Yes", "Yes") },
-      { value: "false", text: indT("Tickets_Filter_ProcessedByIA_No", "No") },
-    ],
-    []
-  );
-
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
     defaultCancelText: indT("Confirm_No", "Cancel"),
   });
 
-  const { header, lines, isLoading, errorMessage } = useExpenseTicketDetailState({
+  const { header, lines, isLoading, errorMessage, reloadDetail } = useExpenseTicketDetailState({
     hasAccess,
     fileId,
     onForbidden: showPermissionModal,
@@ -147,18 +132,8 @@ const ExpenseTicketDetailPageContent = () => {
     if (isEditing || !header) return;
 
     setDraftDescription(safeText(header.description));
-    setDraftStatus(header.status === 1 ? "1" : header.status === 0 ? "0" : "");
     setDraftGastoType(header.gastoType === null ? "" : String(header.gastoType));
-    setDraftProcessedByAI(header.processedByAI === true ? "true" : header.processedByAI === false ? "false" : "");
     setDraftCurrencyCode(safeText(header.currencyCode).toUpperCase());
-    setDraftTotalAmount(
-      formatExpenseInputNumber(header.totalAmount, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: true,
-        fallback: "",
-      })
-    );
     setDraftTransDate(safeText(header.transDate));
     setDraftComentario(safeText(header.comentario));
     setDraftUrlFile(safeText(header.urlFile));
@@ -172,11 +147,20 @@ const ExpenseTicketDetailPageContent = () => {
     }
   }, [linePage, lines.length]);
 
+  useEffect(() => {
+    return () => {
+      if (previewImageUrl) {
+        URL.revokeObjectURL(previewImageUrl);
+      }
+    };
+  }, [previewImageUrl]);
+
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
 
   const handleEnableEdit = useCallback(() => {
     if (!header || isLoading) return;
+    if (header.status === 1) return;
     if (!canEditTicket) {
       showPermissionModal();
       return;
@@ -197,18 +181,8 @@ const ExpenseTicketDetailPageContent = () => {
     setIsEditing(false);
     setModalError("");
     setDraftDescription(safeText(header.description));
-    setDraftStatus(header.status === 1 ? "1" : header.status === 0 ? "0" : "");
     setDraftGastoType(header.gastoType === null ? "" : String(header.gastoType));
-    setDraftProcessedByAI(header.processedByAI === true ? "true" : header.processedByAI === false ? "false" : "");
     setDraftCurrencyCode(safeText(header.currencyCode).toUpperCase());
-    setDraftTotalAmount(
-      formatExpenseInputNumber(header.totalAmount, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: true,
-        fallback: "",
-      })
-    );
     setDraftTransDate(safeText(header.transDate));
     setDraftComentario(safeText(header.comentario));
     setDraftUrlFile(safeText(header.urlFile));
@@ -223,11 +197,8 @@ const ExpenseTicketDetailPageContent = () => {
     canDeleteTicket,
     fileId,
     draftDescription,
-    draftStatus,
     draftGastoType,
-    draftProcessedByAI,
     draftCurrencyCode,
-    draftTotalAmount,
     draftTransDate,
     draftComentario,
     draftUrlFile,
@@ -265,10 +236,13 @@ const ExpenseTicketDetailPageContent = () => {
     void handleModalConfirm();
   }, [busy, closeConfirm, handleModalConfirm, modalError]);
 
+  const isAssignedTicket = header?.status === 1;
+
   useExpenseTicketDetailTopbarActions({
     busy,
     modalOpen: modal.open,
     isEditing,
+    isLocked: isAssignedTicket,
     canEditTicket,
     canDeleteTicket,
     fileId,
@@ -278,7 +252,7 @@ const ExpenseTicketDetailPageContent = () => {
     handleUpdate,
     handleDelete,
     onSaveSuccess: () => {
-      window.location.reload();
+      void reloadDetail();
     },
     openConfirm,
     closeConfirm,
@@ -286,6 +260,7 @@ const ExpenseTicketDetailPageContent = () => {
 
   const openLineDetail = useCallback(
     (rawLineRecId: string) => {
+      if (isAssignedTicket) return;
       const lineRecId = safeText(rawLineRecId);
       if (!lineRecId) return;
       if (!fileId) return;
@@ -296,7 +271,7 @@ const ExpenseTicketDetailPageContent = () => {
         bypassGuardOnce: false,
       });
     },
-    [fileId]
+    [fileId, isAssignedTicket]
   );
 
   const resolveClickableCard = useCallback((target: EventTarget | null) => {
@@ -315,13 +290,59 @@ const ExpenseTicketDetailPageContent = () => {
     resolveClickableCard,
   });
 
-  const openFile = useCallback(() => {
+  const closePreview = useCallback(() => {
+    setPreviewOpen(false);
+    setPreviewBusy(false);
+    setPreviewError("");
+    setPreviewImageUrl((previous) => {
+      if (previous) {
+        URL.revokeObjectURL(previous);
+      }
+      return "";
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!previewOpen) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closePreview();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [previewOpen, closePreview]);
+
+  const openFile = useCallback(async () => {
     const currentUrl = safeText(isEditing ? draftUrlFile : header?.urlFile);
     if (!currentUrl) return;
-    window.open(currentUrl, "_blank", "noopener,noreferrer");
+
+    setPreviewOpen(true);
+    setPreviewBusy(true);
+    setPreviewError("");
+
+    try {
+      const blob = await fetchExpenseSheetTicketPreviewBlob(currentUrl, {
+        suppressPermissionModal: true,
+      });
+      const objectUrl = URL.createObjectURL(blob);
+      setPreviewImageUrl((previous) => {
+        if (previous) {
+          URL.revokeObjectURL(previous);
+        }
+        return objectUrl;
+      });
+    } catch (error) {
+      setPreviewError(error instanceof Error ? error.message : indT("Api_RequestFailed", "Request failed."));
+      setPreviewImageUrl("");
+    } finally {
+      setPreviewBusy(false);
+    }
   }, [draftUrlFile, header?.urlFile, isEditing]);
 
-  const statusLabel = useMemo(() => getExpenseTicketStatusLabel(isEditing ? draftStatus : header?.status), [draftStatus, header?.status, isEditing]);
+  const statusLabel = useMemo(() => getExpenseTicketStatusLabel(header?.status), [header?.status]);
   const gastoTypeLabel = useMemo(() => {
     const currentGastoType = isEditing ? draftGastoType : header?.gastoType === null ? "" : String(header?.gastoType ?? "");
     if (!currentGastoType) {
@@ -329,20 +350,10 @@ const ExpenseTicketDetailPageContent = () => {
     }
     return gastoTypeLabelMap.get(String(currentGastoType)) || String(currentGastoType);
   }, [draftGastoType, gastoTypeLabelMap, header?.gastoType, isEditing]);
-  const processedByAiLabel = useMemo(() => {
-    const value = isEditing ? draftProcessedByAI : header?.processedByAI === true ? "true" : header?.processedByAI === false ? "false" : "";
-    if (value === "true") return indT("Tickets_Filter_ProcessedByIA_Yes", "Yes");
-    if (value === "false") return indT("Tickets_Filter_ProcessedByIA_No", "No");
-    return indT("Common_NotAvailable", "N/A");
-  }, [draftProcessedByAI, header?.processedByAI, isEditing]);
-  const totalAmountText = useMemo(() => {
-    if (isEditing) {
-      const parsed = parseExpenseNumericInput(draftTotalAmount);
-      return formatAmountWithCurrency(parsed, draftCurrencyCode || header?.currencyCode);
-    }
-
-    return formatAmountWithCurrency(header?.totalAmount ?? null, header?.currencyCode);
-  }, [draftCurrencyCode, draftTotalAmount, header?.currencyCode, header?.totalAmount, isEditing]);
+  const totalAmountText = useMemo(
+    () => formatAmountWithCurrency(header?.totalAmount ?? null, (isEditing ? draftCurrencyCode : header?.currencyCode) || header?.currencyCode),
+    [draftCurrencyCode, header?.currencyCode, header?.totalAmount, isEditing]
+  );
   const transDateText = useMemo(
     () => formatExpenseDisplayDate(isEditing ? draftTransDate : header?.transDate, document?.documentElement?.lang || "es-ES"),
     [draftTransDate, header?.transDate, isEditing]
@@ -365,6 +376,36 @@ const ExpenseTicketDetailPageContent = () => {
         onConfirm={handleModalButtonConfirm}
         onCancel={closeConfirm}
       />
+      {previewOpen
+        ? createPortal(
+            <div
+              className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/45 backdrop-blur-md px-4 py-6"
+              onClick={closePreview}
+            >
+              <div className="max-h-[92vh] max-w-[92vw] flex items-center justify-center" onClick={(event) => event.stopPropagation()}>
+                {previewBusy ? (
+                  <div className="flex items-center gap-2 text-sm text-slate-100">
+                    <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
+                      <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
+                    </svg>
+                    {indT("Common_Loading", "Loading")}
+                  </div>
+                ) : previewError ? (
+                  <p className="text-sm text-rose-200">{previewError}</p>
+                ) : previewImageUrl ? (
+                  <img
+                    src={previewImageUrl}
+                    alt={safeText(isEditing ? draftFileName : header?.fileName) || indT("Tickets_Field_FileId", "Ticket")}
+                    className="max-h-[90vh] w-auto max-w-[92vw] rounded-lg object-contain shadow-2xl"
+                  />
+                ) : (
+                  <p className="text-sm text-slate-100">{indT("Common_NotAvailable", "N/A")}</p>
+                )}
+              </div>
+            </div>,
+            document.body
+          )
+        : null}
 
       <div
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
@@ -384,33 +425,20 @@ const ExpenseTicketDetailPageContent = () => {
             header={header}
             statusLabel={statusLabel}
             gastoTypeLabel={gastoTypeLabel}
-            processedByAiLabel={processedByAiLabel}
             totalAmountText={totalAmountText}
             transDateText={transDateText}
             isEditing={isEditing}
-            statusOptions={statusOptions}
             gastoTypeOptions={gastoTypeOptions}
-            processedByAiOptions={processedByAiOptions}
             draftDescription={draftDescription}
-            draftStatus={draftStatus}
             draftGastoType={draftGastoType}
-            draftProcessedByAI={draftProcessedByAI}
             draftCurrencyCode={draftCurrencyCode}
-            draftTotalAmount={draftTotalAmount}
             draftTransDate={draftTransDate}
-            draftComentario={draftComentario}
             draftUrlFile={draftUrlFile}
             draftFileName={draftFileName}
             onDraftDescriptionChange={setDraftDescription}
-            onDraftStatusChange={setDraftStatus}
             onDraftGastoTypeChange={setDraftGastoType}
-            onDraftProcessedByAIChange={setDraftProcessedByAI}
             onDraftCurrencyCodeChange={setDraftCurrencyCode}
-            onDraftTotalAmountChange={setDraftTotalAmount}
             onDraftTransDateChange={setDraftTransDate}
-            onDraftComentarioChange={setDraftComentario}
-            onDraftUrlFileChange={setDraftUrlFile}
-            onDraftFileNameChange={setDraftFileName}
             onOpenFile={openFile}
           />
           <ExpenseTicketLinesList
