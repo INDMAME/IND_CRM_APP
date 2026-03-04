@@ -1,5 +1,22 @@
 import { formatExpenseNumber } from "./utils/expenseNumberFormat.ts";
 
+const CURRENCY_SYMBOL_MAP: Record<string, string> = {
+  USD: "$",
+  EUR: "€",
+  GBP: "£",
+  MXN: "MX$",
+  BOB: "Bs",
+  PEN: "S/",
+  BRL: "R$",
+  COP: "$",
+  CLP: "$",
+  ARS: "$",
+};
+
+const hasAlphabeticCurrencyCode = (value: string): boolean => {
+  return /[A-Za-z]{3}/.test(value);
+};
+
 // Formats a numeric amount with fixed UI number style and optional currency code.
 export const formatAmountWithCurrency = (
   amount: number | null | undefined,
@@ -19,13 +36,23 @@ export const formatAmountWithCurrency = (
   });
 
   if (safeCurrency) {
+    const mappedSymbol = CURRENCY_SYMBOL_MAP[safeCurrency];
+    if (mappedSymbol) {
+      return `${mappedSymbol}${decimalText}`;
+    }
+
     try {
-      return new Intl.NumberFormat("en-US", {
+      const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: safeCurrency,
+        currencyDisplay: "narrowSymbol",
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }).format(amount);
+
+      if (!hasAlphabeticCurrencyCode(formatted)) {
+        return formatted;
+      }
     } catch {
       // Fall back to decimal + code when currency code is invalid.
     }

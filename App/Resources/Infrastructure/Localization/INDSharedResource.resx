@@ -127,10 +127,16 @@
     <value>Cabecera</value>
   </data>
   <data name="Tickets_Detail_Lines" xml:space="preserve">
-    <value>Lineas</value>
+    <value>Líneas</value>
   </data>
   <data name="Tickets_Detail_NoLines" xml:space="preserve">
     <value>Sin lineas para este ticket.</value>
+  </data>
+  <data name="Tickets_Detail_ViewTicket" xml:space="preserve">
+    <value>Ver ticket</value>
+  </data>
+  <data name="Tickets_Detail_ViewAttachment" xml:space="preserve">
+    <value>Ver adjunto</value>
   </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>Hojas de gastos</value>
@@ -1129,7 +1135,7 @@
     <value>Agrega al menos una linea.</value>
   </data>
   <data name="ExpenseSheets_Line" xml:space="preserve">
-    <value>Linea</value>
+    <value>Línea</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve">
     <value>Consultando tipo de cambio...</value>

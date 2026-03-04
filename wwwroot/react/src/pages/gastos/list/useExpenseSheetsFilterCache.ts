@@ -1,6 +1,7 @@
 import { useCallback } from "react";
 import type { AppliedFilterSnapshot } from "./expenseListTypes.ts";
 import { normalizeExpenseFilterSnapshot } from "./expenseFilterSnapshot.ts";
+import type { ExpenseSheetCard } from "../expenseTypes.ts";
 import {
   getSessionJsonWithExpiry,
   getSessionValueWithExpiry,
@@ -9,14 +10,59 @@ import {
   setSessionValueWithExpiry,
 } from "../../../utils/sessionExpiry.ts";
 
-const EXPENSE_SHEETS_FILTER_KEY = "expense_sheets_filter_v1";
-const EXPENSE_SHEETS_RETURN_FLAG_KEY = "expense_sheets_return_v1";
+const EXPENSE_SHEETS_FILTER_KEY_PREFIX = "expense_sheets_filter_v1";
+const EXPENSE_SHEETS_RETURN_FLAG_KEY_PREFIX = "expense_sheets_return_v1";
 const EXPENSE_SHEETS_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 export type ExpenseSheetsCachedState = {
   filters: AppliedFilterSnapshot;
   page: number;
   scrollY: number;
+  items: ExpenseSheetCard[];
+  total: number;
+};
+
+const getScopeToken = (): string => {
+  if (typeof window === "undefined") return "session";
+  const raw = String((window as { __IND_ENTRA_OID__?: unknown }).__IND_ENTRA_OID__ || "")
+    .trim()
+    .toLowerCase();
+  return raw || "session";
+};
+
+const getScopedKeys = () => {
+  const scope = getScopeToken();
+  return {
+    filterKey: `${EXPENSE_SHEETS_FILTER_KEY_PREFIX}_${scope}`,
+    returnFlagKey: `${EXPENSE_SHEETS_RETURN_FLAG_KEY_PREFIX}_${scope}`,
+  };
+};
+
+const toNullableNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeItems = (raw: unknown): ExpenseSheetCard[] => {
+  if (!Array.isArray(raw)) return [];
+
+  return raw.map((entry) => {
+    const item = (entry || {}) as Partial<ExpenseSheetCard>;
+    return {
+      hojaGastosId: String(item.hojaGastosId || "").trim(),
+      description: typeof item.description === "string" ? item.description.trim() : undefined,
+      expenseSheetStatus: toNullableNumber(item.expenseSheetStatus),
+      estadoComentarios: typeof item.estadoComentarios === "string" ? item.estadoComentarios.trim() : null,
+      userId: typeof item.userId === "string" ? item.userId.trim() : undefined,
+      voucher: typeof item.voucher === "string" ? item.voucher.trim() : undefined,
+      projId: typeof item.projId === "string" ? item.projId.trim() : undefined,
+      currencyCode: typeof item.currencyCode === "string" ? item.currencyCode.trim() : undefined,
+      totalAmount: toNullableNumber(item.totalAmount),
+      exchRate: toNullableNumber(item.exchRate),
+      exchangeRateMode: toNullableNumber(item.exchangeRateMode),
+      createdDate: typeof item.createdDate === "string" ? item.createdDate.trim() : undefined,
+    };
+  });
 };
 
 const normalizeState = (raw: ExpenseSheetsCachedState | null): ExpenseSheetsCachedState | null => {
@@ -27,25 +73,32 @@ const normalizeState = (raw: ExpenseSheetsCachedState | null): ExpenseSheetsCach
 
   const scrollRaw = Number(raw.scrollY);
   const scrollY = Number.isFinite(scrollRaw) && scrollRaw >= 0 ? Math.floor(scrollRaw) : 0;
+  const items = normalizeItems((raw as { items?: unknown }).items);
+  const totalRaw = Number((raw as { total?: unknown }).total);
+  const total = Number.isFinite(totalRaw) && totalRaw >= 0 ? totalRaw : items.length;
 
   return {
     filters: normalizeExpenseFilterSnapshot(raw.filters),
     page,
     scrollY,
+    items,
+    total,
   };
 };
 
 // Centralizes cache persistence for returning from expense detail to list.
 export const useExpenseSheetsFilterCache = () => {
   const readCachedState = useCallback((): ExpenseSheetsCachedState | null => {
-    const raw = getSessionJsonWithExpiry<ExpenseSheetsCachedState>(EXPENSE_SHEETS_FILTER_KEY);
+    const keys = getScopedKeys();
+    const raw = getSessionJsonWithExpiry<ExpenseSheetsCachedState>(keys.filterKey);
     return normalizeState(raw);
   }, []);
 
   const consumeReturnFlag = useCallback((): boolean => {
-    const raw = getSessionValueWithExpiry(EXPENSE_SHEETS_RETURN_FLAG_KEY);
+    const keys = getScopedKeys();
+    const raw = getSessionValueWithExpiry(keys.returnFlagKey);
     if (raw === "1") {
-      removeSessionValueWithExpiry(EXPENSE_SHEETS_RETURN_FLAG_KEY);
+      removeSessionValueWithExpiry(keys.returnFlagKey);
       return true;
     }
     return false;
@@ -55,13 +108,15 @@ export const useExpenseSheetsFilterCache = () => {
     const normalized = normalizeState(state);
     if (!normalized) return;
 
-    setSessionJsonWithExpiry(EXPENSE_SHEETS_FILTER_KEY, normalized, EXPENSE_SHEETS_CACHE_TTL_MS);
-    setSessionValueWithExpiry(EXPENSE_SHEETS_RETURN_FLAG_KEY, "1", EXPENSE_SHEETS_CACHE_TTL_MS);
+    const keys = getScopedKeys();
+    setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_SHEETS_CACHE_TTL_MS);
+    setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_SHEETS_CACHE_TTL_MS);
   }, []);
 
   const clearCachedState = useCallback(() => {
-    removeSessionValueWithExpiry(EXPENSE_SHEETS_FILTER_KEY);
-    removeSessionValueWithExpiry(EXPENSE_SHEETS_RETURN_FLAG_KEY);
+    const keys = getScopedKeys();
+    removeSessionValueWithExpiry(keys.filterKey);
+    removeSessionValueWithExpiry(keys.returnFlagKey);
   }, []);
 
   return {

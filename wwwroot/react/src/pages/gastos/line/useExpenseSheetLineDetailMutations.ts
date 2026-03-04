@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
+import { ApiFetchError } from "../../../services/apiService.ts";
 import type {
   ExpenseSheetCreateLineRequest,
   ExpenseSheetLine,
@@ -9,19 +10,27 @@ import type {
 import { parseExpenseInternationalValue } from "../constants/internationalOptions.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
-import { createExpenseSheet, deleteExpenseSheetLine, updateExpenseSheetLine } from "../utils/expenseApi.ts";
+import {
+  createExpenseSheet,
+  deleteExpenseSheetLine,
+  deleteExpenseSheetTicket,
+  deleteExpenseSheetTicketFile,
+  updateExpenseSheetLine,
+} from "../utils/expenseApi.ts";
 
 type UseExpenseSheetLineDetailMutationsArgs = {
   busy: boolean;
   isEditing: boolean;
   isCreateMode: boolean;
-  isLocked: boolean;
+  isEditLocked: boolean;
+  isDeleteLocked: boolean;
   canCreateExpense: boolean;
   canEditExpense: boolean;
   canDeleteExpense: boolean;
   sheetId: string;
   lineId: string;
   line: ExpenseSheetLine | null;
+  linkedTicketFileId: string;
   draftDescription: string;
   draftTransDate: string;
   draftTypeValueCode: string;
@@ -66,13 +75,15 @@ export const useExpenseSheetLineDetailMutations = ({
   busy,
   isEditing,
   isCreateMode,
-  isLocked,
+  isEditLocked,
+  isDeleteLocked,
   canCreateExpense,
   canEditExpense,
   canDeleteExpense,
   sheetId,
   lineId,
   line,
+  linkedTicketFileId,
   draftDescription,
   draftTransDate,
   draftTypeValueCode,
@@ -86,9 +97,25 @@ export const useExpenseSheetLineDetailMutations = ({
   setIsEditing,
   onCreateSuccess,
 }: UseExpenseSheetLineDetailMutationsArgs) => {
+  const isNotFoundError = (error: unknown): boolean => {
+    return error instanceof ApiFetchError && error.status === 404;
+  };
+
+  const isMissingTicketFileMessage = (message: unknown): boolean => {
+    const normalized = String(message || "").trim().toLowerCase();
+    if (!normalized) return false;
+
+    return (
+      normalized.includes("archivo asociado") ||
+      normalized.includes("archivo adjunto") ||
+      normalized.includes("associated file") ||
+      normalized.includes("attached file")
+    );
+  };
+
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
-    if (isLocked) return false;
+    if (isEditLocked) return false;
 
     const canProceed = isCreateMode ? canCreateExpense : canEditExpense;
     if (!canProceed) {
@@ -180,7 +207,7 @@ export const useExpenseSheetLineDetailMutations = ({
     draftTransDate,
     draftTypeValueCode,
     isCreateMode,
-    isLocked,
+    isEditLocked,
     isEditing,
     line,
     lineId,
@@ -194,7 +221,7 @@ export const useExpenseSheetLineDetailMutations = ({
 
   const handleDelete = useCallback(async () => {
     if (busy) return false;
-    if (isLocked) return false;
+    if (isDeleteLocked) return false;
     if (!canDeleteExpense) {
       showPermissionModal();
       return false;
@@ -207,6 +234,31 @@ export const useExpenseSheetLineDetailMutations = ({
       setBusy,
       setStatus,
       action: async () => {
+        const safeLinkedTicketFileId = safeText(linkedTicketFileId);
+        if (safeLinkedTicketFileId) {
+          try {
+            const deleteFileResponse = await deleteExpenseSheetTicketFile(safeLinkedTicketFileId);
+            if (!deleteFileResponse.Success && !isMissingTicketFileMessage(deleteFileResponse.Message)) {
+              throw new Error(deleteFileResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+            }
+          } catch (error) {
+            if (!isNotFoundError(error)) {
+              throw error;
+            }
+          }
+
+          try {
+            const deleteTicketResponse = await deleteExpenseSheetTicket(safeLinkedTicketFileId);
+            if (!deleteTicketResponse.Success) {
+              throw new Error(deleteTicketResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+            }
+          } catch (error) {
+            if (!isNotFoundError(error)) {
+              throw error;
+            }
+          }
+        }
+
         const response = await deleteExpenseSheetLine(sheetId, lineId);
 
         if (!response.Success) {
@@ -219,7 +271,17 @@ export const useExpenseSheetLineDetailMutations = ({
     });
 
     return result.ok;
-  }, [busy, canDeleteExpense, isLocked, lineId, setBusy, setModalError, setStatus, sheetId]);
+  }, [
+    busy,
+    canDeleteExpense,
+    isDeleteLocked,
+    lineId,
+    linkedTicketFileId,
+    setBusy,
+    setModalError,
+    setStatus,
+    sheetId,
+  ]);
 
   return {
     handleUpdate,

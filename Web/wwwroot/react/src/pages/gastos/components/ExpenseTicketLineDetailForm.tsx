@@ -47,7 +47,7 @@ const ExpenseTicketLineDetailForm = ({
   return (
     <section className="space-y-0">
       <ExpenseSectionDivider
-        label={header.description || header.fileId || indT("Tickets_Detail_Title", "Ticket detail")}
+        label={indT("ExpenseSheets_Line", "Line")}
         className="expense-section-divider--spaced"
         labelClassName="expense-section-divider__label--title"
       />

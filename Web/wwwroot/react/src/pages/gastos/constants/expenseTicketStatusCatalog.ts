@@ -24,6 +24,13 @@ const STATUS_META_BY_CODE: Record<ExpenseTicketStatusCode, ExpenseTicketStatusUi
 };
 
 const toNullableExpenseTicketStatusCode = (value: unknown): ExpenseTicketStatusCode | null => {
+  if (value === null || value === undefined) {
+    return null;
+  }
+  if (typeof value === "string" && value.trim() === "") {
+    return null;
+  }
+
   const parsed = Number(value);
   if (parsed === 0 || parsed === 1) {
     return parsed;

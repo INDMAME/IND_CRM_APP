@@ -7,6 +7,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import {
+  DEFAULT_EXPENSE_STATUS_FILTER,
   getExpenseStatusBadgeClassName,
   getExpenseStatusLabel,
   normalizeExpenseStatusFilterCode,
@@ -47,7 +48,16 @@ const ExpenseSheetsPageContent = () => {
     []
   );
 
-  const { items, total, currentPage, isLoading, errorMessage, loadList, resetList } = useExpenseSheetsListData({
+  const {
+    items,
+    total,
+    currentPage,
+    isLoading,
+    errorMessage,
+    loadList,
+    restoreListSnapshot,
+    resetList,
+  } = useExpenseSheetsListData({
     hasAccess,
     pageSize: PAGE_SIZE,
     onForbidden: showPermissionModal,
@@ -101,6 +111,8 @@ const ExpenseSheetsPageContent = () => {
         filters: snapshot,
         page: currentPage < 1 ? 1 : currentPage,
         scrollY: typeof window !== "undefined" ? window.scrollY || 0 : 0,
+        items,
+        total,
       });
 
       const id = encodeURIComponent(sheetId);
@@ -108,7 +120,7 @@ const ExpenseSheetsPageContent = () => {
         bypassGuardOnce: false,
       });
     },
-    [appliedFilters, currentFilters, currentPage, saveCachedState]
+    [appliedFilters, currentFilters, currentPage, items, saveCachedState, total]
   );
 
   const handleOpenCreateSheetMode = useCallback(() => {
@@ -184,11 +196,13 @@ const ExpenseSheetsPageContent = () => {
         value: appliedFilters.currencyCode.trim(),
       });
     }
-    summary.push({
-      key: "status",
-      label: indT("ExpenseSheets_Filter_Status", "Estado"),
-      value: getExpenseStatusLabel(appliedFilters.statusFilter),
-    });
+    if (appliedFilters.statusFilter !== DEFAULT_EXPENSE_STATUS_FILTER) {
+      summary.push({
+        key: "status",
+        label: indT("ExpenseSheets_Filter_Status", "Estado"),
+        value: getExpenseStatusLabel(appliedFilters.statusFilter),
+      });
+    }
 
     return summary;
   }, [appliedFilters]);
@@ -199,7 +213,10 @@ const ExpenseSheetsPageContent = () => {
     if (didRestoreOnMountRef.current) return;
     didRestoreOnMountRef.current = true;
 
-    if (!consumeReturnFlag()) return;
+    if (!consumeReturnFlag()) {
+      clearCachedState();
+      return;
+    }
 
     const cachedState = readCachedState();
     if (!cachedState) {
@@ -209,8 +226,16 @@ const ExpenseSheetsPageContent = () => {
 
     restoreAppliedFilters(cachedState.filters);
     pendingScrollRestoreRef.current = cachedState.scrollY;
+    if (cachedState.items.length > 0 || cachedState.total > 0) {
+      restoreListSnapshot({
+        items: cachedState.items,
+        total: cachedState.total,
+        page: cachedState.page,
+      });
+      return;
+    }
     void loadList(cachedState.page, cachedState.filters);
-  }, [clearCachedState, consumeReturnFlag, loadList, readCachedState, restoreAppliedFilters]);
+  }, [clearCachedState, consumeReturnFlag, loadList, readCachedState, restoreAppliedFilters, restoreListSnapshot]);
 
   useEffect(() => {
     if (isLoading) return;

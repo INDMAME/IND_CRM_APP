@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
+import { flashActionMark } from "../../../utils/visitasHistory.ts";
 import type {
   ExpenseGastoTypeCode,
   ExpenseSheetCreateLineRequest,
@@ -68,14 +69,15 @@ type UploadSyncResult = {
 };
 
 type UseExpenseSheetQuickTicketFlowArgs = {
-  sheetId: string;
-  projectId: string;
-  currencyCode: string;
+  sheetId?: string;
+  projectId?: string;
+  currencyCode?: string;
   canCreateExpense: boolean;
   isCreateMode: boolean;
   isSheetLocked: boolean;
+  linkToSheet?: boolean;
   onForbidden: () => void;
-  onCompleted?: () => void;
+  onCompleted?: (result: { fileId: string; linkedToSheet: boolean }) => void;
 };
 
 type QuickFlowProgressKey =
@@ -349,12 +351,13 @@ const removeCachedImageFile = async (cacheKey: string): Promise<void> => {
 };
 
 export const useExpenseSheetQuickTicketFlow = ({
-  sheetId,
-  projectId,
-  currencyCode,
+  sheetId = "",
+  projectId = "",
+  currencyCode = "",
   canCreateExpense,
   isCreateMode,
   isSheetLocked,
+  linkToSheet = true,
   onForbidden,
   onCompleted,
 }: UseExpenseSheetQuickTicketFlowArgs) => {
@@ -414,12 +417,12 @@ export const useExpenseSheetQuickTicketFlow = ({
   }, []);
 
   const ensureQuickCreatePermission = useCallback((): boolean => {
-    if (!canCreateExpense || !sheetId || isCreateMode || isSheetLocked) {
+    if (!canCreateExpense || isCreateMode || isSheetLocked || (linkToSheet && !sheetId)) {
       onForbidden();
       return false;
     }
     return true;
-  }, [canCreateExpense, isCreateMode, isSheetLocked, onForbidden, sheetId]);
+  }, [canCreateExpense, isCreateMode, isSheetLocked, linkToSheet, onForbidden, sheetId]);
 
   const resolveUiErrorMessage = useCallback(
     (error: unknown): string => {
@@ -453,7 +456,7 @@ export const useExpenseSheetQuickTicketFlow = ({
     []
   );
 
-  const applyIaAndLinkToSheet = useCallback(
+  const applyIaAndFinalize = useCallback(
     async (fileId: string, draft: NormalizedDraft, uploadResult: UploadSyncResult) => {
       setProgressKey("finalizingIa");
       const iaPayload = buildTicketIaPayload(draft, uploadResult);
@@ -464,6 +467,8 @@ export const useExpenseSheetQuickTicketFlow = ({
       if (iaResponse.Success !== true) {
         throw new Error(safeText(iaResponse.Message) || indT("Api_RequestFailed", "Request failed."));
       }
+
+      if (!linkToSheet) return;
 
       const linePayload = buildSheetLinePayload(draft, fileId, projectId);
       if (!linePayload) return;
@@ -484,7 +489,7 @@ export const useExpenseSheetQuickTicketFlow = ({
         throw new Error(safeText(createResponse.Message) || indT("Api_RequestFailed", "Request failed."));
       }
     },
-    [addTrace, projectId, sheetId]
+    [addTrace, linkToSheet, projectId, sheetId]
   );
 
   const resumeFromUploadStep = useCallback(
@@ -508,27 +513,29 @@ export const useExpenseSheetQuickTicketFlow = ({
         }
 
         const uploadResult = resolveUploadResult(uploadResponse.Data);
-        await applyIaAndLinkToSheet(pendingState.fileId, pendingState.draft, uploadResult);
+        await applyIaAndFinalize(pendingState.fileId, pendingState.draft, uploadResult);
 
         setProgressKey("done");
         setPendingUploadRetry(null);
         await removeCachedImageFile(pendingState.cacheKey);
         setTimeout(() => {
+          flashActionMark("okProcess", 1200);
           setBusy(false);
           setProgressKey(null);
-          onCompleted?.();
+          onCompleted?.({ fileId: pendingState.fileId, linkedToSheet: linkToSheet });
         }, 320);
       } catch (error) {
         if (error instanceof ApiFetchError) {
           const traceId = extractTraceIdFromError(error);
           addTrace("ticket-file-upload-error", traceId);
         }
+        flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
         setErrorMessage(resolveUiErrorMessage(error));
       }
     },
-    [addTrace, applyIaAndLinkToSheet, onCompleted, resolveUiErrorMessage]
+    [addTrace, applyIaAndFinalize, linkToSheet, onCompleted, resolveUiErrorMessage]
   );
 
   const runIaCreateFlow = useCallback(
@@ -564,14 +571,15 @@ export const useExpenseSheetQuickTicketFlow = ({
           }
 
           const uploadResult = resolveUploadResult(uploadResponse.Data);
-          await applyIaAndLinkToSheet(fileId, draft, uploadResult);
+          await applyIaAndFinalize(fileId, draft, uploadResult);
 
           setProgressKey("done");
           await removeCachedImageFile(cacheKey);
           setTimeout(() => {
+            flashActionMark("okProcess", 1200);
             setBusy(false);
             setProgressKey(null);
-            onCompleted?.();
+            onCompleted?.({ fileId, linkedToSheet: linkToSheet });
           }, 320);
         } catch (uploadError) {
           if (uploadError instanceof ApiFetchError) {
@@ -593,12 +601,13 @@ export const useExpenseSheetQuickTicketFlow = ({
           );
         }
       } catch (error) {
+        flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
         setErrorMessage(resolveUiErrorMessage(error));
       }
     },
-    [addTrace, applyIaAndLinkToSheet, clearFlowState, onCompleted, resolveUiErrorMessage]
+    [addTrace, applyIaAndFinalize, clearFlowState, linkToSheet, onCompleted, resolveUiErrorMessage]
   );
 
   const runManualCreateFlow = useCallback(
@@ -652,26 +661,28 @@ export const useExpenseSheetQuickTicketFlow = ({
           throw new Error(safeText(iaDraftResponse.Message) || indT("Api_RequestFailed", "Request failed."));
         }
         const draft = normalizeDraftFromIaResponse(iaDraftResponse.Data as ExpenseSheetDraftResponse);
-        await applyIaAndLinkToSheet(fileId, draft, uploadResult);
+        await applyIaAndFinalize(fileId, draft, uploadResult);
 
         setProgressKey("done");
         await removeCachedImageFile(cacheKey);
         setTimeout(() => {
+          flashActionMark("okProcess", 1200);
           setBusy(false);
           setProgressKey(null);
-          onCompleted?.();
+          onCompleted?.({ fileId, linkedToSheet: linkToSheet });
         }, 320);
       } catch (error) {
         if (error instanceof ApiFetchError) {
           const traceId = extractTraceIdFromError(error);
           addTrace("ticket-manual-error", traceId);
         }
+        flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
         setErrorMessage(resolveUiErrorMessage(error));
       }
     },
-    [addTrace, applyIaAndLinkToSheet, clearFlowState, currencyCode, onCompleted, resolveUiErrorMessage]
+    [addTrace, applyIaAndFinalize, clearFlowState, currencyCode, linkToSheet, onCompleted, resolveUiErrorMessage]
   );
 
   const handleSelectedFile = useCallback(

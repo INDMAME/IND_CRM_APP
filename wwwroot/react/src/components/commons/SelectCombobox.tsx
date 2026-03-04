@@ -211,7 +211,12 @@ const SelectCombobox = ({
     initialDropdownWidthRef.current = width;
   }, [listOpen, lockDropdownWidthOnFirstOpen]);
 
-  const fixedDropdownBaseWidth = lockDropdownWidthOnFirstOpen ? initialDropdownWidthRef.current : null;
+  const measuredAnchorWidth = boxRef.current?.getBoundingClientRect().width;
+  const normalizedMeasuredAnchorWidth =
+    Number.isFinite(measuredAnchorWidth) && measuredAnchorWidth && measuredAnchorWidth > 0 ? measuredAnchorWidth : null;
+  const fixedDropdownBaseWidth = lockDropdownWidthOnFirstOpen
+    ? initialDropdownWidthRef.current ?? normalizedMeasuredAnchorWidth
+    : normalizedMeasuredAnchorWidth;
   const fixedDropdownExpandedWidth =
     fixedDropdownBaseWidth !== null && Number.isFinite(fixedDropdownBaseWidth)
       ? fixedDropdownBaseWidth + normalizedDropdownExpandPx

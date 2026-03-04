@@ -391,9 +391,14 @@ export const useExpenseSheetLineDetailState = ({
   const isSheetPaidByVoucher = hasAssignedVoucher(header?.voucher);
   const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
   const isSheetLocked = isSheetApproved || isSheetPaid;
+  const linkedTicketFileId = safeText(line?.fileId);
+  const hasLinkedTicket = !isCreateMode && !!linkedTicketFileId;
+  const isLineEditLocked = isSheetLocked || hasLinkedTicket;
+  const isLineDeleteLocked = isSheetLocked;
+  const isLineLocked = isLineEditLocked;
 
   const handleEnableEdit = useCallback(() => {
-    if (isCreateMode || isLoading || !header || !line || isSheetLocked) {
+    if (isCreateMode || isLoading || !header || !line || isLineEditLocked) {
       return;
     }
 
@@ -406,7 +411,7 @@ export const useExpenseSheetLineDetailState = ({
     setIsEditing(true);
     hydrateDraftFromLine(line, header);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditExpense, header, hydrateDraftFromLine, isCreateMode, isLoading, isSheetLocked, line, onForbidden]);
+  }, [canEditExpense, header, hydrateDraftFromLine, isCreateMode, isLineEditLocked, isLoading, line, onForbidden]);
 
   const handleCancelEdit = useCallback(() => {
     const targetUrl = `/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`;
@@ -470,6 +475,11 @@ export const useExpenseSheetLineDetailState = ({
     fuelPriceMessageIsError,
     isSheetPaid,
     isSheetLocked,
+    isLineEditLocked,
+    isLineDeleteLocked,
+    isLineLocked,
+    hasLinkedTicket,
+    linkedTicketFileId,
     setBusy,
     setStatus,
     setIsEditing,

@@ -1,9 +1,20 @@
 import React, { useCallback } from "react";
+import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../../utils/permissions.ts";
 import type { ExpenseSheetTicketUpdateRequest } from "../../expenseTypes.ts";
 import { executeExpenseMutation } from "../../hooks/expenseMutationUtils.ts";
-import { deleteExpenseSheetTicket, updateExpenseSheetTicket } from "../../utils/expenseApi.ts";
+import {
+  deleteExpenseSheetLine,
+  deleteExpenseSheetTicket,
+  deleteExpenseSheetTicketFile,
+  updateExpenseSheetTicket,
+} from "../../utils/expenseApi.ts";
+
+type DeleteLinkedExpenseLineContext = {
+  sheetId: string;
+  lineRecId: string;
+};
 
 type UseExpenseTicketDetailMutationsArgs = {
   busy: boolean;
@@ -18,6 +29,7 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftComentario: string;
   draftUrlFile: string;
   draftFileName: string;
+  deleteLinkedExpenseLineContext?: DeleteLinkedExpenseLineContext | null;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
@@ -39,6 +51,22 @@ const resolveTicketFileExtension = (fileName: string, urlFile: string): string |
   return match[1].toLowerCase();
 };
 
+const isNotFoundError = (error: unknown): boolean => {
+  return error instanceof ApiFetchError && error.status === 404;
+};
+
+const isMissingTicketFileMessage = (message: unknown): boolean => {
+  const normalized = String(message || "").trim().toLowerCase();
+  if (!normalized) return false;
+
+  return (
+    normalized.includes("archivo asociado") ||
+    normalized.includes("archivo adjunto") ||
+    normalized.includes("associated file") ||
+    normalized.includes("attached file")
+  );
+};
+
 // Encapsulates update and delete mutations for ticket header detail.
 export const useExpenseTicketDetailMutations = ({
   busy,
@@ -53,6 +81,7 @@ export const useExpenseTicketDetailMutations = ({
   draftComentario,
   draftUrlFile,
   draftFileName,
+  deleteLinkedExpenseLineContext,
   setModalError,
   setBusy,
   setStatus,
@@ -151,9 +180,43 @@ export const useExpenseTicketDetailMutations = ({
       setBusy,
       setStatus,
       action: async () => {
+        try {
+          const deleteFileResponse = await deleteExpenseSheetTicketFile(fileId, {
+            suppressPermissionModal: true,
+          });
+          if (!deleteFileResponse.Success && !isMissingTicketFileMessage(deleteFileResponse.Message)) {
+            throw new Error(deleteFileResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+          }
+        } catch (error) {
+          if (!isNotFoundError(error)) {
+            throw error;
+          }
+        }
+
         const response = await deleteExpenseSheetTicket(fileId);
         if (!response.Success) {
           throw new Error(response.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+        }
+
+        if (deleteLinkedExpenseLineContext) {
+          try {
+            const lineDeleteResponse = await deleteExpenseSheetLine(
+              deleteLinkedExpenseLineContext.sheetId,
+              deleteLinkedExpenseLineContext.lineRecId,
+              {
+                suppressPermissionModal: true,
+              }
+            );
+
+            if (!lineDeleteResponse.Success) {
+              throw new Error(lineDeleteResponse.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
+            }
+          } catch (error) {
+            // The linked line can be auto-removed by backend cascade; keep flow successful in that case.
+            if (!isNotFoundError(error)) {
+              throw error;
+            }
+          }
         }
 
         setStatus(indT("ExpenseSheets_Detail_Deleted", "Expense sheet deleted"));
@@ -162,7 +225,7 @@ export const useExpenseTicketDetailMutations = ({
     });
 
     return result.ok;
-  }, [busy, canDeleteTicket, fileId, setBusy, setModalError, setStatus]);
+  }, [busy, canDeleteTicket, deleteLinkedExpenseLineContext, fileId, setBusy, setModalError, setStatus]);
 
   return {
     handleUpdate,

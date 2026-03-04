@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
-import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -12,6 +11,7 @@ import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "..
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
+import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import {
   mapBooleanEnumOptions,
   mapWindowEnumOptions,
@@ -62,6 +62,10 @@ const ExpenseSheetLineDetailContent = () => {
     fuelPriceMessage,
     fuelPriceMessageIsError,
     isSheetLocked,
+    isLineEditLocked,
+    isLineDeleteLocked,
+    hasLinkedTicket,
+    linkedTicketFileId,
     setBusy,
     setStatus,
     setIsEditing,
@@ -75,7 +79,6 @@ const ExpenseSheetLineDetailContent = () => {
     setDraftInternational,
     handleEnableEdit,
     handleCancelEdit,
-    handleOpenCreateMode,
     navigateToSheetDetail,
   } = useExpenseSheetLineDetailState({
     hasAccess,
@@ -98,8 +101,8 @@ const ExpenseSheetLineDetailContent = () => {
     [header?.currencyCode, line?.price]
   );
   const amountText = useMemo(
-    () => formatAmountWithCurrency(calculatedAmountPreview),
-    [calculatedAmountPreview]
+    () => formatAmountWithCurrency(calculatedAmountPreview, safeText(header?.currencyCode)),
+    [calculatedAmountPreview, header?.currencyCode]
   );
   const projectValue = safeText(line?.projId || header?.projId);
   const sheetDescription = safeText(header?.description) || "-";
@@ -162,13 +165,15 @@ const ExpenseSheetLineDetailContent = () => {
     busy,
     isEditing,
     isCreateMode,
-    isLocked: isSheetLocked,
+    isEditLocked: isLineEditLocked,
+    isDeleteLocked: isLineDeleteLocked,
     canCreateExpense,
     canEditExpense,
     canDeleteExpense,
     sheetId,
     lineId,
     line,
+    linkedTicketFileId,
     draftDescription,
     draftTransDate,
     draftTypeValueCode,
@@ -183,12 +188,15 @@ const ExpenseSheetLineDetailContent = () => {
     onCreateSuccess: () => {},
   });
 
+  const lineTopbarActionMode = hasLinkedTicket && !isSheetLocked ? "delete_only" : "default";
+
   useExpenseSheetLineDetailTopbarActions({
     busy: busy || isRedirectingAfterCreate,
     modalOpen: modal.open,
     isEditing,
     isCreateMode,
     isLocked: isSheetLocked,
+    actionMode: lineTopbarActionMode,
     canCreateExpense,
     canEditExpense,
     canDeleteExpense,
@@ -210,6 +218,23 @@ const ExpenseSheetLineDetailContent = () => {
     openConfirm,
     closeConfirm,
   });
+
+  const handleOpenLinkedTicket = useCallback(() => {
+    const safeFileId = safeText(linkedTicketFileId);
+    const safeSheetId = safeText(sheetId);
+    const safeLineId = safeText(lineId || line?.lineRecId);
+    if (!safeFileId || !safeSheetId || !safeLineId) return;
+
+    const query = new URLSearchParams({
+      fileId: safeFileId,
+      origin: "expense-line",
+      sheetId: safeSheetId,
+      lineRecId: safeLineId,
+    });
+    navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
+      askConfirmation: isEditing,
+    });
+  }, [isEditing, line?.lineRecId, lineId, linkedTicketFileId, sheetId]);
 
   return (
     <div className="space-y-2">
@@ -272,19 +297,12 @@ const ExpenseSheetLineDetailContent = () => {
           onDraftQtyChange={setDraftQty}
           onDraftProjectIdChange={setDraftProjectId}
           onDraftInternationalChange={setDraftInternational}
+          linkedTicketFileId={linkedTicketFileId}
+          showLinkedTicketField={hasLinkedTicket}
+          onOpenLinkedTicket={handleOpenLinkedTicket}
         />
       ) : null}
 
-      {canCreateExpense && !isCreateMode && !isSheetLocked ? (
-        <FloatingActionButton
-          route=""
-          ariaLabel={indT("Common_Create", "Create")}
-          size={76}
-          right={16}
-          bottom={24}
-          onClick={handleOpenCreateMode}
-        />
-      ) : null}
     </div>
   );
 };

@@ -146,7 +146,7 @@
         <div id="submenuGastos" class="submenu ml-4 hidden" aria-label="@SR["Nav_Expenses"].Value">
             @if (canViewExpenseSheets)
             {
-                <a asp-controller="Gastos" asp-action="ExpenseSheets" class="block px-6 py-1 text-sm hover:bg-white/15 transition">
+                <a asp-controller="Gastos" asp-action="ExpenseSheets" data-clear-expense-cache="1" class="block px-6 py-1 text-sm hover:bg-white/15 transition">
                     <span class="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/85" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
@@ -157,7 +157,7 @@
             }
             @if (canViewExpenseTickets)
             {
-                <a asp-controller="Gastos" asp-action="Tickets" class="block px-6 py-1 text-sm hover:bg-white/15 transition">
+                <a asp-controller="Gastos" asp-action="Tickets" data-clear-expense-cache="1" class="block px-6 py-1 text-sm hover:bg-white/15 transition">
                     <span class="flex items-center gap-2">
                         <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/85" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 6.75v10.5m-9-8.25h9m-9 4.5h5.25M3.75 5.25A1.5 1.5 0 0 1 5.25 3.75h13.5a1.5 1.5 0 0 1 1.5 1.5v13.5a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V5.25Z" />
@@ -169,14 +169,16 @@
         </div>
     }
 
-    <div class="user-panel mt-auto px-6 pb-8 relative">
-        <button id="userMenuToggle" type="button" class="user-chip flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer transition hover:bg-white/10" aria-expanded="false" aria-controls="userMenu">
-            <svg xmlns="http://www.w3.org/2000/svg" class="user-chip-icon h-5 w-5" fill="none" viewBox="0 0 30 30" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
-                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 19.5a7.5 7.5 0 1 1 15 0" />
-            </svg>
-            <span class="username-text">@displayUser.ToUpperInvariant()</span>
-            <svg id="userMenuChevron" xmlns="http://www.w3.org/2000/svg" class="ms-2 user-chip-chevron h-4 w-4 transition-transform duration-150" fill="none" viewBox="0 0 30 30" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+    <div class="user-panel mt-auto pb-14 relative">
+        <button id="userMenuToggle" type="button" class="user-chip flex w-full items-center justify-between text-left text-sm font-semibold tracking-wide transition hover:bg-white/15" aria-expanded="false" aria-controls="userMenu">
+            <span class="flex items-center gap-2 text-white/90">
+                <svg xmlns="http://www.w3.org/2000/svg" class="user-chip-icon h-5 w-5 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6.75a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75a17.933 17.933 0 0 1-7.499-1.632Z" />
+                </svg>
+                <span class="username-text">@displayUser.ToUpperInvariant()</span>
+            </span>
+            <svg id="userMenuChevron" xmlns="http://www.w3.org/2000/svg" class="user-chip-chevron h-5 w-5 text-white/80 transition-transform duration-150" fill="none" viewBox="0 0 30 30" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
             </svg>
         </button>
@@ -294,3 +296,37 @@
     </div>
 
 </div>
+
+<script>
+    (function () {
+        const clearExpenseListCache = () => {
+            try {
+                const prefixes = [
+                    "expense_tickets_filter_v1",
+                    "expense_tickets_return_v1",
+                    "expense_sheets_filter_v1",
+                    "expense_sheets_return_v1"
+                ];
+                const keysToRemove = [];
+                for (let i = 0; i < window.sessionStorage.length; i += 1) {
+                    const key = window.sessionStorage.key(i);
+                    if (!key) continue;
+                    if (prefixes.some((prefix) => key === prefix || key.startsWith(prefix + "_"))) {
+                        keysToRemove.push(key);
+                    }
+                }
+                keysToRemove.forEach((key) => window.sessionStorage.removeItem(key));
+            } catch {
+                // Ignore cache cleanup errors to avoid blocking navigation.
+            }
+        };
+
+        document.addEventListener("click", (event) => {
+            const target = event.target;
+            if (!(target instanceof Element)) return;
+            const trigger = target.closest("[data-clear-expense-cache='1']");
+            if (!trigger) return;
+            clearExpenseListCache();
+        });
+    })();
+</script>

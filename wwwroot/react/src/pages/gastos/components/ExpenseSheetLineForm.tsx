@@ -33,6 +33,8 @@ type ExpenseSheetLineFormProps = {
   draftQty: string;
   draftProjectId: string;
   draftInternational: string;
+  linkedTicketFileId: string;
+  showLinkedTicketField: boolean;
   onDraftDescriptionChange: (value: string) => void;
   onDraftTransDateChange: (value: string) => void;
   onDraftTypeValueCodeChange: (value: string) => void;
@@ -40,6 +42,7 @@ type ExpenseSheetLineFormProps = {
   onDraftQtyChange: (value: string) => void;
   onDraftProjectIdChange: (value: string) => void;
   onDraftInternationalChange: (value: string) => void;
+  onOpenLinkedTicket: () => void;
 };
 
 const formatQtyValue = (value: number | null | undefined): string => {
@@ -55,7 +58,7 @@ const formatQtyValue = (value: number | null | undefined): string => {
 const ExpenseSheetLineForm = ({
   line,
   fallbackDate,
-  sheetDescription,
+  sheetDescription: _sheetDescription,
   projectValue,
   priceText,
   amountText,
@@ -75,6 +78,8 @@ const ExpenseSheetLineForm = ({
   draftQty,
   draftProjectId,
   draftInternational,
+  linkedTicketFileId,
+  showLinkedTicketField,
   onDraftDescriptionChange,
   onDraftTransDateChange,
   onDraftTypeValueCodeChange,
@@ -82,11 +87,12 @@ const ExpenseSheetLineForm = ({
   onDraftQtyChange,
   onDraftProjectIdChange,
   onDraftInternationalChange,
+  onOpenLinkedTicket,
 }: ExpenseSheetLineFormProps) => {
   return (
     <section className="space-y-0">
       <ExpenseSectionDivider
-        label={sheetDescription}
+        label={indT("ExpenseSheets_Line", "Line")}
         className="expense-section-divider--spaced"
         labelClassName="expense-section-divider__label--title"
       />
@@ -110,6 +116,15 @@ const ExpenseSheetLineForm = ({
               fullWidth
             />
           )}
+
+          {showLinkedTicketField ? (
+            <ExpenseReadOnlyField
+              label={indT("Tickets_Field_FileId", "Ticket")}
+              value={linkedTicketFileId}
+              fullWidth
+              onClick={onOpenLinkedTicket}
+            />
+          ) : null}
 
           {isEditing ? (
             <div className="visita-field-text">

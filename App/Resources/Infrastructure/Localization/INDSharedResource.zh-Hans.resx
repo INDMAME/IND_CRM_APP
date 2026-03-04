@@ -1182,6 +1182,12 @@
   <data name="Tickets_Detail_NoLines" xml:space="preserve">
     <value>此票据没有行项目。</value>
   </data>
+  <data name="Tickets_Detail_ViewTicket" xml:space="preserve">
+    <value>View ticket</value>
+  </data>
+  <data name="Tickets_Detail_ViewAttachment" xml:space="preserve">
+    <value>View attachment</value>
+  </data>
   <data name="Common_Link" xml:space="preserve">
     <value>??</value>
   </data>

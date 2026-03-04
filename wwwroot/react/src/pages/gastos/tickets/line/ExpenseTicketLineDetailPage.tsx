@@ -29,6 +29,9 @@ const ExpenseTicketLineDetailContent = () => {
   const canDeleteTicket = canAccess("GASTOS_TICKETS", "FullAccess");
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineRecId = safeText(window.__EXPENSE_TICKET_LINE_ID__);
+  const routeParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const detailOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
+  const allowAssignedDraftEdit = detailOrigin === "sheet-create";
 
   const {
     header,
@@ -56,6 +59,7 @@ const ExpenseTicketLineDetailContent = () => {
     canEditTicket,
     fileId,
     lineRecId,
+    allowAssignedDraftEdit,
     onForbidden: showPermissionModal,
   });
 
@@ -75,6 +79,7 @@ const ExpenseTicketLineDetailContent = () => {
     [header?.currencyCode, line?.price]
   );
   const isAssignedTicket = header?.status === 1;
+  const isContextLocked = isAssignedTicket && !allowAssignedDraftEdit;
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -128,7 +133,7 @@ const ExpenseTicketLineDetailContent = () => {
     busy,
     modalOpen: modal.open,
     isEditing,
-    isLocked: isAssignedTicket,
+    isLocked: isContextLocked,
     canEditTicket,
     canDeleteTicket,
     fileId,

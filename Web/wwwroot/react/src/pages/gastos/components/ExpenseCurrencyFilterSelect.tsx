@@ -224,7 +224,7 @@ const ExpenseCurrencyFilterSelect = ({
         allowTextInput
         showSearchButton={false}
         showLabel={showLabel}
-        usePortal={false}
+        usePortal
         selectedTextMode="value"
         dropdownExpandPx={dropdownExpandPx}
         dropdownMinWidthPx={dropdownMinWidthPx}

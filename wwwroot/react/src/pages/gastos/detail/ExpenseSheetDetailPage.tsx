@@ -15,6 +15,7 @@ import ExpenseLinesTimeline from "../components/ExpenseLinesTimeline.tsx";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
+import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
@@ -295,8 +296,22 @@ const ExpenseSheetDetailPageContent = () => {
     isCreateMode,
     isSheetLocked,
     onForbidden: showPermissionModal,
-    onCompleted: () => {
-      window.location.reload();
+    onCompleted: (result) => {
+      const createdFileId = safeText(result?.fileId);
+      if (!createdFileId) {
+        window.location.reload();
+        return;
+      }
+      const currentSheetId = safeText(header?.hojaGastosId || sheetId);
+      const query = new URLSearchParams({
+        fileId: createdFileId,
+        mode: "edit",
+        origin: "sheet-create",
+      });
+      if (currentSheetId) {
+        query.set("sheetId", currentSheetId);
+      }
+      navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`);
     },
   });
 

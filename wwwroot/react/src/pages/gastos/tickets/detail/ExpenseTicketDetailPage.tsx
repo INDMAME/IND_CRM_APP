@@ -89,6 +89,18 @@ const ExpenseTicketDetailPageContent = () => {
   const canDeleteTicket = canAccess("GASTOS_TICKETS", "FullAccess");
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
+  const routeParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const autoEditMode = useMemo(() => {
+    const mode = routeParams.get("mode");
+    return safeText(mode).toLowerCase() === "edit";
+  }, [routeParams]);
+  const detailOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
+  const contextSheetId = useMemo(() => safeText(routeParams.get("sheetId")), [routeParams]);
+  const contextLineRecId = useMemo(() => safeText(routeParams.get("lineRecId")), [routeParams]);
+  const isFromExpenseSheetCreate = detailOrigin === "sheet-create";
+  const isFromExpenseLine = detailOrigin === "expense-line" && !!contextSheetId && !!contextLineRecId;
+  const allowAssignedDraftEdit = isFromExpenseSheetCreate;
+  const autoEditAttemptedRef = useRef(false);
 
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
@@ -196,7 +208,7 @@ const ExpenseTicketDetailPageContent = () => {
 
   const handleEnableEdit = useCallback(() => {
     if (!header || isLoading) return;
-    if (header.status === 1) return;
+    if (header.status === 1 && !allowAssignedDraftEdit) return;
     if (!canEditTicket) {
       showPermissionModal();
       return;
@@ -205,7 +217,14 @@ const ExpenseTicketDetailPageContent = () => {
     setModalError("");
     setIsEditing(true);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditTicket, header, isLoading]);
+  }, [allowAssignedDraftEdit, canEditTicket, header, isLoading]);
+
+  useEffect(() => {
+    if (!autoEditMode || isFromExpenseLine || autoEditAttemptedRef.current) return;
+    if (isLoading || !header) return;
+    autoEditAttemptedRef.current = true;
+    handleEnableEdit();
+  }, [autoEditMode, handleEnableEdit, header, isFromExpenseLine, isLoading]);
 
   const handleCancelEdit = useCallback(() => {
     if (!isEditing) return;
@@ -239,6 +258,12 @@ const ExpenseTicketDetailPageContent = () => {
     draftComentario,
     draftUrlFile,
     draftFileName,
+    deleteLinkedExpenseLineContext: isFromExpenseLine
+      ? {
+          sheetId: contextSheetId,
+          lineRecId: contextLineRecId,
+        }
+      : null,
     setModalError,
     setBusy,
     setStatus,
@@ -273,14 +298,19 @@ const ExpenseTicketDetailPageContent = () => {
   }, [busy, closeConfirm, handleModalConfirm, modalError]);
 
   const isAssignedTicket = header?.status === 1;
+  const isContextLocked = isAssignedTicket && !allowAssignedDraftEdit;
+  const canEditTicketInContext = canEditTicket && !isFromExpenseLine;
+  const canDeleteTicketInContext = canDeleteTicket && !isFromExpenseLine;
+  const ticketTopbarActionMode = isFromExpenseLine ? "view_only" : "default";
 
   useExpenseTicketDetailTopbarActions({
     busy,
     modalOpen: modal.open,
     isEditing,
-    isLocked: isAssignedTicket,
-    canEditTicket,
-    canDeleteTicket,
+    isLocked: ticketTopbarActionMode === "delete_only" ? false : isContextLocked,
+    actionMode: ticketTopbarActionMode,
+    canEditTicket: canEditTicketInContext,
+    canDeleteTicket: canDeleteTicketInContext,
     fileId,
     setModalError,
     handleEnableEdit,
@@ -290,24 +320,41 @@ const ExpenseTicketDetailPageContent = () => {
     onSaveSuccess: () => {
       void reloadDetail();
     },
+    onDeleteSuccess: isFromExpenseLine
+      ? () => {
+          navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(contextSheetId)}`);
+        }
+      : undefined,
     openConfirm,
     closeConfirm,
   });
 
   const openLineDetail = useCallback(
     (rawLineRecId: string) => {
-      if (isAssignedTicket) return;
+      if (isFromExpenseLine) return;
       const lineRecId = safeText(rawLineRecId);
       if (!lineRecId) return;
       if (!fileId) return;
 
-      const targetUrl = `/Gastos/TicketLineDetail?fileId=${encodeURIComponent(fileId)}&lineRecId=${encodeURIComponent(lineRecId)}`;
+      const query = new URLSearchParams({
+        fileId,
+        lineRecId,
+      });
+      if (isFromExpenseSheetCreate) {
+        query.set("origin", "sheet-create");
+        query.set("mode", "edit");
+        if (contextSheetId) {
+          query.set("sheetId", contextSheetId);
+        }
+      }
+
+      const targetUrl = `/Gastos/TicketLineDetail?${query.toString()}`;
       navigateToExpenseUrl(targetUrl, {
         askConfirmation: true,
         bypassGuardOnce: false,
       });
     },
-    [fileId, isAssignedTicket]
+    [contextSheetId, fileId, isFromExpenseLine, isFromExpenseSheetCreate]
   );
 
   const resolveClickableCard = useCallback((target: EventTarget | null) => {
@@ -539,6 +586,15 @@ const ExpenseTicketDetailPageContent = () => {
     }
   }, [draftUrlFile, header?.urlFile, isEditing, resetPreviewGesture]);
 
+  const handleOpenExpenseSheet = useCallback(() => {
+    const safeSheetId = safeText(header?.hojaGastosIdDisplay);
+    if (!safeSheetId) return;
+
+    navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(safeSheetId)}`, {
+      askConfirmation: isEditing,
+    });
+  }, [header?.hojaGastosIdDisplay, isEditing]);
+
   const statusLabel = useMemo(() => getExpenseTicketStatusLabel(header?.status), [header?.status]);
   const gastoTypeLabel = useMemo(() => {
     const currentGastoType = isEditing ? draftGastoType : header?.gastoType === null ? "" : String(header?.gastoType ?? "");
@@ -672,6 +728,7 @@ const ExpenseTicketDetailPageContent = () => {
             onDraftCurrencyCodeChange={setDraftCurrencyCode}
             onDraftTransDateChange={setDraftTransDate}
             onOpenFile={openFile}
+            onOpenExpenseSheet={handleOpenExpenseSheet}
           />
           <ExpenseTicketLinesList
             visibleLines={visibleLines}

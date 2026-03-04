@@ -5,7 +5,6 @@ import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
-import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 
 const hasRealExpenseSheetValue = (value: string): boolean => {
@@ -16,14 +15,8 @@ const hasRealExpenseSheetValue = (value: string): boolean => {
   return true;
 };
 
-const IMAGE_EXTENSION_REGEX = /\.(png|jpe?g|gif|bmp|webp|tiff?|heic|heif|avif|svg)(?:$|[?#])/i;
-
-const hasImagePreviewLink = (urlValue: string, fileNameValue: string): boolean => {
-  const url = safeText(urlValue);
-  if (!url) return false;
-  if (/^data:image\//i.test(url)) return true;
-  if (IMAGE_EXTENSION_REGEX.test(url)) return true;
-  return IMAGE_EXTENSION_REGEX.test(safeText(fileNameValue));
+const hasImagePreviewLink = (urlValue: string): boolean => {
+  return safeText(urlValue).length > 0;
 };
 
 type ExpenseTicketDetailHeaderFormProps = {
@@ -45,6 +38,7 @@ type ExpenseTicketDetailHeaderFormProps = {
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftTransDateChange: (value: string) => void;
   onOpenFile: () => void;
+  onOpenExpenseSheet?: () => void;
 };
 
 // Read-only and editable header form for ticket detail.
@@ -67,121 +61,118 @@ const ExpenseTicketDetailHeaderForm = ({
   onDraftCurrencyCodeChange,
   onDraftTransDateChange,
   onOpenFile,
+  onOpenExpenseSheet,
 }: ExpenseTicketDetailHeaderFormProps) => {
   const previewUrl = safeText(isEditing ? draftUrlFile : header.urlFile);
-  const previewFileName = safeText(isEditing ? draftFileName : header.fileName);
-  const canOpenFile = hasImagePreviewLink(previewUrl, previewFileName);
+  const canOpenFile = hasImagePreviewLink(previewUrl);
   const showExpenseSheetField = hasRealExpenseSheetValue(header.hojaGastosIdDisplay);
 
   return (
-    <section className="space-y-0">
-      <ExpenseSectionDivider label={indT("Tickets_Detail_Header", "Header")} className="expense-section-divider--spaced" />
+    <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ExpenseReadOnlyField
+          label={indT("Tickets_Field_FileId", "Ticket")}
+          value={header.fileId || "-"}
+        />
 
-      <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <ExpenseReadOnlyField
+          label={indT("Tickets_Field_Status", "Status")}
+          value={statusLabel || "-"}
+        />
+
+        {isEditing ? (
+          <div className="sm:col-span-2 space-y-1.5">
+            <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Description", "Description")}</label>
+            <input
+              className="form-control"
+              value={draftDescription}
+              onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+              aria-label={indT("ExpenseSheets_Field_Description", "Description")}
+            />
+          </div>
+        ) : (
           <ExpenseReadOnlyField
-            label={indT("Tickets_Field_FileId", "Ticket")}
-            value={header.fileId || "-"}
+            label={indT("ExpenseSheets_Field_Description", "Description")}
+            value={header.description || "-"}
+            fullWidth
           />
+        )}
 
+        {isEditing ? (
+          <SelectCombobox
+            label={indT("Tickets_Filter_Category", "Category")}
+            options={gastoTypeOptions}
+            value={draftGastoType}
+            onChange={onDraftGastoTypeChange}
+            placeholder={indT("Tickets_Filter_Category", "Category")}
+            usePortal={false}
+            allowTextInput={false}
+            showSearchButton={false}
+          />
+        ) : (
           <ExpenseReadOnlyField
-            label={indT("Tickets_Field_Status", "Status")}
-            value={statusLabel || "-"}
+            label={indT("Tickets_Filter_Category", "Category")}
+            value={gastoTypeLabel || "-"}
           />
+        )}
 
-          {isEditing ? (
-            <div className="sm:col-span-2 space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Description", "Description")}</label>
-              <input
-                className="form-control"
-                value={draftDescription}
-                onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
-                aria-label={indT("ExpenseSheets_Field_Description", "Description")}
-              />
-            </div>
-          ) : (
-            <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_Description", "Description")}
-              value={header.description || "-"}
-              fullWidth
-            />
-          )}
-
-          {isEditing ? (
-            <SelectCombobox
-              label={indT("Tickets_Filter_Category", "Category")}
-              options={gastoTypeOptions}
-              value={draftGastoType}
-              onChange={onDraftGastoTypeChange}
-              placeholder={indT("Tickets_Filter_Category", "Category")}
-              usePortal={false}
-              allowTextInput={false}
-              showSearchButton={false}
-            />
-          ) : (
-            <ExpenseReadOnlyField
-              label={indT("Tickets_Filter_Category", "Category")}
-              value={gastoTypeLabel || "-"}
-            />
-          )}
-
-          {showExpenseSheetField ? (
-            <ExpenseReadOnlyField
-              label={indT("Tickets_Field_ExpenseSheetDisplay", "Expense sheet")}
-              value={header.hojaGastosIdDisplay || "-"}
-            />
-          ) : null}
-
-          {isEditing ? (
-            <ExpenseCurrencyFilterSelect
-              label={indT("ExpenseSheets_Field_Currency", "Currency")}
-              placeholder={indT("ExpenseSheets_Field_Currency", "Currency")}
-              value={draftCurrencyCode}
-              onChange={onDraftCurrencyCodeChange}
-              idBase="expense-ticket-detail-currency"
-            />
-          ) : (
-            <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_Currency", "Currency")}
-              value={header.currencyCode || "-"}
-            />
-          )}
-
+        {showExpenseSheetField ? (
           <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")}
-            value={totalAmountText || "-"}
+            label={indT("Tickets_Field_ExpenseSheetDisplay", "Expense sheet")}
+            value={header.hojaGastosIdDisplay || "-"}
+            onClick={onOpenExpenseSheet}
           />
+        ) : null}
 
-          {isEditing ? (
-            <div className="visita-field-text">
-              <SingleDatePicker
-                label={indT("ExpenseSheets_Field_CreatedDate", "Date")}
-                value={draftTransDate}
-                onChange={onDraftTransDateChange}
-                readOnly={!isEditing}
-                disabled={!isEditing}
-              />
-            </div>
-          ) : (
+        {isEditing ? (
+          <ExpenseCurrencyFilterSelect
+            label={indT("ExpenseSheets_Field_Currency", "Currency")}
+            placeholder={indT("ExpenseSheets_Field_Currency", "Currency")}
+            value={draftCurrencyCode}
+            onChange={onDraftCurrencyCodeChange}
+            idBase="expense-ticket-detail-currency"
+          />
+        ) : (
+          <ExpenseReadOnlyField
+            label={indT("ExpenseSheets_Field_Currency", "Currency")}
+            value={header.currencyCode || "-"}
+          />
+        )}
+
+        <ExpenseReadOnlyField
+          label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")}
+          value={totalAmountText || "-"}
+        />
+
+        {isEditing ? (
+          <div className="visita-field-text">
+            <SingleDatePicker
+              label={indT("ExpenseSheets_Field_CreatedDate", "Date")}
+              value={draftTransDate}
+              onChange={onDraftTransDateChange}
+              readOnly={!isEditing}
+              disabled={!isEditing}
+            />
+          </div>
+        ) : (
             <ExpenseReadOnlyField
               label={indT("ExpenseSheets_Field_CreatedDate", "Date")}
               value={transDateText || formatExpenseDisplayDate(header.transDate, document?.documentElement?.lang || "es-ES") || "-"}
             />
           )}
-        </div>
+      </div>
 
-        {canOpenFile ? (
-          <div className="flex justify-end">
-            <button
-              type="button"
-              className="ind-action-btn px-3 py-1.5 text-xs"
-              onClick={onOpenFile}
-            >
-              {indT("Tickets_Detail_ViewTicket", "Ver ticket")}
-            </button>
-          </div>
-        ) : null}
-      </section>
+      {canOpenFile ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            className="ind-action-btn px-3 py-1.5 text-xs"
+            onClick={onOpenFile}
+          >
+            {indT("Tickets_Detail_ViewAttachment", "Ver adjunto")}
+          </button>
+        </div>
+      ) : null}
     </section>
   );
 };

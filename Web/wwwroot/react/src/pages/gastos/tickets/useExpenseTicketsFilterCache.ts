@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { normalizeExpenseTicketFilterSnapshot } from "./expenseTicketFilterSnapshot.ts";
-import type { ExpenseTicketAppliedFilterSnapshot } from "./expenseTicketListTypes.ts";
+import type { ExpenseTicketAppliedFilterSnapshot, ExpenseTicketCard } from "./expenseTicketListTypes.ts";
 import {
   getSessionJsonWithExpiry,
   getSessionValueWithExpiry,
@@ -9,15 +9,82 @@ import {
   setSessionValueWithExpiry,
 } from "../../../utils/sessionExpiry.ts";
 
-const EXPENSE_TICKETS_FILTER_KEY = "expense_tickets_filter_v1";
-const EXPENSE_TICKETS_RETURN_FLAG_KEY = "expense_tickets_return_v1";
+const EXPENSE_TICKETS_FILTER_KEY_PREFIX = "expense_tickets_filter_v1";
+const EXPENSE_TICKETS_RETURN_FLAG_KEY_PREFIX = "expense_tickets_return_v1";
 const EXPENSE_TICKETS_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+const ALLOWED_TICKET_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 export type ExpenseTicketsCachedState = {
   filters: ExpenseTicketAppliedFilterSnapshot;
   page: number;
   scrollY: number;
   focusFileId: string;
+  items: ExpenseTicketCard[];
+  total: number;
+};
+
+const getScopeToken = (): string => {
+  if (typeof window === "undefined") return "session";
+  const raw = String((window as { __IND_ENTRA_OID__?: unknown }).__IND_ENTRA_OID__ || "")
+    .trim()
+    .toLowerCase();
+  return raw || "session";
+};
+
+const getScopedKeys = () => {
+  const scope = getScopeToken();
+  return {
+    filterKey: `${EXPENSE_TICKETS_FILTER_KEY_PREFIX}_${scope}`,
+    returnFlagKey: `${EXPENSE_TICKETS_RETURN_FLAG_KEY_PREFIX}_${scope}`,
+  };
+};
+
+const toNullableNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const normalizeStatus = (value: unknown): 0 | 1 | null => {
+  const parsed = Number(value);
+  if (parsed === 0 || parsed === 1) return parsed;
+  return null;
+};
+
+const normalizeProcessedByAi = (value: unknown): boolean | null => {
+  if (value === true || value === false) return value;
+  if (value === 1 || value === "1" || value === "true") return true;
+  if (value === 0 || value === "0" || value === "false") return false;
+  return null;
+};
+
+const normalizeTicketGastoType = (value: unknown): ExpenseTicketCard["gastoType"] => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || !ALLOWED_TICKET_GASTO_TYPES.has(parsed)) {
+    return null;
+  }
+  return parsed as ExpenseTicketCard["gastoType"];
+};
+
+const normalizeItems = (raw: unknown): ExpenseTicketCard[] => {
+  if (!Array.isArray(raw)) return [];
+
+  return raw.map((entry) => {
+    const item = (entry || {}) as Partial<ExpenseTicketCard>;
+    return {
+      fileId: String(item.fileId || "").trim(),
+      description: String(item.description || "").trim(),
+      status: normalizeStatus(item.status),
+      hojaGastosIdDisplay: String(item.hojaGastosIdDisplay || "").trim(),
+      processedByAI: normalizeProcessedByAi(item.processedByAI),
+      currencyCode: String(item.currencyCode || "").trim(),
+      totalAmount: toNullableNumber(item.totalAmount),
+      createdByUserId: String(item.createdByUserId || "").trim(),
+      transDate: String(item.transDate || "").trim(),
+      urlFile: String(item.urlFile || "").trim(),
+      fileName: String(item.fileName || "").trim(),
+      gastoType: normalizeTicketGastoType(item.gastoType),
+    };
+  });
 };
 
 const normalizeState = (raw: ExpenseTicketsCachedState | null): ExpenseTicketsCachedState | null => {
@@ -28,26 +95,33 @@ const normalizeState = (raw: ExpenseTicketsCachedState | null): ExpenseTicketsCa
 
   const scrollRaw = Number(raw.scrollY);
   const scrollY = Number.isFinite(scrollRaw) && scrollRaw >= 0 ? Math.floor(scrollRaw) : 0;
+  const items = normalizeItems((raw as { items?: unknown }).items);
+  const totalRaw = Number((raw as { total?: unknown }).total);
+  const total = Number.isFinite(totalRaw) && totalRaw >= 0 ? totalRaw : items.length;
 
   return {
     filters: normalizeExpenseTicketFilterSnapshot(raw.filters),
     page,
     scrollY,
     focusFileId: String(raw.focusFileId || "").trim(),
+    items,
+    total,
   };
 };
 
 // Centralizes cache persistence for returning from ticket detail to list.
 export const useExpenseTicketsFilterCache = () => {
   const readCachedState = useCallback((): ExpenseTicketsCachedState | null => {
-    const raw = getSessionJsonWithExpiry<ExpenseTicketsCachedState>(EXPENSE_TICKETS_FILTER_KEY);
+    const keys = getScopedKeys();
+    const raw = getSessionJsonWithExpiry<ExpenseTicketsCachedState>(keys.filterKey);
     return normalizeState(raw);
   }, []);
 
   const consumeReturnFlag = useCallback((): boolean => {
-    const raw = getSessionValueWithExpiry(EXPENSE_TICKETS_RETURN_FLAG_KEY);
+    const keys = getScopedKeys();
+    const raw = getSessionValueWithExpiry(keys.returnFlagKey);
     if (raw === "1") {
-      removeSessionValueWithExpiry(EXPENSE_TICKETS_RETURN_FLAG_KEY);
+      removeSessionValueWithExpiry(keys.returnFlagKey);
       return true;
     }
     return false;
@@ -57,13 +131,15 @@ export const useExpenseTicketsFilterCache = () => {
     const normalized = normalizeState(state);
     if (!normalized) return;
 
-    setSessionJsonWithExpiry(EXPENSE_TICKETS_FILTER_KEY, normalized, EXPENSE_TICKETS_CACHE_TTL_MS);
-    setSessionValueWithExpiry(EXPENSE_TICKETS_RETURN_FLAG_KEY, "1", EXPENSE_TICKETS_CACHE_TTL_MS);
+    const keys = getScopedKeys();
+    setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_TICKETS_CACHE_TTL_MS);
+    setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_TICKETS_CACHE_TTL_MS);
   }, []);
 
   const clearCachedState = useCallback(() => {
-    removeSessionValueWithExpiry(EXPENSE_TICKETS_FILTER_KEY);
-    removeSessionValueWithExpiry(EXPENSE_TICKETS_RETURN_FLAG_KEY);
+    const keys = getScopedKeys();
+    removeSessionValueWithExpiry(keys.filterKey);
+    removeSessionValueWithExpiry(keys.returnFlagKey);
   }, []);
 
   return {

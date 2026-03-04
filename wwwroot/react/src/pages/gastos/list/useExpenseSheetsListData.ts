@@ -19,6 +19,23 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
+  const restoreListSnapshot = useCallback(
+    (snapshot: { items: ExpenseSheetCard[]; total: number; page: number }) => {
+      const safeItems = Array.isArray(snapshot.items) ? snapshot.items : [];
+      const safeTotalRaw = Number(snapshot.total);
+      const safeTotal = Number.isFinite(safeTotalRaw) && safeTotalRaw >= 0 ? safeTotalRaw : safeItems.length;
+      const safePageRaw = Number(snapshot.page);
+      const safePage = Number.isFinite(safePageRaw) && safePageRaw > 0 ? Math.floor(safePageRaw) : 1;
+
+      setItems(safeItems);
+      setTotal(safeTotal);
+      setCurrentPage(safePage);
+      setErrorMessage("");
+      setIsLoading(false);
+    },
+    []
+  );
+
   const loadList = useCallback(
     async (page: number, filters: ExpenseSheetListFilters) => {
       if (!hasAccess) {
@@ -82,6 +99,7 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
     isLoading,
     errorMessage,
     loadList,
+    restoreListSnapshot,
     resetList,
   };
 };

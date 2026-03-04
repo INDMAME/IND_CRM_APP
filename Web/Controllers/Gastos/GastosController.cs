@@ -85,7 +85,7 @@ namespace IND_CRM_APP.Controllers
 
         // Shows the expense ticket detail page.
         [HttpGet]
-        public async Task<IActionResult> TicketDetail(string fileId)
+        public async Task<IActionResult> TicketDetail(string fileId, string mode = "", string origin = "", string sheetId = "", string lineRecId = "")
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -103,13 +103,25 @@ namespace IND_CRM_APP.Controllers
                 .Select(x => new { value = x.Key, text = x.Value })
                 .OrderBy(x => int.TryParse(x.value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var code) ? code : int.MaxValue)
                 .ToList();
-            ViewData["TopbarBackUrl"] = "/Gastos/Tickets";
+            var normalizedOrigin = (origin ?? string.Empty).Trim().ToLowerInvariant();
+            if (normalizedOrigin == "expense-line" && !string.IsNullOrWhiteSpace(sheetId) && !string.IsNullOrWhiteSpace(lineRecId))
+            {
+                ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetLineDetail?hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}&lineRecId={Uri.EscapeDataString(lineRecId.Trim())}";
+            }
+            else if (normalizedOrigin == "sheet-create")
+            {
+                ViewData["TopbarBackUrl"] = $"/Gastos/Tickets?ticketFileId={Uri.EscapeDataString(safeFileId)}";
+            }
+            else
+            {
+                ViewData["TopbarBackUrl"] = "/Gastos/Tickets";
+            }
             return View("~/Web/Views/Gastos/TicketDetail.cshtml");
         }
 
         // Shows one ticket line detail page.
         [HttpGet]
-        public async Task<IActionResult> TicketLineDetail(string fileId, string lineRecId)
+        public async Task<IActionResult> TicketLineDetail(string fileId, string lineRecId, string mode = "", string origin = "", string sheetId = "")
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -124,7 +136,18 @@ namespace IND_CRM_APP.Controllers
 
             ViewBag.TicketFileId = safeFileId;
             ViewBag.TicketLineRecId = safeLineRecId;
-            ViewData["TopbarBackUrl"] = $"/Gastos/TicketDetail?fileId={Uri.EscapeDataString(safeFileId)}";
+            var normalizedOrigin = (origin ?? string.Empty).Trim().ToLowerInvariant();
+            var backQuery = new List<string>
+            {
+                $"fileId={Uri.EscapeDataString(safeFileId)}"
+            };
+            if (!string.IsNullOrWhiteSpace(mode))
+                backQuery.Add($"mode={Uri.EscapeDataString(mode.Trim())}");
+            if (!string.IsNullOrWhiteSpace(normalizedOrigin))
+                backQuery.Add($"origin={Uri.EscapeDataString(normalizedOrigin)}");
+            if (!string.IsNullOrWhiteSpace(sheetId))
+                backQuery.Add($"sheetId={Uri.EscapeDataString(sheetId.Trim())}");
+            ViewData["TopbarBackUrl"] = $"/Gastos/TicketDetail?{string.Join("&", backQuery)}";
             return View("~/Web/Views/Gastos/TicketLineDetail.cshtml");
         }
 

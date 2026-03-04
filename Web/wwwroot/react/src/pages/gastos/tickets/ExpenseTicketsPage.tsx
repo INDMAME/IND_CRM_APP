@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
+import FloatingActionButton, { type FloatingActionButtonMenuItem } from "../../../components/commons/FloatingActionButton.tsx";
+import Spinner from "../../../components/commons/Spinner.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
@@ -13,9 +15,11 @@ import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDateParts, formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
+import { useExpenseSheetQuickTicketFlow } from "../detail/useExpenseSheetQuickTicketFlow.ts";
 import { useExpenseTicketsFiltersState } from "./useExpenseTicketsFiltersState.ts";
 import { useExpenseTicketsListData } from "./useExpenseTicketsListData.ts";
 import { useExpenseTicketsFilterCache } from "./useExpenseTicketsFilterCache.ts";
+import type { ExpenseTicketAppliedFilterSnapshot } from "./expenseTicketListTypes.ts";
 
 const PAGE_SIZE = 10;
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
@@ -51,10 +55,24 @@ const buildFallbackGastoTypeOptions = (): ExpenseSelectOption[] => {
     .sort((left, right) => Number(left.value) - Number(right.value));
 };
 
+const NewTicketIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="h-6 w-6">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M10 20h-5a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v2" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14.362 11.15a3 3 0 1 0 -4.144 4.263" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14 21v-4a2 2 0 1 1 4 0v4" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M14 19h4" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v6" />
+  </svg>
+);
+
 const ExpenseTicketsPageContent = () => {
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
+  const canCreateTicket = canAccess("GASTOS_TICKETS", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const cameraInputRef = React.useRef<HTMLInputElement | null>(null);
+  const galleryInputRef = React.useRef<HTMLInputElement | null>(null);
   const didRestoreOnMountRef = React.useRef(false);
+  const didApplyQueryFilterRef = React.useRef(false);
   const pendingScrollRestoreRef = React.useRef<number | null>(null);
   const pendingFocusFileIdRef = React.useRef("");
 
@@ -90,7 +108,16 @@ const ExpenseTicketsPageContent = () => {
     return map;
   }, [gastoTypeOptions]);
 
-  const { items, total, currentPage, isLoading, errorMessage, loadList, resetList } = useExpenseTicketsListData({
+  const {
+    items,
+    total,
+    currentPage,
+    isLoading,
+    errorMessage,
+    loadList,
+    restoreListSnapshot,
+    resetList,
+  } = useExpenseTicketsListData({
     hasAccess,
     pageSize: PAGE_SIZE,
     onForbidden: showPermissionModal,
@@ -134,6 +161,48 @@ const ExpenseTicketsPageContent = () => {
     },
   });
 
+  const {
+    sourcePickerOpen,
+    busy: quickTicketBusy,
+    progressMessage: quickTicketProgressMessage,
+    errorMessage: quickTicketErrorMessage,
+    hasPendingUploadRetry,
+    traceList: quickTicketTraceList,
+    openSourcePicker,
+    closeSourcePicker,
+    selectFromCamera,
+    selectFromGallery,
+    handleSelectedFile,
+    retryPendingUpload,
+    clearError: clearQuickTicketError,
+  } = useExpenseSheetQuickTicketFlow({
+    canCreateExpense: canCreateTicket,
+    isCreateMode: false,
+    isSheetLocked: false,
+    linkToSheet: false,
+    currencyCode: currencyCode || "EUR",
+    onForbidden: showPermissionModal,
+    onCompleted: (result) => {
+      const createdFileId = safeText(result?.fileId);
+      if (!createdFileId) return;
+      navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(createdFileId)}&mode=edit`, {
+        askConfirmation: false,
+      });
+    },
+  });
+
+  const fabMenuItems = useMemo<FloatingActionButtonMenuItem[]>(
+    () => [
+      {
+        id: "new-ticket",
+        label: indT("ExpenseSheets_Fab_NewTicket", "Nuevo Ticket"),
+        icon: <NewTicketIcon />,
+        onClick: openSourcePicker,
+      },
+    ],
+    [openSourcePicker]
+  );
+
   const openTicketDetail = useCallback(
     (rawFileId: string) => {
       const fileId = safeText(rawFileId);
@@ -145,6 +214,8 @@ const ExpenseTicketsPageContent = () => {
         page: currentPage < 1 ? 1 : currentPage,
         scrollY: typeof window !== "undefined" ? window.scrollY || 0 : 0,
         focusFileId: fileId,
+        items,
+        total,
       });
 
       navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(fileId)}`, {
@@ -152,7 +223,7 @@ const ExpenseTicketsPageContent = () => {
         bypassGuardOnce: false,
       });
     },
-    [appliedFilters, currentPage, currentFilters, saveCachedState]
+    [appliedFilters, currentPage, currentFilters, items, saveCachedState, total]
   );
 
   const resolveClickableCard = useCallback((target: EventTarget | null) => {
@@ -211,14 +282,13 @@ const ExpenseTicketsPageContent = () => {
       });
     }
 
-    summary.push({
-      key: "status",
-      label: indT("Tickets_Filter_Status", "Status"),
-      value:
-        snapshot.statusFilter === ""
-          ? indT("Tickets_Filter_All", "All")
-          : getExpenseTicketStatusLabel(snapshot.statusFilter),
-    });
+    if (snapshot.statusFilter !== "") {
+      summary.push({
+        key: "status",
+        label: indT("Tickets_Filter_Status", "Status"),
+        value: getExpenseTicketStatusLabel(snapshot.statusFilter),
+      });
+    }
 
     if (snapshot.gastoTypeFilter !== "") {
       const categoryLabel = gastoTypeLabelMap.get(String(snapshot.gastoTypeFilter)) || String(snapshot.gastoTypeFilter);
@@ -246,10 +316,41 @@ const ExpenseTicketsPageContent = () => {
   const showSummary = !showFilters && summaryItems.length > 0;
 
   useEffect(() => {
+    if (didApplyQueryFilterRef.current) return;
+    didApplyQueryFilterRef.current = true;
+
+    const url = new URL(window.location.href);
+    const ticketFileId = safeText(url.searchParams.get("ticketFileId"));
+    if (!ticketFileId) return;
+
+    const querySnapshot: ExpenseTicketAppliedFilterSnapshot = {
+      fromDate: "",
+      toDate: "",
+      filterKey: ticketFileId,
+      currencyCode: "",
+      statusFilter: "",
+      gastoTypeFilter: "",
+      processedByIaFilter: "all",
+    };
+
+    clearCachedState();
+    restoreAppliedFilters(querySnapshot);
+    pendingFocusFileIdRef.current = ticketFileId;
+    void loadList(1, querySnapshot);
+
+    url.searchParams.delete("ticketFileId");
+    const cleanedQuery = url.searchParams.toString();
+    window.history.replaceState({}, "", cleanedQuery ? `${url.pathname}?${cleanedQuery}` : url.pathname);
+  }, [clearCachedState, loadList, restoreAppliedFilters]);
+
+  useEffect(() => {
     if (didRestoreOnMountRef.current) return;
     didRestoreOnMountRef.current = true;
 
-    if (!consumeReturnFlag()) return;
+    if (!consumeReturnFlag()) {
+      clearCachedState();
+      return;
+    }
 
     const cachedState = readCachedState();
     if (!cachedState) {
@@ -260,8 +361,16 @@ const ExpenseTicketsPageContent = () => {
     restoreAppliedFilters(cachedState.filters);
     pendingScrollRestoreRef.current = cachedState.scrollY;
     pendingFocusFileIdRef.current = cachedState.focusFileId;
+    if (cachedState.items.length > 0 || cachedState.total > 0) {
+      restoreListSnapshot({
+        items: cachedState.items,
+        total: cachedState.total,
+        page: cachedState.page,
+      });
+      return;
+    }
     void loadList(cachedState.page, cachedState.filters);
-  }, [clearCachedState, consumeReturnFlag, loadList, readCachedState, restoreAppliedFilters]);
+  }, [clearCachedState, consumeReturnFlag, loadList, readCachedState, restoreAppliedFilters, restoreListSnapshot]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -324,6 +433,110 @@ const ExpenseTicketsPageContent = () => {
 
   return (
     <div className="space-y-2">
+      <input
+        ref={cameraInputRef}
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
+        capture="environment"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0] || null;
+          event.currentTarget.value = "";
+          void handleSelectedFile(file, "camera");
+        }}
+      />
+      <input
+        ref={galleryInputRef}
+        type="file"
+        accept="image/jpeg,image/jpg,image/png,image/webp"
+        className="hidden"
+        onChange={(event) => {
+          const file = event.currentTarget.files?.[0] || null;
+          event.currentTarget.value = "";
+          void handleSelectedFile(file, "gallery");
+        }}
+      />
+
+      {sourcePickerOpen ? (
+        <div className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/45 px-4 py-6">
+          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+            <h3 className="text-[16px] font-semibold text-slate-800">
+              {indT("ExpenseSheets_NewTicket_Source_Title", "Nuevo ticket")}
+            </h3>
+            <p className="mt-1 text-sm text-slate-600">
+              {indT(
+                "ExpenseSheets_NewTicket_Source_Body",
+                "Selecciona una fuente para capturar o elegir la imagen del ticket."
+              )}
+            </p>
+
+            <div className="mt-4 grid grid-cols-1 gap-2">
+              <button
+                type="button"
+                className="ind-action-btn w-full px-3 py-2 text-sm"
+                onClick={() => {
+                  void selectFromCamera(cameraInputRef.current);
+                }}
+              >
+                {indT("ExpenseSheets_NewTicket_Source_Camera", "Usar camara")}
+              </button>
+              <button
+                type="button"
+                className="ind-action-btn w-full px-3 py-2 text-sm"
+                onClick={() => selectFromGallery(galleryInputRef.current)}
+              >
+                {indT("ExpenseSheets_NewTicket_Source_Gallery", "Elegir imagen")}
+              </button>
+              <button
+                type="button"
+                className="ind-action-btn w-full px-3 py-2 text-sm"
+                onClick={closeSourcePicker}
+              >
+                {indT("Common_Cancel", "Cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {quickTicketBusy ? (
+        <div className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/35 px-4">
+          <div className="glass-panel shadow-card flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-sm text-slate-700">
+            <Spinner size="h-5 w-5" label={indT("Common_Loading", "Loading")} />
+            <span>{quickTicketProgressMessage || indT("Common_Loading", "Loading")}</span>
+          </div>
+        </div>
+      ) : null}
+
+      {quickTicketErrorMessage ? (
+        <div className="glass-panel shadow-card space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+          <p>{quickTicketErrorMessage}</p>
+          {quickTicketTraceList.length > 0 ? (
+            <div className="rounded-lg border border-rose-200 bg-white p-2 text-xs text-rose-700">
+              {quickTicketTraceList.map((entry) => (
+                <p key={`${entry.step}-${entry.at}`}>{`${entry.step}: ${entry.traceId}`}</p>
+              ))}
+            </div>
+          ) : null}
+          <div className="flex flex-wrap gap-2">
+            {hasPendingUploadRetry ? (
+              <button
+                type="button"
+                className="ind-action-btn px-3 py-1.5 text-xs"
+                onClick={() => {
+                  void retryPendingUpload();
+                }}
+              >
+                {indT("ExpenseSheets_NewTicket_RetryUpload", "Reintentar upload")}
+              </button>
+            ) : null}
+            <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={clearQuickTicketError}>
+              {indT("Common_Close", "Close")}
+            </button>
+          </div>
+        </div>
+      ) : null}
+
       {showSummary ? (
         <div className="filter-card filter-card--summary p-3 sm:p-4 mt-1 mb-3">
           <div className="expense-summary-grid grid grid-cols-1 min-[360px]:grid-cols-2 items-start gap-x-4 gap-y-1 text-xs">
@@ -397,38 +610,9 @@ const ExpenseTicketsPageContent = () => {
             const gastoTypeLabel = gastoTypeCode
               ? gastoTypeLabelMap.get(gastoTypeCode) || gastoTypeCode
               : indT("Common_NotAvailable", "N/A");
-            const hojaGastosIdDisplay = safeText(item.hojaGastosIdDisplay);
-            const subtitleParts: string[] = [];
-            subtitleParts.push(`${indT("Tickets_Filter_Category", "Category")}: ${gastoTypeLabel}`);
-            if (hojaGastosIdDisplay) {
-              subtitleParts.push(
-                `${indT("Tickets_Field_ExpenseSheetDisplay", "Expense sheet")}: ${hojaGastosIdDisplay}`
-              );
-            }
-            const cardSubtitle = subtitleParts.join("   ");
+            const cardSubtitle = gastoTypeLabel;
             const statusIcons = isAssignedToExpenseSheet || showProcessedByAiIcon ? (
               <>
-                {showProcessedByAiIcon ? (
-                  <span className="expense-ticket-card__status-icon expense-ticket-card__status-icon--ai" title={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}>
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1.75"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="h-7 w-7"
-                    >
-                      <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                      <path d="M8 16v-6a2 2 0 1 1 4 0v6" />
-                      <path d="M8 13h4" />
-                      <path d="M16 8v8" />
-                    </svg>
-                  </span>
-                ) : null}
                 {isAssignedToExpenseSheet ? (
                   <span className="expense-ticket-card__status-icon" title={statusLabel}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
@@ -438,6 +622,14 @@ const ExpenseTicketsPageContent = () => {
                         d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"
                       />
                     </svg>
+                  </span>
+                ) : null}
+                {showProcessedByAiIcon ? (
+                  <span
+                    className="expense-ticket-card__status-icon expense-ticket-card__status-icon--ai"
+                    title={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}
+                  >
+                    <span className="expense-ticket-card__ai-label">AI</span>
                   </span>
                 ) : null}
               </>
@@ -475,6 +667,17 @@ const ExpenseTicketsPageContent = () => {
         }}
         labels={paginationLabels}
       />
+
+      {canCreateTicket ? (
+        <FloatingActionButton
+          ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
+          size={76}
+          right={16}
+          bottom={24}
+          menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
+          menuItems={fabMenuItems}
+        />
+      ) : null}
     </div>
   );
 };

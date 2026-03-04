@@ -132,6 +132,12 @@
   <data name="Tickets_Detail_NoLines" xml:space="preserve">
     <value>Ez dago ticket honetarako lerrorik.</value>
   </data>
+  <data name="Tickets_Detail_ViewTicket" xml:space="preserve">
+    <value>Ticketa ikusi</value>
+  </data>
+  <data name="Tickets_Detail_ViewAttachment" xml:space="preserve">
+    <value>Eranskina ikusi</value>
+  </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>gastu-orriak</value>
   </data>

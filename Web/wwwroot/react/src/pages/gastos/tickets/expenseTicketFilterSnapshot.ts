@@ -8,7 +8,16 @@ import type {
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 const normalizeGastoTypeFilter = (value: unknown): "" | ExpenseGastoTypeCode => {
-  const parsed = Number(value);
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  const raw = String(value).trim();
+  if (!raw) {
+    return "";
+  }
+
+  const parsed = Number(raw);
   if (!Number.isInteger(parsed) || !ALLOWED_GASTO_TYPES.has(parsed)) {
     return "";
   }

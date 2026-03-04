@@ -24,6 +24,7 @@ type UseExpenseTopbarCrudActionsArgs = {
   isEditing: boolean;
   isCreateMode: boolean;
   isLocked: boolean;
+  actionMode?: "default" | "delete_only" | "view_only";
   allowCreateModeActionsWhenLocked?: boolean;
   canCreate: boolean;
   canEdit: boolean;
@@ -59,6 +60,7 @@ export const useExpenseTopbarCrudActions = ({
   isEditing,
   isCreateMode,
   isLocked,
+  actionMode = "default",
   allowCreateModeActionsWhenLocked = false,
   canCreate,
   canEdit,
@@ -87,7 +89,33 @@ export const useExpenseTopbarCrudActions = ({
     const deleteBtn = document.getElementById(ids.deleteBtnId);
     const cancelBtn = document.getElementById(ids.cancelBtnId);
     if (!editIcon || !saveIcon) return;
+    const editBtn = editIcon.closest("button");
 
+    if (actionMode === "view_only") {
+      if (editBtn) editBtn.classList.add("topbar-hidden");
+      editIcon.classList.add("hidden");
+      saveIcon.classList.add("hidden");
+      if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
+      if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
+      return;
+    }
+
+    if (actionMode === "delete_only") {
+      if (editBtn) editBtn.classList.add("topbar-hidden");
+      editIcon.classList.add("hidden");
+      saveIcon.classList.add("hidden");
+      if (deleteBtn) {
+        if (canDelete) {
+          deleteBtn.classList.remove("topbar-hidden");
+        } else {
+          deleteBtn.classList.add("topbar-hidden");
+        }
+      }
+      if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
+      return;
+    }
+
+    if (editBtn) editBtn.classList.remove("topbar-hidden");
     if (lockActions) {
       editIcon.classList.add("hidden");
       saveIcon.classList.add("hidden");
@@ -107,10 +135,11 @@ export const useExpenseTopbarCrudActions = ({
       if (deleteBtn) deleteBtn.classList.remove("topbar-hidden");
       if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
     }
-  }, [ids.cancelBtnId, ids.deleteBtnId, ids.editIconId, ids.saveIconId, isEditing, lockActions]);
+  }, [actionMode, canDelete, ids.cancelBtnId, ids.deleteBtnId, ids.editIconId, ids.saveIconId, isEditing, lockActions]);
 
   useEffect(() => {
     const onEdit = () => {
+      if (actionMode === "delete_only" || actionMode === "view_only") return;
       if (lockActions) return;
 
       const canProceed = isCreateMode ? canCreate : canEdit;
@@ -130,14 +159,10 @@ export const useExpenseTopbarCrudActions = ({
             const ok = await handleSave();
             if (ok) {
               closeConfirm();
-              // Create mode redirects to a new page; skip delayed success animation to avoid intermediate UI flash.
-              if (isCreateMode) {
-                onSaveSuccess();
-                return ok;
-              }
               await wait(200);
-              flashActionMark("okProcess", 1200);
-              await wait(1200);
+              const successDurationMs = isCreateMode ? 900 : 1200;
+              flashActionMark("okProcess", successDurationMs);
+              await wait(successDurationMs);
               onSaveSuccess();
             }
             return ok;
@@ -149,6 +174,7 @@ export const useExpenseTopbarCrudActions = ({
     };
 
     const onDelete = () => {
+      if (actionMode === "view_only") return;
       if (isCreateMode || lockActions) return;
       if (!canDelete) {
         showPermissionModal();
@@ -190,6 +216,7 @@ export const useExpenseTopbarCrudActions = ({
       window.removeEventListener(events.cancelEvent, onCancel);
     };
   }, [
+    actionMode,
     busy,
     canCreate,
     canDelete,

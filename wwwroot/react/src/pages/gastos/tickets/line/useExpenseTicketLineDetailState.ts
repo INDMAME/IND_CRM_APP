@@ -21,6 +21,7 @@ type UseExpenseTicketLineDetailStateArgs = {
   canEditTicket: boolean;
   fileId: string;
   lineRecId: string;
+  allowAssignedDraftEdit: boolean;
   onForbidden: () => void;
 };
 
@@ -30,6 +31,7 @@ export const useExpenseTicketLineDetailState = ({
   canEditTicket,
   fileId,
   lineRecId,
+  allowAssignedDraftEdit,
   onForbidden,
 }: UseExpenseTicketLineDetailStateArgs) => {
   const [header, setHeader] = useState<ExpenseTicketDetailHeader | null>(null);
@@ -154,7 +156,7 @@ export const useExpenseTicketLineDetailState = ({
     if (isLoading || !header || !line) {
       return;
     }
-    if (header.status === 1) {
+    if (header.status === 1 && !allowAssignedDraftEdit) {
       return;
     }
 
@@ -167,7 +169,7 @@ export const useExpenseTicketLineDetailState = ({
     setIsEditing(true);
     hydrateDraftFromLine(line);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditTicket, header, hydrateDraftFromLine, isLoading, line, onForbidden]);
+  }, [allowAssignedDraftEdit, canEditTicket, header, hydrateDraftFromLine, isLoading, line, onForbidden]);
 
   const handleCancelEdit = useCallback(() => {
     if (!isEditing) return;

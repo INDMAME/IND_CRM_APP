@@ -8,6 +8,7 @@ type UseExpenseSheetLineDetailTopbarActionsArgs = {
   isEditing: boolean;
   isCreateMode: boolean;
   isLocked: boolean;
+  actionMode?: "default" | "delete_only" | "view_only";
   canCreateExpense: boolean;
   canEditExpense: boolean;
   canDeleteExpense: boolean;
@@ -34,6 +35,7 @@ export const useExpenseSheetLineDetailTopbarActions = ({
   isEditing,
   isCreateMode,
   isLocked,
+  actionMode = "default",
   canCreateExpense,
   canEditExpense,
   canDeleteExpense,
@@ -64,6 +66,7 @@ export const useExpenseSheetLineDetailTopbarActions = ({
     isEditing,
     isCreateMode,
     isLocked,
+    actionMode,
     canCreate: canCreateExpense,
     canEdit: canEditExpense,
     canDelete: canDeleteExpense,

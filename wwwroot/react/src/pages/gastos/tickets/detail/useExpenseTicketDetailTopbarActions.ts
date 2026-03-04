@@ -7,6 +7,7 @@ type UseExpenseTicketDetailTopbarActionsArgs = {
   modalOpen: boolean;
   isEditing: boolean;
   isLocked: boolean;
+  actionMode?: "default" | "delete_only";
   canEditTicket: boolean;
   canDeleteTicket: boolean;
   fileId: string;
@@ -16,6 +17,7 @@ type UseExpenseTicketDetailTopbarActionsArgs = {
   handleUpdate: () => Promise<boolean>;
   handleDelete: () => Promise<boolean>;
   onSaveSuccess: () => void;
+  onDeleteSuccess?: () => void;
   openConfirm: (opts: {
     title: string;
     message: string;
@@ -31,6 +33,7 @@ export const useExpenseTicketDetailTopbarActions = ({
   modalOpen,
   isEditing,
   isLocked,
+  actionMode = "default",
   canEditTicket,
   canDeleteTicket,
   fileId,
@@ -40,6 +43,7 @@ export const useExpenseTicketDetailTopbarActions = ({
   handleUpdate,
   handleDelete,
   onSaveSuccess,
+  onDeleteSuccess,
   openConfirm,
   closeConfirm,
 }: UseExpenseTicketDetailTopbarActionsArgs) => {
@@ -60,6 +64,7 @@ export const useExpenseTicketDetailTopbarActions = ({
     isEditing,
     isCreateMode: false,
     isLocked,
+    actionMode,
     canCreate: false,
     canEdit: canEditTicket,
     canDelete: canDeleteTicket,
@@ -75,9 +80,7 @@ export const useExpenseTicketDetailTopbarActions = ({
     deleteConfirmMessage: indT("Confirm_Delete_Body", "Do you want to delete this item?"),
     deleteConfirmText: indT("Common_Delete", "Delete"),
     onSaveSuccess,
-    onDeleteSuccess: () => {
-      navigateToExpenseUrl("/Gastos/Tickets");
-    },
+    onDeleteSuccess: onDeleteSuccess || (() => navigateToExpenseUrl("/Gastos/Tickets")),
     openConfirm,
     closeConfirm,
   });

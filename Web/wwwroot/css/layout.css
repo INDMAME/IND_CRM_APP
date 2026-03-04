@@ -372,7 +372,7 @@ html, body {
 /* USER PANEL (single instance, corrected) */
 .user-panel {
     position: sticky;
-    bottom: 16px;
+    bottom: 40px;
     margin-top: auto;
     z-index: 3;
 }
@@ -380,10 +380,12 @@ html, body {
 /* ANIMATED USER CHIP */
 .user-chip {
     background: transparent;
-    padding: 9px 12px;
+    width: 100%;
+    padding: 12px 24px;
     border-radius: 5px;
     display: flex;
     align-items: center;
+    justify-content: space-between;
     border: none;
     transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     cursor: pointer;
@@ -397,8 +399,10 @@ html, body {
 
 /* Chip icon */
 .user-chip-icon {
-    font-size: 20px;
-    margin-right: 8px;
+    width: 20px;
+    height: 20px;
+    flex: 0 0 20px;
+    margin-right: 0;
     opacity: 0.95;
 }
 
@@ -411,8 +415,9 @@ html, body {
 
 /* Chip chevron */
 .user-chip-chevron {
-    margin-left: auto;
-    font-size: 13px;
+    margin-left: 8px;
+    width: 20px;
+    height: 20px;
     opacity: 0.85;
 }
 

@@ -132,6 +132,12 @@
   <data name="Tickets_Detail_NoLines" xml:space="preserve">
     <value>No lines for this ticket.</value>
   </data>
+  <data name="Tickets_Detail_ViewTicket" xml:space="preserve">
+    <value>View ticket</value>
+  </data>
+  <data name="Tickets_Detail_ViewAttachment" xml:space="preserve">
+    <value>View attachment</value>
+  </data>
   <data name="ExpenseSheets_Title" xml:space="preserve">
     <value>Expense sheets</value>
   </data>
