@@ -24,6 +24,12 @@ const TICKET_TRACE_STORAGE_KEY = "expense_sheet_ticket_quick_flow_trace_v1";
 const MAX_TICKET_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
 const ALLOWED_TICKET_IMAGE_MIME_TYPES = new Set<string>(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
 const ALLOWED_TICKET_IMAGE_EXTENSIONS = new Set<string>(["jpg", "jpeg", "png", "webp"]);
+const TICKET_MIME_TO_EXTENSION: Record<string, string> = {
+  "image/jpeg": "jpg",
+  "image/jpg": "jpg",
+  "image/png": "png",
+  "image/webp": "webp",
+};
 const ALLOWED_TICKET_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const DEFAULT_TICKET_GASTO_TYPE = 8;
 const DEFAULT_CREATE_MODE = "manual" as "ia" | "manual";
@@ -55,13 +61,22 @@ type NormalizedDraft = {
   lines: NormalizedDraftLine[];
 };
 
-type PendingUploadRetry = {
-  fileId: string;
-  extension: string;
-  cacheKey: string;
-  draft: NormalizedDraft;
-  fileNameHint: string;
-};
+type PendingUploadRetry =
+  | {
+      strategy: "ia-ready";
+      fileId: string;
+      extension: string;
+      cacheKey: string;
+      draft: NormalizedDraft;
+      fileNameHint: string;
+    }
+  | {
+      strategy: "manual-post-upload-draft";
+      fileId: string;
+      extension: string;
+      cacheKey: string;
+      fileNameHint: string;
+    };
 
 type UploadSyncResult = {
   urlFile: string;
@@ -145,17 +160,26 @@ const normalizeGastoType = (value: unknown): number | null => {
   return parsed;
 };
 
-const inferExtension = (file: File): string => {
-  const fromName = safeText(file.name).split(".").pop() || "";
-  const normalizedFromName = fromName.toLowerCase().replace(/[^a-z0-9]/g, "");
-  if (normalizedFromName) return normalizedFromName;
+const normalizeImageExtension = (value: string): string => {
+  const normalized = safeText(value).toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!normalized) return "";
+  if (normalized === "jpeg") return "jpg";
+  return ALLOWED_TICKET_IMAGE_EXTENSIONS.has(normalized) ? normalized : "";
+};
 
+const resolveExtensionFromFileName = (file: File): string => {
+  const fromName = safeText(file.name).split(".").pop() || "";
+  return normalizeImageExtension(fromName);
+};
+
+const inferExtension = (file: File): string => {
   const type = safeText(file.type).toLowerCase();
-  if (type === "image/jpeg") return "jpg";
-  if (type === "image/png") return "png";
-  if (type === "image/webp") return "webp";
-  if (type === "image/heic") return "heic";
-  if (type === "image/heif") return "heif";
+  const fromMime = TICKET_MIME_TO_EXTENSION[type];
+  if (fromMime) return fromMime;
+
+  const fromName = resolveExtensionFromFileName(file);
+  if (fromName) return fromName;
+
   return "jpg";
 };
 
@@ -165,8 +189,8 @@ const isSupportedTicketImageFile = (file: File): boolean => {
     return ALLOWED_TICKET_IMAGE_MIME_TYPES.has(normalizedType);
   }
 
-  const extension = inferExtension(file);
-  return ALLOWED_TICKET_IMAGE_EXTENSIONS.has(extension);
+  const extension = resolveExtensionFromFileName(file);
+  return !!extension;
 };
 
 const resolveRandomKey = (): string => {
@@ -513,7 +537,22 @@ export const useExpenseSheetQuickTicketFlow = ({
         }
 
         const uploadResult = resolveUploadResult(uploadResponse.Data);
-        await applyIaAndFinalize(pendingState.fileId, pendingState.draft, uploadResult);
+        let draft: NormalizedDraft;
+        if (pendingState.strategy === "ia-ready") {
+          draft = pendingState.draft;
+        } else {
+          setProgressKey("uploadingImage");
+          const iaDraftResponse = await extractExpenseFromTicketDraft(file, false, uploadResult.urlFile || undefined, {
+            suppressPermissionModal: true,
+          });
+          addTrace("expensefromticket", safeText((iaDraftResponse as { TraceId?: unknown })?.TraceId));
+          if (iaDraftResponse.Success !== true) {
+            throw new Error(safeText(iaDraftResponse.Message) || indT("Api_RequestFailed", "Request failed."));
+          }
+          draft = normalizeDraftFromIaResponse(iaDraftResponse.Data as ExpenseSheetDraftResponse);
+        }
+
+        await applyIaAndFinalize(pendingState.fileId, draft, uploadResult);
 
         setProgressKey("done");
         setPendingUploadRetry(null);
@@ -527,7 +566,7 @@ export const useExpenseSheetQuickTicketFlow = ({
       } catch (error) {
         if (error instanceof ApiFetchError) {
           const traceId = extractTraceIdFromError(error);
-          addTrace("ticket-file-upload-error", traceId);
+          addTrace("ticket-retry-error", traceId);
         }
         flashActionMark("errorProcess", 1500);
         setBusy(false);
@@ -587,6 +626,7 @@ export const useExpenseSheetQuickTicketFlow = ({
             addTrace("ticket-file-upload-error", traceId);
           }
           setPendingUploadRetry({
+            strategy: "ia-ready",
             fileId,
             extension,
             cacheKey,
@@ -615,6 +655,8 @@ export const useExpenseSheetQuickTicketFlow = ({
       setBusy(true);
       setProgressKey("creatingTicket");
       clearFlowState();
+      let createdFileId = "";
+      let stage: "creatingTicket" | "syncingFile" | "uploadingImage" | "finalizingIa" = "creatingTicket";
 
       try {
         const today = getTodayYyyyMMdd();
@@ -641,7 +683,9 @@ export const useExpenseSheetQuickTicketFlow = ({
         if (!fileId) {
           throw new Error(indT("ExpenseSheets_NewTicket_Error_NoFileId", "Could not resolve ticket file id."));
         }
+        createdFileId = fileId;
 
+        stage = "syncingFile";
         setProgressKey("syncingFile");
         const uploadResponse = await uploadExpenseSheetTicketFile(fileId, file, extension, {
           suppressPermissionModal: true,
@@ -652,6 +696,7 @@ export const useExpenseSheetQuickTicketFlow = ({
         }
         const uploadResult = resolveUploadResult(uploadResponse.Data);
 
+        stage = "uploadingImage";
         setProgressKey("uploadingImage");
         const iaDraftResponse = await extractExpenseFromTicketDraft(file, false, uploadResult.urlFile || undefined, {
           suppressPermissionModal: true,
@@ -661,6 +706,7 @@ export const useExpenseSheetQuickTicketFlow = ({
           throw new Error(safeText(iaDraftResponse.Message) || indT("Api_RequestFailed", "Request failed."));
         }
         const draft = normalizeDraftFromIaResponse(iaDraftResponse.Data as ExpenseSheetDraftResponse);
+        stage = "finalizingIa";
         await applyIaAndFinalize(fileId, draft, uploadResult);
 
         setProgressKey("done");
@@ -675,6 +721,16 @@ export const useExpenseSheetQuickTicketFlow = ({
         if (error instanceof ApiFetchError) {
           const traceId = extractTraceIdFromError(error);
           addTrace("ticket-manual-error", traceId);
+        }
+
+        if (stage === "syncingFile" && createdFileId) {
+          setPendingUploadRetry({
+            strategy: "manual-post-upload-draft",
+            fileId: createdFileId,
+            extension,
+            cacheKey,
+            fileNameHint: sanitizeFileName(file.name),
+          });
         }
         flashActionMark("errorProcess", 1500);
         setBusy(false);

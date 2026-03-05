@@ -606,6 +606,7 @@ const ExpenseTicketsPageContent = () => {
             const statusLabel = getExpenseTicketStatusLabel(statusCode);
             const isAssignedToExpenseSheet = statusCode === 1;
             const showProcessedByAiIcon = item.processedByAI === true;
+            const processedByAiLabel = indT("Tickets_Filter_ProcessedByIA", "Processed by IA");
             const gastoTypeCode = item.gastoType === null ? "" : String(item.gastoType);
             const gastoTypeLabel = gastoTypeCode
               ? gastoTypeLabelMap.get(gastoTypeCode) || gastoTypeCode
@@ -614,7 +615,7 @@ const ExpenseTicketsPageContent = () => {
             const statusIcons = isAssignedToExpenseSheet || showProcessedByAiIcon ? (
               <>
                 {isAssignedToExpenseSheet ? (
-                  <span className="expense-ticket-card__status-icon" title={statusLabel}>
+                  <span className="expense-ticket-card__status-icon" role="img" aria-label={statusLabel}>
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
                       <path
                         strokeLinecap="round"
@@ -627,9 +628,10 @@ const ExpenseTicketsPageContent = () => {
                 {showProcessedByAiIcon ? (
                   <span
                     className="expense-ticket-card__status-icon expense-ticket-card__status-icon--ai"
-                    title={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}
+                    role="img"
+                    aria-label={processedByAiLabel}
                   >
-                    <span className="expense-ticket-card__ai-label">AI</span>
+                    <span className="expense-ticket-card__ai-label" aria-hidden="true">AI</span>
                   </span>
                 ) : null}
               </>

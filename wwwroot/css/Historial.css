@@ -470,10 +470,11 @@
     justify-content: center;
     width: 16px;
     height: 16px;
-    font-size: 14px;
-    font-weight: 800;
+    font-size: 15px;
+    font-weight: 900;
     line-height: 1;
     letter-spacing: 0;
+    text-transform: uppercase;
 }
 .expense-ticket-card__status-icon + .expense-ticket-card__status-icon {
     margin-top: -1px;

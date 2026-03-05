@@ -64,7 +64,11 @@ const ExpenseTimelineCard = ({
       </div>
       <div className="timeline-card__content flex-1 py-3 px-4">
         {statusClassName ? <span className={statusClassName} title={statusLabel} aria-label={statusLabel} /> : null}
-        {statusIcon ? <span className={statusIconClassName} title={statusLabel}>{statusIcon}</span> : null}
+        {statusIcon ? (
+          <span className={statusIconClassName} role="group" aria-label={statusLabel || undefined}>
+            {statusIcon}
+          </span>
+        ) : null}
         <p className={titleClassName} data-fulltext={safeTitle}>
           {safeTitle}
         </p>
