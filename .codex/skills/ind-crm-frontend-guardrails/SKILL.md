@@ -66,6 +66,7 @@ Conflict precedence:
 | Section titles | Reuse `ExpenseSectionDivider` for centered section labels with side lines; keep labels borderless (no box/pill frame). |
 | Style ownership | External Tailwind helper skills can suggest syntax or patterns, but local style rules are mandatory. |
 | Canonical web path | Treat `Web/wwwroot` as canonical source path. Root `wwwroot` is a compatibility mirror/junction. |
+| Test execution default | IMPORTANT: when user asks to create or run a frontend test, default to public URL E2E (`baseURL`) using real pages. Use local fixtures or mocked fetch only when the user explicitly requests fixture-based testing. |
 | Documentation sync | Edit root `.codex/*.md` files or `.codex/config.toml` and run `npm run sync:skill:local:references` when references are changed. |
 | Completion checks | Run `references/QUALITY_CHECKLIST.md`; publish plus `iisreset` when frontend release tasks require it. |
 
@@ -120,6 +121,7 @@ Required triggers:
    - Add matching `app.MapControllerRoute(...)` entries in `Program.cs`.
    - Validate expected and wrong verb behavior locally to catch 404/405 mismatches.
 6. Validate i18n and anti-regression critical paths.
+   - For test work requested by user, prefer E2E flow on public `baseURL` and avoid local fixture servers unless explicitly requested.
 7. Execute quality checks and release steps required by scope.
 8. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
 
@@ -140,4 +142,4 @@ Required triggers:
 - Mismatching frontend HTTP verb versus controller verb attribute on API routes.
 
 ## Last updated
-- 2026-02-26
+- 2026-03-05
