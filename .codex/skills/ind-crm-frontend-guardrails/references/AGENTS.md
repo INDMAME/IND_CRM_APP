@@ -215,6 +215,23 @@
 - Do not start implementation with unresolved assumptions unless the user explicitly approves those assumptions.
 - The plan must list required skills to be used for the task (at minimum `ind-crm-frontend-guardrails`, plus triggered sub-skills from routing).
 
+## IMPORTANT: Monolith prevention gate (always before new functionality)
+
+- This rule is mandatory and must be read before any implementation work starts.
+- For every new functionality (backend or frontend), Codex must produce a short refactor-first plan before writing code.
+- The plan must include:
+  - Current object(s) that would grow and risk becoming monolithic.
+  - Proposed split into focused units (container, hooks, services, mappers, utilities, components).
+  - Exact target file paths inside existing module structure.
+  - Behavior invariants that must stay unchanged.
+- Codex must prefer extending existing focused objects over adding logic to a single large file.
+- If a file already has high complexity (size, mixed concerns, many side effects), Codex must refactor first or refactor in the same change.
+- Codex must always load and apply best-practice skills for implementation quality:
+  - `vercel-react-best-practices` for React/TS/TSX behavior and performance.
+  - `vercel-composition-patterns` for component API and composition design.
+  - `brainstorming` before new feature behavior changes.
+  - `systematic-debugging` for bugs/regressions.
+
 ## Critical anti regression rule (dates, calendars and API)
 
 Codex must apply this rule for any change that touches views, scripts or filter logic:

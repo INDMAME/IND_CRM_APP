@@ -7,7 +7,7 @@ type UseExpenseTicketDetailTopbarActionsArgs = {
   modalOpen: boolean;
   isEditing: boolean;
   isLocked: boolean;
-  actionMode?: "default" | "delete_only";
+  actionMode?: "default" | "delete_only" | "view_only";
   canEditTicket: boolean;
   canDeleteTicket: boolean;
   fileId: string;

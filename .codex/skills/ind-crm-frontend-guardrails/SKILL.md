@@ -47,6 +47,7 @@ Conflict precedence:
 | Area | Required rule |
 |---|---|
 | Planning gate | Before code, define page decomposition (container, dumb components, hooks, utils/services, file paths) and ask clarifying questions when split is ambiguous. |
+| Monolith prevention | IMPORTANT: before any new functionality, create a refactor-first plan that prevents monolithic files and explicitly lists focused object boundaries. |
 | Impact pre-check | Assess effects on filters, calendars, dropdowns, forms, handlers, hooks, components, and UI services. |
 | Object placement | Validate path with `references/PROJECT_STRUCTURE.md`; reuse existing objects first. |
 | Frontend architecture | MVC + Razor first, React islands only, Tailwind only, Heroicons default, Montserrat base, primary `#00296b`. |
@@ -98,6 +99,10 @@ Required triggers:
    - Define page decomposition (container, dumb components, hooks, utilities/services, and target paths).
    - If decomposition is unclear, ask clarifying questions before coding.
    - Confirm input type for every new input-like field (`remote-search-dropdown`, `fixed-enum-instant-search`, `fixed-enum-select`).
+   - IMPORTANT: run monolith prevention gate for every new functionality:
+     - Identify current large objects likely to absorb new logic.
+     - Propose focused split (page container, dumb components, hooks, service adapters, mappers, utilities).
+     - Keep behavior invariants explicit and avoid expanding one large file when a focused module is cleaner.
 2. Run impact pre-check before editing:
    - Identify effects on filters, calendars, dropdowns, forms, handlers, hooks, components, and UI services.
    - If risk is not trivial, propose a safe alternative before implementation.
@@ -105,6 +110,7 @@ Required triggers:
    - Keep module-specific objects under `pages/<module>` and avoid parallel trees.
    - Promote to shared only when behavior contract is reusable across modules.
 4. Apply architecture and contract rules during implementation.
+   - Always apply `vercel-react-best-practices` and `vercel-composition-patterns` for React object design and scalability decisions.
    - React performance guardrails: parallelize independent async calls, avoid effect-driven mirror state, cleanup listeners.
    - React composition guardrails: no new boolean mode flags when explicit variant/component composition is cleaner.
    - Numeric format guardrails: for currency/price/qty/amount/exchange-rate fields, enforce `#,##0.00` display with grouped thousands and exactly 2 decimals.

@@ -1,9 +1,9 @@
-import { formatExpenseNumber } from "./utils/expenseNumberFormat.ts";
+﻿import { formatExpenseNumber } from "./utils/expenseNumberFormat.ts";
 
 const CURRENCY_SYMBOL_MAP: Record<string, string> = {
   USD: "$",
-  EUR: "€",
-  GBP: "£",
+  EUR: "\u20ac",
+  GBP: "\u00a3",
   MXN: "MX$",
   BOB: "Bs",
   PEN: "S/",
@@ -45,7 +45,7 @@ export const formatAmountWithCurrency = (
       const formatted = new Intl.NumberFormat("en-US", {
         style: "currency",
         currency: safeCurrency,
-        currencyDisplay: "narrowSymbol",
+        currencyDisplay: "symbol",
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
       }).format(amount);
