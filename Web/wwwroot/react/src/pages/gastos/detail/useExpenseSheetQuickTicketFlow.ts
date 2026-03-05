@@ -18,7 +18,7 @@ import {
   buildTicketIaPayload,
   cacheImageFile,
   extractTraceIdFromError,
-  getTodayYyyyMMdd,
+  getTodayDdMmYyyy,
   inferExtension,
   isSupportedTicketImageFile,
   normalizeDraftFromIaResponse,
@@ -323,7 +323,7 @@ export const useExpenseSheetQuickTicketFlow = ({
       let stage: "creatingTicket" | "syncingFile" | "uploadingImage" | "finalizingIa" = "creatingTicket";
 
       try {
-        const today = getTodayYyyyMMdd();
+        const today = getTodayDdMmYyyy();
         const placeholderUrl = `pending://ticket-upload/${resolveRandomKey()}`;
         const createPayload: ExpenseSheetTicketCreateRequest = {
           mode: 1,

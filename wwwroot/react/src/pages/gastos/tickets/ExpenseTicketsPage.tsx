@@ -631,7 +631,13 @@ const ExpenseTicketsPageContent = () => {
                     role="img"
                     aria-label={processedByAiLabel}
                   >
-                    <span className="expense-ticket-card__ai-label" aria-hidden="true">AI</span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 18l4-12l4 12" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6 13h4" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 6h6" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M17 6v12" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M14 18h6" />
+                    </svg>
                   </span>
                 ) : null}
               </>

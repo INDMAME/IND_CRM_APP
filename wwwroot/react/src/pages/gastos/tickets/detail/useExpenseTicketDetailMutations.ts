@@ -10,6 +10,7 @@ import {
   deleteExpenseSheetTicketFile,
   updateExpenseSheetTicket,
 } from "../../utils/expenseApi.ts";
+import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../../utils/expenseApiDateUtils.ts";
 
 type DeleteLinkedExpenseLineContext = {
   sheetId: string;
@@ -118,10 +119,18 @@ export const useExpenseTicketDetailMutations = ({
       return false;
     }
 
+    const rawTransDate = String(draftTransDate || "").trim();
+    const normalizedTransDate = rawTransDate ? toExpenseApiDdMmYyyy(rawTransDate) : "";
+    if (rawTransDate && !normalizedTransDate) {
+      setModalError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+      setStatus(EXPENSE_API_DATE_FORMAT_MESSAGE);
+      return false;
+    }
+
     const payload: ExpenseSheetTicketUpdateRequest = {
       description: normalizedDescription,
       currencyCode: normalizedCurrency,
-      transDate: String(draftTransDate || "").trim() || undefined,
+      transDate: normalizedTransDate || undefined,
       comentario: String(draftComentario || "").trim() || undefined,
       urlFile: String(draftUrlFile || "").trim() || undefined,
       fileName: String(draftFileName || "").trim() || undefined,

@@ -3,6 +3,9 @@ export type ExpenseStatusFilterCode = ExpenseStatusCode | 5;
 export type ExpenseExchangeRateModeCode = 0 | 1;
 export type ExpenseSheetCreateMode = 0 | 1 | 2;
 export type ExpenseGastoTypeCode = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 14;
+// Backend date contract for gastos/tickets:
+// request accepts DDMMYYYY or DD.MM.YYYY, response returns DD.MM.YYYY.
+export type ExpenseApiDate = string;
 
 // Shared validation envelope item used by IndApiResponse errors.
 export type IndValidationError = {
@@ -102,7 +105,7 @@ export type ExchangeRateDto = {
 export type FuelPriceKmDto = {
   PriceKm: number | null;
   Source: string;
-  TransDate: string;
+  TransDate: ExpenseApiDate;
 };
 
 // /api/crm/expensesheets/list request contract.
@@ -111,8 +114,8 @@ export type ExpenseSheetListApiRequest = {
   page: number;
   pageSize: number;
   billedMode?: 0 | 1 | 2;
-  createdDateFrom?: string;
-  createdDateTo?: string;
+  createdDateFrom?: ExpenseApiDate;
+  createdDateTo?: ExpenseApiDate;
   projId?: string;
   currencyCode?: string;
   expenseSheetStatus?: number | null;
@@ -131,13 +134,13 @@ export type ExpenseSheetListItemDto = {
   TotalAmount: number | null;
   ExchRate: number | null;
   ExchangeRateMode: number | null;
-  CreatedDate: string | null;
+  CreatedDate: ExpenseApiDate | null;
 };
 
 // /api/crm/expensesheets/{hojaGastosId} line contract.
 export type ExpenseSheetLineDto = {
   RecId: string;
-  TransDate: string;
+  TransDate: ExpenseApiDate;
   TypeValue: number | null;
   Description: string;
   Internacional: boolean | null;
@@ -163,12 +166,12 @@ export type ExpenseSheetDetailDto = {
   ExchangeRateMode: number | null;
   ProjId: string;
   Voucher: string;
-  CreatedDate: string | null;
+  CreatedDate: ExpenseApiDate | null;
   Lines: ExpenseSheetLineDto[];
 };
 
 export type ExpenseSheetCreateLineRequest = {
-  transDate: string;
+  transDate: ExpenseApiDate;
   typeValue: number;
   description: string;
   internacional: boolean;
@@ -234,7 +237,7 @@ export type ExpenseSheetHeaderUpdateRequest = {
 
 // /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId} update line request contract.
 export type ExpenseSheetLineUpdateRequest = {
-  transDate: string;
+  transDate: ExpenseApiDate;
   typeValue: number;
   description: string;
   internacional: boolean;
@@ -299,7 +302,7 @@ export type ExpenseSheetHeader = {
 // UI model used by line detail components.
 export type ExpenseSheetLine = {
   lineRecId: string;
-  transDate?: string;
+  transDate?: ExpenseApiDate;
   typeValue?: string;
   typeValueCode?: string;
   description?: string;
@@ -316,8 +319,8 @@ export type ExpenseSheetLine = {
 export type ExpenseSheetTicketListRequest = {
   page: number;
   pageSize: number;
-  createdDateFrom?: string;
-  createdDateTo?: string;
+  createdDateFrom?: ExpenseApiDate;
+  createdDateTo?: ExpenseApiDate;
   searchKey?: string;
   filter?: string;
   status?: 0 | 1 | null;
@@ -340,7 +343,7 @@ export type ExpenseSheetTicketCreateRequest = {
   currencyCode?: string;
   totalAmount?: number;
   status?: number;
-  transDate?: string;
+  transDate?: ExpenseApiDate;
   comentario?: string;
   urlFile?: string;
   fileName?: string;
@@ -388,7 +391,7 @@ export type ExpenseSheetTicketListItemDto = {
   CurrencyCode: string;
   TotalAmount: number | null;
   CreatedByUserId: string;
-  TransDate: string;
+  TransDate: ExpenseApiDate;
   UrlFile: string;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
@@ -403,7 +406,7 @@ export type ExpenseSheetTicketDetailDto = {
   CurrencyCode: string;
   TotalAmount: number | null;
   CreatedByUserId: string;
-  TransDate: string;
+  TransDate: ExpenseApiDate;
   Comentario: string;
   UrlFile: string;
   FileName: string;
@@ -413,7 +416,7 @@ export type ExpenseSheetTicketDetailDto = {
 
 export type ExpenseSheetCreateLineDraft = {
   localId: string;
-  transDate: string;
+  transDate: ExpenseApiDate;
   typeValueCode: string;
   description: string;
   internacional: boolean;

@@ -9,6 +9,7 @@ import {
   setExpenseNavigationGuard,
 } from "../utils/expenseNavigation.ts";
 import { hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 
 const KM_GASTO_TYPE_CODE = "3";
@@ -42,26 +43,7 @@ const formatEditableQuantity = (value: number | null | undefined): string => {
 };
 
 const normalizeFuelTransDate = (raw: string): string => {
-  const value = String(raw || "").trim();
-  if (!value) return "";
-
-  if (/^\d{8}$/.test(value)) {
-    return value;
-  }
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return value.replace(/-/g, "");
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
-
-  const yyyy = parsed.getFullYear();
-  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
-  const dd = String(parsed.getDate()).padStart(2, "0");
-  return `${yyyy}${mm}${dd}`;
+  return toExpenseApiDdMmYyyy(raw);
 };
 
 // Resolves localized fuel price source messages for known backend sources.
@@ -315,7 +297,7 @@ export const useExpenseSheetLineDetailState = ({
 
     if (!normalizedFuelTransDate) {
       setIsFuelPriceLoading(false);
-      setFuelPriceMessage(indT("Api_RequestFailed", "Request failed."));
+      setFuelPriceMessage(EXPENSE_API_DATE_FORMAT_MESSAGE);
       setFuelPriceMessageIsError(true);
       return () => {
         clearPending();

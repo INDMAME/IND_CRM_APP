@@ -24,13 +24,13 @@ function getQueryParam(url, key) {
   }
 }
 
-// Builds yyyyMMdd date expected by ticket creation API.
-function buildAxDate() {
+// Builds compact DDMMYYYY date to verify backward-compatible request support.
+function buildCompactApiDate() {
   const now = new Date();
-  const year = String(now.getFullYear());
-  const month = String(now.getMonth() + 1).padStart(2, "0");
   const day = String(now.getDate()).padStart(2, "0");
-  return `${year}${month}${day}`;
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const year = String(now.getFullYear());
+  return `${day}${month}${year}`;
 }
 
 // Extracts ticket file id from flexible API response payload shapes.
@@ -55,7 +55,7 @@ async function createTemporaryTicket(page) {
     currencyCode: "EUR",
     gastoType: 5,
     totalAmount: 20,
-    transDate: buildAxDate(),
+    transDate: buildCompactApiDate(),
     comentario: "E2E temporary ticket",
     urlFile: `pending://ticket-upload/e2e-${stamp}`,
     fileExtension: "jpg",
@@ -187,6 +187,9 @@ test.describe("Ticket detail E2E", () => {
 
       expect(String(capturedHeaderPayload.description || "")).toContain("E2E Ticket Header");
       expect(String(capturedHeaderPayload.currencyCode || "")).not.toBe("");
+      if (capturedHeaderPayload.transDate !== undefined && capturedHeaderPayload.transDate !== null) {
+        expect(String(capturedHeaderPayload.transDate || "")).toMatch(/^\d{2}\.\d{2}\.\d{4}$/);
+      }
 
       await page.unroute(headerRoutePattern);
     } finally {
@@ -275,6 +278,9 @@ test.describe("Ticket detail E2E", () => {
         .not.toBeNull();
 
       expect(String(capturedLinePayload.description || "")).toContain("E2E Line");
+      if (capturedLinePayload.transDate !== undefined && capturedLinePayload.transDate !== null) {
+        expect(String(capturedLinePayload.transDate || "")).toMatch(/^\d{2}\.\d{2}\.\d{4}$/);
+      }
       expect(Number(capturedLinePayload.qty)).toBe(2);
       expect(Number(capturedLinePayload.price)).toBe(8.5);
       expect(Number(capturedLinePayload.totalAmount)).toBe(17);

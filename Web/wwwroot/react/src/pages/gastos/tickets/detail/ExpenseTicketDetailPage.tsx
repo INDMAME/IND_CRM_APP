@@ -13,7 +13,7 @@ import { getExpenseTicketStatusLabel } from "../../constants/expenseTicketStatus
 import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
 import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
-import { formatExpenseDisplayDate, safeText } from "../../utils/expenseUiUtils.ts";
+import { formatExpenseDisplayDate, parseExpenseDate, safeText, toIsoDate } from "../../utils/expenseUiUtils.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
 import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutations.ts";
 import { useExpenseTicketDetailTopbarActions } from "./useExpenseTicketDetailTopbarActions.ts";
@@ -58,6 +58,11 @@ const buildFallbackGastoTypeOptions = (): ExpenseSelectOption[] => {
       text: indT(cfg.key, cfg.fallback),
     }))
     .sort((left, right) => Number(left.value) - Number(right.value));
+};
+
+const toInputDate = (raw?: string): string => {
+  const parsed = parseExpenseDate(raw);
+  return parsed ? toIsoDate(parsed) : "";
 };
 
 const ExpenseTicketDetailPageContent = () => {
@@ -162,7 +167,7 @@ const ExpenseTicketDetailPageContent = () => {
     setDraftDescription(safeText(header.description));
     setDraftGastoType(header.gastoType === null ? "" : String(header.gastoType));
     setDraftCurrencyCode(safeText(header.currencyCode).toUpperCase());
-    setDraftTransDate(safeText(header.transDate));
+    setDraftTransDate(toInputDate(header.transDate));
     setDraftComentario(safeText(header.comentario));
     setDraftUrlFile(safeText(header.urlFile));
     setDraftFileName(safeText(header.fileName));
@@ -210,7 +215,7 @@ const ExpenseTicketDetailPageContent = () => {
     setDraftDescription(safeText(header.description));
     setDraftGastoType(header.gastoType === null ? "" : String(header.gastoType));
     setDraftCurrencyCode(safeText(header.currencyCode).toUpperCase());
-    setDraftTransDate(safeText(header.transDate));
+    setDraftTransDate(toInputDate(header.transDate));
     setDraftComentario(safeText(header.comentario));
     setDraftUrlFile(safeText(header.urlFile));
     setDraftFileName(safeText(header.fileName));

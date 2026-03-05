@@ -338,7 +338,11 @@ const ExpenseSheetsPageContent = () => {
         <div ref={timelineContainerRef} className="timeline-box">
           {items.map((item, index) => {
             const id = safeText(item.hojaGastosId);
-            const dateParts = formatExpenseDateParts(item.createdDate, document?.documentElement?.lang || "es-ES");
+            const dateParts = formatExpenseDateParts(
+              item.createdDate,
+              document?.documentElement?.lang || "es-ES",
+              { preferMonthFirstOnSlash: true }
+            );
             const currency = safeText(item.currencyCode);
             const description = safeText(item.description);
             const voucher = safeText(item.voucher);

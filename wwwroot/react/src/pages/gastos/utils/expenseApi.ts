@@ -33,6 +33,8 @@ import {
   normalizeOptionalTicketGastoType as normalizeOptionalTicketGastoTypeTransform,
   normalizeOptionalTicketProcessedByAI as normalizeOptionalTicketProcessedByAITransform,
   normalizeOptionalTicketStatus as normalizeOptionalTicketStatusTransform,
+  normalizeOptionalApiDate as normalizeOptionalApiDateTransform,
+  normalizeRequiredApiDate as normalizeRequiredApiDateTransform,
   normalizeTicketListDate as normalizeTicketListDateTransform,
   normalizeTicketListGastoType as normalizeTicketListGastoTypeTransform,
   safeText as safeTextTransform,
@@ -56,6 +58,7 @@ import {
   mapExpenseSheetLine as mapExpenseSheetLineCore,
   mapExpenseSheetListItemToCard as mapExpenseSheetListItemToCardCore,
 } from "./expenseApiMappers.ts";
+import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "./expenseApiDateUtils.ts";
 
 type ProjectDropdownResponse = {
   total?: number;
@@ -156,6 +159,8 @@ const toNullableGastoTypeCode = toNullableGastoTypeCodeTransform;
 const normalizeOptionalTicketGastoType = normalizeOptionalTicketGastoTypeTransform;
 const normalizeTicketListGastoType = normalizeTicketListGastoTypeTransform;
 const normalizeOptionalTicketStatus = normalizeOptionalTicketStatusTransform;
+const normalizeOptionalApiDate = normalizeOptionalApiDateTransform;
+const normalizeRequiredApiDate = normalizeRequiredApiDateTransform;
 const normalizeTicketListDate = normalizeTicketListDateTransform;
 const toNullableBool = toNullableBoolTransform;
 const normalizeOptionalTicketProcessedByAI = normalizeOptionalTicketProcessedByAITransform;
@@ -532,8 +537,22 @@ export const fetchExpenseSheetList = async (
   payload: ExpenseSheetListApiRequest,
   options?: ApiFetchOptions
 ): Promise<IndPagedResponse<ExpenseSheetListItemDto>> => {
+  const rawCreatedDateFrom = safeText(payload?.createdDateFrom);
+  const rawCreatedDateTo = safeText(payload?.createdDateTo);
+  const createdDateFrom = normalizeOptionalApiDate(rawCreatedDateFrom);
+  const createdDateTo = normalizeOptionalApiDate(rawCreatedDateTo);
+
+  if (rawCreatedDateFrom && !createdDateFrom) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+  if (rawCreatedDateTo && !createdDateTo) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+
   const safePayload: ExpenseSheetListApiRequest = {
     ...payload,
+    createdDateFrom,
+    createdDateTo,
     expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
   };
 
@@ -793,7 +812,7 @@ export const getFuelPriceKm = async (
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<FuelPriceKmDto>> => {
   const context = await ensureExpenseApiContext(options);
-  const normalizedDate = safeText(transDate);
+  const normalizedDate = normalizeRequiredApiDate(transDate);
   const query = new URLSearchParams();
 
   query.set("transDate", normalizedDate);
@@ -818,7 +837,11 @@ export const createExpenseSheet = async (
   const context = await ensureExpenseApiContext(options);
   const mode = payload.mode ?? 0;
   const lines = Array.isArray(payload.lines) ? payload.lines : [];
-  const hasInvalidLinePayload = lines.some((line) => {
+  const normalizedLines = lines.map((line) => ({
+    ...line,
+    transDate: normalizeRequiredApiDate(line.transDate),
+  }));
+  const hasInvalidLinePayload = normalizedLines.some((line) => {
     return (
       !safeText(line.transDate) ||
       !Number.isInteger(Number(line.typeValue)) ||
@@ -873,7 +896,7 @@ export const createExpenseSheet = async (
     description: safeText(payload.description) || undefined,
     currencyCode: safeText(payload.currencyCode) || undefined,
     projId: safeText(payload.projId) || undefined,
-    lines: mode === 1 ? [] : lines,
+    lines: mode === 1 ? [] : normalizedLines,
   };
 
   const response = await fetchJson<IndApiResponse<ExpenseSheetCreateResponseData>>("/api/crm/expensesheets", {
@@ -939,8 +962,8 @@ export const updateExpenseSheetLine = async (
   payload: ExpenseSheetLineUpdateRequest,
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<ExpenseSheetLineUpdateResponseData>> => {
+  const normalizedTransDate = normalizeRequiredApiDate(payload.transDate);
   if (
-    !safeText(payload.transDate) ||
     !Number.isInteger(Number(payload.typeValue)) ||
     Number(payload.typeValue) <= 0 ||
     !isPositiveNumber(payload.qty) ||
@@ -959,7 +982,10 @@ export const updateExpenseSheetLine = async (
       ...options,
       method: "PUT",
       headers: buildExpenseHeaders(context, options, true),
-      body: JSON.stringify(payload),
+      body: JSON.stringify({
+        ...payload,
+        transDate: normalizedTransDate,
+      }),
     }
   );
 
@@ -1028,8 +1054,21 @@ export const createExpenseSheetTicket = async (
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<object>> => {
   const context = await ensureExpenseApiContext(options);
+  const mode = Number(payload?.mode);
+  const rawTransDate = safeText(payload?.transDate);
+  const normalizedTransDate = normalizeOptionalApiDate(rawTransDate);
+
+  if (rawTransDate && !normalizedTransDate) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+
+  if ((mode === 0 || mode === 1) && !normalizedTransDate) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+
   const safePayload: ExpenseSheetTicketCreateRequest = {
     ...payload,
+    transDate: normalizedTransDate || undefined,
     gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
   };
   const response = await fetchJson<IndApiResponse<object>>("/api/crm/expensesheets/tickets", {
@@ -1053,10 +1092,10 @@ export const fetchExpenseSheetTicketsList = async (
   const createdDateFrom = normalizeTicketListDate(rawCreatedDateFrom);
   const createdDateTo = normalizeTicketListDate(rawCreatedDateTo);
   if (rawCreatedDateFrom && !createdDateFrom) {
-    throw new ApiFetchError("createdDateFrom must be in yyyy-MM-dd format.");
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
   }
   if (rawCreatedDateTo && !createdDateTo) {
-    throw new ApiFetchError("createdDateTo must be in yyyy-MM-dd format.");
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
   }
 
   const preferredSearchKey = safeText(payload?.searchKey || payload?.filter);
@@ -1158,8 +1197,16 @@ export const updateExpenseSheetTicket = async (
 ): Promise<IndApiResponse<object>> => {
   const context = await ensureExpenseApiContext(options);
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const rawTransDate = safeText(payload?.transDate);
+  const normalizedTransDate = normalizeOptionalApiDate(rawTransDate);
+
+  if (rawTransDate && !normalizedTransDate) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+
   const safePayload: ExpenseSheetTicketUpdateRequest = {
     ...payload,
+    transDate: normalizedTransDate || undefined,
     gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
   };
   const response = await fetchJson<IndApiResponse<object>>(`/api/crm/expensesheets/tickets/${safeFileId}`, {
@@ -1210,6 +1257,12 @@ export const applyExpenseSheetTicketIa = async (
   const safePayload: ExpenseSheetTicketIaRequest = {
     ...rawPayload,
   };
+  const normalizedTransDate = normalizeOptionalApiDate(rawPayload.transDate);
+  if (!normalizedTransDate) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+  safePayload.transDate = normalizedTransDate;
+
   const gastoType = normalizeOptionalTicketGastoType(rawPayload.gastoType);
   if (gastoType === undefined) {
     delete safePayload.gastoType;

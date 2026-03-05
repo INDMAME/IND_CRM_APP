@@ -6,6 +6,7 @@ import type {
   ExpenseSheetTicketIaRequest,
 } from "../expenseTypes.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import { toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 
 const TICKET_IMAGE_CACHE_NAME = "ind-expense-ticket-image-v1";
 const TICKET_IMAGE_CACHE_PREFIX = "/__ind_cache__/ticket-image/";
@@ -118,28 +119,12 @@ const toPositiveNumber = (value: unknown): number | null => {
   return parsed !== null && parsed > 0 ? parsed : null;
 };
 
-const toYyyyMMdd = (value: unknown): string => {
-  const raw = safeText(value);
-  if (!raw) return "";
-
-  const dateOnly = raw.split("T")[0].split(" ")[0];
-  if (/^\d{8}$/.test(dateOnly)) return dateOnly;
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
-    return dateOnly.replace(/-/g, "");
-  }
-  if (/^\d{4}\/\d{2}\/\d{2}$/.test(dateOnly)) {
-    return dateOnly.replace(/\//g, "");
-  }
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) return "";
-  const year = String(parsed.getFullYear());
-  const month = String(parsed.getMonth() + 1).padStart(2, "0");
-  const day = String(parsed.getDate()).padStart(2, "0");
-  return `${year}${month}${day}`;
+const toDdMmYyyy = (value: unknown): string => {
+  return toExpenseApiDdMmYyyy(value);
 };
 
-export const getTodayYyyyMMdd = (): string => {
-  return toYyyyMMdd(new Date());
+export const getTodayDdMmYyyy = (): string => {
+  return toDdMmYyyy(new Date());
 };
 
 const normalizeGastoType = (value: unknown): number | null => {
@@ -212,7 +197,7 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
   const draftDescription = safeText(getFirstDefined(data, ["description", "Description"]));
   const draftCurrency = safeText(getFirstDefined(data, ["currencyCode", "CurrencyCode"])).toUpperCase();
   const draftTotalAmount = toPositiveNumber(getFirstDefined(data, ["totalAmount", "TotalAmount"])) || 0;
-  const draftTransDate = toYyyyMMdd(getFirstDefined(data, ["transDate", "TransDate"])) || getTodayYyyyMMdd();
+  const draftTransDate = toDdMmYyyy(getFirstDefined(data, ["transDate", "TransDate"])) || getTodayDdMmYyyy();
   const draftComment = safeText(getFirstDefined(data, ["comentario", "Comentario"]));
   const draftGastoType = normalizeGastoType(getFirstDefined(data, ["gastoType", "GastoType"]));
 
@@ -232,7 +217,7 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
       const safeTypeValue = Number.isInteger(candidateTypeValue) ? Number(candidateTypeValue) : null;
       const typeValue = safeTypeValue && safeTypeValue > 0 ? safeTypeValue : draftGastoType || DEFAULT_TICKET_GASTO_TYPE;
       const description = safeText(getFirstDefined(lineRecord, ["description", "Description"])) || draftDescription;
-      const transDate = toYyyyMMdd(getFirstDefined(lineRecord, ["transDate", "TransDate"])) || draftTransDate;
+      const transDate = toDdMmYyyy(getFirstDefined(lineRecord, ["transDate", "TransDate"])) || draftTransDate;
 
       return {
         transDate,
@@ -314,7 +299,7 @@ export const buildSheetLinePayload = (
   const typeValue = Number.isInteger(safeTypeValue) && safeTypeValue > 0 ? safeTypeValue : DEFAULT_TICKET_GASTO_TYPE;
 
   return {
-    transDate: draft.transDate || lineFromDraft?.transDate || getTodayYyyyMMdd(),
+    transDate: draft.transDate || lineFromDraft?.transDate || getTodayDdMmYyyy(),
     typeValue,
     description: safeText(draft.description) || "Ticket",
     internacional: false,

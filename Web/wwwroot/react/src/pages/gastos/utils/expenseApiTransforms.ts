@@ -1,5 +1,10 @@
 ﻿import { ApiFetchError } from "../../../services/apiService.ts";
 import type { ExpenseGastoTypeCode, ExpenseSheetTicketListRequest } from "../expenseTypes.ts";
+import {
+  EXPENSE_API_DATE_FORMAT_MESSAGE,
+  isExpenseApiDdMmYyyy,
+  toExpenseApiDdMmYyyy,
+} from "./expenseApiDateUtils.ts";
 
 const ALLOWED_GASTO_TYPE_CODES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
@@ -82,27 +87,29 @@ export const normalizeTicketListDate = (value: unknown): string => {
   const raw = safeText(value);
   if (!raw) return "";
 
-  const dateOnly = raw.split("T")[0].split(" ")[0];
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
-    return dateOnly;
-  }
+  return toExpenseApiDdMmYyyy(raw);
+};
 
-  if (/^\d{8}$/.test(dateOnly)) {
-    const year = dateOnly.slice(0, 4);
-    const month = dateOnly.slice(4, 6);
-    const day = dateOnly.slice(6, 8);
-    return `${year}-${month}-${day}`;
-  }
+export const normalizeOptionalApiDate = (value: unknown): string | undefined => {
+  const raw = safeText(value);
+  if (!raw) return undefined;
 
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
+  const normalized = toExpenseApiDdMmYyyy(raw);
+  return normalized || undefined;
+};
 
-  const year = String(parsed.getFullYear());
-  const month = String(parsed.getMonth() + 1).padStart(2, "0");
-  const day = String(parsed.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+export const normalizeRequiredApiDate = (value: unknown): string => {
+  const normalized = normalizeOptionalApiDate(value);
+  if (!normalized) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+  return normalized;
+};
+
+export const validateApiDdMmYyyyOrThrow = (value: unknown): void => {
+  if (!isExpenseApiDdMmYyyy(value)) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
 };
 
 export const toNullableBool = (value: unknown): boolean | null => {

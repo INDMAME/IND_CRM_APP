@@ -1,7 +1,13 @@
+import { parseExpenseApiDate } from "./expenseApiDateUtils.ts";
+
 export type ExpenseDateParts = {
   year: string;
   month: string;
   day: string;
+};
+
+type ParseExpenseDateOptions = {
+  preferMonthFirstOnSlash?: boolean;
 };
 
 const BASQUE_MONTHS_SHORT = [
@@ -69,38 +75,41 @@ export const toIsoDate = (date: Date): string => {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 };
 
+const buildExpenseDate = (year: number, month: number, day: number): Date | null => {
+  const candidate = new Date(year, month - 1, day);
+  if (
+    Number.isNaN(candidate.getTime()) ||
+    candidate.getFullYear() !== year ||
+    candidate.getMonth() !== month - 1 ||
+    candidate.getDate() !== day
+  ) {
+    return null;
+  }
+
+  return candidate;
+};
+
 // Parse supported API date formats.
-export const parseExpenseDate = (raw?: string): Date | null => {
+export const parseExpenseDate = (raw?: string, options?: ParseExpenseDateOptions): Date | null => {
   if (!raw) return null;
   const value = String(raw).trim();
   if (!value) return null;
 
   const dateOnly = value.split("T")[0].split(" ")[0];
 
-  if (/^\d{2}[./-]\d{2}[./-]\d{4}$/.test(dateOnly)) {
-    const [day, month, year] = dateOnly.split(/[./-]/).map(Number);
-    return new Date(year, month - 1, day);
+  // Keep optional month-first compatibility for legacy slash dates in cards.
+  if (options?.preferMonthFirstOnSlash && /^\d{2}\/\d{2}\/\d{4}$/.test(dateOnly)) {
+    const [firstPart, secondPart, yearPart] = dateOnly.split(/[./-]/);
+    const first = Number(firstPart);
+    const second = Number(secondPart);
+    const year = Number(yearPart);
+    const monthFirstDate = buildExpenseDate(year, first, second);
+    if (monthFirstDate) {
+      return monthFirstDate;
+    }
   }
 
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
-    const [year, month, day] = dateOnly.split("-").map(Number);
-    return new Date(year, month - 1, day);
-  }
-
-  if (/^\d{4}[./-]\d{2}[./-]\d{2}$/.test(dateOnly)) {
-    const [year, month, day] = dateOnly.split(/[./-]/).map(Number);
-    return new Date(year, month - 1, day);
-  }
-
-  if (/^\d{8}$/.test(dateOnly)) {
-    const year = Number(dateOnly.slice(0, 4));
-    const month = Number(dateOnly.slice(4, 6));
-    const day = Number(dateOnly.slice(6, 8));
-    return new Date(year, month - 1, day);
-  }
-
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return parseExpenseApiDate(value);
 };
 
 // Format a date for read-only fields using the same output style as visits.
@@ -124,8 +133,8 @@ export const formatExpenseDisplayDate = (raw?: string, locale = "es-ES", fallbac
 };
 
 // Build timeline date fragments for card left panel.
-export const formatExpenseDateParts = (raw?: string, locale = "es-ES"): ExpenseDateParts => {
-  const date = parseExpenseDate(raw);
+export const formatExpenseDateParts = (raw?: string, locale = "es-ES", options?: ParseExpenseDateOptions): ExpenseDateParts => {
+  const date = parseExpenseDate(raw, options);
   if (!date) {
     return { year: "", month: "", day: "--" };
   }

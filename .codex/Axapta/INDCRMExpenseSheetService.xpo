@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Lunes 3/2/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 3/5/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -1574,14 +1574,14 @@ Formatversion: 1
         #                                                         [ticketHeader.FileId, strFmt('%1', lineRecId), strFmt('%1', ticketHeader.TotalAmount)]);
         #            }
         #
-        #            select firstonly expenseLine
+        #            /*select firstonly expenseLine
         #                where expenseLine.FileId == fileId;
         #
         #            if (expenseLine.RecId)
         #            {
         #                ttsabort;
         #                return INDCRMUtilityService::buildHeader(false, 'FileId esta asignado a una linea de gastos. Debe desasignarse antes de eliminar.', conNull());
-        #            }
+        #            } */
         #
         #            while select forupdate ticketLine
         #                where ticketLine.FileId        == ticketHeader.FileId
@@ -1850,7 +1850,7 @@ Formatversion: 1
         #                                                      strFmt("%1", exchangeRateMode),
         #                                                      strFmt("%1", header.ProjId),
         #                                                      strFmt("%1", header.Voucher),
-        #                                                      strFmt("%1", header.CreatedDate)
+        #                                                      strFmt("%1", date2Str(header.CreatedDate, 123, 2,2,2,2,4))
         #                                                     ]);
         #
         #        while select line
@@ -1863,7 +1863,7 @@ Formatversion: 1
         #
         #             lineRow = [
         #                         strFmt("%1", line.RecId),
-        #                         strFmt("%1", date2Str(line.TransDate,  123, 2,2,2,2,4)),
+        #                         strFmt("%1", date2Str(line.TransDate, 123, 2,2,2,2,4)),
         #                         strFmt("%1", gastoTypeInt),
         #                         strFmt("%1", line.Description),
         #                         strFmt("%1", line.Internacional),
@@ -1921,10 +1921,10 @@ Formatversion: 1
         #
         #    // Filtros opcionales nuevos
         #    if (conLen(_data) >= 5 && conPeek(_data, 5))
-        #        createdDateFrom = str2Date(conPeek(_data, 5), 321);
+        #        createdDateFrom = str2Date(conPeek(_data, 5), 123);
         #
         #    if (conLen(_data) >= 6 && conPeek(_data, 6))
-        #        createdDateTo = str2Date(conPeek(_data, 6), 321);
+        #        createdDateTo = str2Date(conPeek(_data, 6), 123);
         #
         #    if (conLen(_data) >= 7)
         #        projId = conPeek(_data, 7);
@@ -2007,7 +2007,7 @@ Formatversion: 1
         #                         strFmt("%1", exchangeRateMode),
         #                         strFmt("%1", hoja.ProjId),
         #                         strFmt("%1", hoja.Voucher),
-        #                         strFmt("%1", hoja.CreatedDate)
+        #                         strFmt("%1", date2Str(hoja.CreatedDate, 123, 2,2,2,2,4))
         #                      ]];
         #
         #            conResult += conItem;
@@ -2088,7 +2088,7 @@ Formatversion: 1
         #                                                      strFmt('%1', ticketHeader.CurrencyCode),
         #                                                      strFmt('%1', ticketHeader.TotalAmount),
         #                                                      strFmt('%1', ticketHeader.CreatedByUserId),
-        #                                                      strFmt('%1', date2Str(docuRef.INDTransDate, 123, 2,2,2,2,4)),
+        #                                                      strFmt('%1', date2Str(ticketHeader.createdDate, 123, 2,2,2,2,4)),
         #                                                      strFmt('%1', docuRef.INDComentario),
         #                                                      strFmt('%1', docuRef.INDURLFile),
         #                                                      strFmt('%1', docuRef.INDFilename),
@@ -2188,8 +2188,8 @@ Formatversion: 1
         #        }
         #    }
         #
-        #    createdDateFrom = str2Date(conPeek(_data, 5), 321);
-        #    createdDateTo   = str2Date(conPeek(_data, 6), 321);
+        #    createdDateFrom = str2Date(conPeek(_data, 5), 123);
+        #    createdDateTo   = str2Date(conPeek(_data, 6), 123);
         #
         #    if (createdDateFrom && createdDateTo && createdDateFrom > createdDateTo)
         #        return [['Sin datos, la fecha desde no puede ser mayor a la fecha hasta.']];
@@ -2275,7 +2275,7 @@ Formatversion: 1
         #                        strFmt('%1', ticketHeader.CurrencyCode),
         #                        strFmt('%1', ticketHeader.TotalAmount),
         #                        strFmt('%1', ticketHeader.CreatedByUserId),
-        #                        strFmt('%1', date2Str(docuRef.INDTransDate, 123, 2,2,2,2,4)),
+        #                        strFmt('%1', date2Str(ticketHeader.createdDate, 123, 2,2,2,2,4)),
         #                        strFmt('%1', docuRef.INDURLFile),
         #                        strFmt('%1', docuRef.INDFilename),
         #                        strFmt('%1', processedByAIInt),

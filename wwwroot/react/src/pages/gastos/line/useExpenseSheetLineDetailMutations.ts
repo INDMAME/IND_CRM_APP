@@ -9,6 +9,7 @@ import type {
 } from "../expenseTypes.ts";
 import { parseExpenseInternationalValue } from "../constants/internationalOptions.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import {
   createExpenseSheet,
@@ -46,26 +47,7 @@ type UseExpenseSheetLineDetailMutationsArgs = {
 };
 
 const normalizeLineDate = (raw: string): string => {
-  const value = String(raw || "").trim();
-  if (!value) return "";
-
-  if (/^\d{8}$/.test(value)) {
-    return value;
-  }
-
-  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-    return value.replace(/-/g, "");
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
-
-  const yyyy = parsed.getFullYear();
-  const mm = String(parsed.getMonth() + 1).padStart(2, "0");
-  const dd = String(parsed.getDate()).padStart(2, "0");
-  return `${yyyy}${mm}${dd}`;
+  return toExpenseApiDdMmYyyy(raw);
 };
 
 const parseNumber = (raw: string): number | null => parseDecimalInput(raw);
@@ -140,7 +122,13 @@ export const useExpenseSheetLineDetailMutations = ({
       return false;
     }
 
-    if (!normalizedDate || !Number.isFinite(parsedTypeValue) || parsedTypeValue <= 0) {
+    if (!normalizedDate) {
+      setModalError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+      setStatus(EXPENSE_API_DATE_FORMAT_MESSAGE);
+      return false;
+    }
+
+    if (!Number.isFinite(parsedTypeValue) || parsedTypeValue <= 0) {
       const validationMessage = indT("Api_RequestFailed", "Request failed.");
       setModalError(validationMessage);
       setStatus(validationMessage);
