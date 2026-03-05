@@ -3,17 +3,13 @@ import type {
   EntraContextDto,
   EntraContextRequest,
   ExchangeRateDto,
-  ExpenseGastoTypeCode,
   FuelPriceKmDto,
-  ExpenseSheetCard,
   ExpenseSheetCurrencyDto,
   ExpenseSheetCreateRequest,
   ExpenseSheetCreateResponseData,
   ExpenseSheetDetailDto,
   ExpenseSheetDraftResponse,
-  ExpenseSheetHeader,
   ExpenseSheetHeaderUpdateRequest,
-  ExpenseSheetLine,
   ExpenseSheetLineDto,
   ExpenseSheetLineUpdateRequest,
   ExpenseSheetLineUpdateResponseData,
@@ -30,6 +26,36 @@ import type {
   IndApiResponse,
   IndPagedResponse,
 } from "../expenseTypes.ts";
+import {
+  isNonNegativeNumber as isNonNegativeNumberTransform,
+  isPositiveNumber as isPositiveNumberTransform,
+  normalizeExpenseSheetListStatusFilter as normalizeExpenseSheetListStatusFilterTransform,
+  normalizeOptionalTicketGastoType as normalizeOptionalTicketGastoTypeTransform,
+  normalizeOptionalTicketProcessedByAI as normalizeOptionalTicketProcessedByAITransform,
+  normalizeOptionalTicketStatus as normalizeOptionalTicketStatusTransform,
+  normalizeTicketListDate as normalizeTicketListDateTransform,
+  normalizeTicketListGastoType as normalizeTicketListGastoTypeTransform,
+  safeText as safeTextTransform,
+  toFlagBool as toFlagBoolTransform,
+  toNullableBool as toNullableBoolTransform,
+  toNullableGastoTypeCode as toNullableGastoTypeCodeTransform,
+  toNullableNumber as toNullableNumberTransform,
+  toNullableTicketStatusCode as toNullableTicketStatusCodeTransform,
+} from "./expenseApiTransforms.ts";
+import {
+  normalizeApiResponse as normalizeApiResponseTransform,
+  normalizeCurrencyPagedResponse as normalizeCurrencyPagedResponseTransform,
+  normalizeDetailPagedResponse as normalizeDetailPagedResponseTransform,
+  normalizeListPagedResponse as normalizeListPagedResponseTransform,
+  normalizeSubordinatesPagedResponse as normalizeSubordinatesPagedResponseTransform,
+  normalizeTicketDetailPagedResponse as normalizeTicketDetailPagedResponseTransform,
+  normalizeTicketListPagedResponse as normalizeTicketListPagedResponseTransform,
+} from "./expenseApiResponseNormalizers.ts";
+import {
+  mapExpenseSheetHeader as mapExpenseSheetHeaderCore,
+  mapExpenseSheetLine as mapExpenseSheetLineCore,
+  mapExpenseSheetListItemToCard as mapExpenseSheetListItemToCardCore,
+} from "./expenseApiMappers.ts";
 
 type ProjectDropdownResponse = {
   total?: number;
@@ -90,13 +116,10 @@ type ExpenseWindowRuntime = {
   }>;
 };
 
-type ExpenseGastoTypeEntry = NonNullable<ExpenseWindowRuntime["__EXPENSE_GASTO_TYPES__"]>[number];
-
 const DEFAULT_APP_CODE = "CRM";
 const JSON_HEADERS: Record<string, string> = {
   "Content-Type": "application/json",
 };
-const ALLOWED_GASTO_TYPE_CODES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 let runtimeAuthSeed: Partial<ExpenseApiAuthSeed> = {};
 let cachedContext: ExpenseApiContext | null = null;
@@ -105,10 +128,7 @@ let contextPromise: Promise<ExpenseApiContext> | null = null;
 const cachedCurrencyResponses = new Map<string, IndPagedResponse<ExpenseSheetCurrencyDto>>();
 const pendingCurrencyRequests = new Map<string, Promise<IndPagedResponse<ExpenseSheetCurrencyDto>>>();
 
-const safeText = (value: unknown): string => {
-  if (value === null || value === undefined) return "";
-  return String(value).trim();
-};
+const safeText = safeTextTransform;
 
 const tryParseJsonRecord = (raw: string): Record<string, unknown> | null => {
   if (!raw || !raw.trim()) return null;
@@ -128,139 +148,19 @@ const readApiMessage = (raw: string): string => {
   return typeof value === "string" ? value.trim() : "";
 };
 
-const toNullableNumber = (value: unknown): number | null => {
-  if (value === null || value === undefined) return null;
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
-};
-
-const isNonNegativeNumber = (value: unknown): boolean => {
-  const parsed = toNullableNumber(value);
-  return parsed !== null && parsed >= 0;
-};
-
-const isPositiveNumber = (value: unknown): boolean => {
-  const parsed = toNullableNumber(value);
-  return parsed !== null && parsed > 0;
-};
-
-const isValidListExpenseSheetStatus = (value: unknown): boolean => {
-  const parsed = toNullableNumber(value);
-  return parsed !== null && Number.isInteger(parsed) && parsed >= 0 && parsed <= 4;
-};
-
-const toNullableTicketStatusCode = (value: unknown): 0 | 1 | null => {
-  const parsed = toNullableNumber(value);
-  if (parsed === 0 || parsed === 1) {
-    return parsed;
-  }
-
-  return null;
-};
-
-const toNullableGastoTypeCode = (value: unknown): ExpenseGastoTypeCode | null => {
-  const parsed = toNullableNumber(value);
-  if (parsed === null || !Number.isInteger(parsed) || !ALLOWED_GASTO_TYPE_CODES.has(parsed)) {
-    return null;
-  }
-
-  return parsed as ExpenseGastoTypeCode;
-};
-
-const normalizeOptionalTicketGastoType = (value: unknown): ExpenseGastoTypeCode | undefined => {
-  if (value === null || value === undefined || safeText(value) === "") {
-    return undefined;
-  }
-
-  const parsed = toNullableGastoTypeCode(value);
-  if (parsed === null) {
-    throw new ApiFetchError("gastoType must be one of: 0,1,2,3,4,5,6,7,8,14.");
-  }
-
-  return parsed;
-};
-
-const normalizeTicketListGastoType = (value: unknown): ExpenseSheetTicketListRequest["gastoType"] => {
-  if (value === null || value === undefined || safeText(value) === "") {
-    return null;
-  }
-
-  return toNullableGastoTypeCode(value);
-};
-
-const normalizeOptionalTicketStatus = (value: unknown): 0 | 1 | null => {
-  if (value === null || value === undefined || safeText(value) === "") {
-    return null;
-  }
-
-  return toNullableTicketStatusCode(value);
-};
-
-const normalizeTicketListDate = (value: unknown): string => {
-  const raw = safeText(value);
-  if (!raw) return "";
-
-  const dateOnly = raw.split("T")[0].split(" ")[0];
-  if (/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
-    return dateOnly;
-  }
-
-  if (/^\d{8}$/.test(dateOnly)) {
-    const year = dateOnly.slice(0, 4);
-    const month = dateOnly.slice(4, 6);
-    const day = dateOnly.slice(6, 8);
-    return `${year}-${month}-${day}`;
-  }
-
-  const parsed = new Date(raw);
-  if (Number.isNaN(parsed.getTime())) {
-    return "";
-  }
-
-  const year = String(parsed.getFullYear());
-  const month = String(parsed.getMonth() + 1).padStart(2, "0");
-  const day = String(parsed.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
-};
-
-const toNullableBool = (value: unknown): boolean | null => {
-  if (value === null || value === undefined) return null;
-  if (typeof value === "boolean") return value;
-  if (typeof value === "string") {
-    const normalized = value.trim().toLowerCase();
-    if (normalized === "true" || normalized === "1") return true;
-    if (normalized === "false" || normalized === "0") return false;
-  }
-  if (typeof value === "number") {
-    if (value === 1) return true;
-    if (value === 0) return false;
-  }
-  return null;
-};
-
-const normalizeOptionalTicketProcessedByAI = (value: unknown): boolean | null => {
-  if (value === null || value === undefined || safeText(value) === "") {
-    return null;
-  }
-
-  return toNullableBool(value);
-};
-
-const normalizeExpenseSheetListStatusFilter = (value: unknown): number | null => {
-  return isValidListExpenseSheetStatus(value) ? Number(value) : null;
-};
-
-const toFlagBool = (value: unknown): boolean | null => {
-  const normalizedBool = toNullableBool(value);
-  if (normalizedBool !== null) return normalizedBool;
-
-  if (typeof value !== "string") return null;
-  const normalized = value.trim().toLowerCase();
-  if (!normalized) return null;
-  if (normalized === "on" || normalized === "yes" || normalized === "y") return true;
-  if (normalized === "off" || normalized === "no" || normalized === "n") return false;
-  return null;
-};
+const toNullableNumber = toNullableNumberTransform;
+const isNonNegativeNumber = isNonNegativeNumberTransform;
+const isPositiveNumber = isPositiveNumberTransform;
+const toNullableTicketStatusCode = toNullableTicketStatusCodeTransform;
+const toNullableGastoTypeCode = toNullableGastoTypeCodeTransform;
+const normalizeOptionalTicketGastoType = normalizeOptionalTicketGastoTypeTransform;
+const normalizeTicketListGastoType = normalizeTicketListGastoTypeTransform;
+const normalizeOptionalTicketStatus = normalizeOptionalTicketStatusTransform;
+const normalizeTicketListDate = normalizeTicketListDateTransform;
+const toNullableBool = toNullableBoolTransform;
+const normalizeOptionalTicketProcessedByAI = normalizeOptionalTicketProcessedByAITransform;
+const normalizeExpenseSheetListStatusFilter = normalizeExpenseSheetListStatusFilterTransform;
+const toFlagBool = toFlagBoolTransform;
 
 const readExpenseWindowRuntime = (): ExpenseWindowRuntime => {
   if (typeof window === "undefined") return {};
@@ -514,109 +414,13 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
   }
 };
 
-const normalizeListPagedResponse = (
-  response: IndPagedResponse<ExpenseSheetListItemDto>
-): IndPagedResponse<ExpenseSheetListItemDto> => {
-  return {
-    ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
-  };
-};
-
-const normalizeDetailPagedResponse = (
-  response: IndPagedResponse<ExpenseSheetDetailDto>
-): IndPagedResponse<ExpenseSheetDetailDto> => {
-  return {
-    ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
-  };
-};
-
-const normalizeApiResponse = <T>(response: IndApiResponse<T>): IndApiResponse<T> => {
-  return {
-    ...response,
-    Errors: Array.isArray(response?.Errors) ? response.Errors : response?.Errors ?? null,
-  };
-};
-
-const normalizeCurrencyPagedResponse = (
-  response: IndPagedResponse<ExpenseSheetCurrencyDto>
-): IndPagedResponse<ExpenseSheetCurrencyDto> => {
-  return {
-    ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
-  };
-};
-
-const normalizeSubordinatesPagedResponse = (
-  response: IndPagedResponse<ExpenseSheetSubordinateDto>
-): IndPagedResponse<ExpenseSheetSubordinateDto> => {
-  return {
-    ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
-  };
-};
-
-const normalizeTicketListPagedResponse = (
-  response: IndPagedResponse<ExpenseSheetTicketListItemDto>
-): IndPagedResponse<ExpenseSheetTicketListItemDto> => {
-  const items = Array.isArray(response?.Items) ? response.Items : [];
-  const normalizedItems = items.map((item) => ({
-    ...item,
-    Status: toNullableTicketStatusCode(
-      (item as { Status?: unknown; status?: unknown })?.Status ??
-        (item as { Status?: unknown; status?: unknown })?.status
-    ),
-    ProcessedByAI: toNullableBool(
-      (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.ProcessedByAI ??
-        (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.processedByAI
-    ),
-    HojaGastosIdDisplay: safeText(
-      (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.HojaGastosIdDisplay ??
-        (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.hojaGastosIdDisplay
-    ),
-    GastoType: toNullableGastoTypeCode(
-      (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
-        (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
-    ),
-  }));
-
-  return {
-    ...response,
-    Items: normalizedItems,
-  };
-};
-
-const normalizeTicketDetailPagedResponse = (
-  response: IndPagedResponse<ExpenseSheetTicketDetailDto>
-): IndPagedResponse<ExpenseSheetTicketDetailDto> => {
-  const items = Array.isArray(response?.Items) ? response.Items : [];
-  const normalizedItems = items.map((item) => ({
-    ...item,
-    Status: toNullableTicketStatusCode(
-      (item as { Status?: unknown; status?: unknown })?.Status ??
-        (item as { Status?: unknown; status?: unknown })?.status
-    ),
-    ProcessedByAI: toNullableBool(
-      (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.ProcessedByAI ??
-        (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.processedByAI
-    ),
-    HojaGastosIdDisplay: safeText(
-      (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.HojaGastosIdDisplay ??
-        (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.hojaGastosIdDisplay
-    ),
-    GastoType: toNullableGastoTypeCode(
-      (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
-        (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
-    ),
-    Lines: Array.isArray(item?.Lines) ? item.Lines : [],
-  }));
-
-  return {
-    ...response,
-    Items: normalizedItems,
-  };
-};
+const normalizeListPagedResponse = normalizeListPagedResponseTransform;
+const normalizeDetailPagedResponse = normalizeDetailPagedResponseTransform;
+const normalizeApiResponse = normalizeApiResponseTransform;
+const normalizeCurrencyPagedResponse = normalizeCurrencyPagedResponseTransform;
+const normalizeSubordinatesPagedResponse = normalizeSubordinatesPagedResponseTransform;
+const normalizeTicketListPagedResponse = normalizeTicketListPagedResponseTransform;
+const normalizeTicketDetailPagedResponse = normalizeTicketDetailPagedResponseTransform;
 
 const looksLikeHtmlDocument = (value: unknown): boolean => {
   const raw = safeText(value).toLowerCase();
@@ -693,21 +497,6 @@ const mapLegacyListResponse = (
   };
 };
 
-const resolveTypeLabel = (typeValueCode: string): string => {
-  if (!typeValueCode || typeof window === "undefined") {
-    return typeValueCode;
-  }
-
-  const rawCatalogSource = readExpenseWindowRuntime().__EXPENSE_GASTO_TYPES__;
-  const rawCatalog = Array.isArray(rawCatalogSource) ? rawCatalogSource : [];
-  const match = rawCatalog.find((entry: ExpenseGastoTypeEntry) => {
-    const entryCode = safeText(entry?.value || entry?.Value);
-    return entryCode === typeValueCode;
-  });
-
-  return safeText(match?.text || match?.Text) || typeValueCode;
-};
-
 // Sets runtime auth inputs used to resolve Entra context and mandatory expense headers.
 export const configureExpenseApiAuth = (seed: Partial<ExpenseApiAuthSeed>): void => {
   const strictFromSeed = toFlagBool(seed.strictApiRoutes);
@@ -730,63 +519,13 @@ export const configureExpenseApiAuth = (seed: Partial<ExpenseApiAuthSeed>): void
 };
 
 // Maps /api/crm/expensesheets/list item contract to list card UI model.
-export const mapExpenseSheetListItemToCard = (item: ExpenseSheetListItemDto): ExpenseSheetCard => {
-  return {
-    hojaGastosId: safeText(item.HojaGastosId),
-    description: safeText(item.Description),
-    expenseSheetStatus: toNullableNumber(item.ExpenseSheetStatus),
-    estadoComentarios: safeText(item.EstadoComentarios) || null,
-    userId: safeText(item.UserId),
-    voucher: safeText(item.Voucher),
-    projId: safeText(item.ProjId),
-    currencyCode: safeText(item.CurrencyCode),
-    totalAmount: toNullableNumber(item.TotalAmount),
-    exchRate: toNullableNumber(item.ExchRate),
-    exchangeRateMode: toNullableNumber(item.ExchangeRateMode),
-    createdDate: safeText(item.CreatedDate),
-  };
-};
+export const mapExpenseSheetListItemToCard = mapExpenseSheetListItemToCardCore;
 
 // Maps /api/crm/expensesheets/{hojaGastosId} header contract to UI model.
-export const mapExpenseSheetHeader = (sheet: ExpenseSheetDetailDto): ExpenseSheetHeader => {
-  return {
-    hojaGastosId: safeText(sheet.HojaGastosId),
-    description: safeText(sheet.Description),
-    userId: safeText(sheet.UserId),
-    expenseSheetStatus: toNullableNumber(sheet.ExpenseSheetStatus),
-    estadoComentarios: safeText(sheet.EstadoComentarios) || null,
-    currencyCode: safeText(sheet.CurrencyCode),
-    totalAmount: toNullableNumber(sheet.TotalAmount),
-    exchRate: safeText(sheet.ExchRate),
-    exchangeRateMode: toNullableNumber(sheet.ExchangeRateMode),
-    projId: safeText(sheet.ProjId),
-    voucher: safeText(sheet.Voucher),
-    createdDate: safeText(sheet.CreatedDate),
-  };
-};
+export const mapExpenseSheetHeader = mapExpenseSheetHeaderCore;
 
 // Maps /api/crm/expensesheets/{hojaGastosId} line contract to UI model.
-export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine => {
-  const typeValueCode = safeText(line.TypeValue);
-  const legacyPrice = (line as { price?: unknown }).price;
-  const legacyFileId = (line as { fileId?: unknown }).fileId;
-
-  return {
-    lineRecId: safeText(line.RecId),
-    transDate: safeText(line.TransDate),
-    typeValueCode,
-    typeValue: resolveTypeLabel(typeValueCode),
-    description: safeText(line.Description),
-    internacional: toNullableBool(line.Internacional),
-    fileId: safeText(line.FileId ?? legacyFileId),
-    ticket: toNullableBool(line.Ticket),
-    price: toNullableNumber(line.Price ?? legacyPrice),
-    qty: toNullableNumber(line.Qty),
-    amount: toNullableNumber(line.Amount),
-    projId: safeText(line.ProjId),
-    indAttachFiles: safeText(line.IndAttachFiles),
-  };
-};
+export const mapExpenseSheetLine = mapExpenseSheetLineCore;
 
 // Loads the expense sheet list from /api/crm/expensesheets/list.
 export const fetchExpenseSheetList = async (
