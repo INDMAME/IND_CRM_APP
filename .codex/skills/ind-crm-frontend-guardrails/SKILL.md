@@ -54,6 +54,7 @@ Conflict precedence:
 | React entry pattern | Keep page bootstrap thin. Use `mountReactIsland` + `mountWhenDocumentReady`; use `VisitasPageProviders` and `AppErrorBoundary` where applicable. |
 | Legacy JS | Do not add new jQuery or jquery-validation usage. |
 | API contract | Frontend services and hooks do not invent response formats; consume `IndApiResponse<T>` / `IndPagedResponse<T>` contracts. |
+| Expense list date contract | For expense sheets and ticket list payloads sent by web backend to upstream, `createdDateFrom` and `createdDateTo` must be `ddMMyyyy` (or `DD.MM.YYYY` only if endpoint contract explicitly requires dotted format). Never send `yyyyMMdd`. |
 | Internal API route pattern | Every new `/api/...` endpoint must have explicit controller verb attributes plus `Program.cs` `MapControllerRoute` mapping, with local verb validation to prevent 404/405 regressions. |
 | i18n | No hardcoded user-facing strings; add resource keys to all supported cultures in the same change. |
 | Anti-regression | Preserve date pickers, date filters, and payload formats unless explicitly requested. |
@@ -132,6 +133,7 @@ Required triggers:
 - Mixing React full-page patterns into areas that must remain MVC plus Razor.
 - Hardcoding labels or messages instead of resource keys in all supported cultures.
 - Treating date behavior changes as harmless refactors without explicit requirement.
+- Sending expense list filter dates in `yyyyMMdd` to upstream instead of required day-first contract (`ddMMyyyy` or `DD.MM.YYYY`).
 - Editing `wwwroot` mirror paths as primary source instead of `Web/wwwroot`.
 - Adding behavior through boolean prop stacking instead of composition or explicit variants.
 - Leaving numeric fields with locale-dependent or mixed formats instead of the required `#,##0.00`.
@@ -142,4 +144,4 @@ Required triggers:
 - Mismatching frontend HTTP verb versus controller verb attribute on API routes.
 
 ## Last updated
-- 2026-03-05
+- 2026-03-06

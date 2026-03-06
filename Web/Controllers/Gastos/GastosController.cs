@@ -281,6 +281,22 @@ namespace IND_CRM_APP.Controllers
                 var responsePage = result.Page > 0 ? result.Page : page;
                 var responsePageSize = result.PageSize > 0 ? result.PageSize : pageSize;
 
+                if (!result.Success && items.Count == 0)
+                {
+                    _logger.LogWarning(
+                        "ApiExpenseSheetsList upstream returned non-success. Message={Message} TraceId={TraceId} page={Page} pageSize={PageSize} billedMode={BilledMode} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} projId={ProjId} currencyCode={CurrencyCode} expenseSheetStatus={ExpenseSheetStatus}",
+                        result.Message ?? string.Empty,
+                        result.TraceId ?? string.Empty,
+                        page,
+                        pageSize,
+                        payload.BilledMode.HasValue ? payload.BilledMode.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                        payload.CreatedDateFrom ?? string.Empty,
+                        payload.CreatedDateTo ?? string.Empty,
+                        payload.ProjId ?? string.Empty,
+                        payload.CurrencyCode ?? string.Empty,
+                        payload.ExpenseSheetStatus.HasValue ? payload.ExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null");
+                }
+
                 return CreateApiPagedResponse(new
                 {
                     Success = result.Success || items.Count > 0,
@@ -1342,6 +1358,24 @@ namespace IND_CRM_APP.Controllers
                     .ToList();
                 var responsePage = result.Page > 0 ? result.Page : page;
                 var responsePageSize = result.PageSize > 0 ? result.PageSize : pageSize;
+
+                if (!result.Success && items.Count == 0)
+                {
+                    _logger.LogWarning(
+                        "ApiExpenseSheetTicketsList upstream returned non-success. Message={Message} TraceId={TraceId} page={Page} pageSize={PageSize} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} searchKey={SearchKey} filter={Filter} status={Status} currencyCode={CurrencyCode} gastoType={GastoType} processedByAI={ProcessedByAI}",
+                        result.Message ?? string.Empty,
+                        result.TraceId ?? string.Empty,
+                        page,
+                        pageSize,
+                        request.CreatedDateFrom ?? string.Empty,
+                        request.CreatedDateTo ?? string.Empty,
+                        request.SearchKey ?? string.Empty,
+                        request.Filter ?? string.Empty,
+                        request.Status.HasValue ? request.Status.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                        request.CurrencyCode ?? string.Empty,
+                        request.GastoType.HasValue ? request.GastoType.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                        request.ProcessedByAI.HasValue ? request.ProcessedByAI.Value.ToString() : "null");
+                }
 
                 return CreateApiPagedResponse(new
                 {
@@ -2546,6 +2580,7 @@ namespace IND_CRM_APP.Controllers
         }
 
         // Normalizes date filters to accepted API formats.
+        // Accepts yyyyMMdd, yyyy-MM-dd, DDMMYYYY and DD.MM.YYYY in a culture-safe way.
         private static string? NormalizeListDateFilter(string? raw)
         {
             if (string.IsNullOrWhiteSpace(raw))
@@ -2557,6 +2592,18 @@ namespace IND_CRM_APP.Controllers
 
             if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
                 return value;
+
+            if (DateTime.TryParseExact(value, "ddMMyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdMmYyyy))
+                return parsedDdMmYyyy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdDotMmDotYyyy))
+                return parsedDdDotMmDotYyyy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdDashMmDashYyyy))
+                return parsedDdDashMmDashYyyy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdSlashMmSlashYyyy))
+                return parsedDdSlashMmSlashYyyy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
             if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedInv))
                 return parsedInv.ToString("yyyy-MM-dd");
@@ -3017,23 +3064,36 @@ namespace IND_CRM_APP.Controllers
         }
 
         // Normalizes date values to yyyy-MM-dd when possible.
+        // Parses explicit day-first formats first to avoid month/day swaps on server cultures.
         private static string NormalizeDate(string? raw)
         {
             if (string.IsNullOrWhiteSpace(raw))
                 return string.Empty;
 
             var value = raw.Trim();
+            if (DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactYmdCompact))
+                return exactYmdCompact.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactYmdDash))
+                return exactYmdDash.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "ddMMyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDdMmCompact))
+                return exactDdMmCompact.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDdMmDot))
+                return exactDdMmDot.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDdMmDash))
+                return exactDdMmDash.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDdMmSlash))
+                return exactDdMmSlash.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
             if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedInv))
                 return parsedInv.ToString("yyyy-MM-dd");
 
             if (DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedCur))
                 return parsedCur.ToString("yyyy-MM-dd");
-
-            if (value.Length == 8 && long.TryParse(value, out _))
-            {
-                if (DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exact))
-                    return exact.ToString("yyyy-MM-dd");
-            }
 
             return value;
         }

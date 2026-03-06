@@ -134,6 +134,7 @@ const ExpenseFiltersPanel = ({
             value={currencyCode}
             onChange={onCurrencyCodeChange}
             showLabel={false}
+            showLoadingStateText={false}
           />
 
           <ExpenseStatusFilterSelect

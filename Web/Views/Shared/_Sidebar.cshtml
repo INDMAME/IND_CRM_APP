@@ -12,6 +12,7 @@
     var returnUrl = (Context?.Request?.Path.Value ?? "/") + (Context?.Request?.QueryString.Value ?? string.Empty);
     var cultureFeature = Context?.Features.Get<Microsoft.AspNetCore.Localization.IRequestCultureFeature>();
     var currentCulture = cultureFeature?.RequestCulture?.UICulture?.Name ?? System.Globalization.CultureInfo.CurrentUICulture.Name;
+    var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 
     IndWebContext? webContext = null;
     var contextRaw = HttpAccessor.HttpContext?.Session.GetString("INDWebContext");
@@ -297,7 +298,7 @@
 
 </div>
 
-<script>
+<script nonce="@cspNonce">
     (function () {
         const clearExpenseListCache = () => {
             try {

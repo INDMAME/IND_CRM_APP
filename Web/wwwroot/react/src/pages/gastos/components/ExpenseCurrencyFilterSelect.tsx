@@ -19,6 +19,7 @@ type ExpenseCurrencyFilterSelectProps = {
   preferDefaultCurrencyFromContext?: boolean;
   dropdownExpandPx?: number;
   dropdownMinWidthPx?: number;
+  showLoadingStateText?: boolean;
 };
 
 const normalizeCurrencyCode = (value: string | number | null | undefined): string => {
@@ -113,6 +114,7 @@ const ExpenseCurrencyFilterSelect = ({
   preferDefaultCurrencyFromContext = false,
   dropdownExpandPx = 0,
   dropdownMinWidthPx = 320,
+  showLoadingStateText = true,
 }: ExpenseCurrencyFilterSelectProps) => {
   const locale = useMemo(() => readPreferredLocale(), []);
   const [options, setOptions] = useState<ExpenseSelectOption[]>([]);
@@ -245,7 +247,7 @@ const ExpenseCurrencyFilterSelect = ({
         panelClassName={CURRENCY_DROPDOWN_PANEL_CLASS}
         panelStyle={CURRENCY_DROPDOWN_PANEL_STYLE}
       />
-      {isLoadingOptions ? <p className="text-xs text-slate-500">{loadingMessage}</p> : null}
+      {showLoadingStateText && isLoadingOptions ? <p className="text-xs text-slate-500">{loadingMessage}</p> : null}
       {!isLoadingOptions && loadErrorMessage ? <p className="text-xs text-danger">{loadErrorMessage}</p> : null}
       {!isLoadingOptions && !loadErrorMessage && emptyMessage ? <p className="text-xs text-slate-500">{emptyMessage}</p> : null}
     </div>

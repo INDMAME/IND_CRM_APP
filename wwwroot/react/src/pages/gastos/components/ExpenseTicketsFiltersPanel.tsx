@@ -145,6 +145,7 @@ const ExpenseTicketsFiltersPanel = ({
             value={currencyCode}
             onChange={onCurrencyCodeChange}
             showLabel={false}
+            showLoadingStateText={false}
           />
 
           <SelectCombobox
@@ -179,15 +180,15 @@ const ExpenseTicketsFiltersPanel = ({
             panelClassName="visitas-typography"
             showLabel={false}
           />
-        </div>
 
-        <ExpenseProcessedByIaFilterSelect
-          label={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}
-          placeholder={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}
-          value={processedByIaFilter}
-          onChange={onProcessedByIaFilterChange}
-          showLabel={false}
-        />
+          <ExpenseProcessedByIaFilterSelect
+            label={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}
+            placeholder={indT("Tickets_Filter_ProcessedByIA", "Processed by IA")}
+            value={processedByIaFilter}
+            onChange={onProcessedByIaFilterChange}
+            showLabel={false}
+          />
+        </div>
 
         <ExpenseFilterActions
           clearLabel={indT("History_Filter_Clear", "Clear")}

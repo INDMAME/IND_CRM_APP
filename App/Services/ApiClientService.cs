@@ -9,6 +9,7 @@ using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http.Headers;
+using System.Globalization;
 using System.Text.Json;
 using System.Linq;
 using System.Threading;
@@ -97,6 +98,23 @@ namespace IND_CRM_APP.Services
             return string.IsNullOrWhiteSpace(raw) ? "<empty>" : $"len={raw.Length}";
         }
 
+        // Returns a compact safe snippet for diagnostics without flooding logs.
+        private static string SafeLogSnippet(string? raw, int maxChars = 1200)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return "<empty>";
+
+            var normalized = raw
+                .Replace('\r', ' ')
+                .Replace('\n', ' ')
+                .Trim();
+
+            if (normalized.Length <= maxChars)
+                return normalized;
+
+            return normalized.Substring(0, maxChars) + "...";
+        }
+
         // Normalize a quoted string response into a plain value.
         private static string NormalizeQuotedValue(string? raw)
         {
@@ -167,6 +185,40 @@ namespace IND_CRM_APP.Services
         private static string? NormalizeOptionalText(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        // Normalizes list date filters to AX expected compact format (ddMMyyyy).
+        private static string? NormalizeAxListDate(string? value)
+        {
+            var normalized = NormalizeOptionalText(value);
+            if (string.IsNullOrWhiteSpace(normalized))
+                return null;
+
+            if (DateTime.TryParseExact(normalized, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedCompact))
+                return parsedCompact.ToString("ddMMyyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(normalized, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedIso))
+                return parsedIso.ToString("ddMMyyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(normalized, "ddMMyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdMmYyyy))
+                return parsedDdMmYyyy.ToString("ddMMyyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(normalized, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdDotMmDotYyyy))
+                return parsedDdDotMmDotYyyy.ToString("ddMMyyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(normalized, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdSlashMmSlashYyyy))
+                return parsedDdSlashMmSlashYyyy.ToString("ddMMyyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(normalized, "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdDashMmDashYyyy))
+                return parsedDdDashMmDashYyyy.ToString("ddMMyyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParse(normalized, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedInv))
+                return parsedInv.ToString("ddMMyyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParse(normalized, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedCur))
+                return parsedCur.ToString("ddMMyyyy", CultureInfo.InvariantCulture);
+
+            return normalized;
         }
 
         // Normalizes optional gasto type values against the fixed enum set.
@@ -812,20 +864,54 @@ namespace IND_CRM_APP.Services
 
             req ??= new ExpenseSheetListApiRequest();
 
-            var payload = new ExpenseSheetListApiRequest
+            var normalizedPage = req.Page < 1 ? 1 : req.Page;
+            var normalizedPageSize = req.PageSize <= 0 ? 50 : req.PageSize;
+            var normalizedBilledMode = req.BilledMode is >= 0 and <= 2 ? req.BilledMode.Value : 2;
+            var normalizedExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null;
+            var normalizedFilter = NormalizeOptionalText(req.Filter) ?? string.Empty;
+            var normalizedCreatedDateFrom = NormalizeAxListDate(req.CreatedDateFrom) ?? string.Empty;
+            var normalizedCreatedDateTo = NormalizeAxListDate(req.CreatedDateTo) ?? string.Empty;
+            var normalizedProjId = NormalizeOptionalText(req.ProjId) ?? string.Empty;
+            var normalizedCurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant() ?? string.Empty;
+
+            var payload = new Dictionary<string, object?>
             {
-                Filter = NormalizeOptionalText(req.Filter),
-                BilledMode = req.BilledMode is >= 0 and <= 2 ? req.BilledMode : null,
-                CreatedDateFrom = NormalizeOptionalText(req.CreatedDateFrom),
-                CreatedDateTo = NormalizeOptionalText(req.CreatedDateTo),
-                ProjId = NormalizeOptionalText(req.ProjId),
-                CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
-                ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
-                Page = req.Page < 1 ? 1 : req.Page,
-                PageSize = req.PageSize <= 0 ? 50 : req.PageSize
+                ["filter"] = normalizedFilter,
+                ["billedMode"] = normalizedBilledMode,
+                ["createdDateFrom"] = normalizedCreatedDateFrom,
+                ["createdDateTo"] = normalizedCreatedDateTo,
+                ["projId"] = normalizedProjId,
+                ["currencyCode"] = normalizedCurrencyCode,
+                ["expenseSheetStatus"] = normalizedExpenseSheetStatus,
+                ["page"] = normalizedPage,
+                ["pageSize"] = normalizedPageSize
             };
 
-            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetsList, payload);
+            var serializedPayload = Serialize(payload);
+            _logger.LogInformation(
+                "Upstream request {Operation}: payloadLength={PayloadLength} billedMode={BilledMode} page={Page} pageSize={PageSize} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} filterLen={FilterLen} projIdLen={ProjIdLen} currencyCode={CurrencyCode} expenseSheetStatus={ExpenseSheetStatus}",
+                "GetExpenseSheets",
+                serializedPayload.Length,
+                normalizedBilledMode,
+                normalizedPage,
+                normalizedPageSize,
+                normalizedCreatedDateFrom,
+                normalizedCreatedDateTo,
+                normalizedFilter.Length,
+                normalizedProjId.Length,
+                string.IsNullOrWhiteSpace(normalizedCurrencyCode) ? "<empty>" : normalizedCurrencyCode,
+                normalizedExpenseSheetStatus.HasValue ? normalizedExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null");
+
+            var result = await SendPostAsync(ApiRoutes.ExpenseSheetsList, serializedPayload);
+            if (!result.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Upstream non-success {Operation}: statusCode={StatusCode} payloadLength={PayloadLength} body={BodySnippet}",
+                    "GetExpenseSheets",
+                    (int)result.StatusCode,
+                    serializedPayload.Length,
+                    SafeLogSnippet(result.Raw));
+            }
             return BuildPagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheets");
         }
 
@@ -911,40 +997,55 @@ namespace IND_CRM_APP.Services
 
             var normalizedPage = req.Page < 1 ? 1 : req.Page;
             var normalizedPageSize = req.PageSize <= 0 ? 50 : req.PageSize;
-            var normalizedCreatedDateFrom = NormalizeOptionalText(req.CreatedDateFrom);
-            var normalizedCreatedDateTo = NormalizeOptionalText(req.CreatedDateTo);
-            var normalizedSearchKey = NormalizeOptionalText(req.SearchKey) ?? NormalizeOptionalText(req.Filter);
-            var normalizedFilter = NormalizeOptionalText(req.Filter);
-            var normalizedCurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant();
+            var normalizedCreatedDateFrom = NormalizeAxListDate(req.CreatedDateFrom) ?? string.Empty;
+            var normalizedCreatedDateTo = NormalizeAxListDate(req.CreatedDateTo) ?? string.Empty;
+            var normalizedSearchKey = NormalizeOptionalText(req.SearchKey) ?? NormalizeOptionalText(req.Filter) ?? string.Empty;
+            var normalizedFilter = NormalizeOptionalText(req.Filter) ?? normalizedSearchKey;
+            var normalizedCurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant() ?? string.Empty;
             var normalizedGastoType = NormalizeTicketGastoType(req.GastoType);
+            var normalizedStatus = BuildTicketStatusFilterToken(req.Status);
+            var normalizedProcessedByAi = BuildTicketProcessedByAiFilterToken(req.ProcessedByAI);
 
             var payload = new Dictionary<string, object?>
             {
                 ["page"] = normalizedPage,
                 ["pageSize"] = normalizedPageSize,
-                ["status"] = BuildTicketStatusFilterToken(req.Status),
-                ["processedByAI"] = BuildTicketProcessedByAiFilterToken(req.ProcessedByAI)
+                ["createdDateFrom"] = normalizedCreatedDateFrom,
+                ["createdDateTo"] = normalizedCreatedDateTo,
+                ["searchKey"] = normalizedSearchKey,
+                ["filter"] = normalizedFilter,
+                ["status"] = normalizedStatus,
+                ["currencyCode"] = normalizedCurrencyCode,
+                ["gastoType"] = normalizedGastoType,
+                ["processedByAI"] = normalizedProcessedByAi
             };
 
-            if (!string.IsNullOrWhiteSpace(normalizedCreatedDateFrom))
-                payload["createdDateFrom"] = normalizedCreatedDateFrom;
+            var serializedPayload = Serialize(payload);
+            _logger.LogInformation(
+                "Upstream request {Operation}: payloadLength={PayloadLength} page={Page} pageSize={PageSize} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} searchKeyLen={SearchKeyLen} filterLen={FilterLen} status={Status} currencyCode={CurrencyCode} gastoType={GastoType} processedByAI={ProcessedByAI}",
+                "GetExpenseSheetTickets",
+                serializedPayload.Length,
+                normalizedPage,
+                normalizedPageSize,
+                normalizedCreatedDateFrom,
+                normalizedCreatedDateTo,
+                normalizedSearchKey.Length,
+                normalizedFilter.Length,
+                normalizedStatus.HasValue ? normalizedStatus.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                string.IsNullOrWhiteSpace(normalizedCurrencyCode) ? "<empty>" : normalizedCurrencyCode,
+                normalizedGastoType.HasValue ? normalizedGastoType.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                normalizedProcessedByAi.HasValue ? normalizedProcessedByAi.Value.ToString(CultureInfo.InvariantCulture) : "null");
 
-            if (!string.IsNullOrWhiteSpace(normalizedCreatedDateTo))
-                payload["createdDateTo"] = normalizedCreatedDateTo;
-
-            if (!string.IsNullOrWhiteSpace(normalizedSearchKey))
-                payload["searchKey"] = normalizedSearchKey;
-
-            if (!string.IsNullOrWhiteSpace(normalizedFilter))
-                payload["filter"] = normalizedFilter;
-
-            if (!string.IsNullOrWhiteSpace(normalizedCurrencyCode))
-                payload["currencyCode"] = normalizedCurrencyCode;
-
-            if (normalizedGastoType.HasValue)
-                payload["gastoType"] = normalizedGastoType.Value;
-
-            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketsList, payload);
+            var result = await SendPostAsync(ApiRoutes.ExpenseSheetTicketsList, serializedPayload);
+            if (!result.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Upstream non-success {Operation}: statusCode={StatusCode} payloadLength={PayloadLength} body={BodySnippet}",
+                    "GetExpenseSheetTickets",
+                    (int)result.StatusCode,
+                    serializedPayload.Length,
+                    SafeLogSnippet(result.Raw));
+            }
             return BuildPagedResponse<ExpenseSheetTicketListItemDto>(result, "GetExpenseSheetTickets");
         }
 
@@ -1377,6 +1478,15 @@ namespace IND_CRM_APP.Services
             }
 
             LogNullPagedMetricsIfAny(result.Raw, operation, result.StatusCode);
+            if (!result.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "Paged upstream response not successful for {Operation}. StatusCode: {StatusCode}. Error: {ErrorMessage}. Raw: {RawSnippet}",
+                    operation,
+                    (int)result.StatusCode,
+                    result.ErrorMessage ?? "<null>",
+                    SafeLogSnippet(result.Raw));
+            }
 
             try
             {
