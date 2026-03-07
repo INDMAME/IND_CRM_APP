@@ -1100,10 +1100,15 @@ const ExpenseTicketsPageContent = () => {
 
           {canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked ? (
             <>
-              <div className="text-xs text-slate-600">
-                {`${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount} | ${indT("ExpenseSheets_Field_TotalAmount", "Total amount")}: ${selectedTotalAmountText}`}
+              <div className="flex flex-wrap items-center gap-2 text-xs">
+                <span className="inline-flex items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 font-semibold text-slate-700">
+                  {`${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}`}
+                </span>
+                <span className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-2.5 py-1 font-semibold text-primary">
+                  {`${indT("ExpenseSheets_Field_TotalAmount", "Total amount")}: ${selectedTotalAmountText}`}
+                </span>
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 pt-0.5">
                 <button
                   type="button"
                   className="ind-action-btn px-3 py-1.5 text-xs"
