@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   ExpenseTicketAppliedFilterSnapshot,
   ExpenseTicketQuickFilterId,
@@ -11,15 +11,34 @@ import { normalizeExpenseTicketFilterSnapshot } from "./expenseTicketFilterSnaps
 type UseExpenseTicketsFiltersStateArgs = {
   onApplyFilters: (snapshot: ExpenseTicketAppliedFilterSnapshot) => void;
   onClearFilters: () => void;
+  fixedStatusFilter?: ExpenseTicketStatusFilterCode | null;
+  allowEmptyDatesOnApply?: boolean;
 };
 
 // Owns filter UI state and apply/clear rules for expense tickets list page.
-export const useExpenseTicketsFiltersState = ({ onApplyFilters, onClearFilters }: UseExpenseTicketsFiltersStateArgs) => {
+export const useExpenseTicketsFiltersState = ({
+  onApplyFilters,
+  onClearFilters,
+  fixedStatusFilter = null,
+  allowEmptyDatesOnApply = false,
+}: UseExpenseTicketsFiltersStateArgs) => {
+  const hasFixedStatusFilter = fixedStatusFilter === 0 || fixedStatusFilter === 1;
+
+  const resolveStatusFilter = useCallback(
+    (value: ExpenseTicketStatusFilterCode): ExpenseTicketStatusFilterCode => {
+      if (hasFixedStatusFilter) {
+        return fixedStatusFilter as ExpenseTicketStatusFilterCode;
+      }
+      return value;
+    },
+    [fixedStatusFilter, hasFixedStatusFilter]
+  );
+
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [filterKey, setFilterKey] = useState("");
   const [currencyCode, setCurrencyCode] = useState("");
-  const [statusFilter, setStatusFilter] = useState<ExpenseTicketStatusFilterCode>("");
+  const [statusFilterRaw, setStatusFilterRaw] = useState<ExpenseTicketStatusFilterCode>(resolveStatusFilter(""));
   const [gastoTypeFilter, setGastoTypeFilter] = useState<"" | ExpenseGastoTypeCode>("");
   const [processedByIaFilter, setProcessedByIaFilter] = useState<"all" | "yes" | "no">("all");
   const [activeQuickFilter, setActiveQuickFilter] = useState<ExpenseTicketQuickFilterId | null>(null);
@@ -28,6 +47,13 @@ export const useExpenseTicketsFiltersState = ({ onApplyFilters, onClearFilters }
   const [manualDateAutoOpenKey, setManualDateAutoOpenKey] = useState(0);
   const [appliedFilters, setAppliedFilters] = useState<ExpenseTicketAppliedFilterSnapshot | null>(null);
   const [showFilters, setShowFilters] = useState(true);
+
+  useEffect(() => {
+    if (!hasFixedStatusFilter) return;
+    setStatusFilterRaw(fixedStatusFilter as ExpenseTicketStatusFilterCode);
+  }, [fixedStatusFilter, hasFixedStatusFilter]);
+
+  const statusFilter = resolveStatusFilter(statusFilterRaw);
 
   const currentFilters = useMemo<ExpenseTicketAppliedFilterSnapshot>(
     () => ({
@@ -42,8 +68,19 @@ export const useExpenseTicketsFiltersState = ({ onApplyFilters, onClearFilters }
     [currencyCode, filterKey, fromDate, gastoTypeFilter, processedByIaFilter, statusFilter, toDate]
   );
 
+  const setStatusFilter = useCallback(
+    (value: ExpenseTicketStatusFilterCode) => {
+      if (hasFixedStatusFilter) {
+        setStatusFilterRaw(fixedStatusFilter as ExpenseTicketStatusFilterCode);
+        return;
+      }
+      setStatusFilterRaw(value);
+    },
+    [fixedStatusFilter, hasFixedStatusFilter]
+  );
+
   const onApply = useCallback(() => {
-    if (!fromDate || !toDate) {
+    if (!allowEmptyDatesOnApply && (!fromDate || !toDate)) {
       setShowManualDateError(true);
       setShowManualDateFilter(true);
       setActiveQuickFilter("custom");
@@ -65,31 +102,38 @@ export const useExpenseTicketsFiltersState = ({ onApplyFilters, onClearFilters }
     setShowManualDateFilter(false);
     setShowFilters(false);
     onApplyFilters(snapshot);
-  }, [currencyCode, filterKey, fromDate, gastoTypeFilter, onApplyFilters, processedByIaFilter, statusFilter, toDate]);
+  }, [allowEmptyDatesOnApply, currencyCode, filterKey, fromDate, gastoTypeFilter, onApplyFilters, processedByIaFilter, statusFilter, toDate]);
 
   // Rehydrates ticket filters from a cached snapshot when returning from detail.
-  const restoreAppliedFilters = useCallback((snapshot: ExpenseTicketAppliedFilterSnapshot) => {
-    const normalized = normalizeExpenseTicketFilterSnapshot(snapshot);
-    setFromDate(normalized.fromDate);
-    setToDate(normalized.toDate);
-    setFilterKey(normalized.filterKey);
-    setCurrencyCode(normalized.currencyCode);
-    setStatusFilter(normalized.statusFilter);
-    setGastoTypeFilter(normalized.gastoTypeFilter);
-    setProcessedByIaFilter(normalized.processedByIaFilter);
-    setActiveQuickFilter(null);
-    setShowManualDateFilter(false);
-    setShowManualDateError(false);
-    setAppliedFilters(normalized);
-    setShowFilters(false);
-  }, []);
+  const restoreAppliedFilters = useCallback(
+    (snapshot: ExpenseTicketAppliedFilterSnapshot) => {
+      const normalized = normalizeExpenseTicketFilterSnapshot(snapshot);
+      const normalizedStatusFilter = resolveStatusFilter(normalized.statusFilter);
+      setFromDate(normalized.fromDate);
+      setToDate(normalized.toDate);
+      setFilterKey(normalized.filterKey);
+      setCurrencyCode(normalized.currencyCode);
+      setStatusFilterRaw(normalizedStatusFilter);
+      setGastoTypeFilter(normalized.gastoTypeFilter);
+      setProcessedByIaFilter(normalized.processedByIaFilter);
+      setActiveQuickFilter(null);
+      setShowManualDateFilter(false);
+      setShowManualDateError(false);
+      setAppliedFilters({
+        ...normalized,
+        statusFilter: normalizedStatusFilter,
+      });
+      setShowFilters(false);
+    },
+    [resolveStatusFilter]
+  );
 
   const onClear = useCallback(() => {
     setFromDate("");
     setToDate("");
     setFilterKey("");
     setCurrencyCode("");
-    setStatusFilter("");
+    setStatusFilterRaw(resolveStatusFilter(""));
     setGastoTypeFilter("");
     setProcessedByIaFilter("all");
     setActiveQuickFilter(null);
@@ -99,7 +143,7 @@ export const useExpenseTicketsFiltersState = ({ onApplyFilters, onClearFilters }
     setAppliedFilters(null);
     setShowFilters(true);
     onClearFilters();
-  }, [onClearFilters]);
+  }, [onClearFilters, resolveStatusFilter]);
 
   const onDateRangeChange = useCallback(
     (nextFromDate: string, nextToDate: string) => {
@@ -198,5 +242,6 @@ export const useExpenseTicketsFiltersState = ({ onApplyFilters, onClearFilters }
     onManualRangeComplete,
     onQuickFilterChange,
     toggleFilterPanel,
+    statusFilterLocked: hasFixedStatusFilter,
   };
 };

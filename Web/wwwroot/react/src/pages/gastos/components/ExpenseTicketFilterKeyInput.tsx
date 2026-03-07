@@ -10,6 +10,7 @@ type ExpenseTicketFilterKeyInputProps = {
   value: string;
   onChange: (value: string) => void;
   enableRemoteSuggestions?: boolean;
+  fixedStatusFilter?: 0 | 1 | null;
   readOnly?: boolean;
   disabled?: boolean;
   showLabel?: boolean;
@@ -18,13 +19,19 @@ type ExpenseTicketFilterKeyInputProps = {
 const SEARCH_PAGE_SIZE = 30;
 
 // Builds minimal payload for ticket key suggestions without date filters.
-const buildTicketSuggestPayload = (term: string, page: number, pageSize: number): ExpenseSheetTicketListRequest => {
+const buildTicketSuggestPayload = (
+  term: string,
+  page: number,
+  pageSize: number,
+  fixedStatusFilter: 0 | 1 | null
+): ExpenseSheetTicketListRequest => {
   const safeTerm = String(term || "").trim();
   return {
     page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
     pageSize: Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : SEARCH_PAGE_SIZE,
     searchKey: safeTerm || undefined,
     filter: safeTerm || undefined,
+    status: fixedStatusFilter === 0 || fixedStatusFilter === 1 ? fixedStatusFilter : undefined,
   };
 };
 
@@ -52,6 +59,7 @@ const ExpenseTicketFilterKeyInput = ({
   value,
   onChange,
   enableRemoteSuggestions = true,
+  fixedStatusFilter = null,
   readOnly = false,
   disabled = false,
   showLabel = true,
@@ -59,7 +67,7 @@ const ExpenseTicketFilterKeyInput = ({
   const readOnlyMode = readOnly || disabled;
 
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
-    const payload = buildTicketSuggestPayload(term, 1, SEARCH_PAGE_SIZE);
+    const payload = buildTicketSuggestPayload(term, 1, SEARCH_PAGE_SIZE, fixedStatusFilter);
 
     const response = await fetchExpenseSheetTicketsList(payload, {
       suppressPermissionModal: true,
@@ -71,10 +79,10 @@ const ExpenseTicketFilterKeyInput = ({
     }
 
     return mapTicketOptions(response?.Items);
-  }, []);
+  }, [fixedStatusFilter]);
 
   const loadOptionsPage = useCallback(async (term: string, page: number, _pageSize: number, signal: AbortSignal) => {
-    const payload = buildTicketSuggestPayload(term, page, SEARCH_PAGE_SIZE);
+    const payload = buildTicketSuggestPayload(term, page, SEARCH_PAGE_SIZE, fixedStatusFilter);
 
     const response = await fetchExpenseSheetTicketsList(payload, {
       suppressPermissionModal: true,
@@ -92,7 +100,7 @@ const ExpenseTicketFilterKeyInput = ({
       items: mapTicketOptions(response?.Items),
       total: Number(response?.Total || 0),
     };
-  }, []);
+  }, [fixedStatusFilter]);
 
   if (!enableRemoteSuggestions || readOnlyMode) {
     return (

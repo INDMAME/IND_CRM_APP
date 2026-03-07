@@ -51,6 +51,8 @@ type ExpenseTicketsFiltersPanelProps = {
   processedByIaFilter: ExpenseTicketProcessedByIaFilter;
   activeQuickFilter: ExpenseTicketQuickFilterId | null;
   showManualDateError: boolean;
+  statusFilterReadOnly?: boolean;
+  fixedStatusFilter?: 0 | 1 | null;
   gastoTypeOptions: ExpenseSelectOption[];
   onDateRangeChange: (fromDate: string, toDate: string) => void;
   onManualRangeComplete: (fromDate: string, toDate: string) => void;
@@ -78,6 +80,8 @@ const ExpenseTicketsFiltersPanel = ({
   processedByIaFilter,
   activeQuickFilter,
   showManualDateError,
+  statusFilterReadOnly = false,
+  fixedStatusFilter = null,
   gastoTypeOptions,
   onDateRangeChange,
   onManualRangeComplete,
@@ -136,6 +140,7 @@ const ExpenseTicketsFiltersPanel = ({
             value={filterKey}
             onChange={onFilterKeyChange}
             enableRemoteSuggestions
+            fixedStatusFilter={fixedStatusFilter}
             showLabel={false}
           />
 
@@ -155,6 +160,7 @@ const ExpenseTicketsFiltersPanel = ({
             value={statusFilter}
             onChange={(nextValue) => onStatusFilterChange(normalizeExpenseTicketStatusFilterCode(nextValue, ""))}
             allowTextInput={false}
+            disabled={statusFilterReadOnly}
             idBase="expense-ticket-status-filter"
             portalClassName="visitas-typography"
             panelClassName="visitas-typography"
