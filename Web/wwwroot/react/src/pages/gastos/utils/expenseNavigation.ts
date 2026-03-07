@@ -5,8 +5,11 @@ type NavigateWithGuardOptions = {
 };
 
 // Updates the global navigation guard lifecycle for active edit processes.
-export const setExpenseNavigationGuard = (active: boolean): void => {
-  window.__indSetNavigationGuard?.(active);
+export const setExpenseNavigationGuard = (
+  activeOrOptions?: boolean | IndNavigationGuardOptions,
+  message?: string
+): void => {
+  window.__indSetNavigationGuard?.(activeOrOptions, message);
 };
 
 // Clears global navigation guard flags when component unmounts.

@@ -1029,6 +1029,9 @@
   <data name="TextEditor_Microphone" xml:space="preserve">
     <value>Microphone</value>
   </data>
+  <data name="TextEditor_Microphone_ReadOnlyHint" xml:space="preserve">
+    <value>Audio transcription is available only in edit mode.</value>
+  </data>
   <data name="TextEditor_Transcribe" xml:space="preserve">
     <value>Transcribe</value>
   </data>

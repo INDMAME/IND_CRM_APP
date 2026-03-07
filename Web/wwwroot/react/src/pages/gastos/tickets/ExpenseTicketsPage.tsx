@@ -16,7 +16,7 @@ import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCatalog.ts";
 import { createExpenseSheet, configureExpenseApiAuth, fetchExpenseSheetDetail, fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
 import { toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
-import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
+import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../utils/expenseNavigation.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDateParts, formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetQuickTicketFlow } from "../detail/useExpenseSheetQuickTicketFlow.ts";
@@ -285,6 +285,14 @@ const ExpenseTicketsPageContent = () => {
     return items.filter((item) => canSelectTicketForLink(item));
   }, [items]);
   const visibleSelectableCount = selectableVisibleTickets.length;
+  const linkModeCancelMessage = useMemo(
+    () =>
+      indT(
+        "ExpenseTickets_LinkMode_CancelConfirm",
+        "Se cancelara el proceso de vinculacion y volveras a la hoja de gastos. Quieres continuar?"
+      ),
+    []
+  );
 
   const setFilteredSelectedTickets = useCallback((predicate: (entry: ExpenseTicketCard) => boolean) => {
     setSelectedTicketsById((previous) => {
@@ -552,9 +560,9 @@ const ExpenseTicketsPageContent = () => {
     setLinkFlowError("");
     setLinkFlowStatus("");
     openConfirm({
-      title: indT("ExpenseSheets_Fab_LinkTicket", "Vincular ticket"),
+      title: indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
       message: `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}\n${indT("ExpenseSheets_Field_TotalAmount", "Total amount")}: ${selectedTotalAmountText}`,
-      confirmText: indT("ExpenseSheets_Fab_LinkTicket", "Vincular ticket"),
+      confirmText: indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
       cancelText: indT("Confirm_No", "Cancel"),
       onConfirm: async () => {
         return runTicketLinkFlow();
@@ -605,9 +613,17 @@ const ExpenseTicketsPageContent = () => {
       if (!fileId) return;
 
       if (isLinkMode) {
-        const selectedTicket = items.find((entry) => safeText(entry.fileId).toUpperCase() === fileId.toUpperCase());
-        if (!selectedTicket) return;
-        toggleTicketSelection(selectedTicket);
+        const query = new URLSearchParams({
+          fileId,
+          origin: "sheet-link",
+        });
+        if (linkSheetId) {
+          query.set("sheetId", linkSheetId);
+        }
+        navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
+          askConfirmation: false,
+          bypassGuardOnce: true,
+        });
         return;
       }
 
@@ -626,7 +642,7 @@ const ExpenseTicketsPageContent = () => {
         bypassGuardOnce: false,
       });
     },
-    [appliedFilters, currentPage, currentFilters, isLinkMode, items, saveCachedState, toggleTicketSelection, total]
+    [appliedFilters, currentPage, currentFilters, isLinkMode, items, linkSheetId, saveCachedState, total]
   );
 
   const resolveClickableCard = useCallback((target: EventTarget | null) => {
@@ -760,6 +776,17 @@ const ExpenseTicketsPageContent = () => {
       cancelled = true;
     };
   }, [canProcessLinkMode, isLinkMode, linkSheetId]);
+
+  useEffect(() => {
+    if (!isLinkMode) return;
+    setExpenseNavigationGuard({
+      active: true,
+      message: linkModeCancelMessage,
+    });
+    return () => {
+      clearExpenseNavigationGuard();
+    };
+  }, [isLinkMode, linkModeCancelMessage]);
 
   useEffect(() => {
     if (didApplyQueryFilterRef.current) return;
@@ -1083,7 +1110,7 @@ const ExpenseTicketsPageContent = () => {
                   onClick={selectVisibleTickets}
                   disabled={linkFlowBusy || visibleSelectableCount < 1}
                 >
-                  {`${indT("Tickets_Filter_All", "All")} (${visibleSelectableCount})`}
+                  {indT("ExpenseTickets_LinkMode_SelectAll", "Seleccionar todos")}
                 </button>
                 <button
                   type="button"
@@ -1091,7 +1118,7 @@ const ExpenseTicketsPageContent = () => {
                   onClick={clearTicketSelection}
                   disabled={linkFlowBusy || selectedTicketCount < 1}
                 >
-                  {indT("History_Filter_Clear", "Clear")}
+                  {indT("ExpenseTickets_LinkMode_ClearAll", "Borrar todos")}
                 </button>
                 <button
                   type="button"
@@ -1099,7 +1126,7 @@ const ExpenseTicketsPageContent = () => {
                   onClick={openLinkConfirmModal}
                   disabled={linkFlowBusy || selectedTicketCount < 1}
                 >
-                  {`${indT("ExpenseSheets_Fab_LinkTicket", "Vincular ticket")} (${selectedTicketCount})`}
+                  {indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)")}
                 </button>
               </div>
             </>
@@ -1173,19 +1200,19 @@ const ExpenseTicketsPageContent = () => {
               </>
             ) : null;
             const selectionControl = isLinkMode ? (
-              <label className="inline-flex items-center gap-1 rounded-md border border-slate-200 bg-white px-1.5 py-0.5 text-[10px] font-medium text-slate-700">
+              <span className="inline-flex items-center justify-center">
                 <input
                   type="checkbox"
                   checked={isSelectedInLinkMode}
                   disabled={!isSelectableInLinkMode || linkFlowBusy || linkSheetCheckBusy || linkSheetLocked}
+                  className="h-4 w-4 cursor-pointer accent-primary pointer-events-auto"
                   onClick={(event) => {
                     event.stopPropagation();
                   }}
                   onChange={() => toggleTicketSelection(item)}
-                  aria-label={indT("ExpenseSheets_Fab_LinkTicket", "Vincular ticket")}
+                  aria-label={indT("ExpenseTickets_LinkMode_SelectTicket", "Seleccionar ticket")}
                 />
-                {indT("Common_Link", "Link")}
-              </label>
+              </span>
             ) : null;
             const statusIcons = isLinkMode ? (
               <>
@@ -1193,6 +1220,9 @@ const ExpenseTicketsPageContent = () => {
                 {baseStatusIcons}
               </>
             ) : baseStatusIcons;
+            const statusIconClassName = isLinkMode
+              ? "expense-ticket-card__status-icons pointer-events-auto"
+              : "expense-ticket-card__status-icons";
 
             return (
               <div
@@ -1209,7 +1239,7 @@ const ExpenseTicketsPageContent = () => {
                   titleClassName="expense-ticket-card__title timeline-name"
                   statusLabel={statusLabel}
                   statusIcon={statusIcons}
-                  statusIconClassName="expense-ticket-card__status-icons"
+                  statusIconClassName={statusIconClassName}
                 />
               </div>
             );

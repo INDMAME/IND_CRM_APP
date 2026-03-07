@@ -21,6 +21,12 @@ type CompactPaginationProps = {
 
 const DEFAULT_WINDOW = 6;
 
+type PaginationLockWindow = Window & {
+  __indPaginationLockCount?: number;
+  __indPaginationPrevOverflow?: string;
+  __indPaginationPrevTouchAction?: string;
+};
+
 // Compact pagination with 6-page window and edge controls.
 const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
   ({ totalPages, currentPage, pageWindow = DEFAULT_WINDOW, onPageChange, labels, className, loading }, ref) => {
@@ -30,6 +36,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
     const hasLoadingSignal = typeof loading === "boolean";
     const isLoading = loading === true;
     const [isPageTransitionPending, setIsPageTransitionPending] = useState(false);
+    const showPageSpinner = hasLoadingSignal && isPageTransitionPending;
 
     const showPagination = safeTotal > 1;
     const showEdgeNav = safeTotal > windowSize;
@@ -50,6 +57,33 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
       setIsPageTransitionPending(false);
     }, [hasLoadingSignal, isLoading, isPageTransitionPending]);
 
+    useEffect(() => {
+      if (!showPageSpinner) return;
+      if (typeof window === "undefined" || typeof document === "undefined") return;
+
+      const lockWindow = window as PaginationLockWindow;
+      const lockCount = Number(lockWindow.__indPaginationLockCount || 0);
+      if (lockCount < 1) {
+        lockWindow.__indPaginationPrevOverflow = document.body.style.overflow;
+        lockWindow.__indPaginationPrevTouchAction = document.body.style.touchAction;
+        document.body.style.overflow = "hidden";
+        document.body.style.touchAction = "none";
+      }
+      lockWindow.__indPaginationLockCount = lockCount + 1;
+
+      return () => {
+        const currentCount = Number(lockWindow.__indPaginationLockCount || 0);
+        const nextCount = Math.max(0, currentCount - 1);
+        lockWindow.__indPaginationLockCount = nextCount;
+        if (nextCount < 1) {
+          document.body.style.overflow = lockWindow.__indPaginationPrevOverflow || "";
+          document.body.style.touchAction = lockWindow.__indPaginationPrevTouchAction || "";
+          delete lockWindow.__indPaginationPrevOverflow;
+          delete lockWindow.__indPaginationPrevTouchAction;
+        }
+      };
+    }, [showPageSpinner]);
+
     const requestPageChange = (page: number) => {
       if (page < 1 || page > safeTotal) return;
       if (page === safeCurrent) return;
@@ -59,14 +93,20 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
       onPageChange(page);
     };
 
-    const showPageSpinner = hasLoadingSignal && isPageTransitionPending;
-
     if (!showPagination) return null;
 
     return (
       <>
         {showPageSpinner ? (
-          <div className="fixed inset-0 z-600000 flex items-center justify-center bg-white/45 backdrop-blur-[1px] pointer-events-none">
+          <div
+            className="fixed inset-0 z-600000 flex items-center justify-center bg-white/45 backdrop-blur-[1px]"
+            onWheel={(event) => {
+              event.preventDefault();
+            }}
+            onTouchMove={(event) => {
+              event.preventDefault();
+            }}
+          >
             <Spinner size="h-10 w-10" />
           </div>
         ) : null}

@@ -81,6 +81,7 @@ const ExpenseTicketDetailPageContent = () => {
   const contextLineRecId = useMemo(() => safeText(routeParams.get("lineRecId")), [routeParams]);
   const isFromExpenseSheetCreate = detailOrigin === "sheet-create";
   const isFromExpenseLine = detailOrigin === "expense-line" && !!contextSheetId && !!contextLineRecId;
+  const isFromSheetLink = detailOrigin === "sheet-link" && !!contextSheetId;
   const allowAssignedDraftEdit = isFromExpenseSheetCreate;
   const autoEditAttemptedRef = useRef(false);
 
@@ -185,6 +186,7 @@ const ExpenseTicketDetailPageContent = () => {
 
   const handleEnableEdit = useCallback(() => {
     if (!header || isLoading) return;
+    if (isFromSheetLink) return;
     if (header.status === 1 && !allowAssignedDraftEdit) return;
     if (!canEditTicket) {
       showPermissionModal();
@@ -194,14 +196,14 @@ const ExpenseTicketDetailPageContent = () => {
     setModalError("");
     setIsEditing(true);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [allowAssignedDraftEdit, canEditTicket, header, isLoading]);
+  }, [allowAssignedDraftEdit, canEditTicket, header, isFromSheetLink, isLoading]);
 
   useEffect(() => {
-    if (!autoEditMode || isFromExpenseLine || autoEditAttemptedRef.current) return;
+    if (!autoEditMode || isFromExpenseLine || isFromSheetLink || autoEditAttemptedRef.current) return;
     if (isLoading || !header) return;
     autoEditAttemptedRef.current = true;
     handleEnableEdit();
-  }, [autoEditMode, handleEnableEdit, header, isFromExpenseLine, isLoading]);
+  }, [autoEditMode, handleEnableEdit, header, isFromExpenseLine, isFromSheetLink, isLoading]);
 
   const handleCancelEdit = useCallback(() => {
     if (!isEditing) return;
@@ -276,9 +278,9 @@ const ExpenseTicketDetailPageContent = () => {
 
   const isAssignedTicket = header?.status === 1;
   const isContextLocked = isAssignedTicket && !allowAssignedDraftEdit;
-  const canEditTicketInContext = canEditTicket && !isFromExpenseLine;
-  const canDeleteTicketInContext = canDeleteTicket && !isFromExpenseLine;
-  const ticketTopbarActionMode: "default" | "view_only" = isFromExpenseLine ? "view_only" : "default";
+  const canEditTicketInContext = canEditTicket && !isFromExpenseLine && !isFromSheetLink;
+  const canDeleteTicketInContext = canDeleteTicket && !isFromExpenseLine && !isFromSheetLink;
+  const ticketTopbarActionMode: "default" | "view_only" = isFromExpenseLine || isFromSheetLink ? "view_only" : "default";
 
   useExpenseTicketDetailTopbarActions({
     busy,
@@ -308,7 +310,7 @@ const ExpenseTicketDetailPageContent = () => {
 
   const openLineDetail = useCallback(
     (rawLineRecId: string) => {
-      if (isFromExpenseLine) return;
+      if (isFromExpenseLine || isFromSheetLink) return;
       const lineRecId = safeText(rawLineRecId);
       if (!lineRecId) return;
       if (!fileId) return;
@@ -331,7 +333,7 @@ const ExpenseTicketDetailPageContent = () => {
         bypassGuardOnce: false,
       });
     },
-    [contextSheetId, fileId, isFromExpenseLine, isFromExpenseSheetCreate]
+    [contextSheetId, fileId, isFromExpenseLine, isFromExpenseSheetCreate, isFromSheetLink]
   );
 
   const resolveClickableCard = useCallback((target: EventTarget | null) => {
@@ -355,13 +357,14 @@ const ExpenseTicketDetailPageContent = () => {
   }, [openPreview]);
 
   const handleOpenExpenseSheet = useCallback(() => {
+    if (isFromSheetLink) return;
     const safeSheetId = safeText(header?.hojaGastosIdDisplay);
     if (!safeSheetId) return;
 
     navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(safeSheetId)}`, {
       askConfirmation: isEditing,
     });
-  }, [header?.hojaGastosIdDisplay, isEditing]);
+  }, [header?.hojaGastosIdDisplay, isEditing, isFromSheetLink]);
 
   const statusLabel = useMemo(() => getExpenseTicketStatusLabel(header?.status), [header?.status]);
   const gastoTypeLabel = useMemo(() => {
@@ -445,7 +448,7 @@ const ExpenseTicketDetailPageContent = () => {
             onDraftCurrencyCodeChange={setDraftCurrencyCode}
             onDraftTransDateChange={setDraftTransDate}
             onOpenFile={openFile}
-            onOpenExpenseSheet={handleOpenExpenseSheet}
+            onOpenExpenseSheet={isFromSheetLink ? undefined : handleOpenExpenseSheet}
           />
           <ExpenseTicketLinesList
             visibleLines={visibleLines}

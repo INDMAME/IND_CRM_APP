@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronLeftIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon, LockClosedIcon } from "@heroicons/react/24/outline";
 import AudioRecorderMinimal from "./AudioRecorderMinimal.tsx";
 import PulseRingsMultipleIcon from "../../components/commons/PulseRingsMultipleIcon.tsx";
 import { TEXT_EDITOR_PREFIX } from "../../utils/textEditor.ts";
@@ -407,8 +407,16 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
     ? "relative rounded-2xl border border-slate-200 bg-slate-100 shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary"
     : "relative rounded-2xl border border-slate-300 bg-white shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary";
   const micDisabled = isReadOnly || isTranscribing || isTyping;
+  const micReadOnlyHint = indT("TextEditor_Microphone_ReadOnlyHint", "Audio transcription is available only in edit mode.");
+  const micBaseLabel = indT("TextEditor_Microphone", "Microphone");
+  const micAriaLabel = isReadOnly ? `${micBaseLabel}. ${micReadOnlyHint}` : micBaseLabel;
+  const micTooltip = isReadOnly ? micReadOnlyHint : micBaseLabel;
   const micButtonClass = `absolute top-0 right-0 z-20 inline-flex h-[70px] w-[70px] items-center justify-center overflow-visible bg-transparent p-0 m-0 border-0 rounded-none text-primary shadow-none focus:outline-hidden focus:ring-0 focus:ring-offset-0${
-    micDisabled ? " opacity-70 cursor-not-allowed" : " hover:text-primary/80"
+    micDisabled
+      ? isReadOnly
+        ? " opacity-70 cursor-not-allowed text-slate-400"
+        : " opacity-70 cursor-not-allowed text-primary/60"
+      : " hover:text-primary/80"
   }`;
 
   return (
@@ -516,17 +524,24 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
           <button
             type="button"
             className={micButtonClass}
-            aria-label={indT("TextEditor_Microphone", "Microphone")}
+            aria-label={micAriaLabel}
+            title={micTooltip}
             onClick={toggleRecorder}
             disabled={micDisabled}
             aria-disabled={micDisabled ? "true" : undefined}
           >
-                <span className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
-                  <PulseRingsMultipleIcon size={240} padding={12} color="currentColor" strokeWidth={2} opacity={0.3} rotation={90} />
-                </span>
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="h-6 w-6 relative z-10" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                </svg>
+                {isReadOnly ? (
+                  <LockClosedIcon className="h-6 w-6 relative z-10" aria-hidden="true" />
+                ) : (
+                  <>
+                    <span className="absolute inset-0 flex items-center justify-center pointer-events-none" aria-hidden="true">
+                      <PulseRingsMultipleIcon size={240} padding={12} color="currentColor" strokeWidth={2} opacity={0.3} rotation={90} />
+                    </span>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1} stroke="currentColor" className="h-6 w-6 relative z-10" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
+                    </svg>
+                  </>
+                )}
           </button>
           </div>
         </div>

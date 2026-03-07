@@ -67,13 +67,19 @@ namespace IND_CRM_APP.Controllers
 
         // Shows the expense tickets list page.
         [HttpGet]
-        public async Task<IActionResult> Tickets()
+        public async Task<IActionResult> Tickets([FromQuery(Name = "action")] string ticketsAction = "", string hojaGastosId = "")
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
                 return RedirectToAction("Login", "Auth");
 
             await LoadEnvironmentInfoAsync();
+            var normalizedAction = (ticketsAction ?? string.Empty).Trim().ToLowerInvariant();
+            var safeSheetId = (hojaGastosId ?? string.Empty).Trim();
+            if (normalizedAction == "link" && !string.IsNullOrWhiteSpace(safeSheetId))
+            {
+                ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetDetail?hojaGastosId={Uri.EscapeDataString(safeSheetId)}";
+            }
 
             ViewBag.GastoTypeOptions = _crmEnumCatalog
                 .GetGastoTypeMap()
@@ -107,6 +113,10 @@ namespace IND_CRM_APP.Controllers
             if (normalizedOrigin == "expense-line" && !string.IsNullOrWhiteSpace(sheetId) && !string.IsNullOrWhiteSpace(lineRecId))
             {
                 ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetLineDetail?hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}&lineRecId={Uri.EscapeDataString(lineRecId.Trim())}";
+            }
+            else if (normalizedOrigin == "sheet-link" && !string.IsNullOrWhiteSpace(sheetId))
+            {
+                ViewData["TopbarBackUrl"] = $"/Gastos/Tickets?action=link&hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}";
             }
             else if (normalizedOrigin == "sheet-create")
             {
@@ -1262,7 +1272,7 @@ namespace IND_CRM_APP.Controllers
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                 TotalAmount = req.TotalAmount,
                 Status = req.Status is >= 0 ? req.Status : null,
-                TransDate = NormalizeListDateFilter(req.TransDate) ?? NormalizeOptionalText(req.TransDate),
+                TransDate = NormalizeTicketTransDate(req.TransDate) ?? NormalizeOptionalText(req.TransDate),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
                 FileName = NormalizeOptionalText(req.FileName),
@@ -1517,7 +1527,7 @@ namespace IND_CRM_APP.Controllers
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                 TotalAmount = req.TotalAmount,
                 Status = req.Status is >= 0 ? req.Status : null,
-                TransDate = NormalizeListDateFilter(req.TransDate) ?? NormalizeOptionalText(req.TransDate),
+                TransDate = NormalizeTicketTransDate(req.TransDate) ?? NormalizeOptionalText(req.TransDate),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
                 FileName = NormalizeOptionalText(req.FileName),
@@ -2610,6 +2620,40 @@ namespace IND_CRM_APP.Controllers
 
             if (DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedCur))
                 return parsedCur.ToString("yyyy-MM-dd");
+
+            return null;
+        }
+
+        // Normalizes ticket transDate fields to DD.MM.YYYY required by upstream ticket contracts.
+        private static string? NormalizeTicketTransDate(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            var value = raw.Trim();
+            if (DateTime.TryParseExact(value, "ddMMyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdMmYyyy))
+                return parsedDdMmYyyy.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdDotMmDotYyyy))
+                return parsedDdDotMmDotYyyy.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedCompactYyyyMmDd))
+                return parsedCompactYyyyMmDd.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedIso))
+                return parsedIso.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedSlash))
+                return parsedSlash.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParseExact(value, "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDash))
+                return parsedDash.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedInv))
+                return parsedInv.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
+
+            if (DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedCur))
+                return parsedCur.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
 
             return null;
         }

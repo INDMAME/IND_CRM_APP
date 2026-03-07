@@ -960,6 +960,9 @@
   <data name="TextEditor_Microphone" xml:space="preserve">
     <value>麦克风</value>
   </data>
+    <data name="TextEditor_Microphone_ReadOnlyHint" xml:space="preserve">
+    <value>Audio transcription is available only in edit mode.</value>
+  </data>
   <data name="TextEditor_Transcribe" xml:space="preserve">
     <value>转写</value>
   </data>
