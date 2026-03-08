@@ -1266,5 +1266,20 @@
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
     <value>Saiatu berriro upload</value>
   </data>
+  <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
+    <value>Lotura prozesua bertan behera utziko da eta gastu orrira itzuliko zara. Jarraitu nahi duzu?</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_SelectAll" xml:space="preserve">
+    <value>Hautatu guztiak</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ClearAll" xml:space="preserve">
+    <value>Garbitu guztiak</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_LinkButton" xml:space="preserve">
+    <value>Lotu ticketa(k)</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_SelectTicket" xml:space="preserve">
+    <value>Hautatu ticketa</value>
+  </data>
 </root>
 

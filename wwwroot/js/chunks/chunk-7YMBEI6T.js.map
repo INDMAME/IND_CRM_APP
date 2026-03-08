@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../react/src/utils/wait.ts"],
-  "sourcesContent": ["export const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));\n"],
-  "mappings": "AAAO,IAAMA,EAAQC,GAAe,IAAI,QAASC,GAAY,WAAWA,EAASD,CAAE,CAAC",
-  "names": ["wait", "ms", "resolve"]
-}

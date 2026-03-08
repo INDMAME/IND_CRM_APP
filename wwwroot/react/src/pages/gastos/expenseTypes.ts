@@ -62,6 +62,7 @@ export type EntraContextCompanyDto = {
   CompanyName: string;
   CurrencyCode: string;
   AllowSelfManagement: boolean;
+  crmUserId?: string;
   Modules: EntraContextModuleDto[];
 };
 
@@ -88,8 +89,9 @@ export type ExpenseSheetCurrencyDto = {
 
 // /api/crm/expensesheets/subordinates item contract.
 export type ExpenseSheetSubordinateDto = {
-  UserId: string;
-  Name: string;
+  crmUserId: string;
+  axUserId: string;
+  name: string;
 };
 
 // /api/system/exchange-rate response contract.
@@ -265,6 +267,7 @@ export type ExpenseSheetListFilters = {
   projectId: string;
   hojaGastosId: string;
   currencyCode: string;
+  managedUserId: string;
 };
 
 // UI model used by list cards.

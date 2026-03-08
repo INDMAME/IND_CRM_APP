@@ -3,11 +3,13 @@ import { indT } from "../../../utils/indI18n.ts";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 import ExpenseDateRangeFilter from "./ExpenseDateRangeFilter.tsx";
 import ExpenseFilterActions from "./ExpenseFilterActions.tsx";
+import ExpenseManagedUserFilterSelect from "./ExpenseManagedUserFilterSelect.tsx";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseQuickDateFilters from "./ExpenseQuickDateFilters.tsx";
 import ExpenseSheetFilterInput from "./ExpenseSheetFilterInput.tsx";
 import ExpenseStatusFilterSelect from "./ExpenseStatusFilterSelect.tsx";
 import HistorySummary from "../../visitas/historial/HistorySummary.tsx";
+import type { AuthManagedUser } from "../../../context/AuthContext.tsx";
 import type { ExpenseQuickFilterId } from "../list/expenseListTypes.ts";
 import type { ExpenseStatusFilterCode } from "../expenseTypes.ts";
 
@@ -43,6 +45,9 @@ type ExpenseFiltersPanelProps = {
   projectId: string;
   hojaGastosId: string;
   currencyCode: string;
+  managedUserId: string;
+  managedUsers: AuthManagedUser[];
+  showManagedUserFilter: boolean;
   statusFilter: ExpenseStatusFilterCode;
   activeQuickFilter: ExpenseQuickFilterId | null;
   showManualDateError: boolean;
@@ -52,6 +57,7 @@ type ExpenseFiltersPanelProps = {
   onProjectIdChange: (value: string) => void;
   onHojaGastosIdChange: (value: string) => void;
   onCurrencyCodeChange: (value: string) => void;
+  onManagedUserIdChange: (value: string) => void;
   onStatusFilterChange: (value: ExpenseStatusFilterCode) => void;
   onClear: () => void;
   onApply: () => void;
@@ -67,6 +73,9 @@ const ExpenseFiltersPanel = ({
   projectId,
   hojaGastosId,
   currencyCode,
+  managedUserId,
+  managedUsers,
+  showManagedUserFilter,
   statusFilter,
   activeQuickFilter,
   showManualDateError,
@@ -76,6 +85,7 @@ const ExpenseFiltersPanel = ({
   onProjectIdChange,
   onHojaGastosIdChange,
   onCurrencyCodeChange,
+  onManagedUserIdChange,
   onStatusFilterChange,
   onClear,
   onApply,
@@ -110,7 +120,7 @@ const ExpenseFiltersPanel = ({
           />
         ) : null}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${showManagedUserFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-2`}>
           <ExpenseProjectFilterInput
             label={indT("ExpenseSheets_Filter_Project", "Project")}
             placeholder={indT("ExpenseSheets_Filter_Project", "Project")}
@@ -136,6 +146,17 @@ const ExpenseFiltersPanel = ({
             showLabel={false}
             showLoadingStateText={false}
           />
+
+          {showManagedUserFilter ? (
+            <ExpenseManagedUserFilterSelect
+              label={indT("Common_User", "User")}
+              placeholder={indT("Common_User", "User")}
+              value={managedUserId}
+              users={managedUsers}
+              onChange={onManagedUserIdChange}
+              showLabel={false}
+            />
+          ) : null}
 
           <ExpenseStatusFilterSelect
             label={indT("ExpenseSheets_Filter_Status", "Estado")}

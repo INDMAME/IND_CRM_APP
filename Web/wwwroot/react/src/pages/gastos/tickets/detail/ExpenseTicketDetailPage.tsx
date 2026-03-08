@@ -470,7 +470,7 @@ const ExpenseTicketDetailPageContent = () => {
 // Main page entry for expense ticket detail.
 const ExpenseTicketDetailPage = () => {
   return (
-    <VisitasPageProviders>
+    <VisitasPageProviders enableExpenseManagement>
       <ExpenseTicketDetailPageContent />
     </VisitasPageProviders>
   );

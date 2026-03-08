@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Jueves 2/19/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Domingo 3/8/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -327,7 +327,7 @@ Formatversion: 1
         #            companyCurrencyCode = "";
         #            allowSelfManagement = false;
         #        }
-        #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, CurrencyCode, allowSelfManagement, ModulesCon]
+        #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, CurrencyCode, allowSelfManagement, ModulesCon,CRMUserId]
         #        // Nota: IsDefault se recalcula al final segun defaultCompany final
         #        companyItem = [
         #                        strFmt("%1", ciasPerm.CiaId),
@@ -335,6 +335,7 @@ Formatversion: 1
         #                        strFmt("%1", companyName),
         #                        strFmt("%1", companyCurrencyCode),
         #                        strFmt("%1", allowSelfManagement),
+        #                        strFmt("%1", companyCrmUserId),
         #                        modulesCon
         #                      ];
         #

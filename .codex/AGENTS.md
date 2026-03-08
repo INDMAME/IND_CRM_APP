@@ -82,6 +82,9 @@
     - Store and retrieve the token from session or cookies.
     - Add Authorization: Bearer {token} header to HTTP calls to IND_CRM_API.
 - Controllers must not manipulate the token directly, they just call the authenticated services.
+- For Gastos frontend/session caches, scope keys must always include both `entraOid` and selected `companyId`.
+- Subordinates bootstrap rule: after Entra context is resolved on login, load `/api/crm/expensesheets/subordinates` for the selected company and cache it in the same `entraOid + companyId` scope.
+- If cached subordinates data is missing when needed, trigger one automatic fallback fetch before rendering subordinate-dependent filters/actions.
 
 ## UI, design system and frontend architecture
 

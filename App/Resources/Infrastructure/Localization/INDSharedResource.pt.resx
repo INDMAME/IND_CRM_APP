@@ -1266,5 +1266,20 @@
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
     <value>Tentar upload novamente</value>
   </data>
+  <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
+    <value>O processo de vinculacao sera cancelado e voltara a folha de despesas. Deseja continuar?</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_SelectAll" xml:space="preserve">
+    <value>Selecionar todos</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ClearAll" xml:space="preserve">
+    <value>Limpar todos</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_LinkButton" xml:space="preserve">
+    <value>Vincular ticket(s)</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_SelectTicket" xml:space="preserve">
+    <value>Selecionar ticket</value>
+  </data>
 </root>
 

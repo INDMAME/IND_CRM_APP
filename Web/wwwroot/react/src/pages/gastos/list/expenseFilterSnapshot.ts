@@ -16,6 +16,7 @@ export const normalizeExpenseFilterSnapshot = (
     legacyStatusFallback
   );
   const hojaGastosId = String(value?.hojaGastosId || "").trim();
+  const managedUserId = String((value as { managedUserId?: unknown } | null | undefined)?.managedUserId || "").trim();
 
   return {
     fromDate: String(value?.fromDate || "").trim(),
@@ -23,6 +24,7 @@ export const normalizeExpenseFilterSnapshot = (
     projectId: String(value?.projectId || "").trim(),
     hojaGastosId,
     currencyCode: String(value?.currencyCode || "").trim(),
+    managedUserId,
     statusFilter,
     exchangeRateMode: null,
     filter: String(value?.filter || hojaGastosId || "").trim(),

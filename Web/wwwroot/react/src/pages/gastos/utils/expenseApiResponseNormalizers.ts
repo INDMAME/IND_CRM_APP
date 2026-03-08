@@ -9,6 +9,7 @@
   IndPagedResponse,
 } from "../expenseTypes.ts";
 import { safeText, toNullableBool, toNullableGastoTypeCode, toNullableTicketStatusCode } from "./expenseApiTransforms.ts";
+import { normalizeExpenseSheetSubordinates } from "./expenseSubordinateMapper.ts";
 
 export const normalizeListPagedResponse = (
   response: IndPagedResponse<ExpenseSheetListItemDto>
@@ -45,11 +46,13 @@ export const normalizeCurrencyPagedResponse = (
 };
 
 export const normalizeSubordinatesPagedResponse = (
-  response: IndPagedResponse<ExpenseSheetSubordinateDto>
+  response: IndPagedResponse<unknown>
 ): IndPagedResponse<ExpenseSheetSubordinateDto> => {
+  const normalizedItems = normalizeExpenseSheetSubordinates(response?.Items);
+
   return {
     ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
+    Items: normalizedItems,
   };
 };
 

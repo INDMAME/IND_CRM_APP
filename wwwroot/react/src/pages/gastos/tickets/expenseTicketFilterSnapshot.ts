@@ -41,6 +41,7 @@ export const normalizeExpenseTicketFilterSnapshot = (
     toDate: String(value?.toDate || "").trim(),
     filterKey: String(value?.filterKey || "").trim(),
     currencyCode: String(value?.currencyCode || "").trim(),
+    managedUserId: String(value?.managedUserId || "").trim(),
     statusFilter: normalizeExpenseTicketStatusFilterCode(value?.statusFilter, ""),
     gastoTypeFilter: normalizeGastoTypeFilter(value?.gastoTypeFilter),
     processedByIaFilter: normalizeProcessedByIaFilter(value?.processedByIaFilter),

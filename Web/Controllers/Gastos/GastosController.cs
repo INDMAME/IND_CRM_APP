@@ -1362,7 +1362,7 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
-                var result = await _apiClient.GetExpenseSheetTicketsAsync(token, request);
+                var result = await _apiClient.GetExpenseSheetTicketsAsync(token, request, HttpContext.RequestAborted);
                 var items = result.GetAnyItems()
                     .Select(ToExpenseSheetTicketApiListItem)
                     .ToList();

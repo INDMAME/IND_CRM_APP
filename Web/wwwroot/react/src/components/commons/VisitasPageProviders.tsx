@@ -4,13 +4,14 @@ import { AuthProvider } from "../../context/AuthContext.tsx";
 
 type Props = {
   children: React.ReactNode;
+  enableExpenseManagement?: boolean;
 };
 
 // Shared provider wrapper for visitas React islands.
-const VisitasPageProviders = ({ children }: Props) => {
+const VisitasPageProviders = ({ children, enableExpenseManagement = false }: Props) => {
   return (
     <I18nProvider>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider enableExpenseManagement={enableExpenseManagement}>{children}</AuthProvider>
     </I18nProvider>
   );
 };

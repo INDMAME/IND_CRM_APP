@@ -310,7 +310,7 @@ const ExpenseSheetLineDetailContent = () => {
 // Main page entry for expense sheet line detail.
 const ExpenseSheetLineDetailPage = () => {
   return (
-    <VisitasPageProviders>
+    <VisitasPageProviders enableExpenseManagement>
       <ExpenseSheetLineDetailContent />
     </VisitasPageProviders>
   );

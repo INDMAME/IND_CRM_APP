@@ -8,15 +8,21 @@ import { normalizeExpenseFilterSnapshot } from "./expenseFilterSnapshot.ts";
 type UseExpenseSheetsFiltersStateArgs = {
   onApplyFilters: (snapshot: AppliedFilterSnapshot) => void;
   onClearFilters: () => void;
+  defaultManagedUserId: string;
 };
 
 // Owns filter UI state and apply/clear rules for expense list page.
-export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }: UseExpenseSheetsFiltersStateArgs) => {
+export const useExpenseSheetsFiltersState = ({
+  onApplyFilters,
+  onClearFilters,
+  defaultManagedUserId,
+}: UseExpenseSheetsFiltersStateArgs) => {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [projectId, setProjectId] = useState("");
   const [hojaGastosId, setHojaGastosId] = useState("");
   const [currencyCode, setCurrencyCode] = useState("");
+  const [managedUserId, setManagedUserId] = useState(defaultManagedUserId);
   const [statusFilter, setStatusFilter] = useState<ExpenseStatusFilterCode>(DEFAULT_EXPENSE_STATUS_FILTER);
   const exchangeRateMode = null;
   const [activeQuickFilter, setActiveQuickFilter] = useState<ExpenseQuickFilterId | null>(null);
@@ -33,11 +39,12 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
       projectId,
       hojaGastosId,
       currencyCode,
+      managedUserId,
       statusFilter,
       exchangeRateMode,
       filter: hojaGastosId,
     }),
-    [currencyCode, fromDate, hojaGastosId, projectId, statusFilter, toDate]
+    [currencyCode, fromDate, hojaGastosId, managedUserId, projectId, statusFilter, toDate]
   );
 
   const onApply = useCallback(() => {
@@ -54,6 +61,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
       projectId,
       hojaGastosId,
       currencyCode,
+      managedUserId,
       statusFilter,
       exchangeRateMode,
       filter: hojaGastosId,
@@ -64,23 +72,28 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setShowManualDateFilter(false);
     setShowFilters(false);
     onApplyFilters(snapshot);
-  }, [currencyCode, fromDate, hojaGastosId, onApplyFilters, projectId, statusFilter, toDate]);
+  }, [currencyCode, fromDate, hojaGastosId, managedUserId, onApplyFilters, projectId, statusFilter, toDate]);
 
   // Rehydrates the list filters from a cached snapshot when returning from detail.
   const restoreAppliedFilters = useCallback((snapshot: AppliedFilterSnapshot) => {
     const normalized = normalizeExpenseFilterSnapshot(snapshot);
+    const restoredManagedUserId = String(normalized.managedUserId || defaultManagedUserId).trim();
     setFromDate(normalized.fromDate);
     setToDate(normalized.toDate);
     setProjectId(normalized.projectId);
     setHojaGastosId(normalized.hojaGastosId);
     setCurrencyCode(normalized.currencyCode);
+    setManagedUserId(restoredManagedUserId);
     setStatusFilter(normalized.statusFilter);
     setActiveQuickFilter(null);
     setShowManualDateFilter(false);
     setShowManualDateError(false);
-    setAppliedFilters(normalized);
+    setAppliedFilters({
+      ...normalized,
+      managedUserId: restoredManagedUserId,
+    });
     setShowFilters(false);
-  }, []);
+  }, [defaultManagedUserId]);
 
   const onClear = useCallback(() => {
     setFromDate("");
@@ -88,6 +101,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setProjectId("");
     setHojaGastosId("");
     setCurrencyCode("");
+    setManagedUserId(defaultManagedUserId);
     setStatusFilter(DEFAULT_EXPENSE_STATUS_FILTER);
     setActiveQuickFilter(null);
     setShowManualDateFilter(false);
@@ -96,7 +110,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setAppliedFilters(null);
     setShowFilters(true);
     onClearFilters();
-  }, [onClearFilters]);
+  }, [defaultManagedUserId, onClearFilters]);
 
   const onDateRangeChange = useCallback(
     (nextFromDate: string, nextToDate: string) => {
@@ -177,6 +191,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     projectId,
     hojaGastosId,
     currencyCode,
+    managedUserId,
     statusFilter,
     exchangeRateMode,
     activeQuickFilter,
@@ -189,6 +204,7 @@ export const useExpenseSheetsFiltersState = ({ onApplyFilters, onClearFilters }:
     setProjectId,
     setHojaGastosId,
     setCurrencyCode,
+    setManagedUserId,
     setStatusFilter,
     onApply,
     onClear,

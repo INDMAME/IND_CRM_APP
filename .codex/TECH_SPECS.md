@@ -38,6 +38,9 @@
 - Module access is enforced by `INDModuleAuthorizeFilter` + `INDModuleRegistry`.
 - `AllowSelfManagement` is company-scoped and must come from the selected company in Entra context.
 - `_Layout.cshtml` injects this value into `window.__IND_ALLOW_SELF_MANAGEMENT__`, and React must consume it through `AuthProvider` -> `useAuthContext().allowSelfManagement`.
+- For Gastos context and React/session cache keys, use a composite scope `entraOid + companyId` (same user in different companies must never share cache entries).
+- `subordinates` must be loaded as part of the Entra context bootstrap right after login context resolution for the selected company.
+- If `subordinates` is missing at runtime, run one automatic recovery call to `/api/crm/expensesheets/subordinates` and persist the result in the same `entraOid + companyId` scope.
 
 ## Localization
 - UI localization only. Use `App/Resources/Infrastructure/Localization/INDSharedResource.*.resx`.

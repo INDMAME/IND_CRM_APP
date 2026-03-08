@@ -9,6 +9,7 @@ import {
   setSessionJsonWithExpiry,
   setSessionValueWithExpiry,
 } from "../../../utils/sessionExpiry.ts";
+import { getExpenseScopeToken } from "../utils/expenseScope.ts";
 
 const EXPENSE_SHEETS_FILTER_KEY_PREFIX = "expense_sheets_filter_v1";
 const EXPENSE_SHEETS_RETURN_FLAG_KEY_PREFIX = "expense_sheets_return_v1";
@@ -23,11 +24,7 @@ export type ExpenseSheetsCachedState = {
 };
 
 const getScopeToken = (): string => {
-  if (typeof window === "undefined") return "session";
-  const raw = String((window as { __IND_ENTRA_OID__?: unknown }).__IND_ENTRA_OID__ || "")
-    .trim()
-    .toLowerCase();
-  return raw || "session";
+  return getExpenseScopeToken();
 };
 
 const getScopedKeys = () => {

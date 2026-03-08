@@ -1,0 +1,39 @@
+{
+  "Success": true,
+  "Message": "OK",
+  "Total": 1,
+  "Page": 1,
+  "PageSize": 1,
+  "Items": [
+    {
+      "Header": {
+        "Success": true,
+        "Message": "OK",
+        "AxUserId": "AX001",
+        "UserActive": true,
+        "AppActive": true,
+        "DefaultCompany": "CEU",
+        "DefaultCurrencyCode": "EUR"
+      },
+      "Companies": [
+        {
+          "CompanyId": "CEU",
+          "IsDefault": true,
+          "CompanyName": "Insertec",
+          "CurrencyCode": "EUR",
+          "AllowSelfManagement": true,
+          "CrmUserId": "CRM001",
+          "Modules": []
+        },
+        {
+          "CompanyId": "TAZ",
+          "IsDefault": false,
+          "CompanyName": "Legacy Company",
+          "CurrencyCode": "EUR",
+          "AllowSelfManagement": false,
+          "Modules": []
+        }
+      ]
+    }
+  ]
+}

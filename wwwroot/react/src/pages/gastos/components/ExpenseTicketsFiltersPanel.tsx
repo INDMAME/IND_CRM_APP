@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
+import type { AuthManagedUser } from "../../../context/AuthContext.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import HistorySummary from "../../visitas/historial/HistorySummary.tsx";
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
@@ -13,6 +14,7 @@ import type { ExpenseTicketProcessedByIaFilter, ExpenseTicketQuickFilterId } fro
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 import ExpenseDateRangeFilter from "./ExpenseDateRangeFilter.tsx";
 import ExpenseFilterActions from "./ExpenseFilterActions.tsx";
+import ExpenseManagedUserFilterSelect from "./ExpenseManagedUserFilterSelect.tsx";
 import ExpenseProcessedByIaFilterSelect from "./ExpenseProcessedByIaFilterSelect.tsx";
 import ExpenseQuickDateFilters from "./ExpenseQuickDateFilters.tsx";
 import ExpenseTicketFilterKeyInput from "./ExpenseTicketFilterKeyInput.tsx";
@@ -46,6 +48,9 @@ type ExpenseTicketsFiltersPanelProps = {
   toDate: string;
   filterKey: string;
   currencyCode: string;
+  managedUserId: string;
+  managedUsers: AuthManagedUser[];
+  showManagedUserFilter: boolean;
   statusFilter: ExpenseTicketStatusFilterCode;
   gastoTypeFilter: "" | ExpenseGastoTypeCode;
   processedByIaFilter: ExpenseTicketProcessedByIaFilter;
@@ -59,6 +64,7 @@ type ExpenseTicketsFiltersPanelProps = {
   onQuickFilterChange: (filterId: ExpenseTicketQuickFilterId) => void;
   onFilterKeyChange: (value: string) => void;
   onCurrencyCodeChange: (value: string) => void;
+  onManagedUserIdChange: (value: string) => void;
   onStatusFilterChange: (value: ExpenseTicketStatusFilterCode) => void;
   onGastoTypeFilterChange: (value: "" | ExpenseGastoTypeCode) => void;
   onProcessedByIaFilterChange: (value: ExpenseTicketProcessedByIaFilter) => void;
@@ -75,6 +81,9 @@ const ExpenseTicketsFiltersPanel = ({
   toDate,
   filterKey,
   currencyCode,
+  managedUserId,
+  managedUsers,
+  showManagedUserFilter,
   statusFilter,
   gastoTypeFilter,
   processedByIaFilter,
@@ -88,6 +97,7 @@ const ExpenseTicketsFiltersPanel = ({
   onQuickFilterChange,
   onFilterKeyChange,
   onCurrencyCodeChange,
+  onManagedUserIdChange,
   onStatusFilterChange,
   onGastoTypeFilterChange,
   onProcessedByIaFilterChange,
@@ -133,7 +143,7 @@ const ExpenseTicketsFiltersPanel = ({
           />
         ) : null}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${showManagedUserFilter ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-2`}>
           <ExpenseTicketFilterKeyInput
             label={indT("Tickets_Filter_FilterKey", "Ticket")}
             placeholder={indT("Tickets_Filter_FilterKey", "Ticket")}
@@ -152,6 +162,17 @@ const ExpenseTicketsFiltersPanel = ({
             showLabel={false}
             showLoadingStateText={false}
           />
+
+          {showManagedUserFilter ? (
+            <ExpenseManagedUserFilterSelect
+              label={indT("Common_User", "User")}
+              placeholder={indT("Common_User", "User")}
+              value={managedUserId}
+              users={managedUsers}
+              onChange={onManagedUserIdChange}
+              showLabel={false}
+            />
+          ) : null}
 
           <SelectCombobox
             label={indT("Tickets_Filter_Status", "Status")}

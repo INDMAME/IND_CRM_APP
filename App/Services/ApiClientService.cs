@@ -989,7 +989,8 @@ namespace IND_CRM_APP.Services
 
         public async Task<PagedApiResponse<ExpenseSheetTicketListItemDto>> GetExpenseSheetTicketsAsync(
             string token,
-            ExpenseSheetTicketListRequest req)
+            ExpenseSheetTicketListRequest req,
+            CancellationToken cancellationToken = default)
         {
             PrepareRequestHeaders(token, "GetExpenseSheetTickets", requireCompany: true);
 
@@ -1036,7 +1037,7 @@ namespace IND_CRM_APP.Services
                 normalizedGastoType.HasValue ? normalizedGastoType.Value.ToString(CultureInfo.InvariantCulture) : "null",
                 normalizedProcessedByAi.HasValue ? normalizedProcessedByAi.Value.ToString(CultureInfo.InvariantCulture) : "null");
 
-            var result = await SendPostAsync(ApiRoutes.ExpenseSheetTicketsList, serializedPayload);
+            var result = await SendPostAsync(ApiRoutes.ExpenseSheetTicketsList, serializedPayload, cancellationToken);
             if (!result.IsSuccessStatusCode)
             {
                 _logger.LogWarning(

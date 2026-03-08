@@ -1266,5 +1266,20 @@
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
     <value>Retry upload</value>
   </data>
+  <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
+    <value>The link process will be canceled and you will return to the expense sheet. Do you want to continue?</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_SelectAll" xml:space="preserve">
+    <value>Select all</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ClearAll" xml:space="preserve">
+    <value>Clear all</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_LinkButton" xml:space="preserve">
+    <value>Link ticket(s)</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_SelectTicket" xml:space="preserve">
+    <value>Select ticket</value>
+  </data>
 </root>
 

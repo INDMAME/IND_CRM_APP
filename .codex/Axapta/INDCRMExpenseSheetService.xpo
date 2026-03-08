@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 3/5/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Domingo 3/8/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -16,6 +16,67 @@ Formatversion: 1
     
     METHODS
       Version: 3
+      SOURCE #getSubordinatesByUser_backup
+        #// Method: getSubordinatesByUser
+        #// Purpose: Obtiene subordinados de un usuario CRM en una compania.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #// Output rows:
+        #//  - [[subordinateUserId, subordinateName], ...]
+        #static server container getSubordinatesByUser_backup(container _data)
+        #{
+        #    DataAreaId                 companyId;
+        #    UserId                     axUserId;
+        #    CRMUserId                  crmUserId;
+        #    CRMUsuarioTable            crmUsuarioTable;
+        #    CRMUsuarioSubordinadoTable subordinadoTable;
+        #    container                  resultCon, itemCon, subordinateUsersCon;
+        #    str                        subordinateList;
+        #    str                        subordinateUserId;
+        #    int                        i;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #    if (!companyId)
+        #        return conNull();
+        #
+        #    if (conLen(_data) < 2)
+        #        return resultCon;
+        #
+        #    axUserId = conPeek(_data, 2);
+        #
+        #    changecompany(companyId)
+        #    {
+        #        crmUsuarioTable = SysUserInfo::getCRMUsuarioTable(axUserId);
+        #        crmUserId = crmUsuarioTable.UserId;
+        #        if (!crmUserId)
+        #            return resultCon;
+        #
+        #        subordinadoTable.clear();
+        #        subordinadoTable.UserIdJefe = crmUserId;
+        #
+        #        subordinateList = crmUsuarioTable.ListaSubordinadosByPerTable();
+        #        if (!subordinateList)
+        #            return resultCon;
+        #
+        #        subordinateUsersCon = str2con(subordinateList, ',');
+        #
+        #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
+        #        {
+        #            subordinateUserId = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
+        #            if (!subordinateUserId)
+        #                continue;
+        #
+        #            itemCon = [[strFmt("%1", subordinateUserId), strFmt("%1",CRMUsuarioTable::Find(subordinateUserId).Name)]];
+        #            resultCon += itemCon;
+        #        }
+        #    }
+        #
+        #    return resultCon ? resultCon : [["Sin datos."]];
+        #}
+        #
+      ENDSOURCE
       SOURCE #classDeclaration
         #// Purpose: COM methods for expense sheets and ticket metadata management.
         #// Notes: All methods return containers with a stable shape for the API layer.
@@ -2453,8 +2514,9 @@ Formatversion: 1
         #    DataAreaId                 companyId;
         #    UserId                     axUserId;
         #    CRMUserId                  crmUserId;
-        #    CRMUsuarioTable            crmUsuarioTable;
+        #    CRMUsuarioTable            crmUsuarioTable,crmUsuarioTableSub;
         #    CRMUsuarioSubordinadoTable subordinadoTable;
+        #    INDPersonaTable            personaTable;
         #    container                  resultCon, itemCon, subordinateUsersCon;
         #    str                        subordinateList;
         #    str                        subordinateUserId;
@@ -2488,13 +2550,22 @@ Formatversion: 1
         #
         #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
         #        {
-        #            subordinateUserId = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
-        #            if (!subordinateUserId)
+        #            subordinateUserId   = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
+        #            crmUsuarioTableSub  = CRMUsuarioTable::Find(subordinateUserId);
+        #            personaTable        = INDPersonaTable::findByCRM(crmUsuarioTableSub.RecId);
+        #
+        #            if (!subordinateUserId || !personaTable.UserId || crmUsuarioTable.UserId == crmUsuarioTableSub.UserId)
         #                continue;
         #
-        #            itemCon = [[strFmt("%1", subordinateUserId), strFmt("%1",CRMUsuarioTable::Find(subordinateUserId).Name)]];
+        #            itemCon = [[
+        #                        strFmt("%1", subordinateUserId),
+        #                        strFmt("%1", personaTable.UserId),
+        #                        strFmt("%1", crmUsuarioTableSub.Name)
+        #                      ]];
+        #
         #            resultCon += itemCon;
         #        }
+        #
         #    }
         #
         #    return resultCon ? resultCon : [["Sin datos."]];

@@ -10,6 +10,7 @@ export type ExpenseTicketAppliedFilterSnapshot = {
   toDate: string;
   filterKey: string;
   currencyCode: string;
+  managedUserId: string;
   statusFilter: ExpenseTicketStatusFilterCode;
   gastoTypeFilter: "" | ExpenseGastoTypeCode;
   processedByIaFilter: ExpenseTicketProcessedByIaFilter;

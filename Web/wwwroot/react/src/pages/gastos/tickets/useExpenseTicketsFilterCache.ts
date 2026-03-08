@@ -8,6 +8,7 @@ import {
   setSessionJsonWithExpiry,
   setSessionValueWithExpiry,
 } from "../../../utils/sessionExpiry.ts";
+import { getExpenseScopeToken } from "../utils/expenseScope.ts";
 
 const EXPENSE_TICKETS_FILTER_KEY_PREFIX = "expense_tickets_filter_v1";
 const EXPENSE_TICKETS_RETURN_FLAG_KEY_PREFIX = "expense_tickets_return_v1";
@@ -20,15 +21,13 @@ export type ExpenseTicketsCachedState = {
   scrollY: number;
   focusFileId: string;
   items: ExpenseTicketCard[];
+  selectedTickets: ExpenseTicketCard[];
   total: number;
+  linkModeSheetId: string;
 };
 
 const getScopeToken = (): string => {
-  if (typeof window === "undefined") return "session";
-  const raw = String((window as { __IND_ENTRA_OID__?: unknown }).__IND_ENTRA_OID__ || "")
-    .trim()
-    .toLowerCase();
-  return raw || "session";
+  return getExpenseScopeToken();
 };
 
 const getScopedKeys = () => {
@@ -96,6 +95,7 @@ const normalizeState = (raw: ExpenseTicketsCachedState | null): ExpenseTicketsCa
   const scrollRaw = Number(raw.scrollY);
   const scrollY = Number.isFinite(scrollRaw) && scrollRaw >= 0 ? Math.floor(scrollRaw) : 0;
   const items = normalizeItems((raw as { items?: unknown }).items);
+  const selectedTickets = normalizeItems((raw as { selectedTickets?: unknown }).selectedTickets);
   const totalRaw = Number((raw as { total?: unknown }).total);
   const total = Number.isFinite(totalRaw) && totalRaw >= 0 ? totalRaw : items.length;
 
@@ -105,7 +105,9 @@ const normalizeState = (raw: ExpenseTicketsCachedState | null): ExpenseTicketsCa
     scrollY,
     focusFileId: String(raw.focusFileId || "").trim(),
     items,
+    selectedTickets,
     total,
+    linkModeSheetId: String((raw as { linkModeSheetId?: unknown }).linkModeSheetId || "").trim(),
   };
 };
 

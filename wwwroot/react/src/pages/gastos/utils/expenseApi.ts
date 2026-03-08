@@ -59,6 +59,7 @@ import {
   mapExpenseSheetListItemToCard as mapExpenseSheetListItemToCardCore,
 } from "./expenseApiMappers.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "./expenseApiDateUtils.ts";
+import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
 
 type ProjectDropdownResponse = {
   total?: number;
@@ -94,7 +95,15 @@ type ExpenseApiContext = {
   token: string;
   companyId: string;
   axUserId: string;
+  crmUserId: string;
   defaultCurrencyCode: string;
+  allowSelfManagement: boolean;
+};
+
+export type ExpenseApiContextSnapshot = {
+  companyId: string;
+  axUserId: string;
+  crmUserId: string;
   allowSelfManagement: boolean;
 };
 
@@ -266,8 +275,17 @@ const buildExpenseHeaders = (
     merged["X-IND-Company"] = context.companyId;
   }
 
-  if (includeAxUserId && safeText(context.axUserId)) {
-    merged["X-IND-AxUserId"] = context.axUserId;
+  if (includeAxUserId) {
+    const requestAxUserId = getHeaderValue(options?.headers, "X-IND-AxUserId");
+    const overrideAxUserId = getExpenseActingUserOverride();
+    const resolvedAxUserId = safeText(requestAxUserId || overrideAxUserId || context.axUserId);
+    if (resolvedAxUserId) {
+      merged["X-IND-AxUserId"] = resolvedAxUserId;
+    } else {
+      removeHeaderValue(merged, "X-IND-AxUserId");
+    }
+  } else {
+    removeHeaderValue(merged, "X-IND-AxUserId");
   }
 
   if (includeJson) {
@@ -321,24 +339,94 @@ const resolveAuthSeed = (options?: ApiFetchOptions): ExpenseApiAuthSeed => {
   };
 };
 
+type RawEntraContextCompany = {
+  CompanyId?: unknown;
+  companyId?: unknown;
+  IsDefault?: unknown;
+  isDefault?: unknown;
+  AllowSelfManagement?: unknown;
+  allowSelfManagement?: unknown;
+  CrmUserId?: unknown;
+  crmUserId?: unknown;
+};
+
+type NormalizedEntraContextCompany = {
+  companyId: string;
+  isDefault: boolean;
+  allowSelfManagement: boolean;
+  crmUserId: string;
+};
+
+type RawEntraContextHeader = {
+  AxUserId?: unknown;
+  axUserId?: unknown;
+  DefaultCompany?: unknown;
+  defaultCompany?: unknown;
+  DefaultCurrencyCode?: unknown;
+  defaultCurrencyCode?: unknown;
+};
+
+type RawEntraContextItem = {
+  Header?: RawEntraContextHeader;
+  header?: RawEntraContextHeader;
+  Companies?: unknown;
+  companies?: unknown;
+};
+
+// Maps one Entra company item to the frontend-safe shape used by context consumers.
+const mapEntraContextCompany = (item: unknown): NormalizedEntraContextCompany | null => {
+  if (!item || typeof item !== "object") return null;
+
+  const raw = item as RawEntraContextCompany;
+  const companyId = safeText(raw.CompanyId ?? raw.companyId);
+  if (!companyId) return null;
+
+  return {
+    companyId,
+    isDefault: toFlagBool(raw.IsDefault ?? raw.isDefault) === true,
+    allowSelfManagement: toFlagBool(raw.AllowSelfManagement ?? raw.allowSelfManagement) === true,
+    crmUserId: safeText(raw.CrmUserId ?? raw.crmUserId),
+  };
+};
+
 const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): ExpenseApiContext => {
-  if (!response.Success) {
-    throw new ApiFetchError(response.Message || "Could not load Entra context.");
+  const rawResponse = response as {
+    Success?: unknown;
+    success?: unknown;
+    Message?: unknown;
+    message?: unknown;
+    Items?: unknown;
+    items?: unknown;
+  };
+
+  const isSuccess = toFlagBool(rawResponse.Success ?? rawResponse.success);
+  if (isSuccess === false) {
+    throw new ApiFetchError(safeText(rawResponse.Message ?? rawResponse.message) || "Could not load Entra context.");
   }
 
-  const first = Array.isArray(response.Items) ? response.Items[0] : null;
-  if (!first || !first.Header) {
+  const items = Array.isArray(rawResponse.Items)
+    ? rawResponse.Items
+    : (Array.isArray(rawResponse.items) ? rawResponse.items : []);
+  const first = items[0] as RawEntraContextItem | undefined;
+  const header = first?.Header ?? first?.header;
+  if (!first || !header) {
     throw new ApiFetchError("Could not load Entra context.");
   }
 
-  const axUserId = safeText(first.Header.AxUserId);
-  const defaultCompany = safeText(first.Header.DefaultCompany);
-  const defaultCurrencyCode = safeText(first.Header.DefaultCurrencyCode);
-  const companies = Array.isArray(first.Companies) ? first.Companies : [];
-  const fallbackCompany = safeText(companies.find((item) => item.IsDefault)?.CompanyId);
+  const axUserId = safeText(header.AxUserId ?? header.axUserId);
+  const defaultCompany = safeText(header.DefaultCompany ?? header.defaultCompany);
+  const defaultCurrencyCode = safeText(header.DefaultCurrencyCode ?? header.defaultCurrencyCode);
+  const companiesRaw = Array.isArray(first.Companies)
+    ? first.Companies
+    : (Array.isArray(first.companies) ? first.companies : []);
+  const companies = companiesRaw
+    .map((item) => mapEntraContextCompany(item))
+    .filter((item): item is NormalizedEntraContextCompany => !!item);
+  const fallbackCompany = safeText(companies.find((item) => item.isDefault)?.companyId);
   const companyId = defaultCompany || fallbackCompany;
-  const selectedCompany = companies.find((item) => safeText(item.CompanyId) === companyId) || companies[0];
-  const allowSelfManagement = selectedCompany?.AllowSelfManagement === true;
+  const selectedCompany = companies.find((item) => safeText(item.companyId) === companyId) || companies[0];
+  const allowSelfManagement = selectedCompany?.allowSelfManagement === true;
+  const crmUserId = safeText(selectedCompany?.crmUserId);
 
   if (!axUserId || !companyId) {
     throw new ApiFetchError("Could not resolve Entra company context.");
@@ -348,6 +436,7 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
     token: "",
     companyId,
     axUserId,
+    crmUserId,
     defaultCurrencyCode,
     allowSelfManagement,
   };
@@ -371,6 +460,7 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
       token: seed.token,
       companyId: fallbackCompanyId,
       axUserId: "",
+      crmUserId: "",
       defaultCurrencyCode: "",
       allowSelfManagement: globalThis.__IND_ALLOW_SELF_MANAGEMENT__ === true,
     };
@@ -417,6 +507,17 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
   } finally {
     contextPromise = null;
   }
+};
+
+// Exposes resolved Entra context values needed by Gastos UI management state.
+export const getExpenseApiContextSnapshot = async (options?: ApiFetchOptions): Promise<ExpenseApiContextSnapshot> => {
+  const context = await ensureExpenseApiContext(options);
+  return {
+    companyId: safeText(context.companyId).toUpperCase(),
+    axUserId: safeText(context.axUserId),
+    crmUserId: safeText(context.crmUserId),
+    allowSelfManagement: context.allowSelfManagement === true,
+  };
 };
 
 const normalizeListPagedResponse = normalizeListPagedResponseTransform;
@@ -725,7 +826,7 @@ export const getExpenseSheetSubordinates = async (
   options?: ApiFetchOptions
 ): Promise<IndPagedResponse<ExpenseSheetSubordinateDto>> => {
   const context = await ensureExpenseApiContext(options);
-  const response = await fetchJson<IndPagedResponse<ExpenseSheetSubordinateDto>>("/api/crm/expensesheets/subordinates", {
+  const response = await fetchJson<IndPagedResponse<unknown>>("/api/crm/expensesheets/subordinates", {
     ...options,
     method: "GET",
     headers: buildExpenseHeaders(context, options),

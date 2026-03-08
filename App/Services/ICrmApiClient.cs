@@ -1,6 +1,7 @@
 ﻿using IND_CRM_APP.Models.Activities;
 using IND_CRM_APP.Models.CRM;
 using IND_CRM_APP.Models.Shared;
+using System.Threading;
 
 namespace IND_CRM_APP.Services
 {
@@ -174,7 +175,8 @@ namespace IND_CRM_APP.Services
 
         Task<PagedApiResponse<ExpenseSheetTicketListItemDto>> GetExpenseSheetTicketsAsync(
             string token,
-            ExpenseSheetTicketListRequest req
+            ExpenseSheetTicketListRequest req,
+            CancellationToken cancellationToken = default
         );
 
         Task<PagedApiResponse<ExpenseSheetTicketDetailDto>> GetExpenseSheetTicketDetailAsync(

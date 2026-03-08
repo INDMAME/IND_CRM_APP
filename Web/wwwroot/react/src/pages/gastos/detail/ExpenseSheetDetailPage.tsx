@@ -23,6 +23,14 @@ import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow
 
 const LINES_PAGE_SIZE = 6;
 
+const normalizeUserId = (value: unknown): string => String(value || "").trim();
+
+const isSameUser = (left: string, right: string): boolean => {
+  const normalizedLeft = normalizeUserId(left).toUpperCase();
+  const normalizedRight = normalizeUserId(right).toUpperCase();
+  return !!normalizedLeft && normalizedLeft === normalizedRight;
+};
+
 const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   if (!items.length) return [];
   const safePage = Math.max(1, page);
@@ -64,7 +72,7 @@ const NewLineIcon = () => (
 );
 
 const ExpenseSheetDetailPageContent = () => {
-  const { allowSelfManagement } = useAuthContext();
+  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canEditExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Edit");
   const canDeleteExpense = canAccess("GASTOS_HOJA_GASTO", "FullAccess");
@@ -72,8 +80,17 @@ const ExpenseSheetDetailPageContent = () => {
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const sheetMode = safeText(window.__EXPENSE_SHEET_MODE__).toLowerCase();
   const isCreateMode = sheetMode === "create";
-  const canEditExpenseStatusByPermission = allowSelfManagement === true && !isCreateMode;
-  const canEditExpense = canEditExpenseByModule || canEditExpenseStatusByPermission;
+  const isManagingOtherUser =
+    !isCreateMode &&
+    canManageOtherUsers &&
+    !!normalizeUserId(currentAxUserId) &&
+    !!normalizeUserId(selectedManagedUserId) &&
+    !isSameUser(selectedManagedUserId, currentAxUserId);
+  const canCreateExpenseForCurrentView = canCreateExpense && !isManagingOtherUser;
+  const canEditHeaderFields = canEditExpenseByModule && !isManagingOtherUser;
+  const canEditExpenseStatusByPermission =
+    !isCreateMode && ((allowSelfManagement === true && !isManagingOtherUser) || (canManageOtherUsers && isManagingOtherUser));
+  const canEditExpense = canEditHeaderFields || canEditExpenseStatusByPermission;
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const createdSheetIdRef = useRef("");
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -141,9 +158,9 @@ const ExpenseSheetDetailPageContent = () => {
     navigateToLineDetail,
   } = useExpenseSheetDetailState({
     hasAccess,
-    canCreateExpense,
+    canCreateExpense: canCreateExpenseForCurrentView,
     canEditExpense,
-    canEditHeaderFields: canEditExpenseByModule,
+    canEditHeaderFields,
     sheetId,
     isCreateMode,
     onForbidden: showPermissionModal,
@@ -203,9 +220,10 @@ const ExpenseSheetDetailPageContent = () => {
     isExchangeRateLockedByLines,
     lockedCurrencyCode: safeText(header?.currencyCode),
     lockedExchangeRate: safeText(header?.exchRate),
-    canCreateExpense,
+    canCreateExpense: canCreateExpenseForCurrentView,
     canEditExpense,
     canDeleteExpense,
+    canEditHeaderFields,
     canEditStatus: canEditExpenseStatus,
     sheetId,
     draftDescription,
@@ -245,7 +263,7 @@ const ExpenseSheetDetailPageContent = () => {
     isEditing,
     isCreateMode,
     isLocked: isSheetLocked,
-    canCreateExpense,
+    canCreateExpense: canCreateExpenseForCurrentView,
     canEditExpense,
     canDeleteExpense,
     setModalError,
@@ -292,7 +310,7 @@ const ExpenseSheetDetailPageContent = () => {
     sheetId: safeText(header?.hojaGastosId || sheetId),
     projectId: projectValue,
     currencyCode: safeText(header?.currencyCode),
-    canCreateExpense,
+    canCreateExpense: canCreateExpenseForCurrentView,
     isCreateMode,
     isSheetLocked,
     onForbidden: showPermissionModal,
@@ -477,7 +495,7 @@ const ExpenseSheetDetailPageContent = () => {
         <ExpenseSheetHeaderForm
           isCreateMode={isCreateMode}
           isEditing={isEditing}
-          canEditHeaderFields={canEditExpenseByModule}
+          canEditHeaderFields={canEditHeaderFields}
           canEditStatus={canEditExpenseStatus}
           header={header}
           projectValue={projectValue}
@@ -525,7 +543,7 @@ const ExpenseSheetDetailPageContent = () => {
         />
       ) : null}
 
-      {canCreateExpense && !isCreateMode && !isSheetLocked ? (
+      {canCreateExpenseForCurrentView && !isCreateMode && !isSheetLocked ? (
         <FloatingActionButton
           ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
           size={76}
@@ -542,7 +560,7 @@ const ExpenseSheetDetailPageContent = () => {
 // Main page entry for expense sheet detail.
 const ExpenseSheetDetailPage = () => {
   return (
-    <VisitasPageProviders>
+    <VisitasPageProviders enableExpenseManagement>
       <ExpenseSheetDetailPageContent />
     </VisitasPageProviders>
   );

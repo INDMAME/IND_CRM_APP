@@ -21,6 +21,7 @@ type UseExpenseSheetDetailMutationsArgs = {
   canCreateExpense: boolean;
   canEditExpense: boolean;
   canDeleteExpense: boolean;
+  canEditHeaderFields: boolean;
   canEditStatus: boolean;
   sheetId: string;
   draftDescription: string;
@@ -60,6 +61,7 @@ export const useExpenseSheetDetailMutations = ({
   canCreateExpense,
   canEditExpense,
   canDeleteExpense,
+  canEditHeaderFields,
   canEditStatus,
   sheetId,
   draftDescription,
@@ -100,7 +102,8 @@ export const useExpenseSheetDetailMutations = ({
       isExchangeRateLockedByLines ? (lockedExchangeRate || draftExchangeRate || "") : (draftExchangeRate || "")
     );
     const normalizedBaseCurrency = String(exchangeRateBaseCurrency || "EUR").trim().toUpperCase() || "EUR";
-    const requiresExchangeRate = normalizedCurrency !== "" && normalizedCurrency !== normalizedBaseCurrency;
+    const requiresExchangeRate =
+      canEditHeaderFields && normalizedCurrency !== "" && normalizedCurrency !== normalizedBaseCurrency;
     const parsedExchangeRate = normalizeExchangeRate(normalizedExchangeRateRaw);
     const officialExchangeRate = normalizeExchangeRate(officialExchangeRateValue);
     const originalExchangeRate = normalizeExchangeRate(lockedExchangeRate);
@@ -110,20 +113,24 @@ export const useExpenseSheetDetailMutations = ({
     const parsedDraftStatus = Number(draftExpenseSheetStatus);
     const hasDraftStatus = Number.isInteger(parsedDraftStatus) && parsedDraftStatus >= 0;
     const hasManualRateEditOnUpdate =
+      canEditHeaderFields &&
       !isCreateMode &&
       hasValidRate &&
       (originalExchangeRate == null || !areRatesEquivalent(parsedExchangeRate, originalExchangeRate));
     // Only send exchangeRateMode when the user actually changed the rate manually.
     const isManualExchangeRate = (() => {
+      if (!canEditHeaderFields) return false;
       if (!requiresExchangeRate || !hasValidRate) return false;
       if (isExchangeRateLockedByLines) return false;
       if (!isCreateMode && !hasManualRateEditOnUpdate) return false;
       if (officialExchangeRate == null) return true;
       return !areRatesEquivalent(parsedExchangeRate, officialExchangeRate);
     })();
-    const resolvedExchangeRateMode = isManualExchangeRate
-      ? 1
-      : (normalizedEstadoComentarios ? (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : 0) : undefined);
+    const resolvedExchangeRateMode = canEditHeaderFields
+      ? (isManualExchangeRate
+        ? 1
+        : (normalizedEstadoComentarios ? (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : 0) : undefined))
+      : (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : undefined);
     const resolvedExpenseSheetStatus = hasDraftStatus ? parsedDraftStatus : (currentExpenseSheetStatus ?? undefined);
 
     if (isCreateMode) {
@@ -219,6 +226,7 @@ export const useExpenseSheetDetailMutations = ({
     busy,
     canCreateExpense,
     canEditExpense,
+    canEditHeaderFields,
     draftCurrencyCode,
     draftDescription,
     draftExchangeRate,
