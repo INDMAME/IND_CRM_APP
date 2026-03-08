@@ -220,6 +220,13 @@ const removeHeaderValue = (headers: Record<string, string>, key: string): void =
   delete headers[toDelete];
 };
 
+const normalizeAxUserIdHeader = (value: unknown): string => {
+  const normalized = safeText(value);
+  if (!normalized) return "";
+  const firstToken = normalized.split("-")[0];
+  return safeText(firstToken);
+};
+
 const resolveBearerToken = (headers: HeadersInit | undefined): string => {
   const authorization = getHeaderValue(headers, "Authorization");
   if (!authorization) return "";
@@ -633,11 +640,16 @@ export const mapExpenseSheetHeader = mapExpenseSheetHeaderCore;
 // Maps /api/crm/expensesheets/{hojaGastosId} line contract to UI model.
 export const mapExpenseSheetLine = mapExpenseSheetLineCore;
 
+export type ExpenseSheetListFetchOptions = ApiFetchOptions & {
+  axUserIdOverride?: string;
+};
+
 // Loads the expense sheet list from /api/crm/expensesheets/list.
 export const fetchExpenseSheetList = async (
   payload: ExpenseSheetListApiRequest,
-  options?: ApiFetchOptions
+  options?: ExpenseSheetListFetchOptions
 ): Promise<IndPagedResponse<ExpenseSheetListItemDto>> => {
+  const { axUserIdOverride, ...baseOptions } = options || {};
   const rawCreatedDateFrom = safeText(payload?.createdDateFrom);
   const rawCreatedDateTo = safeText(payload?.createdDateTo);
   const createdDateFrom = normalizeOptionalApiDate(rawCreatedDateFrom);
@@ -657,12 +669,21 @@ export const fetchExpenseSheetList = async (
     expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
   };
 
-  const context = await ensureExpenseApiContext(options);
+  const context = await ensureExpenseApiContext(baseOptions);
+  const listHeaders = sanitizeHeaders(buildExpenseHeaders(context, baseOptions, true, false));
+  const normalizedOverrideAxUserId = normalizeAxUserIdHeader(axUserIdOverride);
+  const resolvedAxUserId = safeText(normalizedOverrideAxUserId || context.axUserId);
+  if (resolvedAxUserId) {
+    listHeaders["X-IND-AxUserId"] = resolvedAxUserId;
+  } else {
+    removeHeaderValue(listHeaders, "X-IND-AxUserId");
+  }
+
   try {
     const response = await fetchJson<IndPagedResponse<ExpenseSheetListItemDto>>("/api/crm/expensesheets/list", {
-      ...options,
+      ...baseOptions,
       method: "POST",
-      headers: buildExpenseHeaders(context, options, true),
+      headers: listHeaders,
       body: JSON.stringify(safePayload),
     });
 
@@ -673,10 +694,10 @@ export const fetchExpenseSheetList = async (
     }
 
     const legacyResponse = await fetchJson<LegacyExpenseListResponse>("/Gastos/ListExpenseSheets", {
-      ...options,
+      ...baseOptions,
       method: "POST",
       headers: {
-        ...sanitizeHeaders(options?.headers),
+        ...sanitizeHeaders(baseOptions?.headers),
         ...JSON_HEADERS,
       },
       body: JSON.stringify(toLegacyListRequestPayload(safePayload)),
@@ -826,10 +847,17 @@ export const getExpenseSheetSubordinates = async (
   options?: ApiFetchOptions
 ): Promise<IndPagedResponse<ExpenseSheetSubordinateDto>> => {
   const context = await ensureExpenseApiContext(options);
+  // Subordinates must always resolve from the logged context user, not from acting-user overrides.
+  const headers = sanitizeHeaders(buildExpenseHeaders(context, options, false, false));
+  const contextAxUserId = safeText(context.axUserId);
+  if (contextAxUserId) {
+    headers["X-IND-AxUserId"] = contextAxUserId;
+  }
+
   const response = await fetchJson<IndPagedResponse<unknown>>("/api/crm/expensesheets/subordinates", {
     ...options,
     method: "GET",
-    headers: buildExpenseHeaders(context, options),
+    headers,
   });
 
   return normalizeSubordinatesPagedResponse(response);

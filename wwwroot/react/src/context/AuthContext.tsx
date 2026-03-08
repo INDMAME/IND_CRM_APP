@@ -2,10 +2,7 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { getSessionJsonWithExpiry, setSessionJsonWithExpiry } from "../utils/sessionExpiry.ts";
 import { getExpenseScopeToken } from "../pages/gastos/utils/expenseScope.ts";
 import { normalizeExpenseSheetSubordinates } from "../pages/gastos/utils/expenseSubordinateMapper.ts";
-import {
-  clearExpenseActingUserOverride,
-  setExpenseActingUserOverride,
-} from "../pages/gastos/utils/expenseActingUser.ts";
+import { clearExpenseActingUserOverride } from "../pages/gastos/utils/expenseActingUser.ts";
 
 export type AccessLevel = "View" | "Edit" | "Add" | "FullAccess";
 export type AuthManagedUser = {
@@ -21,7 +18,7 @@ const ACCESS_RIGHTS: Record<AccessLevel, number> = {
   FullAccess: 4,
 };
 
-const EXPENSE_MANAGEMENT_CACHE_KEY_PREFIX = "expense_management_context_v1";
+const EXPENSE_MANAGEMENT_CACHE_KEY_PREFIX = "expense_management_context_v2";
 const EXPENSE_MANAGEMENT_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 type ExpenseManagementCacheEntry = {
@@ -95,7 +92,7 @@ const resolveManagedUserSelection = (
     const self = users.find((entry) => isSameUser(entry.axUserId, normalizedCurrent));
     return self?.axUserId || normalizedCurrent;
   }
-  return users[0]?.axUserId || "";
+  return "";
 };
 
 const getExpenseManagementCacheKey = (): string => {
@@ -234,10 +231,10 @@ export const AuthProvider = ({
         });
         const resolvedCurrentUser = normalizeText(contextSnapshot.axUserId);
         const resolvedCurrentCrmUser = normalizeText(contextSnapshot.crmUserId);
-        const shouldFetchSubordinates = !cached || !Array.isArray(cached.subordinates) || cached.subordinates.length === 0;
         let nextSubordinates = ensureCurrentUserInSubordinates(cached?.subordinates || [], resolvedCurrentUser);
 
-        if (shouldFetchSubordinates) {
+        // Always refresh subordinates from API to avoid stale legacy id mappings.
+        try {
           const subordinatesResponse = await expenseApiModule.getExpenseSheetSubordinates({
             suppressPermissionModal: true,
           });
@@ -245,6 +242,8 @@ export const AuthProvider = ({
             normalizeSubordinates(subordinatesResponse?.Items),
             resolvedCurrentUser
           );
+        } catch {
+          // Keep cached subordinates when refresh fails.
         }
 
         const nextSelection = resolveManagedUserSelection(
@@ -304,21 +303,6 @@ export const AuthProvider = ({
     selfManagement,
     subordinates,
   ]);
-
-  useEffect(() => {
-    if (!enableExpenseManagement) return;
-    const normalizedCurrent = normalizeText(currentAxUserId);
-    const normalizedSelected = normalizeText(selectedManagedUserId);
-    const shouldOverride =
-      !!normalizedSelected && (!normalizedCurrent || !isSameUser(normalizedSelected, normalizedCurrent));
-
-    if (!shouldOverride) {
-      clearExpenseActingUserOverride();
-      return;
-    }
-
-    setExpenseActingUserOverride(normalizedSelected);
-  }, [currentAxUserId, enableExpenseManagement, selectedManagedUserId]);
 
   const manageableSubordinates = useMemo(() => {
     const normalizedCurrent = normalizeText(currentAxUserId);

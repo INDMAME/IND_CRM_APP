@@ -133,6 +133,7 @@ const ExpenseFiltersPanel = ({
             label={indT("ExpenseSheets_Filter_Sheet", "Expense sheet")}
             placeholder={indT("ExpenseSheets_Filter_Sheet", "Expense sheet")}
             value={hojaGastosId}
+            managedUserId={managedUserId}
             onChange={onHojaGastosIdChange}
             enableRemoteSuggestions
             showLabel={false}
@@ -149,8 +150,8 @@ const ExpenseFiltersPanel = ({
 
           {showManagedUserFilter ? (
             <ExpenseManagedUserFilterSelect
-              label={indT("Common_User", "User")}
-              placeholder={indT("Common_User", "User")}
+              label={indT("ExpenseSheets_Filter_User", "User")}
+              placeholder={indT("ExpenseSheets_Filter_User", "User")}
               value={managedUserId}
               users={managedUsers}
               onChange={onManagedUserIdChange}

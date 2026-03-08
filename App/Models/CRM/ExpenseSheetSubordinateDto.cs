@@ -10,6 +10,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("UserId")]
         public string UserId { get; set; } = string.Empty;
 
+        [JsonPropertyName("CrmUserId")]
+        public string CrmUserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("AxUserId")]
+        public string AxUserId { get; set; } = string.Empty;
+
         [JsonPropertyName("Name")]
         public string Name { get; set; } = string.Empty;
 

@@ -156,6 +156,9 @@
   <data name="ExpenseSheets_Filter_Currency" xml:space="preserve">
     <value>分裂</value>
   </data>
+  <data name="ExpenseSheets_Filter_User" xml:space="preserve">
+    <value>用户</value>
+  </data>
   <data name="ExpenseSheets_Filter_Status" xml:space="preserve">
     <value>状态</value>
   </data>

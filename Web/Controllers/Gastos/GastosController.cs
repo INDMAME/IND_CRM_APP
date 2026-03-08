@@ -226,10 +226,11 @@ namespace IND_CRM_APP.Controllers
             var page = req.Page < 1 ? 1 : req.Page;
             var pageSize = req.PageSize <= 0 ? 6 : req.PageSize;
             var listRequest = BuildExpenseSheetListApiRequest(req, page, pageSize);
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
 
             try
             {
-                var result = await _apiClient.GetExpenseSheetsAsync(token, listRequest);
+                var result = await _apiClient.GetExpenseSheetsAsync(token, listRequest, requestAxUserId);
                 var items = result.GetAnyItems().Select(ToExpenseSheetCard).ToList();
                 var responsePage = result.Page > 0 ? result.Page : page;
                 var responsePageSize = result.PageSize > 0 ? result.PageSize : pageSize;
@@ -281,10 +282,17 @@ namespace IND_CRM_APP.Controllers
                 Page = page,
                 PageSize = pageSize
             };
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            _logger.LogInformation(
+                "ApiExpenseSheetsList request trace. hojaGastosId={HojaGastosId} X-IND-AxUserId={AxUserId} page={Page} pageSize={PageSize}",
+                payload.Filter ?? string.Empty,
+                requestAxUserId ?? string.Empty,
+                page,
+                pageSize);
 
             try
             {
-                var result = await _apiClient.GetExpenseSheetsAsync(token, payload);
+                var result = await _apiClient.GetExpenseSheetsAsync(token, payload, requestAxUserId);
                 var items = result.GetAnyItems()
                     .Select(ToExpenseSheetApiListItem)
                     .ToList();
@@ -388,8 +396,14 @@ namespace IND_CRM_APP.Controllers
                 var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token);
                 var items = result.GetAnyItems()
                     .Select(ToExpenseSheetSubordinateApiItem)
-                    .Where(x => !string.IsNullOrWhiteSpace(x.UserId))
-                    .GroupBy(x => x.UserId, StringComparer.OrdinalIgnoreCase)
+                    .Where(x =>
+                        !string.IsNullOrWhiteSpace(x.AxUserId) ||
+                        !string.IsNullOrWhiteSpace(x.UserId))
+                    .GroupBy(
+                        x => !string.IsNullOrWhiteSpace(x.AxUserId)
+                            ? x.AxUserId
+                            : x.UserId,
+                        StringComparer.OrdinalIgnoreCase)
                     .Select(x => x.First())
                     .ToList();
                 var responsePage = result.Page > 0 ? result.Page : 1;
@@ -829,6 +843,11 @@ namespace IND_CRM_APP.Controllers
             var safeSheetId = NormalizeOptionalText(hojaGastosId);
             if (string.IsNullOrWhiteSpace(safeSheetId))
                 return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            _logger.LogInformation(
+                "ApiExpenseSheetDetail request trace. hojaGastosId={HojaGastosId} X-IND-AxUserId={AxUserId}",
+                safeSheetId,
+                requestAxUserId ?? string.Empty);
 
             try
             {
@@ -2880,18 +2899,35 @@ namespace IND_CRM_APP.Controllers
         }
 
         // Maps subordinate items to API contract fields expected by /api/crm/expensesheets/subordinates.
-        private static ExpenseSheetSubordinateDto ToExpenseSheetSubordinateApiItem(ExpenseSheetSubordinateDto item)
+        private static ExpenseSheetSubordinateApiItem ToExpenseSheetSubordinateApiItem(ExpenseSheetSubordinateDto item)
         {
-            var userId = NormalizeOptionalText(item.UserId)
-                         ?? NormalizeOptionalText(GetExtraString(item.Extra, "userId", "UserId"));
+            var legacyUserId = NormalizeOptionalText(item.UserId)
+                               ?? NormalizeOptionalText(GetExtraString(item.Extra, "userId", "UserId"));
+            var crmUserId = NormalizeOptionalText(item.CrmUserId)
+                            ?? NormalizeOptionalText(GetExtraString(item.Extra, "crmUserId", "CrmUserId"))
+                            ?? legacyUserId;
+            var axUserId = NormalizeOptionalText(item.AxUserId)
+                           ?? NormalizeOptionalText(GetExtraString(item.Extra, "axUserId", "AxUserId"))
+                           ?? legacyUserId;
             var name = NormalizeOptionalText(item.Name)
                        ?? NormalizeOptionalText(GetExtraString(item.Extra, "name", "Name"));
+            var effectiveCrmUserId = crmUserId ?? axUserId ?? string.Empty;
+            var effectiveAxUserId = axUserId ?? crmUserId ?? string.Empty;
 
-            return new ExpenseSheetSubordinateDto
+            return new ExpenseSheetSubordinateApiItem
             {
-                UserId = userId ?? string.Empty,
-                Name = name ?? string.Empty
+                UserId = effectiveCrmUserId,
+                AxUserId = effectiveAxUserId,
+                Name = name ?? effectiveAxUserId
             };
+        }
+
+        // Public subordinate API contract. Keep only fields expected by consumers.
+        private sealed class ExpenseSheetSubordinateApiItem
+        {
+            public string UserId { get; set; } = string.Empty;
+            public string AxUserId { get; set; } = string.Empty;
+            public string Name { get; set; } = string.Empty;
         }
 
         // Maps one sheet to a detail header payload.

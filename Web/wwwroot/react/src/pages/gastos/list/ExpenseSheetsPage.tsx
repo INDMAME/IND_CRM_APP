@@ -34,32 +34,25 @@ const isSameUser = (left: string, right: string): boolean => {
   return !!normalizedLeft && normalizedLeft === normalizedRight;
 };
 
-const ensureCurrentUserInList = (users: AuthManagedUser[], currentAxUserId: string): AuthManagedUser[] => {
-  const normalizedCurrent = normalizeUserId(currentAxUserId);
-  if (!normalizedCurrent) return users;
-  if (users.some((entry) => isSameUser(entry.axUserId, normalizedCurrent))) return users;
-  return [
-    {
-      crmUserId: normalizedCurrent,
-      axUserId: normalizedCurrent,
-      name: normalizedCurrent,
-    },
-    ...users,
-  ];
+const resolveManagedUserSelection = (requestedUserId: string, users: AuthManagedUser[]): string => {
+  const normalizedRequested = normalizeUserId(requestedUserId);
+  if (!normalizedRequested) return "";
+  const found = users.find((entry) => isSameUser(entry.axUserId, normalizedRequested));
+  return found?.axUserId || "";
 };
 
-const resolveManagedUserSelection = (requestedUserId: string, currentAxUserId: string, users: AuthManagedUser[]): string => {
-  const normalizedRequested = normalizeUserId(requestedUserId);
-  const normalizedCurrent = normalizeUserId(currentAxUserId);
-  if (normalizedRequested) {
-    const found = users.find((entry) => isSameUser(entry.axUserId, normalizedRequested));
-    if (found) return found.axUserId;
-  }
-  if (normalizedCurrent) {
-    const self = users.find((entry) => isSameUser(entry.axUserId, normalizedCurrent));
-    return self?.axUserId || normalizedCurrent;
-  }
-  return users[0]?.axUserId || "";
+const normalizeManagedUserFilterValue = (value: unknown, users: AuthManagedUser[]): string => {
+  const normalized = normalizeUserId(value);
+  if (!normalized) return "";
+
+  const directMatch = users.find((entry) => isSameUser(entry.axUserId, normalized));
+  if (directMatch) return directMatch.axUserId;
+
+  const valueToken = normalized.split("-")[0]?.trim() || normalized;
+  const tokenMatch = users.find((entry) => isSameUser(entry.axUserId, valueToken));
+  if (tokenMatch) return tokenMatch.axUserId;
+
+  return valueToken;
 };
 
 // Initializes auth seed for expense API calls before island effects run.
@@ -75,21 +68,12 @@ const ExpenseSheetsPageContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
-  const {
-    currentAxUserId,
-    selectedManagedUserId,
-    subordinates,
-    canManageOtherUsers,
-    setSelectedManagedUserId,
-  } = useAuthContext();
+  const { manageableSubordinates } = useAuthContext();
   const managedUsers = useMemo(
-    () => ensureCurrentUserInList(Array.isArray(subordinates) ? subordinates : [], currentAxUserId),
-    [currentAxUserId, subordinates]
+    () => (Array.isArray(manageableSubordinates) ? manageableSubordinates : []),
+    [manageableSubordinates]
   );
-  const defaultManagedUserId = useMemo(
-    () => resolveManagedUserSelection(selectedManagedUserId, currentAxUserId, managedUsers),
-    [currentAxUserId, managedUsers, selectedManagedUserId]
-  );
+  const showManagedUserFilter = managedUsers.length > 0;
   const managedUserLabelById = useMemo(() => {
     const map = new Map<string, string>();
     managedUsers.forEach((entry) => {
@@ -129,19 +113,6 @@ const ExpenseSheetsPageContent = () => {
   const { readCachedState, consumeReturnFlag, saveCachedState, clearCachedState } = useExpenseSheetsFilterCache();
   const didRestoreOnMountRef = React.useRef(false);
   const pendingScrollRestoreRef = React.useRef<number | null>(null);
-  const syncManagedUserSelection = useCallback(
-    (requestedUserId: string): string => {
-      const resolvedUserId = resolveManagedUserSelection(requestedUserId, currentAxUserId, managedUsers);
-      setSelectedManagedUserId(resolvedUserId);
-      if (!resolvedUserId || (currentAxUserId && isSameUser(resolvedUserId, currentAxUserId))) {
-        clearExpenseActingUserOverride();
-      } else {
-        setExpenseActingUserOverride(resolvedUserId);
-      }
-      return resolvedUserId;
-    },
-    [currentAxUserId, managedUsers, setSelectedManagedUserId]
-  );
 
   const {
     fromDate,
@@ -172,35 +143,75 @@ const ExpenseSheetsPageContent = () => {
     toggleFilterPanel,
   } = useExpenseSheetsFiltersState({
     onApplyFilters: (snapshot) => {
-      const resolvedManagedUserId = syncManagedUserSelection(snapshot.managedUserId);
+      const resolvedManagedUserId = normalizeManagedUserFilterValue(snapshot.managedUserId, managedUsers);
+      if (resolvedManagedUserId) {
+        setExpenseActingUserOverride(resolvedManagedUserId);
+      } else {
+        clearExpenseActingUserOverride();
+      }
       void loadList(1, {
         ...snapshot,
         managedUserId: resolvedManagedUserId,
       });
     },
     onClearFilters: () => {
-      const resetManagedUserId = syncManagedUserSelection(currentAxUserId);
-      setManagedUserId(resetManagedUserId);
+      setManagedUserId("");
       clearCachedState();
+      clearExpenseActingUserOverride();
       resetList();
     },
-    defaultManagedUserId,
+    defaultManagedUserId: "",
   });
 
-  useEffect(() => {
-    const normalizedDefaultManagedUserId = normalizeUserId(defaultManagedUserId);
-    if (!normalizedDefaultManagedUserId) return;
-    setManagedUserId(normalizedDefaultManagedUserId);
-    syncManagedUserSelection(normalizedDefaultManagedUserId);
-  }, [defaultManagedUserId, setManagedUserId, syncManagedUserSelection]);
+  const handleManagedUserIdChange = useCallback(
+    (value: string) => {
+      const normalizedValue = normalizeManagedUserFilterValue(value, managedUsers);
+      const wasManagedUserSelected = !!normalizeUserId(managedUserId);
+      const shouldAutoApplyClear = wasManagedUserSelected && !normalizedValue;
+      setManagedUserId(normalizedValue);
+      clearCachedState();
+
+      if (!shouldAutoApplyClear) {
+        return;
+      }
+
+      const nextSnapshot = {
+        ...(appliedFilters || currentFilters),
+        managedUserId: "",
+      };
+      clearExpenseActingUserOverride();
+      restoreAppliedFilters(nextSnapshot);
+      void loadList(1, nextSnapshot);
+    },
+    [
+      appliedFilters,
+      clearCachedState,
+      currentFilters,
+      loadList,
+      managedUserId,
+      managedUsers,
+      restoreAppliedFilters,
+      setManagedUserId,
+    ]
+  );
 
   const goToDetail = useCallback(
     (sheetId: string) => {
       if (!sheetId) return;
 
       const snapshot = appliedFilters || currentFilters;
+      const resolvedManagedUserId = normalizeManagedUserFilterValue(snapshot.managedUserId, managedUsers);
+      const normalizedSnapshot = {
+        ...snapshot,
+        managedUserId: resolvedManagedUserId,
+      };
+      if (resolvedManagedUserId) {
+        setExpenseActingUserOverride(resolvedManagedUserId);
+      } else {
+        clearExpenseActingUserOverride();
+      }
       saveCachedState({
-        filters: snapshot,
+        filters: normalizedSnapshot,
         page: currentPage < 1 ? 1 : currentPage,
         scrollY: typeof window !== "undefined" ? window.scrollY || 0 : 0,
         items,
@@ -212,7 +223,7 @@ const ExpenseSheetsPageContent = () => {
         bypassGuardOnce: false,
       });
     },
-    [appliedFilters, currentFilters, currentPage, items, saveCachedState, total]
+    [appliedFilters, currentFilters, currentPage, items, managedUsers, saveCachedState, total]
   );
 
   const handleOpenCreateSheetMode = useCallback(() => {
@@ -289,11 +300,11 @@ const ExpenseSheetsPageContent = () => {
       });
     }
     const appliedManagedUserId = normalizeUserId(appliedFilters.managedUserId);
-    if (appliedManagedUserId && (!currentAxUserId || !isSameUser(appliedManagedUserId, currentAxUserId))) {
+    if (appliedManagedUserId) {
       const managedUserLabel = managedUserLabelById.get(appliedManagedUserId.toUpperCase()) || appliedManagedUserId;
       summary.push({
         key: "managed-user",
-        label: indT("Common_User", "User"),
+        label: indT("ExpenseSheets_Filter_User", "User"),
         value: managedUserLabel,
       });
     }
@@ -306,7 +317,7 @@ const ExpenseSheetsPageContent = () => {
     }
 
     return summary;
-  }, [appliedFilters, currentAxUserId, managedUserLabelById]);
+  }, [appliedFilters, managedUserLabelById]);
 
   const showSummary = !showFilters && summaryItems.length > 0;
 
@@ -316,24 +327,29 @@ const ExpenseSheetsPageContent = () => {
 
     if (!consumeReturnFlag()) {
       clearCachedState();
-      const resetManagedUserId = syncManagedUserSelection(currentAxUserId);
-      setManagedUserId(resetManagedUserId);
+      setManagedUserId("");
+      clearExpenseActingUserOverride();
       return;
     }
 
     const cachedState = readCachedState();
     if (!cachedState) {
       clearCachedState();
-      const resetManagedUserId = syncManagedUserSelection(currentAxUserId);
-      setManagedUserId(resetManagedUserId);
+      setManagedUserId("");
+      clearExpenseActingUserOverride();
       return;
     }
 
-    const restoredManagedUserId = syncManagedUserSelection(cachedState.filters.managedUserId);
+    const restoredManagedUserId = resolveManagedUserSelection(cachedState.filters.managedUserId, managedUsers);
     const restoredFilters = {
       ...cachedState.filters,
       managedUserId: restoredManagedUserId,
     };
+    if (restoredManagedUserId) {
+      setExpenseActingUserOverride(restoredManagedUserId);
+    } else {
+      clearExpenseActingUserOverride();
+    }
 
     restoreAppliedFilters(restoredFilters);
     pendingScrollRestoreRef.current = cachedState.scrollY;
@@ -349,13 +365,12 @@ const ExpenseSheetsPageContent = () => {
   }, [
     clearCachedState,
     consumeReturnFlag,
-    currentAxUserId,
     loadList,
+    managedUsers,
     readCachedState,
     restoreAppliedFilters,
     restoreListSnapshot,
     setManagedUserId,
-    syncManagedUserSelection,
   ]);
 
   useEffect(() => {
@@ -386,7 +401,7 @@ const ExpenseSheetsPageContent = () => {
         return;
       }
 
-      const resolvedManagedUserId = syncManagedUserSelection(appliedFilters.managedUserId);
+      const resolvedManagedUserId = normalizeManagedUserFilterValue(appliedFilters.managedUserId, managedUsers);
       void loadList(currentPage < 1 ? 1 : currentPage, {
         ...appliedFilters,
         managedUserId: resolvedManagedUserId,
@@ -400,7 +415,7 @@ const ExpenseSheetsPageContent = () => {
       window.removeEventListener("expense-sheets-toggle-filter", onToggleFilters);
       window.removeEventListener("expense-sheets-refresh", onRefresh);
     };
-  }, [appliedFilters, currentPage, loadList, showFilters, syncManagedUserSelection, toggleFilterPanel]);
+  }, [appliedFilters, currentPage, loadList, managedUsers, showFilters, toggleFilterPanel]);
 
   return (
     <div className="space-y-2">
@@ -432,7 +447,7 @@ const ExpenseSheetsPageContent = () => {
         currencyCode={currencyCode}
         managedUserId={managedUserId}
         managedUsers={managedUsers}
-        showManagedUserFilter={canManageOtherUsers}
+        showManagedUserFilter={showManagedUserFilter}
         statusFilter={statusFilter}
         activeQuickFilter={activeQuickFilter}
         onDateRangeChange={onDateRangeChange}
@@ -441,7 +456,7 @@ const ExpenseSheetsPageContent = () => {
         onProjectIdChange={setProjectId}
         onHojaGastosIdChange={setHojaGastosId}
         onCurrencyCodeChange={setCurrencyCode}
-        onManagedUserIdChange={setManagedUserId}
+        onManagedUserIdChange={handleManagedUserIdChange}
         onStatusFilterChange={setStatusFilter}
         onClear={onClear}
         onApply={onApply}
@@ -504,7 +519,7 @@ const ExpenseSheetsPageContent = () => {
         loading={isLoading}
         onPageChange={(page) => {
           const snapshot = appliedFilters || currentFilters;
-          const resolvedManagedUserId = syncManagedUserSelection(snapshot.managedUserId);
+          const resolvedManagedUserId = normalizeManagedUserFilterValue(snapshot.managedUserId, managedUsers);
           void loadList(page, {
             ...snapshot,
             managedUserId: resolvedManagedUserId,

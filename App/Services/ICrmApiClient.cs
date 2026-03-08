@@ -156,7 +156,8 @@ namespace IND_CRM_APP.Services
 
         Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetsAsync(
             string token,
-            ExpenseSheetListApiRequest req
+            ExpenseSheetListApiRequest req,
+            string? axUserIdOverride = null
         );
 
         Task<PagedApiResponse<ExpenseSheetCurrencyDto>> GetExpenseSheetCurrenciesAsync(

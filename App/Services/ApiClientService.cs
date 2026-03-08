@@ -251,9 +251,10 @@ namespace IND_CRM_APP.Services
             string operation,
             bool requireCompany,
             bool includeCompanyHeader = true,
-            bool includeAxUserHeader = true)
+            bool includeAxUserHeader = true,
+            string? axUserIdOverride = null)
         {
-            AddToken(token, includeCompanyHeader, includeAxUserHeader);
+            AddToken(token, includeCompanyHeader, includeAxUserHeader, axUserIdOverride);
             LogCompanyHeader(operation, requireCompany);
         }
 
@@ -858,9 +859,16 @@ namespace IND_CRM_APP.Services
 
         public async Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetsAsync(
             string token,
-            ExpenseSheetListApiRequest req)
+            ExpenseSheetListApiRequest req,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "GetExpenseSheets", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "GetExpenseSheets",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             req ??= new ExpenseSheetListApiRequest();
 
@@ -889,7 +897,7 @@ namespace IND_CRM_APP.Services
 
             var serializedPayload = Serialize(payload);
             _logger.LogInformation(
-                "Upstream request {Operation}: payloadLength={PayloadLength} billedMode={BilledMode} page={Page} pageSize={PageSize} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} filterLen={FilterLen} projIdLen={ProjIdLen} currencyCode={CurrencyCode} expenseSheetStatus={ExpenseSheetStatus}",
+                "Upstream request {Operation}: payloadLength={PayloadLength} billedMode={BilledMode} page={Page} pageSize={PageSize} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} filterLen={FilterLen} projIdLen={ProjIdLen} currencyCode={CurrencyCode} expenseSheetStatus={ExpenseSheetStatus} axUserIdOverride={AxUserIdOverride}",
                 "GetExpenseSheets",
                 serializedPayload.Length,
                 normalizedBilledMode,
@@ -900,7 +908,8 @@ namespace IND_CRM_APP.Services
                 normalizedFilter.Length,
                 normalizedProjId.Length,
                 string.IsNullOrWhiteSpace(normalizedCurrencyCode) ? "<empty>" : normalizedCurrencyCode,
-                normalizedExpenseSheetStatus.HasValue ? normalizedExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null");
+                normalizedExpenseSheetStatus.HasValue ? normalizedExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
 
             var result = await SendPostAsync(ApiRoutes.ExpenseSheetsList, serializedPayload);
             if (!result.IsSuccessStatusCode)
@@ -2036,7 +2045,11 @@ namespace IND_CRM_APP.Services
             AddToken(newToken);
         }
 
-        private void AddToken(string token, bool includeCompanyHeader = true, bool includeAxUserHeader = true)
+        private void AddToken(
+            string token,
+            bool includeCompanyHeader = true,
+            bool includeAxUserHeader = true,
+            string? axUserIdOverride = null)
         {
             _client.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
@@ -2052,7 +2065,7 @@ namespace IND_CRM_APP.Services
 
             if (includeAxUserHeader)
             {
-                ApplyAxUserHeader();
+                ApplyAxUserHeader(axUserIdOverride);
             }
             else
             {
@@ -2071,11 +2084,11 @@ namespace IND_CRM_APP.Services
             _client.DefaultRequestHeaders.Add("X-IND-Company", companyId);
         }
 
-        private void ApplyAxUserHeader()
+        private void ApplyAxUserHeader(string? axUserIdOverride = null)
         {
             _client.DefaultRequestHeaders.Remove("X-IND-AxUserId");
 
-            var axUserId = GetAxUserId();
+            var axUserId = NormalizeOptionalText(axUserIdOverride) ?? GetAxUserId();
             if (string.IsNullOrWhiteSpace(axUserId))
                 return;
 

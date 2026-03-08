@@ -9,6 +9,7 @@ type ExpenseSheetFilterInputProps = {
   label: string;
   placeholder: string;
   value: string;
+  managedUserId?: string;
   onChange: (value: string) => void;
   enableRemoteSuggestions?: boolean;
   disabled?: boolean;
@@ -37,6 +38,7 @@ const ExpenseSheetFilterInput = ({
   label,
   placeholder,
   value,
+  managedUserId = "",
   onChange,
   enableRemoteSuggestions = true,
   disabled = false,
@@ -44,11 +46,13 @@ const ExpenseSheetFilterInput = ({
   showLabel = true,
 }: ExpenseSheetFilterInputProps) => {
   const readOnlyMode = readOnly || disabled;
+  const normalizedManagedUserId = String(managedUserId || "").trim();
 
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
     const payload = buildExpenseSheetSuggestPayload(term, SEARCH_PAGE_SIZE, 1);
     const response = await fetchExpenseSheetList(payload, {
       suppressPermissionModal: true,
+      axUserIdOverride: normalizedManagedUserId || undefined,
       signal,
     });
 
@@ -57,12 +61,13 @@ const ExpenseSheetFilterInput = ({
     }
 
     return mapSheetOptions(response?.Items);
-  }, []);
+  }, [normalizedManagedUserId]);
 
   const loadOptionsPage = useCallback(async (term: string, page: number, pageSize: number, signal: AbortSignal) => {
     const payload = buildExpenseSheetSuggestPayload(term, pageSize, page);
     const response = await fetchExpenseSheetList(payload, {
       suppressPermissionModal: true,
+      axUserIdOverride: normalizedManagedUserId || undefined,
       signal,
     });
 
@@ -77,7 +82,7 @@ const ExpenseSheetFilterInput = ({
       items: mapSheetOptions(response?.Items),
       total: Number(response?.Total || 0),
     };
-  }, []);
+  }, [normalizedManagedUserId]);
 
   if (!enableRemoteSuggestions || readOnlyMode) {
     return (

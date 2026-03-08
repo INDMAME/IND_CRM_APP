@@ -15,7 +15,13 @@ type ExpenseManagedUserFilterSelectProps = {
 };
 
 const toOptionText = (user: AuthManagedUser): string => {
-  return String(user.name || "").trim();
+  const axUserId = String(user.axUserId || "").trim();
+  const name = String(user.name || "").trim();
+  if (!axUserId) return "";
+  if (!name || name.toUpperCase() === axUserId.toUpperCase()) {
+    return axUserId;
+  }
+  return `${axUserId} - ${name}`;
 };
 
 // Fixed local user selector used to filter expense sheets by managed Ax user.
@@ -56,6 +62,7 @@ const ExpenseManagedUserFilterSelect = ({
       portalClassName="visitas-typography"
       panelClassName="visitas-typography"
       allowTextInput
+      selectedTextMode="value"
       showLabel={showLabel}
     />
   );

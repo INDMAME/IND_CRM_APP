@@ -67,6 +67,7 @@ Conflict precedence:
 | Section titles | Reuse `ExpenseSectionDivider` for centered section labels with side lines; keep labels borderless (no box/pill frame). |
 | Style ownership | External Tailwind helper skills can suggest syntax or patterns, but local style rules are mandatory. |
 | Canonical web path | Treat `Web/wwwroot` as canonical source path. Root `wwwroot` is a compatibility mirror/junction. |
+| Runtime freshness gate | Before validating behavior, ensure the running runtime is current: rebuild touched assets, republish/restart when required, and verify served artifacts/log path reflect the latest build. |
 | Test execution default | IMPORTANT: when user asks to create or run a frontend test, default to public URL E2E (`baseURL`) using real pages. Use local fixtures or mocked fetch only when the user explicitly requests fixture-based testing. |
 | Documentation sync | Edit root `.codex/*.md` files or `.codex/config.toml` and run `npm run sync:skill:local:references` when references are changed. |
 | Completion checks | Run `references/QUALITY_CHECKLIST.md`; publish plus `iisreset` when frontend release tasks require it. |
@@ -124,6 +125,8 @@ Required triggers:
 6. Validate i18n and anti-regression critical paths.
    - For test work requested by user, prefer E2E flow on public `baseURL` and avoid local fixture servers unless explicitly requested.
 7. Execute quality checks and release steps required by scope.
+   - Runtime freshness is mandatory: if runtime behavior does not match code, stop and verify build/deploy/runtime state before further debugging.
+   - For publish scope, deploy with `publish.ps1` and verify the app is serving current artifacts before accepting results.
 8. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
 
 ## Common Mistakes
@@ -142,6 +145,7 @@ Required triggers:
 - Creating ad-hoc section title capsules instead of reusing `ExpenseSectionDivider`.
 - Creating `/api/...` controller actions without explicit `Program.cs` route map.
 - Mismatching frontend HTTP verb versus controller verb attribute on API routes.
+- Debugging or validating behavior against stale runtime/build output.
 
 ## Last updated
-- 2026-03-06
+- 2026-03-08

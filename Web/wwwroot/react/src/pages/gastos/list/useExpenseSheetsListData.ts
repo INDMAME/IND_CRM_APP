@@ -46,10 +46,12 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
       setIsLoading(true);
       setErrorMessage("");
       const payload = buildExpenseListPayload(filters, page, pageSize);
+      const selectedManagedUserId = String(filters?.managedUserId || "").trim();
 
       try {
         const response = await fetchExpenseSheetList(payload, {
           suppressPermissionModal: true,
+          axUserIdOverride: selectedManagedUserId || undefined,
         });
 
         if (response?.Success === false) {
