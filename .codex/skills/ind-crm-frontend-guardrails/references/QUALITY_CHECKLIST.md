@@ -13,6 +13,7 @@
 ## Frontend (React + Tailwind)
 - `npm run build` (react + css)
 - Release build: `npm run build:react:prod` and `npm run build:css`
+- `npm run check:react-doctor`
 - Verify critical pages: visitas create/detail/history, gastos list/detail/line-detail, text editor, audio recorder
 - Critical behaviors: date filters, dropdowns, permissions, confirm modal, action mark
 - Read-only color contract verified per `COMPONENT_CONTRACTS.md`
@@ -24,6 +25,9 @@
 - Verify global listeners are cleaned up in hook teardown
 - Verify unsaved-change prompts use app modal flow (no browser-native popup fallback)
 - Verify edit/delete/create icons are permission-gated in UI where applicable
+- React Doctor diff gate is clean for changed frontend files, or any remaining findings are unrelated legacy findings explicitly documented in the final response
+- Run a short clean-code review on touched files and confirm no obvious low-risk modular refactor was left behind
+- If a low-risk modular refactor is still needed, apply it before closure or call out why it was deferred
 
 ## Backend (.NET)
 - `dotnet build`
@@ -32,6 +36,7 @@
 - Confirm OIDC callback and Entra context flow
 - For each new `/api/...` endpoint, verify explicit `Program.cs` route map and verb alignment with controller attributes.
 - For each new `/api/...` endpoint, validate expected verb returns non-404/non-405 and wrong verb returns intentional 405.
+- Run a short clean-code review on touched backend files and confirm responsibilities still follow module ownership and focused object boundaries
 
 ## Regression checks
 - Date range selection works (from/to focus and payload format)
@@ -53,4 +58,4 @@
 - For release tasks, run `iisreset` after publish
 
 ## Last updated
-- 2026-02-17
+- 2026-03-09

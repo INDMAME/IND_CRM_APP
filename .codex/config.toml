@@ -13,6 +13,9 @@ Before delivering code, confirm:
 2) User flow stays intact.
 3) New design/code is compatible with current architecture.
 4) No regression risk in any module.
+5) React Doctor check is clean for changed frontend files, or any remaining unrelated legacy findings are called out explicitly.
+
+Before delivering any task in this repo, run `npm run check:react-doctor`. If it reports diagnostics in frontend files touched by the current task, fix them and re-run before closing the task.
 
 When working on the project IND_CRM_APP (ASP.NET Core MVC web app), follow these architecture and UI rules:
 

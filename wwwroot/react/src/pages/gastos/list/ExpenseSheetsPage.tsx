@@ -464,10 +464,12 @@ const ExpenseSheetsPageContent = () => {
             {summaryItems.map((item, index) => (
               <div
                 key={`${item.key}-${item.value}-${index}`}
-                className="history-filter-summary history-filter-summary--grid-item leading-5 min-w-0"
+                className={`history-filter-summary history-filter-summary--grid-item leading-5 min-w-0 ${item.key === "managed-user" ? "min-[360px]:col-span-2" : ""}`}
               >
                 <span className="history-filter-summary__label font-semibold">{item.label}:</span>
-                <span className="history-filter-summary__value break-words">{item.value}</span>
+                <span className={`history-filter-summary__value ${item.key === "managed-user" ? "block truncate whitespace-nowrap" : "break-words"}`}>
+                  {item.value}
+                </span>
               </div>
             ))}
           </div>

@@ -19,6 +19,7 @@
 | `ind-crm-frontend-guardrails` | Frontend change, review, or release in IND_CRM_APP. | Required on frontend scope |
 | `brainstorming` | Before creative work: new features, behavior changes, component design. | Required on creative tasks |
 | `writing-skills` | Creating, editing, or validating skill content and `.codex` guardrail docs. | Required on skill/doc rule work |
+| `react-doctor` | Closing React or frontend tasks, reviewing frontend best practices, or validating changed React files before delivery. | Required before delivery when frontend source or build inputs changed |
 | `systematic-debugging` | Any bug, test failure, or unexpected behavior before proposing fixes. | Required on debugging |
 | `vercel-react-best-practices` | React/TS/TSX rendering, data flow, listeners, bundle, performance tasks. | Required on React tasks |
 | `vercel-composition-patterns` | Refactoring React component APIs, composition, render props, context, boolean prop cleanup. | Required when component API design is involved |
@@ -47,9 +48,10 @@
 - Project-local required skill path: `.codex/skills/ind-crm-frontend-guardrails/SKILL.md`.
 - Keep only `ind-crm-frontend-guardrails` under `.codex/skills`.
 - Shared helper skills path: `C:\Users\marco.meza\.codex\skills`.
+- Run React Doctor through `npm run check:react-doctor` so repo-specific ignore rules in `react-doctor.config.json` are applied.
 - Routing is trigger-based: skills should be loaded when task context matches, not by manual preference.
 - Never let `tailwindcss-v4` or `tailwind-patterns` override the project visual language: Montserrat, primary `#00296b`, Heroicons, and existing component contracts.
 - After editing `.codex/*.md` or `.codex/config.toml`, run `npm run sync:skill:local:references` (also enforced by pre-commit).
 
 ## Last updated
-- 2026-02-12
+- 2026-03-09

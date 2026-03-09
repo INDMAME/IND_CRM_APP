@@ -13,6 +13,8 @@
     "sync:skill:local:references:watch": "node scripts/sync-local-skill-references.mjs --watch",
     "sync:codex:references": "node scripts/sync-codex-references.mjs",
     "check:codex:references": "node scripts/check-codex-references.mjs",
+    "check:react-doctor": "npx -y react-doctor@latest . --yes --offline --verbose --diff HEAD",
+    "check:react-doctor:score": "npx -y react-doctor@latest . --yes --offline --score --diff HEAD",
     "check:resx:encoding": "node scripts/check-resx-encoding.mjs",
     "check:localization:keys": "node scripts/check-localization-keys.mjs",
     "sync:codex:references:watch": "node scripts/sync-local-skill-references.mjs --watch",

@@ -234,6 +234,11 @@
   - `vercel-composition-patterns` for component API and composition design.
   - `brainstorming` before new feature behavior changes.
   - `systematic-debugging` for bugs/regressions.
+- Before closing any implementation task, Codex must run a short clean-code and modular-architecture review on the touched code:
+  - Check whether the new or changed logic should be split into smaller module-scoped objects (page, hook, service, mapper, utility, component, controller, helper).
+  - Refactor when the current change leaves behind obvious mixed concerns, duplicated logic, oversized objects, or weak module boundaries.
+  - Keep the review aligned with `.codex/PROJECT_STRUCTURE.md` and the existing module ownership rules.
+  - If no safe refactor is justified, explicitly confirm that the touched code already fits the modular architecture.
 
 ## Critical anti regression rule (dates, calendars and API)
 
@@ -266,6 +271,13 @@ Codex must apply this rule for any change that touches views, scripts or filter 
   - npm run build:css
   - npm run build
   - dotnet build
+- Always run `npm run check:react-doctor` before responding to the user.
+  - Treat diagnostics in frontend files touched by the current task as blocking.
+  - Fix those diagnostics and re-run the check before closing the task.
+  - If only unrelated or pre-existing frontend diagnostics remain outside the task scope, call them out explicitly.
+- Before responding, verify whether the touched code can be safely refactored toward cleaner module boundaries.
+  - If the answer is yes, apply the refactor in the same task when it is low-risk and within scope.
+  - If the answer is no, state that the touched code already fits the modular architecture or explain why a larger refactor was intentionally deferred.
 - After any change that must be deployed, publish to C:\inetpub\wwwroot\IND_CRM_APP and restart IIS using iisreset.
 
 ## Quick design prompt (visitas/historial)
@@ -276,4 +288,4 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-02-17
+- 2026-03-09

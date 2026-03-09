@@ -1,0 +1,10 @@
+{
+  "ignore": {
+    "files": [
+      "wwwroot/**",
+      "Web/wwwroot/js/**",
+      "Web/wwwroot/css/**",
+      "Web/Assets/tailwind.input.css"
+    ]
+  }
+}

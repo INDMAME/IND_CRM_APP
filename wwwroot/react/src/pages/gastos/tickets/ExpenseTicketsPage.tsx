@@ -410,10 +410,6 @@ const ExpenseTicketsPageContent = () => {
     }, 0);
   }, [selectedTicketList]);
   const selectedTotalAmountText = useMemo(() => formatAmountWithCurrency(selectedTotalAmount, ""), [selectedTotalAmount]);
-  const selectableVisibleTickets = useMemo(() => {
-    return items.filter((item) => canSelectTicketForLink(item));
-  }, [items]);
-  const visibleSelectableCount = selectableVisibleTickets.length;
   useEffect(() => {
     setTopbarActionGroupReady("expense-tickets-list-actions");
   }, []);
@@ -485,19 +481,6 @@ const ExpenseTicketsPageContent = () => {
   const clearTicketSelection = useCallback(() => {
     setSelectedTicketsById({});
   }, []);
-
-  const selectVisibleTickets = useCallback(() => {
-    if (visibleSelectableCount < 1) return;
-    setSelectedTicketsById((previous) => {
-      const next = { ...previous };
-      for (const ticket of selectableVisibleTickets) {
-        const fileId = safeText(ticket.fileId);
-        if (!fileId) continue;
-        next[fileId] = ticket;
-      }
-      return next;
-    });
-  }, [selectableVisibleTickets, visibleSelectableCount]);
 
   useEffect(() => {
     return () => {
@@ -1351,15 +1334,7 @@ const ExpenseTicketsPageContent = () => {
 
           {canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked ? (
             <>
-              <div className="grid grid-cols-3 gap-1.5 pt-0.5">
-                <button
-                  type="button"
-                  className="ind-action-btn w-full min-w-0 px-1.5 py-1 text-[10px] leading-tight sm:text-xs"
-                  onClick={selectVisibleTickets}
-                  disabled={linkFlowBusy || visibleSelectableCount < 1}
-                >
-                  {indT("ExpenseTickets_LinkMode_SelectAll", "Seleccionar todos")}
-                </button>
+              <div className="grid grid-cols-2 gap-1.5 pt-0.5">
                 <button
                   type="button"
                   className="ind-action-btn w-full min-w-0 px-1.5 py-1 text-[10px] leading-tight sm:text-xs"

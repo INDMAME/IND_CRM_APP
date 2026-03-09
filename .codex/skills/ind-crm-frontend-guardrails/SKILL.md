@@ -68,6 +68,9 @@ Conflict precedence:
 | Style ownership | External Tailwind helper skills can suggest syntax or patterns, but local style rules are mandatory. |
 | Canonical web path | Treat `Web/wwwroot` as canonical source path. Root `wwwroot` is a compatibility mirror/junction. |
 | Runtime freshness gate | Before validating behavior, ensure the running runtime is current: rebuild touched assets, republish/restart when required, and verify served artifacts/log path reflect the latest build. |
+| React Doctor gate | Before final response, run `npm run check:react-doctor`, fix diagnostics in changed frontend files, and rerun before closing the task. |
+| Clean-code gate | Before final response, review touched code for low-risk refactors that improve clean code and preserve module boundaries; apply them when safe. |
+| Publish keyword | If the user says `publica`, run full compilation first (`npm run build` and `dotnet build`), then execute `publish.ps1`, and confirm IIS restart/service health before closing the task. |
 | Test execution default | IMPORTANT: when user asks to create or run a frontend test, default to public URL E2E (`baseURL`) using real pages. Use local fixtures or mocked fetch only when the user explicitly requests fixture-based testing. |
 | Documentation sync | Edit root `.codex/*.md` files or `.codex/config.toml` and run `npm run sync:skill:local:references` when references are changed. |
 | Completion checks | Run `references/QUALITY_CHECKLIST.md`; publish plus `iisreset` when frontend release tasks require it. |
@@ -79,6 +82,7 @@ Before implementation or review, match the task against `references/SKILL_ROUTIN
 Required triggers:
 - `REQUIRED SUB-SKILL: brainstorming` before new features, behavior changes, or design work.
 - `REQUIRED SUB-SKILL: writing-skills` when creating or editing any skill document or `.codex` guardrail documentation.
+- `REQUIRED SUB-SKILL: react-doctor` before closing React, TS, JS, Tailwind, or frontend bundle changes.
 - `REQUIRED SUB-SKILL: systematic-debugging` for any bug, failing test, or unexpected behavior.
 - `REQUIRED SUB-SKILL: vercel-react-best-practices` for React or TS/TSX rendering, data flow, listener, or performance work.
 - `REQUIRED SUB-SKILL: vercel-composition-patterns` when React component API design or composition patterns are involved.
@@ -126,6 +130,10 @@ Required triggers:
    - For test work requested by user, prefer E2E flow on public `baseURL` and avoid local fixture servers unless explicitly requested.
 7. Execute quality checks and release steps required by scope.
    - Runtime freshness is mandatory: if runtime behavior does not match code, stop and verify build/deploy/runtime state before further debugging.
+   - Run `npm run check:react-doctor` before the final response. The repo-level `react-doctor.config.json` ignores mirror/generated paths, so diagnostics in changed frontend files are blocking and must be fixed or explicitly justified if unrelated legacy findings remain.
+   - Run a final clean-code pass on touched frontend files before closing the task. Check for mixed concerns, duplicated logic, oversized objects, and misplaced responsibilities across page, hook, service, mapper, utility, and component boundaries.
+   - If a low-risk refactor would materially improve modularity or clarity, apply it in the same task before closing. If not, explicitly confirm the touched code already fits the modular architecture.
+   - If the user explicitly says `publica`, treat it as a release command: run `npm run build`, `dotnet build`, `publish.ps1`, and verify IIS is back in `Running`.
    - For publish scope, deploy with `publish.ps1` and verify the app is serving current artifacts before accepting results.
 8. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
 
@@ -148,4 +156,4 @@ Required triggers:
 - Debugging or validating behavior against stale runtime/build output.
 
 ## Last updated
-- 2026-03-08
+- 2026-03-09
