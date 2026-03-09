@@ -23,6 +23,7 @@ import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
+import { setTopbarActionGroupReady } from "../../../utils/topbarActionVisibility.ts";
 
 const PAGE_SIZE = 6;
 const FAB_BASE_BOTTOM = 24;
@@ -259,6 +260,10 @@ const ExpenseSheetsPageContent = () => {
   });
 
   const totalPages = Math.ceil((total || 0) / PAGE_SIZE);
+
+  useEffect(() => {
+    setTopbarActionGroupReady("expense-sheets-list-actions");
+  }, []);
 
   // Keep the floating action button clear of pagination controls on small screens.
   const updateFabBottom = useCallback(() => {

@@ -202,7 +202,10 @@
                 var refreshDispatch = isHistory
                     ? "history-refresh"
                     : (isExpenseSheets ? "expense-sheets-refresh" : "expense-tickets-refresh");
-                <div id="visit-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
+                var listActionsGroupId = isHistory
+                    ? "history-list-actions"
+                    : (isExpenseSheets ? "expense-sheets-list-actions" : "expense-tickets-list-actions");
+                <div id="@listActionsGroupId" class="flex items-center gap-1 pr-1 topbar-actions-pending">
                     <button id="historyFilterToggleBtn" type="button" class="topbar-btn pointer-events-auto"
                             aria-label="@SR["History_Filter_Toggle"]"
                             data-ind-dispatch="@filterDispatch">
@@ -221,7 +224,7 @@
             }
             else if (isVisitaDetail && (canEditHistory || canDeleteHistory))
             {
-                <div id="expense-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
+                <div id="visit-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
                     @if (canEditHistory)
                     {
                         <button id="visitEditBtn" type="button" class="topbar-btn pointer-events-auto"
@@ -257,7 +260,7 @@
             }
             else if (isExpenseSheetDetail && (canEditExpenseSheetDetail || canDeleteExpense || (isExpenseSheetCreateMode && canCreateExpense)))
             {
-                <div id="expense-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
+                <div id="expense-sheet-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
                     @if (canEditExpenseSheetDetail || (isExpenseSheetCreateMode && canCreateExpense))
                     {
                         <button id="expenseEditBtn" type="button" class="topbar-btn pointer-events-auto"

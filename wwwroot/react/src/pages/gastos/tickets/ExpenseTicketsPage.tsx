@@ -27,6 +27,7 @@ import { useExpenseTicketsListData } from "./useExpenseTicketsListData.ts";
 import { useExpenseTicketsFilterCache } from "./useExpenseTicketsFilterCache.ts";
 import type { ExpenseSheetCreateLineRequest } from "../expenseTypes.ts";
 import type { ExpenseTicketAppliedFilterSnapshot, ExpenseTicketCard } from "./expenseTicketListTypes.ts";
+import { setTopbarActionGroupReady } from "../../../utils/topbarActionVisibility.ts";
 
 const PAGE_SIZE = 10;
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
@@ -413,6 +414,10 @@ const ExpenseTicketsPageContent = () => {
     return items.filter((item) => canSelectTicketForLink(item));
   }, [items]);
   const visibleSelectableCount = selectableVisibleTickets.length;
+  useEffect(() => {
+    setTopbarActionGroupReady("expense-tickets-list-actions");
+  }, []);
+
   const linkModeCancelMessage = useMemo(
     () =>
       indT(

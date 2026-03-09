@@ -83,8 +83,21 @@ const normalizeState = (raw: ExpenseSheetsCachedState | null): ExpenseSheetsCach
   };
 };
 
+const normalizeEntityId = (value: unknown): string => {
+  return String(value || "").trim().toUpperCase();
+};
+
 // Centralizes cache persistence for returning from expense detail to list.
 export const useExpenseSheetsFilterCache = () => {
+  const writeCachedState = useCallback((state: ExpenseSheetsCachedState): void => {
+    const normalized = normalizeState(state);
+    if (!normalized) return;
+
+    const keys = getScopedKeys();
+    setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_SHEETS_CACHE_TTL_MS);
+    setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_SHEETS_CACHE_TTL_MS);
+  }, []);
+
   const readCachedState = useCallback((): ExpenseSheetsCachedState | null => {
     const keys = getScopedKeys();
     const raw = getSessionJsonWithExpiry<ExpenseSheetsCachedState>(keys.filterKey);
@@ -102,13 +115,36 @@ export const useExpenseSheetsFilterCache = () => {
   }, []);
 
   const saveCachedState = useCallback((state: ExpenseSheetsCachedState): void => {
-    const normalized = normalizeState(state);
-    if (!normalized) return;
+    writeCachedState(state);
+  }, [writeCachedState]);
 
-    const keys = getScopedKeys();
-    setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_SHEETS_CACHE_TTL_MS);
-    setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_SHEETS_CACHE_TTL_MS);
-  }, []);
+  const removeCachedSheet = useCallback(
+    (sheetId: string): void => {
+      const normalizedSheetId = normalizeEntityId(sheetId);
+      if (!normalizedSheetId) return;
+
+      const currentState = readCachedState();
+      if (!currentState) return;
+
+      const nextItems = currentState.items.filter((item) => normalizeEntityId(item.hojaGastosId) !== normalizedSheetId);
+      const removedCount = currentState.items.length - nextItems.length;
+      if (removedCount < 1 || nextItems.length < 1) {
+        writeCachedState({
+          ...currentState,
+          items: [],
+          total: 0,
+        });
+        return;
+      }
+
+      writeCachedState({
+        ...currentState,
+        items: nextItems,
+        total: Math.max(nextItems.length, currentState.total - removedCount),
+      });
+    },
+    [readCachedState, writeCachedState]
+  );
 
   const clearCachedState = useCallback(() => {
     const keys = getScopedKeys();
@@ -120,6 +156,7 @@ export const useExpenseSheetsFilterCache = () => {
     readCachedState,
     consumeReturnFlag,
     saveCachedState,
+    removeCachedSheet,
     clearCachedState,
   };
 };

@@ -20,6 +20,7 @@ type UseExpenseSheetDetailTopbarActionsArgs = {
   handleUpdate: () => Promise<boolean>;
   handleDelete: () => Promise<boolean>;
   onSaveSuccess: () => void;
+  onDeleteSuccess?: () => void;
   openConfirm: (opts: {
     title: string;
     message: string;
@@ -48,11 +49,12 @@ export const useExpenseSheetDetailTopbarActions = ({
   handleUpdate,
   handleDelete,
   onSaveSuccess,
+  onDeleteSuccess,
   openConfirm,
   closeConfirm,
 }: UseExpenseSheetDetailTopbarActionsArgs) => {
   useExpenseTopbarCrudActions({
-    actionGroupId: "expense-detail-actions",
+    actionGroupId: "expense-sheet-detail-actions",
     ids: {
       editIconId: "expenseEditIcon",
       saveIconId: "expenseSaveIcon",
@@ -88,9 +90,7 @@ export const useExpenseSheetDetailTopbarActions = ({
     deleteConfirmMessage: indT("ExpenseSheets_Detail_DeleteSheet_Body", "Do you want to delete this expense sheet?"),
     deleteConfirmText: indT("Common_Delete", "Delete"),
     onSaveSuccess,
-    onDeleteSuccess: () => {
-      navigateToExpenseUrl("/Gastos/ExpenseSheets");
-    },
+    onDeleteSuccess: onDeleteSuccess || (() => navigateToExpenseUrl("/Gastos/ExpenseSheets")),
     openConfirm,
     closeConfirm,
   });

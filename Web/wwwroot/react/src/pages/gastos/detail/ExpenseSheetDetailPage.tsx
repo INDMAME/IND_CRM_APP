@@ -21,6 +21,7 @@ import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
+import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 
 const LINES_PAGE_SIZE = 6;
 
@@ -167,6 +168,7 @@ const ExpenseSheetDetailPageContent = () => {
   });
 
   const canEditExpenseStatus = canEditExpenseStatusByPermission && !isSheetPaid;
+  const { removeCachedSheet } = useExpenseSheetsFilterCache();
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -277,6 +279,10 @@ const ExpenseSheetDetailPageContent = () => {
     handleUpdate,
     handleDelete,
     onSaveSuccess: handleSaveSuccess,
+    onDeleteSuccess: () => {
+      removeCachedSheet(safeText(header?.hojaGastosId || sheetId));
+      navigateToExpenseUrl("/Gastos/ExpenseSheets");
+    },
     openConfirm,
     closeConfirm,
   });

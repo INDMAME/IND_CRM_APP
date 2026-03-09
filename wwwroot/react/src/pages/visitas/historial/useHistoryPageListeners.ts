@@ -1,5 +1,6 @@
 ﻿import React, { useEffect } from "react";
 import type { HistoryCachedFilter } from "../../../hooks/useHistoryFilterCache.ts";
+import { setTopbarActionGroupReady } from "../../../utils/topbarActionVisibility.ts";
 import type { FilterLoadRequest, LoadOverride } from "./useHistoryFiltersState.ts";
 
 type UseHistoryPageListenersArgs = {
@@ -42,6 +43,10 @@ export const useHistoryPageListeners = ({
   setShowFilters,
   applyFilters,
 }: UseHistoryPageListenersArgs) => {
+  useEffect(() => {
+    setTopbarActionGroupReady("history-list-actions");
+  }, []);
+
   // Close the manual picker when clicking outside of the range picker UI.
   useEffect(() => {
     if (!isOpen) return;

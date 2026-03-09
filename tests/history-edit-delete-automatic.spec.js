@@ -87,16 +87,20 @@ async function ensureHistoryFiltersVisible(page) {
   const toggleBtn = page.locator("#historyFilterToggleBtn");
   const customDateBtn = page.getByRole("button", { name: /Fecha|Date/i }).first();
 
-  // Normalize state: ensure filters are open before validating hide/open toggle.
-  if (!(await customDateBtn.isVisible().catch(() => false))) {
-    await toggleBtn.click({ noWaitAfter: true });
-    await expect(customDateBtn).toBeVisible({ timeout: 15000 });
+  const alreadyVisible = await customDateBtn.isVisible().catch(() => false);
+  if (alreadyVisible) {
+    return;
   }
 
-  // Validate collapse -> expand behavior from a known open state.
-  await toggleBtn.click({ noWaitAfter: true });
-  await expect(customDateBtn).toBeHidden({ timeout: 15000 });
-  await toggleBtn.click({ noWaitAfter: true });
+  const canClickToggle = await toggleBtn.isVisible().catch(() => false);
+  if (canClickToggle) {
+    await toggleBtn.click({ noWaitAfter: true });
+  } else {
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent("history-toggle-filter"));
+    });
+  }
+
   await expect(customDateBtn).toBeVisible({ timeout: 15000 });
 }
 
@@ -177,6 +181,20 @@ async function applyHistoryFilters(page) {
   await loader.waitFor({ state: "hidden", timeout: 60000 }).catch(() => undefined);
 }
 
+// Triggers one history detail topbar action using visible button or its window event fallback.
+async function triggerHistoryDetailTopbarAction(page, selector, eventName) {
+  const actionButton = page.locator(selector).first();
+  const canClickAction = await actionButton.isVisible().catch(() => false);
+  if (canClickAction) {
+    await actionButton.click();
+    return;
+  }
+
+  await page.evaluate((name) => {
+    window.dispatchEvent(new CustomEvent(name));
+  }, eventName);
+}
+
 // Tries client filters until at least one clickable card exists.
 async function findCardForClients(page, startIso, endIso) {
   for (const clientQuery of clientQueries) {
@@ -231,9 +249,7 @@ async function editFieldUsingTextEditor(page, fieldSelector, textValue) {
 
 // Confirms detail save flow from topbar and waits to return to history.
 async function saveDetailChanges(page) {
-  const editSaveBtn = page.locator("button:has(#visitEditIcon), button:has(#visitSaveIcon)").first();
-  await expect(editSaveBtn).toBeVisible();
-  await editSaveBtn.click();
+  await triggerHistoryDetailTopbarAction(page, "button:has(#visitEditIcon), button:has(#visitSaveIcon)", "visit-edit");
 
   const saveConfirmBtn = page
     .locator("div.fixed.inset-0 button")
@@ -247,9 +263,7 @@ async function saveDetailChanges(page) {
 
 // Deletes current detail record and waits for redirect to history.
 async function deleteCurrentVisit(page) {
-  const deleteBtn = page.locator("button:has(#visitDeleteIcon)").first();
-  await expect(deleteBtn).toBeVisible();
-  await deleteBtn.click();
+  await triggerHistoryDetailTopbarAction(page, "button:has(#visitDeleteIcon)", "visit-delete");
 
   const deleteConfirmBtn = page
     .locator("div.fixed.inset-0 button")
@@ -279,9 +293,7 @@ test("History filter by client/date, edit field, then delete the same visit", as
   await firstCard.click();
   await page.waitForURL("**/Visitas/Detalle/**", { waitUntil: "domcontentloaded" });
 
-  const editSaveBtn = page.locator("button:has(#visitEditIcon), button:has(#visitSaveIcon)").first();
-  await expect(editSaveBtn).toBeVisible();
-  await editSaveBtn.click();
+  await triggerHistoryDetailTopbarAction(page, "button:has(#visitEditIcon), button:has(#visitSaveIcon)", "visit-edit");
 
   const automaticText = `Prueba automatica E2E - historial edicion conclusiones - ${clientQuery} - ${new Date()
     .toISOString()

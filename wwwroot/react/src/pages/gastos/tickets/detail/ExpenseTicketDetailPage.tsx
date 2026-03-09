@@ -21,6 +21,7 @@ import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutatio
 import { useExpenseTicketDetailTopbarActions } from "./useExpenseTicketDetailTopbarActions.ts";
 import { useExpenseTicketImagePreview } from "./useExpenseTicketImagePreview.ts";
 import ExpenseTicketPreviewModal from "./ExpenseTicketPreviewModal.tsx";
+import { useExpenseTicketsFilterCache } from "../useExpenseTicketsFilterCache.ts";
 
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const LINES_PAGE_SIZE = 6;
@@ -292,6 +293,7 @@ const ExpenseTicketDetailPageContent = () => {
   const canDeleteTicketInContext = canDeleteTicket && !isFromExpenseLine && !isFromSheetLink;
   const ticketTopbarActionMode: "default" | "view_only" =
     isManagingOtherUser || isFromExpenseLine || isFromSheetLink ? "view_only" : "default";
+  const { removeCachedTicket } = useExpenseTicketsFilterCache();
 
   useExpenseTicketDetailTopbarActions({
     busy,
@@ -311,11 +313,14 @@ const ExpenseTicketDetailPageContent = () => {
     onSaveSuccess: () => {
       void reloadDetail();
     },
-    onDeleteSuccess: isFromExpenseLine
-      ? () => {
-          navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(contextSheetId)}`);
-        }
-      : undefined,
+    onDeleteSuccess: () => {
+      removeCachedTicket(safeText(header?.fileId || fileId));
+      if (isFromExpenseLine) {
+        navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(contextSheetId)}`);
+        return;
+      }
+      navigateToExpenseUrl("/Gastos/Tickets");
+    },
     openConfirm,
     closeConfirm,
   });

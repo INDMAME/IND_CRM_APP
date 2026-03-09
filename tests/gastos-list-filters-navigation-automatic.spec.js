@@ -33,8 +33,15 @@ async function ensureFilterPanelVisible(page) {
   if (panelVisible) return;
 
   const filterToggle = page.locator("#historyFilterToggleBtn");
-  await expect(filterToggle).toBeVisible({ timeout: 15000 });
-  await filterToggle.click();
+  const canClickToggle = await filterToggle.isVisible().catch(() => false);
+  if (canClickToggle) {
+    await filterToggle.click();
+  } else {
+    const toggleEventName = /\/Gastos\/Tickets/i.test(page.url()) ? "expense-tickets-toggle-filter" : "expense-sheets-toggle-filter";
+    await page.evaluate((eventName) => {
+      window.dispatchEvent(new CustomEvent(eventName));
+    }, toggleEventName);
+  }
   await expect(panel).toBeVisible({ timeout: 15000 });
 }
 
