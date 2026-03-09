@@ -179,6 +179,7 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: 
         const response = await fetchExpenseSheetTicketsList(payload, {
           suppressPermissionModal: true,
           signal: controller.signal,
+          axUserIdOverride: normalizedManagedUserId || undefined,
         });
         if (requestSeq !== activeRequestSeqRef.current) return;
 

@@ -12,6 +12,7 @@ type ExpenseManagedUserFilterSelectProps = {
   readOnly?: boolean;
   disabled?: boolean;
   showLabel?: boolean;
+  clearOnEmptyInput?: boolean;
 };
 
 const toOptionText = (user: AuthManagedUser): string => {
@@ -34,6 +35,7 @@ const ExpenseManagedUserFilterSelect = ({
   readOnly = false,
   disabled = false,
   showLabel = true,
+  clearOnEmptyInput = false,
 }: ExpenseManagedUserFilterSelectProps) => {
   const options = useMemo<ExpenseSelectOption[]>(() => {
     return (Array.isArray(users) ? users : [])
@@ -64,6 +66,7 @@ const ExpenseManagedUserFilterSelect = ({
       allowTextInput
       selectedTextMode="value"
       showLabel={showLabel}
+      clearOnEmptyInput={clearOnEmptyInput}
     />
   );
 };

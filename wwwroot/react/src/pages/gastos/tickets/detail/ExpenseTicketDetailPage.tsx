@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../../components/commons/ConfirmModal.tsx";
+import { useAuthContext } from "../../../../context/AuthContext.tsx";
 import { useTimelineCardEffects } from "../../../../hooks/useTimelineCardEffects.ts";
 import { useConfirmDialog } from "../../../../hooks/useConfirmDialog.ts";
 import { canAccess, showPermissionModal } from "../../../../utils/permissions.ts";
@@ -12,6 +13,7 @@ import { formatAmountWithCurrency } from "../../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../../constants/expenseTicketStatusCatalog.ts";
 import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
 import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
+import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
 import { formatExpenseDisplayDate, parseExpenseDate, safeText, toIsoDate } from "../../utils/expenseUiUtils.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
@@ -66,9 +68,10 @@ const toInputDate = (raw?: string): string => {
 };
 
 const ExpenseTicketDetailPageContent = () => {
+  const { canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } = useAuthContext();
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
-  const canEditTicket = canAccess("GASTOS_TICKETS", "Edit");
-  const canDeleteTicket = canAccess("GASTOS_TICKETS", "FullAccess");
+  const canEditTicketByModule = canAccess("GASTOS_TICKETS", "Edit");
+  const canDeleteTicketByModule = canAccess("GASTOS_TICKETS", "FullAccess");
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const routeParams = useMemo(() => new URLSearchParams(window.location.search), []);
@@ -82,6 +85,13 @@ const ExpenseTicketDetailPageContent = () => {
   const isFromExpenseSheetCreate = detailOrigin === "sheet-create";
   const isFromExpenseLine = detailOrigin === "expense-line" && !!contextSheetId && !!contextLineRecId;
   const isFromSheetLink = detailOrigin === "sheet-link" && !!contextSheetId;
+  const isManagingOtherUser = isManagingOtherExpenseUser({
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
+  });
+  const canEditTicket = canEditTicketByModule && !isManagingOtherUser;
+  const canDeleteTicket = canDeleteTicketByModule && !isManagingOtherUser;
   const allowAssignedDraftEdit = isFromExpenseSheetCreate;
   const autoEditAttemptedRef = useRef(false);
 
@@ -280,7 +290,8 @@ const ExpenseTicketDetailPageContent = () => {
   const isContextLocked = isAssignedTicket && !allowAssignedDraftEdit;
   const canEditTicketInContext = canEditTicket && !isFromExpenseLine && !isFromSheetLink;
   const canDeleteTicketInContext = canDeleteTicket && !isFromExpenseLine && !isFromSheetLink;
-  const ticketTopbarActionMode: "default" | "view_only" = isFromExpenseLine || isFromSheetLink ? "view_only" : "default";
+  const ticketTopbarActionMode: "default" | "view_only" =
+    isManagingOtherUser || isFromExpenseLine || isFromSheetLink ? "view_only" : "default";
 
   useExpenseTicketDetailTopbarActions({
     busy,
@@ -288,6 +299,7 @@ const ExpenseTicketDetailPageContent = () => {
     isEditing,
     isLocked: isContextLocked,
     actionMode: ticketTopbarActionMode,
+    permissionsReady: managementBootstrapReady,
     canEditTicket: canEditTicketInContext,
     canDeleteTicket: canDeleteTicketInContext,
     fileId,

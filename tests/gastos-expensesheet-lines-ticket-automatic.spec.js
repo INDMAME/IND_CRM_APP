@@ -2,6 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("./e2e-devtools-mobile.fixture");
+const { acquirePublicE2ELock, releasePublicE2ELock } = require("./public-env-lock");
 
 const TICKETS_PHOTOS_DIR =
   process.env.IND_E2E_TICKETS_PHOTOS_DIR || "C:\\Users\\marco.meza\\Pictures\\Tickets Fotos";
@@ -14,8 +15,37 @@ const PREFERRED_TICKET_IMAGE_NAMES = [
 ];
 test.setTimeout(600000);
 
+// Clears Gastos managed-user session caches so E2E always starts from self context.
+async function isolateExpenseManagementSession(page) {
+  await page.addInitScript(() => {
+    const prefixes = [
+      "expense_management_context_v2_",
+      "expense_acting_user_v1_",
+      "expense_sheets_filter_v1_",
+      "expense_sheets_return_v1_",
+      "expense_tickets_filter_v1_",
+      "expense_tickets_return_v1_",
+      "expense_tickets_list_v1_",
+      "expense_sheet_ticket_quick_flow_trace_v1",
+    ];
+    const keys = [];
+    for (let index = 0; index < sessionStorage.length; index += 1) {
+      const key = sessionStorage.key(index);
+      if (key) {
+        keys.push(key);
+      }
+    }
+    for (const key of keys) {
+      if (prefixes.some((prefix) => key.startsWith(prefix))) {
+        sessionStorage.removeItem(key);
+      }
+    }
+  });
+}
+
 // Ensures an authenticated session exists before accessing protected pages.
 async function ensureAuthenticatedSession(page) {
+  await isolateExpenseManagementSession(page);
   await page.goto("/Gastos/ExpenseSheets?fresh=1", { waitUntil: "domcontentloaded" });
   const loginGateVisible = await page
     .getByRole("button", { name: /sign in with microsoft|iniciar sesi[o\u00f3]n con microsoft/i })
@@ -109,9 +139,20 @@ async function clickModalAction(page, actionRegex) {
 
 // Saves current edit in topbar and confirms modal.
 async function saveTopbarChanges(page, topbarButtonSelector) {
-  const button = page.locator(topbarButtonSelector);
-  await expect(button).toBeVisible({ timeout: 15000 });
-  await button.click();
+  const confirmButton = page.locator("div.fixed.inset-0 button").filter({ hasText: /save|guardar/i }).first();
+  const modalAlreadyVisible = await confirmButton.isVisible().catch(() => false);
+  if (!modalAlreadyVisible) {
+    const button = page.locator(topbarButtonSelector);
+    await expect(button).toBeVisible({ timeout: 15000 });
+    try {
+      await button.click();
+    } catch (error) {
+      const modalVisibleAfterClick = await confirmButton.isVisible().catch(() => false);
+      if (!modalVisibleAfterClick) {
+        throw error;
+      }
+    }
+  }
   await clickModalAction(page, /save|guardar/i);
 }
 
@@ -377,6 +418,14 @@ async function deleteExpenseSheetBestEffort(page, sheetId) {
 
 test.describe("Expense sheets lines E2E", () => {
   test.describe.configure({ mode: "serial" });
+
+  test.beforeAll(async () => {
+    await acquirePublicE2ELock("expense-sheets-lines");
+  });
+
+  test.afterAll(async () => {
+    await releasePublicE2ELock();
+  });
 
   test("Create sheet, create manual line, then create line via Nuevo Ticket image flow", async ({ page }) => {
     await ensureAuthenticatedSession(page);

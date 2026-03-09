@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { wait } from "../../../utils/wait.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
+import { setTopbarActionGroupReady } from "../../../utils/topbarActionVisibility.ts";
 
 type TopbarCrudIds = {
   editIconId: string;
@@ -19,13 +20,17 @@ type TopbarCrudEvents = {
 type UseExpenseTopbarCrudActionsArgs = {
   ids: TopbarCrudIds;
   events: TopbarCrudEvents;
+  actionGroupId: string;
   busy: boolean;
   modalOpen: boolean;
   isEditing: boolean;
   isCreateMode: boolean;
   isLocked: boolean;
+  isEditLocked?: boolean;
+  isDeleteLocked?: boolean;
   actionMode?: "default" | "delete_only" | "view_only";
   allowCreateModeActionsWhenLocked?: boolean;
+  permissionsReady?: boolean;
   canCreate: boolean;
   canEdit: boolean;
   canDelete: boolean;
@@ -55,13 +60,17 @@ type UseExpenseTopbarCrudActionsArgs = {
 export const useExpenseTopbarCrudActions = ({
   ids,
   events,
+  actionGroupId,
   busy,
   modalOpen,
   isEditing,
   isCreateMode,
   isLocked,
+  isEditLocked,
+  isDeleteLocked,
   actionMode = "default",
   allowCreateModeActionsWhenLocked = false,
+  permissionsReady = true,
   canCreate,
   canEdit,
   canDelete,
@@ -81,29 +90,32 @@ export const useExpenseTopbarCrudActions = ({
   openConfirm,
   closeConfirm,
 }: UseExpenseTopbarCrudActionsArgs) => {
-  const lockActions = isLocked && !(isCreateMode && allowCreateModeActionsWhenLocked);
+  const resolvedEditLock = (isEditLocked ?? isLocked) && !(isCreateMode && allowCreateModeActionsWhenLocked);
+  const resolvedDeleteLock = isDeleteLocked ?? isLocked;
 
   useEffect(() => {
+    if (!permissionsReady) return;
+
     const editIcon = document.getElementById(ids.editIconId);
     const saveIcon = document.getElementById(ids.saveIconId);
     const deleteBtn = document.getElementById(ids.deleteBtnId);
     const cancelBtn = document.getElementById(ids.cancelBtnId);
-    if (!editIcon || !saveIcon) return;
-    const editBtn = editIcon.closest("button");
+    const editBtn = editIcon?.closest("button") ?? null;
 
     if (actionMode === "view_only") {
       if (editBtn) editBtn.classList.add("topbar-hidden");
-      editIcon.classList.add("hidden");
-      saveIcon.classList.add("hidden");
+      if (editIcon) editIcon.classList.add("hidden");
+      if (saveIcon) saveIcon.classList.add("hidden");
       if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
       if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
+      setTopbarActionGroupReady(actionGroupId);
       return;
     }
 
     if (actionMode === "delete_only") {
       if (editBtn) editBtn.classList.add("topbar-hidden");
-      editIcon.classList.add("hidden");
-      saveIcon.classList.add("hidden");
+      if (editIcon) editIcon.classList.add("hidden");
+      if (saveIcon) saveIcon.classList.add("hidden");
       if (deleteBtn) {
         if (canDelete) {
           deleteBtn.classList.remove("topbar-hidden");
@@ -112,35 +124,64 @@ export const useExpenseTopbarCrudActions = ({
         }
       }
       if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
+      setTopbarActionGroupReady(actionGroupId);
       return;
     }
 
     if (editBtn) editBtn.classList.remove("topbar-hidden");
-    if (lockActions) {
-      editIcon.classList.add("hidden");
-      saveIcon.classList.add("hidden");
+    if (isEditing) {
+      if (editIcon) editIcon.classList.add("hidden");
+      if (resolvedEditLock) {
+        if (saveIcon) saveIcon.classList.add("hidden");
+      } else {
+        if (saveIcon) saveIcon.classList.remove("hidden");
+      }
       if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
+      if (cancelBtn) {
+        if (resolvedEditLock) {
+          cancelBtn.classList.add("topbar-hidden");
+        } else {
+          cancelBtn.classList.remove("topbar-hidden");
+        }
+      }
+    } else {
+      if (resolvedEditLock) {
+        if (editIcon) editIcon.classList.add("hidden");
+      } else {
+        if (editIcon) editIcon.classList.remove("hidden");
+      }
+      if (saveIcon) saveIcon.classList.add("hidden");
+      if (deleteBtn) {
+        if (resolvedDeleteLock) {
+          deleteBtn.classList.add("topbar-hidden");
+        } else {
+          deleteBtn.classList.remove("topbar-hidden");
+        }
+      }
       if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
-      return;
     }
 
-    if (isEditing) {
-      editIcon.classList.add("hidden");
-      saveIcon.classList.remove("hidden");
-      if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
-      if (cancelBtn) cancelBtn.classList.remove("topbar-hidden");
-    } else {
-      editIcon.classList.remove("hidden");
-      saveIcon.classList.add("hidden");
-      if (deleteBtn) deleteBtn.classList.remove("topbar-hidden");
-      if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
-    }
-  }, [actionMode, canDelete, ids.cancelBtnId, ids.deleteBtnId, ids.editIconId, ids.saveIconId, isEditing, lockActions]);
+    setTopbarActionGroupReady(actionGroupId);
+  }, [
+    actionGroupId,
+    actionMode,
+    canDelete,
+    ids.cancelBtnId,
+    ids.deleteBtnId,
+    ids.editIconId,
+    ids.saveIconId,
+    isEditing,
+    permissionsReady,
+    resolvedDeleteLock,
+    resolvedEditLock,
+  ]);
 
   useEffect(() => {
+    if (!permissionsReady) return;
+
     const onEdit = () => {
       if (actionMode === "delete_only" || actionMode === "view_only") return;
-      if (lockActions) return;
+      if (resolvedEditLock) return;
 
       const canProceed = isCreateMode ? canCreate : canEdit;
       if (!canProceed) {
@@ -175,7 +216,7 @@ export const useExpenseTopbarCrudActions = ({
 
     const onDelete = () => {
       if (actionMode === "view_only") return;
-      if (isCreateMode || lockActions) return;
+      if (isCreateMode || resolvedDeleteLock) return;
       if (!canDelete) {
         showPermissionModal();
         return;
@@ -234,11 +275,13 @@ export const useExpenseTopbarCrudActions = ({
     handleSave,
     isCreateMode,
     isEditing,
-    lockActions,
     modalOpen,
     onDeleteSuccess,
     onSaveSuccess,
     openConfirm,
+    permissionsReady,
+    resolvedDeleteLock,
+    resolvedEditLock,
     saveConfirmMessage,
     saveConfirmText,
     saveConfirmTitle,

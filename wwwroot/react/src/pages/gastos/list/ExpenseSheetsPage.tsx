@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
@@ -25,6 +25,9 @@ import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 
 const PAGE_SIZE = 6;
+const FAB_BASE_BOTTOM = 24;
+const FAB_CLEARANCE = 24;
+const FAB_GAP = 12;
 
 const normalizeUserId = (value: unknown): string => String(value || "").trim();
 
@@ -68,6 +71,8 @@ const ExpenseSheetsPageContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const paginationRef = React.useRef<HTMLDivElement | null>(null);
+  const [fabBottom, setFabBottom] = useState(FAB_BASE_BOTTOM);
   const { manageableSubordinates } = useAuthContext();
   const managedUsers = useMemo(
     () => (Array.isArray(manageableSubordinates) ? manageableSubordinates : []),
@@ -254,6 +259,35 @@ const ExpenseSheetsPageContent = () => {
   });
 
   const totalPages = Math.ceil((total || 0) / PAGE_SIZE);
+
+  // Keep the floating action button clear of pagination controls on small screens.
+  const updateFabBottom = useCallback(() => {
+    if (!paginationRef.current || totalPages <= 1) {
+      setFabBottom(FAB_BASE_BOTTOM);
+      return;
+    }
+
+    const height = paginationRef.current.offsetHeight || 0;
+    const nextBottom = Math.max(FAB_BASE_BOTTOM, height + FAB_CLEARANCE + FAB_GAP);
+    setFabBottom((previous) => (Math.abs(previous - nextBottom) < 1 ? previous : nextBottom));
+  }, [totalPages]);
+
+  useEffect(() => {
+    updateFabBottom();
+
+    let observer: ResizeObserver | null = null;
+    const paginationEl = paginationRef.current;
+    if (paginationEl && typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(() => updateFabBottom());
+      observer.observe(paginationEl);
+    }
+
+    window.addEventListener("resize", updateFabBottom);
+    return () => {
+      window.removeEventListener("resize", updateFabBottom);
+      if (observer) observer.disconnect();
+    };
+  }, [updateFabBottom]);
 
   const summaryItems = useMemo(() => {
     if (!appliedFilters) {
@@ -514,6 +548,7 @@ const ExpenseSheetsPageContent = () => {
       ) : null}
 
       <CompactPagination
+        ref={paginationRef}
         totalPages={totalPages}
         currentPage={currentPage}
         loading={isLoading}
@@ -534,7 +569,7 @@ const ExpenseSheetsPageContent = () => {
           ariaLabel={indT("Common_Create", "Create")}
           size={76}
           right={16}
-          bottom={24}
+          bottom={fabBottom}
           onClick={handleOpenCreateSheetMode}
         />
       ) : null}

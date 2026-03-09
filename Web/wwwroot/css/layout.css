@@ -235,6 +235,11 @@ html, body {
     display: none !important;
 }
 
+.topbar-actions-pending {
+    visibility: hidden;
+    pointer-events: none;
+}
+
 .topbar svg,
 .topbar-icon,
 .topbar .topbar-btn svg {

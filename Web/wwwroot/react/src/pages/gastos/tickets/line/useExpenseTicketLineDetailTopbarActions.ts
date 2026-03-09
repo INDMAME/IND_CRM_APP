@@ -7,6 +7,7 @@ type UseExpenseTicketLineDetailTopbarActionsArgs = {
   modalOpen: boolean;
   isEditing: boolean;
   isLocked: boolean;
+  permissionsReady?: boolean;
   canEditTicket: boolean;
   canDeleteTicket: boolean;
   fileId: string;
@@ -31,6 +32,7 @@ export const useExpenseTicketLineDetailTopbarActions = ({
   modalOpen,
   isEditing,
   isLocked,
+  permissionsReady = true,
   canEditTicket,
   canDeleteTicket,
   fileId,
@@ -44,6 +46,7 @@ export const useExpenseTicketLineDetailTopbarActions = ({
   closeConfirm,
 }: UseExpenseTicketLineDetailTopbarActionsArgs) => {
   useExpenseTopbarCrudActions({
+    actionGroupId: "expense-ticket-line-detail-actions",
     ids: {
       editIconId: "expenseTicketLineEditIcon",
       saveIconId: "expenseTicketLineSaveIcon",
@@ -60,6 +63,7 @@ export const useExpenseTicketLineDetailTopbarActions = ({
     isEditing,
     isCreateMode: false,
     isLocked,
+    permissionsReady,
     canCreate: false,
     canEdit: canEditTicket,
     canDelete: canDeleteTicket,

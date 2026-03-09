@@ -795,9 +795,16 @@ namespace IND_CRM_APP.Services
         // ======================================================
         public async Task<ApiResponse<ExpenseSheetCreateResponseData>> CreateExpenseSheetAsync(
             string token,
-            ExpenseSheetCreateRequest req)
+            ExpenseSheetCreateRequest req,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "CreateExpenseSheet", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "CreateExpenseSheet",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheets, req);
             return BuildApiResponse<ExpenseSheetCreateResponseData>(result, "CreateExpenseSheet");
@@ -805,9 +812,16 @@ namespace IND_CRM_APP.Services
 
         public async Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetDetailAsync(
             string token,
-            string hojaGastosId)
+            string hojaGastosId,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "GetExpenseSheetDetail", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "GetExpenseSheetDetail",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var safeId = EscapePathSegment(hojaGastosId);
             var result = await SendGetAsync(ApiRoutes.ExpenseSheetById(safeId));
@@ -817,9 +831,16 @@ namespace IND_CRM_APP.Services
         public async Task<ApiResponse<object>> UpdateExpenseSheetHeaderAsync(
             string token,
             string hojaGastosId,
-            ExpenseSheetUpdateRequest req)
+            ExpenseSheetUpdateRequest req,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "UpdateExpenseSheetHeader", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "UpdateExpenseSheetHeader",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var safeId = EscapePathSegment(hojaGastosId);
             var result = await SendPutJsonAsync(ApiRoutes.ExpenseSheetById(safeId), req);
@@ -830,9 +851,16 @@ namespace IND_CRM_APP.Services
             string token,
             string hojaGastosId,
             string lineRecId,
-            ExpenseSheetLineRequest req)
+            ExpenseSheetLineRequest req,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "UpdateExpenseSheetLine", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "UpdateExpenseSheetLine",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var safeSheetId = EscapePathSegment(hojaGastosId);
             var safeLineId = EscapePathSegment(lineRecId);
@@ -845,9 +873,16 @@ namespace IND_CRM_APP.Services
             string hojaGastosId,
             string lineRecId,
             bool deleteWholeSheet,
-            int? deleteMode = null)
+            int? deleteMode = null,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "DeleteExpenseSheetLine", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "DeleteExpenseSheetLine",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var safeSheetId = EscapePathSegment(hojaGastosId);
             var safeLineId = EscapePathSegment(lineRecId ?? "0");
@@ -956,9 +991,16 @@ namespace IND_CRM_APP.Services
 
         public async Task<ApiResponse<object>> CreateExpenseSheetTicketAsync(
             string token,
-            ExpenseSheetTicketCreateRequest req)
+            ExpenseSheetTicketCreateRequest req,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "CreateExpenseSheetTicket", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "CreateExpenseSheetTicket",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             req ??= new ExpenseSheetTicketCreateRequest();
             var lines = req.Lines?
@@ -1061,9 +1103,16 @@ namespace IND_CRM_APP.Services
 
         public async Task<PagedApiResponse<ExpenseSheetTicketDetailDto>> GetExpenseSheetTicketDetailAsync(
             string token,
-            string fileId)
+            string fileId,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "GetExpenseSheetTicketDetail", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "GetExpenseSheetTicketDetail",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var safeFileId = EscapePathSegment(fileId);
             var result = await SendGetAsync(ApiRoutes.ExpenseSheetTicketByFileId(safeFileId));
@@ -1113,9 +1162,16 @@ namespace IND_CRM_APP.Services
         public async Task<ApiResponse<object>> UpdateExpenseSheetTicketFromIAAsync(
             string token,
             string fileId,
-            object req)
+            object req,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "UpdateExpenseSheetTicketFromIA", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "UpdateExpenseSheetTicketFromIA",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var safeFileId = EscapePathSegment(fileId);
             var payload = req ?? new { };
@@ -1191,9 +1247,16 @@ namespace IND_CRM_APP.Services
             string fileName,
             string? contentType,
             string? extension = null,
+            string? axUserIdOverride = null,
             CancellationToken cancellationToken = default)
         {
-            PrepareRequestHeaders(token, "UploadExpenseSheetTicketFile", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "UploadExpenseSheetTicketFile",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var safeFileId = EscapePathSegment(fileId);
             var safeFileName = string.IsNullOrWhiteSpace(fileName) ? "ticket.jpg" : Path.GetFileName(fileName);
@@ -1347,9 +1410,16 @@ namespace IND_CRM_APP.Services
             string? contentType,
             bool? persistTicket = null,
             string? ticketUrlFile = null,
+            string? axUserIdOverride = null,
             CancellationToken cancellationToken = default)
         {
-            PrepareRequestHeaders(token, "ExpenseFromTicket", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "ExpenseFromTicket",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var safeFileName = string.IsNullOrWhiteSpace(fileName) ? "ticket.jpg" : Path.GetFileName(fileName);
             var mime = string.IsNullOrWhiteSpace(contentType) ? "image/jpeg" : contentType.Trim();

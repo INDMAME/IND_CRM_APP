@@ -15,6 +15,7 @@ import ExpenseLinesTimeline from "../components/ExpenseLinesTimeline.tsx";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
+import { isManagingOtherExpenseUser } from "../utils/expenseManagedUserScope.ts";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
@@ -22,14 +23,6 @@ import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
 
 const LINES_PAGE_SIZE = 6;
-
-const normalizeUserId = (value: unknown): string => String(value || "").trim();
-
-const isSameUser = (left: string, right: string): boolean => {
-  const normalizedLeft = normalizeUserId(left).toUpperCase();
-  const normalizedRight = normalizeUserId(right).toUpperCase();
-  return !!normalizedLeft && normalizedLeft === normalizedRight;
-};
 
 const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   if (!items.length) return [];
@@ -72,7 +65,8 @@ const NewLineIcon = () => (
 );
 
 const ExpenseSheetDetailPageContent = () => {
-  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId } = useAuthContext();
+  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } =
+    useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canEditExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Edit");
   const canDeleteExpense = canAccess("GASTOS_HOJA_GASTO", "FullAccess");
@@ -80,14 +74,15 @@ const ExpenseSheetDetailPageContent = () => {
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const sheetMode = safeText(window.__EXPENSE_SHEET_MODE__).toLowerCase();
   const isCreateMode = sheetMode === "create";
-  const isManagingOtherUser =
-    !isCreateMode &&
-    canManageOtherUsers &&
-    !!normalizeUserId(currentAxUserId) &&
-    !!normalizeUserId(selectedManagedUserId) &&
-    !isSameUser(selectedManagedUserId, currentAxUserId);
+  const isManagingOtherUser = isManagingOtherExpenseUser({
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
+    isCreateMode,
+  });
   const canCreateExpenseForCurrentView = canCreateExpense && !isManagingOtherUser;
   const canEditHeaderFields = canEditExpenseByModule && !isManagingOtherUser;
+  const canDeleteExpenseForCurrentView = canDeleteExpense && !isManagingOtherUser;
   const canEditExpenseStatusByPermission =
     !isCreateMode && ((allowSelfManagement === true && !isManagingOtherUser) || (canManageOtherUsers && isManagingOtherUser));
   const canEditExpense = canEditHeaderFields || canEditExpenseStatusByPermission;
@@ -123,6 +118,7 @@ const ExpenseSheetDetailPageContent = () => {
     draftExchangeRate,
     draftExpenseSheetStatus,
     draftEstadoComentarios,
+    draftVoucher,
     officialExchangeRateValue,
     officialExchangeRateRawValue,
     officialExchangeRateDate,
@@ -131,12 +127,14 @@ const ExpenseSheetDetailPageContent = () => {
     voucherValue,
     isSheetPaid,
     isSheetLocked,
+    isSheetEditLocked,
     exchangeRateValue,
     showExchangeRate,
     normalizedDraftCurrency,
     exchangeRateBaseCurrency,
     exchangeRateReferenceAmount,
     exchangeRateValidationMessage,
+    canEditHeaderFieldsCurrent,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
     setLinePage,
@@ -150,6 +148,7 @@ const ExpenseSheetDetailPageContent = () => {
     setDraftExchangeRate,
     setDraftExpenseSheetStatus,
     setDraftEstadoComentarios,
+    setDraftVoucher,
     handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateLineMode,
@@ -161,12 +160,13 @@ const ExpenseSheetDetailPageContent = () => {
     canCreateExpense: canCreateExpenseForCurrentView,
     canEditExpense,
     canEditHeaderFields,
+    canEditApprovedStatus: canEditExpenseStatusByPermission,
     sheetId,
     isCreateMode,
     onForbidden: showPermissionModal,
   });
 
-  const canEditExpenseStatus = canEditExpenseStatusByPermission && !isSheetLocked;
+  const canEditExpenseStatus = canEditExpenseStatusByPermission && !isSheetPaid;
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -215,15 +215,16 @@ const ExpenseSheetDetailPageContent = () => {
     busy,
     isEditing,
     isCreateMode,
-    isLocked: isSheetLocked,
+    isEditLocked: isSheetEditLocked,
+    isDeleteLocked: isSheetLocked,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
     lockedCurrencyCode: safeText(header?.currencyCode),
     lockedExchangeRate: safeText(header?.exchRate),
     canCreateExpense: canCreateExpenseForCurrentView,
     canEditExpense,
-    canDeleteExpense,
-    canEditHeaderFields,
+    canDeleteExpense: canDeleteExpenseForCurrentView,
+    canEditHeaderFields: canEditHeaderFieldsCurrent,
     canEditStatus: canEditExpenseStatus,
     sheetId,
     draftDescription,
@@ -233,6 +234,7 @@ const ExpenseSheetDetailPageContent = () => {
     draftProjectId,
     draftExpenseSheetStatus,
     draftEstadoComentarios,
+    draftVoucher,
     currentExpenseSheetStatus: header?.expenseSheetStatus,
     currentExchangeRateMode: header?.exchangeRateMode,
     exchangeRateBaseCurrency,
@@ -263,9 +265,12 @@ const ExpenseSheetDetailPageContent = () => {
     isEditing,
     isCreateMode,
     isLocked: isSheetLocked,
+    isEditLocked: isSheetEditLocked,
+    isDeleteLocked: isSheetLocked,
+    permissionsReady: managementBootstrapReady,
     canCreateExpense: canCreateExpenseForCurrentView,
     canEditExpense,
-    canDeleteExpense,
+    canDeleteExpense: canDeleteExpenseForCurrentView,
     setModalError,
     handleEnableEdit,
     handleCancelEdit,
@@ -495,7 +500,7 @@ const ExpenseSheetDetailPageContent = () => {
         <ExpenseSheetHeaderForm
           isCreateMode={isCreateMode}
           isEditing={isEditing}
-          canEditHeaderFields={canEditHeaderFields}
+          canEditHeaderFields={canEditHeaderFieldsCurrent}
           canEditStatus={canEditExpenseStatus}
           header={header}
           projectValue={projectValue}
@@ -516,6 +521,7 @@ const ExpenseSheetDetailPageContent = () => {
           draftExchangeRate={draftExchangeRate}
           draftExpenseSheetStatus={draftExpenseSheetStatus}
           draftEstadoComentarios={draftEstadoComentarios}
+          draftVoucher={draftVoucher}
           officialExchangeRateRawValue={officialExchangeRateRawValue}
           officialExchangeRateDate={officialExchangeRateDate}
           officialExchangeRateSource={officialExchangeRateSource}
@@ -525,6 +531,7 @@ const ExpenseSheetDetailPageContent = () => {
           onDraftExchangeRateChange={setDraftExchangeRate}
           onDraftExpenseSheetStatusChange={setDraftExpenseSheetStatus}
           onDraftEstadoComentariosChange={setDraftEstadoComentarios}
+          onDraftVoucherChange={setDraftVoucher}
         />
       ) : null}
 

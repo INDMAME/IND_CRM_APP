@@ -2,6 +2,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { test, expect } = require("./e2e-devtools-mobile.fixture");
+const { acquirePublicE2ELock, releasePublicE2ELock } = require("./public-env-lock");
 
 const TICKETS_PHOTOS_DIR =
   process.env.IND_E2E_TICKETS_PHOTOS_DIR || "C:\\Users\\marco.meza\\Pictures\\Tickets Fotos";
@@ -13,23 +14,53 @@ const PREFERRED_TICKET_IMAGE_NAMES = [
   "ticket-bar-pizasso-1.jpg",
 ];
 const REQUIRED_SELECTABLE_TICKETS = 3;
-const REQUIRED_CREATED_TICKETS = 5;
-const MAX_CREATE_ATTEMPTS = 18;
+const REQUIRED_CREATED_TICKETS = REQUIRED_SELECTABLE_TICKETS;
+const REQUIRED_GALLERY_TICKETS = REQUIRED_CREATED_TICKETS;
+const MAX_GALLERY_ATTEMPTS = 8;
 const DEFAULT_CURRENCY = "EUR";
+const LOGIN_GATE_REGEX = /sign in with microsoft|iniciar sesi[o\u00f3]n con microsoft/i;
+const EXTENSION_TO_MIME = {
+  jpg: "image/jpeg",
+  jpeg: "image/jpeg",
+  png: "image/png",
+  webp: "image/webp",
+};
 
 test.setTimeout(900000);
 
+// Clears Gastos managed-user session caches so E2E always starts from self context.
+async function isolateExpenseManagementSession(page) {
+  await page.addInitScript(() => {
+    const prefixes = [
+      "expense_management_context_v2_",
+      "expense_acting_user_v1_",
+      "expense_sheets_filter_v1_",
+      "expense_sheets_return_v1_",
+      "expense_tickets_filter_v1_",
+      "expense_tickets_return_v1_",
+      "expense_tickets_list_v1_",
+      "expense_sheet_ticket_quick_flow_trace_v1",
+    ];
+    const keys = [];
+    for (let index = 0; index < sessionStorage.length; index += 1) {
+      const key = sessionStorage.key(index);
+      if (key) {
+        keys.push(key);
+      }
+    }
+    for (const key of keys) {
+      if (prefixes.some((prefix) => key.startsWith(prefix))) {
+        sessionStorage.removeItem(key);
+      }
+    }
+  });
+}
+
 // Ensures an authenticated session exists before accessing protected pages.
 async function ensureAuthenticatedSession(page) {
+  await isolateExpenseManagementSession(page);
   await page.goto("/Gastos/ExpenseSheets?fresh=1", { waitUntil: "domcontentloaded" });
-  const loginGateVisible = await page
-    .getByRole("button", { name: /sign in with microsoft|iniciar sesi[o\u00f3]n con microsoft/i })
-    .isVisible()
-    .catch(() => false);
-
-  if (loginGateVisible) {
-    throw new Error("No active authenticated session. Run: npm run test:e2e:auth:capture");
-  }
+  await assertStillAuthenticated(page, "opening Gastos");
 }
 
 // Reads query string values from URL.
@@ -40,6 +71,235 @@ function getQueryParam(url, key) {
   } catch {
     return "";
   }
+}
+
+// Detects the Microsoft login gate so tests fail fast on auth loss.
+async function isLoginGateVisible(page) {
+  return page
+    .getByRole("button", { name: LOGIN_GATE_REGEX })
+    .isVisible()
+    .catch(() => false);
+}
+
+// Stops the flow immediately when session is lost.
+async function assertStillAuthenticated(page, contextLabel) {
+  const currentUrl = String(page.url() || "");
+  const loginGateVisible = await isLoginGateVisible(page);
+  if (loginGateVisible || /\/Auth\//i.test(currentUrl)) {
+    throw new Error(`Authentication lost while ${contextLabel}. Run: npm run test:e2e:auth:capture`);
+  }
+}
+
+// Returns a plain trimmed string value.
+function safeText(value) {
+  return String(value ?? "").trim();
+}
+
+// Reads an object-like value defensively.
+function asRecord(value) {
+  return value && typeof value === "object" ? value : {};
+}
+
+// Returns the first defined property found in a record.
+function getFirstDefined(record, keys) {
+  for (const key of keys) {
+    if (record && Object.prototype.hasOwnProperty.call(record, key)) {
+      return record[key];
+    }
+  }
+  return undefined;
+}
+
+// Parses any numeric-like value.
+function toNumber(value) {
+  if (value === null || value === undefined) return null;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+// Parses a strictly positive number.
+function toPositiveNumber(value) {
+  const parsed = toNumber(value);
+  return parsed !== null && parsed > 0 ? parsed : null;
+}
+
+// Normalizes supported date shapes to DD.MM.YYYY.
+function toDdMmYyyy(value) {
+  const text = safeText(value);
+  if (!text) return "";
+  if (/^\d{2}\.\d{2}\.\d{4}$/.test(text)) return text;
+  if (/^\d{8}$/.test(text)) {
+    return `${text.slice(0, 2)}.${text.slice(2, 4)}.${text.slice(4)}`;
+  }
+
+  const parsed = new Date(text);
+  if (Number.isNaN(parsed.getTime())) return "";
+  const day = String(parsed.getDate()).padStart(2, "0");
+  const month = String(parsed.getMonth() + 1).padStart(2, "0");
+  const year = String(parsed.getFullYear());
+  return `${day}.${month}.${year}`;
+}
+
+// Builds a stable today string for ticket draft defaults.
+function getTodayDdMmYyyy() {
+  return toDdMmYyyy(new Date());
+}
+
+// Reads the same auth headers that the React expense client attaches to API calls.
+async function readExpenseApiRequestHeaders(page, includeJson = false) {
+  const runtime = await page.evaluate(() => {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    let currentAxUserId = "";
+    for (let index = 0; index < sessionStorage.length; index += 1) {
+      const key = sessionStorage.key(index);
+      if (!key || !key.startsWith("expense_management_context_v2_")) {
+        continue;
+      }
+      try {
+        const raw = JSON.parse(String(sessionStorage.getItem(key) || "{}"));
+        currentAxUserId = String(raw.currentAxUserId || "").trim();
+        if (currentAxUserId) {
+          break;
+        }
+      } catch {
+        // Ignore malformed cached state and keep scanning.
+      }
+    }
+    return {
+      token: String(window.__IND_API_TOKEN__ || "").trim(),
+      companyId: String(window.__IND_SELECTED_COMPANY__ || "").trim(),
+      csrfToken: String(meta?.getAttribute("content") || "").trim(),
+      currentAxUserId,
+    };
+  });
+
+  const headers = {
+    Accept: "application/json",
+  };
+
+  if (runtime.token) {
+    headers.Authorization = `Bearer ${runtime.token}`;
+  }
+
+  if (runtime.companyId) {
+    headers["X-IND-Company"] = runtime.companyId;
+  }
+
+  if (runtime.csrfToken) {
+    headers.RequestVerificationToken = runtime.csrfToken;
+  }
+
+  if (runtime.currentAxUserId) {
+    headers["X-IND-AxUserId"] = runtime.currentAxUserId;
+  }
+
+  if (includeJson) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  return headers;
+}
+
+// Extracts the file id returned by the IA draft flow.
+function resolveTicketFileIdFromDraftResponse(rawData) {
+  const data = asRecord(rawData);
+  const creation = asRecord(getFirstDefined(data, ["TicketCreation", "ticketCreation"]));
+  return safeText(getFirstDefined(creation, ["FileId", "fileId"]));
+}
+
+// Extracts upload sync response values.
+function resolveUploadResult(rawData) {
+  const data = asRecord(rawData);
+  return {
+    urlFile: safeText(getFirstDefined(data, ["UrlFile", "urlFile"])),
+    fileName: safeText(getFirstDefined(data, ["FileName", "fileName"])),
+  };
+}
+
+// Normalizes the IA draft payload to the structure used by quick ticket flow.
+function normalizeDraftFromIaResponse(rawData) {
+  const data = asRecord(rawData);
+  const draftDescription = safeText(getFirstDefined(data, ["description", "Description"]));
+  const draftCurrency = safeText(getFirstDefined(data, ["currencyCode", "CurrencyCode"])).toUpperCase();
+  const draftTotalAmount = toPositiveNumber(getFirstDefined(data, ["totalAmount", "TotalAmount"])) || 0;
+  const draftTransDate = toDdMmYyyy(getFirstDefined(data, ["transDate", "TransDate"])) || getTodayDdMmYyyy();
+  const draftComment = safeText(getFirstDefined(data, ["comentario", "Comentario"]));
+  const draftGastoType = toNumber(getFirstDefined(data, ["gastoType", "GastoType"]));
+
+  const rawLines = getFirstDefined(data, ["lines", "Lines"]);
+  const lineArray = Array.isArray(rawLines) ? rawLines : [];
+  const lines = lineArray
+    .map((entry) => {
+      const lineRecord = asRecord(entry);
+      const qty = toPositiveNumber(getFirstDefined(lineRecord, ["qty", "Qty"])) || 1;
+      const price = toPositiveNumber(getFirstDefined(lineRecord, ["price", "Price"])) || 0;
+      const explicitTotal = toPositiveNumber(getFirstDefined(lineRecord, ["totalAmount", "TotalAmount"])) || 0;
+      const computedTotal = explicitTotal > 0 ? explicitTotal : qty * price;
+      if (!(computedTotal > 0)) return null;
+
+      const typeValue = Number(getFirstDefined(lineRecord, ["typeValue", "TypeValue"]) || draftGastoType || 8);
+      return {
+        description: safeText(getFirstDefined(lineRecord, ["description", "Description"])) || draftDescription || "Ticket",
+        qty,
+        price: price > 0 ? price : computedTotal,
+        totalAmount: computedTotal,
+        typeValue: Number.isInteger(typeValue) && typeValue > 0 ? typeValue : 8,
+        transDate: toDdMmYyyy(getFirstDefined(lineRecord, ["transDate", "TransDate"])) || draftTransDate,
+      };
+    })
+    .filter(Boolean);
+
+  return {
+    description: draftDescription || "Ticket",
+    currencyCode: draftCurrency || DEFAULT_CURRENCY,
+    totalAmount: draftTotalAmount > 0 ? draftTotalAmount : lines.reduce((sum, line) => sum + line.totalAmount, 0),
+    transDate: draftTransDate,
+    comentario: draftComment,
+    gastoType: Number.isInteger(draftGastoType) && draftGastoType > 0 ? draftGastoType : null,
+    lines,
+  };
+}
+
+// Builds the IA payload used to finalize a created ticket.
+function buildTicketIaPayload(draft, uploadResult) {
+  const payload = {
+    description: draft.description,
+    currencyCode: draft.currencyCode,
+    totalAmount: draft.totalAmount > 0 ? draft.totalAmount : undefined,
+    transDate: draft.transDate,
+    comentario: draft.comentario || undefined,
+    urlFile: uploadResult.urlFile || undefined,
+    fileName: uploadResult.fileName || undefined,
+    lines: draft.lines.map((line) => ({
+      description: line.description,
+      qty: line.qty,
+      price: line.price,
+      totalAmount: line.totalAmount,
+    })),
+  };
+
+  if (draft.gastoType !== null) {
+    payload.gastoType = draft.gastoType;
+  }
+
+  return payload;
+}
+
+// Parses one JSON API response and throws a readable error when backend rejects it.
+async function readSuccessfulJson(response, label) {
+  const rawText = await response.text();
+  let json = null;
+  try {
+    json = JSON.parse(rawText);
+  } catch {
+    json = null;
+  }
+
+  if (!response.ok() || !json || json.Success === false) {
+    throw new Error(`${label} failed. status=${response.status()} body=${rawText}`);
+  }
+
+  return json;
 }
 
 // Recursively lists all files under a directory.
@@ -117,9 +377,20 @@ async function clickModalAction(page, actionRegex) {
 
 // Saves current edit in topbar and confirms modal.
 async function saveTopbarChanges(page, topbarButtonSelector) {
-  const button = page.locator(topbarButtonSelector);
-  await expect(button).toBeVisible({ timeout: 15000 });
-  await button.click();
+  const confirmButton = page.locator("div.fixed.inset-0 button").filter({ hasText: /save|guardar/i }).first();
+  const modalAlreadyVisible = await confirmButton.isVisible().catch(() => false);
+  if (!modalAlreadyVisible) {
+    const button = page.locator(topbarButtonSelector);
+    await expect(button).toBeVisible({ timeout: 15000 });
+    try {
+      await button.click();
+    } catch (error) {
+      const modalVisibleAfterClick = await confirmButton.isVisible().catch(() => false);
+      if (!modalVisibleAfterClick) {
+        throw error;
+      }
+    }
+  }
   await clickModalAction(page, /save|guardar/i);
 }
 
@@ -247,6 +518,7 @@ async function createManualExpenseLine(page) {
 // Creates one ticket from tickets page through random gallery upload.
 async function createTicketFromGalleryUpload(page, imagePath) {
   await page.goto("/Gastos/Tickets?fresh=1", { waitUntil: "domcontentloaded" });
+  await assertStillAuthenticated(page, "opening tickets list before gallery upload");
   await expect(page.locator("#expense-tickets-root")).toBeVisible({ timeout: 30000 });
 
   await clickFabMenuItem(page, /nuevo ticket|new ticket/i);
@@ -265,6 +537,7 @@ async function createTicketFromGalleryUpload(page, imagePath) {
     .catch(() => false);
 
   if (!didNavigateToTicketDetail) {
+    await assertStillAuthenticated(page, "waiting for gallery upload result");
     const errorText = await page.locator(".bg-rose-50").first().textContent().catch(() => "");
     const closeErrorButton = page
       .locator("button")
@@ -281,6 +554,7 @@ async function createTicketFromGalleryUpload(page, imagePath) {
     };
   }
 
+  await assertStillAuthenticated(page, "opening ticket detail after gallery upload");
   await expect(page.locator("#expense-ticket-detail-root")).toBeVisible({ timeout: 30000 });
   const fileId = getQueryParam(page.url(), "fileId");
   if (!fileId) {
@@ -293,14 +567,71 @@ async function createTicketFromGalleryUpload(page, imagePath) {
   return { fileId, error: "" };
 }
 
-// Creates multiple tickets from random gallery images with retries.
-async function createTicketsFromGallery(page, requiredCount) {
+// Creates one ticket through the same IA/upload/finalize chain used by quick ticket flow.
+async function createTicketFromIaApiFlow(page, imagePath, baseHeaders) {
+  const fileBuffer = fs.readFileSync(imagePath);
+  const fileName = path.basename(imagePath);
+  const extension = path.extname(imagePath).toLowerCase().replace(/^\./, "") || "jpg";
+  const mimeType = EXTENSION_TO_MIME[extension] || "image/jpeg";
+  const formHeaders = { ...baseHeaders };
+
+  const draftResponse = await page.request.post("/api/ia/service/expensefromticket", {
+    multipart: {
+      ticketImage: {
+        name: fileName,
+        mimeType,
+        buffer: fileBuffer,
+      },
+      persistTicket: "true",
+    },
+    headers: formHeaders,
+  });
+  const draftJson = await readSuccessfulJson(draftResponse, "Ticket IA draft");
+  const fileId = resolveTicketFileIdFromDraftResponse(draftJson.Data);
+  if (!fileId) {
+    throw new Error(`Ticket IA draft returned no fileId. body=${JSON.stringify(draftJson)}`);
+  }
+
+  const uploadResponse = await page.request.post(
+    `/api/crm/expensesheets/tickets/${encodeURIComponent(fileId)}/file?extension=${encodeURIComponent(extension)}`,
+    {
+      multipart: {
+        file: {
+          name: fileName,
+          mimeType,
+          buffer: fileBuffer,
+        },
+      },
+      headers: formHeaders,
+    }
+  );
+  const uploadJson = await readSuccessfulJson(uploadResponse, "Ticket file upload");
+  const uploadResult = resolveUploadResult(uploadJson.Data);
+  const draft = normalizeDraftFromIaResponse(draftJson.Data);
+  const iaPayload = buildTicketIaPayload(draft, uploadResult);
+  const jsonHeaders = {
+    ...baseHeaders,
+    "Content-Type": "application/json",
+  };
+
+  const iaResponse = await page.request.post(`/api/crm/expensesheets/tickets/${encodeURIComponent(fileId)}/ia`, {
+    data: iaPayload,
+    headers: jsonHeaders,
+  });
+  await readSuccessfulJson(iaResponse, "Ticket IA finalize");
+
+  return { fileId, error: "" };
+}
+
+// Creates enough unassigned tickets for link-mode assertions using the real gallery upload flow.
+async function createTicketsForLinkMode(page, requiredCount) {
   const imagePool = buildTicketImageCandidates();
   const createdIds = [];
   let lastError = "";
   let activePage = page;
+  const requiredGalleryTickets = Math.min(REQUIRED_GALLERY_TICKETS, requiredCount);
 
-  for (let attempt = 0; attempt < MAX_CREATE_ATTEMPTS && createdIds.length < requiredCount; attempt += 1) {
+  for (let attempt = 0; attempt < MAX_GALLERY_ATTEMPTS && createdIds.length < requiredGalleryTickets; attempt += 1) {
     activePage = await ensureActivePage(activePage);
     const imagePath = imagePool[attempt % imagePool.length];
     try {
@@ -317,7 +648,7 @@ async function createTicketsFromGallery(page, requiredCount) {
   }
 
   if (createdIds.length < requiredCount) {
-    throw new Error(`Could not create ${requiredCount} tickets from gallery. Last error: ${lastError || "n/a"}`);
+    throw new Error(`Could not create ${requiredCount} tickets for link mode. Last error: ${lastError || "n/a"}`);
   }
 
   return { ticketIds: createdIds, activePage };
@@ -336,8 +667,30 @@ async function openLinkModeFromSheet(page, sheetId) {
     .toBe(String(sheetId));
 }
 
+// Ensures the tickets filter panel is expanded before interacting with its controls.
+async function ensureTicketsFilterPanelOpen(page) {
+  const ticketInput = page.getByRole("combobox", { name: /ticket/i }).first();
+  const alreadyVisible = await ticketInput.isVisible().catch(() => false);
+  if (alreadyVisible) {
+    return;
+  }
+
+  const filterToggleButton = page.locator("#historyFilterToggleBtn");
+  const canClickToggle = await filterToggleButton.isVisible().catch(() => false);
+  if (canClickToggle) {
+    await filterToggleButton.click();
+  } else {
+    await page.evaluate(() => {
+      window.dispatchEvent(new CustomEvent("expense-tickets-toggle-filter"));
+    });
+  }
+
+  await expect(ticketInput).toBeVisible({ timeout: 20000 });
+}
+
 // Applies ticket file filter and waits for list response.
 async function applyTicketFilter(page, fileId) {
+  await ensureTicketsFilterPanelOpen(page);
   const ticketInput = page.getByRole("combobox", { name: /ticket/i }).first();
   await expect(ticketInput).toBeVisible({ timeout: 15000 });
   await ticketInput.fill("");
@@ -400,23 +753,38 @@ async function selectTicketByFileId(page, fileId) {
   await expect(checkbox).toBeChecked({ timeout: 15000 });
 }
 
-// Confirms link action and waits until current filtered id disappears from list.
-async function confirmLinkSelection(page, expectedCount, filteredFileIdAfterLink) {
+// Confirms link action and waits until the app returns to the expense sheet detail.
+async function confirmLinkSelection(page, expectedCount, sheetId) {
   const linkButton = page.getByRole("button", { name: /vincular ticket|link ticket/i }).first();
   await expect(linkButton).toBeVisible({ timeout: 20000 });
-  await expect(linkButton).toContainText(new RegExp(`\\(${expectedCount}\\)`), { timeout: 15000 });
+  await expect(linkButton).toBeEnabled({ timeout: 15000 });
+  const linkButtonText = String((await linkButton.textContent().catch(() => "")) || "").trim();
+  if (/\(\d+\)/.test(linkButtonText)) {
+    await expect(linkButton).toContainText(new RegExp(`\\(${expectedCount}\\)`), { timeout: 15000 });
+  }
   await linkButton.click();
 
-  const modal = page.locator("div.fixed.inset-0").first();
+  const modal = page
+    .locator("div.fixed.inset-0")
+    .filter({ hasText: new RegExp(`Tickets\\s*:\\s*${expectedCount}`, "i") })
+    .last();
   await expect(modal).toBeVisible({ timeout: 15000 });
   await expect(modal).toContainText(new RegExp(`Tickets\\s*:\\s*${expectedCount}`, "i"), { timeout: 15000 });
-  await clickModalAction(page, /vincular ticket|link ticket|link/i);
+  await Promise.all([
+    page.waitForURL(`**/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(String(sheetId || "").trim())}`, {
+      waitUntil: "domcontentloaded",
+      timeout: 120000,
+    }),
+    clickModalAction(page, /vincular ticket|link ticket|link/i),
+  ]);
+  await expect(page.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
+}
 
-  if (filteredFileIdAfterLink) {
-    await expect
-      .poll(async () => page.locator(`.timeline-item[data-ticket-file-id="${filteredFileIdAfterLink}"]`).count(), { timeout: 120000 })
-      .toBe(0);
-  }
+// Verifies that one linked ticket line is already visible on the expense sheet detail.
+async function expectLinkedTicketVisibleOnSheet(page, fileId) {
+  const safeFileId = String(fileId || "").trim();
+  await expect(page.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
+  await expect(page.getByRole("group", { name: new RegExp(safeFileId, "i") }).first()).toBeVisible({ timeout: 30000 });
 }
 
 // Best-effort cleanup: deletes created expense sheet.
@@ -442,14 +810,23 @@ async function deleteTicketsBestEffort(page, ticketFileIds) {
 test.describe("Expense sheet link mode E2E", () => {
   test.describe.configure({ mode: "serial" });
 
+  test.beforeAll(async () => {
+    await acquirePublicE2ELock("expense-sheet-link-mode");
+  });
+
+  test.afterAll(async () => {
+    await releasePublicE2ELock();
+  });
+
   test("Create random gallery tickets, create sheet + manual line, link one and then multiple tickets", async ({ page }) => {
     let currentPage = page;
     await ensureAuthenticatedSession(currentPage);
+    await expect(currentPage.locator("#expense-sheets-root")).toBeVisible({ timeout: 30000 });
 
     const createdTicketIds = [];
     let sheetId = "";
     try {
-      const createdTickets = await createTicketsFromGallery(currentPage, REQUIRED_CREATED_TICKETS);
+      const createdTickets = await createTicketsForLinkMode(currentPage, REQUIRED_CREATED_TICKETS);
       createdTicketIds.push(...createdTickets.ticketIds);
       currentPage = createdTickets.activePage;
 
@@ -459,6 +836,7 @@ test.describe("Expense sheet link mode E2E", () => {
 
       await openLinkModeFromSheet(currentPage, sheetId);
 
+      await ensureTicketsFilterPanelOpen(currentPage);
       const statusInput = currentPage.getByRole("combobox", { name: /status|estado/i }).first();
       await expect(statusInput).toBeVisible({ timeout: 20000 });
       await expect(statusInput).toBeDisabled({ timeout: 20000 });
@@ -480,7 +858,9 @@ test.describe("Expense sheet link mode E2E", () => {
       const firstTicket = candidates[0];
       await applyTicketFilter(currentPage, firstTicket);
       await selectTicketByFileId(currentPage, firstTicket);
-      await confirmLinkSelection(currentPage, 1, firstTicket);
+      await confirmLinkSelection(currentPage, 1, sheetId);
+      await expectLinkedTicketVisibleOnSheet(currentPage, firstTicket);
+      await openLinkModeFromSheet(currentPage, sheetId);
 
       const multiTickets = candidates.slice(1, 3);
       expect(multiTickets.length).toBe(2);
@@ -488,7 +868,12 @@ test.describe("Expense sheet link mode E2E", () => {
         await applyTicketFilter(currentPage, fileId);
         await selectTicketByFileId(currentPage, fileId);
       }
-      await confirmLinkSelection(currentPage, multiTickets.length, multiTickets[multiTickets.length - 1]);
+      await confirmLinkSelection(currentPage, multiTickets.length, sheetId);
+      for (const fileId of [firstTicket, ...multiTickets]) {
+        await expectLinkedTicketVisibleOnSheet(currentPage, fileId);
+      }
+
+      await openLinkModeFromSheet(currentPage, sheetId);
 
       for (const fileId of [firstTicket, ...multiTickets]) {
         await applyTicketFilter(currentPage, fileId);

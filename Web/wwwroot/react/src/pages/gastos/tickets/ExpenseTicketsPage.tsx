@@ -82,7 +82,7 @@ const resolveManagedUserSelection = (requestedUserId: string, currentAxUserId: s
     const self = users.find((entry) => isSameUser(entry.axUserId, normalizedCurrent));
     return self?.axUserId || normalizedCurrent;
   }
-  return users[0]?.axUserId || "";
+  return "";
 };
 
 const buildLinkModeInitialSnapshot = (managedUserId = ""): ExpenseTicketAppliedFilterSnapshot => {
@@ -150,7 +150,6 @@ const ExpenseTicketsPageContent = () => {
   const canLinkSheetLines = canAccess("GASTOS_HOJA_GASTO", "Add");
   const {
     currentAxUserId,
-    selectedManagedUserId,
     subordinates,
     canManageOtherUsers,
     setSelectedManagedUserId,
@@ -186,8 +185,8 @@ const ExpenseTicketsPageContent = () => {
     [currentAxUserId, subordinates]
   );
   const defaultManagedUserId = useMemo(
-    () => resolveManagedUserSelection(selectedManagedUserId, currentAxUserId, managedUsers),
-    [currentAxUserId, managedUsers, selectedManagedUserId]
+    () => resolveManagedUserSelection(currentAxUserId, currentAxUserId, managedUsers),
+    [currentAxUserId, managedUsers]
   );
   const showManagedUserFilter = isLinkMode && canManageOtherUsers;
 
@@ -374,6 +373,7 @@ const ExpenseTicketsPageContent = () => {
     isCreateMode: false,
     isSheetLocked: false,
     linkToSheet: false,
+    axUserIdOverride: safeText(currentAxUserId),
     currencyCode: currencyCode || "EUR",
     onForbidden: showPermissionModal,
     onCompleted: (result) => {
@@ -551,12 +551,13 @@ const ExpenseTicketsPageContent = () => {
     []
   );
 
-  const revalidateLinkSelection = useCallback(async (candidateSelection: Record<string, ExpenseTicketCard>) => {
-    const entries = Object.entries(candidateSelection);
-    if (entries.length < 1) return {} as Record<string, ExpenseTicketCard>;
+  const revalidateLinkSelection = useCallback(
+    async (candidateSelection: Record<string, ExpenseTicketCard>, axUserIdOverride = "") => {
+      const entries = Object.entries(candidateSelection);
+      if (entries.length < 1) return {} as Record<string, ExpenseTicketCard>;
 
-    const next: Record<string, ExpenseTicketCard> = {};
-    for (const [fileId, ticket] of entries) {
+      const next: Record<string, ExpenseTicketCard> = {};
+      for (const [fileId, ticket] of entries) {
       const safeFileId = safeText(fileId);
       if (!safeFileId || !canSelectTicketForLink(ticket)) {
         continue;
@@ -573,6 +574,7 @@ const ExpenseTicketsPageContent = () => {
           },
           {
             suppressPermissionModal: true,
+            axUserIdOverride: safeText(axUserIdOverride) || undefined,
           }
         );
         const itemsRaw = Array.isArray(response?.Items) ? response.Items : [];
@@ -587,7 +589,9 @@ const ExpenseTicketsPageContent = () => {
     }
 
     return next;
-  }, []);
+    },
+    []
+  );
 
   const runTicketLinkFlow = useCallback(async () => {
     if (!isLinkMode || !linkSheetId || linkFlowBusy) {
@@ -604,6 +608,15 @@ const ExpenseTicketsPageContent = () => {
     if (selectedEntries.length < 1) {
       return false;
     }
+
+    const activeFilters = resolveActiveFilters();
+    const requestAxUserId = safeText(activeFilters.managedUserId || currentAxUserId);
+    const requestHeaders =
+      requestAxUserId
+        ? {
+            "X-IND-AxUserId": requestAxUserId,
+          }
+        : undefined;
 
     setLinkFlowBusy(true);
     setLinkFlowError("");
@@ -634,6 +647,7 @@ const ExpenseTicketsPageContent = () => {
             },
             {
               suppressPermissionModal: true,
+              headers: requestHeaders,
             }
           );
 
@@ -654,9 +668,8 @@ const ExpenseTicketsPageContent = () => {
         }
       }
 
-      const snapshot = resolveActiveFilters();
-      await loadList(currentPage < 1 ? 1 : currentPage, snapshot);
-      const validatedFailures = await revalidateLinkSelection(failedSelection);
+      await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
+      const validatedFailures = await revalidateLinkSelection(failedSelection, requestAxUserId);
       setFilteredSelectedTickets((entry) => {
         const safeFileId = safeText(entry.fileId);
         return !!safeFileId && !!validatedFailures[safeFileId];
@@ -695,6 +708,7 @@ const ExpenseTicketsPageContent = () => {
     canProcessLinkMode,
     clearCachedState,
     currentPage,
+    currentAxUserId,
     isLinkMode,
     linkFlowBusy,
     linkSheetId,

@@ -8,6 +8,9 @@ type UseExpenseSheetDetailTopbarActionsArgs = {
   isEditing: boolean;
   isCreateMode: boolean;
   isLocked: boolean;
+  isEditLocked?: boolean;
+  isDeleteLocked?: boolean;
+  permissionsReady?: boolean;
   canEditExpense: boolean;
   canCreateExpense: boolean;
   canDeleteExpense: boolean;
@@ -33,6 +36,9 @@ export const useExpenseSheetDetailTopbarActions = ({
   isEditing,
   isCreateMode,
   isLocked,
+  isEditLocked,
+  isDeleteLocked,
+  permissionsReady = true,
   canEditExpense,
   canCreateExpense,
   canDeleteExpense,
@@ -46,6 +52,7 @@ export const useExpenseSheetDetailTopbarActions = ({
   closeConfirm,
 }: UseExpenseSheetDetailTopbarActionsArgs) => {
   useExpenseTopbarCrudActions({
+    actionGroupId: "expense-detail-actions",
     ids: {
       editIconId: "expenseEditIcon",
       saveIconId: "expenseSaveIcon",
@@ -62,7 +69,10 @@ export const useExpenseSheetDetailTopbarActions = ({
     isEditing,
     isCreateMode,
     isLocked,
+    isEditLocked,
+    isDeleteLocked,
     allowCreateModeActionsWhenLocked: true,
+    permissionsReady,
     canCreate: canCreateExpense,
     canEdit: canEditExpense,
     canDelete: canDeleteExpense,

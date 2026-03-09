@@ -202,7 +202,7 @@
                 var refreshDispatch = isHistory
                     ? "history-refresh"
                     : (isExpenseSheets ? "expense-sheets-refresh" : "expense-tickets-refresh");
-                <div class="flex items-center gap-1 pr-1">
+                <div id="visit-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
                     <button id="historyFilterToggleBtn" type="button" class="topbar-btn pointer-events-auto"
                             aria-label="@SR["History_Filter_Toggle"]"
                             data-ind-dispatch="@filterDispatch">
@@ -221,7 +221,7 @@
             }
             else if (isVisitaDetail && (canEditHistory || canDeleteHistory))
             {
-                <div class="flex items-center gap-1 pr-1">
+                <div id="expense-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
                     @if (canEditHistory)
                     {
                         <button id="visitEditBtn" type="button" class="topbar-btn pointer-events-auto"
@@ -257,7 +257,7 @@
             }
             else if (isExpenseSheetDetail && (canEditExpenseSheetDetail || canDeleteExpense || (isExpenseSheetCreateMode && canCreateExpense)))
             {
-                <div class="flex items-center gap-1 pr-1">
+                <div id="expense-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
                     @if (canEditExpenseSheetDetail || (isExpenseSheetCreateMode && canCreateExpense))
                     {
                         <button id="expenseEditBtn" type="button" class="topbar-btn pointer-events-auto"
@@ -296,7 +296,7 @@
             }
             else if (isExpenseSheetLineDetail && (canEditExpense || canDeleteExpense || (isExpenseSheetLineCreateMode && canCreateExpense)))
             {
-                <div class="flex items-center gap-1 pr-1">
+                <div id="expense-line-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
                     @if (canEditExpense || (isExpenseSheetLineCreateMode && canCreateExpense))
                     {
                         <button id="expenseLineEditBtn" type="button" class="topbar-btn pointer-events-auto"
@@ -335,7 +335,7 @@
             }
             else if (isExpenseTicketDetail && (canEditTicket || canDeleteTicket))
             {
-                <div class="flex items-center gap-1 pr-1">
+                <div id="expense-ticket-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
                     @if (canEditTicket)
                     {
                         <button id="expenseTicketEditBtn" type="button" class="topbar-btn pointer-events-auto"
@@ -374,7 +374,7 @@
             }
             else if (isExpenseTicketLineDetail && (canEditTicket || canDeleteTicket))
             {
-                <div class="flex items-center gap-1 pr-1">
+                <div id="expense-ticket-line-detail-actions" class="flex items-center gap-1 pr-1 topbar-actions-pending">
                     @if (canEditTicket)
                     {
                         <button id="expenseTicketLineEditBtn" type="button" class="topbar-btn pointer-events-auto"

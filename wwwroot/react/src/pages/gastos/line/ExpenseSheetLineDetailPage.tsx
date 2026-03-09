@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
+import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
@@ -11,6 +12,7 @@ import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "..
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
+import { isManagingOtherExpenseUser } from "../utils/expenseManagedUserScope.ts";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import {
   mapBooleanEnumOptions,
@@ -31,14 +33,24 @@ const bootstrapExpenseApiAuth = () => {
 };
 
 const ExpenseSheetLineDetailContent = () => {
+  const { canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
-  const canEditExpense = canAccess("GASTOS_HOJA_GASTO", "Edit");
-  const canDeleteExpense = canAccess("GASTOS_HOJA_GASTO", "FullAccess");
-  const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
+  const canEditExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Edit");
+  const canDeleteExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "FullAccess");
+  const canCreateExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Add");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
   const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
   const isCreateMode = lineMode === "create";
+  const isManagingOtherUser = isManagingOtherExpenseUser({
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
+    isCreateMode,
+  });
+  const canEditExpense = canEditExpenseByModule && !isManagingOtherUser;
+  const canDeleteExpense = canDeleteExpenseByModule && !isManagingOtherUser;
+  const canCreateExpense = canCreateExpenseByModule && !isManagingOtherUser;
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
 
   const {
@@ -188,7 +200,7 @@ const ExpenseSheetLineDetailContent = () => {
     onCreateSuccess: () => {},
   });
 
-  const lineTopbarActionMode = hasLinkedTicket && !isSheetLocked ? "delete_only" : "default";
+  const lineTopbarActionMode = isManagingOtherUser ? "view_only" : (hasLinkedTicket && !isSheetLocked ? "delete_only" : "default");
 
   useExpenseSheetLineDetailTopbarActions({
     busy: busy || isRedirectingAfterCreate,
@@ -197,6 +209,7 @@ const ExpenseSheetLineDetailContent = () => {
     isCreateMode,
     isLocked: isSheetLocked,
     actionMode: lineTopbarActionMode,
+    permissionsReady: managementBootstrapReady,
     canCreateExpense,
     canEditExpense,
     canDeleteExpense,

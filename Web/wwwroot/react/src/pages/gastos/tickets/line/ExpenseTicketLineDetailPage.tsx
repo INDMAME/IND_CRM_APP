@@ -1,6 +1,7 @@
 import React, { useCallback, useMemo } from "react";
 import VisitasPageProviders from "../../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../../components/commons/ConfirmModal.tsx";
+import { useAuthContext } from "../../../../context/AuthContext.tsx";
 import { useConfirmDialog } from "../../../../hooks/useConfirmDialog.ts";
 import { canAccess, showPermissionModal } from "../../../../utils/permissions.ts";
 import { indT } from "../../../../utils/indI18n.ts";
@@ -9,6 +10,7 @@ import ExpenseTicketLineDetailForm from "../../components/ExpenseTicketLineDetai
 import { formatAmountWithCurrency } from "../../expenseFormatters.ts";
 import { parseDecimalInput } from "../../hooks/expenseMutationUtils.ts";
 import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
+import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 import { useExpenseTicketLineDetailMutations } from "./useExpenseTicketLineDetailMutations.ts";
 import { useExpenseTicketLineDetailState } from "./useExpenseTicketLineDetailState.ts";
@@ -24,14 +26,22 @@ const bootstrapExpenseApiAuth = () => {
 };
 
 const ExpenseTicketLineDetailContent = () => {
+  const { canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } = useAuthContext();
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
-  const canEditTicket = canAccess("GASTOS_TICKETS", "Edit");
-  const canDeleteTicket = canAccess("GASTOS_TICKETS", "FullAccess");
+  const canEditTicketByModule = canAccess("GASTOS_TICKETS", "Edit");
+  const canDeleteTicketByModule = canAccess("GASTOS_TICKETS", "FullAccess");
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineRecId = safeText(window.__EXPENSE_TICKET_LINE_ID__);
   const routeParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const detailOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
   const allowAssignedDraftEdit = detailOrigin === "sheet-create";
+  const isManagingOtherUser = isManagingOtherExpenseUser({
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
+  });
+  const canEditTicket = canEditTicketByModule && !isManagingOtherUser;
+  const canDeleteTicket = canDeleteTicketByModule && !isManagingOtherUser;
 
   const {
     header,
@@ -133,7 +143,8 @@ const ExpenseTicketLineDetailContent = () => {
     busy,
     modalOpen: modal.open,
     isEditing,
-    isLocked: isContextLocked,
+    isLocked: isContextLocked || isManagingOtherUser,
+    permissionsReady: managementBootstrapReady,
     canEditTicket,
     canDeleteTicket,
     fileId,

@@ -156,6 +156,7 @@ const ExpenseFiltersPanel = ({
               users={managedUsers}
               onChange={onManagedUserIdChange}
               showLabel={false}
+              clearOnEmptyInput
             />
           ) : null}
 

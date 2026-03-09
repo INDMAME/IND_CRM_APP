@@ -42,6 +42,7 @@ export const useExpenseSheetQuickTicketFlow = ({
   sheetId = "",
   projectId = "",
   currencyCode = "",
+  axUserIdOverride = "",
   canCreateExpense,
   isCreateMode,
   isSheetLocked,
@@ -104,6 +105,23 @@ export const useExpenseSheetQuickTicketFlow = ({
     persistTraceList([]);
   }, []);
 
+  // Forces mutations to follow the page-resolved AX user instead of any stale global override.
+  const buildApiOptions = useCallback(() => {
+    const safeAxUserId = safeText(axUserIdOverride);
+    if (!safeAxUserId) {
+      return {
+        suppressPermissionModal: true,
+      };
+    }
+
+    return {
+      suppressPermissionModal: true,
+      headers: {
+        "X-IND-AxUserId": safeAxUserId,
+      },
+    };
+  }, [axUserIdOverride]);
+
   const ensureQuickCreatePermission = useCallback((): boolean => {
     if (!canCreateExpense || isCreateMode || isSheetLocked || (linkToSheet && !sheetId)) {
       onForbidden();
@@ -148,9 +166,7 @@ export const useExpenseSheetQuickTicketFlow = ({
     async (fileId: string, draft: NormalizedDraft, uploadResult: UploadSyncResult) => {
       setProgressKey("finalizingIa");
       const iaPayload = buildTicketIaPayload(draft, uploadResult);
-      const iaResponse = await applyExpenseSheetTicketIa(fileId, iaPayload, {
-        suppressPermissionModal: true,
-      });
+      const iaResponse = await applyExpenseSheetTicketIa(fileId, iaPayload, buildApiOptions());
       addTrace("ticket-ia", safeText((iaResponse as { TraceId?: unknown })?.TraceId));
       if (iaResponse.Success !== true) {
         throw new Error(safeText(iaResponse.Message) || indT("Api_RequestFailed", "Request failed."));
@@ -168,16 +184,14 @@ export const useExpenseSheetQuickTicketFlow = ({
           existingHojaGastosId: sheetId,
           lines: [linePayload],
         },
-        {
-          suppressPermissionModal: true,
-        }
+        buildApiOptions()
       );
       addTrace("expense-sheet-append-line", safeText((createResponse as { TraceId?: unknown })?.TraceId));
       if (createResponse.Success !== true) {
         throw new Error(safeText(createResponse.Message) || indT("Api_RequestFailed", "Request failed."));
       }
     },
-    [addTrace, linkToSheet, projectId, sheetId]
+    [addTrace, buildApiOptions, linkToSheet, projectId, sheetId]
   );
 
   const resumeFromUploadStep = useCallback(
@@ -191,9 +205,7 @@ export const useExpenseSheetQuickTicketFlow = ({
           pendingState.fileId,
           file,
           pendingState.extension,
-          {
-            suppressPermissionModal: true,
-          }
+          buildApiOptions()
         );
         addTrace("ticket-file-upload", safeText((uploadResponse as { TraceId?: unknown })?.TraceId));
         if (uploadResponse.Success !== true) {
@@ -206,9 +218,12 @@ export const useExpenseSheetQuickTicketFlow = ({
           draft = pendingState.draft;
         } else {
           setProgressKey("uploadingImage");
-          const iaDraftResponse = await extractExpenseFromTicketDraft(file, false, uploadResult.urlFile || undefined, {
-            suppressPermissionModal: true,
-          });
+          const iaDraftResponse = await extractExpenseFromTicketDraft(
+            file,
+            false,
+            uploadResult.urlFile || undefined,
+            buildApiOptions()
+          );
           addTrace("expensefromticket", safeText((iaDraftResponse as { TraceId?: unknown })?.TraceId));
           if (iaDraftResponse.Success !== true) {
             throw new Error(safeText(iaDraftResponse.Message) || indT("Api_RequestFailed", "Request failed."));
@@ -238,7 +253,7 @@ export const useExpenseSheetQuickTicketFlow = ({
         setErrorMessage(resolveUiErrorMessage(error));
       }
     },
-    [addTrace, applyIaAndFinalize, linkToSheet, onCompleted, resolveUiErrorMessage]
+    [addTrace, applyIaAndFinalize, buildApiOptions, linkToSheet, onCompleted, resolveUiErrorMessage]
   );
 
   const runIaCreateFlow = useCallback(
@@ -249,9 +264,7 @@ export const useExpenseSheetQuickTicketFlow = ({
 
       try {
         setProgressKey("creatingTicket");
-        const draftResponse = await extractExpenseFromTicketDraft(file, true, undefined, {
-          suppressPermissionModal: true,
-        });
+        const draftResponse = await extractExpenseFromTicketDraft(file, true, undefined, buildApiOptions());
         addTrace("expensefromticket", safeText((draftResponse as { TraceId?: unknown })?.TraceId));
         if (draftResponse.Success !== true) {
           throw new Error(safeText(draftResponse.Message) || indT("Api_RequestFailed", "Request failed."));
@@ -265,9 +278,7 @@ export const useExpenseSheetQuickTicketFlow = ({
 
         try {
           setProgressKey("syncingFile");
-          const uploadResponse = await uploadExpenseSheetTicketFile(fileId, file, extension, {
-            suppressPermissionModal: true,
-          });
+          const uploadResponse = await uploadExpenseSheetTicketFile(fileId, file, extension, buildApiOptions());
           addTrace("ticket-file-upload", safeText((uploadResponse as { TraceId?: unknown })?.TraceId));
           if (uploadResponse.Success !== true) {
             throw new Error(safeText(uploadResponse.Message) || indT("Api_RequestFailed", "Request failed."));
@@ -311,7 +322,7 @@ export const useExpenseSheetQuickTicketFlow = ({
         setErrorMessage(resolveUiErrorMessage(error));
       }
     },
-    [addTrace, applyIaAndFinalize, clearFlowState, linkToSheet, onCompleted, resolveUiErrorMessage]
+    [addTrace, applyIaAndFinalize, buildApiOptions, clearFlowState, linkToSheet, onCompleted, resolveUiErrorMessage]
   );
 
   const runManualCreateFlow = useCallback(
@@ -334,9 +345,7 @@ export const useExpenseSheetQuickTicketFlow = ({
           urlFile: placeholderUrl,
           fileExtension: extension,
         };
-        const createResponse = await createExpenseSheetTicket(createPayload, {
-          suppressPermissionModal: true,
-        });
+        const createResponse = await createExpenseSheetTicket(createPayload, buildApiOptions());
         addTrace("ticket-create-manual", safeText((createResponse as { TraceId?: unknown })?.TraceId));
         if (createResponse.Success !== true) {
           throw new Error(safeText(createResponse.Message) || indT("Api_RequestFailed", "Request failed."));
@@ -351,9 +360,7 @@ export const useExpenseSheetQuickTicketFlow = ({
 
         stage = "syncingFile";
         setProgressKey("syncingFile");
-        const uploadResponse = await uploadExpenseSheetTicketFile(fileId, file, extension, {
-          suppressPermissionModal: true,
-        });
+        const uploadResponse = await uploadExpenseSheetTicketFile(fileId, file, extension, buildApiOptions());
         addTrace("ticket-file-upload", safeText((uploadResponse as { TraceId?: unknown })?.TraceId));
         if (uploadResponse.Success !== true) {
           throw new Error(safeText(uploadResponse.Message) || indT("Api_RequestFailed", "Request failed."));
@@ -362,9 +369,12 @@ export const useExpenseSheetQuickTicketFlow = ({
 
         stage = "uploadingImage";
         setProgressKey("uploadingImage");
-        const iaDraftResponse = await extractExpenseFromTicketDraft(file, false, uploadResult.urlFile || undefined, {
-          suppressPermissionModal: true,
-        });
+        const iaDraftResponse = await extractExpenseFromTicketDraft(
+          file,
+          false,
+          uploadResult.urlFile || undefined,
+          buildApiOptions()
+        );
         addTrace("expensefromticket", safeText((iaDraftResponse as { TraceId?: unknown })?.TraceId));
         if (iaDraftResponse.Success !== true) {
           throw new Error(safeText(iaDraftResponse.Message) || indT("Api_RequestFailed", "Request failed."));
@@ -402,7 +412,7 @@ export const useExpenseSheetQuickTicketFlow = ({
         setErrorMessage(resolveUiErrorMessage(error));
       }
     },
-    [addTrace, applyIaAndFinalize, clearFlowState, currencyCode, linkToSheet, onCompleted, resolveUiErrorMessage]
+    [addTrace, applyIaAndFinalize, buildApiOptions, clearFlowState, currencyCode, linkToSheet, onCompleted, resolveUiErrorMessage]
   );
 
   const handleSelectedFile = useCallback(

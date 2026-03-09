@@ -9,6 +9,7 @@ type UseExpenseSheetLineDetailTopbarActionsArgs = {
   isCreateMode: boolean;
   isLocked: boolean;
   actionMode?: "default" | "delete_only" | "view_only";
+  permissionsReady?: boolean;
   canCreateExpense: boolean;
   canEditExpense: boolean;
   canDeleteExpense: boolean;
@@ -36,6 +37,7 @@ export const useExpenseSheetLineDetailTopbarActions = ({
   isCreateMode,
   isLocked,
   actionMode = "default",
+  permissionsReady = true,
   canCreateExpense,
   canEditExpense,
   canDeleteExpense,
@@ -50,6 +52,7 @@ export const useExpenseSheetLineDetailTopbarActions = ({
   closeConfirm,
 }: UseExpenseSheetLineDetailTopbarActionsArgs) => {
   useExpenseTopbarCrudActions({
+    actionGroupId: "expense-line-detail-actions",
     ids: {
       editIconId: "expenseLineEditIcon",
       saveIconId: "expenseLineSaveIcon",
@@ -67,6 +70,7 @@ export const useExpenseSheetLineDetailTopbarActions = ({
     isCreateMode,
     isLocked,
     actionMode,
+    permissionsReady,
     canCreate: canCreateExpense,
     canEdit: canEditExpense,
     canDelete: canDeleteExpense,

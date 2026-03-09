@@ -9,7 +9,11 @@ const authStatePath =
   process.env.IND_E2E_AUTH_STATE || path.join(repoRoot, "tests", ".auth", "entra-storage-state.json");
 const useStoredAuthState = process.env.IND_E2E_USE_AUTH_STATE !== "false" && fs.existsSync(authStatePath);
 const useDevtools = process.env.IND_E2E_DEVTOOLS === "true";
-const useFreshProfile = useDevtools && process.env.IND_E2E_FRESH_DEVTOOLS_PROFILE !== "false";
+// Always start from a clean persistent profile unless a run explicitly opts out.
+// This avoids stale Gastos session state leaking managed-user context between E2E runs.
+const useFreshProfile =
+  process.env.IND_E2E_FRESH_PROFILE !== "false" &&
+  process.env.IND_E2E_FRESH_DEVTOOLS_PROFILE !== "false";
 
 // Keeps persistent profile directories isolated per worker to avoid lock contention.
 function getUserDataDir(workerIndex) {

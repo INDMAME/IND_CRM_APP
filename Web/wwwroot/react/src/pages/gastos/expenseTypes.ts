@@ -232,6 +232,7 @@ export type ExpenseSheetHeaderUpdateRequest = {
   currencyCode: string;
   exchRate: number;
   projId?: string;
+  voucher?: string;
   expenseSheetStatus?: number;
   exchangeRateMode?: number;
   estadoComentarios?: string;

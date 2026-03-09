@@ -78,6 +78,7 @@ export type UseExpenseSheetQuickTicketFlowArgs = {
   sheetId?: string;
   projectId?: string;
   currencyCode?: string;
+  axUserIdOverride?: string;
   canCreateExpense: boolean;
   isCreateMode: boolean;
   isSheetLocked: boolean;

@@ -3,6 +3,7 @@ import { wait } from "../utils/wait.ts";
 import { indT } from "../utils/indI18n.ts";
 import { showPermissionModal } from "../utils/permissions.ts";
 import { setHistoryFilterForDate, flashActionMark } from "../utils/visitasHistory.ts";
+import { setTopbarActionGroupReady } from "../utils/topbarActionVisibility.ts";
 
 type UseDetailTopbarActionsArgs = {
   busy: boolean;
@@ -16,6 +17,8 @@ type UseDetailTopbarActionsArgs = {
   handleCancelEdit: () => void;
   handleUpdate: () => Promise<boolean>;
   handleDelete: () => Promise<boolean>;
+  actionGroupId?: string;
+  permissionsReady?: boolean;
   openConfirm: (opts: {
     title: string;
     message: string;
@@ -38,29 +41,39 @@ export const useDetailTopbarActions = ({
   handleCancelEdit,
   handleUpdate,
   handleDelete,
+  actionGroupId = "visit-detail-actions",
+  permissionsReady = true,
   openConfirm,
   closeConfirm,
 }: UseDetailTopbarActionsArgs) => {
   useEffect(() => {
+    if (!permissionsReady) return;
+
     const editIcon = document.getElementById("visitEditIcon");
     const saveIcon = document.getElementById("visitSaveIcon");
     const deleteBtn = document.getElementById("visitDeleteBtn");
     const cancelBtn = document.getElementById("visitCancelBtn");
-    if (!editIcon || !saveIcon) return;
+    const editBtn = editIcon?.closest("button") ?? null;
     if (isEditing) {
-      editIcon.classList.add("hidden");
-      saveIcon.classList.remove("hidden");
+      if (editBtn) editBtn.classList.remove("topbar-hidden");
+      if (editIcon) editIcon.classList.add("hidden");
+      if (saveIcon) saveIcon.classList.remove("hidden");
       if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
       if (cancelBtn) cancelBtn.classList.remove("topbar-hidden");
     } else {
-      editIcon.classList.remove("hidden");
-      saveIcon.classList.add("hidden");
+      if (editBtn) editBtn.classList.remove("topbar-hidden");
+      if (editIcon) editIcon.classList.remove("hidden");
+      if (saveIcon) saveIcon.classList.add("hidden");
       if (deleteBtn) deleteBtn.classList.remove("topbar-hidden");
       if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
     }
-  }, [isEditing]);
+
+    setTopbarActionGroupReady(actionGroupId);
+  }, [actionGroupId, isEditing, permissionsReady]);
 
   useEffect(() => {
+    if (!permissionsReady) return;
+
     const onEdit = () => {
       if (!canEditHistory) {
         showPermissionModal();
@@ -144,6 +157,7 @@ export const useDetailTopbarActions = ({
     isEditing,
     modalOpen,
     openConfirm,
+    permissionsReady,
     setModalError,
     transDate,
   ]);

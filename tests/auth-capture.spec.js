@@ -35,6 +35,29 @@ async function isLoginGateVisible(page) {
   return loginMessageVisible;
 }
 
+// Clicks the app login gate once so SSO-capable environments can continue automatically.
+async function clickMicrosoftLoginGate(page) {
+  const loginLink = page
+    .getByRole("link", { name: /sign in with microsoft|iniciar sesi[oÃ³]n con microsoft|entrar con microsoft/i })
+    .first();
+  const linkVisible = await loginLink.isVisible().catch(() => false);
+  if (linkVisible) {
+    await loginLink.click().catch(() => undefined);
+    return true;
+  }
+
+  const loginButton = page
+    .getByRole("button", { name: /sign in with microsoft|iniciar sesi[oÃ³]n con microsoft|entrar con microsoft/i })
+    .first();
+  const buttonVisible = await loginButton.isVisible().catch(() => false);
+  if (buttonVisible) {
+    await loginButton.click().catch(() => undefined);
+    return true;
+  }
+
+  return false;
+}
+
 // Waits until the browser returns to the app after interactive auth and MFA.
 async function waitForAuthenticatedSession(page) {
   const startedAt = Date.now();
@@ -42,6 +65,7 @@ async function waitForAuthenticatedSession(page) {
   let loggedEntraHint = false;
   let loggedLocalHint = false;
   let loggedLoginGateHint = false;
+  let clickedLoginGate = false;
 
   console.log("[auth] Browser opened. Complete login and MFA in this window. It will stay open until authentication is done.");
 
@@ -65,6 +89,12 @@ async function waitForAuthenticatedSession(page) {
       console.log("[auth] App login gate detected. Click 'Sign in with Microsoft' and complete MS Entra flow.");
       loggedLoginGateHint = true;
     }
+    if (loginGateVisible && !clickedLoginGate) {
+      clickedLoginGate = await clickMicrosoftLoginGate(page);
+      if (clickedLoginGate) {
+        console.log("[auth] Login gate clicked automatically.");
+      }
+    }
 
     const appRootCount = await page
       .locator("#visitas-app-root, #visitas-history-root, #visita-detail-root")
@@ -72,7 +102,9 @@ async function waitForAuthenticatedSession(page) {
       .catch(() => 0);
 
     const inAppRoute =
-      /\/(visitas|historial|texteditorreact)\b/i.test(url) || url.toLowerCase().includes("/visitas/");
+      /\/(visitas|historial|texteditorreact|home\/index)\b/i.test(url) ||
+      url.toLowerCase().includes("/visitas/") ||
+      url.toLowerCase().includes("/home/index");
     const inAppAuthenticated = !onMicrosoftAuth && !loginGateVisible && (appRootCount > 0 || inAppRoute);
 
     // Require a few stable checks to avoid finishing during transient redirects.

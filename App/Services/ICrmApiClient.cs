@@ -119,31 +119,36 @@ namespace IND_CRM_APP.Services
             string? contentType,
             bool? persistTicket = null,
             string? ticketUrlFile = null,
+            string? axUserIdOverride = null,
             CancellationToken cancellationToken = default
         );
 
         // Expense sheets.
         Task<ApiResponse<ExpenseSheetCreateResponseData>> CreateExpenseSheetAsync(
             string token,
-            ExpenseSheetCreateRequest req
+            ExpenseSheetCreateRequest req,
+            string? axUserIdOverride = null
         );
 
         Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetDetailAsync(
             string token,
-            string hojaGastosId
+            string hojaGastosId,
+            string? axUserIdOverride = null
         );
 
         Task<ApiResponse<object>> UpdateExpenseSheetHeaderAsync(
             string token,
             string hojaGastosId,
-            ExpenseSheetUpdateRequest req
+            ExpenseSheetUpdateRequest req,
+            string? axUserIdOverride = null
         );
 
         Task<ApiResponse<object>> UpdateExpenseSheetLineAsync(
             string token,
             string hojaGastosId,
             string lineRecId,
-            ExpenseSheetLineRequest req
+            ExpenseSheetLineRequest req,
+            string? axUserIdOverride = null
         );
 
         Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(
@@ -151,7 +156,8 @@ namespace IND_CRM_APP.Services
             string hojaGastosId,
             string lineRecId,
             bool deleteWholeSheet,
-            int? deleteMode = null
+            int? deleteMode = null,
+            string? axUserIdOverride = null
         );
 
         Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetsAsync(
@@ -171,7 +177,8 @@ namespace IND_CRM_APP.Services
         // Expense sheet tickets.
         Task<ApiResponse<object>> CreateExpenseSheetTicketAsync(
             string token,
-            ExpenseSheetTicketCreateRequest req
+            ExpenseSheetTicketCreateRequest req,
+            string? axUserIdOverride = null
         );
 
         Task<PagedApiResponse<ExpenseSheetTicketListItemDto>> GetExpenseSheetTicketsAsync(
@@ -182,7 +189,8 @@ namespace IND_CRM_APP.Services
 
         Task<PagedApiResponse<ExpenseSheetTicketDetailDto>> GetExpenseSheetTicketDetailAsync(
             string token,
-            string fileId
+            string fileId,
+            string? axUserIdOverride = null
         );
 
         Task<ApiResponse<object>> UpdateExpenseSheetTicketAsync(
@@ -200,7 +208,8 @@ namespace IND_CRM_APP.Services
         Task<ApiResponse<object>> UpdateExpenseSheetTicketFromIAAsync(
             string token,
             string fileId,
-            object req
+            object req,
+            string? axUserIdOverride = null
         );
 
         Task<ApiResponse<object>> CreateExpenseSheetTicketLineAsync(
@@ -229,6 +238,7 @@ namespace IND_CRM_APP.Services
             string fileName,
             string? contentType,
             string? extension = null,
+            string? axUserIdOverride = null,
             CancellationToken cancellationToken = default
         );
 

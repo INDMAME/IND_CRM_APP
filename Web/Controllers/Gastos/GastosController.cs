@@ -22,6 +22,10 @@ namespace IND_CRM_APP.Controllers
         private readonly ICrmEnumCatalog _crmEnumCatalog;
         private readonly ITicketBlobPreviewService _ticketBlobPreviewService;
         private readonly IStringLocalizer<INDSharedResource> _sr;
+        private const int ExpenseSheetStatusPaid = 4;
+        private const string ExpenseSheetNotFoundErrorCode = "CRM_EXPENSESHEET_NOT_FOUND";
+        private const string ExpenseSheetPaidReadOnlyErrorCode = "CRM_EXPENSESHEET_PAID_READ_ONLY";
+        private const string ExpenseManagedUserReadOnlyErrorCode = "CRM_EXPENSE_MANAGED_USER_READ_ONLY";
         private static readonly HashSet<int> AllowedTicketGastoTypes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
         private static readonly HashSet<string> AllowedTicketImageContentTypes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -50,6 +54,15 @@ namespace IND_CRM_APP.Controllers
             _crmEnumCatalog = crmEnumCatalog;
             _ticketBlobPreviewService = ticketBlobPreviewService;
             _sr = sr;
+        }
+
+        // Immutable guard result for expense sheet mutation checks.
+        private sealed class ExpenseSheetMutationGuardResult
+        {
+            public bool Allowed { get; init; }
+            public int StatusCode { get; init; }
+            public string Message { get; init; } = string.Empty;
+            public string ErrorCode { get; init; } = string.Empty;
         }
 
         // Shows the expense sheet list page.
@@ -773,6 +786,7 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
+                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
                 using var stream = ticketImage.OpenReadStream();
                 var response = await _apiClient.ExpenseFromTicketAsync(
                     token,
@@ -781,6 +795,7 @@ namespace IND_CRM_APP.Controllers
                     ticketImage.ContentType,
                     persistValue,
                     NormalizeOptionalText(ticketUrlFile),
+                    requestAxUserId,
                     HttpContext.RequestAborted);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
 
@@ -851,7 +866,7 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
-                var result = await _apiClient.GetExpenseSheetDetailAsync(token, safeSheetId);
+                var result = await _apiClient.GetExpenseSheetDetailAsync(token, safeSheetId, requestAxUserId);
                 var sheet = SelectSheet(result.GetAnyItems(), safeSheetId);
                 if (sheet == null)
                     return CreateApiPagedError(StatusCodes.Status404NotFound, _sr["ExpenseSheets_NotFound"].Value);
@@ -961,9 +976,22 @@ namespace IND_CRM_APP.Controllers
                 request.ProjId = null;
             }
 
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            if (normalizedMode == 2 && !string.IsNullOrWhiteSpace(normalizedExistingSheetId))
+            {
+                var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                    token,
+                    normalizedExistingSheetId,
+                    requestAxUserId,
+                    nameof(ApiExpenseSheetsCreate),
+                    allowManagedUserMutation: false);
+                if (!mutationGuard.Allowed)
+                    return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+            }
+
             try
             {
-                var response = await _apiClient.CreateExpenseSheetAsync(token, request);
+                var response = await _apiClient.CreateExpenseSheetAsync(token, request, requestAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
 
                 return CreateApiResponse(
@@ -1030,6 +1058,7 @@ namespace IND_CRM_APP.Controllers
                 ? req.ExchangeRateMode.Value
                 : (int?)null;
             var normalizedEstadoComentarios = NormalizeOptionalText(req.EstadoComentarios);
+            var normalizedVoucher = NormalizeOptionalText(req.Voucher);
 
             var request = new ExpenseSheetUpdateRequest
             {
@@ -1037,14 +1066,24 @@ namespace IND_CRM_APP.Controllers
                 CurrencyCode = normalizedCurrency,
                 ExchRate = req.ExchRate,
                 ProjId = NormalizeOptionalText(req.ProjId),
+                Voucher = normalizedVoucher,
                 ExpenseSheetStatus = normalizedExpenseSheetStatus,
                 ExchangeRateMode = normalizedExchangeRateMode,
                 EstadoComentarios = normalizedEstadoComentarios
             };
 
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetUpdate));
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
             try
             {
-                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, safeSheetId, request);
+                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, safeSheetId, request, requestAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
 
                 return CreateApiResponse(
@@ -1120,13 +1159,24 @@ namespace IND_CRM_APP.Controllers
                 IndAttachFiles = req.IndAttachFiles ?? string.Empty
             };
 
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetLineUpdate),
+                allowManagedUserMutation: false);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
             try
             {
                 var response = await _apiClient.UpdateExpenseSheetLineAsync(
                     token,
                     safeSheetId,
                     safeLineId,
-                    request);
+                    request,
+                    requestAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
 
                 return CreateApiResponse(
@@ -1189,6 +1239,16 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
 
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetLineDelete),
+                allowManagedUserMutation: false);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
             try
             {
                 var response = await _apiClient.DeleteExpenseSheetLineAsync(
@@ -1196,7 +1256,8 @@ namespace IND_CRM_APP.Controllers
                     safeSheetId,
                     safeLineId,
                     resolvedDeleteWholeSheet,
-                    resolvedDeleteMode);
+                    resolvedDeleteMode,
+                    requestAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
 
                 return CreateApiResponse(
@@ -1300,10 +1361,14 @@ namespace IND_CRM_APP.Controllers
                 GastoType = NormalizeTicketGastoType(req.GastoType),
                 Lines = normalizedLines.Count > 0 ? normalizedLines : null
             };
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketsCreate));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
             try
             {
-                var response = await _apiClient.CreateExpenseSheetTicketAsync(token, request);
+                var response = await _apiClient.CreateExpenseSheetTicketAsync(token, request, requestAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
 
                 return CreateApiResponse(
@@ -1554,6 +1619,10 @@ namespace IND_CRM_APP.Controllers
                 FileExtension = NormalizeOptionalText(req.FileExtension),
                 GastoType = NormalizeTicketGastoType(req.GastoType)
             };
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketUpdate));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
             try
             {
@@ -1606,6 +1675,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketDelete));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
             try
             {
@@ -1667,10 +1740,14 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketApplyIa));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
             try
             {
-                var response = await _apiClient.UpdateExpenseSheetTicketFromIAAsync(token, safeFileId, req);
+                var response = await _apiClient.UpdateExpenseSheetTicketFromIAAsync(token, safeFileId, req, requestAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
 
                 return CreateApiResponse(
@@ -1736,6 +1813,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketLineCreate));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
             try
             {
@@ -1809,6 +1890,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketLineUpdate));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
             try
             {
@@ -1862,6 +1947,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketLineDelete));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
             try
             {
@@ -1920,6 +2009,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketFileUpload));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
             var safeUploadFileName = Path.GetFileName(file.FileName ?? "ticket.jpg");
             var normalizedUploadContentType = NormalizeOptionalText(file.ContentType) ?? "<empty>";
@@ -1943,6 +2036,7 @@ namespace IND_CRM_APP.Controllers
                     safeUploadFileName,
                     file.ContentType,
                     NormalizeOptionalText(extension),
+                    requestAxUserId,
                     HttpContext.RequestAborted);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
 
@@ -2011,6 +2105,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketFileDelete));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
 
             try
             {
@@ -2220,7 +2318,20 @@ namespace IND_CRM_APP.Controllers
                     request.ProjId = null;
                 }
 
-                var response = await _apiClient.CreateExpenseSheetAsync(token, request);
+                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                if (normalizedMode == 2 && !string.IsNullOrWhiteSpace(normalizedExistingSheetId))
+                {
+                    var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                        token,
+                        normalizedExistingSheetId,
+                        requestAxUserId,
+                        nameof(CreateExpenseSheet),
+                        allowManagedUserMutation: false);
+                    if (!mutationGuard.Allowed)
+                        return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
+                }
+
+                var response = await _apiClient.CreateExpenseSheetAsync(token, request, requestAxUserId);
 
                 if (IND_SetActionMark && response.Success)
                 {
@@ -2272,6 +2383,7 @@ namespace IND_CRM_APP.Controllers
                     ? req.ExchangeRateMode.Value
                     : (int?)null;
                 var normalizedEstadoComentarios = NormalizeOptionalText(req.EstadoComentarios);
+                var normalizedVoucher = NormalizeOptionalText(req.Voucher);
 
                 var request = new ExpenseSheetUpdateRequest
                 {
@@ -2279,12 +2391,21 @@ namespace IND_CRM_APP.Controllers
                     CurrencyCode = normalizedCurrency,
                     ExchRate = req.ExchRate,
                     ProjId = NormalizeOptionalText(req.ProjId),
+                    Voucher = normalizedVoucher,
                     ExpenseSheetStatus = normalizedExpenseSheetStatus,
                     ExchangeRateMode = normalizedExchangeRateMode,
                     EstadoComentarios = normalizedEstadoComentarios
                 };
 
-                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, hojaGastosId.Trim(), request);
+                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                    token,
+                    hojaGastosId.Trim(),
+                    requestAxUserId,
+                    nameof(UpdateExpenseSheetHeader));
+                if (!mutationGuard.Allowed)
+                    return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
+                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, hojaGastosId.Trim(), request, requestAxUserId);
 
                 if (IND_SetActionMark && response.Success)
                 {
@@ -2341,11 +2462,21 @@ namespace IND_CRM_APP.Controllers
                     IndAttachFiles = req.IndAttachFiles ?? string.Empty
                 };
 
+                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                    token,
+                    hojaGastosId.Trim(),
+                    requestAxUserId,
+                    nameof(UpdateExpenseSheetLine),
+                    allowManagedUserMutation: false);
+                if (!mutationGuard.Allowed)
+                    return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
                 var response = await _apiClient.UpdateExpenseSheetLineAsync(
                     token,
                     hojaGastosId.Trim(),
                     lineRecId.Trim(),
-                    request);
+                    request,
+                    requestAxUserId);
 
                 if (IND_SetActionMark && response.Success)
                 {
@@ -2383,12 +2514,22 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrWhiteSpace(hojaGastosId) || string.IsNullOrWhiteSpace(lineRecId))
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
+                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                    token,
+                    hojaGastosId.Trim(),
+                    requestAxUserId,
+                    nameof(DeleteExpenseSheetLine),
+                    allowManagedUserMutation: false);
+                if (!mutationGuard.Allowed)
+                    return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
                 var response = await _apiClient.DeleteExpenseSheetLineAsync(
                     token,
                     hojaGastosId.Trim(),
                     lineRecId.Trim(),
                     deleteWholeSheet: false,
-                    deleteMode: 0);
+                    deleteMode: 0,
+                    axUserIdOverride: requestAxUserId);
 
                 if (IND_SetActionMark && response.Success)
                 {
@@ -2423,12 +2564,22 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrWhiteSpace(hojaGastosId))
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
+                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                    token,
+                    hojaGastosId.Trim(),
+                    requestAxUserId,
+                    nameof(DeleteExpenseSheet),
+                    allowManagedUserMutation: false);
+                if (!mutationGuard.Allowed)
+                    return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
                 var response = await _apiClient.DeleteExpenseSheetLineAsync(
                     token,
                     hojaGastosId.Trim(),
                     "0",
                     deleteWholeSheet: true,
-                    deleteMode: 2);
+                    deleteMode: 2,
+                    axUserIdOverride: requestAxUserId);
 
                 if (IND_SetActionMark && response.Success)
                 {
@@ -2484,6 +2635,89 @@ namespace IND_CRM_APP.Controllers
                 _logger.LogError(ex, "Unhandled error in GetProjectsForDropdown");
                 return Json(new { total = 0, items = Array.Empty<object>() });
             }
+        }
+
+        // Loads the current sheet state before mutating it so paid sheets stay immutable.
+        private async Task<ExpenseSheetMutationGuardResult> ValidateExpenseSheetMutationAsync(
+            string token,
+            string hojaGastosId,
+            string? axUserIdOverride,
+            string operationName,
+            bool allowManagedUserMutation = true)
+        {
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            if (string.IsNullOrWhiteSpace(safeSheetId))
+            {
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status400BadRequest,
+                    Message = _sr["Api_RequestFailed"].Value,
+                    ErrorCode = "INVALID_REQUEST"
+                };
+            }
+
+            if (!allowManagedUserMutation)
+            {
+                var managedUserGuard = ValidateManagedUserMutation(axUserIdOverride, operationName);
+                if (managedUserGuard != null)
+                    return managedUserGuard;
+            }
+
+            try
+            {
+                var result = await _apiClient.GetExpenseSheetDetailAsync(token, safeSheetId, axUserIdOverride);
+                var sheet = SelectSheet(result.GetAnyItems(), safeSheetId);
+                if (sheet == null)
+                {
+                    return new ExpenseSheetMutationGuardResult
+                    {
+                        Allowed = false,
+                        StatusCode = StatusCodes.Status404NotFound,
+                        Message = _sr["ExpenseSheets_NotFound"].Value,
+                        ErrorCode = ExpenseSheetNotFoundErrorCode
+                    };
+                }
+
+                if (IsPaidExpenseSheet(sheet))
+                {
+                    return new ExpenseSheetMutationGuardResult
+                    {
+                        Allowed = false,
+                        StatusCode = StatusCodes.Status409Conflict,
+                        Message = _sr["ExpenseSheets_Detail_PaidReadOnly"].Value,
+                        ErrorCode = ExpenseSheetPaidReadOnlyErrorCode
+                    };
+                }
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error while validating expense sheet mutation in {Operation}", operationName);
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status502BadGateway,
+                    Message = _sr["Api_RequestFailed"].Value,
+                    ErrorCode = "UPSTREAM_ERROR"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error while validating expense sheet mutation in {Operation}", operationName);
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Message = _sr["Api_RequestFailed"].Value,
+                    ErrorCode = "UNHANDLED_ERROR"
+                };
+            }
+
+            return new ExpenseSheetMutationGuardResult
+            {
+                Allowed = true,
+                StatusCode = StatusCodes.Status200OK
+            };
         }
 
         // Builds a paged API JSON response with exact property casing.
@@ -2677,40 +2911,76 @@ namespace IND_CRM_APP.Controllers
             return null;
         }
 
-        // Normalizes line transDate values to yyyyMMdd for upstream update payloads.
+        // Normalizes line transDate values to DD.MM.YYYY for upstream line contracts.
         private static string NormalizeLineTransDate(string? raw)
         {
             var normalized = NormalizeListDateFilter(raw);
             if (string.IsNullOrWhiteSpace(normalized))
                 return string.Empty;
 
-            if (DateTime.TryParseExact(
-                    normalized,
-                    "yyyy-MM-dd",
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.None,
-                    out var parsed))
-            {
-                return parsed.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-            }
-
-            if (DateTime.TryParseExact(
-                    normalized,
-                    "yyyyMMdd",
-                    CultureInfo.InvariantCulture,
-                    DateTimeStyles.None,
-                    out parsed))
-            {
-                return parsed.ToString("yyyyMMdd", CultureInfo.InvariantCulture);
-            }
-
-            return string.Empty;
+            return NormalizeTicketTransDate(normalized) ?? string.Empty;
         }
 
         // Returns a trimmed string or null for optional API fields.
         private static string? NormalizeOptionalText(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        // Returns the Ax user stored in session for the signed-in context.
+        private string? GetCurrentSessionAxUserId()
+        {
+            return NormalizeOptionalText(HttpContext?.Session.GetString("AxUser"));
+        }
+
+        // Detects when Gastos is acting on another user through X-IND-AxUserId.
+        private bool IsManagingOtherExpenseUser(string? axUserIdOverride)
+        {
+            var normalizedOverride = NormalizeOptionalText(axUserIdOverride);
+            var currentSessionAxUserId = GetCurrentSessionAxUserId();
+            return !string.IsNullOrWhiteSpace(normalizedOverride) &&
+                   !string.IsNullOrWhiteSpace(currentSessionAxUserId) &&
+                   !string.Equals(normalizedOverride, currentSessionAxUserId, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Blocks managed-user mutations that are not allowed outside the sheet header state flow.
+        private ExpenseSheetMutationGuardResult? ValidateManagedUserMutation(string? axUserIdOverride, string operationName)
+        {
+            if (!IsManagingOtherExpenseUser(axUserIdOverride))
+                return null;
+
+            _logger.LogInformation(
+                "Blocked managed-user expense mutation in {Operation}. X-IND-AxUserId={AxUserId}",
+                operationName,
+                NormalizeOptionalText(axUserIdOverride) ?? string.Empty);
+
+            return new ExpenseSheetMutationGuardResult
+            {
+                Allowed = false,
+                StatusCode = StatusCodes.Status403Forbidden,
+                Message = _sr["Auth_PermissionDenied_Body"].Value,
+                ErrorCode = ExpenseManagedUserReadOnlyErrorCode
+            };
+        }
+
+        // Treats voucher assignment or paid status code as immutable paid state.
+        private static bool IsPaidExpenseSheet(ExpenseSheetDetailDto sheet)
+        {
+            var statusCode = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado");
+            if (statusCode == ExpenseSheetStatusPaid)
+                return true;
+
+            return HasAssignedVoucher(GetExtraString(sheet.Extra, "voucher"));
+        }
+
+        // Matches the same voucher semantics used by the React expense pages.
+        private static bool HasAssignedVoucher(string? value)
+        {
+            var voucher = (value ?? string.Empty).Trim().ToUpperInvariant();
+            if (string.IsNullOrWhiteSpace(voucher))
+                return false;
+
+            return voucher != "-" && voucher != "." && voucher != "0";
         }
 
         // Selects one sheet by id or falls back to the first item.

@@ -644,6 +644,10 @@ export type ExpenseSheetListFetchOptions = ApiFetchOptions & {
   axUserIdOverride?: string;
 };
 
+export type ExpenseTicketListFetchOptions = ApiFetchOptions & {
+  axUserIdOverride?: string;
+};
+
 // Loads the expense sheet list from /api/crm/expensesheets/list.
 export const fetchExpenseSheetList = async (
   payload: ExpenseSheetListApiRequest,
@@ -1213,9 +1217,10 @@ export const createExpenseSheetTicket = async (
 // Loads ticket list using /api/crm/expensesheets/tickets/list.
 export const fetchExpenseSheetTicketsList = async (
   payload: ExpenseSheetTicketListRequest,
-  options?: ApiFetchOptions
+  options?: ExpenseTicketListFetchOptions
 ): Promise<IndPagedResponse<ExpenseSheetTicketListItemDto>> => {
-  const context = await ensureExpenseApiContext(options);
+  const { axUserIdOverride, ...baseOptions } = options || {};
+  const context = await ensureExpenseApiContext(baseOptions);
   const rawCreatedDateFrom = safeText(payload?.createdDateFrom);
   const rawCreatedDateTo = safeText(payload?.createdDateTo);
   const createdDateFrom = normalizeTicketListDate(rawCreatedDateFrom);
@@ -1245,9 +1250,19 @@ export const fetchExpenseSheetTicketsList = async (
   const response = await fetchJson<IndPagedResponse<ExpenseSheetTicketListItemDto>>(
     "/api/crm/expensesheets/tickets/list",
     {
-      ...options,
+      ...baseOptions,
       method: "POST",
-      headers: buildExpenseHeaders(context, options, true),
+      headers: (() => {
+        const headers = sanitizeHeaders(buildExpenseHeaders(context, baseOptions, true, false));
+        const normalizedOverrideAxUserId = normalizeAxUserIdHeader(axUserIdOverride);
+        const resolvedAxUserId = safeText(normalizedOverrideAxUserId || context.axUserId);
+        if (resolvedAxUserId) {
+          headers["X-IND-AxUserId"] = resolvedAxUserId;
+        } else {
+          removeHeaderValue(headers, "X-IND-AxUserId");
+        }
+        return headers;
+      })(),
       body: JSON.stringify(safePayload),
     }
   );
