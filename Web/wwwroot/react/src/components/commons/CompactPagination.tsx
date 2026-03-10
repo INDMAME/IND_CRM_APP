@@ -112,6 +112,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
         ) : null}
         <div
           id="pagination"
+          data-ind-pagination-anchor="true"
           ref={ref}
           className={classNames(
             "pagination grid grid-cols-[1fr_auto_1fr] items-center gap-1",

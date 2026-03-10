@@ -7,11 +7,9 @@ type UseHistoryPageListenersArgs = {
   isOpen: boolean;
   activatorRef: React.RefObject<HTMLDivElement | null>;
   popoverRef: React.RefObject<HTMLDivElement | null>;
-  paginationRef: React.RefObject<HTMLDivElement | null>;
   hasRestoredFilterRef: React.MutableRefObject<boolean>;
   retryOnNetworkErrorRef: React.MutableRefObject<boolean>;
   currentPage: number;
-  updateFabBottom: () => void;
   logHistory: (message: string, data?: Record<string, unknown>) => void;
   consumeReturnFlag: () => boolean;
   readCachedFilter: () => HistoryCachedFilter | null;
@@ -28,11 +26,9 @@ export const useHistoryPageListeners = ({
   isOpen,
   activatorRef,
   popoverRef,
-  paginationRef,
   hasRestoredFilterRef,
   retryOnNetworkErrorRef,
   currentPage,
-  updateFabBottom,
   logHistory,
   consumeReturnFlag,
   readCachedFilter,
@@ -94,24 +90,6 @@ export const useHistoryPageListeners = ({
     setIsOpen,
     setShowFilters,
   ]);
-
-  // Keep floating action button clear of pagination and react to layout changes.
-  useEffect(() => {
-    updateFabBottom();
-
-    let observer: ResizeObserver | null = null;
-    const paginationEl = paginationRef.current;
-    if (paginationEl && typeof ResizeObserver !== "undefined") {
-      observer = new ResizeObserver(() => updateFabBottom());
-      observer.observe(paginationEl);
-    }
-
-    window.addEventListener("resize", updateFabBottom);
-    return () => {
-      window.removeEventListener("resize", updateFabBottom);
-      if (observer) observer.disconnect();
-    };
-  }, [paginationRef, updateFabBottom]);
 
   // Wire topbar actions that toggle filters or force refresh of current page.
   useEffect(() => {

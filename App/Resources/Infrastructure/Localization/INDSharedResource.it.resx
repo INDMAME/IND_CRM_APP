@@ -201,6 +201,21 @@
   <data name="ExpenseSheets_Detail_DeleteError" xml:space="preserve">
     <value>Errore durante l'eliminazione della nota spese.</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_Approve" xml:space="preserve">
+    <value>Approva</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Reject" xml:space="preserve">
+    <value>Rifiuta</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoApproval" xml:space="preserve">
+    <value>Annulla approvazione</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoRejection" xml:space="preserve">
+    <value>Annulla rifiuto</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Toolbar" xml:space="preserve">
+    <value>Azioni stato nota spese</value>
+  </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
     <value>Aggiornamento della linea di spesa in corso...</value>
   </data>
@@ -227,6 +242,9 @@
   </data>
   <data name="ExpenseSheets_Filter_User" xml:space="preserve">
     <value>Utente</value>
+  </data>
+  <data name="ExpenseSheets_Filter_User_All" xml:space="preserve">
+    <value>Tutti</value>
   </data>
   <data name="ExpenseSheets_Filter_Status" xml:space="preserve">
     <value>Stato</value>

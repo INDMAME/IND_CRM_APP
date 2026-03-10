@@ -32,8 +32,6 @@ const PAGE_SIZE = 6;
 const PAGE_WINDOW = 6;
 const NAV_DELAY_MS = 320;
 const FAB_BASE_BOTTOM = 32;
-const FAB_CLEARANCE = 24;
-const FAB_GAP = 12;
 
 const normalizeUiLocale = (locale: string) => {
   const value = String(locale || "").trim();
@@ -214,9 +212,6 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
 
   const activatorRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
-  const paginationRef = useRef<HTMLDivElement | null>(null);
-
-  const [fabBottom, setFabBottom] = useState(FAB_BASE_BOTTOM);
 
   const { readCachedFilter, clearFilterCache, consumeReturnFlag, saveCachedFilter } = useHistoryFilterCache();
   const {
@@ -306,26 +301,13 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
 
   const totalPages = Math.ceil((total || 0) / PAGE_SIZE);
 
-  // Keep the floating action button clear of pagination on small screens.
-  const updateFabBottom = useCallback(() => {
-    if (!paginationRef.current || totalPages <= 1) {
-      setFabBottom(FAB_BASE_BOTTOM);
-      return;
-    }
-    const height = paginationRef.current.offsetHeight || 0;
-    const next = Math.max(FAB_BASE_BOTTOM, height + FAB_CLEARANCE + FAB_GAP);
-    setFabBottom((prev) => (Math.abs(prev - next) < 1 ? prev : next));
-  }, [totalPages]);
-
   useHistoryPageListeners({
     isOpen,
     activatorRef,
     popoverRef,
-    paginationRef,
     hasRestoredFilterRef,
     retryOnNetworkErrorRef,
     currentPage,
-    updateFabBottom,
     logHistory,
     consumeReturnFlag,
     readCachedFilter,
@@ -742,7 +724,6 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
           />
 
           <CompactPagination
-            ref={paginationRef}
             totalPages={totalPages}
             currentPage={currentPage}
             pageWindow={PAGE_WINDOW}
@@ -758,7 +739,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
           ariaLabel={indT("Common_Create", "Create")}
           size={76}
           right={16}
-          bottom={fabBottom}
+          bottom={FAB_BASE_BOTTOM}
         />
       )}
     </div>

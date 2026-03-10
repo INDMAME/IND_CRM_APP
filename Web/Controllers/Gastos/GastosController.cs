@@ -292,16 +292,18 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
+                IncludeSubordinates = req.IncludeSubordinates,
                 Page = page,
                 PageSize = pageSize
             };
             var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
             _logger.LogInformation(
-                "ApiExpenseSheetsList request trace. hojaGastosId={HojaGastosId} X-IND-AxUserId={AxUserId} page={Page} pageSize={PageSize}",
+                "ApiExpenseSheetsList request trace. hojaGastosId={HojaGastosId} X-IND-AxUserId={AxUserId} page={Page} pageSize={PageSize} includeSubordinates={IncludeSubordinates}",
                 payload.Filter ?? string.Empty,
                 requestAxUserId ?? string.Empty,
                 page,
-                pageSize);
+                pageSize,
+                payload.IncludeSubordinates);
 
             try
             {
@@ -315,7 +317,7 @@ namespace IND_CRM_APP.Controllers
                 if (!result.Success && items.Count == 0)
                 {
                     _logger.LogWarning(
-                        "ApiExpenseSheetsList upstream returned non-success. Message={Message} TraceId={TraceId} page={Page} pageSize={PageSize} billedMode={BilledMode} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} projId={ProjId} currencyCode={CurrencyCode} expenseSheetStatus={ExpenseSheetStatus}",
+                        "ApiExpenseSheetsList upstream returned non-success. Message={Message} TraceId={TraceId} page={Page} pageSize={PageSize} billedMode={BilledMode} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} projId={ProjId} currencyCode={CurrencyCode} expenseSheetStatus={ExpenseSheetStatus} includeSubordinates={IncludeSubordinates}",
                         result.Message ?? string.Empty,
                         result.TraceId ?? string.Empty,
                         page,
@@ -325,7 +327,8 @@ namespace IND_CRM_APP.Controllers
                         payload.CreatedDateTo ?? string.Empty,
                         payload.ProjId ?? string.Empty,
                         payload.CurrencyCode ?? string.Empty,
-                        payload.ExpenseSheetStatus.HasValue ? payload.ExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null");
+                        payload.ExpenseSheetStatus.HasValue ? payload.ExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                        payload.IncludeSubordinates);
                 }
 
                 return CreateApiPagedResponse(new
@@ -2800,6 +2803,7 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjectId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
+                IncludeSubordinates = req.IncludeSubordinates,
                 Page = page,
                 PageSize = pageSize
             };
@@ -3003,10 +3007,17 @@ namespace IND_CRM_APP.Controllers
             {
                 hojaGastosId = sheet.HojaGastosId ?? string.Empty,
                 description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
+                expenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
+                estadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
+                userId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
+                userName = GetExtraString(sheet.Extra, "userName", "name", "userDisplayName", "nombreUsuario"),
                 voucher = GetExtraString(sheet.Extra, "voucher"),
                 projId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
+                totalAmount = GetExtraDecimal(sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
                 totalAmountMST = GetExtraDecimal(sheet.Extra, "totalAmountMST", "totalamountmst"),
+                exchRate = GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"),
+                exchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 createdDate = NormalizeDate(GetExtraString(sheet.Extra, "createdDate", "creationDate", "transDate", "fechaCreacion"))
             };
         }
@@ -3021,6 +3032,7 @@ namespace IND_CRM_APP.Controllers
                 ExpenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
                 EstadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
                 UserId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
+                UserName = GetExtraString(sheet.Extra, "userName", "name", "userDisplayName", "nombreUsuario"),
                 Voucher = GetExtraString(sheet.Extra, "voucher"),
                 ProjId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 CurrencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),

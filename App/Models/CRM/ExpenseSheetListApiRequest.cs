@@ -33,6 +33,9 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public int? ExpenseSheetStatus { get; set; }
 
+        [JsonPropertyName("includeSubordinates")]
+        public bool IncludeSubordinates { get; set; }
+
         [JsonPropertyName("page")]
         public int Page { get; set; } = 1;
 

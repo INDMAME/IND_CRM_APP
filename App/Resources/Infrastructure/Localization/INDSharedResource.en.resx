@@ -201,6 +201,21 @@
   <data name="ExpenseSheets_Detail_DeleteError" xml:space="preserve">
     <value>Error deleting expense sheet.</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_Approve" xml:space="preserve">
+    <value>Approve</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Reject" xml:space="preserve">
+    <value>Reject</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoApproval" xml:space="preserve">
+    <value>Undo approval</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoRejection" xml:space="preserve">
+    <value>Undo rejection</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Toolbar" xml:space="preserve">
+    <value>Expense sheet status actions</value>
+  </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
     <value>Updating expense line...</value>
   </data>
@@ -227,6 +242,9 @@
   </data>
   <data name="ExpenseSheets_Filter_User" xml:space="preserve">
     <value>User</value>
+  </data>
+  <data name="ExpenseSheets_Filter_User_All" xml:space="preserve">
+    <value>All</value>
   </data>
   <data name="ExpenseSheets_Filter_Status" xml:space="preserve">
     <value>Status</value>

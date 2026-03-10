@@ -23,6 +23,7 @@ export const useExpenseSheetsFiltersState = ({
   const [hojaGastosId, setHojaGastosId] = useState("");
   const [currencyCode, setCurrencyCode] = useState("");
   const [managedUserId, setManagedUserId] = useState(defaultManagedUserId);
+  const [includeSubordinates, setIncludeSubordinates] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ExpenseStatusFilterCode>(DEFAULT_EXPENSE_STATUS_FILTER);
   const exchangeRateMode = null;
   const [activeQuickFilter, setActiveQuickFilter] = useState<ExpenseQuickFilterId | null>(null);
@@ -39,12 +40,13 @@ export const useExpenseSheetsFiltersState = ({
       projectId,
       hojaGastosId,
       currencyCode,
-      managedUserId,
+      managedUserId: String(managedUserId || defaultManagedUserId).trim(),
+      includeSubordinates,
       statusFilter,
       exchangeRateMode,
       filter: hojaGastosId,
     }),
-    [currencyCode, fromDate, hojaGastosId, managedUserId, projectId, statusFilter, toDate]
+    [currencyCode, defaultManagedUserId, fromDate, hojaGastosId, includeSubordinates, managedUserId, projectId, statusFilter, toDate]
   );
 
   const onApply = useCallback(() => {
@@ -61,7 +63,8 @@ export const useExpenseSheetsFiltersState = ({
       projectId,
       hojaGastosId,
       currencyCode,
-      managedUserId,
+      managedUserId: String(managedUserId || defaultManagedUserId).trim(),
+      includeSubordinates,
       statusFilter,
       exchangeRateMode,
       filter: hojaGastosId,
@@ -72,7 +75,7 @@ export const useExpenseSheetsFiltersState = ({
     setShowManualDateFilter(false);
     setShowFilters(false);
     onApplyFilters(snapshot);
-  }, [currencyCode, fromDate, hojaGastosId, managedUserId, onApplyFilters, projectId, statusFilter, toDate]);
+  }, [currencyCode, defaultManagedUserId, fromDate, hojaGastosId, includeSubordinates, managedUserId, onApplyFilters, projectId, statusFilter, toDate]);
 
   // Rehydrates the list filters from a cached snapshot when returning from detail.
   const restoreAppliedFilters = useCallback((snapshot: AppliedFilterSnapshot) => {
@@ -84,6 +87,7 @@ export const useExpenseSheetsFiltersState = ({
     setHojaGastosId(normalized.hojaGastosId);
     setCurrencyCode(normalized.currencyCode);
     setManagedUserId(restoredManagedUserId);
+    setIncludeSubordinates(normalized.includeSubordinates === true);
     setStatusFilter(normalized.statusFilter);
     setActiveQuickFilter(null);
     setShowManualDateFilter(false);
@@ -102,6 +106,7 @@ export const useExpenseSheetsFiltersState = ({
     setHojaGastosId("");
     setCurrencyCode("");
     setManagedUserId(defaultManagedUserId);
+    setIncludeSubordinates(false);
     setStatusFilter(DEFAULT_EXPENSE_STATUS_FILTER);
     setActiveQuickFilter(null);
     setShowManualDateFilter(false);
@@ -192,6 +197,7 @@ export const useExpenseSheetsFiltersState = ({
     hojaGastosId,
     currencyCode,
     managedUserId,
+    includeSubordinates,
     statusFilter,
     exchangeRateMode,
     activeQuickFilter,
@@ -205,6 +211,7 @@ export const useExpenseSheetsFiltersState = ({
     setHojaGastosId,
     setCurrencyCode,
     setManagedUserId,
+    setIncludeSubordinates,
     setStatusFilter,
     onApply,
     onClear,

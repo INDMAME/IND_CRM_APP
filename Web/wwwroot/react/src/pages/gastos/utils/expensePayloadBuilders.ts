@@ -84,6 +84,7 @@ export const buildExpenseListPayload = (
     projId: normalizeOptionalText(filters.projectId),
     currencyCode: normalizeOptionalText(filters.currencyCode),
     expenseSheetStatus: resolveExpenseSheetStatus(filters.statusFilter),
+    includeSubordinates: filters.includeSubordinates === true,
     page: nextPage,
     pageSize: nextPageSize,
   };
@@ -93,7 +94,8 @@ export const buildExpenseListPayload = (
 export const buildExpenseSheetSuggestPayload = (
   term: string,
   pageSize = DEFAULT_SUGGEST_PAGE_SIZE,
-  page = 1
+  page = 1,
+  includeSubordinates = false
 ): ExpenseSheetListApiRequest => {
   const safeTerm = String(term || "").trim();
   const nextPageSize = Number.isFinite(pageSize) && pageSize > 0 ? pageSize : DEFAULT_SUGGEST_PAGE_SIZE;
@@ -106,6 +108,7 @@ export const buildExpenseSheetSuggestPayload = (
     createdDateTo: undefined,
     projId: undefined,
     currencyCode: undefined,
+    includeSubordinates: includeSubordinates === true,
     page: nextPage,
     pageSize: nextPageSize,
   };

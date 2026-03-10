@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useFloatingActionButtonVisibility } from "../../hooks/useFloatingActionButtonVisibility.ts";
 
 export type FloatingActionButtonMenuItem = {
   id: string;
@@ -9,6 +10,8 @@ export type FloatingActionButtonMenuItem = {
   disabled?: boolean;
   ariaLabel?: string;
 };
+
+const EMPTY_MENU_ITEMS: FloatingActionButtonMenuItem[] = [];
 
 type FloatingActionButtonProps = {
   route?: string;
@@ -43,7 +46,7 @@ const FloatingActionButton = ({
   plusThickness = 4,
   plusLength = 28,
   onClick,
-  menuItems = [],
+  menuItems = EMPTY_MENU_ITEMS,
   isMenuOpen,
   onMenuOpenChange,
   closeMenuOnSelect = true,
@@ -56,6 +59,11 @@ const FloatingActionButton = ({
   const hasMenu = menuItems.length > 0;
   const isMenuControlled = typeof isMenuOpen === "boolean";
   const menuOpen = hasMenu ? (isMenuControlled ? Boolean(isMenuOpen) : internalMenuOpen) : false;
+  const { isVisible, resolvedBottom } = useFloatingActionButtonVisibility({
+    bottom,
+    right,
+    size,
+  });
 
   const setMenuOpen = useCallback(
     (nextOpen: boolean) => {
@@ -163,6 +171,11 @@ const FloatingActionButton = ({
     };
   }, [menuOpen, setMenuOpen]);
 
+  useEffect(() => {
+    if (isVisible || !menuOpen) return;
+    setMenuOpen(false);
+  }, [isVisible, menuOpen, setMenuOpen]);
+
   const runPrimaryAction = useCallback(() => {
     if (typeof onClick === "function") {
       onClick();
@@ -204,13 +217,18 @@ const FloatingActionButton = ({
     return extra ? `${base} ${extra}` : base;
   }, [menuClassName]);
 
+  const rootClassName = useMemo(() => {
+    const base = "fixed z-2000 flex flex-col items-end gap-2 transition-[opacity,transform,bottom] duration-200 ease-out";
+    return isVisible ? `${base} opacity-100 translate-y-0` : `${base} pointer-events-none translate-y-6 opacity-0`;
+  }, [isVisible]);
+
   return (
     <div
       ref={rootRef}
-      className="fixed z-2000 flex flex-col items-end gap-2"
+      className={rootClassName}
       style={{
         right: `${right}px`,
-        bottom: `${bottom}px`,
+        bottom: `${resolvedBottom}px`,
       }}
     >
       {menuOpen ? (
@@ -240,6 +258,8 @@ const FloatingActionButton = ({
         aria-label={ariaLabel}
         aria-expanded={hasMenu ? menuOpen : undefined}
         aria-haspopup={hasMenu ? "menu" : undefined}
+        aria-hidden={!isVisible}
+        tabIndex={isVisible ? 0 : -1}
         className="rounded-md border-0 bg-transparent p-0 transition-transform duration-150 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-4"
         style={{
           width: `${size}px`,

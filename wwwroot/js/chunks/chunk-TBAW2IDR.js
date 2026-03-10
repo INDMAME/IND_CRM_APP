@@ -3,7 +3,7 @@ import {
 } from "./chunk-LBAUQXUT.js";
 import {
   fetchExpenseProjects
-} from "./chunk-SAOIE2GK.js";
+} from "./chunk-YVGMYSYA.js";
 import {
   require_jsx_runtime,
   require_react

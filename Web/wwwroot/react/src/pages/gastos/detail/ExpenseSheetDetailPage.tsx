@@ -2,6 +2,7 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import FloatingActionButton, { type FloatingActionButtonMenuItem } from "../../../components/commons/FloatingActionButton.tsx";
+import PageBottomActions, { PageBottomActionButton } from "../../../components/commons/PageBottomActions.tsx";
 import Spinner from "../../../components/commons/Spinner.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
@@ -24,6 +25,7 @@ import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 
 const LINES_PAGE_SIZE = 6;
+const DETAIL_FAB_BOTTOM_WITH_ACTION_BAR = 176;
 
 const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   if (!items.length) return [];
@@ -64,6 +66,18 @@ const NewLineIcon = () => (
     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7h4" />
   </svg>
 );
+
+// Renders the shared bottom action bar mockup for expense sheet status flows.
+const ExpenseSheetStatusMockupActions = () => {
+  return (
+    <PageBottomActions ariaLabel={indT("ExpenseSheets_BottomActions_Toolbar", "Expense sheet status actions")}>
+      <PageBottomActionButton label={indT("ExpenseSheets_BottomActions_Approve", "Approve")} />
+      <PageBottomActionButton label={indT("ExpenseSheets_BottomActions_Reject", "Reject")} />
+      <PageBottomActionButton label={indT("ExpenseSheets_BottomActions_UndoApproval", "Undo approval")} />
+      <PageBottomActionButton label={indT("ExpenseSheets_BottomActions_UndoRejection", "Undo rejection")} />
+    </PageBottomActions>
+  );
+};
 
 const ExpenseSheetDetailPageContent = () => {
   const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } =
@@ -119,13 +133,11 @@ const ExpenseSheetDetailPageContent = () => {
     draftExchangeRate,
     draftExpenseSheetStatus,
     draftEstadoComentarios,
-    draftVoucher,
     officialExchangeRateValue,
     officialExchangeRateRawValue,
     officialExchangeRateDate,
     officialExchangeRateSource,
     projectValue,
-    voucherValue,
     isSheetPaid,
     isSheetLocked,
     isSheetEditLocked,
@@ -149,7 +161,6 @@ const ExpenseSheetDetailPageContent = () => {
     setDraftExchangeRate,
     setDraftExpenseSheetStatus,
     setDraftEstadoComentarios,
-    setDraftVoucher,
     handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateLineMode,
@@ -188,15 +199,10 @@ const ExpenseSheetDetailPageContent = () => {
 
   const modalLoadingText = indT("Common_Loading", "Loading");
   const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
-  const modalConfirmText = busy
-    ? modalLoadingText
-    : (!busy && modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")));
+  const modalConfirmText = busy ? modalLoadingText : (!busy && modalError ? indT("Common_OK", "OK") : (modal.confirmText || indT("Confirm_Yes", "OK")));
 
   const handleModalButtonConfirm = useCallback(() => {
-    if (!busy && modalError) {
-      closeConfirm();
-      return;
-    }
+    if (!busy && modalError) { closeConfirm(); return; }
     handleModalConfirm();
   }, [busy, closeConfirm, handleModalConfirm, modalError]);
 
@@ -236,7 +242,6 @@ const ExpenseSheetDetailPageContent = () => {
     draftProjectId,
     draftExpenseSheetStatus,
     draftEstadoComentarios,
-    draftVoucher,
     currentExpenseSheetStatus: header?.expenseSheetStatus,
     currentExchangeRateMode: header?.exchangeRateMode,
     exchangeRateBaseCurrency,
@@ -367,6 +372,8 @@ const ExpenseSheetDetailPageContent = () => {
     ],
     [handleOpenCreateLineMode, handleOpenLinkTicketMode, openSourcePicker]
   );
+
+  const showMockupBottomActions = !isCreateMode && !isLoading && !isRedirectingAfterCreate && !errorMessage;
 
   return (
     <div className="space-y-3">
@@ -510,8 +517,6 @@ const ExpenseSheetDetailPageContent = () => {
           canEditStatus={canEditExpenseStatus}
           header={header}
           projectValue={projectValue}
-          voucherValue={voucherValue}
-          isSheetPaid={isSheetPaid}
           isCurrencyLockedByLines={isCurrencyLockedByLines}
           isExchangeRateLockedByLines={isExchangeRateLockedByLines}
           normalizedDraftCurrency={normalizedDraftCurrency}
@@ -527,7 +532,6 @@ const ExpenseSheetDetailPageContent = () => {
           draftExchangeRate={draftExchangeRate}
           draftExpenseSheetStatus={draftExpenseSheetStatus}
           draftEstadoComentarios={draftEstadoComentarios}
-          draftVoucher={draftVoucher}
           officialExchangeRateRawValue={officialExchangeRateRawValue}
           officialExchangeRateDate={officialExchangeRateDate}
           officialExchangeRateSource={officialExchangeRateSource}
@@ -537,7 +541,6 @@ const ExpenseSheetDetailPageContent = () => {
           onDraftExchangeRateChange={setDraftExchangeRate}
           onDraftExpenseSheetStatusChange={setDraftExpenseSheetStatus}
           onDraftEstadoComentariosChange={setDraftEstadoComentarios}
-          onDraftVoucherChange={setDraftVoucher}
         />
       ) : null}
 
@@ -556,12 +559,16 @@ const ExpenseSheetDetailPageContent = () => {
         />
       ) : null}
 
+      {showMockupBottomActions ? (
+        <ExpenseSheetStatusMockupActions />
+      ) : null}
+
       {canCreateExpenseForCurrentView && !isCreateMode && !isSheetLocked ? (
         <FloatingActionButton
           ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
           size={76}
           right={16}
-          bottom={24}
+          bottom={showMockupBottomActions ? DETAIL_FAB_BOTTOM_WITH_ACTION_BAR : 24}
           menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
           menuItems={fabMenuItems}
         />

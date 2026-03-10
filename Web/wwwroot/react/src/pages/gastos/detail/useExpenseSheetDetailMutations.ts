@@ -32,7 +32,6 @@ type UseExpenseSheetDetailMutationsArgs = {
   draftProjectId: string;
   draftExpenseSheetStatus?: number | null;
   draftEstadoComentarios: string;
-  draftVoucher: string;
   exchangeRateBaseCurrency: string;
   currentExpenseSheetStatus?: number | null;
   currentExchangeRateMode?: number | null;
@@ -44,7 +43,6 @@ type UseExpenseSheetDetailMutationsArgs = {
 };
 
 const normalizeExchangeRate = (raw: string): number | null => parseDecimalInput(raw);
-const EXPENSE_STATUS_PAID = 4;
 // Compares rates with tolerance to avoid floating point mismatch on payload mode.
 const areRatesEquivalent = (left: number | null, right: number | null): boolean => {
   if (left == null || right == null) return false;
@@ -75,7 +73,6 @@ export const useExpenseSheetDetailMutations = ({
   draftProjectId,
   draftExpenseSheetStatus,
   draftEstadoComentarios,
-  draftVoucher,
   exchangeRateBaseCurrency,
   currentExpenseSheetStatus,
   currentExchangeRateMode,
@@ -103,7 +100,6 @@ export const useExpenseSheetDetailMutations = ({
     const normalizedDescription = String(draftDescription || "").trim();
     const normalizedProjectId = String(draftProjectId || "").trim();
     const normalizedEstadoComentarios = canEditStatus ? String(draftEstadoComentarios || "").trim() : "";
-    const normalizedVoucher = canEditStatus ? String(draftVoucher || "").trim() : "";
     const normalizedExchangeRateRaw = String(
       isExchangeRateLockedByLines ? (lockedExchangeRate || draftExchangeRate || "") : (draftExchangeRate || "")
     );
@@ -138,7 +134,6 @@ export const useExpenseSheetDetailMutations = ({
         : (normalizedEstadoComentarios ? (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : 0) : undefined))
       : (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : undefined);
     const resolvedExpenseSheetStatus = hasDraftStatus ? parsedDraftStatus : (currentExpenseSheetStatus ?? undefined);
-    const resolvedVoucher = resolvedExpenseSheetStatus === EXPENSE_STATUS_PAID ? normalizedVoucher || undefined : undefined;
 
     if (isCreateMode) {
       if (!normalizedDescription) {
@@ -211,7 +206,6 @@ export const useExpenseSheetDetailMutations = ({
           currencyCode: normalizedCurrency,
           exchRate: hasValidRate ? Number(parsedExchangeRate) : 1,
           projId: String(draftProjectId || "").trim() || undefined,
-          voucher: resolvedVoucher,
           expenseSheetStatus: resolvedExpenseSheetStatus,
           exchangeRateMode: resolvedExchangeRateMode,
           estadoComentarios: canEditStatus ? normalizedEstadoComentarios : undefined,
@@ -246,7 +240,6 @@ export const useExpenseSheetDetailMutations = ({
     currentExpenseSheetStatus,
     currentExchangeRateMode,
     canEditStatus,
-    draftVoucher,
     isCreateMode,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,

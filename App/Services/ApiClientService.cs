@@ -916,6 +916,7 @@ namespace IND_CRM_APP.Services
             var normalizedCreatedDateTo = NormalizeAxListDate(req.CreatedDateTo) ?? string.Empty;
             var normalizedProjId = NormalizeOptionalText(req.ProjId) ?? string.Empty;
             var normalizedCurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant() ?? string.Empty;
+            var normalizedIncludeSubordinates = req.IncludeSubordinates;
 
             var payload = new Dictionary<string, object?>
             {
@@ -926,13 +927,14 @@ namespace IND_CRM_APP.Services
                 ["projId"] = normalizedProjId,
                 ["currencyCode"] = normalizedCurrencyCode,
                 ["expenseSheetStatus"] = normalizedExpenseSheetStatus,
+                ["includeSubordinates"] = normalizedIncludeSubordinates,
                 ["page"] = normalizedPage,
                 ["pageSize"] = normalizedPageSize
             };
 
             var serializedPayload = Serialize(payload);
             _logger.LogInformation(
-                "Upstream request {Operation}: payloadLength={PayloadLength} billedMode={BilledMode} page={Page} pageSize={PageSize} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} filterLen={FilterLen} projIdLen={ProjIdLen} currencyCode={CurrencyCode} expenseSheetStatus={ExpenseSheetStatus} axUserIdOverride={AxUserIdOverride}",
+                "Upstream request {Operation}: payloadLength={PayloadLength} billedMode={BilledMode} page={Page} pageSize={PageSize} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} filterLen={FilterLen} projIdLen={ProjIdLen} currencyCode={CurrencyCode} expenseSheetStatus={ExpenseSheetStatus} includeSubordinates={IncludeSubordinates} axUserIdOverride={AxUserIdOverride}",
                 "GetExpenseSheets",
                 serializedPayload.Length,
                 normalizedBilledMode,
@@ -944,6 +946,7 @@ namespace IND_CRM_APP.Services
                 normalizedProjId.Length,
                 string.IsNullOrWhiteSpace(normalizedCurrencyCode) ? "<empty>" : normalizedCurrencyCode,
                 normalizedExpenseSheetStatus.HasValue ? normalizedExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                normalizedIncludeSubordinates,
                 NormalizeOptionalText(axUserIdOverride) ?? "<session>");
 
             var result = await SendPostAsync(ApiRoutes.ExpenseSheetsList, serializedPayload);

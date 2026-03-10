@@ -10,6 +10,7 @@ type ExpenseSheetFilterInputProps = {
   placeholder: string;
   value: string;
   managedUserId?: string;
+  includeSubordinates?: boolean;
   onChange: (value: string) => void;
   enableRemoteSuggestions?: boolean;
   disabled?: boolean;
@@ -19,14 +20,20 @@ type ExpenseSheetFilterInputProps = {
 
 const SEARCH_PAGE_SIZE = 20;
 
+const formatSheetOptionTitle = (sheetId: string, ownerUserId: string): string => {
+  if (!ownerUserId) return sheetId;
+  return `${sheetId} (${ownerUserId})`;
+};
+
 const mapSheetOptions = (items: ExpenseSheetListItemDto[] | undefined): RemoteSearchOption[] => {
   return (Array.isArray(items) ? items : [])
     .map((item) => {
       const id = String(item?.HojaGastosId || "").trim();
+      const ownerUserId = String(item?.UserId || "").trim();
       if (!id) return null;
       return {
         value: id,
-        title: id,
+        title: formatSheetOptionTitle(id, ownerUserId),
         subtitle: String(item?.Description || "").trim() || "-",
       } as RemoteSearchOption;
     })
@@ -39,6 +46,7 @@ const ExpenseSheetFilterInput = ({
   placeholder,
   value,
   managedUserId = "",
+  includeSubordinates = false,
   onChange,
   enableRemoteSuggestions = true,
   disabled = false,
@@ -49,7 +57,7 @@ const ExpenseSheetFilterInput = ({
   const normalizedManagedUserId = String(managedUserId || "").trim();
 
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
-    const payload = buildExpenseSheetSuggestPayload(term, SEARCH_PAGE_SIZE, 1);
+    const payload = buildExpenseSheetSuggestPayload(term, SEARCH_PAGE_SIZE, 1, includeSubordinates);
     const response = await fetchExpenseSheetList(payload, {
       suppressPermissionModal: true,
       axUserIdOverride: normalizedManagedUserId || undefined,
@@ -61,10 +69,10 @@ const ExpenseSheetFilterInput = ({
     }
 
     return mapSheetOptions(response?.Items);
-  }, [normalizedManagedUserId]);
+  }, [includeSubordinates, normalizedManagedUserId]);
 
   const loadOptionsPage = useCallback(async (term: string, page: number, pageSize: number, signal: AbortSignal) => {
-    const payload = buildExpenseSheetSuggestPayload(term, pageSize, page);
+    const payload = buildExpenseSheetSuggestPayload(term, pageSize, page, includeSubordinates);
     const response = await fetchExpenseSheetList(payload, {
       suppressPermissionModal: true,
       axUserIdOverride: normalizedManagedUserId || undefined,
@@ -82,7 +90,7 @@ const ExpenseSheetFilterInput = ({
       items: mapSheetOptions(response?.Items),
       total: Number(response?.Total || 0),
     };
-  }, [normalizedManagedUserId]);
+  }, [includeSubordinates, normalizedManagedUserId]);
 
   if (!enableRemoteSuggestions || readOnlyMode) {
     return (

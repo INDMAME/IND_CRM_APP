@@ -201,6 +201,21 @@
   <data name="ExpenseSheets_Detail_DeleteError" xml:space="preserve">
     <value>Error al eliminar la hoja de gastos.</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_Approve" xml:space="preserve">
+    <value>Aprobar</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Reject" xml:space="preserve">
+    <value>Rechazar</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoApproval" xml:space="preserve">
+    <value>Deshacer aprobacion</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoRejection" xml:space="preserve">
+    <value>Deshacer rechazo</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Toolbar" xml:space="preserve">
+    <value>Acciones de estado de la hoja de gastos</value>
+  </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
     <value>Actualizando linea de gasto...</value>
   </data>
@@ -227,6 +242,9 @@
   </data>
   <data name="ExpenseSheets_Filter_User" xml:space="preserve">
     <value>Usuario</value>
+  </data>
+  <data name="ExpenseSheets_Filter_User_All" xml:space="preserve">
+    <value>Todos</value>
   </data>
   <data name="ExpenseSheets_Filter_Status" xml:space="preserve">
     <value>Estado</value>

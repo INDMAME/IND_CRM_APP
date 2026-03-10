@@ -51,6 +51,7 @@ const normalizeItems = (raw: unknown): ExpenseSheetCard[] => {
       expenseSheetStatus: toNullableNumber(item.expenseSheetStatus),
       estadoComentarios: typeof item.estadoComentarios === "string" ? item.estadoComentarios.trim() : null,
       userId: typeof item.userId === "string" ? item.userId.trim() : undefined,
+      userName: typeof item.userName === "string" ? item.userName.trim() : null,
       voucher: typeof item.voucher === "string" ? item.voucher.trim() : undefined,
       projId: typeof item.projId === "string" ? item.projId.trim() : undefined,
       currencyCode: typeof item.currencyCode === "string" ? item.currencyCode.trim() : undefined,

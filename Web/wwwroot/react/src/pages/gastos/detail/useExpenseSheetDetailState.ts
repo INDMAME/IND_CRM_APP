@@ -42,7 +42,6 @@ const buildCreateHeaderDraft = (): ExpenseSheetHeader => {
     hojaGastosId: "",
     description: "",
     projId: "",
-    voucher: "",
     currencyCode: "",
     totalAmount: null,
     expenseSheetStatus: 0,
@@ -96,7 +95,6 @@ export const useExpenseSheetDetailState = ({
   const [draftExchangeRate, setDraftExchangeRate] = useState("");
   const [draftExpenseSheetStatus, setDraftExpenseSheetStatus] = useState(0);
   const [draftEstadoComentarios, setDraftEstadoComentarios] = useState("");
-  const [draftVoucher, setDraftVoucher] = useState("");
   const [defaultCurrencyCode, setDefaultCurrencyCode] = useState("");
   const [isExchangeRateLoading, setIsExchangeRateLoading] = useState(false);
   const [exchangeRateMessage, setExchangeRateMessage] = useState("");
@@ -121,7 +119,6 @@ export const useExpenseSheetDetailState = ({
     const nextStatus = Number(nextHeader?.expenseSheetStatus);
     setDraftExpenseSheetStatus(Number.isInteger(nextStatus) && nextStatus >= 0 ? nextStatus : 0);
     setDraftEstadoComentarios(safeText(nextHeader?.estadoComentarios));
-    setDraftVoucher(safeText(nextHeader?.voucher));
   }, []);
 
   useEffect(() => {
@@ -245,11 +242,10 @@ export const useExpenseSheetDetailState = ({
   }, [hasActiveProcess]);
 
   const projectValue = safeText(header?.projId);
-  const voucherValue = safeText(header?.voucher);
   const statusCode = typeof header?.expenseSheetStatus === "number" ? header.expenseSheetStatus : null;
   const isSheetApproved = statusCode === EXPENSE_STATUS_APPROVED;
   const isSheetPaidByStatus = statusCode === EXPENSE_STATUS_PAID;
-  const isSheetPaidByVoucher = hasAssignedVoucher(voucherValue);
+  const isSheetPaidByVoucher = hasAssignedVoucher(header?.voucher);
   const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
   const isSheetLocked = isSheetApproved || isSheetPaid;
   const isSheetEditLocked = isSheetPaid || (isSheetApproved && !canEditApprovedStatus);
@@ -595,7 +591,6 @@ export const useExpenseSheetDetailState = ({
     draftExchangeRate,
     draftExpenseSheetStatus,
     draftEstadoComentarios,
-    draftVoucher,
     officialExchangeRateValue,
     officialExchangeRateRawValue,
     officialExchangeRateDate,
@@ -604,7 +599,6 @@ export const useExpenseSheetDetailState = ({
     exchangeRateMessage,
     exchangeRateMessageIsError,
     projectValue,
-    voucherValue,
     isSheetApproved,
     isSheetPaid,
     isSheetLocked,
@@ -630,7 +624,6 @@ export const useExpenseSheetDetailState = ({
     setDraftExchangeRate,
     setDraftExpenseSheetStatus,
     setDraftEstadoComentarios,
-    setDraftVoucher,
     handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateSheetMode,

@@ -173,7 +173,7 @@ var AuthProvider = ({
     }
     const bootstrapExpenseManagement = async () => {
       try {
-        const expenseApiModule = await import("./expenseApi-37YVUEC5.js");
+        const expenseApiModule = await import("./expenseApi-KMRMKSSV.js");
         const contextSnapshot = await expenseApiModule.getExpenseApiContextSnapshot({
           suppressPermissionModal: true
         });

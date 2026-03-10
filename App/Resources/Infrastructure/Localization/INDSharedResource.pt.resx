@@ -201,6 +201,21 @@
   <data name="ExpenseSheets_Detail_DeleteError" xml:space="preserve">
     <value>Erro ao excluir planilha de despesas.</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_Approve" xml:space="preserve">
+    <value>Aprovar</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Reject" xml:space="preserve">
+    <value>Rejeitar</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoApproval" xml:space="preserve">
+    <value>Desfazer aprovacao</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoRejection" xml:space="preserve">
+    <value>Desfazer rejeicao</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Toolbar" xml:space="preserve">
+    <value>Acoes de estado da planilha de despesas</value>
+  </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
     <value>Atualizando linha de despesas...</value>
   </data>
@@ -227,6 +242,9 @@
   </data>
   <data name="ExpenseSheets_Filter_User" xml:space="preserve">
     <value>Utilizador</value>
+  </data>
+  <data name="ExpenseSheets_Filter_User_All" xml:space="preserve">
+    <value>Todos</value>
   </data>
   <data name="ExpenseSheets_Filter_Status" xml:space="preserve">
     <value>Estado</value>

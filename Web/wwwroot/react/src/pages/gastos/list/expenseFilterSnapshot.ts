@@ -25,6 +25,7 @@ export const normalizeExpenseFilterSnapshot = (
     hojaGastosId,
     currencyCode: String(value?.currencyCode || "").trim(),
     managedUserId,
+    includeSubordinates: value?.includeSubordinates === true,
     statusFilter,
     exchangeRateMode: null,
     filter: String(value?.filter || hojaGastosId || "").trim(),

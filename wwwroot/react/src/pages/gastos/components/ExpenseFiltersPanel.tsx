@@ -12,6 +12,7 @@ import HistorySummary from "../../visitas/historial/HistorySummary.tsx";
 import type { AuthManagedUser } from "../../../context/AuthContext.tsx";
 import type { ExpenseQuickFilterId } from "../list/expenseListTypes.ts";
 import type { ExpenseStatusFilterCode } from "../expenseTypes.ts";
+import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 
 export type { ExpenseQuickFilterId };
 
@@ -46,8 +47,12 @@ type ExpenseFiltersPanelProps = {
   hojaGastosId: string;
   currencyCode: string;
   managedUserId: string;
+  sheetLookupManagedUserId: string;
+  includeSubordinates: boolean;
   managedUsers: AuthManagedUser[];
   showManagedUserFilter: boolean;
+  managedUserFilterDisabled: boolean;
+  managedUserAllOption?: ExpenseSelectOption | null;
   statusFilter: ExpenseStatusFilterCode;
   activeQuickFilter: ExpenseQuickFilterId | null;
   showManualDateError: boolean;
@@ -74,8 +79,12 @@ const ExpenseFiltersPanel = ({
   hojaGastosId,
   currencyCode,
   managedUserId,
+  sheetLookupManagedUserId,
+  includeSubordinates,
   managedUsers,
   showManagedUserFilter,
+  managedUserFilterDisabled,
+  managedUserAllOption = null,
   statusFilter,
   activeQuickFilter,
   showManualDateError,
@@ -121,21 +130,36 @@ const ExpenseFiltersPanel = ({
         ) : null}
 
         <div className={`grid grid-cols-1 sm:grid-cols-2 ${showManagedUserFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-2`}>
-          <ExpenseProjectFilterInput
-            label={indT("ExpenseSheets_Filter_Project", "Project")}
-            placeholder={indT("ExpenseSheets_Filter_Project", "Project")}
-            value={projectId}
-            onChange={onProjectIdChange}
-            showLabel={false}
-          />
+          {showManagedUserFilter ? (
+            <ExpenseManagedUserFilterSelect
+              label={indT("ExpenseSheets_Filter_User", "User")}
+              placeholder={indT("ExpenseSheets_Filter_User", "User")}
+              value={managedUserId}
+              users={managedUsers}
+              allOption={managedUserAllOption}
+              onChange={onManagedUserIdChange}
+              disabled={managedUserFilterDisabled}
+              showLabel={false}
+              clearOnEmptyInput
+            />
+          ) : null}
 
           <ExpenseSheetFilterInput
             label={indT("ExpenseSheets_Filter_Sheet", "Expense sheet")}
             placeholder={indT("ExpenseSheets_Filter_Sheet", "Expense sheet")}
             value={hojaGastosId}
-            managedUserId={managedUserId}
+            managedUserId={sheetLookupManagedUserId}
+            includeSubordinates={includeSubordinates}
             onChange={onHojaGastosIdChange}
             enableRemoteSuggestions
+            showLabel={false}
+          />
+
+          <ExpenseProjectFilterInput
+            label={indT("ExpenseSheets_Filter_Project", "Project")}
+            placeholder={indT("ExpenseSheets_Filter_Project", "Project")}
+            value={projectId}
+            onChange={onProjectIdChange}
             showLabel={false}
           />
 
@@ -147,18 +171,6 @@ const ExpenseFiltersPanel = ({
             showLabel={false}
             showLoadingStateText={false}
           />
-
-          {showManagedUserFilter ? (
-            <ExpenseManagedUserFilterSelect
-              label={indT("ExpenseSheets_Filter_User", "User")}
-              placeholder={indT("ExpenseSheets_Filter_User", "User")}
-              value={managedUserId}
-              users={managedUsers}
-              onChange={onManagedUserIdChange}
-              showLabel={false}
-              clearOnEmptyInput
-            />
-          ) : null}
 
           <ExpenseStatusFilterSelect
             label={indT("ExpenseSheets_Filter_Status", "Estado")}

@@ -201,6 +201,21 @@
   <data name="ExpenseSheets_Detail_DeleteError" xml:space="preserve">
     <value>Errore bat gertatu da gastu-orria ezabatzean.</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_Approve" xml:space="preserve">
+    <value>Onartu</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Reject" xml:space="preserve">
+    <value>Baztertu</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoApproval" xml:space="preserve">
+    <value>Onarpena desegin</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoRejection" xml:space="preserve">
+    <value>Ezezpena desegin</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_Toolbar" xml:space="preserve">
+    <value>Gastu-orriaren egoera ekintzak</value>
+  </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
     <value>Gastu-lerroa eguneratzen...</value>
   </data>
@@ -227,6 +242,9 @@
   </data>
   <data name="ExpenseSheets_Filter_User" xml:space="preserve">
     <value>Erabiltzailea</value>
+  </data>
+  <data name="ExpenseSheets_Filter_User_All" xml:space="preserve">
+    <value>Denak</value>
   </data>
   <data name="ExpenseSheets_Filter_Status" xml:space="preserve">
     <value>Egoera</value>

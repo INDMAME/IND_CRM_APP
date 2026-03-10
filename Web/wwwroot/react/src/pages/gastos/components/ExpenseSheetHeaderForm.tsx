@@ -20,8 +20,6 @@ type ExpenseSheetHeaderFormProps = {
   canEditStatus: boolean;
   header: ExpenseSheetHeader;
   projectValue: string;
-  voucherValue: string;
-  isSheetPaid: boolean;
   isCurrencyLockedByLines: boolean;
   isExchangeRateLockedByLines: boolean;
   normalizedDraftCurrency: string;
@@ -37,7 +35,6 @@ type ExpenseSheetHeaderFormProps = {
   draftExchangeRate: string;
   draftExpenseSheetStatus: number;
   draftEstadoComentarios: string;
-  draftVoucher: string;
   officialExchangeRateRawValue: string;
   officialExchangeRateDate: string;
   officialExchangeRateSource: string;
@@ -47,7 +44,6 @@ type ExpenseSheetHeaderFormProps = {
   onDraftExchangeRateChange: (value: string) => void;
   onDraftExpenseSheetStatusChange: (value: number) => void;
   onDraftEstadoComentariosChange: (value: string) => void;
-  onDraftVoucherChange: (value: string) => void;
 };
 
 const EXCHANGE_RATE_MODE_PREFIX_PATTERN = /^T\.?C\.?\s*/i;
@@ -60,8 +56,6 @@ const ExpenseSheetHeaderForm = ({
   canEditStatus,
   header,
   projectValue,
-  voucherValue,
-  isSheetPaid,
   isCurrencyLockedByLines,
   isExchangeRateLockedByLines,
   normalizedDraftCurrency,
@@ -77,7 +71,6 @@ const ExpenseSheetHeaderForm = ({
   draftExchangeRate,
   draftExpenseSheetStatus,
   draftEstadoComentarios,
-  draftVoucher,
   officialExchangeRateRawValue,
   officialExchangeRateDate,
   officialExchangeRateSource,
@@ -87,7 +80,6 @@ const ExpenseSheetHeaderForm = ({
   onDraftExchangeRateChange,
   onDraftExpenseSheetStatusChange,
   onDraftEstadoComentariosChange,
-  onDraftVoucherChange,
 }: ExpenseSheetHeaderFormProps) => {
   const isForeignCurrency =
     isEditing && canEditHeaderFields && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
@@ -104,7 +96,6 @@ const ExpenseSheetHeaderForm = ({
   const statusDraftValue = String(Number.isInteger(draftExpenseSheetStatus) ? draftExpenseSheetStatus : 0);
   const statusCommentValue = safeText(header.estadoComentarios);
   const showStatusCommentField = !isCreateMode && ((isEditing && canEditStatus) || !!statusCommentValue);
-  const showVoucherDraftField = !isCreateMode && isEditing && canEditStatus && draftExpenseSheetStatus === 4;
   const localCurrencyOptions = React.useMemo<ExpenseSelectOption[]>(
     () => [
       {
@@ -226,18 +217,6 @@ const ExpenseSheetHeaderForm = ({
             />
           )
         ) : null}
-        {showVoucherDraftField ? (
-          <div className="space-y-1.5">
-            <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Voucher", "Voucher")}</label>
-            <input
-              className="form-control"
-              value={draftVoucher}
-              onChange={(event) => onDraftVoucherChange(event.target.value || "")}
-              aria-label={indT("ExpenseSheets_Field_Voucher", "Voucher")}
-              placeholder={indT("ExpenseSheets_Field_Voucher", "Voucher")}
-            />
-          </div>
-        ) : null}
         {isEditing && canEditHeaderFields ? (
           <div className="sm:col-span-2 space-y-1.5">
             <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Description", "Description")}</label>
@@ -266,9 +245,6 @@ const ExpenseSheetHeaderForm = ({
           />
         ) : projectValue ? (
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
-        ) : null}
-        {!isEditing && isSheetPaid ? (
-          <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Voucher", "Voucher")} value={voucherValue || "-"} />
         ) : null}
         {isEditing && canEditHeaderFields ? (
           <div className="sm:col-span-2 space-y-3">

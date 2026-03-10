@@ -77,6 +77,7 @@ type LegacyExpenseListItem = {
   totalAmountMST?: unknown;
   exchRate?: unknown;
   userId?: unknown;
+  userName?: unknown;
   exchangeRateMode?: unknown;
   expenseSheetStatus?: unknown;
   createdDate?: unknown;
@@ -569,6 +570,7 @@ const toLegacyListRequestPayload = (payload: ExpenseSheetListApiRequest) => {
     projectId: safeText(payload.projId),
     currencyCode: safeText(payload.currencyCode),
     expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
+    includeSubordinates: payload.includeSubordinates === true,
     page: Number.isFinite(payload.page) && payload.page > 0 ? payload.page : 1,
     pageSize: Number.isFinite(payload.pageSize) && payload.pageSize > 0 ? payload.pageSize : 50,
   };
@@ -581,6 +583,7 @@ const mapLegacyListItemToApiListItem = (item: LegacyExpenseListItem): ExpenseShe
     ExpenseSheetStatus: toNullableNumber(item.expenseSheetStatus),
     EstadoComentarios: safeText(item.estadoComentarios) || null,
     UserId: safeText(item.userId) || null,
+    UserName: safeText(item.userName) || null,
     Voucher: safeText(item.voucher),
     ProjId: safeText(item.projId),
     CurrencyCode: safeText(item.currencyCode),
@@ -671,6 +674,7 @@ export const fetchExpenseSheetList = async (
     createdDateFrom,
     createdDateTo,
     expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
+    includeSubordinates: payload.includeSubordinates === true,
   };
 
   const context = await ensureExpenseApiContext(baseOptions);

@@ -121,6 +121,7 @@ export type ExpenseSheetListApiRequest = {
   projId?: string;
   currencyCode?: string;
   expenseSheetStatus?: number | null;
+  includeSubordinates?: boolean;
 };
 
 // /api/crm/expensesheets/list item contract.
@@ -130,6 +131,7 @@ export type ExpenseSheetListItemDto = {
   ExpenseSheetStatus: number | null;
   EstadoComentarios: string | null;
   UserId: string | null;
+  UserName: string | null;
   Voucher: string;
   ProjId: string;
   CurrencyCode: string;
@@ -232,7 +234,6 @@ export type ExpenseSheetHeaderUpdateRequest = {
   currencyCode: string;
   exchRate: number;
   projId?: string;
-  voucher?: string;
   expenseSheetStatus?: number;
   exchangeRateMode?: number;
   estadoComentarios?: string;
@@ -269,6 +270,7 @@ export type ExpenseSheetListFilters = {
   hojaGastosId: string;
   currencyCode: string;
   managedUserId: string;
+  includeSubordinates: boolean;
 };
 
 // UI model used by list cards.
@@ -278,6 +280,7 @@ export type ExpenseSheetCard = {
   expenseSheetStatus?: number | null;
   estadoComentarios?: string | null;
   userId?: string;
+  userName?: string | null;
   voucher?: string;
   projId?: string;
   currencyCode?: string;

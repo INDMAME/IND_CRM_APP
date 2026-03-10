@@ -8,6 +8,7 @@ type ExpenseManagedUserFilterSelectProps = {
   placeholder: string;
   value: string;
   users: AuthManagedUser[];
+  allOption?: ExpenseSelectOption | null;
   onChange: (value: string) => void;
   readOnly?: boolean;
   disabled?: boolean;
@@ -31,6 +32,7 @@ const ExpenseManagedUserFilterSelect = ({
   placeholder,
   value,
   users,
+  allOption = null,
   onChange,
   readOnly = false,
   disabled = false,
@@ -38,7 +40,7 @@ const ExpenseManagedUserFilterSelect = ({
   clearOnEmptyInput = false,
 }: ExpenseManagedUserFilterSelectProps) => {
   const options = useMemo<ExpenseSelectOption[]>(() => {
-    return (Array.isArray(users) ? users : [])
+    const userOptions = (Array.isArray(users) ? users : [])
       .map((entry) => {
         const axUserId = String(entry.axUserId || "").trim();
         const label = toOptionText(entry);
@@ -49,7 +51,10 @@ const ExpenseManagedUserFilterSelect = ({
         } as ExpenseSelectOption;
       })
       .filter((entry): entry is ExpenseSelectOption => !!entry);
-  }, [users]);
+    return allOption ? [allOption, ...userOptions] : userOptions;
+  }, [allOption, users]);
+
+  const selectedTextMode = allOption && value === allOption.value ? "text" : "value";
 
   return (
     <SelectCombobox
@@ -64,7 +69,7 @@ const ExpenseManagedUserFilterSelect = ({
       portalClassName="visitas-typography"
       panelClassName="visitas-typography"
       allowTextInput
-      selectedTextMode="value"
+      selectedTextMode={selectedTextMode}
       showLabel={showLabel}
       clearOnEmptyInput={clearOnEmptyInput}
     />

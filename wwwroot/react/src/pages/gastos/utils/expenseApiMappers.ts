@@ -47,6 +47,7 @@ export const mapExpenseSheetListItemToCard = (item: ExpenseSheetListItemDto): Ex
     expenseSheetStatus: toNullableNumber(item.ExpenseSheetStatus),
     estadoComentarios: safeText(item.EstadoComentarios) || null,
     userId: safeText(item.UserId),
+    userName: safeText(item.UserName) || null,
     voucher: safeText(item.Voucher),
     projId: safeText(item.ProjId),
     currencyCode: safeText(item.CurrencyCode),

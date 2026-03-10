@@ -1946,6 +1946,39 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #buildExpenseSheetListRow
+        #// Purpose: Builds one expense sheet list row with stable output columns.
+        #static server container buildExpenseSheetListRow(CRMHojaGastosTable _hoja)
+        #{
+        #    int       expenseSheetStatus, exchangeRateMode;
+        #    Amount    monto;
+        #    container conItem;
+        #    ;
+        #
+        #    monto               = _hoja.TotalAmount();
+        #    exchangeRateMode    = _hoja.ExchangeRateMode;
+        #    expenseSheetStatus  = _hoja.ExpenseSheetStatus;
+        #
+        #    conItem = [[
+        #                 strFmt("%1", _hoja.HojaGastosId),
+        #                 strFmt("%1", _hoja.Description),
+        #                 strFmt("%1", expenseSheetStatus),
+        #                 strFmt("%1", _hoja.EstadoComentarios),
+        #                 strFmt("%1", _hoja.UserId),
+        #                 strFmt("%1", INDPersonaTable::findByCRM(CRMUsuarioTable::Find(_hoja.UserId).RecId).Name),
+        #                 strFmt("%1", _hoja.CurrencyCode),
+        #                 strFmt("%1", monto),
+        #                 strFmt("%1", _hoja.ExchRate),
+        #                 strFmt("%1", exchangeRateMode),
+        #                 strFmt("%1", _hoja.ProjId),
+        #                 strFmt("%1", _hoja.Voucher),
+        #                 strFmt("%1", date2Str(_hoja.CreatedDate, 123, 2,2,2,2,4))
+        #              ]];
+        #
+        #    return conItem;
+        #}
+        #
+      ENDSOURCE
       SOURCE #getExpenseSheetsList
         #static server container getExpenseSheetsList(container _data)
         #{
@@ -1956,10 +1989,11 @@ Formatversion: 1
         #
         #    str 1000             filterTxt;
         #    str 1000             likePattern;
+        #    str 20               expenseSheetStatusFilterRaw;
+        #    str 20               includeSubordinatesRaw;
         #
-        #    int                  billedMode,expenseSheetStatus,expenseSheetStatusFilter,exchangeRateMode;
-        #    boolean              hasExpenseSheetStatusFilter;
-        #    Amount               monto;
+        #    int                  billedMode,expenseSheetStatusFilter;
+        #    boolean              hasExpenseSheetStatusFilter, includeSubordinates;
         #    // Filtros nuevos
         #    date                 createdDateFrom;
         #    date                 createdDateTo;
@@ -1967,7 +2001,8 @@ Formatversion: 1
         #    CurrencyCode         currencyCode;
         #
         #    CRMHojaGastosTable   hoja;
-        #    container            conResult, conItem;
+        #    CRMUsuarioSubordinadoTable subordinadoTable;
+        #    container            conResult;
         #
         #    _company = INDCRMUtilityService::getCompany(_data);
         #    if (!_company)
@@ -1982,10 +2017,10 @@ Formatversion: 1
         #
         #    // Filtros opcionales nuevos
         #    if (conLen(_data) >= 5 && conPeek(_data, 5))
-        #        createdDateFrom = str2Date(conPeek(_data, 5), 123);
+        #        createdDateFrom = INDCRMUtilityService::parseYmdDate(conPeek(_data, 5));
         #
         #    if (conLen(_data) >= 6 && conPeek(_data, 6))
-        #        createdDateTo = str2Date(conPeek(_data, 6), 123);
+        #        createdDateTo = INDCRMUtilityService::parseYmdDate(conPeek(_data, 6));
         #
         #    if (conLen(_data) >= 7)
         #        projId = conPeek(_data, 7);
@@ -1995,8 +2030,25 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 9)
         #    {
-        #        expenseSheetStatusFilter = conPeek(_data, 9);
-        #        hasExpenseSheetStatusFilter = true;
+        #        expenseSheetStatusFilterRaw = strLwr(strLTrim(strRTrim(strFmt("%1", conPeek(_data, 9)))));
+        #
+        #        if (expenseSheetStatusFilterRaw == '0'
+        #         || expenseSheetStatusFilterRaw == '1'
+        #         || expenseSheetStatusFilterRaw == '2'
+        #         || expenseSheetStatusFilterRaw == '3'
+        #         || expenseSheetStatusFilterRaw == '4')
+        #        {
+        #            expenseSheetStatusFilter = str2int(expenseSheetStatusFilterRaw);
+        #            hasExpenseSheetStatusFilter = true;
+        #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 10)
+        #    {
+        #        includeSubordinatesRaw = strLwr(strLTrim(strRTrim(strFmt("%1", conPeek(_data, 10)))));
+        #        includeSubordinates = includeSubordinatesRaw == '1'
+        #                           || includeSubordinatesRaw == 'true'
+        #                           || includeSubordinatesRaw == 'yes';
         #    }
         #
         #    // billedMode permitido
@@ -2019,59 +2071,89 @@ Formatversion: 1
         #        if (!crmUserId)
         #            return conResult;
         #
-        #        while select hoja
-        #         index hint INDSearchKeyIdx
-        #           order by createdDate DESC
-        #            where hoja.UserId == crmUserId
-        #
-        #               // Texto opcional
-        #               && ( !filterTxt || hoja.INDSearchKey like likePattern )
-        #
-        #               // Facturacion
-        #               && (
-        #                      (billedMode == 2)
-        #                   || (billedMode == 0 && hoja.Voucher == '')
-        #                   || (billedMode == 1 && hoja.Voucher != '')
-        #                  )
-        #
-        #               // Fecha creacion opcional
-        #               && (
-        #                      (!createdDateFrom && !createdDateTo)
-        #                   || ( createdDateFrom && !createdDateTo && hoja.CreatedDate >= createdDateFrom)
-        #                   || (!createdDateFrom &&  createdDateTo && hoja.CreatedDate <= createdDateTo)
-        #                   || ( createdDateFrom &&  createdDateTo &&
-        #                        hoja.CreatedDate >= createdDateFrom &&
-        #                        hoja.CreatedDate <= createdDateTo)
-        #                  )
-        #
-        #               // Proyecto opcional
-        #               && ( !projId || hoja.ProjId == projId )
-        #
-        #               // Moneda opcional
-        #               && ( !currencyCode || hoja.CurrencyCode == currencyCode )
-        #
-        #               // Estado opcional
-        #               && ( !hasExpenseSheetStatusFilter || hoja.ExpenseSheetStatus == expenseSheetStatusFilter )
+        #        if (!includeSubordinates)
         #        {
-        #            monto               = hoja.TotalAmount();
-        #            exchangeRateMode    = hoja.ExchangeRateMode;
-        #            expenseSheetStatus  = hoja.ExpenseSheetStatus;
-        #            conItem = [[
-        #                         strFmt("%1", hoja.HojaGastosId),
-        #                         strFmt("%1", hoja.Description),
-        #                         strFmt("%1", expenseSheetStatus),
-        #                         strFmt("%1", hoja.EstadoComentarios),
-        #                         strFmt("%1", hoja.UserId),
-        #                         strFmt("%1", hoja.CurrencyCode),
-        #                         strFmt("%1", monto),
-        #                         strFmt("%1", hoja.ExchRate),
-        #                         strFmt("%1", exchangeRateMode),
-        #                         strFmt("%1", hoja.ProjId),
-        #                         strFmt("%1", hoja.Voucher),
-        #                         strFmt("%1", date2Str(hoja.CreatedDate, 123, 2,2,2,2,4))
-        #                      ]];
+        #            while select hoja
+        #             index hint INDSearchKeyIdx
+        #               order by createdDate DESC
+        #                where hoja.UserId == crmUserId
         #
-        #            conResult += conItem;
+        #                   // Texto opcional
+        #                   && ( !filterTxt || hoja.INDSearchKey like likePattern )
+        #
+        #                   // Facturacion
+        #                   && (
+        #                          (billedMode == 2)
+        #                       || (billedMode == 0 && hoja.Voucher == '')
+        #                       || (billedMode == 1 && hoja.Voucher != '')
+        #                      )
+        #
+        #                   // Excluir registros legacy sin CreatedDate real.
+        #                   && hoja.CreatedDate != dateNull()
+        #
+        #                   // Fecha creacion opcional
+        #                   && (
+        #                          (!createdDateFrom && !createdDateTo)
+        #                       || ( createdDateFrom && !createdDateTo && hoja.CreatedDate >= createdDateFrom)
+        #                       || (!createdDateFrom &&  createdDateTo && hoja.CreatedDate <= createdDateTo)
+        #                       || ( createdDateFrom &&  createdDateTo &&
+        #                            hoja.CreatedDate >= createdDateFrom &&
+        #                            hoja.CreatedDate <= createdDateTo)
+        #                      )
+        #
+        #                   // Proyecto opcional
+        #                   && ( !projId || hoja.ProjId == projId )
+        #
+        #                   // Moneda opcional
+        #                   && ( !currencyCode || hoja.CurrencyCode == currencyCode )
+        #
+        #                   // Estado opcional
+        #                   && ( !hasExpenseSheetStatusFilter || hoja.ExpenseSheetStatus == expenseSheetStatusFilter )
+        #            {
+        #                conResult += INDCRMExpenseSheetService::buildExpenseSheetListRow(hoja);
+        #            }
+        #        }
+        #        else
+        #        {
+        #            while select hoja
+        #             index hint INDSearchKeyIdx
+        #               order by createdDate DESC
+        #                where ( !filterTxt || hoja.INDSearchKey like likePattern )
+        #
+        #                       // Facturacion
+        #                   && (
+        #                          (billedMode == 2)
+        #                       || (billedMode == 0 && hoja.Voucher == '')
+        #                       || (billedMode == 1 && hoja.Voucher != '')
+        #                      )
+        #
+        #                       // Excluir registros legacy sin CreatedDate real.
+        #                   && hoja.CreatedDate != dateNull()
+        #
+        #                       // Fecha creacion opcional
+        #                   && (
+        #                          (!createdDateFrom && !createdDateTo)
+        #                       || ( createdDateFrom && !createdDateTo && hoja.CreatedDate >= createdDateFrom)
+        #                       || (!createdDateFrom &&  createdDateTo && hoja.CreatedDate <= createdDateTo)
+        #                       || ( createdDateFrom &&  createdDateTo &&
+        #                            hoja.CreatedDate >= createdDateFrom &&
+        #                            hoja.CreatedDate <= createdDateTo)
+        #                      )
+        #
+        #                       // Proyecto opcional
+        #                   && ( !projId || hoja.ProjId == projId )
+        #
+        #                       // Moneda opcional
+        #                   && ( !currencyCode || hoja.CurrencyCode == currencyCode )
+        #
+        #                       // Estado opcional
+        #                   && ( !hasExpenseSheetStatusFilter || hoja.ExpenseSheetStatus == expenseSheetStatusFilter )
+        #             exists join subordinadoTable
+        #                where subordinadoTable.UserIdJefe == crmUserId
+        #                   && subordinadoTable.UserIdSubordinado == hoja.UserId
+        #            {
+        #                conResult += INDCRMExpenseSheetService::buildExpenseSheetListRow(hoja);
+        #            }
         #        }
         #    }
         #
@@ -2249,8 +2331,8 @@ Formatversion: 1
         #        }
         #    }
         #
-        #    createdDateFrom = str2Date(conPeek(_data, 5), 123);
-        #    createdDateTo   = str2Date(conPeek(_data, 6), 123);
+        #    createdDateFrom = INDCRMUtilityService::parseYmdDate(conPeek(_data, 5));
+        #    createdDateTo   = INDCRMUtilityService::parseYmdDate(conPeek(_data, 6));
         #
         #    if (createdDateFrom && createdDateTo && createdDateFrom > createdDateTo)
         #        return [['Sin datos, la fecha desde no puede ser mayor a la fecha hasta.']];
