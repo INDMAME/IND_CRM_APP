@@ -42,6 +42,9 @@
   <data name="Common_NoData" xml:space="preserve">
     <value>Daturik ez</value>
   </data>
+  <data name="Common_NotFound" xml:space="preserve">
+    <value>Ez da aurkitu</value>
+  </data>
   <data name="Common_User" xml:space="preserve">
     <value>Erabiltzailea</value>
   </data>
@@ -1294,7 +1297,7 @@
     <value>Hautatu guztiak</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ClearAll" xml:space="preserve">
-    <value>Garbitu guztiak</value>
+    <value>Garbitu hautapena</value>
   </data>
   <data name="ExpenseTickets_LinkMode_LinkButton" xml:space="preserve">
     <value>Lotu ticketa(k)</value>

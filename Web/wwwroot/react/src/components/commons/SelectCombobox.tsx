@@ -22,6 +22,12 @@ type NormalizedOption = {
   icon?: React.ReactNode;
 };
 
+const EMPTY_OPTION: NormalizedOption = { value: "", text: "" };
+
+const normalizeLookupText = (value: string | number | null | undefined): string => {
+  return String(value ?? "").trim().toLowerCase();
+};
+
 type SelectComboboxProps = {
   label: string;
   options: RawOption[];
@@ -111,25 +117,46 @@ const SelectCombobox = ({
 
   const [query, setQuery] = useState<string | null>(null);
   const [selected, setSelected] = useState(
-    data.find((d) => String(d.value) === String(value)) || { value: "", text: "" }
+    data.find((d) => String(d.value) === String(value)) || EMPTY_OPTION
   );
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showNotFoundState, setShowNotFoundState] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const initialDropdownWidthRef = useRef<number | null>(null);
 
-  useOutsideClick([containerRef, listRef], () => setOpen(false));
+  const clearManualValue = (nextOpen: boolean, showNotFound: boolean) => {
+    setSelected(EMPTY_OPTION);
+    setQuery("");
+    setActiveIndex(0);
+    setShowNotFoundState(showNotFound);
+    setOpen(nextOpen);
+    if (!emitOnValueChange) {
+      onChange("");
+    }
+  };
+
+  useOutsideClick([containerRef, listRef], () => {
+    if (query !== null) {
+      clearManualValue(false, false);
+      return;
+    }
+
+    setShowNotFoundState(false);
+    setOpen(false);
+  });
 
   useEffect(() => {
-    setSelected(data.find((d) => String(d.value) === String(value)) || { value: "", text: "" });
+    const nextSelected = data.find((d) => String(d.value) === String(value)) || EMPTY_OPTION;
+    setSelected(nextSelected);
+
+    if (String(value ?? "").trim()) {
+      setQuery(null);
+      setShowNotFoundState(false);
+    }
   }, [value, data]);
-
-  useEffect(() => {
-    // Reset typed search text after external value changes.
-    setQuery(null);
-  }, [selected]);
 
   useEffect(() => {
     if (!emitOnValueChange) return;
@@ -138,23 +165,20 @@ const SelectCombobox = ({
 
   const filtered = useMemo(() => {
     if (!query || !query.trim()) return data;
-    const f = data.filter((o) => {
-      const optionValue = String(o.value ?? "").trim();
-      if (!optionValue) {
-        return false;
-      }
-      return o.text.toLowerCase().includes(query.toLowerCase());
+    const normalizedQuery = normalizeLookupText(query);
+    return data.filter((option) => {
+      const optionValue = normalizeLookupText(option.value);
+      const optionText = normalizeLookupText(option.text);
+      return optionText.includes(normalizedQuery) || optionValue.includes(normalizedQuery);
     });
-    return f.length ? f : data;
   }, [data, query]);
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [filtered.length, query]);
+  const resolvedActiveIndex =
+    filtered.length > 0 ? Math.min(Math.max(activeIndex, 0), filtered.length - 1) : 0;
 
   const selectOption = (opt: NormalizedOption) => {
     setSelected(opt);
     setQuery(null);
+    setShowNotFoundState(false);
     setOpen(false);
     if (!emitOnValueChange) {
       onChange(opt?.value ? String(opt.value) : "");
@@ -178,26 +202,40 @@ const SelectCombobox = ({
     if (ev.key === "Enter") {
       ev.preventDefault();
       if (clearOnEmptyInput && query !== null && !query.trim()) {
+        setShowNotFoundState(false);
         setOpen(false);
         return;
       }
       if (open && filtered.length) {
-        selectOption(filtered[activeIndex] ?? filtered[0]);
+        selectOption(filtered[resolvedActiveIndex] ?? filtered[0]);
+      } else if (query !== null && query.trim()) {
+        clearManualValue(true, true);
       } else {
+        setShowNotFoundState(false);
         setOpen(true);
       }
     }
-    if (ev.key === "Escape") setOpen(false);
+    if (ev.key === "Escape") {
+      if (query !== null) {
+        clearManualValue(false, false);
+        return;
+      }
+
+      setShowNotFoundState(false);
+      setOpen(false);
+    }
   };
 
   const safeId = String(idBase || label || "select");
   const listId = `select-options-${safeId}`;
-  const activeId = open && filtered[activeIndex] ? `select-opt-${safeId}-${filtered[activeIndex].value}` : undefined;
+  const activeId =
+    open && filtered[resolvedActiveIndex] ? `select-opt-${safeId}-${filtered[resolvedActiveIndex].value}` : undefined;
   const listOpen = open && !disabled;
   const selectedValue = String(selected?.value ?? "").trim();
   const selectedDisplayText = selectedTextMode === "value" ? selectedValue : selected?.text || "";
   const displayValue = query !== null ? query : (selectedValue ? selectedDisplayText : "");
   const showSelectedIcon = query === null && !!selectedValue && !!selected?.icon;
+  const showNotFoundRow = showNotFoundState || (!!query && !!query.trim() && filtered.length === 0);
   const normalizedDropdownExpandPx = Number.isFinite(dropdownExpandPx) ? Math.max(0, dropdownExpandPx) : 0;
   const normalizedDropdownMinWidthPx = Number.isFinite(dropdownMinWidthPx) ? Math.max(0, dropdownMinWidthPx) : 0;
 
@@ -242,10 +280,10 @@ const SelectCombobox = ({
 
   const listBody = (
     <div id={listId} ref={listRef} role="listbox" aria-label={label}>
-      {filtered.length === 0 && <div className="px-4 py-2 text-sm text-slate-500">{indT("Dropdown_NoResults", "No results")}</div>}
+      {showNotFoundRow ? <div className="px-4 py-2 text-sm text-slate-500">{indT("Common_NotFound", "Not found")}</div> : null}
       {filtered.map((opt, idx) => {
         const sel = selected?.value === opt.value;
-        const isActive = idx === activeIndex;
+        const isActive = idx === resolvedActiveIndex;
         const optionStateClassName = sel ? optionSelectedClassName : isActive ? optionActiveClassName : optionDefaultClassName;
         return (
           <button
@@ -338,13 +376,11 @@ const SelectCombobox = ({
             onChange={(event) => {
               if (!allowTextInput) return;
               const val = event.target.value;
+              setActiveIndex(0);
+              setShowNotFoundState(false);
               setQuery(val);
               if (clearOnEmptyInput && !val.trim()) {
-                setSelected({ value: "", text: "" });
-                setOpen(false);
-                if (!emitOnValueChange) {
-                  onChange("");
-                }
+                clearManualValue(false, false);
                 return;
               }
               setOpen(true);
@@ -373,6 +409,10 @@ const SelectCombobox = ({
                 className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
                 onClick={() => {
                   if (disabled) return;
+                  if (query !== null && query.trim() && filtered.length === 0) {
+                    clearManualValue(true, true);
+                    return;
+                  }
                   setOpen(true);
                 }}
                 aria-label={indT("Common_Search", "Search")}
@@ -388,6 +428,10 @@ const SelectCombobox = ({
               className="flex items-center p-1.5 text-slate-500 hover:text-slate-600"
               onClick={() => {
                 if (disabled) return;
+                if (open && query !== null && query.trim()) {
+                  clearManualValue(false, false);
+                  return;
+                }
                 setOpen((prev) => !prev);
               }}
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}

@@ -134,11 +134,15 @@
 }
 
 .filter-card .history-filter-stack > .history-client-combobox {
-    margin-top: 8px;
+    margin-top: 5px;
 }
 
 .filter-card .history-client-combobox input::placeholder {
-    font-size: 15px;
+    font-size: 14px;
+}
+
+.filter-card .history-client-combobox .tech-info {
+    margin-top: 4px;
 }
 
 .filter-card .ind-quick-slider__track {
@@ -383,19 +387,19 @@
 }
 .expense-sheet-card__title {
     margin: 0;
-    padding: 0 22px 20px 0;
+    padding: 0 42px 0 0;
     text-align: left;
 }
 .expense-ticket-card__title {
     margin: 0;
-    padding: 0 22px 0 0;
+    padding: 0 42px 0 0;
     text-align: left;
 }
 .expense-sheet-card__subtitle {
     margin: 0;
-    padding: 0 22px 20px 0;
-    font-size: 12px;
-    line-height: 1.25;
+    padding: 0 42px 0 0;
+    font-size: 11px;
+    line-height: 1.2;
     color: #00296bb8;
     text-align: left;
     text-transform: none;
@@ -405,17 +409,17 @@
 }
 .expense-line-card__title {
     margin: 0;
-    padding: 0 22px 2px 0;
+    padding: 0 42px 0 0;
 }
 .expense-line-card__meta {
     margin-top: 0;
-    padding-right: 22px;
+    padding-right: 42px;
 }
 .expense-sheet-card__amount {
     position: absolute;
-    right: 4px;
-    bottom: 4px;
-    font-size: 12px;
+    right: 6px;
+    bottom: 6px;
+    font-size: 11px;
     font-weight: 600;
     line-height: 1.2;
     color: #00296be0;
@@ -463,6 +467,14 @@
 .expense-ticket-card__status-icon svg {
     width: 16px;
     height: 16px;
+}
+.expense-timeline-card__content {
+    padding: 8px 12px 22px;
+    gap: 2px;
+}
+.expense-timeline-card__date-panel {
+    min-width: 68px;
+    padding: 6px 8px;
 }
 .expense-ticket-card__ai-label {
     display: inline-flex;

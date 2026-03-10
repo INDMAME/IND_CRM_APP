@@ -7,11 +7,9 @@ type UseFloatingActionButtonVisibilityArgs = {
 };
 
 type UseFloatingActionButtonVisibilityResult = {
-  isVisible: boolean;
   resolvedBottom: number;
 };
 
-const SCROLL_IDLE_DELAY_MS = 180;
 const PAGINATION_CLEARANCE_PX = 16;
 const PAGINATION_SELECTOR = "[data-ind-pagination-anchor='true']";
 
@@ -55,16 +53,14 @@ const resolveBottomOffset = ({
   }, Math.max(0, bottom));
 };
 
-// Keeps the floating action button hidden during scroll and clear of visible paginations.
+// Keeps the floating action button clear of visible paginations.
 export const useFloatingActionButtonVisibility = ({
   bottom,
   right,
   size,
 }: UseFloatingActionButtonVisibilityArgs): UseFloatingActionButtonVisibilityResult => {
-  const [isVisible, setIsVisible] = useState(true);
   const [resolvedBottom, setResolvedBottom] = useState(bottom);
   const animationFrameRef = useRef<number | null>(null);
-  const scrollIdleTimeoutRef = useRef<number | null>(null);
 
   const updateBottom = useCallback(() => {
     if (typeof window === "undefined") return;
@@ -102,55 +98,35 @@ export const useFloatingActionButtonVisibility = ({
     const observer = new ResizeObserver(() => scheduleBottomUpdate());
     getPaginationElements().forEach((element) => observer.observe(element));
     return () => observer.disconnect();
-  });
+  }, [scheduleBottomUpdate, updateBottom]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-
-    const handleMotion = () => {
-      setIsVisible(false);
-      scheduleBottomUpdate();
-
-      if (scrollIdleTimeoutRef.current !== null) {
-        window.clearTimeout(scrollIdleTimeoutRef.current);
-      }
-
-      scrollIdleTimeoutRef.current = window.setTimeout(() => {
-        scrollIdleTimeoutRef.current = null;
-        updateBottom();
-        setIsVisible(true);
-      }, SCROLL_IDLE_DELAY_MS);
-    };
 
     const handleResize = () => {
       scheduleBottomUpdate();
     };
 
-    window.addEventListener("scroll", handleMotion, { capture: true, passive: true });
-    window.addEventListener("wheel", handleMotion, { passive: true });
-    window.addEventListener("touchmove", handleMotion, { passive: true });
+    window.addEventListener("scroll", scheduleBottomUpdate, { capture: true, passive: true });
+    window.addEventListener("wheel", scheduleBottomUpdate, { passive: true });
+    window.addEventListener("touchmove", scheduleBottomUpdate, { passive: true });
     window.addEventListener("resize", handleResize, { passive: true });
     window.addEventListener("orientationchange", handleResize);
 
     return () => {
-      window.removeEventListener("scroll", handleMotion, true);
-      window.removeEventListener("wheel", handleMotion);
-      window.removeEventListener("touchmove", handleMotion);
+      window.removeEventListener("scroll", scheduleBottomUpdate, true);
+      window.removeEventListener("wheel", scheduleBottomUpdate);
+      window.removeEventListener("touchmove", scheduleBottomUpdate);
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("orientationchange", handleResize);
-
-      if (scrollIdleTimeoutRef.current !== null) {
-        window.clearTimeout(scrollIdleTimeoutRef.current);
-      }
 
       if (animationFrameRef.current !== null) {
         window.cancelAnimationFrame(animationFrameRef.current);
       }
     };
-  }, [scheduleBottomUpdate, updateBottom]);
+  }, [scheduleBottomUpdate]);
 
   return {
-    isVisible,
     resolvedBottom,
   };
 };

@@ -73,7 +73,6 @@ const RemoteSearchCombobox = ({
 }: RemoteSearchComboboxProps) => {
   const readOnlyMode = readOnly || disabled;
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
-  const [query, setQuery] = useState(value || "");
   const [options, setOptions] = useState<RemoteSearchOption[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -81,18 +80,17 @@ const RemoteSearchCombobox = ({
   const [lastSearchedTerm, setLastSearchedTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [showNotFoundState, setShowNotFoundState] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
-  const appendRequestRef = useRef(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
 
-  useOutsideClick([containerRef, listRef], () => setOpen(false));
-
-  useEffect(() => {
-    setQuery(value || "");
-  }, [value]);
+  useOutsideClick([containerRef, listRef], () => {
+    setShowNotFoundState(false);
+    setOpen(false);
+  });
 
   useEffect(() => {
     return () => {
@@ -100,6 +98,8 @@ const RemoteSearchCombobox = ({
       abortRef.current = null;
     };
   }, []);
+
+  const query = value || "";
 
   const filtered = useMemo(() => {
     if (!query.trim()) return options;
@@ -111,14 +111,8 @@ const RemoteSearchCombobox = ({
       return valueText.includes(q) || titleText.includes(q) || subtitleText.includes(q);
     });
   }, [options, query]);
-
-  useEffect(() => {
-    if (appendRequestRef.current) {
-      return;
-    }
-
-    setActiveIndex(0);
-  }, [filtered.length, query]);
+  const resolvedActiveIndex =
+    filtered.length > 0 ? Math.min(Math.max(activeIndex, 0), filtered.length - 1) : 0;
 
   const canSearchTerm = useCallback(
     (term: string): boolean => {
@@ -134,16 +128,30 @@ const RemoteSearchCombobox = ({
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
-      appendRequestRef.current = append;
       setLoading(true);
+      if (!append) {
+        setActiveIndex(0);
+      }
 
       const termKey = term.toLowerCase();
       try {
         if (onSearchPage) {
           const response = await onSearchPage(term, page, pageSize, controller.signal);
           const pageItems = uniqueByValue(Array.isArray(response?.items) ? response.items : []);
+          if (!append && pageItems.length === 0) {
+            setOptions([]);
+            setCurrentPage(0);
+            setHasMore(false);
+            setLastSearchedTerm(termKey);
+            setShowNotFoundState(true);
+            onChange("");
+            setOpen(true);
+            return;
+          }
+
           setOptions((previous) => (append ? uniqueByValue([...(previous || []), ...pageItems]) : pageItems));
           setCurrentPage(page);
+          setShowNotFoundState(false);
 
           const apiTotal = Number(response?.total);
           if (Number.isFinite(apiTotal) && apiTotal > 0) {
@@ -154,9 +162,21 @@ const RemoteSearchCombobox = ({
         } else {
           const response = await onSearch(term, controller.signal);
           const next = uniqueByValue(response || []);
+          if (!append && next.length === 0) {
+            setOptions([]);
+            setCurrentPage(0);
+            setHasMore(false);
+            setLastSearchedTerm(termKey);
+            setShowNotFoundState(true);
+            onChange("");
+            setOpen(true);
+            return;
+          }
+
           setOptions(next);
           setCurrentPage(1);
           setHasMore(false);
+          setShowNotFoundState(false);
         }
 
         setLastSearchedTerm(termKey);
@@ -168,12 +188,12 @@ const RemoteSearchCombobox = ({
           setHasMore(false);
         }
         setLastSearchedTerm(termKey);
+        setShowNotFoundState(false);
         setOpen(true);
       } finally {
         if (abortRef.current === controller) {
           abortRef.current = null;
         }
-        appendRequestRef.current = false;
         setLoading(false);
       }
     },
@@ -189,6 +209,7 @@ const RemoteSearchCombobox = ({
       setOptions([]);
       setCurrentPage(0);
       setHasMore(false);
+      setShowNotFoundState(false);
       setOpen(false);
       setLastSearchedTerm("");
       return;
@@ -243,7 +264,7 @@ const RemoteSearchCombobox = ({
 
   const selectOption = (option: RemoteSearchOption) => {
     const nextValue = String(option.value || "").trim();
-    setQuery(nextValue);
+    setShowNotFoundState(false);
     onChange(nextValue);
     setLastSearchedTerm(nextValue.toLowerCase());
     setOpen(false);
@@ -257,7 +278,8 @@ const RemoteSearchCombobox = ({
     queryKey !== lastSearchedTerm;
 
   const listId = `${idBase}-options`;
-  const activeId = open && filtered[activeIndex] ? `${idBase}-opt-${filtered[activeIndex].value}` : undefined;
+  const activeId =
+    open && filtered[resolvedActiveIndex] ? `${idBase}-opt-${filtered[resolvedActiveIndex].value}` : undefined;
   const showLoadingOnlyState = loading && filtered.length === 0;
 
   return (
@@ -285,14 +307,15 @@ const RemoteSearchCombobox = ({
             value={query}
             onChange={(event) => {
               const nextValue = event.target.value;
-              setQuery(nextValue);
+              setActiveIndex(0);
+              setShowNotFoundState(false);
               onChange(nextValue);
               if (nextValue.trim().toLowerCase() !== lastSearchedTerm) {
                 setOpen(false);
               }
             }}
             onFocus={() => {
-              if (!readOnlyMode && filtered.length > 0) {
+              if (!readOnlyMode && (filtered.length > 0 || showNotFoundState)) {
                 setOpen(true);
               }
             }}
@@ -304,7 +327,7 @@ const RemoteSearchCombobox = ({
                 setActiveIndex,
                 onEnterWhenOpen: () => {
                   if (filtered.length > 0) {
-                    selectOption(filtered[activeIndex] ?? filtered[0]);
+                    selectOption(filtered[resolvedActiveIndex] ?? filtered[0]);
                     return;
                   }
                   void runSearch();
@@ -385,12 +408,14 @@ const RemoteSearchCombobox = ({
           <div id={listId} ref={listRef}>
             {showLoadingOnlyState ? (
               <div className="px-4 py-2 text-sm text-slate-500">{indT("Common_Loading", "Loading")}</div>
+            ) : showNotFoundState ? (
+              <div className="px-4 py-2 text-sm text-slate-500">{indT("Common_NotFound", "Not found")}</div>
             ) : filtered.length === 0 ? (
               <div className="px-4 py-2 text-sm text-slate-500">{indT("Common_NoData", "No data")}</div>
             ) : (
               <>
                 {filtered.map((option, index) => {
-                  const isActive = index === activeIndex;
+                  const isActive = index === resolvedActiveIndex;
                   const optionId = option.value || `${index}`;
                   return (
                     <button

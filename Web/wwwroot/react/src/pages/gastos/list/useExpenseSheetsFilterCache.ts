@@ -84,10 +84,6 @@ const normalizeState = (raw: ExpenseSheetsCachedState | null): ExpenseSheetsCach
   };
 };
 
-const normalizeEntityId = (value: unknown): string => {
-  return String(value || "").trim().toUpperCase();
-};
-
 // Centralizes cache persistence for returning from expense detail to list.
 export const useExpenseSheetsFilterCache = () => {
   const writeCachedState = useCallback((state: ExpenseSheetsCachedState): void => {
@@ -119,33 +115,16 @@ export const useExpenseSheetsFilterCache = () => {
     writeCachedState(state);
   }, [writeCachedState]);
 
-  const removeCachedSheet = useCallback(
-    (sheetId: string): void => {
-      const normalizedSheetId = normalizeEntityId(sheetId);
-      if (!normalizedSheetId) return;
+  const invalidateCachedListForRefetch = useCallback((): void => {
+    const currentState = readCachedState();
+    if (!currentState) return;
 
-      const currentState = readCachedState();
-      if (!currentState) return;
-
-      const nextItems = currentState.items.filter((item) => normalizeEntityId(item.hojaGastosId) !== normalizedSheetId);
-      const removedCount = currentState.items.length - nextItems.length;
-      if (removedCount < 1 || nextItems.length < 1) {
-        writeCachedState({
-          ...currentState,
-          items: [],
-          total: 0,
-        });
-        return;
-      }
-
-      writeCachedState({
-        ...currentState,
-        items: nextItems,
-        total: Math.max(nextItems.length, currentState.total - removedCount),
-      });
-    },
-    [readCachedState, writeCachedState]
-  );
+    writeCachedState({
+      ...currentState,
+      items: [],
+      total: 0,
+    });
+  }, [readCachedState, writeCachedState]);
 
   const clearCachedState = useCallback(() => {
     const keys = getScopedKeys();
@@ -157,7 +136,7 @@ export const useExpenseSheetsFilterCache = () => {
     readCachedState,
     consumeReturnFlag,
     saveCachedState,
-    removeCachedSheet,
+    invalidateCachedListForRefetch,
     clearCachedState,
   };
 };

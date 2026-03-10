@@ -16,6 +16,8 @@ type UseExpenseTicketsListDataArgs = {
 const ALLOWED_GASTO_TYPE_CODES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const EXPENSE_TICKETS_LIST_CACHE_KEY_PREFIX = "expense_tickets_list_v1";
 const EXPENSE_TICKETS_LIST_CACHE_TTL_MS = 2 * 60 * 1000;
+const BULK_SELECTION_PAGE_SIZE = 200;
+const BULK_SELECTION_CONCURRENCY = 4;
 
 type ExpenseTicketListCacheEntry = {
   requestKey: string;
@@ -233,6 +235,75 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: 
     [hasAccess, onForbidden, pageSize, restoreListSnapshot]
   );
 
+  // Loads the full filtered ticket result set for true select-all behavior.
+  const loadAllMatchingTickets = useCallback(
+    async (
+      filters: ExpenseTicketAppliedFilterSnapshot,
+      axUserIdOverride = ""
+    ): Promise<ExpenseTicketCard[]> => {
+      if (!hasAccess) {
+        onForbidden();
+        return [];
+      }
+
+      const normalizedAxUserIdOverride = String(axUserIdOverride || "").trim().toUpperCase();
+      const ticketMap = new Map<string, ExpenseTicketCard>();
+
+      const fetchPage = async (page: number): Promise<{ items: ExpenseTicketCard[]; total: number }> => {
+        const payload = buildExpenseTicketListPayload(filters, page, BULK_SELECTION_PAGE_SIZE);
+        const response = await fetchExpenseSheetTicketsList(payload, {
+          suppressPermissionModal: true,
+          axUserIdOverride: normalizedAxUserIdOverride || undefined,
+        });
+        const sourceItems = Array.isArray(response?.Items) ? response.Items : [];
+        if (response?.Success === false && sourceItems.length < 1) {
+          throw new Error(response.Message || indT("Tickets_LoadError", "Could not load tickets."));
+        }
+
+        return {
+          items: sourceItems.map((item) => mapTicketItemToCard(item as unknown as Record<string, unknown>)),
+          total: Number(response?.Total ?? sourceItems.length ?? 0),
+        };
+      };
+
+      try {
+        const firstPage = await fetchPage(1);
+        for (const item of firstPage.items) {
+          const normalizedFileId = String(item.fileId || "").trim().toUpperCase();
+          if (!normalizedFileId) continue;
+          ticketMap.set(normalizedFileId, item);
+        }
+
+        const resolvedTotal = firstPage.total > 0 ? firstPage.total : firstPage.items.length;
+        const totalPages = Math.max(1, Math.ceil(resolvedTotal / BULK_SELECTION_PAGE_SIZE));
+        const remainingPages = Array.from({ length: Math.max(0, totalPages - 1) }, (_value, index) => index + 2);
+
+        for (let index = 0; index < remainingPages.length; index += BULK_SELECTION_CONCURRENCY) {
+          const pageChunk = remainingPages.slice(index, index + BULK_SELECTION_CONCURRENCY);
+          const pageResults = await Promise.all(pageChunk.map((page) => fetchPage(page)));
+
+          for (const pageResult of pageResults) {
+            for (const item of pageResult.items) {
+              const normalizedFileId = String(item.fileId || "").trim().toUpperCase();
+              if (!normalizedFileId) continue;
+              ticketMap.set(normalizedFileId, item);
+            }
+          }
+        }
+
+        return Array.from(ticketMap.values());
+      } catch (error) {
+        if (error instanceof ApiFetchError && error.status === 403) {
+          onForbidden();
+          return [];
+        }
+
+        throw error;
+      }
+    },
+    [hasAccess, onForbidden]
+  );
+
   const resetList = useCallback(() => {
     if (activeRequestControllerRef.current) {
       activeRequestControllerRef.current.abort();
@@ -262,6 +333,7 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: 
     isLoading,
     errorMessage,
     loadList,
+    loadAllMatchingTickets,
     restoreListSnapshot,
     resetList,
   };

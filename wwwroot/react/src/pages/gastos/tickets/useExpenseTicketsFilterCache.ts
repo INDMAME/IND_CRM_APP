@@ -111,10 +111,6 @@ const normalizeState = (raw: ExpenseTicketsCachedState | null): ExpenseTicketsCa
   };
 };
 
-const normalizeEntityId = (value: unknown): string => {
-  return String(value || "").trim().toUpperCase();
-};
-
 // Centralizes cache persistence for returning from ticket detail to list.
 export const useExpenseTicketsFilterCache = () => {
   const writeCachedState = useCallback((state: ExpenseTicketsCachedState): void => {
@@ -146,40 +142,17 @@ export const useExpenseTicketsFilterCache = () => {
     writeCachedState(state);
   }, [writeCachedState]);
 
-  const removeCachedTicket = useCallback(
-    (fileId: string): void => {
-      const normalizedFileId = normalizeEntityId(fileId);
-      if (!normalizedFileId) return;
+  const invalidateCachedListForRefetch = useCallback((): void => {
+    const currentState = readCachedState();
+    if (!currentState) return;
 
-      const currentState = readCachedState();
-      if (!currentState) return;
-
-      const nextItems = currentState.items.filter((item) => normalizeEntityId(item.fileId) !== normalizedFileId);
-      const removedCount = currentState.items.length - nextItems.length;
-      const nextSelectedTickets = currentState.selectedTickets.filter(
-        (item) => normalizeEntityId(item.fileId) !== normalizedFileId
-      );
-      if (removedCount < 1 || nextItems.length < 1) {
-        writeCachedState({
-          ...currentState,
-          focusFileId: "",
-          items: [],
-          selectedTickets: nextSelectedTickets,
-          total: 0,
-        });
-        return;
-      }
-
-      writeCachedState({
-        ...currentState,
-        focusFileId: normalizeEntityId(currentState.focusFileId) === normalizedFileId ? "" : currentState.focusFileId,
-        items: nextItems,
-        selectedTickets: nextSelectedTickets,
-        total: Math.max(nextItems.length, currentState.total - removedCount),
-      });
-    },
-    [readCachedState, writeCachedState]
-  );
+    writeCachedState({
+      ...currentState,
+      focusFileId: "",
+      items: [],
+      total: 0,
+    });
+  }, [readCachedState, writeCachedState]);
 
   const clearCachedState = useCallback(() => {
     const keys = getScopedKeys();
@@ -191,7 +164,7 @@ export const useExpenseTicketsFilterCache = () => {
     readCachedState,
     consumeReturnFlag,
     saveCachedState,
-    removeCachedTicket,
+    invalidateCachedListForRefetch,
     clearCachedState,
   };
 };

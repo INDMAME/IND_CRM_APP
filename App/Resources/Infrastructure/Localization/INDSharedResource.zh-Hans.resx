@@ -42,6 +42,9 @@
   <data name="Common_NoData" xml:space="preserve">
     <value>无数据</value>
   </data>
+  <data name="Common_NotFound" xml:space="preserve">
+    <value>未找到</value>
+  </data>
   <data name="Common_User" xml:space="preserve">
     <value>用户</value>
   </data>
@@ -1291,10 +1294,10 @@
     <value>The link process will be canceled and you will return to the expense sheet. Do you want to continue?</value>
   </data>
   <data name="ExpenseTickets_LinkMode_SelectAll" xml:space="preserve">
-    <value>Select all</value>
+    <value>全选</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ClearAll" xml:space="preserve">
-    <value>Clear all</value>
+    <value>清除所选</value>
   </data>
   <data name="ExpenseTickets_LinkMode_LinkButton" xml:space="preserve">
     <value>Link ticket(s)</value>

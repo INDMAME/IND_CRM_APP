@@ -99,7 +99,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
       <>
         {showPageSpinner ? (
           <div
-            className="fixed inset-0 z-600000 flex items-center justify-center bg-white/45 backdrop-blur-[1px]"
+            className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-100"
             onWheel={(event) => {
               event.preventDefault();
             }}

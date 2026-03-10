@@ -27,7 +27,7 @@ const ExpenseProcessedByIaFilterSelect = ({
   const uiValue = value === "all" ? "" : value;
   const options = useMemo<ExpenseSelectOption[]>(
     () => [
-      { value: "all", text: indT("ExpenseSheets_Filter_Status_Both", "All") },
+      { value: "all", text: indT("Tickets_Filter_All", "All") },
       { value: "yes", text: indT("Tickets_Filter_ProcessedByIA_Yes", "Yes") },
       { value: "no", text: indT("Tickets_Filter_ProcessedByIA_No", "No") },
     ],

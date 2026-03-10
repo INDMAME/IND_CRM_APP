@@ -16,7 +16,7 @@ import ExpenseLinesTimeline from "../components/ExpenseLinesTimeline.tsx";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
-import { isManagingOtherExpenseUser } from "../utils/expenseManagedUserScope.ts";
+import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
@@ -89,18 +89,21 @@ const ExpenseSheetDetailPageContent = () => {
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const sheetMode = safeText(window.__EXPENSE_SHEET_MODE__).toLowerCase();
   const isCreateMode = sheetMode === "create";
-  const isManagingOtherUser = isManagingOtherExpenseUser({
+  const isManagingOtherUserBySelection = isManagingOtherExpenseRecord({
     canManageOtherUsers,
     currentAxUserId,
     selectedManagedUserId,
+    recordOwnerUserId: "",
     isCreateMode,
   });
-  const canCreateExpenseForCurrentView = canCreateExpense && !isManagingOtherUser;
-  const canEditHeaderFields = canEditExpenseByModule && !isManagingOtherUser;
-  const canDeleteExpenseForCurrentView = canDeleteExpense && !isManagingOtherUser;
-  const canEditExpenseStatusByPermission =
-    !isCreateMode && ((allowSelfManagement === true && !isManagingOtherUser) || (canManageOtherUsers && isManagingOtherUser));
-  const canEditExpense = canEditHeaderFields || canEditExpenseStatusByPermission;
+  const canCreateExpenseForSelectedContext = canCreateExpense && !isManagingOtherUserBySelection;
+  const canEditHeaderFieldsForSelectedContext = canEditExpenseByModule && !isManagingOtherUserBySelection;
+  const canEditExpenseStatusBySelectedContext =
+    !isCreateMode &&
+    ((allowSelfManagement === true && !isManagingOtherUserBySelection) ||
+      (canManageOtherUsers && isManagingOtherUserBySelection));
+  const canEditExpenseForSelectedContext =
+    canEditHeaderFieldsForSelectedContext || canEditExpenseStatusBySelectedContext;
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const createdSheetIdRef = useRef("");
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -140,14 +143,12 @@ const ExpenseSheetDetailPageContent = () => {
     projectValue,
     isSheetPaid,
     isSheetLocked,
-    isSheetEditLocked,
     exchangeRateValue,
     showExchangeRate,
     normalizedDraftCurrency,
     exchangeRateBaseCurrency,
     exchangeRateReferenceAmount,
     exchangeRateValidationMessage,
-    canEditHeaderFieldsCurrent,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
     setLinePage,
@@ -161,7 +162,6 @@ const ExpenseSheetDetailPageContent = () => {
     setDraftExchangeRate,
     setDraftExpenseSheetStatus,
     setDraftEstadoComentarios,
-    handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateLineMode,
     handleOpenLinkTicketMode,
@@ -169,17 +169,34 @@ const ExpenseSheetDetailPageContent = () => {
     navigateToLineDetail,
   } = useExpenseSheetDetailState({
     hasAccess,
-    canCreateExpense: canCreateExpenseForCurrentView,
-    canEditExpense,
-    canEditHeaderFields,
-    canEditApprovedStatus: canEditExpenseStatusByPermission,
+    canCreateExpense: canCreateExpenseForSelectedContext,
+    canEditExpense: canEditExpenseForSelectedContext,
+    canEditHeaderFields: canEditHeaderFieldsForSelectedContext,
+    canEditApprovedStatus: canEditExpenseStatusBySelectedContext,
     sheetId,
     isCreateMode,
     onForbidden: showPermissionModal,
   });
 
+  const isManagingOtherUser = isManagingOtherExpenseRecord({
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
+    recordOwnerUserId: header?.userId,
+    isCreateMode,
+  });
+  const canCreateExpenseForCurrentView = canCreateExpense && !isManagingOtherUser;
+  const canEditHeaderFields = canEditExpenseByModule && !isManagingOtherUser;
+  const canDeleteExpenseForCurrentView = canDeleteExpense && !isManagingOtherUser;
+  const canEditExpenseStatusByPermission =
+    !isCreateMode && ((allowSelfManagement === true && !isManagingOtherUser) || (canManageOtherUsers && isManagingOtherUser));
+  const canEditExpense = canEditHeaderFields || canEditExpenseStatusByPermission;
+  const isSheetApproved = Number(header?.expenseSheetStatus) === 2;
   const canEditExpenseStatus = canEditExpenseStatusByPermission && !isSheetPaid;
-  const { removeCachedSheet } = useExpenseSheetsFilterCache();
+  const effectiveIsSheetEditLocked = isSheetPaid || (isSheetApproved && !canEditExpenseStatusByPermission);
+  const effectiveCanEditHeaderFieldsCurrent = canEditHeaderFields && !isSheetApproved && !isSheetPaid;
+  const detailPermissionsReady = managementBootstrapReady && (isCreateMode || !!header);
+  const { invalidateCachedListForRefetch } = useExpenseSheetsFilterCache();
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -206,6 +223,21 @@ const ExpenseSheetDetailPageContent = () => {
     handleModalConfirm();
   }, [busy, closeConfirm, handleModalConfirm, modalError]);
 
+  const handleEnableEditForCurrentView = useCallback(() => {
+    if (isCreateMode || isLoading || !header || effectiveIsSheetEditLocked) {
+      return;
+    }
+
+    if (!canEditExpense) {
+      showPermissionModal();
+      return;
+    }
+
+    setModalError("");
+    setIsEditing(true);
+    setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
+  }, [canEditExpense, effectiveIsSheetEditLocked, header, isCreateMode, isLoading, setIsEditing, setModalError, setStatus]);
+
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
   const totalAmountText = useMemo(
@@ -223,7 +255,7 @@ const ExpenseSheetDetailPageContent = () => {
     busy,
     isEditing,
     isCreateMode,
-    isEditLocked: isSheetEditLocked,
+    isEditLocked: effectiveIsSheetEditLocked,
     isDeleteLocked: isSheetLocked,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
@@ -232,7 +264,7 @@ const ExpenseSheetDetailPageContent = () => {
     canCreateExpense: canCreateExpenseForCurrentView,
     canEditExpense,
     canDeleteExpense: canDeleteExpenseForCurrentView,
-    canEditHeaderFields: canEditHeaderFieldsCurrent,
+    canEditHeaderFields: effectiveCanEditHeaderFieldsCurrent,
     canEditStatus: canEditExpenseStatus,
     sheetId,
     draftDescription,
@@ -272,20 +304,20 @@ const ExpenseSheetDetailPageContent = () => {
     isEditing,
     isCreateMode,
     isLocked: isSheetLocked,
-    isEditLocked: isSheetEditLocked,
+    isEditLocked: effectiveIsSheetEditLocked,
     isDeleteLocked: isSheetLocked,
-    permissionsReady: managementBootstrapReady,
+    permissionsReady: detailPermissionsReady,
     canCreateExpense: canCreateExpenseForCurrentView,
     canEditExpense,
     canDeleteExpense: canDeleteExpenseForCurrentView,
     setModalError,
-    handleEnableEdit,
+    handleEnableEdit: handleEnableEditForCurrentView,
     handleCancelEdit,
     handleUpdate,
     handleDelete,
     onSaveSuccess: handleSaveSuccess,
     onDeleteSuccess: () => {
-      removeCachedSheet(safeText(header?.hojaGastosId || sheetId));
+      invalidateCachedListForRefetch();
       navigateToExpenseUrl("/Gastos/ExpenseSheets");
     },
     openConfirm,
@@ -513,7 +545,7 @@ const ExpenseSheetDetailPageContent = () => {
         <ExpenseSheetHeaderForm
           isCreateMode={isCreateMode}
           isEditing={isEditing}
-          canEditHeaderFields={canEditHeaderFieldsCurrent}
+          canEditHeaderFields={effectiveCanEditHeaderFieldsCurrent}
           canEditStatus={canEditExpenseStatus}
           header={header}
           projectValue={projectValue}

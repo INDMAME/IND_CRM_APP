@@ -45,6 +45,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   const [hasMore, setHasMore] = useState(true);
   const [blocking, setBlocking] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showNotFoundState, setShowNotFoundState] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
@@ -56,7 +57,13 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   const inputId = `${idBase}-contacts-input`;
   const listId = `${idBase}-contacts-options`;
 
-  useOutsideClick([containerRef, listRef], () => setOpen(false));
+  useOutsideClick([containerRef, listRef], () => {
+    setOpen(false);
+    setShowNotFoundState(false);
+    if (query.trim()) {
+      setQuery("");
+    }
+  });
 
   useEffect(() => {
     onChangeRef.current = onChange;
@@ -96,6 +103,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     const cached = getCachedContacts(accountNum) as ContactOption[] | null;
     if (cached) {
       setOptions(cached);
+      setShowNotFoundState(false);
       setHasLoaded(true);
       setHasMore(cached.length === 10);
       setStatus(
@@ -116,6 +124,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
     setBlocking(false);
     setLoadingMore(false);
     setActiveIndex(0);
+    setShowNotFoundState(false);
     setPage(1);
     setHasMore(true);
 
@@ -220,6 +229,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
         setCachedContacts(accountNum, next);
         return next;
       });
+      setShowNotFoundState(false);
       setHasLoaded(true);
       setHasMore(mapped.length === 10);
       setPage(pageToLoad);
@@ -268,16 +278,15 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return availableOptions;
-    const f = availableOptions.filter(
+    return availableOptions.filter(
       (o) => o.text.toLowerCase().includes(q) || o.cargo.toLowerCase().includes(q) || o.empresa.toLowerCase().includes(q)
     );
-    return f.length ? f : availableOptions;
   }, [availableOptions, query]);
-  const activeId = open && filtered[activeIndex] ? `${idBase}-contact-opt-${filtered[activeIndex].value}` : undefined;
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [filtered.length, query]);
+  const shouldShowNotFoundRow = showNotFoundState || (!!query.trim() && filtered.length === 0);
+  const resolvedActiveIndex =
+    filtered.length > 0 ? Math.min(Math.max(activeIndex, 0), filtered.length - 1) : 0;
+  const activeId =
+    open && filtered[resolvedActiveIndex] ? `${idBase}-contact-opt-${filtered[resolvedActiveIndex].value}` : undefined;
 
   const toggleOption = (opt: ContactOption) => {
     setSelected((prev) => {
@@ -285,6 +294,8 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
       if (exists) return prev.filter((p) => p.value !== opt.value);
       return [...prev, opt];
     });
+    setShowNotFoundState(false);
+    setQuery("");
   };
 
   const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
@@ -296,7 +307,16 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
       openOnArrow: true,
       onArrowNavigate: ensureLoaded,
       onEnterWhenOpen: () => {
-        toggleOption(filtered[activeIndex] ?? filtered[0]);
+        if (filtered.length > 0) {
+          toggleOption(filtered[resolvedActiveIndex] ?? filtered[0]);
+          return;
+        }
+
+        if (query.trim()) {
+          setQuery("");
+          setShowNotFoundState(true);
+          setOpen(true);
+        }
       },
       onEnterWhenClosed: accountNum
         ? () => {
@@ -339,7 +359,11 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
               id={inputId}
               name={`${idBase}-contacts-query`}
               className="flex-1 min-w-30 bg-transparent text-sm sm:text-base leading-5 text-slate-900 border-none outline-hidden px-1 py-1 focus:ring-0 focus:border-transparent"
-              onChange={(event) => setQuery(event.target.value)}
+              onChange={(event) => {
+                setActiveIndex(0);
+                setShowNotFoundState(false);
+                setQuery(event.target.value);
+              }}
               onKeyDown={handleKeyDown}
               placeholder={selected.length ? "" : indT("Visits_Create_FilterPlaceholder", "Type to filter...")}
               autoComplete="off"
@@ -404,13 +428,15 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
             )}
             {!loading && options.length > 0 && filtered.length === 0 && (
               <div className="px-4 py-2 text-sm text-slate-500">
-                {query.trim() ? indT("Visits_Create_NoMatches", "No matches") : indT("Visits_Create_NoMoreContacts", "No more contacts available")}
+                {shouldShowNotFoundRow
+                  ? indT("Common_NotFound", "Not found")
+                  : indT("Visits_Create_NoMoreContacts", "No more contacts available")}
               </div>
             )}
             {!loading &&
               filtered.map((opt, idx) => {
                 const sel = selected.some((s) => s.value === opt.value);
-                const isActive = idx === activeIndex;
+                const isActive = idx === resolvedActiveIndex;
                 return (
                   <button
                     type="button"

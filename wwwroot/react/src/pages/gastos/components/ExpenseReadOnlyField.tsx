@@ -5,13 +5,16 @@ type ExpenseReadOnlyFieldProps = {
   value: string;
   fullWidth?: boolean;
   leadingIcon?: React.ReactNode;
+  // Reserved for future field-to-page navigation. Kept disabled intentionally for now.
   onClick?: () => void;
 };
 
+const ENABLE_READ_ONLY_FIELD_NAVIGATION = false;
+
 // Reusable read-only field for expense detail pages.
-const ExpenseReadOnlyField = ({ label, value, fullWidth = false, leadingIcon, onClick }: ExpenseReadOnlyFieldProps) => {
+const ExpenseReadOnlyField = ({ label, value, fullWidth = false, leadingIcon, onClick: _onClick }: ExpenseReadOnlyFieldProps) => {
   const displayValue = value || "-";
-  const isClickable = typeof onClick === "function" && displayValue !== "-";
+  const isClickable = ENABLE_READ_ONLY_FIELD_NAVIGATION && typeof _onClick === "function" && displayValue !== "-";
 
   return (
     <div className={fullWidth ? "sm:col-span-2 space-y-1.5" : "space-y-1.5"}>
@@ -26,7 +29,7 @@ const ExpenseReadOnlyField = ({ label, value, fullWidth = false, leadingIcon, on
           <button
             type="button"
             className={`form-control ind-readonly-field ${leadingIcon ? "pl-9" : ""} text-left underline decoration-slate-400 underline-offset-2`.trim()}
-            onClick={onClick}
+            onClick={_onClick}
           >
             {displayValue}
           </button>

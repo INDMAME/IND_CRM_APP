@@ -41,23 +41,12 @@ export const PageBottomActionButton = ({
       aria-label={ariaLabel || label}
       tabIndex={tabIndex}
       className={classNames(
-        "relative inline-block w-full overflow-hidden rounded-[5px] disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-block w-full rounded-[5px] disabled:cursor-not-allowed disabled:opacity-60",
         fullWidth ? "col-span-2" : "",
         className || ""
       )}
-      style={{ padding: "5.3px 0" }}
     >
-      <div
-        aria-hidden="true"
-        className="absolute bottom-[-11px] right-[-125%] z-0 h-[50%] w-[150%] rounded-md opacity-70 animate-star-movement-bottom"
-        style={{ background: "radial-gradient(circle, rgba(0, 41, 107, 0.65), transparent 12%)", animationDuration: "2.5s" }}
-      />
-      <div
-        aria-hidden="true"
-        className="absolute top-[-10px] left-[-125%] z-0 h-[50%] w-[150%] rounded-md opacity-70 animate-star-movement-top"
-        style={{ background: "radial-gradient(circle, rgba(0, 41, 107, 0.65), transparent 12%)", animationDuration: "2.5s" }}
-      />
-      <span className="primary-btn relative z-10 flex w-full items-center justify-center rounded-[5px] border border-[#001f4d]/70 bg-gradient-to-b from-[#00296b] to-[#001f4d] px-3 py-[12px] text-center text-[13px] text-white sm:px-4 sm:text-[14px]">
+      <span className="flex w-full items-center justify-center rounded-[5px] border border-[#001f4d]/80 bg-primary px-3 py-2.5 text-center text-[12px] font-semibold leading-tight text-white shadow-xs transition-colors duration-150 hover:bg-[#001f4d] sm:px-4 sm:py-2.5 sm:text-[13px]">
         {label}
       </span>
     </button>
@@ -66,7 +55,7 @@ export const PageBottomActionButton = ({
 
 PageBottomActionButton.displayName = "PageBottomActionButton";
 
-// Fixed bottom action bar that stays visible when the page is idle.
+// Fixed bottom action bar that stays visible while the page scrolls.
 const PageBottomActions = ({ children, ariaLabel, className }: PageBottomActionsProps) => {
   const actionButtons = Children.toArray(children)
     .filter(
@@ -76,7 +65,7 @@ const PageBottomActions = ({ children, ariaLabel, className }: PageBottomActions
     .slice(0, MAX_PAGE_BOTTOM_ACTIONS);
 
   const actionCount = actionButtons.length;
-  const { isVisible, reservedHeight, wrapperRef } = usePageBottomActionsVisibility();
+  const { reservedHeight, wrapperRef } = usePageBottomActionsVisibility();
   const portalTarget = typeof document === "undefined" ? null : document.body;
 
   if (actionCount < 1) {
@@ -86,24 +75,23 @@ const PageBottomActions = ({ children, ariaLabel, className }: PageBottomActions
   const actionBar = (
     <div
       ref={wrapperRef}
-      aria-hidden={!isVisible}
-      className={classNames(
-        "fixed inset-x-0 bottom-0 z-1900 transition-[opacity,transform] duration-200 ease-out",
-        isVisible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-6 opacity-0"
-      )}
+      className="fixed inset-x-0 bottom-0 z-1900 border-t border-slate-200/90 bg-white shadow-[0_-10px_28px_rgba(15,23,42,0.12)]"
     >
-      <div className="mx-auto max-w-[1140px] px-4 sm:px-6" style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))" }}>
+      <div
+        className="w-full px-2 pt-2 sm:px-3 sm:pt-2.5"
+        style={{ paddingBottom: "calc(0.2rem + env(safe-area-inset-bottom, 0px))" }}
+      >
         <div
           role="toolbar"
           aria-label={ariaLabel}
-          className={classNames("pointer-events-auto rounded-[5px] border border-slate-200/80 bg-white/95 p-2 shadow-2xl backdrop-blur-md", className || "")}
+          className={classNames("pointer-events-auto w-full", className || "")}
         >
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-1.5">
             {actionButtons.map((child, index) => {
               const shouldUseFullWidth = actionCount === 1 || (actionCount % 2 === 1 && index === actionCount - 1);
               return cloneElement(child, {
                 fullWidth: shouldUseFullWidth,
-                tabIndex: isVisible ? child.props.tabIndex : -1,
+                tabIndex: child.props.tabIndex,
                 key: child.key ?? `page-bottom-action-${index}`,
               });
             })}

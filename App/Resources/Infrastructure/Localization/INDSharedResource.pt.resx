@@ -42,6 +42,9 @@
   <data name="Common_NoData" xml:space="preserve">
     <value>Sem dados</value>
   </data>
+  <data name="Common_NotFound" xml:space="preserve">
+    <value>Nao encontrado</value>
+  </data>
   <data name="Common_User" xml:space="preserve">
     <value>Usuário</value>
   </data>
@@ -1294,7 +1297,7 @@
     <value>Selecionar todos</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ClearAll" xml:space="preserve">
-    <value>Limpar todos</value>
+    <value>Limpar selecao</value>
   </data>
   <data name="ExpenseTickets_LinkMode_LinkButton" xml:space="preserve">
     <value>Vincular ticket(s)</value>

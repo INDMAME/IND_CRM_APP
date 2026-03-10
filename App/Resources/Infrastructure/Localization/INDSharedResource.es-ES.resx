@@ -42,6 +42,9 @@
   <data name="Common_NoData" xml:space="preserve">
     <value>Sin datos</value>
   </data>
+  <data name="Common_NotFound" xml:space="preserve">
+    <value>No encontrado</value>
+  </data>
   <data name="Common_User" xml:space="preserve">
     <value>Usuario</value>
   </data>
@@ -1291,10 +1294,10 @@
     <value>Se cancelara el proceso de vinculacion y volveras a la hoja de gastos. Quieres continuar?</value>
   </data>
   <data name="ExpenseTickets_LinkMode_SelectAll" xml:space="preserve">
-    <value>Seleccionar todos</value>
+    <value>Seleccionar todo</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ClearAll" xml:space="preserve">
-    <value>Borrar todos</value>
+    <value>Borrar selección</value>
   </data>
   <data name="ExpenseTickets_LinkMode_LinkButton" xml:space="preserve">
     <value>Vincular ticket(s)</value>

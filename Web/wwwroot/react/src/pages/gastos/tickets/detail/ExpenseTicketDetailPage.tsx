@@ -293,7 +293,7 @@ const ExpenseTicketDetailPageContent = () => {
   const canDeleteTicketInContext = canDeleteTicket && !isFromExpenseLine && !isFromSheetLink;
   const ticketTopbarActionMode: "default" | "view_only" =
     isManagingOtherUser || isFromExpenseLine || isFromSheetLink ? "view_only" : "default";
-  const { removeCachedTicket } = useExpenseTicketsFilterCache();
+  const { invalidateCachedListForRefetch } = useExpenseTicketsFilterCache();
 
   useExpenseTicketDetailTopbarActions({
     busy,
@@ -314,7 +314,7 @@ const ExpenseTicketDetailPageContent = () => {
       void reloadDetail();
     },
     onDeleteSuccess: () => {
-      removeCachedTicket(safeText(header?.fileId || fileId));
+      invalidateCachedListForRefetch();
       if (isFromExpenseLine) {
         navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(contextSheetId)}`);
         return;

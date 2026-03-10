@@ -40,7 +40,7 @@ const ExpenseTimelineCard = ({
 
   return (
     <div
-      className="timeline-card timeline-card--clickable"
+      className="timeline-card timeline-card--clickable expense-timeline-card"
       role="button"
       tabIndex={0}
       onClick={onOpen}
@@ -51,7 +51,7 @@ const ExpenseTimelineCard = ({
         }
       }}
     >
-      <div className="timeline-date-panel flex flex-col items-center justify-center gap-1 px-3 py-3 bg-slate-50 border-r border-slate-200 text-slate-600">
+      <div className="timeline-date-panel expense-timeline-card__date-panel flex flex-col items-center justify-center gap-1 bg-slate-50 border-r border-slate-200 text-slate-600">
         {datePanelContent ? (
           datePanelContent
         ) : (
@@ -62,7 +62,7 @@ const ExpenseTimelineCard = ({
           </>
         )}
       </div>
-      <div className="timeline-card__content flex-1 py-3 px-4">
+      <div className="timeline-card__content expense-timeline-card__content flex-1">
         {statusClassName ? <span className={statusClassName} title={statusLabel} aria-label={statusLabel} /> : null}
         {statusIcon ? (
           <span className={statusIconClassName} role="group" aria-label={statusLabel || undefined}>

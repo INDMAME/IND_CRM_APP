@@ -27,3 +27,33 @@ export const isManagingOtherExpenseUser = ({
 
   return !isSameExpenseUser(normalizedCurrentUserId, normalizedSelectedManagedUserId);
 };
+
+// Resolves the effective owner context for one expense record once detail data is available.
+export const isManagingOtherExpenseRecord = ({
+  canManageOtherUsers,
+  currentAxUserId,
+  selectedManagedUserId,
+  recordOwnerUserId,
+  isCreateMode = false,
+}: {
+  canManageOtherUsers: boolean;
+  currentAxUserId: unknown;
+  selectedManagedUserId: unknown;
+  recordOwnerUserId: unknown;
+  isCreateMode?: boolean;
+}): boolean => {
+  if (isCreateMode) return false;
+
+  const normalizedCurrentUserId = normalizeUserId(currentAxUserId);
+  const normalizedRecordOwnerUserId = normalizeUserId(recordOwnerUserId);
+  if (normalizedCurrentUserId && normalizedRecordOwnerUserId) {
+    return !isSameExpenseUser(normalizedCurrentUserId, normalizedRecordOwnerUserId);
+  }
+
+  return isManagingOtherExpenseUser({
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
+    isCreateMode,
+  });
+};

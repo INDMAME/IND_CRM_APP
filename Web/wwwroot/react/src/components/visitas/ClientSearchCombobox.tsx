@@ -64,23 +64,29 @@ const ClientSearchCombobox = ({
   const [hasMore, setHasMore] = useState(true);
   const [blocking, setBlocking] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [showNotFoundState, setShowNotFoundState] = useState(false);
   const listRef = useRef<HTMLDivElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  useOutsideClick([containerRef, listRef], () => setOpen(false));
+  useOutsideClick([containerRef, listRef], () => {
+    setShowNotFoundState(false);
+    setOpen(false);
+  });
 
   useEffect(() => {
     if (!value) {
       if (shouldClearOnNull) {
         setSelected(null);
         setQuery("");
+        setShowNotFoundState(false);
       }
       return;
     }
     setSelected(value);
     setQuery(value.text || "");
+    setShowNotFoundState(false);
   }, [value, shouldClearOnNull]);
 
   const filtered = useMemo(() => {
@@ -90,10 +96,8 @@ const ClientSearchCombobox = ({
     const match = options.filter((o) => o.text.toLowerCase().includes(q));
     return match.length > 0 ? match : options;
   }, [options, query, fetchedQuery]);
-
-  useEffect(() => {
-    setActiveIndex(0);
-  }, [filtered.length, query]);
+  const resolvedActiveIndex =
+    filtered.length > 0 ? Math.min(Math.max(activeIndex, 0), filtered.length - 1) : 0;
 
   const cancelPending = () => {
     if (abortRef.current) {
@@ -114,6 +118,7 @@ const ClientSearchCombobox = ({
   const search = async () => {
     const currentQuery = query.trim().toLowerCase();
     if (currentQuery.length < minChars) {
+      setShowNotFoundState(false);
       setStatus(indFormat("Visits_Create_MinChars", "Type at least {0} characters.", minChars));
       setOptions([]);
       setHasMore(false);
@@ -126,13 +131,19 @@ const ClientSearchCombobox = ({
     const cacheKey = query.trim().toLowerCase();
     if (hasClientCache(cacheKey)) {
       const cached = (getClientCache(cacheKey) || []) as ClientOption[];
+      setActiveIndex(0);
       setFetchedQuery(currentQuery);
       setOptions(cached);
-      setStatus(
-        cached.length
-          ? indFormat("Visits_Create_ClientCountCache", "{0} clients (cache)", cached.length)
-          : indT("Visits_Create_NoResults", "No results")
-      );
+      if (cached.length < 1) {
+        setSelected(null);
+        setQuery("");
+        setShowNotFoundState(true);
+        onSelected(null);
+        setStatus(indT("Common_NotFound", "Not found"));
+      } else {
+        setShowNotFoundState(false);
+        setStatus(indFormat("Visits_Create_ClientCountCache", "{0} clients (cache)", cached.length));
+      }
       setHasMore(cached.length === 10);
       setOpen(true);
       return;
@@ -147,10 +158,20 @@ const ClientSearchCombobox = ({
       const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=1&pageSize=10`;
       const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
       const items = (data.items || []).map(mapAccountItem).filter(Boolean) as ClientOption[];
+      setActiveIndex(0);
       setFetchedQuery(currentQuery);
       setClientCache(cacheKey, items);
       setOptions(items);
-      setStatus(items.length ? indFormat("Visits_Create_ClientCount", "{0} clients", items.length) : indT("Visits_Create_NoResults", "No results"));
+      if (items.length < 1) {
+        setSelected(null);
+        setQuery("");
+        setShowNotFoundState(true);
+        onSelected(null);
+        setStatus(indT("Common_NotFound", "Not found"));
+      } else {
+        setShowNotFoundState(false);
+        setStatus(indFormat("Visits_Create_ClientCount", "{0} clients", items.length));
+      }
       setHasMore(items.length === 10);
       shouldOpenOnFinish = true;
     } catch (err: any) {
@@ -203,6 +224,7 @@ const ClientSearchCombobox = ({
   const selectOption = (opt: ClientOption) => {
     setSelected(opt);
     setQuery(opt.text);
+    setShowNotFoundState(false);
     setOpen(false);
     onSelected(opt);
   };
@@ -212,6 +234,7 @@ const ClientSearchCombobox = ({
     const trimmed = query.trim();
     if (trimmed.length < minChars) {
       cancelPending();
+      setShowNotFoundState(false);
       setOptions([]);
       setHasMore(false);
       setStatus(indFormat("Visits_Create_MinChars", "Type at least {0} characters.", minChars));
@@ -239,7 +262,10 @@ const ClientSearchCombobox = ({
       setActiveIndex,
       requireOpenForArrows: true,
       onEnterWhenOpen: () => {
-        selectOption(filtered[activeIndex] ?? filtered[0]);
+        if (filtered.length < 1) {
+          return;
+        }
+        selectOption(filtered[resolvedActiveIndex] ?? filtered[0]);
       },
       onEnterWhenClosed: requestSearchOrOpen,
     });
@@ -253,27 +279,30 @@ const ClientSearchCombobox = ({
   const wrapperClass = isCompact ? "space-y-1 history-client-combobox" : "space-y-2";
   const labelClass = "form-label font-semibold";
   const containerClass = isCompact
-    ? "relative w-full rounded-[5px] border border-slate-200/70 bg-transparent text-left focus-within:border-primary/70 focus-within:ring-2 focus-within:ring-primary/20 focus-within:ring-offset-0"
+    ? "relative w-full rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
     : "relative w-full cursor-default rounded-[5px] border-slate-300 bg-white text-left shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm";
   const inputClass = isCompact
-    ? "w-full rounded-[5px] border border-transparent bg-transparent px-3 pr-24 py-2 text-[11px] leading-5 text-slate-700 placeholder:text-slate-400 focus:outline-hidden"
+    ? "w-full rounded-xl border border-slate-200 px-3 py-2 pr-24 text-sm sm:text-base leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
     : "w-full rounded-[5px] border border-slate-200 px-3 py-2 pr-24 text-sm sm:text-base leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary";
-  const emptyTextClass = isCompact ? "px-4 py-2 text-[11px] text-slate-500" : "px-4 py-2 text-sm text-slate-500";
+  const emptyTextClass = isCompact ? "px-4 py-2 text-sm text-slate-500" : "px-4 py-2 text-sm text-slate-500";
   const optionClass = isCompact
-    ? "relative flex w-full cursor-default select-none items-start py-2 px-3 text-left text-[11px]"
+    ? "relative flex w-full cursor-default select-none items-start py-2 px-3 text-left text-sm"
     : "relative flex w-full cursor-default select-none items-start py-2 px-3 text-left text-sm";
-  const optionTextClass = isCompact ? "block truncate uppercase text-[12px]" : "block truncate uppercase text-[13px]";
-  const optionSubTextClass = isCompact ? "block truncate uppercase text-[10px] text-slate-600" : "block truncate uppercase text-[11px] text-slate-600";
+  const optionTextClass = isCompact ? "block truncate uppercase text-[13px]" : "block truncate uppercase text-[13px]";
+  const optionSubTextClass = isCompact ? "block truncate uppercase text-[11px] text-slate-600" : "block truncate uppercase text-[11px] text-slate-600";
   const optionSubTextSecondaryClass = isCompact
-    ? "block truncate uppercase text-[10px] text-slate-500"
+    ? "block truncate uppercase text-[11px] text-slate-500"
     : "block truncate uppercase text-[11px] text-slate-500";
-  const statusClass = isCompact ? "text-[10px] text-slate-500 tech-info" : "text-xs text-slate-500 tech-info";
-  const searchIconSize = isCompact ? "h-4 w-4" : "h-5 w-5";
-  const chevronIconSize = isCompact ? "h-4 w-4" : "h-5 w-5";
+  const statusClass = isCompact ? "text-xs text-slate-500 tech-info" : "text-xs text-slate-500 tech-info";
+  const searchIconSize = isCompact ? "h-5 w-5" : "h-5 w-5";
+  const chevronIconSize = isCompact ? "h-5 w-5" : "h-5 w-5";
 
   const safeIdBase = idBase || (isCompact ? "history-client" : "client");
   const listId = `${safeIdBase}-options`;
-  const activeId = open && filtered[activeIndex] ? `${safeIdBase}-opt-${filtered[activeIndex].value}` : undefined;
+  const activeId =
+    open && filtered[resolvedActiveIndex]
+      ? `${safeIdBase}-opt-${filtered[resolvedActiveIndex].value}`
+      : undefined;
 
   return (
     <div className={wrapperClass} ref={containerRef}>
@@ -285,7 +314,9 @@ const ClientSearchCombobox = ({
             value={query}
             onChange={(event) => {
               const val = event.target.value;
+              setActiveIndex(0);
               setQuery(val);
+              setShowNotFoundState(false);
               if (selected && val !== (selected.text || "")) {
                 setSelected(null);
                 onSelected?.(null);
@@ -367,7 +398,9 @@ const ClientSearchCombobox = ({
           <div ref={listRef} id={listId}>
             {options.length === 0 && (
               <div className={emptyTextClass}>
-                {query.trim().length < minChars
+                {showNotFoundState
+                  ? indT("Common_NotFound", "Not found")
+                  : query.trim().length < minChars
                   ? indFormat("Visits_Create_MinChars", "Type at least {0} characters.", minChars)
                   : indT("Visits_Create_NoResults", "No results")}
               </div>
@@ -377,7 +410,7 @@ const ClientSearchCombobox = ({
             )}
             {!loading &&
               filtered.map((opt, idx) => {
-                const isActive = idx === activeIndex;
+                const isActive = idx === resolvedActiveIndex;
                 const sel = selected?.value === opt.value;
                 return (
                   <button

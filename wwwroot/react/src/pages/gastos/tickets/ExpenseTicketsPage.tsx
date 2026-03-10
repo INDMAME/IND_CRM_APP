@@ -1,8 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import FloatingActionButton, { type FloatingActionButtonMenuItem } from "../../../components/commons/FloatingActionButton.tsx";
+import PageBottomActions, { PageBottomActionButton } from "../../../components/commons/PageBottomActions.tsx";
 import Spinner from "../../../components/commons/Spinner.tsx";
 import { useAuthContext, type AuthManagedUser } from "../../../context/AuthContext.tsx";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
@@ -27,7 +28,7 @@ import { useExpenseTicketsListData } from "./useExpenseTicketsListData.ts";
 import { useExpenseTicketsFilterCache } from "./useExpenseTicketsFilterCache.ts";
 import type { ExpenseSheetCreateLineRequest } from "../expenseTypes.ts";
 import type { ExpenseTicketAppliedFilterSnapshot, ExpenseTicketCard } from "./expenseTicketListTypes.ts";
-import { setTopbarActionGroupReady } from "../../../utils/topbarActionVisibility.ts";
+import { setTopbarActionGroupReady as revealTopbarActionGroup } from "../../../utils/topbarActionVisibility.ts";
 
 const PAGE_SIZE = 10;
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
@@ -217,6 +218,8 @@ const ExpenseTicketsPageContent = () => {
   const [linkFlowBusy, setLinkFlowBusy] = useState(false);
   const [linkFlowStatus, setLinkFlowStatus] = useState("");
   const [linkFlowError, setLinkFlowError] = useState("");
+  const [selectAllBusy, setSelectAllBusy] = useState(false);
+  const [selectAllError, setSelectAllError] = useState("");
   const [selectedTicketsById, setSelectedTicketsById] = useState<Record<string, ExpenseTicketCard>>({});
 
   const paginationLabels = useMemo(
@@ -263,6 +266,7 @@ const ExpenseTicketsPageContent = () => {
     isLoading,
     errorMessage,
     loadList,
+    loadAllMatchingTickets,
     restoreListSnapshot,
     resetList,
   } = useExpenseTicketsListData({
@@ -410,8 +414,8 @@ const ExpenseTicketsPageContent = () => {
     }, 0);
   }, [selectedTicketList]);
   const selectedTotalAmountText = useMemo(() => formatAmountWithCurrency(selectedTotalAmount, ""), [selectedTotalAmount]);
-  useEffect(() => {
-    setTopbarActionGroupReady("expense-tickets-list-actions");
+  useLayoutEffect(() => {
+    revealTopbarActionGroup("expense-tickets-list-actions");
   }, []);
 
   const linkModeCancelMessage = useMemo(
@@ -479,8 +483,51 @@ const ExpenseTicketsPageContent = () => {
   );
 
   const clearTicketSelection = useCallback(() => {
+    setSelectAllError("");
     setSelectedTicketsById({});
   }, []);
+
+  // Selects every ticket that matches the active filters, not only the visible page.
+  const selectAllMatchingTickets = useCallback(async () => {
+    if (!isLinkMode || !canProcessLinkMode || linkSheetCheckBusy || linkSheetLocked || linkFlowBusy || selectAllBusy) {
+      return;
+    }
+
+    setSelectAllBusy(true);
+    setSelectAllError("");
+
+    try {
+      const activeFilters = resolveActiveFilters();
+      const requestAxUserId = safeText(activeFilters.managedUserId || currentAxUserId);
+      const allMatchingTickets = await loadAllMatchingTickets(activeFilters, requestAxUserId);
+
+      setSelectedTicketsById((previous) => {
+        const next = { ...previous };
+        for (const ticket of allMatchingTickets) {
+          if (!canSelectTicketForLink(ticket)) continue;
+          const fileId = safeText(ticket.fileId);
+          if (!fileId) continue;
+          next[fileId] = ticket;
+        }
+        return next;
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : indT("Tickets_LoadError", "Could not load tickets.");
+      setSelectAllError(message);
+    } finally {
+      setSelectAllBusy(false);
+    }
+  }, [
+    canProcessLinkMode,
+    currentAxUserId,
+    isLinkMode,
+    linkFlowBusy,
+    linkSheetCheckBusy,
+    linkSheetLocked,
+    loadAllMatchingTickets,
+    resolveActiveFilters,
+    selectAllBusy,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -1268,9 +1315,9 @@ const ExpenseTicketsPageContent = () => {
       {showSummary ? (
         <div className="filter-card filter-card--summary p-3 sm:p-4 mt-1 mb-3">
           <div className="expense-summary-grid grid grid-cols-1 min-[360px]:grid-cols-2 items-start gap-x-4 gap-y-1 text-xs">
-            {summaryItems.map((item, index) => (
+            {summaryItems.map((item) => (
               <div
-                key={`${item.key}-${item.value}-${index}`}
+                key={item.key}
                 className="history-filter-summary history-filter-summary--grid-item leading-5 min-w-0"
               >
                 <span className="history-filter-summary__label font-semibold">{item.label}:</span>
@@ -1326,10 +1373,21 @@ const ExpenseTicketsPageContent = () => {
             </div>
           ) : null}
 
+          {canProcessLinkMode && !linkSheetCheckBusy && selectAllBusy ? (
+            <div className="flex items-center gap-2 text-sm text-slate-700">
+              <Spinner size="h-4 w-4" label={indT("Common_Loading", "Loading")} />
+              <span>{indT("Common_Loading", "Loading")}</span>
+            </div>
+          ) : null}
+
           {canProcessLinkMode && !linkSheetCheckBusy && linkSheetLocked ? (
             <div className="text-sm text-rose-700">
               {indT("ExpenseSheets_Detail_PaidReadOnly", "Las hojas de gasto pagadas son de solo lectura.")}
             </div>
+          ) : null}
+
+          {canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked && selectAllError ? (
+            <div className="text-sm text-rose-700">{selectAllError}</div>
           ) : null}
 
           {canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked ? (
@@ -1338,18 +1396,20 @@ const ExpenseTicketsPageContent = () => {
                 <button
                   type="button"
                   className="ind-action-btn w-full min-w-0 px-1.5 py-1 text-[10px] leading-tight sm:text-xs"
-                  onClick={clearTicketSelection}
-                  disabled={linkFlowBusy || selectedTicketCount < 1}
+                  onClick={() => {
+                    void selectAllMatchingTickets();
+                  }}
+                  disabled={linkFlowBusy || selectAllBusy || total < 1}
                 >
-                  {indT("ExpenseTickets_LinkMode_ClearAll", "Borrar todos")}
+                  {indT("ExpenseTickets_LinkMode_SelectAll", "Seleccionar todo")}
                 </button>
                 <button
                   type="button"
                   className="ind-action-btn w-full min-w-0 px-1.5 py-1 text-[10px] leading-tight sm:text-xs"
-                  onClick={openLinkConfirmModal}
-                  disabled={linkFlowBusy || selectedTicketCount < 1}
+                  onClick={clearTicketSelection}
+                  disabled={linkFlowBusy || selectAllBusy || selectedTicketCount < 1}
                 >
-                  {indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)")}
+                  {indT("ExpenseTickets_LinkMode_ClearAll", "Borrar seleccion")}
                 </button>
               </div>
             </>
@@ -1375,7 +1435,7 @@ const ExpenseTicketsPageContent = () => {
 
       {!errorMessage && items.length > 0 ? (
         <div ref={timelineContainerRef} className="timeline-box">
-          {items.map((item, index) => {
+          {items.map((item) => {
             const fileId = safeText(item.fileId);
             const dateParts = formatExpenseDateParts(item.transDate, document?.documentElement?.lang || "es-ES");
             const title = safeText(item.description) || safeText(item.fileName) || fileId || "-";
@@ -1423,26 +1483,20 @@ const ExpenseTicketsPageContent = () => {
               </>
             ) : null;
             const selectionControl = isLinkMode ? (
-              <span
-                className="inline-flex -m-1 h-6 w-6 items-center justify-center"
-                onPointerDown={(event) => {
-                  event.stopPropagation();
-                  markLinkModeSelectionIntent();
-                }}
-                onMouseDown={(event) => {
-                  event.stopPropagation();
-                  markLinkModeSelectionIntent();
-                }}
-                onClick={(event) => {
-                  event.stopPropagation();
-                  markLinkModeSelectionIntent();
-                }}
-              >
+              <span className="inline-flex -m-1 h-6 w-6 items-center justify-center">
                 <input
                   type="checkbox"
                   checked={isSelectedInLinkMode}
                   disabled={!isSelectableInLinkMode || linkFlowBusy || linkSheetCheckBusy || linkSheetLocked}
                   className="h-4 w-4 cursor-pointer accent-primary pointer-events-auto"
+                  onPointerDown={(event) => {
+                    event.stopPropagation();
+                    markLinkModeSelectionIntent();
+                  }}
+                  onMouseDown={(event) => {
+                    event.stopPropagation();
+                    markLinkModeSelectionIntent();
+                  }}
                   onClick={(event) => {
                     event.stopPropagation();
                     markLinkModeSelectionIntent();
@@ -1464,10 +1518,13 @@ const ExpenseTicketsPageContent = () => {
             const statusIconClassName = isLinkMode
               ? "expense-ticket-card__status-icons pointer-events-auto"
               : "expense-ticket-card__status-icons";
+            const ticketCardKey =
+              fileId ||
+              `${safeText(item.fileName)}-${safeText(item.transDate)}-${safeText(item.description)}-${String(item.totalAmount ?? "")}`;
 
             return (
               <div
-                key={`${fileId}-${index}`}
+                key={ticketCardKey}
                 className={isSelectedInLinkMode ? "timeline-item rounded-2xl ring-2 ring-primary/30" : "timeline-item"}
                 data-ticket-file-id={fileId || undefined}
               >
@@ -1502,6 +1559,16 @@ const ExpenseTicketsPageContent = () => {
         }}
         labels={paginationLabels}
       />
+
+      {isLinkMode && canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked ? (
+        <PageBottomActions ariaLabel={indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)")}>
+          <PageBottomActionButton
+            label={indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)")}
+            onClick={openLinkConfirmModal}
+            disabled={linkFlowBusy || selectAllBusy || selectedTicketCount < 1}
+          />
+        </PageBottomActions>
+      ) : null}
 
       {canCreateTicket && !isLinkMode ? (
         <FloatingActionButton
