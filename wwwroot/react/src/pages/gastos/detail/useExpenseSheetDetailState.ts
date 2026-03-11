@@ -66,6 +66,7 @@ type UseExpenseSheetDetailStateArgs = {
   allowSelfManagement: boolean;
   canManageOtherUsers: boolean;
   currentAxUserId: string;
+  currentCrmUserId: string;
   selectedManagedUserId: string;
   sheetId: string;
   isCreateMode: boolean;
@@ -79,6 +80,7 @@ export const useExpenseSheetDetailState = ({
   allowSelfManagement,
   canManageOtherUsers,
   currentAxUserId,
+  currentCrmUserId,
   selectedManagedUserId,
   sheetId,
   isCreateMode,
@@ -251,6 +253,7 @@ export const useExpenseSheetDetailState = ({
   const isManagingOtherUser = isManagingOtherExpenseRecord({
     canManageOtherUsers,
     currentAxUserId,
+    currentCrmUserId,
     selectedManagedUserId,
     recordOwnerUserId: header?.userId,
     isCreateMode,

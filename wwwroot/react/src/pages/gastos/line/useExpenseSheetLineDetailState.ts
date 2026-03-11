@@ -91,6 +91,7 @@ type UseExpenseSheetLineDetailStateArgs = {
   allowSelfManagement: boolean;
   canManageOtherUsers: boolean;
   currentAxUserId: string;
+  currentCrmUserId: string;
   selectedManagedUserId: string;
   sheetId: string;
   lineId: string;
@@ -104,6 +105,7 @@ export const useExpenseSheetLineDetailState = ({
   allowSelfManagement,
   canManageOtherUsers,
   currentAxUserId,
+  currentCrmUserId,
   selectedManagedUserId,
   sheetId,
   lineId,
@@ -186,6 +188,7 @@ export const useExpenseSheetLineDetailState = ({
           const isManagingOtherUser = isManagingOtherExpenseRecord({
             canManageOtherUsers,
             currentAxUserId,
+            currentCrmUserId,
             selectedManagedUserId,
             recordOwnerUserId: loadedHeader.userId,
             isCreateMode: false,
@@ -281,6 +284,7 @@ export const useExpenseSheetLineDetailState = ({
     allowSelfManagement,
     canManageOtherUsers,
     currentAxUserId,
+    currentCrmUserId,
     hasAccess,
     hydrateDraftFromLine,
     isCreateMode,
@@ -404,6 +408,7 @@ export const useExpenseSheetLineDetailState = ({
   const isManagingOtherUser = isManagingOtherExpenseRecord({
     canManageOtherUsers,
     currentAxUserId,
+    currentCrmUserId,
     selectedManagedUserId,
     recordOwnerUserId: header?.userId,
     isCreateMode,

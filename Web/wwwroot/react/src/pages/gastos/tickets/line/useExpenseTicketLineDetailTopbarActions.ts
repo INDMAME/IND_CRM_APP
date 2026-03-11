@@ -17,6 +17,7 @@ type UseExpenseTicketLineDetailTopbarActionsArgs = {
   handleUpdate: () => Promise<boolean>;
   handleDelete: () => Promise<boolean>;
   onSaveSuccess: () => void;
+  onDeleteSuccess?: () => void;
   openConfirm: (opts: {
     title: string;
     message: string;
@@ -42,6 +43,7 @@ export const useExpenseTicketLineDetailTopbarActions = ({
   handleUpdate,
   handleDelete,
   onSaveSuccess,
+  onDeleteSuccess,
   openConfirm,
   closeConfirm,
 }: UseExpenseTicketLineDetailTopbarActionsArgs) => {
@@ -79,9 +81,9 @@ export const useExpenseTicketLineDetailTopbarActions = ({
     deleteConfirmMessage: indT("Confirm_Delete_Body", "Do you want to delete this item?"),
     deleteConfirmText: indT("Common_Delete", "Delete"),
     onSaveSuccess,
-    onDeleteSuccess: () => {
+    onDeleteSuccess: onDeleteSuccess || (() => {
       navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(fileId)}`);
-    },
+    }),
     openConfirm,
     closeConfirm,
   });

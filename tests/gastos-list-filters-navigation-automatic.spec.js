@@ -100,6 +100,35 @@ async function clickTopbarBack(page) {
   await backButton.click();
 }
 
+// Retries card clicks because list refetch can briefly detach the selected timeline node.
+async function clickTimelineCardWithRetry(page, locatorFactory, timeout = 30000) {
+  const deadline = Date.now() + timeout;
+  let lastError = null;
+
+  while (Date.now() < deadline) {
+    const locator = locatorFactory();
+    const hasVisibleCard = await locator.first().isVisible().catch(() => false);
+    if (!hasVisibleCard) {
+      await page.waitForTimeout(200);
+      continue;
+    }
+
+    try {
+      await locator.first().click({ timeout: 5000 });
+      return;
+    } catch (error) {
+      lastError = error;
+      await page.waitForTimeout(250);
+    }
+  }
+
+  if (lastError) {
+    throw lastError;
+  }
+
+  throw new Error("Timeline card was not clickable before timeout.");
+}
+
 // Resolves a preferred status option regex from visible sheet status marker class.
 async function resolveSheetStatusRegex(firstSheetItem) {
   if ((await firstSheetItem.locator(".expense-sheet-card__status--draft").count()) > 0) {
@@ -185,7 +214,9 @@ test.describe("List filters + navigation E2E", () => {
 
     const filteredTicketItem = page.locator(`.timeline-item[data-ticket-file-id="${ticketFileId}"]`).first();
     await expect(filteredTicketItem).toBeVisible({ timeout: 60000 });
-    await filteredTicketItem.locator(".timeline-card--clickable").first().click();
+    await clickTimelineCardWithRetry(page, () =>
+      page.locator(`.timeline-item[data-ticket-file-id="${ticketFileId}"] .timeline-card--clickable`)
+    );
 
     await page.waitForURL("**/Gastos/TicketDetail?**", {
       waitUntil: "domcontentloaded",
@@ -276,7 +307,7 @@ test.describe("List filters + navigation E2E", () => {
     await clickApplyFilters(page);
     const filteredCard = page.locator("#expense-sheets-root .timeline-card--clickable").first();
     await expect(filteredCard).toBeVisible({ timeout: 60000 });
-    await filteredCard.click();
+    await clickTimelineCardWithRetry(page, () => page.locator("#expense-sheets-root .timeline-card--clickable"));
 
     await page.waitForURL("**/Gastos/ExpenseSheetDetail?**", {
       waitUntil: "domcontentloaded",

@@ -11,6 +11,13 @@ import { formatAmountWithCurrency } from "../../expenseFormatters.ts";
 import { parseDecimalInput } from "../../hooks/expenseMutationUtils.ts";
 import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
+import { reloadExpensePage, navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
+import {
+  appendExpenseTicketReturnQuery,
+  normalizeExpenseTicketReturnContext,
+  resolveExpenseTicketReturnContext,
+  saveExpenseTicketReturnContext,
+} from "../../utils/expenseTicketReturnContext.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 import { useExpenseTicketLineDetailMutations } from "./useExpenseTicketLineDetailMutations.ts";
 import { useExpenseTicketLineDetailState } from "./useExpenseTicketLineDetailState.ts";
@@ -33,8 +40,28 @@ const ExpenseTicketLineDetailContent = () => {
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineRecId = safeText(window.__EXPENSE_TICKET_LINE_ID__);
   const routeParams = useMemo(() => new URLSearchParams(window.location.search), []);
-  const detailOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
+  const routeOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
+  const routeSheetId = useMemo(() => safeText(routeParams.get("sheetId")), [routeParams]);
+  const explicitReturnContext = useMemo(
+    () =>
+      normalizeExpenseTicketReturnContext({
+        fileId,
+        origin: routeOrigin,
+        sheetId: routeSheetId,
+      }),
+    [fileId, routeOrigin, routeSheetId]
+  );
+  const ticketReturnContext = useMemo(
+    () => resolveExpenseTicketReturnContext(fileId, explicitReturnContext),
+    [explicitReturnContext, fileId]
+  );
+  const detailOrigin = ticketReturnContext?.origin || routeOrigin;
   const allowAssignedDraftEdit = detailOrigin === "sheet-create";
+
+  React.useEffect(() => {
+    if (!explicitReturnContext) return;
+    saveExpenseTicketReturnContext(explicitReturnContext);
+  }, [explicitReturnContext]);
   const isManagingOtherUser = isManagingOtherExpenseUser({
     canManageOtherUsers,
     currentAxUserId,
@@ -90,6 +117,15 @@ const ExpenseTicketLineDetailContent = () => {
   );
   const isAssignedTicket = header?.status === 1;
   const isContextLocked = isAssignedTicket && !allowAssignedDraftEdit;
+  const ticketDetailUrl = useMemo(() => {
+    const safeFileId = safeText(fileId);
+    if (!safeFileId) return "";
+    const query = new URLSearchParams({
+      fileId: safeFileId,
+    });
+    appendExpenseTicketReturnQuery(query, ticketReturnContext);
+    return `/Gastos/TicketDetail?${query.toString()}`;
+  }, [fileId, ticketReturnContext]);
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -154,7 +190,11 @@ const ExpenseTicketLineDetailContent = () => {
     handleUpdate,
     handleDelete,
     onSaveSuccess: () => {
-      window.location.reload();
+      reloadExpensePage();
+    },
+    onDeleteSuccess: () => {
+      if (!ticketDetailUrl) return;
+      navigateToExpenseUrl(ticketDetailUrl);
     },
     openConfirm,
     closeConfirm,

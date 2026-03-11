@@ -69,6 +69,7 @@ Conflict precedence:
 | Style ownership | External Tailwind helper skills can suggest syntax or patterns, but local style rules are mandatory. |
 | Canonical web path | Treat `Web/wwwroot` as canonical source path. Root `wwwroot` is a compatibility mirror/junction. |
 | Runtime freshness gate | Before validating behavior, ensure the running runtime is current: rebuild touched assets, republish/restart when required, and verify served artifacts/log path reflect the latest build. |
+| Public validation default | For visual or E2E validation, publish first and run the check against the public URL/IP using the authenticated public session. Treat localhost validation as diagnostic only unless the user explicitly asks for local-only testing. |
 | React Doctor gate | Before final response, run `npm run check:react-doctor`, fix diagnostics in changed frontend files, and rerun before closing the task. |
 | Clean-code gate | Before final response, review touched code for low-risk refactors that improve clean code and preserve module boundaries; apply them when safe. |
 | Publish keyword | If the user says `publica`, run full compilation first (`npm run build` and `dotnet build`), then execute `publish.ps1`, and confirm IIS restart/service health before closing the task. |
@@ -130,8 +131,10 @@ Required triggers:
    - Validate expected and wrong verb behavior locally to catch 404/405 mismatches.
 6. Validate i18n and anti-regression critical paths.
    - For test work requested by user, prefer E2E flow on public `baseURL` and avoid local fixture servers unless explicitly requested.
+   - For visual or manual validation, publish first and execute the test against the public URL/IP where the authenticated session is already available. Use localhost only for diagnosis or when the user explicitly requests local validation.
 7. Execute quality checks and release steps required by scope.
    - Runtime freshness is mandatory: if runtime behavior does not match code, stop and verify build/deploy/runtime state before further debugging.
+   - If the validation target is the public environment, complete publish first and only then run the browser test against that public runtime.
    - Run `npm run check:react-doctor` before the final response. The repo-level `react-doctor.config.json` ignores mirror/generated paths, so diagnostics in changed frontend files are blocking and must be fixed or explicitly justified if unrelated legacy findings remain.
    - Run a final clean-code pass on touched frontend files before closing the task. Check for mixed concerns, duplicated logic, oversized objects, and misplaced responsibilities across page, hook, service, mapper, utility, and component boundaries.
    - If a low-risk refactor would materially improve modularity or clarity, apply it in the same task before closing. If not, explicitly confirm the touched code already fits the modular architecture.
@@ -159,4 +162,4 @@ Required triggers:
 - Debugging or validating behavior against stale runtime/build output.
 
 ## Last updated
-- 2026-03-09
+- 2026-03-11

@@ -12,7 +12,8 @@ import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "..
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
-import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
+import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
+import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import {
   mapBooleanEnumOptions,
   mapWindowEnumOptions,
@@ -32,8 +33,14 @@ const bootstrapExpenseApiAuth = () => {
 };
 
 const ExpenseSheetLineDetailContent = () => {
-  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } =
-    useAuthContext();
+  const {
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    currentCrmUserId,
+    selectedManagedUserId,
+    managementBootstrapReady,
+  } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
@@ -88,6 +95,7 @@ const ExpenseSheetLineDetailContent = () => {
     allowSelfManagement,
     canManageOtherUsers,
     currentAxUserId,
+    currentCrmUserId,
     selectedManagedUserId,
     sheetId,
     lineId,
@@ -222,7 +230,7 @@ const ExpenseSheetLineDetailContent = () => {
         return;
       }
 
-      window.location.reload();
+      reloadExpensePage();
     },
     openConfirm,
     closeConfirm,
@@ -239,6 +247,11 @@ const ExpenseSheetLineDetailContent = () => {
       origin: "expense-line",
       sheetId: safeSheetId,
       lineRecId: safeLineId,
+    });
+    saveExpenseTicketReturnContext({
+      fileId: safeFileId,
+      origin: "expense-line",
+      sheetId: safeSheetId,
     });
     navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
       askConfirmation: isEditing,

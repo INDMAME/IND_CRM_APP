@@ -9,7 +9,8 @@ import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
-import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
+import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
+import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
@@ -61,8 +62,14 @@ export const bootstrapExpenseApiAuth = () => {
 
 // Owns the detail-page orchestration and keeps the view component focused on rendering.
 export const useExpenseSheetDetailPageController = () => {
-  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } =
-    useAuthContext();
+  const {
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    currentCrmUserId,
+    selectedManagedUserId,
+    managementBootstrapReady,
+  } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
@@ -98,6 +105,7 @@ export const useExpenseSheetDetailPageController = () => {
     allowSelfManagement,
     canManageOtherUsers,
     currentAxUserId,
+    currentCrmUserId,
     selectedManagedUserId,
     sheetId,
     isCreateMode,
@@ -254,7 +262,7 @@ export const useExpenseSheetDetailPageController = () => {
       return;
     }
 
-    window.location.reload();
+    reloadExpensePage();
   }, [isCreateMode, navigateToCreatedSheet]);
 
   const handleStatusActionClick = useCallback(
@@ -280,7 +288,7 @@ export const useExpenseSheetDetailPageController = () => {
           if (ok) {
             invalidateCachedListForRefetch();
             closeConfirm();
-            window.location.reload();
+            reloadExpensePage();
           }
           return ok;
         },
@@ -343,7 +351,7 @@ export const useExpenseSheetDetailPageController = () => {
     onCompleted: (result) => {
       const createdFileId = safeText(result?.fileId);
       if (!createdFileId) {
-        window.location.reload();
+        reloadExpensePage();
         return;
       }
 
@@ -354,6 +362,11 @@ export const useExpenseSheetDetailPageController = () => {
         origin: "sheet-create",
       });
       if (currentSheetId) {
+        saveExpenseTicketReturnContext({
+          fileId: createdFileId,
+          origin: "sheet-create",
+          sheetId: currentSheetId,
+        });
         query.set("sheetId", currentSheetId);
       }
       navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`);

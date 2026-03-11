@@ -9,11 +9,57 @@ import { bootstrapExpenseApiAuth, useExpenseSheetDetailPageController } from "./
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 
 const DETAIL_FAB_BOTTOM_WITH_ACTION_BAR = 176;
+const EXPENSE_SHEETS_LIST_URL = "/Gastos/ExpenseSheets";
 
 const ExpenseSheetDetailPageContent = () => {
   const controller = useExpenseSheetDetailPageController();
+  const { readCachedState, saveCachedState } = useExpenseSheetsFilterCache();
+
+  const rearmExpenseSheetsReturnState = React.useCallback(() => {
+    const cachedState = readCachedState();
+    if (!cachedState) return;
+    saveCachedState(cachedState);
+  }, [readCachedState, saveCachedState]);
+
+  React.useEffect(() => {
+    const backButton = document.getElementById("globalBackBtn");
+    if (!backButton) return;
+
+    backButton.setAttribute("data-back-url", EXPENSE_SHEETS_LIST_URL);
+
+    return () => {
+      backButton.removeAttribute("data-back-url");
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const handleNativeBack = (event) => {
+      if (event?.state && event.state.indTrap === true) {
+        return;
+      }
+
+      const executeBackNavigation = () => {
+        rearmExpenseSheetsReturnState();
+        window.__indBypassNavigationGuardOnce?.();
+        window.location.replace(EXPENSE_SHEETS_LIST_URL);
+      };
+
+      if (typeof window.__indRequestNavigation === "function") {
+        window.__indRequestNavigation(executeBackNavigation);
+        return;
+      }
+
+      executeBackNavigation();
+    };
+
+    window.addEventListener("popstate", handleNativeBack);
+    return () => {
+      window.removeEventListener("popstate", handleNativeBack);
+    };
+  }, [rearmExpenseSheetsReturnState]);
 
   return (
     <div className="space-y-3">

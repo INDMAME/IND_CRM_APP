@@ -1,6 +1,11 @@
 import { useCallback } from "react";
 import type { RefObject } from "react";
 import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
+import {
+  appendExpenseTicketReturnQuery,
+  buildExpenseSheetDetailUrl,
+  type ExpenseTicketReturnContext,
+} from "../../utils/expenseTicketReturnContext.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type UseExpenseTicketDetailInteractionsArgs = {
@@ -13,6 +18,7 @@ type UseExpenseTicketDetailInteractionsArgs = {
   isEditing: boolean;
   lineContainerRef: RefObject<HTMLDivElement | null>;
   openPreview: () => Promise<void>;
+  ticketReturnContext?: ExpenseTicketReturnContext | null;
 };
 
 // Groups ticket detail navigation and line-card interactions behind stable callbacks.
@@ -26,6 +32,7 @@ export const useExpenseTicketDetailInteractions = ({
   isEditing,
   lineContainerRef,
   openPreview,
+  ticketReturnContext,
 }: UseExpenseTicketDetailInteractionsArgs) => {
   const openLineDetail = useCallback(
     (rawLineRecId: string) => {
@@ -38,19 +45,16 @@ export const useExpenseTicketDetailInteractions = ({
         lineRecId,
       });
       if (isFromExpenseSheetCreate) {
-        query.set("origin", "sheet-create");
         query.set("mode", "edit");
-        if (contextSheetId) {
-          query.set("sheetId", contextSheetId);
-        }
       }
+      appendExpenseTicketReturnQuery(query, ticketReturnContext);
 
       navigateToExpenseUrl(`/Gastos/TicketLineDetail?${query.toString()}`, {
         askConfirmation: true,
         bypassGuardOnce: false,
       });
     },
-    [contextSheetId, fileId, isFromExpenseLine, isFromExpenseSheetCreate, isFromSheetLink]
+    [fileId, isFromExpenseLine, isFromExpenseSheetCreate, isFromSheetLink, ticketReturnContext]
   );
 
   const resolveClickableCard = useCallback(
@@ -71,13 +75,13 @@ export const useExpenseTicketDetailInteractions = ({
 
   const handleOpenExpenseSheet = useCallback(() => {
     if (isFromSheetLink) return;
-    const safeSheetId = safeText(headerExpenseSheetId);
+    const safeSheetId = safeText(ticketReturnContext?.sheetId || headerExpenseSheetId || contextSheetId);
     if (!safeSheetId) return;
 
-    navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(safeSheetId)}`, {
+    navigateToExpenseUrl(buildExpenseSheetDetailUrl(safeSheetId), {
       askConfirmation: isEditing,
     });
-  }, [headerExpenseSheetId, isEditing, isFromSheetLink]);
+  }, [contextSheetId, headerExpenseSheetId, isEditing, isFromSheetLink, ticketReturnContext]);
 
   return {
     openLineDetail,

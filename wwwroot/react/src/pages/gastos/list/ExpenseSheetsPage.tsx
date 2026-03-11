@@ -23,6 +23,7 @@ import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
+import { hasExpenseReturnReferrer, isExpenseHistoryBackForwardNavigation } from "../utils/expenseHistoryNavigation.ts";
 import { setTopbarActionGroupReady } from "../../../utils/topbarActionVisibility.ts";
 import {
   ensureCurrentExpenseManagedUserInList,
@@ -111,6 +112,7 @@ const ExpenseSheetsPageContent = () => {
   const { readCachedState, consumeReturnFlag, saveCachedState, clearCachedState } = useExpenseSheetsFilterCache();
   const didRestoreOnMountRef = React.useRef(false);
   const pendingScrollRestoreRef = React.useRef<number | null>(null);
+  const pendingAutomaticLoadTimerRef = React.useRef<number | null>(null);
 
   const {
     fromDate,
@@ -193,6 +195,39 @@ const ExpenseSheetsPageContent = () => {
     [currentFilters, normalizeManagedUserSnapshotForLoad]
   );
 
+  // Keeps return-to-list flows consistent by always re-running the live query.
+  const runAutomaticListLoad = useCallback(
+    (
+      page: number,
+      snapshot: typeof currentFilters,
+      options: {
+        resetBeforeLoad?: boolean;
+      } = {}
+    ) => {
+      if (pendingAutomaticLoadTimerRef.current != null) {
+        window.clearTimeout(pendingAutomaticLoadTimerRef.current);
+      }
+
+      pendingAutomaticLoadTimerRef.current = window.setTimeout(() => {
+        pendingAutomaticLoadTimerRef.current = null;
+        if (options.resetBeforeLoad) {
+          resetList();
+        }
+        void loadList(page, snapshot);
+      }, 0);
+    },
+    [loadList, resetList]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (pendingAutomaticLoadTimerRef.current != null) {
+        window.clearTimeout(pendingAutomaticLoadTimerRef.current);
+        pendingAutomaticLoadTimerRef.current = null;
+      }
+    };
+  }, []);
+
   const handleManagedUserIdChange = useCallback(
     (value: string) => {
       const normalizedNextFilter = normalizeExpenseManagedUserFilterChange({
@@ -237,7 +272,7 @@ const ExpenseSheetsPageContent = () => {
         clearExpenseActingUserOverride();
       }
       restoreAppliedFilters(nextSnapshot);
-      void loadList(1, nextSnapshot);
+      runAutomaticListLoad(1, nextSnapshot);
     },
     [
       appliedFilters,
@@ -252,6 +287,7 @@ const ExpenseSheetsPageContent = () => {
       managedUsers,
       normalizeManagedUserSnapshotForLoad,
       restoreAppliedFilters,
+      runAutomaticListLoad,
       setIncludeSubordinates,
       setHojaGastosId,
       setManagedUserId,
@@ -397,11 +433,16 @@ const ExpenseSheetsPageContent = () => {
   const activeListFilters = appliedFilters || currentFilters;
 
   useEffect(() => {
-    if (!managementBootstrapReady) return;
+    if (!managementBootstrapReady || !hasAccess) return;
     if (didRestoreOnMountRef.current) return;
     didRestoreOnMountRef.current = true;
 
-    if (!consumeReturnFlag()) {
+    const isHistoryBackForward = isExpenseHistoryBackForwardNavigation();
+    const isReturnFromExpenseDetail = hasExpenseReturnReferrer([
+      "/Gastos/ExpenseSheetDetail",
+      "/Gastos/ExpenseLineDetail",
+    ]);
+    if (!consumeReturnFlag() && !isHistoryBackForward && !isReturnFromExpenseDetail) {
       clearCachedState();
       setManagedUserId(defaultManagedUserId);
       setIncludeSubordinates(false);
@@ -436,19 +477,20 @@ const ExpenseSheetsPageContent = () => {
         total: cachedState.total,
         page: cachedState.page,
       });
-      return;
     }
-    void loadList(cachedState.page, restoredFilters);
+    runAutomaticListLoad(cachedState.page, restoredFilters);
   }, [
     clearCachedState,
     consumeReturnFlag,
     defaultManagedUserId,
+    hasAccess,
     loadList,
     managementBootstrapReady,
     normalizeManagedUserSnapshotForLoad,
     readCachedState,
     restoreAppliedFilters,
     restoreListSnapshot,
+    runAutomaticListLoad,
     setIncludeSubordinates,
     setManagedUserId,
   ]);
@@ -466,6 +508,37 @@ const ExpenseSheetsPageContent = () => {
       });
     });
   }, [currentPage, isLoading, items.length]);
+
+  useEffect(() => {
+    if (!managementBootstrapReady || !hasAccess) return;
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted && !isExpenseHistoryBackForwardNavigation()) return;
+
+      const snapshot = normalizeManagedUserSnapshotForLoad(appliedFilters || currentFilters);
+      if (snapshot.managedUserId) {
+        setExpenseActingUserOverride(snapshot.managedUserId);
+      } else {
+        clearExpenseActingUserOverride();
+      }
+
+      runAutomaticListLoad(currentPage < 1 ? 1 : currentPage, snapshot);
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [
+    appliedFilters,
+    clearExpenseActingUserOverride,
+    currentFilters,
+    currentPage,
+    hasAccess,
+    managementBootstrapReady,
+    normalizeManagedUserSnapshotForLoad,
+    runAutomaticListLoad,
+  ]);
 
   useEffect(() => {
     const onToggleFilters = () => {

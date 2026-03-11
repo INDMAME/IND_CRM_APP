@@ -7,6 +7,7 @@ import PageBottomActions, { PageBottomActionButton } from "../../../components/c
 import Spinner from "../../../components/commons/Spinner.tsx";
 import { useAuthContext, type AuthManagedUser } from "../../../context/AuthContext.tsx";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
+import { ApiFetchError } from "../../../services/apiService.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
@@ -16,19 +17,33 @@ import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import ExpenseTicketsFiltersPanel from "../components/ExpenseTicketsFiltersPanel.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCatalog.ts";
-import { createExpenseSheet, configureExpenseApiAuth, fetchExpenseSheetDetail, fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
+import {
+  createExpenseSheet,
+  configureExpenseApiAuth,
+  fetchExpenseSheetDetail,
+  fetchExpenseSheetTicketsList,
+  mapExpenseSheetHeader,
+} from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 import { toExpenseApiDdMmYyyy, toExpenseIsoDate } from "../utils/expenseApiDateUtils.ts";
 import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../utils/expenseNavigation.ts";
+import { isExpenseAbortLikeError } from "../utils/expenseRequestRetry.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
-import { formatExpenseDateParts, formatExpenseDisplayDate, safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import {
+  clearExpenseTicketReturnContext,
+  saveExpenseTicketReturnContext,
+} from "../utils/expenseTicketReturnContext.ts";
+import { hasExpenseReturnReferrer, isExpenseHistoryBackForwardNavigation } from "../utils/expenseHistoryNavigation.ts";
+import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetQuickTicketFlow } from "../detail/useExpenseSheetQuickTicketFlow.ts";
+import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
 import { useExpenseTicketsFiltersState } from "./useExpenseTicketsFiltersState.ts";
 import { useExpenseTicketsListData } from "./useExpenseTicketsListData.ts";
-import { useExpenseTicketsFilterCache } from "./useExpenseTicketsFilterCache.ts";
+import { useExpenseTicketsFilterCache, type ExpenseTicketsCachedState } from "./useExpenseTicketsFilterCache.ts";
 import type { ExpenseSheetCreateLineRequest } from "../expenseTypes.ts";
 import type { ExpenseTicketAppliedFilterSnapshot, ExpenseTicketCard } from "./expenseTicketListTypes.ts";
 import { setTopbarActionGroupReady as revealTopbarActionGroup } from "../../../utils/topbarActionVisibility.ts";
+import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 
 const PAGE_SIZE = 10;
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
@@ -105,6 +120,14 @@ const buildLinkModeInitialSnapshot = (managedUserId = ""): ExpenseTicketAppliedF
   };
 };
 
+const resolveLinkModeBlockedMessage = (isPaid: boolean): string => {
+  if (isPaid) {
+    return indT("ExpenseSheets_Detail_PaidReadOnly", "Las hojas de gasto pagadas son de solo lectura.");
+  }
+
+  return indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.");
+};
+
 // Keeps created-ticket return filters bound to one valid list date.
 const resolveCreatedTicketFilterDate = (value: unknown): string => {
   return toExpenseIsoDate(value) || toExpenseIsoDate(new Date());
@@ -157,20 +180,23 @@ const ExpenseTicketsPageContent = () => {
   const canLinkSheetLines = canAccess("GASTOS_HOJA_GASTO", "Add");
   const {
     currentAxUserId,
+    currentCrmUserId,
     subordinates,
     canManageOtherUsers,
     setSelectedManagedUserId,
+    managementBootstrapReady,
+    selectedManagedUserId,
+    allowSelfManagement,
   } = useAuthContext();
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
   const cameraInputRef = React.useRef<HTMLInputElement | null>(null);
   const galleryInputRef = React.useRef<HTMLInputElement | null>(null);
   const didRestoreOnMountRef = React.useRef(false);
-  const didApplyQueryFilterRef = React.useRef(false);
   const pendingScrollRestoreRef = React.useRef<number | null>(null);
   const pendingFocusFileIdRef = React.useRef("");
   const linkModeSelectionIntentUntilRef = React.useRef(0);
   const linkModePendingOpenTimerRef = React.useRef<number | null>(null);
-
+  const pendingAutomaticLoadTimerRef = React.useRef<number | null>(null);
   const linkModeContext = useMemo(() => {
     const url = new URL(window.location.href);
     const action = safeText(url.searchParams.get("action")).toLowerCase();
@@ -179,12 +205,15 @@ const ExpenseTicketsPageContent = () => {
     return {
       isLinkMode,
       sheetId: hojaGastosId,
+      sheetOrigin: isLinkMode ? ("sheet-link" as const) : (!!hojaGastosId ? ("sheet-create" as const) : null),
       fixedStatusFilter: isLinkMode ? (0 as const) : null,
     };
   }, []);
 
   const isLinkMode = linkModeContext.isLinkMode;
   const linkSheetId = linkModeContext.sheetId;
+  const sheetCallerOrigin = linkModeContext.sheetOrigin;
+  const hasSheetCallerContext = !!linkSheetId && !!sheetCallerOrigin;
   const fixedStatusFilter = linkModeContext.fixedStatusFilter;
   const canProcessLinkMode = !isLinkMode || canLinkSheetLines;
   const managedUsers = useMemo(
@@ -219,6 +248,7 @@ const ExpenseTicketsPageContent = () => {
   );
 
   const [linkSheetLocked, setLinkSheetLocked] = useState(false);
+  const [linkSheetBlockedMessage, setLinkSheetBlockedMessage] = useState("");
   const [linkSheetCheckBusy, setLinkSheetCheckBusy] = useState(false);
   const [linkFlowBusy, setLinkFlowBusy] = useState(false);
   const [linkFlowStatus, setLinkFlowStatus] = useState("");
@@ -274,6 +304,7 @@ const ExpenseTicketsPageContent = () => {
     loadAllMatchingTickets,
     restoreListSnapshot,
     resetList,
+    clearListCache,
   } = useExpenseTicketsListData({
     hasAccess,
     pageSize: PAGE_SIZE,
@@ -389,6 +420,26 @@ const ExpenseTicketsPageContent = () => {
     onCompleted: (result) => {
       const createdFileId = safeText(result?.fileId);
       if (!createdFileId) return;
+
+      if (hasSheetCallerContext && sheetCallerOrigin) {
+        saveExpenseTicketReturnContext({
+          fileId: createdFileId,
+          sheetId: linkSheetId,
+          origin: sheetCallerOrigin,
+        });
+        const query = new URLSearchParams({
+          fileId: createdFileId,
+          mode: "edit",
+          origin: sheetCallerOrigin,
+          sheetId: linkSheetId,
+        });
+        navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
+          askConfirmation: false,
+        });
+        return;
+      }
+
+      clearExpenseTicketReturnContext();
       navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(createdFileId)}&mode=edit&origin=ticket-create`, {
         askConfirmation: false,
       });
@@ -431,6 +482,169 @@ const ExpenseTicketsPageContent = () => {
       ),
     []
   );
+  // Forces the automatic list refresh after one state rehydration path completes.
+  const runAutomaticListLoad = useCallback(
+    (
+      page: number,
+      snapshot: ExpenseTicketAppliedFilterSnapshot,
+      options: {
+        clearCache?: boolean;
+        resetBeforeLoad?: boolean;
+      } = {}
+    ) => {
+      if (pendingAutomaticLoadTimerRef.current != null) {
+        window.clearTimeout(pendingAutomaticLoadTimerRef.current);
+      }
+
+      pendingAutomaticLoadTimerRef.current = window.setTimeout(() => {
+        pendingAutomaticLoadTimerRef.current = null;
+        if (options.clearCache) {
+          clearListCache();
+        }
+        if (options.resetBeforeLoad) {
+          resetList();
+        }
+        void loadList(page, snapshot);
+      }, 0);
+    },
+    [clearListCache, loadList, resetList]
+  );
+
+  useEffect(() => {
+    return () => {
+      if (pendingAutomaticLoadTimerRef.current != null) {
+        window.clearTimeout(pendingAutomaticLoadTimerRef.current);
+        pendingAutomaticLoadTimerRef.current = null;
+      }
+    };
+  }, []);
+
+  const applyCreatedTicketReturn = useCallback(
+    (ticketFileId: string, ticketDateValue: unknown) => {
+      const ticketDate = resolveCreatedTicketFilterDate(ticketDateValue);
+      const resolvedManagedUserId = syncManagedUserSelection(defaultManagedUserId);
+
+      const querySnapshot: ExpenseTicketAppliedFilterSnapshot = {
+        fromDate: ticketDate,
+        toDate: ticketDate,
+        filterKey: ticketFileId,
+        currencyCode: "",
+        managedUserId: resolvedManagedUserId,
+        statusFilter: "",
+        gastoTypeFilter: "",
+        processedByIaFilter: "all",
+      };
+
+      clearCachedState();
+      restoreAppliedFilters(querySnapshot);
+      pendingFocusFileIdRef.current = ticketFileId;
+      runAutomaticListLoad(1, querySnapshot, {
+        clearCache: true,
+        resetBeforeLoad: true,
+      });
+
+      const url = new URL(window.location.href);
+      url.searchParams.delete("ticketFileId");
+      url.searchParams.delete("ticketDate");
+      const cleanedQuery = url.searchParams.toString();
+      window.history.replaceState({}, "", cleanedQuery ? `${url.pathname}?${cleanedQuery}` : url.pathname);
+    },
+    [
+      clearCachedState,
+      defaultManagedUserId,
+      restoreAppliedFilters,
+      runAutomaticListLoad,
+      syncManagedUserSelection,
+    ]
+  );
+
+  const restoreLinkModeReturnState = useCallback(
+    (cachedState: ExpenseTicketsCachedState) => {
+      const restoredManagedUserId = syncManagedUserSelection(cachedState.filters.managedUserId);
+      const restoredFilters = {
+        ...cachedState.filters,
+        managedUserId: restoredManagedUserId,
+      };
+
+      restoreAppliedFilters(restoredFilters);
+      pendingScrollRestoreRef.current = cachedState.scrollY;
+      pendingFocusFileIdRef.current = cachedState.focusFileId;
+
+      const restoredSelection: Record<string, ExpenseTicketCard> = {};
+      for (const ticket of cachedState.selectedTickets) {
+        const selectedFileId = safeText(ticket.fileId);
+        if (!selectedFileId) continue;
+        restoredSelection[selectedFileId] = ticket;
+      }
+      setSelectedTicketsById(restoredSelection);
+
+      if (cachedState.items.length > 0 || cachedState.total > 0) {
+        restoreListSnapshot({
+          items: cachedState.items,
+          total: cachedState.total,
+          page: cachedState.page,
+        });
+      }
+
+      runAutomaticListLoad(cachedState.page, normalizeLinkModeSnapshotForLoad(restoredFilters), {
+        clearCache: true,
+      });
+    },
+    [
+      normalizeLinkModeSnapshotForLoad,
+      restoreAppliedFilters,
+      restoreListSnapshot,
+      runAutomaticListLoad,
+      syncManagedUserSelection,
+    ]
+  );
+
+  const restoreInitialLinkModeState = useCallback(() => {
+    const initialManagedUserId = syncManagedUserSelection(defaultManagedUserId);
+    const linkSnapshot = buildLinkModeInitialSnapshot(initialManagedUserId);
+    clearCachedState();
+    setSelectedTicketsById({});
+    restoreAppliedFilters(linkSnapshot);
+    runAutomaticListLoad(1, normalizeLinkModeSnapshotForLoad(linkSnapshot), {
+      clearCache: true,
+      resetBeforeLoad: true,
+    });
+  }, [
+    clearCachedState,
+    defaultManagedUserId,
+    normalizeLinkModeSnapshotForLoad,
+    restoreAppliedFilters,
+    runAutomaticListLoad,
+    syncManagedUserSelection,
+  ]);
+
+  const restoreStandardReturnState = useCallback(
+    (cachedState: ExpenseTicketsCachedState) => {
+      const restoredManagedUserId = syncManagedUserSelection(cachedState.filters.managedUserId);
+      const restoredFilters = {
+        ...cachedState.filters,
+        managedUserId: restoredManagedUserId,
+      };
+
+      restoreAppliedFilters(restoredFilters);
+      pendingScrollRestoreRef.current = cachedState.scrollY;
+      pendingFocusFileIdRef.current = cachedState.focusFileId;
+
+      if (cachedState.items.length > 0 || cachedState.total > 0) {
+        restoreListSnapshot({
+          items: cachedState.items,
+          total: cachedState.total,
+          page: cachedState.page,
+        });
+      }
+
+      runAutomaticListLoad(cachedState.page, restoredFilters, {
+        clearCache: true,
+      });
+    },
+    [restoreAppliedFilters, restoreListSnapshot, runAutomaticListLoad, syncManagedUserSelection]
+  );
+
   const markLinkModeSelectionIntent = useCallback(() => {
     linkModeSelectionIntentUntilRef.current = Date.now() + LINK_MODE_SELECTION_GUARD_MS;
     if (linkModePendingOpenTimerRef.current != null) {
@@ -638,8 +852,11 @@ const ExpenseTicketsPageContent = () => {
       return false;
     }
     if (linkSheetLocked || !canProcessLinkMode) {
-      setLinkFlowError(indT("ExpenseSheets_Detail_PaidReadOnly", "Las hojas de gasto pagadas son de solo lectura."));
-      setLinkFlowStatus(indT("ExpenseSheets_Detail_PaidReadOnly", "Las hojas de gasto pagadas son de solo lectura."));
+      const blockedMessage =
+        linkSheetBlockedMessage ||
+        indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.");
+      setLinkFlowError(blockedMessage);
+      setLinkFlowStatus(blockedMessage);
       flashActionMark("errorProcess", 1500);
       return false;
     }
@@ -752,6 +969,7 @@ const ExpenseTicketsPageContent = () => {
     isLinkMode,
     linkFlowBusy,
     linkSheetId,
+    linkSheetBlockedMessage,
     linkSheetLocked,
     loadList,
     revalidateLinkSelection,
@@ -842,9 +1060,14 @@ const ExpenseTicketsPageContent = () => {
           saveCachedState(currentState);
           const query = new URLSearchParams({
             fileId,
-            origin: "sheet-link",
           });
-          if (linkSheetId) {
+          if (hasSheetCallerContext && sheetCallerOrigin) {
+            saveExpenseTicketReturnContext({
+              fileId,
+              sheetId: linkSheetId,
+              origin: sheetCallerOrigin,
+            });
+            query.set("origin", sheetCallerOrigin);
             query.set("sheetId", linkSheetId);
           }
           navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
@@ -856,6 +1079,25 @@ const ExpenseTicketsPageContent = () => {
       }
 
       saveCachedState(currentState);
+      if (hasSheetCallerContext && sheetCallerOrigin) {
+        saveExpenseTicketReturnContext({
+          fileId,
+          sheetId: linkSheetId,
+          origin: sheetCallerOrigin,
+        });
+        const query = new URLSearchParams({
+          fileId,
+          origin: sheetCallerOrigin,
+          sheetId: linkSheetId,
+        });
+        navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
+          askConfirmation: true,
+          bypassGuardOnce: false,
+        });
+        return;
+      }
+
+      clearExpenseTicketReturnContext();
       navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(fileId)}`, {
         askConfirmation: true,
         bypassGuardOnce: false,
@@ -866,9 +1108,11 @@ const ExpenseTicketsPageContent = () => {
       clearPendingDetailOpen,
       currentPage,
       currentFilters,
+      hasSheetCallerContext,
+      linkSheetId,
       isLinkMode,
       items,
-      linkSheetId,
+      sheetCallerOrigin,
       saveCachedState,
       selectedTicketList,
       total,
@@ -892,6 +1136,7 @@ const ExpenseTicketsPageContent = () => {
   });
 
   const totalPages = Math.ceil((total || 0) / PAGE_SIZE);
+  const showListLoading = isLoading;
 
   const summaryItems = useMemo(() => {
     const snapshot = appliedFilters;
@@ -968,11 +1213,13 @@ const ExpenseTicketsPageContent = () => {
   useEffect(() => {
     if (!isLinkMode || !linkSheetId) {
       setLinkSheetLocked(false);
+      setLinkSheetBlockedMessage("");
       setLinkSheetCheckBusy(false);
       return;
     }
     if (!canProcessLinkMode) {
       setLinkSheetLocked(true);
+      setLinkSheetBlockedMessage(indT("Auth_PermissionDenied_Body", "No permission."));
       setLinkSheetCheckBusy(false);
       return;
     }
@@ -986,15 +1233,59 @@ const ExpenseTicketsPageContent = () => {
         });
         if (cancelled) return;
 
+        if (response?.Success === false) {
+          setLinkSheetLocked(true);
+          setLinkSheetBlockedMessage(
+            safeText(response.Message) || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.")
+          );
+          return;
+        }
+
         const headers = Array.isArray(response?.Items) ? response.Items : [];
-        const header = (headers[0] || null) as { ExpenseSheetStatus?: unknown; Voucher?: unknown } | null;
-        const statusCode = Number(header?.ExpenseSheetStatus ?? -1);
-        const voucher = safeText(header?.Voucher);
-        const isLocked = statusCode === EXPENSE_STATUS_APPROVED || statusCode === EXPENSE_STATUS_PAID || !!voucher;
+        const selectedSheet =
+          headers.find((entry) => safeText((entry as { HojaGastosId?: unknown })?.HojaGastosId).toUpperCase() === linkSheetId.toUpperCase()) ||
+          headers[0] ||
+          null;
+
+        if (!selectedSheet) {
+          setLinkSheetLocked(true);
+          setLinkSheetBlockedMessage(indT("ExpenseSheets_NotFound", "Expense sheet was not found."));
+          return;
+        }
+
+        const mappedHeader = mapExpenseSheetHeader(selectedSheet);
+        const statusCode = typeof mappedHeader.expenseSheetStatus === "number" ? mappedHeader.expenseSheetStatus : null;
+        const isPaid = statusCode === EXPENSE_STATUS_PAID || hasAssignedVoucher(mappedHeader.voucher);
+        const isManagingOtherUser = isManagingOtherExpenseRecord({
+          canManageOtherUsers,
+          currentAxUserId,
+          currentCrmUserId,
+          selectedManagedUserId,
+          recordOwnerUserId: mappedHeader.userId,
+          isCreateMode: false,
+        });
+        const detailPolicy = resolveExpenseSheetDetailPolicy({
+          statusCode,
+          isManagingOtherUser,
+          allowSelfManagement,
+          isPaid,
+        });
+        const isLocked = detailPolicy.interactionMode !== "full_edit";
         setLinkSheetLocked(isLocked);
-      } catch {
+        setLinkSheetBlockedMessage(isLocked ? resolveLinkModeBlockedMessage(isPaid) : "");
+      } catch (error) {
         if (cancelled) return;
+        if (isExpenseAbortLikeError(error)) return;
         setLinkSheetLocked(true);
+        if (error instanceof ApiFetchError && error.status === 403) {
+          setLinkSheetBlockedMessage(indT("Auth_PermissionDenied_Body", "No permission."));
+          return;
+        }
+        setLinkSheetBlockedMessage(
+          error instanceof Error
+            ? error.message
+            : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.")
+        );
       } finally {
         if (!cancelled) {
           setLinkSheetCheckBusy(false);
@@ -1005,7 +1296,16 @@ const ExpenseTicketsPageContent = () => {
     return () => {
       cancelled = true;
     };
-  }, [canProcessLinkMode, isLinkMode, linkSheetId]);
+  }, [
+    allowSelfManagement,
+    canManageOtherUsers,
+    canProcessLinkMode,
+    currentAxUserId,
+    currentCrmUserId,
+    isLinkMode,
+    linkSheetId,
+    selectedManagedUserId,
+  ]);
 
   useEffect(() => {
     if (!isLinkMode) return;
@@ -1019,84 +1319,38 @@ const ExpenseTicketsPageContent = () => {
   }, [isLinkMode, linkModeCancelMessage]);
 
   useEffect(() => {
-    if (didApplyQueryFilterRef.current) return;
-    didApplyQueryFilterRef.current = true;
-    if (isLinkMode) return;
-
-    const url = new URL(window.location.href);
-    const ticketFileId = safeText(url.searchParams.get("ticketFileId"));
-    if (!ticketFileId) return;
-    const ticketDate = resolveCreatedTicketFilterDate(url.searchParams.get("ticketDate"));
-    const resolvedManagedUserId = syncManagedUserSelection(defaultManagedUserId);
-
-    const querySnapshot: ExpenseTicketAppliedFilterSnapshot = {
-      fromDate: ticketDate,
-      toDate: ticketDate,
-      filterKey: ticketFileId,
-      currencyCode: "",
-      managedUserId: resolvedManagedUserId,
-      statusFilter: "",
-      gastoTypeFilter: "",
-      processedByIaFilter: "all",
-    };
-
-    clearCachedState();
-    restoreAppliedFilters(querySnapshot);
-    pendingFocusFileIdRef.current = ticketFileId;
-    void loadList(1, querySnapshot);
-
-    url.searchParams.delete("ticketFileId");
-    url.searchParams.delete("ticketDate");
-    const cleanedQuery = url.searchParams.toString();
-    window.history.replaceState({}, "", cleanedQuery ? `${url.pathname}?${cleanedQuery}` : url.pathname);
-  }, [clearCachedState, defaultManagedUserId, isLinkMode, loadList, restoreAppliedFilters, syncManagedUserSelection]);
-
-  useEffect(() => {
+    if (!managementBootstrapReady || !hasAccess) return;
     if (didRestoreOnMountRef.current) return;
     didRestoreOnMountRef.current = true;
+    const isHistoryBackForward = isExpenseHistoryBackForwardNavigation();
+    const isReturnFromTicketDetail = hasExpenseReturnReferrer([
+      "/Gastos/TicketDetail",
+      "/Gastos/TicketLineDetail",
+    ]);
+
+    if (!isLinkMode) {
+      const url = new URL(window.location.href);
+      const ticketFileId = safeText(url.searchParams.get("ticketFileId"));
+      if (ticketFileId) {
+        applyCreatedTicketReturn(ticketFileId, url.searchParams.get("ticketDate"));
+        return;
+      }
+    }
 
     if (isLinkMode) {
-      const isReturningFromDetail = consumeReturnFlag();
+      const isReturningFromDetail = consumeReturnFlag() || isHistoryBackForward || isReturnFromTicketDetail;
       const cachedState = isReturningFromDetail ? readCachedState() : null;
       const cachedSheetId = safeText(cachedState?.linkModeSheetId);
       if (cachedState && cachedSheetId && cachedSheetId === safeText(linkSheetId)) {
-        const restoredManagedUserId = syncManagedUserSelection(cachedState.filters.managedUserId);
-        const restoredFilters = {
-          ...cachedState.filters,
-          managedUserId: restoredManagedUserId,
-        };
-        restoreAppliedFilters(restoredFilters);
-        pendingScrollRestoreRef.current = cachedState.scrollY;
-        pendingFocusFileIdRef.current = cachedState.focusFileId;
-        const restoredSelection: Record<string, ExpenseTicketCard> = {};
-        for (const ticket of cachedState.selectedTickets) {
-          const selectedFileId = safeText(ticket.fileId);
-          if (!selectedFileId) continue;
-          restoredSelection[selectedFileId] = ticket;
-        }
-        setSelectedTicketsById(restoredSelection);
-        if (cachedState.items.length > 0 || cachedState.total > 0) {
-          restoreListSnapshot({
-            items: cachedState.items,
-            total: cachedState.total,
-            page: cachedState.page,
-          });
-          return;
-        }
-        void loadList(cachedState.page, normalizeLinkModeSnapshotForLoad(restoredFilters));
+        restoreLinkModeReturnState(cachedState);
         return;
       }
 
-      const initialManagedUserId = syncManagedUserSelection(defaultManagedUserId);
-      const linkSnapshot = buildLinkModeInitialSnapshot(initialManagedUserId);
-      clearCachedState();
-      setSelectedTicketsById({});
-      restoreAppliedFilters(linkSnapshot);
-      void loadList(1, normalizeLinkModeSnapshotForLoad(linkSnapshot));
+      restoreInitialLinkModeState();
       return;
     }
 
-    if (!consumeReturnFlag()) {
+    if (!consumeReturnFlag() && !isHistoryBackForward && !isReturnFromTicketDetail) {
       clearCachedState();
       return;
     }
@@ -1107,35 +1361,19 @@ const ExpenseTicketsPageContent = () => {
       return;
     }
 
-    const restoredManagedUserId = syncManagedUserSelection(cachedState.filters.managedUserId);
-    const restoredFilters = {
-      ...cachedState.filters,
-      managedUserId: restoredManagedUserId,
-    };
-    restoreAppliedFilters(restoredFilters);
-    pendingScrollRestoreRef.current = cachedState.scrollY;
-    pendingFocusFileIdRef.current = cachedState.focusFileId;
-    if (cachedState.items.length > 0 || cachedState.total > 0) {
-      restoreListSnapshot({
-        items: cachedState.items,
-        total: cachedState.total,
-        page: cachedState.page,
-      });
-      return;
-    }
-    void loadList(cachedState.page, restoredFilters);
+    restoreStandardReturnState(cachedState);
   }, [
+    applyCreatedTicketReturn,
     clearCachedState,
-    defaultManagedUserId,
     consumeReturnFlag,
+    hasAccess,
     isLinkMode,
     linkSheetId,
-    loadList,
-    normalizeLinkModeSnapshotForLoad,
+    managementBootstrapReady,
     readCachedState,
-    restoreAppliedFilters,
-    restoreListSnapshot,
-    syncManagedUserSelection,
+    restoreInitialLinkModeState,
+    restoreLinkModeReturnState,
+    restoreStandardReturnState,
   ]);
 
   useEffect(() => {
@@ -1170,6 +1408,28 @@ const ExpenseTicketsPageContent = () => {
       targetCard.focus({ preventScroll: true });
     });
   }, [isLoading, items.length]);
+
+  useEffect(() => {
+    if (!managementBootstrapReady || !hasAccess) return;
+
+    const handlePageShow = (event: PageTransitionEvent) => {
+      if (!event.persisted && !isExpenseHistoryBackForwardNavigation()) return;
+
+      const snapshot = resolveActiveFilters();
+      if (!isLinkMode && (!snapshot.fromDate || !snapshot.toDate)) {
+        return;
+      }
+
+      runAutomaticListLoad(currentPage < 1 ? 1 : currentPage, snapshot, {
+        clearCache: true,
+      });
+    };
+
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [currentPage, hasAccess, isLinkMode, managementBootstrapReady, resolveActiveFilters, runAutomaticListLoad]);
 
   useEffect(() => {
     const onToggleFilters = () => {
@@ -1389,7 +1649,8 @@ const ExpenseTicketsPageContent = () => {
 
           {canProcessLinkMode && !linkSheetCheckBusy && linkSheetLocked ? (
             <div className="text-sm text-rose-700">
-              {indT("ExpenseSheets_Detail_PaidReadOnly", "Las hojas de gasto pagadas son de solo lectura.")}
+              {linkSheetBlockedMessage ||
+                indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.")}
             </div>
           ) : null}
 
@@ -1426,7 +1687,7 @@ const ExpenseTicketsPageContent = () => {
 
       <div
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
-        style={{ display: isLoading ? "flex" : "none" }}
+        style={{ display: showListLoading ? "flex" : "none" }}
       >
         <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
           <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
@@ -1436,7 +1697,7 @@ const ExpenseTicketsPageContent = () => {
 
       {errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
 
-      {!isLoading && !errorMessage && items.length === 0 ? (
+      {!showListLoading && !errorMessage && items.length === 0 ? (
         <div className="timeline-box timeline-empty" data-empty-text={indT("Common_NoData", "No data")} />
       ) : null}
 

@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
-import { getSessionJsonWithExpiry, setSessionJsonWithExpiry } from "../../../utils/sessionExpiry.ts";
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
 import { fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
-import { getExpenseScopeToken } from "../utils/expenseScope.ts";
+import { isExpenseAbortLikeError, runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
 import { buildExpenseTicketListPayload } from "../utils/expensePayloadBuilders.ts";
 import type { ExpenseTicketAppliedFilterSnapshot, ExpenseTicketCard } from "./expenseTicketListTypes.ts";
 
@@ -14,17 +13,8 @@ type UseExpenseTicketsListDataArgs = {
   onForbidden: () => void;
 };
 const ALLOWED_GASTO_TYPE_CODES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
-const EXPENSE_TICKETS_LIST_CACHE_KEY_PREFIX = "expense_tickets_list_v1";
-const EXPENSE_TICKETS_LIST_CACHE_TTL_MS = 2 * 60 * 1000;
 const BULK_SELECTION_PAGE_SIZE = 200;
 const BULK_SELECTION_CONCURRENCY = 4;
-
-type ExpenseTicketListCacheEntry = {
-  requestKey: string;
-  page: number;
-  total: number;
-  items: ExpenseTicketCard[];
-};
 
 const toNullableNumber = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -73,36 +63,6 @@ const mapTicketItemToCard = (item: Record<string, unknown>): ExpenseTicketCard =
   };
 };
 
-const getListCacheScope = () => {
-  return getExpenseScopeToken();
-};
-
-const getListCacheKey = () => `${EXPENSE_TICKETS_LIST_CACHE_KEY_PREFIX}_${getListCacheScope()}`;
-
-// Reads one short-lived list snapshot to avoid repeating the same expensive request.
-const readListCacheEntry = (requestKey: string): ExpenseTicketListCacheEntry | null => {
-  const raw = getSessionJsonWithExpiry<ExpenseTicketListCacheEntry>(getListCacheKey());
-  if (!raw || typeof raw !== "object") return null;
-  if (String(raw.requestKey || "") !== requestKey) return null;
-
-  const safeItems = Array.isArray(raw.items) ? raw.items : [];
-  const totalRaw = Number(raw.total);
-  const total = Number.isFinite(totalRaw) && totalRaw >= 0 ? totalRaw : safeItems.length;
-  const pageRaw = Number(raw.page);
-  const page = Number.isFinite(pageRaw) && pageRaw > 0 ? Math.floor(pageRaw) : 1;
-
-  return {
-    requestKey,
-    page,
-    total,
-    items: safeItems,
-  };
-};
-
-const writeListCacheEntry = (entry: ExpenseTicketListCacheEntry): void => {
-  setSessionJsonWithExpiry(getListCacheKey(), entry, EXPENSE_TICKETS_LIST_CACHE_TTL_MS);
-};
-
 // Owns list data fetch, loading state, and pagination metadata for tickets.
 export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: UseExpenseTicketsListDataArgs) => {
   const [items, setItems] = useState<ExpenseTicketCard[]>([]);
@@ -140,25 +100,7 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: 
 
       const payload = buildExpenseTicketListPayload(filters, page, pageSize);
       const normalizedManagedUserId = String(filters?.managedUserId || "").trim().toUpperCase();
-      const requestKey = JSON.stringify({
-        payload,
-        managedUserId: normalizedManagedUserId,
-      });
-      const cachedEntry = readListCacheEntry(requestKey);
-      if (cachedEntry) {
-        if (activeRequestControllerRef.current) {
-          activeRequestControllerRef.current.abort();
-          activeRequestControllerRef.current = null;
-          activeRequestKeyRef.current = "";
-          activeRequestSeqRef.current += 1;
-        }
-        restoreListSnapshot({
-          items: cachedEntry.items,
-          total: cachedEntry.total,
-          page: cachedEntry.page,
-        });
-        return;
-      }
+      const requestKey = JSON.stringify({ payload, managedUserId: normalizedManagedUserId });
 
       if (activeRequestControllerRef.current && activeRequestKeyRef.current === requestKey) {
         return;
@@ -178,11 +120,17 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: 
       setErrorMessage("");
 
       try {
-        const response = await fetchExpenseSheetTicketsList(payload, {
-          suppressPermissionModal: true,
-          signal: controller.signal,
-          axUserIdOverride: normalizedManagedUserId || undefined,
-        });
+        const response = await runExpenseReadRequestWithRetry(
+          () =>
+            fetchExpenseSheetTicketsList(payload, {
+              suppressPermissionModal: true,
+              signal: controller.signal,
+              axUserIdOverride: normalizedManagedUserId || undefined,
+            }),
+          {
+            signal: controller.signal,
+          }
+        );
         if (requestSeq !== activeRequestSeqRef.current) return;
 
         if (response?.Success === false) {
@@ -199,20 +147,12 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: 
         const responseTotal = Number(response?.Total ?? mappedItems.length ?? 0);
         const nextTotal = responseTotal;
 
-        writeListCacheEntry({
-          requestKey,
-          page,
-          total: nextTotal,
-          items: mappedItems,
-        });
-
         setItems(mappedItems);
         setTotal(nextTotal);
         setCurrentPage(page);
       } catch (error) {
-        if (controller.signal.aborted) return;
-        if (error instanceof DOMException && error.name === "AbortError") return;
         if (requestSeq !== activeRequestSeqRef.current) return;
+        if (isExpenseAbortLikeError(error, controller.signal)) return;
 
         if (error instanceof ApiFetchError && error.status === 403) {
           onForbidden();
@@ -251,10 +191,12 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: 
 
       const fetchPage = async (page: number): Promise<{ items: ExpenseTicketCard[]; total: number }> => {
         const payload = buildExpenseTicketListPayload(filters, page, BULK_SELECTION_PAGE_SIZE);
-        const response = await fetchExpenseSheetTicketsList(payload, {
-          suppressPermissionModal: true,
-          axUserIdOverride: normalizedAxUserIdOverride || undefined,
-        });
+        const response = await runExpenseReadRequestWithRetry(() =>
+          fetchExpenseSheetTicketsList(payload, {
+            suppressPermissionModal: true,
+            axUserIdOverride: normalizedAxUserIdOverride || undefined,
+          })
+        );
         const sourceItems = Array.isArray(response?.Items) ? response.Items : [];
         if (response?.Success === false && sourceItems.length < 1) {
           throw new Error(response.Message || indT("Tickets_LoadError", "Could not load tickets."));
@@ -316,6 +258,10 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: 
     setErrorMessage("");
   }, []);
 
+  const clearListCache = useCallback(() => {
+    // Ticket list auto-load must always hit the live endpoint.
+  }, []);
+
   useEffect(() => {
     return () => {
       if (activeRequestControllerRef.current) {
@@ -336,5 +282,6 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, onForbidden }: 
     loadAllMatchingTickets,
     restoreListSnapshot,
     resetList,
+    clearListCache,
   };
 };

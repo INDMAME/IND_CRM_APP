@@ -574,6 +574,7 @@
                 pendingAction: null,
                 modalOpen: false
             };
+            let previousFocusedElement = null;
 
             const clearBypassTimer = () => {
                 if (!guard.resetTimer) return;
@@ -608,20 +609,34 @@
                 guard.message = defaultMessage;
                 guard.pendingAction = null;
                 if (guard.modalOpen && modal) {
+                    if (modal.contains(document.activeElement)) {
+                        document.activeElement.blur?.();
+                    }
                     modal.classList.add("hidden");
                     modal.classList.remove("flex");
                     modal.setAttribute("aria-hidden", "true");
                     guard.modalOpen = false;
+                    if (previousFocusedElement && document.contains(previousFocusedElement)) {
+                        window.requestAnimationFrame(() => previousFocusedElement.focus?.({ preventScroll: true }));
+                    }
+                    previousFocusedElement = null;
                 }
             };
 
             const closeModal = () => {
                 guard.pendingAction = null;
                 if (!modal || !guard.modalOpen) return;
+                if (modal.contains(document.activeElement)) {
+                    document.activeElement.blur?.();
+                }
                 modal.classList.add("hidden");
                 modal.classList.remove("flex");
                 modal.setAttribute("aria-hidden", "true");
                 guard.modalOpen = false;
+                if (previousFocusedElement && document.contains(previousFocusedElement)) {
+                    window.requestAnimationFrame(() => previousFocusedElement.focus?.({ preventScroll: true }));
+                }
+                previousFocusedElement = null;
             };
 
             const executeAction = (action) => {
@@ -643,6 +658,7 @@
                     return;
                 }
 
+                previousFocusedElement = document.activeElement instanceof HTMLElement ? document.activeElement : null;
                 modalBody.textContent = safeMessage;
                 modalConfirmBtn.textContent = defaultConfirmText;
                 modalCancelBtn.textContent = defaultCancelText;

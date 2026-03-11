@@ -4,6 +4,10 @@ type NavigateWithGuardOptions = {
   message?: string;
 };
 
+type ReloadExpensePageOptions = {
+  bypassGuardOnce?: boolean;
+};
+
 // Updates the global navigation guard lifecycle for active edit processes.
 export const setExpenseNavigationGuard = (
   activeOrOptions?: boolean | IndNavigationGuardOptions,
@@ -46,4 +50,13 @@ export const navigateToExpenseUrl = (
     }
     window.location.href = safeUrl;
   }, options);
+};
+
+// Reloads the current page while bypassing the global unsaved-change guard when needed.
+export const reloadExpensePage = (options: ReloadExpensePageOptions = {}): void => {
+  const { bypassGuardOnce = true } = options;
+  if (bypassGuardOnce) {
+    window.__indBypassNavigationGuardOnce?.();
+  }
+  window.location.reload();
 };

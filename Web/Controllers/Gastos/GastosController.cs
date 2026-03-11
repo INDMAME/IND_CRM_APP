@@ -2795,7 +2795,12 @@ namespace IND_CRM_APP.Controllers
                     string.Equals(company.CompanyId, selectedCompanyId, StringComparison.OrdinalIgnoreCase))
                     ?? cachedContext?.Companies?.FirstOrDefault();
                 var allowSelfManagement = selectedCompany?.AllowSelfManagement == true;
-                var isManagingOtherUser = ResolveIsManagingOtherExpenseRecord(currentAxUserId, snapshot.OwnerUserId, axUserIdOverride);
+                var currentCrmUserId = NormalizeOptionalText(selectedCompany?.CrmUserId);
+                var isManagingOtherUser = ResolveIsManagingOtherExpenseRecord(
+                    currentAxUserId,
+                    currentCrmUserId,
+                    snapshot.OwnerUserId,
+                    axUserIdOverride);
 
                 if (isManagingOtherUser)
                 {
@@ -3108,13 +3113,25 @@ namespace IND_CRM_APP.Controllers
             };
         }
 
-        // Resolves own vs subordinate mode using the best available owner and acting-user data.
-        private static bool ResolveIsManagingOtherExpenseRecord(string? currentAxUserId, string? ownerUserId, string? axUserIdOverride)
+        // Resolves own vs subordinate mode using both Ax and CRM user identities.
+        private static bool ResolveIsManagingOtherExpenseRecord(
+            string? currentAxUserId,
+            string? currentCrmUserId,
+            string? ownerUserId,
+            string? axUserIdOverride)
         {
             var normalizedCurrentAxUserId = NormalizeOptionalText(currentAxUserId);
+            var normalizedCurrentCrmUserId = NormalizeOptionalText(currentCrmUserId);
             var normalizedOwnerUserId = NormalizeOptionalText(ownerUserId);
-            if (!string.IsNullOrWhiteSpace(normalizedCurrentAxUserId) && !string.IsNullOrWhiteSpace(normalizedOwnerUserId))
-                return !IsSameExpenseUserId(normalizedCurrentAxUserId, normalizedOwnerUserId);
+            if (!string.IsNullOrWhiteSpace(normalizedOwnerUserId))
+            {
+                var matchesCurrentIdentity =
+                    (!string.IsNullOrWhiteSpace(normalizedCurrentAxUserId) && IsSameExpenseUserId(normalizedCurrentAxUserId, normalizedOwnerUserId)) ||
+                    (!string.IsNullOrWhiteSpace(normalizedCurrentCrmUserId) && IsSameExpenseUserId(normalizedCurrentCrmUserId, normalizedOwnerUserId));
+
+                if (!string.IsNullOrWhiteSpace(normalizedCurrentAxUserId) || !string.IsNullOrWhiteSpace(normalizedCurrentCrmUserId))
+                    return !matchesCurrentIdentity;
+            }
 
             var normalizedOverride = NormalizeOptionalText(axUserIdOverride);
             return !string.IsNullOrWhiteSpace(normalizedCurrentAxUserId) &&

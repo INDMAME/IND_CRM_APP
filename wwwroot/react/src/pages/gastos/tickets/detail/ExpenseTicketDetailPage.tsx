@@ -10,6 +10,7 @@ import { toExpenseIsoDate } from "../../utils/expenseApiDateUtils.ts";
 import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
+import { buildExpenseSheetDetailUrl } from "../../utils/expenseTicketReturnContext.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
 import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutations.ts";
@@ -70,8 +71,16 @@ const ExpenseTicketDetailPageContent = () => {
   const canDeleteTicketByModule = canAccess("GASTOS_TICKETS", "FullAccess");
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
-  const { autoEditMode, detailOrigin, contextSheetId, contextLineRecId, isFromExpenseSheetCreate, isFromExpenseLine, isFromSheetLink } =
-    useExpenseTicketDetailRouteContext();
+  const {
+    autoEditMode,
+    detailOrigin,
+    contextSheetId,
+    contextLineRecId,
+    isFromExpenseSheetCreate,
+    isFromExpenseLine,
+    isFromSheetLink,
+    ticketReturnContext,
+  } = useExpenseTicketDetailRouteContext();
   const isManagingOtherUser = isManagingOtherExpenseUser({
     canManageOtherUsers,
     currentAxUserId,
@@ -109,22 +118,72 @@ const ExpenseTicketDetailPageContent = () => {
     fileId,
     onForbidden: showPermissionModal,
   });
+  const { readCachedState, saveCachedState, invalidateCachedListForRefetch } = useExpenseTicketsFilterCache();
+  const nativeBackUrl = useMemo(() => {
+    if (ticketReturnContext?.sheetId) {
+      return buildExpenseSheetDetailUrl(ticketReturnContext.sheetId);
+    }
+
+    if (detailOrigin === "ticket-create") {
+      const ticketDate = toExpenseIsoDate(header?.transDate) || toExpenseIsoDate(new Date());
+      const query = new URLSearchParams({
+        ticketFileId: fileId,
+        ticketDate,
+      });
+
+      return `/Gastos/Tickets?${query.toString()}`;
+    }
+
+    return "/Gastos/Tickets";
+  }, [detailOrigin, fileId, header?.transDate, ticketReturnContext]);
+
+  const rearmExpenseTicketsReturnState = useCallback(() => {
+    const cachedState = readCachedState();
+    if (!cachedState) return;
+    saveCachedState(cachedState);
+  }, [readCachedState, saveCachedState]);
 
   useEffect(() => {
-    if (detailOrigin !== "sheet-create" && detailOrigin !== "ticket-create") return;
     if (!fileId) return;
 
     const backButton = document.getElementById("globalBackBtn");
     if (!backButton) return;
 
-    const ticketDate = toExpenseIsoDate(header?.transDate) || toExpenseIsoDate(new Date());
-    const query = new URLSearchParams({
-      ticketFileId: fileId,
-      ticketDate,
-    });
+    backButton.setAttribute("data-back-url", nativeBackUrl);
+    return () => {
+      backButton.removeAttribute("data-back-url");
+    };
+  }, [fileId, nativeBackUrl]);
 
-    backButton.setAttribute("data-back-url", `/Gastos/Tickets?${query.toString()}`);
-  }, [detailOrigin, fileId, header?.transDate]);
+  useEffect(() => {
+    if (!fileId) return;
+
+    const handleNativeBack = (event) => {
+      if (event?.state && event.state.indTrap === true) {
+        return;
+      }
+
+      const executeBackNavigation = () => {
+        if (!ticketReturnContext?.sheetId) {
+          rearmExpenseTicketsReturnState();
+        }
+        window.__indBypassNavigationGuardOnce?.();
+        window.location.replace(nativeBackUrl);
+      };
+
+      if (typeof window.__indRequestNavigation === "function") {
+        window.__indRequestNavigation(executeBackNavigation);
+        return;
+      }
+
+      executeBackNavigation();
+    };
+
+    window.addEventListener("popstate", handleNativeBack);
+    return () => {
+      window.removeEventListener("popstate", handleNativeBack);
+    };
+  }, [fileId, nativeBackUrl, rearmExpenseTicketsReturnState, ticketReturnContext?.sheetId]);
 
   const {
     busy,
@@ -239,7 +298,6 @@ const ExpenseTicketDetailPageContent = () => {
   const canDeleteTicketInContext = canDeleteTicket && !isFromExpenseLine && !isFromSheetLink;
   const ticketTopbarActionMode: "default" | "view_only" =
     isManagingOtherUser || isFromExpenseLine || isFromSheetLink ? "view_only" : "default";
-  const { invalidateCachedListForRefetch } = useExpenseTicketsFilterCache();
 
   useExpenseTicketDetailTopbarActions({
     busy,
@@ -261,8 +319,8 @@ const ExpenseTicketDetailPageContent = () => {
     },
     onDeleteSuccess: () => {
       invalidateCachedListForRefetch();
-      if (isFromExpenseLine) {
-        navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(contextSheetId)}`);
+      if (ticketReturnContext?.sheetId) {
+        navigateToExpenseUrl(buildExpenseSheetDetailUrl(ticketReturnContext.sheetId));
         return;
       }
       navigateToExpenseUrl("/Gastos/Tickets");
@@ -281,6 +339,7 @@ const ExpenseTicketDetailPageContent = () => {
     isEditing,
     lineContainerRef,
     openPreview,
+    ticketReturnContext,
   });
 
   useTimelineCardEffects({

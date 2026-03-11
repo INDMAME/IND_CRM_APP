@@ -7,6 +7,25 @@ export const isSameExpenseUser = (left: unknown, right: unknown): boolean => {
   return !!normalizedLeft && normalizedLeft === normalizedRight;
 };
 
+// Matches one expense owner id against the current user ids exposed by auth context.
+const matchesCurrentExpenseIdentity = ({
+  currentAxUserId,
+  currentCrmUserId,
+  recordOwnerUserId,
+}: {
+  currentAxUserId: unknown;
+  currentCrmUserId?: unknown;
+  recordOwnerUserId: unknown;
+}): boolean => {
+  const normalizedOwnerUserId = normalizeUserId(recordOwnerUserId);
+  if (!normalizedOwnerUserId) return false;
+
+  return (
+    isSameExpenseUser(normalizedOwnerUserId, currentAxUserId) ||
+    isSameExpenseUser(normalizedOwnerUserId, currentCrmUserId)
+  );
+};
+
 // Resolves whether the current expense context is acting on another user's data.
 export const isManagingOtherExpenseUser = ({
   canManageOtherUsers,
@@ -32,27 +51,34 @@ export const isManagingOtherExpenseUser = ({
 export const isManagingOtherExpenseRecord = ({
   canManageOtherUsers,
   currentAxUserId,
+  currentCrmUserId,
   selectedManagedUserId,
   recordOwnerUserId,
   isCreateMode = false,
 }: {
   canManageOtherUsers: boolean;
   currentAxUserId: unknown;
+  currentCrmUserId?: unknown;
   selectedManagedUserId: unknown;
   recordOwnerUserId: unknown;
   isCreateMode?: boolean;
 }): boolean => {
   if (isCreateMode) return false;
 
-  const normalizedCurrentUserId = normalizeUserId(currentAxUserId);
+  const normalizedCurrentAxUserId = normalizeUserId(currentAxUserId);
+  const normalizedCurrentCrmUserId = normalizeUserId(currentCrmUserId);
   const normalizedRecordOwnerUserId = normalizeUserId(recordOwnerUserId);
-  if (normalizedCurrentUserId && normalizedRecordOwnerUserId) {
-    return !isSameExpenseUser(normalizedCurrentUserId, normalizedRecordOwnerUserId);
+  if (normalizedRecordOwnerUserId && (normalizedCurrentAxUserId || normalizedCurrentCrmUserId)) {
+    return !matchesCurrentExpenseIdentity({
+      currentAxUserId: normalizedCurrentAxUserId,
+      currentCrmUserId: normalizedCurrentCrmUserId,
+      recordOwnerUserId: normalizedRecordOwnerUserId,
+    });
   }
 
   return isManagingOtherExpenseUser({
     canManageOtherUsers,
-    currentAxUserId,
+    currentAxUserId: normalizedCurrentAxUserId,
     selectedManagedUserId,
     isCreateMode,
   });
