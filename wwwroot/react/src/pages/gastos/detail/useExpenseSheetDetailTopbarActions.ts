@@ -7,6 +7,7 @@ type UseExpenseSheetDetailTopbarActionsArgs = {
   modalOpen: boolean;
   isEditing: boolean;
   isCreateMode: boolean;
+  actionMode?: "default" | "delete_only" | "view_only";
   isLocked: boolean;
   isEditLocked?: boolean;
   isDeleteLocked?: boolean;
@@ -36,6 +37,7 @@ export const useExpenseSheetDetailTopbarActions = ({
   modalOpen,
   isEditing,
   isCreateMode,
+  actionMode = "default",
   isLocked,
   isEditLocked,
   isDeleteLocked,
@@ -71,6 +73,7 @@ export const useExpenseSheetDetailTopbarActions = ({
     isEditing,
     isCreateMode,
     isLocked,
+    actionMode,
     isEditLocked,
     isDeleteLocked,
     allowCreateModeActionsWhenLocked: true,

@@ -2,7 +2,6 @@ import React, { useCallback, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import FloatingActionButton, { type FloatingActionButtonMenuItem } from "../../../components/commons/FloatingActionButton.tsx";
-import PageBottomActions, { PageBottomActionButton } from "../../../components/commons/PageBottomActions.tsx";
 import Spinner from "../../../components/commons/Spinner.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
@@ -18,6 +17,7 @@ import { formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
+import ExpenseSheetStatusActionBar from "./ExpenseSheetStatusActionBar.tsx";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
@@ -67,20 +67,8 @@ const NewLineIcon = () => (
   </svg>
 );
 
-// Renders the shared bottom action bar mockup for expense sheet status flows.
-const ExpenseSheetStatusMockupActions = () => {
-  return (
-    <PageBottomActions ariaLabel={indT("ExpenseSheets_BottomActions_Toolbar", "Expense sheet status actions")}>
-      <PageBottomActionButton label={indT("ExpenseSheets_BottomActions_Approve", "Approve")} />
-      <PageBottomActionButton label={indT("ExpenseSheets_BottomActions_Reject", "Reject")} />
-      <PageBottomActionButton label={indT("ExpenseSheets_BottomActions_UndoApproval", "Undo approval")} />
-      <PageBottomActionButton label={indT("ExpenseSheets_BottomActions_UndoRejection", "Undo rejection")} />
-    </PageBottomActions>
-  );
-};
-
 const ExpenseSheetDetailPageContent = () => {
-  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, currentCrmUserId, selectedManagedUserId, managementBootstrapReady } =
+  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } =
     useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canEditExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Edit");
@@ -97,13 +85,6 @@ const ExpenseSheetDetailPageContent = () => {
     isCreateMode,
   });
   const canCreateExpenseForSelectedContext = canCreateExpense && !isManagingOtherUserBySelection;
-  const canEditHeaderFieldsForSelectedContext = canEditExpenseByModule && !isManagingOtherUserBySelection;
-  const canEditExpenseStatusBySelectedContext =
-    !isCreateMode &&
-    ((allowSelfManagement === true && !isManagingOtherUserBySelection) ||
-      (canManageOtherUsers && isManagingOtherUserBySelection));
-  const canEditExpenseForSelectedContext =
-    canEditHeaderFieldsForSelectedContext || canEditExpenseStatusBySelectedContext;
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const createdSheetIdRef = useRef("");
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
@@ -134,13 +115,14 @@ const ExpenseSheetDetailPageContent = () => {
     draftProjectId,
     draftCurrencyCode,
     draftExchangeRate,
-    draftExpenseSheetStatus,
     draftEstadoComentarios,
     officialExchangeRateValue,
     officialExchangeRateRawValue,
     officialExchangeRateDate,
     officialExchangeRateSource,
     projectValue,
+    detailPolicy,
+    isManagingOtherUser,
     isSheetPaid,
     isSheetLocked,
     exchangeRateValue,
@@ -149,6 +131,10 @@ const ExpenseSheetDetailPageContent = () => {
     exchangeRateBaseCurrency,
     exchangeRateReferenceAmount,
     exchangeRateValidationMessage,
+    canEditStatusCommentCurrent,
+    canEditAnyCurrent,
+    canUseFullEditFeatures,
+    canEditHeaderFieldsCurrent,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
     setLinePage,
@@ -160,8 +146,8 @@ const ExpenseSheetDetailPageContent = () => {
     setDraftProjectId,
     setDraftCurrencyCode,
     setDraftExchangeRate,
-    setDraftExpenseSheetStatus,
     setDraftEstadoComentarios,
+    handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateLineMode,
     handleOpenLinkTicketMode,
@@ -170,31 +156,21 @@ const ExpenseSheetDetailPageContent = () => {
   } = useExpenseSheetDetailState({
     hasAccess,
     canCreateExpense: canCreateExpenseForSelectedContext,
-    canEditExpense: canEditExpenseForSelectedContext,
-    canEditHeaderFields: canEditHeaderFieldsForSelectedContext,
-    canEditApprovedStatus: canEditExpenseStatusBySelectedContext,
+    canEditExpenseByModule,
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
     sheetId,
     isCreateMode,
     onForbidden: showPermissionModal,
   });
 
-  const isManagingOtherUser = isManagingOtherExpenseRecord({
-    canManageOtherUsers,
-    currentAxUserId: currentCrmUserId,
-    selectedManagedUserId,
-    recordOwnerUserId: header?.userId,
-    isCreateMode,
-  });
   const canCreateExpenseForCurrentView = canCreateExpense && !isManagingOtherUser;
-  const canEditHeaderFields = canEditExpenseByModule && !isManagingOtherUser;
-  const canDeleteExpenseForCurrentView = canDeleteExpense && !isManagingOtherUser;
-  const canEditExpenseStatusByPermission =
-    !isCreateMode && ((allowSelfManagement === true && !isManagingOtherUser) || (canManageOtherUsers && isManagingOtherUser));
-  const canEditExpense = canEditHeaderFields || canEditExpenseStatusByPermission;
-  const isSheetApproved = Number(header?.expenseSheetStatus) === 2;
-  const canEditExpenseStatus = canEditExpenseStatusByPermission && !isSheetPaid;
-  const effectiveIsSheetEditLocked = isSheetPaid || (isSheetApproved && !canEditExpenseStatusByPermission);
-  const effectiveCanEditHeaderFieldsCurrent = canEditHeaderFields && !isSheetApproved && !isSheetPaid;
+  const canDeleteExpenseForCurrentView = canDeleteExpense && !isManagingOtherUser && canUseFullEditFeatures;
+  const canTransitionStatus = detailPolicy.statusActions.length > 0;
+  const isReadOnlyMode = detailPolicy.interactionMode === "read_only";
+  const topbarActionMode = !isCreateMode && isReadOnlyMode ? "view_only" : "default";
   const detailPermissionsReady = managementBootstrapReady && (isCreateMode || !!header);
   const { invalidateCachedListForRefetch } = useExpenseSheetsFilterCache();
 
@@ -223,21 +199,6 @@ const ExpenseSheetDetailPageContent = () => {
     handleModalConfirm();
   }, [busy, closeConfirm, handleModalConfirm, modalError]);
 
-  const handleEnableEditForCurrentView = useCallback(() => {
-    if (isCreateMode || isLoading || !header || effectiveIsSheetEditLocked) {
-      return;
-    }
-
-    if (!canEditExpense) {
-      showPermissionModal();
-      return;
-    }
-
-    setModalError("");
-    setIsEditing(true);
-    setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditExpense, effectiveIsSheetEditLocked, header, isCreateMode, isLoading, setIsEditing, setModalError, setStatus]);
-
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
   const totalAmountText = useMemo(
@@ -251,28 +212,27 @@ const ExpenseSheetDetailPageContent = () => {
     [header?.totalAmount]
   );
 
-  const { handleUpdate, handleDelete } = useExpenseSheetDetailMutations({
+  const { handleUpdate, handleStatusTransition, handleDelete } = useExpenseSheetDetailMutations({
     busy,
     isEditing,
     isCreateMode,
-    isEditLocked: effectiveIsSheetEditLocked,
+    isEditLocked: isReadOnlyMode,
     isDeleteLocked: isSheetLocked,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
     lockedCurrencyCode: safeText(header?.currencyCode),
     lockedExchangeRate: safeText(header?.exchRate),
     canCreateExpense: canCreateExpenseForCurrentView,
-    canEditExpense,
+    canEditExpense: canEditAnyCurrent,
     canDeleteExpense: canDeleteExpenseForCurrentView,
-    canEditHeaderFields: effectiveCanEditHeaderFieldsCurrent,
-    canEditStatus: canEditExpenseStatus,
+    canEditHeaderFields: canEditHeaderFieldsCurrent,
+    canTransitionStatus,
     sheetId,
     draftDescription,
     draftCurrencyCode,
     draftExchangeRate,
     officialExchangeRateValue,
     draftProjectId,
-    draftExpenseSheetStatus,
     draftEstadoComentarios,
     currentExpenseSheetStatus: header?.expenseSheetStatus,
     currentExchangeRateMode: header?.exchangeRateMode,
@@ -298,20 +258,45 @@ const ExpenseSheetDetailPageContent = () => {
     window.location.reload();
   }, [isCreateMode, navigateToCreatedSheet]);
 
+  const handleStatusActionClick = useCallback(
+    (action: { labelKey: string; fallback: string; nextStatus: number }) => {
+      const actionLabel = indT(action.labelKey, action.fallback);
+      openConfirm({
+        title: actionLabel,
+        message: indT(
+          "ExpenseSheets_BottomActions_ConfirmBody",
+          "Do you want to update the expense sheet status?"
+        ),
+        confirmText: actionLabel,
+        onConfirm: async () => {
+          const ok = await handleStatusTransition(action.nextStatus, actionLabel);
+          if (ok) {
+            invalidateCachedListForRefetch();
+            closeConfirm();
+            window.location.reload();
+          }
+          return ok;
+        },
+      });
+    },
+    [closeConfirm, handleStatusTransition, invalidateCachedListForRefetch, openConfirm]
+  );
+
   useExpenseSheetDetailTopbarActions({
     busy: busy || isRedirectingAfterCreate,
     modalOpen: modal.open,
     isEditing,
     isCreateMode,
+    actionMode: topbarActionMode,
     isLocked: isSheetLocked,
-    isEditLocked: effectiveIsSheetEditLocked,
+    isEditLocked: isReadOnlyMode,
     isDeleteLocked: isSheetLocked,
     permissionsReady: detailPermissionsReady,
     canCreateExpense: canCreateExpenseForCurrentView,
-    canEditExpense,
+    canEditExpense: canEditAnyCurrent,
     canDeleteExpense: canDeleteExpenseForCurrentView,
     setModalError,
-    handleEnableEdit: handleEnableEditForCurrentView,
+    handleEnableEdit,
     handleCancelEdit,
     handleUpdate,
     handleDelete,
@@ -358,9 +343,9 @@ const ExpenseSheetDetailPageContent = () => {
     sheetId: safeText(header?.hojaGastosId || sheetId),
     projectId: projectValue,
     currencyCode: safeText(header?.currencyCode),
-    canCreateExpense: canCreateExpenseForCurrentView,
+    canCreateExpense: canCreateExpenseForCurrentView && canUseFullEditFeatures,
     isCreateMode,
-    isSheetLocked,
+    isSheetLocked: !canUseFullEditFeatures,
     onForbidden: showPermissionModal,
     onCompleted: (result) => {
       const createdFileId = safeText(result?.fileId);
@@ -405,7 +390,8 @@ const ExpenseSheetDetailPageContent = () => {
     [handleOpenCreateLineMode, handleOpenLinkTicketMode, openSourcePicker]
   );
 
-  const showMockupBottomActions = !isCreateMode && !isLoading && !isRedirectingAfterCreate && !errorMessage;
+  const showStatusActionBar =
+    !isCreateMode && !isLoading && !isRedirectingAfterCreate && !errorMessage && detailPolicy.statusActions.length > 0;
 
   return (
     <div className="space-y-3">
@@ -545,8 +531,8 @@ const ExpenseSheetDetailPageContent = () => {
         <ExpenseSheetHeaderForm
           isCreateMode={isCreateMode}
           isEditing={isEditing}
-          canEditHeaderFields={effectiveCanEditHeaderFieldsCurrent}
-          canEditStatus={canEditExpenseStatus}
+          canEditHeaderFields={canEditHeaderFieldsCurrent}
+          statusCommentMode={canEditStatusCommentCurrent ? "edit" : (safeText(header?.estadoComentarios) ? "read" : "hidden")}
           header={header}
           projectValue={projectValue}
           isCurrencyLockedByLines={isCurrencyLockedByLines}
@@ -562,7 +548,6 @@ const ExpenseSheetDetailPageContent = () => {
           draftProjectId={draftProjectId}
           draftCurrencyCode={draftCurrencyCode}
           draftExchangeRate={draftExchangeRate}
-          draftExpenseSheetStatus={draftExpenseSheetStatus}
           draftEstadoComentarios={draftEstadoComentarios}
           officialExchangeRateRawValue={officialExchangeRateRawValue}
           officialExchangeRateDate={officialExchangeRateDate}
@@ -571,7 +556,6 @@ const ExpenseSheetDetailPageContent = () => {
           onDraftProjectIdChange={setDraftProjectId}
           onDraftCurrencyCodeChange={setDraftCurrencyCode}
           onDraftExchangeRateChange={setDraftExchangeRate}
-          onDraftExpenseSheetStatusChange={setDraftExpenseSheetStatus}
           onDraftEstadoComentariosChange={setDraftEstadoComentarios}
         />
       ) : null}
@@ -591,16 +575,20 @@ const ExpenseSheetDetailPageContent = () => {
         />
       ) : null}
 
-      {showMockupBottomActions ? (
-        <ExpenseSheetStatusMockupActions />
+      {showStatusActionBar ? (
+        <ExpenseSheetStatusActionBar
+          actions={detailPolicy.statusActions}
+          busy={busy || isRedirectingAfterCreate}
+          onActionClick={handleStatusActionClick}
+        />
       ) : null}
 
-      {canCreateExpenseForCurrentView && !isCreateMode && !isSheetLocked ? (
+      {canCreateExpenseForCurrentView && !isCreateMode && canUseFullEditFeatures ? (
         <FloatingActionButton
           ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
           size={76}
           right={16}
-          bottom={showMockupBottomActions ? DETAIL_FAB_BOTTOM_WITH_ACTION_BAR : 24}
+          bottom={showStatusActionBar ? DETAIL_FAB_BOTTOM_WITH_ACTION_BAR : 24}
           menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
           menuItems={fabMenuItems}
         />

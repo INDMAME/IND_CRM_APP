@@ -1305,5 +1305,20 @@
   <data name="ExpenseTickets_LinkMode_SelectTicket" xml:space="preserve">
     <value>Selecionar ticket</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_RequestApproval" xml:space="preserve">
+    <value>Request approval</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoRequest" xml:space="preserve">
+    <value>Undo request</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
+    <value>Do you want to update the expense sheet status?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
+    <value>This expense sheet is read-only for its current status.</value>
+  </data>
+  <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
+    <value>This expense sheet status change is not allowed.</value>
+  </data>
 </root>
 

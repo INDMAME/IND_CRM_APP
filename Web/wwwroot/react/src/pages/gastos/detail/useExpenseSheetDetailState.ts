@@ -17,9 +17,11 @@ import {
   navigateToExpenseUrl,
   setExpenseNavigationGuard,
 } from "../utils/expenseNavigation.ts";
+import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 import { getExpenseExchangeRateModeLabel } from "../constants/exchangeRateEntryModeCatalog.ts";
 import { formatExpenseDisplayDate, hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { formatExpenseInputNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
+import { resolveExpenseSheetDetailPolicy } from "./expenseSheetDetailPolicy.ts";
 
 const EXCHANGE_RATE_DEBOUNCE_MS = 400;
 const EXCHANGE_RATE_REFERENCE_AMOUNT = 100;
@@ -61,9 +63,11 @@ const shouldShowExchangeRate = (value: string): boolean => {
 type UseExpenseSheetDetailStateArgs = {
   hasAccess: boolean;
   canCreateExpense: boolean;
-  canEditExpense: boolean;
-  canEditHeaderFields: boolean;
-  canEditApprovedStatus: boolean;
+  canEditExpenseByModule: boolean;
+  allowSelfManagement: boolean;
+  canManageOtherUsers: boolean;
+  currentAxUserId: string;
+  selectedManagedUserId: string;
   sheetId: string;
   isCreateMode: boolean;
   onForbidden: () => void;
@@ -73,9 +77,11 @@ type UseExpenseSheetDetailStateArgs = {
 export const useExpenseSheetDetailState = ({
   hasAccess,
   canCreateExpense,
-  canEditExpense,
-  canEditHeaderFields,
-  canEditApprovedStatus,
+  canEditExpenseByModule,
+  allowSelfManagement,
+  canManageOtherUsers,
+  currentAxUserId,
+  selectedManagedUserId,
   sheetId,
   isCreateMode,
   onForbidden,
@@ -93,7 +99,6 @@ export const useExpenseSheetDetailState = ({
   const [draftProjectId, setDraftProjectId] = useState("");
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
   const [draftExchangeRate, setDraftExchangeRate] = useState("");
-  const [draftExpenseSheetStatus, setDraftExpenseSheetStatus] = useState(0);
   const [draftEstadoComentarios, setDraftEstadoComentarios] = useState("");
   const [defaultCurrencyCode, setDefaultCurrencyCode] = useState("");
   const [isExchangeRateLoading, setIsExchangeRateLoading] = useState(false);
@@ -116,8 +121,6 @@ export const useExpenseSheetDetailState = ({
         fallback: "",
       })
     );
-    const nextStatus = Number(nextHeader?.expenseSheetStatus);
-    setDraftExpenseSheetStatus(Number.isInteger(nextStatus) && nextStatus >= 0 ? nextStatus : 0);
     setDraftEstadoComentarios(safeText(nextHeader?.estadoComentarios));
   }, []);
 
@@ -247,9 +250,34 @@ export const useExpenseSheetDetailState = ({
   const isSheetPaidByStatus = statusCode === EXPENSE_STATUS_PAID;
   const isSheetPaidByVoucher = hasAssignedVoucher(header?.voucher);
   const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
+  const isManagingOtherUser = isManagingOtherExpenseRecord({
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
+    recordOwnerUserId: header?.userId,
+    isCreateMode,
+  });
+  const detailPolicy = useMemo(() => {
+    if (isCreateMode) {
+      return {
+        interactionMode: "full_edit" as const,
+        showFab: false,
+        statusActions: [],
+      };
+    }
+
+    return resolveExpenseSheetDetailPolicy({
+      statusCode,
+      isManagingOtherUser,
+      allowSelfManagement,
+      isPaid: isSheetPaid,
+    });
+  }, [allowSelfManagement, isCreateMode, isManagingOtherUser, isSheetPaid, statusCode]);
+  const canEditHeaderFieldsCurrent = isCreateMode || (canEditExpenseByModule && !isManagingOtherUser && detailPolicy.interactionMode === "full_edit");
+  const canEditStatusCommentCurrent = !isCreateMode && detailPolicy.interactionMode === "comment_only_edit";
+  const canEditAnyCurrent = (isCreateMode && canCreateExpense) || canEditHeaderFieldsCurrent || canEditStatusCommentCurrent;
+  const canUseFullEditFeatures = !isCreateMode && detailPolicy.interactionMode === "full_edit";
   const isSheetLocked = isSheetApproved || isSheetPaid;
-  const isSheetEditLocked = isSheetPaid || (isSheetApproved && !canEditApprovedStatus);
-  const canEditHeaderFieldsCurrent = canEditHeaderFields && !isSheetApproved && !isSheetPaid;
   const hasLines = lines.length > 0;
   const exchangeRateValue = formatExpenseInputNumber(safeText(header?.exchRate), {
     minimumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
@@ -457,11 +485,11 @@ export const useExpenseSheetDetailState = ({
   ]);
 
   const handleEnableEdit = useCallback(() => {
-    if (isCreateMode || isLoading || !header || isSheetEditLocked) {
+    if (isCreateMode || isLoading || !header) {
       return;
     }
 
-    if (!canEditExpense) {
+    if (!canEditAnyCurrent) {
       onForbidden();
       return;
     }
@@ -470,7 +498,7 @@ export const useExpenseSheetDetailState = ({
     setIsEditing(true);
     hydrateDraftFromHeader(header);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditExpense, header, hydrateDraftFromHeader, isCreateMode, isLoading, isSheetEditLocked, onForbidden]);
+  }, [canEditAnyCurrent, header, hydrateDraftFromHeader, isCreateMode, isLoading, onForbidden]);
 
   const handleCancelEdit = useCallback(() => {
     if (isCreateMode) {
@@ -506,7 +534,7 @@ export const useExpenseSheetDetailState = ({
 
   // Opens expense line create mode from an existing expense sheet detail.
   const handleOpenCreateLineMode = useCallback(() => {
-    if (!canCreateExpense || !sheetId || isSheetLocked) {
+    if (!canCreateExpense || !sheetId || !canUseFullEditFeatures) {
       onForbidden();
       return;
     }
@@ -519,12 +547,12 @@ export const useExpenseSheetDetailState = ({
     navigateToExpenseUrl(targetUrl, {
       askConfirmation: isEditing,
     });
-  }, [canCreateExpense, isCreateMode, isEditing, isSheetLocked, onForbidden, sheetId]);
+  }, [canCreateExpense, canUseFullEditFeatures, isCreateMode, isEditing, onForbidden, sheetId]);
 
   // Opens tickets page from expense sheet context to create or link tickets.
   const openTicketsFromSheet = useCallback(
     (action: "new" | "link") => {
-      if (!canCreateExpense || !sheetId || isSheetLocked) {
+      if (!canCreateExpense || !sheetId || !canUseFullEditFeatures) {
         onForbidden();
         return;
       }
@@ -541,7 +569,7 @@ export const useExpenseSheetDetailState = ({
         askConfirmation: isEditing,
       });
     },
-    [canCreateExpense, isCreateMode, isEditing, isSheetLocked, onForbidden, sheetId]
+    [canCreateExpense, canUseFullEditFeatures, isCreateMode, isEditing, onForbidden, sheetId]
   );
 
   const handleOpenCreateTicketMode = useCallback(() => {
@@ -589,7 +617,6 @@ export const useExpenseSheetDetailState = ({
     draftProjectId,
     draftCurrencyCode,
     draftExchangeRate,
-    draftExpenseSheetStatus,
     draftEstadoComentarios,
     officialExchangeRateValue,
     officialExchangeRateRawValue,
@@ -602,13 +629,17 @@ export const useExpenseSheetDetailState = ({
     isSheetApproved,
     isSheetPaid,
     isSheetLocked,
-    isSheetEditLocked,
     exchangeRateValue,
     showExchangeRate,
     normalizedDraftCurrency,
     exchangeRateBaseCurrency,
     exchangeRateReferenceAmount: EXCHANGE_RATE_REFERENCE_AMOUNT,
     exchangeRateValidationMessage,
+    detailPolicy,
+    isManagingOtherUser,
+    canEditStatusCommentCurrent,
+    canEditAnyCurrent,
+    canUseFullEditFeatures,
     canEditHeaderFieldsCurrent,
     isCurrencyLockedByLines,
     isExchangeRateLockedByLines,
@@ -622,7 +653,6 @@ export const useExpenseSheetDetailState = ({
     setDraftProjectId,
     setDraftCurrencyCode,
     setDraftExchangeRate,
-    setDraftExpenseSheetStatus,
     setDraftEstadoComentarios,
     handleEnableEdit,
     handleCancelEdit,

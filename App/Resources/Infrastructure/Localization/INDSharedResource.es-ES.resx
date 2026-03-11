@@ -219,6 +219,15 @@
   <data name="ExpenseSheets_BottomActions_Toolbar" xml:space="preserve">
     <value>Acciones de estado de la hoja de gastos</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_RequestApproval" xml:space="preserve">
+    <value>Solicitar aprobacion</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_UndoRequest" xml:space="preserve">
+    <value>Deshacer solicitud</value>
+  </data>
+  <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
+    <value>Quieres actualizar el estado de la hoja de gastos?</value>
+  </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
     <value>Actualizando linea de gasto...</value>
   </data>
@@ -1187,6 +1196,12 @@
   </data>
   <data name="ExpenseSheets_Detail_PaidReadOnly" xml:space="preserve">
     <value>Las hojas de gasto pagadas son de solo lectura.</value>
+  </data>
+  <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
+    <value>Esta hoja de gastos es de solo lectura para su estado actual.</value>
+  </data>
+  <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
+    <value>Este cambio de estado de la hoja de gastos no esta permitido.</value>
   </data>
   <data name="ExpenseSheets_FuelPrice_Loading" xml:space="preserve">
     <value>Consultando precio de combustible...</value>

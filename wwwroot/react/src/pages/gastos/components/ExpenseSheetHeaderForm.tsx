@@ -7,7 +7,7 @@ import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 import ExpenseCurrencyFlagIcon from "./ExpenseCurrencyFlagIcon.tsx";
 import InfoPopoverIconButton from "../../../components/commons/InfoPopoverIconButton.tsx";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
-import { getExpenseSheetStatusOptions, getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
+import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import { getExpenseExchangeRateModeLabel } from "../constants/exchangeRateEntryModeCatalog.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
@@ -17,7 +17,7 @@ type ExpenseSheetHeaderFormProps = {
   isCreateMode: boolean;
   isEditing: boolean;
   canEditHeaderFields: boolean;
-  canEditStatus: boolean;
+  statusCommentMode: "hidden" | "read" | "edit";
   header: ExpenseSheetHeader;
   projectValue: string;
   isCurrencyLockedByLines: boolean;
@@ -33,7 +33,6 @@ type ExpenseSheetHeaderFormProps = {
   draftProjectId: string;
   draftCurrencyCode: string;
   draftExchangeRate: string;
-  draftExpenseSheetStatus: number;
   draftEstadoComentarios: string;
   officialExchangeRateRawValue: string;
   officialExchangeRateDate: string;
@@ -42,7 +41,6 @@ type ExpenseSheetHeaderFormProps = {
   onDraftProjectIdChange: (value: string) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
-  onDraftExpenseSheetStatusChange: (value: number) => void;
   onDraftEstadoComentariosChange: (value: string) => void;
 };
 
@@ -53,7 +51,7 @@ const ExpenseSheetHeaderForm = ({
   isCreateMode,
   isEditing,
   canEditHeaderFields,
-  canEditStatus,
+  statusCommentMode,
   header,
   projectValue,
   isCurrencyLockedByLines,
@@ -69,7 +67,6 @@ const ExpenseSheetHeaderForm = ({
   draftProjectId,
   draftCurrencyCode,
   draftExchangeRate,
-  draftExpenseSheetStatus,
   draftEstadoComentarios,
   officialExchangeRateRawValue,
   officialExchangeRateDate,
@@ -78,7 +75,6 @@ const ExpenseSheetHeaderForm = ({
   onDraftProjectIdChange,
   onDraftCurrencyCodeChange,
   onDraftExchangeRateChange,
-  onDraftExpenseSheetStatusChange,
   onDraftEstadoComentariosChange,
 }: ExpenseSheetHeaderFormProps) => {
   const isForeignCurrency =
@@ -92,10 +88,9 @@ const ExpenseSheetHeaderForm = ({
       : getExpenseStatusLabel(header.expenseSheetStatus);
   const headerCurrencyCode = safeText(header.currencyCode).toUpperCase();
   const baseCurrencyCode = safeText(exchangeRateBaseCurrency).toUpperCase();
-  const statusOptions = React.useMemo(() => getExpenseSheetStatusOptions(), []);
-  const statusDraftValue = String(Number.isInteger(draftExpenseSheetStatus) ? draftExpenseSheetStatus : 0);
   const statusCommentValue = safeText(header.estadoComentarios);
-  const showStatusCommentField = !isCreateMode && ((isEditing && canEditStatus) || !!statusCommentValue);
+  const showStatusCommentField = !isCreateMode && (statusCommentMode !== "hidden" || !!statusCommentValue);
+  const canEditStatusComment = isEditing && statusCommentMode === "edit";
   const localCurrencyOptions = React.useMemo<ExpenseSelectOption[]>(
     () => [
       {
@@ -175,30 +170,9 @@ const ExpenseSheetHeaderForm = ({
             value={safeText(header.hojaGastosId) || "-"}
           />
         ) : null}
-        {!isCreateMode ? (
-          isEditing && canEditStatus ? (
-            <SelectCombobox
-              label={indT("ExpenseSheets_Field_Status", "Status")}
-              options={statusOptions}
-              value={statusDraftValue}
-              onChange={(nextValue) => {
-                const parsed = Number(nextValue);
-                if (Number.isInteger(parsed) && parsed >= 0) {
-                  onDraftExpenseSheetStatusChange(parsed);
-                }
-              }}
-              placeholder={indT("ExpenseSheets_Field_Status", "Status")}
-              emitOnValueChange
-              allowTextInput={false}
-              idBase="expense-header-status"
-              portalClassName="visitas-typography"
-            />
-          ) : (
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} />
-          )
-        ) : null}
+        {!isCreateMode ? <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} /> : null}
         {showStatusCommentField ? (
-          isEditing && canEditStatus ? (
+          canEditStatusComment ? (
             <div className="md:col-span-2 space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_StatusComment", "Status comment")}</label>
               <textarea

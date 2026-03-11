@@ -1,5 +1,6 @@
 using IND_CRM_APP.Infrastructure.Localization;
 using IND_CRM_APP.Models.CRM;
+using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using IND_CRM_APP.Extensions;
@@ -21,10 +22,17 @@ namespace IND_CRM_APP.Controllers
         private readonly ILogger<GastosController> _logger;
         private readonly ICrmEnumCatalog _crmEnumCatalog;
         private readonly ITicketBlobPreviewService _ticketBlobPreviewService;
+        private readonly IIndAuthContextService _authContext;
         private readonly IStringLocalizer<INDSharedResource> _sr;
+        private const int ExpenseSheetStatusDraft = 0;
+        private const int ExpenseSheetStatusApprovalRequested = 1;
+        private const int ExpenseSheetStatusApproved = 2;
+        private const int ExpenseSheetStatusRejected = 3;
         private const int ExpenseSheetStatusPaid = 4;
         private const string ExpenseSheetNotFoundErrorCode = "CRM_EXPENSESHEET_NOT_FOUND";
         private const string ExpenseSheetPaidReadOnlyErrorCode = "CRM_EXPENSESHEET_PAID_READ_ONLY";
+        private const string ExpenseSheetReadOnlyByStatusErrorCode = "CRM_EXPENSESHEET_STATUS_READ_ONLY";
+        private const string ExpenseSheetStatusTransitionErrorCode = "CRM_EXPENSESHEET_STATUS_TRANSITION_NOT_ALLOWED";
         private const string ExpenseManagedUserReadOnlyErrorCode = "CRM_EXPENSE_MANAGED_USER_READ_ONLY";
         private static readonly HashSet<int> AllowedTicketGastoTypes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
         private static readonly HashSet<string> AllowedTicketImageContentTypes = new(StringComparer.OrdinalIgnoreCase)
@@ -48,11 +56,13 @@ namespace IND_CRM_APP.Controllers
             ILogger<GastosController> logger,
             ICrmEnumCatalog crmEnumCatalog,
             ITicketBlobPreviewService ticketBlobPreviewService,
+            IIndAuthContextService authContext,
             IStringLocalizer<INDSharedResource> sr) : base(apiClient, tokenSession)
         {
             _logger = logger;
             _crmEnumCatalog = crmEnumCatalog;
             _ticketBlobPreviewService = ticketBlobPreviewService;
+            _authContext = authContext;
             _sr = sr;
         }
 
@@ -63,6 +73,49 @@ namespace IND_CRM_APP.Controllers
             public int StatusCode { get; init; }
             public string Message { get; init; } = string.Empty;
             public string ErrorCode { get; init; } = string.Empty;
+            public ExpenseSheetSnapshot? Snapshot { get; init; }
+            public ExpenseSheetMutationPolicy? Policy { get; init; }
+        }
+
+        // Defines the expense mutation family so one policy can protect all entry points.
+        private enum ExpenseSheetMutationType
+        {
+            HeaderUpdate,
+            LineMutation,
+            DeleteSheet
+        }
+
+        // Mirrors the frontend interaction modes used by expense sheet detail.
+        private enum ExpenseSheetInteractionMode
+        {
+            FullEdit,
+            CommentOnlyEdit,
+            ReadOnly
+        }
+
+        // Normalized server snapshot for policy evaluation and payload comparison.
+        private sealed class ExpenseSheetSnapshot
+        {
+            public string OwnerUserId { get; init; } = string.Empty;
+            public int? StatusCode { get; init; }
+            public string Description { get; init; } = string.Empty;
+            public string CurrencyCode { get; init; } = string.Empty;
+            public decimal ExchangeRate { get; init; }
+            public string? ProjectId { get; init; }
+            public string? Voucher { get; init; }
+            public int? ExchangeRateMode { get; init; }
+            public string? StatusComment { get; init; }
+            public bool IsPaid { get; init; }
+        }
+
+        // Encapsulates the resolved mutation rules for one expense sheet and actor context.
+        private sealed class ExpenseSheetMutationPolicy
+        {
+            public ExpenseSheetInteractionMode InteractionMode { get; init; }
+            public bool IsManagingOtherUser { get; init; }
+            public bool AllowSelfManagement { get; init; }
+            public bool CanDeleteSheet { get; init; }
+            public HashSet<int> AllowedNextStatuses { get; init; } = new();
         }
 
         // Shows the expense sheet list page.
@@ -984,7 +1037,7 @@ namespace IND_CRM_APP.Controllers
                     normalizedExistingSheetId,
                     requestAxUserId,
                     nameof(ApiExpenseSheetsCreate),
-                    allowManagedUserMutation: false);
+                    ExpenseSheetMutationType.LineMutation);
                 if (!mutationGuard.Allowed)
                     return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
             }
@@ -1076,7 +1129,9 @@ namespace IND_CRM_APP.Controllers
                 token,
                 safeSheetId,
                 requestAxUserId,
-                nameof(ApiExpenseSheetUpdate));
+                nameof(ApiExpenseSheetUpdate),
+                ExpenseSheetMutationType.HeaderUpdate,
+                request);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
@@ -1163,7 +1218,7 @@ namespace IND_CRM_APP.Controllers
                 safeSheetId,
                 requestAxUserId,
                 nameof(ApiExpenseSheetLineUpdate),
-                allowManagedUserMutation: false);
+                ExpenseSheetMutationType.LineMutation);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
@@ -1243,7 +1298,7 @@ namespace IND_CRM_APP.Controllers
                 safeSheetId,
                 requestAxUserId,
                 nameof(ApiExpenseSheetLineDelete),
-                allowManagedUserMutation: false);
+                resolvedDeleteWholeSheet ? ExpenseSheetMutationType.DeleteSheet : ExpenseSheetMutationType.LineMutation);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
@@ -2351,7 +2406,7 @@ namespace IND_CRM_APP.Controllers
                         normalizedExistingSheetId,
                         requestAxUserId,
                         nameof(CreateExpenseSheet),
-                        allowManagedUserMutation: false);
+                        ExpenseSheetMutationType.LineMutation);
                     if (!mutationGuard.Allowed)
                         return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
                 }
@@ -2427,7 +2482,9 @@ namespace IND_CRM_APP.Controllers
                     token,
                     hojaGastosId.Trim(),
                     requestAxUserId,
-                    nameof(UpdateExpenseSheetHeader));
+                    nameof(UpdateExpenseSheetHeader),
+                    ExpenseSheetMutationType.HeaderUpdate,
+                    request);
                 if (!mutationGuard.Allowed)
                     return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
                 var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, hojaGastosId.Trim(), request, requestAxUserId);
@@ -2493,7 +2550,7 @@ namespace IND_CRM_APP.Controllers
                     hojaGastosId.Trim(),
                     requestAxUserId,
                     nameof(UpdateExpenseSheetLine),
-                    allowManagedUserMutation: false);
+                    ExpenseSheetMutationType.LineMutation);
                 if (!mutationGuard.Allowed)
                     return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
                 var response = await _apiClient.UpdateExpenseSheetLineAsync(
@@ -2545,7 +2602,7 @@ namespace IND_CRM_APP.Controllers
                     hojaGastosId.Trim(),
                     requestAxUserId,
                     nameof(DeleteExpenseSheetLine),
-                    allowManagedUserMutation: false);
+                    ExpenseSheetMutationType.LineMutation);
                 if (!mutationGuard.Allowed)
                     return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
                 var response = await _apiClient.DeleteExpenseSheetLineAsync(
@@ -2595,7 +2652,7 @@ namespace IND_CRM_APP.Controllers
                     hojaGastosId.Trim(),
                     requestAxUserId,
                     nameof(DeleteExpenseSheet),
-                    allowManagedUserMutation: false);
+                    ExpenseSheetMutationType.DeleteSheet);
                 if (!mutationGuard.Allowed)
                     return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
                 var response = await _apiClient.DeleteExpenseSheetLineAsync(
@@ -2662,13 +2719,14 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
-        // Loads the current sheet state before mutating it so paid sheets stay immutable.
+        // Loads the current sheet state and resolves the final mutation policy before any write.
         private async Task<ExpenseSheetMutationGuardResult> ValidateExpenseSheetMutationAsync(
             string token,
             string hojaGastosId,
             string? axUserIdOverride,
             string operationName,
-            bool allowManagedUserMutation = true)
+            ExpenseSheetMutationType mutationType,
+            ExpenseSheetUpdateRequest? headerRequest = null)
         {
             var safeSheetId = NormalizeOptionalText(hojaGastosId);
             if (string.IsNullOrWhiteSpace(safeSheetId))
@@ -2680,13 +2738,6 @@ namespace IND_CRM_APP.Controllers
                     Message = _sr["Api_RequestFailed"].Value,
                     ErrorCode = "INVALID_REQUEST"
                 };
-            }
-
-            if (!allowManagedUserMutation)
-            {
-                var managedUserGuard = ValidateManagedUserMutation(axUserIdOverride, operationName);
-                if (managedUserGuard != null)
-                    return managedUserGuard;
             }
 
             try
@@ -2704,16 +2755,92 @@ namespace IND_CRM_APP.Controllers
                     };
                 }
 
-                if (IsPaidExpenseSheet(sheet))
+                var snapshot = BuildExpenseSheetSnapshot(sheet);
+                if (snapshot.IsPaid)
                 {
                     return new ExpenseSheetMutationGuardResult
                     {
                         Allowed = false,
                         StatusCode = StatusCodes.Status409Conflict,
                         Message = _sr["ExpenseSheets_Detail_PaidReadOnly"].Value,
-                        ErrorCode = ExpenseSheetPaidReadOnlyErrorCode
+                        ErrorCode = ExpenseSheetPaidReadOnlyErrorCode,
+                        Snapshot = snapshot
                     };
                 }
+
+                var cachedContext = _authContext.GetCachedContext();
+                if (cachedContext == null)
+                {
+                    var contextResult = await _authContext.EnsureContextAsync();
+                    if (!contextResult.Success || contextResult.Context == null)
+                    {
+                        return new ExpenseSheetMutationGuardResult
+                        {
+                            Allowed = false,
+                            StatusCode = StatusCodes.Status403Forbidden,
+                            Message = _sr["Auth_PermissionDenied_Body"].Value,
+                            ErrorCode = ExpenseManagedUserReadOnlyErrorCode,
+                            Snapshot = snapshot
+                        };
+                    }
+
+                    cachedContext = contextResult.Context;
+                }
+
+                var currentAxUserId = NormalizeOptionalText(cachedContext?.Header?.AxUserId) ?? GetCurrentSessionAxUserId() ?? string.Empty;
+                var selectedCompanyId = NormalizeOptionalText(_authContext.GetSelectedCompanyId(cachedContext));
+                var selectedCompany = cachedContext?.Companies?.FirstOrDefault(company =>
+                    string.Equals(company.CompanyId, selectedCompanyId, StringComparison.OrdinalIgnoreCase))
+                    ?? cachedContext?.Companies?.FirstOrDefault();
+                var allowSelfManagement = selectedCompany?.AllowSelfManagement == true;
+                var isManagingOtherUser = ResolveIsManagingOtherExpenseRecord(currentAxUserId, snapshot.OwnerUserId, axUserIdOverride);
+
+                if (isManagingOtherUser)
+                {
+                    var subordinateGuard = await ValidateManagedExpenseSheetOwnerAsync(token, snapshot.OwnerUserId, operationName, snapshot);
+                    if (!subordinateGuard.Allowed)
+                        return subordinateGuard;
+                }
+
+                var policy = ResolveExpenseSheetMutationPolicy(snapshot, isManagingOtherUser, allowSelfManagement);
+
+                if (mutationType == ExpenseSheetMutationType.LineMutation && policy.InteractionMode != ExpenseSheetInteractionMode.FullEdit)
+                {
+                    return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
+                }
+
+                if (mutationType == ExpenseSheetMutationType.DeleteSheet && !policy.CanDeleteSheet)
+                {
+                    return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
+                }
+
+                if (mutationType == ExpenseSheetMutationType.HeaderUpdate)
+                {
+                    if (headerRequest == null)
+                    {
+                        return new ExpenseSheetMutationGuardResult
+                        {
+                            Allowed = false,
+                            StatusCode = StatusCodes.Status400BadRequest,
+                            Message = _sr["Api_RequestFailed"].Value,
+                            ErrorCode = "INVALID_REQUEST",
+                            Snapshot = snapshot,
+                            Policy = policy
+                        };
+                    }
+
+                    var headerGuard = ValidateExpenseSheetHeaderUpdate(policy, snapshot, headerRequest);
+                    if (!headerGuard.Allowed)
+                        return headerGuard;
+                }
+
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = true,
+                    StatusCode = StatusCodes.Status200OK,
+                    Snapshot = snapshot,
+                    Policy = policy
+                };
             }
             catch (ApiException ex)
             {
@@ -2737,12 +2864,283 @@ namespace IND_CRM_APP.Controllers
                     ErrorCode = "UNHANDLED_ERROR"
                 };
             }
+        }
+
+        // Builds a normalized snapshot so backend policy checks stay independent from raw DTO shapes.
+        private static ExpenseSheetSnapshot BuildExpenseSheetSnapshot(ExpenseSheetDetailDto sheet)
+        {
+            return new ExpenseSheetSnapshot
+            {
+                OwnerUserId = NormalizeOptionalText(GetExtraString(sheet.Extra, "userId", "axUserId", "usuario")) ?? string.Empty,
+                StatusCode = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
+                Description = NormalizeOptionalText(GetExtraString(sheet.Extra, "description", "descripcion", "desc")) ?? string.Empty,
+                CurrencyCode = (NormalizeOptionalText(GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa")) ?? string.Empty).ToUpperInvariant(),
+                ExchangeRate = GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio") ?? 0m,
+                ProjectId = NormalizeOptionalText(GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project")),
+                Voucher = NormalizeOptionalText(GetExtraString(sheet.Extra, "voucher")),
+                ExchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
+                StatusComment = NormalizeOptionalText(GetExtraString(sheet.Extra, "estadoComentarios")),
+                IsPaid = IsPaidExpenseSheet(sheet)
+            };
+        }
+
+        // Mirrors the UI matrix in server-side form so direct API calls cannot bypass the workflow.
+        private static ExpenseSheetMutationPolicy ResolveExpenseSheetMutationPolicy(
+            ExpenseSheetSnapshot snapshot,
+            bool isManagingOtherUser,
+            bool allowSelfManagement)
+        {
+            if (snapshot.IsPaid)
+            {
+                return new ExpenseSheetMutationPolicy
+                {
+                    InteractionMode = ExpenseSheetInteractionMode.ReadOnly,
+                    IsManagingOtherUser = isManagingOtherUser,
+                    AllowSelfManagement = allowSelfManagement,
+                    CanDeleteSheet = false
+                };
+            }
+
+            var statusCode = snapshot.StatusCode;
+            if (isManagingOtherUser)
+            {
+                return statusCode switch
+                {
+                    ExpenseSheetStatusApprovalRequested => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, isManagingOtherUser, allowSelfManagement, false, ExpenseSheetStatusApproved, ExpenseSheetStatusRejected),
+                    ExpenseSheetStatusApproved => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, isManagingOtherUser, allowSelfManagement, false, ExpenseSheetStatusApprovalRequested),
+                    ExpenseSheetStatusRejected => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, isManagingOtherUser, allowSelfManagement, false, ExpenseSheetStatusApprovalRequested),
+                    _ => BuildPolicy(ExpenseSheetInteractionMode.ReadOnly, isManagingOtherUser, allowSelfManagement, false)
+                };
+            }
+
+            if (allowSelfManagement)
+            {
+                return statusCode switch
+                {
+                    ExpenseSheetStatusDraft => BuildPolicy(ExpenseSheetInteractionMode.FullEdit, false, true, true, ExpenseSheetStatusApproved),
+                    ExpenseSheetStatusApprovalRequested => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, false, true, false, ExpenseSheetStatusApproved),
+                    ExpenseSheetStatusApproved => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, false, true, false, ExpenseSheetStatusApprovalRequested),
+                    ExpenseSheetStatusRejected => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, false, true, false, ExpenseSheetStatusApprovalRequested),
+                    _ => BuildPolicy(ExpenseSheetInteractionMode.ReadOnly, false, true, false)
+                };
+            }
+
+            return statusCode switch
+            {
+                ExpenseSheetStatusDraft => BuildPolicy(ExpenseSheetInteractionMode.FullEdit, false, false, true, ExpenseSheetStatusApprovalRequested),
+                ExpenseSheetStatusApprovalRequested => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, false, false, false, ExpenseSheetStatusDraft),
+                ExpenseSheetStatusRejected => BuildPolicy(ExpenseSheetInteractionMode.FullEdit, false, false, true, ExpenseSheetStatusApprovalRequested),
+                _ => BuildPolicy(ExpenseSheetInteractionMode.ReadOnly, false, false, false)
+            };
+        }
+
+        // Creates a compact policy instance with the allowed target statuses for the current matrix cell.
+        private static ExpenseSheetMutationPolicy BuildPolicy(
+            ExpenseSheetInteractionMode interactionMode,
+            bool isManagingOtherUser,
+            bool allowSelfManagement,
+            bool canDeleteSheet,
+            params int[] allowedNextStatuses)
+        {
+            return new ExpenseSheetMutationPolicy
+            {
+                InteractionMode = interactionMode,
+                IsManagingOtherUser = isManagingOtherUser,
+                AllowSelfManagement = allowSelfManagement,
+                CanDeleteSheet = canDeleteSheet,
+                AllowedNextStatuses = new HashSet<int>(allowedNextStatuses ?? Array.Empty<int>())
+            };
+        }
+
+        // Validates comment-only and status-transition rules for header updates.
+        private ExpenseSheetMutationGuardResult ValidateExpenseSheetHeaderUpdate(
+            ExpenseSheetMutationPolicy policy,
+            ExpenseSheetSnapshot snapshot,
+            ExpenseSheetUpdateRequest request)
+        {
+            if (policy.InteractionMode == ExpenseSheetInteractionMode.ReadOnly)
+            {
+                return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
+            }
+
+            if (policy.InteractionMode == ExpenseSheetInteractionMode.CommentOnlyEdit &&
+                HasExpenseSheetHeaderFieldChanges(snapshot, request))
+            {
+                return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
+            }
+
+            var currentStatus = snapshot.StatusCode;
+            var requestedStatus = request.ExpenseSheetStatus ?? currentStatus;
+            if (requestedStatus != currentStatus)
+            {
+                if (!requestedStatus.HasValue || !policy.AllowedNextStatuses.Contains(requestedStatus.Value))
+                {
+                    return new ExpenseSheetMutationGuardResult
+                    {
+                        Allowed = false,
+                        StatusCode = StatusCodes.Status409Conflict,
+                        Message = _sr["ExpenseSheets_Detail_StatusTransitionNotAllowed"].Value,
+                        ErrorCode = ExpenseSheetStatusTransitionErrorCode,
+                        Snapshot = snapshot,
+                        Policy = policy
+                    };
+                }
+            }
 
             return new ExpenseSheetMutationGuardResult
             {
                 Allowed = true,
-                StatusCode = StatusCodes.Status200OK
+                StatusCode = StatusCodes.Status200OK,
+                Snapshot = snapshot,
+                Policy = policy
             };
+        }
+
+        // Detects any non-comment header mutation so comment-only mode can stay locked down.
+        private static bool HasExpenseSheetHeaderFieldChanges(ExpenseSheetSnapshot snapshot, ExpenseSheetUpdateRequest request)
+        {
+            if (!string.Equals((request.Description ?? string.Empty).Trim(), snapshot.Description, StringComparison.Ordinal))
+                return true;
+
+            if (!string.Equals((NormalizeOptionalText(request.CurrencyCode) ?? string.Empty).ToUpperInvariant(), snapshot.CurrencyCode, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (!AreExpenseDecimalsEquivalent(request.ExchRate, snapshot.ExchangeRate))
+                return true;
+
+            if (!string.Equals(NormalizeOptionalText(request.ProjId) ?? string.Empty, snapshot.ProjectId ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (!string.Equals(NormalizeOptionalText(request.Voucher) ?? string.Empty, snapshot.Voucher ?? string.Empty, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            if (NormalizeExpenseNullableInt(request.ExchangeRateMode) != NormalizeExpenseNullableInt(snapshot.ExchangeRateMode))
+                return true;
+
+            return false;
+        }
+
+        // Protects subordinate mutations by verifying the record owner belongs to the current subordinate scope.
+        private async Task<ExpenseSheetMutationGuardResult> ValidateManagedExpenseSheetOwnerAsync(
+            string token,
+            string ownerUserId,
+            string operationName,
+            ExpenseSheetSnapshot snapshot)
+        {
+            var normalizedOwnerUserId = NormalizeOptionalText(ownerUserId);
+            if (string.IsNullOrWhiteSpace(normalizedOwnerUserId))
+            {
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status403Forbidden,
+                    Message = _sr["Auth_PermissionDenied_Body"].Value,
+                    ErrorCode = ExpenseManagedUserReadOnlyErrorCode,
+                    Snapshot = snapshot
+                };
+            }
+
+            try
+            {
+                var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token);
+                var items = result.GetAnyItems();
+                var belongsToSubordinates = items.Any(item =>
+                    IsSameExpenseUserId(item.AxUserId, normalizedOwnerUserId) ||
+                    IsSameExpenseUserId(item.CrmUserId, normalizedOwnerUserId) ||
+                    IsSameExpenseUserId(item.UserId, normalizedOwnerUserId) ||
+                    IsSameExpenseUserId(GetExtraString(item.Extra, "axUserId", "AxUserId"), normalizedOwnerUserId) ||
+                    IsSameExpenseUserId(GetExtraString(item.Extra, "crmUserId", "CrmUserId"), normalizedOwnerUserId) ||
+                    IsSameExpenseUserId(GetExtraString(item.Extra, "userId", "UserId"), normalizedOwnerUserId));
+
+                if (belongsToSubordinates)
+                {
+                    return new ExpenseSheetMutationGuardResult
+                    {
+                        Allowed = true,
+                        StatusCode = StatusCodes.Status200OK,
+                        Snapshot = snapshot
+                    };
+                }
+
+                _logger.LogInformation(
+                    "Blocked expense mutation outside subordinate scope in {Operation}. ownerUserId={OwnerUserId}",
+                    operationName,
+                    normalizedOwnerUserId);
+
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status403Forbidden,
+                    Message = _sr["Auth_PermissionDenied_Body"].Value,
+                    ErrorCode = ExpenseManagedUserReadOnlyErrorCode,
+                    Snapshot = snapshot
+                };
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error while validating subordinate ownership in {Operation}", operationName);
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status502BadGateway,
+                    Message = _sr["Api_RequestFailed"].Value,
+                    ErrorCode = "UPSTREAM_ERROR",
+                    Snapshot = snapshot
+                };
+            }
+        }
+
+        // Reuses the same read-only message for blocked header, line and delete mutations outside allowed modes.
+        private ExpenseSheetMutationGuardResult BuildExpenseSheetReadOnlyGuard(
+            ExpenseSheetSnapshot snapshot,
+            ExpenseSheetMutationPolicy policy)
+        {
+            return new ExpenseSheetMutationGuardResult
+            {
+                Allowed = false,
+                StatusCode = StatusCodes.Status409Conflict,
+                Message = _sr["ExpenseSheets_Detail_ReadOnlyByStatus"].Value,
+                ErrorCode = ExpenseSheetReadOnlyByStatusErrorCode,
+                Snapshot = snapshot,
+                Policy = policy
+            };
+        }
+
+        // Resolves own vs subordinate mode using the best available owner and acting-user data.
+        private static bool ResolveIsManagingOtherExpenseRecord(string? currentAxUserId, string? ownerUserId, string? axUserIdOverride)
+        {
+            var normalizedCurrentAxUserId = NormalizeOptionalText(currentAxUserId);
+            var normalizedOwnerUserId = NormalizeOptionalText(ownerUserId);
+            if (!string.IsNullOrWhiteSpace(normalizedCurrentAxUserId) && !string.IsNullOrWhiteSpace(normalizedOwnerUserId))
+                return !IsSameExpenseUserId(normalizedCurrentAxUserId, normalizedOwnerUserId);
+
+            var normalizedOverride = NormalizeOptionalText(axUserIdOverride);
+            return !string.IsNullOrWhiteSpace(normalizedCurrentAxUserId) &&
+                   !string.IsNullOrWhiteSpace(normalizedOverride) &&
+                   !IsSameExpenseUserId(normalizedCurrentAxUserId, normalizedOverride);
+        }
+
+        // Compares expense user identifiers with stable trimming and casing.
+        private static bool IsSameExpenseUserId(string? left, string? right)
+        {
+            var normalizedLeft = NormalizeOptionalText(left);
+            var normalizedRight = NormalizeOptionalText(right);
+            if (string.IsNullOrWhiteSpace(normalizedLeft) || string.IsNullOrWhiteSpace(normalizedRight))
+                return false;
+
+            return string.Equals(normalizedLeft, normalizedRight, StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Normalizes nullable ints used by status and exchange-rate mode comparisons.
+        private static int? NormalizeExpenseNullableInt(int? value)
+        {
+            return value.HasValue && value.Value >= 0 ? value.Value : null;
+        }
+
+        // Uses tolerance so payload decimals do not fail policy checks on formatting-only differences.
+        private static bool AreExpenseDecimalsEquivalent(decimal left, decimal right)
+        {
+            return Math.Abs(left - right) < 0.0000001m;
         }
 
         // Builds a paged API JSON response with exact property casing.
