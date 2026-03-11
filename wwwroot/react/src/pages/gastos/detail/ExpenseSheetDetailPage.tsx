@@ -80,7 +80,7 @@ const ExpenseSheetStatusMockupActions = () => {
 };
 
 const ExpenseSheetDetailPageContent = () => {
-  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } =
+  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, currentCrmUserId, selectedManagedUserId, managementBootstrapReady } =
     useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canEditExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Edit");
@@ -180,7 +180,7 @@ const ExpenseSheetDetailPageContent = () => {
 
   const isManagingOtherUser = isManagingOtherExpenseRecord({
     canManageOtherUsers,
-    currentAxUserId,
+    currentAxUserId: currentCrmUserId,
     selectedManagedUserId,
     recordOwnerUserId: header?.userId,
     isCreateMode,

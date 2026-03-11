@@ -487,6 +487,15 @@ const ExpenseTicketsPageContent = () => {
     setSelectedTicketsById({});
   }, []);
 
+  const resolveActiveFilters = useCallback((): ExpenseTicketAppliedFilterSnapshot => {
+    const baseSnapshot = appliedFilters || currentFilters;
+    const resolvedManagedUserId = syncManagedUserSelection(baseSnapshot.managedUserId);
+    return normalizeLinkModeSnapshotForLoad({
+      ...baseSnapshot,
+      managedUserId: resolvedManagedUserId,
+    });
+  }, [appliedFilters, currentFilters, normalizeLinkModeSnapshotForLoad, syncManagedUserSelection]);
+
   // Selects every ticket that matches the active filters, not only the visible page.
   const selectAllMatchingTickets = useCallback(async () => {
     if (!isLinkMode || !canProcessLinkMode || linkSheetCheckBusy || linkSheetLocked || linkFlowBusy || selectAllBusy) {
@@ -550,15 +559,6 @@ const ExpenseTicketsPageContent = () => {
       return changed ? next : previous;
     });
   }, [isLinkMode, items]);
-
-  const resolveActiveFilters = useCallback((): ExpenseTicketAppliedFilterSnapshot => {
-    const baseSnapshot = appliedFilters || currentFilters;
-    const resolvedManagedUserId = syncManagedUserSelection(baseSnapshot.managedUserId);
-    return normalizeLinkModeSnapshotForLoad({
-      ...baseSnapshot,
-      managedUserId: resolvedManagedUserId,
-    });
-  }, [appliedFilters, currentFilters, normalizeLinkModeSnapshotForLoad, syncManagedUserSelection]);
 
   const buildExpenseLineFromTicket = useCallback(
     (ticket: ExpenseTicketCard): ExpenseSheetCreateLineRequest | null => {
