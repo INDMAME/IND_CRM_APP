@@ -228,6 +228,9 @@
   <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
     <value>Do you want to update the expense sheet status?</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_ConfirmTransition" xml:space="preserve">
+    <value>Stato attuale: {0}\nNuovo stato: {1}\n\nVuoi aggiornare lo stato del foglio spese?</value>
+  </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
     <value>Aggiornamento della linea di spesa in corso...</value>
   </data>

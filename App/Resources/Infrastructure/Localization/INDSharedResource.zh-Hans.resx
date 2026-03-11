@@ -1314,6 +1314,9 @@
   <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
     <value>Do you want to update the expense sheet status?</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_ConfirmTransition" xml:space="preserve">
+    <value>当前状态: {0}\n新状态: {1}\n\n是否要更新费用单状态？</value>
+  </data>
   <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
     <value>This expense sheet is read-only for its current status.</value>
   </data>

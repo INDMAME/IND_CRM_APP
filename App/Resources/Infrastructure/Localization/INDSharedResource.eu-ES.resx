@@ -228,6 +228,9 @@
   <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
     <value>Do you want to update the expense sheet status?</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_ConfirmTransition" xml:space="preserve">
+    <value>Uneko egoera: {0}\nEgoera berria: {1}\n\nGastu-orriaren egoera eguneratu nahi duzu?</value>
+  </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
     <value>Gastu-lerroa eguneratzen...</value>
   </data>

@@ -1314,6 +1314,9 @@
   <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
     <value>Do you want to update the expense sheet status?</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_ConfirmTransition" xml:space="preserve">
+    <value>Estado atual: {0}\nNovo estado: {1}\n\nDeseja atualizar o estado da folha de despesas?</value>
+  </data>
   <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
     <value>This expense sheet is read-only for its current status.</value>
   </data>
