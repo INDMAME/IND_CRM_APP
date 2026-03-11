@@ -6,6 +6,7 @@ import { canAccess, showPermissionModal } from "../../../../utils/permissions.ts
 import { indT } from "../../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../../utils/reactIsland.tsx";
 import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
+import { toExpenseIsoDate } from "../../utils/expenseApiDateUtils.ts";
 import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
@@ -69,7 +70,7 @@ const ExpenseTicketDetailPageContent = () => {
   const canDeleteTicketByModule = canAccess("GASTOS_TICKETS", "FullAccess");
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
-  const { autoEditMode, contextSheetId, contextLineRecId, isFromExpenseSheetCreate, isFromExpenseLine, isFromSheetLink } =
+  const { autoEditMode, detailOrigin, contextSheetId, contextLineRecId, isFromExpenseSheetCreate, isFromExpenseLine, isFromSheetLink } =
     useExpenseTicketDetailRouteContext();
   const isManagingOtherUser = isManagingOtherExpenseUser({
     canManageOtherUsers,
@@ -108,6 +109,22 @@ const ExpenseTicketDetailPageContent = () => {
     fileId,
     onForbidden: showPermissionModal,
   });
+
+  useEffect(() => {
+    if (detailOrigin !== "sheet-create" && detailOrigin !== "ticket-create") return;
+    if (!fileId) return;
+
+    const backButton = document.getElementById("globalBackBtn");
+    if (!backButton) return;
+
+    const ticketDate = toExpenseIsoDate(header?.transDate) || toExpenseIsoDate(new Date());
+    const query = new URLSearchParams({
+      ticketFileId: fileId,
+      ticketDate,
+    });
+
+    backButton.setAttribute("data-back-url", `/Gastos/Tickets?${query.toString()}`);
+  }, [detailOrigin, fileId, header?.transDate]);
 
   const {
     busy,

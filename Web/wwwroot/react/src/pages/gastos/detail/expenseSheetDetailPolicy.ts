@@ -18,6 +18,7 @@ export type ExpenseSheetStatusAction = {
 export type ExpenseSheetDetailPolicy = {
   interactionMode: ExpenseSheetDetailInteractionMode;
   showFab: boolean;
+  canDeleteSheet: boolean;
   statusActions: ExpenseSheetStatusAction[];
 };
 
@@ -71,6 +72,7 @@ const ACTION_UNDO_REQUEST: ExpenseSheetStatusAction = {
 const READ_ONLY_POLICY: ExpenseSheetDetailPolicy = {
   interactionMode: "read_only",
   showFab: false,
+  canDeleteSheet: false,
   statusActions: [],
 };
 
@@ -96,18 +98,21 @@ export const resolveExpenseSheetDetailPolicy = ({
         return {
           interactionMode: "comment_only_edit",
           showFab: false,
+          canDeleteSheet: false,
           statusActions: [ACTION_APPROVE, ACTION_REJECT],
         };
       case STATUS_APPROVED:
         return {
           interactionMode: "comment_only_edit",
           showFab: false,
+          canDeleteSheet: false,
           statusActions: [ACTION_UNDO_APPROVAL],
         };
       case STATUS_REJECTED:
         return {
           interactionMode: "comment_only_edit",
           showFab: false,
+          canDeleteSheet: false,
           statusActions: [ACTION_UNDO_REJECTION],
         };
       default:
@@ -121,24 +126,28 @@ export const resolveExpenseSheetDetailPolicy = ({
         return {
           interactionMode: "full_edit",
           showFab: true,
+          canDeleteSheet: true,
           statusActions: [ACTION_APPROVE],
         };
       case STATUS_APPROVAL_REQUESTED:
         return {
           interactionMode: "comment_only_edit",
           showFab: false,
+          canDeleteSheet: false,
           statusActions: [ACTION_APPROVE],
         };
       case STATUS_APPROVED:
         return {
           interactionMode: "comment_only_edit",
           showFab: false,
+          canDeleteSheet: false,
           statusActions: [ACTION_UNDO_APPROVAL],
         };
       case STATUS_REJECTED:
         return {
           interactionMode: "comment_only_edit",
           showFab: false,
+          canDeleteSheet: false,
           statusActions: [ACTION_UNDO_REJECTION],
         };
       default:
@@ -151,18 +160,21 @@ export const resolveExpenseSheetDetailPolicy = ({
       return {
         interactionMode: "full_edit",
         showFab: true,
+        canDeleteSheet: true,
         statusActions: [ACTION_REQUEST_APPROVAL],
       };
     case STATUS_APPROVAL_REQUESTED:
       return {
         interactionMode: "comment_only_edit",
         showFab: false,
+        canDeleteSheet: false,
         statusActions: [ACTION_UNDO_REQUEST],
       };
     case STATUS_REJECTED:
       return {
         interactionMode: "full_edit",
         showFab: true,
+        canDeleteSheet: true,
         statusActions: [ACTION_REQUEST_APPROVAL],
       };
     default:

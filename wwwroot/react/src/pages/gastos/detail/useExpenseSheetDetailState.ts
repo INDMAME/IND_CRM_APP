@@ -63,7 +63,6 @@ const shouldShowExchangeRate = (value: string): boolean => {
 type UseExpenseSheetDetailStateArgs = {
   hasAccess: boolean;
   canCreateExpense: boolean;
-  canEditExpenseByModule: boolean;
   allowSelfManagement: boolean;
   canManageOtherUsers: boolean;
   currentAxUserId: string;
@@ -77,7 +76,6 @@ type UseExpenseSheetDetailStateArgs = {
 export const useExpenseSheetDetailState = ({
   hasAccess,
   canCreateExpense,
-  canEditExpenseByModule,
   allowSelfManagement,
   canManageOtherUsers,
   currentAxUserId,
@@ -262,6 +260,7 @@ export const useExpenseSheetDetailState = ({
       return {
         interactionMode: "full_edit" as const,
         showFab: false,
+        canDeleteSheet: false,
         statusActions: [],
       };
     }
@@ -273,7 +272,7 @@ export const useExpenseSheetDetailState = ({
       isPaid: isSheetPaid,
     });
   }, [allowSelfManagement, isCreateMode, isManagingOtherUser, isSheetPaid, statusCode]);
-  const canEditHeaderFieldsCurrent = isCreateMode || (canEditExpenseByModule && !isManagingOtherUser && detailPolicy.interactionMode === "full_edit");
+  const canEditHeaderFieldsCurrent = isCreateMode || (!isManagingOtherUser && detailPolicy.interactionMode === "full_edit");
   const canEditStatusCommentCurrent = !isCreateMode && detailPolicy.interactionMode === "comment_only_edit";
   const canEditAnyCurrent = (isCreateMode && canCreateExpense) || canEditHeaderFieldsCurrent || canEditStatusCommentCurrent;
   const canUseFullEditFeatures = !isCreateMode && detailPolicy.interactionMode === "full_edit";
@@ -534,7 +533,7 @@ export const useExpenseSheetDetailState = ({
 
   // Opens expense line create mode from an existing expense sheet detail.
   const handleOpenCreateLineMode = useCallback(() => {
-    if (!canCreateExpense || !sheetId || !canUseFullEditFeatures) {
+    if (!sheetId || !canUseFullEditFeatures) {
       onForbidden();
       return;
     }
@@ -547,12 +546,12 @@ export const useExpenseSheetDetailState = ({
     navigateToExpenseUrl(targetUrl, {
       askConfirmation: isEditing,
     });
-  }, [canCreateExpense, canUseFullEditFeatures, isCreateMode, isEditing, onForbidden, sheetId]);
+  }, [canUseFullEditFeatures, isCreateMode, isEditing, onForbidden, sheetId]);
 
   // Opens tickets page from expense sheet context to create or link tickets.
   const openTicketsFromSheet = useCallback(
     (action: "new" | "link") => {
-      if (!canCreateExpense || !sheetId || !canUseFullEditFeatures) {
+      if (!sheetId || !canUseFullEditFeatures) {
         onForbidden();
         return;
       }
@@ -569,7 +568,7 @@ export const useExpenseSheetDetailState = ({
         askConfirmation: isEditing,
       });
     },
-    [canCreateExpense, canUseFullEditFeatures, isCreateMode, isEditing, onForbidden, sheetId]
+    [canUseFullEditFeatures, isCreateMode, isEditing, onForbidden, sheetId]
   );
 
   const handleOpenCreateTicketMode = useCallback(() => {

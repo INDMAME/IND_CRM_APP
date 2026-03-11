@@ -12,7 +12,6 @@ import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "..
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
-import { isManagingOtherExpenseUser } from "../utils/expenseManagedUserScope.ts";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import {
   mapBooleanEnumOptions,
@@ -33,24 +32,13 @@ const bootstrapExpenseApiAuth = () => {
 };
 
 const ExpenseSheetLineDetailContent = () => {
-  const { canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } = useAuthContext();
+  const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } =
+    useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
-  const canEditExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Edit");
-  const canDeleteExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "FullAccess");
-  const canCreateExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Add");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
   const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
   const isCreateMode = lineMode === "create";
-  const isManagingOtherUser = isManagingOtherExpenseUser({
-    canManageOtherUsers,
-    currentAxUserId,
-    selectedManagedUserId,
-    isCreateMode,
-  });
-  const canEditExpense = canEditExpenseByModule && !isManagingOtherUser;
-  const canDeleteExpense = canDeleteExpenseByModule && !isManagingOtherUser;
-  const canCreateExpense = canCreateExpenseByModule && !isManagingOtherUser;
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
 
   const {
@@ -78,6 +66,9 @@ const ExpenseSheetLineDetailContent = () => {
     isLineDeleteLocked,
     hasLinkedTicket,
     linkedTicketFileId,
+    canCreateExpenseCurrent,
+    canEditExpenseCurrent,
+    canDeleteExpenseCurrent,
     setBusy,
     setStatus,
     setIsEditing,
@@ -94,8 +85,10 @@ const ExpenseSheetLineDetailContent = () => {
     navigateToSheetDetail,
   } = useExpenseSheetLineDetailState({
     hasAccess,
-    canCreateExpense,
-    canEditExpense,
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
     sheetId,
     lineId,
     isCreateMode,
@@ -179,9 +172,9 @@ const ExpenseSheetLineDetailContent = () => {
     isCreateMode,
     isEditLocked: isLineEditLocked,
     isDeleteLocked: isLineDeleteLocked,
-    canCreateExpense,
-    canEditExpense,
-    canDeleteExpense,
+    canCreateExpense: canCreateExpenseCurrent,
+    canEditExpense: canEditExpenseCurrent,
+    canDeleteExpense: canDeleteExpenseCurrent,
     sheetId,
     lineId,
     line,
@@ -200,7 +193,10 @@ const ExpenseSheetLineDetailContent = () => {
     onCreateSuccess: () => {},
   });
 
-  const lineTopbarActionMode = isManagingOtherUser ? "view_only" : (hasLinkedTicket && !isSheetLocked ? "delete_only" : "default");
+  const lineTopbarActionMode =
+    !canEditExpenseCurrent && !canDeleteExpenseCurrent
+      ? "view_only"
+      : (hasLinkedTicket && !isSheetLocked ? "delete_only" : "default");
 
   useExpenseSheetLineDetailTopbarActions({
     busy: busy || isRedirectingAfterCreate,
@@ -210,9 +206,9 @@ const ExpenseSheetLineDetailContent = () => {
     isLocked: isSheetLocked,
     actionMode: lineTopbarActionMode,
     permissionsReady: managementBootstrapReady,
-    canCreateExpense,
-    canEditExpense,
-    canDeleteExpense,
+    canCreateExpense: canCreateExpenseCurrent,
+    canEditExpense: canEditExpenseCurrent,
+    canDeleteExpense: canDeleteExpenseCurrent,
     sheetId,
     setModalError,
     handleEnableEdit,

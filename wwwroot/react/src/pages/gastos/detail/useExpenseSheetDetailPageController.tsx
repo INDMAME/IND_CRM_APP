@@ -64,8 +64,6 @@ export const useExpenseSheetDetailPageController = () => {
   const { allowSelfManagement, canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } =
     useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
-  const canEditExpenseByModule = canAccess("GASTOS_HOJA_GASTO", "Edit");
-  const canDeleteExpense = canAccess("GASTOS_HOJA_GASTO", "FullAccess");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const sheetMode = safeText(window.__EXPENSE_SHEET_MODE__).toLowerCase();
@@ -97,7 +95,6 @@ export const useExpenseSheetDetailPageController = () => {
   const detailState = useExpenseSheetDetailState({
     hasAccess,
     canCreateExpense: canCreateExpenseForSelectedContext,
-    canEditExpenseByModule,
     allowSelfManagement,
     canManageOtherUsers,
     currentAxUserId,
@@ -161,7 +158,7 @@ export const useExpenseSheetDetailPageController = () => {
   } = detailState;
 
   const canCreateExpenseForCurrentView = canCreateExpense && !isManagingOtherUser;
-  const canDeleteExpenseForCurrentView = canDeleteExpense && !isManagingOtherUser && canUseFullEditFeatures;
+  const canDeleteExpenseForCurrentView = detailPolicy.canDeleteSheet;
   const canTransitionStatus = detailPolicy.statusActions.length > 0;
   const isReadOnlyMode = detailPolicy.interactionMode === "read_only";
   const topbarActionMode = !isCreateMode && isReadOnlyMode ? "view_only" : "default";
@@ -339,7 +336,7 @@ export const useExpenseSheetDetailPageController = () => {
     sheetId: safeText(header?.hojaGastosId || sheetId),
     projectId: projectValue,
     currencyCode: safeText(header?.currencyCode),
-    canCreateExpense: canCreateExpenseForCurrentView && canUseFullEditFeatures,
+    canCreateExpense: !isCreateMode && detailPolicy.showFab,
     isCreateMode,
     isSheetLocked: !canUseFullEditFeatures,
     onForbidden: showPermissionModal,
@@ -389,9 +386,10 @@ export const useExpenseSheetDetailPageController = () => {
 
   const showStatusActionBar =
     !isCreateMode && !isLoading && !isRedirectingAfterCreate && !errorMessage && detailPolicy.statusActions.length > 0;
-  const showFab = canCreateExpenseForCurrentView && !isCreateMode && canUseFullEditFeatures;
+  const showFab = !isCreateMode && detailPolicy.showFab;
+  const hasVisibleStatusComment = safeText(header?.estadoComentarios).trim().length > 2;
   const statusCommentMode: "hidden" | "read" | "edit" =
-    canEditStatusCommentCurrent ? "edit" : (safeText(header?.estadoComentarios) ? "read" : "hidden");
+    canEditStatusCommentCurrent ? "edit" : (hasVisibleStatusComment ? "read" : "hidden");
 
   return {
     header,

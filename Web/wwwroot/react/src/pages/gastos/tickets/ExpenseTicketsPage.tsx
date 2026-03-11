@@ -18,7 +18,7 @@ import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCatalog.ts";
 import { createExpenseSheet, configureExpenseApiAuth, fetchExpenseSheetDetail, fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
-import { toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
+import { toExpenseApiDdMmYyyy, toExpenseIsoDate } from "../utils/expenseApiDateUtils.ts";
 import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../utils/expenseNavigation.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDateParts, formatExpenseDisplayDate, safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
@@ -103,6 +103,11 @@ const buildLinkModeInitialSnapshot = (managedUserId = ""): ExpenseTicketAppliedF
     gastoTypeFilter: "",
     processedByIaFilter: "all",
   };
+};
+
+// Keeps created-ticket return filters bound to one valid list date.
+const resolveCreatedTicketFilterDate = (value: unknown): string => {
+  return toExpenseIsoDate(value) || toExpenseIsoDate(new Date());
 };
 
 // Validates whether one ticket card can be linked to an expense sheet line.
@@ -384,7 +389,7 @@ const ExpenseTicketsPageContent = () => {
     onCompleted: (result) => {
       const createdFileId = safeText(result?.fileId);
       if (!createdFileId) return;
-      navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(createdFileId)}&mode=edit`, {
+      navigateToExpenseUrl(`/Gastos/TicketDetail?fileId=${encodeURIComponent(createdFileId)}&mode=edit&origin=ticket-create`, {
         askConfirmation: false,
       });
     },
@@ -1021,11 +1026,12 @@ const ExpenseTicketsPageContent = () => {
     const url = new URL(window.location.href);
     const ticketFileId = safeText(url.searchParams.get("ticketFileId"));
     if (!ticketFileId) return;
+    const ticketDate = resolveCreatedTicketFilterDate(url.searchParams.get("ticketDate"));
     const resolvedManagedUserId = syncManagedUserSelection(defaultManagedUserId);
 
     const querySnapshot: ExpenseTicketAppliedFilterSnapshot = {
-      fromDate: "",
-      toDate: "",
+      fromDate: ticketDate,
+      toDate: ticketDate,
       filterKey: ticketFileId,
       currencyCode: "",
       managedUserId: resolvedManagedUserId,
@@ -1040,6 +1046,7 @@ const ExpenseTicketsPageContent = () => {
     void loadList(1, querySnapshot);
 
     url.searchParams.delete("ticketFileId");
+    url.searchParams.delete("ticketDate");
     const cleanedQuery = url.searchParams.toString();
     window.history.replaceState({}, "", cleanedQuery ? `${url.pathname}?${cleanedQuery}` : url.pathname);
   }, [clearCachedState, defaultManagedUserId, isLinkMode, loadList, restoreAppliedFilters, syncManagedUserSelection]);

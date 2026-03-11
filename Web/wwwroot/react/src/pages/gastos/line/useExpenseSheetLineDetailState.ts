@@ -11,6 +11,8 @@ import {
 import { hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
+import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
+import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 
 const KM_GASTO_TYPE_CODE = "3";
 const FUEL_PRICE_DEBOUNCE_MS = 300;
@@ -86,8 +88,10 @@ const buildCreateLineDraft = (baseDate: string, projectId: string): ExpenseSheet
 
 type UseExpenseSheetLineDetailStateArgs = {
   hasAccess: boolean;
-  canCreateExpense: boolean;
-  canEditExpense: boolean;
+  allowSelfManagement: boolean;
+  canManageOtherUsers: boolean;
+  currentAxUserId: string;
+  selectedManagedUserId: string;
   sheetId: string;
   lineId: string;
   isCreateMode: boolean;
@@ -97,8 +101,10 @@ type UseExpenseSheetLineDetailStateArgs = {
 // Owns state and behavior for expense line detail page (read, edit, create).
 export const useExpenseSheetLineDetailState = ({
   hasAccess,
-  canCreateExpense,
-  canEditExpense,
+  allowSelfManagement,
+  canManageOtherUsers,
+  currentAxUserId,
+  selectedManagedUserId,
   sheetId,
   lineId,
   isCreateMode,
@@ -152,11 +158,6 @@ export const useExpenseSheetLineDetailState = ({
 
       try {
         if (isCreateMode) {
-          if (!canCreateExpense) {
-            onForbidden();
-            return;
-          }
-
           const response = await fetchExpenseSheetDetail(sheetId, {
             suppressPermissionModal: true,
           });
@@ -182,11 +183,28 @@ export const useExpenseSheetLineDetailState = ({
           const loadedHeader = mapExpenseSheetHeader(selectedSheet);
           const loadedStatusCode = typeof loadedHeader.expenseSheetStatus === "number" ? loadedHeader.expenseSheetStatus : null;
           const isCreateLockedStatus = loadedStatusCode === EXPENSE_STATUS_APPROVED || loadedStatusCode === EXPENSE_STATUS_PAID;
+          const isManagingOtherUser = isManagingOtherExpenseRecord({
+            canManageOtherUsers,
+            currentAxUserId,
+            selectedManagedUserId,
+            recordOwnerUserId: loadedHeader.userId,
+            isCreateMode: false,
+          });
+          const loadedPolicy = resolveExpenseSheetDetailPolicy({
+            statusCode: loadedStatusCode,
+            isManagingOtherUser,
+            allowSelfManagement,
+            isPaid: isCreateLockedStatus || hasAssignedVoucher(loadedHeader.voucher),
+          });
           if (isCreateLockedStatus || hasAssignedVoucher(loadedHeader.voucher)) {
             setErrorMessage(indT("ExpenseSheets_Detail_PaidReadOnly", "Paid expense sheets are read-only."));
             setHeader(loadedHeader);
             setLine(null);
             setIsEditing(false);
+            return;
+          }
+          if (loadedPolicy.interactionMode !== "full_edit") {
+            onForbidden();
             return;
           }
 
@@ -259,7 +277,18 @@ export const useExpenseSheetLineDetailState = ({
     };
 
     void loadDetail();
-  }, [canCreateExpense, hasAccess, hydrateDraftFromLine, isCreateMode, lineId, onForbidden, sheetId]);
+  }, [
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    hasAccess,
+    hydrateDraftFromLine,
+    isCreateMode,
+    lineId,
+    onForbidden,
+    selectedManagedUserId,
+    sheetId,
+  ]);
 
   useEffect(() => {
     if (!line || isEditing) return;
@@ -372,7 +401,35 @@ export const useExpenseSheetLineDetailState = ({
   const isSheetPaidByStatus = statusCode === EXPENSE_STATUS_PAID;
   const isSheetPaidByVoucher = hasAssignedVoucher(header?.voucher);
   const isSheetPaid = isSheetPaidByStatus || isSheetPaidByVoucher;
-  const isSheetLocked = isSheetApproved || isSheetPaid;
+  const isManagingOtherUser = isManagingOtherExpenseRecord({
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
+    recordOwnerUserId: header?.userId,
+    isCreateMode,
+  });
+  const detailPolicy = useMemo(() => {
+    if (!header) {
+      return {
+        interactionMode: "read_only" as const,
+        showFab: false,
+        canDeleteSheet: false,
+        statusActions: [],
+      };
+    }
+
+    return resolveExpenseSheetDetailPolicy({
+      statusCode,
+      isManagingOtherUser,
+      allowSelfManagement,
+      isPaid: isSheetPaid,
+    });
+  }, [allowSelfManagement, header, isManagingOtherUser, isSheetPaid, statusCode]);
+  const canUseFullEditFeatures = detailPolicy.interactionMode === "full_edit";
+  const canCreateExpenseCurrent = canUseFullEditFeatures;
+  const canEditExpenseCurrent = canUseFullEditFeatures;
+  const canDeleteExpenseCurrent = canUseFullEditFeatures;
+  const isSheetLocked = !canUseFullEditFeatures || isSheetApproved || isSheetPaid;
   const linkedTicketFileId = safeText(line?.fileId);
   const hasLinkedTicket = !isCreateMode && !!linkedTicketFileId;
   const isLineEditLocked = isSheetLocked || hasLinkedTicket;
@@ -384,7 +441,7 @@ export const useExpenseSheetLineDetailState = ({
       return;
     }
 
-    if (!canEditExpense) {
+    if (!canEditExpenseCurrent) {
       onForbidden();
       return;
     }
@@ -393,7 +450,7 @@ export const useExpenseSheetLineDetailState = ({
     setIsEditing(true);
     hydrateDraftFromLine(line, header);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditExpense, header, hydrateDraftFromLine, isCreateMode, isLineEditLocked, isLoading, line, onForbidden]);
+  }, [canEditExpenseCurrent, header, hydrateDraftFromLine, isCreateMode, isLineEditLocked, isLoading, line, onForbidden]);
 
   const handleCancelEdit = useCallback(() => {
     const targetUrl = `/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`;
@@ -413,7 +470,7 @@ export const useExpenseSheetLineDetailState = ({
   }, [header, hydrateDraftFromLine, isCreateMode, isEditing, line, sheetId]);
 
   const handleOpenCreateMode = useCallback(() => {
-    if (!canCreateExpense || !sheetId || isSheetLocked) {
+    if (!canCreateExpenseCurrent || !sheetId || isSheetLocked) {
       onForbidden();
       return;
     }
@@ -426,7 +483,7 @@ export const useExpenseSheetLineDetailState = ({
     navigateToExpenseUrl(targetUrl, {
       askConfirmation: isEditing,
     });
-  }, [canCreateExpense, isCreateMode, isEditing, isSheetLocked, onForbidden, sheetId]);
+  }, [canCreateExpenseCurrent, isCreateMode, isEditing, isSheetLocked, onForbidden, sheetId]);
 
   const navigateToSheetDetail = useCallback(() => {
     const safeSheetId = safeText(sheetId);
@@ -462,6 +519,9 @@ export const useExpenseSheetLineDetailState = ({
     isLineLocked,
     hasLinkedTicket,
     linkedTicketFileId,
+    canCreateExpenseCurrent,
+    canEditExpenseCurrent,
+    canDeleteExpenseCurrent,
     setBusy,
     setStatus,
     setIsEditing,

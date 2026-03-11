@@ -184,9 +184,11 @@ namespace IND_CRM_APP.Controllers
             {
                 ViewData["TopbarBackUrl"] = $"/Gastos/Tickets?action=link&hojaGastosId={Uri.EscapeDataString(sheetId.Trim())}";
             }
-            else if (normalizedOrigin == "sheet-create")
+            else if (normalizedOrigin == "sheet-create" || normalizedOrigin == "ticket-create")
             {
-                ViewData["TopbarBackUrl"] = $"/Gastos/Tickets?ticketFileId={Uri.EscapeDataString(safeFileId)}";
+                var createdTicketDate = DateTime.Today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+                ViewData["TopbarBackUrl"] =
+                    $"/Gastos/Tickets?ticketFileId={Uri.EscapeDataString(safeFileId)}&ticketDate={Uri.EscapeDataString(createdTicketDate)}";
             }
             else
             {

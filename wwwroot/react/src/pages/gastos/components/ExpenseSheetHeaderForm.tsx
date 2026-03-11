@@ -85,7 +85,8 @@ const ExpenseSheetHeaderForm = ({
   const headerCurrencyCode = safeText(header.currencyCode).toUpperCase();
   const baseCurrencyCode = safeText(exchangeRateBaseCurrency).toUpperCase();
   const statusCommentValue = safeText(header.estadoComentarios);
-  const showStatusCommentField = !isCreateMode && (statusCommentMode !== "hidden" || !!statusCommentValue);
+  const hasVisibleStatusComment = statusCommentValue.trim().length > 2;
+  const showStatusCommentField = !isCreateMode && (statusCommentMode !== "hidden" || hasVisibleStatusComment);
   const canEditStatusComment = isEditing && statusCommentMode === "edit";
   const parsedDraftExchangeRate = parseExpenseNumericInput(draftExchangeRate);
   const parsedOfficialRawRate = parseExpenseNumericInput(officialExchangeRateRawValue);
