@@ -13,6 +13,7 @@ namespace IND_CRM_APP.Services
     {
         private const string BlobConnectionKey = "AZURE_BLOB_CONNECTION_STRING";
         private readonly BlobServiceClient? _blobServiceClient;
+        private readonly string _serviceHost = string.Empty;
 
         public TicketBlobPreviewService()
         {
@@ -23,10 +24,12 @@ namespace IND_CRM_APP.Services
             try
             {
                 _blobServiceClient = new BlobServiceClient(connectionString.Trim());
+                _serviceHost = _blobServiceClient.Uri.Host;
             }
             catch
             {
                 _blobServiceClient = null;
+                _serviceHost = string.Empty;
             }
         }
 
@@ -40,6 +43,9 @@ namespace IND_CRM_APP.Services
                 return null;
 
             if (!blobUri.Scheme.Equals("https", StringComparison.OrdinalIgnoreCase))
+                return null;
+
+            if (!IsAllowedBlobHost(blobUri))
                 return null;
 
             BlobUriBuilder uriBuilder;
@@ -77,6 +83,18 @@ namespace IND_CRM_APP.Services
             {
                 return null;
             }
+        }
+
+        // Only allow blobs from the storage account configured for the application.
+        private bool IsAllowedBlobHost(Uri blobUri)
+        {
+            if (blobUri == null || string.IsNullOrWhiteSpace(blobUri.Host))
+                return false;
+
+            if (string.IsNullOrWhiteSpace(_serviceHost))
+                return false;
+
+            return string.Equals(blobUri.Host, _serviceHost, StringComparison.OrdinalIgnoreCase);
         }
 
         // Resolves a content type from blob metadata or extension fallback.

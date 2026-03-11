@@ -45,7 +45,7 @@ export type IndPagedResponse<T> = {
 
 // /api/auth/entra/context request contract.
 export type EntraContextRequest = {
-  entraOid: string;
+  entraOid?: string;
   appCode: string;
 };
 

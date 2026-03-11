@@ -1,4 +1,11 @@
-import { ApiFetchError, fetchJson, getCsrfToken, type ApiFetchOptions } from "../../../services/apiService.ts";
+import {
+  ApiFetchError,
+  fetchJson,
+  getCsrfToken,
+  handleApiAuthFailure,
+  readApiMessageFromRaw,
+  type ApiFetchOptions,
+} from "../../../services/apiService.ts";
 import type {
   EntraContextDto,
   EntraContextRequest,
@@ -60,6 +67,7 @@ import {
 } from "./expenseApiMappers.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "./expenseApiDateUtils.ts";
 import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
+import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
 
 type ProjectDropdownResponse = {
   total?: number;
@@ -142,24 +150,6 @@ const cachedCurrencyResponses = new Map<string, IndPagedResponse<ExpenseSheetCur
 const pendingCurrencyRequests = new Map<string, Promise<IndPagedResponse<ExpenseSheetCurrencyDto>>>();
 
 const safeText = safeTextTransform;
-
-const tryParseJsonRecord = (raw: string): Record<string, unknown> | null => {
-  if (!raw || !raw.trim()) return null;
-  try {
-    const parsed = JSON.parse(raw);
-    return parsed && typeof parsed === "object" ? (parsed as Record<string, unknown>) : null;
-  } catch {
-    return null;
-  }
-};
-
-const readApiMessage = (raw: string): string => {
-  const payload = tryParseJsonRecord(raw);
-  if (!payload) return "";
-
-  const value = payload.Message ?? payload.message;
-  return typeof value === "string" ? value.trim() : "";
-};
 
 const toNullableNumber = toNullableNumberTransform;
 const isNonNegativeNumber = isNonNegativeNumberTransform;
@@ -431,7 +421,8 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
     .map((item) => mapEntraContextCompany(item))
     .filter((item): item is NormalizedEntraContextCompany => !!item);
   const fallbackCompany = safeText(companies.find((item) => item.isDefault)?.companyId);
-  const companyId = defaultCompany || fallbackCompany;
+  const selectedCompanyId = readWindowSelectedCompany();
+  const companyId = resolveEffectiveCompanyId(selectedCompanyId, companies, defaultCompany || fallbackCompany);
   const selectedCompany = companies.find((item) => safeText(item.companyId) === companyId) || companies[0];
   const allowSelfManagement = selectedCompany?.allowSelfManagement === true;
   const crmUserId = safeText(selectedCompany?.crmUserId);
@@ -462,32 +453,15 @@ const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<Expen
     return contextPromise;
   }
 
-  const fallbackCompanyId = readWindowSelectedCompany();
-  if (!safeText(seed.entraOid) && fallbackCompanyId) {
-    const fallbackContext: ExpenseApiContext = {
-      token: seed.token,
-      companyId: fallbackCompanyId,
-      axUserId: "",
-      crmUserId: "",
-      defaultCurrencyCode: "",
-      allowSelfManagement: globalThis.__IND_ALLOW_SELF_MANAGEMENT__ === true,
-    };
-
-    cachedContext = fallbackContext;
-    cachedContextKey = contextKey;
-    return fallbackContext;
-  }
-
-  if (!safeText(seed.entraOid)) {
-    throw new ApiFetchError("Missing Entra OID for Entra context request.");
-  }
-
   cachedContextKey = contextKey;
   contextPromise = (async () => {
     const contextPayload: EntraContextRequest = {
-      entraOid: seed.entraOid,
       appCode: seed.appCode,
     };
+
+    if (safeText(seed.entraOid)) {
+      contextPayload.entraOid = seed.entraOid;
+    }
 
     const contextResponse = await fetchJson<IndPagedResponse<EntraContextDto>>("/api/auth/entra/context", {
       ...options,
@@ -1295,37 +1269,48 @@ export const fetchExpenseSheetTicket = async (
 
 // Downloads one ticket image preview blob through the internal proxy endpoint.
 export const fetchExpenseSheetTicketPreviewBlob = async (
+  fileId: string,
   urlFile: string,
   options?: ApiFetchOptions
 ): Promise<Blob> => {
+  const safeFileId = safeText(fileId);
   const safeUrlFile = safeText(urlFile);
-  if (!safeUrlFile) {
-    throw new ApiFetchError("Missing ticket urlFile.");
+  if (!safeFileId || !safeUrlFile) {
+    throw new ApiFetchError("Missing ticket preview payload.");
   }
 
   const { suppressPermissionModal: _suppressPermissionModal, ...fetchOptions } = options || {};
+  const context = await ensureExpenseApiContext(options);
   const csrfToken = getCsrfToken();
-  const headers: HeadersInit = {
+  const headers = sanitizeHeaders(buildExpenseHeaders(context, fetchOptions, true));
+  headers.Accept = "image/*";
+  const requestHeaders: HeadersInit = {
     Accept: "image/*",
-    "Content-Type": "application/json",
-    ...(fetchOptions.headers || {}),
+    ...headers,
   };
 
   if (csrfToken) {
-    (headers as Record<string, string>)["RequestVerificationToken"] = csrfToken;
+    (requestHeaders as Record<string, string>)["RequestVerificationToken"] = csrfToken;
   }
 
   const response = await fetch("/api/crm/expensesheets/tickets/preview", {
     credentials: "same-origin",
     ...fetchOptions,
     method: "POST",
-    headers,
-    body: JSON.stringify({ urlFile: safeUrlFile }),
+    headers: requestHeaders,
+    body: JSON.stringify({
+      fileId: safeFileId,
+      urlFile: safeUrlFile,
+    }),
   });
 
   if (!response.ok) {
     const raw = await response.text();
-    const message = readApiMessage(raw);
+    const reloginResult = await handleApiAuthFailure<Blob>(raw, response.status, "ticket-preview");
+    if (reloginResult !== null) {
+      return reloginResult;
+    }
+    const message = readApiMessageFromRaw(raw);
     throw new ApiFetchError(message || "Could not load ticket preview.", response.status, raw);
   }
 

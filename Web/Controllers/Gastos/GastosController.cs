@@ -272,7 +272,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/list.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetsList([FromBody] ExpenseSheetListApiRequest req)
         {
             var token = GetToken();
@@ -707,7 +706,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/ia/service/expensefromticket.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         [RequestSizeLimit(52428800)]
         [RequestFormLimits(MultipartBodyLengthLimit = 52428800)]
         public async Task<IActionResult> ApiExpenseFromTicket(
@@ -900,7 +898,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetsCreate([FromBody] ExpenseSheetCreateRequest req)
         {
             var token = GetToken();
@@ -1028,7 +1025,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/{hojaGastosId}.
         [HttpPut]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetUpdate(string hojaGastosId, [FromBody] ExpenseSheetUpdateRequest req)
         {
             var token = GetToken();
@@ -1120,7 +1116,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}.
         [HttpPut]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetLineUpdate(
             string hojaGastosId,
             string lineRecId,
@@ -1294,7 +1289,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/tickets.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetTicketsCreate([FromBody] ExpenseSheetTicketCreateRequest req)
         {
             var token = GetToken();
@@ -1405,7 +1399,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/tickets/list.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetTicketsList([FromBody] ExpenseSheetTicketListRequest req)
         {
             var token = GetToken();
@@ -1509,9 +1502,11 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrWhiteSpace(safeFileId))
                 return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
 
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+
             try
             {
-                var result = await _apiClient.GetExpenseSheetTicketDetailAsync(token, safeFileId);
+                var result = await _apiClient.GetExpenseSheetTicketDetailAsync(token, safeFileId, requestAxUserId);
                 var ticket = SelectTicket(result.GetAnyItems(), safeFileId);
                 if (ticket == null)
                     return CreateApiPagedError(StatusCodes.Status404NotFound, _sr["Tickets_Detail_NotFound"].Value);
@@ -1542,7 +1537,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/tickets/preview.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetTicketPreview([FromBody] ExpenseSheetTicketPreviewRequest req)
         {
             var token = GetToken();
@@ -1552,8 +1546,8 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_SessionExpired"].Value,
                     "SESSION_EXPIRED");
 
-            var safeUrl = NormalizeOptionalText(req?.UrlFile);
-            if (string.IsNullOrWhiteSpace(safeUrl))
+            var safeFileId = NormalizeOptionalText(req?.FileId);
+            if (string.IsNullOrWhiteSpace(safeFileId))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -1561,7 +1555,32 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
-                var preview = await _ticketBlobPreviewService.DownloadAsync(safeUrl, HttpContext.RequestAborted);
+                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var detailResult = await _apiClient.GetExpenseSheetTicketDetailAsync(token, safeFileId, requestAxUserId);
+                var ticket = SelectTicket(detailResult.GetAnyItems(), safeFileId);
+                if (ticket == null)
+                    return CreateApiCommandError(
+                        StatusCodes.Status404NotFound,
+                        _sr["Tickets_Detail_NotFound"].Value,
+                        "NOT_FOUND");
+
+                var resolvedUrl = NormalizeOptionalText(ticket.UrlFile);
+                if (string.IsNullOrWhiteSpace(resolvedUrl))
+                    return CreateApiCommandError(
+                        StatusCodes.Status404NotFound,
+                        _sr["Api_RequestFailed"].Value,
+                        "NOT_FOUND");
+
+                var requestedUrl = NormalizeOptionalText(req?.UrlFile);
+                if (!string.IsNullOrWhiteSpace(requestedUrl) &&
+                    !string.Equals(requestedUrl, resolvedUrl, StringComparison.OrdinalIgnoreCase))
+                {
+                    _logger.LogWarning(
+                        "Ticket preview URL mismatch detected for fileId {FileId}. Client URL was ignored.",
+                        safeFileId);
+                }
+
+                var preview = await _ticketBlobPreviewService.DownloadAsync(resolvedUrl, HttpContext.RequestAborted);
                 if (preview == null)
                     return CreateApiCommandError(
                         StatusCodes.Status404NotFound,
@@ -1572,6 +1591,14 @@ namespace IND_CRM_APP.Controllers
                 Response.Headers.Pragma = "no-cache";
                 Response.Headers["X-Content-Type-Options"] = "nosniff";
                 return File(preview.Content, preview.ContentType);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketPreview");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
             }
             catch (Exception ex)
             {
@@ -1585,7 +1612,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}.
         [HttpPut]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetTicketUpdate(string fileId, [FromBody] ExpenseSheetTicketUpdateRequest req)
         {
             var token = GetToken();
@@ -1719,7 +1745,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/ia.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetTicketApplyIa(string fileId, [FromBody] JsonElement req)
         {
             var token = GetToken();
@@ -1784,7 +1809,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/lines.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetTicketLineCreate(string fileId, [FromBody] ExpenseSheetTicketLineRequest req)
         {
             var token = GetToken();
@@ -1857,7 +1881,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/lines/{lineRecId}.
         [HttpPut]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiExpenseSheetTicketLineUpdate(
             string fileId,
             string lineRecId,
@@ -1991,7 +2014,6 @@ namespace IND_CRM_APP.Controllers
 
         // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/file.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         [RequestSizeLimit(52428800)]
         [RequestFormLimits(MultipartBodyLengthLimit = 52428800)]
         public async Task<IActionResult> ApiExpenseSheetTicketFileUpload(

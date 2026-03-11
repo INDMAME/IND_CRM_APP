@@ -1,5 +1,6 @@
 using System;
 using IND_CRM_APP.Extensions;
+using IND_CRM_APP.Infrastructure.Security.Auth;
 using IND_CRM_APP.Infrastructure.Localization;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
@@ -10,6 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.Json;
 
 namespace IND_CRM_APP.Controllers
@@ -18,17 +20,20 @@ namespace IND_CRM_APP.Controllers
     public class AuthController : Controller
     {
         private readonly ICrmApiClient _api;
+        private readonly IIndAuthContextService _authContext;
         private readonly ITokenSessionService _tokenSession;
         private readonly ILogger<AuthController> _logger;
         private readonly IStringLocalizer<INDSharedResource> _sr;
 
         public AuthController(
             ICrmApiClient api,
+            IIndAuthContextService authContext,
             ITokenSessionService tokenSession,
             ILogger<AuthController> logger,
             IStringLocalizer<INDSharedResource> sr)
         {
             _api = api;
+            _authContext = authContext;
             _tokenSession = tokenSession;
             _logger = logger;
             _sr = sr;
@@ -146,11 +151,9 @@ namespace IND_CRM_APP.Controllers
 
         // Proxies /api/auth/entra/context for React consumers with IND API envelope.
         [HttpPost]
-        [IgnoreAntiforgeryToken]
         public async Task<IActionResult> ApiEntraContext([FromBody] EntraContextRequest? request)
         {
-            var token = _tokenSession.GetToken().Token;
-            if (string.IsNullOrWhiteSpace(token))
+            if (User?.Identity?.IsAuthenticated != true)
             {
                 return CreateApiPagedResponse(
                     new
@@ -166,40 +169,52 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status401Unauthorized);
             }
 
-            var entraOid = (request?.EntraOid ?? string.Empty).Trim();
-            var appCode = (request?.AppCode ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(entraOid) || string.IsNullOrWhiteSpace(appCode))
+            var requestedAppCode = (request?.AppCode ?? string.Empty).Trim();
+            if (!string.IsNullOrWhiteSpace(requestedAppCode) &&
+                !string.Equals(requestedAppCode, IndAuthEnv.AppCode, StringComparison.OrdinalIgnoreCase))
             {
-                return CreateApiPagedResponse(
-                    new
-                    {
-                        Success = false,
-                        Message = _sr["Api_RequestFailed"].Value,
-                        Total = 0,
-                        Page = 1,
-                        PageSize = 0,
-                        Items = Array.Empty<object>(),
-                        ErrorCode = "INVALID_REQUEST"
-                    },
-                    StatusCodes.Status400BadRequest);
+                _logger.LogInformation(
+                    "ApiEntraContext ignored client appCode '{RequestedAppCode}' and used server appCode '{ServerAppCode}'.",
+                    requestedAppCode,
+                    IndAuthEnv.AppCode);
             }
 
             try
             {
-                var response = await _api.GetEntraContextAsync(token, entraOid, appCode);
-                var items = response.Items ?? new List<IndEntraContextItem>();
-                var total = items.Count;
+                var contextResult = await _authContext.EnsureContextAsync();
+                if (!contextResult.Success || contextResult.Context == null)
+                {
+                    var (statusCode, errorCode) = ResolveContextFailure(contextResult.Message);
+
+                    return CreateApiPagedResponse(
+                        new
+                        {
+                            Success = false,
+                            Message = string.IsNullOrWhiteSpace(contextResult.Message)
+                                ? _sr["Api_RequestFailed"].Value
+                                : contextResult.Message,
+                            Total = 0,
+                            Page = 1,
+                            PageSize = 0,
+                            Items = Array.Empty<object>(),
+                            ErrorCode = errorCode
+                        },
+                        statusCode);
+                }
+
+                var items = new[] { ToApiEntraContextItem(contextResult.Context) };
+                const int total = 1;
 
                 return CreateApiPagedResponse(
                     new
                     {
-                        Success = response.Success,
-                        Message = response.Message ?? string.Empty,
+                        Success = true,
+                        Message = contextResult.Context.Header.Message ?? string.Empty,
                         Total = total,
                         Page = 1,
                         PageSize = total,
                         Items = items,
-                        ErrorCode = response.ErrorCode
+                        ErrorCode = (string?)null
                     });
             }
             catch (ApiException ex)
@@ -234,6 +249,65 @@ namespace IND_CRM_APP.Controllers
                     },
                     StatusCodes.Status500InternalServerError);
             }
+        }
+
+        // Maps cached web context back to the React-facing Entra context shape.
+        private static object ToApiEntraContextItem(IndWebContext context)
+        {
+            return new
+            {
+                Header = new
+                {
+                    context.Header.Success,
+                    context.Header.Message,
+                    context.Header.AxUserId,
+                    context.Header.UserActive,
+                    context.Header.AppActive,
+                    context.Header.DefaultCompany,
+                    context.Header.DefaultCurrencyCode
+                },
+                Companies = context.Companies.Select(company => new
+                {
+                    company.CompanyId,
+                    company.IsDefault,
+                    company.CompanyName,
+                    company.CurrencyCode,
+                    company.CrmUserId,
+                    company.AllowSelfManagement,
+                    Modules = company.Modules.Select(module => new
+                    {
+                        module.ModuleCode,
+                        module.Description,
+                        module.IsActive,
+                        module.AccessRightsInt
+                    }).ToList()
+                }).ToList()
+            };
+        }
+
+        // Keeps auth failures distinct from denied or upstream context failures.
+        private static (int StatusCode, string ErrorCode) ResolveContextFailure(string? message)
+        {
+            var normalized = (message ?? string.Empty).Trim();
+            if (string.Equals(normalized, "Missing Entra OID.", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "Session not available.", StringComparison.OrdinalIgnoreCase))
+            {
+                return (StatusCodes.Status401Unauthorized, "SESSION_EXPIRED");
+            }
+
+            if (string.Equals(normalized, "Access denied.", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "Context not available.", StringComparison.OrdinalIgnoreCase))
+            {
+                return (StatusCodes.Status403Forbidden, "CONTEXT_DENIED");
+            }
+
+            if (string.Equals(normalized, "Missing internal token.", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "Context API error.", StringComparison.OrdinalIgnoreCase))
+            {
+                return (StatusCodes.Status502BadGateway, "UPSTREAM_ERROR");
+            }
+
+            return (StatusCodes.Status400BadRequest, "CONTEXT_ERROR");
         }
 
         private async Task<IActionResult> LogoutCore()

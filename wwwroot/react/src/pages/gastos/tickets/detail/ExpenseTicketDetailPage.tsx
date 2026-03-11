@@ -171,7 +171,10 @@ const ExpenseTicketDetailPageContent = () => {
     handlePreviewPointerMove,
     handlePreviewPointerEnd,
     handlePreviewWheel,
-  } = useExpenseTicketImagePreview({ sourceUrl: previewSourceUrl });
+  } = useExpenseTicketImagePreview({
+    fileId,
+    sourceUrl: previewSourceUrl,
+  });
 
   useEffect(() => {
     if (isEditing || !header) return;

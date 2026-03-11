@@ -1,4 +1,5 @@
 using System;
+using System.Text.Json;
 using System.Threading.Tasks;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
@@ -67,8 +68,8 @@ namespace IND_CRM_APP.Middleware
                 if (minutesLeft <= 0)
                 {
                     tokenSession.Clear();
-                    _logger.LogInformation("Token expired, redirecting to login.");
-                    context.Response.Redirect("/Auth/Login");
+                    _logger.LogInformation("Token expired, rejecting request.");
+                    await RejectExpiredSessionAsync(context);
                     return;
                 }
 
@@ -96,8 +97,8 @@ namespace IND_CRM_APP.Middleware
                         else
                         {
                             tokenSession.Clear();
-                            _logger.LogWarning("Token refresh returned an empty token. Redirecting to login.");
-                            context.Response.Redirect("/Auth/Login");
+                            _logger.LogWarning("Token refresh returned an empty token. Rejecting request.");
+                            await RejectExpiredSessionAsync(context);
                             return;
                         }
                     }
@@ -105,13 +106,52 @@ namespace IND_CRM_APP.Middleware
                     {
                         _logger.LogError(ex, "Error refreshing token.");
                         tokenSession.Clear();
-                        context.Response.Redirect("/Auth/Login");
+                        await RejectExpiredSessionAsync(context);
                         return;
                     }
                 }
             }
 
             await _next(context);
+        }
+
+        private static bool IsApiRequest(HttpRequest request)
+        {
+            if (request.Path.StartsWithSegments("/api"))
+                return true;
+
+            var accept = request.Headers["Accept"].ToString();
+            if (!string.IsNullOrWhiteSpace(accept) &&
+                accept.Contains("application/json", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var requestedWith = request.Headers["X-Requested-With"].ToString();
+            return string.Equals(requestedWith, "XMLHttpRequest", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static Task RejectExpiredSessionAsync(HttpContext context)
+        {
+            if (!IsApiRequest(context.Request))
+            {
+                context.Response.Redirect("/Auth/Login");
+                return Task.CompletedTask;
+            }
+
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+            context.Response.ContentType = "application/json; charset=utf-8";
+            context.Response.Headers.CacheControl = "no-store";
+            context.Response.Headers.Pragma = "no-cache";
+
+            var payload = JsonSerializer.Serialize(new
+            {
+                Success = false,
+                Message = "Your session has expired.",
+                ErrorCode = "SESSION_EXPIRED",
+                ForceRelogin = true,
+                Errors = Array.Empty<object>()
+            });
+
+            return context.Response.WriteAsync(payload);
         }
     }
 }

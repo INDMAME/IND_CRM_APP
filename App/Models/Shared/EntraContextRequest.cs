@@ -6,9 +6,9 @@ namespace IND_CRM_APP.Models.Shared
     public class EntraContextRequest
     {
         [JsonPropertyName("entraOid")]
-        public string EntraOid { get; set; } = string.Empty;
+        public string? EntraOid { get; set; }
 
         [JsonPropertyName("appCode")]
-        public string AppCode { get; set; } = string.Empty;
+        public string? AppCode { get; set; }
     }
 }

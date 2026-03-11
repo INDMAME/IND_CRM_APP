@@ -54,6 +54,7 @@ Conflict precedence:
 | React entry pattern | Keep page bootstrap thin. Use `mountReactIsland` + `mountWhenDocumentReady`; use `VisitasPageProviders` and `AppErrorBoundary` where applicable. |
 | Legacy JS | Do not add new jQuery or jquery-validation usage. |
 | API contract | Frontend services and hooks do not invent response formats; consume `IndApiResponse<T>` / `IndPagedResponse<T>` contracts. |
+| Company selection rule | Every frontend API client must resolve company with `Web/wwwroot/react/src/utils/companySelection.ts`: use `defaultCompany` by default, but override with `__IND_SELECTED_COMPANY__` only when that manual selection exists in the current context company list. |
 | Expense list date contract | For expense sheets and ticket list payloads sent by web backend to upstream, `createdDateFrom` and `createdDateTo` must be `ddMMyyyy` (or `DD.MM.YYYY` only if endpoint contract explicitly requires dotted format). Never send `yyyyMMdd`. |
 | Internal API route pattern | Every new `/api/...` endpoint must have explicit controller verb attributes plus `Program.cs` `MapControllerRoute` mapping, with local verb validation to prevent 404/405 regressions. |
 | i18n | No hardcoded user-facing strings; add resource keys to all supported cultures in the same change. |
@@ -120,6 +121,7 @@ Required triggers:
    - Always apply `vercel-react-best-practices` and `vercel-composition-patterns` for React object design and scalability decisions.
    - React performance guardrails: parallelize independent async calls, avoid effect-driven mirror state, cleanup listeners.
    - React composition guardrails: no new boolean mode flags when explicit variant/component composition is cleaner.
+   - Company context guardrail: for any endpoint that depends on company context, resolve the effective company with `resolveEffectiveCompanyId(...)` from `Web/wwwroot/react/src/utils/companySelection.ts` before building headers, cache keys, or request scope. Never trust `DefaultCompany` alone when `__IND_SELECTED_COMPANY__` exists.
    - Numeric format guardrails: for currency/price/qty/amount/exchange-rate fields, enforce `#,##0.00` display with grouped thousands and exactly 2 decimals.
    - Security guardrails: enforce permission-gated actions, require AuthContext `allowSelfManagement` for self-management scoped actions, and use integrated app dialogs for destructive or unsaved-change flows.
 5. Enforce internal API endpoint exposure pattern for any new `/api/...` route.
@@ -148,6 +150,7 @@ Required triggers:
 - Editing `wwwroot` mirror paths as primary source instead of `Web/wwwroot`.
 - Adding behavior through boolean prop stacking instead of composition or explicit variants.
 - Leaving numeric fields with locale-dependent or mixed formats instead of the required `#,##0.00`.
+- Resolving company-scoped endpoints from `DefaultCompany` only and ignoring a valid manual `__IND_SELECTED_COMPANY__` override.
 - Leaving global listeners attached after component unmount.
 - Shipping UI edit/delete actions without checking permission state.
 - Creating ad-hoc section title capsules instead of reusing `ExpenseSectionDivider`.

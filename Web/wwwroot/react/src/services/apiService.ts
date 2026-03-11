@@ -122,6 +122,10 @@ const getMessageFromPayload = (payload: unknown): string => {
   return getStringProp(payload, "message", "Message");
 };
 
+export const readApiMessageFromRaw = (raw: string): string => {
+  return getMessageFromPayload(tryParseJson(raw));
+};
+
 const toValidationErrorItem = (value: unknown): ValidationErrorItem | null => {
   const record = asRecord(value);
   if (!record) return null;
@@ -226,6 +230,20 @@ const forceReloginAndWait = async <T>(reason: string): Promise<T> => {
 
   // Keep pending until navigation finishes to avoid rendering transient errors.
   return new Promise<T>(() => {});
+};
+
+export const handleApiAuthFailure = async <T>(
+  raw: string,
+  status: number,
+  fallbackReason: string
+): Promise<T | null> => {
+  const payload = tryParseJson(raw);
+  if (!shouldForceRelogin(payload, status)) {
+    return null;
+  }
+
+  const payloadMessage = getMessageFromPayload(payload);
+  return forceReloginAndWait<T>(payloadMessage || fallbackReason);
 };
 
 export async function fetchJson<T = unknown>(url: string, options?: ApiFetchOptions): Promise<T> {

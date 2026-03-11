@@ -172,6 +172,9 @@ namespace IND_CRM_APP.Models.CRM
     // Request payload for ticket file preview loading.
     public class ExpenseSheetTicketPreviewRequest
     {
+        [JsonPropertyName("fileId")]
+        public string? FileId { get; set; }
+
         [JsonPropertyName("urlFile")]
         public string? UrlFile { get; set; }
     }

@@ -13,6 +13,7 @@ export type TicketPreviewPoint = {
 };
 
 type UseExpenseTicketImagePreviewArgs = {
+  fileId: string;
   sourceUrl: string;
 };
 
@@ -33,7 +34,7 @@ const getPreviewPointCenter = (left: TicketPreviewPoint, right: TicketPreviewPoi
 });
 
 // Manages ticket image preview state and zoom/pan gestures.
-export const useExpenseTicketImagePreview = ({ sourceUrl }: UseExpenseTicketImagePreviewArgs) => {
+export const useExpenseTicketImagePreview = ({ fileId, sourceUrl }: UseExpenseTicketImagePreviewArgs) => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewError, setPreviewError] = useState("");
@@ -247,8 +248,9 @@ export const useExpenseTicketImagePreview = ({ sourceUrl }: UseExpenseTicketImag
   );
 
   const openPreview = useCallback(async () => {
+    const currentFileId = safeText(fileId);
     const currentUrl = safeText(sourceUrl);
-    if (!currentUrl) return;
+    if (!currentFileId || !currentUrl) return;
 
     resetPreviewGesture();
     setPreviewOpen(true);
@@ -256,7 +258,7 @@ export const useExpenseTicketImagePreview = ({ sourceUrl }: UseExpenseTicketImag
     setPreviewError("");
 
     try {
-      const blob = await fetchExpenseSheetTicketPreviewBlob(currentUrl, {
+      const blob = await fetchExpenseSheetTicketPreviewBlob(currentFileId, currentUrl, {
         suppressPermissionModal: true,
       });
       const objectUrl = URL.createObjectURL(blob);
@@ -272,7 +274,7 @@ export const useExpenseTicketImagePreview = ({ sourceUrl }: UseExpenseTicketImag
     } finally {
       setPreviewBusy(false);
     }
-  }, [resetPreviewGesture, sourceUrl]);
+  }, [fileId, resetPreviewGesture, sourceUrl]);
 
   return {
     previewOpen,

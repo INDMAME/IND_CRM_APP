@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../react/src/utils/topbarActionVisibility.ts"],
-  "sourcesContent": ["const TOPBAR_ACTIONS_PENDING_CLASS = \"topbar-actions-pending\";\n\n// Reveals a topbar action group only after client-side permissions and mode are resolved.\nexport const setTopbarActionGroupReady = (groupId: string | undefined): void => {\n  const safeGroupId = String(groupId || \"\").trim();\n  if (!safeGroupId || typeof document === \"undefined\") return;\n\n  const group = document.getElementById(safeGroupId);\n  if (!group) return;\n\n  group.classList.remove(TOPBAR_ACTIONS_PENDING_CLASS);\n};\n"],
-  "mappings": "AAAA,IAAMA,EAA+B,yBAGxBC,EAA6BC,GAAsC,CAC9E,IAAMC,EAAc,OAAOD,GAAW,EAAE,EAAE,KAAK,EAC/C,GAAI,CAACC,GAAe,OAAO,SAAa,IAAa,OAErD,IAAMC,EAAQ,SAAS,eAAeD,CAAW,EAC5CC,GAELA,EAAM,UAAU,OAAOJ,CAA4B,CACrD",
-  "names": ["TOPBAR_ACTIONS_PENDING_CLASS", "setTopbarActionGroupReady", "groupId", "safeGroupId", "group"]
-}
