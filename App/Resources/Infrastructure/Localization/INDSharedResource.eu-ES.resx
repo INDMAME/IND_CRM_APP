@@ -1323,5 +1323,23 @@
   <data name="ExpenseTickets_LinkMode_SelectTicket" xml:space="preserve">
     <value>Hautatu ticketa</value>
   </data>
+  <data name="ExpenseTickets_LinkMode_ResultTitle" xml:space="preserve">
+    <value>Link result</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultRequested" xml:space="preserve">
+    <value>Requested</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultLinked" xml:space="preserve">
+    <value>Linked</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultSkipped" xml:space="preserve">
+    <value>Skipped</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultFailed" xml:space="preserve">
+    <value>Failed</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultReason" xml:space="preserve">
+    <value>Reason</value>
+  </data>
 </root>
 

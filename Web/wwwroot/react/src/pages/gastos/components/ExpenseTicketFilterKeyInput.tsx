@@ -1,14 +1,22 @@
 import React, { useCallback } from "react";
 import RemoteSearchCombobox, { type RemoteSearchOption } from "../../../components/commons/RemoteSearchCombobox.tsx";
 import { ApiFetchError } from "../../../services/apiService.ts";
-import type { ExpenseSheetTicketListItemDto, ExpenseSheetTicketListRequest } from "../expenseTypes.ts";
-import { fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
+import type {
+  ExpenseSheetTicketLinkListItemDto,
+  ExpenseSheetTicketLinkListRequest,
+  ExpenseSheetTicketListItemDto,
+  ExpenseSheetTicketListRequest,
+} from "../expenseTypes.ts";
+import { fetchExpenseSheetTicketLinkList, fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
 
 type ExpenseTicketFilterKeyInputProps = {
   label: string;
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  mode?: "general" | "link";
+  createdDateFrom?: string;
+  createdDateTo?: string;
   enableRemoteSuggestions?: boolean;
   fixedStatusFilter?: 0 | 1 | null;
   readOnly?: boolean;
@@ -23,19 +31,33 @@ const buildTicketSuggestPayload = (
   term: string,
   page: number,
   pageSize: number,
-  fixedStatusFilter: 0 | 1 | null
-): ExpenseSheetTicketListRequest => {
+  fixedStatusFilter: 0 | 1 | null,
+  createdDateFrom: string | undefined,
+  createdDateTo: string | undefined
+): ExpenseSheetTicketListRequest | ExpenseSheetTicketLinkListRequest => {
   const safeTerm = String(term || "").trim();
-  return {
+  const basePayload = {
     page: Number.isFinite(page) && page > 0 ? Math.floor(page) : 1,
     pageSize: Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : SEARCH_PAGE_SIZE,
+    createdDateFrom: createdDateFrom || undefined,
+    createdDateTo: createdDateTo || undefined,
     searchKey: safeTerm || undefined,
     filter: safeTerm || undefined,
-    status: fixedStatusFilter === 0 || fixedStatusFilter === 1 ? fixedStatusFilter : undefined,
   };
+
+  if (fixedStatusFilter === 0 || fixedStatusFilter === 1) {
+    return {
+      ...basePayload,
+      status: fixedStatusFilter,
+    };
+  }
+
+  return basePayload;
 };
 
-const mapTicketOptions = (items: ExpenseSheetTicketListItemDto[] | undefined): RemoteSearchOption[] => {
+const mapTicketOptions = (
+  items: Array<ExpenseSheetTicketListItemDto | ExpenseSheetTicketLinkListItemDto> | undefined
+): RemoteSearchOption[] => {
   return (Array.isArray(items) ? items : [])
     .map((item) => {
       const fileId = String(item?.FileId || "").trim();
@@ -58,6 +80,9 @@ const ExpenseTicketFilterKeyInput = ({
   placeholder,
   value,
   onChange,
+  mode = "general",
+  createdDateFrom = "",
+  createdDateTo = "",
   enableRemoteSuggestions = true,
   fixedStatusFilter = null,
   readOnly = false,
@@ -67,27 +92,44 @@ const ExpenseTicketFilterKeyInput = ({
   const readOnlyMode = readOnly || disabled;
 
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
-    const payload = buildTicketSuggestPayload(term, 1, SEARCH_PAGE_SIZE, fixedStatusFilter);
-
-    const response = await fetchExpenseSheetTicketsList(payload, {
-      suppressPermissionModal: true,
-      signal,
-    });
+    const payload = buildTicketSuggestPayload(term, 1, SEARCH_PAGE_SIZE, fixedStatusFilter, createdDateFrom, createdDateTo);
+    const response =
+      mode === "link"
+        ? await fetchExpenseSheetTicketLinkList(payload as ExpenseSheetTicketLinkListRequest, {
+            suppressPermissionModal: true,
+            signal,
+          })
+        : await fetchExpenseSheetTicketsList(payload as ExpenseSheetTicketListRequest, {
+            suppressPermissionModal: true,
+            signal,
+          });
 
     if (response?.Success === false) {
       return [];
     }
 
     return mapTicketOptions(response?.Items);
-  }, [fixedStatusFilter]);
+  }, [createdDateFrom, createdDateTo, fixedStatusFilter, mode]);
 
   const loadOptionsPage = useCallback(async (term: string, page: number, _pageSize: number, signal: AbortSignal) => {
-    const payload = buildTicketSuggestPayload(term, page, SEARCH_PAGE_SIZE, fixedStatusFilter);
-
-    const response = await fetchExpenseSheetTicketsList(payload, {
-      suppressPermissionModal: true,
-      signal,
-    });
+    const payload = buildTicketSuggestPayload(
+      term,
+      page,
+      SEARCH_PAGE_SIZE,
+      fixedStatusFilter,
+      createdDateFrom,
+      createdDateTo
+    );
+    const response =
+      mode === "link"
+        ? await fetchExpenseSheetTicketLinkList(payload as ExpenseSheetTicketLinkListRequest, {
+            suppressPermissionModal: true,
+            signal,
+          })
+        : await fetchExpenseSheetTicketsList(payload as ExpenseSheetTicketListRequest, {
+            suppressPermissionModal: true,
+            signal,
+          });
 
     if (response?.Success === false) {
       return {
@@ -100,7 +142,7 @@ const ExpenseTicketFilterKeyInput = ({
       items: mapTicketOptions(response?.Items),
       total: Number(response?.Total || 0),
     };
-  }, [fixedStatusFilter]);
+  }, [createdDateFrom, createdDateTo, fixedStatusFilter, mode]);
 
   if (!enableRemoteSuggestions || readOnlyMode) {
     return (

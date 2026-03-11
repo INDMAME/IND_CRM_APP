@@ -45,6 +45,99 @@ namespace IND_CRM_APP.Models.CRM
         public bool? ProcessedByAI { get; set; }
     }
 
+    // Request payload for link-mode ticket filtering.
+    public class ExpenseSheetTicketLinkListRequest
+    {
+        [JsonPropertyName("page")]
+        public int Page { get; set; } = 1;
+
+        [JsonPropertyName("pageSize")]
+        public int PageSize { get; set; } = 50;
+
+        [JsonPropertyName("createdDateFrom")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CreatedDateFrom { get; set; }
+
+        [JsonPropertyName("createdDateTo")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CreatedDateTo { get; set; }
+
+        [JsonPropertyName("searchKey")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? SearchKey { get; set; }
+
+        [JsonPropertyName("filter")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Filter { get; set; }
+
+        [JsonPropertyName("currencyCode")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CurrencyCode { get; set; }
+
+        [JsonPropertyName("gastoType")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? GastoType { get; set; }
+
+        [JsonPropertyName("processedByAI")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? ProcessedByAI { get; set; }
+    }
+
+    // Shared filter payload used by filtered bulk link mode.
+    public class ExpenseSheetTicketLinkBulkFilters
+    {
+        [JsonPropertyName("searchKey")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? SearchKey { get; set; }
+
+        [JsonPropertyName("filter")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? Filter { get; set; }
+
+        [JsonPropertyName("createdDateFrom")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CreatedDateFrom { get; set; }
+
+        [JsonPropertyName("createdDateTo")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CreatedDateTo { get; set; }
+
+        [JsonPropertyName("currencyCode")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CurrencyCode { get; set; }
+
+        [JsonPropertyName("gastoType")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? GastoType { get; set; }
+
+        [JsonPropertyName("processedByAI")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public bool? ProcessedByAI { get; set; }
+    }
+
+    // Request payload for selected or filtered bulk ticket linking.
+    public class ExpenseSheetTicketLinkBulkRequest
+    {
+        [JsonPropertyName("expenseSheetId")]
+        public string ExpenseSheetId { get; set; } = string.Empty;
+
+        [JsonPropertyName("selectionMode")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? SelectionMode { get; set; }
+
+        [JsonPropertyName("ticketIds")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<string>? TicketIds { get; set; }
+
+        [JsonPropertyName("filters")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public ExpenseSheetTicketLinkBulkFilters? Filters { get; set; }
+
+        [JsonPropertyName("excludedIds")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public List<string>? ExcludedIds { get; set; }
+    }
+
     // Request payload for ticket line create/update.
     public class ExpenseSheetTicketLineRequest
     {
@@ -191,8 +284,33 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("Status")]
         public int? Status { get; set; }
 
-        [JsonPropertyName("HojaGastosIdDisplay")]
-        public string HojaGastosIdDisplay { get; set; } = string.Empty;
+        [JsonPropertyName("ProcessedByAI")]
+        public bool? ProcessedByAI { get; set; }
+
+        [JsonPropertyName("CurrencyCode")]
+        public string CurrencyCode { get; set; } = string.Empty;
+
+        [JsonPropertyName("TotalAmount")]
+        public decimal? TotalAmount { get; set; }
+
+        [JsonPropertyName("TransDate")]
+        public string TransDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("FileName")]
+        public string FileName { get; set; } = string.Empty;
+
+        [JsonPropertyName("GastoType")]
+        public int? GastoType { get; set; }
+    }
+
+    // Ticket item returned by link-mode list endpoint.
+    public class ExpenseSheetTicketLinkListItemDto
+    {
+        [JsonPropertyName("FileId")]
+        public string FileId { get; set; } = string.Empty;
+
+        [JsonPropertyName("Description")]
+        public string Description { get; set; } = string.Empty;
 
         [JsonPropertyName("ProcessedByAI")]
         public bool? ProcessedByAI { get; set; }
@@ -203,14 +321,8 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("TotalAmount")]
         public decimal? TotalAmount { get; set; }
 
-        [JsonPropertyName("CreatedByUserId")]
-        public string CreatedByUserId { get; set; } = string.Empty;
-
         [JsonPropertyName("TransDate")]
         public string TransDate { get; set; } = string.Empty;
-
-        [JsonPropertyName("UrlFile")]
-        public string UrlFile { get; set; } = string.Empty;
 
         [JsonPropertyName("FileName")]
         public string FileName { get; set; } = string.Empty;
@@ -288,5 +400,43 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("Lines")]
         public List<ExpenseSheetTicketLineDto> Lines { get; set; } = new();
+    }
+
+    // One skipped or failed ticket returned by bulk link.
+    public class ExpenseSheetTicketLinkBulkIssueDto
+    {
+        [JsonPropertyName("ticketId")]
+        public string TicketId { get; set; } = string.Empty;
+
+        [JsonPropertyName("reason")]
+        public string Reason { get; set; } = string.Empty;
+    }
+
+    // Result payload returned by the bulk link endpoint.
+    public class ExpenseSheetTicketLinkBulkResultDto
+    {
+        [JsonPropertyName("expenseSheetId")]
+        public string ExpenseSheetId { get; set; } = string.Empty;
+
+        [JsonPropertyName("requestedCount")]
+        public int RequestedCount { get; set; }
+
+        [JsonPropertyName("linkedCount")]
+        public int LinkedCount { get; set; }
+
+        [JsonPropertyName("skippedCount")]
+        public int SkippedCount { get; set; }
+
+        [JsonPropertyName("failedCount")]
+        public int FailedCount { get; set; }
+
+        [JsonPropertyName("linkedTicketIds")]
+        public List<string> LinkedTicketIds { get; set; } = new();
+
+        [JsonPropertyName("skipped")]
+        public List<ExpenseSheetTicketLinkBulkIssueDto> Skipped { get; set; } = new();
+
+        [JsonPropertyName("failed")]
+        public List<ExpenseSheetTicketLinkBulkIssueDto> Failed { get; set; } = new();
     }
 }

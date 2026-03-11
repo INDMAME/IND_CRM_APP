@@ -2,6 +2,11 @@ import React from "react";
 import type { ExpenseDateParts } from "../utils/expenseUiUtils.ts";
 import { normalizeCardTitleText, safeText } from "../utils/expenseUiUtils.ts";
 
+type ExpenseTimelineCardInteractionProps = Pick<
+  React.HTMLAttributes<HTMLDivElement>,
+  "aria-label" | "aria-pressed" | "onClick" | "onKeyDown" | "onPointerCancel" | "onPointerDown" | "onPointerMove" | "onPointerUp" | "role" | "tabIndex"
+>;
+
 type ExpenseTimelineCardProps = {
   dateParts: ExpenseDateParts;
   title: string;
@@ -16,6 +21,7 @@ type ExpenseTimelineCardProps = {
   statusIcon?: React.ReactNode;
   statusIconClassName?: string;
   datePanelContent?: React.ReactNode;
+  interactionProps?: ExpenseTimelineCardInteractionProps;
 };
 
 // Reusable clickable timeline card for expense sheets and expense lines.
@@ -33,23 +39,36 @@ const ExpenseTimelineCard = ({
   statusIcon,
   statusIconClassName = "expense-sheet-card__status-icon",
   datePanelContent,
+  interactionProps,
 }: ExpenseTimelineCardProps) => {
   const safeTitle = normalizeCardTitleText(title, "-");
   const safeAmount = amountText || "-";
   const safeSubtitle = safeText(subtitle);
+  const {
+    onClick: customOnClick,
+    onKeyDown: customOnKeyDown,
+    role: customRole,
+    tabIndex: customTabIndex,
+    ...restInteractionProps
+  } = interactionProps || {};
 
-  return (
-    <div
-      className="timeline-card timeline-card--clickable expense-timeline-card"
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(event) => {
+  const handleKeyDown = customOnKeyDown
+    ? customOnKeyDown
+    : (event: React.KeyboardEvent<HTMLDivElement>) => {
         if (event.key === "Enter" || event.key === " ") {
           event.preventDefault();
           onOpen();
         }
-      }}
+      };
+
+  return (
+    <div
+      className="timeline-card timeline-card--clickable expense-timeline-card"
+      role={customRole ?? "button"}
+      tabIndex={typeof customTabIndex === "number" ? customTabIndex : 0}
+      onClick={customOnClick ?? onOpen}
+      onKeyDown={handleKeyDown}
+      {...restInteractionProps}
     >
       <div className="timeline-date-panel expense-timeline-card__date-panel flex flex-col items-center justify-center gap-1 bg-slate-50 border-r border-slate-200 text-slate-600">
         {datePanelContent ? (

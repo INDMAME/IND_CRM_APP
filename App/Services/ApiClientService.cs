@@ -1044,9 +1044,16 @@ namespace IND_CRM_APP.Services
         public async Task<PagedApiResponse<ExpenseSheetTicketListItemDto>> GetExpenseSheetTicketsAsync(
             string token,
             ExpenseSheetTicketListRequest req,
+            string? axUserIdOverride = null,
             CancellationToken cancellationToken = default)
         {
-            PrepareRequestHeaders(token, "GetExpenseSheetTickets", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "GetExpenseSheetTickets",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             req ??= new ExpenseSheetTicketListRequest();
 
@@ -1059,8 +1066,7 @@ namespace IND_CRM_APP.Services
             var normalizedCurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant() ?? string.Empty;
             var normalizedGastoType = NormalizeTicketGastoType(req.GastoType);
             var normalizedStatus = BuildTicketStatusFilterToken(req.Status);
-            var normalizedProcessedByAi = BuildTicketProcessedByAiFilterToken(req.ProcessedByAI);
-
+            var normalizedProcessedByAi = req.ProcessedByAI;
             var payload = new Dictionary<string, object?>
             {
                 ["page"] = normalizedPage,
@@ -1102,6 +1108,100 @@ namespace IND_CRM_APP.Services
                     SafeLogSnippet(result.Raw));
             }
             return BuildPagedResponse<ExpenseSheetTicketListItemDto>(result, "GetExpenseSheetTickets");
+        }
+
+        public async Task<PagedApiResponse<ExpenseSheetTicketLinkListItemDto>> GetExpenseSheetTicketLinkListAsync(
+            string token,
+            ExpenseSheetTicketLinkListRequest req,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "GetExpenseSheetTicketLinkList",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+
+            req ??= new ExpenseSheetTicketLinkListRequest();
+
+            var normalizedPage = req.Page < 1 ? 1 : req.Page;
+            var normalizedPageSize = req.PageSize <= 0 ? 50 : req.PageSize;
+            var normalizedCreatedDateFrom = NormalizeAxListDate(req.CreatedDateFrom) ?? string.Empty;
+            var normalizedCreatedDateTo = NormalizeAxListDate(req.CreatedDateTo) ?? string.Empty;
+            var normalizedSearchKey = NormalizeOptionalText(req.SearchKey) ?? NormalizeOptionalText(req.Filter) ?? string.Empty;
+            var normalizedFilter = NormalizeOptionalText(req.Filter) ?? normalizedSearchKey;
+            var normalizedCurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant() ?? string.Empty;
+            var normalizedGastoType = NormalizeTicketGastoType(req.GastoType);
+
+            var payload = new Dictionary<string, object?>
+            {
+                ["page"] = normalizedPage,
+                ["pageSize"] = normalizedPageSize,
+                ["createdDateFrom"] = normalizedCreatedDateFrom,
+                ["createdDateTo"] = normalizedCreatedDateTo,
+                ["searchKey"] = normalizedSearchKey,
+                ["filter"] = normalizedFilter,
+                ["currencyCode"] = normalizedCurrencyCode,
+                ["gastoType"] = normalizedGastoType,
+                ["processedByAI"] = req.ProcessedByAI
+            };
+
+            var serializedPayload = Serialize(payload);
+            var result = await SendPostAsync(ApiRoutes.ExpenseSheetTicketsLinkList, serializedPayload, cancellationToken);
+            return BuildPagedResponse<ExpenseSheetTicketLinkListItemDto>(result, "GetExpenseSheetTicketLinkList");
+        }
+
+        public async Task<ApiResponse<ExpenseSheetTicketLinkBulkResultDto>> LinkExpenseSheetTicketsBulkAsync(
+            string token,
+            ExpenseSheetTicketLinkBulkRequest req,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "LinkExpenseSheetTicketsBulk",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+
+            req ??= new ExpenseSheetTicketLinkBulkRequest();
+            var normalizedSelectionMode = string.Equals(req.SelectionMode, "filtered", StringComparison.OrdinalIgnoreCase)
+                ? "filtered"
+                : "selected";
+
+            var payload = new ExpenseSheetTicketLinkBulkRequest
+            {
+                ExpenseSheetId = NormalizeOptionalText(req.ExpenseSheetId) ?? string.Empty,
+                SelectionMode = normalizedSelectionMode,
+                TicketIds = req.TicketIds?
+                    .Select(NormalizeOptionalText)
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Cast<string>()
+                    .ToList(),
+                Filters = req.Filters == null
+                    ? null
+                    : new ExpenseSheetTicketLinkBulkFilters
+                    {
+                        SearchKey = NormalizeOptionalText(req.Filters.SearchKey),
+                        Filter = NormalizeOptionalText(req.Filters.Filter),
+                        CreatedDateFrom = NormalizeAxListDate(req.Filters.CreatedDateFrom),
+                        CreatedDateTo = NormalizeAxListDate(req.Filters.CreatedDateTo),
+                        CurrencyCode = NormalizeOptionalText(req.Filters.CurrencyCode)?.ToUpperInvariant(),
+                        GastoType = NormalizeTicketGastoType(req.Filters.GastoType),
+                        ProcessedByAI = req.Filters.ProcessedByAI
+                    },
+                ExcludedIds = req.ExcludedIds?
+                    .Select(NormalizeOptionalText)
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Cast<string>()
+                    .ToList()
+            };
+
+            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketsLinkBulk, payload, cancellationToken);
+            return BuildApiResponse<ExpenseSheetTicketLinkBulkResultDto>(result, "LinkExpenseSheetTicketsBulk");
         }
 
         public async Task<PagedApiResponse<ExpenseSheetTicketDetailDto>> GetExpenseSheetTicketDetailAsync(

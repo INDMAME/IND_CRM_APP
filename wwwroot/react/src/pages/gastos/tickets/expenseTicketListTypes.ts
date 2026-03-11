@@ -16,17 +16,26 @@ export type ExpenseTicketAppliedFilterSnapshot = {
   processedByIaFilter: ExpenseTicketProcessedByIaFilter;
 };
 
-export type ExpenseTicketCard = {
+export type ExpenseTicketListCardBase = {
   fileId: string;
   description: string;
-  status: 0 | 1 | null;
-  hojaGastosIdDisplay: string;
   processedByAI: boolean | null;
   currencyCode: string;
   totalAmount: number | null;
-  createdByUserId: string;
   transDate: string;
-  urlFile: string;
   fileName: string;
   gastoType: ExpenseGastoTypeCode | null;
 };
+
+export type ExpenseTicketCard = ExpenseTicketListCardBase & {
+  kind: "general";
+  status: 0 | 1 | null;
+};
+
+export type ExpenseTicketLinkCard = ExpenseTicketListCardBase & {
+  kind: "link";
+};
+
+export type ExpenseTicketListPageItem = ExpenseTicketCard | ExpenseTicketLinkCard;
+
+export type ExpenseTicketLinkSelectionMode = "selected" | "filtered";

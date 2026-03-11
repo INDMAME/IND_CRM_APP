@@ -7,6 +7,8 @@ const defaultAuthStatePath = path.join(__dirname, ".auth", "entra-storage-state.
 const authStatePath = process.env.IND_E2E_AUTH_STATE || defaultAuthStatePath;
 const startPath = process.env.IND_E2E_AUTH_START_PATH || "/Visitas/Create?fresh=1";
 const loginTimeoutMs = Number(process.env.IND_E2E_AUTH_TIMEOUT_MS || "900000");
+const MICROSOFT_LOGIN_REGEX = /sign in with microsoft|iniciar sesi(?:o|ó)n con microsoft|entrar con microsoft/i;
+const LOGIN_MESSAGE_REGEX = /you must sign in to continue|debe iniciar sesi(?:o|ó)n para continuar/i;
 
 function isMicrosoftAuthUrl(url) {
   const text = String(url || "").toLowerCase();
@@ -21,14 +23,17 @@ async function isLoginGateVisible(page) {
   const loginInputVisible = await page.locator("#inputUser").isVisible().catch(() => false);
   if (loginInputVisible) return true;
 
+  const microsoftLinkVisible = await page.getByRole("link", { name: MICROSOFT_LOGIN_REGEX }).isVisible().catch(() => false);
+  if (microsoftLinkVisible) return true;
+
   const microsoftButtonVisible = await page
-    .getByRole("button", { name: /sign in with microsoft|iniciar sesi[oó]n con microsoft/i })
+    .getByRole("button", { name: MICROSOFT_LOGIN_REGEX })
     .isVisible()
     .catch(() => false);
   if (microsoftButtonVisible) return true;
 
   const loginMessageVisible = await page
-    .locator("text=/you must sign in to continue|debe iniciar sesi[oó]n para continuar/i")
+    .locator(`text=/${LOGIN_MESSAGE_REGEX.source}/i`)
     .first()
     .isVisible()
     .catch(() => false);
@@ -37,18 +42,14 @@ async function isLoginGateVisible(page) {
 
 // Clicks the app login gate once so SSO-capable environments can continue automatically.
 async function clickMicrosoftLoginGate(page) {
-  const loginLink = page
-    .getByRole("link", { name: /sign in with microsoft|iniciar sesi[oÃ³]n con microsoft|entrar con microsoft/i })
-    .first();
+  const loginLink = page.getByRole("link", { name: MICROSOFT_LOGIN_REGEX }).first();
   const linkVisible = await loginLink.isVisible().catch(() => false);
   if (linkVisible) {
     await loginLink.click().catch(() => undefined);
     return true;
   }
 
-  const loginButton = page
-    .getByRole("button", { name: /sign in with microsoft|iniciar sesi[oÃ³]n con microsoft|entrar con microsoft/i })
-    .first();
+  const loginButton = page.getByRole("button", { name: MICROSOFT_LOGIN_REGEX }).first();
   const buttonVisible = await loginButton.isVisible().catch(() => false);
   if (buttonVisible) {
     await loginButton.click().catch(() => undefined);
@@ -56,6 +57,25 @@ async function clickMicrosoftLoginGate(page) {
   }
 
   return false;
+}
+
+async function countAuthenticatedAppRoots(page) {
+  return page
+    .locator(
+      "#visitas-app-root, #visitas-history-root, #visita-detail-root, #expense-sheets-root, #expense-sheet-detail-root, #expense-tickets-root, #expense-ticket-detail-root"
+    )
+    .count()
+    .catch(() => 0);
+}
+
+function isAuthenticatedAppRoute(url) {
+  const text = String(url || "").toLowerCase();
+  return (
+    /\/(visitas|historial|gastos|texteditorreact|home\/index)\b/i.test(text) ||
+    text.includes("/visitas/") ||
+    text.includes("/gastos/") ||
+    text.includes("/home/index")
+  );
 }
 
 // Waits until the browser returns to the app after interactive auth and MFA.
@@ -96,16 +116,8 @@ async function waitForAuthenticatedSession(page) {
       }
     }
 
-    const appRootCount = await page
-      .locator("#visitas-app-root, #visitas-history-root, #visita-detail-root")
-      .count()
-      .catch(() => 0);
-
-    const inAppRoute =
-      /\/(visitas|historial|texteditorreact|home\/index)\b/i.test(url) ||
-      url.toLowerCase().includes("/visitas/") ||
-      url.toLowerCase().includes("/home/index");
-    const inAppAuthenticated = !onMicrosoftAuth && !loginGateVisible && (appRootCount > 0 || inAppRoute);
+    const appRootCount = await countAuthenticatedAppRoots(page);
+    const inAppAuthenticated = !onMicrosoftAuth && !loginGateVisible && (appRootCount > 0 || isAuthenticatedAppRoute(url));
 
     // Require a few stable checks to avoid finishing during transient redirects.
     if (inAppAuthenticated) {

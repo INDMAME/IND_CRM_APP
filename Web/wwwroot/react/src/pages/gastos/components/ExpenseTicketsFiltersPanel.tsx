@@ -41,6 +41,7 @@ const formatDate = (raw: string, locale: string): string => {
 };
 
 type ExpenseTicketsFiltersPanelProps = {
+  mode: "general" | "link";
   visible: boolean;
   showManualDateFilter: boolean;
   manualDateAutoOpenKey: number;
@@ -74,6 +75,7 @@ type ExpenseTicketsFiltersPanelProps = {
 
 // Shared tickets filter panel with global quick date filters and fixed ticket filters.
 const ExpenseTicketsFiltersPanel = ({
+  mode,
   visible,
   showManualDateFilter,
   manualDateAutoOpenKey,
@@ -116,6 +118,10 @@ const ExpenseTicketsFiltersPanel = ({
   if (!visible) return null;
   const locale = document?.documentElement?.lang || "es-ES";
   const showInlineDateSummary = !showManualDateFilter && !!fromDate && !!toDate;
+  const showStatusFilter = mode === "general";
+  const desktopColumnsClassName = showManagedUserFilter
+    ? (showStatusFilter ? "lg:grid-cols-6" : "lg:grid-cols-5")
+    : (showStatusFilter ? "lg:grid-cols-5" : "lg:grid-cols-4");
 
   return (
     <div className="filter-card filter-card--expanded p-2 sm:p-2.5 relative">
@@ -143,14 +149,17 @@ const ExpenseTicketsFiltersPanel = ({
           />
         ) : null}
 
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${showManagedUserFilter ? "lg:grid-cols-6" : "lg:grid-cols-5"} gap-2`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${desktopColumnsClassName} gap-2`}>
           <ExpenseTicketFilterKeyInput
             label={indT("Tickets_Filter_FilterKey", "Ticket")}
             placeholder={indT("Tickets_Filter_FilterKey", "Ticket")}
             value={filterKey}
             onChange={onFilterKeyChange}
+            mode={mode}
+            createdDateFrom={fromDate}
+            createdDateTo={toDate}
             enableRemoteSuggestions
-            fixedStatusFilter={fixedStatusFilter}
+            fixedStatusFilter={mode === "general" ? fixedStatusFilter : null}
             showLabel={false}
           />
 
@@ -174,19 +183,21 @@ const ExpenseTicketsFiltersPanel = ({
             />
           ) : null}
 
-          <SelectCombobox
-            label={indT("Tickets_Filter_Status", "Status")}
-            placeholder={indT("Tickets_Filter_Status", "Status")}
-            options={statusOptions}
-            value={statusFilter}
-            onChange={(nextValue) => onStatusFilterChange(normalizeExpenseTicketStatusFilterCode(nextValue, ""))}
-            allowTextInput={false}
-            disabled={statusFilterReadOnly}
-            idBase="expense-ticket-status-filter"
-            portalClassName="visitas-typography"
-            panelClassName="visitas-typography"
-            showLabel={false}
-          />
+          {showStatusFilter ? (
+            <SelectCombobox
+              label={indT("Tickets_Filter_Status", "Status")}
+              placeholder={indT("Tickets_Filter_Status", "Status")}
+              options={statusOptions}
+              value={statusFilter}
+              onChange={(nextValue) => onStatusFilterChange(normalizeExpenseTicketStatusFilterCode(nextValue, ""))}
+              allowTextInput={false}
+              disabled={statusFilterReadOnly}
+              idBase="expense-ticket-status-filter"
+              portalClassName="visitas-typography"
+              panelClassName="visitas-typography"
+              showLabel={false}
+            />
+          ) : null}
 
           <SelectCombobox
             label={indT("Tickets_Filter_Category", "Category")}

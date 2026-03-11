@@ -23,6 +23,8 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string ExpenseSheets = "api/crm/expensesheets";
         public const string ExpenseSheetTickets = "api/crm/expensesheets/tickets";
         public const string ExpenseSheetTicketsList = "api/crm/expensesheets/tickets/list";
+        public const string ExpenseSheetTicketsLinkList = "api/crm/expensesheets/tickets/link/list";
+        public const string ExpenseSheetTicketsLinkBulk = "api/crm/expensesheets/tickets/link/bulk";
         public const string SpeechTranscribe = "api/ia/service/speech";
         public const string ExpenseFromTicket = "api/ia/service/expensefromticket";
 

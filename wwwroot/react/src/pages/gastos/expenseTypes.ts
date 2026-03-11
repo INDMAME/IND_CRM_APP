@@ -336,6 +336,18 @@ export type ExpenseSheetTicketListRequest = {
   processedByAI?: boolean | null;
 };
 
+export type ExpenseSheetTicketLinkListRequest = {
+  page: number;
+  pageSize: number;
+  createdDateFrom?: ExpenseApiDate;
+  createdDateTo?: ExpenseApiDate;
+  searchKey?: string;
+  filter?: string;
+  currencyCode?: string;
+  gastoType?: ExpenseGastoTypeCode | null;
+  processedByAI?: boolean | null;
+};
+
 export type ExpenseSheetTicketLineRequest = {
   description: string;
   qty: number;
@@ -393,13 +405,21 @@ export type ExpenseSheetTicketListItemDto = {
   FileId: string;
   Description: string;
   Status: number | null;
-  HojaGastosIdDisplay: string;
   ProcessedByAI: boolean | null;
   CurrencyCode: string;
   TotalAmount: number | null;
-  CreatedByUserId: string;
   TransDate: ExpenseApiDate;
-  UrlFile: string;
+  FileName: string;
+  GastoType: ExpenseGastoTypeCode | null;
+};
+
+export type ExpenseSheetTicketLinkListItemDto = {
+  FileId: string;
+  Description: string;
+  ProcessedByAI: boolean | null;
+  CurrencyCode: string;
+  TotalAmount: number | null;
+  TransDate: ExpenseApiDate;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
 };
@@ -419,6 +439,40 @@ export type ExpenseSheetTicketDetailDto = {
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
   Lines: ExpenseSheetTicketLineDto[];
+};
+
+export type ExpenseSheetTicketLinkBulkIssueDto = {
+  ticketId: string;
+  reason: string;
+};
+
+export type ExpenseSheetTicketLinkBulkFilters = {
+  searchKey?: string;
+  filter?: string;
+  createdDateFrom?: ExpenseApiDate;
+  createdDateTo?: ExpenseApiDate;
+  currencyCode?: string;
+  gastoType?: ExpenseGastoTypeCode | null;
+  processedByAI?: boolean | null;
+};
+
+export type ExpenseSheetTicketLinkBulkRequest = {
+  expenseSheetId: string;
+  selectionMode?: "selected" | "filtered";
+  ticketIds?: string[];
+  filters?: ExpenseSheetTicketLinkBulkFilters | null;
+  excludedIds?: string[];
+};
+
+export type ExpenseSheetTicketLinkBulkResultDto = {
+  expenseSheetId: string;
+  requestedCount: number;
+  linkedCount: number;
+  skippedCount: number;
+  failedCount: number;
+  linkedTicketIds: string[];
+  skipped: ExpenseSheetTicketLinkBulkIssueDto[];
+  failed: ExpenseSheetTicketLinkBulkIssueDto[];
 };
 
 export type ExpenseSheetCreateLineDraft = {

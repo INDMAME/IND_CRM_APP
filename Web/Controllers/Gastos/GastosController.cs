@@ -1496,10 +1496,11 @@ namespace IND_CRM_APP.Controllers
                 GastoType = NormalizeTicketGastoType(req.GastoType),
                 ProcessedByAI = req.ProcessedByAI
             };
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
 
             try
             {
-                var result = await _apiClient.GetExpenseSheetTicketsAsync(token, request, HttpContext.RequestAborted);
+                var result = await _apiClient.GetExpenseSheetTicketsAsync(token, request, requestAxUserId, HttpContext.RequestAborted);
                 var items = result.GetAnyItems()
                     .Select(ToExpenseSheetTicketApiListItem)
                     .ToList();
@@ -1544,6 +1545,176 @@ namespace IND_CRM_APP.Controllers
             {
                 _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketsList");
                 return CreateApiPagedError(StatusCodes.Status500InternalServerError, _sr["Api_RequestFailed"].Value);
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/link/list.
+        [HttpPost]
+        public async Task<IActionResult> ApiExpenseSheetTicketsLinkList([FromBody] ExpenseSheetTicketLinkListRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiPagedError(StatusCodes.Status401Unauthorized, _sr["Api_SessionExpired"].Value);
+
+            if (req == null || req.Page < 1 || req.PageSize <= 0)
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            var normalizedCreatedDateFrom = NormalizeListDateFilter(req.CreatedDateFrom);
+            var normalizedCreatedDateTo = NormalizeListDateFilter(req.CreatedDateTo);
+            if (!string.IsNullOrWhiteSpace(req.CreatedDateFrom) && string.IsNullOrWhiteSpace(normalizedCreatedDateFrom))
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            if (!string.IsNullOrWhiteSpace(req.CreatedDateTo) && string.IsNullOrWhiteSpace(normalizedCreatedDateTo))
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            if (!IsValidTicketGastoType(req.GastoType))
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+
+            var page = req.Page;
+            var pageSize = req.PageSize;
+            var normalizedSearchKey = NormalizeOptionalText(req.SearchKey) ?? NormalizeOptionalText(req.Filter);
+            var request = new ExpenseSheetTicketLinkListRequest
+            {
+                Page = page,
+                PageSize = pageSize,
+                CreatedDateFrom = normalizedCreatedDateFrom,
+                CreatedDateTo = normalizedCreatedDateTo,
+                SearchKey = normalizedSearchKey,
+                Filter = NormalizeOptionalText(req.Filter) ?? normalizedSearchKey,
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                GastoType = NormalizeTicketGastoType(req.GastoType),
+                ProcessedByAI = req.ProcessedByAI
+            };
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+
+            try
+            {
+                var result = await _apiClient.GetExpenseSheetTicketLinkListAsync(token, request, requestAxUserId, HttpContext.RequestAborted);
+                var items = result.GetAnyItems()
+                    .Select(ToExpenseSheetTicketLinkApiListItem)
+                    .ToList();
+                var responsePage = result.Page > 0 ? result.Page : page;
+                var responsePageSize = result.PageSize > 0 ? result.PageSize : pageSize;
+
+                return CreateApiPagedResponse(new
+                {
+                    Success = result.Success || items.Count > 0,
+                    Message = result.Message ?? string.Empty,
+                    Total = result.Total > 0 ? result.Total : items.Count,
+                    Page = responsePage,
+                    PageSize = responsePageSize,
+                    Items = items,
+                    TraceId = result.TraceId
+                });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketsLinkList");
+                return CreateApiPagedError(StatusCodes.Status502BadGateway, _sr["Api_RequestFailed"].Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketsLinkList");
+                return CreateApiPagedError(StatusCodes.Status500InternalServerError, _sr["Api_RequestFailed"].Value);
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/link/bulk.
+        [HttpPost]
+        public async Task<IActionResult> ApiExpenseSheetTicketsLinkBulk([FromBody] ExpenseSheetTicketLinkBulkRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            if (req == null || string.IsNullOrWhiteSpace(NormalizeOptionalText(req.ExpenseSheetId)))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var normalizedSelectionMode = string.Equals(req.SelectionMode, "filtered", StringComparison.OrdinalIgnoreCase)
+                ? "filtered"
+                : "selected";
+
+            if (normalizedSelectionMode == "selected" && (req.TicketIds == null || req.TicketIds.Count < 1))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            if (normalizedSelectionMode == "filtered" && req.Filters != null && !IsValidTicketGastoType(req.Filters.GastoType))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var request = new ExpenseSheetTicketLinkBulkRequest
+            {
+                ExpenseSheetId = NormalizeOptionalText(req.ExpenseSheetId) ?? string.Empty,
+                SelectionMode = normalizedSelectionMode,
+                TicketIds = req.TicketIds?
+                    .Select(NormalizeOptionalText)
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Cast<string>()
+                    .ToList(),
+                Filters = req.Filters == null
+                    ? null
+                    : new ExpenseSheetTicketLinkBulkFilters
+                    {
+                        SearchKey = NormalizeOptionalText(req.Filters.SearchKey),
+                        Filter = NormalizeOptionalText(req.Filters.Filter),
+                        CreatedDateFrom = NormalizeListDateFilter(req.Filters.CreatedDateFrom),
+                        CreatedDateTo = NormalizeListDateFilter(req.Filters.CreatedDateTo),
+                        CurrencyCode = NormalizeOptionalText(req.Filters.CurrencyCode)?.ToUpperInvariant(),
+                        GastoType = NormalizeTicketGastoType(req.Filters.GastoType),
+                        ProcessedByAI = req.Filters.ProcessedByAI
+                    },
+                ExcludedIds = req.ExcludedIds?
+                    .Select(NormalizeOptionalText)
+                    .Where(value => !string.IsNullOrWhiteSpace(value))
+                    .Cast<string>()
+                    .ToList()
+            };
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketsLinkBulk));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
+
+            try
+            {
+                var response = await _apiClient.LinkExpenseSheetTicketsBulkAsync(token, request, requestAxUserId, HttpContext.RequestAborted);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketsLinkBulk");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketsLinkBulk");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
             }
         }
 
@@ -3552,13 +3723,26 @@ namespace IND_CRM_APP.Controllers
                 FileId = item.FileId ?? string.Empty,
                 Description = item.Description ?? string.Empty,
                 Status = item.Status,
-                HojaGastosIdDisplay = item.HojaGastosIdDisplay ?? string.Empty,
                 ProcessedByAI = item.ProcessedByAI,
                 CurrencyCode = item.CurrencyCode ?? string.Empty,
                 TotalAmount = item.TotalAmount,
-                CreatedByUserId = item.CreatedByUserId ?? string.Empty,
                 TransDate = NormalizeDate(item.TransDate),
-                UrlFile = item.UrlFile ?? string.Empty,
+                FileName = item.FileName ?? string.Empty,
+                GastoType = NormalizeTicketGastoType(item.GastoType)
+            };
+        }
+
+        // Maps one link-mode ticket list item to API contract fields expected by /api/crm/expensesheets/tickets/link/list.
+        private static object ToExpenseSheetTicketLinkApiListItem(ExpenseSheetTicketLinkListItemDto item)
+        {
+            return new
+            {
+                FileId = item.FileId ?? string.Empty,
+                Description = item.Description ?? string.Empty,
+                ProcessedByAI = item.ProcessedByAI,
+                CurrencyCode = item.CurrencyCode ?? string.Empty,
+                TotalAmount = item.TotalAmount,
+                TransDate = NormalizeDate(item.TransDate),
                 FileName = item.FileName ?? string.Empty,
                 GastoType = NormalizeTicketGastoType(item.GastoType)
             };

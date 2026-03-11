@@ -24,6 +24,10 @@ import type {
   ExpenseSheetListItemDto,
   ExpenseSheetTicketCreateRequest,
   ExpenseSheetTicketDetailDto,
+  ExpenseSheetTicketLinkBulkRequest,
+  ExpenseSheetTicketLinkBulkResultDto,
+  ExpenseSheetTicketLinkListItemDto,
+  ExpenseSheetTicketLinkListRequest,
   ExpenseSheetTicketLineRequest,
   ExpenseSheetTicketListItemDto,
   ExpenseSheetTicketListRequest,
@@ -57,6 +61,8 @@ import {
   normalizeDetailPagedResponse as normalizeDetailPagedResponseTransform,
   normalizeListPagedResponse as normalizeListPagedResponseTransform,
   normalizeSubordinatesPagedResponse as normalizeSubordinatesPagedResponseTransform,
+  normalizeTicketLinkBulkResponse as normalizeTicketLinkBulkResponseTransform,
+  normalizeTicketLinkListPagedResponse as normalizeTicketLinkListPagedResponseTransform,
   normalizeTicketDetailPagedResponse as normalizeTicketDetailPagedResponseTransform,
   normalizeTicketListPagedResponse as normalizeTicketListPagedResponseTransform,
 } from "./expenseApiResponseNormalizers.ts";
@@ -508,7 +514,9 @@ const normalizeApiResponse = normalizeApiResponseTransform;
 const normalizeCurrencyPagedResponse = normalizeCurrencyPagedResponseTransform;
 const normalizeSubordinatesPagedResponse = normalizeSubordinatesPagedResponseTransform;
 const normalizeTicketListPagedResponse = normalizeTicketListPagedResponseTransform;
+const normalizeTicketLinkListPagedResponse = normalizeTicketLinkListPagedResponseTransform;
 const normalizeTicketDetailPagedResponse = normalizeTicketDetailPagedResponseTransform;
+const normalizeTicketLinkBulkResponse = normalizeTicketLinkBulkResponseTransform;
 
 const looksLikeHtmlDocument = (value: unknown): boolean => {
   const raw = safeText(value).toLowerCase();
@@ -623,6 +631,22 @@ export type ExpenseSheetListFetchOptions = ApiFetchOptions & {
 
 export type ExpenseTicketListFetchOptions = ApiFetchOptions & {
   axUserIdOverride?: string;
+};
+
+const buildTicketListHeaders = (
+  context: ExpenseApiContext,
+  options: ApiFetchOptions | undefined,
+  axUserIdOverride: string | undefined
+): Record<string, string> => {
+  const headers = sanitizeHeaders(buildExpenseHeaders(context, options, true, false));
+  const normalizedOverrideAxUserId = normalizeAxUserIdHeader(axUserIdOverride);
+  const resolvedAxUserId = safeText(normalizedOverrideAxUserId || context.axUserId);
+  if (resolvedAxUserId) {
+    headers["X-IND-AxUserId"] = resolvedAxUserId;
+  } else {
+    removeHeaderValue(headers, "X-IND-AxUserId");
+  }
+  return headers;
 };
 
 // Loads the expense sheet list from /api/crm/expensesheets/list.
@@ -1192,13 +1216,19 @@ export const createExpenseSheetTicket = async (
   return normalizeApiResponse(response);
 };
 
-// Loads ticket list using /api/crm/expensesheets/tickets/list.
-export const fetchExpenseSheetTicketsList = async (
-  payload: ExpenseSheetTicketListRequest,
-  options?: ExpenseTicketListFetchOptions
-): Promise<IndPagedResponse<ExpenseSheetTicketListItemDto>> => {
-  const { axUserIdOverride, ...baseOptions } = options || {};
-  const context = await ensureExpenseApiContext(baseOptions);
+const normalizeTicketFilterCriteriaPayload = <
+  T extends {
+    createdDateFrom?: string;
+    createdDateTo?: string;
+    searchKey?: string;
+    filter?: string;
+    currencyCode?: string;
+    gastoType?: unknown;
+    processedByAI?: unknown;
+  },
+>(
+  payload: T
+) => {
   const rawCreatedDateFrom = safeText(payload?.createdDateFrom);
   const rawCreatedDateTo = safeText(payload?.createdDateTo);
   const createdDateFrom = normalizeTicketListDate(rawCreatedDateFrom);
@@ -1212,17 +1242,50 @@ export const fetchExpenseSheetTicketsList = async (
 
   const preferredSearchKey = safeText(payload?.searchKey || payload?.filter);
   const legacyFilter = safeText(payload?.filter || preferredSearchKey);
-  const safePayload: ExpenseSheetTicketListRequest = {
-    page: Number.isFinite(payload?.page) && payload.page > 0 ? Math.floor(payload.page) : 1,
-    pageSize: Number.isFinite(payload?.pageSize) && payload.pageSize > 0 ? Math.floor(payload.pageSize) : 50,
+
+  return {
     createdDateFrom: createdDateFrom || undefined,
     createdDateTo: createdDateTo || undefined,
     searchKey: preferredSearchKey || undefined,
     filter: legacyFilter || undefined,
-    status: normalizeOptionalTicketStatus(payload?.status),
     currencyCode: safeText(payload?.currencyCode).toUpperCase() || undefined,
     gastoType: normalizeTicketListGastoType(payload?.gastoType),
     processedByAI: normalizeOptionalTicketProcessedByAI(payload?.processedByAI),
+  };
+};
+
+const normalizeTicketListFilterPayload = <
+  T extends {
+    page?: number;
+    pageSize?: number;
+    createdDateFrom?: string;
+    createdDateTo?: string;
+    searchKey?: string;
+    filter?: string;
+    currencyCode?: string;
+    gastoType?: unknown;
+    processedByAI?: unknown;
+  },
+>(
+  payload: T
+) => {
+  return {
+    page: Number.isFinite(payload?.page) && Number(payload.page) > 0 ? Math.floor(Number(payload.page)) : 1,
+    pageSize: Number.isFinite(payload?.pageSize) && Number(payload.pageSize) > 0 ? Math.floor(Number(payload.pageSize)) : 50,
+    ...normalizeTicketFilterCriteriaPayload(payload),
+  };
+};
+
+// Loads ticket list using /api/crm/expensesheets/tickets/list.
+export const fetchExpenseSheetTicketsList = async (
+  payload: ExpenseSheetTicketListRequest,
+  options?: ExpenseTicketListFetchOptions
+): Promise<IndPagedResponse<ExpenseSheetTicketListItemDto>> => {
+  const { axUserIdOverride, ...baseOptions } = options || {};
+  const context = await ensureExpenseApiContext(baseOptions);
+  const safePayload: ExpenseSheetTicketListRequest = {
+    ...normalizeTicketListFilterPayload(payload),
+    status: normalizeOptionalTicketStatus(payload?.status),
   };
 
   const response = await fetchJson<IndPagedResponse<ExpenseSheetTicketListItemDto>>(
@@ -1230,22 +1293,77 @@ export const fetchExpenseSheetTicketsList = async (
     {
       ...baseOptions,
       method: "POST",
-      headers: (() => {
-        const headers = sanitizeHeaders(buildExpenseHeaders(context, baseOptions, true, false));
-        const normalizedOverrideAxUserId = normalizeAxUserIdHeader(axUserIdOverride);
-        const resolvedAxUserId = safeText(normalizedOverrideAxUserId || context.axUserId);
-        if (resolvedAxUserId) {
-          headers["X-IND-AxUserId"] = resolvedAxUserId;
-        } else {
-          removeHeaderValue(headers, "X-IND-AxUserId");
-        }
-        return headers;
-      })(),
+      headers: buildTicketListHeaders(context, baseOptions, axUserIdOverride),
       body: JSON.stringify(safePayload),
     }
   );
 
   return normalizeTicketListPagedResponse(response);
+};
+
+// Loads link-mode ticket list using /api/crm/expensesheets/tickets/link/list.
+export const fetchExpenseSheetTicketLinkList = async (
+  payload: ExpenseSheetTicketLinkListRequest,
+  options?: ExpenseTicketListFetchOptions
+): Promise<IndPagedResponse<ExpenseSheetTicketLinkListItemDto>> => {
+  const { axUserIdOverride, ...baseOptions } = options || {};
+  const context = await ensureExpenseApiContext(baseOptions);
+  const safePayload: ExpenseSheetTicketLinkListRequest = {
+    ...normalizeTicketListFilterPayload(payload),
+  };
+
+  const response = await fetchJson<IndPagedResponse<ExpenseSheetTicketLinkListItemDto>>(
+    "/api/crm/expensesheets/tickets/link/list",
+    {
+      ...baseOptions,
+      method: "POST",
+      headers: buildTicketListHeaders(context, baseOptions, axUserIdOverride),
+      body: JSON.stringify(safePayload),
+    }
+  );
+
+  return normalizeTicketLinkListPagedResponse(response);
+};
+
+// Links selected or filtered tickets using /api/crm/expensesheets/tickets/link/bulk.
+export const linkExpenseSheetTicketsBulk = async (
+  payload: ExpenseSheetTicketLinkBulkRequest,
+  options?: ExpenseTicketListFetchOptions
+): Promise<IndApiResponse<ExpenseSheetTicketLinkBulkResultDto>> => {
+  const { axUserIdOverride, ...baseOptions } = options || {};
+  const context = await ensureExpenseApiContext(baseOptions);
+  const selectionMode = payload?.selectionMode === "filtered" ? "filtered" : "selected";
+  const ticketIds = Array.isArray(payload?.ticketIds)
+    ? payload.ticketIds.map((entry) => safeText(entry)).filter(Boolean)
+    : [];
+  const excludedIds = Array.isArray(payload?.excludedIds)
+    ? payload.excludedIds.map((entry) => safeText(entry)).filter(Boolean)
+    : [];
+
+  const safePayload: ExpenseSheetTicketLinkBulkRequest = {
+    expenseSheetId: safeText(payload?.expenseSheetId),
+    selectionMode,
+    ticketIds: selectionMode === "selected" ? ticketIds : undefined,
+    filters:
+      selectionMode === "filtered" && payload?.filters
+        ? {
+            ...normalizeTicketFilterCriteriaPayload(payload.filters),
+          }
+        : undefined,
+    excludedIds: selectionMode === "filtered" ? excludedIds : undefined,
+  };
+
+  const response = await fetchJson<IndApiResponse<ExpenseSheetTicketLinkBulkResultDto>>(
+    "/api/crm/expensesheets/tickets/link/bulk",
+    {
+      ...baseOptions,
+      method: "POST",
+      headers: buildTicketListHeaders(context, baseOptions, axUserIdOverride),
+      body: JSON.stringify(safePayload),
+    }
+  );
+
+  return normalizeTicketLinkBulkResponse(response);
 };
 
 // Loads one ticket detail using /api/crm/expensesheets/tickets/{fileId}.

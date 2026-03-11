@@ -118,7 +118,7 @@ const ExpenseTicketDetailPageContent = () => {
     fileId,
     onForbidden: showPermissionModal,
   });
-  const { readCachedState, saveCachedState, invalidateCachedListForRefetch } = useExpenseTicketsFilterCache();
+  const { readCachedState, saveCachedState, markResetFiltersReturn, clearCachedState } = useExpenseTicketsFilterCache();
   const nativeBackUrl = useMemo(() => {
     if (ticketReturnContext?.sheetId) {
       return buildExpenseSheetDetailUrl(ticketReturnContext.sheetId);
@@ -318,11 +318,13 @@ const ExpenseTicketDetailPageContent = () => {
       void reloadDetail();
     },
     onDeleteSuccess: () => {
-      invalidateCachedListForRefetch();
       if (ticketReturnContext?.sheetId) {
+        clearCachedState();
         navigateToExpenseUrl(buildExpenseSheetDetailUrl(ticketReturnContext.sheetId));
         return;
       }
+
+      markResetFiltersReturn();
       navigateToExpenseUrl("/Gastos/Tickets");
     },
     openConfirm,

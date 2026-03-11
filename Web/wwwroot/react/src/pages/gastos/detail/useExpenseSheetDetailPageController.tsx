@@ -19,6 +19,7 @@ import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 
 const LINES_PAGE_SIZE = 6;
+const EXPENSE_STATUS_APPROVAL_REQUESTED = 1;
 
 const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   if (!items.length) return [];
@@ -169,7 +170,9 @@ export const useExpenseSheetDetailPageController = () => {
   const canDeleteExpenseForCurrentView = detailPolicy.canDeleteSheet;
   const canTransitionStatus = detailPolicy.statusActions.length > 0;
   const isReadOnlyMode = detailPolicy.interactionMode === "read_only";
-  const topbarActionMode = !isCreateMode && isReadOnlyMode ? "view_only" : "default";
+  const currentStatusCode = typeof header?.expenseSheetStatus === "number" ? header.expenseSheetStatus : null;
+  const hidesCrudTopbarByStatus = currentStatusCode === EXPENSE_STATUS_APPROVAL_REQUESTED;
+  const topbarActionMode = !isCreateMode && (isReadOnlyMode || hidesCrudTopbarByStatus) ? "view_only" : "default";
   const detailPermissionsReady = managementBootstrapReady && (isCreateMode || !!header);
   const { invalidateCachedListForRefetch } = useExpenseSheetsFilterCache();
 

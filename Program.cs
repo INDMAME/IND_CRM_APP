@@ -450,6 +450,20 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-expense-sheet-tickets-link-list",
+    pattern: "api/crm/expensesheets/tickets/link/list",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketsLinkList" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
+    name: "api-expense-sheet-tickets-link-bulk",
+    pattern: "api/crm/expensesheets/tickets/link/bulk",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketsLinkBulk" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
     name: "api-expense-sheet-ticket-preview",
     pattern: "api/crm/expensesheets/tickets/preview",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketPreview" },

@@ -1323,5 +1323,23 @@
   <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
     <value>This expense sheet status change is not allowed.</value>
   </data>
+  <data name="ExpenseTickets_LinkMode_ResultTitle" xml:space="preserve">
+    <value>Resultado da vinculacao</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultRequested" xml:space="preserve">
+    <value>Solicitados</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultLinked" xml:space="preserve">
+    <value>Vinculados</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultSkipped" xml:space="preserve">
+    <value>Omitidos</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultFailed" xml:space="preserve">
+    <value>Falhados</value>
+  </data>
+  <data name="ExpenseTickets_LinkMode_ResultReason" xml:space="preserve">
+    <value>Motivo</value>
+  </data>
 </root>
 

@@ -184,6 +184,21 @@ namespace IND_CRM_APP.Services
         Task<PagedApiResponse<ExpenseSheetTicketListItemDto>> GetExpenseSheetTicketsAsync(
             string token,
             ExpenseSheetTicketListRequest req,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default
+        );
+
+        Task<PagedApiResponse<ExpenseSheetTicketLinkListItemDto>> GetExpenseSheetTicketLinkListAsync(
+            string token,
+            ExpenseSheetTicketLinkListRequest req,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default
+        );
+
+        Task<ApiResponse<ExpenseSheetTicketLinkBulkResultDto>> LinkExpenseSheetTicketsBulkAsync(
+            string token,
+            ExpenseSheetTicketLinkBulkRequest req,
+            string? axUserIdOverride = null,
             CancellationToken cancellationToken = default
         );
 

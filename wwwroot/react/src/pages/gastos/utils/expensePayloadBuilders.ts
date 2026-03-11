@@ -1,5 +1,7 @@
 import type {
   ExpenseSheetListApiRequest,
+  ExpenseSheetTicketLinkBulkFilters,
+  ExpenseSheetTicketLinkListRequest,
   ExpenseSheetListFilters,
   ExpenseSheetTicketListRequest,
 } from "../expenseTypes.ts";
@@ -66,6 +68,22 @@ const resolveTicketGastoTypeFilter = (
   return parsed as ExpenseSheetTicketListRequest["gastoType"];
 };
 
+const buildExpenseTicketFilterPayload = (
+  filters: ExpenseTicketAppliedFilterSnapshot
+): ExpenseSheetTicketLinkBulkFilters => {
+  const safeFilterKey = normalizeOptionalText(filters.filterKey);
+
+  return {
+    createdDateFrom: normalizeOptionalText(filters.fromDate),
+    createdDateTo: normalizeOptionalText(filters.toDate),
+    searchKey: safeFilterKey,
+    filter: safeFilterKey,
+    currencyCode: normalizeOptionalText(filters.currencyCode),
+    gastoType: resolveTicketGastoTypeFilter(filters.gastoTypeFilter),
+    processedByAI: resolveProcessedByAiFilter(filters.processedByIaFilter),
+  };
+};
+
 // Build list payload for /api/crm/expensesheets/list from current filter state.
 export const buildExpenseListPayload = (
   filters: ExpenseSheetListFilters,
@@ -122,18 +140,34 @@ export const buildExpenseTicketListPayload = (
 ): ExpenseSheetTicketListRequest => {
   const nextPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
   const nextPageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : DEFAULT_SUGGEST_PAGE_SIZE;
-  const safeFilterKey = normalizeOptionalText(filters.filterKey);
 
   return {
     page: nextPage,
     pageSize: nextPageSize,
-    createdDateFrom: normalizeOptionalText(filters.fromDate),
-    createdDateTo: normalizeOptionalText(filters.toDate),
-    searchKey: safeFilterKey,
-    filter: safeFilterKey,
+    ...buildExpenseTicketFilterPayload(filters),
     status: resolveTicketStatusFilter(filters.statusFilter),
-    currencyCode: normalizeOptionalText(filters.currencyCode),
-    gastoType: resolveTicketGastoTypeFilter(filters.gastoTypeFilter),
-    processedByAI: resolveProcessedByAiFilter(filters.processedByIaFilter),
   };
+};
+
+// Build list payload for /api/crm/expensesheets/tickets/link/list from ticket filter state.
+export const buildExpenseTicketLinkListPayload = (
+  filters: ExpenseTicketAppliedFilterSnapshot,
+  page: number,
+  pageSize: number
+): ExpenseSheetTicketLinkListRequest => {
+  const nextPage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
+  const nextPageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : DEFAULT_SUGGEST_PAGE_SIZE;
+
+  return {
+    page: nextPage,
+    pageSize: nextPageSize,
+    ...buildExpenseTicketFilterPayload(filters),
+  };
+};
+
+// Build filter payload for /api/crm/expensesheets/tickets/link/bulk in filtered mode.
+export const buildExpenseTicketLinkBulkFilters = (
+  filters: ExpenseTicketAppliedFilterSnapshot
+): ExpenseSheetTicketLinkBulkFilters => {
+  return buildExpenseTicketFilterPayload(filters);
 };
