@@ -1087,4 +1087,83 @@ test("Open ticket detail with quick tap and link one ticket with long press", as
       await deleteExpenseSheetBestEffort(currentPage, sheetId);
     }
   });
+
+  test("Keep selection and show backend reason when no ticket can be linked", async ({ page }) => {
+    let currentPage = page;
+    await ensureAuthenticatedSession(currentPage);
+    await expect(currentPage.locator("#expense-tickets-root")).toBeVisible({ timeout: 30000 });
+
+    let sheetId = "";
+    const sheetCurrencyCode = "USD";
+    try {
+      const createdSheet = await createExpenseSheet(currentPage, sheetCurrencyCode);
+      sheetId = createdSheet.sheetId;
+
+      await openLinkModeFromSheet(currentPage, sheetId);
+      await ensureTicketsFilterPanelOpen(currentPage);
+
+      const currencyInput = currentPage.getByRole("combobox", { name: /currency|divisa/i }).first();
+      await expect
+        .poll(async () => String((await currencyInput.inputValue()) || "").trim().toUpperCase(), { timeout: 30000 })
+        .toBe(sheetCurrencyCode);
+
+      await applyTicketCurrencyFilter(currentPage, "");
+      const candidateIds = await getVisibleSelectableTicketIds(currentPage, 12);
+      expect(candidateIds.length).toBeGreaterThan(0);
+
+      let mismatchTicketId = "";
+      for (const candidateId of candidateIds) {
+        const candidateCurrency = await resolveTicketCurrencyCode(currentPage, candidateId);
+        if (candidateCurrency && candidateCurrency !== sheetCurrencyCode) {
+          mismatchTicketId = candidateId;
+          break;
+        }
+      }
+      expect(mismatchTicketId).toBeTruthy();
+
+      await applyTicketFilter(currentPage, mismatchTicketId);
+      await expect(currentPage.locator(`.timeline-item[data-ticket-file-id="${mismatchTicketId}"]`).first()).toBeVisible({
+        timeout: 60000,
+      });
+      await selectTicketByFileId(currentPage, mismatchTicketId);
+      await expect(currentPage.locator(`.timeline-item[data-ticket-file-id="${mismatchTicketId}"]`).first()).toHaveAttribute(
+        "data-ticket-selected",
+        "true",
+        { timeout: 30000 }
+      );
+      await expect(currentPage.locator("text=/Tickets:\\s*1/i").first()).toBeVisible({ timeout: 15000 });
+
+      const result = await confirmLinkSelection(currentPage, 1, sheetId);
+      expect(result.linkedCount, JSON.stringify(result.bulkPayload)).toBe(0);
+
+      const bulkData = asRecord(getFirstDefined(asRecord(result.bulkPayload), ["Data", "data"]));
+      const skippedCount = Number(getFirstDefined(bulkData, ["skippedCount", "SkippedCount"]) || 0);
+      const skippedItems = Array.isArray(getFirstDefined(bulkData, ["skipped", "Skipped"]))
+        ? getFirstDefined(bulkData, ["skipped", "Skipped"])
+        : [];
+      const firstReason = safeText(
+        getFirstDefined(asRecord(skippedItems[0]), ["reason", "Reason"])
+      );
+
+      expect(skippedCount, JSON.stringify(result.bulkPayload)).toBeGreaterThan(0);
+      expect(firstReason).toMatch(/currencycode does not match the target expense sheet/i);
+
+      await currentPage.waitForURL(`**/Gastos/Tickets?action=link&hojaGastosId=${encodeURIComponent(String(sheetId || "").trim())}`, {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      });
+      await expect(currentPage.locator(`.timeline-item[data-ticket-file-id="${mismatchTicketId}"]`).first()).toHaveAttribute(
+        "data-ticket-selected",
+        "true",
+        { timeout: 30000 }
+      );
+      await expect(currentPage.locator("text=/Tickets:\\s*1/i").first()).toBeVisible({ timeout: 15000 });
+      await expect(
+        currentPage.getByText(/ticket currencycode does not match the target expense sheet/i).first()
+      ).toBeVisible({ timeout: 30000 });
+    } finally {
+      currentPage = await ensureActivePage(currentPage);
+      await deleteExpenseSheetBestEffort(currentPage, sheetId);
+    }
+  });
 });

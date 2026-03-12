@@ -13,6 +13,8 @@ type LinkSheetGateState = {
   linkSheetLocked: boolean;
   linkSheetBlockedMessage: string;
   linkSheetCheckBusy: boolean;
+  linkSheetCurrencyCode: string;
+  linkSheetMetadataReady: boolean;
 };
 
 type LinkSheetGateAction =
@@ -41,6 +43,8 @@ const INITIAL_LINK_SHEET_GATE_STATE: LinkSheetGateState = {
   linkSheetLocked: false,
   linkSheetBlockedMessage: "",
   linkSheetCheckBusy: false,
+  linkSheetCurrencyCode: "",
+  linkSheetMetadataReady: false,
 };
 
 const linkSheetGateReducer = (state: LinkSheetGateState, action: LinkSheetGateAction): LinkSheetGateState => {
@@ -87,6 +91,8 @@ export const useExpenseTicketLinkSheetGate = ({
           linkSheetLocked: true,
           linkSheetBlockedMessage: indT("Auth_PermissionDenied_Body", "No permission."),
           linkSheetCheckBusy: false,
+          linkSheetCurrencyCode: "",
+          linkSheetMetadataReady: true,
         },
       });
       return;
@@ -97,6 +103,7 @@ export const useExpenseTicketLinkSheetGate = ({
       type: "patch",
       patch: {
         linkSheetCheckBusy: true,
+        linkSheetMetadataReady: false,
       },
     });
 
@@ -115,6 +122,8 @@ export const useExpenseTicketLinkSheetGate = ({
               linkSheetBlockedMessage:
                 safeText(response.Message) || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."),
               linkSheetCheckBusy: false,
+              linkSheetCurrencyCode: "",
+              linkSheetMetadataReady: true,
             },
           });
           return;
@@ -136,12 +145,15 @@ export const useExpenseTicketLinkSheetGate = ({
               linkSheetLocked: true,
               linkSheetBlockedMessage: indT("ExpenseSheets_NotFound", "Expense sheet was not found."),
               linkSheetCheckBusy: false,
+              linkSheetCurrencyCode: "",
+              linkSheetMetadataReady: true,
             },
           });
           return;
         }
 
         const mappedHeader = mapExpenseSheetHeader(selectedSheet);
+        const linkSheetCurrencyCode = safeText(mappedHeader.currencyCode).toUpperCase();
         const statusCode = typeof mappedHeader.expenseSheetStatus === "number" ? mappedHeader.expenseSheetStatus : null;
         const isPaid = statusCode === EXPENSE_STATUS_PAID || hasAssignedVoucher(mappedHeader.voucher);
         const isManagingOtherUser = isManagingOtherExpenseRecord({
@@ -166,6 +178,8 @@ export const useExpenseTicketLinkSheetGate = ({
             linkSheetLocked: isLocked,
             linkSheetBlockedMessage: isLocked ? resolveBlockedMessage(isPaid) : "",
             linkSheetCheckBusy: false,
+            linkSheetCurrencyCode,
+            linkSheetMetadataReady: true,
           },
         });
       } catch (error) {
@@ -176,6 +190,7 @@ export const useExpenseTicketLinkSheetGate = ({
             type: "patch",
             patch: {
               linkSheetCheckBusy: false,
+              linkSheetMetadataReady: true,
             },
           });
           return;
@@ -192,6 +207,8 @@ export const useExpenseTicketLinkSheetGate = ({
                   ? error.message
                   : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."),
             linkSheetCheckBusy: false,
+            linkSheetCurrencyCode: "",
+            linkSheetMetadataReady: true,
           },
         });
       }

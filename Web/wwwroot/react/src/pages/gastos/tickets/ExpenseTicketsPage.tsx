@@ -106,7 +106,10 @@ const resolveManagedUserSelection = (requestedUserId: string, currentAxUserId: s
   return "";
 };
 
-const buildLinkModeInitialSnapshot = (managedUserId = ""): ExpenseTicketAppliedFilterSnapshot => {
+const buildLinkModeInitialSnapshot = (
+  managedUserId = "",
+  currencyCode = ""
+): ExpenseTicketAppliedFilterSnapshot => {
   const today = startOfDay(new Date());
   const fromDate = new Date(today);
   // Keep automatic link-mode load bounded to avoid heavy upstream scans.
@@ -116,7 +119,7 @@ const buildLinkModeInitialSnapshot = (managedUserId = ""): ExpenseTicketAppliedF
     fromDate: toIsoDate(fromDate),
     toDate: toIsoDate(today),
     filterKey: "",
-    currencyCode: "",
+    currencyCode: safeText(currencyCode).toUpperCase(),
     managedUserId: normalizeUserId(managedUserId),
     statusFilter: 0,
     gastoTypeFilter: "",
@@ -330,7 +333,13 @@ const ExpenseTicketsPageContent = () => {
     },
     [currentAxUserId, managedUsers, setSelectedManagedUserId]
   );
-  const { linkSheetLocked, linkSheetBlockedMessage, linkSheetCheckBusy } = useExpenseTicketLinkSheetGate({
+  const {
+    linkSheetLocked,
+    linkSheetBlockedMessage,
+    linkSheetCheckBusy,
+    linkSheetCurrencyCode,
+    linkSheetMetadataReady,
+  } = useExpenseTicketLinkSheetGate({
     isLinkMode,
     linkSheetId,
     canProcessLinkMode,
@@ -350,6 +359,10 @@ const ExpenseTicketsPageContent = () => {
     resetList,
     loadList,
   });
+  const buildInitialLinkModeSnapshot = useCallback(() => {
+    const initialManagedUserId = syncManagedUserSelection(defaultManagedUserId);
+    return buildLinkModeInitialSnapshot(initialManagedUserId, linkSheetCurrencyCode);
+  }, [defaultManagedUserId, linkSheetCurrencyCode, syncManagedUserSelection]);
 
   const {
     fromDate,
@@ -400,9 +413,20 @@ const ExpenseTicketsPageContent = () => {
     onClearFilters: () => {
       setLinkBulkResult(null);
       clearLinkTicketSelection();
+      clearCachedState();
+      if (isLinkMode) {
+        const linkSnapshot = buildInitialLinkModeSnapshot();
+        restoreAppliedFilters(linkSnapshot);
+        runAutomaticListLoad(1, normalizeLinkModeSnapshotForLoad(linkSnapshot), {
+          clearCache: true,
+          resetBeforeLoad: true,
+          waitForLinkModeSheetReady: true,
+        });
+        return;
+      }
+
       const resetManagedUserId = syncManagedUserSelection(currentAxUserId);
       setManagedUserId(resetManagedUserId);
-      clearCachedState();
       resetList();
     },
   });
@@ -594,8 +618,7 @@ const ExpenseTicketsPageContent = () => {
   );
 
   const restoreInitialLinkModeState = useCallback(() => {
-    const initialManagedUserId = syncManagedUserSelection(defaultManagedUserId);
-    const linkSnapshot = buildLinkModeInitialSnapshot(initialManagedUserId);
+    const linkSnapshot = buildInitialLinkModeSnapshot();
     clearCachedState();
     clearExpenseTicketLinkReturnState();
     clearLinkTicketSelection();
@@ -607,14 +630,13 @@ const ExpenseTicketsPageContent = () => {
       waitForLinkModeSheetReady: true,
     });
   }, [
+    buildInitialLinkModeSnapshot,
     clearCachedState,
     clearExpenseTicketLinkReturnState,
     clearLinkTicketSelection,
-    defaultManagedUserId,
     normalizeLinkModeSnapshotForLoad,
     restoreAppliedFilters,
     runAutomaticListLoad,
-    syncManagedUserSelection,
   ]);
 
   const restoreStandardReturnState = useCallback(
@@ -779,11 +801,11 @@ const ExpenseTicketsPageContent = () => {
       }
 
       setLinkBulkResult(result);
-      clearTicketSelection();
-      clearCachedState();
-      clearExpenseTicketLinkReturnState();
 
       if (result.linkedCount > 0) {
+        clearTicketSelection();
+        clearCachedState();
+        clearExpenseTicketLinkReturnState();
         clearExpenseTicketReturnContext();
         const successMark = result.failedCount > 0 || result.skippedCount > 0 ? "warningProcess" : "okProcess";
         flashActionMark(successMark, successMark === "okProcess" ? 1200 : 1500);
@@ -1105,6 +1127,7 @@ const ExpenseTicketsPageContent = () => {
   useEffect(() => {
     if (!managementBootstrapReady || !hasAccess) return;
     if (didRestoreOnMountRef.current) return;
+    if (isLinkMode && !linkSheetMetadataReady) return;
     didRestoreOnMountRef.current = true;
     const isHistoryBackForward = isExpenseHistoryBackForwardNavigation();
     const isReturnFromTicketDetail = hasExpenseReturnReferrer([
@@ -1182,6 +1205,7 @@ const ExpenseTicketsPageContent = () => {
     consumeReturnMode,
     hasAccess,
     isLinkMode,
+    linkSheetMetadataReady,
     linkSheetId,
     managementBootstrapReady,
     readCachedState,
