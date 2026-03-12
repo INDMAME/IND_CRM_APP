@@ -206,6 +206,46 @@ export type ExpenseSheetCreateResponseData = {
   LineRecIds: number[];
 };
 
+export type ExpenseSheetTicketQuickCreateRequest = {
+  ticketImage: File | Blob;
+  currencyCode?: string;
+  description?: string;
+  comentario?: string;
+  existingHojaGastosId?: string;
+  projectId?: string;
+};
+
+export type ExpenseSheetTicketQuickCreateCompletedStage =
+  | "ticket-created"
+  | "file-uploaded"
+  | "draft-extracted"
+  | "ticket-finalized"
+  | "sheet-linked";
+
+export type ExpenseSheetTicketQuickCreateStepTraceIds = {
+  TicketCreate?: string;
+  FileUpload?: string;
+  DraftExtract?: string;
+  TicketFinalize?: string;
+  SheetLink?: string;
+};
+
+export type ExpenseSheetTicketQuickCreateResponseData = {
+  FileId: string;
+  UrlFile: string;
+  FileName: string;
+  ProcessedByAI?: boolean | null;
+  LinkedToSheet: boolean;
+  HojaGastosId?: string | null;
+  CompletedStage: ExpenseSheetTicketQuickCreateCompletedStage | string;
+  StepTraceIds?: ExpenseSheetTicketQuickCreateStepTraceIds | null;
+};
+
+export type ExpenseSheetTicketQuickCreateResult = IndApiResponse<ExpenseSheetTicketQuickCreateResponseData> & {
+  HttpStatus?: number;
+  RetryAfter?: string | null;
+};
+
 // /api/ia/service/expensefromticket response contract.
 export type ExpenseSheetDraftResponse = ExpenseSheetCreateRequest & {
   gastoType?: ExpenseGastoTypeCode | null;

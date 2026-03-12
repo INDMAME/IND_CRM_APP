@@ -443,6 +443,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-quick-create",
+    pattern: "api/crm/expensesheets/tickets/quick-create",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketQuickCreate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
     name: "api-expense-sheet-tickets-list",
     pattern: "api/crm/expensesheets/tickets/list",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketsList" },

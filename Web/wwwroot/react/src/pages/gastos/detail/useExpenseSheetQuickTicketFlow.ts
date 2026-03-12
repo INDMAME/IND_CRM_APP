@@ -1,42 +1,48 @@
-﻿import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
-import { indT } from "../../../utils/indI18n.ts";
+import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
-import type { ExpenseSheetDraftResponse, ExpenseSheetTicketCreateRequest } from "../expenseTypes.ts";
-import {
-  applyExpenseSheetTicketIa,
-  createExpenseSheet,
-  createExpenseSheetTicket,
-  extractExpenseFromTicketDraft,
-  uploadExpenseSheetTicketFile,
-} from "../utils/expenseApi.ts";
+import type { ExpenseSheetTicketQuickCreateResult } from "../expenseTypes.ts";
+import { createExpenseSheetTicketQuick } from "../utils/expenseApi.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import {
-  DEFAULT_CREATE_MODE,
   MAX_TICKET_IMAGE_SIZE_BYTES,
-  buildSheetLinePayload,
-  buildTicketIaPayload,
   cacheImageFile,
   extractTraceIdFromError,
-  getTodayDdMmYyyy,
-  inferExtension,
   isSupportedTicketImageFile,
-  normalizeDraftFromIaResponse,
   persistTraceList,
-  readCachedImageFile,
   removeCachedImageFile,
   resolveRandomKey,
-  resolveTicketFileIdFromDraftResponse,
-  resolveUploadResult,
-  sanitizeFileName,
-  type NormalizedDraft,
-  type PendingUploadRetry,
   type QuickFlowProgressKey,
   type TicketImageSource,
   type TicketTraceEntry,
-  type UploadSyncResult,
   type UseExpenseSheetQuickTicketFlowArgs,
 } from "./useExpenseSheetQuickTicketFlowCore.ts";
+
+type QuickCreatePartialTicketState = {
+  fileId: string;
+  linkedToSheet: boolean;
+  completedStage: string;
+  urlFile: string;
+  fileName: string;
+  processedByAI: boolean | null;
+};
+
+const formatValidationErrors = (
+  errors: Array<{ Field?: unknown; Message?: unknown } | null | undefined> | null | undefined
+): string => {
+  if (!Array.isArray(errors) || errors.length === 0) return "";
+
+  return errors
+    .map((entry) => {
+      const field = safeText(entry?.Field);
+      const message = safeText(entry?.Message);
+      if (field && message) return `${field}: ${message}`;
+      return message || field;
+    })
+    .filter(Boolean)
+    .join(" | ");
+};
 
 export const useExpenseSheetQuickTicketFlow = ({
   sheetId = "",
@@ -54,9 +60,10 @@ export const useExpenseSheetQuickTicketFlow = ({
   const [busy, setBusy] = useState(false);
   const [progressKey, setProgressKey] = useState<QuickFlowProgressKey | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
-  const [pendingUploadRetry, setPendingUploadRetry] = useState<PendingUploadRetry | null>(null);
   const [traceList, setTraceList] = useState<TicketTraceEntry[]>([]);
+  const [partialTicketFailure, setPartialTicketFailure] = useState<QuickCreatePartialTicketState | null>(null);
   const latestFileRef = useRef<{ cacheKey: string; file: File } | null>(null);
+  const latestCreatedTicketRef = useRef<QuickCreatePartialTicketState | null>(null);
 
   const progressMessage = useMemo(() => {
     if (progressKey === "uploadingImage") {
@@ -98,9 +105,18 @@ export const useExpenseSheetQuickTicketFlow = ({
     });
   }, []);
 
+  const clearCachedCurrentImage = useCallback(() => {
+    const cacheKey = latestFileRef.current?.cacheKey;
+    if (!cacheKey) return;
+    void removeCachedImageFile(cacheKey).catch(() => {
+      // Ignore cache cleanup failures in restricted browser contexts.
+    });
+  }, []);
+
   const clearFlowState = useCallback(() => {
+    latestCreatedTicketRef.current = null;
     setErrorMessage("");
-    setPendingUploadRetry(null);
+    setPartialTicketFailure(null);
     setTraceList([]);
     persistTraceList([]);
   }, []);
@@ -130,289 +146,168 @@ export const useExpenseSheetQuickTicketFlow = ({
     return true;
   }, [canCreateExpense, isCreateMode, isSheetLocked, linkToSheet, onForbidden, sheetId]);
 
-  const resolveUiErrorMessage = useCallback(
-    (error: unknown): string => {
-      if (error instanceof ApiFetchError) {
-        if (error.status === 422) {
-          const validationText = Array.isArray(error.validationErrors)
-            ? error.validationErrors
-                .map((entry) => {
-                  const field = safeText(entry?.Field);
-                  const message = safeText(entry?.Message);
-                  if (field && message) return `${field}: ${message}`;
-                  return message || field;
-                })
-                .filter((entry) => entry)
-                .join(" | ")
-            : "";
-          return validationText || indT("ExpenseSheets_NewTicket_Error_Validation", "Validation error.");
-        }
-        if (error.status === 404) {
-          return indT("ExpenseSheets_NewTicket_Error_NotFound", "Record not found.");
-        }
-        if (error.status === 500) {
-          return indT("ExpenseSheets_NewTicket_Error_Server", "Server error.");
-        }
+  const resolveUiErrorMessage = useCallback((error: unknown): string => {
+    if (error instanceof ApiFetchError) {
+      const validationText = formatValidationErrors(error.validationErrors);
+      if (validationText) {
+        return validationText;
       }
 
-      return error instanceof Error && safeText(error.message)
-        ? safeText(error.message)
-        : indT("Api_RequestFailed", "Request failed.");
+      if (error.status === 429) {
+        return safeText(error.message) || indT("ExpenseSheets_NewTicket_Error_RateLimit", "Too many requests.");
+      }
+      if (error.status === 404) {
+        return indT("ExpenseSheets_NewTicket_Error_NotFound", "Record not found.");
+      }
+      if (error.status === 500) {
+        return indT("ExpenseSheets_NewTicket_Error_Server", "Server error.");
+      }
+    }
+
+    return error instanceof Error && safeText(error.message)
+      ? safeText(error.message)
+      : indT("Api_RequestFailed", "Request failed.");
+  }, []);
+
+  const addQuickCreateResponseTraces = useCallback(
+    (response: ExpenseSheetTicketQuickCreateResult) => {
+      addTrace("ticket-quick-create", safeText(response.TraceId));
+
+      const stepTraceIds = response.Data?.StepTraceIds;
+      addTrace("ticket-create", safeText(stepTraceIds?.TicketCreate));
+      addTrace("ticket-file-upload", safeText(stepTraceIds?.FileUpload));
+      addTrace("expensefromticket", safeText(stepTraceIds?.DraftExtract));
+      addTrace("ticket-finalize", safeText(stepTraceIds?.TicketFinalize));
+      addTrace("expense-sheet-link", safeText(stepTraceIds?.SheetLink));
     },
-    []
+    [addTrace]
   );
 
-  const applyIaAndFinalize = useCallback(
-    async (fileId: string, draft: NormalizedDraft, uploadResult: UploadSyncResult) => {
-      setProgressKey("finalizingIa");
-      const iaPayload = buildTicketIaPayload(draft, uploadResult);
-      const iaResponse = await applyExpenseSheetTicketIa(fileId, iaPayload, buildApiOptions());
-      addTrace("ticket-ia", safeText((iaResponse as { TraceId?: unknown })?.TraceId));
-      if (iaResponse.Success !== true) {
-        throw new Error(safeText(iaResponse.Message) || indT("Api_RequestFailed", "Request failed."));
-      }
+  const resolveQuickCreateFailureMessage = useCallback((response: ExpenseSheetTicketQuickCreateResult): string => {
+    const data = response.Data;
+    const fileId = safeText(data?.FileId);
+    const completedStage = safeText(data?.CompletedStage);
+    const responseMessage = safeText(response.Message);
+    const validationText = formatValidationErrors(response.Errors);
+    const retryAfter = safeText(response.RetryAfter);
+    const messageParts: string[] = [];
 
-      if (!linkToSheet) return;
-
-      const linePayload = buildSheetLinePayload(draft, fileId, projectId);
-      if (!linePayload) return;
-
-      setProgressKey("linkingExpenseLine");
-      const createResponse = await createExpenseSheet(
-        {
-          mode: 2,
-          existingHojaGastosId: sheetId,
-          lines: [linePayload],
-        },
-        buildApiOptions()
-      );
-      addTrace("expense-sheet-append-line", safeText((createResponse as { TraceId?: unknown })?.TraceId));
-      if (createResponse.Success !== true) {
-        throw new Error(safeText(createResponse.Message) || indT("Api_RequestFailed", "Request failed."));
-      }
-    },
-    [addTrace, buildApiOptions, linkToSheet, projectId, sheetId]
-  );
-
-  const resumeFromUploadStep = useCallback(
-    async (pendingState: PendingUploadRetry, file: File): Promise<void> => {
-      setBusy(true);
-      setErrorMessage("");
-      setProgressKey("syncingFile");
-
-      try {
-        const uploadResponse = await uploadExpenseSheetTicketFile(
-          pendingState.fileId,
-          file,
-          pendingState.extension,
-          buildApiOptions()
+    if (response.HttpStatus === 429) {
+      messageParts.push(responseMessage || indT("ExpenseSheets_NewTicket_Error_RateLimit", "Too many requests."));
+      if (retryAfter) {
+        messageParts.push(
+          indFormat("ExpenseSheets_NewTicket_Error_RetryAfterHint", "Retry after {0}.", retryAfter)
         );
-        addTrace("ticket-file-upload", safeText((uploadResponse as { TraceId?: unknown })?.TraceId));
-        if (uploadResponse.Success !== true) {
-          throw new Error(safeText(uploadResponse.Message) || indT("Api_RequestFailed", "Request failed."));
-        }
-
-        const uploadResult = resolveUploadResult(uploadResponse.Data);
-        let draft: NormalizedDraft;
-        if (pendingState.strategy === "ia-ready") {
-          draft = pendingState.draft;
-        } else {
-          setProgressKey("uploadingImage");
-          const iaDraftResponse = await extractExpenseFromTicketDraft(
-            file,
-            false,
-            uploadResult.urlFile || undefined,
-            buildApiOptions()
-          );
-          addTrace("expensefromticket", safeText((iaDraftResponse as { TraceId?: unknown })?.TraceId));
-          if (iaDraftResponse.Success !== true) {
-            throw new Error(safeText(iaDraftResponse.Message) || indT("Api_RequestFailed", "Request failed."));
-          }
-          draft = normalizeDraftFromIaResponse(iaDraftResponse.Data as ExpenseSheetDraftResponse);
-        }
-
-        await applyIaAndFinalize(pendingState.fileId, draft, uploadResult);
-
-        setProgressKey("done");
-        setPendingUploadRetry(null);
-        await removeCachedImageFile(pendingState.cacheKey);
-        setTimeout(() => {
-          flashActionMark("okProcess", 1200);
-          setBusy(false);
-          setProgressKey(null);
-          onCompleted?.({ fileId: pendingState.fileId, linkedToSheet: linkToSheet });
-        }, 320);
-      } catch (error) {
-        if (error instanceof ApiFetchError) {
-          const traceId = extractTraceIdFromError(error);
-          addTrace("ticket-retry-error", traceId);
-        }
-        flashActionMark("errorProcess", 1500);
-        setBusy(false);
-        setProgressKey(null);
-        setErrorMessage(resolveUiErrorMessage(error));
       }
-    },
-    [addTrace, applyIaAndFinalize, buildApiOptions, linkToSheet, onCompleted, resolveUiErrorMessage]
-  );
+    } else if (validationText) {
+      messageParts.push(validationText);
+    } else if (responseMessage) {
+      messageParts.push(responseMessage);
+    } else if (fileId) {
+      messageParts.push(
+        indT(
+          "ExpenseSheets_NewTicket_Error_Partial",
+          "The ticket was created, but the full process did not finish."
+        )
+      );
+    } else if (response.HttpStatus === 404) {
+      messageParts.push(indT("ExpenseSheets_NewTicket_Error_NotFound", "Record not found."));
+    } else if (response.HttpStatus === 500) {
+      messageParts.push(indT("ExpenseSheets_NewTicket_Error_Server", "Server error."));
+    } else {
+      messageParts.push(indT("Api_RequestFailed", "Request failed."));
+    }
 
-  const runIaCreateFlow = useCallback(
-    async (file: File, extension: string, cacheKey: string): Promise<void> => {
-      setBusy(true);
-      setProgressKey("uploadingImage");
-      clearFlowState();
+    if (fileId && completedStage) {
+      messageParts.push(indFormat("ExpenseSheets_NewTicket_Error_Stage", "Completed stage: {0}.", completedStage));
+    }
 
-      try {
-        setProgressKey("creatingTicket");
-        const draftResponse = await extractExpenseFromTicketDraft(file, true, undefined, buildApiOptions());
-        addTrace("expensefromticket", safeText((draftResponse as { TraceId?: unknown })?.TraceId));
-        if (draftResponse.Success !== true) {
-          throw new Error(safeText(draftResponse.Message) || indT("Api_RequestFailed", "Request failed."));
-        }
+    return messageParts.filter(Boolean).join(" ");
+  }, []);
 
-        const draft = normalizeDraftFromIaResponse(draftResponse.Data as ExpenseSheetDraftResponse);
-        const fileId = resolveTicketFileIdFromDraftResponse(draftResponse.Data);
-        if (!fileId) {
-          throw new Error(indT("ExpenseSheets_NewTicket_Error_NoFileId", "Could not resolve ticket file id."));
-        }
-
-        try {
-          setProgressKey("syncingFile");
-          const uploadResponse = await uploadExpenseSheetTicketFile(fileId, file, extension, buildApiOptions());
-          addTrace("ticket-file-upload", safeText((uploadResponse as { TraceId?: unknown })?.TraceId));
-          if (uploadResponse.Success !== true) {
-            throw new Error(safeText(uploadResponse.Message) || indT("Api_RequestFailed", "Request failed."));
-          }
-
-          const uploadResult = resolveUploadResult(uploadResponse.Data);
-          await applyIaAndFinalize(fileId, draft, uploadResult);
-
-          setProgressKey("done");
-          await removeCachedImageFile(cacheKey);
-          setTimeout(() => {
-            flashActionMark("okProcess", 1200);
-            setBusy(false);
-            setProgressKey(null);
-            onCompleted?.({ fileId, linkedToSheet: linkToSheet });
-          }, 320);
-        } catch (uploadError) {
-          if (uploadError instanceof ApiFetchError) {
-            const traceId = extractTraceIdFromError(uploadError);
-            addTrace("ticket-file-upload-error", traceId);
-          }
-          setPendingUploadRetry({
-            strategy: "ia-ready",
-            fileId,
-            extension,
-            cacheKey,
-            draft,
-            fileNameHint: sanitizeFileName(file.name),
-          });
-          throw new Error(
-            indT(
-              "ExpenseSheets_NewTicket_Error_UploadRetry",
-              "Ticket created, but file sync failed. Retry upload to complete process."
-            )
-          );
-        }
-      } catch (error) {
-        flashActionMark("errorProcess", 1500);
-        setBusy(false);
-        setProgressKey(null);
-        setErrorMessage(resolveUiErrorMessage(error));
-      }
-    },
-    [addTrace, applyIaAndFinalize, buildApiOptions, clearFlowState, linkToSheet, onCompleted, resolveUiErrorMessage]
-  );
-
-  const runManualCreateFlow = useCallback(
-    async (file: File, extension: string, cacheKey: string): Promise<void> => {
+  const runQuickCreateFlow = useCallback(
+    async (file: File, cacheKey: string): Promise<void> => {
       setBusy(true);
       setProgressKey("creatingTicket");
       clearFlowState();
-      let createdFileId = "";
-      let stage: "creatingTicket" | "syncingFile" | "uploadingImage" | "finalizingIa" = "creatingTicket";
 
       try {
-        const today = getTodayDdMmYyyy();
-        const placeholderUrl = `pending://ticket-upload/${resolveRandomKey()}`;
-        const createPayload: ExpenseSheetTicketCreateRequest = {
-          mode: 1,
-          description: sanitizeFileName(file.name).replace(/\.[a-z0-9]+$/i, "") || "Ticket",
-          currencyCode: safeText(currencyCode).toUpperCase() || "EUR",
-          transDate: today,
-          comentario: "",
-          urlFile: placeholderUrl,
-          fileExtension: extension,
-        };
-        const createResponse = await createExpenseSheetTicket(createPayload, buildApiOptions());
-        addTrace("ticket-create-manual", safeText((createResponse as { TraceId?: unknown })?.TraceId));
-        if (createResponse.Success !== true) {
-          throw new Error(safeText(createResponse.Message) || indT("Api_RequestFailed", "Request failed."));
-        }
-
-        const createData = (createResponse as { Data?: { FileId?: unknown; fileId?: unknown } }).Data;
-        const fileId = safeText(createData?.FileId ?? createData?.fileId);
-        if (!fileId) {
-          throw new Error(indT("ExpenseSheets_NewTicket_Error_NoFileId", "Could not resolve ticket file id."));
-        }
-        createdFileId = fileId;
-
-        stage = "syncingFile";
-        setProgressKey("syncingFile");
-        const uploadResponse = await uploadExpenseSheetTicketFile(fileId, file, extension, buildApiOptions());
-        addTrace("ticket-file-upload", safeText((uploadResponse as { TraceId?: unknown })?.TraceId));
-        if (uploadResponse.Success !== true) {
-          throw new Error(safeText(uploadResponse.Message) || indT("Api_RequestFailed", "Request failed."));
-        }
-        const uploadResult = resolveUploadResult(uploadResponse.Data);
-
-        stage = "uploadingImage";
-        setProgressKey("uploadingImage");
-        const iaDraftResponse = await extractExpenseFromTicketDraft(
-          file,
-          false,
-          uploadResult.urlFile || undefined,
+        const response = await createExpenseSheetTicketQuick(
+          {
+            ticketImage: file,
+            currencyCode: safeText(currencyCode).toUpperCase() || undefined,
+            existingHojaGastosId: linkToSheet ? safeText(sheetId) || undefined : undefined,
+            projectId: linkToSheet ? safeText(projectId) || undefined : undefined,
+          },
           buildApiOptions()
         );
-        addTrace("expensefromticket", safeText((iaDraftResponse as { TraceId?: unknown })?.TraceId));
-        if (iaDraftResponse.Success !== true) {
-          throw new Error(safeText(iaDraftResponse.Message) || indT("Api_RequestFailed", "Request failed."));
-        }
-        const draft = normalizeDraftFromIaResponse(iaDraftResponse.Data as ExpenseSheetDraftResponse);
-        stage = "finalizingIa";
-        await applyIaAndFinalize(fileId, draft, uploadResult);
 
-        setProgressKey("done");
-        await removeCachedImageFile(cacheKey);
-        setTimeout(() => {
+        addQuickCreateResponseTraces(response);
+
+        const fileId = safeText(response.Data?.FileId);
+        const linkedToSheet = response.Data?.LinkedToSheet === true;
+        const partialState =
+          fileId
+            ? {
+                fileId,
+                linkedToSheet,
+                completedStage: safeText(response.Data?.CompletedStage),
+                urlFile: safeText(response.Data?.UrlFile),
+                fileName: safeText(response.Data?.FileName),
+                processedByAI: response.Data?.ProcessedByAI ?? null,
+              }
+            : null;
+
+        if (partialState) {
+          latestCreatedTicketRef.current = partialState;
+        }
+
+        if (response.Success === true) {
+          if (!fileId) {
+            throw new Error(indT("ExpenseSheets_NewTicket_Error_NoFileId", "Could not resolve ticket file id."));
+          }
+
+          setProgressKey("done");
+          await removeCachedImageFile(cacheKey);
           flashActionMark("okProcess", 1200);
           setBusy(false);
           setProgressKey(null);
-          onCompleted?.({ fileId, linkedToSheet: linkToSheet });
-        }, 320);
-      } catch (error) {
-        if (error instanceof ApiFetchError) {
-          const traceId = extractTraceIdFromError(error);
-          addTrace("ticket-manual-error", traceId);
+          onCompleted?.({ fileId, linkedToSheet });
+          return;
         }
 
-        if (stage === "syncingFile" && createdFileId) {
-          setPendingUploadRetry({
-            strategy: "manual-post-upload-draft",
-            fileId: createdFileId,
-            extension,
-            cacheKey,
-            fileNameHint: sanitizeFileName(file.name),
-          });
+        if (partialState) {
+          setPartialTicketFailure(partialState);
         }
+
+        flashActionMark("errorProcess", 1500);
+        setBusy(false);
+        setProgressKey(null);
+        setErrorMessage(resolveQuickCreateFailureMessage(response));
+      } catch (error) {
+        if (error instanceof ApiFetchError) {
+          addTrace("ticket-quick-create-error", extractTraceIdFromError(error));
+        }
+
         flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
         setErrorMessage(resolveUiErrorMessage(error));
       }
     },
-    [addTrace, applyIaAndFinalize, buildApiOptions, clearFlowState, currencyCode, linkToSheet, onCompleted, resolveUiErrorMessage]
+    [
+      addQuickCreateResponseTraces,
+      addTrace,
+      buildApiOptions,
+      clearFlowState,
+      currencyCode,
+      linkToSheet,
+      onCompleted,
+      projectId,
+      resolveQuickCreateFailureMessage,
+      resolveUiErrorMessage,
+      sheetId,
+    ]
   );
 
   const handleSelectedFile = useCallback(
@@ -421,7 +316,7 @@ export const useExpenseSheetQuickTicketFlow = ({
       if (!ensureQuickCreatePermission()) return;
 
       const safeType = safeText(file.type).toLowerCase();
-      if (safeType && !safeType.startsWith("image/")) {
+      if (safeType && !safeType.startsWith("image/") && !/\.(jpe?g|png|webp)$/i.test(file.name || "")) {
         setErrorMessage(indT("ExpenseSheets_NewTicket_Error_FileType", "Unsupported image format."));
         return;
       }
@@ -434,48 +329,36 @@ export const useExpenseSheetQuickTicketFlow = ({
         return;
       }
 
-      const extension = inferExtension(file);
       const cacheKey = resolveRandomKey();
       latestFileRef.current = { cacheKey, file };
-
-      try {
-        await cacheImageFile(cacheKey, file);
-      } catch {
+      void cacheImageFile(cacheKey, file).catch(() => {
         // Do not block flow if browser cache storage is unavailable.
-      }
+      });
 
-      if (DEFAULT_CREATE_MODE === "manual") {
-        await runManualCreateFlow(file, extension, cacheKey);
-      } else {
-        await runIaCreateFlow(file, extension, cacheKey);
-      }
+      await runQuickCreateFlow(file, cacheKey);
     },
-    [ensureQuickCreatePermission, runIaCreateFlow, runManualCreateFlow]
+    [ensureQuickCreatePermission, runQuickCreateFlow]
   );
 
   const retryPendingUpload = useCallback(async () => {
-    if (!pendingUploadRetry) return;
-    if (!ensureQuickCreatePermission()) return;
+    return;
+  }, []);
 
-    let selectedFile = latestFileRef.current?.cacheKey === pendingUploadRetry.cacheKey ? latestFileRef.current.file : null;
-    if (!selectedFile) {
-      const blob = await readCachedImageFile(pendingUploadRetry.cacheKey);
-      if (!blob) {
-        setErrorMessage(indT("ExpenseSheets_NewTicket_Error_RetryFileMissing", "Cached image is no longer available."));
-        return;
-      }
-      selectedFile = new File([blob], pendingUploadRetry.fileNameHint || "ticket-image", {
-        type: safeText(blob.type) || "image/jpeg",
-      });
-      latestFileRef.current = { cacheKey: pendingUploadRetry.cacheKey, file: selectedFile };
-    }
+  const openCreatedTicket = useCallback(() => {
+    const createdTicket = partialTicketFailure || latestCreatedTicketRef.current;
+    const fileId = safeText(createdTicket?.fileId);
+    if (!fileId) return;
 
-    await resumeFromUploadStep(pendingUploadRetry, selectedFile);
-  }, [ensureQuickCreatePermission, pendingUploadRetry, resumeFromUploadStep]);
+    clearCachedCurrentImage();
+    setErrorMessage("");
+    setPartialTicketFailure(null);
+    onCompleted?.({ fileId, linkedToSheet: createdTicket?.linkedToSheet === true });
+  }, [clearCachedCurrentImage, onCompleted, partialTicketFailure]);
 
   const openSourcePicker = useCallback(() => {
     if (!ensureQuickCreatePermission()) return;
     setErrorMessage("");
+    setPartialTicketFailure(null);
     setSourcePickerOpen(true);
   }, [ensureQuickCreatePermission]);
 
@@ -521,8 +404,11 @@ export const useExpenseSheetQuickTicketFlow = ({
   }, []);
 
   const clearError = useCallback(() => {
+    clearCachedCurrentImage();
+    latestCreatedTicketRef.current = null;
     setErrorMessage("");
-  }, []);
+    setPartialTicketFailure(null);
+  }, [clearCachedCurrentImage]);
 
   return {
     sourcePickerOpen,
@@ -530,7 +416,8 @@ export const useExpenseSheetQuickTicketFlow = ({
     progressKey,
     progressMessage,
     errorMessage,
-    hasPendingUploadRetry: pendingUploadRetry !== null,
+    hasPendingUploadRetry: false,
+    hasPartialTicketFailure: partialTicketFailure !== null,
     traceList,
     openSourcePicker,
     closeSourcePicker,
@@ -538,6 +425,7 @@ export const useExpenseSheetQuickTicketFlow = ({
     selectFromGallery,
     handleSelectedFile,
     retryPendingUpload,
+    openCreatedTicket,
     clearError,
   };
 };

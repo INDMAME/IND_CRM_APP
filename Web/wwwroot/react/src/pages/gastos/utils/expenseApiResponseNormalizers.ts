@@ -5,6 +5,7 @@ import type {
   ExpenseSheetTicketDetailDto,
   ExpenseSheetTicketLinkBulkResultDto,
   ExpenseSheetTicketLinkListItemDto,
+  ExpenseSheetTicketQuickCreateResult,
   ExpenseSheetTicketListItemDto,
   ExpenseSheetListItemDto,
   IndApiResponse,
@@ -41,6 +42,83 @@ export const normalizeApiResponse = <T>(response: IndApiResponse<T>): IndApiResp
   return {
     ...response,
     Errors: Array.isArray(response?.Errors) ? response.Errors : response?.Errors ?? null,
+  };
+};
+
+export const normalizeTicketQuickCreateResponse = (
+  response: ExpenseSheetTicketQuickCreateResult
+): ExpenseSheetTicketQuickCreateResult => {
+  const normalized = normalizeApiResponse(response);
+  const rawData = normalized?.Data;
+  if (!rawData || typeof rawData !== "object") {
+    return {
+      ...normalized,
+      HttpStatus: typeof response?.HttpStatus === "number" ? response.HttpStatus : undefined,
+      RetryAfter: safeText(response?.RetryAfter) || null,
+    };
+  }
+
+  const rawStepTraceIds =
+    (rawData as { StepTraceIds?: unknown; stepTraceIds?: unknown }).StepTraceIds ??
+    (rawData as { stepTraceIds?: unknown }).stepTraceIds;
+  const stepTraceIds = rawStepTraceIds && typeof rawStepTraceIds === "object" ? rawStepTraceIds : null;
+
+  return {
+    ...normalized,
+    HttpStatus: typeof response?.HttpStatus === "number" ? response.HttpStatus : undefined,
+    RetryAfter: safeText(response?.RetryAfter) || null,
+    Data: {
+      FileId: safeText((rawData as { FileId?: unknown; fileId?: unknown }).FileId ?? (rawData as { fileId?: unknown }).fileId),
+      UrlFile: safeText(
+        (rawData as { UrlFile?: unknown; urlFile?: unknown }).UrlFile ?? (rawData as { urlFile?: unknown }).urlFile
+      ),
+      FileName: safeText(
+        (rawData as { FileName?: unknown; fileName?: unknown }).FileName ??
+          (rawData as { fileName?: unknown }).fileName
+      ),
+      ProcessedByAI: toNullableBool(
+        (rawData as { ProcessedByAI?: unknown; processedByAI?: unknown }).ProcessedByAI ??
+          (rawData as { processedByAI?: unknown }).processedByAI
+      ),
+      LinkedToSheet:
+        toNullableBool(
+          (rawData as { LinkedToSheet?: unknown; linkedToSheet?: unknown }).LinkedToSheet ??
+            (rawData as { linkedToSheet?: unknown }).linkedToSheet
+        ) === true,
+      HojaGastosId:
+        safeText(
+          (rawData as { HojaGastosId?: unknown; hojaGastosId?: unknown }).HojaGastosId ??
+            (rawData as { hojaGastosId?: unknown }).hojaGastosId
+        ) || null,
+      CompletedStage: safeText(
+        (rawData as { CompletedStage?: unknown; completedStage?: unknown }).CompletedStage ??
+          (rawData as { completedStage?: unknown }).completedStage
+      ),
+      StepTraceIds: stepTraceIds
+        ? {
+            TicketCreate: safeText(
+              (stepTraceIds as { TicketCreate?: unknown; ticketCreate?: unknown }).TicketCreate ??
+                (stepTraceIds as { ticketCreate?: unknown }).ticketCreate
+            ),
+            FileUpload: safeText(
+              (stepTraceIds as { FileUpload?: unknown; fileUpload?: unknown }).FileUpload ??
+                (stepTraceIds as { fileUpload?: unknown }).fileUpload
+            ),
+            DraftExtract: safeText(
+              (stepTraceIds as { DraftExtract?: unknown; draftExtract?: unknown }).DraftExtract ??
+                (stepTraceIds as { draftExtract?: unknown }).draftExtract
+            ),
+            TicketFinalize: safeText(
+              (stepTraceIds as { TicketFinalize?: unknown; ticketFinalize?: unknown }).TicketFinalize ??
+                (stepTraceIds as { ticketFinalize?: unknown }).ticketFinalize
+            ),
+            SheetLink: safeText(
+              (stepTraceIds as { SheetLink?: unknown; sheetLink?: unknown }).SheetLink ??
+                (stepTraceIds as { sheetLink?: unknown }).sheetLink
+            ),
+          }
+        : null,
+    },
   };
 };
 

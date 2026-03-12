@@ -1041,6 +1041,92 @@ namespace IND_CRM_APP.Services
             return BuildApiResponse<object>(result, "CreateExpenseSheetTicket");
         }
 
+        // Creates and finalizes a ticket from one uploaded image through the composite endpoint.
+        public async Task<ApiTransportResponse<object>> QuickCreateExpenseSheetTicketAsync(
+            string token,
+            ExpenseSheetTicketQuickCreateRequest req,
+            Stream ticketImageStream,
+            string fileName,
+            string? contentType,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "QuickCreateExpenseSheetTicket",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+
+            req ??= new ExpenseSheetTicketQuickCreateRequest();
+            var payload = new ExpenseSheetTicketQuickCreateRequest
+            {
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                Description = NormalizeOptionalText(req.Description),
+                Comentario = NormalizeOptionalText(req.Comentario),
+                ExistingHojaGastosId = NormalizeOptionalText(req.ExistingHojaGastosId),
+                ProjectId = NormalizeOptionalText(req.ProjectId)
+            };
+
+            var safeFileName = string.IsNullOrWhiteSpace(fileName) ? "ticket.jpg" : Path.GetFileName(fileName);
+            var mime = string.IsNullOrWhiteSpace(contentType) ? "application/octet-stream" : contentType.Trim();
+            var canReportLength = ticketImageStream.CanSeek;
+            var streamLength = canReportLength ? ticketImageStream.Length : -1;
+
+            _logger.LogInformation(
+                "QuickCreateExpenseSheetTicket request. FileName: {FileName}. ContentType: {ContentType}. StreamLength: {StreamLength}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjectId: {ProjectId}.",
+                safeFileName,
+                mime,
+                streamLength,
+                payload.CurrencyCode ?? "<empty>",
+                payload.ExistingHojaGastosId ?? "<empty>",
+                payload.ProjectId ?? "<empty>");
+
+            using var form = new MultipartFormDataContent();
+            using var fileContent = new StreamContent(ticketImageStream);
+            fileContent.Headers.ContentType = new MediaTypeHeaderValue(mime);
+            form.Add(fileContent, "ticketImage", safeFileName);
+
+            if (payload.CurrencyCode != null)
+                form.Add(new StringContent(payload.CurrencyCode), "currencyCode");
+
+            if (payload.Description != null)
+                form.Add(new StringContent(payload.Description), "description");
+
+            if (payload.Comentario != null)
+                form.Add(new StringContent(payload.Comentario), "comentario");
+
+            if (!string.IsNullOrWhiteSpace(payload.ExistingHojaGastosId))
+                form.Add(new StringContent(payload.ExistingHojaGastosId), "existingHojaGastosId");
+
+            if (!string.IsNullOrWhiteSpace(payload.ProjectId))
+                form.Add(new StringContent(payload.ProjectId), "projectId");
+
+            var result = await SendPostMultipartAsync(
+                ApiRoutes.ExpenseSheetTicketsQuickCreate,
+                form,
+                cancellationToken);
+
+            var response = BuildApiResponse<object>(result, "QuickCreateExpenseSheetTicket");
+            _logger.LogInformation(
+                "QuickCreateExpenseSheetTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. RetryAfter: {RetryAfter}. Raw: {Raw}",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                TryGetHeaderValue(result.Headers, "Retry-After") ?? "<null>",
+                SafeLogPayload(result.Raw));
+
+            return new ApiTransportResponse<object>
+            {
+                Response = response,
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
         public async Task<PagedApiResponse<ExpenseSheetTicketListItemDto>> GetExpenseSheetTicketsAsync(
             string token,
             ExpenseSheetTicketListRequest req,
@@ -2324,6 +2410,24 @@ namespace IND_CRM_APP.Services
 
             if (headers.TryGetValue("Request-Id", out var req))
                 return req.FirstOrDefault();
+
+            return null;
+        }
+
+        // Reads one response header value without throwing on missing transport metadata.
+        private static string? TryGetHeaderValue(IDictionary<string, IEnumerable<string>> headers, string headerName)
+        {
+            if (headers == null || headers.Count == 0 || string.IsNullOrWhiteSpace(headerName))
+                return null;
+
+            foreach (var entry in headers)
+            {
+                if (!string.Equals(entry.Key, headerName, StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var value = entry.Value?.FirstOrDefault();
+                return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+            }
 
             return null;
         }

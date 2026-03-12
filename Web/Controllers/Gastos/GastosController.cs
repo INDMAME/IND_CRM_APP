@@ -39,6 +39,7 @@ namespace IND_CRM_APP.Controllers
         {
             "image/jpeg",
             "image/jpg",
+            "image/pjpeg",
             "image/png",
             "image/webp"
         };
@@ -1447,6 +1448,119 @@ namespace IND_CRM_APP.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketsCreate");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
+        // API route used by React clients for /api/crm/expensesheets/tickets/quick-create.
+        [HttpPost]
+        [RequestSizeLimit(52428800)]
+        [RequestFormLimits(MultipartBodyLengthLimit = 52428800)]
+        public async Task<IActionResult> ApiExpenseSheetTicketQuickCreate(
+            [FromForm] IFormFile? ticketImage,
+            [FromForm] string? currencyCode,
+            [FromForm] string? description,
+            [FromForm] string? comentario,
+            [FromForm] string? existingHojaGastosId,
+            [FromForm] string? projectId)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+            }
+
+            if (ticketImage == null || ticketImage.Length <= 0)
+            {
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+            }
+
+            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketQuickCreate));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
+
+            var safeTicketFileName = Path.GetFileName(ticketImage.FileName ?? "ticket.jpg");
+            var normalizedContentType = (ticketImage.ContentType ?? string.Empty).Trim();
+            var normalizedExtension = Path.GetExtension(ticketImage.FileName ?? string.Empty).TrimStart('.').Trim();
+            var hasAllowedContentType = !string.IsNullOrWhiteSpace(normalizedContentType) &&
+                                        AllowedTicketImageContentTypes.Contains(normalizedContentType);
+            var hasAllowedExtension = !string.IsNullOrWhiteSpace(normalizedExtension) &&
+                                      AllowedTicketImageExtensions.Contains(normalizedExtension);
+
+            if (!hasAllowedContentType && !hasAllowedExtension)
+            {
+                return CreateApiCommandError(
+                    StatusCodes.Status422UnprocessableEntity,
+                    _sr["ExpenseSheets_NewTicket_Error_FileType"].Value,
+                    "VALIDATION_ERROR");
+            }
+
+            var request = new ExpenseSheetTicketQuickCreateRequest
+            {
+                CurrencyCode = NormalizeOptionalText(currencyCode)?.ToUpperInvariant(),
+                Description = NormalizeOptionalText(description),
+                Comentario = NormalizeOptionalText(comentario),
+                ExistingHojaGastosId = NormalizeOptionalText(existingHojaGastosId),
+                ProjectId = NormalizeOptionalText(projectId)
+            };
+
+            try
+            {
+                using var stream = ticketImage.OpenReadStream();
+                var transport = await _apiClient.QuickCreateExpenseSheetTicketAsync(
+                    token,
+                    request,
+                    stream,
+                    safeTicketFileName,
+                    ticketImage.ContentType,
+                    requestAxUserId,
+                    HttpContext.RequestAborted);
+
+                var response = transport.Response;
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+                var retryAfter = transport.Headers
+                    .FirstOrDefault(entry => string.Equals(entry.Key, "Retry-After", StringComparison.OrdinalIgnoreCase))
+                    .Value?
+                    .FirstOrDefault();
+
+                if (!string.IsNullOrWhiteSpace(retryAfter))
+                {
+                    Response.Headers["Retry-After"] = retryAfter;
+                }
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    },
+                    (int)transport.StatusCode);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketQuickCreate");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketQuickCreate");
                 return CreateApiCommandError(
                     StatusCodes.Status500InternalServerError,
                     _sr["Api_RequestFailed"].Value,

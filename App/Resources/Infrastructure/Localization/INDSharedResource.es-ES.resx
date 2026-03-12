@@ -1308,6 +1308,21 @@
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
     <value>Reintentar upload</value>
   </data>
+  <data name="ExpenseSheets_NewTicket_Error_Partial" xml:space="preserve">
+    <value>El ticket se ha creado, pero el proceso completo no ha terminado.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_Stage" xml:space="preserve">
+    <value>Etapa completada: {0}.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_RateLimit" xml:space="preserve">
+    <value>Demasiadas solicitudes.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_RetryAfterHint" xml:space="preserve">
+    <value>Reintenta despues de {0}.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_OpenCreatedTicket" xml:space="preserve">
+    <value>Abrir ticket creado</value>
+  </data>
   <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
     <value>Se cancelará el proceso de vinculación y volverás a la hoja de gastos. ¿Quieres continuar?</value>
   </data>

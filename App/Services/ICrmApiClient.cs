@@ -175,6 +175,16 @@ namespace IND_CRM_APP.Services
         );
 
         // Expense sheet tickets.
+        Task<ApiTransportResponse<object>> QuickCreateExpenseSheetTicketAsync(
+            string token,
+            ExpenseSheetTicketQuickCreateRequest req,
+            Stream ticketImageStream,
+            string fileName,
+            string? contentType,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default
+        );
+
         Task<ApiResponse<object>> CreateExpenseSheetTicketAsync(
             string token,
             ExpenseSheetTicketCreateRequest req,

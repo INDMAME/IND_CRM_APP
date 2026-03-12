@@ -23,6 +23,35 @@ type UseExpenseTicketsListDataArgs = {
 };
 
 const ALLOWED_GASTO_TYPE_CODES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
+const EXPENSE_TICKETS_LIST_LOG_PREFIX = "[expense-tickets:list]";
+
+const logExpenseTicketsListInfo = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.info === "function") {
+    console.info(EXPENSE_TICKETS_LIST_LOG_PREFIX, ...args);
+  }
+};
+
+const logExpenseTicketsListWarn = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.warn === "function") {
+    console.warn(EXPENSE_TICKETS_LIST_LOG_PREFIX, ...args);
+  }
+};
+
+const logExpenseTicketsListError = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.error === "function") {
+    console.error(EXPENSE_TICKETS_LIST_LOG_PREFIX, ...args);
+  }
+};
+
+const buildExpenseTicketsDebugStack = (label: string): string => {
+  if (typeof Error !== "function") return "";
+  const rawStack = new Error(label).stack;
+  if (typeof rawStack !== "string" || !rawStack.trim()) return "";
+  return rawStack
+    .split("\n")
+    .slice(0, 6)
+    .join("\n");
+};
 
 const toNullableNumber = (value: unknown): number | null => {
   const parsed = Number(value);
@@ -113,7 +142,17 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
 
   const loadList = useCallback(
     async (page: number, filters: ExpenseTicketAppliedFilterSnapshot) => {
+      logExpenseTicketsListInfo("loadList:requested", {
+        page,
+        mode,
+        hasAccess,
+        filters,
+      });
       if (!hasAccess) {
+        logExpenseTicketsListWarn("loadList:blocked-no-access", {
+          page,
+          mode,
+        });
         onForbidden();
         return;
       }
@@ -126,10 +165,20 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
       const requestKey = JSON.stringify({ mode, payload, managedUserId: normalizedManagedUserId });
 
       if (activeRequestControllerRef.current && activeRequestKeyRef.current === requestKey) {
+        logExpenseTicketsListWarn("loadList:skip-duplicate-request", {
+          page,
+          mode,
+          requestKey,
+        });
         return;
       }
 
       if (activeRequestControllerRef.current) {
+        logExpenseTicketsListInfo("loadList:abort-previous-request", {
+          previousRequestKey: activeRequestKeyRef.current,
+          previousRequestSeq: activeRequestSeqRef.current,
+          stack: buildExpenseTicketsDebugStack("loadList:abort-previous-request"),
+        });
         activeRequestControllerRef.current.abort();
       }
 
@@ -138,9 +187,31 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
       activeRequestKeyRef.current = requestKey;
       const requestSeq = activeRequestSeqRef.current + 1;
       activeRequestSeqRef.current = requestSeq;
+      const handleAbortSignal = () => {
+        logExpenseTicketsListWarn("loadList:signal-abort-event", {
+          page,
+          mode,
+          requestSeq,
+          requestKey,
+          signalAborted: controller.signal.aborted,
+          signalReason:
+            "reason" in controller.signal
+              ? ((controller.signal as AbortSignal & { reason?: unknown }).reason ?? null)
+              : null,
+        });
+      };
+      controller.signal.addEventListener("abort", handleAbortSignal, { once: true });
 
       setIsLoading(true);
       setErrorMessage("");
+      logExpenseTicketsListInfo("loadList:fetch-start", {
+        page,
+        mode,
+        normalizedManagedUserId,
+        payload,
+        requestKey,
+        requestSeq,
+      });
 
       try {
         const response = await runExpenseReadRequestWithRetry(
@@ -160,9 +231,22 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
             signal: controller.signal,
           }
         );
+        logExpenseTicketsListInfo("loadList:fetch-finished", {
+          page,
+          mode,
+          requestSeq,
+          success: response?.Success,
+          total: response?.Total,
+          items: Array.isArray(response?.Items) ? response.Items.length : 0,
+        });
         if (requestSeq !== activeRequestSeqRef.current) return;
 
         if (response?.Success === false) {
+          logExpenseTicketsListWarn("loadList:api-unsuccessful", {
+            page,
+            mode,
+            message: response.Message,
+          });
           setErrorMessage(response.Message || indT("Tickets_LoadError", "Could not load tickets."));
           setItems([]);
           setTotal(0);
@@ -183,20 +267,45 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
         setCurrentPage(page);
       } catch (error) {
         if (requestSeq !== activeRequestSeqRef.current) return;
-        if (isExpenseAbortLikeError(error, controller.signal)) return;
+        if (isExpenseAbortLikeError(error, controller.signal)) {
+          logExpenseTicketsListWarn("loadList:aborted", {
+            page,
+            mode,
+            requestSeq,
+            message: error instanceof Error ? error.message : error,
+          });
+          return;
+        }
 
         if (error instanceof ApiFetchError && error.status === 403) {
+          logExpenseTicketsListWarn("loadList:forbidden", {
+            page,
+            mode,
+            requestSeq,
+          });
           onForbidden();
           return;
         }
 
+        logExpenseTicketsListError("loadList:failed", {
+          page,
+          mode,
+          requestSeq,
+          message: error instanceof Error ? error.message : error,
+        });
         const message = error instanceof Error ? error.message : indT("Tickets_LoadError", "Could not load tickets.");
         setErrorMessage(message);
         setItems([]);
         setTotal(0);
         setCurrentPage(page);
       } finally {
+        controller.signal.removeEventListener("abort", handleAbortSignal);
         if (requestSeq === activeRequestSeqRef.current) {
+          logExpenseTicketsListInfo("loadList:finalize", {
+            page,
+            mode,
+            requestSeq,
+          });
           setIsLoading(false);
           activeRequestControllerRef.current = null;
           activeRequestKeyRef.current = "";
@@ -206,12 +315,21 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
     [hasAccess, mode, onForbidden, pageSize]
   );
 
-  const resetList = useCallback(() => {
+  const resetList = useCallback((source = "unknown") => {
     if (activeRequestControllerRef.current) {
+      logExpenseTicketsListWarn("resetList:abort-active-request", {
+        source,
+        activeRequestKey: activeRequestKeyRef.current,
+        activeRequestSeq: activeRequestSeqRef.current,
+        stack: buildExpenseTicketsDebugStack(`resetList:${source}`),
+      });
       activeRequestControllerRef.current.abort();
       activeRequestControllerRef.current = null;
       activeRequestKeyRef.current = "";
     }
+    logExpenseTicketsListInfo("resetList:clear-state", {
+      source,
+    });
     setItems([]);
     setTotal(0);
     setCurrentPage(1);
@@ -225,6 +343,11 @@ export const useExpenseTicketsListData = ({ hasAccess, pageSize, mode, onForbidd
   useEffect(() => {
     return () => {
       if (activeRequestControllerRef.current) {
+        logExpenseTicketsListWarn("cleanup:abort-active-request", {
+          activeRequestKey: activeRequestKeyRef.current,
+          activeRequestSeq: activeRequestSeqRef.current,
+          stack: buildExpenseTicketsDebugStack("cleanup:abort-active-request"),
+        });
         activeRequestControllerRef.current.abort();
         activeRequestControllerRef.current = null;
         activeRequestKeyRef.current = "";

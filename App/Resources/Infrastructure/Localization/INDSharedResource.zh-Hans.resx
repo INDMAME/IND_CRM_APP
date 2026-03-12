@@ -1290,6 +1290,21 @@
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
     <value>Retry upload</value>
   </data>
+  <data name="ExpenseSheets_NewTicket_Error_Partial" xml:space="preserve">
+    <value>The ticket was created, but the full process did not finish.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_Stage" xml:space="preserve">
+    <value>Completed stage: {0}.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_RateLimit" xml:space="preserve">
+    <value>Too many requests.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Error_RetryAfterHint" xml:space="preserve">
+    <value>Retry after {0}.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_OpenCreatedTicket" xml:space="preserve">
+    <value>Open created ticket</value>
+  </data>
   <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
     <value>The link process will be canceled and you will return to the expense sheet. Do you want to continue?</value>
   </data>

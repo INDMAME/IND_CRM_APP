@@ -80,6 +80,7 @@ const ExpenseSheetDetailPageContent = () => {
         quickTicketErrorMessage={controller.quickTicketFlow.errorMessage}
         quickTicketTraceList={controller.quickTicketFlow.traceList}
         hasPendingUploadRetry={controller.quickTicketFlow.hasPendingUploadRetry}
+        hasPartialTicketFailure={controller.quickTicketFlow.hasPartialTicketFailure}
         onConfirm={controller.handleModalButtonConfirm}
         onCancel={controller.closeConfirm}
         onSelectedCameraFile={(file) => {
@@ -96,6 +97,7 @@ const ExpenseSheetDetailPageContent = () => {
         onRetryPendingUpload={() => {
           void controller.quickTicketFlow.retryPendingUpload();
         }}
+        onOpenCreatedTicket={controller.quickTicketFlow.openCreatedTicket}
         onClearQuickTicketError={controller.quickTicketFlow.clearError}
       />
 

@@ -34,6 +34,7 @@ import {
 import { hasExpenseReturnReferrer, isExpenseHistoryBackForwardNavigation } from "../utils/expenseHistoryNavigation.ts";
 import { formatExpenseDateParts, formatExpenseDisplayDate, safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetQuickTicketFlow } from "../detail/useExpenseSheetQuickTicketFlow.ts";
+import { TICKET_IMAGE_ACCEPT_ATTRIBUTE } from "../detail/useExpenseSheetQuickTicketFlowCore.ts";
 import { useExpenseTicketsFiltersState } from "./useExpenseTicketsFiltersState.ts";
 import { useExpenseTicketsListData } from "./useExpenseTicketsListData.ts";
 import { useExpenseTicketsFilterCache, type ExpenseTicketsCachedState } from "./useExpenseTicketsFilterCache.ts";
@@ -130,6 +131,20 @@ const resolveLinkModeBlockedMessage = (isPaid: boolean): string => {
   }
 
   return indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.");
+};
+
+const EXPENSE_TICKETS_LOG_PREFIX = "[expense-tickets]";
+
+const logExpenseTicketsInfo = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.info === "function") {
+    console.info(EXPENSE_TICKETS_LOG_PREFIX, ...args);
+  }
+};
+
+const logExpenseTicketsWarn = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.warn === "function") {
+    console.warn(EXPENSE_TICKETS_LOG_PREFIX, ...args);
+  }
 };
 
 // Keeps created-ticket return filters bound to one valid list date.
@@ -422,7 +437,7 @@ const ExpenseTicketsPageContent = () => {
 
       const resetManagedUserId = syncManagedUserSelection(currentAxUserId);
       setManagedUserId(resetManagedUserId);
-      resetList();
+      resetList("clear-filters");
     },
   });
 
@@ -450,6 +465,7 @@ const ExpenseTicketsPageContent = () => {
     progressMessage: quickTicketProgressMessage,
     errorMessage: quickTicketErrorMessage,
     hasPendingUploadRetry,
+    hasPartialTicketFailure,
     traceList: quickTicketTraceList,
     openSourcePicker,
     closeSourcePicker,
@@ -457,6 +473,7 @@ const ExpenseTicketsPageContent = () => {
     selectFromGallery,
     handleSelectedFile,
     retryPendingUpload,
+    openCreatedTicket,
     clearError: clearQuickTicketError,
   } = useExpenseSheetQuickTicketFlow({
     canCreateExpense: !isLinkMode && canCreateTicket,
@@ -534,7 +551,10 @@ const ExpenseTicketsPageContent = () => {
   const applyCreatedTicketReturn = useCallback(
     (ticketFileId: string, ticketDateValue: unknown) => {
       const ticketDate = resolveCreatedTicketFilterDate(ticketDateValue);
-      const resolvedManagedUserId = syncManagedUserSelection(defaultManagedUserId);
+      const createdTicketManagedUserId = normalizeUserId(currentAxUserId);
+      const resolvedManagedUserId = createdTicketManagedUserId
+        ? syncManagedUserSelection(createdTicketManagedUserId)
+        : "";
 
       const querySnapshot: ExpenseTicketAppliedFilterSnapshot = {
         fromDate: ticketDate,
@@ -547,13 +567,26 @@ const ExpenseTicketsPageContent = () => {
         processedByIaFilter: "all",
       };
 
+      logExpenseTicketsInfo("applyCreatedTicketReturn:start", {
+        ticketFileId,
+        ticketDateValue,
+        ticketDate,
+        currentAxUserId,
+        createdTicketManagedUserId,
+        resolvedManagedUserId,
+        querySnapshot,
+      });
+
       clearCachedState();
       restoreAppliedFilters(querySnapshot);
       pendingFocusFileIdRef.current = ticketFileId;
-      runAutomaticListLoad(1, querySnapshot, {
-        clearCache: true,
-        resetBeforeLoad: true,
+      clearListCache();
+      resetList("created-ticket-return");
+      logExpenseTicketsInfo("applyCreatedTicketReturn:loadList", {
+        page: 1,
+        querySnapshot,
       });
+      void loadList(1, querySnapshot);
 
       const url = new URL(window.location.href);
       url.searchParams.delete("ticketFileId");
@@ -563,9 +596,11 @@ const ExpenseTicketsPageContent = () => {
     },
     [
       clearCachedState,
-      defaultManagedUserId,
+      clearListCache,
+      currentAxUserId,
+      loadList,
+      resetList,
       restoreAppliedFilters,
-      runAutomaticListLoad,
       syncManagedUserSelection,
     ]
   );
@@ -1120,8 +1155,40 @@ const ExpenseTicketsPageContent = () => {
   }, [isLinkMode, linkModeCancelMessage]);
 
   useEffect(() => {
-    if (!managementBootstrapReady || !hasAccess) return;
-    if (didRestoreOnMountRef.current) return;
+    logExpenseTicketsInfo("mountRestoreEffect:enter", {
+      url: typeof window !== "undefined" ? window.location.href : "",
+      didRestoreOnMount: didRestoreOnMountRef.current,
+      hasAccess,
+      isLinkMode,
+      managementBootstrapReady,
+    });
+    if (didRestoreOnMountRef.current) {
+      logExpenseTicketsWarn("mountRestoreEffect:skip-already-restored");
+      return;
+    }
+    if (!hasAccess) {
+      logExpenseTicketsWarn("mountRestoreEffect:skip-no-access");
+      return;
+    }
+
+    if (!isLinkMode) {
+      const url = new URL(window.location.href);
+      const ticketFileId = safeText(url.searchParams.get("ticketFileId"));
+      if (ticketFileId) {
+        logExpenseTicketsInfo("mountRestoreEffect:ticket-create-return-detected", {
+          ticketFileId,
+          ticketDate: url.searchParams.get("ticketDate"),
+        });
+        didRestoreOnMountRef.current = true;
+        applyCreatedTicketReturn(ticketFileId, url.searchParams.get("ticketDate"));
+        return;
+      }
+    }
+
+    if (!managementBootstrapReady) {
+      logExpenseTicketsWarn("mountRestoreEffect:waiting-management-bootstrap");
+      return;
+    }
     didRestoreOnMountRef.current = true;
     const isHistoryBackForward = isExpenseHistoryBackForwardNavigation();
     const isReturnFromTicketDetail = hasExpenseReturnReferrer([
@@ -1131,16 +1198,16 @@ const ExpenseTicketsPageContent = () => {
     const returnMode = consumeReturnMode();
     const hasReturnFlag = consumeReturnFlag();
 
-    if (!isLinkMode) {
-      const url = new URL(window.location.href);
-      const ticketFileId = safeText(url.searchParams.get("ticketFileId"));
-      if (ticketFileId) {
-        applyCreatedTicketReturn(ticketFileId, url.searchParams.get("ticketDate"));
-        return;
-      }
-    }
+    logExpenseTicketsInfo("mountRestoreEffect:resolved-return-state", {
+      isHistoryBackForward,
+      isReturnFromTicketDetail,
+      returnMode,
+      hasReturnFlag,
+      isLinkMode,
+    });
 
     if (returnMode === "reset_filters" && hasReturnFlag) {
+      logExpenseTicketsInfo("mountRestoreEffect:restore-delete-return");
       restoreDeleteReturnState();
       return;
     }
@@ -1150,6 +1217,10 @@ const ExpenseTicketsPageContent = () => {
       const cachedState = isReturningFromDetail ? readCachedState() : null;
       const cachedSheetId = safeText(cachedState?.linkModeSheetId);
       if (cachedState && cachedSheetId && cachedSheetId === safeText(linkSheetId)) {
+        logExpenseTicketsInfo("mountRestoreEffect:restore-link-mode-cache", {
+          cachedSheetId,
+          page: cachedState.page,
+        });
         clearExpenseTicketLinkReturnState();
         restoreLinkModeReturnState(cachedState);
         return;
@@ -1157,6 +1228,10 @@ const ExpenseTicketsPageContent = () => {
 
       const linkReturnState = isReturningFromDetail ? readExpenseTicketLinkReturnState(linkSheetId) : null;
       if (linkReturnState) {
+        logExpenseTicketsInfo("mountRestoreEffect:restore-link-mode-return-state", {
+          sheetId: linkReturnState.sheetId,
+          page: linkReturnState.page,
+        });
         clearExpenseTicketLinkReturnState();
         restoreLinkModeReturnState({
           filters: linkReturnState.filters,
@@ -1175,21 +1250,28 @@ const ExpenseTicketsPageContent = () => {
         return;
       }
 
+      logExpenseTicketsInfo("mountRestoreEffect:restore-initial-link-mode");
       restoreInitialLinkModeState();
       return;
     }
 
     if (!hasReturnFlag && !isHistoryBackForward && !isReturnFromTicketDetail) {
+      logExpenseTicketsInfo("mountRestoreEffect:clear-cache-no-return-context");
       clearCachedState();
       return;
     }
 
     const cachedState = readCachedState();
     if (!cachedState) {
+      logExpenseTicketsWarn("mountRestoreEffect:no-cached-state");
       clearCachedState();
       return;
     }
 
+    logExpenseTicketsInfo("mountRestoreEffect:restore-standard-cache", {
+      page: cachedState.page,
+      focusFileId: cachedState.focusFileId,
+    });
     restoreStandardReturnState(cachedState);
   }, [
     applyCreatedTicketReturn,
@@ -1311,7 +1393,7 @@ const ExpenseTicketsPageContent = () => {
       <input
         ref={cameraInputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
+        accept={TICKET_IMAGE_ACCEPT_ATTRIBUTE}
         capture="environment"
         className="hidden"
         onChange={(event) => {
@@ -1323,7 +1405,7 @@ const ExpenseTicketsPageContent = () => {
       <input
         ref={galleryInputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
+        accept={TICKET_IMAGE_ACCEPT_ATTRIBUTE}
         className="hidden"
         onChange={(event) => {
           const file = event.currentTarget.files?.[0] || null;
@@ -1384,16 +1466,33 @@ const ExpenseTicketsPageContent = () => {
       ) : null}
 
       {!isLinkMode && quickTicketErrorMessage ? (
-        <div className="glass-panel shadow-card space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+        <div
+          className={
+            hasPartialTicketFailure
+              ? "glass-panel shadow-card space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+              : "glass-panel shadow-card space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
+          }
+        >
           <p>{quickTicketErrorMessage}</p>
           {quickTicketTraceList.length > 0 ? (
-            <div className="rounded-lg border border-rose-200 bg-white p-2 text-xs text-rose-700">
+            <div
+              className={
+                hasPartialTicketFailure
+                  ? "rounded-lg border border-amber-200 bg-white p-2 text-xs text-amber-800"
+                  : "rounded-lg border border-rose-200 bg-white p-2 text-xs text-rose-700"
+              }
+            >
               {quickTicketTraceList.map((entry) => (
                 <p key={`${entry.step}-${entry.at}`}>{`${entry.step}: ${entry.traceId}`}</p>
               ))}
             </div>
           ) : null}
           <div className="flex flex-wrap gap-2">
+            {hasPartialTicketFailure ? (
+              <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={openCreatedTicket}>
+                {indT("ExpenseSheets_NewTicket_OpenCreatedTicket", "Open created ticket")}
+              </button>
+            ) : null}
             {hasPendingUploadRetry ? (
               <button
                 type="button"

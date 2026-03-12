@@ -13,10 +13,13 @@ const TICKET_IMAGE_CACHE_PREFIX = "/__ind_cache__/ticket-image/";
 const TICKET_TRACE_STORAGE_KEY = "expense_sheet_ticket_quick_flow_trace_v1";
 
 export const MAX_TICKET_IMAGE_SIZE_BYTES = 50 * 1024 * 1024;
-const ALLOWED_TICKET_IMAGE_MIME_TYPES = new Set<string>(["image/jpeg", "image/jpg", "image/png", "image/webp"]);
+export const TICKET_IMAGE_ACCEPT_ATTRIBUTE =
+  ".jpg,.jpeg,.png,.webp,image/jpeg,image/pjpeg,image/png,image/webp";
+const ALLOWED_TICKET_IMAGE_MIME_TYPES = new Set<string>(["image/jpeg", "image/pjpeg", "image/png", "image/webp"]);
 const ALLOWED_TICKET_IMAGE_EXTENSIONS = new Set<string>(["jpg", "jpeg", "png", "webp"]);
 const TICKET_MIME_TO_EXTENSION: Record<string, string> = {
   "image/jpeg": "jpg",
+  "image/pjpeg": "jpg",
   "image/jpg": "jpg",
   "image/png": "png",
   "image/webp": "webp",
@@ -161,8 +164,8 @@ export const inferExtension = (file: File): string => {
 
 export const isSupportedTicketImageFile = (file: File): boolean => {
   const normalizedType = safeText(file.type).toLowerCase();
-  if (normalizedType) {
-    return ALLOWED_TICKET_IMAGE_MIME_TYPES.has(normalizedType);
+  if (normalizedType && ALLOWED_TICKET_IMAGE_MIME_TYPES.has(normalizedType)) {
+    return true;
   }
 
   const extension = resolveExtensionFromFileName(file);

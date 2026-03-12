@@ -404,7 +404,7 @@ export const useExpenseSheetDetailPageController = () => {
   const showStatusActionBar =
     !isCreateMode && !isLoading && !isRedirectingAfterCreate && !errorMessage && detailPolicy.statusActions.length > 0;
   const showFab = !isCreateMode && detailPolicy.showFab;
-  const hasVisibleStatusComment = safeText(header?.estadoComentarios).trim().length > 2;
+  const hasVisibleStatusComment = safeText(header?.estadoComentarios).trim().length > 0;
   const statusCommentMode: "hidden" | "read" | "edit" =
     canEditStatusCommentCurrent ? "edit" : (hasVisibleStatusComment ? "read" : "hidden");
 

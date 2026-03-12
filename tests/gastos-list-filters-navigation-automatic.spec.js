@@ -246,6 +246,60 @@ test.describe("List filters + navigation E2E", () => {
     await page.unroute("**/api/crm/expensesheets/tickets/list");
   });
 
+  test("Tickets: ticketFileId return autoload does not wait for subordinates bootstrap", async ({ page }) => {
+    await ensureAuthenticatedSession(page, "/Gastos/Tickets?fresh=1");
+
+    await page.goto("/Gastos/Tickets?fresh=1", { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#expense-tickets-root")).toBeVisible({ timeout: 30000 });
+
+    await ensureFilterPanelVisible(page);
+    await selectQuick90Days(page);
+    await clickApplyFilters(page);
+
+    const firstTicketItem = page.locator(".timeline-item[data-ticket-file-id]").first();
+    await expect(firstTicketItem).toBeVisible({ timeout: 60000 });
+
+    const ticketFileId = String((await firstTicketItem.getAttribute("data-ticket-file-id")) || "").trim();
+    expect(ticketFileId).not.toBe("");
+
+    const today = new Date();
+    const year = String(today.getFullYear());
+    const month = String(today.getMonth() + 1).padStart(2, "0");
+    const day = String(today.getDate()).padStart(2, "0");
+    const ticketDate = `${year}-${month}-${day}`;
+    const expectedApiDate = `${day}.${month}.${year}`;
+
+    let capturedAutoloadPayload = null;
+    await page.route("**/api/crm/expensesheets/subordinates", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 12000));
+      await route.continue();
+    });
+    await page.route("**/api/crm/expensesheets/tickets/list", async (route) => {
+      if (route.request().method().toUpperCase() === "POST" && capturedAutoloadPayload === null) {
+        try {
+          capturedAutoloadPayload = JSON.parse(route.request().postData() || "{}");
+        } catch {
+          capturedAutoloadPayload = {};
+        }
+      }
+      await route.continue();
+    });
+
+    await page.goto(`/Gastos/Tickets?ticketFileId=${encodeURIComponent(ticketFileId)}&ticketDate=${ticketDate}`, {
+      waitUntil: "domcontentloaded",
+    });
+    await expect(page.locator("#expense-tickets-root")).toBeVisible({ timeout: 30000 });
+
+    await expect.poll(() => capturedAutoloadPayload, { timeout: 10000 }).not.toBeNull();
+    expect(String(capturedAutoloadPayload.searchKey || "")).toBe(ticketFileId);
+    expect(String(capturedAutoloadPayload.filter || "")).toBe(ticketFileId);
+    expect(String(capturedAutoloadPayload.createdDateFrom || "")).toBe(expectedApiDate);
+    expect(String(capturedAutoloadPayload.createdDateTo || "")).toBe(expectedApiDate);
+
+    await page.unroute("**/api/crm/expensesheets/subordinates");
+    await page.unroute("**/api/crm/expensesheets/tickets/list");
+  });
+
   test("Expense sheets: apply filters, open card detail, then go back keeping filters", async ({ page }) => {
     await ensureAuthenticatedSession(page, "/Gastos/ExpenseSheets?fresh=1");
 

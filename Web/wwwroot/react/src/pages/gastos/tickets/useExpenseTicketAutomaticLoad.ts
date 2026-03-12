@@ -43,8 +43,22 @@ type UseExpenseTicketAutomaticLoadArgs = {
   linkSheetCheckBusy: boolean;
   linkSheetLocked: boolean;
   clearListCache: () => void;
-  resetList: () => void;
+  resetList: (source?: string) => void;
   loadList: (page: number, snapshot: ExpenseTicketAppliedFilterSnapshot) => Promise<void>;
+};
+
+const EXPENSE_TICKETS_AUTO_LOAD_LOG_PREFIX = "[expense-tickets:auto-load]";
+
+const logExpenseTicketsAutoLoadInfo = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.info === "function") {
+    console.info(EXPENSE_TICKETS_AUTO_LOAD_LOG_PREFIX, ...args);
+  }
+};
+
+const logExpenseTicketsAutoLoadWarn = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.warn === "function") {
+    console.warn(EXPENSE_TICKETS_AUTO_LOAD_LOG_PREFIX, ...args);
+  }
 };
 
 // Queues one ticket list reload and releases it only when link-mode preconditions are ready.
@@ -69,6 +83,11 @@ export const useExpenseTicketAutomaticLoad = ({
         waitForLinkModeSheetReady?: boolean;
       } = {}
     ) => {
+      logExpenseTicketsAutoLoadInfo("runAutomaticListLoad:schedule", {
+        page,
+        snapshot,
+        options,
+      });
       dispatch({
         type: "schedule",
         request: {
@@ -88,15 +107,26 @@ export const useExpenseTicketAutomaticLoad = ({
 
     if (pendingAutomaticLoad.waitForLinkModeSheetReady) {
       if (!isLinkMode) {
+        logExpenseTicketsAutoLoadWarn("pendingAutomaticLoad:disable-link-wait", {
+          page: pendingAutomaticLoad.page,
+        });
         dispatch({ type: "disable_link_wait" });
         return;
       }
 
       if (!canProcessLinkMode || linkSheetCheckBusy) {
+        logExpenseTicketsAutoLoadInfo("pendingAutomaticLoad:waiting-link-mode-ready", {
+          page: pendingAutomaticLoad.page,
+          canProcessLinkMode,
+          linkSheetCheckBusy,
+        });
         return;
       }
 
       if (linkSheetLocked) {
+        logExpenseTicketsAutoLoadWarn("pendingAutomaticLoad:clear-link-locked", {
+          page: pendingAutomaticLoad.page,
+        });
         dispatch({ type: "clear" });
         return;
       }
@@ -104,13 +134,19 @@ export const useExpenseTicketAutomaticLoad = ({
 
     const { page, snapshot, clearCache, resetBeforeLoad } = pendingAutomaticLoad;
     dispatch({ type: "clear" });
+    logExpenseTicketsAutoLoadInfo("pendingAutomaticLoad:execute", {
+      page,
+      snapshot,
+      clearCache,
+      resetBeforeLoad,
+    });
 
     if (clearCache) {
       clearListCache();
     }
 
     if (resetBeforeLoad) {
-      resetList();
+      resetList("automatic-load:reset-before-load");
     }
 
     void loadList(page, snapshot);

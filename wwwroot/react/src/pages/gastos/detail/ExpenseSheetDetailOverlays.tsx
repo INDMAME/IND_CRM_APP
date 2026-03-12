@@ -2,6 +2,7 @@ import React from "react";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import Spinner from "../../../components/commons/Spinner.tsx";
 import { indT } from "../../../utils/indI18n.ts";
+import { TICKET_IMAGE_ACCEPT_ATTRIBUTE } from "./useExpenseSheetQuickTicketFlowCore.ts";
 
 type ExpenseSheetDetailOverlaysProps = {
   modal: {
@@ -28,6 +29,7 @@ type ExpenseSheetDetailOverlaysProps = {
   quickTicketErrorMessage: string;
   quickTicketTraceList: Array<{ step: string; traceId: string; at: string }>;
   hasPendingUploadRetry: boolean;
+  hasPartialTicketFailure: boolean;
   onConfirm: () => void;
   onCancel: () => void;
   onSelectedCameraFile: (file: File | null) => void;
@@ -36,6 +38,7 @@ type ExpenseSheetDetailOverlaysProps = {
   onSelectFromGallery: () => void;
   onCloseSourcePicker: () => void;
   onRetryPendingUpload: () => void;
+  onOpenCreatedTicket: () => void;
   onClearQuickTicketError: () => void;
 };
 
@@ -57,6 +60,7 @@ const ExpenseSheetDetailOverlays = ({
   quickTicketErrorMessage,
   quickTicketTraceList,
   hasPendingUploadRetry,
+  hasPartialTicketFailure,
   onConfirm,
   onCancel,
   onSelectedCameraFile,
@@ -65,6 +69,7 @@ const ExpenseSheetDetailOverlays = ({
   onSelectFromGallery,
   onCloseSourcePicker,
   onRetryPendingUpload,
+  onOpenCreatedTicket,
   onClearQuickTicketError,
 }: ExpenseSheetDetailOverlaysProps) => {
   return (
@@ -88,7 +93,7 @@ const ExpenseSheetDetailOverlays = ({
       <input
         ref={cameraInputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
+        accept={TICKET_IMAGE_ACCEPT_ATTRIBUTE}
         capture="environment"
         className="hidden"
         onChange={(event) => {
@@ -101,7 +106,7 @@ const ExpenseSheetDetailOverlays = ({
       <input
         ref={galleryInputRef}
         type="file"
-        accept="image/jpeg,image/jpg,image/png,image/webp"
+        accept={TICKET_IMAGE_ACCEPT_ATTRIBUTE}
         className="hidden"
         onChange={(event) => {
           const file = event.currentTarget.files?.[0] || null;
@@ -148,16 +153,33 @@ const ExpenseSheetDetailOverlays = ({
       ) : null}
 
       {quickTicketErrorMessage ? (
-        <div className="glass-panel shadow-card space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800">
+        <div
+          className={
+            hasPartialTicketFailure
+              ? "glass-panel shadow-card space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+              : "glass-panel shadow-card space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
+          }
+        >
           <p>{quickTicketErrorMessage}</p>
           {quickTicketTraceList.length > 0 ? (
-            <div className="rounded-lg border border-rose-200 bg-white p-2 text-xs text-rose-700">
+            <div
+              className={
+                hasPartialTicketFailure
+                  ? "rounded-lg border border-amber-200 bg-white p-2 text-xs text-amber-800"
+                  : "rounded-lg border border-rose-200 bg-white p-2 text-xs text-rose-700"
+              }
+            >
               {quickTicketTraceList.map((entry) => (
                 <p key={`${entry.step}-${entry.at}`}>{`${entry.step}: ${entry.traceId}`}</p>
               ))}
             </div>
           ) : null}
           <div className="flex flex-wrap gap-2">
+            {hasPartialTicketFailure ? (
+              <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={onOpenCreatedTicket}>
+                {indT("ExpenseSheets_NewTicket_OpenCreatedTicket", "Open created ticket")}
+              </button>
+            ) : null}
             {hasPendingUploadRetry ? (
               <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={onRetryPendingUpload}>
                 {indT("ExpenseSheets_NewTicket_RetryUpload", "Reintentar upload")}

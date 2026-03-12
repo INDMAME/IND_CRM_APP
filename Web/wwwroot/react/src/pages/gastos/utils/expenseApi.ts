@@ -28,6 +28,8 @@ import type {
   ExpenseSheetTicketLinkBulkResultDto,
   ExpenseSheetTicketLinkListItemDto,
   ExpenseSheetTicketLinkListRequest,
+  ExpenseSheetTicketQuickCreateRequest,
+  ExpenseSheetTicketQuickCreateResult,
   ExpenseSheetTicketLineRequest,
   ExpenseSheetTicketListItemDto,
   ExpenseSheetTicketListRequest,
@@ -64,6 +66,7 @@ import {
   normalizeTicketLinkBulkResponse as normalizeTicketLinkBulkResponseTransform,
   normalizeTicketLinkListPagedResponse as normalizeTicketLinkListPagedResponseTransform,
   normalizeTicketDetailPagedResponse as normalizeTicketDetailPagedResponseTransform,
+  normalizeTicketQuickCreateResponse as normalizeTicketQuickCreateResponseTransform,
   normalizeTicketListPagedResponse as normalizeTicketListPagedResponseTransform,
 } from "./expenseApiResponseNormalizers.ts";
 import {
@@ -246,6 +249,15 @@ const readWindowAuthSeed = (): Partial<ExpenseApiAuthSeed> => {
   };
 };
 
+const tryParseJson = (raw: string): unknown | null => {
+  if (!raw || !raw.trim()) return null;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+};
+
 const readRuntimeStrictApiFlag = (): boolean => {
   if (typeof window === "undefined") return false;
   const runtimeWindow = readExpenseWindowRuntime();
@@ -256,6 +268,38 @@ const readRuntimeStrictApiFlag = (): boolean => {
 
 const readWindowSelectedCompany = (): string => {
   return safeText(readExpenseWindowRuntime().__IND_SELECTED_COMPANY__).toUpperCase();
+};
+
+// Creates one standard abort error without cancelling the shared underlying request.
+const createExpenseAbortError = (): DOMException => {
+  return new DOMException("Aborted", "AbortError");
+};
+
+// Lets one caller stop waiting on shared context resolution without aborting other consumers.
+const waitForAbortableExpenseResult = async <T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> => {
+  if (!signal) return promise;
+  if (signal.aborted) {
+    throw createExpenseAbortError();
+  }
+
+  return await new Promise<T>((resolve, reject) => {
+    const handleAbort = () => {
+      signal.removeEventListener("abort", handleAbort);
+      reject(createExpenseAbortError());
+    };
+
+    signal.addEventListener("abort", handleAbort, { once: true });
+    promise.then(
+      (value) => {
+        signal.removeEventListener("abort", handleAbort);
+        resolve(value);
+      },
+      (error) => {
+        signal.removeEventListener("abort", handleAbort);
+        reject(error);
+      }
+    );
+  });
 };
 
 const buildContextKey = (seed: ExpenseApiAuthSeed): string => {
@@ -450,51 +494,53 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
 const ensureExpenseApiContext = async (options?: ApiFetchOptions): Promise<ExpenseApiContext> => {
   const seed = resolveAuthSeed(options);
   const contextKey = buildContextKey(seed);
+  const { signal, ...baseOptions } = options || {};
 
   if (cachedContext && cachedContextKey === contextKey) {
-    return cachedContext;
+    return waitForAbortableExpenseResult(Promise.resolve(cachedContext), signal);
   }
 
-  if (contextPromise && cachedContextKey === contextKey) {
-    return contextPromise;
-  }
+  if (!contextPromise || cachedContextKey !== contextKey) {
+    cachedContextKey = contextKey;
+    const sharedContextPromise = (async () => {
+      const contextPayload: EntraContextRequest = {
+        appCode: seed.appCode,
+      };
 
-  cachedContextKey = contextKey;
-  contextPromise = (async () => {
-    const contextPayload: EntraContextRequest = {
-      appCode: seed.appCode,
-    };
+      if (safeText(seed.entraOid)) {
+        contextPayload.entraOid = seed.entraOid;
+      }
 
-    if (safeText(seed.entraOid)) {
-      contextPayload.entraOid = seed.entraOid;
-    }
+      const contextResponse = await fetchJson<IndPagedResponse<EntraContextDto>>("/api/auth/entra/context", {
+        ...baseOptions,
+        method: "POST",
+        headers: buildContextHeaders(seed.token, baseOptions),
+        body: JSON.stringify(contextPayload),
+      });
 
-    const contextResponse = await fetchJson<IndPagedResponse<EntraContextDto>>("/api/auth/entra/context", {
-      ...options,
-      method: "POST",
-      headers: buildContextHeaders(seed.token, options),
-      body: JSON.stringify(contextPayload),
+      const resolved = validateContextResponse(contextResponse);
+      const nextContext: ExpenseApiContext = {
+        ...resolved,
+        token: seed.token,
+      };
+
+      if (typeof window !== "undefined") {
+        window.__IND_ALLOW_SELF_MANAGEMENT__ = nextContext.allowSelfManagement;
+      }
+
+      cachedContext = nextContext;
+      return nextContext;
+    })();
+
+    contextPromise = sharedContextPromise;
+    void sharedContextPromise.finally(() => {
+      if (contextPromise === sharedContextPromise) {
+        contextPromise = null;
+      }
     });
-
-    const resolved = validateContextResponse(contextResponse);
-    const nextContext: ExpenseApiContext = {
-      ...resolved,
-      token: seed.token,
-    };
-
-    if (typeof window !== "undefined") {
-      window.__IND_ALLOW_SELF_MANAGEMENT__ = nextContext.allowSelfManagement;
-    }
-
-    cachedContext = nextContext;
-    return nextContext;
-  })();
-
-  try {
-    return await contextPromise;
-  } finally {
-    contextPromise = null;
   }
+
+  return await waitForAbortableExpenseResult(contextPromise, signal);
 };
 
 // Exposes resolved Entra context values needed by Gastos UI management state.
@@ -511,6 +557,7 @@ export const getExpenseApiContextSnapshot = async (options?: ApiFetchOptions): P
 const normalizeListPagedResponse = normalizeListPagedResponseTransform;
 const normalizeDetailPagedResponse = normalizeDetailPagedResponseTransform;
 const normalizeApiResponse = normalizeApiResponseTransform;
+const normalizeTicketQuickCreateResponse = normalizeTicketQuickCreateResponseTransform;
 const normalizeCurrencyPagedResponse = normalizeCurrencyPagedResponseTransform;
 const normalizeSubordinatesPagedResponse = normalizeSubordinatesPagedResponseTransform;
 const normalizeTicketListPagedResponse = normalizeTicketListPagedResponseTransform;
@@ -1181,6 +1228,98 @@ export const extractExpenseFromTicketDraft = async (
   });
 
   return normalizeApiResponse(response);
+};
+
+// Creates and finalizes one ticket from a single multipart upload using /api/crm/expensesheets/tickets/quick-create.
+export const createExpenseSheetTicketQuick = async (
+  payload: ExpenseSheetTicketQuickCreateRequest,
+  options?: ApiFetchOptions
+): Promise<ExpenseSheetTicketQuickCreateResult> => {
+  if (!payload?.ticketImage) {
+    throw new ApiFetchError("ticketImage is required.");
+  }
+
+  const { suppressPermissionModal: _suppressPermissionModal, ...fetchOptions } = options || {};
+  const context = await ensureExpenseApiContext(fetchOptions);
+  const form = new FormData();
+  const safeCurrencyCode = safeText(payload?.currencyCode).toUpperCase();
+  const safeDescription = safeText(payload?.description);
+  const safeComentario = safeText(payload?.comentario);
+  const safeSheetId = safeText(payload?.existingHojaGastosId);
+  const safeProjectId = safeText(payload?.projectId);
+  const ticketImage = payload.ticketImage;
+
+  if (ticketImage instanceof File) {
+    form.append("ticketImage", ticketImage, safeText(ticketImage.name) || "ticket.jpg");
+  } else {
+    form.append("ticketImage", ticketImage, "ticket.jpg");
+  }
+
+  if (safeCurrencyCode) {
+    form.append("currencyCode", safeCurrencyCode);
+  }
+
+  if ("description" in payload) {
+    form.append("description", safeDescription);
+  }
+
+  if ("comentario" in payload) {
+    form.append("comentario", safeComentario);
+  }
+
+  if (safeSheetId) {
+    form.append("existingHojaGastosId", safeSheetId);
+  }
+
+  if (safeSheetId && safeProjectId) {
+    form.append("projectId", safeProjectId);
+  }
+
+  const csrfToken = getCsrfToken();
+  const headers = sanitizeHeaders(buildExpenseFormHeaders(context, fetchOptions));
+  if (csrfToken) {
+    headers.RequestVerificationToken = csrfToken;
+  }
+
+  const response = await fetch("/api/crm/expensesheets/tickets/quick-create", {
+    credentials: "same-origin",
+    ...fetchOptions,
+    method: "POST",
+    headers,
+    body: form,
+  });
+
+  const raw = await response.text();
+  const retryAfter = safeText(response.headers.get("Retry-After"));
+
+  if (!response.ok) {
+    const reloginResult = await handleApiAuthFailure<ExpenseSheetTicketQuickCreateResult>(
+      raw,
+      response.status,
+      "ticket-quick-create"
+    );
+    if (reloginResult !== null) {
+      return reloginResult;
+    }
+
+    if (response.status === 403) {
+      throw new ApiFetchError(readApiMessageFromRaw(raw) || "Permission denied.", response.status, raw);
+    }
+  }
+
+  const parsed = tryParseJson(raw);
+  if (!parsed || typeof parsed !== "object") {
+    if (!response.ok) {
+      throw new ApiFetchError(readApiMessageFromRaw(raw) || "Request failed.", response.status, raw);
+    }
+    throw new ApiFetchError("Invalid server response.", response.status, raw);
+  }
+
+  return normalizeTicketQuickCreateResponse({
+    ...(parsed as ExpenseSheetTicketQuickCreateResult),
+    HttpStatus: response.status,
+    RetryAfter: retryAfter || null,
+  });
 };
 
 // Creates a ticket header/lines using /api/crm/expensesheets/tickets.
