@@ -7,14 +7,14 @@ export type ExpenseInternationalOption = {
 
 // Fixed enum for "Internacional" field in expense sheet lines.
 export const getExpenseInternationalOptions = (): ExpenseInternationalOption[] => [
-  { value: true, text: indT("ExpenseSheets_International_Yes", "Si") },
+  { value: true, text: indT("ExpenseSheets_International_Yes", "Sí") },
   { value: false, text: indT("ExpenseSheets_International_No", "No") },
 ];
 
 // Maps nullable boolean values to fixed enum labels for read-only rendering.
 export const getExpenseInternationalLabel = (value: boolean | null | undefined): string => {
   if (value === true) {
-    return indT("ExpenseSheets_International_Yes", "Si");
+    return indT("ExpenseSheets_International_Yes", "Sí");
   }
 
   if (value === false) {

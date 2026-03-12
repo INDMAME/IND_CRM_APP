@@ -169,11 +169,11 @@ const ExpenseSheetDetailPageContent = () => {
 
       {controller.showFab ? (
         <FloatingActionButton
-          ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
+          ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rápidas")}
           size={76}
           right={16}
           bottom={controller.showStatusActionBar ? DETAIL_FAB_BOTTOM_WITH_ACTION_BAR : 24}
-          menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
+          menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rápidas")}
           menuItems={controller.fabMenuItems}
         />
       ) : null}

@@ -125,7 +125,7 @@ const ExpenseSheetDetailOverlays = ({
 
             <div className="mt-4 grid grid-cols-1 gap-2">
               <button type="button" className="ind-action-btn w-full px-3 py-2 text-sm" onClick={onSelectFromCamera}>
-                {indT("ExpenseSheets_NewTicket_Source_Camera", "Usar camara")}
+                {indT("ExpenseSheets_NewTicket_Source_Camera", "Usar cámara")}
               </button>
               <button type="button" className="ind-action-btn w-full px-3 py-2 text-sm" onClick={onSelectFromGallery}>
                 {indT("ExpenseSheets_NewTicket_Source_Gallery", "Elegir imagen")}

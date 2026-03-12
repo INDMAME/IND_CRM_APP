@@ -106,10 +106,7 @@ const resolveManagedUserSelection = (requestedUserId: string, currentAxUserId: s
   return "";
 };
 
-const buildLinkModeInitialSnapshot = (
-  managedUserId = "",
-  currencyCode = ""
-): ExpenseTicketAppliedFilterSnapshot => {
+const buildLinkModeInitialSnapshot = (managedUserId = ""): ExpenseTicketAppliedFilterSnapshot => {
   const today = startOfDay(new Date());
   const fromDate = new Date(today);
   // Keep automatic link-mode load bounded to avoid heavy upstream scans.
@@ -119,7 +116,7 @@ const buildLinkModeInitialSnapshot = (
     fromDate: toIsoDate(fromDate),
     toDate: toIsoDate(today),
     filterKey: "",
-    currencyCode: safeText(currencyCode).toUpperCase(),
+    currencyCode: "",
     managedUserId: normalizeUserId(managedUserId),
     statusFilter: 0,
     gastoTypeFilter: "",
@@ -337,8 +334,6 @@ const ExpenseTicketsPageContent = () => {
     linkSheetLocked,
     linkSheetBlockedMessage,
     linkSheetCheckBusy,
-    linkSheetCurrencyCode,
-    linkSheetMetadataReady,
   } = useExpenseTicketLinkSheetGate({
     isLinkMode,
     linkSheetId,
@@ -361,8 +356,8 @@ const ExpenseTicketsPageContent = () => {
   });
   const buildInitialLinkModeSnapshot = useCallback(() => {
     const initialManagedUserId = syncManagedUserSelection(defaultManagedUserId);
-    return buildLinkModeInitialSnapshot(initialManagedUserId, linkSheetCurrencyCode);
-  }, [defaultManagedUserId, linkSheetCurrencyCode, syncManagedUserSelection]);
+    return buildLinkModeInitialSnapshot(initialManagedUserId);
+  }, [defaultManagedUserId, syncManagedUserSelection]);
 
   const {
     fromDate,
@@ -531,7 +526,7 @@ const ExpenseTicketsPageContent = () => {
     () =>
       indT(
         "ExpenseTickets_LinkMode_CancelConfirm",
-        "Se cancelara el proceso de vinculacion y volveras a la hoja de gastos. Quieres continuar?"
+        "Se cancelará el proceso de vinculación y volverás a la hoja de gastos. ¿Quieres continuar?"
       ),
     []
   );
@@ -1127,7 +1122,6 @@ const ExpenseTicketsPageContent = () => {
   useEffect(() => {
     if (!managementBootstrapReady || !hasAccess) return;
     if (didRestoreOnMountRef.current) return;
-    if (isLinkMode && !linkSheetMetadataReady) return;
     didRestoreOnMountRef.current = true;
     const isHistoryBackForward = isExpenseHistoryBackForwardNavigation();
     const isReturnFromTicketDetail = hasExpenseReturnReferrer([
@@ -1205,7 +1199,6 @@ const ExpenseTicketsPageContent = () => {
     consumeReturnMode,
     hasAccess,
     isLinkMode,
-    linkSheetMetadataReady,
     linkSheetId,
     managementBootstrapReady,
     readCachedState,
@@ -1360,7 +1353,7 @@ const ExpenseTicketsPageContent = () => {
                   void selectFromCamera(cameraInputRef.current);
                 }}
               >
-                {indT("ExpenseSheets_NewTicket_Source_Camera", "Usar camara")}
+                {indT("ExpenseSheets_NewTicket_Source_Camera", "Usar cámara")}
               </button>
               <button
                 type="button"
@@ -1521,7 +1514,7 @@ const ExpenseTicketsPageContent = () => {
                   onClick={clearTicketSelection}
                   disabled={linkModeSelectionButtonsDisabled || selectedTicketCount < 1}
                 >
-                  {indT("ExpenseTickets_LinkMode_ClearAll", "Borrar seleccion")}
+                  {indT("ExpenseTickets_LinkMode_ClearAll", "Borrar selección")}
                 </button>
               </div>
             </>
@@ -1673,11 +1666,11 @@ const ExpenseTicketsPageContent = () => {
 
       {canCreateTicket && !isLinkMode ? (
         <FloatingActionButton
-          ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
+          ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rápidas")}
           size={76}
           right={16}
           bottom={24}
-          menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
+          menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rápidas")}
           menuItems={fabMenuItems}
         />
       ) : null}

@@ -85,7 +85,7 @@
     <value>Ticket</value>
   </data>
   <data name="Tickets_Filter_FilterKey_Placeholder" xml:space="preserve">
-    <value>Id de ticket, nombre de archivo o descripcion</value>
+    <value>Id de ticket, nombre de archivo o descripción</value>
   </data>
   <data name="Tickets_Filter_Status" xml:space="preserve">
     <value>Estado</value>
@@ -103,7 +103,7 @@
     <value>Procesado por IA</value>
   </data>
   <data name="Tickets_Filter_ProcessedByIA_Yes" xml:space="preserve">
-    <value>Si</value>
+    <value>Sí</value>
   </data>
   <data name="Tickets_Filter_ProcessedByIA_No" xml:space="preserve">
     <value>No</value>
@@ -124,7 +124,7 @@
     <value>No se pudo cargar el detalle del ticket.</value>
   </data>
   <data name="Tickets_Detail_NotFound" xml:space="preserve">
-    <value>No se encontro el ticket.</value>
+    <value>No se encontró el ticket.</value>
   </data>
   <data name="Tickets_Detail_Header" xml:space="preserve">
     <value>Cabecera</value>
@@ -133,7 +133,7 @@
     <value>Líneas</value>
   </data>
   <data name="Tickets_Detail_NoLines" xml:space="preserve">
-    <value>Sin lineas para este ticket.</value>
+    <value>Sin líneas para este ticket.</value>
   </data>
   <data name="Tickets_Detail_ViewTicket" xml:space="preserve">
     <value>Ver ticket</value>
@@ -169,16 +169,16 @@
     <value>Guardar cambios</value>
   </data>
   <data name="ExpenseSheets_Detail_SaveChanges_Body" xml:space="preserve">
-    <value>Deseas guardar los cambios de la hoja de gastos?</value>
+    <value>¿Deseas guardar los cambios de la hoja de gastos?</value>
   </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>Eliminar hoja de gastos</value>
   </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Body" xml:space="preserve">
-    <value>Deseas eliminar esta hoja de gastos?</value>
+    <value>¿Deseas eliminar esta hoja de gastos?</value>
   </data>
   <data name="ExpenseSheets_Detail_EditingEnabled" xml:space="preserve">
-    <value>Edicion habilitada</value>
+    <value>Edición habilitada</value>
   </data>
   <data name="ExpenseSheets_Detail_Updating" xml:space="preserve">
     <value>Actualizando hoja de gastos...</value>
@@ -211,7 +211,7 @@
     <value>Rechazar</value>
   </data>
   <data name="ExpenseSheets_BottomActions_UndoApproval" xml:space="preserve">
-    <value>Deshacer aprobacion</value>
+    <value>Deshacer aprobación</value>
   </data>
   <data name="ExpenseSheets_BottomActions_UndoRejection" xml:space="preserve">
     <value>Deshacer rechazo</value>
@@ -220,28 +220,28 @@
     <value>Acciones de estado de la hoja de gastos</value>
   </data>
   <data name="ExpenseSheets_BottomActions_RequestApproval" xml:space="preserve">
-    <value>Solicitar aprobacion</value>
+    <value>Solicitar aprobación</value>
   </data>
   <data name="ExpenseSheets_BottomActions_UndoRequest" xml:space="preserve">
     <value>Deshacer solicitud</value>
   </data>
   <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
-    <value>Quieres actualizar el estado de la hoja de gastos?</value>
+    <value>¿Quieres actualizar el estado de la hoja de gastos?</value>
   </data>
   <data name="ExpenseSheets_BottomActions_ConfirmTransition" xml:space="preserve">
-    <value>Estado actual: {0}\nNuevo estado: {1}\n\nQuieres actualizar el estado de la hoja de gastos?</value>
+    <value>Estado actual: {0}\nNuevo estado: {1}\n\n¿Quieres actualizar el estado de la hoja de gastos?</value>
   </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
-    <value>Actualizando linea de gasto...</value>
+    <value>Actualizando línea de gasto...</value>
   </data>
   <data name="ExpenseSheets_Line_Detail_Updated" xml:space="preserve">
-    <value>Linea de gasto actualizada</value>
+    <value>Línea de gasto actualizada</value>
   </data>
   <data name="ExpenseSheets_Line_Detail_Deleting" xml:space="preserve">
-    <value>Eliminando linea de gasto...</value>
+    <value>Eliminando línea de gasto...</value>
   </data>
   <data name="ExpenseSheets_Line_Detail_Deleted" xml:space="preserve">
-    <value>Linea de gasto eliminada</value>
+    <value>Línea de gasto eliminada</value>
   </data>
   <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve">
     <value>La cantidad y el precio deben ser mayores que 0.</value>
@@ -376,7 +376,7 @@
     <value>Internacional</value>
   </data>
   <data name="ExpenseSheets_International_Yes" xml:space="preserve">
-    <value>Si</value>
+    <value>Sí</value>
   </data>
   <data name="ExpenseSheets_International_No" xml:space="preserve">
     <value>No</value>
@@ -502,7 +502,7 @@
     <value>Acceso denegado</value>
   </data>
   <data name="Auth_PermissionDenied_Body" xml:space="preserve">
-    <value>No tienes permisos para realizar esta accion.</value>
+    <value>No tienes permisos para realizar esta acción.</value>
   </data>
   <data name="Topbar_OpenMenu" xml:space="preserve">
     <value>Abrir menú</value>
@@ -1039,7 +1039,7 @@
     <value>Insertar en comentarios</value>
   </data>
   <data name="Speech_Transcribe_Result_Label" xml:space="preserve">
-    <value>Transcripcion</value>
+    <value>Transcripción</value>
   </data>
   <data name="Speech_Transcribe_MissingFile" xml:space="preserve">
     <value>Selecciona un archivo WAV.</value>
@@ -1054,7 +1054,7 @@
     <value>La temperatura debe estar entre 0 y 1.</value>
   </data>
   <data name="Speech_Transcribe_Blocked" xml:space="preserve">
-    <value>Contenido rechazado por politicas de uso.</value>
+    <value>Contenido rechazado por políticas de uso.</value>
   </data>
   <data name="Speech_Transcribe_Failed" xml:space="preserve">
     <value>No se pudo transcribir el audio.</value>
@@ -1063,10 +1063,10 @@
     <value>Editar en pantalla completa</value>
   </data>
   <data name="TextEditor_Microphone" xml:space="preserve">
-    <value>Microfono</value>
+    <value>Micrófono</value>
   </data>
   <data name="TextEditor_Microphone_ReadOnlyHint" xml:space="preserve">
-    <value>La transcripcion de audio solo esta disponible en modo edicion.</value>
+    <value>La transcripción de audio solo está disponible en modo edición.</value>
   </data>
   <data name="TextEditor_Transcribe" xml:space="preserve">
     <value>Transcribir</value>
@@ -1120,28 +1120,28 @@
     <value>Listo</value>
   </data>
   <data name="AudioRecorder_Error_HttpBlocked" xml:space="preserve">
-    <value>Chrome bloquea el microfono en HTTP (intranet). Usa HTTPS o abre la app por http://localhost. Para DEV, configura Chrome para tratar tu origen HTTP como seguro.</value>
+    <value>Chrome bloquea el micrófono en HTTP (intranet). Usa HTTPS o abre la app por http://localhost. Para DEV, configura Chrome para tratar tu origen HTTP como seguro.</value>
   </data>
   <data name="AudioRecorder_Error_PermissionDenied" xml:space="preserve">
-    <value>Permiso de microfono denegado. Habilitalo en el navegador y recarga la pagina.</value>
+    <value>Permiso de micrófono denegado. Habilítalo en el navegador y recarga la página.</value>
   </data>
   <data name="AudioRecorder_Error_NoDevice" xml:space="preserve">
-    <value>No se encontro un dispositivo de microfono. Si estas en Remote Desktop, habilita el microfono en la sesion. Si es USB o Bluetooth, reconectalo y reintenta.</value>
+    <value>No se encontró un dispositivo de micrófono. Si estás en Remote Desktop, habilita el micrófono en la sesión. Si es USB o Bluetooth, reconéctalo y reintenta.</value>
   </data>
   <data name="AudioRecorder_Error_DeviceBusy" xml:space="preserve">
-    <value>El microfono esta ocupado o no se pudo iniciar. Cierra otras apps (Teams, Zoom) y reintenta.</value>
+    <value>El micrófono está ocupado o no se pudo iniciar. Cierra otras apps (Teams, Zoom) y reintenta.</value>
   </data>
   <data name="AudioRecorder_Error_Security" xml:space="preserve">
-    <value>Bloqueado por seguridad del navegador. En Chrome, usa HTTPS o politicas corporativas para permitir el microfono en intranet.</value>
+    <value>Bloqueado por seguridad del navegador. En Chrome, usa HTTPS o políticas corporativas para permitir el micrófono en intranet.</value>
   </data>
   <data name="AudioRecorder_Error_Constraints" xml:space="preserve">
-    <value>No se pudieron cumplir las restricciones de audio. Prueba con otro microfono o configuracion.</value>
+    <value>No se pudieron cumplir las restricciones de audio. Prueba con otro micrófono o configuración.</value>
   </data>
   <data name="AudioRecorder_Error_Generic" xml:space="preserve">
-    <value>No se pudo iniciar la grabacion. Revisa permisos de microfono. En Chrome, normalmente requiere HTTPS o localhost.</value>
+    <value>No se pudo iniciar la grabación. Revisa permisos de micrófono. En Chrome, normalmente requiere HTTPS o localhost.</value>
   </data>
   <data name="AudioRecorder_Error_Unsupported" xml:space="preserve">
-    <value>Tu navegador no soporta getUserMedia o no esta disponible.</value>
+    <value>Tu navegador no soporta getUserMedia o no está disponible.</value>
   </data>
   <data name="AudioRecorder_Error_NoAudioContext" xml:space="preserve">
     <value>AudioContext no disponible en este navegador.</value>
@@ -1150,7 +1150,7 @@
     <value>Origen actual: {0}</value>
   </data>
   <data name="AudioRecorder_Hint_Technical" xml:space="preserve">
-    <value>Detalle tecnico: {0}</value>
+    <value>Detalle técnico: {0}</value>
   </data>
   <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve">
     <value>Tu proceso activo se cancelará y perderás los cambios no guardados. ¿Deseas continuar?</value>
@@ -1162,16 +1162,16 @@
     <value>No</value>
   </data>
   <data name="Common_Yes" xml:space="preserve">
-    <value>Si</value>
+    <value>Sí</value>
   </data>
   <data name="ExpenseSheets_Create_Lines" xml:space="preserve">
-    <value>Lineas</value>
+    <value>Líneas</value>
   </data>
   <data name="Common_Add" xml:space="preserve">
     <value>Agregar</value>
   </data>
   <data name="ExpenseSheets_Create_NoLines" xml:space="preserve">
-    <value>Agrega al menos una linea.</value>
+    <value>Agrega al menos una línea.</value>
   </data>
   <data name="ExpenseSheets_Line" xml:space="preserve">
     <value>Línea</value>
@@ -1180,7 +1180,7 @@
     <value>Consultando tipo de cambio...</value>
   </data>
   <data name="ExpenseSheets_Validation_DescriptionRequired" xml:space="preserve">
-    <value>La descripcion es obligatoria.</value>
+    <value>La descripción es obligatoria.</value>
   </data>
   <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
     <value>La divisa es obligatoria.</value>
@@ -1192,10 +1192,10 @@
     <value>No hay tipo de cambio para la fecha</value>
   </data>
   <data name="ExpenseSheets_Line_Detail_Creating" xml:space="preserve">
-    <value>Creando linea de gasto...</value>
+    <value>Creando línea de gasto...</value>
   </data>
   <data name="ExpenseSheets_Line_Detail_Created" xml:space="preserve">
-    <value>Linea de gasto creada</value>
+    <value>Línea de gasto creada</value>
   </data>
   <data name="ExpenseSheets_Detail_PaidReadOnly" xml:space="preserve">
     <value>Las hojas de gasto pagadas son de solo lectura.</value>
@@ -1204,7 +1204,7 @@
     <value>Esta hoja de gastos es de solo lectura para su estado actual.</value>
   </data>
   <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
-    <value>Este cambio de estado de la hoja de gastos no esta permitido.</value>
+    <value>Este cambio de estado de la hoja de gastos no está permitido.</value>
   </data>
   <data name="ExpenseSheets_FuelPrice_Loading" xml:space="preserve">
     <value>Consultando precio de combustible...</value>
@@ -1216,16 +1216,16 @@
     <value>Origen precio combustible</value>
   </data>
   <data name="ExpenseSheets_FuelPrice_Source_UserConfig" xml:space="preserve">
-    <value>Obtenido por configuracion del usuario.</value>
+    <value>Obtenido por configuración del usuario.</value>
   </data>
   <data name="ExpenseSheets_FuelPrice_Source_GlobalConfig" xml:space="preserve">
-    <value>Obtenido por configuracion global.</value>
+    <value>Obtenido por configuración global.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Text" xml:space="preserve">
     <value>Tipo de cambio obtenido 0.0000000</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Aria" xml:space="preserve">
-    <value>Mostrar informacion del tipo de cambio</value>
+    <value>Mostrar información del tipo de cambio</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>Tipo de cambio obtenido {0}\nFecha: {1}\nOrigen: {2}</value>
@@ -1237,7 +1237,7 @@
     <value>Enlace</value>
   </data>
   <data name="ExpenseSheets_Fab_Actions" xml:space="preserve">
-    <value>Acciones rapidas</value>
+    <value>Acciones rápidas</value>
   </data>
   <data name="ExpenseSheets_Fab_NewTicket" xml:space="preserve">
     <value>Nuevo ticket</value>
@@ -1246,7 +1246,7 @@
     <value>Vincular ticket</value>
   </data>
   <data name="ExpenseSheets_Fab_NewLine" xml:space="preserve">
-    <value>Nueva linea</value>
+    <value>Nueva línea</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Source_Title" xml:space="preserve">
     <value>Nuevo ticket</value>
@@ -1255,7 +1255,7 @@
     <value>Selecciona una fuente para capturar o elegir la imagen del ticket.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Source_Camera" xml:space="preserve">
-    <value>Usar camara</value>
+    <value>Usar cámara</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Source_Gallery" xml:space="preserve">
     <value>Elegir imagen</value>
@@ -1273,7 +1273,7 @@
     <value>Finalizando IA...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_LinkingLine" xml:space="preserve">
-    <value>Vinculando linea de gasto...</value>
+    <value>Vinculando línea de gasto...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_Done" xml:space="preserve">
     <value>Completado</value>
@@ -1282,22 +1282,22 @@
     <value>Formato de imagen no soportado.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_FileSize" xml:space="preserve">
-    <value>La imagen supera el maximo de 50MB.</value>
+    <value>La imagen supera el máximo de 50MB.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_NoFileId" xml:space="preserve">
     <value>No se pudo resolver el fileId del ticket.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_UploadRetry" xml:space="preserve">
-    <value>Ticket creado, pero fallo la sincronizacion del archivo. Reintenta la subida.</value>
+    <value>Ticket creado, pero falló la sincronización del archivo. Reintenta la subida.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RetryFileMissing" xml:space="preserve">
-    <value>La imagen en cache ya no esta disponible.</value>
+    <value>La imagen en caché ya no está disponible.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_CameraPermission" xml:space="preserve">
-    <value>Se requiere permiso de camara.</value>
+    <value>Se requiere permiso de cámara.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Validation" xml:space="preserve">
-    <value>Error de validacion.</value>
+    <value>Error de validación.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_NotFound" xml:space="preserve">
     <value>Registro no encontrado.</value>
@@ -1309,7 +1309,7 @@
     <value>Reintentar upload</value>
   </data>
   <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
-    <value>Se cancelara el proceso de vinculacion y volveras a la hoja de gastos. Quieres continuar?</value>
+    <value>Se cancelará el proceso de vinculación y volverás a la hoja de gastos. ¿Quieres continuar?</value>
   </data>
   <data name="ExpenseTickets_LinkMode_SelectAll" xml:space="preserve">
     <value>Seleccionar todo</value>
@@ -1324,7 +1324,7 @@
     <value>Seleccionar ticket</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultTitle" xml:space="preserve">
-    <value>Resultado de vinculacion</value>
+    <value>Resultado de vinculación</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultRequested" xml:space="preserve">
     <value>Solicitados</value>

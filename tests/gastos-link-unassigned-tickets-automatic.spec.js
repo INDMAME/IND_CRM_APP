@@ -815,46 +815,6 @@ async function applyTicketFilter(page, fileId) {
   await waitListResponse;
 }
 
-// Applies link-mode currency filter so candidate tickets match the target sheet currency.
-async function applyTicketCurrencyFilter(page, currencyCode) {
-  await ensureTicketsFilterPanelOpen(page);
-  const safeCurrencyCode = String(currencyCode || "").trim().toUpperCase();
-  const currencyInput = page.getByRole("combobox", { name: /currency|divisa/i }).first();
-  await expect(currencyInput).toBeVisible({ timeout: 15000 });
-  await currencyInput.fill("");
-  if (safeCurrencyCode) {
-    await currencyInput.fill(safeCurrencyCode);
-    await currencyInput.press("Enter");
-  }
-
-  const listbox = page.locator("div[role='listbox']:visible").first();
-  const listboxVisible = await listbox.isVisible().catch(() => false);
-  if (listboxVisible) {
-    const preferredOption = listbox
-      .locator("button[role='option']")
-      .filter({ hasText: new RegExp(safeCurrencyCode, "i") })
-      .first();
-    const hasPreferred = await preferredOption.count();
-    if (hasPreferred > 0) {
-      await preferredOption.click();
-    } else {
-      await listbox.locator("button[role='option']").first().click();
-    }
-  }
-
-  const applyButton = page.getByRole("button", { name: /apply|aplicar/i }).first();
-  await expect(applyButton).toBeVisible({ timeout: 15000 });
-  const waitListResponse = page
-    .waitForResponse(
-      (response) =>
-        response.url().includes("/api/crm/expensesheets/tickets/link/list") && response.request().method().toUpperCase() === "POST",
-      { timeout: 60000 }
-    )
-    .catch(() => null);
-  await applyButton.click();
-  await waitListResponse;
-}
-
 // Finds whether one ticket card can be selected in link mode.
 async function isTicketSelectableInLinkMode(page, fileId) {
   const ticketItem = page.locator(`.timeline-item[data-ticket-file-id="${fileId}"]`).first();
@@ -1088,7 +1048,7 @@ test("Open ticket detail with quick tap and link one ticket with long press", as
     }
   });
 
-  test("Keep selection and show backend reason when no ticket can be linked", async ({ page }) => {
+  test("Do not prefilter by sheet currency and keep selection when backend skips all tickets", async ({ page }) => {
     let currentPage = page;
     await ensureAuthenticatedSession(currentPage);
     await expect(currentPage.locator("#expense-tickets-root")).toBeVisible({ timeout: 30000 });
@@ -1105,9 +1065,7 @@ test("Open ticket detail with quick tap and link one ticket with long press", as
       const currencyInput = currentPage.getByRole("combobox", { name: /currency|divisa/i }).first();
       await expect
         .poll(async () => String((await currencyInput.inputValue()) || "").trim().toUpperCase(), { timeout: 30000 })
-        .toBe(sheetCurrencyCode);
-
-      await applyTicketCurrencyFilter(currentPage, "");
+        .toBe("");
       const candidateIds = await getVisibleSelectableTicketIds(currentPage, 12);
       expect(candidateIds.length).toBeGreaterThan(0);
 
