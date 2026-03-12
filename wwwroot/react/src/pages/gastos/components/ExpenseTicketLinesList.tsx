@@ -81,24 +81,27 @@ const ExpenseTicketLinesList = ({
         <div className="timeline-box timeline-empty" data-empty-text={indT("Tickets_Detail_NoLines", "No lines for this ticket.")} />
       ) : (
         <div ref={containerRef} className="timeline-box">
-          {visibleLines.map((line, index) => {
+          {visibleLines.map((line) => {
             const amountText = formatAmountWithCurrency(line.totalAmount, currencyCode);
             const qtyText = formatQtyValue(line.qty);
             const priceText = formatAmountWithCurrency(line.price, currencyCode);
             const title = line.description || line.recId || "-";
             const subtitle = `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}   ${indT("ExpenseSheets_Field_Price", "Price")}: ${priceText}`;
+            const lineKey =
+              String(line.recId || "").trim() ||
+              [line.description, line.totalAmount, line.price, line.qty].map((value) => String(value || "").trim()).join("|");
 
             return (
-              <div key={`${line.recId}-${index}`} className="timeline-item">
+              <div key={lineKey} className="timeline-item">
                 <ExpenseTimelineCard
                   dateParts={EMPTY_DATE_PARTS}
                   datePanelContent={TICKET_LINE_DATE_PANEL_ICON}
                   title={title}
                   subtitle={subtitle}
-                  subtitleClassName="expense-sheet-card__subtitle expense-line-card__meta"
+                  subtitleClassName="expense-sheet-card__subtitle expense-line-card__meta text-left"
                   amountText={amountText}
                   onOpen={() => onOpenLine(line.recId)}
-                  titleClassName="timeline-name expense-line-card__title"
+                  titleClassName="timeline-name expense-line-card__title text-left"
                 />
               </div>
             );

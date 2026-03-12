@@ -6,7 +6,6 @@ import { canAccess, showPermissionModal } from "../../../../utils/permissions.ts
 import { indT } from "../../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../../utils/reactIsland.tsx";
 import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
-import { toExpenseIsoDate } from "../../utils/expenseApiDateUtils.ts";
 import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
@@ -23,6 +22,7 @@ import { useExpenseTicketDetailConfirmState } from "./useExpenseTicketDetailConf
 import { useExpenseTicketDetailInteractions } from "./useExpenseTicketDetailInteractions.ts";
 import ExpenseTicketDetailView from "./ExpenseTicketDetailView.tsx";
 import { useExpenseTicketsFilterCache } from "../useExpenseTicketsFilterCache.ts";
+import { useExpenseTicketDetailBackNavigation } from "./useExpenseTicketDetailBackNavigation.ts";
 
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const LINES_PAGE_SIZE = 6;
@@ -119,71 +119,14 @@ const ExpenseTicketDetailPageContent = () => {
     onForbidden: showPermissionModal,
   });
   const { readCachedState, saveCachedState, markResetFiltersReturn, clearCachedState } = useExpenseTicketsFilterCache();
-  const nativeBackUrl = useMemo(() => {
-    if (ticketReturnContext?.sheetId) {
-      return buildExpenseSheetDetailUrl(ticketReturnContext.sheetId);
-    }
-
-    if (detailOrigin === "ticket-create") {
-      const ticketDate = toExpenseIsoDate(header?.transDate) || toExpenseIsoDate(new Date());
-      const query = new URLSearchParams({
-        ticketFileId: fileId,
-        ticketDate,
-      });
-
-      return `/Gastos/Tickets?${query.toString()}`;
-    }
-
-    return "/Gastos/Tickets";
-  }, [detailOrigin, fileId, header?.transDate, ticketReturnContext]);
-
-  const rearmExpenseTicketsReturnState = useCallback(() => {
-    const cachedState = readCachedState();
-    if (!cachedState) return;
-    saveCachedState(cachedState);
-  }, [readCachedState, saveCachedState]);
-
-  useEffect(() => {
-    if (!fileId) return;
-
-    const backButton = document.getElementById("globalBackBtn");
-    if (!backButton) return;
-
-    backButton.setAttribute("data-back-url", nativeBackUrl);
-    return () => {
-      backButton.removeAttribute("data-back-url");
-    };
-  }, [fileId, nativeBackUrl]);
-
-  useEffect(() => {
-    if (!fileId) return;
-
-    const handleNativeBack = (event) => {
-      if (event?.state && event.state.indTrap === true) {
-        return;
-      }
-
-      const executeBackNavigation = () => {
-        if (!ticketReturnContext?.sheetId) {
-          rearmExpenseTicketsReturnState();
-        }
-        window.__indBypassNavigationGuardOnce?.();
-        window.location.replace(nativeBackUrl);
-      };
-
-      if (typeof window.__indRequestNavigation === "function") {
-        window.__indRequestNavigation(executeBackNavigation);
-        return;
-      }
-
-      executeBackNavigation();
-    };
-
-    window.addEventListener("popstate", handleNativeBack);
-    return () => {
-      window.removeEventListener("popstate", handleNativeBack);
-    };
-  }, [fileId, nativeBackUrl, rearmExpenseTicketsReturnState, ticketReturnContext?.sheetId]);
+  useExpenseTicketDetailBackNavigation({
+    fileId,
+    detailOrigin,
+    headerTransDate: header?.transDate,
+    ticketReturnContext,
+    readCachedState,
+    saveCachedState,
+  });
 
   const {
     busy,

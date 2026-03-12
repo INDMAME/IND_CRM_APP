@@ -44,6 +44,7 @@
     user-select: none;
     -webkit-touch-callout: none;
     -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 .filter-card {
     overflow: visible;

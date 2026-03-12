@@ -907,6 +907,32 @@ async function openTicketDetailFromLinkMode(page, fileId) {
   await expect(page.locator("#expense-ticket-detail-root")).toBeVisible({ timeout: 30000 });
 }
 
+async function expectTicketLinkCardContextMenuBlocked(page, fileId) {
+  const card = page.locator(`.timeline-item[data-ticket-file-id="${fileId}"] .timeline-card--clickable`).first();
+  await expect(card).toBeVisible({ timeout: 15000 });
+  const blocked = await card.evaluate((node) => {
+    const event = new MouseEvent("contextmenu", {
+      bubbles: true,
+      cancelable: true,
+    });
+    return node.dispatchEvent(event) === false;
+  });
+  expect(blocked).toBeTruthy();
+}
+
+// Uses the page back chevron and waits until link mode is restored for the same expense sheet.
+async function returnToLinkModeFromTicketDetail(page, sheetId) {
+  const safeSheetId = encodeURIComponent(String(sheetId || "").trim());
+  const backButton = page.getByRole("button", { name: /back|volver/i }).first();
+  await expect(backButton).toBeVisible({ timeout: 15000 });
+  await backButton.click();
+  await page.waitForURL(`**/Gastos/Tickets?action=link&hojaGastosId=${safeSheetId}`, {
+    waitUntil: "domcontentloaded",
+    timeout: 120000,
+  });
+  await expect(page.locator("#expense-tickets-root")).toBeVisible({ timeout: 30000 });
+}
+
 // Confirms link action and returns the backend bulk result. When tickets are linked, the page must redirect to sheet detail.
 async function confirmLinkSelection(page, expectedCount, sheetId) {
   const linkButton = page.getByRole("button", { name: /vincular ticket|link ticket/i }).first();
@@ -1043,15 +1069,16 @@ test("Open ticket detail with quick tap and link one ticket with long press", as
 
       await applyTicketFilter(currentPage, targetTicketId);
       await expect(currentPage.locator(`.timeline-item[data-ticket-file-id="${targetTicketId}"]`).first()).toBeVisible({ timeout: 60000 });
-      await openTicketDetailFromLinkMode(currentPage, targetTicketId);
-      await currentPage.goto(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`, {
-        waitUntil: "domcontentloaded",
-      });
-      await expect(currentPage.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
-      await openLinkModeFromSheet(currentPage, sheetId);
-      await applyTicketFilter(currentPage, targetTicketId);
-      await expect(currentPage.locator(`.timeline-item[data-ticket-file-id="${targetTicketId}"]`).first()).toBeVisible({ timeout: 60000 });
+      await expectTicketLinkCardContextMenuBlocked(currentPage, targetTicketId);
       await selectTicketByFileId(currentPage, targetTicketId);
+      await openTicketDetailFromLinkMode(currentPage, targetTicketId);
+      await returnToLinkModeFromTicketDetail(currentPage, sheetId);
+      await expect(currentPage.locator(`.timeline-item[data-ticket-file-id="${targetTicketId}"]`).first()).toBeVisible({ timeout: 60000 });
+      await expect(currentPage.locator(`.timeline-item[data-ticket-file-id="${targetTicketId}"]`).first()).toHaveAttribute(
+        "data-ticket-selected",
+        "true",
+        { timeout: 30000 }
+      );
       const result = await confirmLinkSelection(currentPage, 1, sheetId);
       expect(result.linkedCount, JSON.stringify(result.bulkPayload)).toBeGreaterThan(0);
       await expectLinkedTicketVisibleOnSheet(currentPage, targetTicketId);

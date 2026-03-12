@@ -3,8 +3,18 @@ import type { ExpenseDateParts } from "../utils/expenseUiUtils.ts";
 import { normalizeCardTitleText, safeText } from "../utils/expenseUiUtils.ts";
 
 type ExpenseTimelineCardInteractionProps = Pick<
-  React.HTMLAttributes<HTMLDivElement>,
-  "aria-label" | "aria-pressed" | "onClick" | "onKeyDown" | "onPointerCancel" | "onPointerDown" | "onPointerMove" | "onPointerUp" | "role" | "tabIndex"
+  React.ButtonHTMLAttributes<HTMLButtonElement>,
+  | "aria-label"
+  | "aria-pressed"
+  | "onClick"
+  | "onContextMenu"
+  | "onKeyDown"
+  | "onPointerCancel"
+  | "onPointerDown"
+  | "onPointerMove"
+  | "onPointerUp"
+  | "role"
+  | "tabIndex"
 >;
 
 type ExpenseTimelineCardProps = {
@@ -52,22 +62,14 @@ const ExpenseTimelineCard = ({
     ...restInteractionProps
   } = interactionProps || {};
 
-  const handleKeyDown = customOnKeyDown
-    ? customOnKeyDown
-    : (event: React.KeyboardEvent<HTMLDivElement>) => {
-        if (event.key === "Enter" || event.key === " ") {
-          event.preventDefault();
-          onOpen();
-        }
-      };
-
   return (
-    <div
-      className="timeline-card timeline-card--clickable expense-timeline-card"
-      role={customRole ?? "button"}
+    <button
+      type="button"
+      className="timeline-card timeline-card--clickable expense-timeline-card text-left"
+      role={customRole}
       tabIndex={typeof customTabIndex === "number" ? customTabIndex : 0}
       onClick={customOnClick ?? onOpen}
-      onKeyDown={handleKeyDown}
+      onKeyDown={customOnKeyDown}
       {...restInteractionProps}
     >
       <div className="timeline-date-panel expense-timeline-card__date-panel flex flex-col items-center justify-center gap-1 bg-slate-50 border-r border-slate-200 text-slate-600">
@@ -100,7 +102,7 @@ const ExpenseTimelineCard = ({
           {safeAmount}
         </span>
       </div>
-    </div>
+    </button>
   );
 };
 

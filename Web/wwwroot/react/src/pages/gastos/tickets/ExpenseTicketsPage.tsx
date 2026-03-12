@@ -7,7 +7,6 @@ import PageBottomActions, { PageBottomActionButton } from "../../../components/c
 import Spinner from "../../../components/commons/Spinner.tsx";
 import { useAuthContext, type AuthManagedUser } from "../../../context/AuthContext.tsx";
 import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
-import { ApiFetchError } from "../../../services/apiService.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
@@ -21,14 +20,11 @@ import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCatalog.ts";
 import {
   configureExpenseApiAuth,
-  fetchExpenseSheetDetail,
   linkExpenseSheetTicketsBulk,
-  mapExpenseSheetHeader,
 } from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 import { toExpenseIsoDate } from "../utils/expenseApiDateUtils.ts";
 import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../utils/expenseNavigation.ts";
-import { isExpenseAbortLikeError } from "../utils/expenseRequestRetry.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import {
   buildExpenseSheetDetailUrl,
@@ -36,12 +32,16 @@ import {
   saveExpenseTicketReturnContext,
 } from "../utils/expenseTicketReturnContext.ts";
 import { hasExpenseReturnReferrer, isExpenseHistoryBackForwardNavigation } from "../utils/expenseHistoryNavigation.ts";
-import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDateParts, formatExpenseDisplayDate, safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetQuickTicketFlow } from "../detail/useExpenseSheetQuickTicketFlow.ts";
-import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
 import { useExpenseTicketsFiltersState } from "./useExpenseTicketsFiltersState.ts";
 import { useExpenseTicketsListData } from "./useExpenseTicketsListData.ts";
 import { useExpenseTicketsFilterCache, type ExpenseTicketsCachedState } from "./useExpenseTicketsFilterCache.ts";
+import {
+  clearExpenseTicketLinkReturnState,
+  readExpenseTicketLinkReturnState,
+  saveExpenseTicketLinkReturnState,
+} from "./expenseTicketLinkReturnState.ts";
 import { buildExpenseTicketLinkBulkFilters } from "../utils/expensePayloadBuilders.ts";
 import type { ExpenseSheetTicketLinkBulkResultDto } from "../expenseTypes.ts";
 import type {
@@ -50,8 +50,9 @@ import type {
   ExpenseTicketListPageItem,
 } from "./expenseTicketListTypes.ts";
 import { useExpenseTicketLinkSelection } from "./useExpenseTicketLinkSelection.ts";
+import { useExpenseTicketAutomaticLoad } from "./useExpenseTicketAutomaticLoad.ts";
+import { useExpenseTicketLinkSheetGate } from "./useExpenseTicketLinkSheetGate.ts";
 import { setTopbarActionGroupReady as revealTopbarActionGroup } from "../../../utils/topbarActionVisibility.ts";
-import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 
 const PAGE_SIZE = 10;
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
@@ -68,9 +69,6 @@ const GASTO_TYPE_LABEL_KEYS: Record<number, { key: string; fallback: string }> =
   8: { key: "Enum_GastoType_Varios", fallback: "Varios" },
   14: { key: "Enum_GastoType_Taxi", fallback: "Taxi" },
 };
-
-const EXPENSE_STATUS_APPROVED = 2;
-const EXPENSE_STATUS_PAID = 4;
 
 const normalizeUserId = (value: unknown): string => String(value || "").trim();
 
@@ -243,22 +241,12 @@ const ExpenseTicketsPageContent = () => {
     [isLinkMode]
   );
 
-  const [linkSheetLocked, setLinkSheetLocked] = useState(false);
-  const [linkSheetBlockedMessage, setLinkSheetBlockedMessage] = useState("");
-  const [linkSheetCheckBusy, setLinkSheetCheckBusy] = useState(false);
   const [linkFlowBusy, setLinkFlowBusy] = useState(false);
   const [linkFlowStatus, setLinkFlowStatus] = useState("");
   const [linkFlowError, setLinkFlowError] = useState("");
   const [selectAllBusy, setSelectAllBusy] = useState(false);
   const [selectAllError, setSelectAllError] = useState("");
   const [linkBulkResult, setLinkBulkResult] = useState<ExpenseSheetTicketLinkBulkResultDto | null>(null);
-  const [pendingAutomaticLoad, setPendingAutomaticLoad] = useState<{
-    page: number;
-    snapshot: ExpenseTicketAppliedFilterSnapshot;
-    clearCache: boolean;
-    resetBeforeLoad: boolean;
-    waitForLinkModeSheetReady: boolean;
-  } | null>(null);
 
   const paginationLabels = useMemo(
     () => ({
@@ -342,6 +330,26 @@ const ExpenseTicketsPageContent = () => {
     },
     [currentAxUserId, managedUsers, setSelectedManagedUserId]
   );
+  const { linkSheetLocked, linkSheetBlockedMessage, linkSheetCheckBusy } = useExpenseTicketLinkSheetGate({
+    isLinkMode,
+    linkSheetId,
+    canProcessLinkMode,
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    currentCrmUserId,
+    selectedManagedUserId,
+    resolveBlockedMessage: resolveLinkModeBlockedMessage,
+  });
+  const { runAutomaticListLoad } = useExpenseTicketAutomaticLoad({
+    isLinkMode,
+    canProcessLinkMode,
+    linkSheetCheckBusy,
+    linkSheetLocked,
+    clearListCache,
+    resetList,
+    loadList,
+  });
 
   const {
     fromDate,
@@ -503,60 +511,6 @@ const ExpenseTicketsPageContent = () => {
       ),
     []
   );
-  // Queues one automatic list refresh after the filter state render has committed.
-  const runAutomaticListLoad = useCallback(
-    (
-      page: number,
-      snapshot: ExpenseTicketAppliedFilterSnapshot,
-      options: {
-        clearCache?: boolean;
-        resetBeforeLoad?: boolean;
-        waitForLinkModeSheetReady?: boolean;
-      } = {}
-    ) => {
-      setPendingAutomaticLoad({
-        page,
-        snapshot,
-        clearCache: options.clearCache === true,
-        resetBeforeLoad: options.resetBeforeLoad === true,
-        waitForLinkModeSheetReady: options.waitForLinkModeSheetReady === true,
-      });
-    },
-    []
-  );
-
-  useEffect(() => {
-    if (!pendingAutomaticLoad) return;
-
-    if (pendingAutomaticLoad.waitForLinkModeSheetReady) {
-      if (!isLinkMode) {
-        setPendingAutomaticLoad((current) =>
-          current ? { ...current, waitForLinkModeSheetReady: false } : null
-        );
-        return;
-      }
-
-      if (!canProcessLinkMode || linkSheetCheckBusy) {
-        return;
-      }
-
-      if (linkSheetLocked) {
-        setPendingAutomaticLoad(null);
-        return;
-      }
-    }
-
-    const { page, snapshot, clearCache, resetBeforeLoad } = pendingAutomaticLoad;
-    setPendingAutomaticLoad(null);
-
-    if (clearCache) {
-      clearListCache();
-    }
-    if (resetBeforeLoad) {
-      resetList();
-    }
-    void loadList(page, snapshot);
-  }, [canProcessLinkMode, clearListCache, isLinkMode, linkSheetCheckBusy, linkSheetLocked, loadList, pendingAutomaticLoad, resetList]);
 
   const applyCreatedTicketReturn = useCallback(
     (ticketFileId: string, ticketDateValue: unknown) => {
@@ -643,6 +597,7 @@ const ExpenseTicketsPageContent = () => {
     const initialManagedUserId = syncManagedUserSelection(defaultManagedUserId);
     const linkSnapshot = buildLinkModeInitialSnapshot(initialManagedUserId);
     clearCachedState();
+    clearExpenseTicketLinkReturnState();
     clearLinkTicketSelection();
     setLinkBulkResult(null);
     restoreAppliedFilters(linkSnapshot);
@@ -653,6 +608,7 @@ const ExpenseTicketsPageContent = () => {
     });
   }, [
     clearCachedState,
+    clearExpenseTicketLinkReturnState,
     clearLinkTicketSelection,
     defaultManagedUserId,
     normalizeLinkModeSnapshotForLoad,
@@ -691,12 +647,13 @@ const ExpenseTicketsPageContent = () => {
   // Keeps delete return explicit: blank filters, open panel, and no automatic reload.
   const restoreDeleteReturnState = useCallback(() => {
     clearCachedState();
+    clearExpenseTicketLinkReturnState();
     pendingScrollRestoreRef.current = null;
     pendingFocusFileIdRef.current = "";
     clearLinkTicketSelection();
     setLinkBulkResult(null);
     onClear();
-  }, [clearCachedState, clearLinkTicketSelection, onClear]);
+  }, [clearCachedState, clearExpenseTicketLinkReturnState, clearLinkTicketSelection, onClear]);
 
   const toggleTicketSelection = useCallback(
     (ticket: ExpenseTicketListPageItem) => {
@@ -824,6 +781,7 @@ const ExpenseTicketsPageContent = () => {
       setLinkBulkResult(result);
       clearTicketSelection();
       clearCachedState();
+      clearExpenseTicketLinkReturnState();
 
       if (result.linkedCount > 0) {
         clearExpenseTicketReturnContext();
@@ -966,6 +924,18 @@ const ExpenseTicketsPageContent = () => {
 
       if (isLinkMode) {
         saveCachedState(currentState);
+        saveExpenseTicketLinkReturnState({
+          sheetId: linkSheetId,
+          page: currentState.page,
+          scrollY: currentState.scrollY,
+          focusFileId: fileId,
+          filters: snapshot,
+          selectionMode,
+          selectedTickets,
+          excludedIds,
+          filteredSelectionFilters: filteredSnapshot,
+          filteredSelectionTotal: filteredTotalCount,
+        });
         const query = new URLSearchParams({
           fileId,
         });
@@ -1023,6 +993,7 @@ const ExpenseTicketsPageContent = () => {
       excludedIds,
       sheetCallerOrigin,
       saveCachedState,
+      saveExpenseTicketLinkReturnState,
       selectedTickets,
       selectionMode,
       total,
@@ -1120,104 +1091,6 @@ const ExpenseTicketsPageContent = () => {
 
   const showSummary = !isLinkMode && !showFilters && summaryItems.length > 0;
 
-  // Validates target sheet lock state before enabling link mode actions.
-  useEffect(() => {
-    if (!isLinkMode || !linkSheetId) {
-      setLinkSheetLocked(false);
-      setLinkSheetBlockedMessage("");
-      setLinkSheetCheckBusy(false);
-      return;
-    }
-    if (!canProcessLinkMode) {
-      setLinkSheetLocked(true);
-      setLinkSheetBlockedMessage(indT("Auth_PermissionDenied_Body", "No permission."));
-      setLinkSheetCheckBusy(false);
-      return;
-    }
-
-    let cancelled = false;
-    setLinkSheetCheckBusy(true);
-    void (async () => {
-      try {
-        const response = await fetchExpenseSheetDetail(linkSheetId, {
-          suppressPermissionModal: true,
-        });
-        if (cancelled) return;
-
-        if (response?.Success === false) {
-          setLinkSheetLocked(true);
-          setLinkSheetBlockedMessage(
-            safeText(response.Message) || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.")
-          );
-          return;
-        }
-
-        const headers = Array.isArray(response?.Items) ? response.Items : [];
-        const selectedSheet =
-          headers.find((entry) => safeText((entry as { HojaGastosId?: unknown })?.HojaGastosId).toUpperCase() === linkSheetId.toUpperCase()) ||
-          headers[0] ||
-          null;
-
-        if (!selectedSheet) {
-          setLinkSheetLocked(true);
-          setLinkSheetBlockedMessage(indT("ExpenseSheets_NotFound", "Expense sheet was not found."));
-          return;
-        }
-
-        const mappedHeader = mapExpenseSheetHeader(selectedSheet);
-        const statusCode = typeof mappedHeader.expenseSheetStatus === "number" ? mappedHeader.expenseSheetStatus : null;
-        const isPaid = statusCode === EXPENSE_STATUS_PAID || hasAssignedVoucher(mappedHeader.voucher);
-        const isManagingOtherUser = isManagingOtherExpenseRecord({
-          canManageOtherUsers,
-          currentAxUserId,
-          currentCrmUserId,
-          selectedManagedUserId,
-          recordOwnerUserId: mappedHeader.userId,
-          isCreateMode: false,
-        });
-        const detailPolicy = resolveExpenseSheetDetailPolicy({
-          statusCode,
-          isManagingOtherUser,
-          allowSelfManagement,
-          isPaid,
-        });
-        const isLocked = detailPolicy.interactionMode !== "full_edit";
-        setLinkSheetLocked(isLocked);
-        setLinkSheetBlockedMessage(isLocked ? resolveLinkModeBlockedMessage(isPaid) : "");
-      } catch (error) {
-        if (cancelled) return;
-        if (isExpenseAbortLikeError(error)) return;
-        setLinkSheetLocked(true);
-        if (error instanceof ApiFetchError && error.status === 403) {
-          setLinkSheetBlockedMessage(indT("Auth_PermissionDenied_Body", "No permission."));
-          return;
-        }
-        setLinkSheetBlockedMessage(
-          error instanceof Error
-            ? error.message
-            : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail.")
-        );
-      } finally {
-        if (!cancelled) {
-          setLinkSheetCheckBusy(false);
-        }
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [
-    allowSelfManagement,
-    canManageOtherUsers,
-    canProcessLinkMode,
-    currentAxUserId,
-    currentCrmUserId,
-    isLinkMode,
-    linkSheetId,
-    selectedManagedUserId,
-  ]);
-
   useEffect(() => {
     if (!isLinkMode) return;
     setExpenseNavigationGuard({
@@ -1260,7 +1133,28 @@ const ExpenseTicketsPageContent = () => {
       const cachedState = isReturningFromDetail ? readCachedState() : null;
       const cachedSheetId = safeText(cachedState?.linkModeSheetId);
       if (cachedState && cachedSheetId && cachedSheetId === safeText(linkSheetId)) {
+        clearExpenseTicketLinkReturnState();
         restoreLinkModeReturnState(cachedState);
+        return;
+      }
+
+      const linkReturnState = isReturningFromDetail ? readExpenseTicketLinkReturnState(linkSheetId) : null;
+      if (linkReturnState) {
+        clearExpenseTicketLinkReturnState();
+        restoreLinkModeReturnState({
+          filters: linkReturnState.filters,
+          page: linkReturnState.page,
+          scrollY: linkReturnState.scrollY,
+          focusFileId: linkReturnState.focusFileId,
+          items: [],
+          selectedTickets: linkReturnState.selectedTickets,
+          total: 0,
+          linkModeSheetId: linkReturnState.sheetId,
+          selectionMode: linkReturnState.selectionMode,
+          excludedIds: linkReturnState.excludedIds,
+          filteredSelectionFilters: linkReturnState.filteredSelectionFilters,
+          filteredSelectionTotal: linkReturnState.filteredSelectionTotal,
+        });
         return;
       }
 
@@ -1283,6 +1177,7 @@ const ExpenseTicketsPageContent = () => {
   }, [
     applyCreatedTicketReturn,
     clearCachedState,
+    clearExpenseTicketLinkReturnState,
     consumeReturnFlag,
     consumeReturnMode,
     hasAccess,
@@ -1290,6 +1185,7 @@ const ExpenseTicketsPageContent = () => {
     linkSheetId,
     managementBootstrapReady,
     readCachedState,
+    readExpenseTicketLinkReturnState,
     restoreDeleteReturnState,
     restoreInitialLinkModeState,
     restoreLinkModeReturnState,

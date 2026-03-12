@@ -2264,6 +2264,59 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #buildExpenseSheetTicketListRow
+        #// Method: buildExpenseSheetTicketListRow
+        #// Purpose: Build one generic ticket-list row with the reduced contract.
+        #static server container buildExpenseSheetTicketListRow(INDTicketInfoTable _ticketHeader, DocuRef _docuRef)
+        #{
+        #    int ticketStatusInt;
+        #    int processedByAIInt;
+        #    int gastoTypeInt;
+        #    ;
+        #
+        #    ticketStatusInt  = _ticketHeader.Status;
+        #    processedByAIInt = _ticketHeader.ProcessedByAI;
+        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #
+        #    return [
+        #            strFmt('%1', _ticketHeader.FileId),
+        #            strFmt('%1', _ticketHeader.Description),
+        #            strFmt('%1', ticketStatusInt),
+        #            strFmt('%1', processedByAIInt),
+        #            strFmt('%1', _ticketHeader.CurrencyCode),
+        #            strFmt('%1', _ticketHeader.TotalAmount),
+        #            strFmt('%1', date2Str(_ticketHeader.createdDate, 123, 2,2,2,2,4)),
+        #            strFmt('%1', _docuRef.INDFilename),
+        #            strFmt('%1', gastoTypeInt)
+        #           ];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetTicketLinkListRow
+        #// Method: buildExpenseSheetTicketLinkListRow
+        #// Purpose: Build one ticket-link row for the linking page contract.
+        #static server container buildExpenseSheetTicketLinkListRow(INDTicketInfoTable _ticketHeader, DocuRef _docuRef)
+        #{
+        #    int processedByAIInt;
+        #    int gastoTypeInt;
+        #    ;
+        #
+        #    processedByAIInt = _ticketHeader.ProcessedByAI;
+        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #
+        #    return [
+        #            strFmt('%1', _ticketHeader.FileId),
+        #            strFmt('%1', _ticketHeader.Description),
+        #            strFmt('%1', _ticketHeader.CurrencyCode),
+        #            strFmt('%1', _ticketHeader.TotalAmount),
+        #            strFmt('%1', date2Str(_ticketHeader.createdDate, 123, 2,2,2,2,4)),
+        #            strFmt('%1', _docuRef.INDFilename),
+        #            strFmt('%1', processedByAIInt),
+        #            strFmt('%1', gastoTypeInt)
+        #           ];
+        #}
+        #
+      ENDSOURCE
       SOURCE #getExpenseSheetTicketsList
         #// Method: getExpenseSheetTicketsList
         #// Purpose: Returns ticket list for one user.
@@ -2278,7 +2331,7 @@ Formatversion: 1
         #//  - _data[8] = gastoType       (optional)
         #//  - _data[9] = processedByAI   (optional, 0|1; otros valores = sin filtro)
         #// Output rows:
-        #//  - [[FileId, Description, Status, CurrencyCode, TotalAmount, CreatedByUserId, TransDate, UrlFile, FileName, ProcessedByAI, GastoType, HojaGastosIdDisplay], ...]
+        #//  - [[FileId, Description, Status, ProcessedByAI, CurrencyCode, TotalAmount, TransDate, FileName, GastoType], ...]
         #static server container getExpenseSheetTicketsList(container _data)
         #{
         #    DataAreaId         companyId;
@@ -2297,14 +2350,10 @@ Formatversion: 1
         #    boolean            hasProcessedByAIFilter;
         #    str 16             processedByAIRaw;
         #    str 16             statusFilterRaw;
-        #    int                ticketStatusInt;
-        #    int                processedByAIInt;
-        #    int                gastoTypeInt;
         #
         #    INDTicketInfoTable ticketHeader;
         #    DocuRef            docuRef;
-        #    container          conResult, conItem;
-        #
+        #    container          conResult;
         #    ;
         #
         #    companyId = INDCRMUtilityService::getCompany(_data);
@@ -2387,10 +2436,10 @@ Formatversion: 1
         #        while select ticketHeader
         #            order by RecId desc
         #            where ticketHeader.CreatedByUserId == axUserId
-        #               && (!hasStatusFilter    || ticketHeader.Status == statusFilter)
-        #               && (!filterTxt          || ticketHeader.SearchKey like likePattern )
-        #               && (!currencyCode       || ticketHeader.CurrencyCode == currencyCode)
-        #               && (!hasGastoTypeFilter || ticketHeader.GastoType == gastoTypeFilter)
+        #               && (!hasStatusFilter       || ticketHeader.Status == statusFilter)
+        #               && (!filterTxt             || ticketHeader.SearchKey like likePattern )
+        #               && (!currencyCode          || ticketHeader.CurrencyCode == currencyCode)
+        #               && (!hasGastoTypeFilter    || ticketHeader.GastoType == gastoTypeFilter)
         #               && (!hasProcessedByAIFilter || ticketHeader.ProcessedByAI == processedByAIFilter)
         #        {
         #            select firstonly docuRef
@@ -2401,32 +2450,145 @@ Formatversion: 1
         #            if (!docuRef.RecId)
         #                continue;
         #
-        #            if (createdDateFrom && docuRef.INDTransDate < createdDateFrom)
+        #            if (createdDateFrom && ticketHeader.createdDate < createdDateFrom)
         #                continue;
         #
-        #            if (createdDateTo && docuRef.INDTransDate > createdDateTo)
+        #            if (createdDateTo && ticketHeader.createdDate > createdDateTo)
         #                continue;
         #
-        #            ticketStatusInt = ticketHeader.Status;
-        #            processedByAIInt = ticketHeader.ProcessedByAI;
-        #            gastoTypeInt = ticketHeader.GastoType;
+        #            conResult += [INDCRMExpenseSheetService::buildExpenseSheetTicketListRow(ticketHeader, docuRef)];
+        #        }
+        #    }
         #
-        #            conItem = [[
-        #                        strFmt('%1', ticketHeader.FileId),
-        #                        strFmt('%1', ticketHeader.Description),
-        #                        strFmt('%1', ticketStatusInt),
-        #                        strFmt('%1', ticketHeader.CurrencyCode),
-        #                        strFmt('%1', ticketHeader.TotalAmount),
-        #                        strFmt('%1', ticketHeader.CreatedByUserId),
-        #                        strFmt('%1', date2Str(ticketHeader.createdDate, 123, 2,2,2,2,4)),
-        #                        strFmt('%1', docuRef.INDURLFile),
-        #                        strFmt('%1', docuRef.INDFilename),
-        #                        strFmt('%1', processedByAIInt),
-        #                        strFmt('%1', gastoTypeInt),
-        #                        strFmt('%1', ticketHeader.hojaGastosIdDisplay())
-        #                      ]];
+        #    return conResult ? conResult : [['Sin datos.']];
+        #}
         #
-        #            conResult += conItem;
+      ENDSOURCE
+      SOURCE #getExpenseSheetTicketsLinkList
+        #// Method: getExpenseSheetTicketsLinkList
+        #// Purpose: Returns linkable ticket list for one user.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #//  - _data[3] = searchKey/filterTxt (optional)
+        #//  - _data[4] = createdDateFrom (optional, yyyymmdd)
+        #//  - _data[5] = createdDateTo   (optional, yyyymmdd)
+        #//  - _data[6] = currencyCode    (optional)
+        #//  - _data[7] = gastoType       (optional)
+        #//  - _data[8] = processedByAI   (optional, 0|1; otros valores = sin filtro)
+        #// Fixed filters:
+        #//  - Status = Pending
+        #//  - TotalAmount != 0
+        #// Output rows:
+        #//  - [[FileId, Description, CurrencyCode, TotalAmount, TransDate, FileName, ProcessedByAI, GastoType], ...]
+        #static server container getExpenseSheetTicketsLinkList(container _data)
+        #{
+        #    DataAreaId         companyId;
+        #    UserId             axUserId;
+        #    CRMUserId          crmUserId;
+        #    str 1000           filterTxt;
+        #    str 1000           likePattern;
+        #    date               createdDateFrom;
+        #    date               createdDateTo;
+        #    CurrencyCode       currencyCode;
+        #    int                gastoTypeFilter;
+        #    boolean            hasGastoTypeFilter;
+        #    int                processedByAIFilter;
+        #    boolean            hasProcessedByAIFilter;
+        #    str 16             processedByAIRaw;
+        #    int                pendingStatus;
+        #
+        #    INDTicketInfoTable ticketHeader;
+        #    DocuRef            docuRef;
+        #    container          conResult;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return conNull();
+        #
+        #    axUserId = conPeek(_data, 2);
+        #
+        #    if (!axUserId)
+        #        return [['Sin datos.']];
+        #
+        #    pendingStatus = 0;
+        #
+        #    if (conLen(_data) >= 3)
+        #        filterTxt = conPeek(_data, 3);
+        #
+        #    createdDateFrom = INDCRMUtilityService::parseYmdDate(conPeek(_data, 4));
+        #    createdDateTo   = INDCRMUtilityService::parseYmdDate(conPeek(_data, 5));
+        #
+        #    if (createdDateFrom && createdDateTo && createdDateFrom > createdDateTo)
+        #        return [['Sin datos, la fecha desde no puede ser mayor a la fecha hasta.']];
+        #
+        #    if (conLen(_data) >= 6)
+        #        currencyCode = conPeek(_data, 6);
+        #
+        #    if (conLen(_data) >= 7 && conPeek(_data, 7))
+        #    {
+        #        gastoTypeFilter = conPeek(_data, 7);
+        #        hasGastoTypeFilter = true;
+        #    }
+        #
+        #    if (conLen(_data) >= 8)
+        #    {
+        #        processedByAIRaw = strFmt('%1', conPeek(_data, 8));
+        #        processedByAIRaw = strLwr(strLTrim(strRTrim(processedByAIRaw)));
+        #        if (processedByAIRaw == '0' || processedByAIRaw == '1')
+        #        {
+        #            processedByAIFilter = str2Int(processedByAIRaw);
+        #            hasProcessedByAIFilter = true;
+        #        }
+        #    }
+        #
+        #    if (filterTxt)
+        #        likePattern = strFmt('*%1*', filterTxt);
+        #
+        #    if (currencyCode)
+        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #
+        #    if (hasGastoTypeFilter && !INDCRMExpenseSheetService::isValidGastoType(gastoTypeFilter))
+        #        hasGastoTypeFilter = false;
+        #
+        #    if (hasProcessedByAIFilter &&
+        #        (processedByAIFilter < 0
+        #      || processedByAIFilter > 1))
+        #        hasProcessedByAIFilter = false;
+        #
+        #    changecompany(companyId)
+        #    {
+        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #        if (!crmUserId)
+        #            return conResult;
+        #
+        #        while select ticketHeader
+        #            order by RecId desc
+        #            where ticketHeader.CreatedByUserId == axUserId
+        #               && ticketHeader.Status          == pendingStatus
+        #               && ticketHeader.TotalAmount     != 0
+        #               && (!filterTxt                  || ticketHeader.SearchKey like likePattern )
+        #               && (!currencyCode               || ticketHeader.CurrencyCode == currencyCode)
+        #               && (!hasGastoTypeFilter         || ticketHeader.GastoType == gastoTypeFilter)
+        #               && (!hasProcessedByAIFilter     || ticketHeader.ProcessedByAI == processedByAIFilter)
+        #        {
+        #            select firstonly docuRef
+        #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)
+        #                   && docuRef.RefRecId   == ticketHeader.RecId
+        #                   && docuRef.INDFileId  == ticketHeader.FileId;
+        #
+        #            if (!docuRef.RecId)
+        #                continue;
+        #
+        #            if (createdDateFrom && ticketHeader.createdDate < createdDateFrom)
+        #                continue;
+        #
+        #            if (createdDateTo && ticketHeader.createdDate > createdDateTo)
+        #                continue;
+        #
+        #            conResult += [INDCRMExpenseSheetService::buildExpenseSheetTicketLinkListRow(ticketHeader, docuRef)];
         #        }
         #    }
         #

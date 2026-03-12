@@ -68,11 +68,11 @@ const ExpenseTicketLinkTimelineItem = ({
   const statusIcon = (
     <>
       <span
-        className={`inline-flex h-5 w-5 items-center justify-center rounded-full border transition ${selectionIndicatorToneClassName}`}
+        className={`inline-flex h-4 w-4 items-center justify-center rounded-[var(--radius-xl)] border transition ${selectionIndicatorToneClassName}`}
         aria-hidden="true"
         title={selectLabel}
       >
-        <CheckIcon className="h-3.5 w-3.5" strokeWidth={2.2} />
+        <CheckIcon className="h-3 w-3" strokeWidth={2.2} />
       </span>
       {processedByAI ? (
         <span
@@ -109,7 +109,6 @@ const ExpenseTicketLinkTimelineItem = ({
         statusIcon={statusIcon}
         statusIconClassName="expense-ticket-card__status-icons"
         interactionProps={{
-          role: "button",
           tabIndex: interactionDisabled ? -1 : 0,
           "aria-label": title,
           "aria-pressed": isSelected,
@@ -117,6 +116,9 @@ const ExpenseTicketLinkTimelineItem = ({
           onPointerMove: tapGuard.onPointerMove,
           onPointerUp: tapGuard.onPointerUp,
           onPointerCancel: tapGuard.onPointerCancel,
+          onContextMenu: (event) => {
+            event.preventDefault();
+          },
           onClick: (event) => {
             event.preventDefault();
           },

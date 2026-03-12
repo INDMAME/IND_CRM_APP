@@ -106,3 +106,10 @@ export const buildExpenseSheetDetailUrl = (sheetId: unknown): string => {
   if (!safeSheetId) return "/Gastos/ExpenseSheets";
   return `/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(safeSheetId)}`;
 };
+
+// Builds the canonical ticket link form URL used when a ticket detail returns to link mode.
+export const buildExpenseTicketLinkUrl = (sheetId: unknown): string => {
+  const safeSheetId = safeText(sheetId);
+  if (!safeSheetId) return "/Gastos/Tickets";
+  return `/Gastos/Tickets?action=link&hojaGastosId=${encodeURIComponent(safeSheetId)}`;
+};

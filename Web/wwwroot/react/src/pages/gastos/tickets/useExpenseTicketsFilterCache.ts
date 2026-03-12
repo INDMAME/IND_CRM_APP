@@ -148,6 +148,15 @@ const normalizeFilteredSelectionTotal = (value: unknown): number => {
   return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : 0;
 };
 
+// Falls back to a lean payload when the full list snapshot cannot be persisted reliably.
+const toCompactState = (state: ExpenseTicketsCachedState): ExpenseTicketsCachedState => {
+  return {
+    ...state,
+    items: [],
+    total: 0,
+  };
+};
+
 const normalizeState = (raw: ExpenseTicketsCachedState | null): ExpenseTicketsCachedState | null => {
   if (!raw || typeof raw !== "object") return null;
 
@@ -192,6 +201,9 @@ export const useExpenseTicketsFilterCache = () => {
 
     const keys = getScopedKeys();
     setSessionJsonWithExpiry(keys.filterKey, normalized, EXPENSE_TICKETS_CACHE_TTL_MS);
+    if (!getSessionJsonWithExpiry<ExpenseTicketsCachedState>(keys.filterKey)) {
+      setSessionJsonWithExpiry(keys.filterKey, toCompactState(normalized), EXPENSE_TICKETS_CACHE_TTL_MS);
+    }
     setSessionValueWithExpiry(keys.returnFlagKey, "1", EXPENSE_TICKETS_CACHE_TTL_MS);
     setSessionValueWithExpiry(keys.returnModeKey, "restore", EXPENSE_TICKETS_CACHE_TTL_MS);
   }, []);

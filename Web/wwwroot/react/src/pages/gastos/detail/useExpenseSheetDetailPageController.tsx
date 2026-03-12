@@ -171,7 +171,8 @@ export const useExpenseSheetDetailPageController = () => {
   const canTransitionStatus = detailPolicy.statusActions.length > 0;
   const isReadOnlyMode = detailPolicy.interactionMode === "read_only";
   const currentStatusCode = typeof header?.expenseSheetStatus === "number" ? header.expenseSheetStatus : null;
-  const hidesCrudTopbarByStatus = currentStatusCode === EXPENSE_STATUS_APPROVAL_REQUESTED;
+  const hidesCrudTopbarByStatus =
+    currentStatusCode === EXPENSE_STATUS_APPROVAL_REQUESTED && !canEditAnyCurrent;
   const topbarActionMode = !isCreateMode && (isReadOnlyMode || hidesCrudTopbarByStatus) ? "view_only" : "default";
   const detailPermissionsReady = managementBootstrapReady && (isCreateMode || !!header);
   const { invalidateCachedListForRefetch } = useExpenseSheetsFilterCache();
