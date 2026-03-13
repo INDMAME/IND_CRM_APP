@@ -1,7 +1,12 @@
 const DDMMYYYY_COMPACT_REGEX = /^\d{8}$/;
+const DDMMYY_COMPACT_REGEX = /^\d{6}$/;
 const DDMMYYYY_DOTTED_REGEX = /^\d{2}\.\d{2}\.\d{4}$/;
 const DATE_ONLY_DMY_REGEX = /^\d{2}[./-]\d{2}[./-]\d{4}$/;
+const DATE_ONLY_DMY_SHORT_YEAR_REGEX = /^\d{2}[./-]\d{2}[./-]\d{2}$/;
 const DATE_ONLY_YMD_REGEX = /^\d{4}[./-]\d{2}[./-]\d{2}$/;
+const MIN_SUPPORTED_EXPENSE_YEAR = 1900;
+const MAX_SUPPORTED_EXPENSE_YEAR = 2100;
+const TWO_DIGIT_YEAR_PIVOT = 50;
 
 export const EXPENSE_API_DATE_FORMAT_MESSAGE = "Formato requerido: DDMMYYYY o DD.MM.YYYY";
 
@@ -10,8 +15,20 @@ const safeText = (value: unknown): string => {
   return String(value).trim();
 };
 
+const isSupportedExpenseYear = (year: number): boolean => {
+  return Number.isInteger(year) && year >= MIN_SUPPORTED_EXPENSE_YEAR && year <= MAX_SUPPORTED_EXPENSE_YEAR;
+};
+
+const expandTwoDigitExpenseYear = (year: number): number => {
+  const normalized = Math.abs(Number(year)) % 100;
+  return normalized >= TWO_DIGIT_YEAR_PIVOT ? 1900 + normalized : 2000 + normalized;
+};
+
 const buildDate = (year: number, month: number, day: number): Date | null => {
   if (!Number.isInteger(year) || !Number.isInteger(month) || !Number.isInteger(day)) {
+    return null;
+  }
+  if (!isSupportedExpenseYear(year)) {
     return null;
   }
   if (month < 1 || month > 12 || day < 1 || day > 31) {
@@ -28,6 +45,16 @@ const buildDate = (year: number, month: number, day: number): Date | null => {
   }
 
   return candidate;
+};
+
+// Keeps OCR dates like 09.07.1220 usable by falling back to the implied two-digit year (2020).
+const buildSafeDayFirstDate = (year: number, month: number, day: number): Date | null => {
+  const explicitYear = buildDate(year, month, day);
+  if (explicitYear) {
+    return explicitYear;
+  }
+
+  return buildDate(expandTwoDigitExpenseYear(year), month, day);
 };
 
 const toDdMmYyyyCompact = (date: Date): string => {
@@ -47,7 +74,7 @@ const toDdMmYyyyDotted = (date: Date): string => {
 // Parses date inputs used by frontend/UI and backend contracts.
 export const parseExpenseApiDate = (raw: unknown): Date | null => {
   if (raw instanceof Date) {
-    return Number.isNaN(raw.getTime()) ? null : raw;
+    return Number.isNaN(raw.getTime()) || !isSupportedExpenseYear(raw.getFullYear()) ? null : raw;
   }
 
   const value = safeText(raw);
@@ -59,7 +86,7 @@ export const parseExpenseApiDate = (raw: unknown): Date | null => {
     const dd = Number(dateOnly.slice(0, 2));
     const mm = Number(dateOnly.slice(2, 4));
     const yyyy = Number(dateOnly.slice(4, 8));
-    const ddmmyyyy = buildDate(yyyy, mm, dd);
+    const ddmmyyyy = buildSafeDayFirstDate(yyyy, mm, dd);
     if (ddmmyyyy) {
       return ddmmyyyy;
     }
@@ -71,18 +98,32 @@ export const parseExpenseApiDate = (raw: unknown): Date | null => {
     return buildDate(legacyYear, legacyMonth, legacyDay);
   }
 
+  if (DDMMYY_COMPACT_REGEX.test(dateOnly)) {
+    const dd = Number(dateOnly.slice(0, 2));
+    const mm = Number(dateOnly.slice(2, 4));
+    const yy = Number(dateOnly.slice(4, 6));
+    return buildDate(expandTwoDigitExpenseYear(yy), mm, dd);
+  }
+
   if (DATE_ONLY_DMY_REGEX.test(dateOnly)) {
     const [dayText, monthText, yearText] = dateOnly.split(/[./-]/);
-    return buildDate(Number(yearText), Number(monthText), Number(dayText));
+    return buildSafeDayFirstDate(Number(yearText), Number(monthText), Number(dayText));
+  }
+
+  if (DATE_ONLY_DMY_SHORT_YEAR_REGEX.test(dateOnly)) {
+    const [dayText, monthText, yearText] = dateOnly.split(/[./-]/);
+    return buildDate(expandTwoDigitExpenseYear(Number(yearText)), Number(monthText), Number(dayText));
   }
 
   if (DATE_ONLY_YMD_REGEX.test(dateOnly)) {
     const [yearText, monthText, dayText] = dateOnly.split(/[./-]/);
-    return buildDate(Number(yearText), Number(monthText), Number(dayText));
+    const parsedYear = Number(yearText);
+    return buildDate(parsedYear, Number(monthText), Number(dayText)) ??
+      buildDate(expandTwoDigitExpenseYear(parsedYear), Number(monthText), Number(dayText));
   }
 
   const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
+  return Number.isNaN(parsed.getTime()) || !isSupportedExpenseYear(parsed.getFullYear()) ? null : parsed;
 };
 
 // Converts unknown date input into strict DD.MM.YYYY used by backend contracts.

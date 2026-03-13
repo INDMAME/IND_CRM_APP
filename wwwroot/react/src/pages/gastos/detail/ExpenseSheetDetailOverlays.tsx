@@ -27,6 +27,7 @@ type ExpenseSheetDetailOverlaysProps = {
   quickTicketBusy: boolean;
   quickTicketProgressMessage: string;
   quickTicketErrorMessage: string;
+  quickTicketAttemptId: string;
   quickTicketTraceList: Array<{ step: string; traceId: string; at: string }>;
   hasPendingUploadRetry: boolean;
   hasPartialTicketFailure: boolean;
@@ -58,6 +59,7 @@ const ExpenseSheetDetailOverlays = ({
   quickTicketBusy,
   quickTicketProgressMessage,
   quickTicketErrorMessage,
+  quickTicketAttemptId,
   quickTicketTraceList,
   hasPendingUploadRetry,
   hasPartialTicketFailure,
@@ -161,6 +163,17 @@ const ExpenseSheetDetailOverlays = ({
           }
         >
           <p>{quickTicketErrorMessage}</p>
+          {quickTicketAttemptId ? (
+            <p
+              className={
+                hasPartialTicketFailure
+                  ? "rounded-lg border border-amber-200 bg-white px-2 py-1 font-mono text-[11px] text-amber-900 break-all"
+                  : "rounded-lg border border-rose-200 bg-white px-2 py-1 font-mono text-[11px] text-rose-800 break-all"
+              }
+            >
+              {`attemptId: ${quickTicketAttemptId}`}
+            </p>
+          ) : null}
           {quickTicketTraceList.length > 0 ? (
             <div
               className={

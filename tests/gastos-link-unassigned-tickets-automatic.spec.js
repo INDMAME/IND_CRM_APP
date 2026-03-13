@@ -8,6 +8,7 @@ const TICKETS_PHOTOS_DIR =
   process.env.IND_E2E_TICKETS_PHOTOS_DIR || "C:\\Users\\marco.meza\\Pictures\\Tickets Fotos";
 const SUPPORTED_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 const PREFERRED_TICKET_IMAGE_NAMES = [
+  "ticket-cafe-teatre-1.jpg",
   "ticket-de-compra.jpg",
   "ticket-comida.jpg",
   "ticket-de-compra (1).jpg",
@@ -72,6 +73,60 @@ function getQueryParam(url, key) {
   } catch {
     return "";
   }
+}
+
+function normalizeRequestPath(requestUrl) {
+  try {
+    return new URL(requestUrl).pathname.toLowerCase();
+  } catch {
+    return String(requestUrl || "").trim().toLowerCase();
+  }
+}
+
+function startTicketCreationRequestCapture(page) {
+  const observed = [];
+  const listener = (request) => {
+    const pathName = normalizeRequestPath(request.url());
+    if (!pathName.startsWith("/api/")) return;
+
+    observed.push({
+      method: String(request.method() || "").trim().toUpperCase(),
+      pathName,
+      url: request.url(),
+    });
+  };
+
+  page.context().on("request", listener);
+  return {
+    observed,
+    stop: () => page.context().off("request", listener),
+  };
+}
+
+function isLegacyQuickTicketMutation(requestEntry) {
+  if (!requestEntry || requestEntry.method !== "POST") return false;
+
+  if (requestEntry.pathName === "/api/ia/service/expensefromticket") return true;
+  if (requestEntry.pathName === "/api/crm/expensesheets/tickets") return true;
+  if (requestEntry.pathName === "/api/crm/expensesheets") return true;
+  if (/^\/api\/crm\/expensesheets\/tickets\/[^/]+\/file\/?$/i.test(requestEntry.pathName)) return true;
+  if (/^\/api\/crm\/expensesheets\/tickets\/[^/]+\/ia\/?$/i.test(requestEntry.pathName)) return true;
+
+  return false;
+}
+
+function assertQuickCreateOnlyRequests(observed, contextLabel) {
+  const quickCreateCalls = observed.filter(
+    (requestEntry) =>
+      requestEntry.method === "POST" && requestEntry.pathName === "/api/crm/expensesheets/tickets/quick-create"
+  );
+  const legacyCalls = observed.filter((requestEntry) => isLegacyQuickTicketMutation(requestEntry));
+
+  expect(quickCreateCalls.length, `${contextLabel}: expected at least one quick-create POST`).toBeGreaterThan(0);
+  expect(
+    legacyCalls,
+    `${contextLabel}: legacy ticket mutations should not be called from the browser. Observed=${JSON.stringify(observed, null, 2)}`
+  ).toEqual([]);
 }
 
 // Detects the Microsoft login gate so tests fail fast on auth loss.
@@ -585,50 +640,65 @@ async function createTicketFromGalleryUpload(page, imagePath) {
   await assertStillAuthenticated(page, "opening tickets list before gallery upload");
   await expect(page.locator("#expense-tickets-root")).toBeVisible({ timeout: 30000 });
 
-  await clickFabMenuItem(page, /nuevo ticket|new ticket/i);
+  const requestCapture = startTicketCreationRequestCapture(page);
+  let captureStopped = false;
+  const stopCapture = () => {
+    if (captureStopped) return;
+    requestCapture.stop();
+    captureStopped = true;
+  };
 
-  const chooseImageButton = page.getByRole("button", { name: /elegir imagen|choose image/i }).first();
-  await expect(chooseImageButton).toBeVisible({ timeout: 15000 });
-  const [chooser] = await Promise.all([page.waitForEvent("filechooser"), chooseImageButton.click()]);
-  await chooser.setFiles(imagePath);
+  try {
+    await clickFabMenuItem(page, /nuevo ticket|new ticket/i);
 
-  const didNavigateToTicketDetail = await page
-    .waitForURL("**/Gastos/TicketDetail?**", {
-      waitUntil: "domcontentloaded",
-      timeout: 120000,
-    })
-    .then(() => true)
-    .catch(() => false);
+    const chooseImageButton = page.getByRole("button", { name: /elegir imagen|choose image/i }).first();
+    await expect(chooseImageButton).toBeVisible({ timeout: 15000 });
+    const [chooser] = await Promise.all([page.waitForEvent("filechooser"), chooseImageButton.click()]);
+    await chooser.setFiles(imagePath);
 
-  if (!didNavigateToTicketDetail) {
-    await assertStillAuthenticated(page, "waiting for gallery upload result");
-    const errorText = await page.locator(".bg-rose-50").first().textContent().catch(() => "");
-    const closeErrorButton = page
-      .locator("button")
-      .filter({ hasText: /close|cerrar|cancel|cancelar/i })
-      .first();
-    const canCloseError = await closeErrorButton.isVisible().catch(() => false);
-    if (canCloseError) {
-      await closeErrorButton.click().catch(() => undefined);
+    const didNavigateToTicketDetail = await page
+      .waitForURL("**/Gastos/TicketDetail?**", {
+        waitUntil: "domcontentloaded",
+        timeout: 120000,
+      })
+      .then(() => true)
+      .catch(() => false);
+
+    if (!didNavigateToTicketDetail) {
+      stopCapture();
+      await assertStillAuthenticated(page, "waiting for gallery upload result");
+      const errorText = await page.locator(".bg-rose-50").first().textContent().catch(() => "");
+      const closeErrorButton = page
+        .locator("button")
+        .filter({ hasText: /close|cerrar|cancel|cancelar/i })
+        .first();
+      const canCloseError = await closeErrorButton.isVisible().catch(() => false);
+      if (canCloseError) {
+        await closeErrorButton.click().catch(() => undefined);
+      }
+
+      return {
+        fileId: "",
+        error: `Ticket create did not navigate. ${String(errorText || "").trim() || "No error panel text."}`,
+      };
     }
 
-    return {
-      fileId: "",
-      error: `Ticket create did not navigate. ${String(errorText || "").trim() || "No error panel text."}`,
-    };
-  }
+    stopCapture();
+    assertQuickCreateOnlyRequests(requestCapture.observed, `tickets-page quick-create ${path.basename(imagePath)}`);
+    await assertStillAuthenticated(page, "opening ticket detail after gallery upload");
+    await expect(page.locator("#expense-ticket-detail-root")).toBeVisible({ timeout: 30000 });
+    const fileId = getQueryParam(page.url(), "fileId");
+    if (!fileId) {
+      return {
+        fileId: "",
+        error: "Ticket detail opened but fileId was empty in URL.",
+      };
+    }
 
-  await assertStillAuthenticated(page, "opening ticket detail after gallery upload");
-  await expect(page.locator("#expense-ticket-detail-root")).toBeVisible({ timeout: 30000 });
-  const fileId = getQueryParam(page.url(), "fileId");
-  if (!fileId) {
-    return {
-      fileId: "",
-      error: "Ticket detail opened but fileId was empty in URL.",
-    };
+    return { fileId, error: "" };
+  } finally {
+    stopCapture();
   }
-
-  return { fileId, error: "" };
 }
 
 // Creates one ticket through the same IA/upload/finalize chain used by quick ticket flow.
@@ -1089,7 +1159,8 @@ test("Open ticket detail with quick tap and link one ticket with long press", as
         "true",
         { timeout: 30000 }
       );
-      await expect(currentPage.locator("text=/Tickets:\\s*1/i").first()).toBeVisible({ timeout: 15000 });
+      const linkButtonBeforeConfirm = currentPage.getByRole("button", { name: /vincular ticket/i }).first();
+      await expect(linkButtonBeforeConfirm).toBeEnabled({ timeout: 15000 });
 
       const result = await confirmLinkSelection(currentPage, 1, sheetId);
       expect(result.linkedCount, JSON.stringify(result.bulkPayload)).toBe(0);
@@ -1115,7 +1186,8 @@ test("Open ticket detail with quick tap and link one ticket with long press", as
         "true",
         { timeout: 30000 }
       );
-      await expect(currentPage.locator("text=/Tickets:\\s*1/i").first()).toBeVisible({ timeout: 15000 });
+      const linkButtonAfterSkip = currentPage.getByRole("button", { name: /vincular ticket/i }).first();
+      await expect(linkButtonAfterSkip).toBeEnabled({ timeout: 15000 });
       await expect(
         currentPage.getByText(/ticket currencycode does not match the target expense sheet/i).first()
       ).toBeVisible({ timeout: 30000 });

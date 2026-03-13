@@ -464,6 +464,7 @@ const ExpenseTicketsPageContent = () => {
     busy: quickTicketBusy,
     progressMessage: quickTicketProgressMessage,
     errorMessage: quickTicketErrorMessage,
+    attemptId: quickTicketAttemptId,
     hasPendingUploadRetry,
     hasPartialTicketFailure,
     traceList: quickTicketTraceList,
@@ -1474,6 +1475,17 @@ const ExpenseTicketsPageContent = () => {
           }
         >
           <p>{quickTicketErrorMessage}</p>
+          {quickTicketAttemptId ? (
+            <p
+              className={
+                hasPartialTicketFailure
+                  ? "rounded-lg border border-amber-200 bg-white px-2 py-1 font-mono text-[11px] text-amber-900 break-all"
+                  : "rounded-lg border border-rose-200 bg-white px-2 py-1 font-mono text-[11px] text-rose-800 break-all"
+              }
+            >
+              {`attemptId: ${quickTicketAttemptId}`}
+            </p>
+          ) : null}
           {quickTicketTraceList.length > 0 ? (
             <div
               className={
@@ -1593,9 +1605,6 @@ const ExpenseTicketsPageContent = () => {
 
           {canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked ? (
             <>
-              <div className="text-xs text-slate-600">
-                {indT("Nav_ExpenseTickets", "Tickets")}: {selectedTicketCount}
-              </div>
               <div className="grid grid-cols-2 gap-1.5 pt-0.5">
                 <button
                   type="button"

@@ -18,6 +18,7 @@ import {
   type TicketTraceEntry,
   type UseExpenseSheetQuickTicketFlowArgs,
 } from "./useExpenseSheetQuickTicketFlowCore.ts";
+import { optimizeTicketImageForUpload, type TicketImageOptimizationResult } from "./ticketImageOptimization.ts";
 
 type QuickCreatePartialTicketState = {
   fileId: string;
@@ -26,6 +27,99 @@ type QuickCreatePartialTicketState = {
   urlFile: string;
   fileName: string;
   processedByAI: boolean | null;
+};
+
+type QuickTicketAttemptContext = {
+  attemptId: string;
+  source: TicketImageSource;
+  startedAt: number;
+  optimization: TicketImageOptimizationResult;
+};
+
+const QUICK_TICKET_FLOW_LOG_PREFIX = "[expense-quick-ticket]";
+
+const logQuickTicketInfo = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.info === "function") {
+    console.info(QUICK_TICKET_FLOW_LOG_PREFIX, ...args);
+  }
+};
+
+const logQuickTicketWarn = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.warn === "function") {
+    console.warn(QUICK_TICKET_FLOW_LOG_PREFIX, ...args);
+  }
+};
+
+const logQuickTicketError = (...args: unknown[]) => {
+  if (typeof console !== "undefined" && typeof console.error === "function") {
+    console.error(QUICK_TICKET_FLOW_LOG_PREFIX, ...args);
+  }
+};
+
+const formatFileSize = (size: number): string => {
+  if (!(size > 0)) return "0 B";
+  if (size >= 1024 * 1024) return `${(size / (1024 * 1024)).toFixed(2)} MB`;
+  if (size >= 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${size} B`;
+};
+
+const buildFileLogData = (file: File) => {
+  return {
+    name: safeText(file.name),
+    type: safeText(file.type),
+    sizeBytes: Number(file.size || 0),
+    sizeText: formatFileSize(Number(file.size || 0)),
+    lastModified: Number(file.lastModified || 0),
+  };
+};
+
+const buildFallbackOptimizationResult = (file: File): TicketImageOptimizationResult => {
+  return {
+    file,
+    changed: false,
+    reason: "optimization-error",
+    resized: false,
+    reencoded: false,
+    elapsedMs: 0,
+    original: {
+      name: safeText(file.name),
+      type: safeText(file.type),
+      size: Number(file.size || 0),
+      width: null,
+      height: null,
+    },
+    output: {
+      name: safeText(file.name),
+      type: safeText(file.type),
+      size: Number(file.size || 0),
+      width: null,
+      height: null,
+    },
+  };
+};
+
+const buildOptimizationLogData = (result: TicketImageOptimizationResult) => {
+  const savedBytes = Math.max(0, result.original.size - result.output.size);
+  const savedRatio = result.original.size > 0 ? savedBytes / result.original.size : 0;
+
+  return {
+    changed: result.changed,
+    reason: result.reason,
+    resized: result.resized,
+    reencoded: result.reencoded,
+    elapsedMs: result.elapsedMs,
+    original: {
+      ...result.original,
+      sizeText: formatFileSize(result.original.size),
+    },
+    output: {
+      ...result.output,
+      sizeText: formatFileSize(result.output.size),
+    },
+    savedBytes,
+    savedText: formatFileSize(savedBytes),
+    savedRatio: Number(savedRatio.toFixed(4)),
+  };
 };
 
 const formatValidationErrors = (
@@ -60,6 +154,7 @@ export const useExpenseSheetQuickTicketFlow = ({
   const [busy, setBusy] = useState(false);
   const [progressKey, setProgressKey] = useState<QuickFlowProgressKey | null>(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [attemptId, setAttemptId] = useState("");
   const [traceList, setTraceList] = useState<TicketTraceEntry[]>([]);
   const [partialTicketFailure, setPartialTicketFailure] = useState<QuickCreatePartialTicketState | null>(null);
   const latestFileRef = useRef<{ cacheKey: string; file: File } | null>(null);
@@ -121,7 +216,6 @@ export const useExpenseSheetQuickTicketFlow = ({
     persistTraceList([]);
   }, []);
 
-  // Forces mutations to follow the page-resolved AX user instead of any stale global override.
   const buildApiOptions = useCallback(() => {
     const safeAxUserId = safeText(axUserIdOverride);
     if (!safeAxUserId) {
@@ -225,11 +319,39 @@ export const useExpenseSheetQuickTicketFlow = ({
     return messageParts.filter(Boolean).join(" ");
   }, []);
 
+  const completeFlowSuccess = useCallback(
+    async (fileId: string, linkedToSheet: boolean, cacheKey: string) => {
+      setProgressKey("done");
+      await removeCachedImageFile(cacheKey);
+      setAttemptId("");
+      latestCreatedTicketRef.current = null;
+      setPartialTicketFailure(null);
+      flashActionMark("okProcess", 1200);
+      setBusy(false);
+      setProgressKey(null);
+      onCompleted?.({ fileId, linkedToSheet });
+    },
+    [onCompleted]
+  );
+
   const runQuickCreateFlow = useCallback(
-    async (file: File, cacheKey: string): Promise<void> => {
+    async (file: File, cacheKey: string, context: QuickTicketAttemptContext): Promise<void> => {
       setBusy(true);
       setProgressKey("creatingTicket");
       clearFlowState();
+
+      const requestStartedAt = Date.now();
+      logQuickTicketInfo("quick-create.request.started", {
+        attemptId: context.attemptId,
+        source: context.source,
+        linkToSheet,
+        cacheKey,
+        elapsedSinceSelectionMs: Math.max(0, requestStartedAt - context.startedAt),
+        uploadFile: buildFileLogData(file),
+        optimization: buildOptimizationLogData(context.optimization),
+        sheetId: linkToSheet ? safeText(sheetId) : "",
+        projectId: linkToSheet ? safeText(projectId) : "",
+      });
 
       try {
         const response = await createExpenseSheetTicketQuick(
@@ -243,6 +365,8 @@ export const useExpenseSheetQuickTicketFlow = ({
         );
 
         addQuickCreateResponseTraces(response);
+
+        const responseElapsedMs = Math.max(0, Date.now() - requestStartedAt);
 
         const fileId = safeText(response.Data?.FileId);
         const linkedToSheet = response.Data?.LinkedToSheet === true;
@@ -267,28 +391,71 @@ export const useExpenseSheetQuickTicketFlow = ({
             throw new Error(indT("ExpenseSheets_NewTicket_Error_NoFileId", "Could not resolve ticket file id."));
           }
 
-          setProgressKey("done");
-          await removeCachedImageFile(cacheKey);
-          flashActionMark("okProcess", 1200);
-          setBusy(false);
-          setProgressKey(null);
-          onCompleted?.({ fileId, linkedToSheet });
+          await completeFlowSuccess(fileId, linkedToSheet, cacheKey);
+          logQuickTicketInfo("quick-create.request.succeeded", {
+            attemptId: context.attemptId,
+            source: context.source,
+            elapsedMs: responseElapsedMs,
+            httpStatus: response.HttpStatus,
+            traceId: safeText(response.TraceId),
+            fileId,
+            linkedToSheet,
+            completedStage: safeText(response.Data?.CompletedStage),
+            processedByAI: response.Data?.ProcessedByAI ?? null,
+            stepTraceIds: response.Data?.StepTraceIds ?? null,
+          });
           return;
         }
 
         if (partialState) {
           setPartialTicketFailure(partialState);
+          logQuickTicketWarn("quick-create.partial-state", {
+            attemptId: context.attemptId,
+            source: context.source,
+            elapsedMs: responseElapsedMs,
+            fileId: partialState.fileId,
+            linkedToSheet: partialState.linkedToSheet,
+            completedStage: partialState.completedStage,
+            processedByAI: partialState.processedByAI,
+          });
         }
 
         flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
-        setErrorMessage(resolveQuickCreateFailureMessage(response));
+        const resolvedMessage = resolveQuickCreateFailureMessage(response);
+        logQuickTicketWarn("quick-create.request.completed-with-error", {
+          attemptId: context.attemptId,
+          source: context.source,
+          elapsedMs: responseElapsedMs,
+          httpStatus: response.HttpStatus,
+          traceId: safeText(response.TraceId),
+          fileId,
+          linkedToSheet,
+          completedStage: safeText(response.Data?.CompletedStage),
+          processedByAI: response.Data?.ProcessedByAI ?? null,
+          retryAfter: safeText(response.RetryAfter),
+          message: safeText(response.Message),
+          resolvedMessage,
+          errors: Array.isArray(response.Errors) ? response.Errors : [],
+          stepTraceIds: response.Data?.StepTraceIds ?? null,
+        });
+        setErrorMessage(resolvedMessage);
       } catch (error) {
         if (error instanceof ApiFetchError) {
           addTrace("ticket-quick-create-error", extractTraceIdFromError(error));
         }
 
+        logQuickTicketError("quick-create.request.failed", {
+          attemptId: context.attemptId,
+          source: context.source,
+          elapsedMs: Math.max(0, Date.now() - requestStartedAt),
+          uploadFile: buildFileLogData(file),
+          traceId: error instanceof ApiFetchError ? extractTraceIdFromError(error) : "",
+          status: error instanceof ApiFetchError ? error.status : null,
+          message: error instanceof Error ? safeText(error.message) : "",
+          validationErrors: error instanceof ApiFetchError ? error.validationErrors : [],
+        });
         flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
@@ -300,9 +467,9 @@ export const useExpenseSheetQuickTicketFlow = ({
       addTrace,
       buildApiOptions,
       clearFlowState,
+      completeFlowSuccess,
       currencyCode,
       linkToSheet,
-      onCompleted,
       projectId,
       resolveQuickCreateFailureMessage,
       resolveUiErrorMessage,
@@ -311,33 +478,127 @@ export const useExpenseSheetQuickTicketFlow = ({
   );
 
   const handleSelectedFile = useCallback(
-    async (file: File | null, _source: TicketImageSource): Promise<void> => {
+    async (file: File | null, source: TicketImageSource): Promise<void> => {
       if (!file) return;
-      if (!ensureQuickCreatePermission()) return;
+
+      const attemptId = resolveRandomKey();
+      const selectionStartedAt = Date.now();
+      setAttemptId(attemptId);
+      logQuickTicketInfo("selection.received", {
+        attemptId,
+        source,
+        linkToSheet,
+        file: buildFileLogData(file),
+      });
+
+      if (!ensureQuickCreatePermission()) {
+        logQuickTicketWarn("selection.forbidden", {
+          attemptId,
+          source,
+          linkToSheet,
+          canCreateExpense,
+          isCreateMode,
+          isSheetLocked,
+          hasSheetId: !!safeText(sheetId),
+        });
+        return;
+      }
 
       const safeType = safeText(file.type).toLowerCase();
       if (safeType && !safeType.startsWith("image/") && !/\.(jpe?g|png|webp)$/i.test(file.name || "")) {
+        logQuickTicketWarn("selection.invalid-file-type", {
+          attemptId,
+          source,
+          file: buildFileLogData(file),
+          reason: "mime-and-extension-not-supported",
+        });
         setErrorMessage(indT("ExpenseSheets_NewTicket_Error_FileType", "Unsupported image format."));
         return;
       }
       if (!isSupportedTicketImageFile(file)) {
+        logQuickTicketWarn("selection.invalid-file-type", {
+          attemptId,
+          source,
+          file: buildFileLogData(file),
+          reason: "unsupported-ticket-image-file",
+        });
         setErrorMessage(indT("ExpenseSheets_NewTicket_Error_FileType", "Unsupported image format."));
         return;
       }
-      if (file.size > MAX_TICKET_IMAGE_SIZE_BYTES) {
+
+      clearFlowState();
+      setProgressKey("uploadingImage");
+      logQuickTicketInfo("optimization.started", {
+        attemptId,
+        source,
+        file: buildFileLogData(file),
+      });
+
+      const optimizationResult = await optimizeTicketImageForUpload(file).catch((error) => {
+        logQuickTicketWarn("optimization.failed", {
+          attemptId,
+          source,
+          file: buildFileLogData(file),
+          message: error instanceof Error ? safeText(error.message) : "",
+        });
+        return buildFallbackOptimizationResult(file);
+      });
+      const uploadFile = optimizationResult.file;
+      logQuickTicketInfo("optimization.completed", {
+        attemptId,
+        source,
+        ...buildOptimizationLogData(optimizationResult),
+      });
+
+      if (uploadFile.size > MAX_TICKET_IMAGE_SIZE_BYTES) {
+        logQuickTicketWarn("selection.rejected-by-size", {
+          attemptId,
+          source,
+          maxSizeBytes: MAX_TICKET_IMAGE_SIZE_BYTES,
+          maxSizeText: formatFileSize(MAX_TICKET_IMAGE_SIZE_BYTES),
+          file: buildFileLogData(uploadFile),
+          optimization: buildOptimizationLogData(optimizationResult),
+        });
+        setProgressKey(null);
         setErrorMessage(indT("ExpenseSheets_NewTicket_Error_FileSize", "Image exceeds 50MB max size."));
         return;
       }
 
-      const cacheKey = resolveRandomKey();
-      latestFileRef.current = { cacheKey, file };
-      void cacheImageFile(cacheKey, file).catch(() => {
-        // Do not block flow if browser cache storage is unavailable.
+      const cacheKey = attemptId;
+      latestFileRef.current = { cacheKey, file: uploadFile };
+      logQuickTicketInfo("cache.store.started", {
+        attemptId,
+        source,
+        cacheKey,
+        file: buildFileLogData(uploadFile),
       });
+      void cacheImageFile(cacheKey, uploadFile)
+        .then(() => {
+          logQuickTicketInfo("cache.store.completed", {
+            attemptId,
+            source,
+            cacheKey,
+            file: buildFileLogData(uploadFile),
+          });
+        })
+        .catch((error) => {
+          logQuickTicketWarn("cache.store.failed", {
+            attemptId,
+            source,
+            cacheKey,
+            file: buildFileLogData(uploadFile),
+            message: error instanceof Error ? safeText(error.message) : "",
+          });
+        });
 
-      await runQuickCreateFlow(file, cacheKey);
+      await runQuickCreateFlow(uploadFile, cacheKey, {
+        attemptId,
+        source,
+        startedAt: selectionStartedAt,
+        optimization: optimizationResult,
+      });
     },
-    [ensureQuickCreatePermission, runQuickCreateFlow]
+    [canCreateExpense, clearFlowState, ensureQuickCreatePermission, isCreateMode, isSheetLocked, linkToSheet, runQuickCreateFlow, sheetId]
   );
 
   const retryPendingUpload = useCallback(async () => {
@@ -350,6 +611,7 @@ export const useExpenseSheetQuickTicketFlow = ({
     if (!fileId) return;
 
     clearCachedCurrentImage();
+    setAttemptId("");
     setErrorMessage("");
     setPartialTicketFailure(null);
     onCompleted?.({ fileId, linkedToSheet: createdTicket?.linkedToSheet === true });
@@ -406,6 +668,7 @@ export const useExpenseSheetQuickTicketFlow = ({
   const clearError = useCallback(() => {
     clearCachedCurrentImage();
     latestCreatedTicketRef.current = null;
+    setAttemptId("");
     setErrorMessage("");
     setPartialTicketFailure(null);
   }, [clearCachedCurrentImage]);
@@ -416,6 +679,7 @@ export const useExpenseSheetQuickTicketFlow = ({
     progressKey,
     progressMessage,
     errorMessage,
+    attemptId,
     hasPendingUploadRetry: false,
     hasPartialTicketFailure: partialTicketFailure !== null,
     traceList,

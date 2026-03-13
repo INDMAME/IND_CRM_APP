@@ -3570,73 +3570,162 @@ namespace IND_CRM_APP.Controllers
             return AllowedTicketGastoTypes.Contains(parsed);
         }
 
-        // Normalizes date filters to accepted API formats.
-        // Accepts yyyyMMdd, yyyy-MM-dd, DDMMYYYY and DD.MM.YYYY in a culture-safe way.
-        private static string? NormalizeListDateFilter(string? raw)
+        private const int MinSupportedExpenseYear = 1900;
+        private const int MaxSupportedExpenseYear = 2100;
+
+        private static bool IsSupportedExpenseYear(int year)
         {
-            if (string.IsNullOrWhiteSpace(raw))
+            return year >= MinSupportedExpenseYear && year <= MaxSupportedExpenseYear;
+        }
+
+        private static int ExpandTwoDigitExpenseYear(int year)
+        {
+            var normalized = Math.Abs(year % 100);
+            return normalized >= 50 ? 1900 + normalized : 2000 + normalized;
+        }
+
+        private static DateTime? TryBuildSupportedExpenseDate(int year, int month, int day)
+        {
+            if (!IsSupportedExpenseYear(year) || month < 1 || month > 12)
                 return null;
 
-            var value = raw.Trim();
-            if (DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-                return value;
+            var maxDay = DateTime.DaysInMonth(year, month);
+            if (day < 1 || day > maxDay)
+                return null;
 
-            if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-                return value;
+            return new DateTime(year, month, day);
+        }
 
-            if (DateTime.TryParseExact(value, "ddMMyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdMmYyyy))
-                return parsedDdMmYyyy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+        // Repairs OCR-style years like 1220 by reusing the implied two-digit year (2020).
+        private static bool TryParseSupportedCompactDayFirstDate(string value, out DateTime parsed)
+        {
+            parsed = default;
+            if (value.Length != 8 || value.Any(ch => !char.IsDigit(ch)))
+                return false;
 
-            if (DateTime.TryParseExact(value, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdDotMmDotYyyy))
-                return parsedDdDotMmDotYyyy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            if (!int.TryParse(value.AsSpan(0, 2), NumberStyles.None, CultureInfo.InvariantCulture, out var day) ||
+                !int.TryParse(value.AsSpan(2, 2), NumberStyles.None, CultureInfo.InvariantCulture, out var month) ||
+                !int.TryParse(value.AsSpan(4, 4), NumberStyles.None, CultureInfo.InvariantCulture, out var year))
+                return false;
 
-            if (DateTime.TryParseExact(value, "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdDashMmDashYyyy))
-                return parsedDdDashMmDashYyyy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            var candidate = TryBuildSupportedExpenseDate(year, month, day) ??
+                            TryBuildSupportedExpenseDate(ExpandTwoDigitExpenseYear(year), month, day);
+            if (!candidate.HasValue)
+                return false;
 
-            if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdSlashMmSlashYyyy))
-                return parsedDdSlashMmSlashYyyy.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            parsed = candidate.Value;
+            return true;
+        }
 
-            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedInv))
-                return parsedInv.ToString("yyyy-MM-dd");
+        private static bool TryParseSupportedCompactShortDayFirstDate(string value, out DateTime parsed)
+        {
+            parsed = default;
+            if (value.Length != 6 || value.Any(ch => !char.IsDigit(ch)))
+                return false;
 
-            if (DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedCur))
-                return parsedCur.ToString("yyyy-MM-dd");
+            if (!int.TryParse(value.AsSpan(0, 2), NumberStyles.None, CultureInfo.InvariantCulture, out var day) ||
+                !int.TryParse(value.AsSpan(2, 2), NumberStyles.None, CultureInfo.InvariantCulture, out var month) ||
+                !int.TryParse(value.AsSpan(4, 2), NumberStyles.None, CultureInfo.InvariantCulture, out var year))
+                return false;
+
+            var candidate = TryBuildSupportedExpenseDate(ExpandTwoDigitExpenseYear(year), month, day);
+            if (!candidate.HasValue)
+                return false;
+
+            parsed = candidate.Value;
+            return true;
+        }
+
+        private static bool TryParseSupportedSeparatedDayFirstDate(string value, out DateTime parsed)
+        {
+            parsed = default;
+            var parts = value.Split(new[] { '.', '/', '-' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 3 || parts[0].Length != 2 || parts[1].Length != 2 || (parts[2].Length != 2 && parts[2].Length != 4))
+                return false;
+
+            if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var day) ||
+                !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var month) ||
+                !int.TryParse(parts[2], NumberStyles.None, CultureInfo.InvariantCulture, out var year))
+                return false;
+
+            var candidate = parts[2].Length == 2
+                ? TryBuildSupportedExpenseDate(ExpandTwoDigitExpenseYear(year), month, day)
+                : TryBuildSupportedExpenseDate(year, month, day) ??
+                  TryBuildSupportedExpenseDate(ExpandTwoDigitExpenseYear(year), month, day);
+
+            if (!candidate.HasValue)
+                return false;
+
+            parsed = candidate.Value;
+            return true;
+        }
+
+        private static bool TryParseSupportedSeparatedYearFirstDate(string value, out DateTime parsed)
+        {
+            parsed = default;
+            var parts = value.Split(new[] { '.', '/', '-' }, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 3 || parts[0].Length != 4 || parts[1].Length != 2 || parts[2].Length != 2)
+                return false;
+
+            if (!int.TryParse(parts[0], NumberStyles.None, CultureInfo.InvariantCulture, out var year) ||
+                !int.TryParse(parts[1], NumberStyles.None, CultureInfo.InvariantCulture, out var month) ||
+                !int.TryParse(parts[2], NumberStyles.None, CultureInfo.InvariantCulture, out var day))
+                return false;
+
+            var candidate = TryBuildSupportedExpenseDate(year, month, day) ??
+                            TryBuildSupportedExpenseDate(ExpandTwoDigitExpenseYear(year), month, day);
+            if (!candidate.HasValue)
+                return false;
+
+            parsed = candidate.Value;
+            return true;
+        }
+
+        private static DateTime? TryParseSupportedExpenseDate(string? raw)
+        {
+            var value = NormalizeOptionalText(raw);
+            if (string.IsNullOrWhiteSpace(value))
+                return null;
+
+            if (TryParseSupportedCompactShortDayFirstDate(value, out var shortDayFirst))
+                return shortDayFirst;
+
+            if (TryParseSupportedCompactDayFirstDate(value, out var compactDayFirst))
+                return compactDayFirst;
+
+            if (DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var compactYearFirst) &&
+                IsSupportedExpenseYear(compactYearFirst.Year))
+                return compactYearFirst;
+
+            if (TryParseSupportedSeparatedDayFirstDate(value, out var separatedDayFirst))
+                return separatedDayFirst;
+
+            if (TryParseSupportedSeparatedYearFirstDate(value, out var separatedYearFirst))
+                return separatedYearFirst;
+
+            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedInv) &&
+                IsSupportedExpenseYear(parsedInv.Year))
+                return parsedInv;
+
+            if (DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedCur) &&
+                IsSupportedExpenseYear(parsedCur.Year))
+                return parsedCur;
 
             return null;
+        }
+
+        // Normalizes date filters to accepted API formats using a stable year range and OCR-safe parsing.
+        private static string? NormalizeListDateFilter(string? raw)
+        {
+            var parsed = TryParseSupportedExpenseDate(raw);
+            return parsed?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
         }
 
         // Normalizes ticket transDate fields to DD.MM.YYYY required by upstream ticket contracts.
         private static string? NormalizeTicketTransDate(string? raw)
         {
-            if (string.IsNullOrWhiteSpace(raw))
-                return null;
-
-            var value = raw.Trim();
-            if (DateTime.TryParseExact(value, "ddMMyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdMmYyyy))
-                return parsedDdMmYyyy.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDdDotMmDotYyyy))
-                return parsedDdDotMmDotYyyy.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedCompactYyyyMmDd))
-                return parsedCompactYyyyMmDd.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedIso))
-                return parsedIso.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedSlash))
-                return parsedSlash.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsedDash))
-                return parsedDash.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedInv))
-                return parsedInv.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedCur))
-                return parsedCur.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
-
-            return null;
+            var parsed = TryParseSupportedExpenseDate(raw);
+            return parsed?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
         }
 
         // Normalizes line transDate values to DD.MM.YYYY for upstream line contracts.
@@ -4169,32 +4258,8 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrWhiteSpace(raw))
                 return string.Empty;
 
-            var value = raw.Trim();
-            if (DateTime.TryParseExact(value, "yyyyMMdd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactYmdCompact))
-                return exactYmdCompact.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactYmdDash))
-                return exactYmdDash.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "ddMMyyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDdMmCompact))
-                return exactDdMmCompact.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "dd.MM.yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDdMmDot))
-                return exactDdMmDot.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "dd-MM-yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDdMmDash))
-                return exactDdMmDash.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParseExact(value, "dd/MM/yyyy", CultureInfo.InvariantCulture, DateTimeStyles.None, out var exactDdMmSlash))
-                return exactDdMmSlash.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
-
-            if (DateTime.TryParse(value, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedInv))
-                return parsedInv.ToString("yyyy-MM-dd");
-
-            if (DateTime.TryParse(value, CultureInfo.CurrentCulture, DateTimeStyles.AllowWhiteSpaces, out var parsedCur))
-                return parsedCur.ToString("yyyy-MM-dd");
-
-            return value;
+            var parsed = TryParseSupportedExpenseDate(raw);
+            return parsed?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? raw.Trim();
         }
     }
 }

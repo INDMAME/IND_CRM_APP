@@ -78,6 +78,7 @@ const ExpenseSheetDetailPageContent = () => {
         quickTicketBusy={controller.quickTicketFlow.busy}
         quickTicketProgressMessage={controller.quickTicketFlow.progressMessage}
         quickTicketErrorMessage={controller.quickTicketFlow.errorMessage}
+        quickTicketAttemptId={controller.quickTicketFlow.attemptId}
         quickTicketTraceList={controller.quickTicketFlow.traceList}
         hasPendingUploadRetry={controller.quickTicketFlow.hasPendingUploadRetry}
         hasPartialTicketFailure={controller.quickTicketFlow.hasPartialTicketFailure}

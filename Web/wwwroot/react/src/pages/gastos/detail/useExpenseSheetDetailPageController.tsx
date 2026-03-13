@@ -406,7 +406,7 @@ export const useExpenseSheetDetailPageController = () => {
   const showFab = !isCreateMode && detailPolicy.showFab;
   const hasVisibleStatusComment = safeText(header?.estadoComentarios).trim().length > 0;
   const statusCommentMode: "hidden" | "read" | "edit" =
-    canEditStatusCommentCurrent ? "edit" : (hasVisibleStatusComment ? "read" : "hidden");
+    isEditing && canEditStatusCommentCurrent ? "edit" : (hasVisibleStatusComment ? "read" : "hidden");
 
   return {
     header,

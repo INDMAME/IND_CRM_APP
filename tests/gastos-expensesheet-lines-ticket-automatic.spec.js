@@ -8,6 +8,7 @@ const TICKETS_PHOTOS_DIR =
   process.env.IND_E2E_TICKETS_PHOTOS_DIR || "C:\\Users\\marco.meza\\Pictures\\Tickets Fotos";
 const SUPPORTED_IMAGE_EXTENSIONS = new Set([".jpg", ".jpeg", ".png", ".webp"]);
 const PREFERRED_TICKET_IMAGE_NAMES = [
+  "ticket-cafe-teatre-1.jpg",
   "ticket-de-compra.jpg",
   "ticket-comida.jpg",
   "ticket-de-compra (1).jpg",
@@ -65,6 +66,60 @@ function getQueryParam(url, key) {
   } catch {
     return "";
   }
+}
+
+function normalizeRequestPath(requestUrl) {
+  try {
+    return new URL(requestUrl).pathname.toLowerCase();
+  } catch {
+    return String(requestUrl || "").trim().toLowerCase();
+  }
+}
+
+function startTicketCreationRequestCapture(page) {
+  const observed = [];
+  const listener = (request) => {
+    const pathName = normalizeRequestPath(request.url());
+    if (!pathName.startsWith("/api/")) return;
+
+    observed.push({
+      method: String(request.method() || "").trim().toUpperCase(),
+      pathName,
+      url: request.url(),
+    });
+  };
+
+  page.context().on("request", listener);
+  return {
+    observed,
+    stop: () => page.context().off("request", listener),
+  };
+}
+
+function isLegacyQuickTicketMutation(requestEntry) {
+  if (!requestEntry || requestEntry.method !== "POST") return false;
+
+  if (requestEntry.pathName === "/api/ia/service/expensefromticket") return true;
+  if (requestEntry.pathName === "/api/crm/expensesheets/tickets") return true;
+  if (requestEntry.pathName === "/api/crm/expensesheets") return true;
+  if (/^\/api\/crm\/expensesheets\/tickets\/[^/]+\/file\/?$/i.test(requestEntry.pathName)) return true;
+  if (/^\/api\/crm\/expensesheets\/tickets\/[^/]+\/ia\/?$/i.test(requestEntry.pathName)) return true;
+
+  return false;
+}
+
+function assertQuickCreateOnlyRequests(observed, contextLabel) {
+  const quickCreateCalls = observed.filter(
+    (requestEntry) =>
+      requestEntry.method === "POST" && requestEntry.pathName === "/api/crm/expensesheets/tickets/quick-create"
+  );
+  const legacyCalls = observed.filter((requestEntry) => isLegacyQuickTicketMutation(requestEntry));
+
+  expect(quickCreateCalls.length, `${contextLabel}: expected at least one quick-create POST`).toBeGreaterThan(0);
+  expect(
+    legacyCalls,
+    `${contextLabel}: legacy ticket mutations should not be called from the browser. Observed=${JSON.stringify(observed, null, 2)}`
+  ).toEqual([]);
 }
 
 // Recursively lists all files under a directory.
@@ -316,61 +371,76 @@ async function createTicketLineFromImage(page, sheetId) {
 
   for (const imagePath of imageCandidates) {
     const workPage = await ensureActivePage();
-    await clickFabMenuItem(workPage, /nuevo ticket|new ticket/i);
+    const requestCapture = startTicketCreationRequestCapture(workPage);
+    let captureStopped = false;
+    const stopCapture = () => {
+      if (captureStopped) return;
+      requestCapture.stop();
+      captureStopped = true;
+    };
 
-    const chooseImageButton = workPage.getByRole("button", { name: /elegir imagen|choose image/i }).first();
-    await expect(chooseImageButton).toBeVisible({ timeout: 15000 });
+    try {
+      await clickFabMenuItem(workPage, /nuevo ticket|new ticket/i);
 
-    const [chooser] = await Promise.all([workPage.waitForEvent("filechooser"), chooseImageButton.click()]);
-    await chooser.setFiles(imagePath);
+      const chooseImageButton = workPage.getByRole("button", { name: /elegir imagen|choose image/i }).first();
+      await expect(chooseImageButton).toBeVisible({ timeout: 15000 });
 
-    const didNavigateToTicketDetail = await workPage
-      .waitForURL("**/Gastos/TicketDetail?**", {
-        waitUntil: "domcontentloaded",
-        timeout: 90000,
-      })
-      .then(() => true)
-      .catch(() => false);
+      const [chooser] = await Promise.all([workPage.waitForEvent("filechooser"), chooseImageButton.click()]);
+      await chooser.setFiles(imagePath);
 
-    if (didNavigateToTicketDetail) {
-      await expect(workPage.locator("#expense-ticket-detail-root")).toBeVisible({ timeout: 30000 });
-
-      const sourceSheetId = getQueryParam(workPage.url(), "sheetId") || sheetId;
-      await workPage.goto(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sourceSheetId)}`, {
-        waitUntil: "domcontentloaded",
-      });
-      await expect(workPage.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
-
-      // Linked ticket line should show the ticket/link icon.
-      await expect(workPage.locator(".expense-line-card__ticket-icon").first()).toBeVisible({ timeout: 60000 });
-      return workPage;
-    }
-
-    const recoveredPage = await ensureActivePage();
-    const errorPanelText = await recoveredPage.locator(".bg-rose-50").first().textContent().catch(() => "");
-    lastErrorMessage = `Selected image: ${imagePath}. Error panel: ${String(errorPanelText || "").trim() || "none"}`;
-
-    const closeErrorButton = recoveredPage
-      .locator("button")
-      .filter({ hasText: /close|cerrar|cancel|cancelar/i })
-      .first();
-    const canCloseError = await closeErrorButton.isVisible().catch(() => false);
-    if (canCloseError) {
-      await closeErrorButton.click().catch(() => undefined);
-    }
-
-    const retryPage = await ensureActivePage();
-    if (!/\/Gastos\/ExpenseSheetDetail/i.test(retryPage.url())) {
-      const didReturnToSheetDetail = await retryPage
-        .goto(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`, {
+      const didNavigateToTicketDetail = await workPage
+        .waitForURL("**/Gastos/TicketDetail?**", {
           waitUntil: "domcontentloaded",
+          timeout: 90000,
         })
         .then(() => true)
         .catch(() => false);
 
-      if (didReturnToSheetDetail) {
-        await expect(retryPage.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
+      if (didNavigateToTicketDetail) {
+        stopCapture();
+        assertQuickCreateOnlyRequests(requestCapture.observed, `expense-sheet quick-create ${path.basename(imagePath)}`);
+        await expect(workPage.locator("#expense-ticket-detail-root")).toBeVisible({ timeout: 30000 });
+
+        const sourceSheetId = getQueryParam(workPage.url(), "sheetId") || sheetId;
+        await workPage.goto(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sourceSheetId)}`, {
+          waitUntil: "domcontentloaded",
+        });
+        await expect(workPage.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
+
+        // Linked ticket line should show the ticket/link icon.
+        await expect(workPage.locator(".expense-line-card__ticket-icon").first()).toBeVisible({ timeout: 60000 });
+        return workPage;
       }
+
+      stopCapture();
+      const recoveredPage = await ensureActivePage();
+      const errorPanelText = await recoveredPage.locator(".bg-rose-50").first().textContent().catch(() => "");
+      lastErrorMessage = `Selected image: ${imagePath}. Error panel: ${String(errorPanelText || "").trim() || "none"}`;
+
+      const closeErrorButton = recoveredPage
+        .locator("button")
+        .filter({ hasText: /close|cerrar|cancel|cancelar/i })
+        .first();
+      const canCloseError = await closeErrorButton.isVisible().catch(() => false);
+      if (canCloseError) {
+        await closeErrorButton.click().catch(() => undefined);
+      }
+
+      const retryPage = await ensureActivePage();
+      if (!/\/Gastos\/ExpenseSheetDetail/i.test(retryPage.url())) {
+        const didReturnToSheetDetail = await retryPage
+          .goto(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`, {
+            waitUntil: "domcontentloaded",
+          })
+          .then(() => true)
+          .catch(() => false);
+
+        if (didReturnToSheetDetail) {
+          await expect(retryPage.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
+        }
+      }
+    } finally {
+      stopCapture();
     }
   }
 
