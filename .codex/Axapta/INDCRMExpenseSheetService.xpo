@@ -710,7 +710,7 @@ Formatversion: 1
         #        if (!fileName)
         #            return [INDCRMUtilityService::buildHeader(false, 'INDFilename es obligatorio.', conNull()), conNull()];
         #
-        #        transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
+        #        transDate = INDCRMUtilityService::parseExpenseTicketTransDate(transDateStr);
         #        if (!transDate)
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
@@ -1050,7 +1050,7 @@ Formatversion: 1
         #        if (!fileName)
         #            return [INDCRMUtilityService::buildHeader(false, 'INDFilename es obligatorio.', conNull()), conNull()];
         #
-        #        transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
+        #        transDate = INDCRMUtilityService::parseExpenseTicketTransDate(transDateStr);
         #        if (!transDate)
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
@@ -3335,7 +3335,7 @@ Formatversion: 1
         #
         #        if (transDateStr)
         #        {
-        #            transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
+        #            transDate = INDCRMUtilityService::parseExpenseTicketTransDate(transDateStr);
         #            if (!transDate)
         #                return INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull());
         #        }
@@ -3628,7 +3628,7 @@ Formatversion: 1
         #    if (!transDateStr)
         #        return [INDCRMUtilityService::buildHeader(false, 'TransDate es obligatorio (yyyymmdd).', conNull()), conNull()];
         #
-        #    transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
+        #    transDate = INDCRMUtilityService::parseExpenseTicketTransDate(transDateStr);
         #    if (!transDate)
         #        return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
