@@ -29,7 +29,7 @@ That bad value then propagated to ticket finalization and line creation payloads
 A second factor made the incident user-visible in the tickets page:
 
 - The new composite endpoint `/api/crm/expensesheets/tickets/quick-create` had replaced the old manual orchestration path in the web UI.
-- When the composite endpoint failed on `TransDate`, the web flow no longer had a working fallback to recover by re-running OCR and finalization from the web layer.
+- At that time, the web layer still needed a temporary recovery path because the composite endpoint did not normalize the invalid OCR `TransDate` upstream.
 
 ## Fixed Behavior
 
@@ -39,9 +39,8 @@ A second factor made the incident user-visible in the tickets page:
   - Ticket dates
   - Expense line dates
   - General expense date normalization shown back to the UI
-- The quick ticket flow now recovers safely when the composite endpoint fails with the known invalid `TransDate` pattern:
-  - If the composite endpoint already created and uploaded the ticket file, the web layer resumes from that partial state and finalizes the ticket manually.
-  - If the composite endpoint is unavailable or not ready, the web layer falls back to the previous manual orchestration path.
+- The composite endpoint now resolves the invalid OCR `TransDate` upstream before validating or finalizing the ticket.
+- The web quick-create proxy no longer performs a second recovery pass for this case and simply returns the composite endpoint result.
 
 ## Validation Signals
 
@@ -67,4 +66,4 @@ For OCR or IA derived expense dates:
 
 - Never trust years outside the supported business range.
 - Normalize or reject short or corrupted OCR years before sending ticket or line payloads upstream.
-- Keep the web fallback path for quick ticket creation until the upstream composite endpoint has the same supported-year guard and produces stable date output by itself.
+- Keep the date guard in the composite endpoint so the browser can stay on a single `quick-create` call without web-side recovery logic.

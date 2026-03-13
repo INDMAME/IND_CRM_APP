@@ -31,11 +31,9 @@ namespace IND_CRM_APP.Services
         private readonly ILogger<ApiClientService> _logger;
         private readonly int _accountsTimeoutSeconds;
         private static readonly HashSet<int> AllowedGastoTypeCodes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
-        private const int DefaultTicketGastoType = 8;
         private const int MinSupportedExpenseYear = 1900;
         private const int MaxSupportedExpenseYear = 2100;
         private const int TwoDigitExpenseYearPivot = 50;
-        private const string QuickCreateMissingFieldsErrorCode = "CRM_EXPENSESHEET_TICKET_MISSING_FIELDS";
 
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
@@ -77,39 +75,6 @@ namespace IND_CRM_APP.Services
             public string DraftExtract { get; init; } = string.Empty;
             public string TicketFinalize { get; init; } = string.Empty;
             public string SheetLink { get; init; } = string.Empty;
-        }
-
-        /// <summary>
-        /// Normalized OCR draft used when the composite endpoint needs a safe server-side recovery.
-        /// </summary>
-        private sealed class QuickCreateRecoveryDraft
-        {
-            public string Description { get; init; } = "Ticket";
-            public string CurrencyCode { get; init; } = "EUR";
-            public decimal TotalAmount { get; init; }
-                = 0m;
-            public string TransDate { get; init; } = string.Empty;
-            public string? Comentario { get; init; }
-                = null;
-            public int? GastoType { get; init; }
-                = null;
-            public IReadOnlyList<QuickCreateRecoveryDraftLine> Lines { get; init; } = Array.Empty<QuickCreateRecoveryDraftLine>();
-        }
-
-        /// <summary>
-        /// One OCR draft line normalized for IA finalize and sheet-link recovery.
-        /// </summary>
-        private sealed class QuickCreateRecoveryDraftLine
-        {
-            public string Description { get; init; } = "Ticket";
-            public string TransDate { get; init; } = string.Empty;
-            public int TypeValue { get; init; } = DefaultTicketGastoType;
-            public decimal Qty { get; init; }
-                = 1m;
-            public decimal Price { get; init; }
-                = 0m;
-            public decimal TotalAmount { get; init; }
-                = 0m;
         }
 
         public ApiClientService(
@@ -394,17 +359,6 @@ namespace IND_CRM_APP.Services
                 return parsedCur;
 
             return null;
-        }
-
-        private static string GetTodayTicketTransDate()
-        {
-            return DateTime.Today.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
-        }
-
-        private static string NormalizeSupportedTicketTransDate(string? raw)
-        {
-            return TryParseSupportedExpenseDate(raw)?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ??
-                   GetTodayTicketTransDate();
         }
 
         // Normalizes list date filters to AX expected compact format (ddMMyyyy).
@@ -1303,50 +1257,27 @@ namespace IND_CRM_APP.Services
                 payload.ExistingHojaGastosId ?? "<empty>",
                 payload.ProjectId ?? "<empty>");
 
-            var ticketImageBytes = await ReadStreamBytesAsync(ticketImageStream, cancellationToken);
-            var transport = await SendQuickCreateExpenseSheetTicketRequestAsync(
+            return await SendQuickCreateExpenseSheetTicketRequestAsync(
                 payload,
-                ticketImageBytes,
+                ticketImageStream,
                 safeFileName,
                 mime,
                 cancellationToken);
-
-            if (!ShouldRecoverQuickCreateInvalidTransDate(transport, out var partialState) || partialState == null)
-                return transport;
-
-            _logger.LogWarning(
-                "QuickCreateExpenseSheetTicket detected recoverable invalid TransDate. FileId: {FileId}. CompletedStage: {CompletedStage}. ExistingHojaGastosId: {ExistingHojaGastosId}. TraceId: {TraceId}. Message: {Message}",
-                partialState.FileId,
-                partialState.CompletedStage,
-                payload.ExistingHojaGastosId ?? "<empty>",
-                transport.Response.TraceId ?? "<null>",
-                transport.Response.Message ?? "<null>");
-
-            var recoveredTransport = await TryRecoverQuickCreateExpenseSheetTicketAsync(
-                token,
-                payload,
-                partialState,
-                ticketImageBytes,
-                safeFileName,
-                mime,
-                axUserIdOverride,
-                transport,
-                cancellationToken);
-
-            return recoveredTransport ?? transport;
         }
 
-        // Replays one uploaded image through the composite endpoint and logs the stage data returned by upstream.
+        // Sends one uploaded image through the composite endpoint and logs the stage data returned by upstream.
         private async Task<ApiTransportResponse<object>> SendQuickCreateExpenseSheetTicketRequestAsync(
             ExpenseSheetTicketQuickCreateRequest payload,
-            byte[] ticketImageBytes,
+            Stream ticketImageStream,
             string safeFileName,
             string mime,
             CancellationToken cancellationToken)
         {
             using var form = new MultipartFormDataContent();
-            using var replayStream = CreateReplayStream(ticketImageBytes);
-            using var fileContent = new StreamContent(replayStream);
+            if (ticketImageStream.CanSeek)
+                ticketImageStream.Position = 0;
+
+            using var fileContent = new StreamContent(ticketImageStream);
             fileContent.Headers.ContentType = new MediaTypeHeaderValue(mime);
             form.Add(fileContent, "ticketImage", safeFileName);
 
@@ -1394,201 +1325,6 @@ namespace IND_CRM_APP.Services
             };
         }
 
-        // Recovers the known OCR TransDate failure using the already-created ticket file returned by quick-create.
-        private async Task<ApiTransportResponse<object>?> TryRecoverQuickCreateExpenseSheetTicketAsync(
-            string token,
-            ExpenseSheetTicketQuickCreateRequest payload,
-            QuickCreatePartialState partialState,
-            byte[] ticketImageBytes,
-            string safeFileName,
-            string mime,
-            string? axUserIdOverride,
-            ApiTransportResponse<object> originalTransport,
-            CancellationToken cancellationToken)
-        {
-            try
-            {
-                using var draftReplayStream = CreateReplayStream(ticketImageBytes);
-                var draftResponse = await ExpenseFromTicketAsync(
-                    token,
-                    draftReplayStream,
-                    safeFileName,
-                    mime,
-                    persistTicket: false,
-                    ticketUrlFile: partialState.UrlFile,
-                    axUserIdOverride: axUserIdOverride,
-                    cancellationToken: cancellationToken);
-
-                _logger.LogInformation(
-                    "QuickCreateExpenseSheetTicket recovery draft result. FileId: {FileId}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. Message: {Message}",
-                    partialState.FileId,
-                    draftResponse.Success,
-                    draftResponse.ErrorCode ?? "<null>",
-                    draftResponse.TraceId ?? "<null>",
-                    draftResponse.Message ?? "<null>");
-
-                if (draftResponse.Success != true)
-                    return null;
-
-                var draft = NormalizeQuickCreateRecoveryDraft(draftResponse.Data);
-                var iaPayload = BuildQuickCreateTicketIaPayload(draft, partialState);
-                var finalizeResponse = await UpdateExpenseSheetTicketFromIAAsync(
-                    token,
-                    partialState.FileId,
-                    iaPayload,
-                    axUserIdOverride);
-
-                _logger.LogInformation(
-                    "QuickCreateExpenseSheetTicket recovery finalize result. FileId: {FileId}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. Message: {Message}",
-                    partialState.FileId,
-                    finalizeResponse.Success,
-                    finalizeResponse.ErrorCode ?? "<null>",
-                    finalizeResponse.TraceId ?? "<null>",
-                    finalizeResponse.Message ?? "<null>");
-
-                if (finalizeResponse.Success != true)
-                    return null;
-
-                string? linkedSheetId = null;
-                string? sheetLinkTraceId = null;
-                if (!string.IsNullOrWhiteSpace(payload.ExistingHojaGastosId))
-                {
-                    var lineRequest = BuildQuickCreateSheetLineRequest(draft, partialState.FileId, payload.ProjectId);
-                    if (lineRequest == null)
-                    {
-                        _logger.LogWarning(
-                            "QuickCreateExpenseSheetTicket recovery could not build one sheet line. FileId: {FileId}. ExistingHojaGastosId: {ExistingHojaGastosId}",
-                            partialState.FileId,
-                            payload.ExistingHojaGastosId);
-                        return null;
-                    }
-
-                    var linkRequest = new ExpenseSheetCreateRequest
-                    {
-                        Mode = 2,
-                        ExistingHojaGastosId = payload.ExistingHojaGastosId,
-                        Lines = new List<ExpenseSheetLineRequest> { lineRequest }
-                    };
-
-                    var linkResponse = await CreateExpenseSheetAsync(token, linkRequest, axUserIdOverride);
-                    _logger.LogInformation(
-                        "QuickCreateExpenseSheetTicket recovery sheet-link result. FileId: {FileId}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. Message: {Message}",
-                        partialState.FileId,
-                        linkResponse.Success,
-                        linkResponse.ErrorCode ?? "<null>",
-                        linkResponse.TraceId ?? "<null>",
-                        linkResponse.Message ?? "<null>");
-
-                    if (linkResponse.Success != true)
-                        return null;
-
-                    linkedSheetId = NormalizeOptionalText(linkResponse.Data?.HojaGastosId) ?? payload.ExistingHojaGastosId;
-                    sheetLinkTraceId = linkResponse.TraceId;
-                }
-
-                var recoveredTransport = BuildRecoveredQuickCreateTransportResponse(
-                    originalTransport,
-                    partialState,
-                    finalizeResponse.TraceId,
-                    sheetLinkTraceId,
-                    linkedSheetId);
-
-                _logger.LogInformation(
-                    "QuickCreateExpenseSheetTicket recovery succeeded. FileId: {FileId}. LinkedToSheet: {LinkedToSheet}. CompletedStage: {CompletedStage}. TraceId: {TraceId}",
-                    partialState.FileId,
-                    !string.IsNullOrWhiteSpace(linkedSheetId),
-                    !string.IsNullOrWhiteSpace(linkedSheetId) ? "sheet-linked" : "ticket-finalized",
-                    recoveredTransport.Response.TraceId ?? "<null>");
-
-                return recoveredTransport;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "QuickCreateExpenseSheetTicket recovery failed. FileId: {FileId}. ExistingHojaGastosId: {ExistingHojaGastosId}",
-                    partialState.FileId,
-                    payload.ExistingHojaGastosId ?? "<empty>");
-                return null;
-            }
-        }
-
-        // Reads one input stream fully so the same upload can be replayed across recovery steps.
-        private static async Task<byte[]> ReadStreamBytesAsync(Stream source, CancellationToken cancellationToken)
-        {
-            if (source == null)
-                return Array.Empty<byte>();
-
-            if (source.CanSeek)
-                source.Position = 0;
-
-            using var buffer = new MemoryStream();
-            await source.CopyToAsync(buffer, cancellationToken);
-            return buffer.ToArray();
-        }
-
-        // Replays an uploaded file from memory without mutating the original request stream.
-        private static MemoryStream CreateReplayStream(byte[] content)
-        {
-            return new MemoryStream(content ?? Array.Empty<byte>(), writable: false);
-        }
-
-        // Detects the known quick-create OCR date failure that can be repaired server-side.
-        private bool ShouldRecoverQuickCreateInvalidTransDate(
-            ApiTransportResponse<object> transport,
-            out QuickCreatePartialState? partialState)
-        {
-            partialState = null;
-            if (transport == null ||
-                transport.StatusCode != HttpStatusCode.UnprocessableEntity ||
-                transport.Response == null ||
-                transport.Response.Success)
-            {
-                return false;
-            }
-
-            if (!string.Equals(
-                    NormalizeOptionalText(transport.Response.ErrorCode),
-                    QuickCreateMissingFieldsErrorCode,
-                    StringComparison.OrdinalIgnoreCase))
-            {
-                return false;
-            }
-
-            if (!TryReadQuickCreatePartialState(transport.Response.Data, out partialState) || partialState == null)
-            {
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(partialState.FileId) || string.IsNullOrWhiteSpace(partialState.UrlFile))
-            {
-                return false;
-            }
-
-            var stage = NormalizeOptionalText(partialState.CompletedStage)?.ToLowerInvariant();
-            if (stage != "file-uploaded" && stage != "draft-extracted" && stage != "ticket-finalized")
-            {
-                return false;
-            }
-
-            var messageParts = new List<string>();
-            var responseMessage = NormalizeOptionalText(transport.Response.Message);
-            if (responseMessage != null)
-                messageParts.Add(responseMessage);
-
-            if (transport.Response.Errors != null)
-            {
-                messageParts.AddRange(
-                    transport.Response.Errors
-                        .Where(entry => entry != null)
-                        .Select(entry => $"{entry.Field} {entry.Message}".Trim())
-                        .Where(entry => !string.IsNullOrWhiteSpace(entry)));
-            }
-
-            var combinedMessage = string.Join(" ", messageParts);
-            return combinedMessage.Contains("TransDate invalida", StringComparison.OrdinalIgnoreCase);
-        }
-
         // Reads the partial quick-create state returned by the composite endpoint after sub-step failures.
         private static bool TryReadQuickCreatePartialState(object? rawData, out QuickCreatePartialState? partialState)
         {
@@ -1631,199 +1367,6 @@ namespace IND_CRM_APP.Services
             };
 
             return true;
-        }
-
-        // Normalizes the OCR draft so downstream ticket finalize/link calls always receive supported values.
-        private static QuickCreateRecoveryDraft NormalizeQuickCreateRecoveryDraft(object? rawDraftData)
-        {
-            var fallbackTransDate = GetTodayTicketTransDate();
-            if (!TryConvertToJsonElement(rawDraftData, out var root) || root.ValueKind != JsonValueKind.Object)
-            {
-                return new QuickCreateRecoveryDraft
-                {
-                    TransDate = fallbackTransDate
-                };
-            }
-
-            var description = NormalizeOptionalText(ReadStringLikeProperty(root, "Description", "description")) ?? "Ticket";
-            var currencyCode = NormalizeOptionalText(ReadStringLikeProperty(root, "CurrencyCode", "currencyCode"))?.ToUpperInvariant() ?? "EUR";
-            var totalAmount = TryReadDecimalFromProperties(root, "TotalAmount", "totalAmount") ?? 0m;
-            var transDate = NormalizeSupportedTicketTransDate(ReadStringLikeProperty(root, "TransDate", "transDate"));
-            var comentario = NormalizeOptionalText(ReadStringLikeProperty(root, "Comentario", "comentario"));
-            var gastoType = NormalizeTicketGastoType(TryReadIntFromProperties(root, "GastoType", "gastoType"));
-
-            var lines = new List<QuickCreateRecoveryDraftLine>();
-            if (TryGetArrayProperty(root, "Lines", out var linesArray))
-            {
-                foreach (var lineElement in linesArray.EnumerateArray())
-                {
-                    if (lineElement.ValueKind != JsonValueKind.Object)
-                        continue;
-
-                    var qty = TryReadDecimalFromProperties(lineElement, "Qty", "qty") ?? 0m;
-                    if (qty <= 0m)
-                        qty = 1m;
-
-                    var price = TryReadDecimalFromProperties(lineElement, "Price", "price") ?? 0m;
-                    var explicitTotal = TryReadDecimalFromProperties(lineElement, "TotalAmount", "totalAmount") ?? 0m;
-                    var computedTotal = explicitTotal > 0m ? explicitTotal : qty * price;
-                    if (computedTotal <= 0m)
-                        continue;
-
-                    var lineType = NormalizeTicketGastoType(TryReadIntFromProperties(lineElement, "TypeValue", "typeValue")) ??
-                                   gastoType ??
-                                   DefaultTicketGastoType;
-                    var lineDescription = NormalizeOptionalText(ReadStringLikeProperty(lineElement, "Description", "description")) ?? description;
-                    var lineTransDate = TryParseSupportedExpenseDate(ReadStringLikeProperty(lineElement, "TransDate", "transDate"))
-                        ?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture) ?? transDate;
-
-                    lines.Add(new QuickCreateRecoveryDraftLine
-                    {
-                        Description = lineDescription,
-                        TransDate = lineTransDate,
-                        TypeValue = lineType,
-                        Qty = qty,
-                        Price = price > 0m ? price : computedTotal,
-                        TotalAmount = computedTotal
-                    });
-                }
-            }
-
-            var normalizedTotal = totalAmount > 0m ? totalAmount : lines.Sum(line => line.TotalAmount);
-            if (lines.Count == 0 && normalizedTotal > 0m)
-            {
-                lines.Add(new QuickCreateRecoveryDraftLine
-                {
-                    Description = description,
-                    TransDate = transDate,
-                    TypeValue = gastoType ?? DefaultTicketGastoType,
-                    Qty = 1m,
-                    Price = normalizedTotal,
-                    TotalAmount = normalizedTotal
-                });
-            }
-
-            return new QuickCreateRecoveryDraft
-            {
-                Description = description,
-                CurrencyCode = currencyCode,
-                TotalAmount = normalizedTotal,
-                TransDate = transDate,
-                Comentario = comentario,
-                GastoType = gastoType,
-                Lines = lines
-            };
-        }
-
-        // Builds the same IA finalize contract used by the React fallback, now server-side only.
-        private static object BuildQuickCreateTicketIaPayload(QuickCreateRecoveryDraft draft, QuickCreatePartialState partialState)
-        {
-            var payload = new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            {
-                ["description"] = draft.Description,
-                ["currencyCode"] = draft.CurrencyCode,
-                ["transDate"] = draft.TransDate,
-                ["urlFile"] = NormalizeOptionalText(partialState.UrlFile),
-                ["fileName"] = NormalizeOptionalText(partialState.FileName),
-                ["lines"] = draft.Lines.Select(line => new Dictionary<string, object?>
-                {
-                    ["description"] = line.Description,
-                    ["qty"] = line.Qty,
-                    ["price"] = line.Price,
-                    ["totalAmount"] = line.TotalAmount
-                }).ToArray()
-            };
-
-            if (draft.TotalAmount > 0m)
-                payload["totalAmount"] = draft.TotalAmount;
-
-            if (!string.IsNullOrWhiteSpace(draft.Comentario))
-                payload["comentario"] = draft.Comentario;
-
-            if (draft.GastoType.HasValue)
-                payload["gastoType"] = draft.GastoType.Value;
-
-            return payload;
-        }
-
-        // Builds one expense sheet line from the recovered ticket header to keep the browser on quick-create only.
-        private static ExpenseSheetLineRequest? BuildQuickCreateSheetLineRequest(
-            QuickCreateRecoveryDraft draft,
-            string fileId,
-            string? projectId)
-        {
-            var firstLine = draft.Lines.FirstOrDefault();
-            var headerTotal = draft.TotalAmount > 0m ? draft.TotalAmount : 0m;
-            var fallbackTotal = firstLine?.TotalAmount ?? 0m;
-            var effectiveTotal = headerTotal > 0m ? headerTotal : fallbackTotal;
-            if (effectiveTotal <= 0m)
-                return null;
-
-            var typeValue = NormalizeTicketGastoType(draft.GastoType ?? firstLine?.TypeValue) ?? DefaultTicketGastoType;
-            var transDate = NormalizeSupportedTicketTransDate(draft.TransDate);
-
-            return new ExpenseSheetLineRequest
-            {
-                TransDate = transDate,
-                TypeValue = typeValue,
-                Description = NormalizeOptionalText(draft.Description) ?? "Ticket",
-                Internacional = false,
-                FileId = NormalizeOptionalText(fileId),
-                Ticket = true,
-                Qty = 1m,
-                Price = effectiveTotal,
-                ProjId = NormalizeOptionalText(projectId),
-                IndAttachFiles = string.Empty
-            };
-        }
-
-        // Converts the successful recovery result back to the quick-create transport envelope expected by the web layer.
-        private static ApiTransportResponse<object> BuildRecoveredQuickCreateTransportResponse(
-            ApiTransportResponse<object> originalTransport,
-            QuickCreatePartialState partialState,
-            string? finalizeTraceId,
-            string? sheetLinkTraceId,
-            string? linkedSheetId)
-        {
-            var resolvedSheetId = NormalizeOptionalText(linkedSheetId) ?? partialState.HojaGastosId;
-            var linkedToSheet = !string.IsNullOrWhiteSpace(resolvedSheetId) || partialState.LinkedToSheet;
-            var completedStage = linkedToSheet ? "sheet-linked" : "ticket-finalized";
-            var traceId = NormalizeOptionalText(sheetLinkTraceId) ??
-                          NormalizeOptionalText(finalizeTraceId) ??
-                          NormalizeOptionalText(originalTransport.Response.TraceId);
-            var stepTraceIds = new Dictionary<string, object?>
-            {
-                ["TicketCreate"] = NormalizeOptionalText(partialState.StepTraceIds.TicketCreate),
-                ["FileUpload"] = NormalizeOptionalText(partialState.StepTraceIds.FileUpload),
-                ["DraftExtract"] = NormalizeOptionalText(partialState.StepTraceIds.DraftExtract),
-                ["TicketFinalize"] = NormalizeOptionalText(finalizeTraceId) ?? NormalizeOptionalText(partialState.StepTraceIds.TicketFinalize),
-                ["SheetLink"] = NormalizeOptionalText(sheetLinkTraceId) ?? NormalizeOptionalText(partialState.StepTraceIds.SheetLink)
-            };
-            var data = new Dictionary<string, object?>
-            {
-                ["FileId"] = partialState.FileId,
-                ["UrlFile"] = partialState.UrlFile,
-                ["FileName"] = partialState.FileName,
-                ["ProcessedByAI"] = true,
-                ["LinkedToSheet"] = linkedToSheet,
-                ["HojaGastosId"] = resolvedSheetId,
-                ["CompletedStage"] = completedStage,
-                ["StepTraceIds"] = stepTraceIds
-            };
-
-            return new ApiTransportResponse<object>
-            {
-                StatusCode = HttpStatusCode.Created,
-                Headers = originalTransport.Headers,
-                Response = new ApiResponse<object>
-                {
-                    Success = true,
-                    Message = linkedToSheet ? "Ticket created and linked." : "Ticket created.",
-                    Data = data,
-                    TraceId = traceId,
-                    Errors = new List<IndValidationError>()
-                }
-            };
         }
 
         // Converts arbitrary response payloads into detached JsonElements for tolerant parsing.
