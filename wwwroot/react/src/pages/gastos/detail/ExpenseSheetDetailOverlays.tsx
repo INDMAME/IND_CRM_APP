@@ -1,6 +1,6 @@
 import React from "react";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
-import Spinner from "../../../components/commons/Spinner.tsx";
+import ExpenseQuickTicketProgressOverlay from "../components/ExpenseQuickTicketProgressOverlay.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import { TICKET_IMAGE_ACCEPT_ATTRIBUTE } from "./useExpenseSheetQuickTicketFlowCore.ts";
 
@@ -26,6 +26,13 @@ type ExpenseSheetDetailOverlaysProps = {
   sourcePickerOpen: boolean;
   quickTicketBusy: boolean;
   quickTicketProgressMessage: string;
+  quickTicketProgressStages: Array<{
+    key: string;
+    title: string;
+    description: string;
+    state: "completed" | "active" | "pending";
+  }>;
+  quickTicketElapsedMs: number;
   quickTicketErrorMessage: string;
   quickTicketAttemptId: string;
   quickTicketTraceList: Array<{ step: string; traceId: string; at: string }>;
@@ -58,6 +65,8 @@ const ExpenseSheetDetailOverlays = ({
   sourcePickerOpen,
   quickTicketBusy,
   quickTicketProgressMessage,
+  quickTicketProgressStages,
+  quickTicketElapsedMs,
   quickTicketErrorMessage,
   quickTicketAttemptId,
   quickTicketTraceList,
@@ -145,14 +154,13 @@ const ExpenseSheetDetailOverlays = ({
         </div>
       ) : null}
 
-      {quickTicketBusy ? (
-        <div className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/35 px-4">
-          <div className="glass-panel shadow-card flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-sm text-slate-700">
-            <Spinner size="h-5 w-5" label={indT("Common_Loading", "Loading")} />
-            <span>{quickTicketProgressMessage || indT("Common_Loading", "Loading")}</span>
-          </div>
-        </div>
-      ) : null}
+      <ExpenseQuickTicketProgressOverlay
+        open={quickTicketBusy}
+        title={indT("ExpenseSheets_NewTicket_Progress_Title", "Processing ticket")}
+        summary={quickTicketProgressMessage || indT("Common_Loading", "Loading")}
+        elapsedMs={quickTicketElapsedMs}
+        stages={quickTicketProgressStages}
+      />
 
       {quickTicketErrorMessage ? (
         <div

@@ -8,9 +8,11 @@ import {
   deleteExpenseSheetLine,
   deleteExpenseSheetTicket,
   deleteExpenseSheetTicketFile,
+  fetchExpenseSheetDetail,
   updateExpenseSheetTicket,
 } from "../../utils/expenseApi.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../../utils/expenseApiDateUtils.ts";
+import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type DeleteLinkedExpenseLineContext = {
   sheetId: string;
@@ -30,6 +32,7 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftComentario: string;
   draftUrlFile: string;
   draftFileName: string;
+  linkedExpenseSheetId?: string;
   deleteLinkedExpenseLineContext?: DeleteLinkedExpenseLineContext | null;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -82,6 +85,7 @@ export const useExpenseTicketDetailMutations = ({
   draftComentario,
   draftUrlFile,
   draftFileName,
+  linkedExpenseSheetId,
   deleteLinkedExpenseLineContext,
   setModalError,
   setBusy,
@@ -175,6 +179,35 @@ export const useExpenseTicketDetailMutations = ({
     setStatus,
   ]);
 
+  const resolveLinkedExpenseLineContext = useCallback(async (): Promise<DeleteLinkedExpenseLineContext | null> => {
+    if (deleteLinkedExpenseLineContext) {
+      return deleteLinkedExpenseLineContext;
+    }
+
+    const safeSheetId = safeText(linkedExpenseSheetId);
+    if (!safeSheetId) {
+      return null;
+    }
+
+    const response = await fetchExpenseSheetDetail(safeSheetId, {
+      suppressPermissionModal: true,
+    });
+    const items = Array.isArray(response.Items) ? response.Items : [];
+    const detail = items.find((entry) => entry && typeof entry === "object") || null;
+    const lines = Array.isArray(detail?.Lines) ? detail.Lines : [];
+    const matchingLine = lines.find((line) => safeText(line?.FileId) === fileId);
+    const lineRecId = safeText(matchingLine?.RecId);
+
+    if (!lineRecId) {
+      return null;
+    }
+
+    return {
+      sheetId: safeSheetId,
+      lineRecId,
+    };
+  }, [deleteLinkedExpenseLineContext, fileId, linkedExpenseSheetId]);
+
   const handleDelete = useCallback(async () => {
     if (busy) return false;
     if (!canDeleteTicket) {
@@ -189,6 +222,8 @@ export const useExpenseTicketDetailMutations = ({
       setBusy,
       setStatus,
       action: async () => {
+        const linkedLineContext = await resolveLinkedExpenseLineContext();
+
         try {
           const deleteFileResponse = await deleteExpenseSheetTicketFile(fileId, {
             suppressPermissionModal: true,
@@ -207,11 +242,11 @@ export const useExpenseTicketDetailMutations = ({
           throw new Error(response.Message || indT("ExpenseSheets_Detail_DeleteFailed", "Delete failed."));
         }
 
-        if (deleteLinkedExpenseLineContext) {
+        if (linkedLineContext) {
           try {
             const lineDeleteResponse = await deleteExpenseSheetLine(
-              deleteLinkedExpenseLineContext.sheetId,
-              deleteLinkedExpenseLineContext.lineRecId,
+              linkedLineContext.sheetId,
+              linkedLineContext.lineRecId,
               {
                 suppressPermissionModal: true,
               }
@@ -234,7 +269,7 @@ export const useExpenseTicketDetailMutations = ({
     });
 
     return result.ok;
-  }, [busy, canDeleteTicket, deleteLinkedExpenseLineContext, fileId, setBusy, setModalError, setStatus]);
+  }, [busy, canDeleteTicket, fileId, resolveLinkedExpenseLineContext, setBusy, setModalError, setStatus]);
 
   return {
     handleUpdate,

@@ -46,6 +46,74 @@ function resolveFileIdFromCreateResponse(payload) {
   return "";
 }
 
+// Reads the same runtime auth headers used by the browser expense client.
+async function readExpenseApiRequestHeaders(page, includeJson = false) {
+  const runtime = await page.evaluate(() => {
+    const meta = document.querySelector('meta[name="csrf-token"]');
+    return {
+      csrfToken: String(meta?.getAttribute("content") || "").trim(),
+      companyId: String(window.__IND_SELECTED_COMPANY__ || "").trim(),
+      token: String(window.__IND_API_TOKEN__ || "").trim(),
+      currentAxUserId: String(window.__IND_CURRENT_AX_USER_ID__ || "").trim(),
+    };
+  });
+
+  const headers = {
+    Accept: "application/json",
+  };
+
+  if (runtime.csrfToken) {
+    headers.RequestVerificationToken = runtime.csrfToken;
+  }
+
+  if (runtime.companyId) {
+    headers["X-IND-Company"] = runtime.companyId;
+  }
+
+  if (runtime.currentAxUserId) {
+    headers["X-IND-AxUserId"] = runtime.currentAxUserId;
+  }
+
+  if (runtime.token) {
+    headers.Authorization = `Bearer ${runtime.token}`;
+  }
+
+  if (includeJson) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  return headers;
+}
+
+// Calls one expense API endpoint from the authenticated browser page.
+async function callExpenseApiFromPage(page, url, method, payload) {
+  const upperMethod = String(method || "GET").trim().toUpperCase() || "GET";
+  const includeJson = upperMethod !== "GET" && payload !== undefined;
+  const headers = await readExpenseApiRequestHeaders(page, includeJson);
+
+  return page.evaluate(
+    async ({ requestUrl, requestMethod, requestHeaders, requestBody }) => {
+      const response = await fetch(requestUrl, {
+        method: requestMethod,
+        headers: requestHeaders,
+        credentials: "same-origin",
+        body: requestBody,
+      });
+
+      return {
+        status: response.status,
+        body: await response.text(),
+      };
+    },
+    {
+      requestUrl: url,
+      requestMethod: upperMethod,
+      requestHeaders: headers,
+      requestBody: includeJson ? JSON.stringify(payload) : undefined,
+    }
+  );
+}
+
 // Creates one temporary ticket with one line for deterministic E2E assertions.
 async function createTemporaryTicket(page) {
   const stamp = Date.now();
@@ -69,15 +137,8 @@ async function createTemporaryTicket(page) {
     ],
   };
 
-  const createResponse = await page.request.post("/api/crm/expensesheets/tickets", {
-    data: payload,
-    headers: {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-    },
-  });
-
-  const rawText = await createResponse.text();
+  const createResponse = await callExpenseApiFromPage(page, "/api/crm/expensesheets/tickets", "POST", payload);
+  const rawText = String(createResponse.body || "");
   let json = null;
   try {
     json = JSON.parse(rawText);
@@ -85,8 +146,8 @@ async function createTemporaryTicket(page) {
     json = null;
   }
 
-  if (!createResponse.ok() || !json || json.Success === false) {
-    throw new Error(`Ticket create failed. status=${createResponse.status()} body=${rawText}`);
+  if (createResponse.status < 200 || createResponse.status >= 300 || !json || json.Success === false) {
+    throw new Error(`Ticket create failed. status=${createResponse.status} body=${rawText}`);
   }
 
   const fileId = resolveFileIdFromCreateResponse(json);
@@ -101,7 +162,7 @@ async function createTemporaryTicket(page) {
 async function deleteTemporaryTicket(page, fileId) {
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
   if (!safeFileId) return;
-  await page.request.delete(`/api/crm/expensesheets/tickets/${safeFileId}`).catch(() => undefined);
+  await callExpenseApiFromPage(page, `/api/crm/expensesheets/tickets/${safeFileId}`, "DELETE").catch(() => undefined);
 }
 
 // Opens ticket detail from tickets list using deterministic ticketFileId filter.
@@ -130,6 +191,60 @@ async function confirmSaveInModal(page) {
     .first();
   await expect(saveButton).toBeVisible({ timeout: 15000 });
   await saveButton.click();
+}
+
+// Confirms delete in the app confirm modal.
+async function confirmDeleteInModal(page) {
+  const deleteButton = page
+    .locator("div.fixed.inset-0 button")
+    .filter({ hasText: /delete|eliminar/i })
+    .first();
+  await expect(deleteButton).toBeVisible({ timeout: 15000 });
+  await deleteButton.click();
+}
+
+// Builds a minimal sheet detail payload that links one expense line to a ticket file.
+function buildLinkedSheetDetailPayload(sheetId, fileId, lineRecId) {
+  return {
+    Success: true,
+    Message: "OK",
+    Total: 1,
+    Page: 1,
+    PageSize: 1,
+    Items: [
+      {
+        HojaGastosId: sheetId,
+        UserId: "E2E",
+        Description: "E2E linked sheet",
+        ExpenseSheetStatus: 0,
+        EstadoComentarios: "",
+        CurrencyCode: "EUR",
+        TotalAmount: 10,
+        ExchRate: 1,
+        ExchangeRateMode: 0,
+        ProjId: "",
+        Voucher: "",
+        CreatedDate: "13.03.2026",
+        Lines: [
+          {
+            RecId: String(lineRecId),
+            TransDate: "13.03.2026",
+            TypeValue: 5,
+            Description: "E2E linked line",
+            Internacional: false,
+            FileId: fileId,
+            Ticket: true,
+            Price: 10,
+            Qty: 1,
+            Amount: 10,
+            ProjId: "",
+            IndAttachFiles: "",
+          },
+        ],
+      },
+    ],
+    TraceId: "trace-sheet-detail-delete-e2e",
+  };
 }
 
 test.describe("Ticket detail E2E", () => {
@@ -286,6 +401,192 @@ test.describe("Ticket detail E2E", () => {
       expect(Number(capturedLinePayload.totalAmount)).toBe(17);
 
       await page.unroute(lineRoutePattern);
+    } finally {
+      await deleteTemporaryTicket(page, fileId);
+    }
+  });
+
+  test("Ticket detail delete resolves linked expense line when opened from sheet-create context", async ({ page }) => {
+    await ensureAuthenticatedSession(page);
+    const fileId = await createTemporaryTicket(page);
+    const fakeSheetId = `E2E-SHEET-${Date.now()}`;
+    const fakeLineRecId = "123456";
+    const safeFileId = encodeURIComponent(fileId);
+    const safeSheetId = encodeURIComponent(fakeSheetId);
+    const ticketDeletePattern = `**/api/crm/expensesheets/tickets/${safeFileId}`;
+    const ticketFileDeletePattern = `**/api/crm/expensesheets/tickets/${safeFileId}/file**`;
+    const sheetDetailPattern = `**/api/crm/expensesheets/${safeSheetId}`;
+    const lineDeletePattern = `**/api/crm/expensesheets/${safeSheetId}/lines/${fakeLineRecId}**`;
+
+    let ticketDeleted = false;
+    let ticketFileDeleted = false;
+    let linkedLineDeleted = false;
+    let linkedSheetLoaded = false;
+
+    try {
+      await page.goto(`/Gastos/TicketDetail?fileId=${encodeURIComponent(fileId)}&origin=sheet-create&sheetId=${safeSheetId}`, {
+        waitUntil: "domcontentloaded",
+      });
+      await expect(page.locator("#expense-ticket-detail-root")).toBeVisible({ timeout: 30000 });
+
+      await page.route(sheetDetailPattern, async (route) => {
+        linkedSheetLoaded = true;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify(buildLinkedSheetDetailPayload(fakeSheetId, fileId, fakeLineRecId)),
+        });
+      });
+
+      await page.route(ticketFileDeletePattern, async (route) => {
+        if (route.request().method().toUpperCase() !== "DELETE") {
+          await route.continue();
+          return;
+        }
+
+        ticketFileDeleted = true;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            Success: true,
+            Message: "Deleted",
+            Data: null,
+            Errors: [],
+            TraceId: "trace-ticket-file-delete-e2e",
+          }),
+        });
+      });
+
+      await page.route(ticketDeletePattern, async (route) => {
+        if (route.request().method().toUpperCase() !== "DELETE") {
+          await route.continue();
+          return;
+        }
+
+        ticketDeleted = true;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            Success: true,
+            Message: "Deleted",
+            Data: null,
+            Errors: [],
+            TraceId: "trace-ticket-delete-e2e",
+          }),
+        });
+      });
+
+      await page.route(lineDeletePattern, async (route) => {
+        if (route.request().method().toUpperCase() !== "DELETE") {
+          await route.continue();
+          return;
+        }
+
+        linkedLineDeleted = true;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            Success: true,
+            Message: "Deleted",
+            Data: null,
+            Errors: [],
+            TraceId: "trace-sheet-line-delete-e2e",
+          }),
+        });
+      });
+
+      const deleteButton = page.locator("#expenseTicketDeleteBtn");
+      await expect(deleteButton).toBeVisible({ timeout: 15000 });
+      await deleteButton.click();
+      await confirmDeleteInModal(page);
+
+      await expect.poll(() => ticketFileDeleted, { timeout: 30000 }).toBe(true);
+      await expect.poll(() => ticketDeleted, { timeout: 30000 }).toBe(true);
+      await expect.poll(() => linkedSheetLoaded, { timeout: 30000 }).toBe(true);
+      await expect.poll(() => linkedLineDeleted, { timeout: 30000 }).toBe(true);
+      await page.waitForURL(`**/Gastos/ExpenseSheetDetail?hojaGastosId=${safeSheetId}`, {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      });
+
+      await page.unroute(lineDeletePattern);
+      await page.unroute(ticketDeletePattern);
+      await page.unroute(ticketFileDeletePattern);
+      await page.unroute(sheetDetailPattern);
+    } finally {
+      await deleteTemporaryTicket(page, fileId);
+    }
+  });
+
+  test("Ticket detail can delete immediately after opening from tickets list", async ({ page }) => {
+    await ensureAuthenticatedSession(page);
+    const fileId = await createTemporaryTicket(page);
+    const safeFileId = encodeURIComponent(fileId);
+    const ticketDeletePattern = `**/api/crm/expensesheets/tickets/${safeFileId}`;
+    const ticketFileDeletePattern = `**/api/crm/expensesheets/tickets/${safeFileId}/file**`;
+    let ticketDeleted = false;
+    let ticketFileDeleted = false;
+
+    try {
+      await openTicketDetailFromList(page, fileId);
+
+      await page.route(ticketFileDeletePattern, async (route) => {
+        if (route.request().method().toUpperCase() !== "DELETE") {
+          await route.continue();
+          return;
+        }
+
+        ticketFileDeleted = true;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            Success: true,
+            Message: "Deleted",
+            Data: null,
+            Errors: [],
+            TraceId: "trace-ticket-file-delete-immediate-e2e",
+          }),
+        });
+      });
+
+      await page.route(ticketDeletePattern, async (route) => {
+        if (route.request().method().toUpperCase() !== "DELETE") {
+          await route.continue();
+          return;
+        }
+
+        ticketDeleted = true;
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            Success: true,
+            Message: "Deleted",
+            Data: null,
+            Errors: [],
+            TraceId: "trace-ticket-delete-immediate-e2e",
+          }),
+        });
+      });
+
+      const deleteButton = page.locator("#expenseTicketDeleteBtn");
+      await expect(deleteButton).toBeVisible({ timeout: 15000 });
+      await deleteButton.click();
+      await confirmDeleteInModal(page);
+
+      await expect.poll(() => ticketFileDeleted, { timeout: 30000 }).toBe(true);
+      await expect.poll(() => ticketDeleted, { timeout: 30000 }).toBe(true);
+      await page.waitForURL("**/Gastos/Tickets**", {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      });
+
+      await page.unroute(ticketDeletePattern);
+      await page.unroute(ticketFileDeletePattern);
     } finally {
       await deleteTemporaryTicket(page, fileId);
     }

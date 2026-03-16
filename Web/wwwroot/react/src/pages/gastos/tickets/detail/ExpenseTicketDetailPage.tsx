@@ -215,6 +215,7 @@ const ExpenseTicketDetailPageContent = () => {
     draftComentario,
     draftUrlFile,
     draftFileName,
+    linkedExpenseSheetId: contextSheetId,
     deleteLinkedExpenseLineContext: isFromExpenseLine
       ? {
           sheetId: contextSheetId,

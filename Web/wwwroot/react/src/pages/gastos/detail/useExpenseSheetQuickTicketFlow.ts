@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
@@ -36,7 +36,19 @@ type QuickTicketAttemptContext = {
   optimization: TicketImageOptimizationResult;
 };
 
+type QuickTicketProgressStage = {
+  key: QuickFlowProgressKey;
+  title: string;
+  description: string;
+  state: "completed" | "active" | "pending";
+};
+
 const QUICK_TICKET_FLOW_LOG_PREFIX = "[expense-quick-ticket]";
+const QUICK_TICKET_VISUAL_STAGE_MS = {
+  syncingFile: 1200,
+  finalizingIa: 3600,
+  linkingExpenseLine: 8500,
+} as const;
 
 const logQuickTicketInfo = (...args: unknown[]) => {
   if (typeof console !== "undefined" && typeof console.info === "function") {
@@ -153,34 +165,158 @@ export const useExpenseSheetQuickTicketFlow = ({
   const [sourcePickerOpen, setSourcePickerOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [progressKey, setProgressKey] = useState<QuickFlowProgressKey | null>(null);
+  const [displayProgressKey, setDisplayProgressKey] = useState<QuickFlowProgressKey | null>(null);
+  const [progressElapsedMs, setProgressElapsedMs] = useState(0);
   const [errorMessage, setErrorMessage] = useState("");
   const [attemptId, setAttemptId] = useState("");
   const [traceList, setTraceList] = useState<TicketTraceEntry[]>([]);
   const [partialTicketFailure, setPartialTicketFailure] = useState<QuickCreatePartialTicketState | null>(null);
   const latestFileRef = useRef<{ cacheKey: string; file: File } | null>(null);
   const latestCreatedTicketRef = useRef<QuickCreatePartialTicketState | null>(null);
+  const progressStartedAtRef = useRef<number | null>(null);
 
   const progressMessage = useMemo(() => {
-    if (progressKey === "uploadingImage") {
+    const effectiveProgressKey = displayProgressKey || progressKey;
+    if (effectiveProgressKey === "uploadingImage") {
       return indT("ExpenseSheets_NewTicket_Status_UploadingImage", "Uploading image...");
     }
-    if (progressKey === "creatingTicket") {
+    if (effectiveProgressKey === "creatingTicket") {
       return indT("ExpenseSheets_NewTicket_Status_CreatingTicket", "Creating ticket...");
     }
-    if (progressKey === "syncingFile") {
+    if (effectiveProgressKey === "syncingFile") {
       return indT("ExpenseSheets_NewTicket_Status_SyncingFile", "Syncing file...");
     }
-    if (progressKey === "finalizingIa") {
+    if (effectiveProgressKey === "finalizingIa") {
       return indT("ExpenseSheets_NewTicket_Status_Finalizing", "Finalizing IA...");
     }
-    if (progressKey === "linkingExpenseLine") {
+    if (effectiveProgressKey === "linkingExpenseLine") {
       return indT("ExpenseSheets_NewTicket_Status_LinkingLine", "Linking expense line...");
     }
-    if (progressKey === "done") {
+    if (effectiveProgressKey === "done") {
       return indT("ExpenseSheets_NewTicket_Status_Done", "Done");
     }
     return "";
-  }, [progressKey]);
+  }, [displayProgressKey, progressKey]);
+
+  useEffect(() => {
+    if (!busy || progressStartedAtRef.current === null) return;
+
+    const syncElapsed = () => {
+      const startedAt = progressStartedAtRef.current;
+      if (startedAt === null) return;
+      setProgressElapsedMs(Math.max(0, Date.now() - startedAt));
+    };
+
+    syncElapsed();
+    const intervalId = window.setInterval(syncElapsed, 250);
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [busy]);
+
+  useEffect(() => {
+    if (!busy) {
+      if (progressKey !== null) {
+        setDisplayProgressKey(progressKey);
+      }
+      return;
+    }
+
+    if (progressKey === null || progressKey === "uploadingImage" || progressKey === "done") {
+      setDisplayProgressKey(progressKey);
+      return;
+    }
+
+    setDisplayProgressKey(progressKey);
+    if (progressKey !== "creatingTicket") {
+      return;
+    }
+
+    const timers: number[] = [
+      window.setTimeout(() => {
+        setDisplayProgressKey("syncingFile");
+      }, QUICK_TICKET_VISUAL_STAGE_MS.syncingFile),
+      window.setTimeout(() => {
+        setDisplayProgressKey("finalizingIa");
+      }, QUICK_TICKET_VISUAL_STAGE_MS.finalizingIa),
+    ];
+
+    if (linkToSheet) {
+      timers.push(
+        window.setTimeout(() => {
+          setDisplayProgressKey("linkingExpenseLine");
+        }, QUICK_TICKET_VISUAL_STAGE_MS.linkingExpenseLine)
+      );
+    }
+
+    return () => {
+      timers.forEach((timerId) => window.clearTimeout(timerId));
+    };
+  }, [busy, linkToSheet, progressKey]);
+
+  const progressStages = useMemo<QuickTicketProgressStage[]>(() => {
+    const visibleStages: QuickFlowProgressKey[] = linkToSheet
+      ? ["uploadingImage", "creatingTicket", "syncingFile", "finalizingIa", "linkingExpenseLine"]
+      : ["uploadingImage", "creatingTicket", "syncingFile", "finalizingIa"];
+
+    const stageCopy: Record<QuickFlowProgressKey, { title: string; description: string }> = {
+      uploadingImage: {
+        title: indT("ExpenseSheets_NewTicket_Progress_Prepare_Title", "Preparing image"),
+        description: indT(
+          "ExpenseSheets_NewTicket_Progress_Prepare_Body",
+          "We validate the image and prepare it for a reliable upload."
+        ),
+      },
+      creatingTicket: {
+        title: indT("ExpenseSheets_NewTicket_Progress_Create_Title", "Creating ticket"),
+        description: indT(
+          "ExpenseSheets_NewTicket_Progress_Create_Body",
+          "The backend reserves the ticket and starts the server-side flow."
+        ),
+      },
+      syncingFile: {
+        title: indT("ExpenseSheets_NewTicket_Progress_File_Title", "Syncing file"),
+        description: indT(
+          "ExpenseSheets_NewTicket_Progress_File_Body",
+          "The uploaded image is being attached to the ticket record."
+        ),
+      },
+      finalizingIa: {
+        title: indT("ExpenseSheets_NewTicket_Progress_Ia_Title", "Reading ticket data"),
+        description: indT(
+          "ExpenseSheets_NewTicket_Progress_Ia_Body",
+          "We are extracting date, amount and description from the image."
+        ),
+      },
+      linkingExpenseLine: {
+        title: indT("ExpenseSheets_NewTicket_Progress_Link_Title", "Linking expense line"),
+        description: indT(
+          "ExpenseSheets_NewTicket_Progress_Link_Body",
+          "The generated ticket is being connected to the current expense sheet."
+        ),
+      },
+      done: {
+        title: indT("ExpenseSheets_NewTicket_Status_Done", "Done"),
+        description: indT("ExpenseSheets_NewTicket_Status_Done", "Done"),
+      },
+    };
+
+    const activeStageKey =
+      progressKey === "done" ? visibleStages[visibleStages.length - 1] : displayProgressKey || progressKey;
+    const activeStageIndex = activeStageKey ? visibleStages.indexOf(activeStageKey) : -1;
+
+    return visibleStages.map((stageKey, index) => ({
+      key: stageKey,
+      title: stageCopy[stageKey].title,
+      description: stageCopy[stageKey].description,
+      state:
+        progressKey === "done" || (activeStageIndex >= 0 && index < activeStageIndex)
+          ? "completed"
+          : index === activeStageIndex
+            ? "active"
+            : "pending",
+    }));
+  }, [displayProgressKey, linkToSheet, progressKey]);
 
   const addTrace = useCallback((step: string, traceId: string) => {
     const safeTraceId = safeText(traceId);
@@ -322,6 +458,7 @@ export const useExpenseSheetQuickTicketFlow = ({
   const completeFlowSuccess = useCallback(
     async (fileId: string, linkedToSheet: boolean, cacheKey: string) => {
       setProgressKey("done");
+      setDisplayProgressKey("done");
       await removeCachedImageFile(cacheKey);
       setAttemptId("");
       latestCreatedTicketRef.current = null;
@@ -329,6 +466,9 @@ export const useExpenseSheetQuickTicketFlow = ({
       flashActionMark("okProcess", 1200);
       setBusy(false);
       setProgressKey(null);
+      setDisplayProgressKey(null);
+      progressStartedAtRef.current = null;
+      setProgressElapsedMs(0);
       onCompleted?.({ fileId, linkedToSheet });
     },
     [onCompleted]
@@ -423,6 +563,9 @@ export const useExpenseSheetQuickTicketFlow = ({
         flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
+        setDisplayProgressKey(null);
+        progressStartedAtRef.current = null;
+        setProgressElapsedMs(0);
         const resolvedMessage = resolveQuickCreateFailureMessage(response);
         logQuickTicketWarn("quick-create.request.completed-with-error", {
           attemptId: context.attemptId,
@@ -459,6 +602,9 @@ export const useExpenseSheetQuickTicketFlow = ({
         flashActionMark("errorProcess", 1500);
         setBusy(false);
         setProgressKey(null);
+        setDisplayProgressKey(null);
+        progressStartedAtRef.current = null;
+        setProgressElapsedMs(0);
         setErrorMessage(resolveUiErrorMessage(error));
       }
     },
@@ -528,6 +674,9 @@ export const useExpenseSheetQuickTicketFlow = ({
 
       clearFlowState();
       setProgressKey("uploadingImage");
+      setDisplayProgressKey("uploadingImage");
+      progressStartedAtRef.current = selectionStartedAt;
+      setProgressElapsedMs(0);
       logQuickTicketInfo("optimization.started", {
         attemptId,
         source,
@@ -560,6 +709,9 @@ export const useExpenseSheetQuickTicketFlow = ({
           optimization: buildOptimizationLogData(optimizationResult),
         });
         setProgressKey(null);
+        setDisplayProgressKey(null);
+        progressStartedAtRef.current = null;
+        setProgressElapsedMs(0);
         setErrorMessage(indT("ExpenseSheets_NewTicket_Error_FileSize", "Image exceeds 50MB max size."));
         return;
       }
@@ -671,6 +823,9 @@ export const useExpenseSheetQuickTicketFlow = ({
     setAttemptId("");
     setErrorMessage("");
     setPartialTicketFailure(null);
+    setDisplayProgressKey(null);
+    progressStartedAtRef.current = null;
+    setProgressElapsedMs(0);
   }, [clearCachedCurrentImage]);
 
   return {
@@ -678,6 +833,8 @@ export const useExpenseSheetQuickTicketFlow = ({
     busy,
     progressKey,
     progressMessage,
+    progressStages,
+    progressElapsedMs,
     errorMessage,
     attemptId,
     hasPendingUploadRetry: false,

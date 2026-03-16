@@ -16,6 +16,7 @@ import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import ExpenseTicketLinkTimelineItem from "../components/ExpenseTicketLinkTimelineItem.tsx";
 import ExpenseTicketLinkBulkSummary from "../components/ExpenseTicketLinkBulkSummary.tsx";
 import ExpenseTicketsFiltersPanel from "../components/ExpenseTicketsFiltersPanel.tsx";
+import ExpenseQuickTicketProgressOverlay from "../components/ExpenseQuickTicketProgressOverlay.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCatalog.ts";
 import {
@@ -463,6 +464,8 @@ const ExpenseTicketsPageContent = () => {
     sourcePickerOpen,
     busy: quickTicketBusy,
     progressMessage: quickTicketProgressMessage,
+    progressStages: quickTicketProgressStages,
+    progressElapsedMs: quickTicketElapsedMs,
     errorMessage: quickTicketErrorMessage,
     attemptId: quickTicketAttemptId,
     hasPendingUploadRetry,
@@ -1457,13 +1460,14 @@ const ExpenseTicketsPageContent = () => {
         </div>
       ) : null}
 
-      {!isLinkMode && quickTicketBusy ? (
-        <div className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/35 px-4">
-          <div className="glass-panel shadow-card flex items-center gap-3 rounded-2xl border border-slate-200 bg-white/95 px-4 py-3 text-sm text-slate-700">
-            <Spinner size="h-5 w-5" label={indT("Common_Loading", "Loading")} />
-            <span>{quickTicketProgressMessage || indT("Common_Loading", "Loading")}</span>
-          </div>
-        </div>
+      {!isLinkMode ? (
+        <ExpenseQuickTicketProgressOverlay
+          open={quickTicketBusy}
+          title={indT("ExpenseSheets_NewTicket_Progress_Title", "Processing ticket")}
+          summary={quickTicketProgressMessage || indT("Common_Loading", "Loading")}
+          elapsedMs={quickTicketElapsedMs}
+          stages={quickTicketProgressStages}
+        />
       ) : null}
 
       {!isLinkMode && quickTicketErrorMessage ? (

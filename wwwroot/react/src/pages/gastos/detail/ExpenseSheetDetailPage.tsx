@@ -77,6 +77,8 @@ const ExpenseSheetDetailPageContent = () => {
         sourcePickerOpen={controller.quickTicketFlow.sourcePickerOpen}
         quickTicketBusy={controller.quickTicketFlow.busy}
         quickTicketProgressMessage={controller.quickTicketFlow.progressMessage}
+        quickTicketProgressStages={controller.quickTicketFlow.progressStages}
+        quickTicketElapsedMs={controller.quickTicketFlow.progressElapsedMs}
         quickTicketErrorMessage={controller.quickTicketFlow.errorMessage}
         quickTicketAttemptId={controller.quickTicketFlow.attemptId}
         quickTicketTraceList={controller.quickTicketFlow.traceList}
