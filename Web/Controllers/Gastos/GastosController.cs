@@ -12,6 +12,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net;
 using System.Text.Json;
 
 namespace IND_CRM_APP.Controllers
@@ -1307,6 +1308,16 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
+                if (resolvedDeleteWholeSheet)
+                {
+                    var cleanupResult = await CleanupExpenseSheetLinkedTicketFilesBeforeDeleteAsync(
+                        token,
+                        safeSheetId,
+                        requestAxUserId);
+                    if (cleanupResult != null)
+                        return cleanupResult;
+                }
+
                 var response = await _apiClient.DeleteExpenseSheetLineAsync(
                     token,
                     safeSheetId,
@@ -1343,6 +1354,82 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_RequestFailed"].Value,
                     "UNHANDLED_ERROR");
             }
+        }
+
+        // Cleans up linked ticket blobs before deleting a full expense sheet.
+        private async Task<IActionResult?> CleanupExpenseSheetLinkedTicketFilesBeforeDeleteAsync(
+            string token,
+            string hojaGastosId,
+            string? axUserIdOverride)
+        {
+            var detailResult = await _apiClient.GetExpenseSheetDetailAsync(token, hojaGastosId, axUserIdOverride);
+            var sheet = SelectSheet(detailResult.GetAnyItems(), hojaGastosId);
+            if (sheet == null)
+            {
+                _logger.LogWarning(
+                    "Skipping whole sheet delete because linked ticket files could not be discovered. hojaGastosId={HojaGastosId} traceId={TraceId}",
+                    hojaGastosId,
+                    detailResult.TraceId ?? string.Empty);
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = false,
+                        Message = detailResult.GetMessageOrDefault(_sr["Api_RequestFailed"].Value),
+                        ErrorCode = detailResult.ErrorCode ?? "DELETE_FILE_DISCOVERY_FAILED",
+                        Data = (object?)null,
+                        Errors = Array.Empty<object>(),
+                        TraceId = detailResult.TraceId
+                    },
+                    StatusCodes.Status502BadGateway);
+            }
+
+            var linkedFileIds = GetExpenseSheetLinkedTicketFileIds(sheet);
+            if (linkedFileIds.Count == 0)
+                return null;
+
+            _logger.LogInformation(
+                "Deleting {Count} linked ticket files before deleting expense sheet {HojaGastosId}.",
+                linkedFileIds.Count,
+                hojaGastosId);
+
+            foreach (var fileId in linkedFileIds)
+            {
+                try
+                {
+                    var response = await _apiClient.DeleteExpenseSheetTicketFileAsync(token, fileId);
+                    if (response.Success || CanIgnoreMissingTicketFileResponse(response))
+                        continue;
+
+                    _logger.LogWarning(
+                        "Linked ticket file cleanup failed before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
+                        hojaGastosId,
+                        fileId,
+                        response.ErrorCode ?? string.Empty,
+                        response.TraceId ?? string.Empty,
+                        response.Message ?? string.Empty);
+
+                    return CreateApiResponse(
+                        new
+                        {
+                            Success = false,
+                            Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
+                            ErrorCode = response.ErrorCode ?? "DELETE_FILE_FAILED",
+                            Data = (object?)null,
+                            Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
+                            TraceId = response.TraceId
+                        },
+                        StatusCodes.Status409Conflict);
+                }
+                catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    _logger.LogInformation(
+                        "Linked ticket file was already missing before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId}",
+                        hojaGastosId,
+                        fileId);
+                }
+            }
+
+            return null;
         }
 
         // API route used by React clients for /api/crm/expensesheets/tickets.
@@ -3811,6 +3898,39 @@ namespace IND_CRM_APP.Controllers
                 string.Equals((x.HojaGastosId ?? string.Empty).Trim(), hojaGastosId.Trim(), StringComparison.OrdinalIgnoreCase));
 
             return match ?? list[0];
+        }
+
+        // Collects unique linked ticket file ids from a sheet detail payload.
+        private static List<string> GetExpenseSheetLinkedTicketFileIds(ExpenseSheetDetailDto? sheet)
+        {
+            return (sheet?.Lines ?? new List<ExpenseSheetLineDto>())
+                .Select(line => NormalizeOptionalText(line.FileId))
+                .Where(fileId => !string.IsNullOrWhiteSpace(fileId))
+                .Cast<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        // Treats missing blob/file cleanup responses as already-clean states.
+        private static bool CanIgnoreMissingTicketFileResponse(ApiResponse<object>? response)
+        {
+            if (response == null || response.Success)
+                return false;
+
+            return IsMissingTicketFileMessage(response.Message);
+        }
+
+        // Mirrors the tolerant missing-file checks already used by the expense delete flows.
+        private static bool IsMissingTicketFileMessage(string? message)
+        {
+            var normalized = (message ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(normalized))
+                return false;
+
+            return normalized.Contains("archivo asociado")
+                || normalized.Contains("archivo adjunto")
+                || normalized.Contains("associated file")
+                || normalized.Contains("attached file");
         }
 
         // Maps a list item to a card payload for the list screen.
