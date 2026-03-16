@@ -1310,7 +1310,7 @@ namespace IND_CRM_APP.Controllers
             {
                 if (resolvedDeleteWholeSheet)
                 {
-                    var cleanupResult = await CleanupExpenseSheetLinkedTicketFilesBeforeDeleteAsync(
+                    var cleanupResult = await CleanupExpenseSheetLinkedTicketsBeforeDeleteAsync(
                         token,
                         safeSheetId,
                         requestAxUserId);
@@ -1356,8 +1356,8 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
-        // Cleans up linked ticket blobs before deleting a full expense sheet.
-        private async Task<IActionResult?> CleanupExpenseSheetLinkedTicketFilesBeforeDeleteAsync(
+        // Cleans up linked ticket blobs and headers before deleting a full expense sheet.
+        private async Task<IActionResult?> CleanupExpenseSheetLinkedTicketsBeforeDeleteAsync(
             string token,
             string hojaGastosId,
             string? axUserIdOverride)
@@ -1388,7 +1388,7 @@ namespace IND_CRM_APP.Controllers
                 return null;
 
             _logger.LogInformation(
-                "Deleting {Count} linked ticket files before deleting expense sheet {HojaGastosId}.",
+                "Deleting {Count} linked ticket files and tickets before deleting expense sheet {HojaGastosId}.",
                 linkedFileIds.Count,
                 hojaGastosId);
 
@@ -1397,33 +1397,67 @@ namespace IND_CRM_APP.Controllers
                 try
                 {
                     var response = await _apiClient.DeleteExpenseSheetTicketFileAsync(token, fileId);
-                    if (response.Success || CanIgnoreMissingTicketFileResponse(response))
-                        continue;
+                    if (!response.Success && !CanIgnoreMissingTicketFileResponse(response))
+                    {
+                        _logger.LogWarning(
+                            "Linked ticket file cleanup failed before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
+                            hojaGastosId,
+                            fileId,
+                            response.ErrorCode ?? string.Empty,
+                            response.TraceId ?? string.Empty,
+                            response.Message ?? string.Empty);
 
-                    _logger.LogWarning(
-                        "Linked ticket file cleanup failed before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
-                        hojaGastosId,
-                        fileId,
-                        response.ErrorCode ?? string.Empty,
-                        response.TraceId ?? string.Empty,
-                        response.Message ?? string.Empty);
-
-                    return CreateApiResponse(
-                        new
-                        {
-                            Success = false,
-                            Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
-                            ErrorCode = response.ErrorCode ?? "DELETE_FILE_FAILED",
-                            Data = (object?)null,
-                            Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
-                            TraceId = response.TraceId
-                        },
-                        StatusCodes.Status409Conflict);
+                        return CreateApiResponse(
+                            new
+                            {
+                                Success = false,
+                                Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
+                                ErrorCode = response.ErrorCode ?? "DELETE_FILE_FAILED",
+                                Data = (object?)null,
+                                Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
+                                TraceId = response.TraceId
+                            },
+                            StatusCodes.Status409Conflict);
+                    }
                 }
                 catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
                 {
                     _logger.LogInformation(
                         "Linked ticket file was already missing before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId}",
+                        hojaGastosId,
+                        fileId);
+                }
+
+                try
+                {
+                    var response = await _apiClient.DeleteExpenseSheetTicketAsync(token, fileId);
+                    if (!response.Success && !CanIgnoreMissingExpenseSheetTicketResponse(response))
+                    {
+                        _logger.LogWarning(
+                            "Linked ticket cleanup failed before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId} errorCode={ErrorCode} traceId={TraceId} message={Message}",
+                            hojaGastosId,
+                            fileId,
+                            response.ErrorCode ?? string.Empty,
+                            response.TraceId ?? string.Empty,
+                            response.Message ?? string.Empty);
+
+                        return CreateApiResponse(
+                            new
+                            {
+                                Success = false,
+                                Message = response.GetMessageOrDefault(_sr["ExpenseSheets_Detail_DeleteFailed"].Value),
+                                ErrorCode = response.ErrorCode ?? "DELETE_TICKET_FAILED",
+                                Data = (object?)null,
+                                Errors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>(),
+                                TraceId = response.TraceId
+                            },
+                            StatusCodes.Status409Conflict);
+                    }
+                }
+                catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+                {
+                    _logger.LogInformation(
+                        "Linked ticket was already missing before whole sheet delete. hojaGastosId={HojaGastosId} fileId={FileId}",
                         hojaGastosId,
                         fileId);
                 }
@@ -3920,6 +3954,16 @@ namespace IND_CRM_APP.Controllers
             return IsMissingTicketFileMessage(response.Message);
         }
 
+        // Treats missing ticket delete responses as already-clean states.
+        private static bool CanIgnoreMissingExpenseSheetTicketResponse(ApiResponse<object>? response)
+        {
+            if (response == null || response.Success)
+                return false;
+
+            return IsMissingExpenseSheetTicketMessage(response.Message)
+                || string.Equals(response.ErrorCode, "NOT_FOUND", StringComparison.OrdinalIgnoreCase);
+        }
+
         // Mirrors the tolerant missing-file checks already used by the expense delete flows.
         private static bool IsMissingTicketFileMessage(string? message)
         {
@@ -3931,6 +3975,18 @@ namespace IND_CRM_APP.Controllers
                 || normalized.Contains("archivo adjunto")
                 || normalized.Contains("associated file")
                 || normalized.Contains("attached file");
+        }
+
+        // Mirrors backend messages for tickets that were already deleted.
+        private static bool IsMissingExpenseSheetTicketMessage(string? message)
+        {
+            var normalized = (message ?? string.Empty).Trim().ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(normalized))
+                return false;
+
+            return normalized.Contains("ticket no encontrado")
+                || normalized.Contains("ticket not found")
+                || normalized.Contains("not found");
         }
 
         // Maps a list item to a card payload for the list screen.
