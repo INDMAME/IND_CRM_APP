@@ -448,7 +448,7 @@
     <value>Italiano</value>
   </data>
   <data name="Language_ZH_Name" xml:space="preserve">
-    <value>中文</value>
+    <value>??</value>
   </data>
   <data name="Login_Title" xml:space="preserve">
     <value>Saioa hasi</value>
@@ -1306,22 +1306,22 @@
     <value>Zerbitzari errorea.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
-    <value>Saiatu berriro upload</value>
+    <value>Berriro igo</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Partial" xml:space="preserve">
-    <value>The ticket was created, but the full process did not finish.</value>
+    <value>Ticketa sortu da, baina prozesu osoa ez da oraindik amaitu.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Stage" xml:space="preserve">
-    <value>Completed stage: {0}.</value>
+    <value>Huts egin duen etapa</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RateLimit" xml:space="preserve">
-    <value>Too many requests.</value>
+    <value>Eskaeren muga lortu da.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RetryAfterHint" xml:space="preserve">
-    <value>Retry after {0}.</value>
+    <value>Itxaron {0} segundo berriro saiatu aurretik.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_OpenCreatedTicket" xml:space="preserve">
-    <value>Open created ticket</value>
+    <value>Sortutako ticketa ireki</value>
   </data>
   <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
     <value>Lotura prozesua bertan behera utziko da eta gastu orrira itzuliko zara. Jarraitu nahi duzu?</value>
@@ -1356,5 +1356,40 @@
   <data name="ExpenseTickets_LinkMode_ResultReason" xml:space="preserve">
     <value>Reason</value>
   </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Prepare_Title" xml:space="preserve">
+    <value>Irudia prestatzen</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Link_Title" xml:space="preserve">
+    <value>Gastu-lerroa lotzen</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Title" xml:space="preserve">
+    <value>Ticketa prozesatzen</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Prepare_Body" xml:space="preserve">
+    <value>Irudia balioztatu eta karga fidagarri baterako prestatzen dugu.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Ia_Title" xml:space="preserve">
+    <value>Ticketaren datuak irakurtzen</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_File_Title" xml:space="preserve">
+    <value>Fitxategia sinkronizatzen</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Create_Title" xml:space="preserve">
+    <value>Ticketa sortzen</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Ia_Body" xml:space="preserve">
+    <value>Iruditik data, zenbatekoa eta deskribapena ateratzen ari gara.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_File_Body" xml:space="preserve">
+    <value>Igotako irudia ticketaren erregistroari eransten ari zaio.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Elapsed" xml:space="preserve">
+    <value>Igarotako denbora</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Create_Body" xml:space="preserve">
+    <value>Backendak ticketa erreserbatu eta zerbitzariaren fluxua abiarazten du.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Link_Body" xml:space="preserve">
+    <value>Sortutako ticketa uneko gastu-orriarekin konektatzen ari da.</value>
+  </data>
 </root>
-

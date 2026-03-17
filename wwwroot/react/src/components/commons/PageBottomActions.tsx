@@ -4,6 +4,8 @@ import { usePageBottomActionsVisibility } from "../../hooks/usePageBottomActions
 import { classNames } from "../../utils/classNames.ts";
 
 const MAX_PAGE_BOTTOM_ACTIONS = 4;
+const PAGE_BOTTOM_ACTIONS_TOP_PADDING_PX = 12;
+const PAGE_BOTTOM_ACTIONS_SIDE_PADDING_PX = 8;
 
 type PageBottomActionButtonProps = {
   label: string;
@@ -46,7 +48,7 @@ export const PageBottomActionButton = ({
         className || ""
       )}
     >
-      <span className="flex w-full items-center justify-center rounded-[5px] border border-[#001f4d]/80 bg-primary px-3 py-2.5 text-center text-[12px] font-semibold leading-tight text-white shadow-xs transition-colors duration-150 hover:bg-[#001f4d] sm:px-4 sm:py-2.5 sm:text-[13px]">
+      <span className="flex min-h-[68px] w-full items-center justify-center rounded-[5px] border border-[#001f4d]/80 bg-primary px-4 py-3.5 text-center text-[18px] font-bold leading-[1.1] text-white shadow-xs transition-colors duration-150 hover:bg-[#001f4d] sm:min-h-[72px] sm:px-5 sm:py-4 sm:text-[20px]">
         {label}
       </span>
     </button>
@@ -65,7 +67,7 @@ const PageBottomActions = ({ children, ariaLabel, className }: PageBottomActions
     .slice(0, MAX_PAGE_BOTTOM_ACTIONS);
 
   const actionCount = actionButtons.length;
-  const { reservedHeight, wrapperRef } = usePageBottomActionsVisibility();
+  const { reservedHeight, wrapperRef, contentInsets } = usePageBottomActionsVisibility();
   const portalTarget = typeof document === "undefined" ? null : document.body;
 
   if (actionCount < 1) {
@@ -78,8 +80,13 @@ const PageBottomActions = ({ children, ariaLabel, className }: PageBottomActions
       className="fixed inset-x-0 bottom-0 z-1900 border-t border-slate-200/90 bg-white shadow-[0_-10px_28px_rgba(15,23,42,0.12)]"
     >
       <div
-        className="w-full px-2 pt-2 sm:px-3 sm:pt-2.5"
-        style={{ paddingBottom: "calc(0.2rem + env(safe-area-inset-bottom, 0px))" }}
+        className="w-full"
+        style={{
+          paddingTop: `${PAGE_BOTTOM_ACTIONS_TOP_PADDING_PX}px`,
+          paddingLeft: `${contentInsets?.left ?? PAGE_BOTTOM_ACTIONS_SIDE_PADDING_PX}px`,
+          paddingRight: `${contentInsets?.right ?? PAGE_BOTTOM_ACTIONS_SIDE_PADDING_PX}px`,
+          paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
+        }}
       >
         <div
           role="toolbar"

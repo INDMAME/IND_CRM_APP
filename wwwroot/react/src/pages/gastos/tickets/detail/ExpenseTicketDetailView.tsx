@@ -6,6 +6,7 @@ import ExpenseTicketDetailHeaderForm from "../../components/ExpenseTicketDetailH
 import ExpenseTicketLinesList from "../../components/ExpenseTicketLinesList.tsx";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "./expenseTicketDetailTypes.ts";
 import ExpenseTicketPreviewModal from "./ExpenseTicketPreviewModal.tsx";
+import ExpenseTicketStickyPreview from "./ExpenseTicketStickyPreview.tsx";
 import type { TicketPreviewPoint } from "./useExpenseTicketImagePreview.ts";
 
 type PaginationLabels = {
@@ -39,6 +40,7 @@ type ExpenseTicketDetailViewProps = {
     imageAlt: string;
     scale: number;
     translate: TicketPreviewPoint;
+    surfaceRef: RefObject<HTMLDivElement | null>;
     onClose: () => void;
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
@@ -49,6 +51,13 @@ type ExpenseTicketDetailViewProps = {
     isLoading: boolean;
     errorMessage: string;
     header: ExpenseTicketDetailHeader | null;
+    showStickyPreview: boolean;
+    previewBusy: boolean;
+    previewError: string;
+    previewImageUrl: string;
+    previewFileName: string;
+    previewAltText: string;
+    onOpenPreview: () => void;
     statusLabel: string;
     gastoTypeLabel: string;
     totalAmountText: string;
@@ -81,6 +90,44 @@ type ExpenseTicketDetailViewProps = {
 
 // Renders the ticket detail view while the page container owns orchestration.
 const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetailViewProps) => {
+  const detailBody = (
+    <>
+      <ExpenseTicketDetailHeaderForm
+        header={content.header}
+        statusLabel={content.statusLabel}
+        gastoTypeLabel={content.gastoTypeLabel}
+        totalAmountText={content.totalAmountText}
+        transDateText={content.transDateText}
+        isEditing={content.isEditing}
+        gastoTypeOptions={content.gastoTypeOptions}
+        draftDescription={content.draftDescription}
+        draftGastoType={content.draftGastoType}
+        draftCurrencyCode={content.draftCurrencyCode}
+        draftTransDate={content.draftTransDate}
+        draftUrlFile={content.draftUrlFile}
+        draftFileName={content.draftFileName}
+        onDraftDescriptionChange={content.onDraftDescriptionChange}
+        onDraftGastoTypeChange={content.onDraftGastoTypeChange}
+        onDraftCurrencyCodeChange={content.onDraftCurrencyCodeChange}
+        onDraftTransDateChange={content.onDraftTransDateChange}
+        onOpenFile={content.onOpenFile}
+        onOpenExpenseSheet={content.onOpenExpenseSheet}
+        hideOpenFileAction={content.showStickyPreview}
+      />
+      <ExpenseTicketLinesList
+        visibleLines={content.visibleLines}
+        totalLinePages={content.totalLinePages}
+        linePage={content.linePage}
+        currencyCode={content.currencyCode}
+        paginationLabels={content.paginationLabels}
+        containerRef={content.containerRef}
+        onLinePageChange={content.onLinePageChange}
+        onOpenLine={content.onOpenLine}
+      />
+      <div className="text-sm text-slate-600">{content.status}</div>
+    </>
+  );
+
   return (
     <div className="space-y-2">
       <ConfirmModal
@@ -106,6 +153,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         imageAlt={preview.imageAlt}
         scale={preview.scale}
         translate={preview.translate}
+        surfaceRef={preview.surfaceRef}
         onClose={preview.onClose}
         onPointerDown={preview.onPointerDown}
         onPointerMove={preview.onPointerMove}
@@ -126,40 +174,23 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
       {content.errorMessage ? <div className="text-danger">{content.errorMessage}</div> : null}
 
       {!content.isLoading && !content.errorMessage && content.header ? (
-        <>
-          <ExpenseTicketDetailHeaderForm
-            header={content.header}
-            statusLabel={content.statusLabel}
-            gastoTypeLabel={content.gastoTypeLabel}
-            totalAmountText={content.totalAmountText}
-            transDateText={content.transDateText}
-            isEditing={content.isEditing}
-            gastoTypeOptions={content.gastoTypeOptions}
-            draftDescription={content.draftDescription}
-            draftGastoType={content.draftGastoType}
-            draftCurrencyCode={content.draftCurrencyCode}
-            draftTransDate={content.draftTransDate}
-            draftUrlFile={content.draftUrlFile}
-            draftFileName={content.draftFileName}
-            onDraftDescriptionChange={content.onDraftDescriptionChange}
-            onDraftGastoTypeChange={content.onDraftGastoTypeChange}
-            onDraftCurrencyCodeChange={content.onDraftCurrencyCodeChange}
-            onDraftTransDateChange={content.onDraftTransDateChange}
-            onOpenFile={content.onOpenFile}
-            onOpenExpenseSheet={content.onOpenExpenseSheet}
-          />
-          <ExpenseTicketLinesList
-            visibleLines={content.visibleLines}
-            totalLinePages={content.totalLinePages}
-            linePage={content.linePage}
-            currencyCode={content.currencyCode}
-            paginationLabels={content.paginationLabels}
-            containerRef={content.containerRef}
-            onLinePageChange={content.onLinePageChange}
-            onOpenLine={content.onOpenLine}
-          />
-          <div className="text-sm text-slate-600">{content.status}</div>
-        </>
+        content.showStickyPreview ? (
+          <div className="space-y-2 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4 lg:space-y-0">
+            <div className="lg:col-start-2">
+              <ExpenseTicketStickyPreview
+                busy={content.previewBusy}
+                error={content.previewError}
+                imageUrl={content.previewImageUrl}
+                imageAlt={content.previewAltText}
+                fileName={content.previewFileName}
+                onOpen={content.onOpenPreview}
+              />
+            </div>
+            <div className="space-y-2 lg:col-start-1 lg:row-start-1">{detailBody}</div>
+          </div>
+        ) : (
+          detailBody
+        )
       ) : null}
     </div>
   );

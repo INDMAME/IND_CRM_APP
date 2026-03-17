@@ -1609,7 +1609,7 @@ const ExpenseTicketsPageContent = () => {
 
           {canProcessLinkMode && !linkSheetCheckBusy && !linkSheetLocked ? (
             <>
-              <div className="grid grid-cols-2 gap-1.5 pt-0.5">
+              <div className="mb-5 grid grid-cols-2 gap-1.5 pt-0.5 sm:mb-6">
                 <button
                   type="button"
                   className="ind-action-btn w-full min-w-0 px-1.5 py-1 text-[10px] leading-tight sm:text-xs"
@@ -1687,9 +1687,7 @@ const ExpenseTicketsPageContent = () => {
                   amountText={amountText}
                   isSelected={isSelectedInLinkMode}
                   isSelectable={isSelectableInLinkMode}
-                  interactionDisabled={linkFlowBusy || linkSheetCheckBusy || linkSheetLocked}
-                  processedByAI={item.processedByAI}
-                  processedByAiLabel={processedByAiLabel}
+                  selectionDisabled={linkFlowBusy || linkSheetCheckBusy || linkSheetLocked}
                   selectLabel={selectTicketLabel}
                   onOpenDetail={() => openTicketDetail(fileId)}
                   onToggleSelect={() => toggleTicketSelection(item)}

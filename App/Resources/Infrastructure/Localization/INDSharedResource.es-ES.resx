@@ -448,7 +448,7 @@
     <value>Italiano</value>
   </data>
   <data name="Language_ZH_Name" xml:space="preserve">
-    <value>中文</value>
+    <value>??</value>
   </data>
   <data name="Login_Title" xml:space="preserve">
     <value>Iniciar sesión</value>
@@ -1306,19 +1306,19 @@
     <value>Error de servidor.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
-    <value>Reintentar upload</value>
+    <value>Reintentar carga</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Partial" xml:space="preserve">
     <value>El ticket se ha creado, pero el proceso completo no ha terminado.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Stage" xml:space="preserve">
-    <value>Etapa completada: {0}.</value>
+    <value>Etapa fallida</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RateLimit" xml:space="preserve">
-    <value>Demasiadas solicitudes.</value>
+    <value>Se ha alcanzado el límite de peticiones.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RetryAfterHint" xml:space="preserve">
-    <value>Reintenta despues de {0}.</value>
+    <value>Espera {0} segundos antes de reintentarlo.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_OpenCreatedTicket" xml:space="preserve">
     <value>Abrir ticket creado</value>
@@ -1356,5 +1356,40 @@
   <data name="ExpenseTickets_LinkMode_ResultReason" xml:space="preserve">
     <value>Motivo</value>
   </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Prepare_Title" xml:space="preserve">
+    <value>Preparando imagen</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Link_Title" xml:space="preserve">
+    <value>Vinculando línea de gasto</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Title" xml:space="preserve">
+    <value>Procesando ticket</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Prepare_Body" xml:space="preserve">
+    <value>Validamos la imagen y la preparamos para una carga fiable.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Ia_Title" xml:space="preserve">
+    <value>Leyendo datos del ticket</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_File_Title" xml:space="preserve">
+    <value>Sincronizando archivo</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Create_Title" xml:space="preserve">
+    <value>Creando ticket</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Ia_Body" xml:space="preserve">
+    <value>Estamos extrayendo fecha, importe y descripción de la imagen.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_File_Body" xml:space="preserve">
+    <value>La imagen subida se está adjuntando al registro del ticket.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Elapsed" xml:space="preserve">
+    <value>Tiempo transcurrido</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Create_Body" xml:space="preserve">
+    <value>El backend reserva el ticket e inicia el flujo del servidor.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Link_Body" xml:space="preserve">
+    <value>El ticket generado se está conectando con la hoja de gastos actual.</value>
+  </data>
 </root>
-

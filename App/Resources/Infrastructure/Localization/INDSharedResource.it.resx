@@ -448,7 +448,7 @@
     <value>Italiano</value>
   </data>
   <data name="Language_ZH_Name" xml:space="preserve">
-    <value>中文</value>
+    <value>??</value>
   </data>
   <data name="Login_Title" xml:space="preserve">
     <value>Accedi</value>
@@ -1306,22 +1306,22 @@
     <value>Errore del server.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
-    <value>Riprova upload</value>
+    <value>Riprova caricamento</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Partial" xml:space="preserve">
-    <value>The ticket was created, but the full process did not finish.</value>
+    <value>Il ticket è stato creato, ma il processo completo non è ancora terminato.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Stage" xml:space="preserve">
-    <value>Completed stage: {0}.</value>
+    <value>Fase non riuscita</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RateLimit" xml:space="preserve">
-    <value>Too many requests.</value>
+    <value>Limite di richieste raggiunto.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RetryAfterHint" xml:space="preserve">
-    <value>Retry after {0}.</value>
+    <value>Attendi {0} secondi prima di riprovare.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_OpenCreatedTicket" xml:space="preserve">
-    <value>Open created ticket</value>
+    <value>Apri ticket creato</value>
   </data>
   <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
     <value>Il processo di collegamento verra annullato e tornerai al foglio spese. Vuoi continuare?</value>
@@ -1356,5 +1356,40 @@
   <data name="ExpenseTickets_LinkMode_ResultReason" xml:space="preserve">
     <value>Motivo</value>
   </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Prepare_Title" xml:space="preserve">
+    <value>Preparazione immagine</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Link_Title" xml:space="preserve">
+    <value>Collegamento riga spese</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Title" xml:space="preserve">
+    <value>Elaborazione ticket</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Prepare_Body" xml:space="preserve">
+    <value>Convalidiamo l&apos;immagine e la prepariamo per un caricamento affidabile.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Ia_Title" xml:space="preserve">
+    <value>Lettura dati ticket</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_File_Title" xml:space="preserve">
+    <value>Sincronizzazione file</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Create_Title" xml:space="preserve">
+    <value>Creazione ticket</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Ia_Body" xml:space="preserve">
+    <value>Stiamo estraendo data, importo e descrizione dall&apos;immagine.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_File_Body" xml:space="preserve">
+    <value>L&apos;immagine caricata viene allegata al record del ticket.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Elapsed" xml:space="preserve">
+    <value>Tempo trascorso</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Create_Body" xml:space="preserve">
+    <value>Il backend riserva il ticket e avvia il flusso lato server.</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Link_Body" xml:space="preserve">
+    <value>Il ticket creato viene collegato alla nota spese corrente.</value>
+  </data>
 </root>
-

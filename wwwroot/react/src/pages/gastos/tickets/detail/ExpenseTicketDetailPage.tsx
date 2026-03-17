@@ -14,7 +14,6 @@ import { safeText } from "../../utils/expenseUiUtils.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
 import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutations.ts";
 import { useExpenseTicketDetailTopbarActions } from "./useExpenseTicketDetailTopbarActions.ts";
-import { useExpenseTicketImagePreview } from "./useExpenseTicketImagePreview.ts";
 import { useExpenseTicketDetailEditor } from "./useExpenseTicketDetailEditor.ts";
 import { useExpenseTicketDetailRouteContext } from "./useExpenseTicketDetailRouteContext.ts";
 import { useExpenseTicketDetailDisplay } from "./useExpenseTicketDetailDisplay.ts";
@@ -23,6 +22,7 @@ import { useExpenseTicketDetailInteractions } from "./useExpenseTicketDetailInte
 import ExpenseTicketDetailView from "./ExpenseTicketDetailView.tsx";
 import { useExpenseTicketsFilterCache } from "../useExpenseTicketsFilterCache.ts";
 import { useExpenseTicketDetailBackNavigation } from "./useExpenseTicketDetailBackNavigation.ts";
+import { useExpenseTicketDetailPreviewPanel } from "./useExpenseTicketDetailPreviewPanel.ts";
 
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const LINES_PAGE_SIZE = 6;
@@ -64,6 +64,210 @@ const buildFallbackGastoTypeOptions = (): ExpenseSelectOption[] => {
     .sort((left, right) => Number(left.value) - Number(right.value));
 };
 
+const buildExpenseTicketDetailModalView = ({
+  modal,
+  modalConfirmText,
+  modalCancelText,
+  modalLoadingText,
+  busy,
+  modalError,
+  status,
+  handleModalButtonConfirm,
+  closeConfirm,
+}: {
+  modal: {
+    open: boolean;
+    title: string;
+    message: string;
+    showCancel: boolean;
+    showConfirm: boolean;
+  };
+  modalConfirmText: string;
+  modalCancelText: string;
+  modalLoadingText: string;
+  busy: boolean;
+  modalError: string;
+  status: string;
+  handleModalButtonConfirm: () => void;
+  closeConfirm: () => void;
+}) => ({
+  open: modal.open,
+  title: modal.title,
+  message: modal.message,
+  confirmText: modalConfirmText,
+  cancelText: modalCancelText,
+  loadingText: modalLoadingText,
+  showCancel: modal.showCancel,
+  showConfirm: modal.showConfirm,
+  busy,
+  error: modalError,
+  status,
+  onConfirm: handleModalButtonConfirm,
+  onCancel: closeConfirm,
+});
+
+const buildExpenseTicketDetailPreviewView = ({
+  previewOpen,
+  previewBusy,
+  previewError,
+  previewImageUrl,
+  previewAltText,
+  previewScale,
+  previewTranslate,
+  previewSurfaceRef,
+  closePreview,
+  handlePreviewPointerDown,
+  handlePreviewPointerMove,
+  handlePreviewPointerEnd,
+  handlePreviewWheel,
+}: {
+  previewOpen: boolean;
+  previewBusy: boolean;
+  previewError: string;
+  previewImageUrl: string;
+  previewAltText: string;
+  previewScale: number;
+  previewTranslate: { x: number; y: number };
+  closePreview: () => void;
+  handlePreviewPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
+  handlePreviewPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
+  handlePreviewPointerEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
+  handlePreviewWheel: (event: React.WheelEvent<HTMLDivElement>) => void;
+}) => ({
+  open: previewOpen,
+  busy: previewBusy,
+  error: previewError,
+  imageUrl: previewImageUrl,
+  imageAlt: previewAltText,
+  scale: previewScale,
+  translate: previewTranslate,
+  surfaceRef: previewSurfaceRef,
+  onClose: closePreview,
+  onPointerDown: handlePreviewPointerDown,
+  onPointerMove: handlePreviewPointerMove,
+  onPointerEnd: handlePreviewPointerEnd,
+  onWheel: handlePreviewWheel,
+});
+
+const buildExpenseTicketDetailContentView = ({
+  isLoading,
+  errorMessage,
+  header,
+  showStickyPreview,
+  previewBusy,
+  previewError,
+  previewImageUrl,
+  previewAltText,
+  openFile,
+  statusLabel,
+  gastoTypeLabel,
+  totalAmountText,
+  transDateText,
+  isEditing,
+  gastoTypeOptions,
+  draftDescription,
+  draftGastoType,
+  draftCurrencyCode,
+  draftTransDate,
+  draftUrlFile,
+  draftFileName,
+  setDraftDescription,
+  setDraftGastoType,
+  setDraftCurrencyCode,
+  setDraftTransDate,
+  isFromSheetLink,
+  handleOpenExpenseSheet,
+  visibleLines,
+  totalLinePages,
+  linePage,
+  safeCurrencyCode,
+  paginationLabels,
+  lineContainerRef,
+  setLinePage,
+  openLineDetail,
+  status,
+}: {
+  isLoading: boolean;
+  errorMessage: string;
+  header: unknown;
+  showStickyPreview: boolean;
+  previewBusy: boolean;
+  previewError: string;
+  previewImageUrl: string;
+  previewAltText: string;
+  openFile: () => void;
+  statusLabel: string;
+  gastoTypeLabel: string;
+  totalAmountText: string;
+  transDateText: string;
+  isEditing: boolean;
+  gastoTypeOptions: ExpenseSelectOption[];
+  draftDescription: string;
+  draftGastoType: string;
+  draftCurrencyCode: string;
+  draftTransDate: string;
+  draftUrlFile: string;
+  draftFileName: string;
+  setDraftDescription: (value: string) => void;
+  setDraftGastoType: (value: string) => void;
+  setDraftCurrencyCode: (value: string) => void;
+  setDraftTransDate: (value: string) => void;
+  isFromSheetLink: boolean;
+  handleOpenExpenseSheet: () => void;
+  visibleLines: unknown[];
+  totalLinePages: number;
+  linePage: number;
+  safeCurrencyCode: string;
+  paginationLabels: {
+    first: string;
+    prev: string;
+    next: string;
+    last: string;
+  };
+  lineContainerRef: React.RefObject<HTMLDivElement | null>;
+  setLinePage: (page: number) => void;
+  openLineDetail: (lineRecId: string) => void;
+  status: string;
+}) => ({
+  isLoading,
+  errorMessage,
+  header,
+  showStickyPreview,
+  previewBusy,
+  previewError,
+  previewImageUrl,
+  previewFileName: previewAltText,
+  previewAltText,
+  onOpenPreview: openFile,
+  statusLabel,
+  gastoTypeLabel,
+  totalAmountText,
+  transDateText,
+  isEditing,
+  gastoTypeOptions,
+  draftDescription,
+  draftGastoType,
+  draftCurrencyCode,
+  draftTransDate,
+  draftUrlFile,
+  draftFileName,
+  onDraftDescriptionChange: setDraftDescription,
+  onDraftGastoTypeChange: setDraftGastoType,
+  onDraftCurrencyCodeChange: setDraftCurrencyCode,
+  onDraftTransDateChange: setDraftTransDate,
+  onOpenFile: openFile,
+  onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
+  visibleLines,
+  totalLinePages,
+  linePage,
+  currencyCode: safeCurrencyCode,
+  paginationLabels,
+  containerRef: lineContainerRef,
+  onLinePageChange: setLinePage,
+  onOpenLine: openLineDetail,
+  status,
+});
+
 const ExpenseTicketDetailPageContent = () => {
   const { canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } = useAuthContext();
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
@@ -90,7 +294,6 @@ const ExpenseTicketDetailPageContent = () => {
   const canDeleteTicket = canDeleteTicketByModule && !isManagingOtherUser;
   const allowAssignedDraftEdit = isFromExpenseSheetCreate;
   const autoEditAttemptedRef = useRef(false);
-
   const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
     const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
     const mapped = mapWindowEnumOptions(source).filter((entry) => {
@@ -104,7 +307,6 @@ const ExpenseTicketDetailPageContent = () => {
 
     return buildFallbackGastoTypeOptions();
   }, []);
-
   const gastoTypeLabelMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const option of gastoTypeOptions) {
@@ -112,7 +314,6 @@ const ExpenseTicketDetailPageContent = () => {
     }
     return map;
   }, [gastoTypeOptions]);
-
   const { header, lines, isLoading, errorMessage, reloadDetail } = useExpenseTicketDetailState({
     hasAccess,
     fileId,
@@ -127,7 +328,6 @@ const ExpenseTicketDetailPageContent = () => {
     readCachedState,
     saveCachedState,
   });
-
   const {
     busy,
     status,
@@ -162,8 +362,6 @@ const ExpenseTicketDetailPageContent = () => {
     isFromSheetLink,
     onForbidden: showPermissionModal,
   });
-
-  const previewSourceUrl = useMemo(() => safeText(isEditing ? draftUrlFile : header?.urlFile), [draftUrlFile, header?.urlFile, isEditing]);
   const { paginationLabels, previewAltText, statusLabel, gastoTypeLabel, totalAmountText, transDateText } =
     useExpenseTicketDetailDisplay({
       header,
@@ -175,6 +373,7 @@ const ExpenseTicketDetailPageContent = () => {
       gastoTypeLabelMap,
     });
   const {
+    showStickyPreview,
     previewOpen,
     previewBusy,
     previewError,
@@ -187,9 +386,11 @@ const ExpenseTicketDetailPageContent = () => {
     handlePreviewPointerMove,
     handlePreviewPointerEnd,
     handlePreviewWheel,
-  } = useExpenseTicketImagePreview({
+  } = useExpenseTicketDetailPreviewPanel({
     fileId,
-    sourceUrl: previewSourceUrl,
+    isEditing,
+    draftUrlFile,
+    headerUrlFile: header?.urlFile,
   });
 
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
@@ -295,70 +496,74 @@ const ExpenseTicketDetailPageContent = () => {
     resolveClickableCard,
   });
 
+  const modalView = buildExpenseTicketDetailModalView({
+    modal,
+    modalConfirmText,
+    modalCancelText,
+    modalLoadingText,
+    busy,
+    modalError,
+    status,
+    handleModalButtonConfirm,
+    closeConfirm,
+  });
+
+  const previewView = buildExpenseTicketDetailPreviewView({
+    previewOpen,
+    previewBusy,
+    previewError,
+    previewImageUrl,
+    previewAltText,
+    previewScale,
+    previewTranslate,
+    closePreview,
+    handlePreviewPointerDown,
+    handlePreviewPointerMove,
+    handlePreviewPointerEnd,
+    handlePreviewWheel,
+  });
+
+  const contentView = buildExpenseTicketDetailContentView({
+    isLoading,
+    errorMessage,
+    header,
+    showStickyPreview,
+    previewBusy,
+    previewError,
+    previewImageUrl,
+    previewAltText,
+    openFile,
+    statusLabel,
+    gastoTypeLabel,
+    totalAmountText,
+    transDateText,
+    isEditing,
+    gastoTypeOptions,
+    draftDescription,
+    draftGastoType,
+    draftCurrencyCode,
+    draftTransDate,
+    draftUrlFile,
+    draftFileName,
+    setDraftDescription,
+    setDraftGastoType,
+    setDraftCurrencyCode,
+    setDraftTransDate,
+    isFromSheetLink,
+    handleOpenExpenseSheet,
+    visibleLines,
+    totalLinePages,
+    linePage,
+    safeCurrencyCode: isEditing ? draftCurrencyCode : safeText(header?.currencyCode),
+    paginationLabels,
+    lineContainerRef,
+    setLinePage,
+    openLineDetail,
+    status,
+  });
+
   return (
-    <ExpenseTicketDetailView
-      modal={{
-        open: modal.open,
-        title: modal.title,
-        message: modal.message,
-        confirmText: modalConfirmText,
-        cancelText: modalCancelText,
-        loadingText: modalLoadingText,
-        showCancel: modal.showCancel,
-        showConfirm: modal.showConfirm,
-        busy,
-        error: modalError,
-        status,
-        onConfirm: handleModalButtonConfirm,
-        onCancel: closeConfirm,
-      }}
-      preview={{
-        open: previewOpen,
-        busy: previewBusy,
-        error: previewError,
-        imageUrl: previewImageUrl,
-        imageAlt: previewAltText,
-        scale: previewScale,
-        translate: previewTranslate,
-        onClose: closePreview,
-        onPointerDown: handlePreviewPointerDown,
-        onPointerMove: handlePreviewPointerMove,
-        onPointerEnd: handlePreviewPointerEnd,
-        onWheel: handlePreviewWheel,
-      }}
-      content={{
-        isLoading,
-        errorMessage,
-        header,
-        statusLabel,
-        gastoTypeLabel,
-        totalAmountText,
-        transDateText,
-        isEditing,
-        gastoTypeOptions,
-        draftDescription,
-        draftGastoType,
-        draftCurrencyCode,
-        draftTransDate,
-        draftUrlFile,
-        draftFileName,
-        onDraftDescriptionChange: setDraftDescription,
-        onDraftGastoTypeChange: setDraftGastoType,
-        onDraftCurrencyCodeChange: setDraftCurrencyCode,
-        onDraftTransDateChange: setDraftTransDate,
-        onOpenFile: openFile,
-        onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
-        visibleLines,
-        totalLinePages,
-        linePage,
-        currencyCode: isEditing ? draftCurrencyCode : safeText(header?.currencyCode),
-        paginationLabels,
-        containerRef: lineContainerRef,
-        onLinePageChange: setLinePage,
-        onOpenLine: openLineDetail,
-        status,
-      }}
-    />
+    <ExpenseTicketDetailView modal={modalView} preview={previewView} content={contentView} />
   );
 };
 

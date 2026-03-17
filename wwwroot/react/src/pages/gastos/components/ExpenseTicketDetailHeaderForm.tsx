@@ -3,6 +3,7 @@ import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "../tickets/detail/expenseTicketDetailTypes.ts";
+import { hasExpenseTicketImagePreviewSource } from "../tickets/detail/expenseTicketPreviewUtils.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
@@ -13,35 +14,6 @@ const hasRealExpenseSheetValue = (value: string): boolean => {
   if (normalized === "-" || normalized === "0") return false;
   if (normalized === "n/a" || normalized === "na") return false;
   return true;
-};
-
-const IMAGE_EXTENSIONS = new Set<string>(["jpg", "jpeg", "png", "webp", "gif", "bmp", "heic", "heif", "avif"]);
-
-const getFileExtensionFromPath = (value: string): string => {
-  const source = safeText(value).toLowerCase();
-  if (!source) return "";
-
-  const withoutQuery = source.split("?")[0].split("#")[0];
-  const parts = withoutQuery.split(".");
-  if (parts.length < 2) return "";
-
-  const rawExt = safeText(parts[parts.length - 1]).replace(/[^a-z0-9]/g, "");
-  return rawExt === "jpeg" ? "jpg" : rawExt;
-};
-
-const hasImagePreviewLink = (urlValue: string): boolean => {
-  const normalizedUrl = safeText(urlValue);
-  if (!normalizedUrl) return false;
-
-  if (normalizedUrl.toLowerCase().startsWith("data:image/")) return true;
-
-  const extension = getFileExtensionFromPath(normalizedUrl);
-  if (extension && IMAGE_EXTENSIONS.has(extension)) return true;
-
-  const normalizedLower = normalizedUrl.toLowerCase();
-  if (normalizedLower.includes("blob.core.windows.net") && normalizedLower.includes("image")) return true;
-
-  return false;
 };
 
 type ExpenseTicketDetailHeaderFormProps = {
@@ -64,6 +36,7 @@ type ExpenseTicketDetailHeaderFormProps = {
   onDraftTransDateChange: (value: string) => void;
   onOpenFile: () => void;
   onOpenExpenseSheet?: () => void;
+  hideOpenFileAction?: boolean;
 };
 
 // Read-only and editable header form for ticket detail.
@@ -87,9 +60,10 @@ const ExpenseTicketDetailHeaderForm = ({
   onDraftTransDateChange,
   onOpenFile,
   onOpenExpenseSheet,
+  hideOpenFileAction = false,
 }: ExpenseTicketDetailHeaderFormProps) => {
   const previewUrl = safeText(isEditing ? draftUrlFile : header.urlFile);
-  const canOpenFile = hasImagePreviewLink(previewUrl);
+  const canOpenFile = hasExpenseTicketImagePreviewSource(previewUrl);
   const showExpenseSheetField = hasRealExpenseSheetValue(header.hojaGastosIdDisplay);
 
   return (
@@ -187,7 +161,7 @@ const ExpenseTicketDetailHeaderForm = ({
           )}
       </div>
 
-      {canOpenFile ? (
+      {canOpenFile && !hideOpenFileAction ? (
         <div className="flex justify-end">
           <button
             type="button"

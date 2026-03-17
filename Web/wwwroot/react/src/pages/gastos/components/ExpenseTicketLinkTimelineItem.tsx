@@ -1,11 +1,7 @@
 import React, { useCallback } from "react";
 import { CheckIcon } from "@heroicons/react/24/outline";
-import { useTapGuard } from "../../../hooks/useTapGuard.ts";
 import type { ExpenseDateParts } from "../utils/expenseUiUtils.ts";
 import ExpenseTimelineCard from "./ExpenseTimelineCard.tsx";
-
-const HOLD_TO_SELECT_MS = 380;
-const HOLD_MOVE_PX = 16;
 
 type ExpenseTicketLinkTimelineItemProps = {
   fileId: string;
@@ -15,15 +11,13 @@ type ExpenseTicketLinkTimelineItemProps = {
   amountText: string;
   isSelected: boolean;
   isSelectable: boolean;
-  interactionDisabled: boolean;
-  processedByAI: boolean | null;
-  processedByAiLabel: string;
+  selectionDisabled: boolean;
   selectLabel: string;
   onOpenDetail: () => void;
   onToggleSelect: () => void;
 };
 
-// Link-mode ticket card: quick tap opens detail, long press toggles selection anywhere on the card.
+// Link-mode ticket card: center opens the read-only detail and the right rail toggles selection.
 const ExpenseTicketLinkTimelineItem = ({
   fileId,
   dateParts,
@@ -32,105 +26,67 @@ const ExpenseTicketLinkTimelineItem = ({
   amountText,
   isSelected,
   isSelectable,
-  interactionDisabled,
-  processedByAI,
-  processedByAiLabel,
+  selectionDisabled,
   selectLabel,
   onOpenDetail,
   onToggleSelect,
 }: ExpenseTicketLinkTimelineItemProps) => {
-  const handleTap = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      event.preventDefault();
-      if (interactionDisabled) return;
-      onOpenDetail();
-    },
-    [interactionDisabled, onOpenDetail]
-  );
+  const canToggleSelection = isSelectable && !selectionDisabled;
 
-  const handleHold = useCallback(() => {
-    if (interactionDisabled || !isSelectable) return false;
+  const handleOpenDetail = useCallback(() => {
+    onOpenDetail();
+  }, [onOpenDetail]);
+
+  const handleToggleSelection = useCallback(() => {
+    if (!canToggleSelection) return;
     onToggleSelect();
-    return true;
-  }, [interactionDisabled, isSelectable, onToggleSelect]);
-
-  const tapGuard = useTapGuard(handleTap, handleHold, {
-    holdMs: HOLD_TO_SELECT_MS,
-    movePx: HOLD_MOVE_PX,
-  });
+  }, [canToggleSelection, onToggleSelect]);
 
   const selectionIndicatorToneClassName = isSelected
     ? "border-primary bg-primary text-white shadow-sm"
-    : isSelectable
-      ? "border-slate-300 bg-white text-transparent"
+    : canToggleSelection
+      ? "border-slate-300 bg-white text-transparent group-hover:border-primary group-hover:bg-primary/5"
       : "border-slate-200 bg-slate-100 text-transparent";
-
-  const statusIcon = (
-    <>
-      <span
-        className={`inline-flex h-4 w-4 items-center justify-center rounded-[var(--radius-xl)] border transition ${selectionIndicatorToneClassName}`}
-        aria-hidden="true"
-        title={selectLabel}
-      >
-        <CheckIcon className="h-3 w-3" strokeWidth={2.2} />
-      </span>
-      {processedByAI ? (
-        <span
-          className="expense-ticket-card__status-icon expense-ticket-card__status-icon--ai"
-          role="img"
-          aria-label={processedByAiLabel}
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 18l4-12l4 12" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 13h4" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M14 6h6" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 6v12" />
-            <path strokeLinecap="round" strokeLinejoin="round" d="M14 18h6" />
-          </svg>
-        </span>
-      ) : null}
-    </>
-  );
 
   return (
     <div
-      className={isSelected ? "timeline-item rounded-2xl ring-2 ring-primary/30" : "timeline-item"}
+      className={isSelected ? "timeline-item rounded-[5px] ring-2 ring-primary/30" : "timeline-item"}
       data-ticket-file-id={fileId || undefined}
       data-ticket-selected={isSelected ? "true" : "false"}
-      data-ticket-selectable={isSelectable && !interactionDisabled ? "true" : "false"}
+      data-ticket-selectable={canToggleSelection ? "true" : "false"}
     >
-      <ExpenseTimelineCard
-        dateParts={dateParts}
-        title={title}
-        subtitle={subtitle}
-        amountText={amountText}
-        onOpen={onOpenDetail}
-        titleClassName="expense-ticket-card__title timeline-name"
-        statusIcon={statusIcon}
-        statusIconClassName="expense-ticket-card__status-icons"
-        interactionProps={{
-          tabIndex: interactionDisabled ? -1 : 0,
-          "aria-label": title,
-          "aria-pressed": isSelected,
-          onPointerDown: tapGuard.onPointerDown,
-          onPointerMove: tapGuard.onPointerMove,
-          onPointerUp: tapGuard.onPointerUp,
-          onPointerCancel: tapGuard.onPointerCancel,
-          onContextMenu: (event) => {
-            event.preventDefault();
-          },
-          onClick: (event) => {
-            event.preventDefault();
-          },
-          onKeyDown: (event) => {
-            if (interactionDisabled) return;
-            if (event.key === "Enter" || event.key === " ") {
+      <div className="relative">
+        <ExpenseTimelineCard
+          dateParts={dateParts}
+          title={title}
+          subtitle={subtitle}
+          amountText={amountText}
+          onOpen={handleOpenDetail}
+          titleClassName="expense-ticket-card__title timeline-name"
+          interactionProps={{
+            "aria-label": title,
+            onContextMenu: (event) => {
               event.preventDefault();
-              onOpenDetail();
-            }
-          },
-        }}
-      />
+            },
+          }}
+        />
+
+        <button
+          type="button"
+          aria-label={selectLabel}
+          aria-pressed={isSelected}
+          title={selectLabel}
+          disabled={!canToggleSelection}
+          onClick={handleToggleSelection}
+          className="group absolute inset-y-0 right-0 z-10 flex w-[4.25rem] items-start justify-end rounded-r-[5px] bg-transparent p-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 disabled:cursor-not-allowed sm:w-[4.75rem]"
+        >
+          <span
+            className={`flex h-[30px] w-[30px] items-center justify-center rounded-[5px] border transition ${selectionIndicatorToneClassName}`}
+          >
+            <CheckIcon className="h-[20px] w-[20px]" strokeWidth={2.3} aria-hidden="true" />
+          </span>
+        </button>
+      </div>
     </div>
   );
 };

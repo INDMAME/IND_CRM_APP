@@ -984,7 +984,7 @@
   <data name="TextEditor_Microphone" xml:space="preserve">
     <value>麦克风</value>
   </data>
-    <data name="TextEditor_Microphone_ReadOnlyHint" xml:space="preserve">
+  <data name="TextEditor_Microphone_ReadOnlyHint" xml:space="preserve">
     <value>Audio transcription is available only in edit mode.</value>
   </data>
   <data name="TextEditor_Transcribe" xml:space="preserve">
@@ -1231,34 +1231,34 @@
     <value>新建行</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Source_Title" xml:space="preserve">
-    <value>New ticket</value>
+    <value>新建票据</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Source_Body" xml:space="preserve">
-    <value>Select a source to capture or choose the ticket image.</value>
+    <value>请选择来源以拍摄或选择票据图片。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Source_Camera" xml:space="preserve">
-    <value>Use camera</value>
+    <value>使用相机</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Source_Gallery" xml:space="preserve">
-    <value>Choose image</value>
+    <value>选择图片</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_UploadingImage" xml:space="preserve">
-    <value>Uploading image...</value>
+    <value>正在上传图片...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_CreatingTicket" xml:space="preserve">
-    <value>Creating ticket...</value>
+    <value>正在创建票据...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_SyncingFile" xml:space="preserve">
-    <value>Syncing file...</value>
+    <value>正在同步文件...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_Finalizing" xml:space="preserve">
-    <value>Finalizing IA...</value>
+    <value>正在完成 AI 处理...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_LinkingLine" xml:space="preserve">
-    <value>Linking expense line...</value>
+    <value>正在关联费用行...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_Done" xml:space="preserve">
-    <value>Done</value>
+    <value>已完成</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_FileType" xml:space="preserve">
     <value>Unsupported image format.</value>
@@ -1288,7 +1288,7 @@
     <value>Server error.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
-    <value>Retry upload</value>
+    <value>重试上传</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Partial" xml:space="preserve">
     <value>The ticket was created, but the full process did not finish.</value>
@@ -1303,7 +1303,7 @@
     <value>Retry after {0}.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_OpenCreatedTicket" xml:space="preserve">
-    <value>Open created ticket</value>
+    <value>打开已创建票据</value>
   </data>
   <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
     <value>The link process will be canceled and you will return to the expense sheet. Do you want to continue?</value>
@@ -1356,5 +1356,40 @@
   <data name="ExpenseTickets_LinkMode_ResultReason" xml:space="preserve">
     <value>Reason</value>
   </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Title" xml:space="preserve">
+    <value>正在处理票据</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Elapsed" xml:space="preserve">
+    <value>已用时间</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Create_Body" xml:space="preserve">
+    <value>后端会预留票据并启动服务器端流程。</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Create_Title" xml:space="preserve">
+    <value>正在创建票据</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_File_Body" xml:space="preserve">
+    <value>正在将上传的图片附加到票据记录。</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Prepare_Title" xml:space="preserve">
+    <value>准备图片</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Ia_Title" xml:space="preserve">
+    <value>正在读取票据数据</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Link_Title" xml:space="preserve">
+    <value>正在关联费用行</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Link_Body" xml:space="preserve">
+    <value>正在将生成的票据连接到当前的费用单。</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Prepare_Body" xml:space="preserve">
+    <value>我们会验证图片，并将其准备为可靠上传。</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_File_Title" xml:space="preserve">
+    <value>正在同步文件</value>
+  </data>
+  <data name="ExpenseSheets_NewTicket_Progress_Ia_Body" xml:space="preserve">
+    <value>我们正在从图片中提取日期、金额和描述。</value>
+  </data>
 </root>
-

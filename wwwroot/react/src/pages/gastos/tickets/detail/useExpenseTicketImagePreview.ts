@@ -15,6 +15,7 @@ export type TicketPreviewPoint = {
 type UseExpenseTicketImagePreviewArgs = {
   fileId: string;
   sourceUrl: string;
+  enabled?: boolean;
 };
 
 const clampPreviewScale = (value: number): number => {
@@ -34,7 +35,7 @@ const getPreviewPointCenter = (left: TicketPreviewPoint, right: TicketPreviewPoi
 });
 
 // Manages ticket image preview state and zoom/pan gestures.
-export const useExpenseTicketImagePreview = ({ fileId, sourceUrl }: UseExpenseTicketImagePreviewArgs) => {
+export const useExpenseTicketImagePreview = ({ fileId, sourceUrl, enabled = true }: UseExpenseTicketImagePreviewArgs) => {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewBusy, setPreviewBusy] = useState(false);
   const [previewError, setPreviewError] = useState("");
@@ -43,6 +44,10 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl }: UseExpenseTi
   const [previewTranslate, setPreviewTranslate] = useState<TicketPreviewPoint>({ x: 0, y: 0 });
 
   const previewScaleRef = useRef(1);
+  const previewImageUrlRef = useRef("");
+  const previewRequestKeyRef = useRef("");
+  const previewLoadPromiseRef = useRef<Promise<string> | null>(null);
+  const previewSurfaceRef = useRef<HTMLDivElement | null>(null);
   const previewTranslateRef = useRef<TicketPreviewPoint>({ x: 0, y: 0 });
   const previewPointersRef = useRef<Map<number, TicketPreviewPoint>>(new Map());
   const previewPanPointerRef = useRef<number | null>(null);
@@ -88,26 +93,104 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl }: UseExpenseTi
     };
   }, []);
 
+  const replacePreviewImageUrl = useCallback((nextUrl: string) => {
+    setPreviewImageUrl((previous) => {
+      if (previous && previous !== nextUrl) {
+        URL.revokeObjectURL(previous);
+      }
+      previewImageUrlRef.current = nextUrl;
+      return nextUrl;
+    });
+  }, []);
+
+  const clearPreviewImage = useCallback(() => {
+    previewLoadPromiseRef.current = null;
+    setPreviewImageUrl((previous) => {
+      if (previous) {
+        URL.revokeObjectURL(previous);
+      }
+      previewImageUrlRef.current = "";
+      return "";
+    });
+  }, []);
+
+  const loadPreviewImage = useCallback(async (): Promise<string> => {
+    const currentFileId = safeText(fileId);
+    const currentUrl = safeText(sourceUrl);
+    if (!enabled || !currentFileId || !currentUrl) {
+      setPreviewBusy(false);
+      setPreviewError("");
+      return "";
+    }
+
+    if (previewImageUrlRef.current) {
+      return previewImageUrlRef.current;
+    }
+
+    if (previewLoadPromiseRef.current) {
+      return previewLoadPromiseRef.current;
+    }
+
+    const requestKey = `${currentFileId}__${currentUrl}`;
+    previewRequestKeyRef.current = requestKey;
+    setPreviewBusy(true);
+    setPreviewError("");
+
+    const nextPromise = (async () => {
+      try {
+        const blob = await fetchExpenseSheetTicketPreviewBlob(currentFileId, currentUrl, {
+          suppressPermissionModal: true,
+        });
+        const objectUrl = URL.createObjectURL(blob);
+        if (previewRequestKeyRef.current !== requestKey) {
+          URL.revokeObjectURL(objectUrl);
+          return "";
+        }
+
+        replacePreviewImageUrl(objectUrl);
+        return objectUrl;
+      } catch (error) {
+        if (previewRequestKeyRef.current === requestKey) {
+          setPreviewError(error instanceof Error ? error.message : indT("Api_RequestFailed", "Request failed."));
+        }
+        return "";
+      } finally {
+        if (previewRequestKeyRef.current === requestKey) {
+          setPreviewBusy(false);
+        }
+        previewLoadPromiseRef.current = null;
+      }
+    })();
+
+    previewLoadPromiseRef.current = nextPromise;
+    return nextPromise;
+  }, [enabled, fileId, replacePreviewImageUrl, sourceUrl]);
+
   const closePreview = useCallback(() => {
     setPreviewOpen(false);
     setPreviewBusy(false);
     setPreviewError("");
     resetPreviewGesture();
-    setPreviewImageUrl((previous) => {
-      if (previous) {
-        URL.revokeObjectURL(previous);
-      }
-      return "";
-    });
   }, [resetPreviewGesture]);
 
   useEffect(() => {
     return () => {
-      if (previewImageUrl) {
-        URL.revokeObjectURL(previewImageUrl);
-      }
+      clearPreviewImage();
     };
-  }, [previewImageUrl]);
+  }, [clearPreviewImage]);
+
+  useEffect(() => {
+    previewRequestKeyRef.current = `${safeText(fileId)}__${safeText(sourceUrl)}`;
+    setPreviewOpen(false);
+    setPreviewBusy(false);
+    setPreviewError("");
+    resetPreviewGesture();
+    clearPreviewImage();
+
+    if (enabled && safeText(fileId) && safeText(sourceUrl)) {
+      void loadPreviewImage();
+    }
+  }, [clearPreviewImage, enabled, fileId, loadPreviewImage, resetPreviewGesture, sourceUrl]);
 
   useEffect(() => {
     if (!previewOpen) return;
@@ -121,6 +204,42 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl }: UseExpenseTi
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [previewOpen, closePreview]);
+
+  useEffect(() => {
+    if (!previewOpen) return;
+    const surface = previewSurfaceRef.current;
+    if (!surface) return;
+
+    const preventGestureDefault = (event: Event) => {
+      event.preventDefault();
+    };
+
+    const preventTouchViewportZoom = (event: TouchEvent) => {
+      if (event.touches.length > 1) {
+        event.preventDefault();
+      }
+    };
+
+    const preventCtrlWheelViewportZoom = (event: WheelEvent) => {
+      if (event.ctrlKey) {
+        event.preventDefault();
+      }
+    };
+
+    surface.addEventListener("gesturestart", preventGestureDefault, { passive: false });
+    surface.addEventListener("gesturechange", preventGestureDefault, { passive: false });
+    surface.addEventListener("gestureend", preventGestureDefault, { passive: false });
+    surface.addEventListener("touchmove", preventTouchViewportZoom, { passive: false });
+    surface.addEventListener("wheel", preventCtrlWheelViewportZoom, { passive: false });
+
+    return () => {
+      surface.removeEventListener("gesturestart", preventGestureDefault);
+      surface.removeEventListener("gesturechange", preventGestureDefault);
+      surface.removeEventListener("gestureend", preventGestureDefault);
+      surface.removeEventListener("touchmove", preventTouchViewportZoom);
+      surface.removeEventListener("wheel", preventCtrlWheelViewportZoom);
+    };
+  }, [previewOpen]);
 
   const handlePreviewPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -250,31 +369,14 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl }: UseExpenseTi
   const openPreview = useCallback(async () => {
     const currentFileId = safeText(fileId);
     const currentUrl = safeText(sourceUrl);
-    if (!currentFileId || !currentUrl) return;
+    if (!enabled || !currentFileId || !currentUrl) return;
 
     resetPreviewGesture();
     setPreviewOpen(true);
-    setPreviewBusy(true);
     setPreviewError("");
 
-    try {
-      const blob = await fetchExpenseSheetTicketPreviewBlob(currentFileId, currentUrl, {
-        suppressPermissionModal: true,
-      });
-      const objectUrl = URL.createObjectURL(blob);
-      setPreviewImageUrl((previous) => {
-        if (previous) {
-          URL.revokeObjectURL(previous);
-        }
-        return objectUrl;
-      });
-    } catch (error) {
-      setPreviewError(error instanceof Error ? error.message : indT("Api_RequestFailed", "Request failed."));
-      setPreviewImageUrl("");
-    } finally {
-      setPreviewBusy(false);
-    }
-  }, [fileId, resetPreviewGesture, sourceUrl]);
+    await loadPreviewImage();
+  }, [enabled, fileId, loadPreviewImage, resetPreviewGesture, sourceUrl]);
 
   return {
     previewOpen,
@@ -283,6 +385,7 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl }: UseExpenseTi
     previewImageUrl,
     previewScale,
     previewTranslate,
+    previewSurfaceRef,
     openPreview,
     closePreview,
     handlePreviewPointerDown,
