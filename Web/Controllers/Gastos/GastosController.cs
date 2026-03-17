@@ -35,6 +35,8 @@ namespace IND_CRM_APP.Controllers
         private const string ExpenseSheetReadOnlyByStatusErrorCode = "CRM_EXPENSESHEET_STATUS_READ_ONLY";
         private const string ExpenseSheetStatusTransitionErrorCode = "CRM_EXPENSESHEET_STATUS_TRANSITION_NOT_ALLOWED";
         private const string ExpenseManagedUserReadOnlyErrorCode = "CRM_EXPENSE_MANAGED_USER_READ_ONLY";
+        private const string ExpenseManagedUserScopeDeniedErrorCode = "CRM_EXPENSE_MANAGED_USER_SCOPE_DENIED";
+        private const string ExpenseSubordinatesScopeCacheKey = "__expense_subordinates_scope_cache";
         private static readonly HashSet<int> AllowedTicketGastoTypes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
         private static readonly HashSet<string> AllowedTicketImageContentTypes = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -77,6 +79,16 @@ namespace IND_CRM_APP.Controllers
             public string ErrorCode { get; init; } = string.Empty;
             public ExpenseSheetSnapshot? Snapshot { get; init; }
             public ExpenseSheetMutationPolicy? Policy { get; init; }
+        }
+
+        // Immutable guard result for acting-user validation before forwarding one override upstream.
+        private sealed class ExpenseActingUserGuardResult
+        {
+            public bool Allowed { get; init; }
+            public int StatusCode { get; init; }
+            public string Message { get; init; } = string.Empty;
+            public string ErrorCode { get; init; } = string.Empty;
+            public string? AxUserId { get; init; }
         }
 
         // Defines the expense mutation family so one policy can protect all entry points.
@@ -296,7 +308,10 @@ namespace IND_CRM_APP.Controllers
             var page = req.Page < 1 ? 1 : req.Page;
             var pageSize = req.PageSize <= 0 ? 6 : req.PageSize;
             var listRequest = BuildExpenseSheetListApiRequest(req, page, pageSize);
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(ListExpenseSheets));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
 
             try
             {
@@ -352,7 +367,10 @@ namespace IND_CRM_APP.Controllers
                 Page = page,
                 PageSize = pageSize
             };
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForPagedAsync(token, nameof(ApiExpenseSheetsList));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             _logger.LogInformation(
                 "ApiExpenseSheetsList request trace. hojaGastosId={HojaGastosId} X-IND-AxUserId={AxUserId} page={Page} pageSize={PageSize} includeSubordinates={IncludeSubordinates}",
                 payload.Filter ?? string.Empty,
@@ -844,7 +862,10 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
-                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseFromTicket));
+                if (actingUser.Error != null)
+                    return actingUser.Error;
+                var requestAxUserId = actingUser.AxUserId;
                 using var stream = ticketImage.OpenReadStream();
                 var response = await _apiClient.ExpenseFromTicketAsync(
                     token,
@@ -916,7 +937,10 @@ namespace IND_CRM_APP.Controllers
             var safeSheetId = NormalizeOptionalText(hojaGastosId);
             if (string.IsNullOrWhiteSpace(safeSheetId))
                 return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForPagedAsync(token, nameof(ApiExpenseSheetDetail));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             _logger.LogInformation(
                 "ApiExpenseSheetDetail request trace. hojaGastosId={HojaGastosId} X-IND-AxUserId={AxUserId}",
                 safeSheetId,
@@ -1033,7 +1057,10 @@ namespace IND_CRM_APP.Controllers
                 request.ProjId = null;
             }
 
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetsCreate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             if (normalizedMode == 2 && !string.IsNullOrWhiteSpace(normalizedExistingSheetId))
             {
                 var mutationGuard = await ValidateExpenseSheetMutationAsync(
@@ -1128,7 +1155,10 @@ namespace IND_CRM_APP.Controllers
                 EstadoComentarios = normalizedEstadoComentarios
             };
 
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetUpdate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var mutationGuard = await ValidateExpenseSheetMutationAsync(
                 token,
                 safeSheetId,
@@ -1216,7 +1246,10 @@ namespace IND_CRM_APP.Controllers
                 IndAttachFiles = req.IndAttachFiles ?? string.Empty
             };
 
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetLineUpdate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var mutationGuard = await ValidateExpenseSheetMutationAsync(
                 token,
                 safeSheetId,
@@ -1296,7 +1329,10 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
 
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetLineDelete));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var mutationGuard = await ValidateExpenseSheetMutationAsync(
                 token,
                 safeSheetId,
@@ -1537,7 +1573,10 @@ namespace IND_CRM_APP.Controllers
                 GastoType = NormalizeTicketGastoType(req.GastoType),
                 Lines = normalizedLines.Count > 0 ? normalizedLines : null
             };
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketsCreate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketsCreate));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -1605,7 +1644,10 @@ namespace IND_CRM_APP.Controllers
                     "INVALID_REQUEST");
             }
 
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketQuickCreate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketQuickCreate));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -1731,7 +1773,10 @@ namespace IND_CRM_APP.Controllers
                 GastoType = NormalizeTicketGastoType(req.GastoType),
                 ProcessedByAI = req.ProcessedByAI
             };
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForPagedAsync(token, nameof(ApiExpenseSheetTicketsList));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
 
             try
             {
@@ -1820,7 +1865,10 @@ namespace IND_CRM_APP.Controllers
                 GastoType = NormalizeTicketGastoType(req.GastoType),
                 ProcessedByAI = req.ProcessedByAI
             };
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForPagedAsync(token, nameof(ApiExpenseSheetTicketsLinkList));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
 
             try
             {
@@ -1914,7 +1962,10 @@ namespace IND_CRM_APP.Controllers
                     .Cast<string>()
                     .ToList()
             };
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketsLinkBulk));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketsLinkBulk));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -1964,8 +2015,10 @@ namespace IND_CRM_APP.Controllers
             var safeFileId = NormalizeOptionalText(fileId);
             if (string.IsNullOrWhiteSpace(safeFileId))
                 return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
-
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForPagedAsync(token, nameof(ApiExpenseSheetTicketDetail));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
 
             try
             {
@@ -2018,7 +2071,10 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
-                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketPreview));
+                if (actingUser.Error != null)
+                    return actingUser.Error;
+                var requestAxUserId = actingUser.AxUserId;
                 var detailResult = await _apiClient.GetExpenseSheetTicketDetailAsync(token, safeFileId, requestAxUserId);
                 var ticket = SelectTicket(detailResult.GetAnyItems(), safeFileId);
                 if (ticket == null)
@@ -2111,7 +2167,10 @@ namespace IND_CRM_APP.Controllers
                 FileExtension = NormalizeOptionalText(req.FileExtension),
                 GastoType = NormalizeTicketGastoType(req.GastoType)
             };
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketUpdate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketUpdate));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -2167,7 +2226,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketDelete));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketDelete));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -2231,7 +2293,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketApplyIa));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketApplyIa));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -2303,7 +2368,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketLineCreate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketLineCreate));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -2379,7 +2447,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketLineUpdate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketLineUpdate));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -2436,7 +2507,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketLineDelete));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketLineDelete));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -2497,7 +2571,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketFileUpload));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketFileUpload));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -2593,7 +2670,10 @@ namespace IND_CRM_APP.Controllers
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
-            var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketFileDelete));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
             var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketFileDelete));
             if (managedUserGuard != null)
                 return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
@@ -2806,7 +2886,10 @@ namespace IND_CRM_APP.Controllers
                     request.ProjId = null;
                 }
 
-                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(CreateExpenseSheet));
+                if (actingUser.Error != null)
+                    return actingUser.Error;
+                var requestAxUserId = actingUser.AxUserId;
                 if (normalizedMode == 2 && !string.IsNullOrWhiteSpace(normalizedExistingSheetId))
                 {
                     var mutationGuard = await ValidateExpenseSheetMutationAsync(
@@ -2885,7 +2968,10 @@ namespace IND_CRM_APP.Controllers
                     EstadoComentarios = normalizedEstadoComentarios
                 };
 
-                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(UpdateExpenseSheetHeader));
+                if (actingUser.Error != null)
+                    return actingUser.Error;
+                var requestAxUserId = actingUser.AxUserId;
                 var mutationGuard = await ValidateExpenseSheetMutationAsync(
                     token,
                     hojaGastosId.Trim(),
@@ -2952,7 +3038,10 @@ namespace IND_CRM_APP.Controllers
                     IndAttachFiles = req.IndAttachFiles ?? string.Empty
                 };
 
-                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(UpdateExpenseSheetLine));
+                if (actingUser.Error != null)
+                    return actingUser.Error;
+                var requestAxUserId = actingUser.AxUserId;
                 var mutationGuard = await ValidateExpenseSheetMutationAsync(
                     token,
                     hojaGastosId.Trim(),
@@ -3004,7 +3093,10 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrWhiteSpace(hojaGastosId) || string.IsNullOrWhiteSpace(lineRecId))
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
-                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(DeleteExpenseSheetLine));
+                if (actingUser.Error != null)
+                    return actingUser.Error;
+                var requestAxUserId = actingUser.AxUserId;
                 var mutationGuard = await ValidateExpenseSheetMutationAsync(
                     token,
                     hojaGastosId.Trim(),
@@ -3054,7 +3146,10 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrWhiteSpace(hojaGastosId))
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
-                var requestAxUserId = NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+                var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(DeleteExpenseSheet));
+                if (actingUser.Error != null)
+                    return actingUser.Error;
+                var requestAxUserId = actingUser.AxUserId;
                 var mutationGuard = await ValidateExpenseSheetMutationAsync(
                     token,
                     hojaGastosId.Trim(),
@@ -3455,15 +3550,8 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
-                var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token);
-                var items = result.GetAnyItems();
-                var belongsToSubordinates = items.Any(item =>
-                    IsSameExpenseUserId(item.AxUserId, normalizedOwnerUserId) ||
-                    IsSameExpenseUserId(item.CrmUserId, normalizedOwnerUserId) ||
-                    IsSameExpenseUserId(item.UserId, normalizedOwnerUserId) ||
-                    IsSameExpenseUserId(GetExtraString(item.Extra, "axUserId", "AxUserId"), normalizedOwnerUserId) ||
-                    IsSameExpenseUserId(GetExtraString(item.Extra, "crmUserId", "CrmUserId"), normalizedOwnerUserId) ||
-                    IsSameExpenseUserId(GetExtraString(item.Extra, "userId", "UserId"), normalizedOwnerUserId));
+                var items = await GetExpenseSheetSubordinatesForScopeAsync(token);
+                var belongsToSubordinates = items.Any(item => MatchesExpenseSubordinateUserId(item, normalizedOwnerUserId));
 
                 if (belongsToSubordinates)
                 {
@@ -3498,6 +3586,18 @@ namespace IND_CRM_APP.Controllers
                     StatusCode = StatusCodes.Status502BadGateway,
                     Message = _sr["Api_RequestFailed"].Value,
                     ErrorCode = "UPSTREAM_ERROR",
+                    Snapshot = snapshot
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error while validating subordinate ownership in {Operation}", operationName);
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Message = _sr["Api_RequestFailed"].Value,
+                    ErrorCode = "UNHANDLED_ERROR",
                     Snapshot = snapshot
                 };
             }
@@ -3865,10 +3965,164 @@ namespace IND_CRM_APP.Controllers
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
 
+        // Reads the requested acting user override from the current request headers.
+        private string? GetRequestedExpenseAxUserId()
+        {
+            return NormalizeOptionalText(Request.Headers["X-IND-AxUserId"].ToString());
+        }
+
+        // Resolves and validates the acting user for paged API responses.
+        private async Task<(string? AxUserId, IActionResult? Error)> ResolveExpenseActingUserForPagedAsync(string token, string operationName)
+        {
+            var guard = await ValidateExpenseActingUserAsync(token, GetRequestedExpenseAxUserId(), operationName);
+            if (guard.Allowed)
+                return (guard.AxUserId, null);
+
+            return (null, CreateApiPagedError(guard.StatusCode, guard.Message));
+        }
+
+        // Resolves and validates the acting user for command API responses.
+        private async Task<(string? AxUserId, IActionResult? Error)> ResolveExpenseActingUserForCommandAsync(string token, string operationName)
+        {
+            var guard = await ValidateExpenseActingUserAsync(token, GetRequestedExpenseAxUserId(), operationName);
+            if (guard.Allowed)
+                return (guard.AxUserId, null);
+
+            return (null, CreateApiCommandError(guard.StatusCode, guard.Message, guard.ErrorCode));
+        }
+
+        // Resolves and validates the acting user for legacy JSON responses.
+        private async Task<(string? AxUserId, IActionResult? Error)> ResolveExpenseActingUserForJsonAsync(string token, string operationName)
+        {
+            var guard = await ValidateExpenseActingUserAsync(token, GetRequestedExpenseAxUserId(), operationName);
+            if (guard.Allowed)
+                return (guard.AxUserId, null);
+
+            return (null, StatusCode(guard.StatusCode, new { success = false, message = guard.Message }));
+        }
+
         // Returns the Ax user stored in session for the signed-in context.
         private string? GetCurrentSessionAxUserId()
         {
             return NormalizeOptionalText(HttpContext?.Session.GetString("AxUser"));
+        }
+
+        // Reuses the subordinate scope lookup within one request to avoid duplicate upstream calls.
+        private async Task<IReadOnlyList<ExpenseSheetSubordinateDto>> GetExpenseSheetSubordinatesForScopeAsync(string token)
+        {
+            if (HttpContext?.Items != null &&
+                HttpContext.Items.TryGetValue(ExpenseSubordinatesScopeCacheKey, out var cachedItems) &&
+                cachedItems is IReadOnlyList<ExpenseSheetSubordinateDto> cachedList)
+            {
+                return cachedList;
+            }
+
+            var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token);
+            var items = result.GetAnyItems().ToList();
+
+            if (HttpContext?.Items != null)
+            {
+                HttpContext.Items[ExpenseSubordinatesScopeCacheKey] = items;
+            }
+
+            return items;
+        }
+
+        // Validates one acting-user override against the signed-in user and their subordinate scope.
+        private async Task<ExpenseActingUserGuardResult> ValidateExpenseActingUserAsync(
+            string token,
+            string? axUserIdOverride,
+            string operationName)
+        {
+            var normalizedOverride = NormalizeOptionalText(axUserIdOverride);
+            if (string.IsNullOrWhiteSpace(normalizedOverride))
+            {
+                return new ExpenseActingUserGuardResult
+                {
+                    Allowed = true,
+                    StatusCode = StatusCodes.Status200OK,
+                    AxUserId = null
+                };
+            }
+
+            var currentSessionAxUserId = GetCurrentSessionAxUserId();
+            if (!string.IsNullOrWhiteSpace(currentSessionAxUserId) &&
+                string.Equals(normalizedOverride, currentSessionAxUserId, StringComparison.OrdinalIgnoreCase))
+            {
+                return new ExpenseActingUserGuardResult
+                {
+                    Allowed = true,
+                    StatusCode = StatusCodes.Status200OK,
+                    AxUserId = normalizedOverride
+                };
+            }
+
+            if (string.IsNullOrWhiteSpace(currentSessionAxUserId))
+            {
+                _logger.LogWarning(
+                    "Blocked acting-user override in {Operation} because the current Ax user is not available in session. RequestedAxUserId={AxUserId}",
+                    operationName,
+                    normalizedOverride);
+
+                return new ExpenseActingUserGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status401Unauthorized,
+                    Message = _sr["Api_SessionExpired"].Value,
+                    ErrorCode = "SESSION_EXPIRED"
+                };
+            }
+
+            try
+            {
+                var items = await GetExpenseSheetSubordinatesForScopeAsync(token);
+                var isAllowed = items.Any(item => MatchesExpenseSubordinateUserId(item, normalizedOverride));
+
+                if (isAllowed)
+                {
+                    return new ExpenseActingUserGuardResult
+                    {
+                        Allowed = true,
+                        StatusCode = StatusCodes.Status200OK,
+                        AxUserId = normalizedOverride
+                    };
+                }
+
+                _logger.LogInformation(
+                    "Blocked acting-user override outside subordinate scope in {Operation}. RequestedAxUserId={AxUserId}",
+                    operationName,
+                    normalizedOverride);
+
+                return new ExpenseActingUserGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status403Forbidden,
+                    Message = _sr["Auth_PermissionDenied_Body"].Value,
+                    ErrorCode = ExpenseManagedUserScopeDeniedErrorCode
+                };
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error while validating acting-user scope in {Operation}", operationName);
+                return new ExpenseActingUserGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status502BadGateway,
+                    Message = _sr["Api_RequestFailed"].Value,
+                    ErrorCode = "UPSTREAM_ERROR"
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error while validating acting-user scope in {Operation}", operationName);
+                return new ExpenseActingUserGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status500InternalServerError,
+                    Message = _sr["Api_RequestFailed"].Value,
+                    ErrorCode = "UNHANDLED_ERROR"
+                };
+            }
         }
 
         // Detects when Gastos is acting on another user through X-IND-AxUserId.
@@ -3899,6 +4153,17 @@ namespace IND_CRM_APP.Controllers
                 Message = _sr["Auth_PermissionDenied_Body"].Value,
                 ErrorCode = ExpenseManagedUserReadOnlyErrorCode
             };
+        }
+
+        // Matches one subordinate entry against any stable expense user identifier field.
+        private static bool MatchesExpenseSubordinateUserId(ExpenseSheetSubordinateDto item, string normalizedUserId)
+        {
+            return IsSameExpenseUserId(item?.AxUserId, normalizedUserId) ||
+                   IsSameExpenseUserId(item?.CrmUserId, normalizedUserId) ||
+                   IsSameExpenseUserId(item?.UserId, normalizedUserId) ||
+                   IsSameExpenseUserId(GetExtraString(item?.Extra, "axUserId", "AxUserId"), normalizedUserId) ||
+                   IsSameExpenseUserId(GetExtraString(item?.Extra, "crmUserId", "CrmUserId"), normalizedUserId) ||
+                   IsSameExpenseUserId(GetExtraString(item?.Extra, "userId", "UserId"), normalizedUserId);
         }
 
         // Treats voucher assignment or paid status code as immutable paid state.
