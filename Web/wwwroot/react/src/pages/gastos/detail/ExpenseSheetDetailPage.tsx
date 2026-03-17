@@ -168,6 +168,7 @@ const ExpenseSheetDetailPageContent = () => {
         <ExpenseSheetStatusActionBar
           actions={controller.detailPolicy.statusActions}
           busy={controller.busy || controller.isRedirectingAfterCreate}
+          disabled={controller.areStatusActionsDisabled}
           onActionClick={controller.handleStatusActionClick}
         />
       ) : null}

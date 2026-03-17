@@ -1,4 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { useFloatingPosition } from "../../hooks/useFloatingPosition.ts";
 import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.tsx";
 
 // Single date picker matching the Historial DRP visual style.
@@ -92,6 +94,14 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
   );
 
   const containerRef = useRef(null);
+  const popoverRef = useRef(null);
+  const anchorRef = useRef(null);
+  const readOnlyMode = readOnly || disabled;
+  const isPopoverOpen = open && !readOnlyMode;
+  const floatingStyle = useFloatingPosition(anchorRef, isPopoverOpen, {
+    overlayRef: popoverRef,
+    autoFitViewport: true,
+  });
 
   useEffect(() => {
     if (selectedDate) {
@@ -102,10 +112,10 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
 
   useEffect(() => {
     const onDocClick = (ev) => {
-      if (!containerRef.current) return;
-      if (!containerRef.current.contains(ev.target)) {
-        setOpen(false);
-      }
+      const target = ev.target;
+      if (containerRef.current?.contains(target)) return;
+      if (popoverRef.current?.contains(target)) return;
+      setOpen(false);
     };
     document.addEventListener("mousedown", onDocClick);
     document.addEventListener("touchstart", onDocClick, { passive: true });
@@ -114,12 +124,6 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
       document.removeEventListener("touchstart", onDocClick);
     };
   }, []);
-
-  const readOnlyMode = readOnly || disabled;
-
-  useEffect(() => {
-    if (readOnlyMode) setOpen(false);
-  }, [readOnlyMode]);
 
   const firstDay = new Date(currentYear, currentMonth, 1);
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
@@ -177,36 +181,25 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
     readOnlyMode ? "ind-readonly-field" : "",
     readOnlyMode ? "cursor-not-allowed" : "cursor-pointer"
   ].filter(Boolean).join(" ");
-
-  return (
-    <div className={containerClass} ref={containerRef}>
-      <label className="form-label font-semibold" style={{ color: labelColor }}>{String(effectiveLabel)}</label>
-      <div className="relative">
-        <button
-          type="button"
-          className={buttonClass}
-          onClick={() => {
-            if (readOnlyMode) return;
-            setOpen((v) => !v);
-          }}
-          onKeyDown={(e) => {
-            if (readOnlyMode) return;
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              setOpen((v) => !v);
-            }
-            if (e.key === "Escape") setOpen(false);
-          }}
-          aria-expanded={open}
-          aria-disabled={readOnlyMode ? "true" : undefined}
-        >
-          <span style={{ color: valueColor, fontWeight: 400 }}>{formatDisplay(selectedDate)}</span>
-        </button>
-        <span className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 pointer-events-none">
-          {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
-        </span>
-        {open && (
-          <div className="drp-popover" role="dialog" aria-modal="true">
+  const popover =
+    isPopoverOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            ref={popoverRef}
+            className="drp-popover"
+            role="dialog"
+            aria-modal="true"
+            style={{
+              position: "fixed",
+              top: floatingStyle.top,
+              left: floatingStyle.left,
+              width: floatingStyle.width,
+              maxHeight: floatingStyle.maxHeight,
+              zIndex: 360000,
+              overflowY: "auto",
+              overscrollBehavior: "contain",
+            }}
+          >
             <div className="drp-head">
               <button type="button" className="drp-nav" aria-label={indT("History_PrevMonth", "Previous month")} onClick={() => goMonth(-1)}>
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
@@ -250,9 +243,40 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
               })}
             </div>
             <div className="drp-status">{indT("DatePicker_SelectDate", "Select date")}</div>
-          </div>
-        )}
+          </div>,
+          document.body
+        )
+      : null;
+
+  return (
+    <div className={containerClass} ref={containerRef}>
+      <label className="form-label font-semibold" style={{ color: labelColor }}>{String(effectiveLabel)}</label>
+      <div ref={anchorRef} className="relative">
+        <button
+          type="button"
+          className={buttonClass}
+          onClick={() => {
+            if (readOnlyMode) return;
+            setOpen((v) => !v);
+          }}
+          onKeyDown={(e) => {
+            if (readOnlyMode) return;
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              setOpen((v) => !v);
+            }
+            if (e.key === "Escape") setOpen(false);
+          }}
+          aria-expanded={isPopoverOpen}
+          aria-disabled={readOnlyMode ? "true" : undefined}
+        >
+          <span style={{ color: valueColor, fontWeight: 400 }}>{formatDisplay(selectedDate)}</span>
+        </button>
+        <span className="absolute inset-y-0 right-0 flex items-center pr-2 text-slate-500 pointer-events-none">
+          {isPopoverOpen ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
+        </span>
       </div>
+      {popover}
     </div>
   );
 }

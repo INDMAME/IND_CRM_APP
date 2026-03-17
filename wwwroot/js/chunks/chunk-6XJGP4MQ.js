@@ -1,2 +1,0 @@
-var p=(e,{isOpen:r,setOpen:o,optionCount:t,setActiveIndex:c,onEnterWhenOpen:b,onEnterWhenClosed:l,onArrowNavigate:a,requireOpenForArrows:i=!1,openOnArrow:f=!1})=>{let u=s=>{t&&c(m=>{let n=m+s;return n<0?t-1:n>=t?0:n})};if(e.key==="ArrowDown"){if(i&&!r)return;e.preventDefault(),f&&o(!0),a?.(),u(1);return}if(e.key==="ArrowUp"){if(i&&!r)return;e.preventDefault(),f&&o(!0),a?.(),u(-1);return}if(e.key==="Enter"){if(e.preventDefault(),r&&t){b();return}l?.();return}e.key==="Escape"&&o(!1)};export{p as a};
-//# sourceMappingURL=chunk-6XJGP4MQ.js.map

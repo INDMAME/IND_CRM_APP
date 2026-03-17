@@ -152,7 +152,7 @@ export const useExpenseTopbarCrudActions = ({
       }
       if (saveIcon) saveIcon.classList.add("hidden");
       if (deleteBtn) {
-        if (resolvedDeleteLock) {
+        if (resolvedDeleteLock || !canDelete) {
           deleteBtn.classList.add("topbar-hidden");
         } else {
           deleteBtn.classList.remove("topbar-hidden");

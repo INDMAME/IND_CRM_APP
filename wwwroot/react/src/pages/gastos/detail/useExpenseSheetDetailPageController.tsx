@@ -28,6 +28,12 @@ const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   return items.slice(start, start + pageSize);
 };
 
+// Treats only positive numeric totals as actionable sheet content.
+const hasPositiveTotalAmount = (value: unknown): boolean => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) && parsed > 0;
+};
+
 const NewTicketIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="h-5 w-5">
     <path strokeLinecap="round" strokeLinejoin="round" d="M10 20h-5a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v2" />
@@ -222,6 +228,8 @@ export const useExpenseSheetDetailPageController = () => {
       }),
     [header?.totalAmount]
   );
+  const hasStatusActionContent = lines.length > 0 || hasPositiveTotalAmount(header?.totalAmount);
+  const areStatusActionsDisabled = !hasStatusActionContent;
 
   const { handleUpdate, handleStatusTransition, handleDelete } = useExpenseSheetDetailMutations({
     busy,
@@ -271,6 +279,10 @@ export const useExpenseSheetDetailPageController = () => {
 
   const handleStatusActionClick = useCallback(
     (action: { labelKey: string; fallback: string; nextStatus: number }) => {
+      if (!hasStatusActionContent) {
+        return;
+      }
+
       const actionLabel = indT(action.labelKey, action.fallback);
       const currentStatusLabel =
         header?.expenseSheetStatus === null || header?.expenseSheetStatus === undefined
@@ -298,7 +310,7 @@ export const useExpenseSheetDetailPageController = () => {
         },
       });
     },
-    [closeConfirm, handleStatusTransition, header?.expenseSheetStatus, invalidateCachedListForRefetch, openConfirm]
+    [closeConfirm, handleStatusTransition, hasStatusActionContent, header?.expenseSheetStatus, invalidateCachedListForRefetch, openConfirm]
   );
 
   useExpenseSheetDetailTopbarActions({
@@ -430,6 +442,7 @@ export const useExpenseSheetDetailPageController = () => {
     canUseFullEditFeatures,
     showStatusActionBar,
     showFab,
+    areStatusActionsDisabled,
     fabMenuItems,
     paginationLabels,
     totalAmountText,

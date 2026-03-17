@@ -6,11 +6,12 @@ import type { ExpenseSheetStatusAction } from "./expenseSheetDetailPolicy.ts";
 type ExpenseSheetStatusActionBarProps = {
   actions: ExpenseSheetStatusAction[];
   busy: boolean;
+  disabled?: boolean;
   onActionClick: (action: ExpenseSheetStatusAction) => void;
 };
 
 // Renders the bottom toolbar for expense sheet status transitions.
-const ExpenseSheetStatusActionBar = ({ actions, busy, onActionClick }: ExpenseSheetStatusActionBarProps) => {
+const ExpenseSheetStatusActionBar = ({ actions, busy, disabled = false, onActionClick }: ExpenseSheetStatusActionBarProps) => {
   if (actions.length < 1) {
     return null;
   }
@@ -21,7 +22,7 @@ const ExpenseSheetStatusActionBar = ({ actions, busy, onActionClick }: ExpenseSh
         <PageBottomActionButton
           key={action.id}
           label={indT(action.labelKey, action.fallback)}
-          disabled={busy}
+          disabled={busy || disabled}
           onClick={() => onActionClick(action)}
         />
       ))}
