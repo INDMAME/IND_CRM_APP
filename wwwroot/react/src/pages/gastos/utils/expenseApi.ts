@@ -22,6 +22,10 @@ import type {
   ExpenseSheetLineUpdateResponseData,
   ExpenseSheetListApiRequest,
   ExpenseSheetListItemDto,
+  ExpenseSheetListResponseEnvelope,
+  ExpenseSheetsAskRequest,
+  ExpenseSheetsAskResponseData,
+  ExpenseSheetsAskResult,
   ExpenseSheetTicketCreateRequest,
   ExpenseSheetTicketDetailDto,
   ExpenseSheetTicketLinkBulkRequest,
@@ -74,6 +78,7 @@ import {
   mapExpenseSheetLine as mapExpenseSheetLineCore,
   mapExpenseSheetListItemToCard as mapExpenseSheetListItemToCardCore,
 } from "./expenseApiMappers.ts";
+import { sanitizeAssistantText } from "./expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "./expenseApiDateUtils.ts";
 import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
 import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
@@ -256,6 +261,14 @@ const tryParseJson = (raw: string): unknown | null => {
   } catch {
     return null;
   }
+};
+
+const cloneJsonCompatibleValue = <T>(value: T): T => {
+  if (value === undefined || value === null) {
+    return value;
+  }
+
+  return JSON.parse(JSON.stringify(value)) as T;
 };
 
 const readRuntimeStrictApiFlag = (): boolean => {
@@ -672,12 +685,26 @@ export const mapExpenseSheetHeader = mapExpenseSheetHeaderCore;
 // Maps /api/crm/expensesheets/{hojaGastosId} line contract to UI model.
 export const mapExpenseSheetLine = mapExpenseSheetLineCore;
 
+export type ExpenseSheetListFetchCapture = {
+  request: ExpenseSheetListApiRequest;
+  response: ExpenseSheetListResponseEnvelope;
+  axUserIdOverride: string | null;
+  source: "api" | "legacy";
+};
+
 export type ExpenseSheetListFetchOptions = ApiFetchOptions & {
   axUserIdOverride?: string;
+  onRequestPrepared?: (request: ExpenseSheetListApiRequest) => void;
+  onCapture?: (capture: ExpenseSheetListFetchCapture) => void;
 };
 
 export type ExpenseTicketListFetchOptions = ApiFetchOptions & {
   axUserIdOverride?: string;
+};
+
+export type ExpenseSheetListSourceJsonOptions = ApiFetchOptions & {
+  axUserIdOverride?: string;
+  seedResponse?: ExpenseSheetListResponseEnvelope | null;
 };
 
 const buildTicketListHeaders = (
@@ -701,7 +728,7 @@ export const fetchExpenseSheetList = async (
   payload: ExpenseSheetListApiRequest,
   options?: ExpenseSheetListFetchOptions
 ): Promise<IndPagedResponse<ExpenseSheetListItemDto>> => {
-  const { axUserIdOverride, ...baseOptions } = options || {};
+  const { axUserIdOverride, onRequestPrepared, onCapture, ...baseOptions } = options || {};
   const rawCreatedDateFrom = safeText(payload?.createdDateFrom);
   const rawCreatedDateTo = safeText(payload?.createdDateTo);
   const createdDateFrom = normalizeOptionalApiDate(rawCreatedDateFrom);
@@ -721,6 +748,9 @@ export const fetchExpenseSheetList = async (
     expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
     includeSubordinates: payload.includeSubordinates === true,
   };
+  const serializedPayload = cloneJsonCompatibleValue(safePayload);
+
+  onRequestPrepared?.(serializedPayload);
 
   const context = await ensureExpenseApiContext(baseOptions);
   const listHeaders = sanitizeHeaders(buildExpenseHeaders(context, baseOptions, true, false));
@@ -738,6 +768,13 @@ export const fetchExpenseSheetList = async (
       method: "POST",
       headers: listHeaders,
       body: JSON.stringify(safePayload),
+    });
+
+    onCapture?.({
+      request: serializedPayload,
+      response: cloneJsonCompatibleValue(response),
+      axUserIdOverride: normalizedOverrideAxUserId || null,
+      source: "api",
     });
 
     return normalizeListPagedResponse(response);
@@ -762,8 +799,109 @@ export const fetchExpenseSheetList = async (
       Number.isFinite(safePayload.pageSize) && safePayload.pageSize > 0 ? safePayload.pageSize : 50
     );
 
+    onCapture?.({
+      request: serializedPayload,
+      response: cloneJsonCompatibleValue(mapped),
+      axUserIdOverride: normalizedOverrideAxUserId || null,
+      source: "legacy",
+    });
+
     return normalizeListPagedResponse(mapped);
   }
+};
+
+const normalizePositiveInteger = (value: unknown, fallbackValue: number): number => {
+  const parsedValue = Number(value);
+  if (Number.isFinite(parsedValue) && parsedValue > 0) {
+    return Math.floor(parsedValue);
+  }
+
+  return fallbackValue;
+};
+
+// Rebuilds one full list envelope for the assistant by loading every page of the active query.
+export const fetchExpenseSheetListSourceJson = async (
+  payload: ExpenseSheetListApiRequest,
+  options?: ExpenseSheetListSourceJsonOptions
+): Promise<ExpenseSheetListResponseEnvelope> => {
+  const { seedResponse, ...baseOptions } = options || {};
+  const fallbackPage = normalizePositiveInteger(payload?.page, 1);
+  const fallbackPageSize = normalizePositiveInteger(payload?.pageSize, 50);
+  const normalizedSeedResponse = seedResponse ? normalizeListPagedResponse(cloneJsonCompatibleValue(seedResponse)) : null;
+  const initialResponse = normalizedSeedResponse ?? (await fetchExpenseSheetList(payload, baseOptions));
+  const normalizedInitialResponse = normalizeListPagedResponse(cloneJsonCompatibleValue(initialResponse));
+
+  if (normalizedInitialResponse.Success === false) {
+    throw new ApiFetchError(
+      safeText(normalizedInitialResponse.Message) || "Could not load the full expense sheet query."
+    );
+  }
+
+  const totalRecordsRaw = Number(normalizedInitialResponse.Total);
+  const totalRecords =
+    Number.isFinite(totalRecordsRaw) && totalRecordsRaw >= 0
+      ? Math.floor(totalRecordsRaw)
+      : normalizedInitialResponse.Items.length;
+  const effectivePageSize = normalizePositiveInteger(normalizedInitialResponse.PageSize, fallbackPageSize);
+  const totalPages = Math.max(1, Math.ceil(totalRecords / Math.max(1, effectivePageSize)));
+  const currentPage = Math.min(
+    totalPages,
+    normalizePositiveInteger(normalizedInitialResponse.Page ?? fallbackPage, fallbackPage)
+  );
+
+  if (totalPages <= 1) {
+    return {
+      ...normalizedInitialResponse,
+      Total: totalRecords,
+      Page: 1,
+      PageSize: effectivePageSize,
+      Items: cloneJsonCompatibleValue(normalizedInitialResponse.Items),
+    };
+  }
+
+  const itemsByPage = new Map<number, ExpenseSheetListItemDto[]>();
+  itemsByPage.set(currentPage, cloneJsonCompatibleValue(normalizedInitialResponse.Items));
+
+  for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+    if (pageNumber === currentPage) {
+      continue;
+    }
+
+    const pageResponse = await fetchExpenseSheetList(
+      {
+        ...payload,
+        page: pageNumber,
+        pageSize: effectivePageSize,
+      },
+      baseOptions
+    );
+
+    if (pageResponse.Success === false) {
+      throw new ApiFetchError(
+        safeText(pageResponse.Message) || `Could not load expense sheet page ${pageNumber}.`
+      );
+    }
+
+    itemsByPage.set(pageNumber, cloneJsonCompatibleValue(pageResponse.Items));
+  }
+
+  const allItems: ExpenseSheetListItemDto[] = [];
+  for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+    const pageItems = itemsByPage.get(pageNumber);
+    if (!Array.isArray(pageItems) || pageItems.length === 0) {
+      continue;
+    }
+
+    allItems.push(...pageItems);
+  }
+
+  return {
+    ...normalizedInitialResponse,
+    Total: totalRecords,
+    Page: 1,
+    PageSize: effectivePageSize,
+    Items: allItems,
+  };
 };
 
 // Loads one expense sheet detail from /api/crm/expensesheets/{hojaGastosId}.
@@ -1193,6 +1331,145 @@ export const deleteExpenseSheetLine = async (
   );
 
   return normalizeApiResponse(response);
+};
+
+const normalizeExpenseSheetsAskResponse = (response: ExpenseSheetsAskResult): ExpenseSheetsAskResult => {
+  const normalized = normalizeApiResponse(response);
+  const rawData = normalized?.Data;
+  if (!rawData || typeof rawData !== "object") {
+    return {
+      ...normalized,
+      Message: sanitizeAssistantText(normalized?.Message),
+      HttpStatus: typeof response?.HttpStatus === "number" ? response.HttpStatus : undefined,
+      RetryAfter: safeText(response?.RetryAfter) || null,
+    };
+  }
+
+  const rawWarnings =
+    (rawData as { Warnings?: unknown; warnings?: unknown }).Warnings ??
+    (rawData as { warnings?: unknown }).warnings;
+  const rawFiltersApplied =
+    (rawData as { FiltersApplied?: unknown; filtersApplied?: unknown }).FiltersApplied ??
+    (rawData as { filtersApplied?: unknown }).filtersApplied;
+
+  const isIgnorableAssistantWarning = (warning: string): boolean => {
+    const normalizedWarning = sanitizeAssistantText(warning).toLowerCase();
+    if (!normalizedWarning) return true;
+
+    return normalizedWarning.includes("sourcejson") &&
+      (normalizedWarning.includes("skipped") || normalizedWarning.includes("omit"));
+  };
+
+  return {
+    ...normalized,
+    Message: sanitizeAssistantText(normalized?.Message),
+    HttpStatus: typeof response?.HttpStatus === "number" ? response.HttpStatus : undefined,
+    RetryAfter: safeText(response?.RetryAfter) || null,
+    Data: {
+      Answer: sanitizeAssistantText(
+        (rawData as { Answer?: unknown; answer?: unknown }).Answer ?? (rawData as { answer?: unknown }).answer
+      ),
+      Model: sanitizeAssistantText(
+        (rawData as { Model?: unknown; model?: unknown }).Model ?? (rawData as { model?: unknown }).model
+      ),
+      SourceKey: sanitizeAssistantText(
+        (rawData as { SourceKey?: unknown; sourceKey?: unknown }).SourceKey ??
+          (rawData as { sourceKey?: unknown }).sourceKey
+      ),
+      FiltersApplied:
+        rawFiltersApplied && typeof rawFiltersApplied === "object"
+          ? cloneJsonCompatibleValue(rawFiltersApplied as Record<string, unknown>)
+          : null,
+      TotalSourceRecords:
+        toNullableNumber(
+          (rawData as { TotalSourceRecords?: unknown; totalSourceRecords?: unknown }).TotalSourceRecords ??
+            (rawData as { totalSourceRecords?: unknown }).totalSourceRecords
+        ) ?? null,
+      RecordsSentToModel:
+        toNullableNumber(
+          (rawData as { RecordsSentToModel?: unknown; recordsSentToModel?: unknown }).RecordsSentToModel ??
+            (rawData as { recordsSentToModel?: unknown }).recordsSentToModel
+        ) ?? null,
+      RetrievalMode: sanitizeAssistantText(
+        (rawData as { RetrievalMode?: unknown; retrievalMode?: unknown }).RetrievalMode ??
+          (rawData as { retrievalMode?: unknown }).retrievalMode
+      ) || null,
+      Truncated: toNullableBool(
+        (rawData as { Truncated?: unknown; truncated?: unknown }).Truncated ??
+          (rawData as { truncated?: unknown }).truncated
+      ),
+      Warnings: Array.isArray(rawWarnings)
+        ? rawWarnings
+            .map((entry) => sanitizeAssistantText(entry))
+            .filter((entry) => entry && !isIgnorableAssistantWarning(entry))
+        : [],
+    },
+  };
+};
+
+// Asks business questions about the current expense sheet list using /api/ia/service/expensesheets/ask.
+export const askExpenseSheetsQuestion = async (
+  payload: ExpenseSheetsAskRequest,
+  options?: ApiFetchOptions
+): Promise<ExpenseSheetsAskResult> => {
+  const question = safeText(payload?.question);
+  if (!question) {
+    throw new ApiFetchError("question is required.");
+  }
+
+  const context = await ensureExpenseApiContext(options);
+  const csrfToken = getCsrfToken();
+  const headers = sanitizeHeaders(buildExpenseHeaders(context, options, true));
+  if (csrfToken) {
+    headers.RequestVerificationToken = csrfToken;
+  }
+
+  const safePayload: ExpenseSheetsAskRequest = {
+    question,
+    answerInstructions: safeText(payload?.answerInstructions) || undefined,
+    listRequest: cloneJsonCompatibleValue(payload.listRequest),
+    sourceJson:
+      payload?.sourceJson === null || payload?.sourceJson === undefined
+        ? undefined
+        : cloneJsonCompatibleValue(payload.sourceJson),
+  };
+
+  const response = await fetch("/api/ia/service/expensesheets/ask", {
+    credentials: "same-origin",
+    ...options,
+    method: "POST",
+    headers,
+    body: JSON.stringify(safePayload),
+  });
+
+  const raw = await response.text();
+  const retryAfter = safeText(response.headers.get("Retry-After"));
+
+  if (!response.ok) {
+    const reloginResult = await handleApiAuthFailure<ExpenseSheetsAskResult>(raw, response.status, "expense-sheets-ask");
+    if (reloginResult !== null) {
+      return reloginResult;
+    }
+
+    if (response.status === 403) {
+      throw new ApiFetchError(readApiMessageFromRaw(raw) || "Permission denied.", response.status, raw);
+    }
+  }
+
+  const parsed = tryParseJson(raw);
+  if (!parsed || typeof parsed !== "object") {
+    if (!response.ok) {
+      throw new ApiFetchError(readApiMessageFromRaw(raw) || "Request failed.", response.status, raw);
+    }
+
+    throw new ApiFetchError("Invalid server response.", response.status, raw);
+  }
+
+  return normalizeExpenseSheetsAskResponse({
+    ...(parsed as ExpenseSheetsAskResult),
+    HttpStatus: response.status,
+    RetryAfter: retryAfter || null,
+  });
 };
 
 // Extracts an expense draft from a ticket image using /api/ia/service/expensefromticket.

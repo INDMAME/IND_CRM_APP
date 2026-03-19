@@ -141,6 +141,34 @@ export type ExpenseSheetListItemDto = {
   CreatedDate: ExpenseApiDate | null;
 };
 
+export type ExpenseSheetListResponseEnvelope = IndPagedResponse<ExpenseSheetListItemDto>;
+
+export type ExpenseSheetsAskSourceJson = Record<string, unknown> | unknown[];
+
+export type ExpenseSheetsAskRequest = {
+  question: string;
+  answerInstructions?: string;
+  listRequest: ExpenseSheetListApiRequest;
+  sourceJson?: ExpenseSheetsAskSourceJson | null;
+};
+
+export type ExpenseSheetsAskResponseData = {
+  Answer: string;
+  Model: string;
+  SourceKey: string;
+  FiltersApplied?: Record<string, unknown> | null;
+  TotalSourceRecords?: number | null;
+  RecordsSentToModel?: number | null;
+  RetrievalMode?: string | null;
+  Truncated?: boolean | null;
+  Warnings?: string[] | null;
+};
+
+export type ExpenseSheetsAskResult = IndApiResponse<ExpenseSheetsAskResponseData> & {
+  HttpStatus?: number;
+  RetryAfter?: string | null;
+};
+
 // /api/crm/expensesheets/{hojaGastosId} line contract.
 export type ExpenseSheetLineDto = {
   RecId: string;

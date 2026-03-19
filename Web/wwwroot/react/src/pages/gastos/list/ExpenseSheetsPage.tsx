@@ -19,6 +19,7 @@ import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, s
 import { useExpenseSheetsListData } from "./useExpenseSheetsListData.ts";
 import { useExpenseSheetsFiltersState } from "./useExpenseSheetsFiltersState.ts";
 import { useExpenseSheetsFilterCache } from "./useExpenseSheetsFilterCache.ts";
+import ExpenseSheetsAssistant from "./ExpenseSheetsAssistant.tsx";
 import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
@@ -103,6 +104,7 @@ const ExpenseSheetsPageContent = () => {
     loadList,
     restoreListSnapshot,
     resetList,
+    assistantContext,
   } = useExpenseSheetsListData({
     hasAccess,
     pageSize: PAGE_SIZE,
@@ -684,6 +686,8 @@ const ExpenseSheetsPageContent = () => {
         }}
         labels={paginationLabels}
       />
+
+      <ExpenseSheetsAssistant context={assistantContext} isListLoading={isLoading} />
 
       {canCreateExpense ? (
         <FloatingActionButton

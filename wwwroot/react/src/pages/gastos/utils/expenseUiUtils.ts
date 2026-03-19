@@ -40,6 +40,22 @@ export const safeText = (value: unknown): string => {
   return String(value).trim();
 };
 
+// Cleans chat text while preserving accents and readable punctuation.
+export const sanitizeAssistantText = (value: unknown): string => {
+  const source = safeText(value);
+  if (!source) return "";
+
+  return source
+    .normalize("NFC")
+    .replace(/\uFEFF/g, "")
+    .replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "")
+    .replace(/[\u200B-\u200D\u2060]/g, "")
+    .replace(/\r\n?/g, "\n")
+    .replace(/[ \t]+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+};
+
 // Normalizes card title text only when it comes in full upper or full lower case.
 export const normalizeCardTitleText = (value: unknown, fallback = "-"): string => {
   const source = safeText(value);

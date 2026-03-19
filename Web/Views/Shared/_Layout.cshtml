@@ -38,8 +38,9 @@
     var hideChrome = ViewData["HideChrome"] as bool? ?? false;
     var contentClassOverride = ViewData["ContentClass"] as string;
     var contentClass = string.IsNullOrWhiteSpace(contentClassOverride)
-        ? "content w-full max-w-5xl mx-auto px-4 md:px-6 min-h-screen"
+        ? "content w-full max-w-5xl mx-auto px-4 md:px-6"
         : contentClassOverride!;
+    var chromeLayoutClass = hideChrome ? "layout-shell--without-chrome" : "layout-shell--with-chrome";
 
     IndWebContext? permissionContext = null;
     var contextRaw = Context?.Session?.GetString("INDWebContext");
@@ -90,7 +91,7 @@
     var permissionRedirectMessage = TempData?["IndPermissionRedirectMessage"] as string;
     var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
-<body class="bg-slate-100 font-sans text-[#00296be0] overflow-x-hidden @bodyClass">
+<body class="bg-slate-100 font-sans text-[#00296be0] overflow-x-hidden @chromeLayoutClass @bodyClass">
     <svg class="ind-spinner-defs" aria-hidden="true" focusable="false">
         <defs>
             <linearGradient id="indSpinnerGradient">

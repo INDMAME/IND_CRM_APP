@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useFloatingActionButtonVisibility } from "../../hooks/useFloatingActionButtonVisibility.ts";
 
 export type FloatingActionButtonMenuItem = {
@@ -59,11 +60,11 @@ const FloatingActionButton = ({
   const hasMenu = menuItems.length > 0;
   const isMenuControlled = typeof isMenuOpen === "boolean";
   const menuOpen = hasMenu ? (isMenuControlled ? Boolean(isMenuOpen) : internalMenuOpen) : false;
-  const { resolvedBottom } = useFloatingActionButtonVisibility({
+  const { resolvedBottom, reservedHeight } = useFloatingActionButtonVisibility({
     bottom,
-    right,
     size,
   });
+  const portalTarget = typeof document === "undefined" ? null : document.body;
 
   const setMenuOpen = useCallback(
     (nextOpen: boolean) => {
@@ -212,7 +213,7 @@ const FloatingActionButton = ({
     return extra ? `${base} ${extra}` : base;
   }, [menuClassName]);
 
-  return (
+  const floatingActionButton = (
     <div
       ref={rootRef}
       className="fixed z-2000 flex flex-col items-end gap-2"
@@ -259,6 +260,32 @@ const FloatingActionButton = ({
         <canvas ref={canvasRef} className="block rounded-md" />
       </button>
     </div>
+  );
+
+  const trailingSpacer =
+    reservedHeight > 0 ? (
+      <div
+        aria-hidden="true"
+        data-ind-floating-action-spacer="true"
+        className="pointer-events-none"
+        style={{ height: `${reservedHeight}px` }}
+      />
+    ) : null;
+
+  if (!portalTarget) {
+    return (
+      <>
+        {trailingSpacer}
+        {floatingActionButton}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {trailingSpacer ? createPortal(trailingSpacer, portalTarget) : null}
+      {createPortal(floatingActionButton, portalTarget)}
+    </>
   );
 };
 

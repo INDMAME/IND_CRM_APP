@@ -1166,6 +1166,61 @@ namespace IND_CRM_APP.Services
             return BuildPagedResponse<ExpenseSheetSubordinateDto>(result, "GetExpenseSheetSubordinates");
         }
 
+        // Asks AI questions about the filtered expense sheet dataset.
+        public async Task<ApiTransportResponse<ExpenseSheetsAskResponseData>> AskExpenseSheetsAsync(
+            string token,
+            ExpenseSheetsAskRequest req,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default)
+        {
+            PrepareRequestHeaders(
+                token,
+                "AskExpenseSheets",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+
+            req ??= new ExpenseSheetsAskRequest();
+            var payload = new ExpenseSheetsAskRequest
+            {
+                Question = NormalizeOptionalText(req.Question),
+                AnswerInstructions = NormalizeOptionalText(req.AnswerInstructions),
+                ListRequest = NormalizeExpenseSheetsAskListRequest(req.ListRequest),
+                SourceJson = CloneOptionalJsonElement(req.SourceJson)
+            };
+
+            var serializedPayload = Serialize(payload);
+            _logger.LogInformation(
+                "AskExpenseSheets request. QuestionLength: {QuestionLength}. HasAnswerInstructions: {HasAnswerInstructions}. HasListRequest: {HasListRequest}. HasSourceJson: {HasSourceJson}. PayloadLength: {PayloadLength}. AxUserIdOverride: {AxUserIdOverride}.",
+                payload.Question?.Length ?? 0,
+                !string.IsNullOrWhiteSpace(payload.AnswerInstructions),
+                payload.ListRequest != null,
+                payload.SourceJson.HasValue && payload.SourceJson.Value.ValueKind != JsonValueKind.Null && payload.SourceJson.Value.ValueKind != JsonValueKind.Undefined,
+                serializedPayload.Length,
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
+
+            var result = await SendPostAsync(ApiRoutes.ExpenseSheetsAsk, serializedPayload, cancellationToken);
+            var response = BuildApiResponse<ExpenseSheetsAskResponseData>(result, "AskExpenseSheets");
+            _logger.LogInformation(
+                "AskExpenseSheets upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. RetryAfter: {RetryAfter}. Message: {Message}. Raw: {Raw}",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                TryGetHeaderValue(result.Headers, "Retry-After") ?? "<null>",
+                response.Message ?? "<null>",
+                SafeLogPayload(result.Raw));
+
+            return new ApiTransportResponse<ExpenseSheetsAskResponseData>
+            {
+                Response = response,
+                StatusCode = result.StatusCode,
+                Headers = result.Headers
+            };
+        }
+
         public async Task<ApiResponse<object>> CreateExpenseSheetTicketAsync(
             string token,
             ExpenseSheetTicketCreateRequest req,
@@ -2001,6 +2056,41 @@ namespace IND_CRM_APP.Services
                 SafeLogPayload(result.Raw));
 
             return response;
+        }
+
+        // Normalizes optional list filters before forwarding them to the AI ask endpoint.
+        private static ExpenseSheetListApiRequest? NormalizeExpenseSheetsAskListRequest(ExpenseSheetListApiRequest? request)
+        {
+            if (request == null)
+                return null;
+
+            return new ExpenseSheetListApiRequest
+            {
+                Filter = NormalizeOptionalText(request.Filter),
+                BilledMode = request.BilledMode is >= 0 and <= 2 ? request.BilledMode : null,
+                CreatedDateFrom = NormalizeAxListDate(request.CreatedDateFrom),
+                CreatedDateTo = NormalizeAxListDate(request.CreatedDateTo),
+                ProjId = NormalizeOptionalText(request.ProjId),
+                CurrencyCode = NormalizeOptionalText(request.CurrencyCode)?.ToUpperInvariant(),
+                ExpenseSheetStatus = request.ExpenseSheetStatus is >= 0 and <= 4 ? request.ExpenseSheetStatus : null,
+                IncludeSubordinates = request.IncludeSubordinates,
+                Page = request.Page < 1 ? 1 : request.Page,
+                PageSize = request.PageSize <= 0 ? 50 : request.PageSize
+            };
+        }
+
+        // Clones a JsonElement so payload forwarding does not depend on the original request lifetime.
+        private static JsonElement? CloneOptionalJsonElement(JsonElement? value)
+        {
+            if (!value.HasValue)
+                return null;
+
+            var element = value.Value;
+            if (element.ValueKind == JsonValueKind.Null || element.ValueKind == JsonValueKind.Undefined)
+                return null;
+
+            using var document = JsonDocument.Parse(element.GetRawText());
+            return document.RootElement.Clone();
         }
 
         // ======================================================

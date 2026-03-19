@@ -239,6 +239,10 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return IndAccessRights.View;
             }
 
+            // Expense sheet assistant only reads already loaded sheet data.
+            if (path.StartsWith("/api/ia/service/expensesheets/ask", StringComparison.OrdinalIgnoreCase))
+                return IndAccessRights.View;
+
             if (path.StartsWith("/TextEditorReact", StringComparison.OrdinalIgnoreCase))
                 return IndAccessRights.View;
             if (path.Contains("/Create", StringComparison.OrdinalIgnoreCase))

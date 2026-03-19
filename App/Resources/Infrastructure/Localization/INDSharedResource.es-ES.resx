@@ -1392,4 +1392,100 @@
   <data name="ExpenseSheets_NewTicket_Progress_Link_Body" xml:space="preserve">
     <value>El ticket generado se está conectando con la hoja de gastos actual.</value>
   </data>
+  <data name="ExpenseSheets_Assistant_Title" xml:space="preserve">
+    <value>Asistente de gastos</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Subtitle" xml:space="preserve">
+    <value>Haz preguntas de negocio sobre las hojas de gasto cargadas actualmente.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_LauncherLabel" xml:space="preserve">
+    <value>Abrir asistente de hojas de gasto</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Empty_Title" xml:space="preserve">
+    <value>Pide un resumen de negocio</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Empty_Body" xml:space="preserve">
+    <value>Usa las acciones rápidas o escribe una pregunta sobre las hojas de gasto cargadas en el listado.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_NoContext_Title" xml:space="preserve">
+    <value>Carga hojas de gasto primero.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_NoContext_Body" xml:space="preserve">
+    <value>El asistente necesita una respuesta real del listado antes de poder analizar los datos.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Input_Placeholder" xml:space="preserve">
+    <value>...</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Context_Updated" xml:space="preserve">
+    <value>El contexto de análisis se actualizó con la última carga del listado.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Context_Ready" xml:space="preserve">
+    <value>Usando la última carga del listado.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Quick_Summary" xml:space="preserve">
+    <value>Resumen</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Quick_Analytics" xml:space="preserve">
+    <value>Analítica</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Quick_Anomalies" xml:space="preserve">
+    <value>Anomalías</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Question_Summary" xml:space="preserve">
+    <value>Resume las hojas de gasto cargadas. Indica total global, usuarios principales, periodos y observaciones relevantes.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Question_Analytics" xml:space="preserve">
+    <value>Analiza las hojas de gasto cargadas y extrae patrones: gasto total, top usuarios, top proyectos, top monedas y distribución por estado.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Question_Anomalies" xml:space="preserve">
+    <value>Revisa las hojas de gasto cargadas y detecta posibles anomalías, inconsistencias o valores atípicos en importes, fechas, usuarios, proyectos, estados y tipos de gasto.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Send" xml:space="preserve">
+    <value>Enviar</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Sending" xml:space="preserve">
+    <value>Enviando</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Retry" xml:space="preserve">
+    <value>Reintentar</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Warnings" xml:space="preserve">
+    <value>Advertencias</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Metadata_Total" xml:space="preserve">
+    <value>Total registros</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Metadata_Mode" xml:space="preserve">
+    <value>Recuperación</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Metadata_Truncated" xml:space="preserve">
+    <value>Truncado</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Metadata_Truncated_Yes" xml:space="preserve">
+    <value>Sí</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Metadata_Truncated_No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Metadata_Trace" xml:space="preserve">
+    <value>TraceId</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Error_Validation" xml:space="preserve">
+    <value>Revisa la pregunta e inténtalo de nuevo.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Error_Server" xml:space="preserve">
+    <value>El asistente no está disponible ahora mismo.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Error_RateLimit" xml:space="preserve">
+    <value>Demasiadas solicitudes al asistente.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Error_RetryAfter" xml:space="preserve">
+    <value>Reintenta después de {0}.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Error_NoContext" xml:space="preserve">
+    <value>Carga hojas de gasto antes de preguntar al asistente.</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
+    <value>Analizando las hojas de gasto cargadas...</value>
+  </data>
 </root>

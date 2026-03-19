@@ -422,6 +422,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-expense-sheets-ask",
+    pattern: "api/ia/service/expensesheets/ask",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetsAsk" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
     name: "api-expense-sheets-create",
     pattern: "api/crm/expensesheets",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetsCreate" },

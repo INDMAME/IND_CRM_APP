@@ -28,6 +28,7 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string ExpenseSheetTicketsLinkBulk = "api/crm/expensesheets/tickets/link/bulk";
         public const string SpeechTranscribe = "api/ia/service/speech";
         public const string ExpenseFromTicket = "api/ia/service/expensefromticket";
+        public const string ExpenseSheetsAsk = "api/ia/service/expensesheets/ask";
 
         // Builds the activity by code route.
         public static string ActivityByCode(string safeCode) =>

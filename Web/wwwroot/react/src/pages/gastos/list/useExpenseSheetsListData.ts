@@ -5,12 +5,22 @@ import type { ExpenseSheetCard, ExpenseSheetListFilters } from "../expenseTypes.
 import { buildExpenseListPayload } from "../utils/expensePayloadBuilders.ts";
 import { fetchExpenseSheetList, mapExpenseSheetListItemToCard } from "../utils/expenseApi.ts";
 import { isExpenseAbortLikeError, runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
+import type { ExpenseSheetsAssistantContextSnapshot } from "./expenseSheetsAssistantTypes.ts";
 
 type UseExpenseSheetsListDataArgs = {
   hasAccess: boolean;
   pageSize: number;
   onForbidden: () => void;
 };
+
+const buildEmptyAssistantContextSnapshot = (): ExpenseSheetsAssistantContextSnapshot => ({
+  lastExpenseSheetsListRequest: null,
+  lastExpenseSheetsListResponse: null,
+  lastExpenseSheetsListAxUserIdOverride: null,
+  lastExpenseSheetsListResponseAt: null,
+  lastExpenseSheetsListResponseSource: null,
+  contextVersion: 0,
+});
 
 // Owns list data fetch, loading state, and pagination metadata.
 export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: UseExpenseSheetsListDataArgs) => {
@@ -19,6 +29,9 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const [assistantContext, setAssistantContext] = useState<ExpenseSheetsAssistantContextSnapshot>(
+    buildEmptyAssistantContextSnapshot
+  );
   const activeRequestControllerRef = useRef<AbortController | null>(null);
   const activeRequestSeqRef = useRef(0);
 
@@ -68,6 +81,22 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
       setErrorMessage("");
       const payload = buildExpenseListPayload(filters, page, pageSize);
       const selectedManagedUserId = String(filters?.managedUserId || "").trim();
+      const handleCapturedResponse = (capture: {
+        request: NonNullable<ExpenseSheetsAssistantContextSnapshot["lastExpenseSheetsListRequest"]>;
+        response: NonNullable<ExpenseSheetsAssistantContextSnapshot["lastExpenseSheetsListResponse"]>;
+        axUserIdOverride: string | null;
+        source: NonNullable<ExpenseSheetsAssistantContextSnapshot["lastExpenseSheetsListResponseSource"]>;
+      }) => {
+        if (requestSeq !== activeRequestSeqRef.current) return;
+        setAssistantContext((previous) => ({
+          lastExpenseSheetsListRequest: capture.request,
+          lastExpenseSheetsListResponse: capture.response,
+          lastExpenseSheetsListAxUserIdOverride: capture.axUserIdOverride,
+          lastExpenseSheetsListResponseAt: Date.now(),
+          lastExpenseSheetsListResponseSource: capture.source,
+          contextVersion: previous.contextVersion + 1,
+        }));
+      };
 
       try {
         const response = await runExpenseReadRequestWithRetry(
@@ -76,6 +105,7 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
               suppressPermissionModal: true,
               signal: controller.signal,
               axUserIdOverride: selectedManagedUserId || undefined,
+              onCapture: handleCapturedResponse,
             }),
           {
             signal: controller.signal,
@@ -133,6 +163,10 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
     setCurrentPage(1);
     setErrorMessage("");
     setIsLoading(false);
+    setAssistantContext((previous) => ({
+      ...buildEmptyAssistantContextSnapshot(),
+      contextVersion: previous.contextVersion + 1,
+    }));
   }, []);
 
   return {
@@ -144,5 +178,6 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
     loadList,
     restoreListSnapshot,
     resetList,
+    assistantContext,
   };
 };

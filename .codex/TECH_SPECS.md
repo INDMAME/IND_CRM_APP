@@ -60,6 +60,10 @@
 - Wrap complex form roots with `components/commons/AppErrorBoundary.tsx` and localized fallback text.
 - Move non-trivial side effects out of JSX trees into page-local hooks (`useHistoryFiltersState`, `useHistoryPageListeners`, `useHistoryTableEffects`, `useDetailMutations`, etc.).
 - Keep reusable UI dumb and prop-driven (`FilterButton`, `ActionButton`, `CompactPagination`, `VisitNarrativeFields`).
+- Shared assistant rule:
+  - Use `components/commons/chat/AssistantChatShell.tsx` as the standard visual shell for chatbot-style experiences.
+  - Keep module-specific request lifecycles, prompts, dataset capture, and API integration in page hooks/containers.
+  - Reuse `components/commons/chat/assistantChatTypes.ts` for message contracts so assistant UIs stay compatible across modules.
 - Reuse shared behavior helpers before adding new logic:
   - combobox keyboard behavior: `hooks/useComboboxKeyboard.ts`
   - text editor navigation and return flow: `utils/textEditorNavigation.ts` + `hooks/useTextEditorFields.ts`
@@ -121,4 +125,4 @@
 - Legacy JS must be migrated into `Web/wwwroot/react/src/legacy` as TS and compiled.
 
 ## Last updated
-- 2026-02-17
+- 2026-03-18

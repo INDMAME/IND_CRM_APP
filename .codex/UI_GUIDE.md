@@ -29,6 +29,8 @@
   - Topbar icons: 24x24 (`h-6 w-6`) with a 25x25 container via `topbar-btn`.
   - Topbar SVG standard: enforce `aspect-ratio: 1 / 1` and `stroke-width: 1.5 !important` on `path/line/polyline`.
   - Topbar SVG visibility: use Tailwind `hidden` on SVG for state swaps. CSS enforces `.topbar svg.hidden { display: none !important; }`.
+  - Assistant chat UI must reuse `components/commons/chat/AssistantChatShell.tsx` for the floating launcher, panel, messages, quick actions, and composer.
+  - Assistant chat adapters may change copy and business logic only; they should not fork spacing, radius, icon placement, or message layout without an approved design update.
 - Read-only fields:
   - Use `ind-readonly-field` for any read-only or disabled input/select/textarea.
   - Read-only text color standard: #64748b (must be `!important` to override text utilities).
@@ -126,6 +128,10 @@
 - Use shared `Spinner` from `components/commons/Spinner.tsx` for loading states.
 - Extract repeated UI blocks into module components (history cards, pagination, form sections).
 - Keep side effects (listeners, tooltip orchestration, animation lifecycle) in hooks, not in presentational components.
+- Assistant chat pattern:
+  - `AssistantChatShell` is the reusable visual primitive.
+  - Module hooks/containers adapt backend data to the shell props.
+  - If a new page needs an assistant, start from the shared shell instead of cloning an existing page-local chat.
 
 ## TextEditor UI behavior (system)
 - Reads data attributes: `data-field-id`, `data-field-label`, `data-field-value`, `data-return-url`.
@@ -134,4 +140,4 @@
 - Transcription uses `/Visitas/TranscribeSpeech` and replaces textarea text.
 
 ## Last updated
-- 2026-02-12
+- 2026-03-18

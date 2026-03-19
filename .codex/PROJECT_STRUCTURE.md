@@ -44,6 +44,7 @@
 |           `-- src/                    // React sources (TS/TSX)
 |               |-- components/         // Shared components
 |               |   |-- commons/        // Shared UI building blocks
+|               |   |   `-- chat/       // Shared assistant chat shell and contracts
 |               |   |-- data/           // Shared data display components
 |               |   |-- navigation/     // Shared navigation components
 |               |   `-- visitas/        // Shared Visitas-only components
@@ -105,4 +106,4 @@
 17) Promote a module component to shared only when at least two modules reuse the same contract and style behavior.
 
 ## Last updated
-- 2026-02-12
+- 2026-03-18

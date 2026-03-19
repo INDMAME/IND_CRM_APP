@@ -30,6 +30,7 @@ html, body {
 :root {
     --bs-primary: #00296b;
     --bs-primary-rgb: 0, 41, 107;
+    --ind-topbar-height: 64px;
 }
 
 /* SIDEBAR */
@@ -344,6 +345,11 @@ html, body {
     padding: 10px 16px 20px;
     margin-top: 0px; /* even closer to the topbar */
     transition: margin-left 0.35s cubic-bezier(.4, 0, .2, 1);
+}
+
+body.layout-shell--with-chrome #content.content {
+    min-height: calc(100vh - var(--ind-topbar-height));
+    min-height: calc(100dvh - var(--ind-topbar-height));
 }
 
     .content.shifted {

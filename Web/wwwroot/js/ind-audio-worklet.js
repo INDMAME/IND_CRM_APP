@@ -1,6 +1,6 @@
 import {
   __commonJS
-} from "./chunks/chunk-45FWCHS2.js";
+} from "./chunks/chunk-W7NC74ZX.js";
 
 // Web/wwwroot/react/audio-recorder/ind-audio-worklet.ts
 var require_ind_audio_worklet = __commonJS({

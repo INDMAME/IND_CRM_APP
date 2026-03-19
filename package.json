@@ -47,6 +47,8 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "react": "^19.2.1",
-    "react-dom": "^19.2.1"
+    "react-dom": "^19.2.1",
+    "react-markdown": "^10.1.0",
+    "recharts": "^3.8.0"
   }
 }

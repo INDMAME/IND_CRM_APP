@@ -174,6 +174,13 @@ namespace IND_CRM_APP.Services
             string token
         );
 
+        Task<ApiTransportResponse<ExpenseSheetsAskResponseData>> AskExpenseSheetsAsync(
+            string token,
+            ExpenseSheetsAskRequest req,
+            string? axUserIdOverride = null,
+            CancellationToken cancellationToken = default
+        );
+
         // Expense sheet tickets.
         Task<ApiTransportResponse<object>> QuickCreateExpenseSheetTicketAsync(
             string token,

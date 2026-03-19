@@ -428,6 +428,107 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // API route used by React clients for /api/ia/service/expensesheets/ask.
+        [HttpPost]
+        public async Task<IActionResult> ApiExpenseSheetsAsk([FromBody] ExpenseSheetsAskRequest? req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+            {
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+            }
+
+            req ??= new ExpenseSheetsAskRequest();
+            var hasSourceJson = req.SourceJson.HasValue &&
+                                req.SourceJson.Value.ValueKind != JsonValueKind.Null &&
+                                req.SourceJson.Value.ValueKind != JsonValueKind.Undefined;
+            var request = new ExpenseSheetsAskRequest
+            {
+                Question = NormalizeOptionalText(req.Question),
+                AnswerInstructions = NormalizeOptionalText(req.AnswerInstructions),
+                ListRequest = req.ListRequest == null
+                    ? null
+                    : new ExpenseSheetListApiRequest
+                    {
+                        Filter = NormalizeOptionalText(req.ListRequest.Filter),
+                        BilledMode = req.ListRequest.BilledMode is >= 0 and <= 2 ? req.ListRequest.BilledMode : null,
+                        CreatedDateFrom = NormalizeListDateFilter(req.ListRequest.CreatedDateFrom),
+                        CreatedDateTo = NormalizeListDateFilter(req.ListRequest.CreatedDateTo),
+                        ProjId = NormalizeOptionalText(req.ListRequest.ProjId),
+                        CurrencyCode = NormalizeOptionalText(req.ListRequest.CurrencyCode)?.ToUpperInvariant(),
+                        ExpenseSheetStatus = req.ListRequest.ExpenseSheetStatus is >= 0 and <= 4 ? req.ListRequest.ExpenseSheetStatus : null,
+                        IncludeSubordinates = req.ListRequest.IncludeSubordinates,
+                        Page = req.ListRequest.Page < 1 ? 1 : req.ListRequest.Page,
+                        PageSize = req.ListRequest.PageSize <= 0 ? 50 : req.ListRequest.PageSize
+                    },
+                SourceJson = req.SourceJson
+            };
+
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetsAsk));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
+
+            _logger.LogInformation(
+                "ApiExpenseSheetsAsk request. QuestionLength={QuestionLength}. HasListRequest={HasListRequest}. HasSourceJson={HasSourceJson}. X-IND-AxUserId={AxUserId}",
+                request.Question?.Length ?? 0,
+                request.ListRequest != null,
+                hasSourceJson,
+                requestAxUserId ?? string.Empty);
+
+            try
+            {
+                var transport = await _apiClient.AskExpenseSheetsAsync(
+                    token,
+                    request,
+                    requestAxUserId,
+                    HttpContext.RequestAborted);
+
+                var response = transport.Response;
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+                var retryAfter = transport.Headers
+                    .FirstOrDefault(entry => string.Equals(entry.Key, "Retry-After", StringComparison.OrdinalIgnoreCase))
+                    .Value?
+                    .FirstOrDefault();
+
+                if (!string.IsNullOrWhiteSpace(retryAfter))
+                {
+                    Response.Headers["Retry-After"] = retryAfter;
+                }
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    },
+                    (int)transport.StatusCode);
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetsAsk");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetsAsk");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
         // API route used by React clients for /api/crm/expensesheets/currencies.
         [HttpGet]
         public async Task<IActionResult> ApiExpenseSheetsCurrencies()

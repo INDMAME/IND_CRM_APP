@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Domingo 3/8/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 18/03/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -16,67 +16,6 @@ Formatversion: 1
     
     METHODS
       Version: 3
-      SOURCE #getSubordinatesByUser_backup
-        #// Method: getSubordinatesByUser
-        #// Purpose: Obtiene subordinados de un usuario CRM en una compania.
-        #// Input:
-        #//  - _data[1] = CompanyId
-        #//  - _data[2] = axUserId
-        #// Output rows:
-        #//  - [[subordinateUserId, subordinateName], ...]
-        #static server container getSubordinatesByUser_backup(container _data)
-        #{
-        #    DataAreaId                 companyId;
-        #    UserId                     axUserId;
-        #    CRMUserId                  crmUserId;
-        #    CRMUsuarioTable            crmUsuarioTable;
-        #    CRMUsuarioSubordinadoTable subordinadoTable;
-        #    container                  resultCon, itemCon, subordinateUsersCon;
-        #    str                        subordinateList;
-        #    str                        subordinateUserId;
-        #    int                        i;
-        #    ;
-        #
-        #    companyId = INDCRMUtilityService::getCompany(_data);
-        #    if (!companyId)
-        #        return conNull();
-        #
-        #    if (conLen(_data) < 2)
-        #        return resultCon;
-        #
-        #    axUserId = conPeek(_data, 2);
-        #
-        #    changecompany(companyId)
-        #    {
-        #        crmUsuarioTable = SysUserInfo::getCRMUsuarioTable(axUserId);
-        #        crmUserId = crmUsuarioTable.UserId;
-        #        if (!crmUserId)
-        #            return resultCon;
-        #
-        #        subordinadoTable.clear();
-        #        subordinadoTable.UserIdJefe = crmUserId;
-        #
-        #        subordinateList = crmUsuarioTable.ListaSubordinadosByPerTable();
-        #        if (!subordinateList)
-        #            return resultCon;
-        #
-        #        subordinateUsersCon = str2con(subordinateList, ',');
-        #
-        #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
-        #        {
-        #            subordinateUserId = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
-        #            if (!subordinateUserId)
-        #                continue;
-        #
-        #            itemCon = [[strFmt("%1", subordinateUserId), strFmt("%1",CRMUsuarioTable::Find(subordinateUserId).Name)]];
-        #            resultCon += itemCon;
-        #        }
-        #    }
-        #
-        #    return resultCon ? resultCon : [["Sin datos."]];
-        #}
-        #
-      ENDSOURCE
       SOURCE #classDeclaration
         #// Purpose: COM methods for expense sheets and ticket metadata management.
         #// Notes: All methods return containers with a stable shape for the API layer.
@@ -84,6 +23,92 @@ Formatversion: 1
         #{
         #
         #}
+      ENDSOURCE
+      SOURCE #buildExpenseSheetListRow
+        #// Purpose: Builds one expense sheet list row with stable output columns.
+        #static server container buildExpenseSheetListRow(CRMHojaGastosTable _hoja)
+        #{
+        #    int       expenseSheetStatus, exchangeRateMode;
+        #    Amount    monto;
+        #    container conItem;
+        #    ;
+        #
+        #    monto               = _hoja.TotalAmount();
+        #    exchangeRateMode    = _hoja.ExchangeRateMode;
+        #    expenseSheetStatus  = _hoja.ExpenseSheetStatus;
+        #
+        #    conItem = [[
+        #                 strFmt("%1", _hoja.HojaGastosId),
+        #                 strFmt("%1", _hoja.Description),
+        #                 strFmt("%1", expenseSheetStatus),
+        #                 strFmt("%1", _hoja.EstadoComentarios),
+        #                 strFmt("%1", _hoja.UserId),
+        #                 strFmt("%1", INDPersonaTable::findByCRM(CRMUsuarioTable::Find(_hoja.UserId).RecId).Name),
+        #                 strFmt("%1", _hoja.CurrencyCode),
+        #                 strFmt("%1", monto),
+        #                 strFmt("%1", _hoja.ExchRate),
+        #                 strFmt("%1", exchangeRateMode),
+        #                 strFmt("%1", _hoja.ProjId),
+        #                 strFmt("%1", _hoja.Voucher),
+        #                 strFmt("%1", date2Str(_hoja.CreatedDate, 123, 2,2,2,2,4))
+        #              ]];
+        #
+        #    return conItem;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetTicketLinkListRow
+        #// Method: buildExpenseSheetTicketLinkListRow
+        #// Purpose: Build one ticket-link row for the linking page contract.
+        #static server container buildExpenseSheetTicketLinkListRow(INDTicketInfoTable _ticketHeader, DocuRef _docuRef)
+        #{
+        #    int processedByAIInt;
+        #    int gastoTypeInt;
+        #    ;
+        #
+        #    processedByAIInt = _ticketHeader.ProcessedByAI;
+        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #
+        #    return [
+        #            strFmt('%1', _ticketHeader.FileId),
+        #            strFmt('%1', _ticketHeader.Description),
+        #            strFmt('%1', _ticketHeader.CurrencyCode),
+        #            strFmt('%1', _ticketHeader.TotalAmount),
+        #            strFmt('%1', date2Str(_docuRef.INDTransDate, 123, 2,2,2,2,4)),
+        #            strFmt('%1', _docuRef.INDFilename),
+        #            strFmt('%1', processedByAIInt),
+        #            strFmt('%1', gastoTypeInt)
+        #           ];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetTicketListRow
+        #// Method: buildExpenseSheetTicketListRow
+        #// Purpose: Build one generic ticket-list row with the reduced contract.
+        #static server container buildExpenseSheetTicketListRow(INDTicketInfoTable _ticketHeader, DocuRef _docuRef)
+        #{
+        #    int ticketStatusInt;
+        #    int processedByAIInt;
+        #    int gastoTypeInt;
+        #    ;
+        #
+        #    ticketStatusInt  = _ticketHeader.Status;
+        #    processedByAIInt = _ticketHeader.ProcessedByAI;
+        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #
+        #    return [
+        #            strFmt('%1', _ticketHeader.FileId),
+        #            strFmt('%1', _ticketHeader.Description),
+        #            strFmt('%1', ticketStatusInt),
+        #            strFmt('%1', processedByAIInt),
+        #            strFmt('%1', _ticketHeader.CurrencyCode),
+        #            strFmt('%1', _ticketHeader.TotalAmount),
+        #            strFmt('%1', date2Str(_docuRef.INDTransDate, 123, 2,2,2,2,4)),
+        #            strFmt('%1', _docuRef.INDFilename),
+        #            strFmt('%1', gastoTypeInt)
+        #           ];
+        #}
+        #
       ENDSOURCE
       SOURCE #calculateTicketTotalAmount
         #// Method: calculateTicketTotalAmount
@@ -559,7 +584,7 @@ Formatversion: 1
         #    Input _data (container):
         #      1) companyId
         #      2) headerIn
-        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional)]
+        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional)]
         #         - Mode 2  : at least [axUserId]
         #      3) linesIn (container of line containers)
         #         - Each line: [lineDescr, qty, price, lineTotal(optional)]
@@ -595,6 +620,9 @@ Formatversion: 1
         #    str                urlFile;
         #    str                fileName;
         #
+        #    str                ocrJson;
+        #    str                normalizedJson;
+        #
         #    str                lineDescr;
         #    real               qty;
         #    real               price;
@@ -604,6 +632,8 @@ Formatversion: 1
         #    boolean            hasHeaderTotalAmount;
         #    boolean            hasProcessedByAI;
         #    boolean            hasGastoType;
+        #    boolean            hasOcrJson;
+        #    boolean            hasNormalizedJson;
         #
         #    INDTicketInfoTable ticketHeader;
         #    INDTicketInfoLine  ticketLine;
@@ -636,6 +666,8 @@ Formatversion: 1
         #    hasHeaderTotalAmount = false;
         #    hasProcessedByAI     = false;
         #    hasGastoType        = false;
+        #    hasOcrJson          = false;
+        #    hasNormalizedJson   = false;
         #
         #    if (conLen(optionsIn) >= 1)
         #        mode = conPeek(optionsIn, 1);
@@ -696,6 +728,18 @@ Formatversion: 1
         #            hasGastoType = true;
         #        }
         #
+        #        if (conLen(headerIn) >= 10)
+        #        {
+        #            ocrJson = conPeek(headerIn, 10);
+        #            hasOcrJson = true;
+        #        }
+        #
+        #        if (conLen(headerIn) >= 11)
+        #        {
+        #            normalizedJson = conPeek(headerIn, 11);
+        #            hasNormalizedJson = true;
+        #        }
+        #
         #        hasHeaderTotalAmount = true;
         #
         #        if (!descr)
@@ -710,7 +754,7 @@ Formatversion: 1
         #        if (!fileName)
         #            return [INDCRMUtilityService::buildHeader(false, 'INDFilename es obligatorio.', conNull()), conNull()];
         #
-        #        transDate = INDCRMUtilityService::parseExpenseTicketTransDate(transDateStr);
+        #        transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
         #        if (!transDate)
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
@@ -765,6 +809,12 @@ Formatversion: 1
         #                docuRef.INDURLFile            = urlFile;
         #                docuRef.INDFilename           = fileName;
         #                docuRef.INDCreatedByUserId    = axUserId;
+        #
+        #                if (hasOcrJson)
+        #                    docuRef.INDOCRJson = ocrJson;
+        #
+        #                if (hasNormalizedJson)
+        #                    docuRef.INDNormalizedJson = normalizedJson;
         #                docuRef.insert();
         #
         #                ticketHeader.clear();
@@ -1050,7 +1100,7 @@ Formatversion: 1
         #        if (!fileName)
         #            return [INDCRMUtilityService::buildHeader(false, 'INDFilename es obligatorio.', conNull()), conNull()];
         #
-        #        transDate = INDCRMUtilityService::parseExpenseTicketTransDate(transDateStr);
+        #        transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
         #        if (!transDate)
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
@@ -1946,39 +1996,6 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #buildExpenseSheetListRow
-        #// Purpose: Builds one expense sheet list row with stable output columns.
-        #static server container buildExpenseSheetListRow(CRMHojaGastosTable _hoja)
-        #{
-        #    int       expenseSheetStatus, exchangeRateMode;
-        #    Amount    monto;
-        #    container conItem;
-        #    ;
-        #
-        #    monto               = _hoja.TotalAmount();
-        #    exchangeRateMode    = _hoja.ExchangeRateMode;
-        #    expenseSheetStatus  = _hoja.ExpenseSheetStatus;
-        #
-        #    conItem = [[
-        #                 strFmt("%1", _hoja.HojaGastosId),
-        #                 strFmt("%1", _hoja.Description),
-        #                 strFmt("%1", expenseSheetStatus),
-        #                 strFmt("%1", _hoja.EstadoComentarios),
-        #                 strFmt("%1", _hoja.UserId),
-        #                 strFmt("%1", INDPersonaTable::findByCRM(CRMUsuarioTable::Find(_hoja.UserId).RecId).Name),
-        #                 strFmt("%1", _hoja.CurrencyCode),
-        #                 strFmt("%1", monto),
-        #                 strFmt("%1", _hoja.ExchRate),
-        #                 strFmt("%1", exchangeRateMode),
-        #                 strFmt("%1", _hoja.ProjId),
-        #                 strFmt("%1", _hoja.Voucher),
-        #                 strFmt("%1", date2Str(_hoja.CreatedDate, 123, 2,2,2,2,4))
-        #              ]];
-        #
-        #    return conItem;
-        #}
-        #
-      ENDSOURCE
       SOURCE #getExpenseSheetsList
         #static server container getExpenseSheetsList(container _data)
         #{
@@ -2231,13 +2248,15 @@ Formatversion: 1
         #                                                      strFmt('%1', ticketHeader.CurrencyCode),
         #                                                      strFmt('%1', ticketHeader.TotalAmount),
         #                                                      strFmt('%1', ticketHeader.CreatedByUserId),
-        #                                                      strFmt('%1', date2Str(ticketHeader.createdDate, 123, 2,2,2,2,4)),
+        #                                                      strFmt('%1', date2Str(docuRef.INDTransDate, 123, 2,2,2,2,4)),
         #                                                      strFmt('%1', docuRef.INDComentario),
         #                                                      strFmt('%1', docuRef.INDURLFile),
         #                                                      strFmt('%1', docuRef.INDFilename),
         #                                                      strFmt('%1', processedByAIInt),
         #                                                      strFmt('%1', gastoTypeInt),
-        #                                                      strFmt('%1', ticketHeader.hojaGastosIdDisplay())
+        #                                                      strFmt('%1', ticketHeader.hojaGastosIdDisplay()),
+        #                                                      strFmt('%1', docuRef.INDOCRJson),
+        #                                                      strFmt('%1', docuRef.INDNormalizedJson)
         #                                                     ]);
         #
         #        while select ticketLine
@@ -2264,56 +2283,135 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #buildExpenseSheetTicketListRow
-        #// Method: buildExpenseSheetTicketListRow
-        #// Purpose: Build one generic ticket-list row with the reduced contract.
-        #static server container buildExpenseSheetTicketListRow(INDTicketInfoTable _ticketHeader, DocuRef _docuRef)
+      SOURCE #getExpenseSheetTicketsLinkList
+        #// Method: getExpenseSheetTicketsLinkList
+        #// Purpose: Returns linkable ticket list for one user.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #//  - _data[3] = searchKey/filterTxt (optional)
+        #//  - _data[4] = createdDateFrom (optional, yyyymmdd)
+        #//  - _data[5] = createdDateTo   (optional, yyyymmdd)
+        #//  - _data[6] = currencyCode    (optional)
+        #//  - _data[7] = gastoType       (optional)
+        #//  - _data[8] = processedByAI   (optional, 0|1; otros valores = sin filtro)
+        #// Fixed filters:
+        #//  - Status = Pending
+        #//  - TotalAmount != 0
+        #// Output rows:
+        #//  - [[FileId, Description, CurrencyCode, TotalAmount, TransDate, FileName, ProcessedByAI, GastoType], ...]
+        #static server container getExpenseSheetTicketsLinkList(container _data)
         #{
-        #    int ticketStatusInt;
-        #    int processedByAIInt;
-        #    int gastoTypeInt;
+        #    DataAreaId         companyId;
+        #    UserId             axUserId;
+        #    CRMUserId          crmUserId;
+        #    str 1000           filterTxt;
+        #    str 1000           likePattern;
+        #    date               createdDateFrom;
+        #    date               createdDateTo;
+        #    CurrencyCode       currencyCode;
+        #    int                gastoTypeFilter;
+        #    boolean            hasGastoTypeFilter;
+        #    int                processedByAIFilter;
+        #    boolean            hasProcessedByAIFilter;
+        #    str 16             processedByAIRaw;
+        #    int                pendingStatus;
+        #
+        #    INDTicketInfoTable ticketHeader;
+        #    DocuRef            docuRef;
+        #    container          conResult;
         #    ;
         #
-        #    ticketStatusInt  = _ticketHeader.Status;
-        #    processedByAIInt = _ticketHeader.ProcessedByAI;
-        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #    companyId = INDCRMUtilityService::getCompany(_data);
         #
-        #    return [
-        #            strFmt('%1', _ticketHeader.FileId),
-        #            strFmt('%1', _ticketHeader.Description),
-        #            strFmt('%1', ticketStatusInt),
-        #            strFmt('%1', processedByAIInt),
-        #            strFmt('%1', _ticketHeader.CurrencyCode),
-        #            strFmt('%1', _ticketHeader.TotalAmount),
-        #            strFmt('%1', date2Str(_ticketHeader.createdDate, 123, 2,2,2,2,4)),
-        #            strFmt('%1', _docuRef.INDFilename),
-        #            strFmt('%1', gastoTypeInt)
-        #           ];
-        #}
+        #    if (!companyId)
+        #        return conNull();
         #
-      ENDSOURCE
-      SOURCE #buildExpenseSheetTicketLinkListRow
-        #// Method: buildExpenseSheetTicketLinkListRow
-        #// Purpose: Build one ticket-link row for the linking page contract.
-        #static server container buildExpenseSheetTicketLinkListRow(INDTicketInfoTable _ticketHeader, DocuRef _docuRef)
-        #{
-        #    int processedByAIInt;
-        #    int gastoTypeInt;
-        #    ;
+        #    axUserId = conPeek(_data, 2);
         #
-        #    processedByAIInt = _ticketHeader.ProcessedByAI;
-        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #    if (!axUserId)
+        #        return [['Sin datos.']];
         #
-        #    return [
-        #            strFmt('%1', _ticketHeader.FileId),
-        #            strFmt('%1', _ticketHeader.Description),
-        #            strFmt('%1', _ticketHeader.CurrencyCode),
-        #            strFmt('%1', _ticketHeader.TotalAmount),
-        #            strFmt('%1', date2Str(_ticketHeader.createdDate, 123, 2,2,2,2,4)),
-        #            strFmt('%1', _docuRef.INDFilename),
-        #            strFmt('%1', processedByAIInt),
-        #            strFmt('%1', gastoTypeInt)
-        #           ];
+        #    pendingStatus = 0;
+        #
+        #    if (conLen(_data) >= 3)
+        #        filterTxt = conPeek(_data, 3);
+        #
+        #    createdDateFrom = INDCRMUtilityService::parseYmdDate(conPeek(_data, 4));
+        #    createdDateTo   = INDCRMUtilityService::parseYmdDate(conPeek(_data, 5));
+        #
+        #    if (createdDateFrom && createdDateTo && createdDateFrom > createdDateTo)
+        #        return [['Sin datos, la fecha desde no puede ser mayor a la fecha hasta.']];
+        #
+        #    if (conLen(_data) >= 6)
+        #        currencyCode = conPeek(_data, 6);
+        #
+        #    if (conLen(_data) >= 7 && conPeek(_data, 7))
+        #    {
+        #        gastoTypeFilter = conPeek(_data, 7);
+        #        hasGastoTypeFilter = true;
+        #    }
+        #
+        #    if (conLen(_data) >= 8)
+        #    {
+        #        processedByAIRaw = strFmt('%1', conPeek(_data, 8));
+        #        processedByAIRaw = strLwr(strLTrim(strRTrim(processedByAIRaw)));
+        #        if (processedByAIRaw == '0' || processedByAIRaw == '1')
+        #        {
+        #            processedByAIFilter = str2Int(processedByAIRaw);
+        #            hasProcessedByAIFilter = true;
+        #        }
+        #    }
+        #
+        #    if (filterTxt)
+        #        likePattern = strFmt('*%1*', filterTxt);
+        #
+        #    if (currencyCode)
+        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #
+        #    if (hasGastoTypeFilter && !INDCRMExpenseSheetService::isValidGastoType(gastoTypeFilter))
+        #        hasGastoTypeFilter = false;
+        #
+        #    if (hasProcessedByAIFilter &&
+        #        (processedByAIFilter < 0
+        #      || processedByAIFilter > 1))
+        #        hasProcessedByAIFilter = false;
+        #
+        #    changecompany(companyId)
+        #    {
+        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #        if (!crmUserId)
+        #            return conResult;
+        #
+        #        while select ticketHeader
+        #            order by RecId desc
+        #            where ticketHeader.CreatedByUserId == axUserId
+        #               && ticketHeader.Status          == pendingStatus
+        #               && ticketHeader.TotalAmount     != 0
+        #               && (!filterTxt                  || ticketHeader.SearchKey like likePattern )
+        #               && (!currencyCode               || ticketHeader.CurrencyCode == currencyCode)
+        #               && (!hasGastoTypeFilter         || ticketHeader.GastoType == gastoTypeFilter)
+        #               && (!hasProcessedByAIFilter     || ticketHeader.ProcessedByAI == processedByAIFilter)
+        #        {
+        #            select firstonly docuRef
+        #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)
+        #                   && docuRef.RefRecId   == ticketHeader.RecId
+        #                   && docuRef.INDFileId  == ticketHeader.FileId;
+        #
+        #            if (!docuRef.RecId)
+        #                continue;
+        #
+        #            if (createdDateFrom && ticketHeader.createdDate < createdDateFrom)
+        #                continue;
+        #
+        #            if (createdDateTo && ticketHeader.createdDate > createdDateTo)
+        #                continue;
+        #
+        #            conResult += [INDCRMExpenseSheetService::buildExpenseSheetTicketLinkListRow(ticketHeader, docuRef)];
+        #        }
+        #    }
+        #
+        #    return conResult ? conResult : [['Sin datos.']];
         #}
         #
       ENDSOURCE
@@ -2457,138 +2555,6 @@ Formatversion: 1
         #                continue;
         #
         #            conResult += [INDCRMExpenseSheetService::buildExpenseSheetTicketListRow(ticketHeader, docuRef)];
-        #        }
-        #    }
-        #
-        #    return conResult ? conResult : [['Sin datos.']];
-        #}
-        #
-      ENDSOURCE
-      SOURCE #getExpenseSheetTicketsLinkList
-        #// Method: getExpenseSheetTicketsLinkList
-        #// Purpose: Returns linkable ticket list for one user.
-        #// Input:
-        #//  - _data[1] = CompanyId
-        #//  - _data[2] = axUserId
-        #//  - _data[3] = searchKey/filterTxt (optional)
-        #//  - _data[4] = createdDateFrom (optional, yyyymmdd)
-        #//  - _data[5] = createdDateTo   (optional, yyyymmdd)
-        #//  - _data[6] = currencyCode    (optional)
-        #//  - _data[7] = gastoType       (optional)
-        #//  - _data[8] = processedByAI   (optional, 0|1; otros valores = sin filtro)
-        #// Fixed filters:
-        #//  - Status = Pending
-        #//  - TotalAmount != 0
-        #// Output rows:
-        #//  - [[FileId, Description, CurrencyCode, TotalAmount, TransDate, FileName, ProcessedByAI, GastoType], ...]
-        #static server container getExpenseSheetTicketsLinkList(container _data)
-        #{
-        #    DataAreaId         companyId;
-        #    UserId             axUserId;
-        #    CRMUserId          crmUserId;
-        #    str 1000           filterTxt;
-        #    str 1000           likePattern;
-        #    date               createdDateFrom;
-        #    date               createdDateTo;
-        #    CurrencyCode       currencyCode;
-        #    int                gastoTypeFilter;
-        #    boolean            hasGastoTypeFilter;
-        #    int                processedByAIFilter;
-        #    boolean            hasProcessedByAIFilter;
-        #    str 16             processedByAIRaw;
-        #    int                pendingStatus;
-        #
-        #    INDTicketInfoTable ticketHeader;
-        #    DocuRef            docuRef;
-        #    container          conResult;
-        #    ;
-        #
-        #    companyId = INDCRMUtilityService::getCompany(_data);
-        #
-        #    if (!companyId)
-        #        return conNull();
-        #
-        #    axUserId = conPeek(_data, 2);
-        #
-        #    if (!axUserId)
-        #        return [['Sin datos.']];
-        #
-        #    pendingStatus = 0;
-        #
-        #    if (conLen(_data) >= 3)
-        #        filterTxt = conPeek(_data, 3);
-        #
-        #    createdDateFrom = INDCRMUtilityService::parseYmdDate(conPeek(_data, 4));
-        #    createdDateTo   = INDCRMUtilityService::parseYmdDate(conPeek(_data, 5));
-        #
-        #    if (createdDateFrom && createdDateTo && createdDateFrom > createdDateTo)
-        #        return [['Sin datos, la fecha desde no puede ser mayor a la fecha hasta.']];
-        #
-        #    if (conLen(_data) >= 6)
-        #        currencyCode = conPeek(_data, 6);
-        #
-        #    if (conLen(_data) >= 7 && conPeek(_data, 7))
-        #    {
-        #        gastoTypeFilter = conPeek(_data, 7);
-        #        hasGastoTypeFilter = true;
-        #    }
-        #
-        #    if (conLen(_data) >= 8)
-        #    {
-        #        processedByAIRaw = strFmt('%1', conPeek(_data, 8));
-        #        processedByAIRaw = strLwr(strLTrim(strRTrim(processedByAIRaw)));
-        #        if (processedByAIRaw == '0' || processedByAIRaw == '1')
-        #        {
-        #            processedByAIFilter = str2Int(processedByAIRaw);
-        #            hasProcessedByAIFilter = true;
-        #        }
-        #    }
-        #
-        #    if (filterTxt)
-        #        likePattern = strFmt('*%1*', filterTxt);
-        #
-        #    if (currencyCode)
-        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
-        #
-        #    if (hasGastoTypeFilter && !INDCRMExpenseSheetService::isValidGastoType(gastoTypeFilter))
-        #        hasGastoTypeFilter = false;
-        #
-        #    if (hasProcessedByAIFilter &&
-        #        (processedByAIFilter < 0
-        #      || processedByAIFilter > 1))
-        #        hasProcessedByAIFilter = false;
-        #
-        #    changecompany(companyId)
-        #    {
-        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
-        #        if (!crmUserId)
-        #            return conResult;
-        #
-        #        while select ticketHeader
-        #            order by RecId desc
-        #            where ticketHeader.CreatedByUserId == axUserId
-        #               && ticketHeader.Status          == pendingStatus
-        #               && ticketHeader.TotalAmount     != 0
-        #               && (!filterTxt                  || ticketHeader.SearchKey like likePattern )
-        #               && (!currencyCode               || ticketHeader.CurrencyCode == currencyCode)
-        #               && (!hasGastoTypeFilter         || ticketHeader.GastoType == gastoTypeFilter)
-        #               && (!hasProcessedByAIFilter     || ticketHeader.ProcessedByAI == processedByAIFilter)
-        #        {
-        #            select firstonly docuRef
-        #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)
-        #                   && docuRef.RefRecId   == ticketHeader.RecId
-        #                   && docuRef.INDFileId  == ticketHeader.FileId;
-        #
-        #            if (!docuRef.RecId)
-        #                continue;
-        #
-        #            if (createdDateFrom && ticketHeader.createdDate < createdDateFrom)
-        #                continue;
-        #
-        #            if (createdDateTo && ticketHeader.createdDate > createdDateTo)
-        #                continue;
-        #
-        #            conResult += [INDCRMExpenseSheetService::buildExpenseSheetTicketLinkListRow(ticketHeader, docuRef)];
         #        }
         #    }
         #
@@ -2810,6 +2776,67 @@ Formatversion: 1
         #            resultCon += itemCon;
         #        }
         #
+        #    }
+        #
+        #    return resultCon ? resultCon : [["Sin datos."]];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getSubordinatesByUser_backup
+        #// Method: getSubordinatesByUser
+        #// Purpose: Obtiene subordinados de un usuario CRM en una compania.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #// Output rows:
+        #//  - [[subordinateUserId, subordinateName], ...]
+        #static server container getSubordinatesByUser_backup(container _data)
+        #{
+        #    DataAreaId                 companyId;
+        #    UserId                     axUserId;
+        #    CRMUserId                  crmUserId;
+        #    CRMUsuarioTable            crmUsuarioTable;
+        #    CRMUsuarioSubordinadoTable subordinadoTable;
+        #    container                  resultCon, itemCon, subordinateUsersCon;
+        #    str                        subordinateList;
+        #    str                        subordinateUserId;
+        #    int                        i;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #    if (!companyId)
+        #        return conNull();
+        #
+        #    if (conLen(_data) < 2)
+        #        return resultCon;
+        #
+        #    axUserId = conPeek(_data, 2);
+        #
+        #    changecompany(companyId)
+        #    {
+        #        crmUsuarioTable = SysUserInfo::getCRMUsuarioTable(axUserId);
+        #        crmUserId = crmUsuarioTable.UserId;
+        #        if (!crmUserId)
+        #            return resultCon;
+        #
+        #        subordinadoTable.clear();
+        #        subordinadoTable.UserIdJefe = crmUserId;
+        #
+        #        subordinateList = crmUsuarioTable.ListaSubordinadosByPerTable();
+        #        if (!subordinateList)
+        #            return resultCon;
+        #
+        #        subordinateUsersCon = str2con(subordinateList, ',');
+        #
+        #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
+        #        {
+        #            subordinateUserId = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
+        #            if (!subordinateUserId)
+        #                continue;
+        #
+        #            itemCon = [[strFmt("%1", subordinateUserId), strFmt("%1",CRMUsuarioTable::Find(subordinateUserId).Name)]];
+        #            resultCon += itemCon;
+        #        }
         #    }
         #
         #    return resultCon ? resultCon : [["Sin datos."]];
@@ -3259,6 +3286,8 @@ Formatversion: 1
         #//  - _data[11] = fileName (optional)
         #//  - _data[12] = processedByAI (optional: 0|1)
         #//  - _data[13] = gastoType (optional)
+        #//  - _data[14] = ocrJson (optional)
+        #//  - _data[15] = normalizedJson (optional)
         #static server container updateExpenseSheetTicket(container _data)
         #{
         #    DataAreaId         companyId;
@@ -3277,6 +3306,8 @@ Formatversion: 1
         #    str                fileName;
         #    int                processedByAI;
         #    int                gastoType;
+        #    str                ocrJson;
+        #    str                normalizedJson;
         #
         #    boolean            hasTotalAmount;
         #    boolean            hasStatus;
@@ -3286,6 +3317,8 @@ Formatversion: 1
         #    boolean            hasFileName;
         #    boolean            hasProcessedByAI;
         #    boolean            hasGastoType;
+        #    boolean            hasOcrJson;
+        #    boolean            hasNormalizedJson;
         #
         #    int                startLine;
         #    str                msg;
@@ -3335,7 +3368,7 @@ Formatversion: 1
         #
         #        if (transDateStr)
         #        {
-        #            transDate = INDCRMUtilityService::parseExpenseTicketTransDate(transDateStr);
+        #            transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
         #            if (!transDate)
         #                return INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull());
         #        }
@@ -3369,6 +3402,18 @@ Formatversion: 1
         #    {
         #        gastoType = conPeek(_data, 13);
         #        hasGastoType = true;
+        #    }
+        #
+        #    if (conLen(_data) >= 14)
+        #    {
+        #        ocrJson = conPeek(_data, 14);
+        #        hasOcrJson = true;
+        #    }
+        #
+        #    if (conLen(_data) >= 15)
+        #    {
+        #        normalizedJson = conPeek(_data, 15);
+        #        hasNormalizedJson = true;
         #    }
         #
         #    if (currencyCode)
@@ -3476,6 +3521,12 @@ Formatversion: 1
         #                docuRef.Name       = fileName;
         #            }
         #
+        #            if (hasOcrJson)
+        #                docuRef.INDOCRJson = ocrJson;
+        #
+        #            if (hasNormalizedJson)
+        #                docuRef.INDNormalizedJson = normalizedJson;
+        #
         #            if (createDocuRef)
         #                docuRef.insert();
         #            else
@@ -3528,7 +3579,7 @@ Formatversion: 1
         #//  - Marks ticket as ProcessedByAI = 1.
         #// Input:
         #//  - _data[1] = CompanyId
-        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional)]
+        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional)]
         #//  - _data[3] = linesIn  = container of lines [lineDescr, qty, price, lineTotal(optional)]
         #// Output:
         #//  - [header, linesOutRecIds]
@@ -3552,6 +3603,8 @@ Formatversion: 1
         #    str                urlFile;
         #    str                fileName;
         #    int                gastoType;
+        #    str                ocrJson;
+        #    str                normalizedJson;
         #
         #    str                lineDescr;
         #    real               qty;
@@ -3560,6 +3613,8 @@ Formatversion: 1
         #    real               linesTotalAmount;
         #    boolean            hasTotalAmount;
         #    boolean            hasGastoType;
+        #    boolean            hasOcrJson;
+        #    boolean            hasNormalizedJson;
         #
         #    int                i;
         #    int                lineCount;
@@ -3605,6 +3660,18 @@ Formatversion: 1
         #        hasGastoType = true;
         #    }
         #
+        #    if (conLen(headerIn) >= 11)
+        #    {
+        #        ocrJson = conPeek(headerIn, 11);
+        #        hasOcrJson = true;
+        #    }
+        #
+        #    if (conLen(headerIn) >= 12)
+        #    {
+        #        normalizedJson = conPeek(headerIn, 12);
+        #        hasNormalizedJson = true;
+        #    }
+        #
         #    hasTotalAmount = true;
         #
         #    if (!axUserId)
@@ -3628,7 +3695,7 @@ Formatversion: 1
         #    if (!transDateStr)
         #        return [INDCRMUtilityService::buildHeader(false, 'TransDate es obligatorio (yyyymmdd).', conNull()), conNull()];
         #
-        #    transDate = INDCRMUtilityService::parseExpenseTicketTransDate(transDateStr);
+        #    transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
         #    if (!transDate)
         #        return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
@@ -3698,6 +3765,12 @@ Formatversion: 1
         #            docuRef.INDFilename           = fileName;
         #            docuRef.Name                  = fileName;
         #            docuRef.Notes                 = comentario;
+        #
+        #            if (hasOcrJson)
+        #                docuRef.INDOCRJson = ocrJson;
+        #
+        #            if (hasNormalizedJson)
+        #                docuRef.INDNormalizedJson = normalizedJson;
         #
         #            if (createDocuRef)
         #                docuRef.insert();
