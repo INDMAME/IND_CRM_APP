@@ -436,7 +436,7 @@
     <value>Italiano</value>
   </data>
   <data name="Language_ZH_Name" xml:space="preserve">
-    <value>??</value>
+    <value>简体中文</value>
   </data>
   <data name="Login_Title" xml:space="preserve">
     <value>Iniciar sessao</value>
@@ -1432,7 +1432,7 @@
     <value>Anomalies</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Summary" xml:space="preserve">
-    <value>Resume the loaded expense sheets. Indicate overall total, main users, periods and relevant observations.</value>
+    <value>Resuma as folhas de despesas carregadas. Indique total global, periodos e observacoes relevantes.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Analytics" xml:space="preserve">
     <value>Analyze the loaded expense sheets and extract patterns: total spend, top users, top projects, top currencies and status distribution.</value>
@@ -1486,6 +1486,6 @@
     <value>Load expense sheets before asking the assistant.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
-    <value>Analyzing the loaded expense sheets...</value>
+    <value>Estou a preparar a resposta...</value>
   </data>
 </root>

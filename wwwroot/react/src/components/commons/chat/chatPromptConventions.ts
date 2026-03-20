@@ -1,56 +1,97 @@
 import type { VisualizationType } from "./chatMessageContract.ts";
 
-const BASE_CONTRACT_RULES = [
-  "Return raw JSON only.",
-  "Do not wrap the JSON in markdown fences.",
-  'Use the root shape {"messages":[...]} exactly.',
-  'Allowed message types: "markdown", "chart", "table".',
-  'Never return HTML, JSX, code blocks, or chart markup inside markdown.',
-  'Markdown messages must use the field "markdown".',
-  'Chart messages must use the field "payload" and include "chartType".',
-  'Supported chartType values are only: "bar", "line", "pie".',
-  'For bar and line charts include: data, xKey, yKey.',
-  'For pie charts include: data, nameKey, dataKey.',
-  'For table messages include: columns and rows.',
-  "If the data is not sufficient for a valid visualization, return only one markdown message explaining why.",
-  "Do not invent missing numeric values or categories.",
-];
+const MAX_ANSWER_INSTRUCTIONS_LENGTH = 260;
 
-const BASE_BUSINESS_TONE_RULES = [
-  "Answer in the same language as the question.",
-  "Keep the answer very short and executive.",
-  "Prefer 3 to 4 short bullets or one short paragraph when returning markdown.",
-  "Prioritize totals, rankings, anomalies, and direct conclusions.",
-  "Avoid filler, introductions, repetition, and technical explanations.",
-  "Never expose raw API or property names from the source JSON.",
-  "Rewrite technical field names as natural business labels in the same language as the question.",
-];
-
-const NORMAL_RESPONSE_EXAMPLE = `{"messages":[{"type":"markdown","markdown":"## Resumen\\n- Total analizado: 12 hojas\\n- Monto total: EUR 8,450.00"}]}`;
-
-const BAR_RESPONSE_EXAMPLE =
-  '{"messages":[{"type":"markdown","markdown":"## Top usuarios\\nLos tres usuarios principales concentran la mayor parte del gasto."},{"type":"chart","payload":{"chartType":"bar","title":"Gasto por usuario","subtitle":"Importe total por usuario","data":[{"user":"Ana","amount":3200},{"user":"Luis","amount":2400}],"xKey":"user","yKey":"amount"}}]}';
-
-const TABLE_RESPONSE_EXAMPLE =
-  '{"messages":[{"type":"markdown","markdown":"## Comparativa\\nEsta tabla resume los importes mas altos."},{"type":"table","payload":{"title":"Comparativa de hojas","columns":[{"key":"sheetId","header":"Hoja"},{"key":"amount","header":"Importe","align":"right"}],"rows":[{"sheetId":"HG-001","amount":1200},{"sheetId":"HG-002","amount":980}]}}]}';
-
-export const CHAT_VISUAL_PROMPT_CONVENTION = [
-  ...BASE_BUSINESS_TONE_RULES,
-  ...BASE_CONTRACT_RULES,
-  `Normal response example: ${NORMAL_RESPONSE_EXAMPLE}`,
-  `Bar chart response example: ${BAR_RESPONSE_EXAMPLE}`,
-  `Table response example: ${TABLE_RESPONSE_EXAMPLE}`,
-].join(" ");
-
-// Builds the exact answer instructions expected by the frontend parser.
-export const buildStructuredAssistantAnswerInstructions = (
-  requestedVisualizationType?: VisualizationType | null
-): string => {
-  const visualizationRule = requestedVisualizationType
-    ? requestedVisualizationType === "table"
-      ? 'The user explicitly chose "table". Return exactly two messages when data is enough: first "markdown", then "table".'
-      : `The user explicitly chose "${requestedVisualizationType}". Return exactly two messages when data is enough: first "markdown", then one "chart" with payload.chartType="${requestedVisualizationType}".`
-    : 'If the question does not explicitly request a supported visualization type, return exactly one "markdown" message.';
-
-  return [CHAT_VISUAL_PROMPT_CONVENTION, visualizationRule].join(" ");
+const toSafeText = (value: unknown): string => {
+  if (value === null || value === undefined) return "";
+  return String(value).replace(/\s+/g, " ").trim();
 };
+
+const trimToMaxLength = (value: string, maxLength: number): string => {
+  const normalized = toSafeText(value);
+  if (normalized.length <= maxLength) {
+    return normalized;
+  }
+
+  const clipped = normalized.slice(0, maxLength);
+  const lastSpaceIndex = clipped.lastIndexOf(" ");
+  if (lastSpaceIndex > Math.floor(maxLength * 0.6)) {
+    return clipped.slice(0, lastSpaceIndex).trim();
+  }
+
+  return clipped.trim();
+};
+
+const resolvePromptLanguageName = (uiLanguage?: string | null): string => {
+  const normalizedLanguage = toSafeText(uiLanguage).toLowerCase().replace(/_/g, "-");
+  if (!normalizedLanguage) return "the user's language";
+  if (normalizedLanguage.startsWith("en")) return "English";
+  if (normalizedLanguage.startsWith("eu")) return "Basque";
+  if (normalizedLanguage.startsWith("pt")) return "Portuguese";
+  if (normalizedLanguage.startsWith("it")) return "Italian";
+  if (normalizedLanguage.startsWith("zh")) return "Simplified Chinese";
+  return "Spanish";
+};
+
+type PromptContext = {
+  uiLanguage?: string | null;
+  hasGreetingIntent?: boolean;
+  requestedVisualizationType?: VisualizationType | null;
+};
+
+const RAW_EXPENSE_SHEET_FIELD_NAMES_RULE =
+  "Rename keys: HojaGastosId,Description,ExpenseSheetStatus,EstadoComentarios,UserId,UserName,Voucher,ProjId,CurrencyCode,TotalAmount,ExchRate,ExchangeRateMode,CreatedDate.";
+
+const buildCommonPromptRules = ({
+  uiLanguage,
+  hasGreetingIntent = false,
+  requestedVisualizationType = null,
+}: PromptContext): string => {
+  const greetingRule = hasGreetingIntent ? "Greet if greeted." : "";
+
+  return [
+    "messages[] JSON.",
+    `${resolvePromptLanguageName(uiLanguage)}, keep accents.`,
+    RAW_EXPENSE_SHEET_FIELD_NAMES_RULE,
+    greetingRule,
+  ].join(" ");
+};
+
+const buildVisualizationPromptRule = (requestedVisualizationType?: VisualizationType | null): string => {
+  if (!requestedVisualizationType) {
+    return "One markdown msg.";
+  }
+
+  if (requestedVisualizationType === "table") {
+    return "Valid: md+table. Else: md.";
+  }
+
+  if (requestedVisualizationType === "pie") {
+    return "Valid: md+chart pie. Else: md.";
+  }
+
+  return `Valid: md+chart ${requestedVisualizationType}. Else: md.`;
+};
+
+// Builds a compact instruction string that stays inside the upstream field limit.
+export const buildStructuredAssistantAnswerInstructions = (
+  requestedVisualizationType?: VisualizationType | null,
+  uiLanguage?: string | null,
+  hasGreetingIntent = false
+): string => {
+  return trimToMaxLength(
+    [
+      buildCommonPromptRules({
+        uiLanguage,
+        hasGreetingIntent: hasGreetingIntent && !requestedVisualizationType,
+        requestedVisualizationType,
+      }),
+      buildVisualizationPromptRule(requestedVisualizationType),
+    ].join(" "),
+    MAX_ANSWER_INSTRUCTIONS_LENGTH
+  );
+};
+
+export const CHAT_PROMPT_LIMITS = {
+  maxAnswerInstructionsLength: MAX_ANSWER_INSTRUCTIONS_LENGTH,
+} as const;

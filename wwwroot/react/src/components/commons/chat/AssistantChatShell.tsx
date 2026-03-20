@@ -29,6 +29,7 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   noContextTitle: string;
   noContextBody: string;
   noContextMessage: string;
+  bottomInset?: string;
   botImageSrc: string;
   contextNotice: string;
   draftValue: string;
@@ -48,6 +49,7 @@ type AssistantChatShellProps<TActionId extends string = string> = {
 
 const ASSISTANT_PAGE_INSET = "max(12px, calc(50vw - 24rem + 12px))";
 const ASSISTANT_BOTTOM_INSET = "calc(0.75rem + env(safe-area-inset-bottom, 0px))";
+const GLOBAL_CHAT_RADIUS_CLASS = "rounded-[var(--radius-xl)]";
 
 const toText = (value: unknown): string => {
   return String(value ?? "").trim();
@@ -75,12 +77,27 @@ const AssistantChatMessageBubble = ({
 }: AssistantChatMessageBubbleProps) => {
   const warnings = Array.isArray(message.meta?.warnings) ? message.meta?.warnings : [];
   const [warningsOpen, setWarningsOpen] = React.useState(false);
+  const warningKeyCounts = new Map<string, number>();
+  const isFramelessVisualMessage = message.message.type === "chart" || message.message.type === "table";
+  const shouldWrapMarkdownAroundAvatar = message.message.type === "markdown";
+  const shouldHideAssistantAvatar = false;
 
   if (message.role === "user") {
     return (
       <div className="flex justify-end">
-        <div className="max-w-[88%] rounded-2xl rounded-br-md bg-primary px-3 py-2 text-[12px] leading-5 text-white shadow-sm">
-          <ChatMessageContent message={message.message} disabled={isSending} />
+        <div className="relative max-w-[92%]">
+          <div
+            className={classNames(
+              "relative z-10 bg-primary px-2.5 py-2 text-[12px] leading-5 text-white shadow-sm",
+              GLOBAL_CHAT_RADIUS_CLASS
+            )}
+          >
+            <ChatMessageContent message={message.message} disabled={isSending} />
+          </div>
+          <span
+            aria-hidden="true"
+            className="absolute right-[-6px] bottom-[7px] h-4 w-4 rotate-45 rounded-[4px] bg-primary"
+          />
         </div>
       </div>
     );
@@ -90,26 +107,110 @@ const AssistantChatMessageBubble = ({
     message.state === "error"
       ? "border-rose-200 bg-rose-50 text-rose-900"
       : "border-slate-200 bg-slate-50/90 text-slate-700";
+  const bubbleTailClassName = message.state === "error" ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-slate-50/90";
 
-  return (
-    <div className="flex justify-start">
-      <div className={classNames("w-full max-w-[92%] rounded-[18px] rounded-bl-[8px] border px-2.5 py-2 shadow-sm", bubbleClassName)}>
-        <div className="flex items-start gap-2">
-          <span className="mt-0.5 flex h-8 w-8 shrink-0 items-start justify-center">
-            {message.state === "loading" ? (
-              <Spinner size="h-4 w-4" />
-            ) : (
-              <img src={botImageSrc} alt="" className="h-8 w-8 object-contain" aria-hidden="true" />
-            )}
-          </span>
-          <div className="min-w-0 flex-1 text-[12px] leading-5">
+  if (isFramelessVisualMessage) {
+    return (
+      <div className="flex justify-start">
+        <div className="w-full max-w-full">
+          <div className="-mx-1.5 w-[calc(100%+0.75rem)] max-w-none text-[12px] leading-5">
             <ChatMessageContent
               message={message.message}
               disabled={isSending}
               onChartTypeSelect={(value) => onChartTypeSelect(message.id, value)}
             />
           </div>
+
+          {message.state === "error" && message.retryQuestion ? (
+            <button
+              type="button"
+              className="mt-2 inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={isSending}
+              onClick={() => onRetry(message.retryQuestion || "")}
+            >
+              <ArrowPathIcon className="h-3.5 w-3.5" />
+              {retryLabel}
+            </button>
+          ) : null}
+
+          {message.state === "done" && warnings.length > 0 ? (
+            <div className="mt-2">
+              <button
+                type="button"
+                className="inline-flex items-center gap-1 rounded-[5px] border border-amber-200 bg-amber-50 px-2 py-1 text-[12px] font-semibold text-amber-900 transition hover:bg-amber-100 focus:outline-hidden focus:ring-2 focus:ring-amber-200"
+                onClick={() => setWarningsOpen((previous) => !previous)}
+              >
+                {warningsLabel} ({warnings.length})
+              </button>
+
+              {warningsOpen ? (
+                <div className="mt-2 rounded-[10px] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-5 text-amber-900">
+                  <ul className="list-disc space-y-1 pl-4">
+                    {warnings.map((warning) => {
+                      const normalizedWarning = toText(warning) || "warning";
+                      const nextOccurrence = (warningKeyCounts.get(normalizedWarning) ?? 0) + 1;
+                      warningKeyCounts.set(normalizedWarning, nextOccurrence);
+
+                      return <li key={`${message.id}-warning-${normalizedWarning}-${nextOccurrence}`}>{warning}</li>;
+                    })}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
         </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-start">
+      <div className={classNames("relative w-full", shouldHideAssistantAvatar ? "max-w-full" : "max-w-[96%]")}>
+        <div
+          className={classNames("relative z-10 border px-2.5 py-2 shadow-sm", bubbleClassName, GLOBAL_CHAT_RADIUS_CLASS)}
+        >
+        {shouldWrapMarkdownAroundAvatar ? (
+          <div className="text-[12px] leading-5">
+            <span className="float-left mt-0.5 mr-2 mb-1 flex h-8 w-8 items-start justify-center">
+              {message.state === "loading" ? (
+                <Spinner size="h-4 w-4" />
+              ) : (
+                <img src={botImageSrc} alt="" className="h-8 w-8 object-contain" aria-hidden="true" />
+              )}
+            </span>
+            <ChatMessageContent
+              message={message.message}
+              disabled={isSending}
+              onChartTypeSelect={(value) => onChartTypeSelect(message.id, value)}
+            />
+            <div className="clear-both" />
+          </div>
+        ) : shouldHideAssistantAvatar ? (
+          <div className="w-full min-w-0 text-[12px] leading-5">
+            <ChatMessageContent
+              message={message.message}
+              disabled={isSending}
+              onChartTypeSelect={(value) => onChartTypeSelect(message.id, value)}
+            />
+          </div>
+        ) : (
+          <div className="flex items-start gap-2">
+            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-start justify-center">
+              {message.state === "loading" ? (
+                <Spinner size="h-4 w-4" />
+              ) : (
+                <img src={botImageSrc} alt="" className="h-8 w-8 object-contain" aria-hidden="true" />
+              )}
+            </span>
+            <div className="min-w-0 flex-1 text-[12px] leading-5">
+              <ChatMessageContent
+                message={message.message}
+                disabled={isSending}
+                onChartTypeSelect={(value) => onChartTypeSelect(message.id, value)}
+              />
+            </div>
+          </div>
+        )}
 
         {message.state === "error" && message.retryQuestion ? (
           <button
@@ -136,14 +237,26 @@ const AssistantChatMessageBubble = ({
             {warningsOpen ? (
               <div className="mt-2 rounded-[10px] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-5 text-amber-900">
                 <ul className="list-disc space-y-1 pl-4">
-                  {warnings.map((warning, index) => (
-                    <li key={`${message.id}-warning-${index}`}>{warning}</li>
-                  ))}
+                  {warnings.map((warning) => {
+                    const normalizedWarning = toText(warning) || "warning";
+                    const nextOccurrence = (warningKeyCounts.get(normalizedWarning) ?? 0) + 1;
+                    warningKeyCounts.set(normalizedWarning, nextOccurrence);
+
+                    return <li key={`${message.id}-warning-${normalizedWarning}-${nextOccurrence}`}>{warning}</li>;
+                  })}
                 </ul>
               </div>
             ) : null}
           </div>
         ) : null}
+        </div>
+        <span
+          aria-hidden="true"
+          className={classNames(
+            "absolute left-[-6px] bottom-[7px] h-4 w-4 rotate-45 rounded-[4px] border",
+            bubbleTailClassName
+          )}
+        />
       </div>
     </div>
   );
@@ -168,6 +281,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
   noContextTitle,
   noContextBody,
   noContextMessage,
+  bottomInset = ASSISTANT_BOTTOM_INSET,
   botImageSrc,
   contextNotice,
   draftValue,
@@ -188,7 +302,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
   const hasAssistantResponse = messages.some((message) => message.role === "assistant" && message.state !== "loading");
   const assistantFloatingStyle = {
     ["--assistant-page-inset" as "--assistant-page-inset"]: ASSISTANT_PAGE_INSET,
-    ["--assistant-bottom-inset" as "--assistant-bottom-inset"]: ASSISTANT_BOTTOM_INSET,
+    ["--assistant-bottom-inset" as "--assistant-bottom-inset"]: bottomInset,
   } as React.CSSProperties;
 
   return (
@@ -198,15 +312,16 @@ const AssistantChatShell = <TActionId extends string = string,>({
           type="button"
           aria-label={launcherAriaLabel}
           title={launcherAriaLabel}
-          className="fixed z-[1850] flex items-center rounded-[20px] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus:ring-4 focus:ring-primary/20 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)]"
+          data-ind-assistant-launcher="true"
+          className="fixed z-[1850] flex items-center rounded-[var(--radius-xl)] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus:ring-4 focus:ring-primary/20 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)]"
           style={assistantFloatingStyle}
           onClick={onToggle}
         >
-          <span className="relative flex h-[60px] w-[60px] shrink-0 items-center justify-center overflow-hidden rounded-[16px] border border-slate-300/95 bg-white/98 p-[2px] shadow-[0_10px_26px_rgba(148,163,184,0.24),0_3px_10px_rgba(15,23,42,0.08)] ring-1 ring-slate-100/80 backdrop-blur-sm">
+          <span className="relative flex h-[60px] w-[60px] shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-xl)] border border-slate-300/95 bg-white/98 p-[2px] shadow-[0_10px_26px_rgba(148,163,184,0.24),0_3px_10px_rgba(15,23,42,0.08)] ring-1 ring-slate-100/80 backdrop-blur-sm">
             <img
               src={botImageSrc}
               alt=""
-              className="h-[54px] w-[54px] scale-[1.04] object-contain drop-shadow-[0_6px_12px_rgba(15,23,42,0.16)]"
+              className="h-[54px] w-[54px] scale-[1.04] rounded-[calc(var(--radius-xl)-2px)] object-contain drop-shadow-[0_6px_12px_rgba(15,23,42,0.16)]"
               aria-hidden="true"
             />
           </span>
@@ -232,7 +347,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
           aria-modal="false"
           aria-label={title}
           className={classNames(
-            "absolute flex h-[69vh] max-h-[69vh] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:left-auto lg:right-[var(--assistant-page-inset)] lg:h-[min(640px,calc(100vh-8rem))] lg:max-h-[640px] lg:w-[368px]",
+            "absolute flex h-[69vh] max-h-[69vh] flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:left-auto lg:right-[var(--assistant-page-inset)] lg:h-[min(640px,calc(100vh-8rem))] lg:max-h-[640px] lg:w-[368px]",
             isOpen ? "translate-y-0 lg:translate-x-0" : "translate-y-full lg:translate-y-0 lg:translate-x-[110%]"
           )}
         >

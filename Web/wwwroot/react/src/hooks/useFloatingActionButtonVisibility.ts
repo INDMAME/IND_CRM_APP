@@ -12,21 +12,11 @@ type UseFloatingActionButtonVisibilityResult = {
 
 const DEFAULT_FAB_BOTTOM_PX = 24;
 const FAB_CONTENT_CLEARANCE_PX = 12;
-const PAGINATION_SELECTOR = "[data-ind-pagination-anchor='true']";
-const LAYOUT_CARD_SELECTOR = ".timeline-item .timeline-card, .timeline-box .timeline-card, [data-ind-card-anchor='true']";
+const ASSISTANT_VISUAL_BASELINE_CORRECTION_PX = 6;
 const ASSISTANT_LAUNCHER_SELECTOR = "[data-ind-assistant-launcher='true']";
+const PAGE_FLOATING_CLEARANCE_CSS_VAR = "--ind-page-floating-clearance";
 
-const getPaginationElements = () => {
-  if (typeof document === "undefined") return [];
-  return Array.from(document.querySelectorAll<HTMLElement>(PAGINATION_SELECTOR));
-};
-
-const getLayoutCardElements = () => {
-  if (typeof document === "undefined") return [];
-  return Array.from(document.querySelectorAll<HTMLElement>(LAYOUT_CARD_SELECTOR));
-};
-
-// Returns true when one layout anchor is rendered and can define the page ending.
+// Returns true when one DOM element is actually visible and can define a visual baseline.
 const isVisibleLayoutElement = (element: HTMLElement): boolean => {
   if (typeof window === "undefined") return false;
 
@@ -53,6 +43,21 @@ const getVisibleAssistantLauncher = (): HTMLElement | null => {
   return null;
 };
 
+const setPageFloatingClearance = (clearance: number): void => {
+  if (typeof document === "undefined") return;
+
+  const safeValue = `${Math.max(0, Math.ceil(clearance))}px`;
+  document.documentElement.style.setProperty(PAGE_FLOATING_CLEARANCE_CSS_VAR, safeValue);
+  document.getElementById("content")?.style.setProperty(PAGE_FLOATING_CLEARANCE_CSS_VAR, safeValue);
+};
+
+const clearPageFloatingClearance = (): void => {
+  if (typeof document === "undefined") return;
+
+  document.documentElement.style.removeProperty(PAGE_FLOATING_CLEARANCE_CSS_VAR);
+  document.getElementById("content")?.style.removeProperty(PAGE_FLOATING_CLEARANCE_CSS_VAR);
+};
+
 // Resolves the bottom distance. When the assistant launcher exists, it becomes the visual baseline.
 const resolveBottomOffset = (bottom: number): number => {
   if (typeof window === "undefined" || typeof document === "undefined") {
@@ -69,18 +74,15 @@ const resolveBottomOffset = (bottom: number): number => {
   const launcherBottom = Math.max(0, Math.round(viewportHeight - launcherRect.bottom));
   const additionalClearance = Math.max(0, bottom - DEFAULT_FAB_BOTTOM_PX);
 
-  return Math.max(0, launcherBottom + additionalClearance);
+  return Math.max(0, launcherBottom - ASSISTANT_VISUAL_BASELINE_CORRECTION_PX + additionalClearance);
 };
 
-// The page only needs the extra trailing space when there is a card list or one pagination block to clear.
-const hasTrailingContentAnchor = (): boolean => {
-  return (
-    getPaginationElements().some((element) => isVisibleLayoutElement(element)) ||
-    getLayoutCardElements().some((element) => isVisibleLayoutElement(element))
-  );
+// Reserves one shared ending lane for floating UI without depending on pagination position.
+const resolveReservedHeight = (bottom: number, size: number): number => {
+  return Math.max(0, Math.ceil(bottom + Math.max(40, size) + FAB_CONTENT_CLEARANCE_PX));
 };
 
-// Keeps the floating action button aligned with other floating UI and reserves one clean ending lane.
+// Keeps the floating action button aligned with other floating UI and exposes one page clearance lane.
 export const useFloatingActionButtonVisibility = ({
   bottom,
   size,
@@ -93,9 +95,7 @@ export const useFloatingActionButtonVisibility = ({
     if (typeof window === "undefined") return;
 
     const nextBottom = resolveBottomOffset(bottom);
-    const nextReservedHeight = hasTrailingContentAnchor()
-      ? Math.ceil(nextBottom + Math.max(40, size) + FAB_CONTENT_CLEARANCE_PX)
-      : 0;
+    const nextReservedHeight = resolveReservedHeight(nextBottom, size);
 
     setResolvedBottom((previous) => (Math.abs(previous - nextBottom) < 1 ? previous : nextBottom));
     setReservedHeight((previous) => (Math.abs(previous - nextReservedHeight) < 1 ? previous : nextReservedHeight));
@@ -135,6 +135,14 @@ export const useFloatingActionButtonVisibility = ({
 
     return () => observer.disconnect();
   }, [scheduleLayoutUpdate]);
+
+  useEffect(() => {
+    setPageFloatingClearance(reservedHeight);
+
+    return () => {
+      clearPageFloatingClearance();
+    };
+  }, [reservedHeight]);
 
   useEffect(() => {
     if (typeof window === "undefined") return;

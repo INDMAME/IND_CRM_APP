@@ -31,6 +31,10 @@ html, body {
     --bs-primary: #00296b;
     --bs-primary-rgb: 0, 41, 107;
     --ind-topbar-height: 64px;
+    --ind-page-floating-clearance: 0px;
+    --ind-content-inline-padding: 16px;
+    --ind-content-top-padding: 10px;
+    --ind-content-bottom-padding: 20px;
 }
 
 /* SIDEBAR */
@@ -342,7 +346,10 @@ html, body {
 
 /* CONTENT */
 .content {
-    padding: 10px 16px 20px;
+    padding-top: var(--ind-content-top-padding);
+    padding-right: var(--ind-content-inline-padding);
+    padding-bottom: calc(var(--ind-content-bottom-padding) + var(--ind-page-floating-clearance));
+    padding-left: var(--ind-content-inline-padding);
     margin-top: 0px; /* even closer to the topbar */
     transition: margin-left 0.35s cubic-bezier(.4, 0, .2, 1);
 }

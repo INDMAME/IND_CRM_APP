@@ -11,19 +11,19 @@ type CommonChartFrameProps = {
 // Provides one reusable card shell for all supported chart components.
 const CommonChartFrame = ({ title, subtitle, emptyStateLabel, hasData, children }: CommonChartFrameProps) => {
   return (
-    <section className="w-[min(100vw-7rem,28rem)] max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section className="w-full max-w-full rounded-[22px] border border-slate-200 bg-white shadow-sm">
       {title || subtitle ? (
         <header className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-          {title ? <h3 className="text-sm font-semibold text-slate-900">{title}</h3> : null}
-          {subtitle ? <p className="mt-1 text-xs leading-5 text-slate-600">{subtitle}</p> : null}
+          {title ? <h3 className="text-[12px] font-semibold leading-5 text-slate-900">{title}</h3> : null}
+          {subtitle ? <p className="mt-1 text-[12px] leading-5 text-slate-600">{subtitle}</p> : null}
         </header>
       ) : null}
 
-      <div className="px-3 py-3">
+      <div className="px-2 py-3 sm:px-3">
         {hasData ? (
-          <div className="h-72 w-full">{children}</div>
+          <div className="min-h-[304px] w-full min-w-0 overflow-visible">{children}</div>
         ) : (
-          <div className="flex h-48 items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 text-center text-sm text-slate-500">
+          <div className="flex h-48 items-center justify-center rounded-[18px] border border-dashed border-slate-200 bg-slate-50 px-4 text-center text-[12px] leading-5 text-slate-500">
             {emptyStateLabel || "No hay datos suficientes para mostrar esta visualizacion."}
           </div>
         )}

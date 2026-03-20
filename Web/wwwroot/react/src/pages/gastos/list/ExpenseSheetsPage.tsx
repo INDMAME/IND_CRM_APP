@@ -38,6 +38,7 @@ import {
 } from "./expenseManagedUserSelection.ts";
 
 const PAGE_SIZE = 6;
+const FLOATING_BASELINE_BOTTOM_PX = 24;
 
 // Initializes auth seed for expense API calls before island effects run.
 const bootstrapExpenseApiAuth = () => {
@@ -695,7 +696,7 @@ const ExpenseSheetsPageContent = () => {
           ariaLabel={indT("Common_Create", "Create")}
           size={76}
           right={16}
-          bottom={24}
+          bottom={FLOATING_BASELINE_BOTTOM_PX}
           onClick={handleOpenCreateSheetMode}
         />
       ) : null}

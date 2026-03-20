@@ -18,9 +18,9 @@ const ChatChartTypePicker = ({
   onSelect,
 }: ChatChartTypePickerProps) => {
   return (
-    <section className="w-[min(100vw-7rem,24rem)] max-w-full rounded-2xl border border-slate-200 bg-white px-3 py-3 shadow-sm">
-      <p className="text-sm font-semibold text-slate-900">{question}</p>
-      <div className="mt-3 grid grid-cols-2 gap-2">
+    <section className="w-full max-w-full">
+      <p className="text-[12px] font-semibold leading-5 text-slate-900">{question}</p>
+      <div className="mt-2 grid grid-cols-2 gap-2">
         {options.map((option) => {
           const isSelected = option.value === selectedType;
 
@@ -38,8 +38,8 @@ const ChatChartTypePicker = ({
               )}
               onClick={() => onSelect?.(option.value)}
             >
-              <span className="block text-sm font-semibold">{option.label}</span>
-              {option.description ? <span className="mt-1 block text-xs leading-5">{option.description}</span> : null}
+              <span className="block text-[12px] font-semibold leading-5">{option.label}</span>
+              {option.description ? <span className="mt-1 block text-[12px] leading-5">{option.description}</span> : null}
             </button>
           );
         })}

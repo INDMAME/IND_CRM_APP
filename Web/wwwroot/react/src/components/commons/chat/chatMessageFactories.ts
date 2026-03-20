@@ -10,23 +10,23 @@ const toSafeText = (value: unknown): string => {
   return String(value).trim();
 };
 
-export const DEFAULT_CHART_TYPE_PICKER_QUESTION = "Que tipo de visualizacion quieres ver?";
+export const DEFAULT_CHART_TYPE_PICKER_QUESTION = "¿Qué tipo de visualización quieres ver?";
 
 export const DEFAULT_CHART_TYPE_OPTIONS: ChartTypeChoiceOption[] = [
   {
     value: "bar",
     label: "Barras",
-    description: "Compara categorias de forma rapida.",
+    description: "Compara categorías de forma rápida.",
   },
   {
     value: "line",
-    label: "Lineas",
-    description: "Muestra cambios o evolucion en el tiempo.",
+    label: "Líneas",
+    description: "Muestra cambios o evolución en el tiempo.",
   },
   {
     value: "pie",
     label: "Pie",
-    description: "Representa la proporcion entre partes.",
+    description: "Representa la proporción entre partes.",
   },
   {
     value: "table",
@@ -57,7 +57,7 @@ export const createChartTypeChoiceMessage = (
 
 export const createValidationFallbackMarkdownMessage = (
   errors: string[],
-  intro = "No se pudo renderizar la visualizacion solicitada."
+  intro = "No se pudo renderizar la visualización solicitada."
 ): MarkdownMessage => {
   const safeErrors = Array.isArray(errors)
     ? errors.map((entry) => toSafeText(entry)).filter(Boolean)
@@ -73,14 +73,14 @@ export const createValidationFallbackMarkdownMessage = (
 export const getVisualizationTypeLabel = (value: VisualizationType): string => {
   switch (value) {
     case "bar":
-      return "grafico de barras";
+      return "gráfico de barras";
     case "line":
-      return "grafico de lineas";
+      return "gráfico de líneas";
     case "pie":
-      return "grafico pie";
+      return "gráfico pie";
     case "table":
       return "tabla";
     default:
-      return "visualizacion";
+      return "visualización";
   }
 };

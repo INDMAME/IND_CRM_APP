@@ -12,17 +12,30 @@ import type { ChatMessage, VisualizationType } from "../../../components/commons
 import {
   createChartTypeChoiceMessage,
   createMarkdownMessage,
-  getVisualizationTypeLabel,
 } from "../../../components/commons/chat/chatMessageFactories.ts";
-import { detectVisualizationIntent } from "../../../components/commons/chat/chatIntentUtils.ts";
+import {
+  detectGreetingIntent,
+  detectTechnicalDisclosureIntent,
+  detectVisualizationIntent,
+} from "../../../components/commons/chat/chatIntentUtils.ts";
 import { parseStructuredChatMessages } from "../../../components/commons/chat/chatMessageParsing.ts";
 import { buildStructuredAssistantAnswerInstructions } from "../../../components/commons/chat/chatPromptConventions.ts";
 import { ApiFetchError } from "../../../services/apiService.ts";
-import { indFormat, indT } from "../../../utils/indI18n.ts";
+import { indT } from "../../../utils/indI18n.ts";
 import { askExpenseSheetsQuestion, fetchExpenseSheetListSourceJson } from "../utils/expenseApi.ts";
 import { runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
 import type { ExpenseSheetListResponseEnvelope, ExpenseSheetsAskResult, IndValidationError } from "../expenseTypes.ts";
 import { safeText, sanitizeAssistantText } from "../utils/expenseUiUtils.ts";
+import {
+  buildExpenseSheetsVisualizationSelectionMessage,
+  formatExpenseSheetsRetryAfterMessage,
+  resolveExpenseSheetsAssistantCopy,
+  type ExpenseSheetsAssistantCopy,
+} from "./expenseSheetsAssistantI18n.ts";
+import {
+  buildExpenseSheetsVisualizationFallbackMessages,
+  shouldUseExpenseSheetsVisualizationFallback,
+} from "./expenseSheetsVisualizationFallback.ts";
 import type {
   ExpenseSheetsAssistantContextSnapshot,
   ExpenseSheetsAssistantMessage,
@@ -32,6 +45,7 @@ import type {
 type UseExpenseSheetsAssistantArgs = {
   context: ExpenseSheetsAssistantContextSnapshot;
   isListLoading: boolean;
+  uiLanguage?: string | null;
 };
 
 type UseExpenseSheetsAssistantResult = {
@@ -57,8 +71,6 @@ type UseExpenseSheetsAssistantResult = {
   textareaRef: RefObject<HTMLTextAreaElement | null>;
 };
 
-const FIELD_NAME_MAPPING_INSTRUCTIONS =
-  "Example mappings in Spanish: ProjId -> Proyecto, TotalAmount -> Monto total, CurrencyCode -> Moneda, UserId or UserName -> Usuario, CreatedDate -> Fecha, ExpenseSheetStatus -> Estado, HojaGastosId -> Hoja de gasto. When monetary amounts are important, show each relevant amount on its own line or bullet so they are easy to scan. Use only the provided expense sheet data and mention missing data in one short sentence if needed.";
 const MAX_TEXTAREA_HEIGHT_PX = 168;
 
 type ExpenseSheetsAssistantSourceJsonCache = {
@@ -113,31 +125,37 @@ const isRetryableStatus = (status: number | undefined): boolean => {
   return status === 429 || status === 500 || status === 502 || status === 503 || status === 504;
 };
 
-const resolveFailedAskMessage = (response: ExpenseSheetsAskResult): string => {
+const resolveFailedAskMessage = (
+  response: ExpenseSheetsAskResult,
+  assistantCopy: ExpenseSheetsAssistantCopy
+): string => {
   const validationText = formatValidationErrors(response.Errors);
   const responseMessage = sanitizeAssistantText(response.Message);
   const retryAfter = safeText(response.RetryAfter);
 
   if (response.HttpStatus === 422) {
-    return validationText || responseMessage || indT("ExpenseSheets_Assistant_Error_Validation", "Check the question and try again.");
+    return validationText || responseMessage || assistantCopy.errorValidation;
   }
 
   if (response.HttpStatus === 429) {
-    const parts = [responseMessage || indT("ExpenseSheets_Assistant_Error_RateLimit", "Too many assistant requests.")];
+    const parts = [responseMessage || assistantCopy.errorRateLimit];
     if (retryAfter) {
-      parts.push(indFormat("ExpenseSheets_Assistant_Error_RetryAfter", "Retry after {0}.", retryAfter));
+      parts.push(formatExpenseSheetsRetryAfterMessage(retryAfter));
     }
     return parts.filter(Boolean).join(" ");
   }
 
   if (response.HttpStatus === 500) {
-    return responseMessage || indT("ExpenseSheets_Assistant_Error_Server", "The assistant is not available right now.");
+    return responseMessage || assistantCopy.errorServer;
   }
 
   return responseMessage || indT("Api_RequestFailed", "Request failed.");
 };
 
-const resolveThrownAskMessage = (error: unknown): { message: string; status?: number; traceId: string } => {
+const resolveThrownAskMessage = (
+  error: unknown,
+  assistantCopy: ExpenseSheetsAssistantCopy
+): { message: string; status?: number; traceId: string } => {
   if (error instanceof ApiFetchError) {
     const validationText = formatValidationErrors(error.validationErrors);
     if (validationText) {
@@ -150,9 +168,7 @@ const resolveThrownAskMessage = (error: unknown): { message: string; status?: nu
 
     if (error.status === 429) {
       return {
-        message:
-          sanitizeAssistantText(error.message) ||
-          indT("ExpenseSheets_Assistant_Error_RateLimit", "Too many assistant requests."),
+        message: sanitizeAssistantText(error.message) || assistantCopy.errorRateLimit,
         status: error.status,
         traceId: extractTraceIdFromApiError(error),
       };
@@ -160,7 +176,7 @@ const resolveThrownAskMessage = (error: unknown): { message: string; status?: nu
 
     if (error.status === 500) {
       return {
-        message: indT("ExpenseSheets_Assistant_Error_Server", "The assistant is not available right now."),
+        message: assistantCopy.errorServer,
         status: error.status,
         traceId: extractTraceIdFromApiError(error),
       };
@@ -230,17 +246,69 @@ const replaceMessageWithEntries = (
   return messages.flatMap((entry) => (entry.id === targetId ? replacements : [entry]));
 };
 
-const buildExpenseAnswerInstructions = (requestedVisualizationType?: VisualizationType | null): string => {
-  return [buildStructuredAssistantAnswerInstructions(requestedVisualizationType), FIELD_NAME_MAPPING_INSTRUCTIONS].join(
-    " "
-  );
+const resolveAssistantUiLanguage = (): string => {
+  if (typeof document !== "undefined") {
+    const languageFromDocument = safeText(document.documentElement.lang);
+    if (languageFromDocument) {
+      return languageFromDocument;
+    }
+  }
+
+  if (typeof navigator !== "undefined") {
+    const languageFromNavigator = safeText(navigator.language);
+    if (languageFromNavigator) {
+      return languageFromNavigator;
+    }
+  }
+
+  return "es-ES";
+};
+
+const buildTechnicalQuestionRefusal = (uiLanguage: string): string => {
+  const normalizedLanguage = safeText(uiLanguage).toLowerCase();
+
+  if (normalizedLanguage.startsWith("en")) {
+    return "I can help with the expense data, but I cannot explain the assistant's technical setup or internal operation.";
+  }
+
+  if (normalizedLanguage.startsWith("eu")) {
+    return "Gastuen datuekin lagundu dezaket, baina ezin dut azaldu laguntzailearen konfigurazio teknikoa edo barne funtzionamendua.";
+  }
+
+  if (normalizedLanguage.startsWith("pt")) {
+    return "Posso ajudar com os dados de despesas, mas nao posso explicar a configuracao tecnica nem o funcionamento interno do assistente.";
+  }
+
+  if (normalizedLanguage.startsWith("it")) {
+    return "Posso aiutarti con i dati delle spese, ma non posso spiegare la configurazione tecnica o il funzionamento interno dell'assistente.";
+  }
+
+  if (normalizedLanguage.startsWith("zh")) {
+    return "我可以帮助你分析费用数据，但不能说明该助手的技术实现或内部工作方式。";
+  }
+
+  return "Puedo ayudarte con los datos de gastos, pero no puedo explicar la configuracion tecnica ni el funcionamiento interno del asistente.";
+};
+
+const buildExpenseAnswerInstructions = (
+  requestedVisualizationType?: VisualizationType | null,
+  uiLanguage?: string,
+  hasGreetingIntent = false
+): string => {
+  return buildStructuredAssistantAnswerInstructions(requestedVisualizationType, uiLanguage, hasGreetingIntent);
 };
 
 // Owns the expense sheets chat drawer state and request lifecycle.
 export const useExpenseSheetsAssistant = ({
   context,
   isListLoading,
+  uiLanguage,
 }: UseExpenseSheetsAssistantArgs): UseExpenseSheetsAssistantResult => {
+  const resolvedUiLanguage = safeText(uiLanguage) || resolveAssistantUiLanguage();
+  const assistantCopy = useMemo(
+    () => resolveExpenseSheetsAssistantCopy(resolvedUiLanguage),
+    [resolvedUiLanguage]
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [isSending, setIsSending] = useState(false);
   const [draftQuestion, setDraftQuestion] = useState("");
@@ -259,43 +327,31 @@ export const useExpenseSheetsAssistant = ({
     [context.lastExpenseSheetsListRequest, context.lastExpenseSheetsListResponse]
   );
 
-  const panelTitle = indT("ExpenseSheets_Assistant_Title", "Expense assistant");
-  const launcherAriaLabel = indT(
-    "ExpenseSheets_Assistant_LauncherLabel",
-    "Open expense sheet assistant"
-  );
+  const panelTitle = assistantCopy.title;
+  const launcherAriaLabel = assistantCopy.launcherAriaLabel;
 
   const quickActions = useMemo<ExpenseSheetsAssistantQuickAction[]>(
     () => [
       {
         id: "summary",
-        label: indT("ExpenseSheets_Assistant_Quick_Summary", "Resumen"),
-        question: indT(
-          "ExpenseSheets_Assistant_Question_Summary",
-          "Resume las hojas de gasto cargadas. Indica total global, usuarios principales, periodos y observaciones relevantes."
-        ),
+        label: assistantCopy.quickActions.summary.label,
+        question: assistantCopy.quickActions.summary.question,
       },
       {
         id: "analytics",
-        label: indT("ExpenseSheets_Assistant_Quick_Analytics", "Analítica"),
-        question: indT(
-          "ExpenseSheets_Assistant_Question_Analytics",
-          "Analiza las hojas de gasto cargadas y extrae patrones: gasto total, top usuarios, top proyectos, top monedas y distribución por estado."
-        ),
+        label: assistantCopy.quickActions.analytics.label,
+        question: assistantCopy.quickActions.analytics.question,
       },
       {
         id: "anomalies",
-        label: indT("ExpenseSheets_Assistant_Quick_Anomalies", "Anomalías"),
-        question: indT(
-          "ExpenseSheets_Assistant_Question_Anomalies",
-          "Revisa las hojas de gasto cargadas y detecta posibles anomalías, inconsistencias o valores atípicos en importes, fechas, usuarios, proyectos, estados y tipos de gasto."
-        ),
+        label: assistantCopy.quickActions.anomalies.label,
+        question: assistantCopy.quickActions.anomalies.question,
       },
     ],
-    []
+    [assistantCopy]
   );
 
-  const resizeTextarea = useEffectEvent(() => {
+  const resizeTextarea = useCallback(() => {
     const element = textareaRef.current;
     if (!element) return;
 
@@ -303,9 +359,9 @@ export const useExpenseSheetsAssistant = ({
     const nextHeight = Math.min(element.scrollHeight, MAX_TEXTAREA_HEIGHT_PX);
     element.style.height = `${Math.max(44, nextHeight)}px`;
     element.style.overflowY = element.scrollHeight > MAX_TEXTAREA_HEIGHT_PX ? "auto" : "hidden";
-  });
+  }, []);
 
-  const scrollMessagesToBottom = useEffectEvent((behavior: ScrollBehavior = "auto") => {
+  const scrollMessagesToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
     const scroller = messagesContainerRef.current;
     if (!scroller) return;
 
@@ -313,13 +369,29 @@ export const useExpenseSheetsAssistant = ({
       top: scroller.scrollHeight,
       behavior,
     });
-  });
+  }, []);
 
-  const focusComposer = useEffectEvent(() => {
-    const element = textareaRef.current;
-    if (!element) return;
-    element.focus();
-  });
+  // Keeps the mobile keyboard hidden until the user explicitly taps the composer.
+  const blurActiveEditableElement = useCallback(() => {
+    if (typeof document === "undefined") {
+      return;
+    }
+
+    const activeElement = document.activeElement;
+    if (!(activeElement instanceof HTMLElement)) {
+      return;
+    }
+
+    const isEditableElement =
+      activeElement === textareaRef.current ||
+      activeElement.tagName === "INPUT" ||
+      activeElement.tagName === "TEXTAREA" ||
+      activeElement.isContentEditable;
+
+    if (isEditableElement) {
+      activeElement.blur();
+    }
+  }, []);
 
   useEffect(() => {
     resizeTextarea();
@@ -328,15 +400,15 @@ export const useExpenseSheetsAssistant = ({
   useEffect(() => {
     if (!isOpen) return;
 
+    blurActiveEditableElement();
     const rafId = window.requestAnimationFrame(() => {
-      focusComposer();
-      scrollMessagesToBottom(messages.length > 0 ? "smooth" : "auto");
+      scrollMessagesToBottom("auto");
     });
 
     return () => {
       window.cancelAnimationFrame(rafId);
     };
-  }, [focusComposer, isOpen, messages.length, scrollMessagesToBottom]);
+  }, [blurActiveEditableElement, isOpen, scrollMessagesToBottom]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -348,6 +420,7 @@ export const useExpenseSheetsAssistant = ({
 
     const handleEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
+        blurActiveEditableElement();
         setIsOpen(false);
       }
     };
@@ -356,12 +429,13 @@ export const useExpenseSheetsAssistant = ({
     return () => {
       window.removeEventListener("keydown", handleEscape);
     };
-  }, [isOpen]);
+  }, [blurActiveEditableElement, isOpen]);
 
   useEffect(() => {
     if (hasContext) return;
+    blurActiveEditableElement();
     setIsOpen(false);
-  }, [hasContext]);
+  }, [blurActiveEditableElement, hasContext]);
 
   useEffect(() => {
     if (!isOpen || typeof document === "undefined") {
@@ -395,10 +469,10 @@ export const useExpenseSheetsAssistant = ({
 
     setContextNotice(
       hasContext
-        ? indT("ExpenseSheets_Assistant_Context_Updated", "Analysis context updated with the latest loaded list.")
-        : indT("ExpenseSheets_Assistant_Error_NoContext", "Load expense sheets before asking the assistant.")
+        ? assistantCopy.contextUpdated
+        : assistantCopy.noContextMessage
     );
-  }, [context.contextVersion, hasContext, messages.length]);
+  }, [assistantCopy.contextUpdated, assistantCopy.noContextMessage, context.contextVersion, hasContext, messages.length]);
 
   const resolveFullSourceJson = useEffectEvent(async (): Promise<ExpenseSheetListResponseEnvelope | null> => {
     if (!context.lastExpenseSheetsListRequest || !context.lastExpenseSheetsListResponse) {
@@ -441,10 +515,46 @@ export const useExpenseSheetsAssistant = ({
         return;
       }
 
+      const technicalDisclosureIntent = detectTechnicalDisclosureIntent(question);
+      const greetingIntent = detectGreetingIntent(question);
       const detectedIntent = detectVisualizationIntent(question);
       const requestedVisualizationType = options?.requestedVisualizationType ?? detectedIntent.requestedType;
       const appendUserQuestion = options?.appendUserQuestion ?? true;
       const userSelectionMessage = options?.userSelectionMessage ?? null;
+
+      if (technicalDisclosureIntent.isDisallowed) {
+        const userMessageId = createMessageId();
+        const assistantMessageId = createMessageId();
+
+        setContextNotice("");
+        setMessages((previous) => {
+          const nextMessages = [...previous];
+
+          if (appendUserQuestion) {
+            nextMessages.push(buildUserMessage(userMessageId, createMarkdownMessage(question)));
+          }
+
+          if (userSelectionMessage) {
+            nextMessages.push(buildUserMessage(createMessageId(), userSelectionMessage));
+          }
+
+          nextMessages.push(
+            buildAssistantMessage(
+              assistantMessageId,
+              createMarkdownMessage(assistantCopy.technicalRefusal),
+              "done"
+            )
+          );
+
+          return nextMessages;
+        });
+
+        if (appendUserQuestion) {
+          setDraftQuestion("");
+        }
+
+        return;
+      }
 
       if (!requestedVisualizationType && detectedIntent.shouldAskForChartType) {
         const userMessageId = createMessageId();
@@ -457,10 +567,8 @@ export const useExpenseSheetsAssistant = ({
           buildAssistantMessage(
             assistantMessageId,
             createChartTypeChoiceMessage(question, {
-              question: indT(
-                "ExpenseSheets_Assistant_ChooseChartType_Question",
-                "What type of visualization do you want?"
-              ),
+              question: assistantCopy.chooseChartTypeQuestion,
+              options: assistantCopy.chartTypeOptions,
             }),
             "done"
           ),
@@ -471,7 +579,7 @@ export const useExpenseSheetsAssistant = ({
 
       const userMessageId = createMessageId();
       const assistantMessageId = createMessageId();
-      const loadingText = indT("ExpenseSheets_Assistant_Message_Loading", "Analyzing the loaded expense sheets...");
+      const loadingText = assistantCopy.loading;
 
       setContextNotice("");
       if (appendUserQuestion) {
@@ -497,15 +605,17 @@ export const useExpenseSheetsAssistant = ({
       try {
         const sourceJson = await resolveFullSourceJson();
         if (!sourceJson) {
-          throw new ApiFetchError(
-            indT("ExpenseSheets_Assistant_Error_NoContext", "Load expense sheets before asking the assistant.")
-          );
+          throw new ApiFetchError(assistantCopy.noContextMessage);
         }
 
         const response = await askExpenseSheetsQuestion(
           {
             question,
-            answerInstructions: buildExpenseAnswerInstructions(requestedVisualizationType),
+            answerInstructions: buildExpenseAnswerInstructions(
+              requestedVisualizationType,
+              resolvedUiLanguage,
+              greetingIntent.isGreetingOnly
+            ),
             listRequest: context.lastExpenseSheetsListRequest,
             sourceJson,
           },
@@ -518,7 +628,7 @@ export const useExpenseSheetsAssistant = ({
           const failedMessage = buildErrorMessage(
             assistantMessageId,
             question,
-            resolveFailedAskMessage(response),
+            resolveFailedAskMessage(response, assistantCopy),
             response.HttpStatus,
             safeText(response.TraceId),
             response.RetryAfter
@@ -531,7 +641,18 @@ export const useExpenseSheetsAssistant = ({
           sanitizeAssistantText(response.Data?.Answer) ||
           sanitizeAssistantText(response.Message) ||
           indT("Common_NotAvailable", "N/A");
-        const parsedAnswer = parseStructuredChatMessages(safeAnswer);
+        const parsedAnswer = parseStructuredChatMessages(safeAnswer, {
+          requestedVisualizationType,
+        });
+        const fallbackVisualizationMessages =
+          shouldUseExpenseSheetsVisualizationFallback(parsedAnswer.messages, requestedVisualizationType)
+            ? buildExpenseSheetsVisualizationFallbackMessages({
+                question,
+                requestedVisualizationType,
+                sourceJson,
+                uiLanguage: resolvedUiLanguage,
+              })
+            : null;
         const assistantMeta = {
           totalSourceRecords: response.Data?.TotalSourceRecords ?? null,
           retrievalMode: safeText(response.Data?.RetrievalMode) || null,
@@ -540,7 +661,11 @@ export const useExpenseSheetsAssistant = ({
           warnings: Array.isArray(response.Data?.Warnings) ? response.Data?.Warnings : [],
           httpStatus: response.HttpStatus,
         };
-        const parsedMessages = parsedAnswer.messages.map((message, index) =>
+        const resolvedMessages =
+          fallbackVisualizationMessages && fallbackVisualizationMessages.length > 0
+            ? fallbackVisualizationMessages
+            : parsedAnswer.messages;
+        const parsedMessages = resolvedMessages.map((message, index) =>
           buildAssistantMessage(index === 0 ? assistantMessageId : createMessageId(), message, "done", index === 0 ? assistantMeta : undefined)
         );
 
@@ -549,7 +674,7 @@ export const useExpenseSheetsAssistant = ({
           setDraftQuestion((previous) => (safeText(previous) === question ? "" : previous));
         }
       } catch (error) {
-        const thrown = resolveThrownAskMessage(error);
+        const thrown = resolveThrownAskMessage(error, assistantCopy);
         const failedMessage = buildErrorMessage(
           assistantMessageId,
           question,
@@ -562,7 +687,14 @@ export const useExpenseSheetsAssistant = ({
         setIsSending(false);
       }
     },
-    [context.lastExpenseSheetsListRequest, context.lastExpenseSheetsListResponse, isSending, resolveFullSourceJson]
+    [
+      assistantCopy,
+      context.lastExpenseSheetsListRequest,
+      context.lastExpenseSheetsListResponse,
+      isSending,
+      resolveFullSourceJson,
+      resolvedUiLanguage,
+    ]
   );
 
   const submitDraftQuestion = useCallback(async () => {
@@ -617,10 +749,12 @@ export const useExpenseSheetsAssistant = ({
       await sendQuestion(originalPrompt, {
         requestedVisualizationType: value,
         appendUserQuestion: false,
-        userSelectionMessage: createMarkdownMessage(`Visualizacion elegida: ${getVisualizationTypeLabel(value)}.`),
+        userSelectionMessage: createMarkdownMessage(
+          buildExpenseSheetsVisualizationSelectionMessage(value, resolvedUiLanguage)
+        ),
       });
     },
-    [isSending, messages, sendQuestion]
+    [isSending, messages, resolvedUiLanguage, sendQuestion]
   );
 
   const handleDraftKeyDown = useCallback(
@@ -640,22 +774,25 @@ export const useExpenseSheetsAssistant = ({
   );
 
   const openPanel = useCallback(() => {
+    blurActiveEditableElement();
     setIsOpen(true);
-  }, []);
+  }, [blurActiveEditableElement]);
 
   const closePanel = useCallback(() => {
+    blurActiveEditableElement();
     setIsOpen(false);
-  }, []);
+  }, [blurActiveEditableElement]);
 
   const togglePanel = useCallback(() => {
+    blurActiveEditableElement();
     setIsOpen((previous) => !previous);
-  }, []);
+  }, [blurActiveEditableElement]);
 
   useEffect(() => {
     if (!hasContext && !isListLoading && messages.length > 0) {
-      setContextNotice(indT("ExpenseSheets_Assistant_Error_NoContext", "Load expense sheets before asking the assistant."));
+      setContextNotice(assistantCopy.noContextMessage);
     }
-  }, [hasContext, isListLoading, messages.length]);
+  }, [assistantCopy.noContextMessage, hasContext, isListLoading, messages.length]);
 
   return {
     isOpen,

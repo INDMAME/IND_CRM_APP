@@ -6,6 +6,10 @@ import {
 } from "@heroicons/react/24/outline";
 import AssistantChatShell from "../../../components/commons/chat/AssistantChatShell.tsx";
 import { indT } from "../../../utils/indI18n.ts";
+import {
+  resolveExpenseSheetsAssistantCopy,
+  useAssistantUiLanguage,
+} from "./expenseSheetsAssistantI18n.ts";
 import type {
   ExpenseSheetsAssistantContextSnapshot,
   ExpenseSheetsAssistantQuickActionId,
@@ -18,6 +22,7 @@ type ExpenseSheetsAssistantProps = {
 };
 
 const BOT_IMAGE_SRC = "/images/kaloria_bot.png";
+const FLOATING_BOTTOM_INSET = "calc(24px + env(safe-area-inset-bottom, 0px))";
 
 const QUICK_ACTION_ICON_BY_ID: Record<ExpenseSheetsAssistantQuickActionId, React.ComponentType<{ className?: string }>> = {
   summary: SparklesIcon,
@@ -27,6 +32,11 @@ const QUICK_ACTION_ICON_BY_ID: Record<ExpenseSheetsAssistantQuickActionId, React
 
 // Adapts the expense sheet assistant state to the shared assistant chat shell.
 const ExpenseSheetsAssistant = ({ context, isListLoading }: ExpenseSheetsAssistantProps) => {
+  const uiLanguage = useAssistantUiLanguage();
+  const assistantCopy = React.useMemo(
+    () => resolveExpenseSheetsAssistantCopy(uiLanguage),
+    [uiLanguage]
+  );
   const {
     isOpen,
     isSending,
@@ -50,6 +60,7 @@ const ExpenseSheetsAssistant = ({ context, isListLoading }: ExpenseSheetsAssista
   } = useExpenseSheetsAssistant({
     context,
     isListLoading,
+    uiLanguage,
   });
 
   const visualQuickActions = React.useMemo(
@@ -70,25 +81,17 @@ const ExpenseSheetsAssistant = ({ context, isListLoading }: ExpenseSheetsAssista
       title={panelTitle}
       launcherAriaLabel={launcherAriaLabel}
       closeAriaLabel={indT("Common_Close", "Close")}
-      sendAriaLabel={indT("ExpenseSheets_Assistant_Send", "Send")}
-      sendingLabel={indT("ExpenseSheets_Assistant_Sending", "Sending")}
-      retryLabel={indT("ExpenseSheets_Assistant_Retry", "Retry")}
-      warningsLabel={indT("ExpenseSheets_Assistant_Warnings", "Warnings")}
-      inputPlaceholder={indT("ExpenseSheets_Assistant_Input_Placeholder", "...")}
-      emptyStateTitle={indT("ExpenseSheets_Assistant_Empty_Title", "Ask for a business summary")}
-      emptyStateBody={indT(
-        "ExpenseSheets_Assistant_Empty_Body",
-        "Use quick actions or write a question about the expense sheets currently loaded in the list."
-      )}
-      noContextTitle={indT("ExpenseSheets_Assistant_NoContext_Title", "Load expense sheets first.")}
-      noContextBody={indT(
-        "ExpenseSheets_Assistant_NoContext_Body",
-        "The assistant needs a real expense sheet list response before it can analyze the data."
-      )}
-      noContextMessage={indT(
-        "ExpenseSheets_Assistant_Error_NoContext",
-        "Load expense sheets before asking the assistant."
-      )}
+      sendAriaLabel={assistantCopy.send}
+      sendingLabel={assistantCopy.sending}
+      retryLabel={assistantCopy.retry}
+      warningsLabel={assistantCopy.warnings}
+      inputPlaceholder={assistantCopy.inputPlaceholder}
+      emptyStateTitle={assistantCopy.emptyStateTitle}
+      emptyStateBody={assistantCopy.emptyStateBody}
+      noContextTitle={assistantCopy.noContextTitle}
+      noContextBody={assistantCopy.noContextBody}
+      noContextMessage={assistantCopy.noContextMessage}
+      bottomInset={FLOATING_BOTTOM_INSET}
       botImageSrc={BOT_IMAGE_SRC}
       contextNotice={contextNotice}
       draftValue={draftQuestion}

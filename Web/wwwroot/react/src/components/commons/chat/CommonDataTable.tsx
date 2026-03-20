@@ -20,17 +20,17 @@ const CommonDataTable = ({ payload }: CommonDataTableProps) => {
   const hasRows = Array.isArray(payload.rows) && payload.rows.length > 0;
 
   return (
-    <section className="w-[min(100vw-7rem,28rem)] max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
       {payload.title || payload.subtitle ? (
         <header className="border-b border-slate-200 bg-slate-50 px-4 py-3">
-          {payload.title ? <h3 className="text-sm font-semibold text-slate-900">{payload.title}</h3> : null}
-          {payload.subtitle ? <p className="mt-1 text-xs leading-5 text-slate-600">{payload.subtitle}</p> : null}
+          {payload.title ? <h3 className="text-[12px] font-semibold leading-5 text-slate-900">{payload.title}</h3> : null}
+          {payload.subtitle ? <p className="mt-1 text-[12px] leading-5 text-slate-600">{payload.subtitle}</p> : null}
         </header>
       ) : null}
 
       <div className="overflow-x-auto">
-        <table className="min-w-full border-collapse text-sm text-slate-700">
-          <thead className="bg-slate-50 text-xs uppercase tracking-[0.08em] text-slate-500">
+        <table className="min-w-full border-collapse text-[12px] leading-5 text-slate-700">
+          <thead className="bg-slate-50 text-[12px] uppercase tracking-[0.08em] text-slate-500">
             <tr>
               {payload.columns.map((column) => (
                 <th
@@ -61,7 +61,7 @@ const CommonDataTable = ({ payload }: CommonDataTableProps) => {
               <tr>
                 <td
                   colSpan={Math.max(payload.columns.length, 1)}
-                  className="px-4 py-8 text-center text-sm text-slate-500"
+                  className="px-4 py-8 text-center text-[12px] leading-5 text-slate-500"
                 >
                   {payload.emptyStateLabel || "No hay filas disponibles para mostrar."}
                 </td>

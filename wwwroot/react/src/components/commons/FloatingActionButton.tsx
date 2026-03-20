@@ -60,7 +60,7 @@ const FloatingActionButton = ({
   const hasMenu = menuItems.length > 0;
   const isMenuControlled = typeof isMenuOpen === "boolean";
   const menuOpen = hasMenu ? (isMenuControlled ? Boolean(isMenuOpen) : internalMenuOpen) : false;
-  const { resolvedBottom, reservedHeight } = useFloatingActionButtonVisibility({
+  const { resolvedBottom } = useFloatingActionButtonVisibility({
     bottom,
     size,
   });
@@ -262,31 +262,11 @@ const FloatingActionButton = ({
     </div>
   );
 
-  const trailingSpacer =
-    reservedHeight > 0 ? (
-      <div
-        aria-hidden="true"
-        data-ind-floating-action-spacer="true"
-        className="pointer-events-none"
-        style={{ height: `${reservedHeight}px` }}
-      />
-    ) : null;
-
   if (!portalTarget) {
-    return (
-      <>
-        {trailingSpacer}
-        {floatingActionButton}
-      </>
-    );
+    return floatingActionButton;
   }
 
-  return (
-    <>
-      {trailingSpacer ? createPortal(trailingSpacer, portalTarget) : null}
-      {createPortal(floatingActionButton, portalTarget)}
-    </>
-  );
+  return createPortal(floatingActionButton, portalTarget);
 };
 
 export default FloatingActionButton;

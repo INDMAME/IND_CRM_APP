@@ -448,7 +448,7 @@
     <value>Italiano</value>
   </data>
   <data name="Language_ZH_Name" xml:space="preserve">
-    <value>??</value>
+    <value>简体中文</value>
   </data>
   <data name="Login_Title" xml:space="preserve">
     <value>Iniciar sesión</value>
@@ -1432,7 +1432,7 @@
     <value>Anomalías</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Summary" xml:space="preserve">
-    <value>Resume las hojas de gasto cargadas. Indica total global, usuarios principales, periodos y observaciones relevantes.</value>
+    <value>Resume las hojas de gasto cargadas. Indica total global, periodos y observaciones relevantes.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Analytics" xml:space="preserve">
     <value>Analiza las hojas de gasto cargadas y extrae patrones: gasto total, top usuarios, top proyectos, top monedas y distribución por estado.</value>
@@ -1486,6 +1486,6 @@
     <value>Carga hojas de gasto antes de preguntar al asistente.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
-    <value>Analizando las hojas de gasto cargadas...</value>
+    <value>Estoy preparando la respuesta...</value>
   </data>
 </root>
