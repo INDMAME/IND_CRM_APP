@@ -82,6 +82,7 @@ import { sanitizeAssistantText } from "./expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "./expenseApiDateUtils.ts";
 import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
 import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
+import { indT } from "../../../utils/indI18n.ts";
 
 type ProjectDropdownResponse = {
   total?: number;
@@ -483,10 +484,26 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
   const companies = companiesRaw
     .map((item) => mapEntraContextCompany(item))
     .filter((item): item is NormalizedEntraContextCompany => !!item);
-  const fallbackCompany = safeText(companies.find((item) => item.isDefault)?.companyId);
   const selectedCompanyId = readWindowSelectedCompany();
-  const companyId = resolveEffectiveCompanyId(selectedCompanyId, companies, defaultCompany || fallbackCompany);
-  const selectedCompany = companies.find((item) => safeText(item.companyId) === companyId) || companies[0];
+  const selectedCompanyMatch = selectedCompanyId
+    ? companies.find((item) => safeText(item.companyId).toUpperCase() === selectedCompanyId)
+    : null;
+
+  // Never fall back to a different company when the user selected one explicitly.
+  if (selectedCompanyId && !selectedCompanyMatch) {
+    throw new ApiFetchError(
+      indT(
+        "Expense_Context_SelectedCompanyUnavailable",
+        "The selected company is no longer available. Please choose it again from the main menu."
+      )
+    );
+  }
+
+  const fallbackCompany = safeText(companies.find((item) => item.isDefault)?.companyId);
+  const companyId =
+    selectedCompanyMatch?.companyId || resolveEffectiveCompanyId("", companies, defaultCompany || fallbackCompany);
+  const selectedCompany =
+    selectedCompanyMatch || companies.find((item) => safeText(item.companyId) === companyId) || companies[0];
   const allowSelfManagement = selectedCompany?.allowSelfManagement === true;
   const crmUserId = safeText(selectedCompany?.crmUserId);
 

@@ -99,9 +99,12 @@ namespace IND_CRM_APP.Controllers
                 var selectedId = HttpContext.Session.GetString("INDCompanySelected");
                 if (!string.IsNullOrWhiteSpace(selectedId))
                 {
-                    return context.Companies
+                    var selectedCompanyName = context.Companies
                         .FirstOrDefault(c => string.Equals(c.CompanyId, selectedId, StringComparison.OrdinalIgnoreCase))
                         ?.CompanyName;
+
+                    // Do not silently show a fallback company name when the selected company is no longer valid.
+                    return string.IsNullOrWhiteSpace(selectedCompanyName) ? null : selectedCompanyName;
                 }
 
                 if (!string.IsNullOrWhiteSpace(context.Header.DefaultCompany))
