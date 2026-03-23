@@ -92,7 +92,7 @@ const AssistantChatMessageBubble = ({
               GLOBAL_CHAT_RADIUS_CLASS
             )}
           >
-            <ChatMessageContent message={message.message} disabled={isSending} />
+            <ChatMessageContent message={message.message} disabled={isSending} markdownTone="inverse" />
           </div>
           <span
             aria-hidden="true"
@@ -106,8 +106,8 @@ const AssistantChatMessageBubble = ({
   const bubbleClassName =
     message.state === "error"
       ? "border-rose-200 bg-rose-50 text-rose-900"
-      : "border-slate-200 bg-slate-50/90 text-slate-700";
-  const bubbleTailClassName = message.state === "error" ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-slate-50/90";
+      : "border-slate-200 bg-white text-slate-700";
+  const bubbleTailClassName = message.state === "error" ? "border-rose-200 bg-rose-50" : "border-slate-200 bg-white";
 
   if (isFramelessVisualMessage) {
     return (
@@ -167,7 +167,11 @@ const AssistantChatMessageBubble = ({
     <div className="flex justify-start">
       <div className={classNames("relative w-full", shouldHideAssistantAvatar ? "max-w-full" : "max-w-[96%]")}>
         <div
-          className={classNames("relative z-10 border px-2.5 py-2 shadow-sm", bubbleClassName, GLOBAL_CHAT_RADIUS_CLASS)}
+          className={classNames(
+            "relative z-10 border px-3 py-2.5 shadow-[0_10px_24px_rgba(15,23,42,0.06)]",
+            bubbleClassName,
+            GLOBAL_CHAT_RADIUS_CLASS
+          )}
         >
         {shouldWrapMarkdownAroundAvatar ? (
           <div className="text-[12px] leading-5">
@@ -378,7 +382,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
             </div>
           ) : null}
 
-          <div ref={messagesContainerRef} className="flex-1 space-y-3 overflow-y-auto px-3 py-2 lg:px-3">
+          <div ref={messagesContainerRef} className="flex-1 space-y-4 overflow-y-auto px-3 py-3 lg:px-3">
             {messages.length === 0 ? (
               <div className="flex min-h-full flex-col items-center justify-start px-3 pt-5 text-center">
                 <span className="mb-2 text-primary">

@@ -4,40 +4,111 @@ import { classNames } from "../../../utils/classNames.ts";
 type ChatMarkdownMessageProps = {
   markdown: string;
   className?: string;
+  tone?: "default" | "inverse";
 };
 
 // Renders safe markdown without enabling arbitrary HTML or JSX execution.
-const ChatMarkdownMessage = ({ markdown, className }: ChatMarkdownMessageProps) => {
+const ChatMarkdownMessage = ({ markdown, className, tone = "default" }: ChatMarkdownMessageProps) => {
+  const isInverse = tone === "inverse";
+
   return (
-    <div className={classNames("min-w-0 break-words text-[12px] leading-5", className)}>
+    <div
+      className={classNames(
+        "min-w-0 break-words text-[12px] leading-6 [&>*+*]:mt-3 [&_strong]:font-semibold",
+        isInverse
+          ? "text-white [&_strong]:text-white [&_em]:text-white/90"
+          : "text-slate-700 [&_strong]:text-slate-900 [&_em]:text-slate-600",
+        className
+      )}
+    >
       <ReactMarkdown
         skipHtml
         components={{
-          p: ({ children }) => <p className="whitespace-pre-wrap break-words">{children}</p>,
-          ul: ({ children }) => <ul className="list-disc space-y-1 pl-5">{children}</ul>,
-          ol: ({ children }) => <ol className="list-decimal space-y-1 pl-5">{children}</ol>,
-          li: ({ children }) => <li className="break-words">{children}</li>,
-          h1: ({ children }) => <h1 className="mb-2 text-[12px] font-semibold leading-5">{children}</h1>,
-          h2: ({ children }) => <h2 className="mb-2 text-[12px] font-semibold leading-5">{children}</h2>,
-          h3: ({ children }) => <h3 className="mb-1 text-[12px] font-semibold leading-5">{children}</h3>,
+          p: ({ children }) => (
+            <p className={classNames("whitespace-pre-wrap break-words", isInverse ? "text-white" : "text-slate-700")}>
+              {children}
+            </p>
+          ),
+          ul: ({ children }) => (
+            <ul className={classNames("list-disc space-y-1.5 pl-5", isInverse ? "marker:text-white/80" : "marker:text-primary")}>
+              {children}
+            </ul>
+          ),
+          ol: ({ children }) => (
+            <ol className={classNames("list-decimal space-y-1.5 pl-5", isInverse ? "marker:text-white/80" : "marker:text-primary")}>
+              {children}
+            </ol>
+          ),
+          li: ({ children }) => <li className="break-words pl-0.5">{children}</li>,
+          h1: ({ children }) => (
+            <h1
+              className={classNames(
+                "rounded-xl border px-2.5 py-1 text-[12px] font-semibold leading-5",
+                isInverse ? "border-white/15 bg-white/10 text-white" : "border-primary/10 bg-primary/5 text-primary"
+              )}
+            >
+              {children}
+            </h1>
+          ),
+          h2: ({ children }) => (
+            <h2
+              className={classNames(
+                "rounded-xl border px-2.5 py-1 text-[12px] font-semibold leading-5",
+                isInverse ? "border-white/15 bg-white/10 text-white" : "border-primary/10 bg-primary/5 text-primary"
+              )}
+            >
+              {children}
+            </h2>
+          ),
+          h3: ({ children }) => (
+            <h3 className={classNames("text-[12px] font-semibold leading-5", isInverse ? "text-white" : "text-primary")}>
+              {children}
+            </h3>
+          ),
           a: ({ href, children }) => (
             <a
               href={href}
               target="_blank"
               rel="noreferrer"
-              className="font-medium underline decoration-current underline-offset-2"
+              className={classNames(
+                "font-medium underline decoration-current underline-offset-2",
+                isInverse ? "text-white" : undefined
+              )}
             >
               {children}
             </a>
           ),
+          strong: ({ children }) => <strong className={classNames("font-semibold", isInverse ? "text-white" : "text-slate-900")}>{children}</strong>,
+          em: ({ children }) => <em className={classNames(isInverse ? "text-white/90" : "text-slate-600")}>{children}</em>,
           code: ({ children }) => (
-            <code className="rounded bg-slate-900/10 px-1.5 py-0.5 font-mono text-[0.92em]">{children}</code>
+            <code
+              className={classNames(
+                "rounded-md border px-1.5 py-0.5 font-mono text-[0.92em]",
+                isInverse ? "border-white/15 bg-white/10 text-white" : "border-slate-200 bg-slate-100 text-slate-800"
+              )}
+            >
+              {children}
+            </code>
           ),
           pre: ({ children }) => (
-            <pre className="overflow-x-auto rounded-xl bg-slate-900 px-3 py-2 text-[12px] leading-5 text-slate-50">{children}</pre>
+            <pre
+              className={classNames(
+                "overflow-x-auto rounded-2xl border px-3 py-3 text-[12px] leading-5 shadow-inner",
+                isInverse ? "border-white/15 bg-slate-950/70 text-slate-50" : "border-slate-200 bg-slate-900 text-slate-50"
+              )}
+            >
+              {children}
+            </pre>
           ),
           blockquote: ({ children }) => (
-            <blockquote className="border-l-2 border-slate-300 pl-3 text-[12px] leading-5 italic text-slate-600">{children}</blockquote>
+            <blockquote
+              className={classNames(
+                "rounded-r-xl border-l-2 px-3 py-2 text-[12px] leading-5 italic",
+                isInverse ? "border-white/25 bg-white/10 text-white/90" : "border-primary/25 bg-primary/5 text-slate-700"
+              )}
+            >
+              {children}
+            </blockquote>
           ),
         }}
       >

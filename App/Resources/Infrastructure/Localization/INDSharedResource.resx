@@ -478,7 +478,7 @@
     <value>Entrar con Microsoft</value>
   </data>
   <data name="Login_SystemVersion" xml:space="preserve">
-    <value>Sistema v{0}</value>
+    <value>Versión v{0}</value>
   </data>
   <data name="Login_Secure" xml:space="preserve">
     <value>Seguro</value>

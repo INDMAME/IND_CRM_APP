@@ -48,18 +48,9 @@ const sanitizeStructuredText = (value: unknown): string => {
 };
 
 // Keeps legacy plain-text answers readable until every prompt returns structured messages.
-export const formatLegacyAssistantMarkdown = (value: string): string => {
-  const normalizedText = sanitizeStructuredText(value);
-  if (!normalizedText) return "";
+export const formatLegacyAssistantMarkdown = (value: string): string => formatAssistantMarkdown(value);
 
-  return normalizedText
-    .replace(/\s*[-\u2022]\s+/g, "\n- ")
-    .replace(/;\s+/g, ";\n")
-    .replace(/:\s+(?=(?:EUR|USD|AED|GBP|CHF|JPY|CNY|SEK|NOK|DKK|CAD|AUD|MXN|\u20AC|\$)\s*[\d])/g, ":\n")
-    .replace(AMOUNT_LINE_BREAK_PATTERN, "\n")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim();
-};
+type AssistantLocale = "es" | "en" | "eu" | "pt" | "it" | "zhHans";
 
 const stripJsonFence = (value: string): string => {
   const fencedMatch = value.match(/^```(?:json)?\s*([\s\S]+?)\s*```$/i);
@@ -98,6 +89,183 @@ const resolveCurrentUiLanguage = (): string => {
   }
 
   return "es-ES";
+};
+
+const resolveAssistantLocale = (uiLanguage?: string | null): AssistantLocale => {
+  const normalizedLanguage = toSafeText(uiLanguage || resolveCurrentUiLanguage()).toLowerCase().replace(/_/g, "-");
+
+  if (normalizedLanguage.startsWith("en")) return "en";
+  if (normalizedLanguage.startsWith("eu")) return "eu";
+  if (normalizedLanguage.startsWith("pt")) return "pt";
+  if (normalizedLanguage.startsWith("it")) return "it";
+  if (normalizedLanguage.startsWith("zh")) return "zhHans";
+  return "es";
+};
+
+const normalizeFieldKeyForLookup = (value: string): string =>
+  toSafeText(value)
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
+    .replace(/[^A-Za-z0-9]+/g, "")
+    .toLowerCase();
+
+const FRIENDLY_FIELD_LABELS: Record<AssistantLocale, Record<string, string>> = {
+  es: {
+    hojagastosid: "Hoja de gasto",
+    description: "Descripcion",
+    expensesheetstatus: "Estado",
+    estadocomentarios: "Comentarios",
+    userid: "Usuario",
+    username: "Nombre",
+    voucher: "Voucher",
+    projid: "Proyecto",
+    currencycode: "Moneda",
+    totalamount: "Importe",
+    exchrate: "Tipo de cambio",
+    exchangeratemode: "Modo de cambio",
+    createddate: "Fecha",
+    transdate: "Fecha",
+    qty: "Cantidad",
+    price: "Precio",
+    amount: "Importe",
+    fileid: "Archivo",
+    lineid: "Linea",
+  },
+  en: {
+    hojagastosid: "Expense sheet",
+    description: "Description",
+    expensesheetstatus: "Status",
+    estadocomentarios: "Comments",
+    userid: "User",
+    username: "Name",
+    voucher: "Voucher",
+    projid: "Project",
+    currencycode: "Currency",
+    totalamount: "Amount",
+    exchrate: "Exchange rate",
+    exchangeratemode: "Exchange mode",
+    createddate: "Date",
+    transdate: "Date",
+    qty: "Quantity",
+    price: "Price",
+    amount: "Amount",
+    fileid: "File",
+    lineid: "Line",
+  },
+  eu: {
+    hojagastosid: "Gastu-orria",
+    description: "Deskribapena",
+    expensesheetstatus: "Egoera",
+    estadocomentarios: "Iruzkinak",
+    userid: "Erabiltzailea",
+    username: "Izena",
+    voucher: "Voucher",
+    projid: "Proiektua",
+    currencycode: "Moneta",
+    totalamount: "Zenbatekoa",
+    exchrate: "Truke-tasa",
+    exchangeratemode: "Truke modua",
+    createddate: "Data",
+    transdate: "Data",
+    qty: "Kantitatea",
+    price: "Prezioa",
+    amount: "Zenbatekoa",
+    fileid: "Fitxategia",
+    lineid: "Lerroa",
+  },
+  pt: {
+    hojagastosid: "Folha de despesas",
+    description: "Descricao",
+    expensesheetstatus: "Estado",
+    estadocomentarios: "Comentarios",
+    userid: "Utilizador",
+    username: "Nome",
+    voucher: "Voucher",
+    projid: "Projeto",
+    currencycode: "Moeda",
+    totalamount: "Montante",
+    exchrate: "Taxa de cambio",
+    exchangeratemode: "Modo de cambio",
+    createddate: "Data",
+    transdate: "Data",
+    qty: "Quantidade",
+    price: "Preco",
+    amount: "Montante",
+    fileid: "Ficheiro",
+    lineid: "Linha",
+  },
+  it: {
+    hojagastosid: "Nota spese",
+    description: "Descrizione",
+    expensesheetstatus: "Stato",
+    estadocomentarios: "Commenti",
+    userid: "Utente",
+    username: "Nome",
+    voucher: "Voucher",
+    projid: "Progetto",
+    currencycode: "Valuta",
+    totalamount: "Importo",
+    exchrate: "Cambio",
+    exchangeratemode: "Modalita cambio",
+    createddate: "Data",
+    transdate: "Data",
+    qty: "Quantita",
+    price: "Prezzo",
+    amount: "Importo",
+    fileid: "File",
+    lineid: "Riga",
+  },
+  zhHans: {
+    hojagastosid: "\u8d39\u7528\u5355",
+    description: "\u63cf\u8ff0",
+    expensesheetstatus: "\u72b6\u6001",
+    estadocomentarios: "\u8bc4\u8bba",
+    userid: "\u7528\u6237",
+    username: "\u540d\u79f0",
+    voucher: "Voucher",
+    projid: "\u9879\u76ee",
+    currencycode: "\u5e01\u79cd",
+    totalamount: "\u91d1\u989d",
+    exchrate: "\u6c47\u7387",
+    exchangeratemode: "\u6c47\u7387\u6a21\u5f0f",
+    createddate: "\u65e5\u671f",
+    transdate: "\u65e5\u671f",
+    qty: "\u6570\u91cf",
+    price: "\u4ef7\u683c",
+    amount: "\u91d1\u989d",
+    fileid: "\u6587\u4ef6",
+    lineid: "\u884c",
+  },
+};
+
+const resolveFriendlyFieldLabel = (key: string, uiLanguage = resolveCurrentUiLanguage()): string => {
+  const locale = resolveAssistantLocale(uiLanguage);
+  return FRIENDLY_FIELD_LABELS[locale][normalizeFieldKeyForLookup(key)] || "";
+};
+
+const escapeRegex = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+const replaceKnownFieldLabelsInText = (value: string, uiLanguage = resolveCurrentUiLanguage()): string => {
+  const locale = resolveAssistantLocale(uiLanguage);
+  const replacements = Object.entries(FRIENDLY_FIELD_LABELS[locale]).sort((left, right) => right[0].length - left[0].length);
+
+  return replacements.reduce((currentText, [rawKey, friendlyLabel]) => {
+    const regex = new RegExp(`\\b${escapeRegex(rawKey)}\\b`, "gi");
+    return currentText.replace(regex, friendlyLabel);
+  }, value);
+};
+
+// Normalizes assistant markdown and swaps technical field keys for user-facing labels.
+const formatAssistantMarkdown = (value: string, uiLanguage = resolveCurrentUiLanguage()): string => {
+  const normalizedText = replaceKnownFieldLabelsInText(sanitizeStructuredText(value), uiLanguage);
+  if (!normalizedText) return "";
+
+  return normalizedText
+    .replace(/\s*[-\u2022]\s+/g, "\n- ")
+    .replace(/;\s+/g, ";\n")
+    .replace(/:\s+(?=(?:EUR|USD|AED|GBP|CHF|JPY|CNY|SEK|NOK|DKK|CAD|AUD|MXN|\u20AC|\$)\s*[\d])/g, ":\n")
+    .replace(AMOUNT_LINE_BREAK_PATTERN, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 };
 
 const resolveLocalizedVisualizationLabel = (chartType: VisualizationType, uiLanguage: string): string => {
@@ -201,7 +369,7 @@ const titleCaseWords = (value: string): string =>
     .map((entry) => entry.charAt(0).toUpperCase() + entry.slice(1).toLowerCase())
     .join(" ");
 
-const humanizeDatasetKey = (key: string): string => {
+const humanizeDatasetKey = (key: string, uiLanguage = resolveCurrentUiLanguage()): string => {
   const normalizedKey = toSafeText(key)
     .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .replace(/[_-]+/g, " ")
@@ -212,19 +380,8 @@ const humanizeDatasetKey = (key: string): string => {
     return "Value";
   }
 
-  const aliasMap: Record<string, string> = {
-    "currency code": "Currency",
-    "total amount": "Total amount",
-    "expense sheet status": "Status",
-    "user name": "User",
-    "user id": "User",
-    "created date": "Created date",
-    "proj id": "Project",
-    "hoja gastos id": "Expense sheet",
-  };
-
-  const loweredKey = normalizedKey.toLowerCase();
-  return aliasMap[loweredKey] || titleCaseWords(normalizedKey);
+  const friendlyLabel = resolveFriendlyFieldLabel(key, uiLanguage);
+  return friendlyLabel || titleCaseWords(normalizedKey);
 };
 
 const getLocalizedCategoryHeader = (uiLanguage: string): string => {
@@ -276,6 +433,66 @@ const normalizeNumericToken = (value: string): number | null => {
 
   const parsedValue = Number(normalizedValue);
   return Number.isFinite(parsedValue) ? parsedValue : null;
+};
+
+const isPipeTableLine = (value: string): boolean => {
+  const trimmed = toSafeText(value);
+  return trimmed.startsWith("|") && trimmed.endsWith("|") && trimmed.split("|").length >= 4;
+};
+
+const isPipeTableSeparatorLine = (value: string): boolean => /^[\s|:-]+$/.test(toSafeText(value));
+
+const splitPipeTableCells = (value: string): string[] =>
+  toSafeText(value)
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((entry) => entry.trim());
+
+const parseLegacyTableCellValue = (value: string): TableRow[string] => {
+  const safeValue = toSafeText(value);
+  if (!safeValue) {
+    return null;
+  }
+
+  if (/^0\d+$/.test(safeValue) || /^\d{4}-\d{2}-\d{2}$/.test(safeValue)) {
+    return safeValue;
+  }
+
+  if (/^-?[\d.,]+$/.test(safeValue)) {
+    const numericValue = normalizeNumericToken(safeValue);
+    if (numericValue !== null) {
+      return numericValue;
+    }
+  }
+
+  return safeValue;
+};
+
+const extractTrailingSectionTitle = (value: string): { body: string; title: string } => {
+  const lines = sanitizeStructuredText(value).split("\n");
+
+  for (let index = lines.length - 1; index >= 0; index -= 1) {
+    const line = toSafeText(lines[index]);
+    if (!line) {
+      continue;
+    }
+
+    const isSectionTitle = line.endsWith(":") && line.length <= 90 && !line.startsWith("-") && !line.startsWith("*");
+    if (!isSectionTitle) {
+      break;
+    }
+
+    return {
+      body: lines.slice(0, index).join("\n").trim(),
+      title: line.slice(0, -1).trim(),
+    };
+  }
+
+  return {
+    body: sanitizeStructuredText(value),
+    title: "",
+  };
 };
 
 const extractLegacySeriesRows = (value: string): ChartDatum[] => {
@@ -377,7 +594,12 @@ const buildRecoveredChartMessage = (
   return renderableMessage.type === "chart" ? renderableMessage : null;
 };
 
-const buildRecoveredTableMessage = (rows: TableRow[], uiLanguage: string): ChatMessage | null => {
+const buildRecoveredTableMessage = (
+  rows: TableRow[],
+  uiLanguage: string,
+  title?: string | null,
+  subtitle?: string | null
+): ChatMessage | null => {
   if (rows.length === 0) {
     return null;
   }
@@ -390,19 +612,53 @@ const buildRecoveredTableMessage = (rows: TableRow[], uiLanguage: string): ChatM
         ? getLocalizedCategoryHeader(uiLanguage)
         : entryKey === "value"
           ? getLocalizedValueHeader(uiLanguage)
-          : humanizeDatasetKey(entryKey),
+          : humanizeDatasetKey(entryKey, uiLanguage),
     align: typeof firstRow[entryKey] === "number" ? "right" : "left",
   }));
 
   const renderableMessage = resolveRenderableChatMessage({
     type: "table",
     payload: {
+      title: toSafeText(title) || undefined,
+      subtitle: toSafeText(subtitle) || undefined,
       columns,
       rows,
     } satisfies TablePayload,
   });
 
   return renderableMessage.type === "table" ? renderableMessage : null;
+};
+
+// Converts raw arrays or plain record payloads into the shared chat table card.
+const tryRecoverGenericTableMessages = (value: unknown): ChatMessage[] | null => {
+  if (shouldSkipVisualizationRecovery(value)) {
+    return null;
+  }
+
+  const uiLanguage = resolveCurrentUiLanguage();
+  const recoverySource = resolveVisualizationRecoverySource(value);
+
+  if (Array.isArray(recoverySource)) {
+    const flatRows = toFlatTableRows(recoverySource);
+    if (flatRows.length === 0) {
+      return null;
+    }
+
+    const recoveredMessage = buildRecoveredTableMessage(flatRows, uiLanguage);
+    return recoveredMessage ? [recoveredMessage] : null;
+  }
+
+  if (isRecord(recoverySource)) {
+    const singleRow = toFlatTableRow(recoverySource);
+    if (!singleRow) {
+      return null;
+    }
+
+    const recoveredMessage = buildRecoveredTableMessage([singleRow], uiLanguage);
+    return recoveredMessage ? [recoveredMessage] : null;
+  }
+
+  return null;
 };
 
 const tryRecoverRequestedVisualizationMessages = (
@@ -476,6 +732,83 @@ const tryRecoverRequestedVisualizationMessagesFromText = (
       : buildRecoveredChartMessage(requestedVisualizationType, rows);
 
   return recoveredMessage ? [introMessage, recoveredMessage] : null;
+};
+
+// Rescues legacy pipe-delimited tables so they render as real table cards instead of ASCII blocks.
+const tryParseLegacyPipeTableMessages = (value: string): ChatMessage[] | null => {
+  const lines = sanitizeStructuredText(value).split("\n");
+  const startIndex = lines.findIndex((line) => isPipeTableLine(line));
+  if (startIndex < 0) {
+    return null;
+  }
+
+  let endIndex = startIndex;
+  while (endIndex + 1 < lines.length && (isPipeTableLine(lines[endIndex + 1]) || isPipeTableSeparatorLine(lines[endIndex + 1]))) {
+    endIndex += 1;
+  }
+
+  const tableLines = lines.slice(startIndex, endIndex + 1);
+  const headerCells = splitPipeTableCells(tableLines[0]);
+  const dataStartIndex = tableLines.length > 1 && isPipeTableSeparatorLine(tableLines[1]) ? 2 : 1;
+  const rawRowCells = tableLines
+    .slice(dataStartIndex)
+    .map((line) => splitPipeTableCells(line))
+    .filter((cells) => cells.some((cell) => toSafeText(cell)));
+
+  if (headerCells.length < 2 || rawRowCells.length === 0) {
+    return null;
+  }
+
+  const columnCount = Math.max(headerCells.length, ...rawRowCells.map((cells) => cells.length));
+  const normalizedHeaders = Array.from({ length: columnCount }, (_, index) => headerCells[index] || `column_${index + 1}`);
+  const normalizedRows = rawRowCells.map((cells) =>
+    Array.from({ length: columnCount }, (_, index) => cells[index] || "")
+  );
+  const uiLanguage = resolveCurrentUiLanguage();
+  const columns: TableColumn[] = normalizedHeaders.map((entry, index) => {
+    const values = normalizedRows.map((row) => row[index]);
+    const isNumericColumn =
+      values.some((entryValue) => toSafeText(entryValue)) &&
+      values.every((entryValue) => !toSafeText(entryValue) || typeof parseLegacyTableCellValue(entryValue) === "number");
+
+    return {
+      key: `column_${index + 1}`,
+      header: humanizeDatasetKey(entry, uiLanguage),
+      align: isNumericColumn ? "right" : "left",
+    };
+  });
+  const rows: TableRow[] = normalizedRows.map((cells) =>
+    Object.fromEntries(columns.map((column, index) => [column.key, parseLegacyTableCellValue(cells[index])])) as TableRow
+  );
+
+  const beforeTable = lines.slice(0, startIndex).join("\n").trim();
+  const afterTable = lines.slice(endIndex + 1).join("\n").trim();
+  const extractedTitle = extractTrailingSectionTitle(beforeTable);
+  const tableMessage = resolveRenderableChatMessage({
+    type: "table",
+    payload: {
+      title: replaceKnownFieldLabelsInText(extractedTitle.title, uiLanguage) || undefined,
+      columns,
+      rows,
+    } satisfies TablePayload,
+  });
+
+  if (tableMessage.type !== "table") {
+    return null;
+  }
+
+  const messages: ChatMessage[] = [];
+  if (toSafeText(extractedTitle.body)) {
+    messages.push(createMarkdownMessage(formatAssistantMarkdown(extractedTitle.body, uiLanguage)));
+  }
+
+  messages.push(tableMessage);
+
+  if (toSafeText(afterTable)) {
+    messages.push(createMarkdownMessage(formatAssistantMarkdown(afterTable, uiLanguage)));
+  }
+
+  return messages.length > 0 ? messages : null;
 };
 
 const extractBalancedJsonSegment = (value: string, openingCharacter: "{" | "["): string | null => {
@@ -794,7 +1127,7 @@ const normalizeStructuredMessage = (value: unknown): { message: ChatMessage | nu
 
   if (type === "markdown") {
     return {
-      message: createMarkdownMessage(sanitizeStructuredText(getRecordValue(value, "markdown", "text", "content"))),
+      message: createMarkdownMessage(formatAssistantMarkdown(sanitizeStructuredText(getRecordValue(value, "markdown", "text", "content")))),
       errors: [],
     };
   }
@@ -923,6 +1256,15 @@ export const parseStructuredChatMessages = (
       };
     }
 
+    const rescuedGenericTableMessages = tryRecoverGenericTableMessages(parsedStructuredValue);
+    if (rescuedGenericTableMessages && rescuedGenericTableMessages.length > 0) {
+      return {
+        messages: rescuedGenericTableMessages,
+        source: "structured",
+        errors: [],
+      };
+    }
+
     const structuredMessages = toStructuredMessages(parsedStructuredValue);
     if (structuredMessages.length > 0) {
       return {
@@ -948,6 +1290,15 @@ export const parseStructuredChatMessages = (
   if (rescuedRequestedVisualizationMessagesFromText && rescuedRequestedVisualizationMessagesFromText.length > 0) {
     return {
       messages: rescuedRequestedVisualizationMessagesFromText,
+      source: "structured",
+      errors: [],
+    };
+  }
+
+  const rescuedLegacyPipeTableMessages = tryParseLegacyPipeTableMessages(safeAnswer);
+  if (rescuedLegacyPipeTableMessages && rescuedLegacyPipeTableMessages.length > 0) {
+    return {
+      messages: rescuedLegacyPipeTableMessages,
       source: "structured",
       errors: [],
     };

@@ -40,7 +40,7 @@ type PromptContext = {
 };
 
 const RAW_EXPENSE_SHEET_FIELD_NAMES_RULE =
-  "Rename keys: HojaGastosId,Description,ExpenseSheetStatus,EstadoComentarios,UserId,UserName,Voucher,ProjId,CurrencyCode,TotalAmount,ExchRate,ExchangeRateMode,CreatedDate.";
+  "No raw keys/JSON. HojaGastosId=hoja; ExpenseSheetStatus=estado; EstadoComentarios=comentarios; UserId=usuario; UserName=nombre; ProjId=proyecto; CurrencyCode=moneda; TotalAmount=importe; ExchRate=tipo cambio; CreatedDate=fecha.";
 
 const buildCommonPromptRules = ({
   uiLanguage,
@@ -59,18 +59,18 @@ const buildCommonPromptRules = ({
 
 const buildVisualizationPromptRule = (requestedVisualizationType?: VisualizationType | null): string => {
   if (!requestedVisualizationType) {
-    return "One markdown msg.";
+    return "One markdown msg. No ASCII/pipe tables.";
   }
 
   if (requestedVisualizationType === "table") {
-    return "Valid: md+table. Else: md.";
+    return "Valid: md+table. Never pipe/ascii tables. Else: md.";
   }
 
   if (requestedVisualizationType === "pie") {
-    return "Valid: md+chart pie. Else: md.";
+    return "Valid: md+chart pie. Never raw JSON. Else: md.";
   }
 
-  return `Valid: md+chart ${requestedVisualizationType}. Else: md.`;
+  return `Valid: md+chart ${requestedVisualizationType}. Never raw JSON. Else: md.`;
 };
 
 // Builds a compact instruction string that stays inside the upstream field limit.
