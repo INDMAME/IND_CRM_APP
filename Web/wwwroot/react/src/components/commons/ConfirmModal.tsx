@@ -41,7 +41,7 @@ export default function ConfirmModal({
 
   return createPortal(
     <div className="fixed inset-0 z-600000 flex items-center justify-center bg-black/40 px-4">
-      <div className="w-full max-w-sm rounded-2xl bg-white shadow-xl border border-slate-200 p-5 space-y-4">
+      <div className="w-full max-w-sm rounded-[var(--radius-xl)] bg-white shadow-xl border border-slate-200 p-5 space-y-4">
         <div className="text-lg font-semibold text-slate-900">{title}</div>
         <div className="text-sm text-slate-700 whitespace-pre-line">{message}</div>
         {showInfo && (
@@ -54,7 +54,7 @@ export default function ConfirmModal({
           {showCancel && (
             <button
               type="button"
-              className="px-4 py-2 rounded-xl border border-slate-300 text-slate-700 hover:border-primary hover:text-primary transition"
+              className="px-4 py-2 rounded-[var(--radius-xl)] border border-slate-300 text-slate-700 hover:border-primary hover:text-primary transition"
               onClick={onCancel}
               disabled={busy}
             >
@@ -64,7 +64,7 @@ export default function ConfirmModal({
           {showConfirm && (
             <button
               type="button"
-              className="px-4 py-2 rounded-xl bg-primary text-white hover:bg-primary/90 transition"
+              className="px-4 py-2 rounded-[var(--radius-xl)] bg-primary text-white hover:bg-primary/90 transition"
               onClick={onConfirm}
               disabled={busy}
             >

@@ -138,7 +138,7 @@ const ExpenseSheetHeaderForm = ({
   const exchangeRateInfoMessage = hasEndpointExchangeRateData ? endpointExchangeRateInfoMessage : storedExchangeRateInfoMessage;
 
   return (
-    <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
+    <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {!isCreateMode ? (
           <ExpenseReadOnlyField

@@ -66,7 +66,7 @@ const CommonPieChart = ({ payload }: CommonPieChartProps) => {
             const percent = totalValue > 0 ? (entry.value / totalValue) * 100 : 0;
 
             return (
-              <li key={`${entry.label}-legend-${entry.value}`} className="flex items-center justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+              <li key={`${entry.label}-legend-${entry.value}`} className="flex items-center justify-between gap-3 rounded-[var(--radius-xl)] border border-slate-200 bg-slate-50 px-3 py-2">
                 <div className="flex min-w-0 items-center gap-2">
                   <span
                     className="h-3 w-3 shrink-0 rounded-full"

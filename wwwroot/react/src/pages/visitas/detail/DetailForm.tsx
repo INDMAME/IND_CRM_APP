@@ -450,10 +450,10 @@ const DetailApp = () => {
       />
       <div
         ref={readOnlySurfaceRef}
-        className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl"
+        className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]"
       >
         {isHydrating && (
-          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 rounded-2xl">
+          <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 rounded-[var(--radius-xl)]">
             <div className="flex items-center gap-2 text-sm text-slate-600">
               <Spinner size="h-5 w-5" />
               <span>{indT("Common_Loading", "Loading")}</span>

@@ -50,7 +50,7 @@ const ExpenseTicketLinkTimelineItem = ({
 
   return (
     <div
-      className={isSelected ? "timeline-item rounded-[5px] ring-2 ring-primary/30" : "timeline-item"}
+      className={isSelected ? "timeline-item rounded-[var(--radius-xl)] ring-2 ring-primary/30" : "timeline-item"}
       data-ticket-file-id={fileId || undefined}
       data-ticket-selected={isSelected ? "true" : "false"}
       data-ticket-selectable={canToggleSelection ? "true" : "false"}
@@ -78,10 +78,10 @@ const ExpenseTicketLinkTimelineItem = ({
           title={selectLabel}
           disabled={!canToggleSelection}
           onClick={handleToggleSelection}
-          className="group absolute inset-y-0 right-0 z-10 flex w-[4.25rem] items-start justify-end rounded-r-[5px] bg-transparent p-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 disabled:cursor-not-allowed sm:w-[4.75rem]"
+          className="group absolute inset-y-0 right-0 z-10 flex w-[4.25rem] items-start justify-end rounded-r-[var(--radius-xl)] bg-transparent p-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/35 disabled:cursor-not-allowed sm:w-[4.75rem]"
         >
           <span
-            className={`flex h-[30px] w-[30px] items-center justify-center rounded-[5px] border transition ${selectionIndicatorToneClassName}`}
+            className={`flex h-[30px] w-[30px] items-center justify-center rounded-[var(--radius-xl)] border transition ${selectionIndicatorToneClassName}`}
           >
             <CheckIcon className="h-[20px] w-[20px]" strokeWidth={2.3} aria-hidden="true" />
           </span>

@@ -46,13 +46,13 @@ const ExpenseSheetCreateLinesEditor = ({
       {validationMessage ? <p className="text-danger text-sm">{validationMessage}</p> : null}
 
       {lines.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-600">
+        <div className="rounded-[var(--radius-xl)] border border-dashed border-slate-300 bg-slate-50 px-3 py-4 text-sm text-slate-600">
           {indT("ExpenseSheets_Create_NoLines", "Add at least one line.")}
         </div>
       ) : null}
 
       {lines.map((line, index) => (
-        <div key={line.localId} className="rounded-xl border border-slate-200 bg-white p-3 shadow-xs space-y-3">
+        <div key={line.localId} className="rounded-[var(--radius-xl)] border border-slate-200 bg-white p-3 shadow-xs space-y-3">
           <div className="flex items-center justify-between gap-3">
             <span className="text-xs font-semibold uppercase tracking-wide text-slate-500">
               {indT("ExpenseSheets_Line", "Line")} {index + 1}

@@ -355,14 +355,14 @@ const SelectCombobox = ({
         <div
           ref={boxRef}
           className={classNames(
-            "relative w-full cursor-default rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm",
+            "relative w-full cursor-default rounded-[var(--radius-xl)] bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm",
             readOnlyMode ? "ind-readonly-field" : ""
           )}
           style={readOnlyMode ? { color: valueColor } : undefined}
         >
           <input
             className={classNames(
-              "w-full rounded-xl border py-2 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+              "w-full rounded-[var(--radius-xl)] border py-2 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
               showSelectedIcon ? selectedInputPaddingClassName : "pl-3",
               showSearchButton ? "pr-20" : "pr-10",
               invalid
@@ -450,7 +450,7 @@ const SelectCombobox = ({
             panelStyle={panelStyle}
             maxHeightClass={dropdownMaxHeightClass}
             role="listbox"
-            roundedClass="rounded-xl"
+            roundedClass="rounded-[var(--radius-xl)]"
             portalClassName={portalClassName}
             panelClassName={panelClassName}
           >
@@ -459,7 +459,7 @@ const SelectCombobox = ({
         ) : (
           listOpen && (
             <div
-              className={`absolute z-360000 mt-1 w-full rounded-xl bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden ${dropdownMaxHeightClass} overflow-auto ${panelClassName || ""}`}
+              className={`absolute z-360000 mt-1 w-full rounded-[var(--radius-xl)] bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden ${dropdownMaxHeightClass} overflow-auto ${panelClassName || ""}`}
               style={{ ...inlineDropdownStyle, ...(panelStyle || {}) }}
             >
               {listBody}

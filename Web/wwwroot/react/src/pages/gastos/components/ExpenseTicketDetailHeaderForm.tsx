@@ -67,7 +67,7 @@ const ExpenseTicketDetailHeaderForm = ({
   const showExpenseSheetField = hasRealExpenseSheetValue(header.hojaGastosIdDisplay);
 
   return (
-    <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
+    <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ExpenseReadOnlyField
           label={indT("Tickets_Field_FileId", "Ticket")}

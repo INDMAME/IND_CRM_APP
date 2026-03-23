@@ -1420,7 +1420,7 @@ const ExpenseTicketsPageContent = () => {
 
       {!isLinkMode && sourcePickerOpen ? (
         <div className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/45 px-4 py-6">
-          <div className="w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-4 shadow-xl">
+          <div className="w-full max-w-sm rounded-[var(--radius-xl)] border border-slate-200 bg-white p-4 shadow-xl">
             <h3 className="text-[16px] font-semibold text-slate-800">
               {indT("ExpenseSheets_NewTicket_Source_Title", "Nuevo ticket")}
             </h3>
@@ -1474,8 +1474,8 @@ const ExpenseTicketsPageContent = () => {
         <div
           className={
             hasPartialTicketFailure
-              ? "glass-panel shadow-card space-y-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
-              : "glass-panel shadow-card space-y-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
+              ? "glass-panel shadow-card space-y-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
+              : "glass-panel shadow-card space-y-2 rounded-[var(--radius-xl)] border border-rose-200 bg-rose-50 p-3 text-sm text-rose-800"
           }
         >
           <p>{quickTicketErrorMessage}</p>
@@ -1483,8 +1483,8 @@ const ExpenseTicketsPageContent = () => {
             <p
               className={
                 hasPartialTicketFailure
-                  ? "rounded-lg border border-amber-200 bg-white px-2 py-1 font-mono text-[11px] text-amber-900 break-all"
-                  : "rounded-lg border border-rose-200 bg-white px-2 py-1 font-mono text-[11px] text-rose-800 break-all"
+                  ? "rounded-[var(--radius-xl)] border border-amber-200 bg-white px-2 py-1 font-mono text-[11px] text-amber-900 break-all"
+                  : "rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2 py-1 font-mono text-[11px] text-rose-800 break-all"
               }
             >
               {`attemptId: ${quickTicketAttemptId}`}
@@ -1494,8 +1494,8 @@ const ExpenseTicketsPageContent = () => {
             <div
               className={
                 hasPartialTicketFailure
-                  ? "rounded-lg border border-amber-200 bg-white p-2 text-xs text-amber-800"
-                  : "rounded-lg border border-rose-200 bg-white p-2 text-xs text-rose-700"
+                  ? "rounded-[var(--radius-xl)] border border-amber-200 bg-white p-2 text-xs text-amber-800"
+                  : "rounded-[var(--radius-xl)] border border-rose-200 bg-white p-2 text-xs text-rose-700"
               }
             >
               {quickTicketTraceList.map((entry) => (

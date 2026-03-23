@@ -1192,8 +1192,8 @@ export default function AudioRecorderMinimal({
       };
 
   const cardClassName = embedded
-    ? "relative w-full rounded-xl sm:rounded-2xl bg-white border shadow-xl"
-    : "relative w-full max-w-[360px] sm:max-w-[420px] lg:max-w-[520px] rounded-xl sm:rounded-2xl bg-white border shadow-xl";
+    ? "relative w-full rounded-[var(--radius-xl)] bg-white border shadow-xl"
+    : "relative w-full max-w-[360px] sm:max-w-[420px] lg:max-w-[520px] rounded-[var(--radius-xl)] bg-white border shadow-xl";
 
   const showTranscribeButton = !!wavBlob && typeof onTranscribe === "function";
   const transcribeText = transcribeLabel || indT("TextEditor_Transcribe", "Transcribe");
@@ -1241,7 +1241,7 @@ export default function AudioRecorderMinimal({
               type="button"
               onClick={togglePlay}
               disabled={!wavUrl}
-              className="h-12 w-12 sm:h-14 sm:w-14 rounded-md border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
+              className="h-12 w-12 sm:h-14 sm:w-14 rounded-[var(--radius-xl)] border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
               style={{
                 borderColor: wavUrl ? "rgba(0, 41, 107, 0.22)" : "rgba(0, 41, 107, 0.18)",
                 backgroundColor: wavUrl ? "rgba(0, 41, 107, 0.06)" : "rgba(0, 41, 107, 0.04)",
@@ -1267,7 +1267,7 @@ export default function AudioRecorderMinimal({
               type="button"
               onClick={onCenterClick}
               disabled={!canRecord}
-              className="h-14 w-14 sm:h-16 sm:w-16 rounded-md border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
+              className="h-14 w-14 sm:h-16 sm:w-16 rounded-[var(--radius-xl)] border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
               style={{
                 borderColor: "rgba(0, 41, 107, 0.18)",
                 backgroundColor: canRecord ? "rgba(0, 41, 107, 0.06)" : "rgba(0, 41, 107, 0.04)",
@@ -1281,7 +1281,7 @@ export default function AudioRecorderMinimal({
               title={centerLabel}
             >
               {!isRecording ? (
-                <span className="h-5 w-5 rounded-md bg-red-500" />
+                <span className="h-5 w-5 rounded-[var(--radius-xl)] bg-red-500" />
               ) : isPaused ? (
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ color: IND_BRAND }}>
                   <path d="M9 7L19 12L9 17V7Z" fill="currentColor" />
@@ -1298,7 +1298,7 @@ export default function AudioRecorderMinimal({
               type="button"
               onClick={onRightClick}
               disabled={!isRecording}
-              className="h-12 w-12 sm:h-14 sm:w-14 rounded-md border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
+              className="h-12 w-12 sm:h-14 sm:w-14 rounded-[var(--radius-xl)] border flex items-center justify-center transition shadow-xs hover:shadow-md active:scale-95"
               style={{
                 borderColor: isRecording ? "rgba(0, 41, 107, 0.22)" : "rgba(0, 41, 107, 0.18)",
                 backgroundColor: isRecording ? "rgba(0, 41, 107, 0.06)" : "rgba(0, 41, 107, 0.04)",
@@ -1320,7 +1320,7 @@ export default function AudioRecorderMinimal({
                 <a
                   href={wavUrl || undefined}
                   download={wavFileName || undefined}
-                  className="px-4 py-1.5 rounded-md border text-[13px] font-medium transition shadow-xs hover:shadow-md active:scale-95"
+                  className="px-4 py-1.5 rounded-[var(--radius-xl)] border text-[13px] font-medium transition shadow-xs hover:shadow-md active:scale-95"
                   style={{
                     borderColor: "rgba(0, 41, 107, 0.22)",
                     backgroundColor: "rgba(0, 41, 107, 0.04)",
@@ -1337,7 +1337,7 @@ export default function AudioRecorderMinimal({
                   type="button"
                   onClick={() => onTranscribe && onTranscribe(wavBlob)}
                   disabled={transcribeBusy}
-                  className="px-4 py-1.5 rounded-md border text-[13px] font-medium transition shadow-xs hover:shadow-md active:scale-95"
+                  className="px-4 py-1.5 rounded-[var(--radius-xl)] border text-[13px] font-medium transition shadow-xs hover:shadow-md active:scale-95"
                   style={{
                     borderColor: "rgba(0, 41, 107, 0.22)",
                     backgroundColor: transcribeBusy ? "rgba(0, 41, 107, 0.08)" : "rgba(0, 41, 107, 0.04)",

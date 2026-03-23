@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 
 type ExpenseCurrencyFlagIconProps = {
   currencyCode: string;
@@ -13,17 +13,14 @@ const normalizeCurrencyCode = (value: string | number | null | undefined): strin
 // Renders a currency flag from local assets with a stable fallback icon.
 const ExpenseCurrencyFlagIcon = ({ currencyCode, className = "", sizeClassName = "h-4 w-4" }: ExpenseCurrencyFlagIconProps) => {
   const normalizedCode = normalizeCurrencyCode(currencyCode);
-  const [loadFailed, setLoadFailed] = useState(false);
-
-  useEffect(() => {
-    setLoadFailed(false);
-  }, [normalizedCode]);
+  const [failedCode, setFailedCode] = useState("");
+  const loadFailed = !!normalizedCode && failedCode === normalizedCode;
 
   if (!normalizedCode || loadFailed) {
     return (
       <span
         aria-hidden="true"
-        className={`inline-flex items-center justify-center rounded-lg text-[10px] font-semibold leading-none text-slate-500 ${sizeClassName} ${className}`.trim()}
+        className={`inline-flex items-center justify-center rounded-[var(--radius-xl)] text-[10px] font-semibold leading-none text-slate-500 ${sizeClassName} ${className}`.trim()}
       >
         $
       </span>
@@ -36,8 +33,8 @@ const ExpenseCurrencyFlagIcon = ({ currencyCode, className = "", sizeClassName =
       alt=""
       aria-hidden="true"
       loading="lazy"
-      className={`${sizeClassName} rounded-lg object-contain ${className}`.trim()}
-      onError={() => setLoadFailed(true)}
+      className={`${sizeClassName} rounded-[var(--radius-xl)] object-contain ${className}`.trim()}
+      onError={() => setFailedCode(normalizedCode)}
     />
   );
 };

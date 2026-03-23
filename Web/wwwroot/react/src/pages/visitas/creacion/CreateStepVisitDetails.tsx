@@ -62,7 +62,7 @@ const CreateStepVisitDetails = ({
   status,
 }: CreateStepVisitDetailsProps) => {
   return (
-    <div className="shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
+    <div className="shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]">
       <div className="text-base font-semibold text-slate-900 border-b border-slate-200 pb-3">
         {title}
       </div>

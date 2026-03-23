@@ -31,7 +31,7 @@ const ChatChartTypePicker = ({
               disabled={disabled}
               aria-pressed={isSelected}
               className={classNames(
-                "rounded-xl border px-3 py-2 text-left transition focus:outline-hidden focus:ring-2 focus:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-60",
+                "rounded-[var(--radius-xl)] border px-3 py-2 text-left transition focus:outline-hidden focus:ring-2 focus:ring-primary/25 disabled:cursor-not-allowed disabled:opacity-60",
                 isSelected
                   ? "border-primary/50 bg-primary/10 text-primary"
                   : "border-slate-200 bg-slate-50 text-slate-700 hover:border-slate-300 hover:bg-white"

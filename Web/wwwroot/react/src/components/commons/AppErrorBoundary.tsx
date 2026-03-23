@@ -26,7 +26,7 @@ class AppErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
-      return <div className="p-4 rounded-xl border border-rose-200 bg-rose-50 text-rose-700">{this.props.fallbackMessage}</div>;
+      return <div className="p-4 rounded-[var(--radius-xl)] border border-rose-200 bg-rose-50 text-rose-700">{this.props.fallbackMessage}</div>;
     }
     return this.props.children;
   }

@@ -43,12 +43,12 @@ export const PageBottomActionButton = ({
       aria-label={ariaLabel || label}
       tabIndex={tabIndex}
       className={classNames(
-        "inline-block w-full rounded-[5px] disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-block w-full rounded-[var(--radius-xl)] disabled:cursor-not-allowed disabled:opacity-60",
         fullWidth ? "col-span-2" : "",
         className || ""
       )}
     >
-      <span className="flex min-h-[68px] w-full items-center justify-center rounded-[5px] border border-[#001f4d]/80 bg-primary px-4 py-3.5 text-center text-[18px] font-bold leading-[1.1] text-white shadow-xs transition-colors duration-150 hover:bg-[#001f4d] sm:min-h-[72px] sm:px-5 sm:py-4 sm:text-[20px]">
+      <span className="flex min-h-[68px] w-full items-center justify-center rounded-[var(--radius-xl)] border border-[#001f4d]/80 bg-primary px-4 py-3.5 text-center text-[18px] font-bold leading-[1.1] text-white shadow-xs transition-colors duration-150 hover:bg-[#001f4d] sm:min-h-[72px] sm:px-5 sm:py-4 sm:text-[20px]">
         {label}
       </span>
     </button>

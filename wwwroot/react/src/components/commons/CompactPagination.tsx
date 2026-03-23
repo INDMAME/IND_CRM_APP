@@ -162,7 +162,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
                   type="button"
                   disabled={isLoading}
                   className={classNames(
-                    "min-w-[26px] px-2 py-0.5 rounded-md border text-[10px] font-semibold transition",
+                    "min-w-[26px] px-2 py-0.5 rounded-[var(--radius-xl)] border text-[10px] font-semibold transition",
                     isActive
                       ? "bg-primary border-primary text-white shadow-sm"
                       : "border-slate-300 text-slate-700 hover:border-primary hover:text-primary",

@@ -22,7 +22,7 @@ const FloatingList = ({
   zIndex = 300000,
   fixedWidthPx,
   maxHeightClass = "max-h-72",
-  roundedClass = "rounded-md",
+  roundedClass = "rounded-[var(--radius-xl)]",
   role,
   portalClassName,
   panelClassName,

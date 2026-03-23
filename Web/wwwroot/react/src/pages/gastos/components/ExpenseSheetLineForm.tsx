@@ -97,7 +97,7 @@ const ExpenseSheetLineForm = ({
         labelClassName="expense-section-divider__label--title"
       />
 
-      <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-2xl">
+      <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {isEditing ? (
             <div className="sm:col-span-2 space-y-1.5">

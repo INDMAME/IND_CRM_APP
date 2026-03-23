@@ -17,6 +17,9 @@ type ExpenseQuickTicketProgressOverlayProps = {
   stages?: ProgressStage[];
 };
 
+const GLOBAL_RADIUS = "var(--radius-xl, 5px)";
+const EMPTY_PROGRESS_STAGES: ProgressStage[] = [];
+
 const formatElapsedLabel = (elapsedMs: number): string => {
   const safeElapsedMs = Number.isFinite(elapsedMs) && elapsedMs > 0 ? elapsedMs : 0;
   const totalSeconds = Math.floor(safeElapsedMs / 1000);
@@ -60,15 +63,18 @@ const ExpenseQuickTicketProgressOverlay = ({
   title,
   summary,
   elapsedMs = 0,
-  stages = [],
+  stages = EMPTY_PROGRESS_STAGES,
 }: ExpenseQuickTicketProgressOverlayProps) => {
   if (!open) return null;
 
   return (
     <div className="fixed inset-0 z-600000 flex items-center justify-center bg-slate-950/40 px-4 py-6">
-      <div className="glass-panel shadow-card w-full max-w-lg rounded-[28px] border border-slate-200 bg-white/95 p-5">
+      <div
+        className="glass-panel shadow-card w-full max-w-lg rounded-[var(--radius-xl)] border border-slate-200 bg-white/95 p-5"
+        style={{ borderRadius: GLOBAL_RADIUS }}
+      >
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-sky-50 text-sky-700">
+          <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-xl)] bg-sky-50 text-sky-700">
             <Spinner size="h-6 w-6" label={indT("Common_Loading", "Loading")} />
           </div>
           <div className="min-w-0 flex-1">
@@ -78,7 +84,7 @@ const ExpenseQuickTicketProgressOverlay = ({
             <p className="mt-1 text-sm text-slate-600">
               {summary || indT("ExpenseSheets_NewTicket_Status_CreatingTicket", "Creating ticket...")}
             </p>
-            <div className="mt-3 flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
+            <div className="mt-3 flex items-center justify-between gap-3 rounded-[var(--radius-xl)] border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-500">
               <span>{indT("ExpenseSheets_NewTicket_Progress_Elapsed", "Elapsed time")}</span>
               <span className="font-mono text-[12px] text-slate-700">{formatElapsedLabel(elapsedMs)}</span>
             </div>
@@ -92,10 +98,10 @@ const ExpenseQuickTicketProgressOverlay = ({
                 key={stage.key}
                 className={
                   stage.state === "active"
-                    ? "rounded-2xl border border-sky-200 bg-sky-50/80 px-3 py-3"
+                    ? "rounded-[var(--radius-xl)] border border-sky-200 bg-sky-50/80 px-3 py-3"
                     : stage.state === "completed"
-                      ? "rounded-2xl border border-emerald-200 bg-emerald-50/70 px-3 py-3"
-                      : "rounded-2xl border border-slate-200 bg-white px-3 py-3"
+                      ? "rounded-[var(--radius-xl)] border border-emerald-200 bg-emerald-50/70 px-3 py-3"
+                      : "rounded-[var(--radius-xl)] border border-slate-200 bg-white px-3 py-3"
                 }
               >
                 <div className="flex items-start gap-3">

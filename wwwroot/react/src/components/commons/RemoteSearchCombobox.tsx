@@ -293,13 +293,13 @@ const RemoteSearchCombobox = ({
         <div
           ref={boxRef}
           className={classNames(
-            "relative w-full rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm",
+            "relative w-full rounded-[var(--radius-xl)] bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm",
             readOnlyMode ? "ind-readonly-field" : ""
           )}
         >
           <input
             className={classNames(
-              "w-full rounded-xl border px-3 py-2 pr-20 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+              "w-full rounded-[var(--radius-xl)] border px-3 py-2 pr-20 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
               "border-slate-200 focus:ring-primary focus:border-primary",
               readOnlyMode ? "ind-readonly-field" : "text-slate-900"
             )}
@@ -402,7 +402,7 @@ const RemoteSearchCombobox = ({
           zIndex={360000}
           maxHeightClass="max-h-72"
           role="listbox"
-          roundedClass="rounded-xl"
+          roundedClass="rounded-[var(--radius-xl)]"
           panelClassName={panelClassName}
         >
           <div id={listId} ref={listRef}>

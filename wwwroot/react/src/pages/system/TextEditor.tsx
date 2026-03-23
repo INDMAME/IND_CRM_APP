@@ -404,8 +404,8 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
   }, [isReadOnly, isTranscribing, isTyping, stopTyping, storageKey, goBackAfterSave, normalizedEditModeKey]);
 
   const editorBoxClass = isReadOnly
-    ? "relative rounded-2xl border border-slate-200 bg-slate-100 shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary"
-    : "relative rounded-2xl border border-slate-300 bg-white shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary";
+    ? "relative rounded-[var(--radius-xl)] border border-slate-200 bg-slate-100 shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary"
+    : "relative rounded-[var(--radius-xl)] border border-slate-300 bg-white shadow-lg overflow-hidden focus-within:ring-4 focus-within:ring-primary/40 focus-within:border-primary";
   const micDisabled = isReadOnly || isTranscribing || isTyping;
   const micReadOnlyHint = indT("TextEditor_Microphone_ReadOnlyHint", "Audio transcription is available only in edit mode.");
   const micBaseLabel = indT("TextEditor_Microphone", "Microphone");

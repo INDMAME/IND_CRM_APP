@@ -11,7 +11,7 @@ type CommonChartFrameProps = {
 // Provides one reusable card shell for all supported chart components.
 const CommonChartFrame = ({ title, subtitle, emptyStateLabel, hasData, children }: CommonChartFrameProps) => {
   return (
-    <section className="w-full max-w-full rounded-[22px] border border-slate-200 bg-white shadow-sm">
+    <section className="w-full max-w-full rounded-[var(--radius-xl)] border border-slate-200 bg-white shadow-sm">
       {title || subtitle ? (
         <header className="border-b border-slate-200 bg-slate-50 px-4 py-3">
           {title ? <h3 className="text-[12px] font-semibold leading-5 text-slate-900">{title}</h3> : null}
@@ -23,7 +23,7 @@ const CommonChartFrame = ({ title, subtitle, emptyStateLabel, hasData, children 
         {hasData ? (
           <div className="min-h-[304px] w-full min-w-0 overflow-visible">{children}</div>
         ) : (
-          <div className="flex h-48 items-center justify-center rounded-[18px] border border-dashed border-slate-200 bg-slate-50 px-4 text-center text-[12px] leading-5 text-slate-500">
+          <div className="flex h-48 items-center justify-center rounded-[var(--radius-xl)] border border-dashed border-slate-200 bg-slate-50 px-4 text-center text-[12px] leading-5 text-slate-500">
             {emptyStateLabel || "No hay datos suficientes para mostrar esta visualizacion."}
           </div>
         )}

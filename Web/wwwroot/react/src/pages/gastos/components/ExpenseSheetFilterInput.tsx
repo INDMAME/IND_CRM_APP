@@ -101,7 +101,7 @@ const ExpenseSheetFilterInput = ({
           </label>
         ) : null}
         <input
-          className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm sm:text-base leading-5 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
+          className="w-full rounded-[var(--radius-xl)] border border-slate-200 px-3 py-2 text-sm sm:text-base leading-5 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
           value={value}
           onChange={(event) => onChange(event.target.value)}
           placeholder={placeholder}

@@ -48,7 +48,7 @@ const ExpenseTicketPreviewModal = ({
       <button
         type="button"
         aria-label={indT("Common_Close", "Close")}
-        className="fixed right-4 top-[calc(1rem+env(safe-area-inset-top,0px))] z-[600020] inline-flex h-10 w-10 items-center justify-center rounded-[5px] border border-slate-200/60 bg-slate-900/78 text-slate-100 shadow-lg transition hover:bg-slate-900/88 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-200/80"
+        className="fixed right-4 top-[calc(1rem+env(safe-area-inset-top,0px))] z-[600020] inline-flex h-10 w-10 items-center justify-center rounded-[var(--radius-xl)] border border-slate-200/60 bg-slate-900/78 text-slate-100 shadow-lg transition hover:bg-slate-900/88 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-slate-200/80"
         onClick={onClose}
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -75,7 +75,7 @@ const ExpenseTicketPreviewModal = ({
         ) : imageUrl ? (
           <div
             ref={surfaceRef}
-            className="relative max-h-[90vh] max-w-[92vw] overflow-hidden rounded-[5px] touch-none overscroll-contain"
+            className="relative max-h-[90vh] max-w-[92vw] overflow-hidden rounded-[var(--radius-xl)] touch-none overscroll-contain"
             role="presentation"
             style={{ touchAction: "none" }}
             onPointerDown={onPointerDown}
@@ -87,7 +87,7 @@ const ExpenseTicketPreviewModal = ({
             <img
               src={imageUrl}
               alt={imageAlt || indT("Tickets_Field_FileId", "Ticket")}
-              className="pointer-events-none max-h-[90vh] w-auto max-w-[92vw] select-none rounded-[5px] object-contain shadow-2xl"
+              className="pointer-events-none max-h-[90vh] w-auto max-w-[92vw] select-none rounded-[var(--radius-xl)] object-contain shadow-2xl"
               style={{
                 transform: `translate3d(${translate.x}px, ${translate.y}px, 0) scale(${scale})`,
                 transformOrigin: "center center",

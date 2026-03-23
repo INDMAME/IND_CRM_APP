@@ -335,13 +335,13 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
       <div className="relative">
           <div
             ref={boxRef}
-            className="relative w-full cursor-default rounded-[5px] border-slate-300 bg-white text-left shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
+            className="relative w-full cursor-default rounded-[var(--radius-xl)] border-slate-300 bg-white text-left shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm"
           >
           <div className="flex flex-wrap gap-1 px-3 py-2 min-h-10">
             {selected.map((c) => (
               <span
                 key={c.value}
-                className="flex items-center gap-1 rounded-md bg-primary/10 text-slate-700 px-2 py-1 text-xs"
+                className="flex items-center gap-1 rounded-[var(--radius-xl)] bg-primary/10 text-slate-700 px-2 py-1 text-xs"
               >
                 {c.text}
                 <button
@@ -410,7 +410,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
             zIndex={380000}
             maxHeightClass="max-h-72"
             role="listbox"
-            roundedClass="rounded-[5px]"
+            roundedClass="rounded-[var(--radius-xl)]"
             portalClassName={portalClassName}
             panelClassName={panelClassName}
           >
@@ -460,7 +460,7 @@ const ContactsCombobox = ({ accountNum, value = [], onChange, portalClassName, p
               })}
           </div>
             {blocking && (
-              <div className="absolute inset-0 z-70000 bg-white/70 backdrop-blur-[1px] flex items-center justify-center rounded-[5px]">
+              <div className="absolute inset-0 z-70000 bg-white/70 backdrop-blur-[1px] flex items-center justify-center rounded-[var(--radius-xl)]">
                 <Spinner size="h-6 w-6" />
               </div>
             )}

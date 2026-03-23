@@ -208,7 +208,7 @@ const FloatingActionButton = ({
   );
 
   const menuPanelClassName = useMemo(() => {
-    const base = "min-w-[11rem] rounded-xl border border-slate-200 bg-white p-2 shadow-xl";
+    const base = "min-w-[11rem] rounded-[var(--radius-xl)] border border-slate-200 bg-white p-2 shadow-xl";
     const extra = menuClassName.trim();
     return extra ? `${base} ${extra}` : base;
   }, [menuClassName]);
@@ -232,7 +232,7 @@ const FloatingActionButton = ({
                   role="menuitem"
                   aria-label={item.ariaLabel || item.label}
                   disabled={item.disabled}
-                  className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-left text-[16px] font-medium leading-5 text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center gap-2 rounded-[var(--radius-xl)] px-3 py-2 text-left text-[16px] font-medium leading-5 text-slate-700 transition-colors hover:bg-slate-100 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
                   onClick={() => handleMenuItemClick(item)}
                 >
                   {item.icon ? <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center">{item.icon}</span> : null}
@@ -249,7 +249,7 @@ const FloatingActionButton = ({
         aria-label={ariaLabel}
         aria-expanded={hasMenu ? menuOpen : undefined}
         aria-haspopup={hasMenu ? "menu" : undefined}
-        className="rounded-md border-0 bg-transparent p-0 transition-transform duration-150 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-4"
+        className="rounded-[var(--radius-xl)] border-0 bg-transparent p-0 transition-transform duration-150 hover:-translate-y-0.5 active:scale-95 focus-visible:ring-4 focus-visible:ring-primary/30 focus-visible:ring-offset-4"
         style={{
           width: `${size}px`,
           height: `${size}px`,
@@ -257,7 +257,7 @@ const FloatingActionButton = ({
         }}
         onClick={handleMainClick}
       >
-        <canvas ref={canvasRef} className="block rounded-md" />
+        <canvas ref={canvasRef} className="block rounded-[var(--radius-xl)]" />
       </button>
     </div>
   );

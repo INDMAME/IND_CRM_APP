@@ -32,7 +32,7 @@ const ExpenseTicketStickyPreview = ({
         aria-label={`${previewLabel}: ${safeFileName}`}
         onClick={onOpen}
       >
-        <div className="overflow-hidden rounded-[5px] border border-slate-200 bg-white shadow-xs transition-[transform,box-shadow,border-color] duration-200 group-hover:-translate-y-[1px] group-hover:border-primary/25 group-hover:shadow-md">
+        <div className="overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white shadow-xs transition-[transform,box-shadow,border-color] duration-200 group-hover:-translate-y-[1px] group-hover:border-primary/25 group-hover:shadow-md">
           <div className="relative h-36 overflow-hidden bg-linear-to-br from-slate-100 via-white to-slate-200 sm:h-40 lg:h-[380px]">
             {imageUrl ? (
               <img
@@ -40,7 +40,7 @@ const ExpenseTicketStickyPreview = ({
                 alt={imageAlt || ticketLabel}
                 width={640}
                 height={960}
-                className="h-full w-full rounded-[5px] object-cover object-center transition-transform duration-300 group-hover:scale-[1.015] lg:object-contain lg:object-center lg:p-3"
+                className="h-full w-full rounded-[var(--radius-xl)] object-cover object-center transition-transform duration-300 group-hover:scale-[1.015] lg:object-contain lg:object-center lg:p-3"
               />
             ) : (
               <div className="flex h-full items-center justify-center px-4">
@@ -53,7 +53,7 @@ const ExpenseTicketStickyPreview = ({
                   </div>
                 ) : (
                   <div className="flex min-w-0 items-center gap-3 text-slate-700">
-                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[5px] bg-primary/8 text-primary">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-xl)] bg-primary/8 text-primary">
                       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path
                           d="M7 3.75h6.25L18.25 8.75V19.5a.75.75 0 0 1-.75.75H7a.75.75 0 0 1-.75-.75v-15A.75.75 0 0 1 7 3.75Z"
@@ -81,7 +81,7 @@ const ExpenseTicketStickyPreview = ({
             )}
 
             <div className="pointer-events-none absolute inset-x-0 top-0 h-16 bg-linear-to-b from-slate-950/26 via-slate-900/8 to-transparent lg:h-20" />
-            <div className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1 rounded-[5px] bg-primary/92 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm">
+            <div className="pointer-events-none absolute right-3 top-3 inline-flex items-center gap-1 rounded-[var(--radius-xl)] bg-primary/92 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm">
               <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                 <path
                   d="M15 3h6v6M21 3l-7 7M9 21H3v-6M3 21l7-7"

@@ -20,7 +20,7 @@ const CommonDataTable = ({ payload }: CommonDataTableProps) => {
   const hasRows = Array.isArray(payload.rows) && payload.rows.length > 0;
 
   return (
-    <section className="w-full max-w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <section className="w-full max-w-full overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white shadow-sm">
       {payload.title || payload.subtitle ? (
         <header className="border-b border-slate-200 bg-slate-50 px-4 py-3">
           {payload.title ? <h3 className="text-[12px] font-semibold leading-5 text-slate-900">{payload.title}</h3> : null}

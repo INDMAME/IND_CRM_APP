@@ -124,7 +124,7 @@ const AssistantChatMessageBubble = ({
           {message.state === "error" && message.retryQuestion ? (
             <button
               type="button"
-              className="mt-2 inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+              className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
               disabled={isSending}
               onClick={() => onRetry(message.retryQuestion || "")}
             >
@@ -137,14 +137,14 @@ const AssistantChatMessageBubble = ({
             <div className="mt-2">
               <button
                 type="button"
-                className="inline-flex items-center gap-1 rounded-[5px] border border-amber-200 bg-amber-50 px-2 py-1 text-[12px] font-semibold text-amber-900 transition hover:bg-amber-100 focus:outline-hidden focus:ring-2 focus:ring-amber-200"
+                className="inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-2 py-1 text-[12px] font-semibold text-amber-900 transition hover:bg-amber-100 focus:outline-hidden focus:ring-2 focus:ring-amber-200"
                 onClick={() => setWarningsOpen((previous) => !previous)}
               >
                 {warningsLabel} ({warnings.length})
               </button>
 
               {warningsOpen ? (
-                <div className="mt-2 rounded-[10px] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-5 text-amber-900">
+                <div className="mt-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-5 text-amber-900">
                   <ul className="list-disc space-y-1 pl-4">
                     {warnings.map((warning) => {
                       const normalizedWarning = toText(warning) || "warning";
@@ -219,7 +219,7 @@ const AssistantChatMessageBubble = ({
         {message.state === "error" && message.retryQuestion ? (
           <button
             type="button"
-            className="mt-2 inline-flex items-center gap-1 rounded-md border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
+            className="mt-2 inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-rose-200 bg-white px-2.5 py-1.5 text-[12px] font-semibold text-rose-800 transition hover:bg-rose-100 focus:outline-hidden focus:ring-2 focus:ring-rose-300 disabled:cursor-not-allowed disabled:opacity-60"
             disabled={isSending}
             onClick={() => onRetry(message.retryQuestion || "")}
           >
@@ -232,14 +232,14 @@ const AssistantChatMessageBubble = ({
           <div className="mt-2">
             <button
               type="button"
-              className="inline-flex items-center gap-1 rounded-[5px] border border-amber-200 bg-amber-50 px-2 py-1 text-[12px] font-semibold text-amber-900 transition hover:bg-amber-100 focus:outline-hidden focus:ring-2 focus:ring-amber-200"
+              className="inline-flex items-center gap-1 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-2 py-1 text-[12px] font-semibold text-amber-900 transition hover:bg-amber-100 focus:outline-hidden focus:ring-2 focus:ring-amber-200"
               onClick={() => setWarningsOpen((previous) => !previous)}
             >
               {warningsLabel} ({warnings.length})
             </button>
 
             {warningsOpen ? (
-              <div className="mt-2 rounded-[10px] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-5 text-amber-900">
+              <div className="mt-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-5 text-amber-900">
                 <ul className="list-disc space-y-1 pl-4">
                   {warnings.map((warning) => {
                     const normalizedWarning = toText(warning) || "warning";
@@ -367,7 +367,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
               </div>
               <button
                 type="button"
-                className="rounded-[5px] border border-slate-200 bg-white p-[5px] text-slate-500 transition hover:border-slate-300 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/30"
+                className="rounded-[var(--radius-xl)] border border-slate-200 bg-white p-[5px] text-slate-500 transition hover:border-slate-300 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/30"
                 aria-label={closeAriaLabel}
                 onClick={onClose}
               >
@@ -420,7 +420,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
                     key={action.id}
                     type="button"
                     disabled={!hasContext || isSending}
-                    className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[5px] border border-slate-200 bg-slate-100 px-2 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-primary/20 hover:bg-slate-50 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-xl)] border border-slate-200 bg-slate-100 px-2 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-primary/20 hover:bg-slate-50 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={() => onQuickAction(action.question)}
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0" />
@@ -430,7 +430,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
               })}
             </div>
 
-            <div className="glass-panel shadow-card relative rounded-2xl border border-slate-200 bg-white/95 px-2.5 py-2">
+            <div className="glass-panel shadow-card relative rounded-[var(--radius-xl)] border border-slate-200 bg-white/95 px-2.5 py-2">
               {!toText(draftValue) ? (
                 <span
                   aria-hidden="true"
@@ -452,7 +452,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
               />
               <button
                 type="button"
-                className="absolute bottom-2 right-2 inline-flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white shadow-sm transition hover:bg-primary/90 focus:outline-hidden focus:ring-4 focus:ring-primary/25 disabled:cursor-not-allowed disabled:bg-slate-300"
+                className="absolute bottom-2 right-2 inline-flex h-11 w-11 items-center justify-center rounded-[var(--radius-xl)] bg-primary text-white shadow-sm transition hover:bg-primary/90 focus:outline-hidden focus:ring-4 focus:ring-primary/25 disabled:cursor-not-allowed disabled:bg-slate-300"
                 disabled={sendDisabled}
                 aria-label={sendAriaLabel}
                 onClick={onSubmit}

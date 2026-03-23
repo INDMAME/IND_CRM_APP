@@ -43,7 +43,7 @@ const ChatMarkdownMessage = ({ markdown, className, tone = "default" }: ChatMark
           h1: ({ children }) => (
             <h1
               className={classNames(
-                "rounded-xl border px-2.5 py-1 text-[12px] font-semibold leading-5",
+                "rounded-[var(--radius-xl)] border px-2.5 py-1 text-[12px] font-semibold leading-5",
                 isInverse ? "border-white/15 bg-white/10 text-white" : "border-primary/10 bg-primary/5 text-primary"
               )}
             >
@@ -53,7 +53,7 @@ const ChatMarkdownMessage = ({ markdown, className, tone = "default" }: ChatMark
           h2: ({ children }) => (
             <h2
               className={classNames(
-                "rounded-xl border px-2.5 py-1 text-[12px] font-semibold leading-5",
+                "rounded-[var(--radius-xl)] border px-2.5 py-1 text-[12px] font-semibold leading-5",
                 isInverse ? "border-white/15 bg-white/10 text-white" : "border-primary/10 bg-primary/5 text-primary"
               )}
             >
@@ -83,7 +83,7 @@ const ChatMarkdownMessage = ({ markdown, className, tone = "default" }: ChatMark
           code: ({ children }) => (
             <code
               className={classNames(
-                "rounded-md border px-1.5 py-0.5 font-mono text-[0.92em]",
+                "rounded-[var(--radius-xl)] border px-1.5 py-0.5 font-mono text-[0.92em]",
                 isInverse ? "border-white/15 bg-white/10 text-white" : "border-slate-200 bg-slate-100 text-slate-800"
               )}
             >
@@ -93,7 +93,7 @@ const ChatMarkdownMessage = ({ markdown, className, tone = "default" }: ChatMark
           pre: ({ children }) => (
             <pre
               className={classNames(
-                "overflow-x-auto rounded-2xl border px-3 py-3 text-[12px] leading-5 shadow-inner",
+                "overflow-x-auto rounded-[var(--radius-xl)] border px-3 py-3 text-[12px] leading-5 shadow-inner",
                 isInverse ? "border-white/15 bg-slate-950/70 text-slate-50" : "border-slate-200 bg-slate-900 text-slate-50"
               )}
             >
@@ -103,7 +103,7 @@ const ChatMarkdownMessage = ({ markdown, className, tone = "default" }: ChatMark
           blockquote: ({ children }) => (
             <blockquote
               className={classNames(
-                "rounded-r-xl border-l-2 px-3 py-2 text-[12px] leading-5 italic",
+                "rounded-r-[var(--radius-xl)] border-l-2 px-3 py-2 text-[12px] leading-5 italic",
                 isInverse ? "border-white/25 bg-white/10 text-white/90" : "border-primary/25 bg-primary/5 text-slate-700"
               )}
             >

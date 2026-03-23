@@ -279,11 +279,11 @@ const ClientSearchCombobox = ({
   const wrapperClass = isCompact ? "space-y-1 history-client-combobox" : "space-y-2";
   const labelClass = "form-label font-semibold";
   const containerClass = isCompact
-    ? "relative w-full rounded-xl bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
-    : "relative w-full cursor-default rounded-[5px] border-slate-300 bg-white text-left shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm";
+    ? "relative w-full rounded-[var(--radius-xl)] bg-white text-left focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-white sm:text-sm"
+    : "relative w-full cursor-default rounded-[var(--radius-xl)] border-slate-300 bg-white text-left shadow-xs focus-within:border-primary focus-within:ring-2 focus-within:ring-primary focus-within:ring-offset-0 sm:text-sm";
   const inputClass = isCompact
-    ? "w-full rounded-xl border border-slate-200 px-3 py-2 pr-24 text-sm sm:text-base leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
-    : "w-full rounded-[5px] border border-slate-200 px-3 py-2 pr-24 text-sm sm:text-base leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary";
+    ? "w-full rounded-[var(--radius-xl)] border border-slate-200 px-3 py-2 pr-24 text-sm sm:text-base leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary"
+    : "w-full rounded-[var(--radius-xl)] border border-slate-200 px-3 py-2 pr-24 text-sm sm:text-base leading-5 text-slate-900 placeholder:text-slate-400 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary";
   const emptyTextClass = isCompact ? "px-4 py-2 text-sm text-slate-500" : "px-4 py-2 text-sm text-slate-500";
   const optionClass = isCompact
     ? "relative flex w-full cursor-default select-none items-start py-2 px-3 text-left text-sm"
@@ -391,7 +391,7 @@ const ClientSearchCombobox = ({
         zIndex={400000}
         maxHeightClass="max-h-72"
         role="listbox"
-        roundedClass="rounded-[5px]"
+        roundedClass="rounded-[var(--radius-xl)]"
         portalClassName={portalClassName}
         panelClassName={panelClassName}
       >
