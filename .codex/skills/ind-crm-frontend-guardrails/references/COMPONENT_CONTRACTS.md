@@ -153,7 +153,27 @@
   - Visual label must be borderless and background-free (no box or pill frame).
   - Side lines must come from `.expense-section-divider::before/::after`.
   - Label text style is uppercase, compact, and high-contrast with the shared palette.
-  - All labels passed to the component must come from i18n resources.
+- All labels passed to the component must come from i18n resources.
+
+## Shared assistant chat contract (React)
+### AssistantChatShell
+- File: `Web/wwwroot/react/src/components/commons/chat/AssistantChatShell.tsx`
+- Purpose: shared dumb shell for floating assistant/chat experiences across pages.
+- Contract:
+  - Must stay presentational and prop-driven only.
+  - Must not call APIs, read module stores, or know page-specific backend contracts.
+  - Feature pages own orchestration in hooks/containers and pass normalized props into the shell.
+  - Standard visual behavior lives here: launcher, overlay, panel, empty state, message list, composer, warning block, and retry button.
+  - Standard header behavior: show the avatar in the header before the first assistant response; after that, keep only response avatars visible.
+  - Standard amount readability helpers live here so every future page gets the same message formatting rules.
+  - Future modules may customize copy, quick actions, and image source, but should not fork layout/style without an explicit design decision.
+
+### assistantChatTypes
+- File: `Web/wwwroot/react/src/components/commons/chat/assistantChatTypes.ts`
+- Purpose: shared message and quick action contracts used by the dumb shell and module adapters.
+- Contract:
+  - Shared message shape is the source of truth for reusable assistant UI.
+  - Module-local assistant types may extend context/state models, but should reuse these message contracts instead of redefining parallel variants.
 
 ## Shared narrative field contract (React)
 ### VisitNarrativeFields
@@ -255,4 +275,4 @@ export function DatePickerLike({ label, value, readOnly = false, disabled = fals
 ```
 
 ## Last updated
-- 2026-02-12
+- 2026-03-18

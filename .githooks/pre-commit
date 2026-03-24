@@ -14,5 +14,5 @@ echo "[pre-commit] Validating Razor localization key coverage..."
 node scripts/check-localization-keys.mjs
 
 # Stage markdown reference updates so commit includes synchronized copies.
-git add -- .codex/skills/ind-crm-frontend-guardrails/references/*.md .codex/skills/ind-crm-frontend-guardrails/references/config.toml
+git add -f -- .codex/skills/ind-crm-frontend-guardrails/references/*.md .codex/skills/ind-crm-frontend-guardrails/references/config.toml
 git add -u -- .codex/skills/ind-crm-frontend-guardrails/references/*.md .codex/skills/ind-crm-frontend-guardrails/references/config.toml
