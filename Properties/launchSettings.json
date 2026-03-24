@@ -6,6 +6,8 @@
       "launchUrl": "/",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
+        "IND_ENV": "DEV",
+        "INDCRM_BASE_URL": "https://dev.insertec.biz:7776/",
         "ASPNETCORE_WEBROOT": "Web\\wwwroot"
       },
       "dotnetRunMessages": true,
@@ -16,6 +18,8 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
+        "IND_ENV": "DEV",
+        "INDCRM_BASE_URL": "https://dev.insertec.biz:7776/",
         "ASPNETCORE_WEBROOT": "Web\\wwwroot"
       },
       "dotnetRunMessages": true,
@@ -26,6 +30,8 @@
       "launchBrowser": false,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
+        "IND_ENV": "DEV",
+        "INDCRM_BASE_URL": "https://dev.insertec.biz:7776/",
         "ASPNETCORE_WEBROOT": "Web\\wwwroot"
       },
       "dotnetRunMessages": true,
@@ -36,6 +42,8 @@
       "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development",
+        "IND_ENV": "DEV",
+        "INDCRM_BASE_URL": "https://dev.insertec.biz:7776/",
         "ASPNETCORE_WEBROOT": "Web\\wwwroot"
       }
     }

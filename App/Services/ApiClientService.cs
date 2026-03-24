@@ -89,19 +89,19 @@ namespace IND_CRM_APP.Services
             _tokenSession = tokenSession;
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
-            _baseUrl = (config["ApiSettings:BaseUrl"] ?? string.Empty).TrimEnd('/');
+            _baseUrl = ResolveBaseUrl(config, logger);
 
             // Defensive config check to avoid empty or insecure API base URL.
             if (string.IsNullOrWhiteSpace(_baseUrl))
             {
                 throw new InvalidOperationException(
-                    "ApiSettings:BaseUrl is required. Configure it in appsettings.json or environment-specific settings.");
+                    "CRM API BaseUrl is required. Configure ApiSettings__BaseUrl or INDCRM_BASE_URL on the target machine.");
             }
 
             if (environment.IsProduction() && _baseUrl.StartsWith("http://", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogError("ApiSettings:BaseUrl must use HTTPS in Production. Current value starts with http://");
-                throw new InvalidOperationException("ApiSettings:BaseUrl must use HTTPS in Production.");
+                _logger.LogError("CRM API BaseUrl must use HTTPS in Production. Current value starts with http://");
+                throw new InvalidOperationException("CRM API BaseUrl must use HTTPS in Production.");
             }
 
             if (int.TryParse(config["ApiSettings:TimeoutSeconds"], out var seconds) && seconds > 0)
@@ -122,6 +122,47 @@ namespace IND_CRM_APP.Services
             {
                 _accountsTimeoutSeconds = (int)_client.Timeout.TotalSeconds;
             }
+        }
+
+        private static string ResolveBaseUrl(IConfiguration config, ILogger<ApiClientService> logger)
+        {
+            var directSetting = NormalizeConfigValue(config["ApiSettings:BaseUrl"]);
+            if (!string.IsNullOrWhiteSpace(directSetting))
+            {
+                logger.LogInformation("CRM API BaseUrl resolved from ApiSettings:BaseUrl.");
+                return directSetting.TrimEnd('/');
+            }
+
+            var sharedEnvironmentSetting = NormalizeConfigValue(config["INDCRM_BASE_URL"]);
+            if (!string.IsNullOrWhiteSpace(sharedEnvironmentSetting))
+            {
+                logger.LogInformation("CRM API BaseUrl resolved from INDCRM_BASE_URL.");
+                return sharedEnvironmentSetting.TrimEnd('/');
+            }
+
+            return string.Empty;
+        }
+
+        private static string NormalizeConfigValue(string? value)
+        {
+            var normalized = (value ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalized))
+                return string.Empty;
+
+            if (LooksLikeUnresolvedEnvironmentToken(normalized))
+                return string.Empty;
+
+            return normalized;
+        }
+
+        private static bool LooksLikeUnresolvedEnvironmentToken(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            return value.Length > 2
+                   && value.StartsWith("%", StringComparison.Ordinal)
+                   && value.EndsWith("%", StringComparison.Ordinal);
         }
 
         private string BuildUrl(string relativePath) => $"{_baseUrl}/{relativePath.TrimStart('/')}";

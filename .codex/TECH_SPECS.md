@@ -10,7 +10,7 @@
 - Web code lives under `Web/` (controllers, views, wwwroot).
 
 ## API surface (IND_CRM_API)
-- Base URL: `ApiSettings:BaseUrl`.
+- Base URL: prefer `ApiSettings__BaseUrl` or shared `INDCRM_BASE_URL`; keep `ApiSettings:BaseUrl` as a non-operational fallback in git.
 - Envelopes:
   - `IndApiResponse<T>`: `Success`, `Message`, `ErrorCode`, `Data`, `Errors`, `TraceId`.
   - `IndPagedResponse<T>`: `Success`, `Message`, `Total`, `Page`, `PageSize`, `Items`, `TraceId`.

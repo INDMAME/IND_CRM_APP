@@ -3,8 +3,81 @@ param(
     [string]$OutputPath = ".\\.publish_tmp",
     [string]$Configuration = "Release",
     [string]$IisPath = "C:\\inetpub\\wwwroot\\IND_CRM_APP",
-    [switch]$RestartIis = $true
+    [switch]$RestartIis = $true,
+    [ValidateSet("DEV", "PROD")]
+    [string]$TargetEnvironment,
+    [switch]$AllowBranchEnvironmentMismatch = $false
 )
+
+function Get-EnvironmentValue {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$Name
+    )
+
+    foreach ($scope in @("Process", "User", "Machine")) {
+        $value = [Environment]::GetEnvironmentVariable($Name, $scope)
+        if (-not [string]::IsNullOrWhiteSpace($value)) {
+            return $value.Trim()
+        }
+    }
+
+    return ""
+}
+
+function Resolve-TargetEnvironment {
+    param(
+        [string]$ExplicitTargetEnvironment
+    )
+
+    if (-not [string]::IsNullOrWhiteSpace($ExplicitTargetEnvironment)) {
+        return $ExplicitTargetEnvironment.Trim().ToUpperInvariant()
+    }
+
+    $configuredEnvironment = Get-EnvironmentValue -Name "IND_ENV"
+    if ([string]::IsNullOrWhiteSpace($configuredEnvironment)) {
+        throw "IND_ENV is not configured. Set IND_ENV on the machine or pass -TargetEnvironment DEV/PROD."
+    }
+
+    $normalized = $configuredEnvironment.Trim().ToUpperInvariant()
+    if ($normalized -notin @("DEV", "PROD")) {
+        throw "IND_ENV must be DEV or PROD. Current value: '$configuredEnvironment'."
+    }
+
+    return $normalized
+}
+
+function Get-CurrentGitBranch {
+    $branch = git rev-parse --abbrev-ref HEAD 2>$null
+    if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($branch)) {
+        throw "Unable to resolve the current git branch. Publish is blocked for safety."
+    }
+
+    return $branch.Trim()
+}
+
+function Normalize-BranchEnvironment {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$BranchName
+    )
+
+    switch ($BranchName.Trim().ToUpperInvariant()) {
+        "DEV" { return "DEV" }
+        "PROD" { return "PROD" }
+        "MAIN" { return "PROD" }
+        default { return "" }
+    }
+}
+
+function Get-EffectiveApiBaseUrl {
+    $directValue = Get-EnvironmentValue -Name "ApiSettings__BaseUrl"
+    if (-not [string]::IsNullOrWhiteSpace($directValue)) {
+        return $directValue
+    }
+
+    return Get-EnvironmentValue -Name "INDCRM_BASE_URL"
+}
 
 # Enforce the canonical IIS deployment directory for this project.
 $CanonicalIisPath = "C:\\inetpub\\wwwroot\\IND_CRM_APP"
@@ -14,6 +87,28 @@ if (-not [System.StringComparer]::OrdinalIgnoreCase.Equals($ResolvedIisPath, $Re
     throw "IIS publish path must be '$CanonicalIisPath'. Received '$IisPath'."
 }
 $IisPath = $CanonicalIisPath
+
+$ResolvedTargetEnvironment = Resolve-TargetEnvironment -ExplicitTargetEnvironment $TargetEnvironment
+$CurrentBranch = Get-CurrentGitBranch
+$CurrentBranchEnvironment = Normalize-BranchEnvironment -BranchName $CurrentBranch
+if ([string]::IsNullOrWhiteSpace($CurrentBranchEnvironment)) {
+    throw "Current git branch '$CurrentBranch' does not map to DEV or PROD. Publish is blocked for safety."
+}
+
+if (-not $AllowBranchEnvironmentMismatch -and $CurrentBranchEnvironment -ne $ResolvedTargetEnvironment) {
+    throw "Branch/environment mismatch. Current branch '$CurrentBranch' maps to '$CurrentBranchEnvironment' but target environment is '$ResolvedTargetEnvironment'."
+}
+
+$EffectiveApiBaseUrl = Get-EffectiveApiBaseUrl
+if ([string]::IsNullOrWhiteSpace($EffectiveApiBaseUrl)) {
+    throw "Neither ApiSettings__BaseUrl nor INDCRM_BASE_URL is configured. Publish is blocked because the deployed app would not know which API environment to use."
+}
+
+if ($ResolvedTargetEnvironment -eq "PROD" -and $EffectiveApiBaseUrl.StartsWith("http://", [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "INDCRM_BASE_URL must use HTTPS for PROD."
+}
+
+Write-Host ("Publish guard: branch={0}; targetEnvironment={1}; apiBaseUrl={2}" -f $CurrentBranch, $ResolvedTargetEnvironment, $EffectiveApiBaseUrl)
 
 # Block deployment if any localization file has encoding corruption markers.
 node scripts/check-resx-encoding.mjs
