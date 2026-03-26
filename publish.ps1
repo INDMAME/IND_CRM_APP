@@ -47,6 +47,28 @@ function Resolve-TargetEnvironment {
     return $normalized
 }
 
+function Get-ExpectedAspNetCoreEnvironment {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TargetEnvironmentName
+    )
+
+    switch ($TargetEnvironmentName.Trim().ToUpperInvariant()) {
+        "DEV" { return "Development" }
+        "PROD" { return "Production" }
+        default { throw "Unsupported target environment '$TargetEnvironmentName'." }
+    }
+}
+
+function Resolve-AspNetCoreEnvironment {
+    $configuredEnvironment = Get-EnvironmentValue -Name "ASPNETCORE_ENVIRONMENT"
+    if ([string]::IsNullOrWhiteSpace($configuredEnvironment)) {
+        throw "ASPNETCORE_ENVIRONMENT is not configured. Set it on the machine before publishing IND_CRM_APP."
+    }
+
+    return $configuredEnvironment.Trim()
+}
+
 function Get-CurrentGitBranch {
     $branch = git rev-parse --abbrev-ref HEAD 2>$null
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($branch)) {
@@ -89,6 +111,8 @@ if (-not [System.StringComparer]::OrdinalIgnoreCase.Equals($ResolvedIisPath, $Re
 $IisPath = $CanonicalIisPath
 
 $ResolvedTargetEnvironment = Resolve-TargetEnvironment -ExplicitTargetEnvironment $TargetEnvironment
+$ExpectedAspNetCoreEnvironment = Get-ExpectedAspNetCoreEnvironment -TargetEnvironmentName $ResolvedTargetEnvironment
+$ResolvedAspNetCoreEnvironment = Resolve-AspNetCoreEnvironment
 $CurrentBranch = Get-CurrentGitBranch
 $CurrentBranchEnvironment = Normalize-BranchEnvironment -BranchName $CurrentBranch
 if ([string]::IsNullOrWhiteSpace($CurrentBranchEnvironment)) {
@@ -97,6 +121,10 @@ if ([string]::IsNullOrWhiteSpace($CurrentBranchEnvironment)) {
 
 if (-not $AllowBranchEnvironmentMismatch -and $CurrentBranchEnvironment -ne $ResolvedTargetEnvironment) {
     throw "Branch/environment mismatch. Current branch '$CurrentBranch' maps to '$CurrentBranchEnvironment' but target environment is '$ResolvedTargetEnvironment'."
+}
+
+if (-not [string]::Equals($ResolvedAspNetCoreEnvironment, $ExpectedAspNetCoreEnvironment, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "ASPNETCORE_ENVIRONMENT mismatch. Expected '$ExpectedAspNetCoreEnvironment' for target '$ResolvedTargetEnvironment' but found '$ResolvedAspNetCoreEnvironment'."
 }
 
 $EffectiveApiBaseUrl = Get-EffectiveApiBaseUrl
@@ -108,7 +136,7 @@ if ($ResolvedTargetEnvironment -eq "PROD" -and $EffectiveApiBaseUrl.StartsWith("
     throw "INDCRM_BASE_URL must use HTTPS for PROD."
 }
 
-Write-Host ("Publish guard: branch={0}; targetEnvironment={1}; apiBaseUrl={2}" -f $CurrentBranch, $ResolvedTargetEnvironment, $EffectiveApiBaseUrl)
+Write-Host ("Publish guard: branch={0}; targetEnvironment={1}; aspNetCoreEnvironment={2}; apiBaseUrl={3}" -f $CurrentBranch, $ResolvedTargetEnvironment, $ResolvedAspNetCoreEnvironment, $EffectiveApiBaseUrl)
 
 # Block deployment if any localization file has encoding corruption markers.
 node scripts/check-resx-encoding.mjs

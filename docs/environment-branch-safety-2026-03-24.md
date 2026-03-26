@@ -1,6 +1,6 @@
 # Environment And Branch Safety
 
-Date: 2026-03-24
+Date: 2026-03-26
 
 ## Goal
 
@@ -16,6 +16,10 @@ Required shared variables:
 
 - `IND_ENV`
 - `INDCRM_BASE_URL`
+
+Required web host variable:
+
+- `ASPNETCORE_ENVIRONMENT`
 
 Existing web-only secrets that stay outside git:
 
@@ -45,12 +49,9 @@ The tracked `appsettings.json` now keeps `ApiSettings:BaseUrl` empty on purpose.
 
 ## Local development safety
 
-`launchSettings.json` now pins local launch profiles to:
+`launchSettings.json` and `.vscode/launch.json` now inherit the machine-level environment instead of pinning local values.
 
-- `IND_ENV=DEV`
-- `INDCRM_BASE_URL=https://dev.insertec.biz:7776/`
-
-This means local `dotnet run`, Visual Studio, and IIS Express sessions do not inherit a machine-level `PROD` target by accident.
+This means local `dotnet run`, Visual Studio, VS Code, and IIS Express sessions use the machine variables that are already configured for the current environment.
 
 Playwright also defaults to `https://dev.insertec.biz:7702` unless `IND_E2E_BASE_URL` is provided explicitly.
 
@@ -59,6 +60,8 @@ Playwright also defaults to `https://dev.insertec.biz:7702` unless `IND_E2E_BASE
 `publish.ps1` now blocks publish when:
 
 - `IND_ENV` is missing and no explicit `-TargetEnvironment` was passed.
+- `ASPNETCORE_ENVIRONMENT` is missing on the target machine.
+- `ASPNETCORE_ENVIRONMENT` does not match the publish target (`Development` for `DEV`, `Production` for `PROD`).
 - The current branch does not map to `DEV` or `PROD`.
 - The current branch and target environment do not match.
 - No effective API base URL is configured on the machine.
