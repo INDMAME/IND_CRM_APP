@@ -1,15 +1,18 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const REQUIRED_LOCAL_SKILL = "ind-crm-frontend-guardrails";
 const GLOBAL_SKILLS_PATH = "C:\\Users\\marco.meza\\.codex\\skills";
 const REFERENCE_CONFIG_FILE = "config.toml";
+const SKILL_ENTRY_FILE = "SKILL.md";
 
 const scriptDir = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = resolve(scriptDir, "..");
 const codexRoot = join(repositoryRoot, ".codex");
 const localSkillsRoot = join(codexRoot, "skills");
+const requiredLocalSkillDir = join(localSkillsRoot, REQUIRED_LOCAL_SKILL);
+const requiredLocalSkillFile = join(requiredLocalSkillDir, SKILL_ENTRY_FILE);
 const referencesDir = join(codexRoot, "skills", "ind-crm-frontend-guardrails", "references");
 
 /**
@@ -52,6 +55,13 @@ function checkLocalSkillLayout() {
   if (extraSkills.length > 0) {
     console.error(
       `[error] Unexpected local skill(s): ${extraSkills.join(", ")}. Move shared skills to ${GLOBAL_SKILLS_PATH}.`,
+    );
+    return false;
+  }
+
+  if (!existsSync(requiredLocalSkillFile)) {
+    console.error(
+      `[error] Missing ${SKILL_ENTRY_FILE} for local required skill '${REQUIRED_LOCAL_SKILL}' in ${requiredLocalSkillDir}.`,
     );
     return false;
   }

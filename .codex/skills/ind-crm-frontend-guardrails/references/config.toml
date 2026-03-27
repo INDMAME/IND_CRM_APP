@@ -8,6 +8,14 @@ Validate dependent elements mentally: filters, calendars, dropdowns, validations
 
 Do not remove working logic or rewrite functional components. Priority: system stability and avoiding side effects.
 
+This repository is in production. Default to conservative, low-risk, reversible changes and the smallest safe diff.
+
+Before implementing, produce a short plan that names touched modules, reuse candidates, regression-sensitive flows, and validation steps.
+
+If the request is ambiguous or there are multiple valid implementations with different UX, architecture, or security consequences, ask a short targeted clarifying question before coding.
+
+Never hardcode passwords, API keys, tokens, connection strings, base URLs, or other environment-specific secrets. Reuse existing system configuration keys and keep the same key names and resolution flow across DEV and PROD.
+
 Before delivering code, confirm:
 1) No previous functionality breaks.
 2) User flow stays intact.

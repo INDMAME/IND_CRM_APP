@@ -1,6 +1,6 @@
 ---
 name: ind-crm-frontend-guardrails
-description: Use when working on IND_CRM_APP frontend scope (Razor views, React islands, Tailwind UI, frontend i18n, and UI API consumption) and changes must follow .codex guardrails.
+description: Use when working on IND_CRM_APP frontend scope (Razor views, React islands, Tailwind UI, frontend i18n, UI API consumption, DEV to PROD release commands such as "genera una release a PROD" and "publica DEV en PROD", or local IIS publish commands such as "publica en iis") and changes must follow .codex guardrails.
 ---
 
 # IND CRM Frontend Guardrails
@@ -16,6 +16,8 @@ Use this skill when a task touches one or more of:
 - Frontend hooks, components, UI services, page bootstrap, or API integration from the UI layer.
 - Frontend auth/token usage, localization resources, payload formats, or release validation.
 - Frontend publish validation steps (`C:\inetpub\wwwroot\IND_CRM_APP`, `iisreset`) when release scope requires it.
+- Explicit DEV to PROD release requests such as `genera una release a PROD`, `publica DEV en PROD`, or equivalent wording.
+- Explicit local web publish requests such as `publica en iis`.
 - `.codex` guardrail documentation or skill maintenance.
 
 ## When NOT to Use
@@ -72,7 +74,9 @@ Conflict precedence:
 | Public validation default | For visual or E2E validation, publish first and run the check against the public URL/IP using the authenticated public session. Treat localhost validation as diagnostic only unless the user explicitly asks for local-only testing. |
 | React Doctor gate | Before final response, run `npm run check:react-doctor`, fix diagnostics in changed frontend files, and rerun before closing the task. |
 | Clean-code gate | Before final response, review touched code for low-risk refactors that improve clean code and preserve module boundaries; apply them when safe. |
-| Publish keyword | If the user says `publica`, run full compilation first (`npm run build` and `dotnet build`), then execute `publish.ps1`, and confirm IIS restart/service health before closing the task. |
+| DEV to PROD release keywords | If the user says `genera una release a PROD`, `publica DEV en PROD`, or equivalent DEV to PROD release wording, execute the conservative release workflow from `references/AGENTS.md` and `references/QUALITY_CHECKLIST.md`. |
+| Local IIS publish keyword | If the user says `publica en iis`, treat that as the explicit local web publish command: run the required validation/build steps, execute `publish.ps1`, and confirm IIS restart and site health before closing. |
+| Publish ambiguity rule | Do not treat generic `publica` as enough to choose between release and local IIS publish. If intent is not explicit, stop and clarify. |
 | Test execution default | IMPORTANT: when user asks to create or run a frontend test, default to public URL E2E (`baseURL`) using real pages. Use local fixtures or mocked fetch only when the user explicitly requests fixture-based testing. |
 | Documentation sync | Edit root `.codex/*.md` files or `.codex/config.toml` and run `npm run sync:skill:local:references` when references are changed. |
 | Completion checks | Run `references/QUALITY_CHECKLIST.md`; publish plus `iisreset` when frontend release tasks require it. |
@@ -138,9 +142,31 @@ Required triggers:
    - Run `npm run check:react-doctor` before the final response. The repo-level `react-doctor.config.json` ignores mirror/generated paths, so diagnostics in changed frontend files are blocking and must be fixed or explicitly justified if unrelated legacy findings remain.
    - Run a final clean-code pass on touched frontend files before closing the task. Check for mixed concerns, duplicated logic, oversized objects, and misplaced responsibilities across page, hook, service, mapper, utility, and component boundaries.
    - If a low-risk refactor would materially improve modularity or clarity, apply it in the same task before closing. If not, explicitly confirm the touched code already fits the modular architecture.
-   - If the user explicitly says `publica`, treat it as a release command: run `npm run build`, `dotnet build`, `publish.ps1`, and verify IIS is back in `Running`.
+   - If the user explicitly requests a DEV to PROD release (`genera una release a PROD`, `publica DEV en PROD`, or equivalent), follow the authoritative workflow in `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
+   - If the user explicitly says `publica en iis`, run the local IIS publish workflow from `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
+   - If the user only says generic `publica`, do not guess between release and local IIS publish. Stop and clarify.
    - For publish scope, deploy with `publish.ps1` and verify the app is serving current artifacts before accepting results.
 8. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
+
+## Production Repository Addendum
+
+This addendum stays in force together with the original frontend guardrails above.
+
+- Treat the repository as production. Prefer the smallest safe diff that preserves current behavior and deployment stability.
+- Before coding, run a narrow impact scan:
+  - touched modules and files,
+  - existing owner objects,
+  - reuse candidates,
+  - regression-sensitive flows,
+  - config or secret interoperability impact.
+- Prefer extending or extracting focused module-scoped units over broad rewrites.
+- Only promote a module-local abstraction to shared when at least two flows need the same stable contract.
+- If a request can be implemented in multiple valid ways with different UX, architecture, contract, or security consequences, ask one short targeted clarifying question before coding.
+- Do not guess when production-relevant ambiguity remains after inspection.
+- Never hardcode passwords, API keys, bearer tokens, connection strings, client secrets, tenant ids, base URLs, or other environment-bound values in code, tests, scripts, docs, or checked-in config.
+- Reuse existing system-managed configuration keys and abstractions before introducing new ones.
+- Keep DEV and PROD interoperable by preserving the same configuration key names and resolution flow across environments; only the external value source should vary.
+- If `.codex` docs or skill files change, root `.codex/*.md` and `.codex/config.toml` remain the source of truth and `references/` must stay synchronized.
 
 ## Common Mistakes
 
@@ -162,4 +188,4 @@ Required triggers:
 - Debugging or validating behavior against stale runtime/build output.
 
 ## Last updated
-- 2026-03-11
+- 2026-03-27

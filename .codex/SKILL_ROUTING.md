@@ -5,7 +5,7 @@
 - Defines when each skill must be loaded in addition to project guardrails.
 
 ## Mandatory routing rules
-1. For any frontend task inside this repository, always load `ind-crm-frontend-guardrails` first.
+1. For any code, config, documentation, review, or release task inside this repository, always load `ind-crm-frontend-guardrails` first.
 2. Match the task against the matrix below and load every skill whose trigger applies.
 3. If multiple skills apply, use the minimal set and run them in a clear order.
 4. If no additional trigger applies, continue with `ind-crm-frontend-guardrails` only.
@@ -16,7 +16,7 @@
 
 | Skill | Use when | Level |
 |---|---|---|
-| `ind-crm-frontend-guardrails` | Frontend change, review, or release in IND_CRM_APP. | Required on frontend scope |
+| `ind-crm-frontend-guardrails` | Repository-local change, review, documentation, config, or release in IND_CRM_APP where project guardrails must apply. | Required on repo-local implementation scope |
 | `brainstorming` | Before creative work: new features, behavior changes, component design. | Required on creative tasks |
 | `writing-skills` | Creating, editing, or validating skill content and `.codex` guardrail docs. | Required on skill/doc rule work |
 | `react-doctor` | Closing React or frontend tasks, reviewing frontend best practices, or validating changed React files before delivery. | Required before delivery when frontend source or build inputs changed |
@@ -48,10 +48,11 @@
 - Project-local required skill path: `.codex/skills/ind-crm-frontend-guardrails/SKILL.md`.
 - Keep only `ind-crm-frontend-guardrails` under `.codex/skills`.
 - Shared helper skills path: `C:\Users\marco.meza\.codex\skills`.
+- The local skill must stay thin: workflow in `SKILL.md`, detailed rules in root `.codex/*.md`, mirrored through `references/`.
 - Run React Doctor through `npm run check:react-doctor` so repo-specific ignore rules in `react-doctor.config.json` are applied.
 - Routing is trigger-based: skills should be loaded when task context matches, not by manual preference.
 - Never let `tailwindcss-v4` or `tailwind-patterns` override the project visual language: Montserrat, primary `#00296b`, Heroicons, and existing component contracts.
 - After editing `.codex/*.md` or `.codex/config.toml`, run `npm run sync:skill:local:references` (also enforced by pre-commit).
 
 ## Last updated
-- 2026-03-09
+- 2026-03-27
