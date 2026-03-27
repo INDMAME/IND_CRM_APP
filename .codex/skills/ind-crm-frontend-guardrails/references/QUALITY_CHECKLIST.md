@@ -36,6 +36,7 @@
 - Confirm OIDC callback and Entra context flow
 - For each new `/api/...` endpoint, verify explicit `Program.cs` route map and verb alignment with controller attributes.
 - For each new `/api/...` endpoint, validate expected verb returns non-404/non-405 and wrong verb returns intentional 405.
+- Verify no new secrets, passwords, tokens, connection strings, base URLs, or other environment-specific values were hardcoded in touched files.
 - Run a short clean-code review on touched backend files and confirm responsibilities still follow module ownership and focused object boundaries
 
 ## Regression checks
@@ -50,12 +51,31 @@
 - If `.codex/*.md` or `.codex/config.toml` changed, run `npm run sync:skill:local:references`
 - Validate sync locally with `npm run check:codex:references`
 - Confirm root `.codex/*.md` and `.codex/skills/ind-crm-frontend-guardrails/references/*.md` stay aligned
+- Confirm `.codex/skills/ind-crm-frontend-guardrails/SKILL.md` exists and stays as a thin workflow entrypoint instead of duplicating the full root docs
 - Confirm no extra local skills exist under `.codex/skills`; shared skills must be in `C:\Users\marco.meza\.codex\skills`
 - Update `Last updated` date in every touched doc
+
+## DEV to PROD release validation
+- For `genera una release a PROD`, `publica DEV en PROD`, or equivalent DEV to PROD release requests, confirm the active branch is `DEV`
+- Run `git status` and stop if release changes are not fully committed or if unrelated local files are present
+- Determine the latest safe `Release <N>` from merged release PRs, release PR titles, tags, or merge commits before calculating the next number
+- Push `DEV` to `origin/DEV` before creating the release PR
+- Create the `DEV` -> `PROD` PR with canonical title `Release <N>`
+- Attempt PR approval and auto-merge when GitHub permissions allow it, and explicitly report self-approval or auto-merge limitations
+- If direct merge fallback is required, refresh local `PROD` from `origin/PROD`, verify no production commits would be lost, merge with commit message `Release <N>`, and push `origin/PROD`
+- Verify the PR ended merged or `origin/PROD` points to the expected release commit, then return local checkout to `DEV`
+- Final report must include release name, published `DEV` commit, PR URL and status, completion mode, and GitHub limitations
+
+## Local IIS publish validation
+- For `publica en iis`, treat the request as a local web publish only, not as a DEV to PROD release
+- Run the required build and validation steps before publishing
+- Execute `publish.ps1` to copy the site to IIS
+- Run `iisreset` or confirm the publish flow restarted IIS as expected
+- Verify the local IIS site is healthy before closing the task
 
 ## Publish
 - Use `publish.ps1` (outputs to `.publish_tmp` and copies to IIS)
 - For release tasks, run `iisreset` after publish
 
 ## Last updated
-- 2026-03-09
+- 2026-03-27

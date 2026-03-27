@@ -16,6 +16,22 @@
   - `IndPagedResponse<T>`: `Success`, `Message`, `Total`, `Page`, `PageSize`, `Items`, `TraceId`.
 - Controllers never build URLs/headers or parse JSON; use `ICrmApiClient`.
 
+## Environment and secret configuration
+- Reuse existing system-managed keys before adding new configuration paths.
+- Keep DEV and PROD on the same configuration contract:
+  - same key names,
+  - same lookup order,
+  - different external values only.
+- Prefer `ApiSettings__BaseUrl` or shared `INDCRM_BASE_URL` for API host resolution.
+- Keep `ApiSettings:BaseUrl` in git only as a non-secret, non-operational fallback for local structure compatibility.
+- Never hardcode passwords, API keys, tokens, connection strings, tenant ids, or environment-specific hosts in:
+  - C# source,
+  - Razor/TS/JS source,
+  - tests,
+  - scripts,
+  - checked-in config defaults.
+- If a new credential or secret is required, extend the existing configuration abstraction instead of binding the implementation to a static literal.
+
 ## Internal endpoint exposure standard (mandatory)
 - Scope: any endpoint this MVC app exposes under `/api/...` for frontend consumption.
 - Route definitions:
@@ -125,4 +141,4 @@
 - Legacy JS must be migrated into `Web/wwwroot/react/src/legacy` as TS and compiled.
 
 ## Last updated
-- 2026-03-18
+- 2026-03-27

@@ -17,7 +17,7 @@
 - `QUALITY_CHECKLIST.md`: build, validation, and publish checks.
 - `PROJECT_STRUCTURE.md`: folder map + master instruction for future work.
 - `SKILL_ROUTING.md`: trigger-based routing map for installed skills and execution order.
-- `.codex/skills/ind-crm-frontend-guardrails/SKILL.md`: reusable project-local skill that consolidates frontend `.codex` guardrails with local references.
+- `.codex/skills/ind-crm-frontend-guardrails/SKILL.md`: reusable project-local skill entrypoint that routes repo work to the correct `.codex` references.
 
 ## Maintenance
 - Root `.codex/*.md` files and `.codex/config.toml` are the source of truth.
@@ -25,6 +25,7 @@
 - Pre-commit also runs local reference sync automatically.
 - Keep docs ASCII-only.
 - Use i18n keys for UI copy; examples are copy references only.
+- Keep the local skill thin: workflow and trigger logic in `SKILL.md`, detailed rules in root `.codex/*.md`.
 - Keep project style sovereignty explicit: external Tailwind helper skills are advisory and cannot override local design rules.
 - Keep module guardrails explicit for both `visitas` and `gastos` flows, promoting shared components only when contracts match.
 - Keep only one project-local skill path: `.codex/skills/ind-crm-frontend-guardrails`.
@@ -32,4 +33,4 @@
 - Add a `Last updated` line when a doc changes.
 
 ## Last updated
-- 2026-02-12
+- 2026-03-27

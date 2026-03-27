@@ -187,6 +187,27 @@
   - Tailwind helper skills (`tailwindcss-v4`, `tailwind-patterns`) are support tools only. They must not override project tokens, spacing rhythm, component contracts, or established page composition.
   - Do not propose solutions based on Angular, Vue, Blazor, Svelte, Bootstrap, jQuery UI, Material, etc.
 
+## Production-first change policy
+
+- This repository is in production. Default to the smallest safe change that preserves current behavior and deployment stability.
+- Before writing code, Codex must identify:
+  - Exact module(s) and file(s) to touch.
+  - Existing objects that already own the responsibility.
+  - Regression-sensitive flows that could be affected.
+  - Any config, secret, or environment interoperability impact.
+- Prefer extending or extracting focused module-scoped units over broad rewrites.
+- Only create new shared standards or components when at least two flows need the same stable contract; otherwise keep the change module-local.
+- If a request can be implemented in multiple valid ways with different architecture, UX, data-contract, or security consequences, Codex must pause and ask a short targeted clarifying question before coding.
+- If inspection still leaves production-relevant ambiguity, do not guess on behavior that could create regressions.
+
+## Secret and environment configuration rules
+
+- Never hardcode passwords, API keys, bearer tokens, connection strings, client secrets, tenant ids, base URLs, or other environment-bound values in code, tests, scripts, docs, or checked-in config.
+- Reuse existing system-managed configuration keys and abstractions before introducing new ones.
+- Keep DEV and PROD interoperable by preserving the same configuration key names and resolution flow across environments; only the external value source should vary.
+- If a fallback value must exist in git, it must be a non-secret placeholder or a non-operational default.
+- If a new credential, password, or secret is required and there is no existing config path, Codex must stop and ask where the value should come from (environment variable, secret store, IIS/app config, etc.).
+
 ## Mandatory skill-first object creation rule
 
 - Before creating any new object of any type, Codex must do a short pre-check:
@@ -221,12 +242,13 @@
 ## IMPORTANT: Monolith prevention gate (always before new functionality)
 
 - This rule is mandatory and must be read before any implementation work starts.
-- For every new functionality (backend or frontend), Codex must produce a short refactor-first plan before writing code.
+- For every new functionality (backend or frontend), Codex must produce a short, conservative, refactor-first plan before writing code.
 - The plan must include:
   - Current object(s) that would grow and risk becoming monolithic.
   - Proposed split into focused units (container, hooks, services, mappers, utilities, components).
   - Exact target file paths inside existing module structure.
   - Behavior invariants that must stay unchanged.
+- The plan must favor low-risk, incremental steps over speculative redesigns.
 - Codex must prefer extending existing focused objects over adding logic to a single large file.
 - If a file already has high complexity (size, mixed concerns, many side effects), Codex must refactor first or refactor in the same change.
 - Codex must always load and apply best-practice skills for implementation quality:
@@ -259,10 +281,12 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 
 - Prefer clean, defensive code and small focused functions.
 - Always explain your plan in a few bullet points before big changes.
+- Ask a short targeted question before coding when architecture, UX, data contract, or security choices are materially ambiguous.
 - Use simple English in comments and commit messages (ASCII only).
 - Add short comments to new methods/classes so any developer can understand them.
 - Avoid new dependencies unless clearly justified in a comment.
 - Keep existing behavior stable unless there is a clear bug or requirement.
+- Never hardcode secrets, passwords, tokens, base URLs, or environment-specific configuration; reuse existing system config keys and abstractions.
 - Frontend standard: ASP.NET Core MVC + Razor views, with optional React components; Tailwind CSS only; Tailwind CSS for interactive components; Heroicons for icons; base font "Montserrat", sans-serif; primary color #00296b.
 - Treat jQuery, and jquery-validation as legacy; do not add new usage.
 - Critical anti regression rule: never change calendars/date filters/dropdowns without validating events, payload formats to IND_CRM_API, and Razor bindings; propose a safe alternative if risk exists.
@@ -280,6 +304,47 @@ Codex must apply this rule for any change that touches views, scripts or filter 
   - If the answer is no, state that the touched code already fits the modular architecture or explain why a larger refactor was intentionally deferred.
 - After any change that must be deployed, publish to C:\inetpub\wwwroot\IND_CRM_APP and restart IIS using iisreset.
 
+## DEV to PROD release command policy
+
+- If the user says `genera una release a PROD`, `publica DEV en PROD`, or clearly requests a DEV to PROD release, interpret that as a git and GitHub release workflow, not as the generic IIS `publish.ps1` deploy command.
+- Keep this flow conservative. If branch state, local changes, release numbering, or production divergence are ambiguous, stop and ask before publishing.
+- Do not publish uncommitted changes.
+- Do not include unrelated files in the release scope.
+- Do not assume the release number if it cannot be inferred safely.
+
+Required DEV to PROD release workflow:
+1. Confirm the active branch is `DEV`.
+2. Run `git status` and verify the release scope is fully committed.
+3. If there are unexpected local changes, unrelated files, conflicts, or ambiguous scope, stop and ask before continuing.
+4. Push `DEV` to `origin/DEV`.
+5. Calculate the next release number as `last release + 1`.
+6. Find the latest `Release <N>` identifier in repository release history. Safe sources include merged PRs, release PR titles, tags, or merge commits. If the last release cannot be determined safely, stop and ask.
+7. Use `Release <N>` as the canonical release name.
+8. Create a PR from `DEV` to `PROD` with title `Release <N>`.
+9. Try to approve the PR and enable auto-merge when GitHub and repository permissions allow it.
+10. If GitHub blocks self-approval of the same PR, report that limitation explicitly.
+11. If auto-merge is unavailable or self-approval fails, but the user explicitly asked to generate the PROD release, treat that request as authorization for a controlled direct merge fallback.
+12. Before any direct merge, update local `PROD` from `origin/PROD` and verify that no production commits would be lost.
+13. If direct merge is required, use `Release <N>` as the merge commit message.
+14. Push `PROD` to `origin/PROD`.
+15. Verify that the PR ended merged or that `origin/PROD` points to the expected release commit.
+16. Return the local working copy to `DEV` before finishing.
+17. Final report must include:
+   - `Release <N>`
+   - published commit on `DEV`
+   - PR URL and status
+   - whether completion happened by merged PR or controlled direct merge
+   - any GitHub limitation encountered
+
+## Local IIS publish command policy
+
+- If the user says `publica en iis`, interpret that as a local web publish command, not as a DEV to PROD release.
+- For `publica en iis`, run the local web publish workflow:
+  1. Run full required validation/build steps first.
+  2. Execute `publish.ps1`.
+  3. Confirm IIS restart and local site health before finishing.
+- Do not treat generic `publica` as enough to trigger a local IIS publish. If the user does not clearly ask for `publica en iis` and does not clearly ask for a DEV to PROD release, stop and clarify.
+
 ## Quick design prompt (visitas/historial)
 - Tailwind only; Bootstrap removed (no `spinner-border`, `page-item`, `page-link`, etc.).
 - Inputs/combos: `rounded-xl border border-slate-200 px-3 py-2 text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-primary focus:border-primary`.
@@ -288,4 +353,4 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-03-09
+- 2026-03-27
