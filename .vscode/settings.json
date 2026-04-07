@@ -5,5 +5,9 @@
         "IND_CRM_APP/.vscode/mcp.json: shadcn": {
             "allowedModels": []
         }
-    }
+    },
+    "search.useGlobalIgnoreFiles": false,
+    "search.useParentIgnoreFiles": false,
+    "search.useIgnoreFiles": false,
+    "search.exclude": {}
 }
