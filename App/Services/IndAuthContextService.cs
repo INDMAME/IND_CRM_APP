@@ -259,6 +259,9 @@ namespace IND_CRM_APP.Services
             {
                 foreach (var c in item.Companies)
                 {
+                    if (string.IsNullOrWhiteSpace(c.CrmUserId))
+                        continue;
+
                     var company = new IndWebCompany
                     {
                         CompanyId = c.CompanyId ?? string.Empty,

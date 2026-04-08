@@ -35,6 +35,8 @@ type ExpenseSheetLineFormProps = {
   draftInternational: string;
   linkedTicketFileId: string;
   showLinkedTicketField: boolean;
+  typeInputRef?: React.Ref<HTMLInputElement>;
+  typeInvalid?: boolean;
   onDraftDescriptionChange: (value: string) => void;
   onDraftTransDateChange: (value: string) => void;
   onDraftTypeValueCodeChange: (value: string) => void;
@@ -80,6 +82,8 @@ const ExpenseSheetLineForm = ({
   draftInternational,
   linkedTicketFileId,
   showLinkedTicketField,
+  typeInputRef,
+  typeInvalid = false,
   onDraftDescriptionChange,
   onDraftTransDateChange,
   onDraftTypeValueCodeChange,
@@ -152,7 +156,9 @@ const ExpenseSheetLineForm = ({
               options={gastoTypeOptions}
               value={draftTypeValueCode || ""}
               onChange={onDraftTypeValueCodeChange}
+              inputRef={typeInputRef}
               placeholder={indT("ExpenseSheets_Field_Type", "Type")}
+              invalid={typeInvalid}
               usePortal={false}
               allowTextInput={false}
               showSearchButton={false}

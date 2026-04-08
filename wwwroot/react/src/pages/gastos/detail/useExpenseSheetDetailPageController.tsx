@@ -95,6 +95,9 @@ export const useExpenseSheetDetailPageController = () => {
   const cameraInputRef = useRef<HTMLInputElement | null>(null);
   const galleryInputRef = useRef<HTMLInputElement | null>(null);
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
+  const [statusTransitionComment, setStatusTransitionComment] = useState("");
+  const [showStatusTransitionCommentField, setShowStatusTransitionCommentField] = useState(false);
+  const statusTransitionCommentRef = useRef("");
 
   const paginationLabels = useMemo(
     () => ({
@@ -188,6 +191,17 @@ export const useExpenseSheetDetailPageController = () => {
     defaultCancelText: indT("Confirm_No", "Cancel"),
   });
 
+  const resetStatusTransitionDialog = useCallback(() => {
+    statusTransitionCommentRef.current = "";
+    setStatusTransitionComment("");
+    setShowStatusTransitionCommentField(false);
+  }, []);
+
+  const handleCloseConfirm = useCallback(() => {
+    resetStatusTransitionDialog();
+    closeConfirm();
+  }, [closeConfirm, resetStatusTransitionDialog]);
+
   const handleModalConfirm = useCallback(async () => {
     setModalError("");
     await handleConfirm({
@@ -209,12 +223,12 @@ export const useExpenseSheetDetailPageController = () => {
 
   const handleModalButtonConfirm = useCallback(() => {
     if (!busy && modalError) {
-      closeConfirm();
+      handleCloseConfirm();
       return;
     }
 
     void handleModalConfirm();
-  }, [busy, closeConfirm, handleModalConfirm, modalError]);
+  }, [busy, handleCloseConfirm, handleModalConfirm, modalError]);
 
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
@@ -265,6 +279,39 @@ export const useExpenseSheetDetailPageController = () => {
     setIsEditing,
   });
 
+  const handleOpenLineDetail = useCallback(
+    async (lineRecId: string) => {
+      const safeLineId = safeText(lineRecId);
+      if (!safeLineId || busy || isRedirectingAfterCreate) {
+        return;
+      }
+
+      if (isEditing && canEditHeaderFieldsCurrent) {
+        const ok = await handleUpdate();
+        if (!ok) {
+          return;
+        }
+
+        navigateToLineDetail(safeLineId, {
+          mode: "edit",
+          askConfirmation: false,
+          bypassGuardOnce: true,
+        });
+        return;
+      }
+
+      navigateToLineDetail(safeLineId);
+    },
+    [
+      busy,
+      canEditHeaderFieldsCurrent,
+      handleUpdate,
+      isEditing,
+      isRedirectingAfterCreate,
+      navigateToLineDetail,
+    ]
+  );
+
   const handleSaveSuccess = useCallback(() => {
     if (isCreateMode) {
       const createdSheetId = safeText(createdSheetIdRef.current);
@@ -295,14 +342,25 @@ export const useExpenseSheetDetailPageController = () => {
         currentStatusLabel,
         nextStatusLabel
       ).replace(/\\n/g, "\n");
+      const shouldPromptStatusComment = canEditStatusCommentCurrent;
+      const initialComment = safeText(header?.estadoComentarios);
+      statusTransitionCommentRef.current = shouldPromptStatusComment ? initialComment : "";
+      setStatusTransitionComment(shouldPromptStatusComment ? initialComment : "");
+      setShowStatusTransitionCommentField(shouldPromptStatusComment);
+
       openConfirm({
         title: actionLabel,
         message: transitionMessage,
         confirmText: actionLabel,
         onConfirm: async () => {
-          const ok = await handleStatusTransition(action.nextStatus, actionLabel);
+          const ok = await handleStatusTransition(
+            action.nextStatus,
+            actionLabel,
+            shouldPromptStatusComment ? statusTransitionCommentRef.current : null
+          );
           if (ok) {
             invalidateCachedListForRefetch();
+            resetStatusTransitionDialog();
             closeConfirm();
             reloadExpensePage();
           }
@@ -310,7 +368,17 @@ export const useExpenseSheetDetailPageController = () => {
         },
       });
     },
-    [closeConfirm, handleStatusTransition, hasStatusActionContent, header?.expenseSheetStatus, invalidateCachedListForRefetch, openConfirm]
+    [
+      canEditStatusCommentCurrent,
+      closeConfirm,
+      handleStatusTransition,
+      hasStatusActionContent,
+      header?.estadoComentarios,
+      header?.expenseSheetStatus,
+      invalidateCachedListForRefetch,
+      openConfirm,
+      resetStatusTransitionDialog,
+    ]
   );
 
   useExpenseSheetDetailTopbarActions({
@@ -419,6 +487,24 @@ export const useExpenseSheetDetailPageController = () => {
   const hasVisibleStatusComment = safeText(header?.estadoComentarios).trim().length > 0;
   const statusCommentMode: "hidden" | "read" | "edit" =
     isEditing && canEditStatusCommentCurrent ? "edit" : (hasVisibleStatusComment ? "read" : "hidden");
+  const modalBody = showStatusTransitionCommentField ? (
+    <div className="space-y-1.5">
+      <label className="form-label font-semibold">
+        {indT("ExpenseSheets_Field_StatusComment", "Status comment")}
+      </label>
+      <textarea
+        className="form-control resize-none"
+        rows={3}
+        value={statusTransitionComment}
+        onChange={(event) => {
+          const nextValue = event.target.value || "";
+          statusTransitionCommentRef.current = nextValue;
+          setStatusTransitionComment(nextValue);
+        }}
+        aria-label={indT("ExpenseSheets_Field_StatusComment", "Status comment")}
+      />
+    </div>
+  ) : null;
 
   return {
     header,
@@ -437,6 +523,7 @@ export const useExpenseSheetDetailPageController = () => {
     modalLoadingText,
     modalCancelText,
     modalConfirmText,
+    modalBody,
     canCreateExpenseForCurrentView,
     canEditHeaderFieldsCurrent,
     canUseFullEditFeatures,
@@ -475,9 +562,9 @@ export const useExpenseSheetDetailPageController = () => {
     setDraftCurrencyCode,
     setDraftExchangeRate,
     setDraftEstadoComentarios,
-    navigateToLineDetail,
+    navigateToLineDetail: handleOpenLineDetail,
     handleModalButtonConfirm,
     handleStatusActionClick,
-    closeConfirm,
+    closeConfirm: handleCloseConfirm,
   };
 };
