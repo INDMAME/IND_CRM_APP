@@ -33,6 +33,7 @@ type SelectComboboxProps = {
   options: RawOption[];
   value: string | number;
   onChange: (value: string) => void;
+  inputRef?: React.Ref<HTMLInputElement>;
   placeholder?: string;
   invalid?: boolean;
   disabled?: boolean;
@@ -70,6 +71,7 @@ const SelectCombobox = ({
   options,
   value,
   onChange,
+  inputRef,
   placeholder,
   invalid = false,
   disabled = false,
@@ -100,6 +102,17 @@ const SelectCombobox = ({
   panelStyle,
   clearOnEmptyInput = false,
 }: SelectComboboxProps) => {
+  const assignInputRef = (node: HTMLInputElement | null) => {
+    if (!inputRef) return;
+
+    if (typeof inputRef === "function") {
+      inputRef(node);
+      return;
+    }
+
+    inputRef.current = node;
+  };
+
   const readOnlyMode = readOnly || disabled;
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
   const data = useMemo(() => {
@@ -361,6 +374,7 @@ const SelectCombobox = ({
           style={readOnlyMode ? { color: valueColor } : undefined}
         >
           <input
+            ref={assignInputRef}
             className={classNames(
               "w-full rounded-[var(--radius-xl)] border py-2 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
               showSelectedIcon ? selectedInputPaddingClassName : "pl-3",

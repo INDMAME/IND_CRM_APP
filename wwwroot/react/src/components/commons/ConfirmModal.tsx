@@ -14,6 +14,7 @@ type ConfirmModalProps = {
   busy?: boolean;
   error?: string;
   status?: string;
+  children?: React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -31,6 +32,7 @@ export default function ConfirmModal({
   busy = false,
   error = "",
   status = "",
+  children,
   onConfirm,
   onCancel,
 }: ConfirmModalProps) {
@@ -44,6 +46,7 @@ export default function ConfirmModal({
       <div className="w-full max-w-sm rounded-[var(--radius-xl)] bg-white shadow-xl border border-slate-200 p-5 space-y-4">
         <div className="text-lg font-semibold text-slate-900">{title}</div>
         <div className="text-sm text-slate-700 whitespace-pre-line">{message}</div>
+        {children}
         {showInfo && (
           <div className="flex items-center gap-2 text-sm text-slate-600">
             {busy && <Spinner size="h-4 w-4" />}

@@ -293,17 +293,10 @@ Formatversion: 1
         #        if (conLen(modulesCon) == 0)
         #            continue;
         #
-        #        // Guardar primera compania con acceso
-        #        if (!firstAllowedCompany)
-        #            firstAllowedCompany = ciasPerm.CiaId;
-        #
-        #        // Marcar si la default inicial tiene acceso real
-        #        if (ciasPerm.CiaId == initialDefaultCompany)
-        #            initialDefaultAllowed = true;
-        #
         #        // Nombre de compania (solo aqui usamos changecompany)
         #        companyName = "";
         #        companyCurrencyCode = "";
+        #        companyCrmUserId = "";
         #        allowSelfManagement = false;
         #        try
         #        {
@@ -325,8 +318,21 @@ Formatversion: 1
         #        {
         #            companyName = "";
         #            companyCurrencyCode = "";
+        #            companyCrmUserId = "";
         #            allowSelfManagement = false;
         #        }
+        #        // Ocultar companias sin usuario CRM para evitar selecciones invalidas.
+        #        if (!companyCrmUserId)
+        #            continue;
+        #
+        #        // Guardar primera compania con acceso real y crm user valido.
+        #        if (!firstAllowedCompany)
+        #            firstAllowedCompany = ciasPerm.CiaId;
+        #
+        #        // Marcar si la default inicial sigue siendo valida tras el filtro crm.
+        #        if (ciasPerm.CiaId == initialDefaultCompany)
+        #            initialDefaultAllowed = true;
+        #
         #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, CurrencyCode, allowSelfManagement, ModulesCon,CRMUserId]
         #        // Nota: IsDefault se recalcula al final segun defaultCompany final
         #        companyItem = [

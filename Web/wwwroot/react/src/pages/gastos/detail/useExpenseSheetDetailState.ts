@@ -591,15 +591,23 @@ export const useExpenseSheetDetailState = ({
   }, []);
 
   const navigateToLineDetail = useCallback(
-    (lineRecId: string) => {
+    (
+      lineRecId: string,
+      options?: {
+        mode?: "view" | "edit";
+        askConfirmation?: boolean;
+        bypassGuardOnce?: boolean;
+      }
+    ) => {
       const safeLineId = safeText(lineRecId);
       const safeSheetId = safeText(sheetId);
       if (!safeLineId || !safeSheetId) return;
 
-      const targetUrl = `/Gastos/ExpenseSheetLineDetail?hojaGastosId=${encodeURIComponent(safeSheetId)}&lineRecId=${encodeURIComponent(safeLineId)}`;
+      const safeMode = options?.mode === "edit" ? "edit" : "";
+      const targetUrl = `/Gastos/ExpenseSheetLineDetail?hojaGastosId=${encodeURIComponent(safeSheetId)}&lineRecId=${encodeURIComponent(safeLineId)}${safeMode ? `&mode=${safeMode}` : ""}`;
       navigateToExpenseUrl(targetUrl, {
-        askConfirmation: true,
-        bypassGuardOnce: false,
+        askConfirmation: options?.askConfirmation ?? true,
+        bypassGuardOnce: options?.bypassGuardOnce ?? false,
       });
     },
     [sheetId]

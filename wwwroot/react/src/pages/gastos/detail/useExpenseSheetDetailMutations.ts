@@ -81,7 +81,10 @@ export const useExpenseSheetDetailMutations = ({
   setIsEditing,
 }: UseExpenseSheetDetailMutationsArgs) => {
   const buildUpdatePayload = useCallback(
-    (nextStatus?: number | null): { payload: ExpenseSheetHeaderUpdateRequest } | { error: string } => {
+    (
+      nextStatus?: number | null,
+      statusCommentOverride?: string | null
+    ): { payload: ExpenseSheetHeaderUpdateRequest } | { error: string } => {
       const normalizedCurrency = String(
         isCurrencyLockedByLines ? (lockedCurrencyCode || draftCurrencyCode || "") : (draftCurrencyCode || "")
       )
@@ -89,7 +92,9 @@ export const useExpenseSheetDetailMutations = ({
         .toUpperCase();
       const normalizedDescription = String(draftDescription || "").trim();
       const normalizedProjectId = String(draftProjectId || "").trim();
-      const normalizedEstadoComentarios = String(draftEstadoComentarios || "").trim();
+      const normalizedEstadoComentarios = String(
+        statusCommentOverride ?? draftEstadoComentarios ?? ""
+      ).trim();
       const normalizedExchangeRateRaw = String(
         isExchangeRateLockedByLines ? (lockedExchangeRate || draftExchangeRate || "") : (draftExchangeRate || "")
       );
@@ -264,14 +269,14 @@ export const useExpenseSheetDetailMutations = ({
   ]);
 
   const handleStatusTransition = useCallback(
-    async (nextStatus: number, startStatus: string) => {
+    async (nextStatus: number, startStatus: string, statusCommentOverride?: string | null) => {
       if (busy || isCreateMode || !sheetId) return false;
       if (!canTransitionStatus) {
         showPermissionModal();
         return false;
       }
 
-      const payloadResult = buildUpdatePayload(nextStatus);
+      const payloadResult = buildUpdatePayload(nextStatus, statusCommentOverride);
       if ("error" in payloadResult) {
         setModalError(payloadResult.error);
         setStatus(payloadResult.error);
@@ -299,7 +304,17 @@ export const useExpenseSheetDetailMutations = ({
 
       return result.ok;
     },
-    [busy, buildUpdatePayload, canTransitionStatus, isCreateMode, setBusy, setIsEditing, setModalError, setStatus, sheetId]
+    [
+      busy,
+      buildUpdatePayload,
+      canTransitionStatus,
+      isCreateMode,
+      setBusy,
+      setIsEditing,
+      setModalError,
+      setStatus,
+      sheetId,
+    ]
   );
 
   const handleDelete = useCallback(async () => {
