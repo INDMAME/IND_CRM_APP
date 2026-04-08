@@ -96,6 +96,7 @@ type UseExpenseSheetLineDetailStateArgs = {
   sheetId: string;
   lineId: string;
   isCreateMode: boolean;
+  startInEditMode: boolean;
   onForbidden: () => void;
 };
 
@@ -110,6 +111,7 @@ export const useExpenseSheetLineDetailState = ({
   sheetId,
   lineId,
   isCreateMode,
+  startInEditMode,
   onForbidden,
 }: UseExpenseSheetLineDetailStateArgs) => {
   const [header, setHeader] = useState<ExpenseSheetHeader | null>(null);
@@ -265,6 +267,36 @@ export const useExpenseSheetLineDetailState = ({
 
         setHeader(mappedHeader);
         setLine(selectedLine);
+        const loadedStatusCode = typeof mappedHeader.expenseSheetStatus === "number" ? mappedHeader.expenseSheetStatus : null;
+        const loadedIsSheetApproved = loadedStatusCode === EXPENSE_STATUS_APPROVED;
+        const loadedIsSheetPaidByStatus = loadedStatusCode === EXPENSE_STATUS_PAID;
+        const loadedIsSheetPaid = loadedIsSheetPaidByStatus || hasAssignedVoucher(mappedHeader.voucher);
+        const loadedIsManagingOtherUser = isManagingOtherExpenseRecord({
+          canManageOtherUsers,
+          currentAxUserId,
+          currentCrmUserId,
+          selectedManagedUserId,
+          recordOwnerUserId: mappedHeader.userId,
+          isCreateMode,
+        });
+        const loadedPolicy = resolveExpenseSheetDetailPolicy({
+          statusCode: loadedStatusCode,
+          isManagingOtherUser: loadedIsManagingOtherUser,
+          allowSelfManagement,
+          isPaid: loadedIsSheetPaid,
+        });
+
+        if (
+          startInEditMode &&
+          !loadedIsSheetApproved &&
+          !loadedIsSheetPaid &&
+          !loadedIsManagingOtherUser &&
+          loadedPolicy.interactionMode === "full_edit"
+        ) {
+          setIsEditing(true);
+          hydrateDraftFromLine(selectedLine, mappedHeader);
+          setStatus("");
+        }
       } catch (error) {
         if (error instanceof ApiFetchError && error.status === 403) {
           onForbidden();
@@ -288,6 +320,7 @@ export const useExpenseSheetLineDetailState = ({
     hasAccess,
     hydrateDraftFromLine,
     isCreateMode,
+    startInEditMode,
     lineId,
     onForbidden,
     selectedManagedUserId,

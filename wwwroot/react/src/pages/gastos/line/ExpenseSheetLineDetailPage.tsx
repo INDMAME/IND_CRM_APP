@@ -46,7 +46,10 @@ const ExpenseSheetLineDetailContent = () => {
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
   const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
   const isCreateMode = lineMode === "create";
+  const startInEditMode = lineMode === "edit";
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
+  const [typeInvalid, setTypeInvalid] = useState(false);
+  const typeInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const {
     header,
@@ -100,6 +103,7 @@ const ExpenseSheetLineDetailContent = () => {
     sheetId,
     lineId,
     isCreateMode,
+    startInEditMode,
     onForbidden: showPermissionModal,
   });
 
@@ -174,6 +178,14 @@ const ExpenseSheetLineDetailContent = () => {
     handleModalConfirm();
   }, [busy, closeConfirm, handleModalConfirm, modalError]);
 
+  const handleDraftTypeValueCodeChange = useCallback(
+    (value: string) => {
+      setTypeInvalid(false);
+      setDraftTypeValueCode(value);
+    },
+    [setDraftTypeValueCode]
+  );
+
   const { handleUpdate, handleDelete } = useExpenseSheetLineDetailMutations({
     busy,
     isEditing,
@@ -198,6 +210,12 @@ const ExpenseSheetLineDetailContent = () => {
     setBusy,
     setStatus,
     setIsEditing,
+    onInvalidType: () => {
+      setTypeInvalid(true);
+      window.requestAnimationFrame(() => {
+        typeInputRef.current?.focus();
+      });
+    },
     onCreateSuccess: () => {},
   });
 
@@ -312,9 +330,11 @@ const ExpenseSheetLineDetailContent = () => {
           draftQty={draftQty}
           draftProjectId={draftProjectId}
           draftInternational={draftInternational}
+          typeInputRef={typeInputRef}
+          typeInvalid={typeInvalid}
           onDraftDescriptionChange={setDraftDescription}
           onDraftTransDateChange={setDraftTransDate}
-          onDraftTypeValueCodeChange={setDraftTypeValueCode}
+          onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
           onDraftPriceChange={setDraftPrice}
           onDraftQtyChange={setDraftQty}
           onDraftProjectIdChange={setDraftProjectId}

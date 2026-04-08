@@ -172,6 +172,7 @@ export type ExpenseSheetsAskResult = IndApiResponse<ExpenseSheetsAskResponseData
 // /api/crm/expensesheets/{hojaGastosId} line contract.
 export type ExpenseSheetLineDto = {
   RecId: string;
+  LineRecId?: string;
   TransDate: ExpenseApiDate;
   TypeValue: number | null;
   Description: string;

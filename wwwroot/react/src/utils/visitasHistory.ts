@@ -88,7 +88,7 @@ const flashActionMarkLocal = (type: string, durationMs: number) => {
       break;
     case "okDelProcess":
       icon = nodes.check;
-      colorClass = "text-rose-600";
+      colorClass = "text-emerald-600";
       break;
     case "warningProcess":
       icon = nodes.warn;

@@ -72,6 +72,7 @@ const ExpenseSheetDetailPageContent = () => {
         modalLoadingText={controller.modalLoadingText}
         modalCancelText={controller.modalCancelText}
         modalConfirmText={controller.modalConfirmText}
+        modalBody={controller.modalBody}
         cameraInputRef={controller.cameraInputRef}
         galleryInputRef={controller.galleryInputRef}
         sourcePickerOpen={controller.quickTicketFlow.sourcePickerOpen}

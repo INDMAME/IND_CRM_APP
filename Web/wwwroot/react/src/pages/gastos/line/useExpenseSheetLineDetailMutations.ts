@@ -43,6 +43,7 @@ type UseExpenseSheetLineDetailMutationsArgs = {
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  onInvalidType?: () => void;
   onCreateSuccess: () => void;
 };
 
@@ -77,6 +78,7 @@ export const useExpenseSheetLineDetailMutations = ({
   setBusy,
   setStatus,
   setIsEditing,
+  onInvalidType,
   onCreateSuccess,
 }: UseExpenseSheetLineDetailMutationsArgs) => {
   const isNotFoundError = (error: unknown): boolean => {
@@ -130,6 +132,7 @@ export const useExpenseSheetLineDetailMutations = ({
 
     if (!Number.isFinite(parsedTypeValue) || parsedTypeValue <= 0) {
       const validationMessage = indT("Api_RequestFailed", "Request failed.");
+      onInvalidType?.();
       setModalError(validationMessage);
       setStatus(validationMessage);
       return false;
@@ -200,6 +203,7 @@ export const useExpenseSheetLineDetailMutations = ({
     line,
     lineId,
     onCreateSuccess,
+    onInvalidType,
     setBusy,
     setIsEditing,
     setModalError,

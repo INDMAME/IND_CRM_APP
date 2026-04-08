@@ -81,9 +81,13 @@ export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine
   const typeValueCode = safeText(line.TypeValue);
   const legacyPrice = (line as { price?: unknown }).price;
   const legacyFileId = (line as { fileId?: unknown }).fileId;
+  const explicitLineRecId = safeText(
+    (line as { LineRecId?: unknown; lineRecId?: unknown }).LineRecId ??
+      (line as { lineRecId?: unknown }).lineRecId
+  );
 
   return {
-    lineRecId: safeText(line.RecId),
+    lineRecId: explicitLineRecId || safeText(line.RecId),
     transDate: safeText(line.TransDate),
     typeValueCode,
     typeValue: resolveTypeLabel(typeValueCode),

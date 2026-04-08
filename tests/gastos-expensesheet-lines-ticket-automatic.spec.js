@@ -48,13 +48,25 @@ async function isolateExpenseManagementSession(page) {
 async function ensureAuthenticatedSession(page) {
   await isolateExpenseManagementSession(page);
   await page.goto("/Gastos/ExpenseSheets?fresh=1", { waitUntil: "domcontentloaded" });
-  const loginGateVisible = await page
+  const currentUrl = page.url();
+  const redirectedToMicrosoft = /login\.microsoftonline\.com|microsoftonline\.com/i.test(currentUrl);
+  const redirectedToAppLogin = /\/Auth\/EntraLogin/i.test(currentUrl);
+  const loginButtonVisible = await page
     .getByRole("button", { name: /sign in with microsoft|iniciar sesi[o\u00f3]n con microsoft/i })
     .isVisible()
     .catch(() => false);
+  const loginLinkVisible = await page
+    .getByRole("link", { name: /sign in with microsoft|iniciar sesi[o\u00f3]n con microsoft/i })
+    .isVisible()
+    .catch(() => false);
+  const loginMessageVisible = await page
+    .locator("text=/you must sign in to continue|debe iniciar sesi(?:o|\\u00f3)n para continuar/i")
+    .first()
+    .isVisible()
+    .catch(() => false);
 
-  if (loginGateVisible) {
-    throw new Error("No active authenticated session. Run: npm run test:e2e:auth:capture");
+  if (redirectedToMicrosoft || redirectedToAppLogin || loginButtonVisible || loginLinkVisible || loginMessageVisible) {
+    throw new Error(`No active authenticated session. Run: npm run test:e2e:auth:capture. Current URL: ${currentUrl}`);
   }
 }
 
@@ -74,6 +86,10 @@ function normalizeRequestPath(requestUrl) {
   } catch {
     return String(requestUrl || "").trim().toLowerCase();
   }
+}
+
+function escapeRegExp(value) {
+  return String(value || "").replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function startTicketCreationRequestCapture(page) {
@@ -510,6 +526,120 @@ test.describe("Expense sheets lines E2E", () => {
     }
   });
 
+  test("Manual lines keep LineRecId for navigation when RecId is not usable", async ({ page }) => {
+    await ensureAuthenticatedSession(page);
+
+    const sheetId = `MOCK-LINE-ID-${Date.now()}`;
+    const lineRecId = "-999";
+    const encodedSheetId = encodeURIComponent(sheetId);
+    const detailRoutePattern = new RegExp(`/api/crm/expensesheets/${escapeRegExp(encodedSheetId)}(?:\\?.*)?$`, "i");
+
+    await page.route(detailRoutePattern, async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: "application/json",
+        body: JSON.stringify({
+          Success: true,
+          Message: "",
+          ErrorCode: null,
+          Items: [
+            {
+              HojaGastosId: sheetId,
+              UserId: "E2EUSER",
+              Description: "Mock sheet",
+              ExpenseSheetStatus: 0,
+              EstadoComentarios: null,
+              CurrencyCode: "EUR",
+              TotalAmount: 10,
+              ExchRate: 1,
+              ExchangeRateMode: 0,
+              ProjId: "PRJ-001",
+              Voucher: "",
+              CreatedDate: "01/04/2026",
+              Lines: [
+                {
+                  RecId: "0",
+                  LineRecId: lineRecId,
+                  TransDate: "01/04/2026",
+                  TypeValue: 1,
+                  Description: "Mock manual line",
+                  Internacional: false,
+                  FileId: "",
+                  Ticket: false,
+                  Price: 10,
+                  Qty: 1,
+                  Amount: 10,
+                  ProjId: "PRJ-001",
+                  IndAttachFiles: "",
+                },
+              ],
+            },
+          ],
+          Total: 1,
+          Page: 1,
+          PageSize: 50,
+        }),
+      });
+    });
+
+    await page.goto(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodedSheetId}`, { waitUntil: "domcontentloaded" });
+    await expect(page.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
+
+    await openLineDetailByDescription(page, "Mock manual line");
+    await expect(page).toHaveURL(new RegExp(`lineRecId=${escapeRegExp(encodeURIComponent(lineRecId))}`), {
+      timeout: 30000,
+    });
+    await expect(page.locator("#expense-line-detail-root")).toBeVisible({ timeout: 30000 });
+    await expect(page.locator(".text-danger")).toHaveCount(0);
+  });
+
+  test("Editing the header auto-saves before opening an existing line in edit mode", async ({ page }) => {
+    await ensureAuthenticatedSession(page);
+
+    const { sheetId } = await createExpenseSheet(page);
+    try {
+      const createdLineDescription = await createManualExpenseLine(page);
+      const updatedHeaderDescription = `E2E Header Updated ${Date.now()}`;
+
+      const editButton = page.locator("#expenseEditBtn");
+      await expect(editButton).toBeVisible({ timeout: 15000 });
+      await editButton.click();
+
+      const descriptionInput = page.getByLabel(/description|descripci[o\u00f3]n/i).first();
+      await expect(descriptionInput).toBeVisible({ timeout: 15000 });
+      await descriptionInput.fill(updatedHeaderDescription);
+
+      const updateResponsePromise = page.waitForResponse((response) => {
+        return (
+          response.request().method().toUpperCase() === "PUT" &&
+          /\/api\/crm\/expensesheets\/[^/]+$/i.test(normalizeRequestPath(response.url()))
+        );
+      });
+
+      const lineCard = page.locator(".timeline-card--clickable", { hasText: createdLineDescription }).first();
+      await expect(lineCard).toBeVisible({ timeout: 30000 });
+      await lineCard.click();
+
+      const updateResponse = await updateResponsePromise;
+      expect(updateResponse.ok(), "Header update should complete before opening the line detail.").toBeTruthy();
+
+      await page.waitForURL("**/Gastos/ExpenseSheetLineDetail?**mode=edit**", {
+        waitUntil: "domcontentloaded",
+        timeout: 30000,
+      });
+      await expect(page.locator("#expense-line-detail-root")).toBeVisible({ timeout: 30000 });
+      await expect(page.getByLabel(/description|descripci[o\u00f3]n/i).first()).toBeVisible({ timeout: 15000 });
+
+      await page.goto(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`, {
+        waitUntil: "domcontentloaded",
+      });
+      await expect(page.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator(`text=${updatedHeaderDescription}`).first()).toBeVisible({ timeout: 30000 });
+    } finally {
+      await deleteExpenseSheetBestEffort(page, sheetId);
+    }
+  });
+
   test("Create sheet, modify one line, verify updates, then delete the line", async ({ page }) => {
     await ensureAuthenticatedSession(page);
 
@@ -566,6 +696,7 @@ test.describe("Expense sheets lines E2E", () => {
       }
 
       await expect(page.locator("#expense-sheet-detail-root")).toBeVisible({ timeout: 30000 });
+      await expect(page.locator("#indActionMarkWrap")).toHaveClass(/text-emerald-600/, { timeout: 5000 });
       await expect(page.locator(".timeline-card--clickable", { hasText: updatedDescription })).toHaveCount(0, {
         timeout: 30000,
       });

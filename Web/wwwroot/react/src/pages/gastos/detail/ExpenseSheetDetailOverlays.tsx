@@ -21,6 +21,7 @@ type ExpenseSheetDetailOverlaysProps = {
   modalLoadingText: string;
   modalCancelText: string;
   modalConfirmText: string;
+  modalBody?: React.ReactNode;
   cameraInputRef: React.RefObject<HTMLInputElement | null>;
   galleryInputRef: React.RefObject<HTMLInputElement | null>;
   sourcePickerOpen: boolean;
@@ -60,6 +61,7 @@ const ExpenseSheetDetailOverlays = ({
   modalLoadingText,
   modalCancelText,
   modalConfirmText,
+  modalBody,
   cameraInputRef,
   galleryInputRef,
   sourcePickerOpen,
@@ -99,7 +101,9 @@ const ExpenseSheetDetailOverlays = ({
         status={status}
         onConfirm={onConfirm}
         onCancel={onCancel}
-      />
+      >
+        {modalBody}
+      </ConfirmModal>
 
       <input
         ref={cameraInputRef}
