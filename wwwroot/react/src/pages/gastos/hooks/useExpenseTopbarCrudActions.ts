@@ -37,6 +37,7 @@ type UseExpenseTopbarCrudActionsArgs = {
   setModalError: (value: string) => void;
   handleEnableEdit: () => void;
   handleCancelEdit: () => void;
+  canOpenSaveConfirm?: () => boolean;
   handleSave: () => Promise<boolean>;
   handleDelete: () => Promise<boolean>;
   saveConfirmTitle: string;
@@ -77,6 +78,7 @@ export const useExpenseTopbarCrudActions = ({
   setModalError,
   handleEnableEdit,
   handleCancelEdit,
+  canOpenSaveConfirm,
   handleSave,
   handleDelete,
   saveConfirmTitle,
@@ -191,6 +193,7 @@ export const useExpenseTopbarCrudActions = ({
 
       if (isEditing) {
         if (busy || modalOpen) return;
+        if (typeof canOpenSaveConfirm === "function" && !canOpenSaveConfirm()) return;
         setModalError("");
         openConfirm({
           title: saveConfirmTitle,
@@ -262,6 +265,7 @@ export const useExpenseTopbarCrudActions = ({
     canCreate,
     canDelete,
     canEdit,
+    canOpenSaveConfirm,
     closeConfirm,
     deleteConfirmMessage,
     deleteConfirmText,

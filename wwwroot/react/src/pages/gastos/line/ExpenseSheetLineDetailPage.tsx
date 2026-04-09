@@ -1,7 +1,6 @@
 import React, { useCallback, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
-import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -21,7 +20,9 @@ import {
 } from "../utils/expenseSelectOptions.ts";
 import { useExpenseSheetLineDetailMutations } from "./useExpenseSheetLineDetailMutations.ts";
 import { useExpenseSheetLineDetailTopbarActions } from "./useExpenseSheetLineDetailTopbarActions.ts";
+import { useExpenseSheetLineDetailConfirmDialog } from "./useExpenseSheetLineDetailConfirmDialog.ts";
 import { useExpenseSheetLineDetailState } from "./useExpenseSheetLineDetailState.ts";
+import { useExpenseSheetLineTypeValidation } from "./useExpenseSheetLineTypeValidation.ts";
 
 // Initializes auth seed for expense API calls before island effects run.
 const bootstrapExpenseApiAuth = () => {
@@ -48,8 +49,6 @@ const ExpenseSheetLineDetailContent = () => {
   const isCreateMode = lineMode === "create";
   const startInEditMode = lineMode === "edit";
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
-  const [typeInvalid, setTypeInvalid] = useState(false);
-  const typeInputRef = React.useRef<HTMLInputElement | null>(null);
 
   const {
     header,
@@ -107,6 +106,28 @@ const ExpenseSheetLineDetailContent = () => {
     onForbidden: showPermissionModal,
   });
 
+  const {
+    typeInvalid,
+    priceInvalid,
+    qtyInvalid,
+    typeInputRef,
+    priceInputRef,
+    qtyInputRef,
+    focusTypeField,
+    focusAmountFields,
+    handleDraftTypeValueCodeChange,
+    handleDraftPriceChange,
+    handleDraftQtyChange,
+    canOpenSaveConfirm,
+  } = useExpenseSheetLineTypeValidation({
+    draftTypeValueCode,
+    draftPrice,
+    draftQty,
+    setDraftTypeValueCode,
+    setDraftPrice,
+    setDraftQty,
+  });
+
   const draftPriceValue = parseDecimalInput(draftPrice);
   const draftQtyValue = parseDecimalInput(draftQty);
   const calculatedAmountPreview =
@@ -146,45 +167,20 @@ const ExpenseSheetLineDetailContent = () => {
     []
   );
 
-  const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
-    defaultConfirmText: indT("Confirm_Yes", "OK"),
-    defaultCancelText: indT("Confirm_No", "Cancel"),
+  const {
+    modal,
+    openConfirm,
+    closeConfirm,
+    modalLoadingText,
+    modalCancelText,
+    modalConfirmText,
+    handleModalButtonConfirm,
+  } = useExpenseSheetLineDetailConfirmDialog({
+    busy,
+    modalError,
+    setModalError,
+    setStatus,
   });
-
-  const handleModalConfirm = useCallback(async () => {
-    setModalError("");
-    await handleConfirm({
-      busy,
-      onError: (msg) => {
-        setModalError(msg);
-        setStatus(msg);
-      },
-    });
-  }, [busy, handleConfirm, setModalError, setStatus]);
-
-  const modalLoadingText = indT("Common_Loading", "Loading");
-  const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
-  const modalConfirmText = busy
-    ? modalLoadingText
-    : !busy && modalError
-      ? indT("Common_OK", "OK")
-      : modal.confirmText || indT("Confirm_Yes", "OK");
-
-  const handleModalButtonConfirm = useCallback(() => {
-    if (!busy && modalError) {
-      closeConfirm();
-      return;
-    }
-    handleModalConfirm();
-  }, [busy, closeConfirm, handleModalConfirm, modalError]);
-
-  const handleDraftTypeValueCodeChange = useCallback(
-    (value: string) => {
-      setTypeInvalid(false);
-      setDraftTypeValueCode(value);
-    },
-    [setDraftTypeValueCode]
-  );
 
   const { handleUpdate, handleDelete } = useExpenseSheetLineDetailMutations({
     busy,
@@ -210,12 +206,8 @@ const ExpenseSheetLineDetailContent = () => {
     setBusy,
     setStatus,
     setIsEditing,
-    onInvalidType: () => {
-      setTypeInvalid(true);
-      window.requestAnimationFrame(() => {
-        typeInputRef.current?.focus();
-      });
-    },
+    onInvalidType: focusTypeField,
+    onInvalidAmountQty: focusAmountFields,
     onCreateSuccess: () => {},
   });
 
@@ -239,6 +231,7 @@ const ExpenseSheetLineDetailContent = () => {
     setModalError,
     handleEnableEdit,
     handleCancelEdit,
+    canOpenSaveConfirm,
     handleUpdate,
     handleDelete,
     onSaveSuccess: () => {
@@ -331,12 +324,16 @@ const ExpenseSheetLineDetailContent = () => {
           draftProjectId={draftProjectId}
           draftInternational={draftInternational}
           typeInputRef={typeInputRef}
+          priceInputRef={priceInputRef}
+          qtyInputRef={qtyInputRef}
           typeInvalid={typeInvalid}
+          priceInvalid={priceInvalid}
+          qtyInvalid={qtyInvalid}
           onDraftDescriptionChange={setDraftDescription}
           onDraftTransDateChange={setDraftTransDate}
           onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
-          onDraftPriceChange={setDraftPrice}
-          onDraftQtyChange={setDraftQty}
+          onDraftPriceChange={handleDraftPriceChange}
+          onDraftQtyChange={handleDraftQtyChange}
           onDraftProjectIdChange={setDraftProjectId}
           onDraftInternationalChange={setDraftInternational}
           linkedTicketFileId={linkedTicketFileId}

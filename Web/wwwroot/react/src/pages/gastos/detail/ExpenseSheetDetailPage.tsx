@@ -138,7 +138,6 @@ const ExpenseSheetDetailPageContent = () => {
           draftProjectId={controller.draftProjectId}
           draftCurrencyCode={controller.draftCurrencyCode}
           draftExchangeRate={controller.draftExchangeRate}
-          draftEstadoComentarios={controller.draftEstadoComentarios}
           officialExchangeRateRawValue={controller.officialExchangeRateRawValue}
           officialExchangeRateDate={controller.officialExchangeRateDate}
           officialExchangeRateSource={controller.officialExchangeRateSource}
@@ -146,7 +145,6 @@ const ExpenseSheetDetailPageContent = () => {
           onDraftProjectIdChange={controller.setDraftProjectId}
           onDraftCurrencyCodeChange={controller.setDraftCurrencyCode}
           onDraftExchangeRateChange={controller.setDraftExchangeRate}
-          onDraftEstadoComentariosChange={controller.setDraftEstadoComentarios}
         />
       ) : null}
 

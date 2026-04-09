@@ -147,6 +147,9 @@
   <data name="ExpenseSheets_BottomActions_UndoRejection" xml:space="preserve">
     <value>撤销拒绝</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_MoveToDraft" xml:space="preserve">
+    <value>转为草稿</value>
+  </data>
   <data name="ExpenseSheets_BottomActions_Toolbar" xml:space="preserve">
     <value>费用表状态操作</value>
   </data>
@@ -1100,6 +1103,9 @@
   </data>
   <data name="ExpenseSheets_Validation_DescriptionRequired" xml:space="preserve">
     <value>描述是强制性的。</value>
+  </data>
+  <data name="Tickets_Validation_CategoryRequired" xml:space="preserve">
+    <value>类别是强制性的。</value>
   </data>
   <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
     <value>货币是强制性的。</value>

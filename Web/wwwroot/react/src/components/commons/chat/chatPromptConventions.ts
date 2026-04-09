@@ -37,47 +37,66 @@ type PromptContext = {
   uiLanguage?: string | null;
   hasGreetingIntent?: boolean;
   requestedVisualizationType?: VisualizationType | null;
+  availableWidthPx?: number | null;
+  availableHeightPx?: number | null;
 };
 
-const RAW_EXPENSE_SHEET_FIELD_NAMES_RULE =
-  "No raw keys/JSON. HojaGastosId=hoja; ExpenseSheetStatus=estado; EstadoComentarios=comentarios; UserId=usuario; UserName=nombre; ProjId=proyecto; CurrencyCode=moneda; TotalAmount=importe; ExchRate=tipo cambio; CreatedDate=fecha.";
+const FRIENDLY_FIELD_NAMES_RULE =
+  "Use labels: hoja, estado, comentarios, usuario, nombre, proyecto, moneda, importe, fecha.";
+
+const clampLayoutHint = (value: number | null | undefined, fallbackValue: number): number => {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    return fallbackValue;
+  }
+
+  return Math.max(180, Math.round(value));
+};
 
 const buildCommonPromptRules = ({
   uiLanguage,
   hasGreetingIntent = false,
-  requestedVisualizationType = null,
+  availableWidthPx,
+  availableHeightPx,
 }: PromptContext): string => {
   const greetingRule = hasGreetingIntent ? "Greet if greeted." : "";
+  const widthPx = clampLayoutHint(availableWidthPx, 304);
+  const heightPx = clampLayoutHint(availableHeightPx, 264);
+  const compactLayoutRule = `Fit about ${widthPx}x${heightPx}px.`;
 
   return [
     "messages[] JSON.",
-    `${resolvePromptLanguageName(uiLanguage)}, keep accents.`,
-    RAW_EXPENSE_SHEET_FIELD_NAMES_RULE,
+    `${resolvePromptLanguageName(uiLanguage)}.`,
+    FRIENDLY_FIELD_NAMES_RULE,
+    compactLayoutRule,
     greetingRule,
   ].join(" ");
 };
 
 const buildVisualizationPromptRule = (requestedVisualizationType?: VisualizationType | null): string => {
   if (!requestedVisualizationType) {
-    return "One markdown msg. No ASCII/pipe tables.";
+    return "One compact markdown msg. Tight bullets, short paras, no blank lines, no ASCII/pipe tables.";
   }
 
   if (requestedVisualizationType === "table") {
-    return "Valid: md+table. Never pipe/ascii tables. Else: md.";
+    return "Valid: md+real table payload. Never markdown/ascii tables or faux charts. Else: compact md.";
   }
 
   if (requestedVisualizationType === "pie") {
-    return "Valid: md+chart pie. Never raw JSON. Else: md.";
+    return "Valid: md+chart pie. Max 6 categories, short labels, avoid overlap. Never raw JSON. Else: compact md.";
   }
 
-  return `Valid: md+chart ${requestedVisualizationType}. Never raw JSON. Else: md.`;
+  return `Valid: md+chart ${requestedVisualizationType}. Max 6 categories, short labels, avoid overlap. Never raw JSON. Else: compact md.`;
 };
 
 // Builds a compact instruction string that stays inside the upstream field limit.
 export const buildStructuredAssistantAnswerInstructions = (
   requestedVisualizationType?: VisualizationType | null,
   uiLanguage?: string | null,
-  hasGreetingIntent = false
+  hasGreetingIntent = false,
+  layoutHints?: {
+    availableWidthPx?: number | null;
+    availableHeightPx?: number | null;
+  }
 ): string => {
   return trimToMaxLength(
     [
@@ -85,6 +104,8 @@ export const buildStructuredAssistantAnswerInstructions = (
         uiLanguage,
         hasGreetingIntent: hasGreetingIntent && !requestedVisualizationType,
         requestedVisualizationType,
+        availableWidthPx: layoutHints?.availableWidthPx,
+        availableHeightPx: layoutHints?.availableHeightPx,
       }),
       buildVisualizationPromptRule(requestedVisualizationType),
     ].join(" "),

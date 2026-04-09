@@ -17,6 +17,7 @@ type UseExpenseSheetLineDetailTopbarActionsArgs = {
   setModalError: (value: string) => void;
   handleEnableEdit: () => void;
   handleCancelEdit: () => void;
+  canOpenSaveConfirm?: () => boolean;
   handleUpdate: () => Promise<boolean>;
   handleDelete: () => Promise<boolean>;
   onSaveSuccess: () => void;
@@ -45,6 +46,7 @@ export const useExpenseSheetLineDetailTopbarActions = ({
   setModalError,
   handleEnableEdit,
   handleCancelEdit,
+  canOpenSaveConfirm,
   handleUpdate,
   handleDelete,
   onSaveSuccess,
@@ -77,6 +79,7 @@ export const useExpenseSheetLineDetailTopbarActions = ({
     setModalError,
     handleEnableEdit,
     handleCancelEdit,
+    canOpenSaveConfirm,
     handleSave: handleUpdate,
     handleDelete,
     saveConfirmTitle: indT("ExpenseSheets_Detail_SaveChanges_Title", "Save changes"),

@@ -151,7 +151,6 @@ export const useExpenseSheetDetailPageController = () => {
     exchangeRateBaseCurrency,
     exchangeRateReferenceAmount,
     exchangeRateValidationMessage,
-    canEditStatusCommentCurrent,
     canEditAnyCurrent,
     canUseFullEditFeatures,
     canEditHeaderFieldsCurrent,
@@ -342,11 +341,10 @@ export const useExpenseSheetDetailPageController = () => {
         currentStatusLabel,
         nextStatusLabel
       ).replace(/\\n/g, "\n");
-      const shouldPromptStatusComment = canEditStatusCommentCurrent;
       const initialComment = safeText(header?.estadoComentarios);
-      statusTransitionCommentRef.current = shouldPromptStatusComment ? initialComment : "";
-      setStatusTransitionComment(shouldPromptStatusComment ? initialComment : "");
-      setShowStatusTransitionCommentField(shouldPromptStatusComment);
+      statusTransitionCommentRef.current = initialComment;
+      setStatusTransitionComment(initialComment);
+      setShowStatusTransitionCommentField(true);
 
       openConfirm({
         title: actionLabel,
@@ -356,7 +354,7 @@ export const useExpenseSheetDetailPageController = () => {
           const ok = await handleStatusTransition(
             action.nextStatus,
             actionLabel,
-            shouldPromptStatusComment ? statusTransitionCommentRef.current : null
+            statusTransitionCommentRef.current
           );
           if (ok) {
             invalidateCachedListForRefetch();
@@ -369,7 +367,6 @@ export const useExpenseSheetDetailPageController = () => {
       });
     },
     [
-      canEditStatusCommentCurrent,
       closeConfirm,
       handleStatusTransition,
       hasStatusActionContent,
@@ -485,8 +482,7 @@ export const useExpenseSheetDetailPageController = () => {
     !isCreateMode && !isLoading && !isRedirectingAfterCreate && !errorMessage && detailPolicy.statusActions.length > 0;
   const showFab = !isCreateMode && detailPolicy.showFab;
   const hasVisibleStatusComment = safeText(header?.estadoComentarios).trim().length > 0;
-  const statusCommentMode: "hidden" | "read" | "edit" =
-    isEditing && canEditStatusCommentCurrent ? "edit" : (hasVisibleStatusComment ? "read" : "hidden");
+  const statusCommentMode: "hidden" | "read" = hasVisibleStatusComment ? "read" : "hidden";
   const modalBody = showStatusTransitionCommentField ? (
     <div className="space-y-1.5">
       <label className="form-label font-semibold">

@@ -22,6 +22,25 @@ type CurrencyTotalsCopy = {
   totalHeader: string;
 };
 
+type ExpenseSheetTotalsCopy = {
+  introChart: string;
+  introTable: string;
+  title: string;
+  subtitle: string;
+  sheetHeader: string;
+  descriptionHeader: string;
+  currencyHeader: string;
+  totalHeader: string;
+};
+
+type ExpenseSheetTotalsRow = {
+  label: string;
+  sheetId: string;
+  description: string | null;
+  currencyCode: string | null;
+  value: number;
+};
+
 const toSafeText = (value: unknown): string => {
   if (value === null || value === undefined) return "";
   return String(value).trim();
@@ -34,9 +53,9 @@ const toIntentText = (value: unknown): string => {
     .toLowerCase();
 };
 
-const toPositiveOrZeroNumber = (value: unknown): number => {
+const toFiniteNumber = (value: unknown): number | null => {
   const numericValue = typeof value === "number" ? value : Number(value);
-  return Number.isFinite(numericValue) ? numericValue : 0;
+  return Number.isFinite(numericValue) ? numericValue : null;
 };
 
 const resolveAssistantLocale = (uiLanguage?: string | null): AssistantLocale => {
@@ -52,8 +71,8 @@ const resolveAssistantLocale = (uiLanguage?: string | null): AssistantLocale => 
 
 const CURRENCY_TOTALS_COPY: Record<AssistantLocale, CurrencyTotalsCopy> = {
   es: {
-    introChart: "Aquí tienes el gráfico con los totales por moneda.",
-    introTable: "Aquí tienes la tabla con los totales por moneda.",
+    introChart: "Aqui tienes el grafico con los totales por moneda.",
+    introTable: "Aqui tienes la tabla con los totales por moneda.",
     title: "Totales por moneda",
     subtitle: "Importes agregados de las hojas de gasto cargadas.",
     currencyHeader: "Moneda",
@@ -101,6 +120,69 @@ const CURRENCY_TOTALS_COPY: Record<AssistantLocale, CurrencyTotalsCopy> = {
   },
 };
 
+const EXPENSE_SHEET_TOTALS_COPY: Record<AssistantLocale, ExpenseSheetTotalsCopy> = {
+  es: {
+    introChart: "Aqui tienes el grafico con el total de cada hoja de gasto.",
+    introTable: "Aqui tienes la tabla con el total de cada hoja de gasto.",
+    title: "Totales por hoja de gasto",
+    subtitle: "Totales actuales de las hojas de gasto cargadas.",
+    sheetHeader: "Hoja",
+    descriptionHeader: "Descripcion",
+    currencyHeader: "Moneda",
+    totalHeader: "Total",
+  },
+  en: {
+    introChart: "Here is the chart with the total for each expense sheet.",
+    introTable: "Here is the table with the total for each expense sheet.",
+    title: "Totals by expense sheet",
+    subtitle: "Current totals for the loaded expense sheets.",
+    sheetHeader: "Sheet",
+    descriptionHeader: "Description",
+    currencyHeader: "Currency",
+    totalHeader: "Total",
+  },
+  eu: {
+    introChart: "Hemen duzu gastu-orri bakoitzaren guztizkoa duen grafikoa.",
+    introTable: "Hemen duzu gastu-orri bakoitzaren guztizkoa duen taula.",
+    title: "Gastu-orriaren araberako guztizkoak",
+    subtitle: "Kargatutako gastu-orrien uneko guztizkoak.",
+    sheetHeader: "Orria",
+    descriptionHeader: "Deskribapena",
+    currencyHeader: "Moneta",
+    totalHeader: "Guztizkoa",
+  },
+  pt: {
+    introChart: "Aqui tens o grafico com o total de cada folha de despesas.",
+    introTable: "Aqui tens a tabela com o total de cada folha de despesas.",
+    title: "Totais por folha de despesas",
+    subtitle: "Totais atuais das folhas de despesas carregadas.",
+    sheetHeader: "Folha",
+    descriptionHeader: "Descricao",
+    currencyHeader: "Moeda",
+    totalHeader: "Total",
+  },
+  it: {
+    introChart: "Ecco il grafico con il totale di ogni nota spese.",
+    introTable: "Ecco la tabella con il totale di ogni nota spese.",
+    title: "Totali per nota spese",
+    subtitle: "Totali correnti delle note spese caricate.",
+    sheetHeader: "Nota",
+    descriptionHeader: "Descrizione",
+    currencyHeader: "Valuta",
+    totalHeader: "Totale",
+  },
+  zhHans: {
+    introChart: "这里是每张费用单总额的图表。",
+    introTable: "这里是每张费用单总额的表格。",
+    title: "按费用单汇总的总额",
+    subtitle: "当前已加载费用单的总额。",
+    sheetHeader: "费用单",
+    descriptionHeader: "描述",
+    currencyHeader: "币种",
+    totalHeader: "总额",
+  },
+};
+
 const CURRENCY_KEYWORDS = [
   "moneda",
   "monedas",
@@ -116,6 +198,22 @@ const CURRENCY_KEYWORDS = [
   "valute",
   "货币",
   "币种",
+];
+
+const EXPENSE_SHEET_KEYWORDS = [
+  "hoja de gasto",
+  "hojas de gasto",
+  "hoja gasto",
+  "hojas gasto",
+  "expense sheet",
+  "expense sheets",
+  "sheet",
+  "sheets",
+  "folha de despesas",
+  "folhas de despesas",
+  "nota spese",
+  "note spese",
+  "费用单",
 ];
 
 const TOTAL_KEYWORDS = [
@@ -150,13 +248,25 @@ const wantsTotalsByCurrency = (question: string): boolean => {
   return containsAnyKeyword(normalizedQuestion, CURRENCY_KEYWORDS) && containsAnyKeyword(normalizedQuestion, TOTAL_KEYWORDS);
 };
 
+const wantsTotalsByExpenseSheet = (question: string): boolean => {
+  const normalizedQuestion = toIntentText(question);
+  if (!normalizedQuestion || wantsTotalsByCurrency(normalizedQuestion)) {
+    return false;
+  }
+
+  return (
+    containsAnyKeyword(normalizedQuestion, EXPENSE_SHEET_KEYWORDS) &&
+    containsAnyKeyword(normalizedQuestion, TOTAL_KEYWORDS)
+  );
+};
+
 const buildCurrencyTotalsRows = (items: ExpenseSheetListItemDto[]): ChartDatum[] => {
   const totalsByCurrency = new Map<string, number>();
 
   items.forEach((item) => {
     const currencyCode = safeText(item?.CurrencyCode).toUpperCase();
-    const totalAmount = toPositiveOrZeroNumber(item?.TotalAmount);
-    if (!currencyCode || totalAmount === 0) {
+    const totalAmount = toFiniteNumber(item?.TotalAmount);
+    if (!currencyCode || totalAmount === null) {
       return;
     }
 
@@ -166,6 +276,41 @@ const buildCurrencyTotalsRows = (items: ExpenseSheetListItemDto[]): ChartDatum[]
   return Array.from(totalsByCurrency.entries())
     .sort((left, right) => right[1] - left[1] || left[0].localeCompare(right[0]))
     .map(([label, value]) => ({ label, value: Number(value.toFixed(2)) }));
+};
+
+const buildExpenseSheetLabel = (item: ExpenseSheetListItemDto): string => {
+  const sheetId = safeText(item?.HojaGastosId);
+  const description = safeText(item?.Description);
+
+  if (sheetId && description) {
+    return `${sheetId} | ${description}`;
+  }
+
+  return description || sheetId || "-";
+};
+
+const buildExpenseSheetTotalsRows = (items: ExpenseSheetListItemDto[]): ExpenseSheetTotalsRow[] => {
+  return items
+    .map((item) => {
+      const value = toFiniteNumber(item?.TotalAmount);
+      if (value === null) {
+        return null;
+      }
+
+      const sheetId = safeText(item?.HojaGastosId);
+      const description = safeText(item?.Description);
+      const currencyCode = safeText(item?.CurrencyCode).toUpperCase();
+
+      return {
+        label: buildExpenseSheetLabel(item),
+        sheetId: sheetId || "-",
+        description: description || null,
+        currencyCode: currencyCode || null,
+        value: Number(value.toFixed(2)),
+      };
+    })
+    .filter((row): row is ExpenseSheetTotalsRow => !!row)
+    .sort((left, right) => right.value - left.value || left.sheetId.localeCompare(right.sheetId));
 };
 
 const buildCurrencyTotalsTableMessage = (rows: ChartDatum[], copy: CurrencyTotalsCopy): ChatMessage | null => {
@@ -227,6 +372,90 @@ const buildCurrencyTotalsChartMessage = (
   return renderableMessage.type === "chart" ? renderableMessage : null;
 };
 
+const buildExpenseSheetTotalsTableMessage = (
+  rows: ExpenseSheetTotalsRow[],
+  copy: ExpenseSheetTotalsCopy
+): ChatMessage | null => {
+  const columns: TableColumn[] = [
+    {
+      key: "sheetId",
+      header: copy.sheetHeader,
+      align: "left",
+    },
+    {
+      key: "description",
+      header: copy.descriptionHeader,
+      align: "left",
+    },
+    {
+      key: "currencyCode",
+      header: copy.currencyHeader,
+      align: "center",
+    },
+    {
+      key: "value",
+      header: copy.totalHeader,
+      align: "right",
+    },
+  ];
+
+  const tableRows: TableRow[] = rows.map((row) => ({
+    sheetId: row.sheetId,
+    description: row.description,
+    currencyCode: row.currencyCode,
+    value: row.value,
+  }));
+
+  const renderableMessage = resolveRenderableChatMessage({
+    type: "table",
+    payload: {
+      title: copy.title,
+      subtitle: copy.subtitle,
+      columns,
+      rows: tableRows,
+    },
+  });
+
+  return renderableMessage.type === "table" ? renderableMessage : null;
+};
+
+const buildExpenseSheetTotalsChartMessage = (
+  requestedVisualizationType: Exclude<VisualizationType, "table">,
+  rows: ExpenseSheetTotalsRow[],
+  copy: ExpenseSheetTotalsCopy
+): ChatMessage | null => {
+  const chartRows: ChartDatum[] = rows.map((row) => ({
+    label: row.label,
+    value: row.value,
+  }));
+
+  const payload: ChartPayload =
+    requestedVisualizationType === "pie"
+      ? {
+          chartType: "pie",
+          title: copy.title,
+          subtitle: copy.subtitle,
+          data: chartRows,
+          nameKey: "label",
+          dataKey: "value",
+        }
+      : {
+          chartType: requestedVisualizationType,
+          title: copy.title,
+          subtitle: copy.subtitle,
+          data: chartRows,
+          xKey: "label",
+          yKey: "value",
+        };
+
+  const renderableMessage = resolveRenderableChatMessage({
+    type: "chart",
+    payload,
+  });
+
+  return renderableMessage.type === "chart" ? renderableMessage : null;
+};
+
 const hasRequestedVisualizationMessage = (
   messages: ChatMessage[],
   requestedVisualizationType: VisualizationType | null | undefined
@@ -244,6 +473,40 @@ const hasRequestedVisualizationMessage = (
   });
 };
 
+const buildCurrencyVisualizationFallbackMessages = (
+  requestedVisualizationType: VisualizationType,
+  rows: ChartDatum[],
+  copy: CurrencyTotalsCopy
+): ChatMessage[] | null => {
+  const visualMessage =
+    requestedVisualizationType === "table"
+      ? buildCurrencyTotalsTableMessage(rows, copy)
+      : buildCurrencyTotalsChartMessage(requestedVisualizationType, rows, copy);
+
+  if (!visualMessage) {
+    return null;
+  }
+
+  return [createMarkdownMessage(requestedVisualizationType === "table" ? copy.introTable : copy.introChart), visualMessage];
+};
+
+const buildExpenseSheetVisualizationFallbackMessages = (
+  requestedVisualizationType: VisualizationType,
+  rows: ExpenseSheetTotalsRow[],
+  copy: ExpenseSheetTotalsCopy
+): ChatMessage[] | null => {
+  const visualMessage =
+    requestedVisualizationType === "table"
+      ? buildExpenseSheetTotalsTableMessage(rows, copy)
+      : buildExpenseSheetTotalsChartMessage(requestedVisualizationType, rows, copy);
+
+  if (!visualMessage) {
+    return null;
+  }
+
+  return [createMarkdownMessage(requestedVisualizationType === "table" ? copy.introTable : copy.introChart), visualMessage];
+};
+
 // Builds a deterministic visualization from loaded expense data when the model does not return a usable payload.
 export const buildExpenseSheetsVisualizationFallbackMessages = ({
   question,
@@ -255,26 +518,31 @@ export const buildExpenseSheetsVisualizationFallbackMessages = ({
     return null;
   }
 
-  if (!wantsTotalsByCurrency(question)) {
-    return null;
+  const locale = resolveAssistantLocale(uiLanguage);
+
+  if (wantsTotalsByCurrency(question)) {
+    const currencyRows = buildCurrencyTotalsRows(sourceJson.Items);
+    if (currencyRows.length === 0) {
+      return null;
+    }
+
+    return buildCurrencyVisualizationFallbackMessages(requestedVisualizationType, currencyRows, CURRENCY_TOTALS_COPY[locale]);
   }
 
-  const rows = buildCurrencyTotalsRows(sourceJson.Items);
-  if (rows.length === 0) {
-    return null;
+  if (wantsTotalsByExpenseSheet(question)) {
+    const expenseSheetRows = buildExpenseSheetTotalsRows(sourceJson.Items);
+    if (expenseSheetRows.length === 0) {
+      return null;
+    }
+
+    return buildExpenseSheetVisualizationFallbackMessages(
+      requestedVisualizationType,
+      expenseSheetRows,
+      EXPENSE_SHEET_TOTALS_COPY[locale]
+    );
   }
 
-  const copy = CURRENCY_TOTALS_COPY[resolveAssistantLocale(uiLanguage)];
-  const visualMessage =
-    requestedVisualizationType === "table"
-      ? buildCurrencyTotalsTableMessage(rows, copy)
-      : buildCurrencyTotalsChartMessage(requestedVisualizationType, rows, copy);
-
-  if (!visualMessage) {
-    return null;
-  }
-
-  return [createMarkdownMessage(requestedVisualizationType === "table" ? copy.introTable : copy.introChart), visualMessage];
+  return null;
 };
 
 export const shouldUseExpenseSheetsVisualizationFallback = (

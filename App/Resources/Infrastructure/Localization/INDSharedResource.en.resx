@@ -216,6 +216,9 @@
   <data name="ExpenseSheets_BottomActions_UndoRejection" xml:space="preserve">
     <value>Undo rejection</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_MoveToDraft" xml:space="preserve">
+    <value>Move to draft</value>
+  </data>
   <data name="ExpenseSheets_BottomActions_Toolbar" xml:space="preserve">
     <value>Expense sheet status actions</value>
   </data>
@@ -1181,6 +1184,9 @@
   </data>
   <data name="ExpenseSheets_Validation_DescriptionRequired" xml:space="preserve">
     <value>Description is required.</value>
+  </data>
+  <data name="Tickets_Validation_CategoryRequired" xml:space="preserve">
+    <value>Category is required.</value>
   </data>
   <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
     <value>Currency is required.</value>

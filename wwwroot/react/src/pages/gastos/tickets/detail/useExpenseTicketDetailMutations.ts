@@ -40,6 +40,8 @@ type UseExpenseTicketDetailMutationsArgs = {
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+const REQUIRED_GASTO_TYPES = new Set<number>([1, 2, 3, 4, 5, 6, 7, 8, 14]);
+
 const parseOptionalInteger = (raw: string): number | undefined => {
   const value = String(raw || "").trim();
   if (!value) return undefined;
@@ -116,8 +118,8 @@ export const useExpenseTicketDetailMutations = ({
     }
 
     const parsedGastoType = parseOptionalInteger(draftGastoType);
-    if (parsedGastoType !== undefined && ![0, 1, 2, 3, 4, 5, 6, 7, 8, 14].includes(parsedGastoType)) {
-      const message = indT("Api_RequestFailed", "Request failed.");
+    if (parsedGastoType === undefined || !REQUIRED_GASTO_TYPES.has(parsedGastoType)) {
+      const message = indT("Tickets_Validation_CategoryRequired", "Category is required.");
       setModalError(message);
       setStatus(message);
       return false;

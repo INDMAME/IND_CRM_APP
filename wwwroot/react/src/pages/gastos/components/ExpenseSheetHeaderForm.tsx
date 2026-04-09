@@ -13,7 +13,7 @@ type ExpenseSheetHeaderFormProps = {
   isCreateMode: boolean;
   isEditing: boolean;
   canEditHeaderFields: boolean;
-  statusCommentMode: "hidden" | "read" | "edit";
+  statusCommentMode: "hidden" | "read";
   header: ExpenseSheetHeader;
   projectValue: string;
   isCurrencyLockedByLines: boolean;
@@ -29,7 +29,6 @@ type ExpenseSheetHeaderFormProps = {
   draftProjectId: string;
   draftCurrencyCode: string;
   draftExchangeRate: string;
-  draftEstadoComentarios: string;
   officialExchangeRateRawValue: string;
   officialExchangeRateDate: string;
   officialExchangeRateSource: string;
@@ -37,7 +36,6 @@ type ExpenseSheetHeaderFormProps = {
   onDraftProjectIdChange: (value: string) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
-  onDraftEstadoComentariosChange: (value: string) => void;
 };
 
 const EXCHANGE_RATE_MODE_PREFIX_PATTERN = /^T\.?C\.?\s*/i;
@@ -63,7 +61,6 @@ const ExpenseSheetHeaderForm = ({
   draftProjectId,
   draftCurrencyCode,
   draftExchangeRate,
-  draftEstadoComentarios,
   officialExchangeRateRawValue,
   officialExchangeRateDate,
   officialExchangeRateSource,
@@ -71,7 +68,6 @@ const ExpenseSheetHeaderForm = ({
   onDraftProjectIdChange,
   onDraftCurrencyCodeChange,
   onDraftExchangeRateChange,
-  onDraftEstadoComentariosChange,
 }: ExpenseSheetHeaderFormProps) => {
   const isForeignCurrency =
     isEditing && canEditHeaderFields && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
@@ -84,9 +80,9 @@ const ExpenseSheetHeaderForm = ({
       : getExpenseStatusLabel(header.expenseSheetStatus);
   const headerCurrencyCode = safeText(header.currencyCode).toUpperCase();
   const baseCurrencyCode = safeText(exchangeRateBaseCurrency).toUpperCase();
+  // Status comment is now edited only in the status transition popup.
   const statusCommentValue = safeText(header.estadoComentarios);
   const showStatusCommentField = !isCreateMode && statusCommentMode !== "hidden";
-  const canEditStatusComment = isEditing && statusCommentMode === "edit";
   const parsedDraftExchangeRate = parseExpenseNumericInput(draftExchangeRate);
   const parsedOfficialRawRate = parseExpenseNumericInput(officialExchangeRateRawValue);
   const baseExchangeRateValue =
@@ -148,24 +144,11 @@ const ExpenseSheetHeaderForm = ({
         ) : null}
         {!isCreateMode ? <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} /> : null}
         {showStatusCommentField ? (
-          canEditStatusComment ? (
-            <div className="md:col-span-2 space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_StatusComment", "Status comment")}</label>
-              <textarea
-                className="form-control resize-none"
-                rows={3}
-                value={draftEstadoComentarios}
-                onChange={(event) => onDraftEstadoComentariosChange(event.target.value || "")}
-                aria-label={indT("ExpenseSheets_Field_StatusComment", "Status comment")}
-              />
-            </div>
-          ) : (
-            <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_StatusComment", "Status comment")}
-              value={statusCommentValue || "-"}
-              fullWidth
-            />
-          )
+          <ExpenseReadOnlyField
+            label={indT("ExpenseSheets_Field_StatusComment", "Status comment")}
+            value={statusCommentValue || "-"}
+            fullWidth
+          />
         ) : null}
         {isEditing && canEditHeaderFields ? (
           <div className="sm:col-span-2 space-y-1.5">

@@ -12,6 +12,8 @@ type ExpenseCurrencyFilterSelectProps = {
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  invalid?: boolean;
+  inputRef?: React.Ref<HTMLInputElement>;
   readOnly?: boolean;
   disabled?: boolean;
   showLabel?: boolean;
@@ -107,6 +109,8 @@ const ExpenseCurrencyFilterSelect = ({
   placeholder,
   value,
   onChange,
+  invalid = false,
+  inputRef,
   readOnly = false,
   disabled = false,
   showLabel = true,
@@ -221,6 +225,8 @@ const ExpenseCurrencyFilterSelect = ({
         options={options}
         value={normalizedValue}
         onChange={(nextValue) => onChange(normalizeCurrencyCode(nextValue))}
+        inputRef={inputRef}
+        invalid={invalid}
         readOnly={readOnly}
         disabled={effectiveDisabled}
         allowTextInput

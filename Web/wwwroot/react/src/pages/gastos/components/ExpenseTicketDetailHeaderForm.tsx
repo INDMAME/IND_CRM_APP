@@ -26,7 +26,11 @@ type ExpenseTicketDetailHeaderFormProps = {
   gastoTypeOptions: Array<{ value: string; text: string }>;
   draftDescription: string;
   draftGastoType: string;
+  gastoTypeInvalid: boolean;
+  gastoTypeInputRef: React.Ref<HTMLInputElement>;
   draftCurrencyCode: string;
+  currencyCodeInvalid: boolean;
+  currencyInputRef: React.Ref<HTMLInputElement>;
   draftTransDate: string;
   draftUrlFile: string;
   draftFileName: string;
@@ -50,7 +54,11 @@ const ExpenseTicketDetailHeaderForm = ({
   gastoTypeOptions,
   draftDescription,
   draftGastoType,
+  gastoTypeInvalid,
+  gastoTypeInputRef,
   draftCurrencyCode,
+  currencyCodeInvalid,
+  currencyInputRef,
   draftTransDate,
   draftUrlFile,
   draftFileName,
@@ -104,7 +112,9 @@ const ExpenseTicketDetailHeaderForm = ({
             value={draftGastoType}
             onChange={onDraftGastoTypeChange}
             placeholder={indT("Tickets_Filter_Category", "Category")}
-            usePortal={false}
+            inputRef={gastoTypeInputRef}
+            invalid={gastoTypeInvalid}
+            usePortal
             allowTextInput={false}
             showSearchButton={false}
           />
@@ -129,6 +139,8 @@ const ExpenseTicketDetailHeaderForm = ({
             placeholder={indT("ExpenseSheets_Field_Currency", "Currency")}
             value={draftCurrencyCode}
             onChange={onDraftCurrencyCodeChange}
+            invalid={currencyCodeInvalid}
+            inputRef={currencyInputRef}
             idBase="expense-ticket-detail-currency"
           />
         ) : (

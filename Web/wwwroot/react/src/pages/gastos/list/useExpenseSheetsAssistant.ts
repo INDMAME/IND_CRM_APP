@@ -72,6 +72,8 @@ type UseExpenseSheetsAssistantResult = {
 };
 
 const MAX_TEXTAREA_HEIGHT_PX = 168;
+const DEFAULT_ASSISTANT_VISUAL_WIDTH_PX = 304;
+const DEFAULT_ASSISTANT_VISUAL_HEIGHT_PX = 264;
 
 type ExpenseSheetsAssistantSourceJsonCache = {
   contextVersion: number;
@@ -290,12 +292,36 @@ const buildTechnicalQuestionRefusal = (uiLanguage: string): string => {
   return "Puedo ayudarte con los datos de gastos, pero no puedo explicar la configuracion tecnica ni el funcionamiento interno del asistente.";
 };
 
+const resolveAssistantVisualizationHints = (container: HTMLDivElement | null): {
+  availableWidthPx: number;
+  availableHeightPx: number;
+} => {
+  const containerWidth = container?.clientWidth ?? 0;
+  const availableWidthPx = containerWidth > 0
+    ? Math.max(220, Math.min(360, Math.round(containerWidth - 8)))
+    : DEFAULT_ASSISTANT_VISUAL_WIDTH_PX;
+
+  return {
+    availableWidthPx,
+    availableHeightPx: DEFAULT_ASSISTANT_VISUAL_HEIGHT_PX,
+  };
+};
+
 const buildExpenseAnswerInstructions = (
   requestedVisualizationType?: VisualizationType | null,
   uiLanguage?: string,
-  hasGreetingIntent = false
+  hasGreetingIntent = false,
+  layoutHints?: {
+    availableWidthPx?: number | null;
+    availableHeightPx?: number | null;
+  }
 ): string => {
-  return buildStructuredAssistantAnswerInstructions(requestedVisualizationType, uiLanguage, hasGreetingIntent);
+  return buildStructuredAssistantAnswerInstructions(
+    requestedVisualizationType,
+    uiLanguage,
+    hasGreetingIntent,
+    layoutHints
+  );
 };
 
 // Owns the expense sheets chat drawer state and request lifecycle.
@@ -607,6 +633,7 @@ export const useExpenseSheetsAssistant = ({
         if (!sourceJson) {
           throw new ApiFetchError(assistantCopy.noContextMessage);
         }
+        const visualizationHints = resolveAssistantVisualizationHints(messagesContainerRef.current);
 
         const response = await askExpenseSheetsQuestion(
           {
@@ -614,7 +641,8 @@ export const useExpenseSheetsAssistant = ({
             answerInstructions: buildExpenseAnswerInstructions(
               requestedVisualizationType,
               resolvedUiLanguage,
-              greetingIntent.isGreetingOnly
+              greetingIntent.isGreetingOnly,
+              visualizationHints
             ),
             listRequest: context.lastExpenseSheetsListRequest,
             sourceJson,

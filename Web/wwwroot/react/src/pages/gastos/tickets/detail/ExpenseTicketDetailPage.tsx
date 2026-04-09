@@ -167,7 +167,11 @@ const buildExpenseTicketDetailContentView = ({
   gastoTypeOptions,
   draftDescription,
   draftGastoType,
+  gastoTypeInvalid,
+  gastoTypeInputRef,
   draftCurrencyCode,
+  currencyCodeInvalid,
+  currencyInputRef,
   draftTransDate,
   draftUrlFile,
   draftFileName,
@@ -204,7 +208,11 @@ const buildExpenseTicketDetailContentView = ({
   gastoTypeOptions: ExpenseSelectOption[];
   draftDescription: string;
   draftGastoType: string;
+  gastoTypeInvalid: boolean;
+  gastoTypeInputRef: React.RefObject<HTMLInputElement | null>;
   draftCurrencyCode: string;
+  currencyCodeInvalid: boolean;
+  currencyInputRef: React.RefObject<HTMLInputElement | null>;
   draftTransDate: string;
   draftUrlFile: string;
   draftFileName: string;
@@ -247,7 +255,11 @@ const buildExpenseTicketDetailContentView = ({
   gastoTypeOptions,
   draftDescription,
   draftGastoType,
+  gastoTypeInvalid,
+  gastoTypeInputRef,
   draftCurrencyCode,
+  currencyCodeInvalid,
+  currencyInputRef,
   draftTransDate,
   draftUrlFile,
   draftFileName,
@@ -336,7 +348,11 @@ const ExpenseTicketDetailPageContent = () => {
     linePage,
     draftDescription,
     draftGastoType,
+    gastoTypeInvalid,
+    gastoTypeInputRef,
     draftCurrencyCode,
+    currencyCodeInvalid,
+    currencyInputRef,
     draftTransDate,
     draftComentario,
     draftUrlFile,
@@ -350,6 +366,7 @@ const ExpenseTicketDetailPageContent = () => {
     setDraftGastoType,
     setDraftCurrencyCode,
     setDraftTransDate,
+    canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,
   } = useExpenseTicketDetailEditor({
@@ -457,6 +474,7 @@ const ExpenseTicketDetailPageContent = () => {
     setModalError,
     handleEnableEdit,
     handleCancelEdit,
+    canOpenSaveConfirm,
     handleUpdate,
     handleDelete,
     onSaveSuccess: () => {
@@ -541,7 +559,11 @@ const ExpenseTicketDetailPageContent = () => {
     gastoTypeOptions,
     draftDescription,
     draftGastoType,
+    gastoTypeInvalid,
+    gastoTypeInputRef,
     draftCurrencyCode,
+    currencyCodeInvalid,
+    currencyInputRef,
     draftTransDate,
     draftUrlFile,
     draftFileName,

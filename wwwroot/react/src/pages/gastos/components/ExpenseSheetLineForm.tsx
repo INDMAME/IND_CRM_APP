@@ -36,7 +36,11 @@ type ExpenseSheetLineFormProps = {
   linkedTicketFileId: string;
   showLinkedTicketField: boolean;
   typeInputRef?: React.Ref<HTMLInputElement>;
+  priceInputRef?: React.Ref<HTMLInputElement>;
+  qtyInputRef?: React.Ref<HTMLInputElement>;
   typeInvalid?: boolean;
+  priceInvalid?: boolean;
+  qtyInvalid?: boolean;
   onDraftDescriptionChange: (value: string) => void;
   onDraftTransDateChange: (value: string) => void;
   onDraftTypeValueCodeChange: (value: string) => void;
@@ -83,7 +87,11 @@ const ExpenseSheetLineForm = ({
   linkedTicketFileId,
   showLinkedTicketField,
   typeInputRef,
+  priceInputRef,
+  qtyInputRef,
   typeInvalid = false,
+  priceInvalid = false,
+  qtyInvalid = false,
   onDraftDescriptionChange,
   onDraftTransDateChange,
   onDraftTypeValueCodeChange,
@@ -171,7 +179,10 @@ const ExpenseSheetLineForm = ({
             <div className="space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Price", "Price")}</label>
               <input
-                className={isKmType ? "form-control ind-readonly-field" : "form-control"}
+                ref={priceInputRef}
+                className={`${isKmType ? "form-control ind-readonly-field" : "form-control"}${
+                  priceInvalid ? " border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400" : ""
+                }`}
                 type="text"
                 inputMode="decimal"
                 value={draftPrice}
@@ -189,6 +200,7 @@ const ExpenseSheetLineForm = ({
                 readOnly={isKmType}
                 disabled={isKmType}
                 aria-readonly={isKmType}
+                aria-invalid={priceInvalid ? "true" : "false"}
                 aria-label={indT("ExpenseSheets_Field_Price", "Price")}
               />
               {isKmType && isFuelPriceLoading ? (
@@ -208,7 +220,10 @@ const ExpenseSheetLineForm = ({
             <div className="space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>
               <input
-                className="form-control"
+                ref={qtyInputRef}
+                className={`form-control${
+                  qtyInvalid ? " border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400" : ""
+                }`}
                 type="text"
                 inputMode="decimal"
                 value={draftQty}
@@ -223,6 +238,7 @@ const ExpenseSheetLineForm = ({
                     })
                   )
                 }
+                aria-invalid={qtyInvalid ? "true" : "false"}
                 aria-label={indT("ExpenseSheets_Field_Qty", "Quantity")}
               />
             </div>

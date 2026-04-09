@@ -44,6 +44,7 @@ type UseExpenseSheetLineDetailMutationsArgs = {
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
   onInvalidType?: () => void;
+  onInvalidAmountQty?: () => void;
   onCreateSuccess: () => void;
 };
 
@@ -79,6 +80,7 @@ export const useExpenseSheetLineDetailMutations = ({
   setStatus,
   setIsEditing,
   onInvalidType,
+  onInvalidAmountQty,
   onCreateSuccess,
 }: UseExpenseSheetLineDetailMutationsArgs) => {
   const isNotFoundError = (error: unknown): boolean => {
@@ -115,6 +117,7 @@ export const useExpenseSheetLineDetailMutations = ({
 
     const hasValidQtyPrice = parsedQty != null && parsedQty > 0 && parsedPrice != null && parsedPrice > 0;
     if (!hasValidQtyPrice) {
+      onInvalidAmountQty?.();
       const validationMessage = indT(
         "ExpenseSheets_Line_Validation_AmountQty",
         "Quantity and price must be greater than 0."
@@ -131,10 +134,7 @@ export const useExpenseSheetLineDetailMutations = ({
     }
 
     if (!Number.isFinite(parsedTypeValue) || parsedTypeValue <= 0) {
-      const validationMessage = indT("Api_RequestFailed", "Request failed.");
       onInvalidType?.();
-      setModalError(validationMessage);
-      setStatus(validationMessage);
       return false;
     }
 
@@ -203,6 +203,7 @@ export const useExpenseSheetLineDetailMutations = ({
     line,
     lineId,
     onCreateSuccess,
+    onInvalidAmountQty,
     onInvalidType,
     setBusy,
     setIsEditing,

@@ -1,6 +1,6 @@
 import type { ChartDatum, ChartDatumValue } from "./chatMessageContract.ts";
 
-export const CHART_HEIGHT = 304;
+export const CHART_HEIGHT = 272;
 export const CHART_COLORS = ["#0F766E", "#0369A1", "#D97706", "#7C3AED", "#DC2626", "#059669"];
 
 export type ChartSeriesPoint = {
@@ -26,6 +26,32 @@ export const toLabelText = (value: ChartDatumValue): string => {
 export const truncateLabel = (value: string, maxLength = 12): string => {
   if (value.length <= maxLength) return value;
   return `${value.slice(0, Math.max(1, maxLength - 3))}...`;
+};
+
+export const resolveXAxisLabelAngle = (itemCount: number): number => {
+  if (itemCount >= 8) return -36;
+  if (itemCount >= 5) return -28;
+  return 0;
+};
+
+export const resolveXAxisLabelStep = (itemCount: number): number => {
+  if (itemCount <= 6) return 1;
+  return Math.max(2, Math.ceil(itemCount / 6));
+};
+
+export const resolveXAxisLabelMaxLength = (itemCount: number): number => {
+  if (itemCount >= 9) return 8;
+  if (itemCount >= 6) return 10;
+  return 12;
+};
+
+export const shouldUseIndexedXAxisLabels = (labels: string[], labelMaxLength: number, labelAngle: number): boolean => {
+  return labelAngle !== 0 || labels.some((label) => label.length > labelMaxLength);
+};
+
+export const shouldRenderXAxisLabel = (index: number, itemCount: number): boolean => {
+  const step = resolveXAxisLabelStep(itemCount);
+  return index === itemCount - 1 || index % step === 0;
 };
 
 export const toNumericValue = (value: ChartDatumValue): number | null => {

@@ -216,6 +216,9 @@
   <data name="ExpenseSheets_BottomActions_UndoRejection" xml:space="preserve">
     <value>Desfazer rejeicao</value>
   </data>
+  <data name="ExpenseSheets_BottomActions_MoveToDraft" xml:space="preserve">
+    <value>Mover para rascunho</value>
+  </data>
   <data name="ExpenseSheets_BottomActions_Toolbar" xml:space="preserve">
     <value>Acoes de estado da planilha de despesas</value>
   </data>
@@ -1169,6 +1172,9 @@
   </data>
   <data name="ExpenseSheets_Validation_DescriptionRequired" xml:space="preserve">
     <value>A descrição é obrigatória.</value>
+  </data>
+  <data name="Tickets_Validation_CategoryRequired" xml:space="preserve">
+    <value>A categoria é obrigatória.</value>
   </data>
   <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
     <value>A moeda é obrigatória.</value>

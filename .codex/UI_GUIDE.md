@@ -99,7 +99,7 @@
 - On error: show inline error message, no action mark.
 - Action mark API:
   - `window.IND.flashActionMark({ type: 'okProcess'|'okDelProcess'|'errorProcess'|'warningProcess', durationMs })`
-- Delete success uses `okDelProcess` (same check icon as `okProcess`, but red).
+- Delete success uses `okDelProcess` (same check icon and green color as `okProcess`).
 - Action mark container is global in `_Layout.cshtml` via `_IndActionMark`.
 
 ## React page decomposition conventions
@@ -140,4 +140,4 @@
 - Transcription uses `/Visitas/TranscribeSpeech` and replaces textarea text.
 
 ## Last updated
-- 2026-03-18
+- 2026-04-09

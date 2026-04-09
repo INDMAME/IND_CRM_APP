@@ -66,7 +66,11 @@ type ExpenseTicketDetailViewProps = {
     gastoTypeOptions: Array<{ value: string; text: string }>;
     draftDescription: string;
     draftGastoType: string;
+    gastoTypeInvalid: boolean;
+    gastoTypeInputRef: RefObject<HTMLInputElement | null>;
     draftCurrencyCode: string;
+    currencyCodeInvalid: boolean;
+    currencyInputRef: RefObject<HTMLInputElement | null>;
     draftTransDate: string;
     draftUrlFile: string;
     draftFileName: string;
@@ -102,7 +106,11 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         gastoTypeOptions={content.gastoTypeOptions}
         draftDescription={content.draftDescription}
         draftGastoType={content.draftGastoType}
+        gastoTypeInvalid={content.gastoTypeInvalid}
+        gastoTypeInputRef={content.gastoTypeInputRef}
         draftCurrencyCode={content.draftCurrencyCode}
+        currencyCodeInvalid={content.currencyCodeInvalid}
+        currencyInputRef={content.currencyInputRef}
         draftTransDate={content.draftTransDate}
         draftUrlFile={content.draftUrlFile}
         draftFileName={content.draftFileName}

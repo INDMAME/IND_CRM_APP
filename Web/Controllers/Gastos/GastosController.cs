@@ -104,6 +104,7 @@ namespace IND_CRM_APP.Controllers
         {
             FullEdit,
             CommentOnlyEdit,
+            StatusActionOnly,
             ReadOnly
         }
 
@@ -3515,9 +3516,9 @@ namespace IND_CRM_APP.Controllers
             {
                 return statusCode switch
                 {
-                    ExpenseSheetStatusApprovalRequested => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, isManagingOtherUser, allowSelfManagement, false, ExpenseSheetStatusApproved, ExpenseSheetStatusRejected),
-                    ExpenseSheetStatusApproved => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, isManagingOtherUser, allowSelfManagement, false, ExpenseSheetStatusApprovalRequested),
-                    ExpenseSheetStatusRejected => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, isManagingOtherUser, allowSelfManagement, false, ExpenseSheetStatusApprovalRequested),
+                    ExpenseSheetStatusApprovalRequested => BuildPolicy(ExpenseSheetInteractionMode.StatusActionOnly, isManagingOtherUser, allowSelfManagement, false, ExpenseSheetStatusApproved, ExpenseSheetStatusRejected),
+                    ExpenseSheetStatusApproved => BuildPolicy(ExpenseSheetInteractionMode.StatusActionOnly, isManagingOtherUser, allowSelfManagement, false, ExpenseSheetStatusApprovalRequested),
+                    ExpenseSheetStatusRejected => BuildPolicy(ExpenseSheetInteractionMode.StatusActionOnly, isManagingOtherUser, allowSelfManagement, false, ExpenseSheetStatusApprovalRequested),
                     _ => BuildPolicy(ExpenseSheetInteractionMode.ReadOnly, isManagingOtherUser, allowSelfManagement, false)
                 };
             }
@@ -3527,9 +3528,7 @@ namespace IND_CRM_APP.Controllers
                 return statusCode switch
                 {
                     ExpenseSheetStatusDraft => BuildPolicy(ExpenseSheetInteractionMode.FullEdit, false, true, true, ExpenseSheetStatusApproved),
-                    ExpenseSheetStatusApprovalRequested => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, false, true, false, ExpenseSheetStatusApproved),
-                    ExpenseSheetStatusApproved => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, false, true, false, ExpenseSheetStatusApprovalRequested),
-                    ExpenseSheetStatusRejected => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, false, true, false, ExpenseSheetStatusApprovalRequested),
+                    ExpenseSheetStatusApproved => BuildPolicy(ExpenseSheetInteractionMode.StatusActionOnly, false, true, false, ExpenseSheetStatusDraft),
                     _ => BuildPolicy(ExpenseSheetInteractionMode.ReadOnly, false, true, false)
                 };
             }
@@ -3537,8 +3536,8 @@ namespace IND_CRM_APP.Controllers
             return statusCode switch
             {
                 ExpenseSheetStatusDraft => BuildPolicy(ExpenseSheetInteractionMode.FullEdit, false, false, true, ExpenseSheetStatusApprovalRequested),
-                ExpenseSheetStatusApprovalRequested => BuildPolicy(ExpenseSheetInteractionMode.CommentOnlyEdit, false, false, false, ExpenseSheetStatusDraft),
-                ExpenseSheetStatusRejected => BuildPolicy(ExpenseSheetInteractionMode.FullEdit, false, false, true, ExpenseSheetStatusApprovalRequested),
+                ExpenseSheetStatusApprovalRequested => BuildPolicy(ExpenseSheetInteractionMode.StatusActionOnly, false, false, false, ExpenseSheetStatusDraft),
+                ExpenseSheetStatusRejected => BuildPolicy(ExpenseSheetInteractionMode.StatusActionOnly, false, false, false, ExpenseSheetStatusDraft),
                 _ => BuildPolicy(ExpenseSheetInteractionMode.ReadOnly, false, false, false)
             };
         }
@@ -3567,20 +3566,29 @@ namespace IND_CRM_APP.Controllers
             ExpenseSheetSnapshot snapshot,
             ExpenseSheetUpdateRequest request)
         {
+            var hasHeaderFieldChanges = HasExpenseSheetHeaderFieldChanges(snapshot, request);
+            var currentStatus = snapshot.StatusCode;
+            var requestedStatus = request.ExpenseSheetStatus ?? currentStatus;
+            var requestedStatusChanged = requestedStatus != currentStatus;
+
             if (policy.InteractionMode == ExpenseSheetInteractionMode.ReadOnly)
             {
                 return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
             }
 
             if (policy.InteractionMode == ExpenseSheetInteractionMode.CommentOnlyEdit &&
-                HasExpenseSheetHeaderFieldChanges(snapshot, request))
+                hasHeaderFieldChanges)
             {
                 return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
             }
 
-            var currentStatus = snapshot.StatusCode;
-            var requestedStatus = request.ExpenseSheetStatus ?? currentStatus;
-            if (requestedStatus != currentStatus)
+            if (policy.InteractionMode == ExpenseSheetInteractionMode.StatusActionOnly &&
+                (hasHeaderFieldChanges || !requestedStatusChanged))
+            {
+                return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
+            }
+
+            if (requestedStatusChanged)
             {
                 if (!requestedStatus.HasValue || !policy.AllowedNextStatuses.Contains(requestedStatus.Value))
                 {
