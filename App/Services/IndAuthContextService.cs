@@ -66,20 +66,28 @@ namespace IND_CRM_APP.Services
         {
             var ctx = _httpContextAccessor.HttpContext;
             var selected = ctx?.Session.GetString(CompanyKey);
-            if (!string.IsNullOrWhiteSpace(selected))
-                return selected;
-
             var selectionSource = ctx?.Session.GetString(CompanySelectionSourceKey);
-            if (string.Equals(selectionSource, CompanySelectionSourceUser, StringComparison.OrdinalIgnoreCase))
-                return null;
+            if (!string.IsNullOrWhiteSpace(selected))
+            {
+                var selectedCompany = FindCompany(context, selected);
+                if (selectedCompany != null)
+                    return selectedCompany.CompanyId;
+
+                if (context == null)
+                    return selected;
+
+                if (string.Equals(selectionSource, CompanySelectionSourceUser, StringComparison.OrdinalIgnoreCase))
+                    return null;
+            }
 
             if (context != null)
             {
-                if (!string.IsNullOrWhiteSpace(context.Header.DefaultCompany))
-                    return context.Header.DefaultCompany;
+                var defaultCompany = FindCompany(context, context.Header.DefaultCompany);
+                if (defaultCompany != null)
+                    return defaultCompany.CompanyId;
 
-                var first = context.Companies.FirstOrDefault();
-                if (first != null && !string.IsNullOrWhiteSpace(first.CompanyId))
+                var first = context.Companies.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c.CompanyId));
+                if (first != null)
                     return first.CompanyId;
             }
 
@@ -259,9 +267,7 @@ namespace IND_CRM_APP.Services
             {
                 foreach (var c in item.Companies)
                 {
-                    if (string.IsNullOrWhiteSpace(c.CrmUserId))
-                        continue;
-
+                    // Keep the company even when CrmUserId is empty because module access can still be valid.
                     var company = new IndWebCompany
                     {
                         CompanyId = c.CompanyId ?? string.Empty,
@@ -441,9 +447,11 @@ namespace IND_CRM_APP.Services
             var isUserSelection = string.Equals(selectionSource, CompanySelectionSourceUser, StringComparison.OrdinalIgnoreCase);
             if (!string.IsNullOrWhiteSpace(selected))
             {
-                if (context.Companies.Any(c => string.Equals(c.CompanyId, selected, StringComparison.OrdinalIgnoreCase)))
+                var selectedCompany = FindCompany(context, selected);
+                if (selectedCompany != null)
                 {
-                    CacheSelectedCompanyName(ctx, context, selected);
+                    ctx.Session.SetString(CompanyKey, selectedCompany.CompanyId);
+                    CacheSelectedCompanyName(ctx, context, selectedCompany.CompanyId);
                     return;
                 }
 
@@ -454,9 +462,8 @@ namespace IND_CRM_APP.Services
                 }
             }
 
-            var fallback = !string.IsNullOrWhiteSpace(context.Header.DefaultCompany)
-                ? context.Header.DefaultCompany
-                : context.Companies.FirstOrDefault()?.CompanyId;
+            var fallback = FindCompany(context, context.Header.DefaultCompany)?.CompanyId
+                ?? context.Companies.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c.CompanyId))?.CompanyId;
 
             if (!string.IsNullOrWhiteSpace(fallback))
             {
@@ -466,7 +473,19 @@ namespace IND_CRM_APP.Services
                 return;
             }
 
+            ctx.Session.Remove(CompanyKey);
+            ctx.Session.Remove(CompanySelectionSourceKey);
             ctx.Session.Remove(CompanyNameKey);
+        }
+
+        // Resolves a company from the current context using case-insensitive company id matching.
+        private static IndWebCompany? FindCompany(IndWebContext? context, string? companyId)
+        {
+            if (context == null || string.IsNullOrWhiteSpace(companyId))
+                return null;
+
+            return context.Companies.FirstOrDefault(c =>
+                string.Equals(c.CompanyId, companyId, StringComparison.OrdinalIgnoreCase));
         }
 
         // Stores the selected company name in session for quick UI use.
