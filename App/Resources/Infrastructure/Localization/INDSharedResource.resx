@@ -232,7 +232,7 @@
     <value>¿Quieres actualizar el estado de la hoja de gastos?</value>
   </data>
   <data name="ExpenseSheets_BottomActions_ConfirmTransition" xml:space="preserve">
-    <value>Current status: {0}\nNew status: {1}\n\nDo you want to update the expense sheet status?</value>
+    <value>Estado actual: {0}\nNuevo estado: {1}\n\n¿Quieres actualizar el estado de la hoja de gastos?</value>
   </data>
   <data name="ExpenseSheets_Line_Detail_Updating" xml:space="preserve">
     <value>Actualizando línea de gasto...</value>
@@ -1144,7 +1144,7 @@
     <value>No se pudo iniciar la grabación. Revisa permisos de micrófono. En Chrome, normalmente requiere HTTPS o localhost.</value>
   </data>
   <data name="AudioRecorder_Error_Unsupported" xml:space="preserve">
-    <value>Tu navegador no soporta getUserMedia o no esta disponible.</value>
+    <value>Tu navegador no soporta getUserMedia o no está disponible.</value>
   </data>
   <data name="AudioRecorder_Error_NoAudioContext" xml:space="preserve">
     <value>AudioContext no disponible en este navegador.</value>
@@ -1153,7 +1153,7 @@
     <value>Origen actual: {0}</value>
   </data>
   <data name="AudioRecorder_Hint_Technical" xml:space="preserve">
-    <value>Detalle tecnico: {0}</value>
+    <value>Detalle técnico: {0}</value>
   </data>
   <data name="Navigation_ActiveProcess_ConfirmLeave" xml:space="preserve">
     <value>Tu proceso activo se cancelará y perderás los cambios no guardados. ¿Deseas continuar?</value>
@@ -1168,7 +1168,7 @@
     <value>Sí</value>
   </data>
   <data name="ExpenseSheets_Create_Lines" xml:space="preserve">
-    <value>Lineas</value>
+    <value>Líneas</value>
   </data>
   <data name="Common_Add" xml:space="preserve">
     <value>Agregar</value>
@@ -1210,7 +1210,7 @@
     <value>Esta hoja de gastos es de solo lectura para su estado actual.</value>
   </data>
   <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
-    <value>Este cambio de estado de la hoja de gastos no esta permitido.</value>
+    <value>Este cambio de estado de la hoja de gastos no está permitido.</value>
   </data>
   <data name="ExpenseSheets_FuelPrice_Loading" xml:space="preserve">
     <value>Consultando precio de combustible...</value>
@@ -1222,16 +1222,16 @@
     <value>Origen precio combustible</value>
   </data>
   <data name="ExpenseSheets_FuelPrice_Source_UserConfig" xml:space="preserve">
-    <value>Obtenido por configuracion del usuario.</value>
+    <value>Obtenido por configuración del usuario.</value>
   </data>
   <data name="ExpenseSheets_FuelPrice_Source_GlobalConfig" xml:space="preserve">
-    <value>Obtenido por configuracion global.</value>
+    <value>Obtenido por configuración global.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Text" xml:space="preserve">
     <value>Tipo de cambio obtenido 0.0000000</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Aria" xml:space="preserve">
-    <value>Mostrar informacion del tipo de cambio</value>
+    <value>Mostrar información del tipo de cambio</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>Tipo de cambio obtenido {0}\nFecha: {1}\nOrigen: {2}</value>
@@ -1267,67 +1267,67 @@
     <value>Elegir imagen</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_UploadingImage" xml:space="preserve">
-    <value>Uploading image...</value>
+    <value>Subiendo imagen...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_CreatingTicket" xml:space="preserve">
-    <value>Creating ticket...</value>
+    <value>Creando ticket...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_SyncingFile" xml:space="preserve">
-    <value>Syncing file...</value>
+    <value>Sincronizando archivo...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_Finalizing" xml:space="preserve">
-    <value>Finalizing IA...</value>
+    <value>Finalizando IA...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_LinkingLine" xml:space="preserve">
     <value>Vinculando línea de gasto...</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Status_Done" xml:space="preserve">
-    <value>Done</value>
+    <value>Completado</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_FileType" xml:space="preserve">
-    <value>Unsupported image format.</value>
+    <value>Formato de imagen no soportado.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_FileSize" xml:space="preserve">
-    <value>Image exceeds 50MB max size.</value>
+    <value>La imagen supera el máximo de 50MB.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_NoFileId" xml:space="preserve">
-    <value>Could not resolve ticket file id.</value>
+    <value>No se pudo resolver el fileId del ticket.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_UploadRetry" xml:space="preserve">
-    <value>Ticket created, but file sync failed. Retry upload to complete process.</value>
+    <value>Ticket creado, pero falló la sincronización del archivo. Reintenta la subida.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RetryFileMissing" xml:space="preserve">
-    <value>Cached image is no longer available.</value>
+    <value>La imagen en caché ya no está disponible.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_CameraPermission" xml:space="preserve">
-    <value>Camera permission is required.</value>
+    <value>Se requiere permiso de cámara.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Validation" xml:space="preserve">
-    <value>Validation error.</value>
+    <value>Error de validación.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_NotFound" xml:space="preserve">
-    <value>Record not found.</value>
+    <value>Registro no encontrado.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Server" xml:space="preserve">
-    <value>Server error.</value>
+    <value>Error de servidor.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
-    <value>Retry upload</value>
+    <value>Reintentar carga</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Partial" xml:space="preserve">
-    <value>The ticket was created, but the full process has not completed yet.</value>
+    <value>El ticket se ha creado, pero el proceso completo no ha terminado.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Stage" xml:space="preserve">
-    <value>Failed stage</value>
+    <value>Etapa fallida</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RateLimit" xml:space="preserve">
-    <value>Rate limit reached.</value>
+    <value>Se ha alcanzado el límite de peticiones.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RetryAfterHint" xml:space="preserve">
-    <value>Please wait {0} seconds before retrying.</value>
+    <value>Espera {0} segundos antes de reintentarlo.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_OpenCreatedTicket" xml:space="preserve">
-    <value>Open created ticket</value>
+    <value>Abrir ticket creado</value>
   </data>
   <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
     <value>Se cancelará el proceso de vinculación y volverás a la hoja de gastos. ¿Quieres continuar?</value>
@@ -1363,112 +1363,112 @@
     <value>Motivo</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Prepare_Title" xml:space="preserve">
-    <value>Preparing image</value>
+    <value>Preparando imagen</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Link_Title" xml:space="preserve">
-    <value>Linking expense line</value>
+    <value>Vinculando línea de gasto</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Title" xml:space="preserve">
-    <value>Processing ticket</value>
+    <value>Procesando ticket</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Prepare_Body" xml:space="preserve">
-    <value>We validate the image and prepare it for a reliable upload.</value>
+    <value>Validamos la imagen y la preparamos para una carga fiable.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Ia_Title" xml:space="preserve">
-    <value>Reading ticket data</value>
+    <value>Leyendo datos del ticket</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_File_Title" xml:space="preserve">
-    <value>Syncing file</value>
+    <value>Sincronizando archivo</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Create_Title" xml:space="preserve">
-    <value>Creating ticket</value>
+    <value>Creando ticket</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Ia_Body" xml:space="preserve">
-    <value>We are extracting date, amount and description from the image.</value>
+    <value>Estamos extrayendo fecha, importe y descripción de la imagen.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_File_Body" xml:space="preserve">
-    <value>The uploaded image is being attached to the ticket record.</value>
+    <value>La imagen subida se está adjuntando al registro del ticket.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Elapsed" xml:space="preserve">
-    <value>Elapsed time</value>
+    <value>Tiempo transcurrido</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Create_Body" xml:space="preserve">
-    <value>The backend reserves the ticket and starts the server-side flow.</value>
+    <value>El backend reserva el ticket e inicia el flujo del servidor.</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Link_Body" xml:space="preserve">
-    <value>The created ticket is being connected to the current expense sheet.</value>
+    <value>El ticket generado se está conectando con la hoja de gastos actual.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Title" xml:space="preserve">
-    <value>Expense assistant</value>
+    <value>Asistente de gastos</value>
   </data>
   <data name="ExpenseSheets_Assistant_Subtitle" xml:space="preserve">
-    <value>Ask business questions about the currently loaded expense sheets.</value>
+    <value>Haz preguntas de negocio sobre las hojas de gasto cargadas actualmente.</value>
   </data>
   <data name="ExpenseSheets_Assistant_LauncherLabel" xml:space="preserve">
-    <value>Open expense sheet assistant</value>
+    <value>Abrir asistente de hojas de gasto</value>
   </data>
   <data name="ExpenseSheets_Assistant_Empty_Title" xml:space="preserve">
-    <value>Ask for a business summary</value>
+    <value>Pide un resumen de negocio</value>
   </data>
   <data name="ExpenseSheets_Assistant_Empty_Body" xml:space="preserve">
-    <value>Use quick actions or write a question about the expense sheets currently loaded in the list.</value>
+    <value>Usa las acciones rápidas o escribe una pregunta sobre las hojas de gasto cargadas en el listado.</value>
   </data>
   <data name="ExpenseSheets_Assistant_NoContext_Title" xml:space="preserve">
-    <value>Load expense sheets first.</value>
+    <value>Carga hojas de gasto primero.</value>
   </data>
   <data name="ExpenseSheets_Assistant_NoContext_Body" xml:space="preserve">
-    <value>The assistant needs a real expense sheet list response before it can analyze the data.</value>
+    <value>El asistente necesita una respuesta real del listado antes de poder analizar los datos.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Input_Placeholder" xml:space="preserve">
     <value>...</value>
   </data>
   <data name="ExpenseSheets_Assistant_Context_Updated" xml:space="preserve">
-    <value>Analysis context updated with the latest loaded list.</value>
+    <value>El contexto de análisis se actualizó con la última carga del listado.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Context_Ready" xml:space="preserve">
-    <value>Using the latest loaded list.</value>
+    <value>Usando la última carga del listado.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Summary" xml:space="preserve">
-    <value>Summary</value>
+    <value>Resumen</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Analytics" xml:space="preserve">
-    <value>Analytics</value>
+    <value>Analítica</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Anomalies" xml:space="preserve">
-    <value>Anomalies</value>
+    <value>Anomalías</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Summary" xml:space="preserve">
-    <value>Resume the loaded expense sheets. Indicate overall total, periods and relevant observations.</value>
+    <value>Resume las hojas de gasto cargadas. Indica total global, periodos y observaciones relevantes.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Analytics" xml:space="preserve">
-    <value>Analyze the loaded expense sheets and extract patterns: total spend, top users, top projects, top currencies and status distribution.</value>
+    <value>Analiza las hojas de gasto cargadas y extrae patrones: gasto total, top usuarios, top proyectos, top monedas y distribución por estado.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Anomalies" xml:space="preserve">
-    <value>Review the loaded expense sheets and detect possible anomalies, inconsistencies or outliers in amounts, dates, users, projects, statuses and expense types.</value>
+    <value>Revisa las hojas de gasto cargadas y detecta posibles anomalías, inconsistencias o valores atípicos en importes, fechas, usuarios, proyectos, estados y tipos de gasto.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Send" xml:space="preserve">
-    <value>Send</value>
+    <value>Enviar</value>
   </data>
   <data name="ExpenseSheets_Assistant_Sending" xml:space="preserve">
-    <value>Sending</value>
+    <value>Enviando</value>
   </data>
   <data name="ExpenseSheets_Assistant_Retry" xml:space="preserve">
-    <value>Retry</value>
+    <value>Reintentar</value>
   </data>
   <data name="ExpenseSheets_Assistant_Warnings" xml:space="preserve">
-    <value>Warnings</value>
+    <value>Advertencias</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Total" xml:space="preserve">
-    <value>Total records</value>
+    <value>Total registros</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Mode" xml:space="preserve">
-    <value>Retrieval</value>
+    <value>Recuperación</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated" xml:space="preserve">
-    <value>Truncated</value>
+    <value>Truncado</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_Yes" xml:space="preserve">
-    <value>Yes</value>
+    <value>Sí</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_No" xml:space="preserve">
     <value>No</value>
@@ -1477,21 +1477,21 @@
     <value>TraceId</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_Validation" xml:space="preserve">
-    <value>Check the question and try again.</value>
+    <value>Revisa la pregunta e inténtalo de nuevo.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_Server" xml:space="preserve">
-    <value>The assistant is not available right now.</value>
+    <value>El asistente no está disponible ahora mismo.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RateLimit" xml:space="preserve">
-    <value>Too many assistant requests.</value>
+    <value>Demasiadas solicitudes al asistente.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RetryAfter" xml:space="preserve">
-    <value>Retry after {0}.</value>
+    <value>Reintenta después de {0}.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_NoContext" xml:space="preserve">
-    <value>Load expense sheets before asking the assistant.</value>
+    <value>Carga hojas de gasto antes de preguntar al asistente.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
-    <value>I'm preparing the answer...</value>
+    <value>Estoy preparando la respuesta...</value>
   </data>
 </root>

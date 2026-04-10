@@ -1242,7 +1242,7 @@ namespace IND_CRM_APP.Controllers
             var normalizedExchangeRateMode = req.ExchangeRateMode.HasValue && req.ExchangeRateMode.Value >= 0
                 ? req.ExchangeRateMode.Value
                 : (int?)null;
-            var normalizedEstadoComentarios = NormalizeOptionalText(req.EstadoComentarios);
+            var normalizedEstadoComentarios = NormalizeOptionalClearableText(req.EstadoComentarios);
             var normalizedVoucher = NormalizeOptionalText(req.Voucher);
 
             var request = new ExpenseSheetUpdateRequest
@@ -3055,7 +3055,7 @@ namespace IND_CRM_APP.Controllers
                 var normalizedExchangeRateMode = req.ExchangeRateMode.HasValue && req.ExchangeRateMode.Value >= 0
                     ? req.ExchangeRateMode.Value
                     : (int?)null;
-                var normalizedEstadoComentarios = NormalizeOptionalText(req.EstadoComentarios);
+                var normalizedEstadoComentarios = NormalizeOptionalClearableText(req.EstadoComentarios);
                 var normalizedVoucher = NormalizeOptionalText(req.Voucher);
 
                 var request = new ExpenseSheetUpdateRequest
@@ -4072,6 +4072,12 @@ namespace IND_CRM_APP.Controllers
         private static string? NormalizeOptionalText(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        // Returns trimmed text while preserving explicit empty strings for clearable fields.
+        private static string? NormalizeOptionalClearableText(string? value)
+        {
+            return value == null ? null : value.Trim();
         }
 
         // Reads the requested acting user override from the current request headers.

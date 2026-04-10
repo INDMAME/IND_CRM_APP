@@ -85,6 +85,7 @@ export const useExpenseSheetDetailMutations = ({
       nextStatus?: number | null,
       statusCommentOverride?: string | null
     ): { payload: ExpenseSheetHeaderUpdateRequest } | { error: string } => {
+      const hasExplicitStatusCommentOverride = statusCommentOverride !== undefined;
       const normalizedCurrency = String(
         isCurrencyLockedByLines ? (lockedCurrencyCode || draftCurrencyCode || "") : (draftCurrencyCode || "")
       )
@@ -126,6 +127,10 @@ export const useExpenseSheetDetailMutations = ({
         : (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : undefined);
       const resolvedExpenseSheetStatus =
         nextStatus ?? (currentExpenseSheetStatus != null ? Number(currentExpenseSheetStatus) : undefined);
+      // Status/comment-only flows still submit the full header payload, so keep the stored rate untouched.
+      const resolvedExchangeRate = canEditHeaderFields
+        ? (hasValidRate ? Number(parsedExchangeRate) : 1)
+        : (originalExchangeRate ?? parsedExchangeRate ?? 0);
 
       if (isCreateMode) {
         if (!normalizedDescription) {
@@ -154,11 +159,14 @@ export const useExpenseSheetDetailMutations = ({
         payload: {
           description: normalizedDescription,
           currencyCode: normalizedCurrency,
-          exchRate: hasValidRate ? Number(parsedExchangeRate) : 1,
+          exchRate: resolvedExchangeRate,
           projId: normalizedProjectId || undefined,
           expenseSheetStatus: resolvedExpenseSheetStatus,
           exchangeRateMode: resolvedExchangeRateMode,
-          estadoComentarios: normalizedEstadoComentarios || undefined,
+          // Preserve explicit empty status comments so the backend can clear the stored value.
+          estadoComentarios: hasExplicitStatusCommentOverride
+            ? normalizedEstadoComentarios
+            : (normalizedEstadoComentarios || undefined),
         },
       };
     },
