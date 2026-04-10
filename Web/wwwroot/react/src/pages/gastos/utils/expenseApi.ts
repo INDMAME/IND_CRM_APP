@@ -229,8 +229,16 @@ const removeHeaderValue = (headers: Record<string, string>, key: string): void =
 const normalizeAxUserIdHeader = (value: unknown): string => {
   const normalized = safeText(value);
   if (!normalized) return "";
-  const firstToken = normalized.split("-")[0];
-  return safeText(firstToken);
+  if (/^-\d+$/.test(normalized)) {
+    return normalized;
+  }
+
+  const labelSeparator = normalized.indexOf(" - ");
+  if (labelSeparator > 0) {
+    return safeText(normalized.slice(0, labelSeparator));
+  }
+
+  return normalized;
 };
 
 const resolveBearerToken = (headers: HeadersInit | undefined): string => {

@@ -271,7 +271,9 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrWhiteSpace(token))
                 return RedirectToAction("Login", "Auth");
 
-            var isCreateMode = string.Equals(mode, "create", StringComparison.OrdinalIgnoreCase);
+            var normalizedMode = (mode ?? string.Empty).Trim();
+            var isCreateMode = string.Equals(normalizedMode, "create", StringComparison.OrdinalIgnoreCase);
+            var isEditMode = string.Equals(normalizedMode, "edit", StringComparison.OrdinalIgnoreCase);
             if (string.IsNullOrWhiteSpace(hojaGastosId))
                 return RedirectToAction(nameof(ExpenseSheets));
 
@@ -283,7 +285,7 @@ namespace IND_CRM_APP.Controllers
             var safeSheetId = hojaGastosId.Trim();
             ViewBag.HojaGastosId = safeSheetId;
             ViewBag.LineRecId = (lineRecId ?? string.Empty).Trim();
-            ViewBag.ExpenseSheetLineMode = isCreateMode ? "create" : "view";
+            ViewBag.ExpenseSheetLineMode = isCreateMode ? "create" : isEditMode ? "edit" : "view";
             ViewBag.GastoTypeOptions = _crmEnumCatalog
                 .GetGastoTypeMap()
                 .Select(x => new { value = x.Key, text = x.Value })

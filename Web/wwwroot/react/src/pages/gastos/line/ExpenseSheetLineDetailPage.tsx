@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
@@ -33,6 +33,22 @@ const bootstrapExpenseApiAuth = () => {
   });
 };
 
+// Consumes the one-time edit handoff from sheet detail so later reloads return to normal view mode.
+const consumeLineEditModeQuery = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const currentUrl = new URL(window.location.href);
+  if (safeText(currentUrl.searchParams.get("mode")).toLowerCase() !== "edit") {
+    return;
+  }
+
+  currentUrl.searchParams.delete("mode");
+  const nextUrl = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+  window.history.replaceState(window.history.state, "", nextUrl);
+};
+
 const ExpenseSheetLineDetailContent = () => {
   const {
     allowSelfManagement,
@@ -49,6 +65,14 @@ const ExpenseSheetLineDetailContent = () => {
   const isCreateMode = lineMode === "create";
   const startInEditMode = lineMode === "edit";
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
+
+  useEffect(() => {
+    if (!startInEditMode) {
+      return;
+    }
+
+    consumeLineEditModeQuery();
+  }, [startInEditMode]);
 
   const {
     header,

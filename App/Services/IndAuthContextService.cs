@@ -159,6 +159,7 @@ namespace IND_CRM_APP.Services
             if (cached != null && cached.Companies.Count > 0)
             {
                 _logger.LogInformation("Using cached Entra context for OID {EntraOid}.", entraOid);
+                RestoreAxUserSession(ctx, cached);
                 EnsureCompanySelection(ctx, cached);
                 LogSelectedCompany(ctx);
                 return new IndAuthContextResult
@@ -218,9 +219,7 @@ namespace IND_CRM_APP.Services
 
                 EnsureCompanySelection(ctx, webContext);
                 LogSelectedCompany(ctx);
-
-                if (!string.IsNullOrWhiteSpace(webContext.Header.AxUserId))
-                    ctx.Session.SetString("AxUser", webContext.Header.AxUserId);
+                RestoreAxUserSession(ctx, webContext);
 
                 return new IndAuthContextResult
                 {
@@ -297,6 +296,19 @@ namespace IND_CRM_APP.Services
             }
 
             return context;
+        }
+
+        // Keeps the session Ax user aligned with the resolved Entra context.
+        private static void RestoreAxUserSession(HttpContext ctx, IndWebContext context)
+        {
+            var normalizedAxUserId = (context?.Header?.AxUserId ?? string.Empty).Trim();
+            if (string.IsNullOrWhiteSpace(normalizedAxUserId))
+            {
+                ctx.Session.Remove("AxUser");
+                return;
+            }
+
+            ctx.Session.SetString("AxUser", normalizedAxUserId);
         }
 
         private static IndWebContextHeader MapHeader(IndEntraContextHeader? header)
