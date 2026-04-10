@@ -271,6 +271,7 @@ export const useExpenseSheetLineDetailState = ({
         const loadedIsSheetApproved = loadedStatusCode === EXPENSE_STATUS_APPROVED;
         const loadedIsSheetPaidByStatus = loadedStatusCode === EXPENSE_STATUS_PAID;
         const loadedIsSheetPaid = loadedIsSheetPaidByStatus || hasAssignedVoucher(mappedHeader.voucher);
+        const loadedHasLinkedTicket = !!safeText(selectedLine.fileId);
         const loadedIsManagingOtherUser = isManagingOtherExpenseRecord({
           canManageOtherUsers,
           currentAxUserId,
@@ -290,6 +291,7 @@ export const useExpenseSheetLineDetailState = ({
           startInEditMode &&
           !loadedIsSheetApproved &&
           !loadedIsSheetPaid &&
+          !loadedHasLinkedTicket &&
           !loadedIsManagingOtherUser &&
           loadedPolicy.interactionMode === "full_edit"
         ) {
