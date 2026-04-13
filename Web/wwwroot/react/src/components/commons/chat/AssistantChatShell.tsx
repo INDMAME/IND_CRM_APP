@@ -102,8 +102,8 @@ const AssistantChatMessageBubble = ({
   const [warningsOpen, setWarningsOpen] = React.useState(false);
   const warningKeyCounts = new Map<string, number>();
   const isFramelessVisualMessage = message.message.type === "chart" || message.message.type === "table";
-  const shouldWrapMarkdownAroundAvatar = message.message.type === "markdown";
   const shouldHideAssistantAvatar = false;
+  const shouldWrapMarkdownAroundAvatar = !shouldHideAssistantAvatar && message.message.type === "markdown";
 
   if (message.role === "user") {
     return (
@@ -167,7 +167,7 @@ const AssistantChatMessageBubble = ({
               </button>
 
               {warningsOpen ? (
-                <div className="mt-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-5 text-amber-900">
+                <div className="mt-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-[1.15rem] text-amber-900">
                   <ul className="list-disc space-y-1 pl-4">
                     {warnings.map((warning) => {
                       const normalizedWarning = toText(warning) || "warning";
@@ -191,53 +191,54 @@ const AssistantChatMessageBubble = ({
       <div className={classNames("relative w-full", shouldHideAssistantAvatar ? "max-w-full" : "max-w-[96%]")}>
         <div
           className={classNames(
-            "relative z-10 border px-3 py-2.5 shadow-[0_10px_24px_rgba(15,23,42,0.06)]",
+            "relative z-10 border px-2.5 py-2 shadow-[0_10px_24px_rgba(15,23,42,0.06)]",
             bubbleClassName,
             GLOBAL_CHAT_RADIUS_CLASS
           )}
         >
-        {shouldWrapMarkdownAroundAvatar ? (
-          <div className="text-[12px] leading-5">
-            <span className="float-left mt-0.5 mr-2 mb-1 flex h-8 w-8 items-start justify-center">
-              {message.state === "loading" ? (
-                <Spinner size="h-4 w-4" />
-              ) : (
-                <img src={botImageSrc} alt="" className="h-8 w-8 object-contain" aria-hidden="true" />
-              )}
-            </span>
-            <ChatMessageContent
-              message={message.message}
-              disabled={isSending}
-              onChartTypeSelect={(value) => onChartTypeSelect(message.id, value)}
-            />
-            <div className="clear-both" />
-          </div>
-        ) : shouldHideAssistantAvatar ? (
-          <div className="w-full min-w-0 text-[12px] leading-5">
-            <ChatMessageContent
-              message={message.message}
-              disabled={isSending}
-              onChartTypeSelect={(value) => onChartTypeSelect(message.id, value)}
-            />
-          </div>
-        ) : (
-          <div className="flex items-start gap-2">
-            <span className="mt-0.5 flex h-8 w-8 shrink-0 items-start justify-center">
-              {message.state === "loading" ? (
-                <Spinner size="h-4 w-4" />
-              ) : (
-                <img src={botImageSrc} alt="" className="h-8 w-8 object-contain" aria-hidden="true" />
-              )}
-            </span>
-            <div className="min-w-0 flex-1 text-[12px] leading-5">
+          {shouldHideAssistantAvatar ? (
+            <div className="w-full min-w-0 text-[12px] leading-5">
               <ChatMessageContent
                 message={message.message}
                 disabled={isSending}
                 onChartTypeSelect={(value) => onChartTypeSelect(message.id, value)}
               />
             </div>
-          </div>
-        )}
+          ) : shouldWrapMarkdownAroundAvatar ? (
+            <div className="min-w-0 text-[12px] leading-[1.15rem]">
+              <span className="-ml-2 mr-1.5 mb-1.5 mt-0.5 float-left flex h-8 w-8 items-start justify-center">
+                {message.state === "loading" ? (
+                  <Spinner size="h-4 w-4" />
+                ) : (
+                  <img src={botImageSrc} alt="" className="h-8 w-8 object-contain" aria-hidden="true" />
+                )}
+              </span>
+              <ChatMessageContent
+                message={message.message}
+                disabled={isSending}
+                markdownLayout="wrapAroundAvatar"
+                onChartTypeSelect={(value) => onChartTypeSelect(message.id, value)}
+              />
+              <div className="clear-both" />
+            </div>
+          ) : (
+            <div className="flex items-start gap-1.5">
+              <span className="-ml-0.5 mt-0.5 flex h-8 w-8 shrink-0 items-start justify-center">
+                {message.state === "loading" ? (
+                  <Spinner size="h-4 w-4" />
+                ) : (
+                  <img src={botImageSrc} alt="" className="h-8 w-8 object-contain" aria-hidden="true" />
+                )}
+              </span>
+              <div className="min-w-0 flex-1 text-[12px] leading-[1.15rem]">
+                <ChatMessageContent
+                  message={message.message}
+                  disabled={isSending}
+                  onChartTypeSelect={(value) => onChartTypeSelect(message.id, value)}
+                />
+              </div>
+            </div>
+          )}
 
         {message.state === "error" && message.retryQuestion ? (
           <button
@@ -262,7 +263,7 @@ const AssistantChatMessageBubble = ({
             </button>
 
             {warningsOpen ? (
-              <div className="mt-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-5 text-amber-900">
+              <div className="mt-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-[1.15rem] text-amber-900">
                 <ul className="list-disc space-y-1 pl-4">
                   {warnings.map((warning) => {
                     const normalizedWarning = toText(warning) || "warning";
@@ -447,11 +448,11 @@ const AssistantChatShell = <TActionId extends string = string,>({
                     key={action.id}
                     type="button"
                     disabled={!hasContext || isSending}
-                    className="inline-flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-[var(--radius-xl)] border border-slate-200 bg-slate-100 px-2 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-primary/20 hover:bg-slate-50 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="inline-flex min-w-0 flex-1 items-center justify-start gap-1 rounded-[var(--radius-xl)] border border-slate-200 bg-slate-100 pl-1.5 pr-2 py-1.5 text-[12px] font-semibold text-slate-600 transition hover:border-primary/20 hover:bg-slate-50 hover:text-primary focus:outline-hidden focus:ring-2 focus:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
                     onClick={() => onQuickAction(action.question)}
                   >
                     <Icon className="h-3.5 w-3.5 shrink-0" />
-                    <span className="truncate">{action.label}</span>
+                    <span className="min-w-0 truncate tracking-[-0.01em]">{action.label}</span>
                   </button>
                 );
               })}

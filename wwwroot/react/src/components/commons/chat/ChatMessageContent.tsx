@@ -10,6 +10,7 @@ type ChatMessageContentProps = {
   disabled?: boolean;
   onChartTypeSelect?: (value: VisualizationType) => void;
   markdownTone?: "default" | "inverse";
+  markdownLayout?: "default" | "wrapAroundAvatar";
 };
 
 // Converts one structured chat message into its presentational component.
@@ -18,12 +19,19 @@ const ChatMessageContent = ({
   disabled = false,
   onChartTypeSelect,
   markdownTone = "default",
+  markdownLayout = "default",
 }: ChatMessageContentProps) => {
   const safeMessage = resolveRenderableChatMessage(message);
 
   switch (safeMessage.type) {
     case "markdown":
-      return <ChatMarkdownMessage markdown={safeMessage.markdown} tone={markdownTone} />;
+      return (
+        <ChatMarkdownMessage
+          markdown={safeMessage.markdown}
+          tone={markdownTone}
+          avatarWrapped={markdownLayout === "wrapAroundAvatar"}
+        />
+      );
     case "chart":
       return <ChatChartRenderer payload={safeMessage.payload} />;
     case "table":

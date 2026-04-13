@@ -41,8 +41,7 @@ type PromptContext = {
   availableHeightPx?: number | null;
 };
 
-const FRIENDLY_FIELD_NAMES_RULE =
-  "Use labels: hoja, estado, comentarios, usuario, nombre, proyecto, moneda, importe, fecha.";
+const FRIENDLY_FIELD_NAMES_RULE = "Use friendly field labels.";
 
 const clampLayoutHint = (value: number | null | undefined, fallbackValue: number): number => {
   if (typeof value !== "number" || !Number.isFinite(value)) {
@@ -61,7 +60,7 @@ const buildCommonPromptRules = ({
   const greetingRule = hasGreetingIntent ? "Greet if greeted." : "";
   const widthPx = clampLayoutHint(availableWidthPx, 304);
   const heightPx = clampLayoutHint(availableHeightPx, 264);
-  const compactLayoutRule = `Fit about ${widthPx}x${heightPx}px.`;
+  const compactLayoutRule = `Fit ${widthPx}x${heightPx}px.`;
 
   return [
     "messages[] JSON.",
@@ -78,14 +77,14 @@ const buildVisualizationPromptRule = (requestedVisualizationType?: Visualization
   }
 
   if (requestedVisualizationType === "table") {
-    return "Return md+real table only. Do not substitute charts or ask again. Never raw JSON or ASCII tables. If impossible, explain briefly in md.";
+    return "md+real table only. No charts, no raw JSON, no ASCII tables. If not useful, brief md with better options.";
   }
 
   if (requestedVisualizationType === "pie") {
-    return "md+pie chart only. Include chartType,data,nameKey,dataKey. Max 6 categories. Short labels. No retry. Fallback brief md.";
+    return 'md+pie only. chartType,data,nameKey,dataKey. Max 6 cats. Business labels, not bare 0/1/2. "All sheets" => top sheet totals with ids. If mixed currencies or weak chart, brief md + 2 better options. No raw JSON.';
   }
 
-  return `md+${requestedVisualizationType} chart only. Include chartType,data,xKey,yKey. Max 6 categories. Short labels. No retry. Fallback brief md.`;
+  return `md+${requestedVisualizationType} only. chartType,data,xKey,yKey. Max 6 cats. Business labels, not bare 0/1/2. "All sheets" => top sheet totals with ids. If mixed currencies or weak chart, brief md + 2 better options. No raw JSON.`;
 };
 
 // Builds a compact instruction string that stays inside the upstream field limit.
@@ -100,6 +99,7 @@ export const buildStructuredAssistantAnswerInstructions = (
 ): string => {
   return trimToMaxLength(
     [
+      buildVisualizationPromptRule(requestedVisualizationType),
       buildCommonPromptRules({
         uiLanguage,
         hasGreetingIntent: hasGreetingIntent && !requestedVisualizationType,
@@ -107,7 +107,6 @@ export const buildStructuredAssistantAnswerInstructions = (
         availableWidthPx: layoutHints?.availableWidthPx,
         availableHeightPx: layoutHints?.availableHeightPx,
       }),
-      buildVisualizationPromptRule(requestedVisualizationType),
     ].join(" "),
     MAX_ANSWER_INSTRUCTIONS_LENGTH
   );
