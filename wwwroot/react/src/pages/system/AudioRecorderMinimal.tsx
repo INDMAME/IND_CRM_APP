@@ -9,6 +9,8 @@ type AudioRecorderProps = {
   onAudioReady?: (wav: Blob) => void;
   onAudioCleared?: () => void;
   onTranscribe?: (wav: Blob) => void | Promise<void>;
+  hideTranscribeButton?: boolean;
+  autoTranscribeOnStop?: boolean;
   transcribeBusy?: boolean;
   transcribeLabel?: string;
   transcribeBusyLabel?: string;
@@ -320,6 +322,8 @@ export default function AudioRecorderMinimal({
   onAudioReady,
   onAudioCleared,
   onTranscribe,
+  hideTranscribeButton = false,
+  autoTranscribeOnStop = false,
   transcribeBusy = false,
   transcribeLabel,
   transcribeBusyLabel,
@@ -857,6 +861,15 @@ export default function AudioRecorderMinimal({
         /* ignore */
       }
     }
+
+    // Auto-transcribe only when the parent explicitly enables it.
+    if (autoTranscribeOnStop && typeof onTranscribe === "function" && !transcribeBusy) {
+      try {
+        void onTranscribe(wav);
+      } catch {
+        /* ignore */
+      }
+    }
   }
 
   function clearRecording() {
@@ -1195,7 +1208,7 @@ export default function AudioRecorderMinimal({
     ? "relative w-full rounded-[var(--radius-xl)] bg-white border shadow-xl"
     : "relative w-full max-w-[360px] sm:max-w-[420px] lg:max-w-[520px] rounded-[var(--radius-xl)] bg-white border shadow-xl";
 
-  const showTranscribeButton = !!wavBlob && typeof onTranscribe === "function";
+  const showTranscribeButton = !!wavBlob && typeof onTranscribe === "function" && !hideTranscribeButton;
   const transcribeText = transcribeLabel || indT("TextEditor_Transcribe", "Transcribe");
   const transcribeBusyText = transcribeBusyLabel || indT("TextEditor_Transcribing", "Transcribing");
     const showDownloadButton = false;

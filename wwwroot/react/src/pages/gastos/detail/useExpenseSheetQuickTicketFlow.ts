@@ -781,35 +781,14 @@ export const useExpenseSheetQuickTicketFlow = ({
     setSourcePickerOpen(false);
   }, [busy]);
 
-  const requestCameraPermission = useCallback(async (): Promise<boolean | null> => {
-    if (typeof navigator === "undefined") return null;
-    const mediaDevices = navigator.mediaDevices;
-    if (!mediaDevices || typeof mediaDevices.getUserMedia !== "function") return null;
-
-    try {
-      const stream = await mediaDevices.getUserMedia({
-        video: { facingMode: "environment" },
-      });
-      stream.getTracks().forEach((track) => track.stop());
-      return true;
-    } catch {
-      return false;
-    }
+  const selectFromCamera = useCallback((inputElement: HTMLInputElement | null) => {
+    if (!inputElement) return;
+    // Safari/iPhone expects the capture picker to open from the active user gesture.
+    // Pre-requesting camera access with getUserMedia() introduces an async boundary and
+    // can leave iOS showing an active camera session without a visible preview.
+    setSourcePickerOpen(false);
+    inputElement.click();
   }, []);
-
-  const selectFromCamera = useCallback(
-    async (inputElement: HTMLInputElement | null) => {
-      if (!inputElement) return;
-      const granted = await requestCameraPermission();
-      if (granted === false) {
-        setErrorMessage(indT("ExpenseSheets_NewTicket_Error_CameraPermission", "Camera permission is required."));
-        return;
-      }
-      setSourcePickerOpen(false);
-      inputElement.click();
-    },
-    [requestCameraPermission]
-  );
 
   const selectFromGallery = useCallback((inputElement: HTMLInputElement | null) => {
     if (!inputElement) return;

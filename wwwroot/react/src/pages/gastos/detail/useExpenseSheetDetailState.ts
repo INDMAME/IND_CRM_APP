@@ -381,8 +381,8 @@ export const useExpenseSheetDetailState = ({
 
       try {
         const response = await getExchangeRate(
-          normalizedDraftCurrency,
           exchangeRateBaseCurrency,
+          normalizedDraftCurrency,
           formExchangeDate,
           {
             suppressPermissionModal: true,
@@ -403,10 +403,12 @@ export const useExpenseSheetDetailState = ({
           return;
         }
 
-        const officialRateRaw = Number(response.Data.Rate);
-        const officialRateForAmount100 = officialRateRaw * EXCHANGE_RATE_REFERENCE_AMOUNT;
-        const nextExchangeRateValue = formatExchangeRateInputValue(officialRateForAmount100);
-        const officialRateRawValue = formatExchangeRateInputValue(officialRateRaw);
+        // The endpoint returns one base-currency unit in the expense currency.
+        // The UI stores the amount for the fixed local reference amount (100).
+        const officialRatePerBaseUnit = Number(response.Data.Rate);
+        const officialRateForReferenceAmount = officialRatePerBaseUnit * EXCHANGE_RATE_REFERENCE_AMOUNT;
+        const nextExchangeRateValue = formatExchangeRateInputValue(officialRateForReferenceAmount);
+        const officialRateRawValue = formatExchangeRateInputValue(officialRatePerBaseUnit);
         setOfficialExchangeRateValue(nextExchangeRateValue);
         setOfficialExchangeRateRawValue(officialRateRawValue);
         setDraftExchangeRate(nextExchangeRateValue);

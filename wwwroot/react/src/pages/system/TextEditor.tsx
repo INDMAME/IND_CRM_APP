@@ -486,6 +486,8 @@ function IndTextEditorApp({ fieldId, fieldLabel, initialValue, returnUrl, initia
                 key={recorderResetKey}
                 embedded
                 onTranscribe={handleTranscribe}
+                hideTranscribeButton
+                autoTranscribeOnStop
                 transcribeBusy={isTranscribing}
                 transcribeLabel={indT("TextEditor_Transcribe", "Transcribe")}
                 transcribeBusyLabel={indT("TextEditor_Transcribing", "Transcribing")}
