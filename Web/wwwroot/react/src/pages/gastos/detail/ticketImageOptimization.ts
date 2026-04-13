@@ -271,19 +271,9 @@ export const optimizeTicketImageForUpload = async (file: File): Promise<TicketIm
     context.imageSmoothingQuality = "high";
     context.drawImage(element, 0, 0, resizePlan.width, resizePlan.height);
 
-    const outputMimeType =
-      normalizedMimeType === "image/webp"
-        ? "image/webp"
-        : normalizedMimeType === "image/png" && shouldResize
-          ? "image/jpeg"
-          : "image/jpeg";
-    const outputExtension =
-      outputMimeType === "image/webp"
-        ? "webp"
-        : outputMimeType === "image/png"
-          ? "png"
-          : "jpg";
-    const quality = outputMimeType === "image/png" ? undefined : TICKET_REENCODE_QUALITY;
+    const outputMimeType = normalizedMimeType === "image/webp" ? "image/webp" : "image/jpeg";
+    const outputExtension = outputMimeType === "image/webp" ? "webp" : "jpg";
+    const quality = TICKET_REENCODE_QUALITY;
     const optimizedBlob = await canvasToBlob(canvas, outputMimeType, quality);
     if (!optimizedBlob || optimizedBlob.size <= 0 || optimizedBlob.size >= file.size) {
       return buildOptimizationResult({

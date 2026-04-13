@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Text.Json;
 
 namespace IND_CRM_APP.Controllers
@@ -484,11 +485,11 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
-                var transport = await _apiClient.AskExpenseSheetsAsync(
-                    token,
-                    request,
-                    requestAxUserId,
-                    HttpContext.RequestAborted);
+                var askResult = await SendExpenseSheetsAskWithContextRecoveryAsync(token, request, requestAxUserId);
+                if (askResult.Error != null)
+                    return askResult.Error;
+
+                var transport = askResult.Transport;
 
                 var response = transport.Response;
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
@@ -530,6 +531,67 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_RequestFailed"].Value,
                     "UNHANDLED_ERROR");
             }
+        }
+
+        // Retries one expense assistant call when the upstream API lost its company bootstrap context.
+        private async Task<(ApiTransportResponse<ExpenseSheetsAskResponseData> Transport, IActionResult? Error)>
+            SendExpenseSheetsAskWithContextRecoveryAsync(
+                string token,
+                ExpenseSheetsAskRequest request,
+                string? axUserIdOverride)
+        {
+            var transport = await _apiClient.AskExpenseSheetsAsync(
+                token,
+                request,
+                axUserIdOverride,
+                HttpContext.RequestAborted);
+
+            if (!IsExpenseAssistantContextBootstrapFailure(transport))
+            {
+                return (transport, null);
+            }
+
+            _logger.LogWarning(
+                "Expense assistant ask lost upstream company context. Refreshing cached context and retrying once. StatusCode={StatusCode}. Message={Message}",
+                (int)transport.StatusCode,
+                transport.Response?.Message ?? string.Empty);
+
+            _authContext.ClearContextCache(preserveCompanySelection: true);
+            HttpContext.Items.Remove(ExpenseSubordinatesScopeCacheKey);
+
+            var refreshedContext = await _authContext.EnsureContextAsync();
+            if (!refreshedContext.Success || refreshedContext.Context == null)
+            {
+                _logger.LogWarning(
+                    "Expense assistant context refresh failed before retry. Message={Message}",
+                    refreshedContext.Message ?? string.Empty);
+                return (transport, null);
+            }
+
+            var requestedAxUserId = GetRequestedExpenseAxUserId();
+            var retryAxUserIdOverride = axUserIdOverride;
+            if (!string.IsNullOrWhiteSpace(requestedAxUserId))
+            {
+                var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetsAsk));
+                if (actingUser.Error != null)
+                    return (transport, actingUser.Error);
+
+                retryAxUserIdOverride = actingUser.AxUserId;
+            }
+
+            var retryTransport = await _apiClient.AskExpenseSheetsAsync(
+                token,
+                request,
+                retryAxUserIdOverride,
+                HttpContext.RequestAborted);
+
+            _logger.LogInformation(
+                "Expense assistant ask retry after context refresh completed. StatusCode={StatusCode}. Success={Success}. Message={Message}",
+                (int)retryTransport.StatusCode,
+                retryTransport.Response?.Success,
+                retryTransport.Response?.Message ?? string.Empty);
+
+            return (retryTransport, null);
         }
 
         // API route used by React clients for /api/crm/expensesheets/currencies.
@@ -4122,6 +4184,41 @@ namespace IND_CRM_APP.Controllers
         private string? GetCurrentSessionAxUserId()
         {
             return NormalizeOptionalText(HttpContext?.Session.GetString("AxUser"));
+        }
+
+        // Detects the upstream error that appears when the API company bootstrap context has been lost.
+        private static bool IsExpenseAssistantContextBootstrapFailure(ApiTransportResponse<ExpenseSheetsAskResponseData>? transport)
+        {
+            if (transport == null || transport.StatusCode != HttpStatusCode.Forbidden)
+                return false;
+
+            var normalizedMessage = NormalizeAssistantDiagnosticText(transport.Response?.Message);
+            if (string.IsNullOrWhiteSpace(normalizedMessage))
+                return false;
+
+            return normalizedMessage.Contains("contexto de companias no inicializado") ||
+                   normalizedMessage.Contains("/api/auth/entra/context") ||
+                   normalizedMessage.Contains("company context not initialized") ||
+                   normalizedMessage.Contains("context not initialized");
+        }
+
+        private static string NormalizeAssistantDiagnosticText(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            var normalized = value.Normalize(NormalizationForm.FormD);
+            var builder = new StringBuilder(normalized.Length);
+
+            foreach (var character in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
+                    continue;
+
+                builder.Append(char.ToLowerInvariant(character));
+            }
+
+            return builder.ToString();
         }
 
         // Reuses the subordinate scope lookup within one request to avoid duplicate upstream calls.

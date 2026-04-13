@@ -32,7 +32,7 @@ const resolveTimelineCardInsets = (): PageBottomActionsInsets | null => {
     return null;
   }
 
-  const cards = document.querySelectorAll<HTMLElement>(".timeline-item .timeline-card, .timeline-box .timeline-card");
+  const cards = Array.from(document.querySelectorAll<HTMLElement>(".timeline-item .timeline-card, .timeline-box .timeline-card"));
   for (const card of cards) {
     if (!isVisibleLayoutCard(card)) continue;
 

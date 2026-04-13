@@ -1,7 +1,22 @@
 import { rmSync } from "node:fs";
+import { spawnSync } from "node:child_process";
+import { resolve } from "node:path";
 import { build } from "esbuild";
 
 const isProd = process.argv.includes("--prod");
+const typecheckScriptPath = resolve("node_modules", "typescript", "bin", "tsc");
+const typecheckResult = spawnSync(process.execPath, [typecheckScriptPath, "--noEmit", "-p", "tsconfig.json"], {
+  stdio: "inherit",
+});
+
+if (typecheckResult.error) {
+  console.error(typecheckResult.error.message);
+  process.exit(1);
+}
+
+if (typecheckResult.status !== 0) {
+  process.exit(typecheckResult.status ?? 1);
+}
 
 const entryPoints = {
   create: "Web/wwwroot/react/src/pages/visitas/creacion/CreatePage.tsx",

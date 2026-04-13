@@ -2,6 +2,7 @@ import type {
   ChartDatum,
   ChartPayload,
   ChatMessage,
+  ChartTypeChoiceOption,
   TableColumn,
   TablePayload,
   TableRow,
@@ -499,8 +500,10 @@ const extractLegacySeriesRows = (value: string): ChartDatum[] => {
   const seriesPattern = /([A-Za-zÀ-ÿ][A-Za-zÀ-ÿ0-9 _/-]{0,24}|[A-Z]{2,})\s*:\s*([-+]?\d[\d.,]*)/g;
   const rows: ChartDatum[] = [];
   const seenLabels = new Set<string>();
+  const normalizedText = sanitizeStructuredText(value);
+  let match: RegExpExecArray | null;
 
-  for (const match of sanitizeStructuredText(value).matchAll(seriesPattern)) {
+  while ((match = seriesPattern.exec(normalizedText)) !== null) {
     const label = toSafeText(match[1]);
     const numericValue = normalizeNumericToken(match[2] || "");
     if (!label || numericValue === null) {
@@ -523,12 +526,18 @@ const extractLegacySeriesRows = (value: string): ChartDatum[] => {
 };
 
 const toCategoryValueRows = (value: Record<string, unknown>): ChartDatum[] => {
-  return Object.entries(value)
-    .filter(([, entryValue]) => isFiniteNumber(entryValue))
-    .map(([entryKey, entryValue]) => ({
+  return Object.entries(value).reduce<ChartDatum[]>((rows, [entryKey, entryValue]) => {
+    if (!isFiniteNumber(entryValue)) {
+      return rows;
+    }
+
+    rows.push({
       label: entryKey,
       value: entryValue,
-    }));
+    });
+
+    return rows;
+  }, []);
 };
 
 const toFlatTableRows = (value: unknown): TableRow[] => {
@@ -569,11 +578,15 @@ const resolveCandidateValueKey = (rows: ChartDatum[]): string => {
 
 const buildRecoveredChartMessage = (
   requestedVisualizationType: Exclude<VisualizationType, "table">,
-  data: ChartDatum[]
+  data: ChartDatum[],
+  title?: string | null,
+  subtitle?: string | null
 ): ChatMessage | null => {
   if (requestedVisualizationType === "pie") {
     const payload: ChartPayload = {
       chartType: "pie",
+      title: toSafeText(title) || undefined,
+      subtitle: toSafeText(subtitle) || undefined,
       data,
       nameKey: resolveCandidateSeriesKey(data) || "label",
       dataKey: resolveCandidateValueKey(data) || "value",
@@ -585,6 +598,8 @@ const buildRecoveredChartMessage = (
 
   const payload: ChartPayload = {
     chartType: requestedVisualizationType,
+    title: toSafeText(title) || undefined,
+    subtitle: toSafeText(subtitle) || undefined,
     data,
     xKey: resolveCandidateSeriesKey(data) || "label",
     yKey: resolveCandidateValueKey(data) || "value",
@@ -1023,8 +1038,37 @@ const isVisualizationType = (value: unknown): value is VisualizationType => {
 };
 
 const normalizeVisualizationType = (value: unknown): VisualizationType | null => {
-  const safeValue = toSafeText(value).toLowerCase().replace(/_/g, "-");
-  return isVisualizationType(safeValue) ? safeValue : null;
+  const safeValue = toSafeText(value).toLowerCase().replace(/_/g, "-").replace(/\s+/g, "-");
+  switch (safeValue) {
+    case "bar":
+    case "bars":
+    case "bar-chart":
+    case "bar-graph":
+    case "barras":
+    case "grafico-de-barras":
+      return "bar";
+    case "line":
+    case "lines":
+    case "line-chart":
+    case "line-graph":
+    case "lineas":
+    case "grafico-de-lineas":
+      return "line";
+    case "pie":
+    case "pie-chart":
+    case "pie-graph":
+    case "pastel":
+    case "tarta":
+    case "circular":
+    case "grafico-de-pie":
+    case "grafico-circular":
+      return "pie";
+    case "table":
+    case "tabla":
+      return "table";
+    default:
+      return isVisualizationType(safeValue) ? safeValue : null;
+  }
 };
 
 const normalizeMessageType = (value: unknown): ChatMessage["type"] | null => {
@@ -1157,23 +1201,21 @@ const normalizeStructuredMessage = (value: unknown): { message: ChatMessage | nu
   if (type === "question-to-choose-chart-type") {
     const optionsValue = getRecordValue(value, "options");
     const options = Array.isArray(optionsValue)
-      ? optionsValue
-          .map((entry) => {
-            if (!isRecord(entry)) return null;
+      ? optionsValue.reduce<ChartTypeChoiceOption[]>((items, entry) => {
+          if (!isRecord(entry)) return items;
 
-            const optionValue = normalizeVisualizationType(getRecordValue(entry, "value", "type"));
-            if (!optionValue) return null;
+          const optionValue = normalizeVisualizationType(getRecordValue(entry, "value", "type"));
+          if (!optionValue) return items;
 
-            return {
-              value: optionValue,
-              label: sanitizeStructuredText(getRecordValue(entry, "label")),
-              description: sanitizeStructuredText(getRecordValue(entry, "description")) || undefined,
-            };
-          })
-          .filter(
-            (entry): entry is { value: VisualizationType; label: string; description?: string } =>
-              !!entry && isVisualizationType(entry.value)
-          )
+          const description = sanitizeStructuredText(getRecordValue(entry, "description"));
+          items.push({
+            value: optionValue,
+            label: sanitizeStructuredText(getRecordValue(entry, "label")),
+            ...(description ? { description } : {}),
+          });
+
+          return items;
+        }, [])
       : [];
 
     return {
@@ -1228,6 +1270,89 @@ const toStructuredMessages = (value: unknown): ChatMessage[] => {
   return [];
 };
 
+const hasRequestedVisualizationMessage = (
+  messages: ChatMessage[],
+  requestedVisualizationType: VisualizationType | null | undefined
+): boolean => {
+  if (!requestedVisualizationType) {
+    return false;
+  }
+
+  return messages.some((message) => {
+    if (requestedVisualizationType === "table") {
+      return message.type === "table";
+    }
+
+    return message.type === "chart" && message.payload.chartType === requestedVisualizationType;
+  });
+};
+
+const coerceMessagesToRequestedVisualizationType = (
+  messages: ChatMessage[],
+  requestedVisualizationType: VisualizationType | null | undefined
+): ChatMessage[] => {
+  if (
+    !requestedVisualizationType ||
+    messages.length === 0 ||
+    hasRequestedVisualizationMessage(messages, requestedVisualizationType)
+  ) {
+    return messages;
+  }
+
+  const uiLanguage = resolveCurrentUiLanguage();
+  let converted = false;
+
+  const coercedMessages = messages.map((message) => {
+    if (converted) {
+      return message;
+    }
+
+    if (message.type === "chart" && Array.isArray(message.payload.data) && message.payload.data.length > 0) {
+      const replacement =
+        requestedVisualizationType === "table"
+          ? buildRecoveredTableMessage(
+              message.payload.data as TableRow[],
+              uiLanguage,
+              message.payload.title,
+              message.payload.subtitle
+            )
+          : buildRecoveredChartMessage(
+              requestedVisualizationType,
+              message.payload.data,
+              message.payload.title,
+              message.payload.subtitle
+            );
+
+      if (replacement) {
+        converted = true;
+        return replacement;
+      }
+    }
+
+    if (message.type === "table" && Array.isArray(message.payload.rows) && message.payload.rows.length > 0) {
+      if (requestedVisualizationType === "table") {
+        return message;
+      }
+
+      const replacement = buildRecoveredChartMessage(
+        requestedVisualizationType,
+        message.payload.rows as ChartDatum[],
+        message.payload.title,
+        message.payload.subtitle
+      );
+
+      if (replacement) {
+        converted = true;
+        return replacement;
+      }
+    }
+
+    return message;
+  });
+
+  return converted ? coercedMessages : messages;
+};
+
 // Parses the AI answer into the exact frontend contract and falls back safely to markdown.
 export const parseStructuredChatMessages = (
   answer: string,
@@ -1268,7 +1393,7 @@ export const parseStructuredChatMessages = (
     const structuredMessages = toStructuredMessages(parsedStructuredValue);
     if (structuredMessages.length > 0) {
       return {
-        messages: structuredMessages,
+        messages: coerceMessagesToRequestedVisualizationType(structuredMessages, options?.requestedVisualizationType),
         source: "structured",
         errors: [],
       };

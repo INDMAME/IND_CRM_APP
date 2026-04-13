@@ -50,9 +50,32 @@ type AssistantChatShellProps<TActionId extends string = string> = {
 const ASSISTANT_PAGE_INSET = "max(12px, calc(50vw - 24rem + 12px))";
 const ASSISTANT_BOTTOM_INSET = "calc(0.75rem + env(safe-area-inset-bottom, 0px))";
 const GLOBAL_CHAT_RADIUS_CLASS = "rounded-[var(--radius-xl)]";
+const DEFAULT_PANEL_HEIGHT_CLASS =
+  "h-[69vh] max-h-[69vh] lg:h-[min(640px,calc(100vh-8rem))] lg:max-h-[640px]";
+const EXPANDED_PANEL_HEIGHT_CLASS =
+  "h-[80vh] max-h-[80vh] lg:h-[min(760px,calc(100vh-5.5rem))] lg:max-h-[760px]";
+const LARGE_CARTESIAN_VISUAL_THRESHOLD = 8;
+const LARGE_PIE_VISUAL_THRESHOLD = 6;
+const LARGE_TABLE_VISUAL_THRESHOLD = 8;
 
 const toText = (value: unknown): string => {
   return String(value ?? "").trim();
+};
+
+// Detects visual answers that need a taller drawer to remain readable.
+const shouldUseExpandedVisualLayout = (message: AssistantChatMessage["message"]): boolean => {
+  switch (message.type) {
+    case "chart":
+      if (message.payload.chartType === "pie") {
+        return message.payload.data.length >= LARGE_PIE_VISUAL_THRESHOLD;
+      }
+
+      return message.payload.data.length >= LARGE_CARTESIAN_VISUAL_THRESHOLD;
+    case "table":
+      return message.payload.rows.length >= LARGE_TABLE_VISUAL_THRESHOLD;
+    default:
+      return false;
+  }
 };
 
 type AssistantChatMessageBubbleProps = {
@@ -304,6 +327,9 @@ const AssistantChatShell = <TActionId extends string = string,>({
 }: AssistantChatShellProps<TActionId>) => {
   const sendDisabled = !hasContext || isSending || !toText(draftValue);
   const hasAssistantResponse = messages.some((message) => message.role === "assistant" && message.state !== "loading");
+  const shouldExpandForVisuals = messages.some(
+    (message) => message.role === "assistant" && message.state !== "loading" && shouldUseExpandedVisualLayout(message.message)
+  );
   const assistantFloatingStyle = {
     ["--assistant-page-inset" as "--assistant-page-inset"]: ASSISTANT_PAGE_INSET,
     ["--assistant-bottom-inset" as "--assistant-bottom-inset"]: bottomInset,
@@ -351,7 +377,8 @@ const AssistantChatShell = <TActionId extends string = string,>({
           aria-modal="false"
           aria-label={title}
           className={classNames(
-            "absolute flex h-[69vh] max-h-[69vh] flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:left-auto lg:right-[var(--assistant-page-inset)] lg:h-[min(640px,calc(100vh-8rem))] lg:max-h-[640px] lg:w-[368px]",
+            "absolute flex flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:left-auto lg:right-[var(--assistant-page-inset)] lg:w-[368px]",
+            shouldExpandForVisuals ? EXPANDED_PANEL_HEIGHT_CLASS : DEFAULT_PANEL_HEIGHT_CLASS,
             isOpen ? "translate-y-0 lg:translate-x-0" : "translate-y-full lg:translate-y-0 lg:translate-x-[110%]"
           )}
         >

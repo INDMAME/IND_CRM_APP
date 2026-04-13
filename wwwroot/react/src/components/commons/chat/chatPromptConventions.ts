@@ -78,14 +78,14 @@ const buildVisualizationPromptRule = (requestedVisualizationType?: Visualization
   }
 
   if (requestedVisualizationType === "table") {
-    return "Valid: md+real table payload. Never markdown/ascii tables or faux charts. Else: compact md.";
+    return "Return md+real table only. Do not substitute charts or ask again. Never raw JSON or ASCII tables. If impossible, explain briefly in md.";
   }
 
   if (requestedVisualizationType === "pie") {
-    return "Valid: md+chart pie. Max 6 categories, short labels, avoid overlap. Never raw JSON. Else: compact md.";
+    return "Return md+chart pie only. chartType must be pie. Max 6 categories, short labels. Do not substitute another type or ask again. If impossible, explain briefly in md.";
   }
 
-  return `Valid: md+chart ${requestedVisualizationType}. Max 6 categories, short labels, avoid overlap. Never raw JSON. Else: compact md.`;
+  return `Return md+chart ${requestedVisualizationType} only. chartType must be ${requestedVisualizationType}. Max 6 categories, short labels. Do not substitute another type or ask again. If impossible, explain briefly in md.`;
 };
 
 // Builds a compact instruction string that stays inside the upstream field limit.

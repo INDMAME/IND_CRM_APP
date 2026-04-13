@@ -33,7 +33,7 @@ const isVisibleLayoutElement = (element: HTMLElement): boolean => {
 const getVisibleAssistantLauncher = (): HTMLElement | null => {
   if (typeof document === "undefined") return null;
 
-  const launchers = document.querySelectorAll<HTMLElement>(ASSISTANT_LAUNCHER_SELECTOR);
+  const launchers = Array.from(document.querySelectorAll<HTMLElement>(ASSISTANT_LAUNCHER_SELECTOR));
   for (const launcher of launchers) {
     if (isVisibleLayoutElement(launcher)) {
       return launcher;

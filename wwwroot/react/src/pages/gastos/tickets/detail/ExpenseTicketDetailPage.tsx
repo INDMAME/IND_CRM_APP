@@ -23,6 +23,7 @@ import ExpenseTicketDetailView from "./ExpenseTicketDetailView.tsx";
 import { useExpenseTicketsFilterCache } from "../useExpenseTicketsFilterCache.ts";
 import { useExpenseTicketDetailBackNavigation } from "./useExpenseTicketDetailBackNavigation.ts";
 import { useExpenseTicketDetailPreviewPanel } from "./useExpenseTicketDetailPreviewPanel.ts";
+import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "./expenseTicketDetailTypes.ts";
 
 const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const LINES_PAGE_SIZE = 6;
@@ -128,6 +129,7 @@ const buildExpenseTicketDetailPreviewView = ({
   previewAltText: string;
   previewScale: number;
   previewTranslate: { x: number; y: number };
+  previewSurfaceRef: React.RefObject<HTMLDivElement | null>;
   closePreview: () => void;
   handlePreviewPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
   handlePreviewPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
@@ -193,7 +195,7 @@ const buildExpenseTicketDetailContentView = ({
 }: {
   isLoading: boolean;
   errorMessage: string;
-  header: unknown;
+  header: ExpenseTicketDetailHeader | null;
   showStickyPreview: boolean;
   previewBusy: boolean;
   previewError: string;
@@ -222,7 +224,7 @@ const buildExpenseTicketDetailContentView = ({
   setDraftTransDate: (value: string) => void;
   isFromSheetLink: boolean;
   handleOpenExpenseSheet: () => void;
-  visibleLines: unknown[];
+  visibleLines: ExpenseTicketDetailLine[];
   totalLinePages: number;
   linePage: number;
   safeCurrencyCode: string;
@@ -280,11 +282,108 @@ const buildExpenseTicketDetailContentView = ({
   status,
 });
 
-const ExpenseTicketDetailPageContent = () => {
+type ExpenseTicketDetailModalViewArgs = Parameters<typeof buildExpenseTicketDetailModalView>[0];
+type ExpenseTicketDetailPreviewViewArgs = Parameters<typeof buildExpenseTicketDetailPreviewView>[0];
+type ExpenseTicketDetailContentViewArgs = Parameters<typeof buildExpenseTicketDetailContentView>[0];
+
+const buildExpenseTicketDetailPageViewModel = ({
+  modalArgs,
+  previewArgs,
+  contentArgs,
+}: {
+  modalArgs: ExpenseTicketDetailModalViewArgs;
+  previewArgs: ExpenseTicketDetailPreviewViewArgs;
+  contentArgs: ExpenseTicketDetailContentViewArgs;
+}) => ({
+  modal: buildExpenseTicketDetailModalView(modalArgs),
+  preview: buildExpenseTicketDetailPreviewView(previewArgs),
+  content: buildExpenseTicketDetailContentView(contentArgs),
+});
+
+// Keeps filter cache wiring and back navigation outside the page container body.
+const useExpenseTicketDetailNavigationState = ({
+  fileId,
+  detailOrigin,
+  headerTransDate,
+  ticketReturnContext,
+}: {
+  fileId: string;
+  detailOrigin: string;
+  headerTransDate: string | null | undefined;
+  ticketReturnContext: ReturnType<typeof useExpenseTicketDetailRouteContext>["ticketReturnContext"];
+}) => {
+  const { readCachedState, saveCachedState, markResetFiltersReturn, clearCachedState } = useExpenseTicketsFilterCache();
+
+  useExpenseTicketDetailBackNavigation({
+    fileId,
+    detailOrigin,
+    headerTransDate,
+    ticketReturnContext,
+    readCachedState,
+    saveCachedState,
+  });
+
+  return {
+    markResetFiltersReturn,
+    clearCachedState,
+  };
+};
+
+// Runs the one-shot auto edit transition for linked contexts after detail data is ready.
+const useExpenseTicketDetailAutoEdit = ({
+  autoEditMode,
+  isFromExpenseLine,
+  isFromSheetLink,
+  isLoading,
+  header,
+  handleEnableEdit,
+}: {
+  autoEditMode: boolean;
+  isFromExpenseLine: boolean;
+  isFromSheetLink: boolean;
+  isLoading: boolean;
+  header: ExpenseTicketDetailHeader | null;
+  handleEnableEdit: () => void;
+}) => {
+  const autoEditAttemptedRef = useRef(false);
+
+  useEffect(() => {
+    if (!autoEditMode || isFromExpenseLine || isFromSheetLink || autoEditAttemptedRef.current) return;
+    if (isLoading || !header) return;
+
+    autoEditAttemptedRef.current = true;
+    handleEnableEdit();
+  }, [autoEditMode, handleEnableEdit, header, isFromExpenseLine, isFromSheetLink, isLoading]);
+};
+
+// Resolves permission and acting-user state so the page container stays focused on orchestration.
+const useExpenseTicketDetailPermissionState = ({
+  isFromExpenseSheetCreate,
+}: {
+  isFromExpenseSheetCreate: boolean;
+}) => {
   const { canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } = useAuthContext();
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
   const canEditTicketByModule = canAccess("GASTOS_TICKETS", "Edit");
   const canDeleteTicketByModule = canAccess("GASTOS_TICKETS", "FullAccess");
+  const isManagingOtherUser = isManagingOtherExpenseUser({
+    canManageOtherUsers,
+    currentAxUserId,
+    selectedManagedUserId,
+  });
+
+  return {
+    hasAccess,
+    canEditTicket: canEditTicketByModule && !isManagingOtherUser,
+    canDeleteTicket: canDeleteTicketByModule && !isManagingOtherUser,
+    allowAssignedDraftEdit: isFromExpenseSheetCreate,
+    isManagingOtherUser,
+    managementBootstrapReady,
+  };
+};
+
+// Owns the ticket detail page orchestration while the component stays thin for rendering.
+const useExpenseTicketDetailPageViewModel = () => {
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineContainerRef = useRef<HTMLDivElement | null>(null);
   const {
@@ -297,15 +396,16 @@ const ExpenseTicketDetailPageContent = () => {
     isFromSheetLink,
     ticketReturnContext,
   } = useExpenseTicketDetailRouteContext();
-  const isManagingOtherUser = isManagingOtherExpenseUser({
-    canManageOtherUsers,
-    currentAxUserId,
-    selectedManagedUserId,
+  const {
+    hasAccess,
+    canEditTicket,
+    canDeleteTicket,
+    allowAssignedDraftEdit,
+    isManagingOtherUser,
+    managementBootstrapReady,
+  } = useExpenseTicketDetailPermissionState({
+    isFromExpenseSheetCreate,
   });
-  const canEditTicket = canEditTicketByModule && !isManagingOtherUser;
-  const canDeleteTicket = canDeleteTicketByModule && !isManagingOtherUser;
-  const allowAssignedDraftEdit = isFromExpenseSheetCreate;
-  const autoEditAttemptedRef = useRef(false);
   const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
     const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
     const mapped = mapWindowEnumOptions(source).filter((entry) => {
@@ -331,14 +431,11 @@ const ExpenseTicketDetailPageContent = () => {
     fileId,
     onForbidden: showPermissionModal,
   });
-  const { readCachedState, saveCachedState, markResetFiltersReturn, clearCachedState } = useExpenseTicketsFilterCache();
-  useExpenseTicketDetailBackNavigation({
+  const { markResetFiltersReturn, clearCachedState } = useExpenseTicketDetailNavigationState({
     fileId,
     detailOrigin,
     headerTransDate: header?.transDate,
     ticketReturnContext,
-    readCachedState,
-    saveCachedState,
   });
   const {
     busy,
@@ -397,6 +494,7 @@ const ExpenseTicketDetailPageContent = () => {
     previewImageUrl,
     previewScale,
     previewTranslate,
+    previewSurfaceRef,
     openPreview,
     closePreview,
     handlePreviewPointerDown,
@@ -413,12 +511,14 @@ const ExpenseTicketDetailPageContent = () => {
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
 
-  useEffect(() => {
-    if (!autoEditMode || isFromExpenseLine || isFromSheetLink || autoEditAttemptedRef.current) return;
-    if (isLoading || !header) return;
-    autoEditAttemptedRef.current = true;
-    handleEnableEdit();
-  }, [autoEditMode, handleEnableEdit, header, isFromExpenseLine, isFromSheetLink, isLoading]);
+  useExpenseTicketDetailAutoEdit({
+    autoEditMode,
+    isFromExpenseLine,
+    isFromSheetLink,
+    isLoading,
+    header,
+    handleEnableEdit,
+  });
 
   const { handleUpdate, handleDelete } = useExpenseTicketDetailMutations({
     busy,
@@ -514,79 +614,84 @@ const ExpenseTicketDetailPageContent = () => {
     resolveClickableCard,
   });
 
-  const modalView = buildExpenseTicketDetailModalView({
-    modal,
-    modalConfirmText,
-    modalCancelText,
-    modalLoadingText,
-    busy,
-    modalError,
-    status,
-    handleModalButtonConfirm,
-    closeConfirm,
+  const detailView = buildExpenseTicketDetailPageViewModel({
+    modalArgs: {
+      modal,
+      modalConfirmText,
+      modalCancelText,
+      modalLoadingText,
+      busy,
+      modalError,
+      status,
+      handleModalButtonConfirm,
+      closeConfirm,
+    },
+    previewArgs: {
+      previewOpen,
+      previewBusy,
+      previewError,
+      previewImageUrl,
+      previewAltText,
+      previewScale,
+      previewTranslate,
+      previewSurfaceRef,
+      closePreview,
+      handlePreviewPointerDown,
+      handlePreviewPointerMove,
+      handlePreviewPointerEnd,
+      handlePreviewWheel,
+    },
+    contentArgs: {
+      isLoading,
+      errorMessage,
+      header,
+      showStickyPreview,
+      previewBusy,
+      previewError,
+      previewImageUrl,
+      previewAltText,
+      openFile,
+      statusLabel,
+      gastoTypeLabel,
+      totalAmountText,
+      transDateText,
+      isEditing,
+      gastoTypeOptions,
+      draftDescription,
+      draftGastoType,
+      gastoTypeInvalid,
+      gastoTypeInputRef,
+      draftCurrencyCode,
+      currencyCodeInvalid,
+      currencyInputRef,
+      draftTransDate,
+      draftUrlFile,
+      draftFileName,
+      setDraftDescription,
+      setDraftGastoType,
+      setDraftCurrencyCode,
+      setDraftTransDate,
+      isFromSheetLink,
+      handleOpenExpenseSheet,
+      visibleLines,
+      totalLinePages,
+      linePage,
+      safeCurrencyCode: isEditing ? draftCurrencyCode : safeText(header?.currencyCode),
+      paginationLabels,
+      lineContainerRef,
+      setLinePage,
+      openLineDetail,
+      status,
+    },
   });
 
-  const previewView = buildExpenseTicketDetailPreviewView({
-    previewOpen,
-    previewBusy,
-    previewError,
-    previewImageUrl,
-    previewAltText,
-    previewScale,
-    previewTranslate,
-    closePreview,
-    handlePreviewPointerDown,
-    handlePreviewPointerMove,
-    handlePreviewPointerEnd,
-    handlePreviewWheel,
-  });
+  return detailView;
+};
 
-  const contentView = buildExpenseTicketDetailContentView({
-    isLoading,
-    errorMessage,
-    header,
-    showStickyPreview,
-    previewBusy,
-    previewError,
-    previewImageUrl,
-    previewAltText,
-    openFile,
-    statusLabel,
-    gastoTypeLabel,
-    totalAmountText,
-    transDateText,
-    isEditing,
-    gastoTypeOptions,
-    draftDescription,
-    draftGastoType,
-    gastoTypeInvalid,
-    gastoTypeInputRef,
-    draftCurrencyCode,
-    currencyCodeInvalid,
-    currencyInputRef,
-    draftTransDate,
-    draftUrlFile,
-    draftFileName,
-    setDraftDescription,
-    setDraftGastoType,
-    setDraftCurrencyCode,
-    setDraftTransDate,
-    isFromSheetLink,
-    handleOpenExpenseSheet,
-    visibleLines,
-    totalLinePages,
-    linePage,
-    safeCurrencyCode: isEditing ? draftCurrencyCode : safeText(header?.currencyCode),
-    paginationLabels,
-    lineContainerRef,
-    setLinePage,
-    openLineDetail,
-    status,
-  });
+const ExpenseTicketDetailPageContent = () => {
+  const detailView = useExpenseTicketDetailPageViewModel();
 
-  return (
-    <ExpenseTicketDetailView modal={modalView} preview={previewView} content={contentView} />
-  );
+  return <ExpenseTicketDetailView modal={detailView.modal} preview={detailView.preview} content={detailView.content} />;
 };
 
 // Main page entry for expense ticket detail.
