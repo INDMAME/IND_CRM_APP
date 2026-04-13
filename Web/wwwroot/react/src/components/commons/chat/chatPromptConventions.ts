@@ -82,10 +82,10 @@ const buildVisualizationPromptRule = (requestedVisualizationType?: Visualization
   }
 
   if (requestedVisualizationType === "pie") {
-    return "Return md+chart pie only. chartType must be pie. Max 6 categories, short labels. Do not substitute another type or ask again. If impossible, explain briefly in md.";
+    return "md+pie chart only. Include chartType,data,nameKey,dataKey. Max 6 categories. Short labels. No retry. Fallback brief md.";
   }
 
-  return `Return md+chart ${requestedVisualizationType} only. chartType must be ${requestedVisualizationType}. Max 6 categories, short labels. Do not substitute another type or ask again. If impossible, explain briefly in md.`;
+  return `md+${requestedVisualizationType} chart only. Include chartType,data,xKey,yKey. Max 6 categories. Short labels. No retry. Fallback brief md.`;
 };
 
 // Builds a compact instruction string that stays inside the upstream field limit.

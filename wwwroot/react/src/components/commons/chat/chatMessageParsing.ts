@@ -935,8 +935,109 @@ const pickExistingDataKey = (data: ChartPayload["data"], candidates: string[]): 
   return "";
 };
 
+// Normalizes free-form assistant text so accent or spacing differences do not break chart recovery.
+const normalizeLooseLookupText = (value: unknown): string =>
+  toSafeText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
+
+// Keeps only object rows because chart renderers expect keyed records, not primitive arrays.
+const normalizeChartData = (value: unknown): ChartPayload["data"] => {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((entry): entry is ChartDatum => isRecord(entry));
+};
+
+// Resolves a chart data key from explicit payload hints first and then from known semantic aliases.
+const resolveStructuredChartDataKey = (
+  data: ChartPayload["data"],
+  explicitValue: unknown,
+  preferredCandidates: string[],
+  fallbackResolver: (rows: ChartDatum[]) => string
+): string => {
+  const explicitKey = resolveExistingDataKey(data, toSafeText(explicitValue));
+  if (explicitKey) {
+    return explicitKey;
+  }
+
+  const preferredKey = pickExistingDataKey(data, preferredCandidates);
+  if (preferredKey) {
+    return preferredKey;
+  }
+
+  return fallbackResolver(data);
+};
+
+// Repairs structured chart payloads so valid data can still render when the model omits required keys.
+const repairStructuredChartPayload = (value: Record<string, unknown>): ChartPayload | null => {
+  const chartType = normalizeVisualizationType(getRecordValue(value, "chartType", "chart_type"));
+  if (!chartType || chartType === "table") {
+    return null;
+  }
+
+  const data = normalizeChartData(getRecordValue(value, "data", "values", "dataset", "rows"));
+  if (data.length === 0) {
+    return null;
+  }
+
+  const title = toSafeText(getRecordValue(value, "title")) || undefined;
+  const subtitle = toSafeText(getRecordValue(value, "subtitle")) || undefined;
+  const emptyStateLabel = toSafeText(getRecordValue(value, "emptyStateLabel", "empty_state_label")) || undefined;
+
+  if (chartType === "pie") {
+    const nameKey = resolveStructuredChartDataKey(
+      data,
+      getRecordValue(value, "nameKey", "name_key", "labelKey", "label_key", "categoryKey", "category_key", "xKey", "x_key"),
+      ["name", "label", "category", "currency", "currencyCode", "x"],
+      resolveCandidateSeriesKey
+    );
+    const dataKey = resolveStructuredChartDataKey(
+      data,
+      getRecordValue(value, "dataKey", "data_key", "valueKey", "value_key", "yKey", "y_key"),
+      ["value", "total", "amount", "count", "y"],
+      resolveCandidateValueKey
+    );
+
+    return {
+      chartType: "pie",
+      data,
+      nameKey,
+      dataKey,
+      title,
+      subtitle,
+      emptyStateLabel,
+    };
+  }
+
+  const xKey = resolveStructuredChartDataKey(
+    data,
+    getRecordValue(value, "xKey", "x_key", "labelKey", "label_key", "categoryKey", "category_key", "nameKey", "name_key"),
+    ["x", "name", "label", "category", "month", "date"],
+    resolveCandidateSeriesKey
+  );
+  const yKey = resolveStructuredChartDataKey(
+    data,
+    getRecordValue(value, "yKey", "y_key", "valueKey", "value_key", "dataKey", "data_key"),
+    ["y", "value", "total", "amount", "count"],
+    resolveCandidateValueKey
+  );
+
+  return {
+    chartType,
+    data,
+    xKey,
+    yKey,
+    title,
+    subtitle,
+    emptyStateLabel,
+  };
+};
+
 const extractLegacyChartType = (value: string): ChartPayload["chartType"] | null => {
-  const safeValue = toSafeText(value).toLowerCase();
+  const safeValue = normalizeLooseLookupText(value);
 
   if (/\b(?:pie\s+chart|chart\s+pie|graph\s+pie|graf(?:ico|ica)\s+(?:de\s+)?(?:pie|pastel|circular))\b/i.test(safeValue)) {
     return "pie";
@@ -1038,7 +1139,7 @@ const isVisualizationType = (value: unknown): value is VisualizationType => {
 };
 
 const normalizeVisualizationType = (value: unknown): VisualizationType | null => {
-  const safeValue = toSafeText(value).toLowerCase().replace(/_/g, "-").replace(/\s+/g, "-");
+  const safeValue = normalizeLooseLookupText(value).replace(/_/g, "-").replace(/\s+/g, "-");
   switch (safeValue) {
     case "bar":
     case "bars":
@@ -1178,10 +1279,12 @@ const normalizeStructuredMessage = (value: unknown): { message: ChatMessage | nu
 
   if (type === "chart") {
     const payload = getRecordValue(value, "payload");
+    const payloadRecord = isRecord(payload) ? payload : null;
+    const repairedPayload = repairStructuredChartPayload(payloadRecord ? { ...value, ...payloadRecord } : value);
     return {
       message: {
         type: "chart",
-        payload: (isRecord(payload) ? payload : value) as ChartPayload,
+        payload: repairedPayload || ((payloadRecord || value) as ChartPayload),
       },
       errors: [],
     };
