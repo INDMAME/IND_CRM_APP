@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 18/03/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Martes 14/04/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -288,7 +288,7 @@ Formatversion: 1
         #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
         #
         #        if (currencyCode == 'EUR')
-        #            exchRate = 1.0;
+        #            exchRate = 100.0;
         #        else if (exchRate <= 0)
         #            return [INDCRMUtilityService::buildHeader(false, 'ExchRate debe ser mayor que 0 cuando CurrencyCode no es EUR.', conNull()), conNull()];
         #
@@ -2760,9 +2760,16 @@ Formatversion: 1
         #
         #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
         #        {
-        #            subordinateUserId   = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
+        #            //subordinateUserId = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
+        #            subordinateUserId   = strLTrim(strRTrim(strFmt("%1",conPeek(subordinateUsersCon, i))));
         #            crmUsuarioTableSub  = CRMUsuarioTable::Find(subordinateUserId);
-        #            personaTable        = INDPersonaTable::findByCRM(crmUsuarioTableSub.RecId);
+        #            if(!crmUsuarioTableSub)
+        #            {
+        #                personaTable        = INDPersonaTable::Find(subordinateUserId);
+        #                crmUsuarioTableSub  = personaTable.getCRMUsuarioTable();
+        #            }
+        #            else
+        #                personaTable        = INDPersonaTable::findByCRM(crmUsuarioTableSub.RecId);
         #
         #            if (!subordinateUserId || !personaTable.UserId || crmUsuarioTable.UserId == crmUsuarioTableSub.UserId)
         #                continue;
@@ -2770,7 +2777,7 @@ Formatversion: 1
         #            itemCon = [[
         #                        strFmt("%1", subordinateUserId),
         #                        strFmt("%1", personaTable.UserId),
-        #                        strFmt("%1", crmUsuarioTableSub.Name)
+        #                        strFmt("%1", personaTable.Name)// crmUsuarioTableSub.Name)
         #                      ]];
         #
         #            resultCon += itemCon;
@@ -2936,7 +2943,6 @@ Formatversion: 1
         #    str                   msg;
         #    boolean               hasExpenseSheetStatus;
         #    boolean               hasExchangeRateMode;
-        #    boolean               hasEstadoComentarios;
         #    CRMComentarios        estadoComentarios;
         #    INDExpenseSheetStatus expenseSheetStatus;
         #    INDExchangeRateMode   exchangeRateMode;
@@ -2961,7 +2967,6 @@ Formatversion: 1
         #
         #    hasExpenseSheetStatus = false;
         #    hasExchangeRateMode   = false;
-        #    hasEstadoComentarios  = false;
         #
         #    if (conLen(_data) >= 8)
         #    {
@@ -2990,7 +2995,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 10)
         #    {
         #        estadoComentarios   = conPeek(_data, 10);
-        #        hasEstadoComentarios = true;
+        #
         #    }
         #
         #
@@ -3023,7 +3028,7 @@ Formatversion: 1
         #                currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
         #
         #                if (currencyCode == 'EUR')
-        #                    exchRate = 1.0;
+        #                    exchRate = 100.0;
         #                else if (exchRate <= 0)
         #                {
         #                    ttsabort;
@@ -3045,8 +3050,8 @@ Formatversion: 1
         #            if (hasExchangeRateMode)
         #                header.ExchangeRateMode = exchangeRateMode;
         #
-        #            if (hasEstadoComentarios)
-        #                header.EstadoComentarios = estadoComentarios;
+        #            header.EstadoComentarios = estadoComentarios;
+        #
         #            header.update();
         #
         #            ttscommit;

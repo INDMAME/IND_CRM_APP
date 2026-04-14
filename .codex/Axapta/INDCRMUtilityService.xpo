@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Domingo 3/8/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Martes 14/04/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -92,7 +92,7 @@ Formatversion: 1
       SOURCE #getEnvironmentName
         #static container getEnvironmentName()
         #{
-        #    return [["TEST"]];
+        #    return [["PROD"]];
         #}
         #
       ENDSOURCE
@@ -293,10 +293,17 @@ Formatversion: 1
         #        if (conLen(modulesCon) == 0)
         #            continue;
         #
+        #        // Guardar primera compania con acceso
+        #        if (!firstAllowedCompany)
+        #            firstAllowedCompany = ciasPerm.CiaId;
+        #
+        #        // Marcar si la default inicial tiene acceso real
+        #        if (ciasPerm.CiaId == initialDefaultCompany)
+        #            initialDefaultAllowed = true;
+        #
         #        // Nombre de compania (solo aqui usamos changecompany)
         #        companyName = "";
         #        companyCurrencyCode = "";
-        #        companyCrmUserId = "";
         #        allowSelfManagement = false;
         #        try
         #        {
@@ -318,21 +325,8 @@ Formatversion: 1
         #        {
         #            companyName = "";
         #            companyCurrencyCode = "";
-        #            companyCrmUserId = "";
         #            allowSelfManagement = false;
         #        }
-        #        // Ocultar companias sin usuario CRM para evitar selecciones invalidas.
-        #        if (!companyCrmUserId)
-        #            continue;
-        #
-        #        // Guardar primera compania con acceso real y crm user valido.
-        #        if (!firstAllowedCompany)
-        #            firstAllowedCompany = ciasPerm.CiaId;
-        #
-        #        // Marcar si la default inicial sigue siendo valida tras el filtro crm.
-        #        if (ciasPerm.CiaId == initialDefaultCompany)
-        #            initialDefaultAllowed = true;
-        #
         #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, CurrencyCode, allowSelfManagement, ModulesCon,CRMUserId]
         #        // Nota: IsDefault se recalcula al final segun defaultCompany final
         #        companyItem = [
@@ -345,7 +339,8 @@ Formatversion: 1
         #                        modulesCon
         #                      ];
         #
-        #        companiesCon = conIns(companiesCon, conLen(companiesCon) + 1, companyItem);
+        #        if(crmUsuarioTable)
+        #            companiesCon = conIns(companiesCon, conLen(companiesCon) + 1, companyItem);
         #    }
         #
         #    // 5) Si no hay ninguna compania con acceso, devolver contexto sin companies
@@ -424,193 +419,13 @@ Formatversion: 1
         #static server date parseYmdDate(str _ymd)
         #{
         #    date d;
-        #    int  parsedYear;
         #
         #    if (!strLen(_ymd))
         #        return dateNull();
         #
         #    // 123 = YMD format
         #    d = str2Date(_ymd, 321);
-        #    if (!d)
-        #        return dateNull();
-        #
-        #    parsedYear = year(d);
-        #    if (parsedYear < 1900 || parsedYear > 2100)
-        #        return dateNull();
-        #
         #    return d;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #isDigitsOnly
-        #// Method: isDigitsOnly
-        #// Purpose: Returns true when the full string only contains decimal digits.
-        #static server boolean isDigitsOnly(str _value)
-        #{
-        #    int i;
-        #    str value;
-        #    str currentChar;
-        #    ;
-        #
-        #    value = strLTrim(strRTrim(_value));
-        #    if (!strLen(value))
-        #        return false;
-        #
-        #    for (i = 1; i <= strLen(value); i++)
-        #    {
-        #        currentChar = subStr(value, i, 1);
-        #        if (!strScan('0123456789', currentChar, 1, 10))
-        #            return false;
-        #    }
-        #
-        #    return true;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #normalizeTwoDigitExpenseYear
-        #// Method: normalizeTwoDigitExpenseYear
-        #// Purpose: Expands two-digit OCR years into the supported business range.
-        #static server int normalizeTwoDigitExpenseYear(int _year)
-        #{
-        #    int normalizedYear;
-        #    ;
-        #
-        #    normalizedYear = abs(_year);
-        #    while (normalizedYear >= 100)
-        #        normalizedYear -= 100;
-        #
-        #    return normalizedYear >= 50
-        #        ? 1900 + normalizedYear
-        #        : 2000 + normalizedYear;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #buildSupportedExpenseDate
-        #// Method: buildSupportedExpenseDate
-        #// Purpose: Builds a date only when the resulting year stays inside the supported range.
-        #static server date buildSupportedExpenseDate(int _day, int _month, int _year)
-        #{
-        #    date candidate;
-        #    int  parsedYear;
-        #    ;
-        #
-        #    candidate = mkDate(_day, _month, _year);
-        #    if (!candidate)
-        #        return dateNull();
-        #
-        #    parsedYear = year(candidate);
-        #    if (parsedYear < 1900 || parsedYear > 2100)
-        #        return dateNull();
-        #
-        #    return candidate;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #parseCompactDayFirstExpenseDate
-        #// Method: parseCompactDayFirstExpenseDate
-        #// Purpose: Parses compact day-first OCR dates like 09071220 or 09072012.
-        #static server date parseCompactDayFirstExpenseDate(str _value)
-        #{
-        #    int  dayValue;
-        #    int  monthValue;
-        #    int  yearValue;
-        #    date candidate;
-        #    str  value;
-        #    ;
-        #
-        #    value = strLTrim(strRTrim(_value));
-        #    if (strLen(value) != 8 || !INDCRMUtilityService::isDigitsOnly(value))
-        #        return dateNull();
-        #
-        #    dayValue   = str2int(subStr(value, 1, 2));
-        #    monthValue = str2int(subStr(value, 3, 2));
-        #    yearValue  = str2int(subStr(value, 5, 4));
-        #
-        #    candidate = INDCRMUtilityService::buildSupportedExpenseDate(dayValue, monthValue, yearValue);
-        #    if (candidate)
-        #        return candidate;
-        #
-        #    return INDCRMUtilityService::buildSupportedExpenseDate(
-        #        dayValue,
-        #        monthValue,
-        #        INDCRMUtilityService::normalizeTwoDigitExpenseYear(yearValue));
-        #}
-        #
-      ENDSOURCE
-      SOURCE #parseCompactShortDayFirstExpenseDate
-        #// Method: parseCompactShortDayFirstExpenseDate
-        #// Purpose: Parses compact short-year OCR dates like 090720.
-        #static server date parseCompactShortDayFirstExpenseDate(str _value)
-        #{
-        #    int dayValue;
-        #    int monthValue;
-        #    int shortYearValue;
-        #    str value;
-        #    ;
-        #
-        #    value = strLTrim(strRTrim(_value));
-        #    if (strLen(value) != 6 || !INDCRMUtilityService::isDigitsOnly(value))
-        #        return dateNull();
-        #
-        #    dayValue       = str2int(subStr(value, 1, 2));
-        #    monthValue     = str2int(subStr(value, 3, 2));
-        #    shortYearValue = str2int(subStr(value, 5, 2));
-        #
-        #    return INDCRMUtilityService::buildSupportedExpenseDate(
-        #        dayValue,
-        #        monthValue,
-        #        INDCRMUtilityService::normalizeTwoDigitExpenseYear(shortYearValue));
-        #}
-        #
-      ENDSOURCE
-      SOURCE #parseExpenseTicketTransDate
-        #// Method: parseExpenseTicketTransDate
-        #// Purpose: Parses ticket dates from IA/OCR while preserving strict yyyymmdd support first.
-        #static server date parseExpenseTicketTransDate(str _rawValue)
-        #{
-        #    str  value;
-        #    str  compactValue;
-        #    int  firstDashPos;
-        #    int  dayValue;
-        #    int  monthValue;
-        #    int  yearValue;
-        #    date parsedDate;
-        #    ;
-        #
-        #    value = strLTrim(strRTrim(_rawValue));
-        #    if (!strLen(value))
-        #        return dateNull();
-        #
-        #    parsedDate = INDCRMUtilityService::parseYmdDate(value);
-        #    if (parsedDate)
-        #        return parsedDate;
-        #
-        #    firstDashPos = strScan(value, '-', 1, strLen(value));
-        #    if (firstDashPos == 5)
-        #    {
-        #        yearValue  = str2int(subStr(value, 1, 4));
-        #        monthValue = str2int(subStr(value, 6, 2));
-        #        dayValue   = str2int(subStr(value, 9, 2));
-        #
-        #        parsedDate = INDCRMUtilityService::buildSupportedExpenseDate(dayValue, monthValue, yearValue);
-        #        if (parsedDate)
-        #            return parsedDate;
-        #
-        #        return INDCRMUtilityService::buildSupportedExpenseDate(
-        #            dayValue,
-        #            monthValue,
-        #            INDCRMUtilityService::normalizeTwoDigitExpenseYear(yearValue));
-        #    }
-        #
-        #    compactValue = strReplace(value, '.', '');
-        #    compactValue = strReplace(compactValue, '/', '');
-        #    compactValue = strReplace(compactValue, '-', '');
-        #
-        #    parsedDate = INDCRMUtilityService::parseCompactDayFirstExpenseDate(compactValue);
-        #    if (parsedDate)
-        #        return parsedDate;
-        #
-        #    return INDCRMUtilityService::parseCompactShortDayFirstExpenseDate(compactValue);
         #}
         #
       ENDSOURCE

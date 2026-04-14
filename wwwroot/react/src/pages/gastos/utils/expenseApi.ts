@@ -1243,11 +1243,13 @@ export const createExpenseSheet = async (
     projId: safeText(payload.projId) || undefined,
     lines: mode === 1 ? [] : normalizedLines,
   };
+  const includeAxUserOverride = mode === 2;
 
   const response = await fetchJson<IndApiResponse<ExpenseSheetCreateResponseData>>("/api/crm/expensesheets", {
     ...options,
     method: "POST",
-    headers: buildExpenseHeaders(context, options, true),
+    // Header create flows must always run in the signed-in user context.
+    headers: buildExpenseHeaders(context, options, true, includeAxUserOverride),
     body: JSON.stringify(normalizedPayload),
   });
 
