@@ -1230,6 +1230,17 @@ namespace IND_CRM_APP.Controllers
             if (actingUser.Error != null)
                 return actingUser.Error;
             var requestAxUserId = actingUser.AxUserId;
+            _logger.LogInformation(
+                "ApiExpenseSheetsCreate request trace. mode={Mode} existingHojaGastosId={ExistingHojaGastosId} X-IND-AxUserId={AxUserId}",
+                normalizedMode,
+                normalizedExistingSheetId ?? string.Empty,
+                requestAxUserId ?? string.Empty);
+            if (normalizedMode != 2)
+            {
+                var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetsCreate));
+                if (managedUserGuard != null)
+                    return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
+            }
             if (normalizedMode == 2 && !string.IsNullOrWhiteSpace(normalizedExistingSheetId))
             {
                 var mutationGuard = await ValidateExpenseSheetMutationAsync(
@@ -3062,6 +3073,17 @@ namespace IND_CRM_APP.Controllers
                 if (actingUser.Error != null)
                     return actingUser.Error;
                 var requestAxUserId = actingUser.AxUserId;
+                _logger.LogInformation(
+                    "CreateExpenseSheet request trace. mode={Mode} existingHojaGastosId={ExistingHojaGastosId} X-IND-AxUserId={AxUserId}",
+                    normalizedMode,
+                    normalizedExistingSheetId ?? string.Empty,
+                    requestAxUserId ?? string.Empty);
+                if (normalizedMode != 2)
+                {
+                    var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(CreateExpenseSheet));
+                    if (managedUserGuard != null)
+                        return StatusCode(managedUserGuard.StatusCode, new { success = false, message = managedUserGuard.Message });
+                }
                 if (normalizedMode == 2 && !string.IsNullOrWhiteSpace(normalizedExistingSheetId))
                 {
                     var mutationGuard = await ValidateExpenseSheetMutationAsync(
