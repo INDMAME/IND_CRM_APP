@@ -9,6 +9,8 @@ import {
   updateExpenseSheetHeader,
 } from "../utils/expenseApi.ts";
 
+const SAME_CURRENCY_EXCHANGE_RATE = 100;
+
 type UseExpenseSheetDetailMutationsArgs = {
   busy: boolean;
   isEditing: boolean;
@@ -102,6 +104,7 @@ export const useExpenseSheetDetailMutations = ({
       const normalizedBaseCurrency = String(exchangeRateBaseCurrency || "EUR").trim().toUpperCase() || "EUR";
       const requiresExchangeRate =
         canEditHeaderFields && normalizedCurrency !== "" && normalizedCurrency !== normalizedBaseCurrency;
+      const usesSameCurrencyRate = canEditHeaderFields && normalizedCurrency !== "" && !requiresExchangeRate;
       const parsedExchangeRate = normalizeExchangeRate(normalizedExchangeRateRaw);
       const officialExchangeRate = normalizeExchangeRate(officialExchangeRateValue);
       const originalExchangeRate = normalizeExchangeRate(lockedExchangeRate);
@@ -129,7 +132,7 @@ export const useExpenseSheetDetailMutations = ({
         nextStatus ?? (currentExpenseSheetStatus != null ? Number(currentExpenseSheetStatus) : undefined);
       // Status/comment-only flows still submit the full header payload, so keep the stored rate untouched.
       const resolvedExchangeRate = canEditHeaderFields
-        ? (hasValidRate ? Number(parsedExchangeRate) : 1)
+        ? (usesSameCurrencyRate ? SAME_CURRENCY_EXCHANGE_RATE : (hasValidRate ? Number(parsedExchangeRate) : 1))
         : (originalExchangeRate ?? parsedExchangeRate ?? 0);
 
       if (isCreateMode) {

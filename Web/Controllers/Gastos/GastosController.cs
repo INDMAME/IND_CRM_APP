@@ -1162,7 +1162,10 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrWhiteSpace(normalizedCurrency))
                 normalizedCurrency = "EUR";
 
-            var normalizedExchRate = req.ExchRate > 0 ? req.ExchRate : 1m;
+            var normalizedExchRate = NormalizeExpenseSheetExchangeRateForWrite(
+                normalizedCurrency,
+                req.ExchRate > 0 ? req.ExchRate : null,
+                fallbackNonEurRate: 1m);
             var normalizedDescription = (req.Description ?? string.Empty).Trim();
             var normalizedLines = (req.Lines ?? new List<ExpenseSheetLineRequest>())
                 .Where(line => line != null)
@@ -1313,7 +1316,7 @@ namespace IND_CRM_APP.Controllers
             {
                 Description = (req.Description ?? string.Empty).Trim(),
                 CurrencyCode = normalizedCurrency,
-                ExchRate = req.ExchRate,
+                ExchRate = NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate),
                 ProjId = NormalizeOptionalText(req.ProjId),
                 Voucher = normalizedVoucher,
                 ExpenseSheetStatus = normalizedExpenseSheetStatus,
@@ -2994,7 +2997,10 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrWhiteSpace(normalizedCurrency))
                     normalizedCurrency = "EUR";
 
-                var normalizedExchRate = req.ExchRate > 0 ? req.ExchRate : 1m;
+                var normalizedExchRate = NormalizeExpenseSheetExchangeRateForWrite(
+                    normalizedCurrency,
+                    req.ExchRate > 0 ? req.ExchRate : null,
+                    fallbackNonEurRate: 1m);
                 var normalizedDescription = (req.Description ?? string.Empty).Trim();
                 var normalizedLines = (req.Lines ?? new List<ExpenseSheetLineRequest>())
                     .Where(line => line != null)
@@ -3126,7 +3132,7 @@ namespace IND_CRM_APP.Controllers
                 {
                     Description = (req.Description ?? string.Empty).Trim(),
                     CurrencyCode = normalizedCurrency,
-                    ExchRate = req.ExchRate,
+                    ExchRate = NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate),
                     ProjId = NormalizeOptionalText(req.ProjId),
                     Voucher = normalizedVoucher,
                     ExpenseSheetStatus = normalizedExpenseSheetStatus,
@@ -3549,7 +3555,9 @@ namespace IND_CRM_APP.Controllers
                 StatusCode = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
                 Description = NormalizeOptionalText(GetExtraString(sheet.Extra, "description", "descripcion", "desc")) ?? string.Empty,
                 CurrencyCode = (NormalizeOptionalText(GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa")) ?? string.Empty).ToUpperInvariant(),
-                ExchangeRate = GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio") ?? 0m,
+                ExchangeRate = NormalizeExpenseSheetExchangeRateForRead(
+                    GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
+                    GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")) ?? 0m,
                 ProjectId = NormalizeOptionalText(GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project")),
                 Voucher = NormalizeOptionalText(GetExtraString(sheet.Extra, "voucher")),
                 ExchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
@@ -3833,6 +3841,56 @@ namespace IND_CRM_APP.Controllers
         private static int? NormalizeExpenseNullableInt(int? value)
         {
             return value.HasValue && value.Value >= 0 ? value.Value : null;
+        }
+
+        // Treats EUR sheets as a fixed 100 reference rate so read and write flows stay aligned.
+        private static decimal? NormalizeExpenseSheetExchangeRateForRead(string? currencyCode, decimal? exchangeRate)
+        {
+            return string.Equals(
+                NormalizeOptionalText(currencyCode),
+                "EUR",
+                StringComparison.OrdinalIgnoreCase)
+                ? 100m
+                : exchangeRate;
+        }
+
+        // Forces the persisted rate for EUR sheets while preserving legacy fallbacks for other currencies.
+        private static decimal NormalizeExpenseSheetExchangeRateForWrite(
+            string? currencyCode,
+            decimal? exchangeRate,
+            decimal fallbackNonEurRate = 0m)
+        {
+            return string.Equals(
+                NormalizeOptionalText(currencyCode),
+                "EUR",
+                StringComparison.OrdinalIgnoreCase)
+                ? 100m
+                : (exchangeRate ?? fallbackNonEurRate);
+        }
+
+        // Keeps detail payloads consistent with the normalized decimal exchange-rate value.
+        private static string NormalizeExpenseSheetExchangeRateText(string? currencyCode, string? exchangeRate)
+        {
+            var normalizedExchangeRate = NormalizeExpenseSheetExchangeRateForRead(currencyCode, ParseNullableDecimal(exchangeRate));
+            return normalizedExchangeRate.HasValue
+                ? normalizedExchangeRate.Value.ToString(CultureInfo.InvariantCulture)
+                : NormalizeOptionalText(exchangeRate) ?? string.Empty;
+        }
+
+        // Parses nullable decimal text defensively because upstream payloads may vary in shape.
+        private static decimal? ParseNullableDecimal(string? value)
+        {
+            var normalizedValue = NormalizeOptionalText(value);
+            if (string.IsNullOrWhiteSpace(normalizedValue))
+                return null;
+
+            if (decimal.TryParse(normalizedValue, NumberStyles.Any, CultureInfo.InvariantCulture, out var invariantValue))
+                return invariantValue;
+
+            if (decimal.TryParse(normalizedValue, NumberStyles.Any, CultureInfo.CurrentCulture, out var currentCultureValue))
+                return currentCultureValue;
+
+            return null;
         }
 
         // Uses tolerance so payload decimals do not fail policy checks on formatting-only differences.
@@ -4471,6 +4529,11 @@ namespace IND_CRM_APP.Controllers
         // Maps a list item to a card payload for the list screen.
         private static object ToExpenseSheetCard(ExpenseSheetDetailDto sheet)
         {
+            var currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa");
+            var normalizedExchangeRate = NormalizeExpenseSheetExchangeRateForRead(
+                currencyCode,
+                GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
+
             return new
             {
                 hojaGastosId = sheet.HojaGastosId ?? string.Empty,
@@ -4481,10 +4544,10 @@ namespace IND_CRM_APP.Controllers
                 userName = GetExtraString(sheet.Extra, "userName", "name", "userDisplayName", "nombreUsuario"),
                 voucher = GetExtraString(sheet.Extra, "voucher"),
                 projId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
-                currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
+                currencyCode = currencyCode,
                 totalAmount = GetExtraDecimal(sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
                 totalAmountMST = GetExtraDecimal(sheet.Extra, "totalAmountMST", "totalamountmst"),
-                exchRate = GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"),
+                exchRate = normalizedExchangeRate,
                 exchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 createdDate = NormalizeDate(GetExtraString(sheet.Extra, "createdDate", "creationDate", "transDate", "fechaCreacion"))
             };
@@ -4493,6 +4556,11 @@ namespace IND_CRM_APP.Controllers
         // Maps a list item to API contract fields expected by /api/crm/expensesheets/list.
         private static object ToExpenseSheetApiListItem(ExpenseSheetDetailDto sheet)
         {
+            var currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa");
+            var normalizedExchangeRate = NormalizeExpenseSheetExchangeRateForRead(
+                currencyCode,
+                GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
+
             return new
             {
                 HojaGastosId = sheet.HojaGastosId ?? string.Empty,
@@ -4503,9 +4571,9 @@ namespace IND_CRM_APP.Controllers
                 UserName = GetExtraString(sheet.Extra, "userName", "name", "userDisplayName", "nombreUsuario"),
                 Voucher = GetExtraString(sheet.Extra, "voucher"),
                 ProjId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
-                CurrencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
+                CurrencyCode = currencyCode,
                 TotalAmount = GetExtraDecimal(sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
-                ExchRate = GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"),
+                ExchRate = normalizedExchangeRate,
                 ExchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 CreatedDate = NormalizeDate(GetExtraString(sheet.Extra, "createdDate", "creationDate", "transDate", "fechaCreacion"))
             };
@@ -4514,6 +4582,8 @@ namespace IND_CRM_APP.Controllers
         // Maps one detail item to API contract fields expected by /api/crm/expensesheets/{hojaGastosId}.
         private static object ToExpenseSheetApiDetailItem(ExpenseSheetDetailDto sheet)
         {
+            var currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa");
+
             return new
             {
                 HojaGastosId = sheet.HojaGastosId ?? string.Empty,
@@ -4521,9 +4591,11 @@ namespace IND_CRM_APP.Controllers
                 UserId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
                 ExpenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
                 EstadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
-                CurrencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
+                CurrencyCode = currencyCode,
                 TotalAmount = GetExtraDecimal(sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
-                ExchRate = GetExtraString(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"),
+                ExchRate = NormalizeExpenseSheetExchangeRateText(
+                    currencyCode,
+                    GetExtraString(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
                 ExchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 ProjId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 Voucher = GetExtraString(sheet.Extra, "voucher"),
@@ -4696,15 +4768,19 @@ namespace IND_CRM_APP.Controllers
         // Maps one sheet to a detail header payload.
         private static object ToExpenseSheetHeader(ExpenseSheetDetailDto sheet)
         {
+            var currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa");
+
             return new
             {
                 hojaGastosId = sheet.HojaGastosId ?? string.Empty,
                 description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
                 userId = GetExtraString(sheet.Extra, "userId"),
                 estadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
-                currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
+                currencyCode = currencyCode,
                 totalAmountMST = GetExtraDecimal(sheet.Extra, "totalAmountMST", "totalamountmst"),
-                exchRate = GetExtraString(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"),
+                exchRate = NormalizeExpenseSheetExchangeRateText(
+                    currencyCode,
+                    GetExtraString(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
                 projId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 voucher = GetExtraString(sheet.Extra, "voucher")
             };

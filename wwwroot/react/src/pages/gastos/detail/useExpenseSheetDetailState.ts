@@ -39,6 +39,9 @@ const formatExchangeRateInputValue = (value: number): string => {
   });
 };
 
+// Reuses the fixed same-currency rate so EUR sheets stay aligned with the 100 reference amount.
+const SAME_CURRENCY_EXCHANGE_RATE_INPUT = formatExchangeRateInputValue(EXCHANGE_RATE_REFERENCE_AMOUNT);
+
 const buildCreateHeaderDraft = (): ExpenseSheetHeader => {
   return {
     hojaGastosId: "",
@@ -49,7 +52,7 @@ const buildCreateHeaderDraft = (): ExpenseSheetHeader => {
     expenseSheetStatus: 0,
     exchangeRateMode: 0,
     createdDate: "",
-    exchRate: "1",
+    exchRate: String(EXCHANGE_RATE_REFERENCE_AMOUNT),
   };
 };
 
@@ -356,8 +359,8 @@ export const useExpenseSheetDetailState = ({
     }
 
     if (normalizedDraftCurrency === exchangeRateBaseCurrency) {
-      setDraftExchangeRate("1");
-      setOfficialExchangeRateValue("1");
+      setDraftExchangeRate(SAME_CURRENCY_EXCHANGE_RATE_INPUT);
+      setOfficialExchangeRateValue(SAME_CURRENCY_EXCHANGE_RATE_INPUT);
       setIsExchangeRateLoading(false);
       setExchangeRateMessage("");
       setExchangeRateMessageIsError(false);
