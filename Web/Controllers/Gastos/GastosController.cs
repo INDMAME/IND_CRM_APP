@@ -602,9 +602,15 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrWhiteSpace(token))
                 return CreateApiPagedError(StatusCodes.Status401Unauthorized, _sr["Api_SessionExpired"].Value);
 
+            var currentAxUserId = GetCurrentSessionAxUserId();
+
             try
             {
-                var result = await _apiClient.GetExpenseSheetCurrenciesAsync(token);
+                _logger.LogInformation(
+                    "ApiExpenseSheetsCurrencies request trace. X-IND-AxUserId={AxUserId}",
+                    currentAxUserId ?? string.Empty);
+
+                var result = await _apiClient.GetExpenseSheetCurrenciesAsync(token, currentAxUserId);
                 var items = result.GetAnyItems()
                     .Select(ToExpenseSheetCurrencyApiItem)
                     .Where(x => !string.IsNullOrWhiteSpace(x.CurrencyCode) || !string.IsNullOrWhiteSpace(x.CurrencyCodeISO))
@@ -647,9 +653,15 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrWhiteSpace(token))
                 return CreateApiPagedError(StatusCodes.Status401Unauthorized, _sr["Api_SessionExpired"].Value);
 
+            var currentAxUserId = GetCurrentSessionAxUserId();
+
             try
             {
-                var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token);
+                _logger.LogInformation(
+                    "ApiExpenseSheetsSubordinates request trace. X-IND-AxUserId={AxUserId}",
+                    currentAxUserId ?? string.Empty);
+
+                var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token, currentAxUserId);
                 var items = result.GetAnyItems()
                     .Select(ToExpenseSheetSubordinateApiItem)
                     .Where(x =>
@@ -2198,10 +2210,15 @@ namespace IND_CRM_APP.Controllers
             var actingUser = await ResolveExpenseActingUserForPagedAsync(token, nameof(ApiExpenseSheetTicketDetail));
             if (actingUser.Error != null)
                 return actingUser.Error;
-            var requestAxUserId = actingUser.AxUserId;
+            var requestAxUserId = actingUser.AxUserId ?? GetCurrentSessionAxUserId();
 
             try
             {
+                _logger.LogInformation(
+                    "ApiExpenseSheetTicketDetail request trace. fileId={FileId} X-IND-AxUserId={AxUserId}",
+                    safeFileId,
+                    requestAxUserId ?? string.Empty);
+
                 var result = await _apiClient.GetExpenseSheetTicketDetailAsync(token, safeFileId, requestAxUserId);
                 var ticket = SelectTicket(result.GetAnyItems(), safeFileId);
                 if (ticket == null)
@@ -4311,7 +4328,7 @@ namespace IND_CRM_APP.Controllers
                 return cachedList;
             }
 
-            var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token);
+            var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token, GetCurrentSessionAxUserId());
             var items = result.GetAnyItems().ToList();
 
             if (HttpContext?.Items != null)

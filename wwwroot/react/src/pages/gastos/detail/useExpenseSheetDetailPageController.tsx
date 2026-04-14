@@ -436,6 +436,11 @@ export const useExpenseSheetDetailPageController = () => {
         return;
       }
 
+      if (result?.linkedToSheet === true) {
+        reloadExpensePage();
+        return;
+      }
+
       const currentSheetId = safeText(header?.hojaGastosId || sheetId);
       const query = new URLSearchParams({
         fileId: createdFileId,

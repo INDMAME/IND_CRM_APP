@@ -167,11 +167,13 @@ namespace IND_CRM_APP.Services
         );
 
         Task<PagedApiResponse<ExpenseSheetCurrencyDto>> GetExpenseSheetCurrenciesAsync(
-            string token
+            string token,
+            string? axUserIdOverride = null
         );
 
         Task<PagedApiResponse<ExpenseSheetSubordinateDto>> GetExpenseSheetSubordinatesAsync(
-            string token
+            string token,
+            string? axUserIdOverride = null
         );
 
         Task<ApiTransportResponse<ExpenseSheetsAskResponseData>> AskExpenseSheetsAsync(

@@ -1178,14 +1178,16 @@ namespace IND_CRM_APP.Services
         }
 
         public async Task<PagedApiResponse<ExpenseSheetCurrencyDto>> GetExpenseSheetCurrenciesAsync(
-            string token)
+            string token,
+            string? axUserIdOverride = null)
         {
             PrepareRequestHeaders(
                 token,
                 "GetExpenseSheetCurrencies",
                 requireCompany: true,
                 includeCompanyHeader: true,
-                includeAxUserHeader: false);
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var result = await SendGetAsync(ApiRoutes.ExpenseSheetCurrencies);
             var parsed = BuildPagedResponse<ExpenseSheetCurrencyDto>(result, "GetExpenseSheetCurrencies");
@@ -1199,9 +1201,16 @@ namespace IND_CRM_APP.Services
         }
 
         public async Task<PagedApiResponse<ExpenseSheetSubordinateDto>> GetExpenseSheetSubordinatesAsync(
-            string token)
+            string token,
+            string? axUserIdOverride = null)
         {
-            PrepareRequestHeaders(token, "GetExpenseSheetSubordinates", requireCompany: true);
+            PrepareRequestHeaders(
+                token,
+                "GetExpenseSheetSubordinates",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
 
             var result = await SendGetAsync(ApiRoutes.ExpenseSheetSubordinates);
             return BuildPagedResponse<ExpenseSheetSubordinateDto>(result, "GetExpenseSheetSubordinates");
