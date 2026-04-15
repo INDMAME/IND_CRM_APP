@@ -9,13 +9,15 @@ import {
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type UseExpenseTicketDetailInteractionsArgs = {
+  busy: boolean;
   fileId: string;
   contextSheetId: string;
   isFromExpenseLine: boolean;
-  isFromExpenseSheetCreate: boolean;
   isFromSheetLink: boolean;
   headerExpenseSheetId: string;
   isEditing: boolean;
+  canOpenSaveConfirm: () => boolean;
+  handleUpdate: () => Promise<boolean>;
   lineContainerRef: RefObject<HTMLDivElement | null>;
   openPreview: () => Promise<void>;
   ticketReturnContext?: ExpenseTicketReturnContext | null;
@@ -23,38 +25,53 @@ type UseExpenseTicketDetailInteractionsArgs = {
 
 // Groups ticket detail navigation and line-card interactions behind stable callbacks.
 export const useExpenseTicketDetailInteractions = ({
+  busy,
   fileId,
   contextSheetId,
   isFromExpenseLine,
-  isFromExpenseSheetCreate,
   isFromSheetLink,
   headerExpenseSheetId,
   isEditing,
+  canOpenSaveConfirm,
+  handleUpdate,
   lineContainerRef,
   openPreview,
   ticketReturnContext,
 }: UseExpenseTicketDetailInteractionsArgs) => {
   const openLineDetail = useCallback(
-    (rawLineRecId: string) => {
+    async (rawLineRecId: string) => {
       if (isFromExpenseLine || isFromSheetLink) return;
+      if (busy) return;
       const lineRecId = safeText(rawLineRecId);
       if (!lineRecId || !fileId) return;
+
+      const shouldOpenInEditMode = isEditing;
+      if (shouldOpenInEditMode) {
+        if (!canOpenSaveConfirm()) {
+          return;
+        }
+
+        const updateOk = await handleUpdate();
+        if (!updateOk) {
+          return;
+        }
+      }
 
       const query = new URLSearchParams({
         fileId,
         lineRecId,
       });
-      if (isFromExpenseSheetCreate) {
+      if (shouldOpenInEditMode) {
         query.set("mode", "edit");
       }
       appendExpenseTicketReturnQuery(query, ticketReturnContext);
 
       navigateToExpenseUrl(`/Gastos/TicketLineDetail?${query.toString()}`, {
-        askConfirmation: true,
-        bypassGuardOnce: false,
+        askConfirmation: false,
+        bypassGuardOnce: shouldOpenInEditMode,
       });
     },
-    [fileId, isFromExpenseLine, isFromExpenseSheetCreate, isFromSheetLink, ticketReturnContext]
+    [busy, canOpenSaveConfirm, fileId, handleUpdate, isEditing, isFromExpenseLine, isFromSheetLink, ticketReturnContext]
   );
 
   const resolveClickableCard = useCallback(

@@ -65,6 +65,8 @@ type ExpenseTicketDetailViewProps = {
     isEditing: boolean;
     gastoTypeOptions: Array<{ value: string; text: string }>;
     draftDescription: string;
+    descriptionInvalid: boolean;
+    descriptionInputRef: RefObject<HTMLInputElement | null>;
     draftGastoType: string;
     gastoTypeInvalid: boolean;
     gastoTypeInputRef: RefObject<HTMLInputElement | null>;
@@ -105,6 +107,8 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         isEditing={content.isEditing}
         gastoTypeOptions={content.gastoTypeOptions}
         draftDescription={content.draftDescription}
+        descriptionInvalid={content.descriptionInvalid}
+        descriptionInputRef={content.descriptionInputRef}
         draftGastoType={content.draftGastoType}
         gastoTypeInvalid={content.gastoTypeInvalid}
         gastoTypeInputRef={content.gastoTypeInputRef}

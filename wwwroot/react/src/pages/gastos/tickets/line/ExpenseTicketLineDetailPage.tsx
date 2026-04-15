@@ -32,6 +32,22 @@ const bootstrapExpenseApiAuth = () => {
   });
 };
 
+// Consumes the one-time edit handoff so later reloads return to normal view mode.
+const consumeTicketLineEditModeQuery = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const currentUrl = new URL(window.location.href);
+  if (safeText(currentUrl.searchParams.get("mode")).toLowerCase() !== "edit") {
+    return;
+  }
+
+  currentUrl.searchParams.delete("mode");
+  const nextUrl = `${currentUrl.pathname}${currentUrl.search}${currentUrl.hash}`;
+  window.history.replaceState(window.history.state, "", nextUrl);
+};
+
 const ExpenseTicketLineDetailContent = () => {
   const { canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } = useAuthContext();
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
@@ -40,6 +56,7 @@ const ExpenseTicketLineDetailContent = () => {
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineRecId = safeText(window.__EXPENSE_TICKET_LINE_ID__);
   const routeParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const startInEditMode = useMemo(() => safeText(routeParams.get("mode")).toLowerCase() === "edit", [routeParams]);
   const routeOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
   const routeSheetId = useMemo(() => safeText(routeParams.get("sheetId")), [routeParams]);
   const explicitReturnContext = useMemo(
@@ -57,11 +74,20 @@ const ExpenseTicketLineDetailContent = () => {
   );
   const detailOrigin = ticketReturnContext?.origin || routeOrigin;
   const allowAssignedDraftEdit = detailOrigin === "sheet-create";
+  const autoEditAttemptedRef = React.useRef(false);
 
   React.useEffect(() => {
     if (!explicitReturnContext) return;
     saveExpenseTicketReturnContext(explicitReturnContext);
   }, [explicitReturnContext]);
+
+  React.useEffect(() => {
+    if (!startInEditMode) {
+      return;
+    }
+
+    consumeTicketLineEditModeQuery();
+  }, [startInEditMode]);
   const isManagingOtherUser = isManagingOtherExpenseUser({
     canManageOtherUsers,
     currentAxUserId,
@@ -99,6 +125,18 @@ const ExpenseTicketLineDetailContent = () => {
     allowAssignedDraftEdit,
     onForbidden: showPermissionModal,
   });
+
+  React.useEffect(() => {
+    if (!startInEditMode || autoEditAttemptedRef.current) {
+      return;
+    }
+    if (isLoading || !header || !line) {
+      return;
+    }
+
+    autoEditAttemptedRef.current = true;
+    handleEnableEdit();
+  }, [handleEnableEdit, header, isLoading, line, startInEditMode]);
 
   const draftQtyValue = parseDecimalInput(draftQty);
   const draftPriceValue = parseDecimalInput(draftPrice);

@@ -32,12 +32,6 @@ import {
   resolveExpenseSheetsAssistantCopy,
   type ExpenseSheetsAssistantCopy,
 } from "./expenseSheetsAssistantI18n.ts";
-import {
-  buildExpenseSheetsVisualizationProposalMessages,
-  buildExpenseSheetsVisualizationFallbackMessages,
-  shouldOfferExpenseSheetsVisualizationProposals,
-  shouldUseExpenseSheetsVisualizationFallback,
-} from "./expenseSheetsVisualizationFallback.ts";
 import type {
   ExpenseSheetsAssistantContextSnapshot,
   ExpenseSheetsAssistantMessage,
@@ -605,52 +599,6 @@ export const useExpenseSheetsAssistant = ({
         return;
       }
 
-      if (
-        detectedIntent.wantsVisualization &&
-        requestedVisualizationType !== "table" &&
-        shouldOfferExpenseSheetsVisualizationProposals(question)
-      ) {
-        const sourceJson = await resolveFullSourceJson().catch(() => null);
-        const proposalMessages = buildExpenseSheetsVisualizationProposalMessages({
-          question,
-          requestedVisualizationType,
-          sourceJson,
-          uiLanguage: resolvedUiLanguage,
-        });
-
-        if (proposalMessages && proposalMessages.length > 0) {
-          const userMessageId = createMessageId();
-          const assistantMessageId = createMessageId();
-
-          setContextNotice("");
-          setMessages((previous) => {
-            const nextMessages = [...previous];
-
-            if (appendUserQuestion) {
-              nextMessages.push(buildUserMessage(userMessageId, createMarkdownMessage(question)));
-            }
-
-            if (userSelectionMessage) {
-              nextMessages.push(buildUserMessage(createMessageId(), userSelectionMessage));
-            }
-
-            nextMessages.push(
-              ...proposalMessages.map((message, index) =>
-                buildAssistantMessage(index === 0 ? assistantMessageId : createMessageId(), message, "done")
-              )
-            );
-
-            return nextMessages;
-          });
-
-          if (appendUserQuestion) {
-            setDraftQuestion("");
-          }
-
-          return;
-        }
-      }
-
       const userMessageId = createMessageId();
       const assistantMessageId = createMessageId();
       const loadingText = assistantCopy.loading;
@@ -720,21 +668,6 @@ export const useExpenseSheetsAssistant = ({
         const parsedAnswer = parseStructuredChatMessages(safeAnswer, {
           requestedVisualizationType,
         });
-        const fallbackVisualizationMessages =
-          shouldUseExpenseSheetsVisualizationFallback(
-            parsedAnswer.messages,
-            requestedVisualizationType,
-            question,
-            sourceJson
-          )
-            ? buildExpenseSheetsVisualizationFallbackMessages({
-                question,
-                requestedVisualizationType,
-                sourceJson,
-                uiLanguage: resolvedUiLanguage,
-                parsedMessages: parsedAnswer.messages,
-              })
-            : null;
         const assistantMeta = {
           totalSourceRecords: response.Data?.TotalSourceRecords ?? null,
           retrievalMode: safeText(response.Data?.RetrievalMode) || null,
@@ -743,11 +676,7 @@ export const useExpenseSheetsAssistant = ({
           warnings: Array.isArray(response.Data?.Warnings) ? response.Data?.Warnings : [],
           httpStatus: response.HttpStatus,
         };
-        const resolvedMessages =
-          fallbackVisualizationMessages && fallbackVisualizationMessages.length > 0
-            ? fallbackVisualizationMessages
-            : parsedAnswer.messages;
-        const parsedMessages = resolvedMessages.map((message, index) =>
+        const parsedMessages = parsedAnswer.messages.map((message, index) =>
           buildAssistantMessage(index === 0 ? assistantMessageId : createMessageId(), message, "done", index === 0 ? assistantMeta : undefined)
         );
 

@@ -9,6 +9,7 @@ import type {
   VisualizationType,
 } from "./chatMessageContract.ts";
 import {
+  DEFAULT_CHART_TYPE_OPTIONS,
   createChartTypeChoiceMessage,
   createMarkdownMessage,
   createValidationFallbackMarkdownMessage,
@@ -1229,6 +1230,29 @@ const inferMessageType = (value: Record<string, unknown>): ChatMessage["type"] |
   return null;
 };
 
+const normalizePickerOptions = (options: ChartTypeChoiceOption[]): ChartTypeChoiceOption[] => {
+  const expectedOrder: VisualizationType[] = ["bar", "line", "pie", "table"];
+  const optionsByValue = new Map<VisualizationType, ChartTypeChoiceOption>();
+
+  options.forEach((option) => {
+    if (!option || !expectedOrder.includes(option.value) || optionsByValue.has(option.value) || !toSafeText(option.label)) {
+      return;
+    }
+
+    optionsByValue.set(option.value, {
+      value: option.value,
+      label: sanitizeStructuredText(option.label),
+      ...(toSafeText(option.description) ? { description: sanitizeStructuredText(option.description) } : {}),
+    });
+  });
+
+  if (expectedOrder.every((value) => optionsByValue.has(value))) {
+    return expectedOrder.map((value) => optionsByValue.get(value)!);
+  }
+
+  return DEFAULT_CHART_TYPE_OPTIONS.map((option) => ({ ...option }));
+};
+
 const shouldSkipVisualizationRecovery = (value: unknown): boolean => {
   if (Array.isArray(value)) {
     return value.some((entry) => isRecord(entry) && inferMessageType(entry) !== null);
@@ -1324,7 +1348,7 @@ const normalizeStructuredMessage = (value: unknown): { message: ChatMessage | nu
     return {
       message: createChartTypeChoiceMessage(sanitizeStructuredText(getRecordValue(value, "originalPrompt", "original_prompt")), {
         question: sanitizeStructuredText(getRecordValue(value, "question")) || undefined,
-        options,
+        options: normalizePickerOptions(options),
         selectedType: normalizeVisualizationType(getRecordValue(value, "selectedType", "selected_type")),
       }),
       errors: [],

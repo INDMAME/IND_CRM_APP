@@ -77,14 +77,14 @@ const buildVisualizationPromptRule = (requestedVisualizationType?: Visualization
   }
 
   if (requestedVisualizationType === "table") {
-    return "md+real table only. No charts, no raw JSON, no ASCII tables. If not useful, brief md with better options.";
+    return "md+real table only. If vague or incomplete, brief md asking for one grouping field and one metric. Keep fixed bar/line/pie/table choices. No charts, raw JSON, or ASCII tables.";
   }
 
   if (requestedVisualizationType === "pie") {
-    return 'md+pie only. chartType,data,nameKey,dataKey. Max 6 cats. Business labels, not bare 0/1/2. "All sheets" => top sheet totals with ids. If mixed currencies or weak chart, brief md + 2 better options. No raw JSON.';
+    return 'md+pie only. chartType,data,nameKey,dataKey. Max 6 cats. Business labels, not bare 0/1/2. If vague, mixed currencies, or weak, brief md asking for one grouping field and one metric. Keep fixed bar/line/pie/table choices. No raw JSON.';
   }
 
-  return `md+${requestedVisualizationType} only. chartType,data,xKey,yKey. Max 6 cats. Business labels, not bare 0/1/2. "All sheets" => top sheet totals with ids. If mixed currencies or weak chart, brief md + 2 better options. No raw JSON.`;
+  return `md+${requestedVisualizationType} only. chartType,data,xKey,yKey. Max 6 cats. Business labels, not bare 0/1/2. If vague, mixed currencies, or weak, brief md asking for one grouping field and one metric. Keep fixed bar/line/pie/table choices. No raw JSON.`;
 };
 
 // Builds a compact instruction string that stays inside the upstream field limit.

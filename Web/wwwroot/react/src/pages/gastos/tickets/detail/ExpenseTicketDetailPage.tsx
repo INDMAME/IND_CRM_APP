@@ -168,6 +168,8 @@ const buildExpenseTicketDetailContentView = ({
   isEditing,
   gastoTypeOptions,
   draftDescription,
+  descriptionInvalid,
+  descriptionInputRef,
   draftGastoType,
   gastoTypeInvalid,
   gastoTypeInputRef,
@@ -209,6 +211,8 @@ const buildExpenseTicketDetailContentView = ({
   isEditing: boolean;
   gastoTypeOptions: ExpenseSelectOption[];
   draftDescription: string;
+  descriptionInvalid: boolean;
+  descriptionInputRef: React.RefObject<HTMLInputElement | null>;
   draftGastoType: string;
   gastoTypeInvalid: boolean;
   gastoTypeInputRef: React.RefObject<HTMLInputElement | null>;
@@ -256,6 +260,8 @@ const buildExpenseTicketDetailContentView = ({
   isEditing,
   gastoTypeOptions,
   draftDescription,
+  descriptionInvalid,
+  descriptionInputRef,
   draftGastoType,
   gastoTypeInvalid,
   gastoTypeInputRef,
@@ -444,6 +450,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     modalError,
     linePage,
     draftDescription,
+    descriptionInvalid,
+    descriptionInputRef,
     draftGastoType,
     gastoTypeInvalid,
     gastoTypeInputRef,
@@ -595,13 +603,15 @@ const useExpenseTicketDetailPageViewModel = () => {
   });
 
   const { openLineDetail, resolveClickableCard, openFile, handleOpenExpenseSheet } = useExpenseTicketDetailInteractions({
+    busy,
     fileId,
     contextSheetId,
     isFromExpenseLine,
-    isFromExpenseSheetCreate,
     isFromSheetLink,
     headerExpenseSheetId: safeText(header?.hojaGastosIdDisplay),
     isEditing,
+    canOpenSaveConfirm,
+    handleUpdate,
     lineContainerRef,
     openPreview,
     ticketReturnContext,
@@ -658,6 +668,8 @@ const useExpenseTicketDetailPageViewModel = () => {
       isEditing,
       gastoTypeOptions,
       draftDescription,
+      descriptionInvalid,
+      descriptionInputRef,
       draftGastoType,
       gastoTypeInvalid,
       gastoTypeInputRef,

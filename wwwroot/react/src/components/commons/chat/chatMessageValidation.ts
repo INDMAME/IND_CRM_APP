@@ -33,6 +33,8 @@ const isFiniteNumber = (value: unknown): value is number => typeof value === "nu
 const hasOwnKey = (value: Record<string, unknown>, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(value, key);
 
+const FIXED_PICKER_OPTION_VALUES = ["bar", "line", "pie", "table"] as const;
+
 const validateChartDataRows = (
   data: unknown[],
   requiredKeys: string[],
@@ -164,8 +166,40 @@ export const validateChatMessage = (message: ChatMessage): ValidationResult => {
       if (!toSafeText(message.originalPrompt)) {
         errors.push("La pregunta para elegir grafico requiere originalPrompt.");
       }
-      if (!Array.isArray(message.options) || message.options.length === 0) {
-        errors.push("La pregunta para elegir grafico requiere options.");
+      if (!Array.isArray(message.options) || message.options.length !== FIXED_PICKER_OPTION_VALUES.length) {
+        errors.push("La pregunta para elegir grafico requiere las 4 opciones fijas.");
+      } else {
+        const seenValues = new Set<string>();
+        message.options.forEach((option, index) => {
+          const optionValue = toSafeText(option?.value).toLowerCase();
+          const expectedValue = FIXED_PICKER_OPTION_VALUES[index];
+
+          if (!toSafeText(option?.label)) {
+            errors.push(`La opcion ${index + 1} del selector requiere label.`);
+          }
+
+          if (!FIXED_PICKER_OPTION_VALUES.includes(optionValue as (typeof FIXED_PICKER_OPTION_VALUES)[number])) {
+            errors.push(`La opcion ${index + 1} del selector no es valida.`);
+            return;
+          }
+
+          if (seenValues.has(optionValue)) {
+            errors.push("Las opciones del selector deben ser unicas.");
+          }
+          seenValues.add(optionValue);
+
+          if (optionValue !== expectedValue) {
+            errors.push("Las opciones del selector deben mantener el orden fijo bar, line, pie, table.");
+          }
+        });
+      }
+
+      if (
+        message.selectedType !== undefined &&
+        message.selectedType !== null &&
+        !FIXED_PICKER_OPTION_VALUES.includes(message.selectedType)
+      ) {
+        errors.push("selectedType no es valido.");
       }
       return buildResult(errors);
     }

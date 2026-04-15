@@ -25,6 +25,8 @@ type ExpenseTicketDetailHeaderFormProps = {
   isEditing: boolean;
   gastoTypeOptions: Array<{ value: string; text: string }>;
   draftDescription: string;
+  descriptionInvalid: boolean;
+  descriptionInputRef: React.Ref<HTMLInputElement>;
   draftGastoType: string;
   gastoTypeInvalid: boolean;
   gastoTypeInputRef: React.Ref<HTMLInputElement>;
@@ -53,6 +55,8 @@ const ExpenseTicketDetailHeaderForm = ({
   isEditing,
   gastoTypeOptions,
   draftDescription,
+  descriptionInvalid,
+  descriptionInputRef,
   draftGastoType,
   gastoTypeInvalid,
   gastoTypeInputRef,
@@ -91,9 +95,11 @@ const ExpenseTicketDetailHeaderForm = ({
           <div className="sm:col-span-2 space-y-1.5">
             <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Description", "Description")}</label>
             <input
-              className="form-control"
+              ref={descriptionInputRef}
+              className={`form-control${descriptionInvalid ? " border-rose-400 bg-rose-50 focus:border-rose-400 focus:ring-rose-200" : ""}`}
               value={draftDescription}
               onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+              aria-invalid={descriptionInvalid ? "true" : "false"}
               aria-label={indT("ExpenseSheets_Field_Description", "Description")}
             />
           </div>
