@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 
@@ -96,12 +97,14 @@ namespace IND_CRM_APP.Services.Http
             string verb,
             CancellationToken cancellationToken = default)
         {
+            var stopwatch = Stopwatch.StartNew();
             try
             {
                 using var request = requestMessage;
                 using var response = await client.SendAsync(request, HttpCompletionOption.ResponseContentRead, cancellationToken);
 
                 var raw = await response.Content.ReadAsStringAsync();
+                stopwatch.Stop();
 
                 return new HttpResult
                 {
@@ -109,17 +112,19 @@ namespace IND_CRM_APP.Services.Http
                     Headers = CopyHeaders(response),
                     IsSuccessStatusCode = response.IsSuccessStatusCode,
                     StatusCode = response.StatusCode,
-                    ErrorMessage = response.IsSuccessStatusCode ? null : $"{verb} {url} - {(int)response.StatusCode} {response.ReasonPhrase}"
+                    ErrorMessage = response.IsSuccessStatusCode ? null : $"{verb} {url} - {(int)response.StatusCode} {response.ReasonPhrase}",
+                    DurationMs = stopwatch.ElapsedMilliseconds
                 };
             }
             catch (Exception ex)
             {
-                return BuildErrorResult(verb, url, ex);
+                stopwatch.Stop();
+                return BuildErrorResult(verb, url, ex, stopwatch.ElapsedMilliseconds);
             }
         }
 
         // Creates a consistent error result for failed requests.
-        private static HttpResult BuildErrorResult(string verb, string url, Exception ex)
+        private static HttpResult BuildErrorResult(string verb, string url, Exception ex, long durationMs)
         {
             return new HttpResult
             {
@@ -127,7 +132,8 @@ namespace IND_CRM_APP.Services.Http
                 Headers = EmptyHeaders(),
                 IsSuccessStatusCode = false,
                 StatusCode = 0,
-                ErrorMessage = $"Error en {verb} {url}: {ex.Message}"
+                ErrorMessage = $"Error en {verb} {url}: {ex.Message}",
+                DurationMs = durationMs
             };
         }
 

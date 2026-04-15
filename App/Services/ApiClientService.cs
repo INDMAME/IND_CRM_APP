@@ -1039,7 +1039,25 @@ namespace IND_CRM_APP.Services
                 axUserIdOverride: axUserIdOverride);
 
             var safeId = EscapePathSegment(hojaGastosId);
+            _logger.LogInformation(
+                "GetExpenseSheetDetail upstream request. HojaGastosId: {HojaGastosId}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}.",
+                hojaGastosId,
+                GetSelectedCompanyId() ?? "<empty>",
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
             var result = await SendGetAsync(ApiRoutes.ExpenseSheetById(safeId));
+            if (!result.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "GetExpenseSheetDetail upstream HTTP result. StatusCode: {StatusCode}. DurationMs: {DurationMs}. TraceId: {TraceId}. HojaGastosId: {HojaGastosId}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. Error: {Error}. Raw: {Raw}.",
+                    (int)result.StatusCode,
+                    result.DurationMs,
+                    TryGetTraceId(result.Headers) ?? "<null>",
+                    hojaGastosId,
+                    GetSelectedCompanyId() ?? "<empty>",
+                    NormalizeOptionalText(axUserIdOverride) ?? "<session>",
+                    result.ErrorMessage ?? "<null>",
+                    SafeLogPayload(result.Raw));
+            }
             return BuildPagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheetDetail");
         }
 
@@ -1213,6 +1231,18 @@ namespace IND_CRM_APP.Services
                 axUserIdOverride: axUserIdOverride);
 
             var result = await SendGetAsync(ApiRoutes.ExpenseSheetSubordinates);
+            if (!result.IsSuccessStatusCode)
+            {
+                _logger.LogWarning(
+                    "GetExpenseSheetSubordinates upstream HTTP result. StatusCode: {StatusCode}. DurationMs: {DurationMs}. TraceId: {TraceId}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. Error: {Error}. Raw: {Raw}.",
+                    (int)result.StatusCode,
+                    result.DurationMs,
+                    TryGetTraceId(result.Headers) ?? "<null>",
+                    GetSelectedCompanyId() ?? "<empty>",
+                    NormalizeOptionalText(axUserIdOverride) ?? "<session>",
+                    result.ErrorMessage ?? "<null>",
+                    SafeLogPayload(result.Raw));
+            }
             return BuildPagedResponse<ExpenseSheetSubordinateDto>(result, "GetExpenseSheetSubordinates");
         }
 
@@ -1354,13 +1384,17 @@ namespace IND_CRM_APP.Services
             var streamLength = canReportLength ? ticketImageStream.Length : -1;
 
             _logger.LogInformation(
-                "QuickCreateExpenseSheetTicket request. FileName: {FileName}. ContentType: {ContentType}. StreamLength: {StreamLength}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjectId: {ProjectId}.",
+                "QuickCreateExpenseSheetTicket request. FileName: {FileName}. ContentType: {ContentType}. StreamLength: {StreamLength}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjectId: {ProjectId}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. DescriptionLength: {DescriptionLength}. ComentarioLength: {ComentarioLength}.",
                 safeFileName,
                 mime,
                 streamLength,
                 payload.CurrencyCode ?? "<empty>",
                 payload.ExistingHojaGastosId ?? "<empty>",
-                payload.ProjectId ?? "<empty>");
+                payload.ProjectId ?? "<empty>",
+                GetSelectedCompanyId() ?? "<empty>",
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>",
+                payload.Description?.Length ?? 0,
+                payload.Comentario?.Length ?? 0);
 
             return await SendQuickCreateExpenseSheetTicketRequestAsync(
                 payload,
@@ -1401,6 +1435,18 @@ namespace IND_CRM_APP.Services
             if (!string.IsNullOrWhiteSpace(payload.ProjectId))
                 form.Add(new StringContent(payload.ProjectId), "projectId");
 
+            _logger.LogInformation(
+                "QuickCreateExpenseSheetTicket multipart envelope. FileName: {FileName}. Mime: {Mime}. StreamCanSeek: {StreamCanSeek}. StreamLength: {StreamLength}. HasCurrencyCode: {HasCurrencyCode}. HasDescription: {HasDescription}. HasComentario: {HasComentario}. HasExistingHojaGastosId: {HasExistingHojaGastosId}. HasProjectId: {HasProjectId}.",
+                safeFileName,
+                mime,
+                ticketImageStream.CanSeek,
+                ticketImageStream.CanSeek ? ticketImageStream.Length : -1,
+                !string.IsNullOrWhiteSpace(payload.CurrencyCode),
+                !string.IsNullOrWhiteSpace(payload.Description),
+                !string.IsNullOrWhiteSpace(payload.Comentario),
+                !string.IsNullOrWhiteSpace(payload.ExistingHojaGastosId),
+                !string.IsNullOrWhiteSpace(payload.ProjectId));
+
             var result = await SendPostMultipartAsync(
                 ApiRoutes.ExpenseSheetTicketsQuickCreate,
                 form,
@@ -1409,9 +1455,10 @@ namespace IND_CRM_APP.Services
             var response = BuildApiResponse<object>(result, "QuickCreateExpenseSheetTicket");
             var hasPartialState = TryReadQuickCreatePartialState(response.Data, out var partialState);
             _logger.LogInformation(
-                "QuickCreateExpenseSheetTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. CompletedStage: {CompletedStage}. LinkedToSheet: {LinkedToSheet}. RetryAfter: {RetryAfter}. Message: {Message}. Raw: {Raw}",
+                "QuickCreateExpenseSheetTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. DurationMs: {DurationMs}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. CompletedStage: {CompletedStage}. LinkedToSheet: {LinkedToSheet}. RetryAfter: {RetryAfter}. Message: {Message}. Raw: {Raw}",
                 result.IsSuccessStatusCode,
                 (int)result.StatusCode,
+                result.DurationMs,
                 response.Success,
                 response.ErrorCode ?? "<null>",
                 response.TraceId ?? "<null>",
@@ -2232,16 +2279,7 @@ namespace IND_CRM_APP.Services
                 };
             }
 
-            LogNullPagedMetricsIfAny(result.Raw, operation, result.StatusCode);
-            if (!result.IsSuccessStatusCode)
-            {
-                _logger.LogWarning(
-                    "Paged upstream response not successful for {Operation}. StatusCode: {StatusCode}. Error: {ErrorMessage}. Raw: {RawSnippet}",
-                    operation,
-                    (int)result.StatusCode,
-                    result.ErrorMessage ?? "<null>",
-                    SafeLogSnippet(result.Raw));
-            }
+            LogPagedEnvelopeDiagnostics(result.Raw, operation, result.StatusCode, result.DurationMs, result.IsSuccessStatusCode);
 
             try
             {
@@ -2342,8 +2380,13 @@ namespace IND_CRM_APP.Services
             return null;
         }
 
-        // Logs when paged envelopes arrive with null metrics to make backend regressions visible.
-        private void LogNullPagedMetricsIfAny(string raw, string operation, HttpStatusCode statusCode)
+        // Logs the effective paged envelope shape when contracts degrade or upstream rejects the request.
+        private void LogPagedEnvelopeDiagnostics(
+            string raw,
+            string operation,
+            HttpStatusCode statusCode,
+            long durationMs,
+            bool isSuccessStatusCode)
         {
             if (string.IsNullOrWhiteSpace(raw))
             {
@@ -2356,33 +2399,70 @@ namespace IND_CRM_APP.Services
                 var root = doc.RootElement;
                 if (root.ValueKind != JsonValueKind.Object)
                 {
+                    if (!isSuccessStatusCode)
+                    {
+                        _logger.LogWarning(
+                            "Paged response diagnostics unavailable for {Operation}. StatusCode: {StatusCode}. DurationMs: {DurationMs}. RootKind: {RootKind}. Raw: {Raw}",
+                            operation,
+                            (int)statusCode,
+                            durationMs,
+                            root.ValueKind,
+                            SafeLogPayload(raw));
+                    }
                     return;
                 }
 
-                var totalNull = JsonPropertyHelper.TryGetPropertyInsensitive(root, "Total", out var totalElement) &&
-                                totalElement.ValueKind == JsonValueKind.Null;
-                var pageNull = JsonPropertyHelper.TryGetPropertyInsensitive(root, "Page", out var pageElement) &&
-                               pageElement.ValueKind == JsonValueKind.Null;
-                var pageSizeNull = JsonPropertyHelper.TryGetPropertyInsensitive(root, "PageSize", out var pageSizeElement) &&
-                                   pageSizeElement.ValueKind == JsonValueKind.Null;
+                var hasItems = JsonPropertyHelper.TryGetPropertyInsensitive(root, "Items", out var itemsElement);
+                var hasData = JsonPropertyHelper.TryGetPropertyInsensitive(root, "Data", out var dataElement);
+                var hasTotal = JsonPropertyHelper.TryGetPropertyInsensitive(root, "Total", out var totalElement);
+                var hasPage = JsonPropertyHelper.TryGetPropertyInsensitive(root, "Page", out var pageElement);
+                var hasPageSize = JsonPropertyHelper.TryGetPropertyInsensitive(root, "PageSize", out var pageSizeElement);
 
-                if (!totalNull && !pageNull && !pageSizeNull)
+                var totalNull = hasTotal && totalElement.ValueKind == JsonValueKind.Null;
+                var pageNull = hasPage && pageElement.ValueKind == JsonValueKind.Null;
+                var pageSizeNull = hasPageSize && pageSizeElement.ValueKind == JsonValueKind.Null;
+                var shouldLog = !isSuccessStatusCode || totalNull || pageNull || pageSizeNull;
+
+                if (!shouldLog)
                 {
                     return;
                 }
 
+                var itemsKind = hasItems ? itemsElement.ValueKind.ToString() : "<missing>";
+                var dataKind = hasData ? dataElement.ValueKind.ToString() : "<missing>";
+                var itemsCount = hasItems && itemsElement.ValueKind == JsonValueKind.Array ? itemsElement.GetArrayLength() : -1;
+                var dataCount = hasData && dataElement.ValueKind == JsonValueKind.Array ? dataElement.GetArrayLength() : -1;
+                var looksNonPaged = hasData &&
+                                    dataElement.ValueKind == JsonValueKind.Object &&
+                                    (!hasItems || itemsElement.ValueKind == JsonValueKind.Null || itemsElement.ValueKind == JsonValueKind.Undefined);
+
                 _logger.LogWarning(
-                    "Paged response includes null metrics for {Operation}. StatusCode: {StatusCode}. TotalNull: {TotalNull}. PageNull: {PageNull}. PageSizeNull: {PageSizeNull}. Raw: {Raw}",
+                    "Paged response diagnostics for {Operation}. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. DurationMs: {DurationMs}. HasItems: {HasItems}. ItemsKind: {ItemsKind}. ItemsCount: {ItemsCount}. HasData: {HasData}. DataKind: {DataKind}. DataCount: {DataCount}. LooksNonPaged: {LooksNonPaged}. TotalPresent: {HasTotal}. TotalNull: {TotalNull}. PagePresent: {HasPage}. PageNull: {PageNull}. PageSizePresent: {HasPageSize}. PageSizeNull: {PageSizeNull}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. Message: {Message}. Raw: {Raw}",
                     operation,
+                    isSuccessStatusCode,
                     (int)statusCode,
+                    durationMs,
+                    hasItems,
+                    itemsKind,
+                    itemsCount,
+                    hasData,
+                    dataKind,
+                    dataCount,
+                    looksNonPaged,
+                    hasTotal,
                     totalNull,
+                    hasPage,
                     pageNull,
+                    hasPageSize,
                     pageSizeNull,
+                    ReadStringLikeProperty(root, "ErrorCode", "errorCode") ?? "<null>",
+                    ReadStringLikeProperty(root, "TraceId", "traceId") ?? "<null>",
+                    TryGetMessage(root) ?? "<null>",
                     SafeLogPayload(raw));
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Could not inspect paged metrics for {Operation}.", operation);
+                _logger.LogDebug(ex, "Could not inspect paged response diagnostics for {Operation}.", operation);
             }
         }
 

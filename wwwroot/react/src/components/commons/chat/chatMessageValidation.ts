@@ -28,6 +28,41 @@ const isNonEmptyKey = (value: unknown): boolean => {
   return toSafeText(value).length > 0;
 };
 
+const isFiniteNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
+
+const hasOwnKey = (value: Record<string, unknown>, key: string): boolean =>
+  Object.prototype.hasOwnProperty.call(value, key);
+
+const validateChartDataRows = (
+  data: unknown[],
+  requiredKeys: string[],
+  valueKey: string | null,
+  errors: string[],
+  chartType: ChartPayload["chartType"]
+): void => {
+  data.forEach((entry, index) => {
+    if (!isRecord(entry)) {
+      errors.push(`La fila ${index + 1} del grafico ${chartType} debe ser un objeto.`);
+      return;
+    }
+
+    requiredKeys.forEach((requiredKey) => {
+      if (!hasOwnKey(entry, requiredKey)) {
+        errors.push(`La fila ${index + 1} del grafico ${chartType} requiere la clave ${requiredKey}.`);
+      }
+    });
+
+    if (valueKey && hasOwnKey(entry, valueKey) && !isFiniteNumber(entry[valueKey])) {
+      errors.push(`La fila ${index + 1} del grafico ${chartType} requiere ${valueKey} numerico.`);
+      return;
+    }
+
+    if (chartType === "pie" && valueKey && hasOwnKey(entry, valueKey) && isFiniteNumber(entry[valueKey]) && entry[valueKey] < 0) {
+      errors.push("El grafico pie no admite valores negativos.");
+    }
+  });
+};
+
 const buildResult = (errors: string[]): ValidationResult => ({
   isValid: errors.length === 0,
   errors,
@@ -52,6 +87,10 @@ export const validateChartPayload = (payload: ChartPayload): ValidationResult =>
     if (!isNonEmptyKey(payload.yKey)) {
       errors.push(`El grafico ${payload.chartType} requiere yKey.`);
     }
+
+    if (isNonEmptyArray(payload.data) && isNonEmptyKey(payload.xKey) && isNonEmptyKey(payload.yKey)) {
+      validateChartDataRows(payload.data, [payload.xKey, payload.yKey], payload.yKey, errors, payload.chartType);
+    }
   }
 
   if (payload.chartType === "pie") {
@@ -60,6 +99,14 @@ export const validateChartPayload = (payload: ChartPayload): ValidationResult =>
     }
     if (!isNonEmptyKey(payload.dataKey)) {
       errors.push("El grafico pie requiere dataKey.");
+    }
+
+    if (isNonEmptyArray(payload.data) && payload.data.length > 6) {
+      errors.push("El grafico pie admite un maximo de 6 categorias.");
+    }
+
+    if (isNonEmptyArray(payload.data) && isNonEmptyKey(payload.nameKey) && isNonEmptyKey(payload.dataKey)) {
+      validateChartDataRows(payload.data, [payload.nameKey, payload.dataKey], payload.dataKey, errors, payload.chartType);
     }
   }
 
@@ -89,6 +136,13 @@ export const validateTablePayload = (payload: TablePayload): ValidationResult =>
 
   if (!Array.isArray(payload.rows)) {
     errors.push("La tabla requiere rows.");
+  } else {
+    payload.columns?.forEach((column) => {
+      if (!column?.key) return;
+      if (!payload.rows.some((row) => isRecord(row) && hasOwnKey(row, column.key))) {
+        errors.push(`La tabla requiere rows con la clave ${column.key}.`);
+      }
+    });
   }
 
   return buildResult(errors);

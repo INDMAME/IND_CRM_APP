@@ -1373,6 +1373,19 @@ const toStructuredMessages = (value: unknown): ChatMessage[] => {
   return [];
 };
 
+const isExpectedStructuredEnvelope = (value: unknown): boolean => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const schemaVersion = toSafeText(getRecordValue(value, "schemaVersion"));
+  if (schemaVersion === "expense-chat-v2") {
+    return true;
+  }
+
+  return Array.isArray(getRecordValue(value, "messages")) && !Array.isArray(getRecordValue(value, "items", "mensajes"));
+};
+
 const hasRequestedVisualizationMessage = (
   messages: ChatMessage[],
   requestedVisualizationType: VisualizationType | null | undefined
@@ -1473,26 +1486,6 @@ export const parseStructuredChatMessages = (
   const parsedJson = tryParseJson(safeAnswer);
   const parsedStructuredValue = parsedJson ?? tryParseEmbeddedJson(safeAnswer);
   if (parsedStructuredValue !== null) {
-    const rescuedRequestedVisualizationMessages =
-      options?.requestedVisualizationType &&
-      tryRecoverRequestedVisualizationMessages(parsedStructuredValue, options.requestedVisualizationType);
-    if (rescuedRequestedVisualizationMessages && rescuedRequestedVisualizationMessages.length > 0) {
-      return {
-        messages: rescuedRequestedVisualizationMessages,
-        source: "structured",
-        errors: [],
-      };
-    }
-
-    const rescuedGenericTableMessages = tryRecoverGenericTableMessages(parsedStructuredValue);
-    if (rescuedGenericTableMessages && rescuedGenericTableMessages.length > 0) {
-      return {
-        messages: rescuedGenericTableMessages,
-        source: "structured",
-        errors: [],
-      };
-    }
-
     const structuredMessages = toStructuredMessages(parsedStructuredValue);
     if (structuredMessages.length > 0) {
       return {
@@ -1501,35 +1494,28 @@ export const parseStructuredChatMessages = (
         errors: [],
       };
     }
-  }
 
-  const rescuedLegacyChartMessages = tryParseLegacyChartMessages(safeAnswer);
-  if (rescuedLegacyChartMessages && rescuedLegacyChartMessages.length > 0) {
-    return {
-      messages: rescuedLegacyChartMessages,
-      source: "structured",
-      errors: [],
-    };
-  }
+    if (!isExpectedStructuredEnvelope(parsedStructuredValue)) {
+      const rescuedRequestedVisualizationMessages =
+        options?.requestedVisualizationType &&
+        tryRecoverRequestedVisualizationMessages(parsedStructuredValue, options.requestedVisualizationType);
+      if (rescuedRequestedVisualizationMessages && rescuedRequestedVisualizationMessages.length > 0) {
+        return {
+          messages: rescuedRequestedVisualizationMessages,
+          source: "structured",
+          errors: [],
+        };
+      }
 
-  const rescuedRequestedVisualizationMessagesFromText =
-    options?.requestedVisualizationType &&
-    tryRecoverRequestedVisualizationMessagesFromText(safeAnswer, options.requestedVisualizationType);
-  if (rescuedRequestedVisualizationMessagesFromText && rescuedRequestedVisualizationMessagesFromText.length > 0) {
-    return {
-      messages: rescuedRequestedVisualizationMessagesFromText,
-      source: "structured",
-      errors: [],
-    };
-  }
-
-  const rescuedLegacyPipeTableMessages = tryParseLegacyPipeTableMessages(safeAnswer);
-  if (rescuedLegacyPipeTableMessages && rescuedLegacyPipeTableMessages.length > 0) {
-    return {
-      messages: rescuedLegacyPipeTableMessages,
-      source: "structured",
-      errors: [],
-    };
+      const rescuedGenericTableMessages = tryRecoverGenericTableMessages(parsedStructuredValue);
+      if (rescuedGenericTableMessages && rescuedGenericTableMessages.length > 0) {
+        return {
+          messages: rescuedGenericTableMessages,
+          source: "structured",
+          errors: [],
+        };
+      }
+    }
   }
 
   return {

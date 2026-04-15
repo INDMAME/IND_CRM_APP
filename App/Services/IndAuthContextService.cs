@@ -24,6 +24,7 @@ namespace IND_CRM_APP.Services
         private const string CompanySelectionSourceUser = "user";
         private const string EntraOidKey = "ENTRAOID";
         private const string EntraOidContextKey = "INDEntraOidContext";
+        private const string AxUserKey = "AxUser";
 
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ICrmApiClient _apiClient;
@@ -48,50 +49,24 @@ namespace IND_CRM_APP.Services
             if (ctx == null)
                 return null;
 
-            var raw = ctx.Session.GetString(ContextKey);
-            if (string.IsNullOrWhiteSpace(raw))
-                return null;
-
-            try
-            {
-                return JsonSerializer.Deserialize<IndWebContext>(raw);
-            }
-            catch
-            {
-                return null;
-            }
+            return TryReadCachedContext(ctx, logDiagnostics: true);
         }
 
         public string? GetSelectedCompanyId(IndWebContext? context)
         {
             var ctx = _httpContextAccessor.HttpContext;
-            var selected = ctx?.Session.GetString(CompanyKey);
-            var selectionSource = ctx?.Session.GetString(CompanySelectionSourceKey);
-            if (!string.IsNullOrWhiteSpace(selected))
+            var resolution = ResolveSelectedCompany(ctx, context);
+            if (ctx != null)
             {
-                var selectedCompany = FindCompany(context, selected);
-                if (selectedCompany != null)
-                    return selectedCompany.CompanyId;
-
-                if (context == null)
-                    return selected;
-
-                if (string.Equals(selectionSource, CompanySelectionSourceUser, StringComparison.OrdinalIgnoreCase))
-                    return null;
+                LogContextSnapshot(
+                    ctx,
+                    "GetSelectedCompanyId",
+                    context,
+                    resolution.CompanyId,
+                    resolution.Reason);
             }
 
-            if (context != null)
-            {
-                var defaultCompany = FindCompany(context, context.Header.DefaultCompany);
-                if (defaultCompany != null)
-                    return defaultCompany.CompanyId;
-
-                var first = context.Companies.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c.CompanyId));
-                if (first != null)
-                    return first.CompanyId;
-            }
-
-            return null;
+            return resolution.CompanyId;
         }
 
         // Clears cached context (optionally preserving the selected company).
@@ -101,11 +76,30 @@ namespace IND_CRM_APP.Services
             if (ctx == null)
                 return;
 
+            var cachedContext = TryReadCachedContext(ctx, logDiagnostics: false);
             var selected = preserveCompanySelection ? ctx.Session.GetString(CompanyKey) : null;
+            var cachedSelection = ResolveSelectedCompany(ctx, cachedContext);
+            LogContextSnapshot(
+                ctx,
+                "ClearContextCache before",
+                cachedContext,
+                cachedSelection.CompanyId,
+                preserveCompanySelection
+                    ? "Preserving selected company in session."
+                    : "Clearing selected company from session.");
             ClearCachedContext(ctx, preserveCompanySelection);
 
             if (preserveCompanySelection && !string.IsNullOrWhiteSpace(selected))
                 ctx.Session.SetString(CompanyKey, selected);
+
+            LogContextSnapshot(
+                ctx,
+                "ClearContextCache after",
+                null,
+                preserveCompanySelection ? selected : null,
+                preserveCompanySelection
+                    ? "Context cleared and selected company kept."
+                    : "Context and selected company cleared.");
         }
 
         public async Task<IndAuthContextResult> EnsureContextAsync()
@@ -148,6 +142,14 @@ namespace IND_CRM_APP.Services
             if (!string.IsNullOrWhiteSpace(cachedOid) &&
                 !string.Equals(cachedOid, entraOid, StringComparison.OrdinalIgnoreCase))
             {
+                var staleContext = TryReadCachedContext(ctx, logDiagnostics: false);
+                var staleSelection = ResolveSelectedCompany(ctx, staleContext);
+                LogContextSnapshot(
+                    ctx,
+                    "EnsureContextAsync stale cache detected",
+                    staleContext,
+                    staleSelection.CompanyId,
+                    "Cached OID differs from current session OID.");
                 _logger.LogInformation(
                     "Clearing cached context because OID changed. Old: {OldOid} New: {NewOid}",
                     cachedOid,
@@ -155,13 +157,20 @@ namespace IND_CRM_APP.Services
                 ClearCachedContext(ctx, preserveCompanySelection: false);
             }
 
-            var cached = GetCachedContext();
+            var cached = TryReadCachedContext(ctx, logDiagnostics: false);
             if (cached != null && cached.Companies.Count > 0)
             {
                 _logger.LogInformation("Using cached Entra context for OID {EntraOid}.", entraOid);
                 RestoreAxUserSession(ctx, cached);
                 EnsureCompanySelection(ctx, cached);
                 LogSelectedCompany(ctx);
+                var cachedSelection = ResolveSelectedCompany(ctx, cached);
+                LogContextSnapshot(
+                    ctx,
+                    "EnsureContextAsync cache hit",
+                    cached,
+                    cachedSelection.CompanyId,
+                    "Returning cached context.");
                 return new IndAuthContextResult
                 {
                     Success = true,
@@ -196,6 +205,13 @@ namespace IND_CRM_APP.Services
                 var webContext = MapContext(response.Items[0]);
                 if (!webContext.Header.Success || webContext.Companies.Count == 0)
                 {
+                    var deniedSelection = ResolveSelectedCompany(ctx, webContext);
+                    LogContextSnapshot(
+                        ctx,
+                        "EnsureContextAsync denied",
+                        webContext,
+                        deniedSelection.CompanyId,
+                        webContext.Header.Message ?? "Context denied or empty.");
                     _logger.LogWarning("Entra context denied for OID {EntraOid}. Message: {Message}", entraOid, webContext.Header.Message);
                     return new IndAuthContextResult
                     {
@@ -211,6 +227,13 @@ namespace IND_CRM_APP.Services
                     ctx.Session.SetString(ContextKey, JsonSerializer.Serialize(webContext));
                     ctx.Session.SetString(EntraOidContextKey, entraOid);
                     _logger.LogInformation("Cached Entra context for OID {EntraOid}.", entraOid);
+                    var cachedSelection = ResolveSelectedCompany(ctx, webContext);
+                    LogContextSnapshot(
+                        ctx,
+                        "EnsureContextAsync cache stored",
+                        webContext,
+                        cachedSelection.CompanyId,
+                        "Stored fresh Entra context in session.");
                 }
                 catch (Exception ex)
                 {
@@ -220,6 +243,13 @@ namespace IND_CRM_APP.Services
                 EnsureCompanySelection(ctx, webContext);
                 LogSelectedCompany(ctx);
                 RestoreAxUserSession(ctx, webContext);
+                var finalSelection = ResolveSelectedCompany(ctx, webContext);
+                LogContextSnapshot(
+                    ctx,
+                    "EnsureContextAsync completed",
+                    webContext,
+                    finalSelection.CompanyId,
+                    "Fresh context loaded and session restored.");
 
                 return new IndAuthContextResult
                 {
@@ -299,16 +329,25 @@ namespace IND_CRM_APP.Services
         }
 
         // Keeps the session Ax user aligned with the resolved Entra context.
-        private static void RestoreAxUserSession(HttpContext ctx, IndWebContext context)
+        private void RestoreAxUserSession(HttpContext ctx, IndWebContext context)
         {
+            var previousAxUser = NormalizeLogValue(ctx.Session.GetString(AxUserKey));
             var normalizedAxUserId = (context?.Header?.AxUserId ?? string.Empty).Trim();
             if (string.IsNullOrWhiteSpace(normalizedAxUserId))
             {
-                ctx.Session.Remove("AxUser");
+                ctx.Session.Remove(AxUserKey);
+                _logger.LogWarning(
+                    "RestoreAxUserSession cleared session AxUser. PreviousAxUser={PreviousAxUser}; ContextAxUser={ContextAxUser}",
+                    previousAxUser,
+                    NormalizeLogValue(context?.Header?.AxUserId));
                 return;
             }
 
-            ctx.Session.SetString("AxUser", normalizedAxUserId);
+            ctx.Session.SetString(AxUserKey, normalizedAxUserId);
+            _logger.LogInformation(
+                "RestoreAxUserSession applied context AxUser. PreviousAxUser={PreviousAxUser}; ContextAxUser={ContextAxUser}",
+                previousAxUser,
+                normalizedAxUserId);
         }
 
         private static IndWebContextHeader MapHeader(IndEntraContextHeader? header)
@@ -446,7 +485,7 @@ namespace IND_CRM_APP.Services
             }
         }
 
-        private static void EnsureCompanySelection(HttpContext ctx, IndWebContext context)
+        private void EnsureCompanySelection(HttpContext ctx, IndWebContext context)
         {
             var selected = ctx.Session.GetString(CompanyKey);
             var selectionSource = ctx.Session.GetString(CompanySelectionSourceKey);
@@ -464,12 +503,24 @@ namespace IND_CRM_APP.Services
                 {
                     ctx.Session.SetString(CompanyKey, selectedCompany.CompanyId);
                     CacheSelectedCompanyName(ctx, context, selectedCompany.CompanyId);
+                    LogContextSnapshot(
+                        ctx,
+                        "EnsureCompanySelection kept existing",
+                        context,
+                        selectedCompany.CompanyId,
+                        "Existing session company is valid for current context.");
                     return;
                 }
 
                 if (isUserSelection)
                 {
                     ctx.Session.Remove(CompanyNameKey);
+                    LogContextSnapshot(
+                        ctx,
+                        "EnsureCompanySelection invalid user selection",
+                        context,
+                        null,
+                        "User-selected company is not available in current context.");
                     return;
                 }
             }
@@ -482,12 +533,26 @@ namespace IND_CRM_APP.Services
                 ctx.Session.SetString(CompanyKey, fallback);
                 ctx.Session.SetString(CompanySelectionSourceKey, CompanySelectionSourceDefault);
                 CacheSelectedCompanyName(ctx, context, fallback);
+                LogContextSnapshot(
+                    ctx,
+                    "EnsureCompanySelection applied fallback",
+                    context,
+                    fallback,
+                    string.Equals(fallback, context.Header.DefaultCompany, StringComparison.OrdinalIgnoreCase)
+                        ? "Default company selected."
+                        : "First available company selected.");
                 return;
             }
 
             ctx.Session.Remove(CompanyKey);
             ctx.Session.Remove(CompanySelectionSourceKey);
             ctx.Session.Remove(CompanyNameKey);
+            LogContextSnapshot(
+                ctx,
+                "EnsureCompanySelection cleared selection",
+                context,
+                null,
+                "No company available in context.");
         }
 
         // Resolves a company from the current context using case-insensitive company id matching.
@@ -522,28 +587,51 @@ namespace IND_CRM_APP.Services
         // Logs the current company selection after context load.
         private void LogSelectedCompany(HttpContext ctx)
         {
-            var selected = ctx.Session.GetString(CompanyKey);
-            if (string.IsNullOrWhiteSpace(selected))
+            var cachedContext = TryReadCachedContext(ctx, logDiagnostics: false);
+            var resolution = ResolveSelectedCompany(ctx, cachedContext);
+            if (string.IsNullOrWhiteSpace(resolution.CompanyId))
             {
                 _logger.LogWarning("No company selected after Entra context load.");
                 return;
             }
 
-            _logger.LogInformation("Selected company from context: {CompanyId}", selected);
+            _logger.LogInformation(
+                "Selected company from context: {CompanyId}. Reason={Reason}",
+                resolution.CompanyId,
+                resolution.Reason);
         }
 
         // Clears cached context and related session values.
-        private static void ClearCachedContext(HttpContext ctx, bool preserveCompanySelection)
+        private void ClearCachedContext(HttpContext ctx, bool preserveCompanySelection)
         {
+            var cachedContext = TryReadCachedContext(ctx, logDiagnostics: false);
+            var cachedSelection = ResolveSelectedCompany(ctx, cachedContext);
+            LogContextSnapshot(
+                ctx,
+                "ClearCachedContext before",
+                cachedContext,
+                cachedSelection.CompanyId,
+                preserveCompanySelection
+                    ? "Clearing cache while preserving selected company keys."
+                    : "Clearing cache and company selection keys.");
             ctx.Session.Remove(ContextKey);
             ctx.Session.Remove(CompanyNameKey);
             ctx.Session.Remove(EntraOidContextKey);
-            ctx.Session.Remove("AxUser");
+            ctx.Session.Remove(AxUserKey);
             if (!preserveCompanySelection)
             {
                 ctx.Session.Remove(CompanyKey);
                 ctx.Session.Remove(CompanySelectionSourceKey);
             }
+
+            LogContextSnapshot(
+                ctx,
+                "ClearCachedContext after",
+                null,
+                preserveCompanySelection ? ctx.Session.GetString(CompanyKey) : null,
+                preserveCompanySelection
+                    ? "Cache cleared and company selection preserved."
+                    : "Cache and company selection cleared.");
         }
 
         // Extracts Entra OID from the authenticated user claims, if available.
@@ -556,6 +644,106 @@ namespace IND_CRM_APP.Services
                       ?? user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
 
             return string.IsNullOrWhiteSpace(oid) ? null : oid;
+        }
+
+        private IndWebContext? TryReadCachedContext(HttpContext ctx, bool logDiagnostics)
+        {
+            var raw = ctx.Session.GetString(ContextKey);
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            try
+            {
+                var cachedContext = JsonSerializer.Deserialize<IndWebContext>(raw);
+                if (cachedContext != null && logDiagnostics)
+                {
+                    var selection = ResolveSelectedCompany(ctx, cachedContext);
+                    LogContextSnapshot(
+                        ctx,
+                        "GetCachedContext hit",
+                        cachedContext,
+                        selection.CompanyId,
+                        "Session cache deserialized successfully.");
+                }
+
+                return cachedContext;
+            }
+            catch (Exception ex)
+            {
+                if (logDiagnostics)
+                {
+                    _logger.LogWarning(ex, "Failed to deserialize cached IND web context.");
+                    LogContextSnapshot(
+                        ctx,
+                        "GetCachedContext deserialize failure",
+                        null,
+                        null,
+                        "Session cache could not be deserialized.");
+                }
+
+                return null;
+            }
+        }
+
+        private (string? CompanyId, string Reason) ResolveSelectedCompany(HttpContext? ctx, IndWebContext? context)
+        {
+            var selected = ctx?.Session.GetString(CompanyKey);
+            var selectionSource = ctx?.Session.GetString(CompanySelectionSourceKey);
+            if (!string.IsNullOrWhiteSpace(selected))
+            {
+                var selectedCompany = FindCompany(context, selected);
+                if (selectedCompany != null)
+                    return (selectedCompany.CompanyId, "session-selection");
+
+                if (context == null)
+                    return (selected, "session-selection-without-context");
+
+                if (string.Equals(selectionSource, CompanySelectionSourceUser, StringComparison.OrdinalIgnoreCase))
+                    return (null, "invalid-user-selection");
+            }
+
+            if (context != null)
+            {
+                var defaultCompany = FindCompany(context, context.Header.DefaultCompany);
+                if (defaultCompany != null)
+                    return (defaultCompany.CompanyId, "default-company");
+
+                var first = context.Companies.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c.CompanyId));
+                if (first != null)
+                    return (first.CompanyId, "first-company");
+            }
+
+            return (null, "no-company");
+        }
+
+        private void LogContextSnapshot(
+            HttpContext ctx,
+            string stage,
+            IndWebContext? context,
+            string? resolvedCompanyId,
+            string? note)
+        {
+            _logger.LogInformation(
+                "IND context trace [{Stage}]. SessionEntraOid={SessionEntraOid}; ContextEntraOid={ContextEntraOid}; ClaimsEntraOid={ClaimsEntraOid}; SessionAxUser={SessionAxUser}; ContextAxUser={ContextAxUser}; SessionCompany={SessionCompany}; SessionCompanyName={SessionCompanyName}; SelectionSource={SelectionSource}; ResolvedCompany={ResolvedCompany}; DefaultCompany={DefaultCompany}; CompanyCount={CompanyCount}; Note={Note}",
+                stage,
+                NormalizeLogValue(ctx.Session.GetString(EntraOidKey)),
+                NormalizeLogValue(ctx.Session.GetString(EntraOidContextKey)),
+                NormalizeLogValue(TryGetEntraOidFromClaims(ctx.User)),
+                NormalizeLogValue(ctx.Session.GetString(AxUserKey)),
+                NormalizeLogValue(context?.Header?.AxUserId),
+                NormalizeLogValue(ctx.Session.GetString(CompanyKey)),
+                NormalizeLogValue(ctx.Session.GetString(CompanyNameKey)),
+                NormalizeLogValue(ctx.Session.GetString(CompanySelectionSourceKey)),
+                NormalizeLogValue(resolvedCompanyId),
+                NormalizeLogValue(context?.Header?.DefaultCompany),
+                context?.Companies?.Count ?? 0,
+                NormalizeLogValue(note));
+        }
+
+        private static string NormalizeLogValue(string? value)
+        {
+            var trimmed = (value ?? string.Empty).Trim();
+            return string.IsNullOrWhiteSpace(trimmed) ? "(empty)" : trimmed;
         }
     }
 }

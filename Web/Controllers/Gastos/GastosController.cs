@@ -5,16 +5,20 @@ using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using IND_CRM_APP.Extensions;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Localization;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
+using System.IO;
 using System.Text;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -654,11 +658,20 @@ namespace IND_CRM_APP.Controllers
                 return CreateApiPagedError(StatusCodes.Status401Unauthorized, _sr["Api_SessionExpired"].Value);
 
             var currentAxUserId = GetCurrentSessionAxUserId();
+            var cachedContext = _authContext.GetCachedContext();
+            var selectedCompanyId = GetSelectedExpenseCompanyIdForLogs();
+            var selectionSource = NormalizeOptionalText(HttpContext.Session.GetString("INDCompanySelectionSource"));
 
             try
             {
                 _logger.LogInformation(
-                    "ApiExpenseSheetsSubordinates request trace. X-IND-AxUserId={AxUserId}",
+                    "ApiExpenseSheetsSubordinates request trace. SessionAxUser={SessionAxUser}; ContextAxUser={ContextAxUser}; SelectedCompany={SelectedCompany}; DefaultCompany={DefaultCompany}; SelectionSource={SelectionSource}; CachedCompanyCount={CachedCompanyCount}; X-IND-AxUserId={AxUserId}",
+                    currentAxUserId ?? string.Empty,
+                    NormalizeOptionalText(cachedContext?.Header?.AxUserId) ?? string.Empty,
+                    selectedCompanyId ?? string.Empty,
+                    NormalizeOptionalText(cachedContext?.Header?.DefaultCompany) ?? string.Empty,
+                    selectionSource ?? string.Empty,
+                    cachedContext?.Companies?.Count ?? 0,
                     currentAxUserId ?? string.Empty);
 
                 var result = await _apiClient.GetExpenseSheetSubordinatesAsync(token, currentAxUserId);
@@ -676,6 +689,20 @@ namespace IND_CRM_APP.Controllers
                     .ToList();
                 var responsePage = result.Page > 0 ? result.Page : 1;
                 var responsePageSize = result.PageSize > 0 ? result.PageSize : items.Count;
+                _logger.LogInformation(
+                    "ApiExpenseSheetsSubordinates response trace. Success={Success}; Message={Message}; ErrorCode={ErrorCode}; TraceId={TraceId}; ItemCount={ItemCount}; Total={Total}; Page={Page}; PageSize={PageSize}; SessionAxUser={SessionAxUser}; ContextAxUser={ContextAxUser}; SelectedCompany={SelectedCompany}; DefaultCompany={DefaultCompany}",
+                    result.Success,
+                    result.Message ?? string.Empty,
+                    result.ErrorCode ?? string.Empty,
+                    result.TraceId ?? string.Empty,
+                    items.Count,
+                    result.Total,
+                    responsePage,
+                    responsePageSize,
+                    currentAxUserId ?? string.Empty,
+                    NormalizeOptionalText(cachedContext?.Header?.AxUserId) ?? string.Empty,
+                    selectedCompanyId ?? string.Empty,
+                    NormalizeOptionalText(cachedContext?.Header?.DefaultCompany) ?? string.Empty);
 
                 return CreateApiPagedResponse(new
                 {
@@ -1129,7 +1156,15 @@ namespace IND_CRM_APP.Controllers
                 var result = await _apiClient.GetExpenseSheetDetailAsync(token, safeSheetId, requestAxUserId);
                 var sheet = SelectSheet(result.GetAnyItems(), safeSheetId);
                 if (sheet == null)
+                {
+                    LogExpenseSheetLookupMiss(
+                        nameof(ApiExpenseSheetDetail),
+                        safeSheetId,
+                        requestAxUserId,
+                        result,
+                        "Returning 404 because the upstream detail envelope produced no selectable sheet item.");
                     return CreateApiPagedError(StatusCodes.Status404NotFound, _sr["ExpenseSheets_NotFound"].Value);
+                }
                 var detailItem = ToExpenseSheetApiDetailItem(sheet);
 
                 return CreateApiPagedResponse(new
@@ -1262,13 +1297,40 @@ namespace IND_CRM_APP.Controllers
                     nameof(ApiExpenseSheetsCreate),
                     ExpenseSheetMutationType.LineMutation);
                 if (!mutationGuard.Allowed)
-                    return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+                {
+                    _logger.LogWarning(
+                        "ApiExpenseSheetsCreate mutation guard denied. Mode: {Mode}. ExistingHojaGastosId: {ExistingHojaGastosId}. SelectedCompany: {SelectedCompany}. AxUserId: {AxUserId}. StatusCode: {StatusCode}. ErrorCode: {ErrorCode}. Message: {Message}.",
+                        normalizedMode,
+                        normalizedExistingSheetId ?? "<empty>",
+                        GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
+                        requestAxUserId ?? "<empty>",
+                        mutationGuard.StatusCode,
+                        mutationGuard.ErrorCode ?? "<empty>",
+                        mutationGuard.Message ?? "<empty>");
+                    return CreateApiCommandError(
+                        mutationGuard.StatusCode,
+                        mutationGuard.Message ?? _sr["Api_RequestFailed"].Value,
+                        mutationGuard.ErrorCode ?? "UNKNOWN_ERROR");
+                }
             }
 
             try
             {
                 var response = await _apiClient.CreateExpenseSheetAsync(token, request, requestAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                if (!response.Success)
+                {
+                    _logger.LogWarning(
+                        "ApiExpenseSheetsCreate upstream logical failure. Mode: {Mode}. ExistingHojaGastosId: {ExistingHojaGastosId}. SelectedCompany: {SelectedCompany}. AxUserId: {AxUserId}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. Message: {Message}.",
+                        normalizedMode,
+                        normalizedExistingSheetId ?? "<empty>",
+                        GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
+                        requestAxUserId ?? "<empty>",
+                        response.ErrorCode ?? "<null>",
+                        response.TraceId ?? "<null>",
+                        response.Message ?? "<null>");
+                }
 
                 return CreateApiResponse(
                     new
@@ -1868,10 +1930,17 @@ namespace IND_CRM_APP.Controllers
                 ExistingHojaGastosId = NormalizeOptionalText(existingHojaGastosId),
                 ProjectId = NormalizeOptionalText(projectId)
             };
+            var actionStopwatch = Stopwatch.StartNew();
+            LogQuickCreateIngressDiagnostics(ticketImage, request, requestAxUserId);
 
             try
             {
                 using var stream = ticketImage.OpenReadStream();
+                _logger.LogInformation(
+                    "ApiExpenseSheetTicketQuickCreate request stream opened. CanSeek: {CanSeek}. StreamLength: {StreamLength}. RequestAborted: {RequestAborted}.",
+                    stream.CanSeek,
+                    stream.CanSeek ? stream.Length : -1,
+                    HttpContext.RequestAborted.IsCancellationRequested);
                 var transport = await _apiClient.QuickCreateExpenseSheetTicketAsync(
                     token,
                     request,
@@ -1893,6 +1962,18 @@ namespace IND_CRM_APP.Controllers
                     Response.Headers["Retry-After"] = retryAfter;
                 }
 
+                actionStopwatch.Stop();
+                _logger.LogInformation(
+                    "ApiExpenseSheetTicketQuickCreate completed. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. RetryAfter: {RetryAfter}. ElapsedMs: {ElapsedMs}. SelectedCompany: {SelectedCompany}. AxUserId: {AxUserId}.",
+                    (int)transport.StatusCode,
+                    response.Success,
+                    response.ErrorCode ?? "<null>",
+                    response.TraceId ?? "<null>",
+                    retryAfter ?? "<null>",
+                    actionStopwatch.ElapsedMilliseconds,
+                    GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
+                    requestAxUserId ?? "<empty>");
+
                 return CreateApiResponse(
                     new
                     {
@@ -1907,7 +1988,15 @@ namespace IND_CRM_APP.Controllers
             }
             catch (ApiException ex)
             {
-                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketQuickCreate");
+                actionStopwatch.Stop();
+                _logger.LogError(
+                    ex,
+                    "Upstream API error in ApiExpenseSheetTicketQuickCreate. SelectedCompany: {SelectedCompany}. AxUserId: {AxUserId}. RequestContentLength: {RequestContentLength}. TicketLength: {TicketLength}. ElapsedMs: {ElapsedMs}.",
+                    GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
+                    requestAxUserId ?? "<empty>",
+                    Request.ContentLength ?? -1,
+                    ticketImage.Length,
+                    actionStopwatch.ElapsedMilliseconds);
                 return CreateApiCommandError(
                     StatusCodes.Status502BadGateway,
                     _sr["Api_RequestFailed"].Value,
@@ -1915,7 +2004,15 @@ namespace IND_CRM_APP.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketQuickCreate");
+                actionStopwatch.Stop();
+                _logger.LogError(
+                    ex,
+                    "Unhandled error in ApiExpenseSheetTicketQuickCreate. SelectedCompany: {SelectedCompany}. AxUserId: {AxUserId}. RequestContentLength: {RequestContentLength}. TicketLength: {TicketLength}. ElapsedMs: {ElapsedMs}.",
+                    GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
+                    requestAxUserId ?? "<empty>",
+                    Request.ContentLength ?? -1,
+                    ticketImage.Length,
+                    actionStopwatch.ElapsedMilliseconds);
                 return CreateApiCommandError(
                     StatusCodes.Status500InternalServerError,
                     _sr["Api_RequestFailed"].Value,
@@ -3457,9 +3554,26 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 var result = await _apiClient.GetExpenseSheetDetailAsync(token, safeSheetId, axUserIdOverride);
+                _logger.LogInformation(
+                    "ValidateExpenseSheetMutationAsync upstream detail result. Operation: {Operation}. HojaGastosId: {HojaGastosId}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. ItemCount: {ItemCount}. Message: {Message}.",
+                    operationName,
+                    safeSheetId,
+                    GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
+                    NormalizeOptionalText(axUserIdOverride) ?? "<session>",
+                    result.Success,
+                    result.ErrorCode ?? "<null>",
+                    result.TraceId ?? "<null>",
+                    result.GetAnyItems().Count(),
+                    result.Message ?? "<null>");
                 var sheet = SelectSheet(result.GetAnyItems(), safeSheetId);
                 if (sheet == null)
                 {
+                    LogExpenseSheetLookupMiss(
+                        operationName,
+                        safeSheetId,
+                        axUserIdOverride,
+                        result,
+                        "Mutation guard is returning not found because the upstream detail envelope produced no selectable sheet item.");
                     return new ExpenseSheetMutationGuardResult
                     {
                         Allowed = false,
@@ -4281,6 +4395,170 @@ namespace IND_CRM_APP.Controllers
         private string? GetCurrentSessionAxUserId()
         {
             return NormalizeOptionalText(HttpContext?.Session.GetString("AxUser"));
+        }
+
+        // Resolves the current company id exactly as the expense API headers would see it.
+        private string? GetSelectedExpenseCompanyIdForLogs()
+        {
+            var cachedContext = _authContext.GetCachedContext();
+            return NormalizeOptionalText(_authContext.GetSelectedCompanyId(cachedContext))
+                   ?? NormalizeOptionalText(HttpContext?.Session.GetString("INDCompanySelected"));
+        }
+
+        // Emits one structured trace with the effective quick-create request limits and multipart metadata.
+        private void LogQuickCreateIngressDiagnostics(
+            IFormFile ticketImage,
+            ExpenseSheetTicketQuickCreateRequest request,
+            string? requestAxUserId)
+        {
+            var maxBodySizeFeature = HttpContext.Features.Get<IHttpMaxRequestBodySizeFeature>();
+            var maxRequestBodySize = maxBodySizeFeature?.MaxRequestBodySize;
+            var boundaryLength = TryGetMultipartBoundaryLength(Request.ContentType);
+            var iisConfigPath = string.Empty;
+            var iisMaxAllowedContentLength = TryReadIisMaxAllowedContentLength(out iisConfigPath);
+
+            _logger.LogInformation(
+                "ApiExpenseSheetTicketQuickCreate ingress. SelectedCompany: {SelectedCompany}. AxUserId: {AxUserId}. RequestContentLength: {RequestContentLength}. RequestContentType: {RequestContentType}. HasFormContentType: {HasFormContentType}. BoundaryLength: {BoundaryLength}. TicketLength: {TicketLength}. TicketContentType: {TicketContentType}. TicketFileName: {TicketFileName}. TicketExtension: {TicketExtension}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjectId: {ProjectId}. DescriptionLength: {DescriptionLength}. ComentarioLength: {ComentarioLength}. MaxRequestBodySize: {MaxRequestBodySize}. MaxRequestBodySizeReadOnly: {MaxRequestBodySizeReadOnly}. IisMaxAllowedContentLength: {IisMaxAllowedContentLength}. IisConfigPath: {IisConfigPath}.",
+                GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
+                NormalizeOptionalText(requestAxUserId) ?? "<empty>",
+                Request.ContentLength ?? -1,
+                Request.ContentType ?? "<empty>",
+                Request.HasFormContentType,
+                boundaryLength ?? -1,
+                ticketImage.Length,
+                ticketImage.ContentType ?? "<empty>",
+                Path.GetFileName(ticketImage.FileName ?? string.Empty),
+                Path.GetExtension(ticketImage.FileName ?? string.Empty),
+                request.CurrencyCode ?? "<empty>",
+                request.ExistingHojaGastosId ?? "<empty>",
+                request.ProjectId ?? "<empty>",
+                request.Description?.Length ?? 0,
+                request.Comentario?.Length ?? 0,
+                maxRequestBodySize ?? -1,
+                maxBodySizeFeature?.IsReadOnly ?? false,
+                iisMaxAllowedContentLength ?? -1,
+                string.IsNullOrWhiteSpace(iisConfigPath) ? "<missing>" : iisConfigPath);
+
+            if (Request.ContentLength.HasValue && maxRequestBodySize.HasValue && Request.ContentLength.Value > maxRequestBodySize.Value)
+            {
+                _logger.LogWarning(
+                    "ApiExpenseSheetTicketQuickCreate request content length exceeds MaxRequestBodySize. RequestContentLength: {RequestContentLength}. MaxRequestBodySize: {MaxRequestBodySize}.",
+                    Request.ContentLength.Value,
+                    maxRequestBodySize.Value);
+            }
+
+            if (Request.ContentLength.HasValue && iisMaxAllowedContentLength.HasValue && Request.ContentLength.Value > iisMaxAllowedContentLength.Value)
+            {
+                _logger.LogWarning(
+                    "ApiExpenseSheetTicketQuickCreate request content length exceeds IIS maxAllowedContentLength. RequestContentLength: {RequestContentLength}. IisMaxAllowedContentLength: {IisMaxAllowedContentLength}.",
+                    Request.ContentLength.Value,
+                    iisMaxAllowedContentLength.Value);
+            }
+
+            if (maxRequestBodySize.HasValue && iisMaxAllowedContentLength.HasValue && maxRequestBodySize.Value != iisMaxAllowedContentLength.Value)
+            {
+                _logger.LogWarning(
+                    "ApiExpenseSheetTicketQuickCreate request size configuration differs between ASP.NET Core and IIS. MaxRequestBodySize: {MaxRequestBodySize}. IisMaxAllowedContentLength: {IisMaxAllowedContentLength}.",
+                    maxRequestBodySize.Value,
+                    iisMaxAllowedContentLength.Value);
+            }
+        }
+
+        // Logs when the web proxy converts an upstream miss or rejection into a local not-found style response.
+        private void LogExpenseSheetLookupMiss(
+            string operationName,
+            string hojaGastosId,
+            string? requestAxUserId,
+            PagedApiResponse<ExpenseSheetDetailDto> result,
+            string reason)
+        {
+            _logger.LogWarning(
+                "Expense sheet lookup miss. Operation: {Operation}. HojaGastosId: {HojaGastosId}. SelectedCompany: {SelectedCompany}. RequestedAxUserId: {RequestedAxUserId}. SessionAxUserId: {SessionAxUserId}. UpstreamSuccess: {UpstreamSuccess}. UpstreamErrorCode: {UpstreamErrorCode}. UpstreamTraceId: {UpstreamTraceId}. UpstreamItemCount: {UpstreamItemCount}. UpstreamMessage: {UpstreamMessage}. Reason: {Reason}.",
+                operationName,
+                hojaGastosId,
+                GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
+                NormalizeOptionalText(requestAxUserId) ?? "<empty>",
+                GetCurrentSessionAxUserId() ?? "<empty>",
+                result.Success,
+                result.ErrorCode ?? "<null>",
+                result.TraceId ?? "<null>",
+                result.GetAnyItems().Count(),
+                result.Message ?? "<null>",
+                reason);
+        }
+
+        // Extracts the multipart boundary length so uploads can be correlated with server buffering behavior.
+        private static int? TryGetMultipartBoundaryLength(string? contentType)
+        {
+            var normalized = NormalizeOptionalText(contentType);
+            if (string.IsNullOrWhiteSpace(normalized))
+                return null;
+
+            const string boundaryToken = "boundary=";
+            var index = normalized.IndexOf(boundaryToken, StringComparison.OrdinalIgnoreCase);
+            if (index < 0)
+                return null;
+
+            var boundary = normalized[(index + boundaryToken.Length)..].Trim().Trim('"');
+            var semicolonIndex = boundary.IndexOf(';');
+            if (semicolonIndex >= 0)
+                boundary = boundary[..semicolonIndex].Trim();
+
+            return string.IsNullOrWhiteSpace(boundary) ? null : boundary.Length;
+        }
+
+        // Reads maxAllowedContentLength from the nearest web.config when the app runs behind IIS.
+        private static long? TryReadIisMaxAllowedContentLength(out string configPath)
+        {
+            configPath = string.Empty;
+
+            foreach (var candidate in EnumerateWebConfigCandidates())
+            {
+                if (!System.IO.File.Exists(candidate))
+                    continue;
+
+                configPath = candidate;
+                try
+                {
+                    var document = XDocument.Load(candidate);
+                    var requestLimits = document
+                        .Descendants("requestLimits")
+                        .FirstOrDefault();
+                    var rawValue = requestLimits?.Attribute("maxAllowedContentLength")?.Value;
+                    return long.TryParse(rawValue, out var parsed) && parsed > 0
+                        ? parsed
+                        : null;
+                }
+                catch
+                {
+                    return null;
+                }
+            }
+
+            return null;
+        }
+
+        private static IEnumerable<string> EnumerateWebConfigCandidates()
+        {
+            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var roots = new[]
+            {
+                AppContext.BaseDirectory,
+                Directory.GetCurrentDirectory()
+            };
+
+            foreach (var root in roots)
+            {
+                var current = root;
+                while (!string.IsNullOrWhiteSpace(current))
+                {
+                    var candidate = Path.Combine(current, "web.config");
+                    if (seen.Add(candidate))
+                        yield return candidate;
+
+                    current = Directory.GetParent(current)?.FullName;
+                }
+            }
         }
 
         // Detects the upstream error that appears when the API company bootstrap context has been lost.

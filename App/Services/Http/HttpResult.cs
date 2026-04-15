@@ -15,5 +15,6 @@ namespace IND_CRM_APP.Services.Http
         public bool IsSuccessStatusCode { get; set; }
         public HttpStatusCode StatusCode { get; set; }
         public string? ErrorMessage { get; set; }
+        public long DurationMs { get; set; }
     }
 }

@@ -132,6 +132,7 @@ namespace IND_CRM_APP.Controllers
         {
             var safeReason = string.IsNullOrWhiteSpace(reason) ? "unspecified" : reason.Trim();
             _logger.LogWarning("Forced relogin requested. Reason: {Reason}", safeReason);
+            LogAuthContextSnapshot("ForceRelogin before clear", _authContext.GetCachedContext(), safeReason);
 
             await ClearAuthSessionAsync();
             TempData.INDSetActionMarkError();
@@ -181,10 +182,15 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
+                LogAuthContextSnapshot("ApiEntraContext before EnsureContextAsync", _authContext.GetCachedContext(), requestedAppCode);
                 var contextResult = await _authContext.EnsureContextAsync();
                 if (!contextResult.Success || contextResult.Context == null)
                 {
                     var (statusCode, errorCode) = ResolveContextFailure(contextResult.Message);
+                    LogAuthContextSnapshot(
+                        "ApiEntraContext failure",
+                        contextResult.Context,
+                        contextResult.Message ?? errorCode);
 
                     return CreateApiPagedResponse(
                         new
@@ -204,6 +210,10 @@ namespace IND_CRM_APP.Controllers
 
                 var items = new[] { ToApiEntraContextItem(contextResult.Context) };
                 const int total = 1;
+                LogAuthContextSnapshot(
+                    "ApiEntraContext success",
+                    contextResult.Context,
+                    contextResult.Context.Header.Message);
 
                 return CreateApiPagedResponse(
                     new
@@ -308,6 +318,40 @@ namespace IND_CRM_APP.Controllers
             }
 
             return (StatusCodes.Status400BadRequest, "CONTEXT_ERROR");
+        }
+
+        private void LogAuthContextSnapshot(string stage, IndWebContext? context, string? note)
+        {
+            _logger.LogInformation(
+                "Auth context trace [{Stage}]. SessionEntraOid={SessionEntraOid}; ContextEntraOid={ContextEntraOid}; ClaimsEntraOid={ClaimsEntraOid}; SessionAxUser={SessionAxUser}; ContextAxUser={ContextAxUser}; SessionCompany={SessionCompany}; SessionCompanyName={SessionCompanyName}; SelectionSource={SelectionSource}; ResolvedCompany={ResolvedCompany}; DefaultCompany={DefaultCompany}; CompanyCount={CompanyCount}; Note={Note}",
+                stage,
+                NormalizeLogValue(HttpContext.Session.GetString("ENTRAOID")),
+                NormalizeLogValue(HttpContext.Session.GetString("INDEntraOidContext")),
+                NormalizeLogValue(TryGetEntraOidFromClaims(User)),
+                NormalizeLogValue(HttpContext.Session.GetString("AxUser")),
+                NormalizeLogValue(context?.Header?.AxUserId),
+                NormalizeLogValue(HttpContext.Session.GetString("INDCompanySelected")),
+                NormalizeLogValue(HttpContext.Session.GetString("INDCompanySelectedName")),
+                NormalizeLogValue(HttpContext.Session.GetString("INDCompanySelectionSource")),
+                NormalizeLogValue(_authContext.GetSelectedCompanyId(context)),
+                NormalizeLogValue(context?.Header?.DefaultCompany),
+                context?.Companies?.Count ?? 0,
+                NormalizeLogValue(note));
+        }
+
+        private static string? TryGetEntraOidFromClaims(System.Security.Claims.ClaimsPrincipal? user)
+        {
+            if (user == null)
+                return null;
+
+            return user.FindFirst(IndAuthEnv.ClaimOid)?.Value
+                   ?? user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
+        }
+
+        private static string NormalizeLogValue(string? value)
+        {
+            var trimmed = (value ?? string.Empty).Trim();
+            return string.IsNullOrWhiteSpace(trimmed) ? "(empty)" : trimmed;
         }
 
         private async Task<IActionResult> LogoutCore()
