@@ -3,6 +3,7 @@ import type { ExpenseQuickFilterId, AppliedFilterSnapshot } from "./expenseListT
 import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog.ts";
 import type { ExpenseStatusFilterCode } from "../expenseTypes.ts";
 import { startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { resolveExpenseQuickDateFilterFromRange } from "../utils/expenseQuickDateFilterState.ts";
 import { normalizeExpenseFilterSnapshot } from "./expenseFilterSnapshot.ts";
 
 type UseExpenseSheetsFiltersStateArgs = {
@@ -81,6 +82,7 @@ export const useExpenseSheetsFiltersState = ({
   const restoreAppliedFilters = useCallback((snapshot: AppliedFilterSnapshot) => {
     const normalized = normalizeExpenseFilterSnapshot(snapshot);
     const restoredManagedUserId = String(normalized.managedUserId || defaultManagedUserId).trim();
+    const restoredQuickFilter = resolveExpenseQuickDateFilterFromRange(normalized.fromDate, normalized.toDate);
     setFromDate(normalized.fromDate);
     setToDate(normalized.toDate);
     setProjectId(normalized.projectId);
@@ -89,7 +91,7 @@ export const useExpenseSheetsFiltersState = ({
     setManagedUserId(restoredManagedUserId);
     setIncludeSubordinates(normalized.includeSubordinates === true);
     setStatusFilter(normalized.statusFilter);
-    setActiveQuickFilter(null);
+    setActiveQuickFilter(restoredQuickFilter);
     setShowManualDateFilter(false);
     setShowManualDateError(false);
     setAppliedFilters({

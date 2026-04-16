@@ -1,9 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
-import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
-import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
@@ -22,6 +20,8 @@ import { useExpenseSheetLineDetailMutations } from "./useExpenseSheetLineDetailM
 import { useExpenseSheetLineDetailTopbarActions } from "./useExpenseSheetLineDetailTopbarActions.ts";
 import { useExpenseSheetLineDetailConfirmDialog } from "./useExpenseSheetLineDetailConfirmDialog.ts";
 import { useExpenseSheetLineDetailState } from "./useExpenseSheetLineDetailState.ts";
+import { useExpenseSheetLineTicketPreview } from "./useExpenseSheetLineTicketPreview.ts";
+import ExpenseSheetLineDetailView from "./ExpenseSheetLineDetailView.tsx";
 import { useExpenseSheetLineTypeValidation } from "./useExpenseSheetLineTypeValidation.ts";
 
 // Initializes auth seed for expense API calls before island effects run.
@@ -169,6 +169,27 @@ const ExpenseSheetLineDetailContent = () => {
   const projectValue = safeText(line?.projId || header?.projId);
   const sheetDescription = safeText(header?.description) || "-";
   const internacionalLabel = getExpenseInternationalLabel(line?.internacional);
+  const {
+    showStickyPreview,
+    previewOpen,
+    previewBusy,
+    previewError,
+    previewImageUrl,
+    previewScale,
+    previewTranslate,
+    previewSurfaceRef,
+    previewFileName,
+    previewAltText,
+    openPreview,
+    closePreview,
+    handlePreviewPointerDown,
+    handlePreviewPointerMove,
+    handlePreviewPointerEnd,
+    handlePreviewWheel,
+  } = useExpenseSheetLineTicketPreview({
+    linkedTicketFileId,
+    hasLinkedTicket,
+  });
 
   const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
     const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
@@ -293,80 +314,92 @@ const ExpenseSheetLineDetailContent = () => {
     });
   }, [isEditing, line?.lineRecId, lineId, linkedTicketFileId, sheetId]);
 
-  return (
-    <div className="space-y-2">
-      <ConfirmModal
-        open={modal.open}
-        title={modal.title}
-        message={modal.message}
-        confirmText={modalConfirmText}
-        cancelText={modalCancelText}
-        loadingText={modalLoadingText}
-        showCancel={modal.showCancel}
-        showConfirm={modal.showConfirm}
-        busy={busy || isRedirectingAfterCreate}
-        error={modalError}
+  const detailBody =
+    !isLoading && !isRedirectingAfterCreate && !errorMessage && line ? (
+      <ExpenseSheetLineForm
+        line={line}
+        fallbackDate={safeText(header?.createdDate)}
+        sheetDescription={sheetDescription}
+        projectValue={projectValue}
+        priceText={priceText}
+        amountText={amountText}
+        internacionalLabel={internacionalLabel}
+        isKmType={isKmType}
+        isFuelPriceLoading={isFuelPriceLoading}
+        fuelPriceMessage={fuelPriceMessage}
+        fuelPriceMessageIsError={fuelPriceMessageIsError}
         status={status}
-        onConfirm={handleModalButtonConfirm}
-        onCancel={closeConfirm}
+        isEditing={isEditing}
+        gastoTypeOptions={gastoTypeOptions}
+        internationalOptions={internationalOptions}
+        draftDescription={draftDescription}
+        draftTransDate={draftTransDate}
+        draftTypeValueCode={draftTypeValueCode}
+        draftPrice={draftPrice}
+        draftQty={draftQty}
+        draftProjectId={draftProjectId}
+        draftInternational={draftInternational}
+        typeInputRef={typeInputRef}
+        priceInputRef={priceInputRef}
+        qtyInputRef={qtyInputRef}
+        typeInvalid={typeInvalid}
+        priceInvalid={priceInvalid}
+        qtyInvalid={qtyInvalid}
+        onDraftDescriptionChange={setDraftDescription}
+        onDraftTransDateChange={setDraftTransDate}
+        onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
+        onDraftPriceChange={handleDraftPriceChange}
+        onDraftQtyChange={handleDraftQtyChange}
+        onDraftProjectIdChange={setDraftProjectId}
+        onDraftInternationalChange={setDraftInternational}
+        linkedTicketFileId={linkedTicketFileId}
+        showLinkedTicketField={hasLinkedTicket}
+        onOpenLinkedTicket={handleOpenLinkedTicket}
       />
+    ) : null;
 
-      <div
-        className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
-        style={{ display: isLoading || isRedirectingAfterCreate ? "flex" : "none" }}
-      >
-        <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
-          <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
-        </svg>
-        {indT("Common_Loading", "Loading")}
-      </div>
-
-      {errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
-
-      {!isLoading && !isRedirectingAfterCreate && !errorMessage && line ? (
-        <ExpenseSheetLineForm
-          line={line}
-          fallbackDate={safeText(header?.createdDate)}
-          sheetDescription={sheetDescription}
-          projectValue={projectValue}
-          priceText={priceText}
-          amountText={amountText}
-          internacionalLabel={internacionalLabel}
-          isKmType={isKmType}
-          isFuelPriceLoading={isFuelPriceLoading}
-          fuelPriceMessage={fuelPriceMessage}
-          fuelPriceMessageIsError={fuelPriceMessageIsError}
-          status={status}
-          isEditing={isEditing}
-          gastoTypeOptions={gastoTypeOptions}
-          internationalOptions={internationalOptions}
-          draftDescription={draftDescription}
-          draftTransDate={draftTransDate}
-          draftTypeValueCode={draftTypeValueCode}
-          draftPrice={draftPrice}
-          draftQty={draftQty}
-          draftProjectId={draftProjectId}
-          draftInternational={draftInternational}
-          typeInputRef={typeInputRef}
-          priceInputRef={priceInputRef}
-          qtyInputRef={qtyInputRef}
-          typeInvalid={typeInvalid}
-          priceInvalid={priceInvalid}
-          qtyInvalid={qtyInvalid}
-          onDraftDescriptionChange={setDraftDescription}
-          onDraftTransDateChange={setDraftTransDate}
-          onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
-          onDraftPriceChange={handleDraftPriceChange}
-          onDraftQtyChange={handleDraftQtyChange}
-          onDraftProjectIdChange={setDraftProjectId}
-          onDraftInternationalChange={setDraftInternational}
-          linkedTicketFileId={linkedTicketFileId}
-          showLinkedTicketField={hasLinkedTicket}
-          onOpenLinkedTicket={handleOpenLinkedTicket}
-        />
-      ) : null}
-
-    </div>
+  return (
+    <ExpenseSheetLineDetailView
+      modal={{
+        open: modal.open,
+        title: modal.title,
+        message: modal.message,
+        confirmText: modalConfirmText,
+        cancelText: modalCancelText,
+        loadingText: modalLoadingText,
+        showCancel: modal.showCancel,
+        showConfirm: modal.showConfirm,
+        busy: busy || isRedirectingAfterCreate,
+        error: modalError,
+        status,
+        onConfirm: handleModalButtonConfirm,
+        onCancel: closeConfirm,
+      }}
+      preview={{
+        open: previewOpen,
+        busy: previewBusy,
+        error: previewError,
+        imageUrl: previewImageUrl,
+        imageAlt: previewAltText,
+        fileName: previewFileName,
+        scale: previewScale,
+        translate: previewTranslate,
+        surfaceRef: previewSurfaceRef,
+        showStickyPreview,
+        onOpen: openPreview,
+        onClose: closePreview,
+        onPointerDown: handlePreviewPointerDown,
+        onPointerMove: handlePreviewPointerMove,
+        onPointerEnd: handlePreviewPointerEnd,
+        onWheel: handlePreviewWheel,
+      }}
+      content={{
+        isLoading,
+        isRedirectingAfterCreate,
+        errorMessage,
+        detailBody,
+      }}
+    />
   );
 };
 

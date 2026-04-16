@@ -15,7 +15,7 @@ import {
 } from "../constants/expenseStatusCatalog.ts";
 import ExpenseFiltersPanel from "../components/ExpenseFiltersPanel.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
-import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetsListData } from "./useExpenseSheetsListData.ts";
 import { useExpenseSheetsFiltersState } from "./useExpenseSheetsFiltersState.ts";
 import { useExpenseSheetsFilterCache } from "./useExpenseSheetsFilterCache.ts";
@@ -435,6 +435,43 @@ const ExpenseSheetsPageContent = () => {
   const showSummary = !showFilters && summaryItems.length > 0;
   const activeListFilters = appliedFilters || currentFilters;
 
+  // Applies the first-entry list defaults without affecting return-from-detail flows.
+  const restoreInitialExpenseSheetsState = useCallback(() => {
+    const today = startOfDay(new Date());
+    const fromDate = new Date(today);
+    fromDate.setDate(today.getDate() - 89);
+
+    const initialFilters = normalizeManagedUserSnapshotForLoad({
+      fromDate: toIsoDate(fromDate),
+      toDate: toIsoDate(today),
+      projectId: "",
+      hojaGastosId: "",
+      currencyCode: "",
+      managedUserId: defaultManagedUserId,
+      includeSubordinates: false,
+      statusFilter: DEFAULT_EXPENSE_STATUS_FILTER,
+      exchangeRateMode: null,
+      filter: "",
+    });
+
+    pendingScrollRestoreRef.current = null;
+    if (initialFilters.managedUserId) {
+      setExpenseActingUserOverride(initialFilters.managedUserId);
+    } else {
+      clearExpenseActingUserOverride();
+    }
+
+    clearCachedState();
+    restoreAppliedFilters(initialFilters);
+    runAutomaticListLoad(1, initialFilters, { resetBeforeLoad: true });
+  }, [
+    clearCachedState,
+    defaultManagedUserId,
+    normalizeManagedUserSnapshotForLoad,
+    restoreAppliedFilters,
+    runAutomaticListLoad,
+  ]);
+
   useEffect(() => {
     if (!managementBootstrapReady || !hasAccess) return;
     if (didRestoreOnMountRef.current) return;
@@ -446,19 +483,13 @@ const ExpenseSheetsPageContent = () => {
       "/Gastos/ExpenseLineDetail",
     ]);
     if (!consumeReturnFlag() && !isHistoryBackForward && !isReturnFromExpenseDetail) {
-      clearCachedState();
-      setManagedUserId(defaultManagedUserId);
-      setIncludeSubordinates(false);
-      clearExpenseActingUserOverride();
+      restoreInitialExpenseSheetsState();
       return;
     }
 
     const cachedState = readCachedState();
     if (!cachedState) {
-      clearCachedState();
-      setManagedUserId(defaultManagedUserId);
-      setIncludeSubordinates(false);
-      clearExpenseActingUserOverride();
+      restoreInitialExpenseSheetsState();
       return;
     }
 
@@ -491,11 +522,10 @@ const ExpenseSheetsPageContent = () => {
     managementBootstrapReady,
     normalizeManagedUserSnapshotForLoad,
     readCachedState,
+    restoreInitialExpenseSheetsState,
     restoreAppliedFilters,
     restoreListSnapshot,
     runAutomaticListLoad,
-    setIncludeSubordinates,
-    setManagedUserId,
   ]);
 
   useEffect(() => {

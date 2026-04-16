@@ -16,6 +16,15 @@ export type FilterLoadRequest = {
   override: LoadOverride;
 };
 
+const HISTORY_QUICK_FILTER_RANGES: Array<{
+  id: Exclude<QuickFilterId, "custom">;
+  daysToSubtract: number;
+}> = [
+  { id: "days-7", daysToSubtract: 6 },
+  { id: "days-30", daysToSubtract: 29 },
+  { id: "days-90", daysToSubtract: 89 },
+];
+
 type UseHistoryFiltersStateArgs = {
   defaultFromDate: string;
   defaultToDate: string;
@@ -38,6 +47,32 @@ export const useHistoryFiltersState = ({
   startOfDay,
   isBefore,
 }: UseHistoryFiltersStateArgs) => {
+  const resolveQuickFilterFromRange = useCallback(
+    (start: Date | null, end: Date | null): QuickFilterId | null => {
+      if (!start || !end) {
+        return null;
+      }
+
+      const normalizedStart = startOfDay(start);
+      const normalizedEnd = startOfDay(end);
+      const today = startOfDay(new Date());
+      if (toISO(normalizedEnd) !== toISO(today)) {
+        return null;
+      }
+
+      for (const entry of HISTORY_QUICK_FILTER_RANGES) {
+        const candidateStart = new Date(today);
+        candidateStart.setDate(today.getDate() - entry.daysToSubtract);
+        if (toISO(normalizedStart) === toISO(candidateStart)) {
+          return entry.id;
+        }
+      }
+
+      return null;
+    },
+    [startOfDay, toISO]
+  );
+
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
   const [manualStartDate, setManualStartDate] = useState<Date | null>(null);
@@ -97,7 +132,7 @@ export const useHistoryFiltersState = ({
     setHoverDate(null);
     setCurrentMonth(start.getMonth());
     setCurrentYear(start.getFullYear());
-    setActiveQuickFilter(null);
+    setActiveQuickFilter(resolveQuickFilterFromRange(start, end));
     setSelectedClient(null);
     setIsOpen(false);
 
@@ -109,7 +144,7 @@ export const useHistoryFiltersState = ({
         accountNum: "",
       },
     };
-  }, [defaultFromDate, defaultToDate, isBefore, parseDateValue, startOfDay, toISO]);
+  }, [defaultFromDate, defaultToDate, isBefore, parseDateValue, resolveQuickFilterFromRange, startOfDay, toISO]);
 
   // Resets history filters local state only.
   const resetHistoryFilters = useCallback(() => {
@@ -141,7 +176,7 @@ export const useHistoryFiltersState = ({
       setHoverDate(null);
       setCurrentMonth(start ? start.getMonth() : new Date().getMonth());
       setCurrentYear(start ? start.getFullYear() : new Date().getFullYear());
-      setActiveQuickFilter(null);
+      setActiveQuickFilter(resolveQuickFilterFromRange(start, end));
       setShowManualPickerPanel(false);
       setShowManualError(false);
 
@@ -163,7 +198,7 @@ export const useHistoryFiltersState = ({
         },
       };
     },
-    [parseISO]
+    [parseISO, resolveQuickFilterFromRange]
   );
 
   const handleSelect = useCallback(

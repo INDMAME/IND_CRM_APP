@@ -40,9 +40,11 @@ namespace IND_CRM_APP.Controllers
             ViewBag.Environment = string.IsNullOrWhiteSpace(environment) ? "Unknown" : environment;
             ViewBag.Company = string.IsNullOrWhiteSpace(company) ? "N/A" : company;
 
-            // Start with empty filters to avoid unnecessary load
-            ViewBag.DefaultFromDate = string.Empty;
-            ViewBag.DefaultToDate = string.Empty;
+            // Start first entry with the latest 90-day window so the page loads collapsed with data.
+            var today = DateTime.Today;
+            var fromDate = today.AddDays(-89);
+            ViewBag.DefaultFromDate = fromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            ViewBag.DefaultToDate = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
 
             return View("~/Web/Views/Visitas/History.cshtml");
         }

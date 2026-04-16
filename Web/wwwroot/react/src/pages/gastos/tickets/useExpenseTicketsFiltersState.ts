@@ -6,6 +6,7 @@ import type {
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
 import type { ExpenseTicketStatusFilterCode } from "../constants/expenseTicketStatusCatalog.ts";
 import { startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { resolveExpenseQuickDateFilterFromRange } from "../utils/expenseQuickDateFilterState.ts";
 import { normalizeExpenseTicketFilterSnapshot } from "./expenseTicketFilterSnapshot.ts";
 
 type UseExpenseTicketsFiltersStateArgs = {
@@ -126,6 +127,7 @@ export const useExpenseTicketsFiltersState = ({
       const normalized = normalizeExpenseTicketFilterSnapshot(snapshot);
       const normalizedStatusFilter = resolveStatusFilter(normalized.statusFilter);
       const restoredManagedUserId = String(normalized.managedUserId || defaultManagedUserId).trim();
+      const restoredQuickFilter = resolveExpenseQuickDateFilterFromRange(normalized.fromDate, normalized.toDate);
       setFromDate(normalized.fromDate);
       setToDate(normalized.toDate);
       setFilterKey(normalized.filterKey);
@@ -134,7 +136,7 @@ export const useExpenseTicketsFiltersState = ({
       setStatusFilterRaw(normalizedStatusFilter);
       setGastoTypeFilter(normalized.gastoTypeFilter);
       setProcessedByIaFilter(normalized.processedByIaFilter);
-      setActiveQuickFilter(null);
+      setActiveQuickFilter(restoredQuickFilter);
       setShowManualDateFilter(false);
       setShowManualDateError(false);
       setAppliedFilters({

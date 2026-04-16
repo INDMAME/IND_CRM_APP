@@ -375,6 +375,24 @@ const ExpenseTicketsPageContent = () => {
     return buildLinkModeInitialSnapshot(initialManagedUserId);
   }, [defaultManagedUserId, syncManagedUserSelection]);
 
+  const buildInitialStandardSnapshot = useCallback((): ExpenseTicketAppliedFilterSnapshot => {
+    const today = startOfDay(new Date());
+    const fromDate = new Date(today);
+    fromDate.setDate(today.getDate() - 89);
+    const initialManagedUserId = syncManagedUserSelection(defaultManagedUserId);
+
+    return {
+      fromDate: toIsoDate(fromDate),
+      toDate: toIsoDate(today),
+      filterKey: "",
+      currencyCode: "",
+      managedUserId: initialManagedUserId,
+      statusFilter: "",
+      gastoTypeFilter: "",
+      processedByIaFilter: "all",
+    };
+  }, [defaultManagedUserId, syncManagedUserSelection]);
+
   const {
     fromDate,
     toDate,
@@ -673,6 +691,26 @@ const ExpenseTicketsPageContent = () => {
     runAutomaticListLoad,
   ]);
 
+  // Applies default first-entry filters for the standard tickets list only.
+  const restoreInitialStandardState = useCallback(() => {
+    const initialSnapshot = buildInitialStandardSnapshot();
+    clearCachedState();
+    clearExpenseTicketLinkReturnState();
+    pendingScrollRestoreRef.current = null;
+    pendingFocusFileIdRef.current = "";
+    restoreAppliedFilters(initialSnapshot);
+    runAutomaticListLoad(1, initialSnapshot, {
+      clearCache: true,
+      resetBeforeLoad: true,
+    });
+  }, [
+    buildInitialStandardSnapshot,
+    clearCachedState,
+    clearExpenseTicketLinkReturnState,
+    restoreAppliedFilters,
+    runAutomaticListLoad,
+  ]);
+
   const restoreStandardReturnState = useCallback(
     (cachedState: ExpenseTicketsCachedState) => {
       const restoredManagedUserId = syncManagedUserSelection(cachedState.filters.managedUserId);
@@ -818,7 +856,10 @@ const ExpenseTicketsPageContent = () => {
           : {
               expenseSheetId: linkSheetId,
               selectionMode: "selected",
-              ticketIds: selectedTickets.map((item) => safeText(item.fileId)).filter(Boolean),
+              ticketIds: selectedTickets.flatMap((item) => {
+                const fileId = safeText(item.fileId);
+                return fileId ? [fileId] : [];
+              }),
             },
         {
           suppressPermissionModal: true,
@@ -1260,8 +1301,8 @@ const ExpenseTicketsPageContent = () => {
     }
 
     if (!hasReturnFlag && !isHistoryBackForward && !isReturnFromTicketDetail) {
-      logExpenseTicketsInfo("mountRestoreEffect:clear-cache-no-return-context");
-      clearCachedState();
+      logExpenseTicketsInfo("mountRestoreEffect:restore-initial-standard-state");
+      restoreInitialStandardState();
       return;
     }
 
@@ -1291,6 +1332,7 @@ const ExpenseTicketsPageContent = () => {
     readExpenseTicketLinkReturnState,
     restoreDeleteReturnState,
     restoreInitialLinkModeState,
+    restoreInitialStandardState,
     restoreLinkModeReturnState,
     restoreStandardReturnState,
   ]);

@@ -1,6 +1,7 @@
 import React from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
+import { useAuthContext } from "../../../context/AuthContext.tsx";
 import ExpenseSheetHeaderForm from "../components/ExpenseSheetHeaderForm.tsx";
 import ExpenseLinesTimeline from "../components/ExpenseLinesTimeline.tsx";
 import ExpenseSheetStatusActionBar from "./ExpenseSheetStatusActionBar.tsx";
@@ -8,7 +9,9 @@ import ExpenseSheetDetailOverlays from "./ExpenseSheetDetailOverlays.tsx";
 import { bootstrapExpenseApiAuth, useExpenseSheetDetailPageController } from "./useExpenseSheetDetailPageController.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
-import { safeText } from "../utils/expenseUiUtils.ts";
+import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog.ts";
+import { safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { consumeExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 
 const DETAIL_FAB_BOTTOM_WITH_ACTION_BAR = 176;
@@ -16,13 +19,55 @@ const EXPENSE_SHEETS_LIST_URL = "/Gastos/ExpenseSheets";
 
 const ExpenseSheetDetailPageContent = () => {
   const controller = useExpenseSheetDetailPageController();
+  const { currentAxUserId } = useAuthContext();
   const { readCachedState, saveCachedState } = useExpenseSheetsFilterCache();
+  const createdSheetReturnIdRef = React.useRef("");
+
+  React.useEffect(() => {
+    const createdContext = consumeExpenseSheetCreatedReturnContext(controller.sheetId);
+    createdSheetReturnIdRef.current = createdContext?.sheetId || "";
+  }, [controller.sheetId]);
+
+  const prepareCreatedSheetReturnState = React.useCallback(() => {
+    const createdSheetId = safeText(createdSheetReturnIdRef.current);
+    if (!createdSheetId) return false;
+
+    const today = startOfDay(new Date());
+    const fromDate = new Date(today);
+    fromDate.setDate(today.getDate() - 89);
+
+    saveCachedState({
+      filters: {
+        fromDate: toIsoDate(fromDate),
+        toDate: toIsoDate(today),
+        projectId: "",
+        hojaGastosId: createdSheetId,
+        currencyCode: "",
+        managedUserId: safeText(currentAxUserId),
+        includeSubordinates: false,
+        statusFilter: DEFAULT_EXPENSE_STATUS_FILTER,
+        exchangeRateMode: null,
+        filter: createdSheetId,
+      },
+      page: 1,
+      scrollY: 0,
+      items: [],
+      total: 0,
+    });
+
+    createdSheetReturnIdRef.current = "";
+    return true;
+  }, [currentAxUserId, saveCachedState]);
 
   const rearmExpenseSheetsReturnState = React.useCallback(() => {
+    if (prepareCreatedSheetReturnState()) {
+      return;
+    }
+
     const cachedState = readCachedState();
     if (!cachedState) return;
     saveCachedState(cachedState);
-  }, [readCachedState, saveCachedState]);
+  }, [prepareCreatedSheetReturnState, readCachedState, saveCachedState]);
 
   React.useEffect(() => {
     const backButton = document.getElementById("globalBackBtn");
@@ -34,6 +79,35 @@ const ExpenseSheetDetailPageContent = () => {
       backButton.removeAttribute("data-back-url");
     };
   }, []);
+
+  React.useEffect(() => {
+    const backButton = document.getElementById("globalBackBtn");
+    if (!backButton) return;
+
+    const handleTopbarBackClick = (event: Event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      const executeBackNavigation = () => {
+        rearmExpenseSheetsReturnState();
+        window.__indBypassNavigationGuardOnce?.();
+        window.location.href = EXPENSE_SHEETS_LIST_URL;
+      };
+
+      if (typeof window.__indRequestNavigation === "function") {
+        window.__indRequestNavigation(executeBackNavigation);
+        return;
+      }
+
+      executeBackNavigation();
+    };
+
+    backButton.addEventListener("click", handleTopbarBackClick, true);
+    return () => {
+      backButton.removeEventListener("click", handleTopbarBackClick, true);
+    };
+  }, [rearmExpenseSheetsReturnState]);
 
   React.useEffect(() => {
     const handleNativeBack = (event) => {

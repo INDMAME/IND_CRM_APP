@@ -10,6 +10,7 @@ import { formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
+import { saveExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
@@ -315,6 +316,9 @@ export const useExpenseSheetDetailPageController = () => {
     if (isCreateMode) {
       const createdSheetId = safeText(createdSheetIdRef.current);
       if (!createdSheetId) return;
+      saveExpenseSheetCreatedReturnContext({
+        sheetId: createdSheetId,
+      });
       setIsRedirectingAfterCreate(true);
       navigateToCreatedSheet(createdSheetId);
       return;
@@ -508,6 +512,7 @@ export const useExpenseSheetDetailPageController = () => {
   ) : null;
 
   return {
+    sheetId,
     header,
     visibleLines,
     linePage,
