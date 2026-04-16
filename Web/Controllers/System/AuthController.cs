@@ -186,11 +186,11 @@ namespace IND_CRM_APP.Controllers
                 var contextResult = await _authContext.EnsureContextAsync();
                 if (!contextResult.Success || contextResult.Context == null)
                 {
-                    var (statusCode, errorCode) = ResolveContextFailure(contextResult.Message);
+                    var (statusCode, errorCode) = ResolveContextFailure(contextResult.ErrorCode, contextResult.Message);
                     LogAuthContextSnapshot(
                         "ApiEntraContext failure",
                         contextResult.Context,
-                        contextResult.Message ?? errorCode);
+                        (contextResult.ErrorCode ?? string.Empty) + "|" + (contextResult.Message ?? errorCode));
 
                     return CreateApiPagedResponse(
                         new
@@ -266,6 +266,12 @@ namespace IND_CRM_APP.Controllers
         {
             return new
             {
+                context.TenantId,
+                context.EntraOid,
+                context.ContextVersion,
+                context.PermissionsRevision,
+                context.ContextIssuedUtc,
+                context.ContextExpiresUtc,
                 Header = new
                 {
                     context.Header.Success,
@@ -296,8 +302,30 @@ namespace IND_CRM_APP.Controllers
         }
 
         // Keeps auth failures distinct from denied or upstream context failures.
-        private static (int StatusCode, string ErrorCode) ResolveContextFailure(string? message)
+        private static (int StatusCode, string ErrorCode) ResolveContextFailure(string? errorCode, string? message)
         {
+            var normalizedErrorCode = (errorCode ?? string.Empty).Trim();
+            if (string.Equals(normalizedErrorCode, "AUTH_CONTEXT_REQUIRED", StringComparison.OrdinalIgnoreCase))
+                return (StatusCodes.Status403Forbidden, "AUTH_CONTEXT_REQUIRED");
+
+            if (string.Equals(normalizedErrorCode, "AUTH_CONTEXT_STALE", StringComparison.OrdinalIgnoreCase))
+                return (StatusCodes.Status403Forbidden, "AUTH_CONTEXT_STALE");
+
+            if (string.Equals(normalizedErrorCode, "AUTH_FORBIDDEN", StringComparison.OrdinalIgnoreCase))
+                return (StatusCodes.Status403Forbidden, "AUTH_FORBIDDEN");
+
+            if (string.Equals(normalizedErrorCode, "CONTEXT_DENIED", StringComparison.OrdinalIgnoreCase))
+                return (StatusCodes.Status403Forbidden, "CONTEXT_DENIED");
+
+            if (string.Equals(normalizedErrorCode, "AUTH_REQUIRED", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalizedErrorCode, "SESSION_EXPIRED", StringComparison.OrdinalIgnoreCase))
+            {
+                return (StatusCodes.Status401Unauthorized, "SESSION_EXPIRED");
+            }
+
+            if (string.Equals(normalizedErrorCode, "UPSTREAM_ERROR", StringComparison.OrdinalIgnoreCase))
+                return (StatusCodes.Status502BadGateway, "UPSTREAM_ERROR");
+
             var normalized = (message ?? string.Empty).Trim();
             if (string.Equals(normalized, "Missing Entra OID.", StringComparison.OrdinalIgnoreCase) ||
                 string.Equals(normalized, "Session not available.", StringComparison.OrdinalIgnoreCase))
@@ -323,7 +351,7 @@ namespace IND_CRM_APP.Controllers
         private void LogAuthContextSnapshot(string stage, IndWebContext? context, string? note)
         {
             _logger.LogInformation(
-                "Auth context trace [{Stage}]. SessionEntraOid={SessionEntraOid}; ContextEntraOid={ContextEntraOid}; ClaimsEntraOid={ClaimsEntraOid}; SessionAxUser={SessionAxUser}; ContextAxUser={ContextAxUser}; SessionCompany={SessionCompany}; SessionCompanyName={SessionCompanyName}; SelectionSource={SelectionSource}; ResolvedCompany={ResolvedCompany}; DefaultCompany={DefaultCompany}; CompanyCount={CompanyCount}; Note={Note}",
+                "Auth context trace [{Stage}]. SessionEntraOid={SessionEntraOid}; ContextEntraOid={ContextEntraOid}; ClaimsEntraOid={ClaimsEntraOid}; SessionAxUser={SessionAxUser}; ContextAxUser={ContextAxUser}; SessionCompany={SessionCompany}; SessionCompanyName={SessionCompanyName}; SelectionSource={SelectionSource}; ResolvedCompany={ResolvedCompany}; DefaultCompany={DefaultCompany}; CompanyCount={CompanyCount}; SessionPermissionsRevision={SessionPermissionsRevision}; ContextPermissionsRevision={ContextPermissionsRevision}; Note={Note}",
                 stage,
                 NormalizeLogValue(HttpContext.Session.GetString("ENTRAOID")),
                 NormalizeLogValue(HttpContext.Session.GetString("INDEntraOidContext")),
@@ -336,6 +364,8 @@ namespace IND_CRM_APP.Controllers
                 NormalizeLogValue(_authContext.GetSelectedCompanyId(context)),
                 NormalizeLogValue(context?.Header?.DefaultCompany),
                 context?.Companies?.Count ?? 0,
+                NormalizeLogValue(HttpContext.Session.GetString("INDPermissionsRevision")),
+                NormalizeLogValue(context?.PermissionsRevision),
                 NormalizeLogValue(note));
         }
 

@@ -1,10 +1,17 @@
 using System.Collections.Generic;
+using System;
 
 namespace IND_CRM_APP.Models.Shared
 {
     // Parsed web context used for module authorization and company selection.
     public class IndWebContext
     {
+        public string TenantId { get; set; } = string.Empty;
+        public string EntraOid { get; set; } = string.Empty;
+        public long ContextVersion { get; set; }
+        public string PermissionsRevision { get; set; } = string.Empty;
+        public DateTime? ContextIssuedUtc { get; set; }
+        public DateTime? ContextExpiresUtc { get; set; }
         public IndWebContextHeader Header { get; set; } = new();
         public List<IndWebCompany> Companies { get; set; } = new();
     }
@@ -57,6 +64,13 @@ namespace IND_CRM_APP.Models.Shared
 
     public class IndEntraContextItem
     {
+        public string? TenantId { get; set; }
+        public string? EntraOid { get; set; }
+        public long? ContextVersion { get; set; }
+        public string? PermissionsRevision { get; set; }
+        public string? ContextToken { get; set; }
+        public string? ContextIssuedUtc { get; set; }
+        public string? ContextExpiresUtc { get; set; }
         public IndEntraContextHeader? Header { get; set; }
         public List<IndEntraCompany>? Companies { get; set; }
     }

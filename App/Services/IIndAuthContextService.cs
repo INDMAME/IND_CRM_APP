@@ -7,7 +7,9 @@ namespace IND_CRM_APP.Services
     public interface IIndAuthContextService
     {
         // Ensures the context is loaded and cached in session.
-        Task<IndAuthContextResult> EnsureContextAsync();
+        Task<IndAuthContextResult> EnsureContextAsync(bool forceRefresh = false);
+        // Refreshes the cached context when request inactivity or expiry says it is stale.
+        Task EnsureFreshContextForRequestAsync();
         // Returns cached context from session if available.
         IndWebContext? GetCachedContext();
         // Resolves the selected company id from session or defaults.
@@ -21,6 +23,7 @@ namespace IND_CRM_APP.Services
     {
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
+        public string ErrorCode { get; set; } = string.Empty;
         public IndWebContext? Context { get; set; }
     }
 }

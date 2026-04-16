@@ -4567,6 +4567,13 @@ namespace IND_CRM_APP.Controllers
             if (transport == null || transport.StatusCode != HttpStatusCode.Forbidden)
                 return false;
 
+            var errorCode = (transport.Response?.ErrorCode ?? string.Empty).Trim();
+            if (string.Equals(errorCode, "AUTH_CONTEXT_REQUIRED", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "AUTH_CONTEXT_STALE", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
             var normalizedMessage = NormalizeAssistantDiagnosticText(transport.Response?.Message);
             if (string.IsNullOrWhiteSpace(normalizedMessage))
                 return false;

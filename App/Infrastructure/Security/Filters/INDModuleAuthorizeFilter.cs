@@ -58,7 +58,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             var ctxResult = await _authContext.EnsureContextAsync();
             if (!ctxResult.Success || ctxResult.Context == null)
             {
-                await HandleContextFailureAsync(context, ctxResult.Message);
+                await HandleContextFailureAsync(context, ctxResult.Message, ctxResult.ErrorCode);
                 return;
             }
 
@@ -434,7 +434,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
         }
 
         // Handles context bootstrap failures by clearing cache and forcing a clean login.
-        private async Task HandleContextFailureAsync(ActionExecutingContext context, string? technicalMessage)
+        private async Task HandleContextFailureAsync(ActionExecutingContext context, string? technicalMessage, string? errorCode)
         {
             var http = context.HttpContext;
             var path = http.Request.Path.Value ?? string.Empty;
@@ -442,7 +442,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 ? "Context not available."
                 : technicalMessage;
 
-            _logger.LogError("Context initialization failed for {Path}. Reason: {Reason}", path, safeReason);
+            _logger.LogError("Context initialization failed for {Path}. ErrorCode: {ErrorCode}. Reason: {Reason}", path, errorCode ?? string.Empty, safeReason);
 
             // Clear session cache and auth cookie to prevent stale context loops.
             http.Session.Clear();
@@ -461,6 +461,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                     success = false,
                     message = publicMessage,
                     forceRelogin = true,
+                    errorCode = string.IsNullOrWhiteSpace(errorCode) ? "SESSION_EXPIRED" : errorCode,
                     loginUrl
                 })
                 {

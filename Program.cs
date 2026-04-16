@@ -210,15 +210,26 @@ builder.Services.AddAuthentication(options =>
                 httpContext.Session.SetString("ENTRAOID", oid);
 
             // Always clear cached context on a fresh Entra sign-in.
-            const string contextKey = "INDWebContext";
-            const string companyKey = "INDCompanySelected";
-            const string companyNameKey = "INDCompanySelectedName";
-            const string contextOidKey = "INDEntraOidContext";
-            httpContext.Session.Remove(contextKey);
-            httpContext.Session.Remove(companyKey);
-            httpContext.Session.Remove(companyNameKey);
-            httpContext.Session.Remove(contextOidKey);
-            httpContext.Session.Remove("AxUser");
+            var sessionKeysToClear = new[]
+            {
+                "INDWebContext",
+                "INDCompanySelected",
+                "INDCompanySelectedName",
+                "INDCompanySelectionSource",
+                "INDEntraOidContext",
+                "INDContextToken",
+                "INDContextVersion",
+                "INDPermissionsRevision",
+                "INDContextIssuedUtc",
+                "INDContextExpiresUtc",
+                "INDContextLastActivityUtc",
+                "INDContextTenantId",
+                "AxUser"
+            };
+
+            foreach (var sessionKey in sessionKeysToClear)
+                httpContext.Session.Remove(sessionKey);
+
             logger.LogInformation("Cleared cached context after Entra sign-in.");
 
             var preferred = principal?.FindFirst(IndAuthEnv.ClaimEmailPreferred)?.Value;
@@ -283,6 +294,7 @@ builder.Logging.AddFile("Logs/indpersonasapp-{Date}.log");
 builder.Services.AddMemoryCache();
 builder.Services.Configure<ApiSettings>(builder.Configuration.GetSection("ApiSettings"));
 builder.Services.Configure<JwtSettings>(builder.Configuration.GetSection("JwtSettings"));
+builder.Services.Configure<ContextSessionSettings>(builder.Configuration.GetSection("ContextSessionSettings"));
 builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
 builder.Services.AddScoped<IIndAuthContextService, IndAuthContextService>();
 builder.Services.AddScoped<IINDCrmEnumLocalizer, INDCrmEnumLocalizer>();
@@ -368,6 +380,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 // Token refresh middleware
 app.UseMiddleware<TokenRefreshMiddleware>();
+app.UseMiddleware<IndContextRefreshMiddleware>();
 
 // -----------------------------
 // Rutas MVC

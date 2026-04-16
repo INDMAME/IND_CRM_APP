@@ -59,7 +59,11 @@ const CONTEXT_FAILURE_HINTS = [
   "context not initialized",
 ];
 
+const CONTEXT_REFRESH_ERROR_CODES = new Set(["AUTH_CONTEXT_REQUIRED", "AUTH_CONTEXT_STALE"]);
+const SESSION_FAILURE_ERROR_CODES = new Set(["SESSION_EXPIRED", "AUTH_REQUIRED"]);
+
 let forcedReloginPromise: Promise<string> | null = null;
+let contextRefreshPromise: Promise<boolean> | null = null;
 
 export const getCsrfToken = (): string => {
   const meta = document.querySelector('meta[name="csrf-token"]');
@@ -120,6 +124,10 @@ const getArrayProp = (payload: unknown, ...keys: string[]): unknown[] => {
 
 const getMessageFromPayload = (payload: unknown): string => {
   return getStringProp(payload, "message", "Message");
+};
+
+const getErrorCodeFromPayload = (payload: unknown): string => {
+  return getStringProp(payload, "errorCode", "ErrorCode");
 };
 
 export const readApiMessageFromRaw = (raw: string): string => {
@@ -204,9 +212,63 @@ const requestForcedRelogin = async (reason: string): Promise<string> => {
   }
 };
 
+const requestContextRefresh = async (): Promise<boolean> => {
+  const csrfToken = getCsrfToken();
+  const headers: HeadersInit = {
+    Accept: "application/json",
+    "Content-Type": "application/json",
+    "X-Requested-With": "XMLHttpRequest",
+  };
+
+  if (csrfToken) {
+    (headers as Record<string, string>)["RequestVerificationToken"] = csrfToken;
+  }
+
+  try {
+    const response = await fetch("/Auth/ApiEntraContext", {
+      method: "POST",
+      credentials: "same-origin",
+      headers,
+      body: "{}",
+    });
+
+    const raw = await response.text();
+    const payload = tryParseJson(raw);
+    if (!response.ok) return false;
+
+    const record = asRecord(payload);
+    if (!record) return false;
+
+    const success = getBooleanProp(payload, "Success", "success");
+    return success !== false;
+  } catch {
+    return false;
+  }
+};
+
+const refreshContextOnce = async (): Promise<boolean> => {
+  if (!contextRefreshPromise) {
+    contextRefreshPromise = requestContextRefresh();
+  }
+
+  try {
+    return await contextRefreshPromise;
+  } finally {
+    contextRefreshPromise = null;
+  }
+};
+
 const shouldForceRelogin = (payload: unknown, status: number): boolean => {
   if (status === 401) return true;
   if (getBooleanProp(payload, "forceRelogin", "ForceRelogin") === true) return true;
+
+  const errorCode = getErrorCodeFromPayload(payload);
+  return SESSION_FAILURE_ERROR_CODES.has(errorCode);
+};
+
+const shouldTryContextRefresh = (payload: unknown): boolean => {
+  const errorCode = getErrorCodeFromPayload(payload);
+  if (CONTEXT_REFRESH_ERROR_CODES.has(errorCode)) return true;
 
   if (getBooleanProp(payload, "success", "Success") === false) {
     const message = getMessageFromPayload(payload);
@@ -238,6 +300,16 @@ export const handleApiAuthFailure = async <T>(
   fallbackReason: string
 ): Promise<T | null> => {
   const payload = tryParseJson(raw);
+  if (shouldTryContextRefresh(payload)) {
+    const refreshed = await refreshContextOnce();
+    if (!refreshed) {
+      const reason = getErrorCodeFromPayload(payload) || getMessageFromPayload(payload) || fallbackReason;
+      return forceReloginAndWait<T>(reason);
+    }
+
+    return null;
+  }
+
   if (!shouldForceRelogin(payload, status)) {
     return null;
   }
@@ -246,7 +318,11 @@ export const handleApiAuthFailure = async <T>(
   return forceReloginAndWait<T>(payloadMessage || fallbackReason);
 };
 
-export async function fetchJson<T = unknown>(url: string, options?: ApiFetchOptions): Promise<T> {
+type InternalFetchOptions = ApiFetchOptions & {
+  __contextRetryAttempt?: boolean;
+};
+
+async function fetchJsonInternal<T = unknown>(url: string, options?: InternalFetchOptions): Promise<T> {
   const { suppressPermissionModal, ...fetchOptions } = options || {};
   const csrfToken = getCsrfToken();
 
@@ -270,8 +346,21 @@ export async function fetchJson<T = unknown>(url: string, options?: ApiFetchOpti
 
   if (!response.ok) {
     const payloadMessage = getMessageFromPayload(payload);
+    const payloadErrorCode = getErrorCodeFromPayload(payload);
     const validationErrors = getValidationErrorsFromPayload(payload);
     const validationMessage = formatValidationErrors(validationErrors);
+
+    if (!options?.__contextRetryAttempt && shouldTryContextRefresh(payload)) {
+      const refreshed = await refreshContextOnce();
+      if (refreshed) {
+        return fetchJsonInternal<T>(url, {
+          ...options,
+          __contextRetryAttempt: true,
+        });
+      }
+
+      return forceReloginAndWait<T>(payloadErrorCode || payloadMessage || `http-${response.status}`);
+    }
 
     if (shouldForceRelogin(payload, response.status)) {
       return forceReloginAndWait<T>(payloadMessage || `http-${response.status}`);
@@ -303,6 +392,20 @@ export async function fetchJson<T = unknown>(url: string, options?: ApiFetchOpti
   }
 
   if (payload !== null) {
+    if (!options?.__contextRetryAttempt && shouldTryContextRefresh(payload)) {
+      const refreshed = await refreshContextOnce();
+      if (refreshed) {
+        return fetchJsonInternal<T>(url, {
+          ...options,
+          __contextRetryAttempt: true,
+        });
+      }
+
+      const payloadMessage = getMessageFromPayload(payload);
+      const payloadErrorCode = getErrorCodeFromPayload(payload);
+      return forceReloginAndWait<T>(payloadErrorCode || payloadMessage || "context-error");
+    }
+
     if (shouldForceRelogin(payload, response.status)) {
       const payloadMessage = getMessageFromPayload(payload);
       return forceReloginAndWait<T>(payloadMessage || "context-error");
@@ -312,4 +415,8 @@ export async function fetchJson<T = unknown>(url: string, options?: ApiFetchOpti
   }
 
   throw new ApiFetchError(indT("Api_InvalidJson", "Invalid server response."), response.status, raw);
+}
+
+export async function fetchJson<T = unknown>(url: string, options?: ApiFetchOptions): Promise<T> {
+  return fetchJsonInternal<T>(url, options);
 }

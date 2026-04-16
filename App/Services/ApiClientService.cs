@@ -467,9 +467,10 @@ namespace IND_CRM_APP.Services
             bool requireCompany,
             bool includeCompanyHeader = true,
             bool includeAxUserHeader = true,
+            bool includeContextHeaders = true,
             string? axUserIdOverride = null)
         {
-            AddToken(token, includeCompanyHeader, includeAxUserHeader, axUserIdOverride);
+            AddToken(token, includeCompanyHeader, includeAxUserHeader, includeContextHeaders, axUserIdOverride);
             LogCompanyHeader(operation, requireCompany);
         }
 
@@ -578,7 +579,8 @@ namespace IND_CRM_APP.Services
                 "GetEntraContext",
                 requireCompany: false,
                 includeCompanyHeader: false,
-                includeAxUserHeader: false);
+                includeAxUserHeader: false,
+                includeContextHeaders: false);
 
             var payload = new
             {
@@ -2874,6 +2876,7 @@ namespace IND_CRM_APP.Services
             string token,
             bool includeCompanyHeader = true,
             bool includeAxUserHeader = true,
+            bool includeContextHeaders = true,
             string? axUserIdOverride = null)
         {
             _client.DefaultRequestHeaders.Authorization =
@@ -2895,6 +2898,18 @@ namespace IND_CRM_APP.Services
             else
             {
                 _client.DefaultRequestHeaders.Remove("X-IND-AxUserId");
+            }
+
+            if (includeContextHeaders)
+            {
+                ApplyContextHeaders();
+            }
+            else
+            {
+                _client.DefaultRequestHeaders.Remove("X-IND-EntraOid");
+                _client.DefaultRequestHeaders.Remove("X-IND-Context-Version");
+                _client.DefaultRequestHeaders.Remove("X-IND-Permissions-Revision");
+                _client.DefaultRequestHeaders.Remove("X-IND-Context-Token");
             }
         }
 
@@ -2920,6 +2935,30 @@ namespace IND_CRM_APP.Services
             _client.DefaultRequestHeaders.Add("X-IND-AxUserId", axUserId);
         }
 
+        private void ApplyContextHeaders()
+        {
+            _client.DefaultRequestHeaders.Remove("X-IND-EntraOid");
+            _client.DefaultRequestHeaders.Remove("X-IND-Context-Version");
+            _client.DefaultRequestHeaders.Remove("X-IND-Permissions-Revision");
+            _client.DefaultRequestHeaders.Remove("X-IND-Context-Token");
+
+            var entraOid = GetEntraOid();
+            if (!string.IsNullOrWhiteSpace(entraOid))
+                _client.DefaultRequestHeaders.Add("X-IND-EntraOid", entraOid);
+
+            var contextVersion = GetContextVersion();
+            if (!string.IsNullOrWhiteSpace(contextVersion))
+                _client.DefaultRequestHeaders.Add("X-IND-Context-Version", contextVersion);
+
+            var permissionsRevision = GetPermissionsRevision();
+            if (!string.IsNullOrWhiteSpace(permissionsRevision))
+                _client.DefaultRequestHeaders.Add("X-IND-Permissions-Revision", permissionsRevision);
+
+            var contextToken = GetContextToken();
+            if (!string.IsNullOrWhiteSpace(contextToken))
+                _client.DefaultRequestHeaders.Add("X-IND-Context-Token", contextToken);
+        }
+
         // Reads the current company id from session, if present.
         private string? GetSelectedCompanyId()
         {
@@ -2940,6 +2979,50 @@ namespace IND_CRM_APP.Services
 
             var axUserId = ctx.Session.GetString("AxUser");
             return string.IsNullOrWhiteSpace(axUserId) ? null : axUserId;
+        }
+
+        // Reads the real Entra OID from session, if present.
+        private string? GetEntraOid()
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            if (ctx == null)
+                return null;
+
+            var entraOid = ctx.Session.GetString("ENTRAOID");
+            return string.IsNullOrWhiteSpace(entraOid) ? null : entraOid;
+        }
+
+        // Reads the current signed context version from session, if present.
+        private string? GetContextVersion()
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            if (ctx == null)
+                return null;
+
+            var contextVersion = ctx.Session.GetString("INDContextVersion");
+            return string.IsNullOrWhiteSpace(contextVersion) ? null : contextVersion;
+        }
+
+        // Reads the current signed context token from session, if present.
+        private string? GetContextToken()
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            if (ctx == null)
+                return null;
+
+            var contextToken = ctx.Session.GetString("INDContextToken");
+            return string.IsNullOrWhiteSpace(contextToken) ? null : contextToken;
+        }
+
+        // Reads the stable permission revision from session, if present.
+        private string? GetPermissionsRevision()
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            if (ctx == null)
+                return null;
+
+            var permissionsRevision = ctx.Session.GetString("INDPermissionsRevision");
+            return string.IsNullOrWhiteSpace(permissionsRevision) ? null : permissionsRevision;
         }
 
         // Logs whether the company header is present for a given operation.
