@@ -532,7 +532,7 @@
     <value>Data</value>
   </data>
   <data name="History_Filter_Client" xml:space="preserve">
-    <value>Cliente</value>
+    <value>Conto</value>
   </data>
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>Cancella</value>
@@ -718,7 +718,7 @@
     <value>Seleziona la data</value>
   </data>
   <data name="Visits_Create_SearchClient" xml:space="preserve">
-    <value>Cerca cliente</value>
+    <value>Cerca conto</value>
   </data>
   <data name="Visits_Create_SearchContact" xml:space="preserve">
     <value>Cerca contatto (selezione multipla)</value>
@@ -1208,6 +1208,15 @@
   </data>
   <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
     <value>This expense sheet is read-only for its current status.</value>
+  </data>
+  <data name="ExpenseTickets_SheetSync_PendingSaveRequired" xml:space="preserve">
+    <value>Devi salvare il ticket prima di uscire da questo flusso.</value>
+  </data>
+  <data name="ExpenseTickets_SheetSync_RetryRequired" xml:space="preserve">
+    <value>I dati del ticket sono cambiati, ma non siamo riusciti a sincronizzare la riga della nota spese. Salva di nuovo prima di uscire.</value>
+  </data>
+  <data name="ExpenseTickets_SheetSync_InvalidTotal" xml:space="preserve">
+    <value>Il ticket deve mantenere un importo totale positivo per sincronizzare la riga spesa.</value>
   </data>
   <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
     <value>This expense sheet status change is not allowed.</value>

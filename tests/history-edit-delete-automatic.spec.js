@@ -146,7 +146,7 @@ async function selectDateRange(page, startIso, endIso) {
 
 // Selects a client in history client combobox.
 async function selectHistoryClient(page, clientQuery) {
-  const input = page.getByRole("combobox", { name: /Client|Cliente/i }).first();
+  const input = page.getByRole("combobox", { name: /Cuenta|Account|Conta|Conto|Kontua|账户/i }).first();
   await expect(input).toBeVisible();
 
   await input.fill(clientQuery);

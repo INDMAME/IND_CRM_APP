@@ -259,7 +259,31 @@ const ExpenseSheetLineDetailContent = () => {
   const lineTopbarActionMode =
     !canEditExpenseCurrent && !canDeleteExpenseCurrent
       ? "view_only"
-      : (hasLinkedTicket && !isSheetLocked ? "delete_only" : "default");
+      : "default";
+
+  const handleEditLinkedTicket = useCallback(() => {
+    const safeFileId = safeText(linkedTicketFileId);
+    const safeSheetId = safeText(sheetId);
+    const safeLineId = safeText(lineId || line?.lineRecId);
+    if (!safeFileId || !safeSheetId || !safeLineId) return;
+
+    const query = new URLSearchParams({
+      fileId: safeFileId,
+      origin: "expense-line",
+      sheetId: safeSheetId,
+      sheetLineRecId: safeLineId,
+      mode: "edit",
+    });
+    saveExpenseTicketReturnContext({
+      fileId: safeFileId,
+      origin: "expense-line",
+      sheetId: safeSheetId,
+      sheetLineRecId: safeLineId,
+    });
+    navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
+      askConfirmation: isEditing,
+    });
+  }, [isEditing, line?.lineRecId, lineId, linkedTicketFileId, sheetId]);
 
   useExpenseSheetLineDetailTopbarActions({
     busy: busy || isRedirectingAfterCreate,
@@ -274,7 +298,7 @@ const ExpenseSheetLineDetailContent = () => {
     canDeleteExpense: canDeleteExpenseCurrent,
     sheetId,
     setModalError,
-    handleEnableEdit,
+    handleEnableEdit: hasLinkedTicket ? handleEditLinkedTicket : handleEnableEdit,
     handleCancelEdit,
     canOpenSaveConfirm,
     handleUpdate,
@@ -302,12 +326,13 @@ const ExpenseSheetLineDetailContent = () => {
       fileId: safeFileId,
       origin: "expense-line",
       sheetId: safeSheetId,
-      lineRecId: safeLineId,
+      sheetLineRecId: safeLineId,
     });
     saveExpenseTicketReturnContext({
       fileId: safeFileId,
       origin: "expense-line",
       sheetId: safeSheetId,
+      sheetLineRecId: safeLineId,
     });
     navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
       askConfirmation: isEditing,

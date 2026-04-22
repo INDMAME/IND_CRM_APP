@@ -13,15 +13,19 @@ export const useExpenseTicketDetailRouteContext = () => {
   const autoEditMode = useMemo(() => safeText(routeParams.get("mode")).toLowerCase() === "edit", [routeParams]);
   const routeOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
   const routeSheetId = useMemo(() => safeText(routeParams.get("sheetId")), [routeParams]);
-  const contextLineRecId = useMemo(() => safeText(routeParams.get("lineRecId")), [routeParams]);
+  const routeSheetLineRecId = useMemo(
+    () => safeText(routeParams.get("sheetLineRecId") || routeParams.get("lineRecId")),
+    [routeParams]
+  );
   const explicitReturnContext = useMemo(
     () =>
       normalizeExpenseTicketReturnContext({
         fileId,
         origin: routeOrigin,
         sheetId: routeSheetId,
+        sheetLineRecId: routeSheetLineRecId,
       }),
-    [fileId, routeOrigin, routeSheetId]
+    [fileId, routeOrigin, routeSheetId, routeSheetLineRecId]
   );
 
   useEffect(() => {
@@ -33,6 +37,7 @@ export const useExpenseTicketDetailRouteContext = () => {
     const ticketReturnContext = resolveExpenseTicketReturnContext(fileId, explicitReturnContext);
     const detailOrigin = ticketReturnContext?.origin || routeOrigin;
     const contextSheetId = ticketReturnContext?.sheetId || routeSheetId;
+    const contextLineRecId = ticketReturnContext?.sheetLineRecId || routeSheetLineRecId;
     const isFromExpenseSheetCreate = detailOrigin === "sheet-create";
     const isFromExpenseLine = detailOrigin === "expense-line" && !!contextSheetId && !!contextLineRecId;
     const isFromSheetLink = detailOrigin === "sheet-link" && !!contextSheetId;
@@ -47,5 +52,5 @@ export const useExpenseTicketDetailRouteContext = () => {
       isFromSheetLink,
       ticketReturnContext,
     };
-  }, [autoEditMode, contextLineRecId, explicitReturnContext, fileId, routeOrigin, routeSheetId]);
+  }, [autoEditMode, explicitReturnContext, fileId, routeOrigin, routeSheetId, routeSheetLineRecId]);
 };

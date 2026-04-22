@@ -532,7 +532,7 @@
     <value>Date</value>
   </data>
   <data name="History_Filter_Client" xml:space="preserve">
-    <value>Client</value>
+    <value>Account</value>
   </data>
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>Clear</value>
@@ -718,7 +718,7 @@
     <value>Select date</value>
   </data>
   <data name="Visits_Create_SearchClient" xml:space="preserve">
-    <value>Search client</value>
+    <value>Search account</value>
   </data>
   <data name="Visits_Create_SearchContact" xml:space="preserve">
     <value>Search contact (multi select)</value>
@@ -1208,6 +1208,15 @@
   </data>
   <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
     <value>This expense sheet is read-only for its current status.</value>
+  </data>
+  <data name="ExpenseTickets_SheetSync_PendingSaveRequired" xml:space="preserve">
+    <value>You must save the ticket before leaving this flow.</value>
+  </data>
+  <data name="ExpenseTickets_SheetSync_RetryRequired" xml:space="preserve">
+    <value>Ticket data changed, but we could not sync the expense-sheet line. Save again before leaving.</value>
+  </data>
+  <data name="ExpenseTickets_SheetSync_InvalidTotal" xml:space="preserve">
+    <value>The ticket must keep a positive total amount to sync the expense line.</value>
   </data>
   <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
     <value>This expense sheet status change is not allowed.</value>

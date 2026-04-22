@@ -12,6 +12,9 @@ import {
   updateExpenseSheetTicket,
 } from "../../utils/expenseApi.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../../utils/expenseApiDateUtils.ts";
+import { syncExpenseLinkedTicketSheetLine } from "../../utils/expenseLinkedTicketSheetSync.ts";
+import { resolveExpenseSheetEditAccess } from "../../utils/expenseSheetEditAccess.ts";
+import { clearExpenseTicketSheetSyncState, saveExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type DeleteLinkedExpenseLineContext = {
@@ -34,6 +37,13 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftFileName: string;
   linkedExpenseSheetId?: string;
   deleteLinkedExpenseLineContext?: DeleteLinkedExpenseLineContext | null;
+  allowSelfManagement: boolean;
+  canManageOtherUsers: boolean;
+  currentAxUserId: string;
+  currentCrmUserId: string;
+  selectedManagedUserId: string;
+  onLinkedSheetSyncFailure?: (message: string) => void;
+  onLinkedSheetSyncSuccess?: () => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
@@ -89,97 +99,189 @@ export const useExpenseTicketDetailMutations = ({
   draftFileName,
   linkedExpenseSheetId,
   deleteLinkedExpenseLineContext,
+  allowSelfManagement,
+  canManageOtherUsers,
+  currentAxUserId,
+  currentCrmUserId,
+  selectedManagedUserId,
+  onLinkedSheetSyncFailure,
+  onLinkedSheetSyncSuccess,
   setModalError,
   setBusy,
   setStatus,
   setIsEditing,
 }: UseExpenseTicketDetailMutationsArgs) => {
-  const handleUpdate = useCallback(async () => {
-    if (busy || !isEditing) return false;
-    if (!canEditTicket) {
-      showPermissionModal();
-      return false;
+  const validateLinkedSheetBeforeMutation = useCallback(async (): Promise<string | null> => {
+    const safeSheetId = safeText(linkedExpenseSheetId);
+    if (!safeSheetId) {
+      return "";
     }
 
-    const normalizedDescription = String(draftDescription || "").trim();
-    if (!normalizedDescription) {
-      const message = indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required.");
-      setModalError(message);
-      setStatus(message);
-      return false;
-    }
-
-    const normalizedCurrency = String(draftCurrencyCode || "").trim().toUpperCase();
-    if (!normalizedCurrency) {
-      const message = indT("ExpenseSheets_Validation_CurrencyRequired", "Currency is required.");
-      setModalError(message);
-      setStatus(message);
-      return false;
-    }
-
-    const parsedGastoType = parseOptionalInteger(draftGastoType);
-    if (parsedGastoType === undefined || !REQUIRED_GASTO_TYPES.has(parsedGastoType)) {
-      const message = indT("Tickets_Validation_CategoryRequired", "Category is required.");
-      setModalError(message);
-      setStatus(message);
-      return false;
-    }
-
-    const rawTransDate = String(draftTransDate || "").trim();
-    const normalizedTransDate = rawTransDate ? toExpenseApiDdMmYyyy(rawTransDate) : "";
-    if (rawTransDate && !normalizedTransDate) {
-      setModalError(EXPENSE_API_DATE_FORMAT_MESSAGE);
-      setStatus(EXPENSE_API_DATE_FORMAT_MESSAGE);
-      return false;
-    }
-
-    const payload: ExpenseSheetTicketUpdateRequest = {
-      description: normalizedDescription,
-      currencyCode: normalizedCurrency,
-      transDate: normalizedTransDate || undefined,
-      comentario: String(draftComentario || "").trim() || undefined,
-      urlFile: String(draftUrlFile || "").trim() || undefined,
-      fileName: String(draftFileName || "").trim() || undefined,
-      fileExtension: resolveTicketFileExtension(draftFileName, draftUrlFile),
-      gastoType: parsedGastoType as ExpenseSheetTicketUpdateRequest["gastoType"],
-    };
-
-    const result = await executeExpenseMutation({
-      startStatus: indT("ExpenseSheets_Detail_Updating", "Updating expense sheet..."),
-      fallbackErrorMessage: indT("ExpenseSheets_Detail_UpdateError", "Update error."),
-      setModalError,
-      setBusy,
-      setStatus,
-      action: async () => {
-        const response = await updateExpenseSheetTicket(fileId, payload);
-        if (!response.Success) {
-          throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
-        }
-
-        setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
-        setIsEditing(false);
-        return true;
-      },
+    const accessResult = await resolveExpenseSheetEditAccess({
+      sheetId: safeSheetId,
+      allowSelfManagement,
+      canManageOtherUsers,
+      currentAxUserId,
+      currentCrmUserId,
+      selectedManagedUserId,
+      suppressPermissionModal: true,
     });
+    if (!accessResult.isLocked) {
+      return safeSheetId;
+    }
 
-    return result.ok;
+    const message =
+      safeText(accessResult.blockedMessage) ||
+      indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.");
+    setModalError(message);
+    setStatus(message);
+    return null;
   }, [
-    busy,
-    canEditTicket,
-    draftComentario,
-    draftCurrencyCode,
-    draftDescription,
-    draftFileName,
-    draftGastoType,
-    draftTransDate,
-    draftUrlFile,
-    fileId,
-    isEditing,
-    setBusy,
-    setIsEditing,
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    currentCrmUserId,
+    linkedExpenseSheetId,
+    selectedManagedUserId,
     setModalError,
     setStatus,
   ]);
+
+  const runHeaderUpdate = useCallback(
+    async ({ syncSheetLine }: { syncSheetLine: boolean }): Promise<boolean> => {
+      if (busy || !isEditing) return false;
+      if (!canEditTicket) {
+        showPermissionModal();
+        return false;
+      }
+
+      const normalizedDescription = String(draftDescription || "").trim();
+      if (!normalizedDescription) {
+        const message = indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required.");
+        setModalError(message);
+        setStatus(message);
+        return false;
+      }
+
+      const normalizedCurrency = String(draftCurrencyCode || "").trim().toUpperCase();
+      if (!normalizedCurrency) {
+        const message = indT("ExpenseSheets_Validation_CurrencyRequired", "Currency is required.");
+        setModalError(message);
+        setStatus(message);
+        return false;
+      }
+
+      const parsedGastoType = parseOptionalInteger(draftGastoType);
+      if (parsedGastoType === undefined || !REQUIRED_GASTO_TYPES.has(parsedGastoType)) {
+        const message = indT("Tickets_Validation_CategoryRequired", "Category is required.");
+        setModalError(message);
+        setStatus(message);
+        return false;
+      }
+
+      const rawTransDate = String(draftTransDate || "").trim();
+      const normalizedTransDate = rawTransDate ? toExpenseApiDdMmYyyy(rawTransDate) : "";
+      if (rawTransDate && !normalizedTransDate) {
+        setModalError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+        setStatus(EXPENSE_API_DATE_FORMAT_MESSAGE);
+        return false;
+      }
+
+      const validatedSheetId = await validateLinkedSheetBeforeMutation();
+      if (validatedSheetId === null) {
+        return false;
+      }
+
+      const payload: ExpenseSheetTicketUpdateRequest = {
+        description: normalizedDescription,
+        currencyCode: normalizedCurrency,
+        transDate: normalizedTransDate || undefined,
+        comentario: String(draftComentario || "").trim() || undefined,
+        urlFile: String(draftUrlFile || "").trim() || undefined,
+        fileName: String(draftFileName || "").trim() || undefined,
+        fileExtension: resolveTicketFileExtension(draftFileName, draftUrlFile),
+        gastoType: parsedGastoType as ExpenseSheetTicketUpdateRequest["gastoType"],
+      };
+
+      const result = await executeExpenseMutation({
+        startStatus: indT("ExpenseSheets_Detail_Updating", "Updating expense sheet..."),
+        fallbackErrorMessage: indT("ExpenseSheets_Detail_UpdateError", "Update error."),
+        setModalError,
+        setBusy,
+        setStatus,
+        action: async () => {
+          const response = await updateExpenseSheetTicket(fileId, payload);
+          if (!response.Success) {
+            throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+          }
+
+          if (syncSheetLine && validatedSheetId) {
+            try {
+              await syncExpenseLinkedTicketSheetLine({
+                fileId,
+                sheetId: validatedSheetId,
+              });
+              clearExpenseTicketSheetSyncState();
+              onLinkedSheetSyncSuccess?.();
+            } catch (error) {
+              const message =
+                error instanceof Error
+                  ? error.message
+                  : indT(
+                      "ExpenseTickets_SheetSync_RetryRequired",
+                      "Ticket data changed, but we could not sync the expense line. Save again before leaving."
+                    );
+              saveExpenseTicketSheetSyncState({
+                fileId,
+                sheetId: validatedSheetId,
+                message,
+              });
+              onLinkedSheetSyncFailure?.(message);
+              throw new Error(message);
+            }
+          }
+
+          setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
+          setIsEditing(false);
+          return true;
+        },
+      });
+
+      return result.ok;
+    },
+    [
+      busy,
+      canEditTicket,
+      draftComentario,
+      draftCurrencyCode,
+      draftDescription,
+      draftFileName,
+      draftGastoType,
+      draftTransDate,
+      draftUrlFile,
+      fileId,
+      isEditing,
+      onLinkedSheetSyncFailure,
+      onLinkedSheetSyncSuccess,
+      setBusy,
+      setIsEditing,
+      setModalError,
+      setStatus,
+      validateLinkedSheetBeforeMutation,
+    ]
+  );
+
+  const handleUpdate = useCallback(async () => {
+    return runHeaderUpdate({
+      syncSheetLine: true,
+    });
+  }, [runHeaderUpdate]);
+
+  const handlePersistHeaderDraft = useCallback(async () => {
+    return runHeaderUpdate({
+      syncSheetLine: false,
+    });
+  }, [runHeaderUpdate]);
 
   const resolveLinkedExpenseLineContext = useCallback(async (): Promise<DeleteLinkedExpenseLineContext | null> => {
     if (deleteLinkedExpenseLineContext) {
@@ -214,6 +316,11 @@ export const useExpenseTicketDetailMutations = ({
     if (busy) return false;
     if (!canDeleteTicket) {
       showPermissionModal();
+      return false;
+    }
+
+    const validatedSheetId = await validateLinkedSheetBeforeMutation();
+    if (validatedSheetId === null) {
       return false;
     }
 
@@ -266,15 +373,30 @@ export const useExpenseTicketDetailMutations = ({
         }
 
         setStatus(indT("ExpenseSheets_Detail_Deleted", "Expense sheet deleted"));
+        if (validatedSheetId) {
+          clearExpenseTicketSheetSyncState();
+          onLinkedSheetSyncSuccess?.();
+        }
         return true;
       },
     });
 
     return result.ok;
-  }, [busy, canDeleteTicket, fileId, resolveLinkedExpenseLineContext, setBusy, setModalError, setStatus]);
+  }, [
+    busy,
+    canDeleteTicket,
+    fileId,
+    onLinkedSheetSyncSuccess,
+    resolveLinkedExpenseLineContext,
+    setBusy,
+    setModalError,
+    setStatus,
+    validateLinkedSheetBeforeMutation,
+  ]);
 
   return {
     handleUpdate,
+    handlePersistHeaderDraft,
     handleDelete,
   };
 };

@@ -46,7 +46,7 @@ const ClientSearchCombobox = ({
   panelClassName,
 }: ClientSearchComboboxProps) => {
   const isCompact = variant === "compact";
-  const resolvedLabel = label || indT("Visits_Create_SearchClient", "Search client");
+  const resolvedLabel = label || indT("History_Filter_Client", "Account");
   const resolvedPlaceholder = placeholder || resolvedLabel;
   const shouldShowLabel = showLabel ?? !isCompact;
   const shouldClearOnNull = clearOnNull ?? isCompact;
@@ -57,7 +57,7 @@ const ClientSearchCombobox = ({
   const [fetchedQuery, setFetchedQuery] = useState("");
   const [loading, setLoading] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [status, setStatus] = useState(indFormat("Visits_Create_MinChars", "Type at least {0} characters.", minChars));
+  const [status, setStatus] = useState(() => indFormat("Visits_Create_MinChars", "Type at least {0} characters.", minChars));
   const [selected, setSelected] = useState<ClientOption | null>(value);
   const [open, setOpen] = useState(false);
   const [page, setPage] = useState(1);
@@ -157,7 +157,10 @@ const ClientSearchCombobox = ({
     try {
       const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=1&pageSize=10`;
       const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
-      const items = (data.items || []).map(mapAccountItem).filter(Boolean) as ClientOption[];
+      const items = (data.items || []).flatMap((item) => {
+        const mapped = mapAccountItem(item);
+        return mapped ? [mapped] : [];
+      });
       setActiveIndex(0);
       setFetchedQuery(currentQuery);
       setClientCache(cacheKey, items);
@@ -200,7 +203,10 @@ const ClientSearchCombobox = ({
       const nextPage = page + 1;
       const url = `/Visitas/GetAccountsForDropdown?term=${encodeURIComponent(query)}&page=${nextPage}&pageSize=10`;
       const data = await fetchJson<{ items?: unknown[] }>(url, { signal: controller.signal });
-      const items = (data.items || []).map(mapAccountItem).filter(Boolean) as ClientOption[];
+      const items = (data.items || []).flatMap((item) => {
+        const mapped = mapAccountItem(item);
+        return mapped ? [mapped] : [];
+      });
       setOptions((prev) => [...prev, ...items]);
       setPage(nextPage);
       setHasMore(items.length === 10);
@@ -355,7 +361,7 @@ const ClientSearchCombobox = ({
                 type="button"
                 className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
                 onClick={requestSearchOrOpen}
-                aria-label={indT("Visits_Create_SearchClient", "Search client")}
+                aria-label={indT("Visits_Create_SearchClient", "Search account")}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={searchIconSize}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 15.75-2.489-2.489m0 0a3.375 3.375 0 1 0-4.773-4.773 3.375 3.375 0 0 0 4.774 4.774ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />

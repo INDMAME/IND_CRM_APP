@@ -570,6 +570,7 @@
             const guard = {
                 active: false,
                 message: defaultMessage,
+                block: false,
                 bypass: false,
                 resetTimer: 0,
                 pendingAction: null,
@@ -599,15 +600,18 @@
                 if (typeof activeOrOptions === "object" && activeOrOptions !== null) {
                     guard.active = !!activeOrOptions.active;
                     guard.message = resolveMessage(activeOrOptions.message);
+                    guard.block = !!activeOrOptions.block;
                     return;
                 }
                 guard.active = !!activeOrOptions;
                 guard.message = resolveMessage(message);
+                guard.block = false;
             };
 
             const clearGuard = () => {
                 guard.active = false;
                 guard.message = defaultMessage;
+                guard.block = false;
                 guard.pendingAction = null;
                 if (guard.modalOpen && modal) {
                     if (modal.contains(document.activeElement)) {
@@ -674,6 +678,9 @@
                 if (guard.bypass || !guard.active) {
                     executeAction(action);
                     return true;
+                }
+                if (guard.block) {
+                    return false;
                 }
                 openModal(message || guard.message, action);
                 return false;

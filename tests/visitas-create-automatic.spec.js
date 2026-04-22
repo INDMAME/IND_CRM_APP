@@ -31,7 +31,7 @@ async function ensureAuthenticatedSession(page) {
 
 // Selects a client by search query and chooses the best matching option.
 async function selectClient(page, clientQuery) {
-  const clientLabel = page.locator("label", { hasText: /Buscar cliente|Search client/i });
+  const clientLabel = page.locator("label", { hasText: /Cuenta|Account|Conta|Conto|Kontua|账户/i });
   await expect(clientLabel).toBeVisible();
   const clientBox = clientLabel.locator("..");
   const clientInput = clientBox.locator("input[role='combobox']").first();

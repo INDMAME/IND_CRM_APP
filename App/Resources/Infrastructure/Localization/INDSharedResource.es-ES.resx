@@ -532,7 +532,7 @@
     <value>Fecha</value>
   </data>
   <data name="History_Filter_Client" xml:space="preserve">
-    <value>Cliente</value>
+    <value>Cuenta</value>
   </data>
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>Borrar</value>
@@ -718,7 +718,7 @@
     <value>Selecciona la fecha</value>
   </data>
   <data name="Visits_Create_SearchClient" xml:space="preserve">
-    <value>Buscar cliente</value>
+    <value>Buscar cuenta</value>
   </data>
   <data name="Visits_Create_SearchContact" xml:space="preserve">
     <value>Buscar contacto (selección múltiple)</value>
@@ -1208,6 +1208,15 @@
   </data>
   <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
     <value>Esta hoja de gastos es de solo lectura para su estado actual.</value>
+  </data>
+  <data name="ExpenseTickets_SheetSync_PendingSaveRequired" xml:space="preserve">
+    <value>Debes guardar el ticket antes de salir de este flujo.</value>
+  </data>
+  <data name="ExpenseTickets_SheetSync_RetryRequired" xml:space="preserve">
+    <value>Los datos del ticket cambiaron, pero no pudimos sincronizar la linea de la hoja de gastos. Guarda de nuevo antes de salir.</value>
+  </data>
+  <data name="ExpenseTickets_SheetSync_InvalidTotal" xml:space="preserve">
+    <value>El ticket debe mantener un importe total positivo para sincronizar la linea de gasto.</value>
   </data>
   <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
     <value>Este cambio de estado de la hoja de gastos no está permitido.</value>

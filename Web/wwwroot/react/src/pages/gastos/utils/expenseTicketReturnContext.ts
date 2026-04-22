@@ -15,6 +15,7 @@ export type ExpenseTicketReturnContext = {
   fileId: string;
   sheetId: string;
   origin: ExpenseTicketSheetOrigin;
+  sheetLineRecId?: string;
 };
 
 const normalizeOrigin = (value: unknown): ExpenseTicketSheetOrigin | "" => {
@@ -37,12 +38,14 @@ export const normalizeExpenseTicketReturnContext = (value: unknown): ExpenseTick
   const fileId = safeText(payload.fileId);
   const sheetId = safeText(payload.sheetId);
   const origin = normalizeOrigin(payload.origin);
+  const sheetLineRecId = safeText(payload.sheetLineRecId);
   if (!fileId || !sheetId || !origin) return null;
 
   return {
     fileId,
     sheetId,
     origin,
+    sheetLineRecId: sheetLineRecId || undefined,
   };
 };
 
@@ -97,6 +100,9 @@ export const appendExpenseTicketReturnQuery = (
 
   query.set("origin", normalized.origin);
   query.set("sheetId", normalized.sheetId);
+  if (normalized.sheetLineRecId) {
+    query.set("sheetLineRecId", normalized.sheetLineRecId);
+  }
   return query;
 };
 
@@ -105,6 +111,21 @@ export const buildExpenseSheetDetailUrl = (sheetId: unknown): string => {
   const safeSheetId = safeText(sheetId);
   if (!safeSheetId) return "/Gastos/ExpenseSheets";
   return `/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(safeSheetId)}`;
+};
+
+// Builds the canonical expense sheet line detail URL used when ticket detail returns to a linked line.
+export const buildExpenseSheetLineDetailUrl = (sheetId: unknown, lineRecId: unknown): string => {
+  const safeSheetId = safeText(sheetId);
+  const safeLineRecId = safeText(lineRecId);
+  if (!safeSheetId || !safeLineRecId) {
+    return buildExpenseSheetDetailUrl(safeSheetId);
+  }
+
+  const query = new URLSearchParams({
+    hojaGastosId: safeSheetId,
+    lineRecId: safeLineRecId,
+  });
+  return `/Gastos/ExpenseSheetLineDetail?${query.toString()}`;
 };
 
 // Builds the canonical ticket link form URL used when a ticket detail returns to link mode.

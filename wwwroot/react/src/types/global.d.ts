@@ -4,6 +4,7 @@ declare global {
   type IndNavigationGuardOptions = {
     active?: boolean;
     message?: string;
+    block?: boolean;
   };
 
   interface Window {

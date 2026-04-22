@@ -12,12 +12,12 @@ type UseExpenseTicketDetailInteractionsArgs = {
   busy: boolean;
   fileId: string;
   contextSheetId: string;
-  isFromExpenseLine: boolean;
   isFromSheetLink: boolean;
   headerExpenseSheetId: string;
   isEditing: boolean;
   canOpenSaveConfirm: () => boolean;
-  handleUpdate: () => Promise<boolean>;
+  handlePersistHeaderDraft: () => Promise<boolean>;
+  bypassWorkflowGuard: boolean;
   lineContainerRef: RefObject<HTMLDivElement | null>;
   openPreview: () => Promise<void>;
   ticketReturnContext?: ExpenseTicketReturnContext | null;
@@ -28,19 +28,19 @@ export const useExpenseTicketDetailInteractions = ({
   busy,
   fileId,
   contextSheetId,
-  isFromExpenseLine,
   isFromSheetLink,
   headerExpenseSheetId,
   isEditing,
   canOpenSaveConfirm,
-  handleUpdate,
+  handlePersistHeaderDraft,
+  bypassWorkflowGuard,
   lineContainerRef,
   openPreview,
   ticketReturnContext,
 }: UseExpenseTicketDetailInteractionsArgs) => {
   const openLineDetail = useCallback(
     async (rawLineRecId: string) => {
-      if (isFromExpenseLine || isFromSheetLink) return;
+      if (isFromSheetLink) return;
       if (busy) return;
       const lineRecId = safeText(rawLineRecId);
       if (!lineRecId || !fileId) return;
@@ -51,7 +51,7 @@ export const useExpenseTicketDetailInteractions = ({
           return;
         }
 
-        const updateOk = await handleUpdate();
+        const updateOk = await handlePersistHeaderDraft();
         if (!updateOk) {
           return;
         }
@@ -68,10 +68,19 @@ export const useExpenseTicketDetailInteractions = ({
 
       navigateToExpenseUrl(`/Gastos/TicketLineDetail?${query.toString()}`, {
         askConfirmation: false,
-        bypassGuardOnce: shouldOpenInEditMode,
+        bypassGuardOnce: shouldOpenInEditMode || bypassWorkflowGuard,
       });
     },
-    [busy, canOpenSaveConfirm, fileId, handleUpdate, isEditing, isFromExpenseLine, isFromSheetLink, ticketReturnContext]
+    [
+      busy,
+      bypassWorkflowGuard,
+      canOpenSaveConfirm,
+      fileId,
+      handlePersistHeaderDraft,
+      isEditing,
+      isFromSheetLink,
+      ticketReturnContext,
+    ]
   );
 
   const resolveClickableCard = useCallback(

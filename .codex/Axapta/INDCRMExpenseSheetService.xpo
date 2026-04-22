@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Martes 14/04/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 22/04/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -44,7 +44,7 @@ Formatversion: 1
         #                 strFmt("%1", _hoja.EstadoComentarios),
         #                 strFmt("%1", _hoja.UserId),
         #                 strFmt("%1", INDPersonaTable::findByCRM(CRMUsuarioTable::Find(_hoja.UserId).RecId).Name),
-        #                 strFmt("%1", _hoja.CurrencyCode),
+        #                 strFmt("%1", Currency::find(_hoja.CurrencyCode).CurrencyCodeISO),
         #                 strFmt("%1", monto),
         #                 strFmt("%1", _hoja.ExchRate),
         #                 strFmt("%1", exchangeRateMode),
@@ -72,7 +72,7 @@ Formatversion: 1
         #    return [
         #            strFmt('%1', _ticketHeader.FileId),
         #            strFmt('%1', _ticketHeader.Description),
-        #            strFmt('%1', _ticketHeader.CurrencyCode),
+        #            strFmt("%1", Currency::find(_ticketHeader.CurrencyCode).CurrencyCodeISO),
         #            strFmt('%1', _ticketHeader.TotalAmount),
         #            strFmt('%1', date2Str(_docuRef.INDTransDate, 123, 2,2,2,2,4)),
         #            strFmt('%1', _docuRef.INDFilename),
@@ -101,7 +101,7 @@ Formatversion: 1
         #            strFmt('%1', _ticketHeader.Description),
         #            strFmt('%1', ticketStatusInt),
         #            strFmt('%1', processedByAIInt),
-        #            strFmt('%1', _ticketHeader.CurrencyCode),
+        #            strFmt("%1", Currency::find(_ticketHeader.CurrencyCode).CurrencyCodeISO),
         #            strFmt('%1', _ticketHeader.TotalAmount),
         #            strFmt('%1', date2Str(_docuRef.INDTransDate, 123, 2,2,2,2,4)),
         #            strFmt('%1', _docuRef.INDFilename),
@@ -351,7 +351,7 @@ Formatversion: 1
         #                header.initFromUsuarioTable();
         #
         #                header.Description  = descr;
-        #                header.CurrencyCode = currencyCode;
+        #                header.CurrencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
         #                header.ExchRate     = exchRate;
         #                header.ProjId       = projId;
         #
@@ -758,7 +758,7 @@ Formatversion: 1
         #        if (!transDate)
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
-        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #        if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
@@ -822,7 +822,7 @@ Formatversion: 1
         #                ticketHeader.FileId          = docuRef.INDFileId;
         #                ticketHeader.Description     = descr;
         #                ticketHeader.Status          = INDTicketStatus::Pending;
-        #                ticketHeader.CurrencyCode    = currencyCode;
+        #                ticketHeader.CurrencyCode    = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
         #                ticketHeader.TotalAmount     = totalAmount;
         #                ticketHeader.GastoType       = hasGastoType ? gastoType : 0;
         #                ticketHeader.ProcessedByAI   = processedByAI;
@@ -1934,6 +1934,9 @@ Formatversion: 1
         #
         #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
         #
+        #        if(!crmUserId)
+        #            crmUserId = CRMUsuarioTable::Find(axUserId).UserId;
+        #
         #        if (!crmUserId || !hojaId)
         #            return [INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull()), conNull()];
         #
@@ -1955,7 +1958,7 @@ Formatversion: 1
         #                                                      strFmt("%1", expenseSheetStatus),
         #                                                      strFmt("%1", header.EstadoComentarios),
         #                                                      strFmt("%1", header.UserId),
-        #                                                      strFmt("%1", header.CurrencyCode),
+        #                                                      strFmt("%1", Currency::find(header.CurrencyCode).CurrencyCodeISO),
         #                                                      strFmt("%1", monto),
         #                                                      strFmt("%1", header.ExchRate),
         #                                                      strFmt("%1", exchangeRateMode),
@@ -1976,7 +1979,7 @@ Formatversion: 1
         #                         strFmt("%1", line.RecId),
         #                         strFmt("%1", date2Str(line.TransDate, 123, 2,2,2,2,4)),
         #                         strFmt("%1", gastoTypeInt),
-        #                         strFmt("%1", line.Description),
+        #                         strFmt("%1", line.Description ? line.Description : enum2str(line.Type)),
         #                         strFmt("%1", line.Internacional),
         #                         strFmt("%1", line.FileId),
         #                         strFmt("%1", line.Price),
@@ -2043,7 +2046,10 @@ Formatversion: 1
         #        projId = conPeek(_data, 7);
         #
         #    if (conLen(_data) >= 8)
+        #    {
         #        currencyCode = conPeek(_data, 8);
+        #        currencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
+        #    }
         #
         #    if (conLen(_data) >= 9)
         #    {
@@ -2245,7 +2251,7 @@ Formatversion: 1
         #                                                      strFmt('%1', ticketHeader.FileId),
         #                                                      strFmt('%1', ticketHeader.Description),
         #                                                      strFmt('%1', ticketStatusInt),
-        #                                                      strFmt('%1', ticketHeader.CurrencyCode),
+        #                                                      strFmt('%1', Currency::find(ticketHeader.CurrencyCode).CurrencyCodeISO),
         #                                                      strFmt('%1', ticketHeader.TotalAmount),
         #                                                      strFmt('%1', ticketHeader.CreatedByUserId),
         #                                                      strFmt('%1', date2Str(docuRef.INDTransDate, 123, 2,2,2,2,4)),
@@ -2344,7 +2350,10 @@ Formatversion: 1
         #        return [['Sin datos, la fecha desde no puede ser mayor a la fecha hasta.']];
         #
         #    if (conLen(_data) >= 6)
+        #    {
         #        currencyCode = conPeek(_data, 6);
+        #        currencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
+        #    }
         #
         #    if (conLen(_data) >= 7 && conPeek(_data, 7))
         #    {
@@ -2367,7 +2376,7 @@ Formatversion: 1
         #        likePattern = strFmt('*%1*', filterTxt);
         #
         #    if (currencyCode)
-        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #    if (hasGastoTypeFilter && !INDCRMExpenseSheetService::isValidGastoType(gastoTypeFilter))
         #        hasGastoTypeFilter = false;
@@ -2485,7 +2494,10 @@ Formatversion: 1
         #        return [['Sin datos, la fecha desde no puede ser mayor a la fecha hasta.']];
         #
         #    if (conLen(_data) >= 7)
+        #    {
         #        currencyCode = conPeek(_data, 7);
+        #        currencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
+        #    }
         #
         #    if (conLen(_data) >= 8 && conPeek(_data, 8))
         #    {
@@ -2515,7 +2527,7 @@ Formatversion: 1
         #        likePattern = strFmt('*%1*', filterTxt);
         #
         #    if (currencyCode)
-        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #    if (hasGastoTypeFilter && !INDCRMExpenseSheetService::isValidGastoType(gastoTypeFilter))
         #        hasGastoTypeFilter = false;
@@ -3025,7 +3037,7 @@ Formatversion: 1
         #
         #            if (currencyCode)
         #            {
-        #                currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #                currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #                if (currencyCode == 'EUR')
         #                    exchRate = 100.0;
@@ -3035,7 +3047,7 @@ Formatversion: 1
         #                    return INDCRMUtilityService::buildHeader(false, 'ExchRate debe ser mayor que 0 cuando CurrencyCode no es EUR.', conNull());
         #                }
         #
-        #                header.CurrencyCode = currencyCode;
+        #                header.CurrencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
         #                header.ExchRate     = exchRate;
         #            }
         #
@@ -3182,7 +3194,7 @@ Formatversion: 1
         #            }
         #
         #            select firstonly forupdate line
-        #                where line.RecId       == lineRecId
+        #                where line.RecId        == lineRecId
         #                   && line.UserId       == crmUserId
         #                   && line.HojaGastosId == hojaId;
         #
@@ -3422,7 +3434,7 @@ Formatversion: 1
         #    }
         #
         #    if (currencyCode)
-        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #    if (hasStatus &&
         #        (status < 0
@@ -3467,7 +3479,7 @@ Formatversion: 1
         #                ticketHeader.Description = descr;
         #
         #            if (currencyCode)
-        #                ticketHeader.CurrencyCode = currencyCode;
+        #                ticketHeader.CurrencyCode  = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
         #
         #            if (hasTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
@@ -3704,7 +3716,7 @@ Formatversion: 1
         #    if (!transDate)
         #        return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
-        #    currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #    currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #    if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
         #        return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
@@ -3736,7 +3748,7 @@ Formatversion: 1
         #            }
         #
         #            ticketHeader.Description   = descr;
-        #            ticketHeader.CurrencyCode  = currencyCode;
+        #            ticketHeader.CurrencyCode  = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
         #            ticketHeader.ProcessedByAI = NoYes::Yes;
         #
         #            if (hasGastoType)

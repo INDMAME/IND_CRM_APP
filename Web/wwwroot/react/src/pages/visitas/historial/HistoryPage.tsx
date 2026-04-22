@@ -558,7 +558,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
   );
   const clearLabel = indT("History_Filter_Clear", "Clear");
   const applyLabel = indT("History_Filter_Apply", "Apply");
-  const clientLabel = indT("History_Filter_Client", "Client");
+  const clientLabel = indT("History_Filter_Client", "Account");
   const quickCustomLabel = indT("History_Quick_Custom", "Date");
   const quick7DaysLabel = indT("History_Quick_7Days", "7 days");
   const quick30DaysLabel = indT("History_Quick_30Days", "30 days");
@@ -672,8 +672,8 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
             key={clientResetKey}
             value={selectedClient}
             onSelected={handleClientSelected}
-            label={indT("History_Filter_Client", "Client")}
-            placeholder={indT("History_Filter_Client", "Client")}
+            label={indT("History_Filter_Client", "Account")}
+            placeholder={indT("History_Filter_Client", "Account")}
             variant="compact"
             showLabel={false}
             idBase="history-client"

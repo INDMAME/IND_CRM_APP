@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo } from "react";
 import type { ExpenseTicketsCachedState } from "../useExpenseTicketsFilterCache.ts";
 import {
   buildExpenseSheetDetailUrl,
+  buildExpenseSheetLineDetailUrl,
   buildExpenseTicketLinkUrl,
   type ExpenseTicketReturnContext,
 } from "../../utils/expenseTicketReturnContext.ts";
@@ -11,6 +12,7 @@ type UseExpenseTicketDetailBackNavigationArgs = {
   fileId: string;
   detailOrigin: string;
   headerTransDate: unknown;
+  contextLineRecId?: string;
   ticketReturnContext?: ExpenseTicketReturnContext | null;
   readCachedState: () => ExpenseTicketsCachedState | null;
   saveCachedState: (state: ExpenseTicketsCachedState) => void;
@@ -21,6 +23,7 @@ export const useExpenseTicketDetailBackNavigation = ({
   fileId,
   detailOrigin,
   headerTransDate,
+  contextLineRecId,
   ticketReturnContext,
   readCachedState,
   saveCachedState,
@@ -30,6 +33,10 @@ export const useExpenseTicketDetailBackNavigation = ({
   const nativeBackUrl = useMemo(() => {
     if (ticketReturnContext?.origin === "sheet-link" && ticketReturnContext.sheetId) {
       return buildExpenseTicketLinkUrl(ticketReturnContext.sheetId);
+    }
+
+    if (ticketReturnContext?.origin === "expense-line" && ticketReturnContext.sheetId) {
+      return buildExpenseSheetLineDetailUrl(ticketReturnContext.sheetId, ticketReturnContext.sheetLineRecId || contextLineRecId);
     }
 
     if (ticketReturnContext?.sheetId) {
@@ -47,7 +54,7 @@ export const useExpenseTicketDetailBackNavigation = ({
     }
 
     return "/Gastos/Tickets";
-  }, [detailOrigin, fileId, headerTransDate, ticketReturnContext]);
+  }, [contextLineRecId, detailOrigin, fileId, headerTransDate, ticketReturnContext]);
 
   const rearmExpenseTicketsReturnState = useCallback(() => {
     const cachedState = readCachedState();

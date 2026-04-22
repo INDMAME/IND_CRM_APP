@@ -1,13 +1,8 @@
 import { useEffect, useReducer } from "react";
-import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
-import { fetchExpenseSheetDetail, mapExpenseSheetHeader } from "../utils/expenseApi.ts";
 import { isExpenseAbortLikeError } from "../utils/expenseRequestRetry.ts";
-import { hasAssignedVoucher, safeText } from "../utils/expenseUiUtils.ts";
-import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
-import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
-
-const EXPENSE_STATUS_PAID = 4;
+import { safeText } from "../utils/expenseUiUtils.ts";
+import { resolveExpenseSheetEditAccess } from "../utils/expenseSheetEditAccess.ts";
 
 type LinkSheetGateState = {
   linkSheetLocked: boolean;
@@ -102,69 +97,26 @@ export const useExpenseTicketLinkSheetGate = ({
 
     void (async () => {
       try {
-        const response = await fetchExpenseSheetDetail(linkSheetId, {
-          suppressPermissionModal: true,
-        });
-        if (cancelled) return;
-
-        if (response?.Success === false) {
-          dispatch({
-            type: "replace",
-            nextState: {
-              linkSheetLocked: true,
-              linkSheetBlockedMessage:
-                safeText(response.Message) || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."),
-              linkSheetCheckBusy: false,
-            },
-          });
-          return;
-        }
-
-        const headers = Array.isArray(response?.Items) ? response.Items : [];
-        const selectedSheet =
-          headers.find(
-            (entry) =>
-              safeText((entry as { HojaGastosId?: unknown })?.HojaGastosId).toUpperCase() === linkSheetId.toUpperCase()
-          ) ||
-          headers[0] ||
-          null;
-
-        if (!selectedSheet) {
-          dispatch({
-            type: "replace",
-            nextState: {
-              linkSheetLocked: true,
-              linkSheetBlockedMessage: indT("ExpenseSheets_NotFound", "Expense sheet was not found."),
-              linkSheetCheckBusy: false,
-            },
-          });
-          return;
-        }
-
-        const mappedHeader = mapExpenseSheetHeader(selectedSheet);
-        const statusCode = typeof mappedHeader.expenseSheetStatus === "number" ? mappedHeader.expenseSheetStatus : null;
-        const isPaid = statusCode === EXPENSE_STATUS_PAID || hasAssignedVoucher(mappedHeader.voucher);
-        const isManagingOtherUser = isManagingOtherExpenseRecord({
+        const accessResult = await resolveExpenseSheetEditAccess({
+          sheetId: linkSheetId,
+          allowSelfManagement,
           canManageOtherUsers,
           currentAxUserId,
           currentCrmUserId,
           selectedManagedUserId,
-          recordOwnerUserId: mappedHeader.userId,
-          isCreateMode: false,
         });
-        const detailPolicy = resolveExpenseSheetDetailPolicy({
-          statusCode,
-          isManagingOtherUser,
-          allowSelfManagement,
-          isPaid,
-        });
-        const isLocked = detailPolicy.interactionMode !== "full_edit";
+        if (cancelled) return;
+
+        const isLocked = accessResult.isLocked;
 
         dispatch({
           type: "replace",
           nextState: {
             linkSheetLocked: isLocked,
-            linkSheetBlockedMessage: isLocked ? resolveBlockedMessage(isPaid) : "",
+            linkSheetBlockedMessage:
+              isLocked && !safeText(accessResult.blockedMessage)
+                ? resolveBlockedMessage(accessResult.isPaid)
+                : safeText(accessResult.blockedMessage),
             linkSheetCheckBusy: false,
           },
         });
@@ -186,11 +138,7 @@ export const useExpenseTicketLinkSheetGate = ({
           nextState: {
             linkSheetLocked: true,
             linkSheetBlockedMessage:
-              error instanceof ApiFetchError && error.status === 403
-                ? indT("Auth_PermissionDenied_Body", "No permission.")
-                : error instanceof Error
-                  ? error.message
-                  : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."),
+              error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."),
             linkSheetCheckBusy: false,
           },
         });

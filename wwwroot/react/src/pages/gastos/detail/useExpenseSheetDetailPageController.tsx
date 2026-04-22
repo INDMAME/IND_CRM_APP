@@ -432,6 +432,7 @@ export const useExpenseSheetDetailPageController = () => {
     canCreateExpense: !isCreateMode && detailPolicy.showFab,
     isCreateMode,
     isSheetLocked: !canUseFullEditFeatures,
+    linkToSheet: false,
     onForbidden: showPermissionModal,
     onCompleted: (result) => {
       const createdFileId = safeText(result?.fileId);

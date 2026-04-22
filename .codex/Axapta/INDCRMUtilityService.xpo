@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Martes 14/04/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Miércoles 22/04/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -180,6 +180,7 @@ Formatversion: 1
         #    str 1000                    _appCode;
         #
         #    SysUserInfo                 sysUserInfo;
+        #    UserInfo                    UserInfo;
         #    INDWebApp                   webApp;
         #    INDWebModule                webModule;
         #    INDCiasPermitidas           ciasPerm;
@@ -254,7 +255,10 @@ Formatversion: 1
         #    }
         #
         #    // 3) Default company inicial del usuario
-        #    initialDefaultCompany = sysUserInfo.company();
+        #    select firstOnly UserInfo
+        #        where UserInfo.id == sysUserInfo.Id;
+        #
+        #    initialDefaultCompany = UserInfo.company;
         #    defaultCompany        = initialDefaultCompany;
         #
         #    // 4) Construir lista de companias + modulos con permisos
@@ -293,18 +297,12 @@ Formatversion: 1
         #        if (conLen(modulesCon) == 0)
         #            continue;
         #
-        #        // Guardar primera compania con acceso
-        #        if (!firstAllowedCompany)
-        #            firstAllowedCompany = ciasPerm.CiaId;
-        #
-        #        // Marcar si la default inicial tiene acceso real
-        #        if (ciasPerm.CiaId == initialDefaultCompany)
-        #            initialDefaultAllowed = true;
-        #
         #        // Nombre de compania (solo aqui usamos changecompany)
         #        companyName = "";
         #        companyCurrencyCode = "";
         #        allowSelfManagement = false;
+        #        companyCrmUserId = "";
+        #        crmUsuarioTable.clear();
         #        try
         #        {
         #            changecompany (ciasPerm.CiaId)
@@ -312,21 +310,39 @@ Formatversion: 1
         #                companyName = CompanyInfo::find().Name;
         #                companyCurrencyCode = CompanyInfo::find().CurrencyCode;
         #
-        #                companyCrmUserId = SysUserInfo::getCRMUsuarioTable(sysUserInfo.Id).UserId;
-        #                if (companyCrmUserId)
+        #                crmUsuarioTable = SysUserInfo::getCRMUsuarioTable(sysUserInfo.Id);
+        #                companyCrmUserId = crmUsuarioTable.UserId;
+        #
+        #                if (!companyCrmUserId)
         #                {
-        #                    crmUsuarioTable = CRMUsuarioTable::Find(companyCrmUserId);
+        #                    crmUsuarioTable = CRMUsuarioTable::Find(sysUserInfo.Id);
+        #                    companyCrmUserId = crmUsuarioTable.UserId;
+        #                }
+        #
         #                    if (crmUsuarioTable.RecId)
         #                        allowSelfManagement = INDPersonaTable::findByCRM(crmUsuarioTable.RecId).AllowSelfManagement;
         #                }
         #            }
-        #        }
         #        catch
         #        {
         #            companyName = "";
         #            companyCurrencyCode = "";
         #            allowSelfManagement = false;
+        #            companyCrmUserId = "";
+        #            crmUsuarioTable.clear();
         #        }
+        #
+        #        if (!crmUsuarioTable.RecId)
+        #            continue;
+        #
+        #        // Guardar primera compania con acceso real
+        #        if (!firstAllowedCompany)
+        #            firstAllowedCompany = ciasPerm.CiaId;
+        #
+        #        // Marcar si la default inicial queda visible en la respuesta
+        #        if (ciasPerm.CiaId == initialDefaultCompany)
+        #            initialDefaultAllowed = true;
+        #
         #        // Item compania: [CiaId, IsDefault (temporal), CompanyName, CurrencyCode, allowSelfManagement, ModulesCon,CRMUserId]
         #        // Nota: IsDefault se recalcula al final segun defaultCompany final
         #        companyItem = [
@@ -339,7 +355,6 @@ Formatversion: 1
         #                        modulesCon
         #                      ];
         #
-        #        if(crmUsuarioTable)
         #            companiesCon = conIns(companiesCon, conLen(companiesCon) + 1, companyItem);
         #    }
         #
@@ -386,7 +401,7 @@ Formatversion: 1
         #        {
         #            changecompany (defaultCompany)
         #            {
-        #                defaultCompanyCurrencyCode = CompanyInfo::find().CurrencyCode;
+        #                defaultCompanyCurrencyCode = Currency::find(CompanyInfo::find().CurrencyCode).CurrencyCodeISO;
         #            }
         #        }
         #        catch
@@ -428,6 +443,39 @@ Formatversion: 1
         #    return d;
         #}
         #
+      ENDSOURCE
+      SOURCE #resolveCurrencyCode
+        #/// <summary>
+        #/// Resuelve un código de divisa a CurrencyCode.
+        #/// Busca primero por CurrencyCode y luego por CurrencyCodeISO.
+        #/// </summary>
+        #/// <param name="_currencyInput">Código de divisa de entrada</param>
+        #/// <returns>CurrencyCode encontrado o vacío</returns>
+        #static CurrencyCode resolveCurrencyCode(CurrencyCode _currencyInput)
+        #{
+        #    Currency       currency;
+        #    CurrencyCode   result;
+        #
+        #    // Normalización básica (defensivo)
+        #    _currencyInput = strUpr(strLRTrim(_currencyInput));
+        #
+        #    // 1. Buscar por CurrencyCode
+        #    select firstOnly CurrencyCode
+        #      from currency
+        #        where currency.CurrencyCode == _currencyInput;
+        #
+        #    if (currency)
+        #        return currency.CurrencyCode;
+        #
+        #
+        #    // 2. Buscar por CurrencyCodeISO
+        #    select firstOnly CurrencyCode
+        #        from currency
+        #        where currency.CurrencyCodeISO == _currencyInput;
+        #
+        #
+        #    return currency.CurrencyCode;
+        #}
       ENDSOURCE
     ENDMETHODS
   ENDCLASS

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../../components/commons/VisitasPageProviders.tsx";
 import { useAuthContext } from "../../../../context/AuthContext.tsx";
 import { useTimelineCardEffects } from "../../../../hooks/useTimelineCardEffects.ts";
@@ -6,11 +6,13 @@ import { canAccess, showPermissionModal } from "../../../../utils/permissions.ts
 import { indT } from "../../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../../utils/reactIsland.tsx";
 import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
-import { navigateToExpenseUrl } from "../../utils/expenseNavigation.ts";
+import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../../utils/expenseNavigation.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
 import { buildExpenseSheetDetailUrl } from "../../utils/expenseTicketReturnContext.ts";
+import { readExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
+import { useExpenseTicketLinkSheetGate } from "../useExpenseTicketLinkSheetGate.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
 import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutations.ts";
 import { useExpenseTicketDetailTopbarActions } from "./useExpenseTicketDetailTopbarActions.ts";
@@ -63,6 +65,14 @@ const buildFallbackGastoTypeOptions = (): ExpenseSelectOption[] => {
       text: indT(cfg.key, cfg.fallback),
     }))
     .sort((left, right) => Number(left.value) - Number(right.value));
+};
+
+const resolveLinkedTicketBlockedMessage = (isPaid: boolean): string => {
+  if (isPaid) {
+    return indT("ExpenseSheets_Detail_PaidReadOnly", "Las hojas de gasto pagadas son de solo lectura.");
+  }
+
+  return indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.");
 };
 
 const buildExpenseTicketDetailModalView = ({
@@ -311,11 +321,13 @@ const useExpenseTicketDetailNavigationState = ({
   fileId,
   detailOrigin,
   headerTransDate,
+  contextLineRecId,
   ticketReturnContext,
 }: {
   fileId: string;
   detailOrigin: string;
   headerTransDate: string | null | undefined;
+  contextLineRecId: string;
   ticketReturnContext: ReturnType<typeof useExpenseTicketDetailRouteContext>["ticketReturnContext"];
 }) => {
   const { readCachedState, saveCachedState, markResetFiltersReturn, clearCachedState } = useExpenseTicketsFilterCache();
@@ -324,6 +336,7 @@ const useExpenseTicketDetailNavigationState = ({
     fileId,
     detailOrigin,
     headerTransDate,
+    contextLineRecId,
     ticketReturnContext,
     readCachedState,
     saveCachedState,
@@ -338,37 +351,40 @@ const useExpenseTicketDetailNavigationState = ({
 // Runs the one-shot auto edit transition for linked contexts after detail data is ready.
 const useExpenseTicketDetailAutoEdit = ({
   autoEditMode,
-  isFromExpenseLine,
   isFromSheetLink,
   isLoading,
   header,
   handleEnableEdit,
+  canAttemptAutoEdit,
 }: {
   autoEditMode: boolean;
-  isFromExpenseLine: boolean;
   isFromSheetLink: boolean;
   isLoading: boolean;
   header: ExpenseTicketDetailHeader | null;
   handleEnableEdit: () => void;
+  canAttemptAutoEdit: boolean;
 }) => {
   const autoEditAttemptedRef = useRef(false);
 
   useEffect(() => {
-    if (!autoEditMode || isFromExpenseLine || isFromSheetLink || autoEditAttemptedRef.current) return;
-    if (isLoading || !header) return;
+    if (!autoEditMode || isFromSheetLink || autoEditAttemptedRef.current) return;
+    if (isLoading || !header || !canAttemptAutoEdit) return;
 
     autoEditAttemptedRef.current = true;
     handleEnableEdit();
-  }, [autoEditMode, handleEnableEdit, header, isFromExpenseLine, isFromSheetLink, isLoading]);
+  }, [autoEditMode, canAttemptAutoEdit, handleEnableEdit, header, isFromSheetLink, isLoading]);
 };
 
 // Resolves permission and acting-user state so the page container stays focused on orchestration.
-const useExpenseTicketDetailPermissionState = ({
-  isFromExpenseSheetCreate,
-}: {
-  isFromExpenseSheetCreate: boolean;
-}) => {
-  const { canManageOtherUsers, currentAxUserId, selectedManagedUserId, managementBootstrapReady } = useAuthContext();
+const useExpenseTicketDetailPermissionState = () => {
+  const {
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    currentCrmUserId,
+    selectedManagedUserId,
+    managementBootstrapReady,
+  } = useAuthContext();
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
   const canEditTicketByModule = canAccess("GASTOS_TICKETS", "Edit");
   const canDeleteTicketByModule = canAccess("GASTOS_TICKETS", "FullAccess");
@@ -382,7 +398,11 @@ const useExpenseTicketDetailPermissionState = ({
     hasAccess,
     canEditTicket: canEditTicketByModule && !isManagingOtherUser,
     canDeleteTicket: canDeleteTicketByModule && !isManagingOtherUser,
-    allowAssignedDraftEdit: isFromExpenseSheetCreate,
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    currentCrmUserId,
+    selectedManagedUserId,
     isManagingOtherUser,
     managementBootstrapReady,
   };
@@ -406,12 +426,13 @@ const useExpenseTicketDetailPageViewModel = () => {
     hasAccess,
     canEditTicket,
     canDeleteTicket,
-    allowAssignedDraftEdit,
-    isManagingOtherUser,
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    currentCrmUserId,
+    selectedManagedUserId,
     managementBootstrapReady,
-  } = useExpenseTicketDetailPermissionState({
-    isFromExpenseSheetCreate,
-  });
+  } = useExpenseTicketDetailPermissionState();
   const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
     const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
     const mapped = mapWindowEnumOptions(source).filter((entry) => {
@@ -437,12 +458,72 @@ const useExpenseTicketDetailPageViewModel = () => {
     fileId,
     onForbidden: showPermissionModal,
   });
+  const linkedExpenseSheetId = useMemo(
+    () => safeText(ticketReturnContext?.sheetId || contextSheetId || header?.hojaGastosIdDisplay),
+    [contextSheetId, header?.hojaGastosIdDisplay, ticketReturnContext]
+  );
+  const {
+    linkSheetLocked,
+    linkSheetBlockedMessage,
+    linkSheetCheckBusy,
+  } = useExpenseTicketLinkSheetGate({
+    isLinkMode: !!linkedExpenseSheetId,
+    linkSheetId: linkedExpenseSheetId,
+    canProcessLinkMode: true,
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    currentCrmUserId,
+    selectedManagedUserId,
+    resolveBlockedMessage: resolveLinkedTicketBlockedMessage,
+  });
+  const [sheetSyncBlocked, setSheetSyncBlocked] = useState(() => !!readExpenseTicketSheetSyncState(fileId));
+  const [sheetSyncBlockedMessage, setSheetSyncBlockedMessage] = useState(() =>
+    safeText(readExpenseTicketSheetSyncState(fileId)?.message)
+  );
+
+  useEffect(() => {
+    const syncState = readExpenseTicketSheetSyncState(fileId);
+    setSheetSyncBlocked(!!syncState);
+    setSheetSyncBlockedMessage(safeText(syncState?.message));
+  }, [fileId]);
+
+  const pendingFirstLink =
+    detailOrigin === "sheet-create" && !!safeText(ticketReturnContext?.sheetId || contextSheetId) && !safeText(header?.hojaGastosIdDisplay);
+  const sheetWorkflowBlockMessage = pendingFirstLink
+    ? indT("ExpenseTickets_SheetSync_PendingSaveRequired", "Save the ticket before leaving this flow.")
+    : sheetSyncBlockedMessage ||
+      indT(
+        "ExpenseTickets_SheetSync_RetryRequired",
+        "Ticket data changed, but we could not sync the expense line. Save again before leaving."
+      );
+  const shouldBlockWorkflowExit = pendingFirstLink || sheetSyncBlocked;
+
+  useEffect(() => {
+    if (!shouldBlockWorkflowExit) {
+      clearExpenseNavigationGuard();
+      return;
+    }
+
+    setExpenseNavigationGuard({
+      active: true,
+      message: sheetWorkflowBlockMessage,
+      block: true,
+    });
+    return () => {
+      clearExpenseNavigationGuard();
+    };
+  }, [sheetWorkflowBlockMessage, shouldBlockWorkflowExit]);
+
   const { markResetFiltersReturn, clearCachedState } = useExpenseTicketDetailNavigationState({
     fileId,
     detailOrigin,
     headerTransDate: header?.transDate,
+    contextLineRecId,
     ticketReturnContext,
   });
+  const canEditLinkedTicket = !linkedExpenseSheetId || (!linkSheetCheckBusy && !linkSheetLocked);
+  const allowAssignedDraftEdit = isFromExpenseSheetCreate || (!!linkedExpenseSheetId && canEditLinkedTicket);
   const {
     busy,
     status,
@@ -478,12 +559,36 @@ const useExpenseTicketDetailPageViewModel = () => {
     header,
     lineCount: lines.length,
     pageSize: LINES_PAGE_SIZE,
-    canEditTicket,
+    canEditTicket: canEditTicket && canEditLinkedTicket,
     isLoading,
     allowAssignedDraftEdit,
     isFromSheetLink,
     onForbidden: showPermissionModal,
   });
+  const handleEnableEditInContext = useCallback(() => {
+    if (linkSheetCheckBusy) {
+      return;
+    }
+
+    if (linkedExpenseSheetId && linkSheetLocked) {
+      const message =
+        safeText(linkSheetBlockedMessage) ||
+        resolveLinkedTicketBlockedMessage(false);
+      setModalError(message);
+      setStatus(message);
+      return;
+    }
+
+    handleEnableEdit();
+  }, [
+    handleEnableEdit,
+    linkSheetBlockedMessage,
+    linkSheetCheckBusy,
+    linkSheetLocked,
+    linkedExpenseSheetId,
+    setModalError,
+    setStatus,
+  ]);
   const { paginationLabels, previewAltText, statusLabel, gastoTypeLabel, totalAmountText, transDateText } =
     useExpenseTicketDetailDisplay({
       header,
@@ -521,18 +626,18 @@ const useExpenseTicketDetailPageViewModel = () => {
 
   useExpenseTicketDetailAutoEdit({
     autoEditMode,
-    isFromExpenseLine,
     isFromSheetLink,
     isLoading,
     header,
-    handleEnableEdit,
+    handleEnableEdit: handleEnableEditInContext,
+    canAttemptAutoEdit: !linkSheetCheckBusy,
   });
 
-  const { handleUpdate, handleDelete } = useExpenseTicketDetailMutations({
+  const { handleUpdate, handlePersistHeaderDraft, handleDelete } = useExpenseTicketDetailMutations({
     busy,
     isEditing,
-    canEditTicket,
-    canDeleteTicket,
+    canEditTicket: canEditTicket && canEditLinkedTicket,
+    canDeleteTicket: canDeleteTicket && canEditLinkedTicket,
     fileId,
     draftDescription,
     draftGastoType,
@@ -541,13 +646,27 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftComentario,
     draftUrlFile,
     draftFileName,
-    linkedExpenseSheetId: contextSheetId,
-    deleteLinkedExpenseLineContext: isFromExpenseLine
+    linkedExpenseSheetId,
+    deleteLinkedExpenseLineContext: isFromExpenseLine && linkedExpenseSheetId && contextLineRecId
       ? {
-          sheetId: contextSheetId,
+          sheetId: linkedExpenseSheetId,
           lineRecId: contextLineRecId,
         }
       : null,
+    allowSelfManagement,
+    canManageOtherUsers,
+    currentAxUserId,
+    currentCrmUserId,
+    selectedManagedUserId,
+    onLinkedSheetSyncFailure: (message) => {
+      setSheetSyncBlocked(true);
+      setSheetSyncBlockedMessage(message);
+      setStatus(message);
+    },
+    onLinkedSheetSyncSuccess: () => {
+      setSheetSyncBlocked(false);
+      setSheetSyncBlockedMessage("");
+    },
     setModalError,
     setBusy,
     setStatus,
@@ -562,12 +681,19 @@ const useExpenseTicketDetailPageViewModel = () => {
       setStatus,
     });
 
+  useEffect(() => {
+    if (!shouldBlockWorkflowExit || busy) return;
+    if (!sheetWorkflowBlockMessage) return;
+    if (status === sheetWorkflowBlockMessage) return;
+    setStatus(sheetWorkflowBlockMessage);
+  }, [busy, setStatus, sheetWorkflowBlockMessage, shouldBlockWorkflowExit, status]);
+
   const isAssignedTicket = header?.status === 1;
-  const isContextLocked = isAssignedTicket && !allowAssignedDraftEdit;
-  const canEditTicketInContext = canEditTicket && !isFromExpenseLine && !isFromSheetLink;
-  const canDeleteTicketInContext = canDeleteTicket && !isFromExpenseLine && !isFromSheetLink;
+  const isContextLocked = (isAssignedTicket && !allowAssignedDraftEdit) || (!!linkedExpenseSheetId && linkSheetLocked);
+  const canEditTicketInContext = canEditTicket && canEditLinkedTicket && !isFromSheetLink;
+  const canDeleteTicketInContext = canDeleteTicket && canEditLinkedTicket && !isFromSheetLink;
   const ticketTopbarActionMode: "default" | "view_only" =
-    isManagingOtherUser || isFromExpenseLine || isFromSheetLink ? "view_only" : "default";
+    !canEditTicketInContext && !canDeleteTicketInContext ? "view_only" : "default";
 
   useExpenseTicketDetailTopbarActions({
     busy,
@@ -580,23 +706,35 @@ const useExpenseTicketDetailPageViewModel = () => {
     canDeleteTicket: canDeleteTicketInContext,
     fileId,
     setModalError,
-    handleEnableEdit,
+    handleEnableEdit: handleEnableEditInContext,
     handleCancelEdit,
     canOpenSaveConfirm,
     handleUpdate,
     handleDelete,
     onSaveSuccess: () => {
+      if ((isFromExpenseSheetCreate || isFromExpenseLine) && linkedExpenseSheetId) {
+        clearCachedState();
+        navigateToExpenseUrl(buildExpenseSheetDetailUrl(linkedExpenseSheetId), {
+          bypassGuardOnce: true,
+        });
+        return;
+      }
+
       void reloadDetail();
     },
     onDeleteSuccess: () => {
       if (ticketReturnContext?.sheetId) {
         clearCachedState();
-        navigateToExpenseUrl(buildExpenseSheetDetailUrl(ticketReturnContext.sheetId));
+        navigateToExpenseUrl(buildExpenseSheetDetailUrl(ticketReturnContext.sheetId), {
+          bypassGuardOnce: true,
+        });
         return;
       }
 
       markResetFiltersReturn();
-      navigateToExpenseUrl("/Gastos/Tickets");
+      navigateToExpenseUrl("/Gastos/Tickets", {
+        bypassGuardOnce: true,
+      });
     },
     openConfirm,
     closeConfirm,
@@ -605,13 +743,13 @@ const useExpenseTicketDetailPageViewModel = () => {
   const { openLineDetail, resolveClickableCard, openFile, handleOpenExpenseSheet } = useExpenseTicketDetailInteractions({
     busy,
     fileId,
-    contextSheetId,
-    isFromExpenseLine,
+    contextSheetId: linkedExpenseSheetId,
     isFromSheetLink,
     headerExpenseSheetId: safeText(header?.hojaGastosIdDisplay),
     isEditing,
     canOpenSaveConfirm,
-    handleUpdate,
+    handlePersistHeaderDraft,
+    bypassWorkflowGuard: shouldBlockWorkflowExit,
     lineContainerRef,
     openPreview,
     ticketReturnContext,

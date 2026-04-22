@@ -323,7 +323,7 @@ function VisitasApp() {
           selectedContacts={selectedContacts}
           onClientSelected={setSelectedClient}
           onContactsChange={setSelectedContacts}
-          clientLabel={indT("Visits_Create_SearchClient", "Search client")}
+          clientLabel={indT("History_Filter_Client", "Account")}
           clientPlaceholder={indFormat("Visits_Create_ClientPlaceholder", "Type at least {0} characters...", 4)}
           selectedContactsCountText={indFormat(
             "Visits_Create_SelectedContactsCount",
