@@ -24,7 +24,6 @@ import {
   linkExpenseSheetTicketsBulk,
 } from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
-import { toExpenseIsoDate } from "../utils/expenseApiDateUtils.ts";
 import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../utils/expenseNavigation.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import {
@@ -146,11 +145,6 @@ const logExpenseTicketsWarn = (...args: unknown[]) => {
   if (typeof console !== "undefined" && typeof console.warn === "function") {
     console.warn(EXPENSE_TICKETS_LOG_PREFIX, ...args);
   }
-};
-
-// Keeps created-ticket return filters bound to one valid list date.
-const resolveCreatedTicketFilterDate = (value: unknown): string => {
-  return toExpenseIsoDate(value) || toExpenseIsoDate(new Date());
 };
 
 // Validates whether one ticket card can participate in bulk link mode.
@@ -572,43 +566,26 @@ const ExpenseTicketsPageContent = () => {
 
   const applyCreatedTicketReturn = useCallback(
     (ticketFileId: string, ticketDateValue: unknown) => {
-      const ticketDate = resolveCreatedTicketFilterDate(ticketDateValue);
-      const createdTicketManagedUserId = normalizeUserId(currentAxUserId);
-      const resolvedManagedUserId = createdTicketManagedUserId
-        ? syncManagedUserSelection(createdTicketManagedUserId)
-        : "";
-
-      const querySnapshot: ExpenseTicketAppliedFilterSnapshot = {
-        fromDate: ticketDate,
-        toDate: ticketDate,
-        filterKey: ticketFileId,
-        currencyCode: "",
-        managedUserId: resolvedManagedUserId,
-        statusFilter: "",
-        gastoTypeFilter: "",
-        processedByIaFilter: "all",
-      };
+      const initialSnapshot = buildInitialStandardSnapshot();
 
       logExpenseTicketsInfo("applyCreatedTicketReturn:start", {
         ticketFileId,
         ticketDateValue,
-        ticketDate,
         currentAxUserId,
-        createdTicketManagedUserId,
-        resolvedManagedUserId,
-        querySnapshot,
+        initialSnapshot,
       });
 
       clearCachedState();
-      restoreAppliedFilters(querySnapshot);
-      pendingFocusFileIdRef.current = ticketFileId;
+      pendingScrollRestoreRef.current = null;
+      pendingFocusFileIdRef.current = "";
+      restoreAppliedFilters(initialSnapshot);
       clearListCache();
       resetList("created-ticket-return");
       logExpenseTicketsInfo("applyCreatedTicketReturn:loadList", {
         page: 1,
-        querySnapshot,
+        initialSnapshot,
       });
-      void loadList(1, querySnapshot);
+      void loadList(1, initialSnapshot);
 
       const url = new URL(window.location.href);
       url.searchParams.delete("ticketFileId");
@@ -617,13 +594,13 @@ const ExpenseTicketsPageContent = () => {
       window.history.replaceState({}, "", cleanedQuery ? `${url.pathname}?${cleanedQuery}` : url.pathname);
     },
     [
+      buildInitialStandardSnapshot,
       clearCachedState,
       clearListCache,
       currentAxUserId,
       loadList,
       resetList,
       restoreAppliedFilters,
-      syncManagedUserSelection,
     ]
   );
 
