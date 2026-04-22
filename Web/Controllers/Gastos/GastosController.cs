@@ -1166,6 +1166,15 @@ namespace IND_CRM_APP.Controllers
                     return CreateApiPagedError(StatusCodes.Status404NotFound, _sr["ExpenseSheets_NotFound"].Value);
                 }
                 var detailItem = ToExpenseSheetApiDetailItem(sheet);
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetDetail),
+                    "response",
+                    ("hojaGastosId", safeSheetId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("traceId", result.TraceId ?? string.Empty),
+                    ("currencyCode", ReadExpenseSheetCurrencyCodeForTrace(sheet)),
+                    ("exchangeRate", ReadExpenseSheetExchangeRateForTrace(sheet)),
+                    ("lineCount", sheet.Lines?.Count ?? 0));
 
                 return CreateApiPagedResponse(new
                 {
@@ -1425,8 +1434,28 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetUpdate),
+                    "request",
+                    ("hojaGastosId", safeSheetId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("exchangeRate", request.ExchRate),
+                    ("projectId", request.ProjId),
+                    ("expenseSheetStatus", request.ExpenseSheetStatus),
+                    ("exchangeRateMode", request.ExchangeRateMode));
                 var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, safeSheetId, request, requestAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetUpdate),
+                    "response",
+                    ("hojaGastosId", safeSheetId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("exchangeRate", request.ExchRate),
+                    ("success", response.Success),
+                    ("traceId", response.TraceId ?? string.Empty),
+                    ("message", response.Message ?? string.Empty));
 
                 return CreateApiResponse(
                     new
@@ -1837,8 +1866,29 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketsCreate),
+                    "request",
+                    ("mode", request.Mode),
+                    ("existingFileId", request.ExistingFileId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("totalAmount", request.TotalAmount),
+                    ("transDate", request.TransDate),
+                    ("gastoType", request.GastoType),
+                    ("lineCount", request.Lines?.Count ?? 0));
                 var response = await _apiClient.CreateExpenseSheetTicketAsync(token, request, requestAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketsCreate),
+                    "response",
+                    ("mode", request.Mode),
+                    ("existingFileId", request.ExistingFileId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("success", response.Success),
+                    ("traceId", response.TraceId ?? string.Empty),
+                    ("message", response.Message ?? string.Empty));
 
                 return CreateApiResponse(
                     new
@@ -1962,6 +2012,18 @@ namespace IND_CRM_APP.Controllers
                     Response.Headers["Retry-After"] = retryAfter;
                 }
 
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketQuickCreate),
+                    "response",
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("existingHojaGastosId", request.ExistingHojaGastosId),
+                    ("statusCode", (int)transport.StatusCode),
+                    ("success", response.Success),
+                    ("traceId", response.TraceId ?? string.Empty),
+                    ("retryAfter", retryAfter ?? string.Empty),
+                    ("message", response.Message ?? string.Empty));
+
                 actionStopwatch.Stop();
                 _logger.LogInformation(
                     "ApiExpenseSheetTicketQuickCreate completed. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. RetryAfter: {RetryAfter}. ElapsedMs: {ElapsedMs}. SelectedCompany: {SelectedCompany}. AxUserId: {AxUserId}.",
@@ -2070,11 +2132,20 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 var result = await _apiClient.GetExpenseSheetTicketsAsync(token, request, requestAxUserId, HttpContext.RequestAborted);
-                var items = result.GetAnyItems()
+                var rawItems = result.GetAnyItems().ToList();
+                var items = rawItems
                     .Select(ToExpenseSheetTicketApiListItem)
                     .ToList();
                 var responsePage = result.Page > 0 ? result.Page : page;
                 var responsePageSize = result.PageSize > 0 ? result.PageSize : pageSize;
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketsList),
+                    "response",
+                    ("requestedAxUserId", requestAxUserId),
+                    ("requestedCurrencyFilter", request.CurrencyCode),
+                    ("traceId", result.TraceId ?? string.Empty),
+                    ("success", result.Success),
+                    ("resultSummary", BuildTicketCurrencySummary(rawItems, item => item.FileId, item => item.CurrencyCode)));
 
                 if (!result.Success && items.Count == 0)
                 {
@@ -2162,11 +2233,20 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 var result = await _apiClient.GetExpenseSheetTicketLinkListAsync(token, request, requestAxUserId, HttpContext.RequestAborted);
-                var items = result.GetAnyItems()
+                var rawItems = result.GetAnyItems().ToList();
+                var items = rawItems
                     .Select(ToExpenseSheetTicketLinkApiListItem)
                     .ToList();
                 var responsePage = result.Page > 0 ? result.Page : page;
                 var responsePageSize = result.PageSize > 0 ? result.PageSize : pageSize;
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketsLinkList),
+                    "response",
+                    ("requestedAxUserId", requestAxUserId),
+                    ("requestedCurrencyFilter", request.CurrencyCode),
+                    ("traceId", result.TraceId ?? string.Empty),
+                    ("success", result.Success),
+                    ("resultSummary", BuildTicketCurrencySummary(rawItems, item => item.FileId, item => item.CurrencyCode)));
 
                 return CreateApiPagedResponse(new
                 {
@@ -2261,8 +2341,33 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketsLinkBulk),
+                    "request",
+                    ("expenseSheetId", request.ExpenseSheetId),
+                    ("selectionMode", request.SelectionMode),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("filterCurrencyCode", request.Filters?.CurrencyCode),
+                    ("ticketIds", BuildTraceListSample(request.TicketIds)),
+                    ("excludedIds", BuildTraceListSample(request.ExcludedIds)));
                 var response = await _apiClient.LinkExpenseSheetTicketsBulkAsync(token, request, requestAxUserId, HttpContext.RequestAborted);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketsLinkBulk),
+                    "response",
+                    ("expenseSheetId", request.ExpenseSheetId),
+                    ("selectionMode", request.SelectionMode),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("filterCurrencyCode", request.Filters?.CurrencyCode),
+                    ("success", response.Success),
+                    ("traceId", response.TraceId ?? string.Empty),
+                    ("message", response.Message ?? string.Empty),
+                    ("requestedCount", response.Data?.RequestedCount),
+                    ("linkedCount", response.Data?.LinkedCount),
+                    ("skippedCount", response.Data?.SkippedCount),
+                    ("failedCount", response.Data?.FailedCount),
+                    ("skipped", BuildBulkIssueSummary(response.Data?.Skipped)),
+                    ("failed", BuildBulkIssueSummary(response.Data?.Failed)));
 
                 return CreateApiResponse(
                     new
@@ -2321,6 +2426,17 @@ namespace IND_CRM_APP.Controllers
                 if (ticket == null)
                     return CreateApiPagedError(StatusCodes.Status404NotFound, _sr["Tickets_Detail_NotFound"].Value);
                 var ticketItem = ticket;
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketDetail),
+                    "response",
+                    ("fileId", safeFileId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("traceId", result.TraceId ?? string.Empty),
+                    ("currencyCode", ticketItem.CurrencyCode),
+                    ("totalAmount", ticketItem.TotalAmount),
+                    ("hojaGastosIdDisplay", ticketItem.HojaGastosIdDisplay),
+                    ("processedByAI", ticketItem.ProcessedByAI),
+                    ("gastoType", ticketItem.GastoType));
 
                 return CreateApiPagedResponse(new
                 {
@@ -2400,6 +2516,15 @@ namespace IND_CRM_APP.Controllers
                         _sr["Api_RequestFailed"].Value,
                         "NOT_FOUND");
 
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketPreview),
+                    "resolved-ticket",
+                    ("fileId", safeFileId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", ticket.CurrencyCode),
+                    ("hojaGastosIdDisplay", ticket.HojaGastosIdDisplay),
+                    ("resolvedUrlLength", resolvedUrl.Length));
+
                 Response.Headers.CacheControl = "no-store";
                 Response.Headers.Pragma = "no-cache";
                 Response.Headers["X-Content-Type-Options"] = "nosniff";
@@ -2471,8 +2596,27 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketUpdate),
+                    "request",
+                    ("fileId", safeFileId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("totalAmount", request.TotalAmount),
+                    ("transDate", request.TransDate),
+                    ("gastoType", request.GastoType),
+                    ("processedByAI", request.ProcessedByAI));
                 var response = await _apiClient.UpdateExpenseSheetTicketAsync(token, safeFileId, request);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketUpdate),
+                    "response",
+                    ("fileId", safeFileId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("success", response.Success),
+                    ("traceId", response.TraceId ?? string.Empty),
+                    ("message", response.Message ?? string.Empty));
 
                 return CreateApiResponse(
                     new
@@ -3029,6 +3173,14 @@ namespace IND_CRM_APP.Controllers
                 var lines = (sheet.Lines ?? new List<ExpenseSheetLineDto>())
                     .Select(ToExpenseSheetLine)
                     .ToList();
+                LogExpenseCurrencyTrace(
+                    nameof(GetExpenseSheetDetail),
+                    "response",
+                    ("hojaGastosId", hojaGastosId.Trim()),
+                    ("traceId", result.TraceId ?? string.Empty),
+                    ("currencyCode", ReadExpenseSheetCurrencyCodeForTrace(sheet)),
+                    ("exchangeRate", ReadExpenseSheetExchangeRateForTrace(sheet)),
+                    ("lineCount", lines.Count));
 
                 return Json(new
                 {
@@ -3192,6 +3344,15 @@ namespace IND_CRM_APP.Controllers
                     normalizedMode,
                     normalizedExistingSheetId ?? string.Empty,
                     requestAxUserId ?? string.Empty);
+                LogExpenseCurrencyTrace(
+                    nameof(CreateExpenseSheet),
+                    "request",
+                    ("mode", normalizedMode),
+                    ("existingHojaGastosId", normalizedExistingSheetId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("exchangeRate", request.ExchRate),
+                    ("lineCount", request.Lines?.Count ?? 0));
                 if (normalizedMode != 2)
                 {
                     var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(CreateExpenseSheet));
@@ -3211,6 +3372,18 @@ namespace IND_CRM_APP.Controllers
                 }
 
                 var response = await _apiClient.CreateExpenseSheetAsync(token, request, requestAxUserId);
+                LogExpenseCurrencyTrace(
+                    nameof(CreateExpenseSheet),
+                    "response",
+                    ("mode", normalizedMode),
+                    ("existingHojaGastosId", normalizedExistingSheetId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("success", response.Success),
+                    ("traceId", response.TraceId ?? string.Empty),
+                    ("message", response.Message ?? string.Empty),
+                    ("createdHojaGastosId", response.Data?.HojaGastosId),
+                    ("lineRecIdCount", response.Data?.LineRecIds?.Count ?? 0));
 
                 if (IND_SetActionMark && response.Success)
                 {
@@ -3289,7 +3462,27 @@ namespace IND_CRM_APP.Controllers
                     request);
                 if (!mutationGuard.Allowed)
                     return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
+                LogExpenseCurrencyTrace(
+                    nameof(UpdateExpenseSheetHeader),
+                    "request",
+                    ("hojaGastosId", hojaGastosId.Trim()),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("exchangeRate", request.ExchRate),
+                    ("projectId", request.ProjId),
+                    ("expenseSheetStatus", request.ExpenseSheetStatus),
+                    ("exchangeRateMode", request.ExchangeRateMode));
                 var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, hojaGastosId.Trim(), request, requestAxUserId);
+                LogExpenseCurrencyTrace(
+                    nameof(UpdateExpenseSheetHeader),
+                    "response",
+                    ("hojaGastosId", hojaGastosId.Trim()),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("currencyCode", request.CurrencyCode),
+                    ("exchangeRate", request.ExchRate),
+                    ("success", response.Success),
+                    ("traceId", response.TraceId ?? string.Empty),
+                    ("message", response.Message ?? string.Empty));
 
                 if (IND_SetActionMark && response.Success)
                 {
@@ -4403,6 +4596,107 @@ namespace IND_CRM_APP.Controllers
             var cachedContext = _authContext.GetCachedContext();
             return NormalizeOptionalText(_authContext.GetSelectedCompanyId(cachedContext))
                    ?? NormalizeOptionalText(HttpContext?.Session.GetString("INDCompanySelected"));
+        }
+
+        // Emits one compact currency trace so diagnostics stay readable across sheet and ticket flows.
+        private void LogExpenseCurrencyTrace(string operation, string stage, params (string Key, object? Value)[] details)
+        {
+            var detailText = string.Join(
+                "; ",
+                (details ?? Array.Empty<(string Key, object? Value)>())
+                    .Select(detail => $"{detail.Key}={FormatExpenseCurrencyTraceValue(detail.Value)}"));
+
+            _logger.LogInformation(
+                "Expense currency trace. operation={Operation}. stage={Stage}. company={Company}. sessionAxUserId={SessionAxUserId}. details={Details}",
+                operation,
+                stage,
+                GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
+                GetCurrentSessionAxUserId() ?? "<empty>",
+                string.IsNullOrWhiteSpace(detailText) ? "<none>" : detailText);
+        }
+
+        // Formats one diagnostic value without flooding the logs with null or blank noise.
+        private static string FormatExpenseCurrencyTraceValue(object? value)
+        {
+            if (value == null)
+                return "<null>";
+
+            if (value is string text)
+                return string.IsNullOrWhiteSpace(text) ? "<empty>" : text.Trim();
+
+            if (value is bool boolValue)
+                return boolValue ? "true" : "false";
+
+            if (value is IFormattable formattable)
+                return formattable.ToString(null, CultureInfo.InvariantCulture) ?? "<null>";
+
+            return value.ToString() ?? "<null>";
+        }
+
+        // Normalizes a currency code for diagnostics while preserving empty-state visibility.
+        private static string NormalizeCurrencyCodeForTrace(string? currencyCode)
+        {
+            return NormalizeOptionalText(currencyCode)?.ToUpperInvariant() ?? "<empty>";
+        }
+
+        // Builds a short sample list for ids or composite ticket markers in diagnostic traces.
+        private static string BuildTraceListSample(IEnumerable<string>? values, int maxItems = 5)
+        {
+            var sample = (values ?? Enumerable.Empty<string>())
+                .Select(value => NormalizeOptionalText(value) ?? "<empty>")
+                .Take(maxItems)
+                .ToList();
+
+            return sample.Count == 0 ? "<none>" : string.Join(",", sample);
+        }
+
+        // Summarizes ticket currencies so empty values stand out immediately in the logs.
+        private static string BuildTicketCurrencySummary<T>(
+            IEnumerable<T>? items,
+            Func<T, string?> idSelector,
+            Func<T, string?> currencySelector,
+            int maxItems = 5)
+        {
+            var list = (items ?? Enumerable.Empty<T>()).ToList();
+            var sample = list
+                .Take(maxItems)
+                .Select(item => $"{NormalizeOptionalText(idSelector(item)) ?? "<empty>"}:{NormalizeCurrencyCodeForTrace(currencySelector(item))}")
+                .ToList();
+            var emptyCurrencyItems = list
+                .Where(item => string.IsNullOrWhiteSpace(NormalizeOptionalText(currencySelector(item))))
+                .Select(item => NormalizeOptionalText(idSelector(item)) ?? "<empty>")
+                .ToList();
+
+            return $"count={list.Count}; emptyCurrencyCount={emptyCurrencyItems.Count}; sample={BuildTraceListSample(sample, maxItems)}; emptyCurrencyIds={BuildTraceListSample(emptyCurrencyItems, maxItems)}";
+        }
+
+        // Summarizes skipped or failed bulk-link issues with a compact ticketId:reason sample.
+        private static string BuildBulkIssueSummary(IEnumerable<ExpenseSheetTicketLinkBulkIssueDto>? issues, int maxItems = 5)
+        {
+            var list = (issues ?? Enumerable.Empty<ExpenseSheetTicketLinkBulkIssueDto>()).ToList();
+            var sample = list
+                .Take(maxItems)
+                .Select(issue => $"{NormalizeOptionalText(issue.TicketId) ?? "<empty>"}:{NormalizeOptionalText(issue.Reason) ?? "<empty>"}")
+                .ToList();
+
+            return $"count={list.Count}; sample={BuildTraceListSample(sample, maxItems)}";
+        }
+
+        // Reads the effective sheet currency from tolerant extra fields for diagnostics.
+        private static string ReadExpenseSheetCurrencyCodeForTrace(ExpenseSheetDetailDto? sheet)
+        {
+            return NormalizeCurrencyCodeForTrace(GetExtraString(sheet?.Extra, "currencyCode", "CurrencyCode", "currency", "divisa"));
+        }
+
+        // Reads the effective sheet exchange rate from tolerant extra fields for diagnostics.
+        private static decimal? ReadExpenseSheetExchangeRateForTrace(ExpenseSheetDetailDto? sheet)
+        {
+            if (sheet == null)
+                return null;
+
+            var currencyCode = GetExtraString(sheet.Extra, "currencyCode", "CurrencyCode", "currency", "divisa");
+            var exchangeRate = GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio");
+            return NormalizeExpenseSheetExchangeRateForRead(currencyCode, exchangeRate);
         }
 
         // Emits one structured trace with the effective quick-create request limits and multipart metadata.

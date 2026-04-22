@@ -261,6 +261,107 @@ namespace IND_CRM_APP.Services
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
 
+        // Normalizes a currency code for compact diagnostics while keeping empty states visible.
+        private static string NormalizeCurrencyCodeForTrace(string? currencyCode)
+        {
+            return NormalizeOptionalText(currencyCode)?.ToUpperInvariant() ?? "<empty>";
+        }
+
+        // Builds a short list sample for diagnostic traces.
+        private static string BuildTraceListSample(IEnumerable<string>? values, int maxItems = 5)
+        {
+            var sample = (values ?? Enumerable.Empty<string>())
+                .Select(value => NormalizeOptionalText(value) ?? "<empty>")
+                .Take(maxItems)
+                .ToList();
+
+            return sample.Count == 0 ? "<none>" : string.Join(",", sample);
+        }
+
+        // Reads one tolerant string value from extra sheet fields.
+        private static string? ReadExtraStringForTrace(Dictionary<string, JsonElement>? extra, params string[] keys)
+        {
+            if (extra == null || keys == null || keys.Length == 0)
+                return null;
+
+            foreach (var key in keys)
+            {
+                foreach (var entry in extra)
+                {
+                    if (!string.Equals(entry.Key, key, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    var rawValue = entry.Value.ValueKind switch
+                    {
+                        JsonValueKind.String => entry.Value.GetString(),
+                        JsonValueKind.Null => null,
+                        JsonValueKind.Undefined => null,
+                        _ => entry.Value.ToString()
+                    };
+
+                    var normalized = NormalizeOptionalText(rawValue);
+                    if (!string.IsNullOrWhiteSpace(normalized))
+                        return normalized;
+                }
+            }
+
+            return null;
+        }
+
+        // Summarizes ticket currencies so empty values stand out quickly in logs.
+        private static string BuildTicketCurrencySummary<T>(
+            IEnumerable<T>? items,
+            Func<T, string?> idSelector,
+            Func<T, string?> currencySelector,
+            int maxItems = 5)
+        {
+            var list = (items ?? Enumerable.Empty<T>()).ToList();
+            var sample = list
+                .Take(maxItems)
+                .Select(item => $"{NormalizeOptionalText(idSelector(item)) ?? "<empty>"}:{NormalizeCurrencyCodeForTrace(currencySelector(item))}")
+                .ToList();
+            var emptyCurrencyItems = list
+                .Where(item => string.IsNullOrWhiteSpace(NormalizeOptionalText(currencySelector(item))))
+                .Select(item => NormalizeOptionalText(idSelector(item)) ?? "<empty>")
+                .ToList();
+
+            return $"count={list.Count}; emptyCurrencyCount={emptyCurrencyItems.Count}; sample={BuildTraceListSample(sample, maxItems)}; emptyCurrencyIds={BuildTraceListSample(emptyCurrencyItems, maxItems)}";
+        }
+
+        // Summarizes sheet currencies so the returned header state is visible in logs.
+        private static string BuildExpenseSheetCurrencySummary(IEnumerable<ExpenseSheetDetailDto>? items, int maxItems = 5)
+        {
+            var list = (items ?? Enumerable.Empty<ExpenseSheetDetailDto>()).ToList();
+            var sample = list
+                .Take(maxItems)
+                .Select(sheet => $"{NormalizeOptionalText(sheet.HojaGastosId) ?? "<empty>"}:{NormalizeCurrencyCodeForTrace(ReadExtraStringForTrace(sheet.Extra, "currencyCode", "CurrencyCode", "currency", "divisa"))}")
+                .ToList();
+            var emptyCurrencyItems = list
+                .Where(sheet => string.IsNullOrWhiteSpace(ReadExtraStringForTrace(sheet.Extra, "currencyCode", "CurrencyCode", "currency", "divisa")))
+                .Select(sheet => NormalizeOptionalText(sheet.HojaGastosId) ?? "<empty>")
+                .ToList();
+
+            return $"count={list.Count}; emptyCurrencyCount={emptyCurrencyItems.Count}; sample={BuildTraceListSample(sample, maxItems)}; emptyCurrencySheetIds={BuildTraceListSample(emptyCurrencyItems, maxItems)}";
+        }
+
+        // Summarizes skipped or failed bulk-link issues with a compact ticketId:reason sample.
+        private static string BuildBulkIssueSummary(IEnumerable<ExpenseSheetTicketLinkBulkIssueDto>? issues, int maxItems = 5)
+        {
+            var list = (issues ?? Enumerable.Empty<ExpenseSheetTicketLinkBulkIssueDto>()).ToList();
+            var sample = list
+                .Take(maxItems)
+                .Select(issue => $"{NormalizeOptionalText(issue.TicketId) ?? "<empty>"}:{NormalizeOptionalText(issue.Reason) ?? "<empty>"}")
+                .ToList();
+
+            return $"count={list.Count}; sample={BuildTraceListSample(sample, maxItems)}";
+        }
+
+        // Reads the effective sheet currency for one detail item.
+        private static string ReadExpenseSheetCurrencyCodeForTrace(ExpenseSheetDetailDto? sheet)
+        {
+            return NormalizeCurrencyCodeForTrace(ReadExtraStringForTrace(sheet?.Extra, "currencyCode", "CurrencyCode", "currency", "divisa"));
+        }
+
         private static bool IsSupportedExpenseYear(int year)
         {
             return year >= MinSupportedExpenseYear && year <= MaxSupportedExpenseYear;
@@ -1023,8 +1124,28 @@ namespace IND_CRM_APP.Services
                 includeAxUserHeader: true,
                 axUserIdOverride: axUserIdOverride);
 
+            req ??= new ExpenseSheetCreateRequest();
+            _logger.LogInformation(
+                "CreateExpenseSheet request. Mode: {Mode}. ExistingHojaGastosId: {ExistingHojaGastosId}. CurrencyCode: {CurrencyCode}. ExchRate: {ExchRate}. LineCount: {LineCount}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}.",
+                req.Mode,
+                NormalizeOptionalText(req.ExistingHojaGastosId) ?? "<empty>",
+                NormalizeCurrencyCodeForTrace(req.CurrencyCode),
+                req.ExchRate,
+                req.Lines?.Count ?? 0,
+                GetSelectedCompanyId() ?? "<empty>",
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
             var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheets, req);
-            return BuildApiResponse<ExpenseSheetCreateResponseData>(result, "CreateExpenseSheet");
+            var response = BuildApiResponse<ExpenseSheetCreateResponseData>(result, "CreateExpenseSheet");
+            _logger.LogInformation(
+                "CreateExpenseSheet upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. HojaGastosId: {HojaGastosId}. LineRecIdCount: {LineRecIdCount}.",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                NormalizeOptionalText(response.Data?.HojaGastosId) ?? "<empty>",
+                response.Data?.LineRecIds?.Count ?? 0);
+            return response;
         }
 
         public async Task<PagedApiResponse<ExpenseSheetDetailDto>> GetExpenseSheetDetailAsync(
@@ -1060,7 +1181,15 @@ namespace IND_CRM_APP.Services
                     result.ErrorMessage ?? "<null>",
                     SafeLogPayload(result.Raw));
             }
-            return BuildPagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheetDetail");
+            var response = BuildPagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheetDetail");
+            _logger.LogInformation(
+                "GetExpenseSheetDetail upstream result. Success: {Success}. TraceId: {TraceId}. HojaGastosId: {HojaGastosId}. CurrencyCode: {CurrencyCode}. Summary: {Summary}.",
+                response.Success,
+                response.TraceId ?? "<null>",
+                hojaGastosId,
+                ReadExpenseSheetCurrencyCodeForTrace(response.GetAnyItems().FirstOrDefault()),
+                BuildExpenseSheetCurrencySummary(response.GetAnyItems()));
+            return response;
         }
 
         public async Task<ApiResponse<object>> UpdateExpenseSheetHeaderAsync(
@@ -1078,8 +1207,29 @@ namespace IND_CRM_APP.Services
                 axUserIdOverride: axUserIdOverride);
 
             var safeId = EscapePathSegment(hojaGastosId);
+            req ??= new ExpenseSheetUpdateRequest();
+            _logger.LogInformation(
+                "UpdateExpenseSheetHeader request. HojaGastosId: {HojaGastosId}. CurrencyCode: {CurrencyCode}. ExchRate: {ExchRate}. ProjId: {ProjId}. ExpenseSheetStatus: {ExpenseSheetStatus}. ExchangeRateMode: {ExchangeRateMode}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}.",
+                hojaGastosId,
+                NormalizeCurrencyCodeForTrace(req.CurrencyCode),
+                req.ExchRate,
+                NormalizeOptionalText(req.ProjId) ?? "<empty>",
+                req.ExpenseSheetStatus.HasValue ? req.ExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                req.ExchangeRateMode.HasValue ? req.ExchangeRateMode.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                GetSelectedCompanyId() ?? "<empty>",
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
             var result = await SendPutJsonAsync(ApiRoutes.ExpenseSheetById(safeId), req);
-            return BuildApiResponse<object>(result, "UpdateExpenseSheetHeader");
+            var response = BuildApiResponse<object>(result, "UpdateExpenseSheetHeader");
+            _logger.LogInformation(
+                "UpdateExpenseSheetHeader upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. HojaGastosId: {HojaGastosId}. CurrencyCode: {CurrencyCode}.",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                hojaGastosId,
+                NormalizeCurrencyCodeForTrace(req.CurrencyCode));
+            return response;
         }
 
         public async Task<ApiResponse<object>> UpdateExpenseSheetLineAsync(
@@ -1194,7 +1344,14 @@ namespace IND_CRM_APP.Services
                     serializedPayload.Length,
                     SafeLogSnippet(result.Raw));
             }
-            return BuildPagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheets");
+            var response = BuildPagedResponse<ExpenseSheetDetailDto>(result, "GetExpenseSheets");
+            _logger.LogInformation(
+                "GetExpenseSheets upstream result. Success: {Success}. TraceId: {TraceId}. RequestedCurrencyCode: {RequestedCurrencyCode}. Summary: {Summary}.",
+                response.Success,
+                response.TraceId ?? "<null>",
+                string.IsNullOrWhiteSpace(normalizedCurrencyCode) ? "<empty>" : normalizedCurrencyCode,
+                BuildExpenseSheetCurrencySummary(response.GetAnyItems()));
+            return response;
         }
 
         public async Task<PagedApiResponse<ExpenseSheetCurrencyDto>> GetExpenseSheetCurrenciesAsync(
@@ -1348,8 +1505,28 @@ namespace IND_CRM_APP.Services
                 Lines = lines != null && lines.Count > 0 ? lines : null
             };
 
+            _logger.LogInformation(
+                "CreateExpenseSheetTicket request. Mode: {Mode}. ExistingFileId: {ExistingFileId}. CurrencyCode: {CurrencyCode}. TotalAmount: {TotalAmount}. TransDate: {TransDate}. GastoType: {GastoType}. LineCount: {LineCount}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}.",
+                payload.Mode,
+                payload.ExistingFileId ?? "<empty>",
+                NormalizeCurrencyCodeForTrace(payload.CurrencyCode),
+                payload.TotalAmount,
+                payload.TransDate ?? "<empty>",
+                payload.GastoType.HasValue ? payload.GastoType.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                payload.Lines?.Count ?? 0,
+                GetSelectedCompanyId() ?? "<empty>",
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
             var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTickets, payload);
-            return BuildApiResponse<object>(result, "CreateExpenseSheetTicket");
+            var response = BuildApiResponse<object>(result, "CreateExpenseSheetTicket");
+            _logger.LogInformation(
+                "CreateExpenseSheetTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. CurrencyCode: {CurrencyCode}.",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                NormalizeCurrencyCodeForTrace(payload.CurrencyCode));
+            return response;
         }
 
         // Creates and finalizes a ticket from one uploaded image through the composite endpoint.
@@ -1693,7 +1870,14 @@ namespace IND_CRM_APP.Services
                     serializedPayload.Length,
                     SafeLogSnippet(result.Raw));
             }
-            return BuildPagedResponse<ExpenseSheetTicketListItemDto>(result, "GetExpenseSheetTickets");
+            var response = BuildPagedResponse<ExpenseSheetTicketListItemDto>(result, "GetExpenseSheetTickets");
+            _logger.LogInformation(
+                "GetExpenseSheetTickets upstream result. Success: {Success}. TraceId: {TraceId}. RequestedCurrencyCode: {RequestedCurrencyCode}. Summary: {Summary}.",
+                response.Success,
+                response.TraceId ?? "<null>",
+                string.IsNullOrWhiteSpace(normalizedCurrencyCode) ? "<empty>" : normalizedCurrencyCode,
+                BuildTicketCurrencySummary(response.GetAnyItems(), item => item.FileId, item => item.CurrencyCode));
+            return response;
         }
 
         public async Task<PagedApiResponse<ExpenseSheetTicketLinkListItemDto>> GetExpenseSheetTicketLinkListAsync(
@@ -1735,8 +1919,28 @@ namespace IND_CRM_APP.Services
             };
 
             var serializedPayload = Serialize(payload);
+            _logger.LogInformation(
+                "Upstream request {Operation}: payloadLength={PayloadLength} page={Page} pageSize={PageSize} createdDateFrom={CreatedDateFrom} createdDateTo={CreatedDateTo} searchKeyLen={SearchKeyLen} filterLen={FilterLen} currencyCode={CurrencyCode} gastoType={GastoType} processedByAI={ProcessedByAI}",
+                "GetExpenseSheetTicketLinkList",
+                serializedPayload.Length,
+                normalizedPage,
+                normalizedPageSize,
+                normalizedCreatedDateFrom,
+                normalizedCreatedDateTo,
+                normalizedSearchKey.Length,
+                normalizedFilter.Length,
+                string.IsNullOrWhiteSpace(normalizedCurrencyCode) ? "<empty>" : normalizedCurrencyCode,
+                normalizedGastoType.HasValue ? normalizedGastoType.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                req.ProcessedByAI.HasValue ? req.ProcessedByAI.Value.ToString(CultureInfo.InvariantCulture) : "null");
             var result = await SendPostAsync(ApiRoutes.ExpenseSheetTicketsLinkList, serializedPayload, cancellationToken);
-            return BuildPagedResponse<ExpenseSheetTicketLinkListItemDto>(result, "GetExpenseSheetTicketLinkList");
+            var response = BuildPagedResponse<ExpenseSheetTicketLinkListItemDto>(result, "GetExpenseSheetTicketLinkList");
+            _logger.LogInformation(
+                "GetExpenseSheetTicketLinkList upstream result. Success: {Success}. TraceId: {TraceId}. RequestedCurrencyCode: {RequestedCurrencyCode}. Summary: {Summary}.",
+                response.Success,
+                response.TraceId ?? "<null>",
+                string.IsNullOrWhiteSpace(normalizedCurrencyCode) ? "<empty>" : normalizedCurrencyCode,
+                BuildTicketCurrencySummary(response.GetAnyItems(), item => item.FileId, item => item.CurrencyCode));
+            return response;
         }
 
         public async Task<ApiResponse<ExpenseSheetTicketLinkBulkResultDto>> LinkExpenseSheetTicketsBulkAsync(
@@ -1786,8 +1990,29 @@ namespace IND_CRM_APP.Services
                     .ToList()
             };
 
+            _logger.LogInformation(
+                "LinkExpenseSheetTicketsBulk request. ExpenseSheetId: {ExpenseSheetId}. SelectionMode: {SelectionMode}. FilterCurrencyCode: {FilterCurrencyCode}. TicketIds: {TicketIds}. ExcludedIds: {ExcludedIds}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}.",
+                payload.ExpenseSheetId,
+                payload.SelectionMode ?? "<empty>",
+                NormalizeCurrencyCodeForTrace(payload.Filters?.CurrencyCode),
+                BuildTraceListSample(payload.TicketIds),
+                BuildTraceListSample(payload.ExcludedIds),
+                GetSelectedCompanyId() ?? "<empty>",
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
             var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketsLinkBulk, payload, cancellationToken);
-            return BuildApiResponse<ExpenseSheetTicketLinkBulkResultDto>(result, "LinkExpenseSheetTicketsBulk");
+            var response = BuildApiResponse<ExpenseSheetTicketLinkBulkResultDto>(result, "LinkExpenseSheetTicketsBulk");
+            _logger.LogInformation(
+                "LinkExpenseSheetTicketsBulk upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. RequestedCount: {RequestedCount}. LinkedCount: {LinkedCount}. Skipped: {Skipped}. Failed: {Failed}.",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                response.Data?.RequestedCount ?? 0,
+                response.Data?.LinkedCount ?? 0,
+                BuildBulkIssueSummary(response.Data?.Skipped),
+                BuildBulkIssueSummary(response.Data?.Failed));
+            return response;
         }
 
         public async Task<PagedApiResponse<ExpenseSheetTicketDetailDto>> GetExpenseSheetTicketDetailAsync(
@@ -1805,7 +2030,14 @@ namespace IND_CRM_APP.Services
 
             var safeFileId = EscapePathSegment(fileId);
             var result = await SendGetAsync(ApiRoutes.ExpenseSheetTicketByFileId(safeFileId));
-            return BuildPagedResponse<ExpenseSheetTicketDetailDto>(result, "GetExpenseSheetTicketDetail");
+            var response = BuildPagedResponse<ExpenseSheetTicketDetailDto>(result, "GetExpenseSheetTicketDetail");
+            _logger.LogInformation(
+                "GetExpenseSheetTicketDetail upstream result. Success: {Success}. TraceId: {TraceId}. FileId: {FileId}. Summary: {Summary}.",
+                response.Success,
+                response.TraceId ?? "<null>",
+                fileId,
+                BuildTicketCurrencySummary(response.GetAnyItems(), item => item.FileId, item => item.CurrencyCode));
+            return response;
         }
 
         public async Task<ApiResponse<object>> UpdateExpenseSheetTicketAsync(
@@ -1832,8 +2064,27 @@ namespace IND_CRM_APP.Services
             };
 
             var safeFileId = EscapePathSegment(fileId);
+            _logger.LogInformation(
+                "UpdateExpenseSheetTicket request. FileId: {FileId}. CurrencyCode: {CurrencyCode}. TotalAmount: {TotalAmount}. TransDate: {TransDate}. GastoType: {GastoType}. ProcessedByAI: {ProcessedByAI}. SelectedCompany: {SelectedCompany}.",
+                fileId,
+                NormalizeCurrencyCodeForTrace(payload.CurrencyCode),
+                payload.TotalAmount,
+                payload.TransDate ?? "<empty>",
+                payload.GastoType.HasValue ? payload.GastoType.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                payload.ProcessedByAI.HasValue ? payload.ProcessedByAI.Value.ToString(CultureInfo.InvariantCulture) : "null",
+                GetSelectedCompanyId() ?? "<empty>");
             var result = await SendPutJsonAsync(ApiRoutes.ExpenseSheetTicketByFileId(safeFileId), payload);
-            return BuildApiResponse<object>(result, "UpdateExpenseSheetTicket");
+            var response = BuildApiResponse<object>(result, "UpdateExpenseSheetTicket");
+            _logger.LogInformation(
+                "UpdateExpenseSheetTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. CurrencyCode: {CurrencyCode}.",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                fileId,
+                NormalizeCurrencyCodeForTrace(payload.CurrencyCode));
+            return response;
         }
 
         public async Task<ApiResponse<object>> DeleteExpenseSheetTicketAsync(
@@ -1864,8 +2115,30 @@ namespace IND_CRM_APP.Services
 
             var safeFileId = EscapePathSegment(fileId);
             var payload = req ?? new { };
+            var currencyCode = "<unavailable>";
+            if (TryConvertToJsonElement(payload, out var root) && root.ValueKind == JsonValueKind.Object)
+            {
+                currencyCode = NormalizeCurrencyCodeForTrace(ReadStringLikeProperty(root, "currencyCode", "CurrencyCode", "currency", "divisa"));
+            }
+
+            _logger.LogInformation(
+                "UpdateExpenseSheetTicketFromIA request. FileId: {FileId}. CurrencyCode: {CurrencyCode}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}.",
+                fileId,
+                currencyCode,
+                GetSelectedCompanyId() ?? "<empty>",
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
             var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketIa(safeFileId), payload);
-            return BuildApiResponse<object>(result, "UpdateExpenseSheetTicketFromIA");
+            var response = BuildApiResponse<object>(result, "UpdateExpenseSheetTicketFromIA");
+            _logger.LogInformation(
+                "UpdateExpenseSheetTicketFromIA upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. CurrencyCode: {CurrencyCode}.",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                fileId,
+                currencyCode);
+            return response;
         }
 
         public async Task<ApiResponse<object>> CreateExpenseSheetTicketLineAsync(
