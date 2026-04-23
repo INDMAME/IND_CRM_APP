@@ -18,6 +18,7 @@ import { formatExpenseInputNumber } from "../../utils/expenseNumberFormat.ts";
 
 type UseExpenseTicketLineDetailStateArgs = {
   hasAccess: boolean;
+  isCreateMode: boolean;
   canEditTicket: boolean;
   fileId: string;
   lineRecId: string;
@@ -27,6 +28,7 @@ type UseExpenseTicketLineDetailStateArgs = {
 // Owns state and behavior for ticket line detail page (read and edit).
 export const useExpenseTicketLineDetailState = ({
   hasAccess,
+  isCreateMode,
   canEditTicket,
   fileId,
   lineRecId,
@@ -38,7 +40,7 @@ export const useExpenseTicketLineDetailState = ({
   const [errorMessage, setErrorMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [status, setStatus] = useState("");
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditing, setIsEditing] = useState(() => isCreateMode);
   const [modalError, setModalError] = useState("");
   const [draftDescription, setDraftDescription] = useState("");
   const [draftQty, setDraftQty] = useState("");
@@ -71,7 +73,7 @@ export const useExpenseTicketLineDetailState = ({
         return;
       }
 
-      if (!fileId || !lineRecId) {
+      if (!fileId || (!isCreateMode && !lineRecId)) {
         setErrorMessage(indT("Tickets_Detail_NotFound", "Ticket was not found."));
         setHeader(null);
         setLine(null);
@@ -108,6 +110,12 @@ export const useExpenseTicketLineDetailState = ({
         const mappedLines = (Array.isArray(selectedTicket.Lines) ? selectedTicket.Lines : []).map((entry) =>
           mapExpenseTicketDetailLine(entry)
         );
+        if (isCreateMode) {
+          setHeader(mappedHeader);
+          setLine(null);
+          return;
+        }
+
         const selectedLine =
           mappedLines.find((entry) => safeText(entry.recId).toUpperCase() === lineRecId.toUpperCase()) || null;
 
@@ -135,12 +143,19 @@ export const useExpenseTicketLineDetailState = ({
     };
 
     void loadDetail();
-  }, [fileId, hasAccess, lineRecId, onForbidden]);
+  }, [fileId, hasAccess, isCreateMode, lineRecId, onForbidden]);
 
   useEffect(() => {
     if (!line || isEditing) return;
     hydrateDraftFromLine(line);
   }, [hydrateDraftFromLine, isEditing, line]);
+
+  useEffect(() => {
+    if (!isCreateMode || isLoading || !header) return;
+    setDraftDescription("");
+    setDraftQty("");
+    setDraftPrice("");
+  }, [header, isCreateMode, isLoading]);
 
   const hasActiveProcess = useMemo(() => busy || isEditing, [busy, isEditing]);
   useEffect(() => {
@@ -151,7 +166,7 @@ export const useExpenseTicketLineDetailState = ({
   }, [hasActiveProcess]);
 
   const handleEnableEdit = useCallback(() => {
-    if (isLoading || !header || !line) {
+    if (isCreateMode || isLoading || !header || !line) {
       return;
     }
 
@@ -164,7 +179,7 @@ export const useExpenseTicketLineDetailState = ({
     setIsEditing(true);
     hydrateDraftFromLine(line);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditTicket, header, hydrateDraftFromLine, isLoading, line, onForbidden]);
+  }, [canEditTicket, header, hydrateDraftFromLine, isCreateMode, isLoading, line, onForbidden]);
 
   const handleCancelEdit = useCallback(() => {
     if (!isEditing) return;

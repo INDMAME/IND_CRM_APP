@@ -7,7 +7,7 @@ import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 
 type ExpenseTicketLineDetailFormProps = {
   header: ExpenseTicketDetailHeader;
-  line: ExpenseTicketDetailLine;
+  line: ExpenseTicketDetailLine | null;
   status: string;
   isEditing: boolean;
   draftDescription: string;
@@ -72,7 +72,7 @@ const ExpenseTicketLineDetailForm = ({
           ) : (
             <ExpenseReadOnlyField
               label={indT("ExpenseSheets_Field_Description", "Description")}
-              value={line.description || "-"}
+              value={line?.description || "-"}
               fullWidth
             />
           )}
@@ -102,7 +102,7 @@ const ExpenseTicketLineDetailForm = ({
           ) : (
             <ExpenseReadOnlyField
               label={indT("ExpenseSheets_Field_Qty", "Quantity")}
-              value={formatQtyValue(line.qty)}
+              value={formatQtyValue(line?.qty ?? null)}
             />
           )}
 

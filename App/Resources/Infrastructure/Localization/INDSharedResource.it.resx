@@ -165,6 +165,9 @@
   <data name="ExpenseSheets_NotFound" xml:space="preserve">
     <value>La nota spese non è stata trovata.</value>
   </data>
+  <data name="Expense_Context_SelectedCompanyUnavailable" xml:space="preserve">
+    <value>L'azienda selezionata non e più disponibile. Selezionala di nuovo dal menu principale.</value>
+  </data>
   <data name="ExpenseSheets_Detail_SaveChanges_Title" xml:space="preserve">
     <value>Salva modifiche</value>
   </data>
@@ -223,13 +226,13 @@
     <value>Azioni stato nota spese</value>
   </data>
   <data name="ExpenseSheets_BottomActions_RequestApproval" xml:space="preserve">
-    <value>Request approval</value>
+    <value>Richiedi approvazione</value>
   </data>
   <data name="ExpenseSheets_BottomActions_UndoRequest" xml:space="preserve">
-    <value>Undo request</value>
+    <value>Annulla richiesta</value>
   </data>
   <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
-    <value>Do you want to update the expense sheet status?</value>
+    <value>Vuoi aggiornare lo stato della nota spese?</value>
   </data>
   <data name="ExpenseSheets_BottomActions_ConfirmTransition" xml:space="preserve">
     <value>Stato attuale: {0}\nNuovo stato: {1}\n\nVuoi aggiornare lo stato del foglio spese?</value>
@@ -876,6 +879,9 @@
   <data name="Visits_Detail_LoadActivityFailed" xml:space="preserve">
     <value>Impossibile ottenere i dati dell'attivita.</value>
   </data>
+  <data name="Visits_Detail_InvalidRecId" xml:space="preserve">
+    <value>Impossibile risolvere l'identificatore dell'attivita. Ricarica e riprova.</value>
+  </data>
   <data name="Visits_Detail_EditingEnabled" xml:space="preserve">
     <value>Modifica abilitata.</value>
   </data>
@@ -1027,7 +1033,7 @@
     <value>Lingua</value>
   </data>
   <data name="Speech_Transcribe_Language_Auto" xml:space="preserve">
-    <value>Auto</value>
+    <value>Automatico</value>
   </data>
   <data name="Speech_Transcribe_Temperature_Label" xml:space="preserve">
     <value>Temperatura</value>
@@ -1207,7 +1213,7 @@
     <value>I fogli spese pagati sono di sola lettura.</value>
   </data>
   <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
-    <value>This expense sheet is read-only for its current status.</value>
+    <value>Questa nota spese e di sola lettura per il suo stato attuale.</value>
   </data>
   <data name="ExpenseTickets_SheetSync_PendingSaveRequired" xml:space="preserve">
     <value>Devi salvare il ticket prima di uscire da questo flusso.</value>
@@ -1219,7 +1225,7 @@
     <value>Il ticket deve mantenere un importo totale positivo per sincronizzare la riga spesa.</value>
   </data>
   <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
-    <value>This expense sheet status change is not allowed.</value>
+    <value>Questo cambio di stato della nota spese non e consentito.</value>
   </data>
   <data name="ExpenseSheets_FuelPrice_Loading" xml:space="preserve">
     <value>Caricamento prezzo carburante...</value>
@@ -1249,7 +1255,7 @@
     <value>Tasso di cambio {0} {1}</value>
   </data>
   <data name="Common_Link" xml:space="preserve">
-    <value>Link</value>
+    <value>Collega</value>
   </data>
   <data name="ExpenseSheets_Fab_Actions" xml:space="preserve">
     <value>Azioni rapide</value>
@@ -1408,76 +1414,76 @@
     <value>Il ticket creato viene collegato alla nota spese corrente.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Title" xml:space="preserve">
-    <value>Expense assistant</value>
+    <value>Assistente note spese</value>
   </data>
   <data name="ExpenseSheets_Assistant_Subtitle" xml:space="preserve">
-    <value>Ask business questions about the currently loaded expense sheets.</value>
+    <value>Fai domande di business sulle note spese attualmente caricate.</value>
   </data>
   <data name="ExpenseSheets_Assistant_LauncherLabel" xml:space="preserve">
-    <value>Open expense sheet assistant</value>
+    <value>Apri assistente note spese</value>
   </data>
   <data name="ExpenseSheets_Assistant_Empty_Title" xml:space="preserve">
-    <value>Ask for a business summary</value>
+    <value>Chiedi un riepilogo di business</value>
   </data>
   <data name="ExpenseSheets_Assistant_Empty_Body" xml:space="preserve">
-    <value>Use quick actions or write a question about the expense sheets currently loaded in the list.</value>
+    <value>Usa le azioni rapide o scrivi una domanda sulle note spese attualmente caricate nell'elenco.</value>
   </data>
   <data name="ExpenseSheets_Assistant_NoContext_Title" xml:space="preserve">
-    <value>Load expense sheets first.</value>
+    <value>Carica prima le note spese.</value>
   </data>
   <data name="ExpenseSheets_Assistant_NoContext_Body" xml:space="preserve">
-    <value>The assistant needs a real expense sheet list response before it can analyze the data.</value>
+    <value>L'assistente ha bisogno di una risposta reale dell'elenco note spese prima di poter analizzare i dati.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Input_Placeholder" xml:space="preserve">
     <value>...</value>
   </data>
   <data name="ExpenseSheets_Assistant_Context_Updated" xml:space="preserve">
-    <value>Analysis context updated with the latest loaded list.</value>
+    <value>Il contesto di analisi e stato aggiornato con l'ultimo elenco caricato.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Context_Ready" xml:space="preserve">
-    <value>Using the latest loaded list.</value>
+    <value>Uso dell'ultimo elenco caricato.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Summary" xml:space="preserve">
-    <value>Summary</value>
+    <value>Riepilogo</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Analytics" xml:space="preserve">
-    <value>Analytics</value>
+    <value>Analisi</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Anomalies" xml:space="preserve">
-    <value>Anomalies</value>
+    <value>Anomalie</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Summary" xml:space="preserve">
     <value>Riassumi le note spese caricate. Indica totale complessivo, periodi e osservazioni rilevanti.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Analytics" xml:space="preserve">
-    <value>Analyze the loaded expense sheets and extract patterns: total spend, top users, top projects, top currencies and status distribution.</value>
+    <value>Analizza le note spese caricate ed estrai i pattern: spesa totale, utenti principali, progetti principali, valute principali e distribuzione degli stati.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Anomalies" xml:space="preserve">
-    <value>Review the loaded expense sheets and detect possible anomalies, inconsistencies or outliers in amounts, dates, users, projects, statuses and expense types.</value>
+    <value>Rivedi le note spese caricate e rileva possibili anomalie, incoerenze o valori atipici in importi, date, utenti, progetti, stati e tipi di spesa.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Send" xml:space="preserve">
-    <value>Send</value>
+    <value>Invia</value>
   </data>
   <data name="ExpenseSheets_Assistant_Sending" xml:space="preserve">
-    <value>Sending</value>
+    <value>Invio</value>
   </data>
   <data name="ExpenseSheets_Assistant_Retry" xml:space="preserve">
-    <value>Retry</value>
+    <value>Riprova</value>
   </data>
   <data name="ExpenseSheets_Assistant_Warnings" xml:space="preserve">
-    <value>Warnings</value>
+    <value>Avvisi</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Total" xml:space="preserve">
-    <value>Total records</value>
+    <value>Record totali</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Mode" xml:space="preserve">
-    <value>Retrieval</value>
+    <value>Recupero</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated" xml:space="preserve">
-    <value>Truncated</value>
+    <value>Troncato</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_Yes" xml:space="preserve">
-    <value>Yes</value>
+    <value>Si</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_No" xml:space="preserve">
     <value>No</value>
@@ -1486,19 +1492,19 @@
     <value>TraceId</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_Validation" xml:space="preserve">
-    <value>Check the question and try again.</value>
+    <value>Controlla la domanda e riprova.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_Server" xml:space="preserve">
-    <value>The assistant is not available right now.</value>
+    <value>L'assistente non e disponibile in questo momento.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RateLimit" xml:space="preserve">
-    <value>Too many assistant requests.</value>
+    <value>Troppe richieste all'assistente.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RetryAfter" xml:space="preserve">
-    <value>Retry after {0}.</value>
+    <value>Riprova tra {0}.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_NoContext" xml:space="preserve">
-    <value>Load expense sheets before asking the assistant.</value>
+    <value>Carica le note spese prima di chiedere all'assistente.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>Sto preparando la risposta...</value>

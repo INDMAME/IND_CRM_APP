@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import FloatingActionButton, { type FloatingActionButtonMenuItem } from "../../../../components/commons/FloatingActionButton.tsx";
 import VisitasPageProviders from "../../../../components/commons/VisitasPageProviders.tsx";
 import { useAuthContext } from "../../../../context/AuthContext.tsx";
 import { useTimelineCardEffects } from "../../../../hooks/useTimelineCardEffects.ts";
@@ -41,6 +42,14 @@ const GASTO_TYPE_LABEL_KEYS: Record<number, { key: string; fallback: string }> =
   8: { key: "Enum_GastoType_Varios", fallback: "Varios" },
   14: { key: "Enum_GastoType_Taxi", fallback: "Taxi" },
 };
+
+const NewLineIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="h-5 w-5">
+    <path strokeLinecap="round" strokeLinejoin="round" d="M3 19c3.333 -2 5 -4 5 -6c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 2.877 2.5 4c1.5 2 2.5 2.5 3.5 1c.667 -1 1.167 -1.833 1.5 -2.5c1 2.333 2.333 3.5 4 3.5h2.5" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2" />
+    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7h4" />
+  </svg>
+);
 
 const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
   if (!items.length) return [];
@@ -515,6 +524,25 @@ const useExpenseTicketDetailPageViewModel = () => {
     };
   }, [sheetWorkflowBlockMessage, shouldBlockWorkflowExit]);
 
+  useEffect(() => {
+    const backButton = document.getElementById("globalBackBtn") as HTMLButtonElement | null;
+    if (!backButton) return;
+
+    const previousDisabled = backButton.disabled;
+    if (pendingFirstLink) {
+      backButton.disabled = true;
+      backButton.setAttribute("aria-disabled", "true");
+    } else if (!previousDisabled) {
+      backButton.disabled = false;
+      backButton.setAttribute("aria-disabled", "false");
+    }
+
+    return () => {
+      backButton.disabled = previousDisabled;
+      backButton.setAttribute("aria-disabled", previousDisabled ? "true" : "false");
+    };
+  }, [pendingFirstLink]);
+
   const { markResetFiltersReturn, clearCachedState } = useExpenseTicketDetailNavigationState({
     fileId,
     detailOrigin,
@@ -682,18 +710,23 @@ const useExpenseTicketDetailPageViewModel = () => {
     });
 
   useEffect(() => {
-    if (!shouldBlockWorkflowExit || busy) return;
+    if (!sheetSyncBlocked || busy) return;
     if (!sheetWorkflowBlockMessage) return;
     if (status === sheetWorkflowBlockMessage) return;
     setStatus(sheetWorkflowBlockMessage);
-  }, [busy, setStatus, sheetWorkflowBlockMessage, shouldBlockWorkflowExit, status]);
+  }, [busy, setStatus, sheetWorkflowBlockMessage, sheetSyncBlocked, status]);
 
   const isAssignedTicket = header?.status === 1;
   const isContextLocked = (isAssignedTicket && !allowAssignedDraftEdit) || (!!linkedExpenseSheetId && linkSheetLocked);
   const canEditTicketInContext = canEditTicket && canEditLinkedTicket && !isFromSheetLink;
+  const canCreateTicketLineInContext = canEditTicketInContext && !isContextLocked && !sheetSyncBlocked;
   const canDeleteTicketInContext = canDeleteTicket && canEditLinkedTicket && !isFromSheetLink;
-  const ticketTopbarActionMode: "default" | "view_only" =
-    !canEditTicketInContext && !canDeleteTicketInContext ? "view_only" : "default";
+  const ticketTopbarActionMode: "default" | "save_only" | "view_only" =
+    pendingFirstLink && isEditing
+      ? "save_only"
+      : !canEditTicketInContext && !canDeleteTicketInContext
+        ? "view_only"
+        : "default";
 
   useExpenseTicketDetailTopbarActions({
     busy,
@@ -740,7 +773,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     closeConfirm,
   });
 
-  const { openLineDetail, resolveClickableCard, openFile, handleOpenExpenseSheet } = useExpenseTicketDetailInteractions({
+  const { openCreateLineDetail, openLineDetail, resolveClickableCard, openFile, handleOpenExpenseSheet } =
+    useExpenseTicketDetailInteractions({
     busy,
     fileId,
     contextSheetId: linkedExpenseSheetId,
@@ -835,13 +869,46 @@ const useExpenseTicketDetailPageViewModel = () => {
     },
   });
 
-  return detailView;
+  return {
+    ...detailView,
+    canShowCreateLineFab: canCreateTicketLineInContext && !isLoading && !errorMessage && !!safeText(fileId) && !!header,
+    isCreateLineFabDisabled: busy || !header,
+    openCreateLineDetail,
+  };
 };
 
 const ExpenseTicketDetailPageContent = () => {
   const detailView = useExpenseTicketDetailPageViewModel();
+  const fabMenuItems = useMemo<FloatingActionButtonMenuItem[]>(
+    () => [
+      {
+        id: "new-ticket-line",
+        label: indT("ExpenseSheets_Fab_NewLine", "Nueva Linea"),
+        icon: <NewLineIcon />,
+        onClick: () => {
+          void detailView.openCreateLineDetail();
+        },
+        disabled: detailView.isCreateLineFabDisabled,
+      },
+    ],
+    [detailView]
+  );
 
-  return <ExpenseTicketDetailView modal={detailView.modal} preview={detailView.preview} content={detailView.content} />;
+  return (
+    <>
+      <ExpenseTicketDetailView modal={detailView.modal} preview={detailView.preview} content={detailView.content} />
+      {detailView.canShowCreateLineFab ? (
+        <FloatingActionButton
+          ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
+          size={76}
+          right={16}
+          bottom={24}
+          menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rapidas")}
+          menuItems={fabMenuItems}
+        />
+      ) : null}
+    </>
+  );
 };
 
 // Main page entry for expense ticket detail.

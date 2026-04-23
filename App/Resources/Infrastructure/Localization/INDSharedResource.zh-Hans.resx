@@ -96,6 +96,9 @@
   <data name="ExpenseSheets_NotFound" xml:space="preserve">
     <value>没有找到费用表。</value>
   </data>
+  <data name="Expense_Context_SelectedCompanyUnavailable" xml:space="preserve">
+    <value>所选公司已不可用。请从主菜单重新选择。</value>
+  </data>
   <data name="ExpenseSheets_Detail_SaveChanges_Title" xml:space="preserve">
     <value>保存更改</value>
   </data>
@@ -795,6 +798,9 @@
   <data name="Visits_Detail_LoadActivityFailed" xml:space="preserve">
     <value>无法获取活动数据。</value>
   </data>
+  <data name="Visits_Detail_InvalidRecId" xml:space="preserve">
+    <value>无法解析活动标识符。请刷新后重试。</value>
+  </data>
   <data name="Visits_Detail_EditingEnabled" xml:space="preserve">
     <value>已启用编辑。</value>
   </data>
@@ -988,7 +994,7 @@
     <value>麦克风</value>
   </data>
   <data name="TextEditor_Microphone_ReadOnlyHint" xml:space="preserve">
-    <value>Audio transcription is available only in edit mode.</value>
+    <value>音频转录仅在编辑模式下可用。</value>
   </data>
   <data name="TextEditor_Transcribe" xml:space="preserve">
     <value>转写</value>
@@ -1147,10 +1153,10 @@
     <value>显示汇率信息</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
-    <value>Exchange rate obtained {0}\nDate: {1}\nSource: {2}</value>
+    <value>已获取汇率 {0}\n日期: {1}\n来源: {2}</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
-    <value>Exchange rate {0} {1}</value>
+    <value>汇率 {0} {1}</value>
   </data>
   <data name="Nav_ExpenseTickets" xml:space="preserve">
     <value>票据</value>
@@ -1216,10 +1222,10 @@
     <value>此票据没有行项目。</value>
   </data>
   <data name="Tickets_Detail_ViewTicket" xml:space="preserve">
-    <value>View ticket</value>
+    <value>查看票据</value>
   </data>
   <data name="Tickets_Detail_ViewAttachment" xml:space="preserve">
-    <value>View attachment</value>
+    <value>查看附件</value>
   </data>
   <data name="Common_Link" xml:space="preserve">
     <value>??</value>
@@ -1267,52 +1273,52 @@
     <value>已完成</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_FileType" xml:space="preserve">
-    <value>Unsupported image format.</value>
+    <value>不支持的图片格式。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_FileSize" xml:space="preserve">
-    <value>Image exceeds 50MB max size.</value>
+    <value>图片超过 50MB 大小限制。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_NoFileId" xml:space="preserve">
-    <value>Could not resolve ticket file id.</value>
+    <value>无法解析票据文件标识。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_UploadRetry" xml:space="preserve">
-    <value>Ticket created, but file sync failed. Retry upload to complete process.</value>
+    <value>票据已创建，但文件同步失败。请重试上传以完成流程。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RetryFileMissing" xml:space="preserve">
-    <value>Cached image is no longer available.</value>
+    <value>缓存的图片已不可用。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_CameraPermission" xml:space="preserve">
-    <value>Camera permission is required.</value>
+    <value>需要相机权限。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Validation" xml:space="preserve">
-    <value>Validation error.</value>
+    <value>验证错误。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_NotFound" xml:space="preserve">
-    <value>Record not found.</value>
+    <value>未找到记录。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Server" xml:space="preserve">
-    <value>Server error.</value>
+    <value>服务器错误。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_RetryUpload" xml:space="preserve">
     <value>重试上传</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Partial" xml:space="preserve">
-    <value>The ticket was created, but the full process did not finish.</value>
+    <value>票据已创建，但完整流程尚未结束。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_Stage" xml:space="preserve">
-    <value>Completed stage: {0}.</value>
+    <value>已完成阶段: {0}。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RateLimit" xml:space="preserve">
-    <value>Too many requests.</value>
+    <value>请求过多。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Error_RetryAfterHint" xml:space="preserve">
-    <value>Retry after {0}.</value>
+    <value>请在 {0} 秒后重试。</value>
   </data>
   <data name="ExpenseSheets_NewTicket_OpenCreatedTicket" xml:space="preserve">
     <value>打开已创建票据</value>
   </data>
   <data name="ExpenseTickets_LinkMode_CancelConfirm" xml:space="preserve">
-    <value>The link process will be canceled and you will return to the expense sheet. Do you want to continue?</value>
+    <value>关联流程将被取消，您将返回费用单。是否继续？</value>
   </data>
   <data name="ExpenseTickets_LinkMode_SelectAll" xml:space="preserve">
     <value>全选</value>
@@ -1321,25 +1327,25 @@
     <value>清除所选</value>
   </data>
   <data name="ExpenseTickets_LinkMode_LinkButton" xml:space="preserve">
-    <value>Link ticket(s)</value>
+    <value>关联票据</value>
   </data>
   <data name="ExpenseTickets_LinkMode_SelectTicket" xml:space="preserve">
-    <value>Select ticket</value>
+    <value>选择票据</value>
   </data>
   <data name="ExpenseSheets_BottomActions_RequestApproval" xml:space="preserve">
-    <value>Request approval</value>
+    <value>请求审批</value>
   </data>
   <data name="ExpenseSheets_BottomActions_UndoRequest" xml:space="preserve">
-    <value>Undo request</value>
+    <value>撤销请求</value>
   </data>
   <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
-    <value>Do you want to update the expense sheet status?</value>
+    <value>是否要更新费用单状态？</value>
   </data>
   <data name="ExpenseSheets_BottomActions_ConfirmTransition" xml:space="preserve">
     <value>当前状态: {0}\n新状态: {1}\n\n是否要更新费用单状态？</value>
   </data>
   <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
-    <value>This expense sheet is read-only for its current status.</value>
+    <value>该费用单因当前状态为只读。</value>
   </data>
   <data name="ExpenseTickets_SheetSync_PendingSaveRequired" xml:space="preserve">
     <value>离开此流程前必须先保存票据。</value>
@@ -1351,25 +1357,25 @@
     <value>票据必须保持正的总金额，才能同步报销行。</value>
   </data>
   <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
-    <value>This expense sheet status change is not allowed.</value>
+    <value>不允许更改该费用单状态。</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultTitle" xml:space="preserve">
-    <value>Link result</value>
+    <value>关联结果</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultRequested" xml:space="preserve">
-    <value>Requested</value>
+    <value>已请求</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultLinked" xml:space="preserve">
-    <value>Linked</value>
+    <value>已关联</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultSkipped" xml:space="preserve">
-    <value>Skipped</value>
+    <value>已跳过</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultFailed" xml:space="preserve">
-    <value>Failed</value>
+    <value>失败</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultReason" xml:space="preserve">
-    <value>Reason</value>
+    <value>原因</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Title" xml:space="preserve">
     <value>正在处理票据</value>
@@ -1408,97 +1414,97 @@
     <value>我们正在从图片中提取日期、金额和描述。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Title" xml:space="preserve">
-    <value>Expense assistant</value>
+    <value>费用助手</value>
   </data>
   <data name="ExpenseSheets_Assistant_Subtitle" xml:space="preserve">
-    <value>Ask business questions about the currently loaded expense sheets.</value>
+    <value>针对当前已加载的费用单提出业务问题。</value>
   </data>
   <data name="ExpenseSheets_Assistant_LauncherLabel" xml:space="preserve">
-    <value>Open expense sheet assistant</value>
+    <value>打开费用助手</value>
   </data>
   <data name="ExpenseSheets_Assistant_Empty_Title" xml:space="preserve">
-    <value>Ask for a business summary</value>
+    <value>请求业务摘要</value>
   </data>
   <data name="ExpenseSheets_Assistant_Empty_Body" xml:space="preserve">
-    <value>Use quick actions or write a question about the expense sheets currently loaded in the list.</value>
+    <value>使用快捷操作，或输入一个关于当前列表中已加载费用单的问题。</value>
   </data>
   <data name="ExpenseSheets_Assistant_NoContext_Title" xml:space="preserve">
-    <value>Load expense sheets first.</value>
+    <value>请先加载费用单。</value>
   </data>
   <data name="ExpenseSheets_Assistant_NoContext_Body" xml:space="preserve">
-    <value>The assistant needs a real expense sheet list response before it can analyze the data.</value>
+    <value>助手需要先获取真实的费用单列表响应，才能分析数据。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Input_Placeholder" xml:space="preserve">
     <value>...</value>
   </data>
   <data name="ExpenseSheets_Assistant_Context_Updated" xml:space="preserve">
-    <value>Analysis context updated with the latest loaded list.</value>
+    <value>分析上下文已更新为最新加载的列表。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Context_Ready" xml:space="preserve">
-    <value>Using the latest loaded list.</value>
+    <value>正在使用最新加载的列表。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Summary" xml:space="preserve">
-    <value>Summary</value>
+    <value>摘要</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Analytics" xml:space="preserve">
-    <value>Analytics</value>
+    <value>分析</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Anomalies" xml:space="preserve">
-    <value>Anomalies</value>
+    <value>异常</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Summary" xml:space="preserve">
     <value>请总结已加载的费用单，说明总额、期间以及重要观察结果。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Analytics" xml:space="preserve">
-    <value>Analyze the loaded expense sheets and extract patterns: total spend, top users, top projects, top currencies and status distribution.</value>
+    <value>分析已加载的费用单并提取模式：总支出、主要用户、主要项目、主要币种以及状态分布。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Anomalies" xml:space="preserve">
-    <value>Review the loaded expense sheets and detect possible anomalies, inconsistencies or outliers in amounts, dates, users, projects, statuses and expense types.</value>
+    <value>检查已加载的费用单，识别金额、日期、用户、项目、状态和费用类型中的潜在异常、不一致或离群值。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Send" xml:space="preserve">
-    <value>Send</value>
+    <value>发送</value>
   </data>
   <data name="ExpenseSheets_Assistant_Sending" xml:space="preserve">
-    <value>Sending</value>
+    <value>发送中</value>
   </data>
   <data name="ExpenseSheets_Assistant_Retry" xml:space="preserve">
-    <value>Retry</value>
+    <value>重试</value>
   </data>
   <data name="ExpenseSheets_Assistant_Warnings" xml:space="preserve">
-    <value>Warnings</value>
+    <value>警告</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Total" xml:space="preserve">
-    <value>Total records</value>
+    <value>记录总数</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Mode" xml:space="preserve">
-    <value>Retrieval</value>
+    <value>检索方式</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated" xml:space="preserve">
-    <value>Truncated</value>
+    <value>已截断</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_Yes" xml:space="preserve">
-    <value>Yes</value>
+    <value>是</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_No" xml:space="preserve">
-    <value>No</value>
+    <value>否</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Trace" xml:space="preserve">
     <value>TraceId</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_Validation" xml:space="preserve">
-    <value>Check the question and try again.</value>
+    <value>请检查问题后重试。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_Server" xml:space="preserve">
-    <value>The assistant is not available right now.</value>
+    <value>助手当前不可用。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RateLimit" xml:space="preserve">
-    <value>Too many assistant requests.</value>
+    <value>助手请求过多。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RetryAfter" xml:space="preserve">
-    <value>Retry after {0}.</value>
+    <value>请在 {0} 后重试。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_NoContext" xml:space="preserve">
-    <value>Load expense sheets before asking the assistant.</value>
+    <value>请先加载费用单，再向助手提问。</value>
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>正在准备回复...</value>

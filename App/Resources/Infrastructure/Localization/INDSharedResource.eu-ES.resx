@@ -165,6 +165,9 @@
   <data name="ExpenseSheets_NotFound" xml:space="preserve">
     <value>Ez da gastu orria aurkitu.</value>
   </data>
+  <data name="Expense_Context_SelectedCompanyUnavailable" xml:space="preserve">
+    <value>Hautatutako enpresa jada ez dago erabilgarri. Aukeratu berriro menu nagusitik.</value>
+  </data>
   <data name="ExpenseSheets_Detail_SaveChanges_Title" xml:space="preserve">
     <value>Gorde aldaketak</value>
   </data>
@@ -223,13 +226,13 @@
     <value>Gastu-orriaren egoera ekintzak</value>
   </data>
   <data name="ExpenseSheets_BottomActions_RequestApproval" xml:space="preserve">
-    <value>Request approval</value>
+    <value>Eskatu onespena</value>
   </data>
   <data name="ExpenseSheets_BottomActions_UndoRequest" xml:space="preserve">
-    <value>Undo request</value>
+    <value>Ezeztatu eskaera</value>
   </data>
   <data name="ExpenseSheets_BottomActions_ConfirmBody" xml:space="preserve">
-    <value>Do you want to update the expense sheet status?</value>
+    <value>Gastu-orriaren egoera eguneratu nahi duzu?</value>
   </data>
   <data name="ExpenseSheets_BottomActions_ConfirmTransition" xml:space="preserve">
     <value>Uneko egoera: {0}\nEgoera berria: {1}\n\nGastu-orriaren egoera eguneratu nahi duzu?</value>
@@ -876,6 +879,9 @@
   <data name="Visits_Detail_LoadActivityFailed" xml:space="preserve">
     <value>Ezin izan dira jardueraren datuak eskuratu.</value>
   </data>
+  <data name="Visits_Detail_InvalidRecId" xml:space="preserve">
+    <value>Ezin izan da jardueraren identifikatzailea ebatzi. Kargatu berriro eta saiatu berriro.</value>
+  </data>
   <data name="Visits_Detail_EditingEnabled" xml:space="preserve">
     <value>Edizioa gaituta.</value>
   </data>
@@ -1207,7 +1213,7 @@
     <value>Ordaindutako gastu-orriak irakurtzeko soilik dira.</value>
   </data>
   <data name="ExpenseSheets_Detail_ReadOnlyByStatus" xml:space="preserve">
-    <value>This expense sheet is read-only for its current status.</value>
+    <value>Gastu-orri hau irakurtzeko soilik dago uneko egoeragatik.</value>
   </data>
   <data name="ExpenseTickets_SheetSync_PendingSaveRequired" xml:space="preserve">
     <value>Ticketa gorde behar duzu fluxu honetatik irten aurretik.</value>
@@ -1219,7 +1225,7 @@
     <value>Ticketak zenbateko oso positiboa mantendu behar du gastu-lerroa sinkronizatzeko.</value>
   </data>
   <data name="ExpenseSheets_Detail_StatusTransitionNotAllowed" xml:space="preserve">
-    <value>This expense sheet status change is not allowed.</value>
+    <value>Gastu-orri honen egoera-aldaketa ez dago baimenduta.</value>
   </data>
   <data name="ExpenseSheets_FuelPrice_Loading" xml:space="preserve">
     <value>Erregaiaren prezioa kargatzen...</value>
@@ -1354,22 +1360,22 @@
     <value>Hautatu ticketa</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultTitle" xml:space="preserve">
-    <value>Link result</value>
+    <value>Loturaren emaitza</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultRequested" xml:space="preserve">
-    <value>Requested</value>
+    <value>Eskatutakoak</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultLinked" xml:space="preserve">
-    <value>Linked</value>
+    <value>Lotutakoak</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultSkipped" xml:space="preserve">
-    <value>Skipped</value>
+    <value>Saltatutakoak</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultFailed" xml:space="preserve">
-    <value>Failed</value>
+    <value>Huts egindakoak</value>
   </data>
   <data name="ExpenseTickets_LinkMode_ResultReason" xml:space="preserve">
-    <value>Reason</value>
+    <value>Arrazoia</value>
   </data>
   <data name="ExpenseSheets_NewTicket_Progress_Prepare_Title" xml:space="preserve">
     <value>Irudia prestatzen</value>
@@ -1408,97 +1414,97 @@
     <value>Sortutako ticketa uneko gastu-orriarekin konektatzen ari da.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Title" xml:space="preserve">
-    <value>Expense assistant</value>
+    <value>Gastu-orrien laguntzailea</value>
   </data>
   <data name="ExpenseSheets_Assistant_Subtitle" xml:space="preserve">
-    <value>Ask business questions about the currently loaded expense sheets.</value>
+    <value>Egin negozio-galderak une honetan kargatutako gastu-orriei buruz.</value>
   </data>
   <data name="ExpenseSheets_Assistant_LauncherLabel" xml:space="preserve">
-    <value>Open expense sheet assistant</value>
+    <value>Ireki gastu-orrien laguntzailea</value>
   </data>
   <data name="ExpenseSheets_Assistant_Empty_Title" xml:space="preserve">
-    <value>Ask for a business summary</value>
+    <value>Eskatu negozio-laburpen bat</value>
   </data>
   <data name="ExpenseSheets_Assistant_Empty_Body" xml:space="preserve">
-    <value>Use quick actions or write a question about the expense sheets currently loaded in the list.</value>
+    <value>Erabili ekintza azkarrak edo idatzi zerrendan une honetan kargatutako gastu-orriei buruzko galdera bat.</value>
   </data>
   <data name="ExpenseSheets_Assistant_NoContext_Title" xml:space="preserve">
-    <value>Load expense sheets first.</value>
+    <value>Kargatu lehenengo gastu-orriak.</value>
   </data>
   <data name="ExpenseSheets_Assistant_NoContext_Body" xml:space="preserve">
-    <value>The assistant needs a real expense sheet list response before it can analyze the data.</value>
+    <value>Laguntzaileak gastu-orrien zerrendaren benetako erantzuna behar du datuak aztertu aurretik.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Input_Placeholder" xml:space="preserve">
     <value>...</value>
   </data>
   <data name="ExpenseSheets_Assistant_Context_Updated" xml:space="preserve">
-    <value>Analysis context updated with the latest loaded list.</value>
+    <value>Azterketa-testuingurua eguneratu da kargatutako azken zerrendarekin.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Context_Ready" xml:space="preserve">
-    <value>Using the latest loaded list.</value>
+    <value>Kargatutako azken zerrenda erabiltzen ari da.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Summary" xml:space="preserve">
-    <value>Summary</value>
+    <value>Laburpena</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Analytics" xml:space="preserve">
-    <value>Analytics</value>
+    <value>Analitika</value>
   </data>
   <data name="ExpenseSheets_Assistant_Quick_Anomalies" xml:space="preserve">
-    <value>Anomalies</value>
+    <value>Anomaliak</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Summary" xml:space="preserve">
     <value>Laburtu kargatutako gastu-orriak. Adierazi guztizko zenbatekoa, epeak eta behaketa garrantzitsuak.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Analytics" xml:space="preserve">
-    <value>Analyze the loaded expense sheets and extract patterns: total spend, top users, top projects, top currencies and status distribution.</value>
+    <value>Aztertu kargatutako gastu-orriak eta atera ereduak: gastu osoa, erabiltzaile nagusiak, proiektu nagusiak, moneta nagusiak eta egoeren banaketa.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Question_Anomalies" xml:space="preserve">
-    <value>Review the loaded expense sheets and detect possible anomalies, inconsistencies or outliers in amounts, dates, users, projects, statuses and expense types.</value>
+    <value>Berrikusi kargatutako gastu-orriak eta detektatu zenbatekoetan, datetan, erabiltzaileetan, proiektuetan, egoeretan eta gastu motetan egon daitezkeen anomaliak, inkongruentziak edo balio arraroak.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Send" xml:space="preserve">
-    <value>Send</value>
+    <value>Bidali</value>
   </data>
   <data name="ExpenseSheets_Assistant_Sending" xml:space="preserve">
-    <value>Sending</value>
+    <value>Bidaltzen</value>
   </data>
   <data name="ExpenseSheets_Assistant_Retry" xml:space="preserve">
-    <value>Retry</value>
+    <value>Saiatu berriro</value>
   </data>
   <data name="ExpenseSheets_Assistant_Warnings" xml:space="preserve">
-    <value>Warnings</value>
+    <value>Abisuak</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Total" xml:space="preserve">
-    <value>Total records</value>
+    <value>Erregistro guztiak</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Mode" xml:space="preserve">
-    <value>Retrieval</value>
+    <value>Berreskuratzea</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated" xml:space="preserve">
-    <value>Truncated</value>
+    <value>Laburtua</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_Yes" xml:space="preserve">
-    <value>Yes</value>
+    <value>Bai</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Truncated_No" xml:space="preserve">
-    <value>No</value>
+    <value>Ez</value>
   </data>
   <data name="ExpenseSheets_Assistant_Metadata_Trace" xml:space="preserve">
     <value>TraceId</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_Validation" xml:space="preserve">
-    <value>Check the question and try again.</value>
+    <value>Egiaztatu galdera eta saiatu berriro.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_Server" xml:space="preserve">
-    <value>The assistant is not available right now.</value>
+    <value>Laguntzailea ez dago erabilgarri une honetan.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RateLimit" xml:space="preserve">
-    <value>Too many assistant requests.</value>
+    <value>Laguntzaileari eskaera gehiegi egin zaizkio.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_RetryAfter" xml:space="preserve">
-    <value>Retry after {0}.</value>
+    <value>Saiatu berriro {0} ondoren.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Error_NoContext" xml:space="preserve">
-    <value>Load expense sheets before asking the assistant.</value>
+    <value>Kargatu gastu-orriak laguntzaileari galdetu aurretik.</value>
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>Erantzuna prestatzen ari naiz...</value>

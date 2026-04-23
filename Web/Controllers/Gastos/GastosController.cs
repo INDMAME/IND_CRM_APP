@@ -219,7 +219,13 @@ namespace IND_CRM_APP.Controllers
 
         // Shows one ticket line detail page.
         [HttpGet]
-        public async Task<IActionResult> TicketLineDetail(string fileId, string lineRecId, string mode = "", string origin = "", string sheetId = "")
+        public async Task<IActionResult> TicketLineDetail(
+            string fileId,
+            string lineRecId,
+            string mode = "",
+            string origin = "",
+            string sheetId = "",
+            string sheetLineRecId = "")
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -227,24 +233,30 @@ namespace IND_CRM_APP.Controllers
 
             var safeFileId = (fileId ?? string.Empty).Trim();
             var safeLineRecId = (lineRecId ?? string.Empty).Trim();
-            if (string.IsNullOrWhiteSpace(safeFileId) || string.IsNullOrWhiteSpace(safeLineRecId))
+            var normalizedMode = (mode ?? string.Empty).Trim().ToLowerInvariant();
+            var isCreateMode = string.Equals(normalizedMode, "create", StringComparison.OrdinalIgnoreCase);
+            var isEditMode = string.Equals(normalizedMode, "edit", StringComparison.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(safeFileId) || (!isCreateMode && string.IsNullOrWhiteSpace(safeLineRecId)))
                 return RedirectToAction(nameof(Tickets));
 
             await LoadEnvironmentInfoAsync();
 
             ViewBag.TicketFileId = safeFileId;
             ViewBag.TicketLineRecId = safeLineRecId;
+            ViewBag.TicketLineMode = isCreateMode ? "create" : isEditMode ? "edit" : "view";
             var normalizedOrigin = (origin ?? string.Empty).Trim().ToLowerInvariant();
             var backQuery = new List<string>
             {
                 $"fileId={Uri.EscapeDataString(safeFileId)}"
             };
-            if (!string.IsNullOrWhiteSpace(mode))
-                backQuery.Add($"mode={Uri.EscapeDataString(mode.Trim())}");
+            if (isEditMode)
+                backQuery.Add("mode=edit");
             if (!string.IsNullOrWhiteSpace(normalizedOrigin))
                 backQuery.Add($"origin={Uri.EscapeDataString(normalizedOrigin)}");
             if (!string.IsNullOrWhiteSpace(sheetId))
                 backQuery.Add($"sheetId={Uri.EscapeDataString(sheetId.Trim())}");
+            if (!string.IsNullOrWhiteSpace(sheetLineRecId))
+                backQuery.Add($"sheetLineRecId={Uri.EscapeDataString(sheetLineRecId.Trim())}");
             ViewData["TopbarBackUrl"] = $"/Gastos/TicketDetail?{string.Join("&", backQuery)}";
             return View("~/Web/Views/Gastos/TicketLineDetail.cshtml");
         }

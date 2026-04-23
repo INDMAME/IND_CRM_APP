@@ -5,12 +5,14 @@ import { executeExpenseMutation, parseDecimalInput } from "../../hooks/expenseMu
 import { syncExpenseLinkedTicketSheetLine } from "../../utils/expenseLinkedTicketSheetSync.ts";
 import { resolveExpenseSheetEditAccess } from "../../utils/expenseSheetEditAccess.ts";
 import { clearExpenseTicketSheetSyncState, saveExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
-import { deleteExpenseSheetTicketLine, updateExpenseSheetTicketLine } from "../../utils/expenseApi.ts";
+import { createExpenseSheetTicketLine, deleteExpenseSheetTicketLine, updateExpenseSheetTicketLine } from "../../utils/expenseApi.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type UseExpenseTicketLineDetailMutationsArgs = {
   busy: boolean;
   isEditing: boolean;
+  isCreateMode: boolean;
+  canCreateTicket: boolean;
   canEditTicket: boolean;
   canDeleteTicket: boolean;
   fileId: string;
@@ -24,6 +26,7 @@ type UseExpenseTicketLineDetailMutationsArgs = {
   currentAxUserId: string;
   currentCrmUserId: string;
   selectedManagedUserId: string;
+  skipLinkedSheetSyncOnCreate?: boolean;
   onLinkedSheetSyncFailure?: (message: string) => void;
   onLinkedSheetSyncSuccess?: () => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
@@ -36,6 +39,8 @@ type UseExpenseTicketLineDetailMutationsArgs = {
 export const useExpenseTicketLineDetailMutations = ({
   busy,
   isEditing,
+  isCreateMode,
+  canCreateTicket,
   canEditTicket,
   canDeleteTicket,
   fileId,
@@ -49,6 +54,7 @@ export const useExpenseTicketLineDetailMutations = ({
   currentAxUserId,
   currentCrmUserId,
   selectedManagedUserId,
+  skipLinkedSheetSyncOnCreate = false,
   onLinkedSheetSyncFailure,
   onLinkedSheetSyncSuccess,
   setModalError,
@@ -94,7 +100,8 @@ export const useExpenseTicketLineDetailMutations = ({
 
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
-    if (!canEditTicket) {
+    const canProceed = isCreateMode ? canCreateTicket : canEditTicket;
+    if (!canProceed) {
       showPermissionModal();
       return false;
     }
@@ -116,24 +123,29 @@ export const useExpenseTicketLineDetailMutations = ({
     }
 
     const result = await executeExpenseMutation({
-      startStatus: indT("ExpenseSheets_Line_Detail_Updating", "Updating expense line..."),
+      startStatus: isCreateMode
+        ? indT("ExpenseSheets_Line_Detail_Creating", "Creating expense line...")
+        : indT("ExpenseSheets_Line_Detail_Updating", "Updating expense line..."),
       fallbackErrorMessage: indT("ExpenseSheets_Detail_UpdateError", "Update error."),
       setModalError,
       setBusy,
       setStatus,
       action: async () => {
-        const response = await updateExpenseSheetTicketLine(fileId, lineRecId, {
+        const payload = {
           description: normalizedDescription,
           qty: Number(parsedQty),
           price: Number(parsedPrice),
           totalAmount: Number(parsedQty) * Number(parsedPrice),
-        });
+        };
+        const response = isCreateMode
+          ? await createExpenseSheetTicketLine(fileId, payload)
+          : await updateExpenseSheetTicketLine(fileId, lineRecId, payload);
 
         if (!response.Success) {
           throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
         }
 
-        if (validatedSheetId) {
+        if (validatedSheetId && !(isCreateMode && skipLinkedSheetSyncOnCreate)) {
           try {
             await syncExpenseLinkedTicketSheetLine({
               fileId,
@@ -155,12 +167,23 @@ export const useExpenseTicketLineDetailMutations = ({
               message,
             });
             onLinkedSheetSyncFailure?.(message);
-            throw new Error(message);
+            if (!isCreateMode) {
+              throw new Error(message);
+            }
           }
+        } else if (isCreateMode) {
+          clearExpenseTicketSheetSyncState();
+          onLinkedSheetSyncSuccess?.();
         }
 
-        setStatus(indT("ExpenseSheets_Line_Detail_Updated", "Expense line updated"));
-        setIsEditing(false);
+        setStatus(
+          isCreateMode
+            ? indT("ExpenseSheets_Line_Detail_Created", "Expense line created")
+            : indT("ExpenseSheets_Line_Detail_Updated", "Expense line updated")
+        );
+        if (!isCreateMode) {
+          setIsEditing(false);
+        }
         return true;
       },
     });
@@ -168,11 +191,13 @@ export const useExpenseTicketLineDetailMutations = ({
     return result.ok;
   }, [
     busy,
+    canCreateTicket,
     canEditTicket,
     draftDescription,
     draftPrice,
     draftQty,
     fileId,
+    isCreateMode,
     isEditing,
     lineRecId,
     onLinkedSheetSyncFailure,
@@ -181,6 +206,7 @@ export const useExpenseTicketLineDetailMutations = ({
     setIsEditing,
     setModalError,
     setStatus,
+    skipLinkedSheetSyncOnCreate,
     validateLinkedSheetBeforeMutation,
   ]);
 

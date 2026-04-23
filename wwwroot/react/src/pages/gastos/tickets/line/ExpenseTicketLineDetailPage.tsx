@@ -73,6 +73,7 @@ const ExpenseTicketLineDetailContent = () => {
   const fileId = safeText(window.__EXPENSE_TICKET_FILE_ID__);
   const lineRecId = safeText(window.__EXPENSE_TICKET_LINE_ID__);
   const routeParams = useMemo(() => new URLSearchParams(window.location.search), []);
+  const isCreateMode = useMemo(() => safeText(routeParams.get("mode")).toLowerCase() === "create", [routeParams]);
   const startInEditMode = useMemo(() => safeText(routeParams.get("mode")).toLowerCase() === "edit", [routeParams]);
   const routeOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
   const routeSheetId = useMemo(() => safeText(routeParams.get("sheetId")), [routeParams]);
@@ -121,6 +122,7 @@ const ExpenseTicketLineDetailContent = () => {
     currentAxUserId,
     selectedManagedUserId,
   });
+  const canCreateTicketLine = canEditTicketByModule && !isManagingOtherUser;
   const canEditTicket = canEditTicketByModule && !isManagingOtherUser;
   const canDeleteTicket = canDeleteTicketByModule && !isManagingOtherUser;
 
@@ -147,6 +149,7 @@ const ExpenseTicketLineDetailContent = () => {
     handleCancelEdit,
   } = useExpenseTicketLineDetailState({
     hasAccess,
+    isCreateMode,
     canEditTicket,
     fileId,
     lineRecId,
@@ -169,6 +172,7 @@ const ExpenseTicketLineDetailContent = () => {
     resolveBlockedMessage: resolveLinkedTicketBlockedMessage,
   });
   const canEditLinkedTicket = !linkedExpenseSheetId || (!linkSheetCheckBusy && !linkSheetLocked);
+  const canCreateLinkedTicketLine = !linkedExpenseSheetId || (!linkSheetCheckBusy && !linkSheetLocked);
   const allowAssignedDraftEdit = detailOrigin === "sheet-create" || (!!linkedExpenseSheetId && canEditLinkedTicket);
   const pendingFirstLink =
     detailOrigin === "sheet-create" && !!safeText(ticketReturnContext?.sheetId || routeSheetId) && !safeText(header?.hojaGastosIdDisplay);
@@ -259,9 +263,20 @@ const ExpenseTicketLineDetailContent = () => {
     appendExpenseTicketReturnQuery(query, ticketReturnContext);
     return `/Gastos/TicketDetail?${query.toString()}`;
   }, [fileId, ticketReturnContext]);
+  const ticketDetailEditUrl = useMemo(() => {
+    const safeFileId = safeText(fileId);
+    if (!safeFileId) return "";
+    const query = new URLSearchParams({
+      fileId: safeFileId,
+      mode: "edit",
+    });
+    appendExpenseTicketReturnQuery(query, ticketReturnContext);
+    return `/Gastos/TicketDetail?${query.toString()}`;
+  }, [fileId, ticketReturnContext]);
+  const preferredTicketDetailUrl = pendingFirstLink ? ticketDetailEditUrl : ticketDetailUrl;
 
   React.useEffect(() => {
-    if (!shouldBlockWorkflowExit || !ticketDetailUrl) {
+    if (!shouldBlockWorkflowExit || !preferredTicketDetailUrl) {
       return;
     }
 
@@ -270,7 +285,7 @@ const ExpenseTicketLineDetailContent = () => {
       event.preventDefault();
       event.stopPropagation();
       event.stopImmediatePropagation?.();
-      navigateToExpenseUrl(ticketDetailUrl, {
+      navigateToExpenseUrl(preferredTicketDetailUrl, {
         askConfirmation: false,
         bypassGuardOnce: true,
       });
@@ -281,7 +296,7 @@ const ExpenseTicketLineDetailContent = () => {
       }
 
       window.__indBypassNavigationGuardOnce?.();
-      window.location.replace(ticketDetailUrl);
+      window.location.replace(preferredTicketDetailUrl);
     };
 
     backButton?.addEventListener("click", handleTopbarBack, true);
@@ -290,7 +305,7 @@ const ExpenseTicketLineDetailContent = () => {
       backButton?.removeEventListener("click", handleTopbarBack, true);
       window.removeEventListener("popstate", handleNativeBack);
     };
-  }, [shouldBlockWorkflowExit, ticketDetailUrl]);
+  }, [preferredTicketDetailUrl, shouldBlockWorkflowExit]);
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -330,9 +345,27 @@ const ExpenseTicketLineDetailContent = () => {
     void handleModalConfirm();
   }, [busy, closeConfirm, handleModalConfirm, modalError]);
 
+  const handleCancelEditInContext = useCallback(() => {
+    if (!isCreateMode) {
+      handleCancelEdit();
+      return;
+    }
+
+    if (!preferredTicketDetailUrl) {
+      return;
+    }
+
+    navigateToExpenseUrl(preferredTicketDetailUrl, {
+      askConfirmation: !shouldBlockWorkflowExit,
+      bypassGuardOnce: shouldBlockWorkflowExit,
+    });
+  }, [handleCancelEdit, isCreateMode, preferredTicketDetailUrl, shouldBlockWorkflowExit]);
+
   const { handleUpdate, handleDelete } = useExpenseTicketLineDetailMutations({
     busy,
     isEditing,
+    isCreateMode,
+    canCreateTicket: canCreateTicketLine && canCreateLinkedTicketLine,
     canEditTicket: canEditTicket && canEditLinkedTicket,
     canDeleteTicket: canDeleteTicket && canEditLinkedTicket,
     fileId,
@@ -346,6 +379,7 @@ const ExpenseTicketLineDetailContent = () => {
     currentAxUserId,
     currentCrmUserId,
     selectedManagedUserId,
+    skipLinkedSheetSyncOnCreate: pendingFirstLink,
     onLinkedSheetSyncFailure: (message) => {
       setSheetSyncBlocked(true);
       setSheetSyncBlockedMessage(message);
@@ -365,22 +399,34 @@ const ExpenseTicketLineDetailContent = () => {
     busy,
     modalOpen: modal.open,
     isEditing,
+    isCreateMode,
     isLocked: isContextLocked || isManagingOtherUser,
     permissionsReady: managementBootstrapReady,
+    canCreateTicket: canCreateTicketLine && canCreateLinkedTicketLine,
     canEditTicket: canEditTicket && canEditLinkedTicket,
     canDeleteTicket: canDeleteTicket && canEditLinkedTicket,
     fileId,
     setModalError,
     handleEnableEdit: handleEnableEditInContext,
-    handleCancelEdit,
+    handleCancelEdit: handleCancelEditInContext,
     handleUpdate,
     handleDelete,
     onSaveSuccess: () => {
+      if (isCreateMode) {
+        const returnUrl = readExpenseTicketSheetSyncState(fileId) ? ticketDetailEditUrl : preferredTicketDetailUrl;
+        if (!returnUrl) return;
+        navigateToExpenseUrl(returnUrl, {
+          askConfirmation: false,
+          bypassGuardOnce: true,
+        });
+        return;
+      }
+
       reloadExpensePage();
     },
     onDeleteSuccess: () => {
-      if (!ticketDetailUrl) return;
-      navigateToExpenseUrl(ticketDetailUrl, {
+      if (!preferredTicketDetailUrl) return;
+      navigateToExpenseUrl(preferredTicketDetailUrl, {
         askConfirmation: false,
         bypassGuardOnce: true,
       });
@@ -419,7 +465,7 @@ const ExpenseTicketLineDetailContent = () => {
 
       {errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
 
-      {!isLoading && !errorMessage && header && line ? (
+      {!isLoading && !errorMessage && header && (line || isCreateMode) ? (
         <ExpenseTicketLineDetailForm
           header={header}
           line={line}

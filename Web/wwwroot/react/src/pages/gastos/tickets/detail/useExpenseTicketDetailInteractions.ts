@@ -38,6 +38,18 @@ export const useExpenseTicketDetailInteractions = ({
   openPreview,
   ticketReturnContext,
 }: UseExpenseTicketDetailInteractionsArgs) => {
+  const persistHeaderDraftIfNeeded = useCallback(async () => {
+    if (!isEditing) {
+      return true;
+    }
+
+    if (!canOpenSaveConfirm()) {
+      return false;
+    }
+
+    return handlePersistHeaderDraft();
+  }, [canOpenSaveConfirm, handlePersistHeaderDraft, isEditing]);
+
   const openLineDetail = useCallback(
     async (rawLineRecId: string) => {
       if (isFromSheetLink) return;
@@ -47,11 +59,7 @@ export const useExpenseTicketDetailInteractions = ({
 
       const shouldOpenInEditMode = isEditing;
       if (shouldOpenInEditMode) {
-        if (!canOpenSaveConfirm()) {
-          return;
-        }
-
-        const updateOk = await handlePersistHeaderDraft();
+        const updateOk = await persistHeaderDraftIfNeeded();
         if (!updateOk) {
           return;
         }
@@ -74,14 +82,35 @@ export const useExpenseTicketDetailInteractions = ({
     [
       busy,
       bypassWorkflowGuard,
-      canOpenSaveConfirm,
       fileId,
-      handlePersistHeaderDraft,
       isEditing,
       isFromSheetLink,
+      persistHeaderDraftIfNeeded,
       ticketReturnContext,
     ]
   );
+
+  const openCreateLineDetail = useCallback(async () => {
+    if (isFromSheetLink) return;
+    if (busy) return;
+    if (!fileId) return;
+
+    const updateOk = await persistHeaderDraftIfNeeded();
+    if (!updateOk) {
+      return;
+    }
+
+    const query = new URLSearchParams({
+      fileId,
+      mode: "create",
+    });
+    appendExpenseTicketReturnQuery(query, ticketReturnContext);
+
+    navigateToExpenseUrl(`/Gastos/TicketLineDetail?${query.toString()}`, {
+      askConfirmation: false,
+      bypassGuardOnce: isEditing || bypassWorkflowGuard,
+    });
+  }, [busy, bypassWorkflowGuard, fileId, isEditing, isFromSheetLink, persistHeaderDraftIfNeeded, ticketReturnContext]);
 
   const resolveClickableCard = useCallback(
     (target: EventTarget | null) => {
@@ -110,6 +139,7 @@ export const useExpenseTicketDetailInteractions = ({
   }, [contextSheetId, headerExpenseSheetId, isEditing, isFromSheetLink, ticketReturnContext]);
 
   return {
+    openCreateLineDetail,
     openLineDetail,
     resolveClickableCard,
     openFile,

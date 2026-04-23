@@ -6,8 +6,10 @@ type UseExpenseTicketLineDetailTopbarActionsArgs = {
   busy: boolean;
   modalOpen: boolean;
   isEditing: boolean;
+  isCreateMode: boolean;
   isLocked: boolean;
   permissionsReady?: boolean;
+  canCreateTicket: boolean;
   canEditTicket: boolean;
   canDeleteTicket: boolean;
   fileId: string;
@@ -32,8 +34,10 @@ export const useExpenseTicketLineDetailTopbarActions = ({
   busy,
   modalOpen,
   isEditing,
+  isCreateMode,
   isLocked,
   permissionsReady = true,
+  canCreateTicket,
   canEditTicket,
   canDeleteTicket,
   fileId,
@@ -63,10 +67,10 @@ export const useExpenseTicketLineDetailTopbarActions = ({
     busy,
     modalOpen,
     isEditing,
-    isCreateMode: false,
+    isCreateMode,
     isLocked,
     permissionsReady,
-    canCreate: false,
+    canCreate: canCreateTicket,
     canEdit: canEditTicket,
     canDelete: canDeleteTicket,
     setModalError,

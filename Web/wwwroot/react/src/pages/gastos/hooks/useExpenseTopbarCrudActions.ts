@@ -28,7 +28,7 @@ type UseExpenseTopbarCrudActionsArgs = {
   isLocked: boolean;
   isEditLocked?: boolean;
   isDeleteLocked?: boolean;
-  actionMode?: "default" | "delete_only" | "view_only";
+  actionMode?: "default" | "delete_only" | "save_only" | "view_only";
   allowCreateModeActionsWhenLocked?: boolean;
   permissionsReady?: boolean;
   canCreate: boolean;
@@ -106,16 +106,32 @@ export const useExpenseTopbarCrudActions = ({
 
     if (actionMode === "view_only") {
       if (editBtn) editBtn.classList.add("topbar-hidden");
+      if (editBtn instanceof HTMLButtonElement) {
+        editBtn.disabled = false;
+        editBtn.setAttribute("aria-disabled", "false");
+      }
       if (editIcon) editIcon.classList.add("hidden");
       if (saveIcon) saveIcon.classList.add("hidden");
       if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
+      if (deleteBtn instanceof HTMLButtonElement) {
+        deleteBtn.disabled = false;
+        deleteBtn.setAttribute("aria-disabled", "false");
+      }
       if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
+      if (cancelBtn instanceof HTMLButtonElement) {
+        cancelBtn.disabled = false;
+        cancelBtn.setAttribute("aria-disabled", "false");
+      }
       setTopbarActionGroupReady(actionGroupId);
       return;
     }
 
     if (actionMode === "delete_only") {
       if (editBtn) editBtn.classList.add("topbar-hidden");
+      if (editBtn instanceof HTMLButtonElement) {
+        editBtn.disabled = false;
+        editBtn.setAttribute("aria-disabled", "false");
+      }
       if (editIcon) editIcon.classList.add("hidden");
       if (saveIcon) saveIcon.classList.add("hidden");
       if (deleteBtn) {
@@ -125,12 +141,52 @@ export const useExpenseTopbarCrudActions = ({
           deleteBtn.classList.add("topbar-hidden");
         }
       }
+      if (deleteBtn instanceof HTMLButtonElement) {
+        deleteBtn.disabled = false;
+        deleteBtn.setAttribute("aria-disabled", "false");
+      }
       if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
+      if (cancelBtn instanceof HTMLButtonElement) {
+        cancelBtn.disabled = false;
+        cancelBtn.setAttribute("aria-disabled", "false");
+      }
+      setTopbarActionGroupReady(actionGroupId);
+      return;
+    }
+
+    if (actionMode === "save_only") {
+      if (editBtn) editBtn.classList.remove("topbar-hidden");
+      if (editBtn instanceof HTMLButtonElement) {
+        editBtn.disabled = false;
+        editBtn.setAttribute("aria-disabled", "false");
+      }
+      if (editIcon) editIcon.classList.add("hidden");
+      if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
+      if (deleteBtn instanceof HTMLButtonElement) {
+        deleteBtn.disabled = false;
+        deleteBtn.setAttribute("aria-disabled", "false");
+      }
+      if (cancelBtn) cancelBtn.classList.remove("topbar-hidden");
+      if (cancelBtn instanceof HTMLButtonElement) {
+        cancelBtn.disabled = true;
+        cancelBtn.setAttribute("aria-disabled", "true");
+      }
+      if (saveIcon) {
+        if (isEditing && !resolvedEditLock) {
+          saveIcon.classList.remove("hidden");
+        } else {
+          saveIcon.classList.add("hidden");
+        }
+      }
       setTopbarActionGroupReady(actionGroupId);
       return;
     }
 
     if (editBtn) editBtn.classList.remove("topbar-hidden");
+    if (editBtn instanceof HTMLButtonElement) {
+      editBtn.disabled = false;
+      editBtn.setAttribute("aria-disabled", "false");
+    }
     if (isEditing) {
       if (editIcon) editIcon.classList.add("hidden");
       if (resolvedEditLock) {
@@ -146,6 +202,10 @@ export const useExpenseTopbarCrudActions = ({
           cancelBtn.classList.remove("topbar-hidden");
         }
       }
+      if (cancelBtn instanceof HTMLButtonElement) {
+        cancelBtn.disabled = false;
+        cancelBtn.setAttribute("aria-disabled", "false");
+      }
     } else {
       if (resolvedEditLock) {
         if (editIcon) editIcon.classList.add("hidden");
@@ -160,7 +220,15 @@ export const useExpenseTopbarCrudActions = ({
           deleteBtn.classList.remove("topbar-hidden");
         }
       }
+      if (deleteBtn instanceof HTMLButtonElement) {
+        deleteBtn.disabled = false;
+        deleteBtn.setAttribute("aria-disabled", "false");
+      }
       if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
+      if (cancelBtn instanceof HTMLButtonElement) {
+        cancelBtn.disabled = false;
+        cancelBtn.setAttribute("aria-disabled", "false");
+      }
     }
 
     setTopbarActionGroupReady(actionGroupId);
@@ -246,6 +314,7 @@ export const useExpenseTopbarCrudActions = ({
     };
 
     const onCancel = () => {
+      if (actionMode === "save_only") return;
       if (busy || modalOpen) return;
       handleCancelEdit();
     };
