@@ -2,7 +2,19 @@
 const fs = require("node:fs");
 const path = require("node:path");
 
-const baseURL = process.env.IND_E2E_BASE_URL || "https://dev.insertec.biz:7702";
+function normalizeBaseURL(value) {
+  return String(value || "").trim().replace(/\/+$/, "");
+}
+
+function resolveBaseURL() {
+  const configuredBaseURL = normalizeBaseURL(process.env.IND_E2E_BASE_URL || process.env.INDCRM_WEB_BASE_URL);
+  if (configuredBaseURL) return configuredBaseURL;
+
+  const targetEnvironment = String(process.env.IND_ENV || "DEV").trim().toUpperCase();
+  return targetEnvironment === "PROD" ? "https://crm.insertec.biz:7702" : "https://dev.insertec.biz:17702";
+}
+
+const baseURL = resolveBaseURL();
 const authStatePath =
   process.env.IND_E2E_AUTH_STATE || path.join(__dirname, "tests", ".auth", "entra-storage-state.json");
 const useStoredAuthState = process.env.IND_E2E_USE_AUTH_STATE !== "false" && fs.existsSync(authStatePath);

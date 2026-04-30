@@ -24,6 +24,11 @@
   - different external values only.
 - Prefer `ApiSettings__BaseUrl` or shared `INDCRM_BASE_URL` for API host resolution.
 - Keep `ApiSettings:BaseUrl` in git only as a non-secret, non-operational fallback for local structure compatibility.
+- Keep the public web endpoint in machine keys:
+  - `INDCRM_WEB_BASE_URL`
+  - `INDCRM_WEB_PUBLIC_HOST`
+  - `INDCRM_WEB_PUBLIC_PORT`
+- `publish.ps1` may keep canonical DEV/PROD endpoint expectations as deployment guardrails, but runtime behavior must come from machine-level configuration and IIS bindings.
 - Never hardcode passwords, API keys, tokens, connection strings, tenant ids, or environment-specific hosts in:
   - C# source,
   - Razor/TS/JS source,

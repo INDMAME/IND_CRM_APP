@@ -35,7 +35,7 @@
       "args": [
         "-NoProfile",
         "-Command",
-        "$ports = @(5001, 7702, 7703); foreach ($p in $ports) { Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue | ForEach-Object { try { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } catch {} } }"
+        "$envName = ''; foreach ($scope in @('Process', 'User', 'Machine')) { $value = [Environment]::GetEnvironmentVariable('IND_ENV', $scope); if (-not [string]::IsNullOrWhiteSpace($value)) { $envName = $value.Trim(); break } }; $webPort = ''; foreach ($scope in @('Process', 'User', 'Machine')) { $value = [Environment]::GetEnvironmentVariable('INDCRM_WEB_PUBLIC_PORT', $scope); if (-not [string]::IsNullOrWhiteSpace($value)) { $webPort = $value.Trim(); break } }; if ([string]::IsNullOrWhiteSpace($webPort)) { if ([string]::Equals($envName, 'PROD', [System.StringComparison]::OrdinalIgnoreCase)) { $webPort = '7702' } else { $webPort = '17702' } }; $ports = @(5001, 7703, [int]$webPort) | Sort-Object -Unique; foreach ($p in $ports) { Get-NetTCPConnection -LocalPort $p -State Listen -ErrorAction SilentlyContinue | ForEach-Object { try { Stop-Process -Id $_.OwningProcess -Force -ErrorAction SilentlyContinue } catch {} } }"
       ],
       "presentation": {
         "reveal": "silent"

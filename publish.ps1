@@ -54,9 +54,73 @@ function Get-ExpectedAspNetCoreEnvironment {
     )
 
     switch ($TargetEnvironmentName.Trim().ToUpperInvariant()) {
-        "DEV" { return "Development" }
+        "DEV" { return "Production" }
         "PROD" { return "Production" }
         default { throw "Unsupported target environment '$TargetEnvironmentName'." }
+    }
+}
+
+function Get-ExpectedApiBaseUrl {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TargetEnvironmentName
+    )
+
+    switch ($TargetEnvironmentName.Trim().ToUpperInvariant()) {
+        "DEV" { return "https://dev.insertec.biz:17776" }
+        "PROD" { return "https://crm.insertec.biz:7776" }
+        default { throw "Unsupported target environment '$TargetEnvironmentName'." }
+    }
+}
+
+function Get-ExpectedWebEndpoint {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$TargetEnvironmentName
+    )
+
+    switch ($TargetEnvironmentName.Trim().ToUpperInvariant()) {
+        "DEV" {
+            return [pscustomobject]@{
+                BaseUrl = "https://dev.insertec.biz:17702"
+                Host = "dev.insertec.biz"
+                Port = "17702"
+            }
+        }
+        "PROD" {
+            return [pscustomobject]@{
+                BaseUrl = "https://crm.insertec.biz:7702"
+                Host = "crm.insertec.biz"
+                Port = "7702"
+            }
+        }
+        default { throw "Unsupported target environment '$TargetEnvironmentName'." }
+    }
+}
+
+function Normalize-BaseUrl {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$BaseUrl
+    )
+
+    return $BaseUrl.Trim().TrimEnd("/")
+}
+
+function Get-UriPort {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Uri]$Uri
+    )
+
+    if (-not $Uri.IsDefaultPort) {
+        return [string]$Uri.Port
+    }
+
+    switch ($Uri.Scheme.ToLowerInvariant()) {
+        "https" { return "443" }
+        "http" { return "80" }
+        default { return "" }
     }
 }
 
@@ -101,6 +165,10 @@ function Get-EffectiveApiBaseUrl {
     return Get-EnvironmentValue -Name "INDCRM_BASE_URL"
 }
 
+function Get-EffectiveWebBaseUrl {
+    return Get-EnvironmentValue -Name "INDCRM_WEB_BASE_URL"
+}
+
 # Enforce the canonical IIS deployment directory for this project.
 $CanonicalIisPath = "C:\\inetpub\\wwwroot\\IND_CRM_APP"
 $ResolvedIisPath = [System.IO.Path]::GetFullPath($IisPath).TrimEnd("\\")
@@ -132,11 +200,70 @@ if ([string]::IsNullOrWhiteSpace($EffectiveApiBaseUrl)) {
     throw "Neither ApiSettings__BaseUrl nor INDCRM_BASE_URL is configured. Publish is blocked because the deployed app would not know which API environment to use."
 }
 
-if ($ResolvedTargetEnvironment -eq "PROD" -and $EffectiveApiBaseUrl.StartsWith("http://", [System.StringComparison]::OrdinalIgnoreCase)) {
-    throw "INDCRM_BASE_URL must use HTTPS for PROD."
+if ($EffectiveApiBaseUrl.StartsWith("http://", [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "INDCRM_BASE_URL must use HTTPS for published DEV and PROD deployments."
 }
 
-Write-Host ("Publish guard: branch={0}; targetEnvironment={1}; aspNetCoreEnvironment={2}; apiBaseUrl={3}" -f $CurrentBranch, $ResolvedTargetEnvironment, $ResolvedAspNetCoreEnvironment, $EffectiveApiBaseUrl)
+$ExpectedApiBaseUrl = Get-ExpectedApiBaseUrl -TargetEnvironmentName $ResolvedTargetEnvironment
+$NormalizedEffectiveApiBaseUrl = Normalize-BaseUrl -BaseUrl $EffectiveApiBaseUrl
+if (-not [string]::Equals($NormalizedEffectiveApiBaseUrl, $ExpectedApiBaseUrl, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "API BaseUrl mismatch. Expected '$ExpectedApiBaseUrl' for target '$ResolvedTargetEnvironment' but found '$NormalizedEffectiveApiBaseUrl'."
+}
+
+$ExpectedWebEndpoint = Get-ExpectedWebEndpoint -TargetEnvironmentName $ResolvedTargetEnvironment
+$EffectiveWebBaseUrl = Get-EffectiveWebBaseUrl
+$WebPublicHost = Get-EnvironmentValue -Name "INDCRM_WEB_PUBLIC_HOST"
+$WebPublicPort = Get-EnvironmentValue -Name "INDCRM_WEB_PUBLIC_PORT"
+
+if ([string]::IsNullOrWhiteSpace($EffectiveWebBaseUrl)) {
+    throw "INDCRM_WEB_BASE_URL is not configured. Publish is blocked because the deployed web endpoint cannot be validated for '$ResolvedTargetEnvironment'."
+}
+
+if ([string]::IsNullOrWhiteSpace($WebPublicHost)) {
+    throw "INDCRM_WEB_PUBLIC_HOST is not configured. Publish is blocked because the deployed web host cannot be validated for '$ResolvedTargetEnvironment'."
+}
+
+if ([string]::IsNullOrWhiteSpace($WebPublicPort)) {
+    throw "INDCRM_WEB_PUBLIC_PORT is not configured. Publish is blocked because the deployed web port cannot be validated for '$ResolvedTargetEnvironment'."
+}
+
+if ($EffectiveWebBaseUrl.StartsWith("http://", [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "INDCRM_WEB_BASE_URL must use HTTPS for published DEV and PROD deployments."
+}
+
+$NormalizedEffectiveWebBaseUrl = Normalize-BaseUrl -BaseUrl $EffectiveWebBaseUrl
+try {
+    $EffectiveWebUri = [System.Uri]$NormalizedEffectiveWebBaseUrl
+}
+catch {
+    throw "INDCRM_WEB_BASE_URL must be an absolute HTTPS URL. Current value: '$EffectiveWebBaseUrl'."
+}
+
+if (-not $EffectiveWebUri.IsAbsoluteUri -or -not [string]::Equals($EffectiveWebUri.Scheme, "https", [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "INDCRM_WEB_BASE_URL must be an absolute HTTPS URL. Current value: '$EffectiveWebBaseUrl'."
+}
+
+$EffectiveWebUriPort = Get-UriPort -Uri $EffectiveWebUri
+$NormalizedWebPublicHost = $WebPublicHost.Trim()
+$NormalizedWebPublicPort = $WebPublicPort.Trim()
+if (-not [string]::Equals($NormalizedWebPublicHost, $ExpectedWebEndpoint.Host, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Web public host mismatch. Expected '$($ExpectedWebEndpoint.Host)' for target '$ResolvedTargetEnvironment' but found '$NormalizedWebPublicHost'."
+}
+
+if (-not [string]::Equals($NormalizedWebPublicPort, $ExpectedWebEndpoint.Port, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Web public port mismatch. Expected '$($ExpectedWebEndpoint.Port)' for target '$ResolvedTargetEnvironment' but found '$NormalizedWebPublicPort'."
+}
+
+if (-not [string]::Equals($NormalizedEffectiveWebBaseUrl, $ExpectedWebEndpoint.BaseUrl, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "Web BaseUrl mismatch. Expected '$($ExpectedWebEndpoint.BaseUrl)' for target '$ResolvedTargetEnvironment' but found '$NormalizedEffectiveWebBaseUrl'."
+}
+
+if (-not [string]::Equals($EffectiveWebUri.Host, $NormalizedWebPublicHost, [System.StringComparison]::OrdinalIgnoreCase) -or
+    -not [string]::Equals($EffectiveWebUriPort, $NormalizedWebPublicPort, [System.StringComparison]::OrdinalIgnoreCase)) {
+    throw "INDCRM_WEB_BASE_URL must match INDCRM_WEB_PUBLIC_HOST and INDCRM_WEB_PUBLIC_PORT. BaseUrl='$NormalizedEffectiveWebBaseUrl'; Host='$NormalizedWebPublicHost'; Port='$NormalizedWebPublicPort'."
+}
+
+Write-Host ("Publish guard: branch={0}; targetEnvironment={1}; aspNetCoreEnvironment={2}; apiBaseUrl={3}; webBaseUrl={4}" -f $CurrentBranch, $ResolvedTargetEnvironment, $ResolvedAspNetCoreEnvironment, $EffectiveApiBaseUrl, $EffectiveWebBaseUrl)
 
 # Block deployment if any localization file has encoding corruption markers.
 node scripts/check-resx-encoding.mjs
