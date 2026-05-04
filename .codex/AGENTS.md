@@ -308,6 +308,10 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 
 - If the user says `genera una release a PROD`, `publica DEV en PROD`, or clearly requests a DEV to PROD release, interpret that as a git and GitHub release workflow, not as the generic IIS `publish.ps1` deploy command.
 - Keep this flow conservative. If branch state, local changes, release numbering, or production divergence are ambiguous, stop and ask before publishing.
+- Local development, commits, release preparation, and release completion must happen from branch `DEV`. Inspect production history through remote metadata or PRs; do not switch the local checkout to `PROD`, `main`, or any production branch for release work.
+- Only push work changes to `origin/DEV`. Never push directly to `origin/PROD`, `origin/main`, or any production branch.
+- Production promotion must happen only through a numbered GitHub PR from `DEV` to `PROD` (or the configured production branch if it is renamed to `main`). The PR title must be `Release <N>` where `N` is incremental.
+- Auto-merge with required checks is mandatory for production promotion. If auto-merge, checks, branch protection, or PR permissions block the release, stop and report the blocker instead of doing a direct merge or direct push.
 - Do not publish uncommitted changes.
 - Do not include unrelated files in the release scope.
 - Do not assume the release number if it cannot be inferred safely.
@@ -321,20 +325,18 @@ Required DEV to PROD release workflow:
 6. Find the latest `Release <N>` identifier in repository release history. Safe sources include merged PRs, release PR titles, tags, or merge commits. If the last release cannot be determined safely, stop and ask.
 7. Use `Release <N>` as the canonical release name.
 8. Create a PR from `DEV` to `PROD` with title `Release <N>`.
-9. Try to approve the PR and enable auto-merge when GitHub and repository permissions allow it.
+9. Ensure the PR has required checks enabled and attempt to approve the PR when GitHub and repository permissions allow it.
 10. If GitHub blocks self-approval of the same PR, report that limitation explicitly.
-11. If auto-merge is unavailable or self-approval fails, but the user explicitly asked to generate the PROD release, treat that request as authorization for a controlled direct merge fallback.
-12. Before any direct merge, update local `PROD` from `origin/PROD` and verify that no production commits would be lost.
-13. If direct merge is required, use `Release <N>` as the merge commit message.
-14. Push `PROD` to `origin/PROD`.
-15. Verify that the PR ended merged or that `origin/PROD` points to the expected release commit.
-16. Return the local working copy to `DEV` before finishing.
-17. Final report must include:
+11. Enable auto-merge on the PR. Do not merge, fast-forward, or push directly to `PROD` or `main`.
+12. If auto-merge cannot be enabled, required checks fail, or repository permissions prevent the PR workflow, stop and report the blocker. Do not use a controlled direct merge fallback.
+13. Verify that the PR is queued for auto-merge or was merged by the protected PR workflow.
+14. Confirm the local working copy remains on `DEV` before finishing.
+15. Final report must include:
    - `Release <N>`
    - published commit on `DEV`
    - PR URL and status
-   - whether completion happened by merged PR or controlled direct merge
-   - any GitHub limitation encountered
+   - auto-merge/check status
+   - any GitHub limitation or branch-protection blocker encountered
 
 ## Local IIS publish command policy
 
@@ -353,4 +355,4 @@ Required DEV to PROD release workflow:
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-03-27
+- 2026-05-04

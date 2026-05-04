@@ -74,6 +74,7 @@ Conflict precedence:
 | Public validation default | For visual or E2E validation, publish first and run the check against the public URL/IP using the authenticated public session. Treat localhost validation as diagnostic only unless the user explicitly asks for local-only testing. |
 | React Doctor gate | Before final response, run `npm run check:react-doctor`, fix diagnostics in changed frontend files, and rerun before closing the task. |
 | Clean-code gate | Before final response, review touched code for low-risk refactors that improve clean code and preserve module boundaries; apply them when safe. |
+| Branch safety | Always work locally on `DEV` and push only to `origin/DEV`; never push, merge, fast-forward, or switch local release work to `PROD`/`main`. Production promotion requires a numbered `DEV` -> `PROD` PR with required checks and auto-merge. |
 | DEV to PROD release keywords | If the user says `genera una release a PROD`, `publica DEV en PROD`, or equivalent DEV to PROD release wording, execute the conservative release workflow from `references/AGENTS.md` and `references/QUALITY_CHECKLIST.md`. |
 | Local IIS publish keyword | If the user says `publica en iis`, treat that as the explicit local web publish command: run the required validation/build steps, execute `publish.ps1`, and confirm IIS restart and site health before closing. |
 | Publish ambiguity rule | Do not treat generic `publica` as enough to choose between release and local IIS publish. If intent is not explicit, stop and clarify. |
@@ -143,6 +144,7 @@ Required triggers:
    - Run a final clean-code pass on touched frontend files before closing the task. Check for mixed concerns, duplicated logic, oversized objects, and misplaced responsibilities across page, hook, service, mapper, utility, and component boundaries.
    - If a low-risk refactor would materially improve modularity or clarity, apply it in the same task before closing. If not, explicitly confirm the touched code already fits the modular architecture.
    - If the user explicitly requests a DEV to PROD release (`genera una release a PROD`, `publica DEV en PROD`, or equivalent), follow the authoritative workflow in `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
+   - Never use direct merge, fast-forward, or direct push to `PROD`/`main` as a release fallback. If the protected PR auto-merge flow is blocked, report the blocker and stop.
    - If the user explicitly says `publica en iis`, run the local IIS publish workflow from `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
    - If the user only says generic `publica`, do not guess between release and local IIS publish. Stop and clarify.
    - For publish scope, deploy with `publish.ps1` and verify the app is serving current artifacts before accepting results.
@@ -188,4 +190,4 @@ This addendum stays in force together with the original frontend guardrails abov
 - Debugging or validating behavior against stale runtime/build output.
 
 ## Last updated
-- 2026-03-27
+- 2026-05-04

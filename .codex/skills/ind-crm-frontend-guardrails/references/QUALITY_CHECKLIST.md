@@ -58,13 +58,14 @@
 ## DEV to PROD release validation
 - For `genera una release a PROD`, `publica DEV en PROD`, or equivalent DEV to PROD release requests, confirm the active branch is `DEV`
 - Run `git status` and stop if release changes are not fully committed or if unrelated local files are present
+- Confirm no local work, commit, merge, fast-forward, or push is being performed directly on `PROD`, `main`, or any production branch
 - Determine the latest safe `Release <N>` from merged release PRs, release PR titles, tags, or merge commits before calculating the next number
 - Push `DEV` to `origin/DEV` before creating the release PR
 - Create the `DEV` -> `PROD` PR with canonical title `Release <N>`
-- Attempt PR approval and auto-merge when GitHub permissions allow it, and explicitly report self-approval or auto-merge limitations
-- If direct merge fallback is required, refresh local `PROD` from `origin/PROD`, verify no production commits would be lost, merge with commit message `Release <N>`, and push `origin/PROD`
-- Verify the PR ended merged or `origin/PROD` points to the expected release commit, then return local checkout to `DEV`
-- Final report must include release name, published `DEV` commit, PR URL and status, completion mode, and GitHub limitations
+- Attempt PR approval when GitHub permissions allow it, enable auto-merge, and explicitly report self-approval or auto-merge limitations
+- Stop and report the blocker if auto-merge cannot be enabled, checks fail, branch protection blocks the PR, or permissions prevent the PR workflow
+- Verify the PR is queued for auto-merge or was merged by the protected PR workflow, then confirm local checkout remains on `DEV`
+- Final report must include release name, published `DEV` commit, PR URL and status, auto-merge/check status, and GitHub limitations
 
 ## Local IIS publish validation
 - For `publica en iis`, treat the request as a local web publish only, not as a DEV to PROD release
@@ -78,4 +79,4 @@
 - For release tasks, run `iisreset` after publish
 
 ## Last updated
-- 2026-03-27
+- 2026-05-04
