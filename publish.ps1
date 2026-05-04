@@ -67,7 +67,7 @@ function Get-ExpectedApiBaseUrl {
     )
 
     switch ($TargetEnvironmentName.Trim().ToUpperInvariant()) {
-        "DEV" { return "https://dev.insertec.biz:17776" }
+        "DEV" { return "https://dev.insertec.biz:2083" }
         "PROD" { return "https://crm.insertec.biz:7776" }
         default { throw "Unsupported target environment '$TargetEnvironmentName'." }
     }
@@ -82,9 +82,9 @@ function Get-ExpectedWebEndpoint {
     switch ($TargetEnvironmentName.Trim().ToUpperInvariant()) {
         "DEV" {
             return [pscustomobject]@{
-                BaseUrl = "https://dev.insertec.biz:17702"
+                BaseUrl = "https://dev.insertec.biz:2053"
                 Host = "dev.insertec.biz"
-                Port = "17702"
+                Port = "2053"
             }
         }
         "PROD" {

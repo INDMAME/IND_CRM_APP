@@ -11,7 +11,7 @@ function resolveBaseURL() {
   if (configuredBaseURL) return configuredBaseURL;
 
   const targetEnvironment = String(process.env.IND_ENV || "DEV").trim().toUpperCase();
-  return targetEnvironment === "PROD" ? "https://crm.insertec.biz:7702" : "https://dev.insertec.biz:17702";
+  return targetEnvironment === "PROD" ? "https://crm.insertec.biz:7702" : "https://dev.insertec.biz:2053";
 }
 
 const baseURL = resolveBaseURL();

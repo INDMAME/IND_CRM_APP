@@ -44,7 +44,7 @@ The public web endpoint keys are intentionally separate from the API endpoint ke
 
 | Environment | Web base URL | Web host | Web port | API base URL |
 | --- | --- | --- | --- | --- |
-| `DEV` | `https://dev.insertec.biz:17702/` | `dev.insertec.biz` | `17702` | `https://dev.insertec.biz:17776/` |
+| `DEV` | `https://dev.insertec.biz:2053/` | `dev.insertec.biz` | `2053` | `https://dev.insertec.biz:2083/` |
 | `PROD` | `https://crm.insertec.biz:7702/` | `crm.insertec.biz` | `7702` | `https://crm.insertec.biz:7776/` |
 
 ## Resolution order in IND_CRM_APP
@@ -67,7 +67,7 @@ Playwright resolves its base URL in this order:
 
 1. `IND_E2E_BASE_URL`
 2. `INDCRM_WEB_BASE_URL`
-3. `IND_ENV` fallback (`DEV` -> `https://dev.insertec.biz:17702`, `PROD` -> `https://crm.insertec.biz:7702`)
+3. `IND_ENV` fallback (`DEV` -> `https://dev.insertec.biz:2053`, `PROD` -> `https://crm.insertec.biz:7702`)
 
 The VS Code `kill-web-ports` task also reads `INDCRM_WEB_PUBLIC_PORT` and falls back to `IND_ENV`, so it no longer pins the PROD web port as the only public web port.
 
@@ -82,10 +82,10 @@ The VS Code `kill-web-ports` task also reads `INDCRM_WEB_PUBLIC_PORT` and falls 
 - The current branch and target environment do not match.
 - No effective API base URL is configured on the machine.
 - The effective API base URL uses `http://`.
-- The effective API base URL does not match the target environment (`DEV` -> `https://dev.insertec.biz:17776`, `PROD` -> `https://crm.insertec.biz:7776`).
+- The effective API base URL does not match the target environment (`DEV` -> `https://dev.insertec.biz:2083`, `PROD` -> `https://crm.insertec.biz:7776`).
 - `INDCRM_WEB_BASE_URL`, `INDCRM_WEB_PUBLIC_HOST` or `INDCRM_WEB_PUBLIC_PORT` is missing.
 - The effective web base URL uses `http://` or is not an absolute HTTPS URL.
-- The effective web base URL, host or port does not match the target environment (`DEV` -> `https://dev.insertec.biz:17702`, `PROD` -> `https://crm.insertec.biz:7702`).
+- The effective web base URL, host or port does not match the target environment (`DEV` -> `https://dev.insertec.biz:2053`, `PROD` -> `https://crm.insertec.biz:7702`).
 
 The script accepts `main` as `PROD` for compatibility, but the preferred branch naming remains `DEV` and `PROD`.
 
