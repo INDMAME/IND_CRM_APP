@@ -169,6 +169,35 @@ function Get-EffectiveWebBaseUrl {
     return Get-EnvironmentValue -Name "INDCRM_WEB_BASE_URL"
 }
 
+function Sync-WebWwwrootMirror {
+    # Keeps the compatibility wwwroot mirror aligned before dotnet publish packages static assets.
+    $repoRoot = [System.IO.Path]::GetFullPath($PSScriptRoot).TrimEnd("\")
+    $sourcePath = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "Web\wwwroot")).TrimEnd("\")
+    $targetPath = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "wwwroot")).TrimEnd("\")
+
+    if (-not (Test-Path -LiteralPath $sourcePath -PathType Container)) {
+        throw "Canonical web root '$sourcePath' does not exist."
+    }
+
+    $expectedTargetPath = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "wwwroot")).TrimEnd("\")
+    if (-not [System.StringComparer]::OrdinalIgnoreCase.Equals($targetPath, $expectedTargetPath)) {
+        throw "Refusing to sync unexpected wwwroot mirror path '$targetPath'."
+    }
+
+    if (-not $sourcePath.StartsWith($repoRoot + "\", [System.StringComparison]::OrdinalIgnoreCase) -or
+        -not $targetPath.StartsWith($repoRoot + "\", [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to sync web roots outside repository '$repoRoot'."
+    }
+
+    Write-Host ("Syncing static assets: {0} -> {1}" -f $sourcePath, $targetPath)
+    robocopy $sourcePath $targetPath /MIR /NFL /NDL /NJH /NJS /NP /R:1 /W:1
+    $rc = $LASTEXITCODE
+    # Robocopy codes 0-7 are success, 8+ are failures.
+    if ($rc -ge 8) {
+        throw "Static asset sync failed with robocopy exit code $rc."
+    }
+}
+
 # Enforce the canonical IIS deployment directory for this project.
 $CanonicalIisPath = "C:\\inetpub\\wwwroot\\IND_CRM_APP"
 $ResolvedIisPath = [System.IO.Path]::GetFullPath($IisPath).TrimEnd("\\")
@@ -287,6 +316,8 @@ npm run build:css
 if ($LASTEXITCODE -ne 0) {
     throw "CSS build failed with exit code $LASTEXITCODE."
 }
+
+Sync-WebWwwrootMirror
 
 # Publish the project directly to avoid solution-level output warnings.
 dotnet publish $ProjectPath -c $Configuration -o $OutputPath

@@ -42,6 +42,8 @@ static bool HasExpectedStaticAssets(string path)
 
 static string ResolveWebRoot()
 {
+    string? fallbackWebRoot = null;
+
     var startPaths = new[]
     {
         AppContext.BaseDirectory,
@@ -56,30 +58,25 @@ static string ResolveWebRoot()
             var webRoot = Path.Combine(current, "Web", "wwwroot");
             var root = Path.Combine(current, "wwwroot");
 
-            // In publish output both folders may exist, but only one contains full static assets.
-            if (HasExpectedStaticAssets(root))
-                return root;
-
+            // Prefer the canonical Web/wwwroot path when it contains the full static asset set.
             if (HasExpectedStaticAssets(webRoot))
                 return webRoot;
 
-            if (Directory.Exists(webRoot) && Directory.EnumerateFileSystemEntries(webRoot).Any())
-                return webRoot;
-
-            if (Directory.Exists(root) && Directory.EnumerateFileSystemEntries(root).Any())
+            // In publish output wwwroot may be the only complete static asset folder.
+            if (HasExpectedStaticAssets(root))
                 return root;
 
-            if (Directory.Exists(webRoot))
-                return webRoot;
-
-            if (Directory.Exists(root))
-                return root;
+            fallbackWebRoot ??= Directory.Exists(webRoot)
+                ? webRoot
+                : Directory.Exists(root)
+                    ? root
+                    : null;
 
             current = Directory.GetParent(current)?.FullName;
         }
     }
 
-    return "wwwroot";
+    return fallbackWebRoot ?? "wwwroot";
 }
 
 var resolvedWebRoot = ResolveWebRoot();

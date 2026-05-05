@@ -26,6 +26,7 @@ namespace IND_CRM_APP.Services
     {
         private readonly HttpClient _client;
         private readonly string _baseUrl;
+        private readonly string _configuredEnvironmentName;
         private readonly ITokenSessionService _tokenSession;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<ApiClientService> _logger;
@@ -90,6 +91,7 @@ namespace IND_CRM_APP.Services
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
             _baseUrl = ResolveBaseUrl(config, logger);
+            _configuredEnvironmentName = ResolveConfiguredEnvironmentName(config, logger);
 
             // Defensive config check to avoid empty or insecure API base URL.
             if (string.IsNullOrWhiteSpace(_baseUrl))
@@ -141,6 +143,39 @@ namespace IND_CRM_APP.Services
             }
 
             return string.Empty;
+        }
+
+        // Resolves the web environment name from the machine-level IND_ENV key.
+        private static string ResolveConfiguredEnvironmentName(IConfiguration config, ILogger<ApiClientService> logger)
+        {
+            var configuredEnvironment = NormalizeConfigValue(config["IND_ENV"]);
+            var normalizedEnvironment = NormalizeEnvironmentName(configuredEnvironment);
+            if (!string.IsNullOrWhiteSpace(normalizedEnvironment))
+            {
+                logger.LogInformation("CRM environment name resolved from IND_ENV.");
+                return normalizedEnvironment;
+            }
+
+            if (!string.IsNullOrWhiteSpace(configuredEnvironment))
+            {
+                logger.LogWarning(
+                    "IND_ENV must be DEV or PROD to replace API environment lookup. Current value will use API fallback.");
+            }
+
+            return string.Empty;
+        }
+
+        // Normalizes supported web environment names to the display contract.
+        private static string NormalizeEnvironmentName(string? value)
+        {
+            var normalized = NormalizeConfigValue(value);
+            if (string.IsNullOrWhiteSpace(normalized))
+                return string.Empty;
+
+            return normalized.Equals("DEV", StringComparison.OrdinalIgnoreCase)
+                   || normalized.Equals("PROD", StringComparison.OrdinalIgnoreCase)
+                ? normalized.ToUpperInvariant()
+                : string.Empty;
         }
 
         private static string NormalizeConfigValue(string? value)
@@ -733,6 +768,9 @@ namespace IND_CRM_APP.Services
         // ======================================================
         public async Task<string> GetEnvironmentAsync(string token)
         {
+            if (!string.IsNullOrWhiteSpace(_configuredEnvironmentName))
+                return _configuredEnvironmentName;
+
             PrepareRequestHeaders(token, "GetEnvironment", requireCompany: true);
 
             var result = await SendGetAsync(ApiRoutes.SystemEnvironment);
