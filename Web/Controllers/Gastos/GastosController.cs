@@ -249,8 +249,6 @@ namespace IND_CRM_APP.Controllers
             {
                 $"fileId={Uri.EscapeDataString(safeFileId)}"
             };
-            if (isEditMode)
-                backQuery.Add("mode=edit");
             if (!string.IsNullOrWhiteSpace(normalizedOrigin))
                 backQuery.Add($"origin={Uri.EscapeDataString(normalizedOrigin)}");
             if (!string.IsNullOrWhiteSpace(sheetId))
