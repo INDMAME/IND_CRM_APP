@@ -63,6 +63,12 @@ namespace IND_CRM_APP.Services
             public string? HojaGastosId { get; init; }
                 = null;
             public string CompletedStage { get; init; } = string.Empty;
+            public string FailedStage { get; init; } = string.Empty;
+            public bool? RollbackAttempted { get; init; }
+                = null;
+            public bool? RollbackSucceeded { get; init; }
+                = null;
+            public string RollbackMessage { get; init; } = string.Empty;
             public QuickCreateStepTraceIds StepTraceIds { get; init; } = new();
         }
 
@@ -1672,7 +1678,7 @@ namespace IND_CRM_APP.Services
             var response = BuildApiResponse<object>(result, "QuickCreateExpenseSheetTicket");
             var hasPartialState = TryReadQuickCreatePartialState(response.Data, out var partialState);
             _logger.LogInformation(
-                "QuickCreateExpenseSheetTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. DurationMs: {DurationMs}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. CompletedStage: {CompletedStage}. LinkedToSheet: {LinkedToSheet}. RetryAfter: {RetryAfter}. Message: {Message}. Raw: {Raw}",
+                "QuickCreateExpenseSheetTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. DurationMs: {DurationMs}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. CompletedStage: {CompletedStage}. FailedStage: {FailedStage}. LinkedToSheet: {LinkedToSheet}. RollbackAttempted: {RollbackAttempted}. RollbackSucceeded: {RollbackSucceeded}. RollbackMessage: {RollbackMessage}. RetryAfter: {RetryAfter}. Message: {Message}. Raw: {Raw}",
                 result.IsSuccessStatusCode,
                 (int)result.StatusCode,
                 result.DurationMs,
@@ -1681,7 +1687,11 @@ namespace IND_CRM_APP.Services
                 response.TraceId ?? "<null>",
                 hasPartialState ? partialState!.FileId : "<null>",
                 hasPartialState ? partialState!.CompletedStage : "<null>",
+                hasPartialState ? partialState!.FailedStage : "<null>",
                 hasPartialState ? partialState!.LinkedToSheet.ToString() : "<null>",
+                hasPartialState ? (partialState!.RollbackAttempted?.ToString() ?? "<null>") : "<null>",
+                hasPartialState ? (partialState!.RollbackSucceeded?.ToString() ?? "<null>") : "<null>",
+                hasPartialState ? partialState!.RollbackMessage : "<null>",
                 TryGetHeaderValue(result.Headers, "Retry-After") ?? "<null>",
                 response.Message ?? "<null>",
                 SafeLogPayload(result.Raw));
@@ -1732,6 +1742,10 @@ namespace IND_CRM_APP.Services
                 LinkedToSheet = TryReadBoolProperty(root, "LinkedToSheet", "linkedToSheet") ?? false,
                 HojaGastosId = NormalizeOptionalText(ReadStringLikeProperty(root, "HojaGastosId", "hojaGastosId")),
                 CompletedStage = NormalizeOptionalText(ReadStringLikeProperty(root, "CompletedStage", "completedStage")) ?? string.Empty,
+                FailedStage = NormalizeOptionalText(ReadStringLikeProperty(root, "FailedStage", "failedStage")) ?? string.Empty,
+                RollbackAttempted = TryReadBoolProperty(root, "RollbackAttempted", "rollbackAttempted"),
+                RollbackSucceeded = TryReadBoolProperty(root, "RollbackSucceeded", "rollbackSucceeded"),
+                RollbackMessage = NormalizeOptionalText(ReadStringLikeProperty(root, "RollbackMessage", "rollbackMessage")) ?? string.Empty,
                 StepTraceIds = stepTraceIds
             };
 

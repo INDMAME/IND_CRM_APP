@@ -267,6 +267,10 @@ export type ExpenseSheetTicketQuickCreateResponseData = {
   LinkedToSheet: boolean;
   HojaGastosId?: string | null;
   CompletedStage: ExpenseSheetTicketQuickCreateCompletedStage | string;
+  FailedStage?: string | null;
+  RollbackAttempted?: boolean | null;
+  RollbackSucceeded?: boolean | null;
+  RollbackMessage?: string | null;
   StepTraceIds?: ExpenseSheetTicketQuickCreateStepTraceIds | null;
 };
 
