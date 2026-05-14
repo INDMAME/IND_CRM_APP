@@ -175,7 +175,6 @@ const ExpenseSheetDetailPageContent = () => {
         onRetryPendingUpload={() => {
           void controller.quickTicketFlow.retryPendingUpload();
         }}
-        onOpenCreatedTicket={controller.quickTicketFlow.openCreatedTicket}
         onClearQuickTicketError={controller.quickTicketFlow.clearError}
       />
 

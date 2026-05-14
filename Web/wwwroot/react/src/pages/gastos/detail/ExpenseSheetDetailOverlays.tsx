@@ -47,7 +47,6 @@ type ExpenseSheetDetailOverlaysProps = {
   onSelectFromGallery: () => void;
   onCloseSourcePicker: () => void;
   onRetryPendingUpload: () => void;
-  onOpenCreatedTicket: () => void;
   onClearQuickTicketError: () => void;
 };
 
@@ -82,7 +81,6 @@ const ExpenseSheetDetailOverlays = ({
   onSelectFromGallery,
   onCloseSourcePicker,
   onRetryPendingUpload,
-  onOpenCreatedTicket,
   onClearQuickTicketError,
 }: ExpenseSheetDetailOverlaysProps) => {
   return (
@@ -200,11 +198,6 @@ const ExpenseSheetDetailOverlays = ({
             </div>
           ) : null}
           <div className="flex flex-wrap gap-2">
-            {hasPartialTicketFailure ? (
-              <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={onOpenCreatedTicket}>
-                {indT("ExpenseSheets_NewTicket_OpenCreatedTicket", "Open created ticket")}
-              </button>
-            ) : null}
             {hasPendingUploadRetry ? (
               <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={onRetryPendingUpload}>
                 {indT("ExpenseSheets_NewTicket_RetryUpload", "Reintentar upload")}

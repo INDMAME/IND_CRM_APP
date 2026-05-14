@@ -489,7 +489,6 @@ const ExpenseTicketsPageContent = () => {
     selectFromGallery,
     handleSelectedFile,
     retryPendingUpload,
-    openCreatedTicket,
     clearError: clearQuickTicketError,
   } = useExpenseSheetQuickTicketFlow({
     canCreateExpense: !isLinkMode && canCreateTicket,
@@ -1523,11 +1522,6 @@ const ExpenseTicketsPageContent = () => {
             </div>
           ) : null}
           <div className="flex flex-wrap gap-2">
-            {hasPartialTicketFailure ? (
-              <button type="button" className="ind-action-btn px-3 py-1.5 text-xs" onClick={openCreatedTicket}>
-                {indT("ExpenseSheets_NewTicket_OpenCreatedTicket", "Open created ticket")}
-              </button>
-            ) : null}
             {hasPendingUploadRetry ? (
               <button
                 type="button"
