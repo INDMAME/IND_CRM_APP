@@ -5375,6 +5375,7 @@ namespace IND_CRM_APP.Controllers
                 Qty = line.Qty,
                 Price = line.Price,
                 TotalAmount = line.TotalAmount,
+                TaxPercent = line.TaxPercent,
                 RefRecIdTable = line.RefRecIdTable ?? string.Empty,
                 CreatedByUserId = line.CreatedByUserId ?? string.Empty
             };
