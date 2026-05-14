@@ -13,6 +13,7 @@ import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { clearExpenseNavigationGuard, reloadExpensePage, navigateToExpenseUrl, setExpenseNavigationGuard } from "../../utils/expenseNavigation.ts";
 import { readExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
+import { resolveTicketLineAmount } from "../../utils/expenseTicketLineAmount.ts";
 import {
   appendExpenseTicketReturnQuery,
   normalizeExpenseTicketReturnContext,
@@ -240,8 +241,8 @@ const ExpenseTicketLineDetailContent = () => {
   const draftQtyValue = parseDecimalInput(draftQty);
   const draftPriceValue = parseDecimalInput(draftPrice);
   const calculatedAmountPreview =
-    isEditing && draftQtyValue != null && draftQtyValue > 0 && draftPriceValue != null && draftPriceValue > 0
-      ? draftQtyValue * draftPriceValue
+    isEditing && draftQtyValue != null && draftPriceValue != null && draftPriceValue !== 0
+      ? resolveTicketLineAmount({ qty: draftQtyValue, price: draftPriceValue })
       : line?.totalAmount ?? null;
 
   const amountText = useMemo(

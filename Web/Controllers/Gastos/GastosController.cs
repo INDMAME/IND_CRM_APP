@@ -1815,21 +1815,23 @@ namespace IND_CRM_APP.Controllers
 
             var normalizedLines = (req.Lines ?? new List<ExpenseSheetTicketLineRequest>())
                 .Where(line => line != null)
-                .Select(line => new ExpenseSheetTicketLineRequest
+                .Select(line =>
                 {
-                    Description = (line.Description ?? string.Empty).Trim(),
-                    Qty = line.Qty,
-                    Price = line.Price,
-                    TotalAmount = line.TotalAmount.HasValue && line.TotalAmount.Value > 0
-                        ? line.TotalAmount.Value
-                        : null
+                    var normalizedLine = new ExpenseSheetTicketLineRequest
+                    {
+                        Description = (line.Description ?? string.Empty).Trim(),
+                        Qty = line.Qty,
+                        Price = line.Price,
+                        TotalAmount = line.TotalAmount
+                    };
+                    normalizedLine.TotalAmount ??= ResolveTicketLineTotalAmount(normalizedLine);
+                    return normalizedLine;
                 })
                 .ToList();
 
             var hasInvalidLines = normalizedLines.Any(line =>
                 string.IsNullOrWhiteSpace(line.Description) ||
-                line.Qty <= 0 ||
-                line.Price <= 0);
+                !IsValidTicketLineAmount(line));
 
             if (hasInvalidLines)
                 return CreateApiCommandError(
@@ -2806,12 +2808,11 @@ namespace IND_CRM_APP.Controllers
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
-                    ? req.TotalAmount.Value
-                    : null
+                TotalAmount = req.TotalAmount
             };
+            request.TotalAmount ??= ResolveTicketLineTotalAmount(request);
 
-            if (string.IsNullOrWhiteSpace(request.Description) || request.Qty <= 0 || request.Price <= 0)
+            if (string.IsNullOrWhiteSpace(request.Description) || !IsValidTicketLineAmount(request))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -2885,12 +2886,11 @@ namespace IND_CRM_APP.Controllers
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
-                    ? req.TotalAmount.Value
-                    : null
+                TotalAmount = req.TotalAmount
             };
+            request.TotalAmount ??= ResolveTicketLineTotalAmount(request);
 
-            if (string.IsNullOrWhiteSpace(request.Description) || request.Qty <= 0 || request.Price <= 0)
+            if (string.IsNullOrWhiteSpace(request.Description) || !IsValidTicketLineAmount(request))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -4376,6 +4376,33 @@ namespace IND_CRM_APP.Controllers
                 return false;
 
             return AllowedTicketGastoTypes.Contains(parsed);
+        }
+
+        // Resolves signed ticket line totals while preserving zero-quantity discounts.
+        private static decimal ResolveTicketLineTotalAmount(ExpenseSheetTicketLineRequest? line)
+        {
+            if (line == null)
+                return 0m;
+
+            if (line.TotalAmount.HasValue)
+                return line.TotalAmount.Value;
+
+            if (line.Qty == 0m && line.Price < 0m)
+                return line.Price;
+
+            return line.Qty * line.Price;
+        }
+
+        // Allows qty=0 only when the signed line total represents a discount.
+        private static bool IsValidTicketLineAmount(ExpenseSheetTicketLineRequest? line)
+        {
+            if (line == null || line.Qty < 0m || line.Price == 0m)
+                return false;
+
+            if (line.Qty > 0m)
+                return true;
+
+            return ResolveTicketLineTotalAmount(line) < 0m;
         }
 
         private const int MinSupportedExpenseYear = 1900;

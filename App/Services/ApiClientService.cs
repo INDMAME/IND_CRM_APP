@@ -1525,9 +1525,7 @@ namespace IND_CRM_APP.Services
                     Description = (x.Description ?? string.Empty).Trim(),
                     Qty = x.Qty,
                     Price = x.Price,
-                    TotalAmount = x.TotalAmount.HasValue && x.TotalAmount.Value > 0
-                        ? x.TotalAmount.Value
-                        : null
+                    TotalAmount = x.TotalAmount
                 })
                 .ToList();
 
@@ -2206,9 +2204,7 @@ namespace IND_CRM_APP.Services
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
-                    ? req.TotalAmount.Value
-                    : null
+                TotalAmount = req.TotalAmount
             };
 
             var safeFileId = EscapePathSegment(fileId);
@@ -2230,9 +2226,7 @@ namespace IND_CRM_APP.Services
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
-                    ? req.TotalAmount.Value
-                    : null
+                TotalAmount = req.TotalAmount
             };
 
             var safeFileId = EscapePathSegment(fileId);

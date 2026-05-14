@@ -75,14 +75,24 @@ const resolveTicketSnapshot = (ticket: ExpenseSheetTicketDetailDto, existingLine
   const transDate =
     toExpenseApiDdMmYyyy(ticket.TransDate) || safeText(existingLine?.transDate) || toExpenseApiDdMmYyyy(new Date());
   const headerTotal = Number(ticket.TotalAmount || 0);
-  const lineTotal = Array.isArray(ticket.Lines)
+  const hasTicketLines = Array.isArray(ticket.Lines) && ticket.Lines.length > 0;
+  const lineTotal = hasTicketLines
     ? ticket.Lines.reduce((sum, entry) => {
-        const value = Number((entry as { TotalAmount?: unknown })?.TotalAmount || 0);
-        return value > 0 ? sum + value : sum;
+        const line = entry as { Price?: unknown; Qty?: unknown; TotalAmount?: unknown };
+        const explicitTotal =
+          line.TotalAmount === null || line.TotalAmount === undefined ? null : Number(line.TotalAmount);
+        const qty = Number(line.Qty);
+        const price = Number(line.Price);
+        const value = explicitTotal !== null && Number.isFinite(explicitTotal)
+          ? explicitTotal
+          : Number.isFinite(qty) && Number.isFinite(price)
+            ? qty * price
+            : 0;
+        return Number.isFinite(value) ? sum + value : sum;
       }, 0)
     : 0;
   const fallbackExistingAmount = Number(existingLine?.amount || existingLine?.price || 0);
-  const totalAmount = lineTotal > 0 ? lineTotal : headerTotal > 0 ? headerTotal : fallbackExistingAmount;
+  const totalAmount = hasTicketLines ? lineTotal : headerTotal !== 0 ? headerTotal : fallbackExistingAmount;
   const parsedGastoType = Number(ticket.GastoType);
   const existingTypeValue = Number(existingLine?.typeValueCode);
   const gastoType =

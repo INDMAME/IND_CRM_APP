@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 22/04/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 13/05/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -285,7 +285,7 @@ Formatversion: 1
         #        if (!currencyCode)
         #            return [INDCRMUtilityService::buildHeader(false, 'CurrencyCode es obligatorio.', conNull()), conNull()];
         #
-        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #        if (currencyCode == 'EUR')
         #            exchRate = 100.0;
@@ -862,6 +862,8 @@ Formatversion: 1
         #                    lineTotal = qty * price;
         #                    if (conLen(lineIn) >= 4)
         #                        lineTotal = conPeek(lineIn, 4);
+        #                    if (qty == 0 && lineTotal == 0 && price < 0)
+        #                        lineTotal = price;
         #
         #                    if (!lineDescr)
         #                    {
@@ -869,20 +871,23 @@ Formatversion: 1
         #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Description es obligatorio en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (qty <= 0)
+        #                    if (qty < 0)
         #                    {
         #                        ttsabort;
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty debe ser mayor que 0 en linea %1.', i), conNull()), conNull()];
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty no puede ser negativo en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (price <= 0)
+        #                    if (qty == 0 && lineTotal >= 0)
         #                    {
         #                        ttsabort;
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price debe ser mayor que 0 en linea %1.', i), conNull()), conNull()];
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty 0 solo se permite para descuentos con total negativo en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if(lineTotal <= 0)
-        #                        lineTotal = qty * price;
+        #                    if (price == 0)
+        #                    {
+        #                        ttsabort;
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price no puede ser 0 en linea %1.', i), conNull()), conNull()];
+        #                    }
         #
         #                    ticketLine.clear();
         #                    ticketLine.initValue();
@@ -908,6 +913,12 @@ Formatversion: 1
         #
         #            if (mode == #ModeCreateHeaderOnly && hasHeaderTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
+        #
+        #            if (ticketHeader.TotalAmount < 0)
+        #            {
+        #                ttsabort;
+        #                return [INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull()), conNull()];
+        #            }
         #
         #            ticketHeader.update();
         #
@@ -1104,7 +1115,7 @@ Formatversion: 1
         #        if (!transDate)
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
-        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #        if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
@@ -1208,6 +1219,8 @@ Formatversion: 1
         #                    lineTotal = qty * price;
         #                    if (conLen(lineIn) >= 4)
         #                        lineTotal = conPeek(lineIn, 4);
+        #                    if (qty == 0 && lineTotal == 0 && price < 0)
+        #                        lineTotal = price;
         #
         #                    if (!lineDescr)
         #                    {
@@ -1215,20 +1228,23 @@ Formatversion: 1
         #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Description es obligatorio en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (qty <= 0)
+        #                    if (qty < 0)
         #                    {
         #
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty debe ser mayor que 0 en linea %1.', i), conNull()), conNull()];
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty no puede ser negativo en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (price <= 0)
+        #                    if (qty == 0 && lineTotal >= 0)
         #                    {
         #
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price debe ser mayor que 0 en linea %1.', i), conNull()), conNull()];
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty 0 solo se permite para descuentos con total negativo en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if(lineTotal <= 0)
-        #                        lineTotal = qty * price;
+        #                    if (price == 0)
+        #                    {
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price no puede ser 0 en linea %1.', i), conNull()), conNull()];
+        #                    }
         #
         #                    ticketLine.clear();
         #                    ticketLine.initValue();
@@ -1253,6 +1269,12 @@ Formatversion: 1
         #
         #            if (mode == #ModeCreateHeaderOnly && hasHeaderTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
+        #
+        #            if (ticketHeader.TotalAmount < 0)
+        #            {
+        #                ttsabort;
+        #                return [INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull()), conNull()];
+        #            }
         #
         #            ticketHeader.update();
         #
@@ -1350,6 +1372,8 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 7)
         #        lineTotal = conPeek(_data, 7);
+        #    if (qty == 0 && lineTotal == 0 && price < 0)
+        #        lineTotal = price;
         #
         #    if (!axUserId)
         #        return INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull());
@@ -1360,14 +1384,14 @@ Formatversion: 1
         #    if (!lineDescr)
         #        return INDCRMUtilityService::buildHeader(false, 'Description es obligatorio.', conNull());
         #
-        #    if (qty <= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Qty debe ser mayor que 0.', conNull());
+        #    if (qty < 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty no puede ser negativo.', conNull());
         #
-        #    if (price <= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Price debe ser mayor que 0.', conNull());
+        #    if (qty == 0 && lineTotal >= 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty 0 solo se permite para descuentos con total negativo.', conNull());
         #
-        #    if (lineTotal <= 0)
-        #        lineTotal = qty * price;
+        #    if (price == 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Price no puede ser 0.', conNull());
         #
         #    startLine = infolog.line();
         #
@@ -1403,6 +1427,12 @@ Formatversion: 1
         #            ticketLine.insert();
         #
         #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            if (ticketHeader.TotalAmount < 0)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull());
+        #            }
+        #
         #            ticketHeader.update();
         #
         #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
@@ -1968,6 +1998,7 @@ Formatversion: 1
         #                                                     ]);
         #
         #        while select line
+        #        order by createdDate DESC
         #            where line.UserId       == crmUserId
         #               && line.HojaGastosId == hojaId
         #        {
@@ -2053,7 +2084,7 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 9)
         #    {
-        #        expenseSheetStatusFilterRaw = strLwr(strLTrim(strRTrim(strFmt("%1", conPeek(_data, 9)))));
+        #        expenseSheetStatusFilterRaw = strLwr(strLRTrim(strFmt("%1", conPeek(_data, 9))));
         #
         #        if (expenseSheetStatusFilterRaw == '0'
         #         || expenseSheetStatusFilterRaw == '1'
@@ -2068,7 +2099,7 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 10)
         #    {
-        #        includeSubordinatesRaw = strLwr(strLTrim(strRTrim(strFmt("%1", conPeek(_data, 10)))));
+        #        includeSubordinatesRaw = strLwr(strLRTrim(strFmt("%1", conPeek(_data, 10))));
         #        includeSubordinates = includeSubordinatesRaw == '1'
         #                           || includeSubordinatesRaw == 'true'
         #                           || includeSubordinatesRaw == 'yes';
@@ -2266,6 +2297,7 @@ Formatversion: 1
         #                                                     ]);
         #
         #        while select ticketLine
+        #          order by createdDate DESC
         #            where ticketLine.FileId        == ticketHeader.FileId
         #               && ticketLine.RefRecIdTable == ticketHeader.RecId
         #        {
@@ -2303,7 +2335,7 @@ Formatversion: 1
         #//  - _data[8] = processedByAI   (optional, 0|1; otros valores = sin filtro)
         #// Fixed filters:
         #//  - Status = Pending
-        #//  - TotalAmount != 0
+        #//  - TotalAmount > 0
         #// Output rows:
         #//  - [[FileId, Description, CurrencyCode, TotalAmount, TransDate, FileName, ProcessedByAI, GastoType], ...]
         #static server container getExpenseSheetTicketsLinkList(container _data)
@@ -2364,7 +2396,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 8)
         #    {
         #        processedByAIRaw = strFmt('%1', conPeek(_data, 8));
-        #        processedByAIRaw = strLwr(strLTrim(strRTrim(processedByAIRaw)));
+        #        processedByAIRaw = strLwr(strLRTrim(processedByAIRaw));
         #        if (processedByAIRaw == '0' || processedByAIRaw == '1')
         #        {
         #            processedByAIFilter = str2Int(processedByAIRaw);
@@ -2393,10 +2425,10 @@ Formatversion: 1
         #            return conResult;
         #
         #        while select ticketHeader
-        #            order by RecId desc
+        #            order by createdDate DESC
         #            where ticketHeader.CreatedByUserId == axUserId
         #               && ticketHeader.Status          == pendingStatus
-        #               && ticketHeader.TotalAmount     != 0
+        #               && ticketHeader.TotalAmount     > 0
         #               && (!filterTxt                  || ticketHeader.SearchKey like likePattern )
         #               && (!currencyCode               || ticketHeader.CurrencyCode == currencyCode)
         #               && (!hasGastoTypeFilter         || ticketHeader.GastoType == gastoTypeFilter)
@@ -2479,7 +2511,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 4)
         #    {
         #        statusFilterRaw = strFmt('%1', conPeek(_data, 4));
-        #        statusFilterRaw = strLwr(strLTrim(strRTrim(statusFilterRaw)));
+        #        statusFilterRaw = strLwr(strLRTrim(statusFilterRaw));
         #        if (statusFilterRaw == '0' || statusFilterRaw == '1')
         #        {
         #            statusFilter = str2Int(statusFilterRaw);
@@ -2508,7 +2540,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 9)
         #    {
         #        processedByAIRaw = strFmt('%1', conPeek(_data, 9));
-        #        processedByAIRaw = strLwr(strLTrim(strRTrim(processedByAIRaw)));
+        #        processedByAIRaw = strLwr(strLRTrim(processedByAIRaw));
         #        if (processedByAIRaw == '0' || processedByAIRaw == '1')
         #        {
         #            processedByAIFilter = str2Int(processedByAIRaw);
@@ -2544,7 +2576,7 @@ Formatversion: 1
         #            return conResult;
         #
         #        while select ticketHeader
-        #            order by RecId desc
+        #            order by createdDate DESC
         #            where ticketHeader.CreatedByUserId == axUserId
         #               && (!hasStatusFilter       || ticketHeader.Status == statusFilter)
         #               && (!filterTxt             || ticketHeader.SearchKey like likePattern )
@@ -2768,12 +2800,11 @@ Formatversion: 1
         #        if (!subordinateList)
         #            return resultCon;
         #
-        #        subordinateUsersCon = str2con(subordinateList, ',');
+        #        subordinateUsersCon = Global::str2ConKeepStrings(subordinateList, ',');
         #
         #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
         #        {
-        #            //subordinateUserId = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
-        #            subordinateUserId   = strLTrim(strRTrim(strFmt("%1",conPeek(subordinateUsersCon, i))));
+        #            subordinateUserId   = strLRTrim(strFmt("%1",conPeek(subordinateUsersCon, i)));
         #            crmUsuarioTableSub  = CRMUsuarioTable::Find(subordinateUserId);
         #            if(!crmUsuarioTableSub)
         #            {
@@ -2849,7 +2880,7 @@ Formatversion: 1
         #
         #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
         #        {
-        #            subordinateUserId = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
+        #            subordinateUserId = strLRTrim(conPeek(subordinateUsersCon, i));
         #            if (!subordinateUserId)
         #                continue;
         #
@@ -2983,7 +3014,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 8)
         #    {
         #        expenseSheetStatusRaw = strFmt('%1', conPeek(_data, 8));
-        #        expenseSheetStatusRaw = strLwr(strLTrim(strRTrim(expenseSheetStatusRaw)));
+        #        expenseSheetStatusRaw = strLwr(strLRTrim(expenseSheetStatusRaw));
         #        if (expenseSheetStatusRaw == '0' || str2Int(expenseSheetStatusRaw) != 0)
         #        {
         #            expenseSheetStatus = str2Int(expenseSheetStatusRaw);
@@ -2995,7 +3026,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 9)
         #    {
         #        exchangeRateModeRaw = strFmt('%1', conPeek(_data, 9));
-        #        exchangeRateModeRaw = strLwr(strLTrim(strRTrim(exchangeRateModeRaw)));
+        #        exchangeRateModeRaw = strLwr(strLRTrim(exchangeRateModeRaw));
         #        if (exchangeRateModeRaw == '0' || str2Int(exchangeRateModeRaw) != 0)
         #        {
         #            exchangeRateMode = str2Int(exchangeRateModeRaw);
@@ -3453,6 +3484,9 @@ Formatversion: 1
         #    if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
         #        return INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull());
         #
+        #    if (hasTotalAmount && totalAmount < 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull());
+        #
         #    startLine = infolog.line();
         #
         #    try
@@ -3492,6 +3526,12 @@ Formatversion: 1
         #
         #            if (hasGastoType)
         #                ticketHeader.GastoType = gastoType;
+        #
+        #            if (ticketHeader.TotalAmount < 0)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull());
+        #            }
         #
         #            ticketHeader.update();
         #
@@ -3819,7 +3859,9 @@ Formatversion: 1
         #                if (conLen(lineIn) >= 4)
         #                    lineTotal = conPeek(lineIn, 4);
         #                else
-        #                    lineTotal = 0;
+        #                    lineTotal = qty * price;
+        #                if (qty == 0 && lineTotal == 0 && price < 0)
+        #                    lineTotal = price;
         #
         #                if (!lineDescr)
         #                {
@@ -3827,20 +3869,23 @@ Formatversion: 1
         #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Description es obligatorio.', i), conNull()), conNull()];
         #                }
         #
-        #                if (qty <= 0)
+        #                if (qty < 0)
         #                {
         #                    ttsabort;
-        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Qty debe ser mayor que 0.', i), conNull()), conNull()];
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Qty no puede ser negativo.', i), conNull()), conNull()];
         #                }
         #
-        #                if (price <= 0)
+        #                if (qty == 0 && lineTotal >= 0)
         #                {
         #                    ttsabort;
-        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Price debe ser mayor que 0.', i), conNull()), conNull()];
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Qty 0 solo se permite para descuentos con total negativo.', i), conNull()), conNull()];
         #                }
         #
-        #                if (lineTotal <= 0)
-        #                    lineTotal = qty * price;
+        #                if (price == 0)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Price no puede ser 0.', i), conNull()), conNull()];
+        #                }
         #
         #                ticketLine.clear();
         #                ticketLine.initValue();
@@ -3857,10 +3902,12 @@ Formatversion: 1
         #                linesTotalAmount += lineTotal;
         #            }
         #
-        #            if (hasTotalAmount && totalAmount > 0)
-        #                ticketHeader.TotalAmount = totalAmount;
-        #            else
-        #                ticketHeader.TotalAmount = linesTotalAmount;
+        #            ticketHeader.TotalAmount = linesTotalAmount;
+        #            if (ticketHeader.TotalAmount < 0)
+        #            {
+        #                ttsabort;
+        #                return [INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull()), conNull()];
+        #            }
         #
         #            ticketHeader.update();
         #
@@ -3956,6 +4003,8 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 8)
         #        lineTotal = conPeek(_data, 8);
+        #    if (qty == 0 && lineTotal == 0 && price < 0)
+        #        lineTotal = price;
         #
         #    if (!axUserId)
         #        return INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull());
@@ -3969,14 +4018,14 @@ Formatversion: 1
         #    if (!lineDescr)
         #        return INDCRMUtilityService::buildHeader(false, 'Description es obligatorio.', conNull());
         #
-        #    if (qty <= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Qty debe ser mayor que 0.', conNull());
+        #    if (qty < 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty no puede ser negativo.', conNull());
         #
-        #    if (price <= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Price debe ser mayor que 0.', conNull());
+        #    if (qty == 0 && lineTotal >= 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty 0 solo se permite para descuentos con total negativo.', conNull());
         #
-        #    if (lineTotal <= 0)
-        #        lineTotal = qty * price;
+        #    if (price == 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Price no puede ser 0.', conNull());
         #
         #    startLine = infolog.line();
         #
@@ -4019,6 +4068,12 @@ Formatversion: 1
         #            ticketLine.update();
         #
         #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            if (ticketHeader.TotalAmount < 0)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull());
+        #            }
+        #
         #            ticketHeader.update();
         #
         #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
