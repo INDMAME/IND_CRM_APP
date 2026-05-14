@@ -21,7 +21,6 @@ type UseExpenseTicketLineDetailMutationsArgs = {
   draftDescription: string;
   draftQty: string;
   draftPrice: string;
-  draftTaxPercent: string;
   linkedExpenseSheetId?: string;
   allowSelfManagement: boolean;
   canManageOtherUsers: boolean;
@@ -50,7 +49,6 @@ export const useExpenseTicketLineDetailMutations = ({
   draftDescription,
   draftQty,
   draftPrice,
-  draftTaxPercent,
   linkedExpenseSheetId,
   allowSelfManagement,
   canManageOtherUsers,
@@ -112,8 +110,6 @@ export const useExpenseTicketLineDetailMutations = ({
     const normalizedDescription = String(draftDescription || "").trim();
     const parsedQty = parseDecimalInput(draftQty);
     const parsedPrice = parseDecimalInput(draftPrice);
-    const rawTaxPercent = safeText(draftTaxPercent);
-    const parsedTaxPercent = rawTaxPercent ? parseDecimalInput(rawTaxPercent) : null;
     const parsedLine = {
       qty: parsedQty,
       price: parsedPrice,
@@ -125,13 +121,6 @@ export const useExpenseTicketLineDetailMutations = ({
         "ExpenseTickets_Line_Validation_AmountQty",
         "La cantidad no puede ser negativa, el precio no puede ser 0 y la cantidad 0 solo se permite en descuentos negativos."
       );
-      setModalError(message);
-      setStatus(message);
-      return false;
-    }
-
-    if (rawTaxPercent && (parsedTaxPercent === null || parsedTaxPercent < 0)) {
-      const message = indT("ExpenseTickets_Line_Validation_TaxPercent", "El IVA no puede ser negativo.");
       setModalError(message);
       setStatus(message);
       return false;
@@ -156,7 +145,6 @@ export const useExpenseTicketLineDetailMutations = ({
           qty: Number(parsedQty),
           price: Number(parsedPrice),
           totalAmount: Number(lineAmount),
-          ...(parsedTaxPercent !== null ? { taxPercent: Number(parsedTaxPercent) } : {}),
         };
         const response = isCreateMode
           ? await createExpenseSheetTicketLine(fileId, payload)
@@ -217,7 +205,6 @@ export const useExpenseTicketLineDetailMutations = ({
     draftDescription,
     draftPrice,
     draftQty,
-    draftTaxPercent,
     fileId,
     isCreateMode,
     isEditing,

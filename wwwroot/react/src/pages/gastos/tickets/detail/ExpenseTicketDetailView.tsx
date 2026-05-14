@@ -62,6 +62,7 @@ type ExpenseTicketDetailViewProps = {
     gastoTypeLabel: string;
     totalAmountText: string;
     transDateText: string;
+    ticketTimeText: string;
     isEditing: boolean;
     gastoTypeOptions: Array<{ value: string; text: string }>;
     draftDescription: string;
@@ -74,12 +75,14 @@ type ExpenseTicketDetailViewProps = {
     currencyCodeInvalid: boolean;
     currencyInputRef: RefObject<HTMLInputElement | null>;
     draftTransDate: string;
+    draftTicketTime: string;
     draftUrlFile: string;
     draftFileName: string;
     onDraftDescriptionChange: (value: string) => void;
     onDraftGastoTypeChange: (value: string) => void;
     onDraftCurrencyCodeChange: (value: string) => void;
     onDraftTransDateChange: (value: string) => void;
+    onDraftTicketTimeChange: (value: string) => void;
     onOpenFile: () => void;
     onOpenExpenseSheet?: () => void;
     visibleLines: ExpenseTicketDetailLine[];
@@ -104,6 +107,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         gastoTypeLabel={content.gastoTypeLabel}
         totalAmountText={content.totalAmountText}
         transDateText={content.transDateText}
+        ticketTimeText={content.ticketTimeText}
         isEditing={content.isEditing}
         gastoTypeOptions={content.gastoTypeOptions}
         draftDescription={content.draftDescription}
@@ -116,12 +120,14 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         currencyCodeInvalid={content.currencyCodeInvalid}
         currencyInputRef={content.currencyInputRef}
         draftTransDate={content.draftTransDate}
+        draftTicketTime={content.draftTicketTime}
         draftUrlFile={content.draftUrlFile}
         draftFileName={content.draftFileName}
         onDraftDescriptionChange={content.onDraftDescriptionChange}
         onDraftGastoTypeChange={content.onDraftGastoTypeChange}
         onDraftCurrencyCodeChange={content.onDraftCurrencyCodeChange}
         onDraftTransDateChange={content.onDraftTransDateChange}
+        onDraftTicketTimeChange={content.onDraftTicketTimeChange}
         onOpenFile={content.onOpenFile}
         onOpenExpenseSheet={content.onOpenExpenseSheet}
         hideOpenFileAction={content.showStickyPreview}
@@ -136,7 +142,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onLinePageChange={content.onLinePageChange}
         onOpenLine={content.onOpenLine}
       />
-      <div className="text-sm text-slate-600">{content.status}</div>
+      <div className="text-sm text-zinc-600">{content.status}</div>
     </>
   );
 
@@ -174,10 +180,10 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
       />
 
       <div
-        className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
+        className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-zinc-700"
         style={{ display: content.isLoading ? "flex" : "none" }}
       >
-        <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
+        <svg className="ind-spinner size-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
           <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
         </svg>
         {indT("Common_Loading", "Loading")}
@@ -187,7 +193,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
 
       {!content.isLoading && !content.errorMessage && content.header ? (
         content.showStickyPreview ? (
-          <div className="space-y-2 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4 lg:space-y-0">
+          <div className="grid gap-y-2 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4">
             <div className="lg:col-start-2">
               <ExpenseTicketStickyPreview
                 busy={content.previewBusy}

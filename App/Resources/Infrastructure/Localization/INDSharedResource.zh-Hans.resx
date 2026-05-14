@@ -1203,6 +1203,12 @@
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>状态</value>
   </data>
+  <data name="Tickets_Field_TicketDate" xml:space="preserve">
+    <value>Ticket date</value>
+  </data>
+  <data name="Tickets_Field_TicketTime" xml:space="preserve">
+    <value>Ticket time</value>
+  </data>
   <data name="Tickets_Detail_Title" xml:space="preserve">
     <value>票据详情</value>
   </data>

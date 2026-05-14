@@ -32,6 +32,7 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftGastoType: string;
   draftCurrencyCode: string;
   draftTransDate: string;
+  draftTicketTime: string;
   draftComentario: string;
   draftUrlFile: string;
   draftFileName: string;
@@ -94,6 +95,7 @@ export const useExpenseTicketDetailMutations = ({
   draftGastoType,
   draftCurrencyCode,
   draftTransDate,
+  draftTicketTime,
   draftComentario,
   draftUrlFile,
   draftFileName,
@@ -196,6 +198,8 @@ export const useExpenseTicketDetailMutations = ({
         description: normalizedDescription,
         currencyCode: normalizedCurrency,
         transDate: normalizedTransDate || undefined,
+        ticketDate: normalizedTransDate || undefined,
+        ticketTime: safeText(draftTicketTime) || undefined,
         comentario: String(draftComentario || "").trim() || undefined,
         urlFile: String(draftUrlFile || "").trim() || undefined,
         fileName: String(draftFileName || "").trim() || undefined,
@@ -257,6 +261,7 @@ export const useExpenseTicketDetailMutations = ({
       draftDescription,
       draftFileName,
       draftGastoType,
+      draftTicketTime,
       draftTransDate,
       draftUrlFile,
       fileId,

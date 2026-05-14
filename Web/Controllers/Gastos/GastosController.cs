@@ -1822,8 +1822,7 @@ namespace IND_CRM_APP.Controllers
                         Description = (line.Description ?? string.Empty).Trim(),
                         Qty = line.Qty,
                         Price = line.Price,
-                        TotalAmount = line.TotalAmount,
-                        TaxPercent = line.TaxPercent
+                        TotalAmount = line.TotalAmount
                     };
                     normalizedLine.TotalAmount ??= ResolveTicketLineTotalAmount(normalizedLine);
                     return normalizedLine;
@@ -1832,7 +1831,6 @@ namespace IND_CRM_APP.Controllers
 
             var hasInvalidLines = normalizedLines.Any(line =>
                 string.IsNullOrWhiteSpace(line.Description) ||
-                (line.TaxPercent.HasValue && line.TaxPercent.Value < 0m) ||
                 !IsValidTicketLineAmount(line));
 
             if (hasInvalidLines)
@@ -1862,6 +1860,8 @@ namespace IND_CRM_APP.Controllers
                 TotalAmount = req.TotalAmount,
                 Status = req.Status is >= 0 ? req.Status : null,
                 TransDate = NormalizeTicketTransDate(req.TransDate) ?? NormalizeOptionalText(req.TransDate),
+                TicketDate = NormalizeTicketTransDate(req.TicketDate ?? req.TransDate) ?? NormalizeOptionalText(req.TicketDate),
+                TicketTime = NormalizeTicketTime(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
                 FileName = NormalizeOptionalText(req.FileName),
@@ -2593,6 +2593,8 @@ namespace IND_CRM_APP.Controllers
                 TotalAmount = req.TotalAmount,
                 Status = req.Status is >= 0 ? req.Status : null,
                 TransDate = NormalizeTicketTransDate(req.TransDate) ?? NormalizeOptionalText(req.TransDate),
+                TicketDate = NormalizeTicketTransDate(req.TicketDate ?? req.TransDate) ?? NormalizeOptionalText(req.TicketDate),
+                TicketTime = NormalizeTicketTime(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
                 FileName = NormalizeOptionalText(req.FileName),
@@ -2810,13 +2812,11 @@ namespace IND_CRM_APP.Controllers
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount,
-                TaxPercent = req.TaxPercent
+                TotalAmount = req.TotalAmount
             };
             request.TotalAmount ??= ResolveTicketLineTotalAmount(request);
 
             if (string.IsNullOrWhiteSpace(request.Description) ||
-                (request.TaxPercent.HasValue && request.TaxPercent.Value < 0m) ||
                 !IsValidTicketLineAmount(request))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
@@ -2891,13 +2891,11 @@ namespace IND_CRM_APP.Controllers
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount,
-                TaxPercent = req.TaxPercent
+                TotalAmount = req.TotalAmount
             };
             request.TotalAmount ??= ResolveTicketLineTotalAmount(request);
 
             if (string.IsNullOrWhiteSpace(request.Description) ||
-                (request.TaxPercent.HasValue && request.TaxPercent.Value < 0m) ||
                 !IsValidTicketLineAmount(request))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
@@ -4571,6 +4569,30 @@ namespace IND_CRM_APP.Controllers
             return parsed?.ToString("dd.MM.yyyy", CultureInfo.InvariantCulture);
         }
 
+        // Normalizes ticket time values to HH:mm:ss for the upstream API.
+        private static string? NormalizeTicketTime(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            var value = raw.Trim();
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var seconds) &&
+                seconds >= 0 &&
+                seconds <= 86399)
+            {
+                return TimeSpan.FromSeconds(seconds).ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture);
+            }
+
+            return DateTime.TryParseExact(
+                    value,
+                    new[] { "H:mm", "HH:mm", "H:mm:ss", "HH:mm:ss" },
+                    CultureInfo.InvariantCulture,
+                    DateTimeStyles.None,
+                    out var parsed)
+                ? parsed.TimeOfDay.ToString(@"hh\:mm\:ss", CultureInfo.InvariantCulture)
+                : NormalizeOptionalText(raw);
+        }
+
         // Normalizes line transDate values to DD.MM.YYYY for upstream line contracts.
         private static string NormalizeLineTransDate(string? raw)
         {
@@ -5320,6 +5342,8 @@ namespace IND_CRM_APP.Controllers
                 CurrencyCode = item.CurrencyCode ?? string.Empty,
                 TotalAmount = item.TotalAmount,
                 TransDate = NormalizeDate(item.TransDate),
+                TicketDate = NormalizeDate(item.TicketDate),
+                TicketTime = NormalizeTicketTime(item.TicketTime) ?? string.Empty,
                 FileName = item.FileName ?? string.Empty,
                 GastoType = NormalizeTicketGastoType(item.GastoType)
             };
@@ -5336,6 +5360,8 @@ namespace IND_CRM_APP.Controllers
                 CurrencyCode = item.CurrencyCode ?? string.Empty,
                 TotalAmount = item.TotalAmount,
                 TransDate = NormalizeDate(item.TransDate),
+                TicketDate = NormalizeDate(item.TicketDate),
+                TicketTime = NormalizeTicketTime(item.TicketTime) ?? string.Empty,
                 FileName = item.FileName ?? string.Empty,
                 GastoType = NormalizeTicketGastoType(item.GastoType)
             };
@@ -5355,6 +5381,8 @@ namespace IND_CRM_APP.Controllers
                 TotalAmount = item.TotalAmount,
                 CreatedByUserId = item.CreatedByUserId ?? string.Empty,
                 TransDate = NormalizeDate(item.TransDate),
+                TicketDate = NormalizeDate(item.TicketDate),
+                TicketTime = NormalizeTicketTime(item.TicketTime) ?? string.Empty,
                 Comentario = item.Comentario ?? string.Empty,
                 UrlFile = item.UrlFile ?? string.Empty,
                 FileName = item.FileName ?? string.Empty,
@@ -5375,7 +5403,6 @@ namespace IND_CRM_APP.Controllers
                 Qty = line.Qty,
                 Price = line.Price,
                 TotalAmount = line.TotalAmount,
-                TaxPercent = line.TaxPercent,
                 RefRecIdTable = line.RefRecIdTable ?? string.Empty,
                 CreatedByUserId = line.CreatedByUserId ?? string.Empty
             };

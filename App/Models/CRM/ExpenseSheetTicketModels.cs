@@ -153,10 +153,6 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("totalAmount")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public decimal? TotalAmount { get; set; }
-
-        [JsonPropertyName("taxPercent")]
-        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
-        public decimal? TaxPercent { get; set; }
     }
 
     // Request payload for ticket creation by mode.
@@ -188,6 +184,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("transDate")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? TransDate { get; set; }
+
+        [JsonPropertyName("ticketDate")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? TicketDate { get; set; }
+
+        [JsonPropertyName("ticketTime")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? TicketTime { get; set; }
 
         [JsonPropertyName("comentario")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -240,6 +244,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("transDate")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? TransDate { get; set; }
+
+        [JsonPropertyName("ticketDate")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? TicketDate { get; set; }
+
+        [JsonPropertyName("ticketTime")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? TicketTime { get; set; }
 
         [JsonPropertyName("comentario")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -300,6 +312,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("TransDate")]
         public string TransDate { get; set; } = string.Empty;
 
+        [JsonPropertyName("TicketDate")]
+        public string TicketDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("TicketTime")]
+        public string TicketTime { get; set; } = string.Empty;
+
         [JsonPropertyName("FileName")]
         public string FileName { get; set; } = string.Empty;
 
@@ -328,6 +346,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("TransDate")]
         public string TransDate { get; set; } = string.Empty;
 
+        [JsonPropertyName("TicketDate")]
+        public string TicketDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("TicketTime")]
+        public string TicketTime { get; set; } = string.Empty;
+
         [JsonPropertyName("FileName")]
         public string FileName { get; set; } = string.Empty;
 
@@ -352,9 +376,6 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("TotalAmount")]
         public decimal? TotalAmount { get; set; }
-
-        [JsonPropertyName("TaxPercent")]
-        public decimal? TaxPercent { get; set; }
 
         [JsonPropertyName("RefRecIdTable")]
         public string RefRecIdTable { get; set; } = string.Empty;
@@ -392,6 +413,12 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("TransDate")]
         public string TransDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("TicketDate")]
+        public string TicketDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("TicketTime")]
+        public string TicketTime { get; set; } = string.Empty;
 
         [JsonPropertyName("Comentario")]
         public string Comentario { get; set; } = string.Empty;

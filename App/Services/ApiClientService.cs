@@ -1525,8 +1525,7 @@ namespace IND_CRM_APP.Services
                     Description = (x.Description ?? string.Empty).Trim(),
                     Qty = x.Qty,
                     Price = x.Price,
-                    TotalAmount = x.TotalAmount,
-                    TaxPercent = x.TaxPercent
+                    TotalAmount = x.TotalAmount
                 })
                 .ToList();
 
@@ -1539,6 +1538,8 @@ namespace IND_CRM_APP.Services
                 TotalAmount = req.TotalAmount,
                 Status = req.Status,
                 TransDate = NormalizeOptionalText(req.TransDate),
+                TicketDate = NormalizeOptionalText(req.TicketDate),
+                TicketTime = NormalizeOptionalText(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
                 FileName = NormalizeOptionalText(req.FileName),
@@ -2106,6 +2107,8 @@ namespace IND_CRM_APP.Services
                 TotalAmount = req.TotalAmount,
                 Status = req.Status,
                 TransDate = NormalizeOptionalText(req.TransDate),
+                TicketDate = NormalizeOptionalText(req.TicketDate),
+                TicketTime = NormalizeOptionalText(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
                 FileName = NormalizeOptionalText(req.FileName),
@@ -2205,8 +2208,7 @@ namespace IND_CRM_APP.Services
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount,
-                TaxPercent = req.TaxPercent
+                TotalAmount = req.TotalAmount
             };
 
             var safeFileId = EscapePathSegment(fileId);
@@ -2228,8 +2230,7 @@ namespace IND_CRM_APP.Services
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount,
-                TaxPercent = req.TaxPercent
+                TotalAmount = req.TotalAmount
             };
 
             var safeFileId = EscapePathSegment(fileId);

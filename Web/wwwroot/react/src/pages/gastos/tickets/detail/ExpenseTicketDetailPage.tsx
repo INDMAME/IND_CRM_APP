@@ -44,7 +44,7 @@ const GASTO_TYPE_LABEL_KEYS: Record<number, { key: string; fallback: string }> =
 };
 
 const NewLineIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="h-5 w-5">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="size-5">
     <path strokeLinecap="round" strokeLinejoin="round" d="M3 19c3.333 -2 5 -4 5 -6c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 2.877 2.5 4c1.5 2 2.5 2.5 3.5 1c.667 -1 1.167 -1.833 1.5 -2.5c1 2.333 2.333 3.5 4 3.5h2.5" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7h4" />
@@ -184,6 +184,7 @@ const buildExpenseTicketDetailContentView = ({
   gastoTypeLabel,
   totalAmountText,
   transDateText,
+  ticketTimeText,
   isEditing,
   gastoTypeOptions,
   draftDescription,
@@ -196,12 +197,14 @@ const buildExpenseTicketDetailContentView = ({
   currencyCodeInvalid,
   currencyInputRef,
   draftTransDate,
+  draftTicketTime,
   draftUrlFile,
   draftFileName,
   setDraftDescription,
   setDraftGastoType,
   setDraftCurrencyCode,
   setDraftTransDate,
+  setDraftTicketTime,
   isFromSheetLink,
   handleOpenExpenseSheet,
   visibleLines,
@@ -227,6 +230,7 @@ const buildExpenseTicketDetailContentView = ({
   gastoTypeLabel: string;
   totalAmountText: string;
   transDateText: string;
+  ticketTimeText: string;
   isEditing: boolean;
   gastoTypeOptions: ExpenseSelectOption[];
   draftDescription: string;
@@ -239,12 +243,14 @@ const buildExpenseTicketDetailContentView = ({
   currencyCodeInvalid: boolean;
   currencyInputRef: React.RefObject<HTMLInputElement | null>;
   draftTransDate: string;
+  draftTicketTime: string;
   draftUrlFile: string;
   draftFileName: string;
   setDraftDescription: (value: string) => void;
   setDraftGastoType: (value: string) => void;
   setDraftCurrencyCode: (value: string) => void;
   setDraftTransDate: (value: string) => void;
+  setDraftTicketTime: (value: string) => void;
   isFromSheetLink: boolean;
   handleOpenExpenseSheet: () => void;
   visibleLines: ExpenseTicketDetailLine[];
@@ -276,6 +282,7 @@ const buildExpenseTicketDetailContentView = ({
   gastoTypeLabel,
   totalAmountText,
   transDateText,
+  ticketTimeText,
   isEditing,
   gastoTypeOptions,
   draftDescription,
@@ -288,12 +295,14 @@ const buildExpenseTicketDetailContentView = ({
   currencyCodeInvalid,
   currencyInputRef,
   draftTransDate,
+  draftTicketTime,
   draftUrlFile,
   draftFileName,
   onDraftDescriptionChange: setDraftDescription,
   onDraftGastoTypeChange: setDraftGastoType,
   onDraftCurrencyCodeChange: setDraftCurrencyCode,
   onDraftTransDateChange: setDraftTransDate,
+  onDraftTicketTimeChange: setDraftTicketTime,
   onOpenFile: openFile,
   onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
   visibleLines,
@@ -568,6 +577,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     currencyCodeInvalid,
     currencyInputRef,
     draftTransDate,
+    draftTicketTime,
     draftComentario,
     draftUrlFile,
     draftFileName,
@@ -580,6 +590,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     setDraftGastoType,
     setDraftCurrencyCode,
     setDraftTransDate,
+    setDraftTicketTime,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,
@@ -617,12 +628,13 @@ const useExpenseTicketDetailPageViewModel = () => {
     setModalError,
     setStatus,
   ]);
-  const { paginationLabels, previewAltText, statusLabel, gastoTypeLabel, totalAmountText, transDateText } =
+  const { paginationLabels, previewAltText, statusLabel, gastoTypeLabel, totalAmountText, transDateText, ticketTimeText } =
     useExpenseTicketDetailDisplay({
       header,
       draftGastoType,
       draftCurrencyCode,
       draftTransDate,
+      draftTicketTime,
       draftFileName,
       isEditing,
       gastoTypeLabelMap,
@@ -671,6 +683,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftGastoType,
     draftCurrencyCode,
     draftTransDate,
+    draftTicketTime,
     draftComentario,
     draftUrlFile,
     draftFileName,
@@ -837,6 +850,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       gastoTypeLabel,
       totalAmountText,
       transDateText,
+      ticketTimeText,
       isEditing,
       gastoTypeOptions,
       draftDescription,
@@ -849,12 +863,14 @@ const useExpenseTicketDetailPageViewModel = () => {
       currencyCodeInvalid,
       currencyInputRef,
       draftTransDate,
+      draftTicketTime,
       draftUrlFile,
       draftFileName,
       setDraftDescription,
       setDraftGastoType,
       setDraftCurrencyCode,
       setDraftTransDate,
+      setDraftTicketTime,
       isFromSheetLink,
       handleOpenExpenseSheet,
       visibleLines,

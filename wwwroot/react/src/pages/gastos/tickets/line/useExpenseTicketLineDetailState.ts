@@ -45,7 +45,6 @@ export const useExpenseTicketLineDetailState = ({
   const [draftDescription, setDraftDescription] = useState("");
   const [draftQty, setDraftQty] = useState("");
   const [draftPrice, setDraftPrice] = useState("");
-  const [draftTaxPercent, setDraftTaxPercent] = useState("");
 
   const hydrateDraftFromLine = useCallback((nextLine: ExpenseTicketDetailLine | null) => {
     setDraftDescription(safeText(nextLine?.description));
@@ -59,14 +58,6 @@ export const useExpenseTicketLineDetailState = ({
     );
     setDraftPrice(
       formatExpenseInputNumber(nextLine?.price, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: true,
-        fallback: "",
-      })
-    );
-    setDraftTaxPercent(
-      formatExpenseInputNumber(nextLine?.taxPercent, {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2,
         useGrouping: true,
@@ -164,7 +155,6 @@ export const useExpenseTicketLineDetailState = ({
     setDraftDescription("");
     setDraftQty("");
     setDraftPrice("");
-    setDraftTaxPercent("");
   }, [header, isCreateMode, isLoading]);
 
   const hasActiveProcess = useMemo(() => busy || isEditing, [busy, isEditing]);
@@ -219,7 +209,6 @@ export const useExpenseTicketLineDetailState = ({
     draftDescription,
     draftQty,
     draftPrice,
-    draftTaxPercent,
     setBusy,
     setStatus,
     setIsEditing,
@@ -227,7 +216,6 @@ export const useExpenseTicketLineDetailState = ({
     setDraftDescription,
     setDraftQty,
     setDraftPrice,
-    setDraftTaxPercent,
     handleEnableEdit,
     handleCancelEdit,
     navigateToTicketDetail,

@@ -13,13 +13,11 @@ type ExpenseTicketLineDetailFormProps = {
   draftDescription: string;
   draftQty: string;
   draftPrice: string;
-  draftTaxPercent: string;
   priceText: string;
   amountText: string;
   onDraftDescriptionChange: (value: string) => void;
   onDraftQtyChange: (value: string) => void;
   onDraftPriceChange: (value: string) => void;
-  onDraftTaxPercentChange: (value: string) => void;
 };
 
 const formatQtyValue = (value: number | null): string => {
@@ -31,16 +29,6 @@ const formatQtyValue = (value: number | null): string => {
   });
 };
 
-const formatTaxPercentValue = (value: number | null): string => {
-  const formatted = formatExpenseNumber(value, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    useGrouping: true,
-    fallback: "",
-  });
-  return formatted ? `${formatted} %` : "-";
-};
-
 // Read-only and editable form renderer for one ticket line.
 const ExpenseTicketLineDetailForm = ({
   header,
@@ -50,13 +38,11 @@ const ExpenseTicketLineDetailForm = ({
   draftDescription,
   draftQty,
   draftPrice,
-  draftTaxPercent,
   priceText,
   amountText,
   onDraftDescriptionChange,
   onDraftQtyChange,
   onDraftPriceChange,
-  onDraftTaxPercentChange,
 }: ExpenseTicketLineDetailFormProps) => {
   return (
     <section className="space-y-0">
@@ -66,7 +52,7 @@ const ExpenseTicketLineDetailForm = ({
         labelClassName="expense-section-divider__label--title"
       />
 
-      <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]">
+      <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-[#e2e8f0] rounded-[var(--radius-xl)]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <ExpenseReadOnlyField
             label={indT("Tickets_Field_FileId", "Ticket")}
@@ -149,42 +135,13 @@ const ExpenseTicketLineDetailForm = ({
             />
           )}
 
-          {isEditing ? (
-            <div className="space-y-1.5">
-              <label className="form-label font-semibold">{indT("Tickets_Field_TaxPercent", "IVA %")}</label>
-              <input
-                className="form-control"
-                type="text"
-                inputMode="decimal"
-                value={draftTaxPercent}
-                onChange={(event) => onDraftTaxPercentChange(event.target.value || "")}
-                onBlur={(event) =>
-                  onDraftTaxPercentChange(
-                    formatExpenseInputNumber(event.target.value, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                      useGrouping: true,
-                      fallback: "",
-                    })
-                  )
-                }
-                aria-label={indT("Tickets_Field_TaxPercent", "IVA %")}
-              />
-            </div>
-          ) : (
-            <ExpenseReadOnlyField
-              label={indT("Tickets_Field_TaxPercent", "IVA %")}
-              value={formatTaxPercentValue(line?.taxPercent ?? null)}
-            />
-          )}
-
           <ExpenseReadOnlyField
             label={indT("ExpenseSheets_Field_Amount", "Amount")}
             value={amountText || "-"}
           />
         </div>
 
-        <div className="flex items-center gap-3 text-sm text-slate-600">
+        <div className="flex items-center gap-3 text-sm text-[#00296bb8]">
           <span>{status}</span>
         </div>
       </section>

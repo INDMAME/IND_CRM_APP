@@ -13,13 +13,11 @@ type ExpenseTicketLineDetailFormProps = {
   draftDescription: string;
   draftQty: string;
   draftPrice: string;
-  draftTaxPercent: string;
   priceText: string;
   amountText: string;
   onDraftDescriptionChange: (value: string) => void;
   onDraftQtyChange: (value: string) => void;
   onDraftPriceChange: (value: string) => void;
-  onDraftTaxPercentChange: (value: string) => void;
 };
 
 const formatQtyValue = (value: number | null): string => {

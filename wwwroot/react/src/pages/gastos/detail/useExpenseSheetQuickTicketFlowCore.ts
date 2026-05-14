@@ -44,7 +44,6 @@ type NormalizedDraftLine = {
   qty: number;
   price: number;
   totalAmount: number;
-  taxPercent: number | null;
 };
 
 export type NormalizedDraft = {
@@ -222,8 +221,6 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
 
       const effectivePrice = price !== null && price !== 0 ? price : qty > 0 ? computedTotal / qty : computedTotal;
       if (effectivePrice === 0 || (qty === 0 && computedTotal >= 0)) return null;
-      const taxPercentCandidate = toNumber(getFirstDefined(lineRecord, ["taxPercent", "TaxPercent"]));
-      const taxPercent = taxPercentCandidate !== null && taxPercentCandidate >= 0 ? taxPercentCandidate : null;
 
       const candidateTypeValue = toPositiveNumber(getFirstDefined(lineRecord, ["typeValue", "TypeValue"]));
       const safeTypeValue = Number.isInteger(candidateTypeValue) ? Number(candidateTypeValue) : null;
@@ -238,7 +235,6 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
         qty,
         price: effectivePrice,
         totalAmount: computedTotal,
-        taxPercent,
       };
     })
     .filter((entry): entry is NormalizedDraftLine => entry !== null);
@@ -275,7 +271,6 @@ export const buildTicketIaPayload = (draft: NormalizedDraft, upload: UploadSyncR
     qty: line.qty,
     price: line.price,
     totalAmount: line.totalAmount,
-    ...(line.taxPercent !== null ? { taxPercent: line.taxPercent } : {}),
   }));
 
   const payload: ExpenseSheetTicketIaRequest = {
@@ -283,6 +278,7 @@ export const buildTicketIaPayload = (draft: NormalizedDraft, upload: UploadSyncR
     currencyCode: draft.currencyCode,
     totalAmount: draft.totalAmount !== 0 ? draft.totalAmount : undefined,
     transDate: draft.transDate,
+    ticketDate: draft.transDate,
     comentario: draft.comentario || undefined,
     urlFile: upload.urlFile || undefined,
     fileName: upload.fileName || undefined,

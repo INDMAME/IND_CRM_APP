@@ -1635,9 +1635,14 @@ export const createExpenseSheetTicket = async (
   const context = await ensureExpenseApiContext(options);
   const mode = Number(payload?.mode);
   const rawTransDate = safeText(payload?.transDate);
+  const rawTicketDate = safeText(payload?.ticketDate);
   const normalizedTransDate = normalizeOptionalApiDate(rawTransDate);
+  const normalizedTicketDate = normalizeOptionalApiDate(rawTicketDate);
 
   if (rawTransDate && !normalizedTransDate) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+  if (rawTicketDate && !normalizedTicketDate) {
     throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
   }
 
@@ -1648,6 +1653,7 @@ export const createExpenseSheetTicket = async (
   const safePayload: ExpenseSheetTicketCreateRequest = {
     ...payload,
     transDate: normalizedTransDate || undefined,
+    ticketDate: normalizedTicketDate || undefined,
     gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
   };
   const response = await fetchJson<IndApiResponse<object>>("/api/crm/expensesheets/tickets", {
@@ -1893,15 +1899,21 @@ export const updateExpenseSheetTicket = async (
   const context = await ensureExpenseApiContext(options);
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
   const rawTransDate = safeText(payload?.transDate);
+  const rawTicketDate = safeText(payload?.ticketDate);
   const normalizedTransDate = normalizeOptionalApiDate(rawTransDate);
+  const normalizedTicketDate = normalizeOptionalApiDate(rawTicketDate);
 
   if (rawTransDate && !normalizedTransDate) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+  if (rawTicketDate && !normalizedTicketDate) {
     throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
   }
 
   const safePayload: ExpenseSheetTicketUpdateRequest = {
     ...payload,
     transDate: normalizedTransDate || undefined,
+    ticketDate: normalizedTicketDate || undefined,
     gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
   };
   const response = await fetchJson<IndApiResponse<object>>(`/api/crm/expensesheets/tickets/${safeFileId}`, {

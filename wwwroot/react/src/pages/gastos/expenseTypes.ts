@@ -212,7 +212,6 @@ export type ExpenseSheetCreateLineRequest = {
   ticket: boolean;
   qty: number;
   price: number;
-  taxPercent?: number | null;
   projId?: string;
   indAttachFiles?: string;
 };
@@ -423,7 +422,6 @@ export type ExpenseSheetTicketLineRequest = {
   qty: number;
   price: number;
   totalAmount?: number;
-  taxPercent?: number | null;
 };
 
 export type ExpenseSheetTicketCreateRequest = {
@@ -434,6 +432,8 @@ export type ExpenseSheetTicketCreateRequest = {
   totalAmount?: number;
   status?: number;
   transDate?: ExpenseApiDate;
+  ticketDate?: ExpenseApiDate;
+  ticketTime?: string;
   comentario?: string;
   urlFile?: string;
   fileName?: string;
@@ -449,6 +449,8 @@ export type ExpenseSheetTicketUpdateRequest = {
   totalAmount?: number;
   status?: number;
   transDate?: string;
+  ticketDate?: string;
+  ticketTime?: string;
   comentario?: string;
   urlFile?: string;
   fileName?: string;
@@ -468,7 +470,6 @@ export type ExpenseSheetTicketLineDto = {
   Qty: number | null;
   Price: number | null;
   TotalAmount: number | null;
-  TaxPercent: number | null;
   RefRecIdTable: string;
   CreatedByUserId: string;
 };
@@ -481,6 +482,8 @@ export type ExpenseSheetTicketListItemDto = {
   CurrencyCode: string;
   TotalAmount: number | null;
   TransDate: ExpenseApiDate;
+  TicketDate: ExpenseApiDate;
+  TicketTime: string;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
 };
@@ -492,6 +495,8 @@ export type ExpenseSheetTicketLinkListItemDto = {
   CurrencyCode: string;
   TotalAmount: number | null;
   TransDate: ExpenseApiDate;
+  TicketDate: ExpenseApiDate;
+  TicketTime: string;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
 };
@@ -506,6 +511,8 @@ export type ExpenseSheetTicketDetailDto = {
   TotalAmount: number | null;
   CreatedByUserId: string;
   TransDate: ExpenseApiDate;
+  TicketDate: ExpenseApiDate;
+  TicketTime: string;
   Comentario: string;
   UrlFile: string;
   FileName: string;

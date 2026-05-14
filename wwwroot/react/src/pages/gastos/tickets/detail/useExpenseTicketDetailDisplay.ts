@@ -10,9 +10,31 @@ type UseExpenseTicketDetailDisplayArgs = {
   draftGastoType: string;
   draftCurrencyCode: string;
   draftTransDate: string;
+  draftTicketTime: string;
   draftFileName: string;
   isEditing: boolean;
   gastoTypeLabelMap: Map<string, string>;
+};
+
+const formatExpenseDisplayTime = (raw?: string): string => {
+  const value = safeText(raw);
+  if (!value || value === "0") return "";
+
+  const secondsValue = Number(value);
+  if (Number.isInteger(secondsValue) && secondsValue >= 0 && secondsValue <= 86399) {
+    const hours = Math.floor(secondsValue / 3600);
+    const minutes = Math.floor((secondsValue % 3600) / 60);
+    const seconds = secondsValue % 60;
+    return [hours, minutes, seconds].map((entry) => String(entry).padStart(2, "0")).join(":");
+  }
+
+  const match = value.match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/);
+  if (!match) return value;
+
+  const hours = Number.parseInt(match[1] || "", 10);
+  if (!Number.isInteger(hours) || hours < 0 || hours > 23) return value;
+
+  return `${String(hours).padStart(2, "0")}:${match[2]}:${match[3] || "00"}`;
 };
 
 // Centralizes display-only values so the page container stays focused on flow wiring.
@@ -21,6 +43,7 @@ export const useExpenseTicketDetailDisplay = ({
   draftGastoType,
   draftCurrencyCode,
   draftTransDate,
+  draftTicketTime,
   draftFileName,
   isEditing,
   gastoTypeLabelMap,
@@ -56,8 +79,13 @@ export const useExpenseTicketDetailDisplay = ({
   );
 
   const transDateText = useMemo(
-    () => formatExpenseDisplayDate(isEditing ? draftTransDate : header?.transDate, document?.documentElement?.lang || "es-ES"),
-    [draftTransDate, header?.transDate, isEditing]
+    () => formatExpenseDisplayDate(isEditing ? draftTransDate : header?.ticketDate || header?.transDate, document?.documentElement?.lang || "es-ES"),
+    [draftTransDate, header?.ticketDate, header?.transDate, isEditing]
+  );
+
+  const ticketTimeText = useMemo(
+    () => formatExpenseDisplayTime(isEditing ? draftTicketTime : header?.ticketTime),
+    [draftTicketTime, header?.ticketTime, isEditing]
   );
 
   return {
@@ -67,5 +95,6 @@ export const useExpenseTicketDetailDisplay = ({
     gastoTypeLabel,
     totalAmountText,
     transDateText,
+    ticketTimeText,
   };
 };

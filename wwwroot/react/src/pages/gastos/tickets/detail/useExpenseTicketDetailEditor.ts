@@ -9,6 +9,7 @@ type DraftState = {
   gastoType: string;
   currencyCode: string;
   transDate: string;
+  ticketTime: string;
   comentario: string;
   urlFile: string;
   fileName: string;
@@ -47,6 +48,7 @@ const createEmptyDraft = (): DraftState => ({
   gastoType: "",
   currencyCode: "",
   transDate: "",
+  ticketTime: "",
   comentario: "",
   urlFile: "",
   fileName: "",
@@ -57,12 +59,34 @@ const toInputDate = (raw?: string): string => {
   return parsed ? toIsoDate(parsed) : "";
 };
 
+const toInputTime = (raw?: string): string => {
+  const value = safeText(raw);
+  if (!value || value === "0") return "";
+
+  const secondsValue = Number(value);
+  if (Number.isInteger(secondsValue) && secondsValue >= 0 && secondsValue <= 86399) {
+    const hours = Math.floor(secondsValue / 3600);
+    const minutes = Math.floor((secondsValue % 3600) / 60);
+    const seconds = secondsValue % 60;
+    return [hours, minutes, seconds].map((entry) => String(entry).padStart(2, "0")).join(":");
+  }
+
+  const match = value.match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/);
+  if (!match) return "";
+
+  const hours = Number.parseInt(match[1] || "", 10);
+  if (!Number.isInteger(hours) || hours < 0 || hours > 23) return "";
+
+  return `${String(hours).padStart(2, "0")}:${match[2]}:${match[3] || "00"}`;
+};
+
 const createDraftFromHeader = (header: ExpenseTicketDetailHeader | null): DraftState => {
   return {
     description: safeText(header?.description),
     gastoType: header?.gastoType === null || header?.gastoType === undefined ? "" : String(header.gastoType),
     currencyCode: safeText(header?.currencyCode).toUpperCase(),
-    transDate: toInputDate(header?.transDate),
+    transDate: toInputDate(header?.ticketDate || header?.transDate),
+    ticketTime: toInputTime(header?.ticketTime),
     comentario: safeText(header?.comentario),
     urlFile: safeText(header?.urlFile),
     fileName: safeText(header?.fileName),
@@ -232,6 +256,17 @@ export const useExpenseTicketDetailEditor = ({
     [state.draft.transDate]
   );
 
+  const setDraftTicketTime = useCallback<Dispatch<SetStateAction<string>>>(
+    (value) => {
+      dispatch({
+        type: "set_draft_field",
+        field: "ticketTime",
+        value: resolveSetStateValue(value, state.draft.ticketTime),
+      });
+    },
+    [state.draft.ticketTime]
+  );
+
   const handleEnableEdit = useCallback(() => {
     if (!header || isLoading) return;
     if (isFromSheetLink) return;
@@ -336,6 +371,7 @@ export const useExpenseTicketDetailEditor = ({
     currencyCodeInvalid,
     currencyInputRef,
     draftTransDate: state.draft.transDate,
+    draftTicketTime: state.draft.ticketTime,
     draftComentario: state.draft.comentario,
     draftUrlFile: state.draft.urlFile,
     draftFileName: state.draft.fileName,
@@ -348,6 +384,7 @@ export const useExpenseTicketDetailEditor = ({
     setDraftGastoType,
     setDraftCurrencyCode,
     setDraftTransDate,
+    setDraftTicketTime,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,

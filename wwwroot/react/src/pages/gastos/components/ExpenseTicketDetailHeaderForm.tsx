@@ -22,6 +22,7 @@ type ExpenseTicketDetailHeaderFormProps = {
   gastoTypeLabel: string;
   totalAmountText: string;
   transDateText: string;
+  ticketTimeText: string;
   isEditing: boolean;
   gastoTypeOptions: Array<{ value: string; text: string }>;
   draftDescription: string;
@@ -34,12 +35,14 @@ type ExpenseTicketDetailHeaderFormProps = {
   currencyCodeInvalid: boolean;
   currencyInputRef: React.Ref<HTMLInputElement>;
   draftTransDate: string;
+  draftTicketTime: string;
   draftUrlFile: string;
   draftFileName: string;
   onDraftDescriptionChange: (value: string) => void;
   onDraftGastoTypeChange: (value: string) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftTransDateChange: (value: string) => void;
+  onDraftTicketTimeChange: (value: string) => void;
   onOpenFile: () => void;
   onOpenExpenseSheet?: () => void;
   hideOpenFileAction?: boolean;
@@ -52,6 +55,7 @@ const ExpenseTicketDetailHeaderForm = ({
   gastoTypeLabel,
   totalAmountText,
   transDateText,
+  ticketTimeText,
   isEditing,
   gastoTypeOptions,
   draftDescription,
@@ -64,12 +68,14 @@ const ExpenseTicketDetailHeaderForm = ({
   currencyCodeInvalid,
   currencyInputRef,
   draftTransDate,
+  draftTicketTime,
   draftUrlFile,
   draftFileName,
   onDraftDescriptionChange,
   onDraftGastoTypeChange,
   onDraftCurrencyCodeChange,
   onDraftTransDateChange,
+  onDraftTicketTimeChange,
   onOpenFile,
   onOpenExpenseSheet,
   hideOpenFileAction = false,
@@ -79,7 +85,7 @@ const ExpenseTicketDetailHeaderForm = ({
   const showExpenseSheetField = hasRealExpenseSheetValue(header.hojaGastosIdDisplay);
 
   return (
-    <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]">
+    <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-zinc-200 rounded-[var(--radius-xl)]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <ExpenseReadOnlyField
           label={indT("Tickets_Field_FileId", "Ticket")}
@@ -164,7 +170,7 @@ const ExpenseTicketDetailHeaderForm = ({
         {isEditing ? (
           <div className="visita-field-text">
             <SingleDatePicker
-              label={indT("ExpenseSheets_Field_CreatedDate", "Date")}
+              label={indT("Tickets_Field_TicketDate", "Ticket date")}
               value={draftTransDate}
               onChange={onDraftTransDateChange}
               readOnly={!isEditing}
@@ -173,10 +179,33 @@ const ExpenseTicketDetailHeaderForm = ({
           </div>
         ) : (
             <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_CreatedDate", "Date")}
-              value={transDateText || formatExpenseDisplayDate(header.transDate, document?.documentElement?.lang || "es-ES") || "-"}
+              label={indT("Tickets_Field_TicketDate", "Ticket date")}
+              value={
+                transDateText ||
+                formatExpenseDisplayDate(header.ticketDate || header.transDate, document?.documentElement?.lang || "es-ES") ||
+                "-"
+              }
             />
           )}
+
+        {isEditing ? (
+          <div className="space-y-1.5">
+            <label className="form-label font-semibold">{indT("Tickets_Field_TicketTime", "Ticket time")}</label>
+            <input
+              className="form-control"
+              type="time"
+              step={1}
+              value={draftTicketTime}
+              onChange={(event) => onDraftTicketTimeChange(event.target.value || "")}
+              aria-label={indT("Tickets_Field_TicketTime", "Ticket time")}
+            />
+          </div>
+        ) : (
+          <ExpenseReadOnlyField
+            label={indT("Tickets_Field_TicketTime", "Ticket time")}
+            value={ticketTimeText || "-"}
+          />
+        )}
       </div>
 
       {canOpenFile && !hideOpenFileAction ? (
