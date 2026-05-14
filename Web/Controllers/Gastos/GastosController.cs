@@ -1822,7 +1822,8 @@ namespace IND_CRM_APP.Controllers
                         Description = (line.Description ?? string.Empty).Trim(),
                         Qty = line.Qty,
                         Price = line.Price,
-                        TotalAmount = line.TotalAmount
+                        TotalAmount = line.TotalAmount,
+                        TaxPercent = line.TaxPercent
                     };
                     normalizedLine.TotalAmount ??= ResolveTicketLineTotalAmount(normalizedLine);
                     return normalizedLine;
@@ -1831,6 +1832,7 @@ namespace IND_CRM_APP.Controllers
 
             var hasInvalidLines = normalizedLines.Any(line =>
                 string.IsNullOrWhiteSpace(line.Description) ||
+                (line.TaxPercent.HasValue && line.TaxPercent.Value < 0m) ||
                 !IsValidTicketLineAmount(line));
 
             if (hasInvalidLines)
@@ -2808,11 +2810,14 @@ namespace IND_CRM_APP.Controllers
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount
+                TotalAmount = req.TotalAmount,
+                TaxPercent = req.TaxPercent
             };
             request.TotalAmount ??= ResolveTicketLineTotalAmount(request);
 
-            if (string.IsNullOrWhiteSpace(request.Description) || !IsValidTicketLineAmount(request))
+            if (string.IsNullOrWhiteSpace(request.Description) ||
+                (request.TaxPercent.HasValue && request.TaxPercent.Value < 0m) ||
+                !IsValidTicketLineAmount(request))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -2886,11 +2891,14 @@ namespace IND_CRM_APP.Controllers
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount
+                TotalAmount = req.TotalAmount,
+                TaxPercent = req.TaxPercent
             };
             request.TotalAmount ??= ResolveTicketLineTotalAmount(request);
 
-            if (string.IsNullOrWhiteSpace(request.Description) || !IsValidTicketLineAmount(request))
+            if (string.IsNullOrWhiteSpace(request.Description) ||
+                (request.TaxPercent.HasValue && request.TaxPercent.Value < 0m) ||
+                !IsValidTicketLineAmount(request))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,

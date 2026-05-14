@@ -35,6 +35,16 @@ const formatQtyValue = (value: number | null): string => {
   });
 };
 
+const formatTaxPercentValue = (value: number | null): string => {
+  const formatted = formatExpenseNumber(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+    fallback: "",
+  });
+  return formatted ? `${formatted} %` : "";
+};
+
 const EMPTY_DATE_PARTS: ExpenseDateParts = {
   year: "--",
   month: "--",
@@ -85,11 +95,19 @@ const ExpenseTicketLinesList = ({
             const amountText = formatAmountWithCurrency(line.totalAmount, currencyCode);
             const qtyText = formatQtyValue(line.qty);
             const priceText = formatAmountWithCurrency(line.price, currencyCode);
+            const taxPercentText = formatTaxPercentValue(line.taxPercent);
             const title = line.description || line.recId || "-";
-            const subtitle = `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}   ${indT("ExpenseSheets_Field_Price", "Price")}: ${priceText}`;
+            const subtitleParts = [
+              `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}`,
+              `${indT("ExpenseSheets_Field_Price", "Price")}: ${priceText}`,
+              taxPercentText ? `${indT("Tickets_Field_TaxPercent", "IVA %")}: ${taxPercentText}` : "",
+            ].filter(Boolean);
+            const subtitle = subtitleParts.join("   ");
             const lineKey =
               String(line.recId || "").trim() ||
-              [line.description, line.totalAmount, line.price, line.qty].map((value) => String(value || "").trim()).join("|");
+              [line.description, line.totalAmount, line.price, line.qty, line.taxPercent]
+                .map((value) => String(value || "").trim())
+                .join("|");
 
             return (
               <div key={lineKey} className="timeline-item">

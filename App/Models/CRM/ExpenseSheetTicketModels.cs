@@ -153,6 +153,10 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("totalAmount")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public decimal? TotalAmount { get; set; }
+
+        [JsonPropertyName("taxPercent")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? TaxPercent { get; set; }
     }
 
     // Request payload for ticket creation by mode.
@@ -348,6 +352,9 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("TotalAmount")]
         public decimal? TotalAmount { get; set; }
+
+        [JsonPropertyName("TaxPercent")]
+        public decimal? TaxPercent { get; set; }
 
         [JsonPropertyName("RefRecIdTable")]
         public string RefRecIdTable { get; set; } = string.Empty;

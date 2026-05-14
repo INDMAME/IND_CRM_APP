@@ -24,6 +24,7 @@ export type ExpenseTicketDetailLine = {
   qty: number | null;
   price: number | null;
   totalAmount: number | null;
+  taxPercent: number | null;
   refRecIdTable: string;
   createdByUserId: string;
 };
@@ -87,6 +88,7 @@ export const mapExpenseTicketDetailLine = (line: ExpenseSheetTicketLineDto): Exp
     qty: typeof line?.Qty === "number" ? line.Qty : null,
     price: typeof line?.Price === "number" ? line.Price : null,
     totalAmount: typeof line?.TotalAmount === "number" ? line.TotalAmount : null,
+    taxPercent: toNullableNumber((line as { TaxPercent?: unknown; taxPercent?: unknown })?.TaxPercent ?? (line as { taxPercent?: unknown })?.taxPercent),
     refRecIdTable: String(line?.RefRecIdTable || "").trim(),
     createdByUserId: String(line?.CreatedByUserId || "").trim(),
   };

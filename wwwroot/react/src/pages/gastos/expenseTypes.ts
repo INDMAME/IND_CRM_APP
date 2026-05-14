@@ -212,6 +212,7 @@ export type ExpenseSheetCreateLineRequest = {
   ticket: boolean;
   qty: number;
   price: number;
+  taxPercent?: number | null;
   projId?: string;
   indAttachFiles?: string;
 };
@@ -422,6 +423,7 @@ export type ExpenseSheetTicketLineRequest = {
   qty: number;
   price: number;
   totalAmount?: number;
+  taxPercent?: number | null;
 };
 
 export type ExpenseSheetTicketCreateRequest = {
@@ -466,6 +468,7 @@ export type ExpenseSheetTicketLineDto = {
   Qty: number | null;
   Price: number | null;
   TotalAmount: number | null;
+  TaxPercent: number | null;
   RefRecIdTable: string;
   CreatedByUserId: string;
 };

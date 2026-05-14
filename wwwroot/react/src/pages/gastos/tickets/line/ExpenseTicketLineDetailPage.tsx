@@ -139,6 +139,7 @@ const ExpenseTicketLineDetailContent = () => {
     draftDescription,
     draftQty,
     draftPrice,
+    draftTaxPercent,
     setBusy,
     setStatus,
     setIsEditing,
@@ -146,6 +147,7 @@ const ExpenseTicketLineDetailContent = () => {
     setDraftDescription,
     setDraftQty,
     setDraftPrice,
+    setDraftTaxPercent,
     handleEnableEdit,
     handleCancelEdit,
   } = useExpenseTicketLineDetailState({
@@ -374,6 +376,7 @@ const ExpenseTicketLineDetailContent = () => {
     draftDescription,
     draftQty,
     draftPrice,
+    draftTaxPercent,
     linkedExpenseSheetId,
     allowSelfManagement,
     canManageOtherUsers,
@@ -475,11 +478,13 @@ const ExpenseTicketLineDetailContent = () => {
           draftDescription={draftDescription}
           draftQty={draftQty}
           draftPrice={draftPrice}
+          draftTaxPercent={draftTaxPercent}
           priceText={priceText}
           amountText={amountText}
           onDraftDescriptionChange={setDraftDescription}
           onDraftQtyChange={setDraftQty}
           onDraftPriceChange={setDraftPrice}
+          onDraftTaxPercentChange={setDraftTaxPercent}
         />
       ) : null}
     </div>

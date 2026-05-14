@@ -13,11 +13,13 @@ type ExpenseTicketLineDetailFormProps = {
   draftDescription: string;
   draftQty: string;
   draftPrice: string;
+  draftTaxPercent: string;
   priceText: string;
   amountText: string;
   onDraftDescriptionChange: (value: string) => void;
   onDraftQtyChange: (value: string) => void;
   onDraftPriceChange: (value: string) => void;
+  onDraftTaxPercentChange: (value: string) => void;
 };
 
 const formatQtyValue = (value: number | null): string => {
@@ -29,6 +31,16 @@ const formatQtyValue = (value: number | null): string => {
   });
 };
 
+const formatTaxPercentValue = (value: number | null): string => {
+  const formatted = formatExpenseNumber(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+    fallback: "",
+  });
+  return formatted ? `${formatted} %` : "-";
+};
+
 // Read-only and editable form renderer for one ticket line.
 const ExpenseTicketLineDetailForm = ({
   header,
@@ -38,11 +50,13 @@ const ExpenseTicketLineDetailForm = ({
   draftDescription,
   draftQty,
   draftPrice,
+  draftTaxPercent,
   priceText,
   amountText,
   onDraftDescriptionChange,
   onDraftQtyChange,
   onDraftPriceChange,
+  onDraftTaxPercentChange,
 }: ExpenseTicketLineDetailFormProps) => {
   return (
     <section className="space-y-0">
@@ -132,6 +146,35 @@ const ExpenseTicketLineDetailForm = ({
             <ExpenseReadOnlyField
               label={indT("ExpenseSheets_Field_Price", "Price")}
               value={priceText || "-"}
+            />
+          )}
+
+          {isEditing ? (
+            <div className="space-y-1.5">
+              <label className="form-label font-semibold">{indT("Tickets_Field_TaxPercent", "IVA %")}</label>
+              <input
+                className="form-control"
+                type="text"
+                inputMode="decimal"
+                value={draftTaxPercent}
+                onChange={(event) => onDraftTaxPercentChange(event.target.value || "")}
+                onBlur={(event) =>
+                  onDraftTaxPercentChange(
+                    formatExpenseInputNumber(event.target.value, {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                      useGrouping: true,
+                      fallback: "",
+                    })
+                  )
+                }
+                aria-label={indT("Tickets_Field_TaxPercent", "IVA %")}
+              />
+            </div>
+          ) : (
+            <ExpenseReadOnlyField
+              label={indT("Tickets_Field_TaxPercent", "IVA %")}
+              value={formatTaxPercentValue(line?.taxPercent ?? null)}
             />
           )}
 
