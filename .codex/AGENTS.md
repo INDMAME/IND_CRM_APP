@@ -306,17 +306,18 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 
 ## DEV to PROD release command policy
 
-- If the user says `genera una release a PROD`, `publica DEV en PROD`, or clearly requests a DEV to PROD release, interpret that as a git and GitHub release workflow, not as the generic IIS `publish.ps1` deploy command.
+- Only if the user explicitly says `merge a prod` or `merge DEV a PROD`, interpret the request as a git and GitHub production promotion workflow.
+- Do not infer production promotion from `publica`, `publica la web`, `republica`, `publica en iis`, `genera una release`, or `publica DEV en PROD` unless the phrase `merge a prod` is present. Without `merge a prod`, publishing means local IIS deployment with `publish.ps1`.
 - Keep this flow conservative. If branch state, local changes, release numbering, or production divergence are ambiguous, stop and ask before publishing.
 - Local development, commits, release preparation, and release completion must happen from branch `DEV`. Inspect production history through remote metadata or PRs; do not switch the local checkout to `PROD`, `main`, or any production branch for release work.
 - Only push work changes to `origin/DEV`. Never push directly to `origin/PROD`, `origin/main`, or any production branch.
 - Production promotion must happen only through a numbered GitHub PR from `DEV` to `PROD` (or the configured production branch if it is renamed to `main`). The PR title must be `Release <N>` where `N` is incremental.
 - Auto-merge with required checks is mandatory for production promotion. If auto-merge, checks, branch protection, or PR permissions block the release, stop and report the blocker instead of doing a direct merge or direct push.
-- Do not publish uncommitted changes.
+- Do not promote uncommitted changes.
 - Do not include unrelated files in the release scope.
 - Do not assume the release number if it cannot be inferred safely.
 
-Required DEV to PROD release workflow:
+Required `merge a prod` workflow:
 1. Confirm the active branch is `DEV`.
 2. Run `git status` and verify the release scope is fully committed.
 3. If there are unexpected local changes, unrelated files, conflicts, or ambiguous scope, stop and ask before continuing.
@@ -340,12 +341,12 @@ Required DEV to PROD release workflow:
 
 ## Local IIS publish command policy
 
-- If the user says `publica en iis`, interpret that as a local web publish command, not as a DEV to PROD release.
-- For `publica en iis`, run the local web publish workflow:
+- If the user says `publica`, `publica la web`, `republica`, `publica en iis`, or asks to publish/deploy the web without saying `merge a prod`, interpret that as a local web publish command, not as a DEV to PROD release.
+- For local IIS publish requests, run the local web publish workflow:
   1. Run full required validation/build steps first.
   2. Execute `publish.ps1`.
   3. Confirm IIS restart and local site health before finishing.
-- Do not treat generic `publica` as enough to trigger a local IIS publish. If the user does not clearly ask for `publica en iis` and does not clearly ask for a DEV to PROD release, stop and clarify.
+- Never perform a DEV to PROD PR, merge, fast-forward, production branch checkout, or production push unless the user explicitly says `merge a prod`.
 
 ## Quick design prompt (visitas/historial)
 - Tailwind only; Bootstrap removed (no `spinner-border`, `page-item`, `page-link`, etc.).
@@ -355,4 +356,4 @@ Required DEV to PROD release workflow:
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-05-04
+- 2026-05-13

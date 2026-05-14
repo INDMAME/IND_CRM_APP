@@ -96,13 +96,12 @@
         return mod?.AccessRightsInt ?? 0;
     }
 
-    var historyAccess = GetModuleAccess(INDModuleRegistry.ModuleVisitasHistorial);
-    var createAccess = GetModuleAccess(INDModuleRegistry.ModuleVisitasCreacion);
+    var visitsAccess = GetModuleAccess(INDModuleRegistry.ModuleVisitasGestion);
     var expenseAccess = GetModuleAccess(INDModuleRegistry.ModuleGastosHojaGasto);
     var ticketsAccess = GetModuleAccess(INDModuleRegistry.ModuleGastosTickets);
-    var canEditHistory = historyAccess >= IndAccessRights.Edit;
-    var canDeleteHistory = historyAccess >= IndAccessRights.FullAccess;
-    var canCreateVisit = createAccess >= IndAccessRights.Add;
+    var canEditHistory = visitsAccess >= IndAccessRights.Edit;
+    var canDeleteHistory = visitsAccess >= IndAccessRights.FullAccess;
+    var canCreateVisit = visitsAccess >= IndAccessRights.Add;
     var canEditExpense = expenseAccess >= IndAccessRights.Edit;
     var canDeleteExpense = expenseAccess >= IndAccessRights.FullAccess;
     var canCreateExpense = expenseAccess >= IndAccessRights.Add;

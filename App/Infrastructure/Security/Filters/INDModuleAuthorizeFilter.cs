@@ -166,7 +166,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 .Where(m => m.AccessRightsInt >= IndAccessRights.View && !string.IsNullOrWhiteSpace(m.ModuleCode))
                 .Select(m => INDModuleRegistry.TryGetCanonicalModuleCode(m.ModuleCode, out var canonical)
                     ? canonical
-                    : m.ModuleCode)
+                    : string.Empty)
                 .Where(code => !string.IsNullOrWhiteSpace(code))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();

@@ -10,7 +10,7 @@ Do not remove working logic or rewrite functional components. Priority: system s
 
 This repository is in production. Default to conservative, low-risk, reversible changes and the smallest safe diff.
 
-Local work, commits, and pushes must target branch `DEV` only. Never push, merge, or fast-forward directly to `PROD`, `main`, or any production branch. Production promotion must use an incremental numbered GitHub PR from `DEV` to the production branch with required checks and auto-merge; if that protected PR flow is blocked, stop and report the blocker.
+Local work, commits, and pushes must target branch `DEV` only. Never push, merge, or fast-forward directly to `PROD`, `main`, or any production branch. Production promotion is allowed only when the user explicitly says `merge a prod`; it must use an incremental numbered GitHub PR from `DEV` to the production branch with required checks and auto-merge, and if that protected PR flow is blocked, stop and report the blocker. Generic publish wording such as `publica`, `publica la web`, `republica`, or `publica en iis` means local IIS deployment with `publish.ps1`, not production promotion.
 
 Before implementing, produce a short plan that names touched modules, reuse candidates, regression-sensitive flows, and validation steps.
 

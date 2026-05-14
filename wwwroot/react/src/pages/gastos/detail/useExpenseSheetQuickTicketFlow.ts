@@ -44,7 +44,6 @@ type QuickTicketProgressStage = {
 };
 
 const QUICK_TICKET_FLOW_LOG_PREFIX = "[expense-quick-ticket]";
-const QUICK_CREATE_AI_UNAVAILABLE_ERROR_CODE = "AI_SERVICE_UNAVAILABLE";
 const QUICK_TICKET_VISUAL_STAGE_MS = {
   syncingFile: 1200,
   finalizingIa: 3600,
@@ -67,13 +66,6 @@ const logQuickTicketError = (...args: unknown[]) => {
   if (typeof console !== "undefined" && typeof console.error === "function") {
     console.error(QUICK_TICKET_FLOW_LOG_PREFIX, ...args);
   }
-};
-
-const isQuickCreateServiceUnavailable = (response: ExpenseSheetTicketQuickCreateResult): boolean => {
-  return (
-    response.HttpStatus === 503 ||
-    safeText(response.ErrorCode).toUpperCase() === QUICK_CREATE_AI_UNAVAILABLE_ERROR_CODE
-  );
 };
 
 const formatFileSize = (size: number): string => {
@@ -428,14 +420,9 @@ export const useExpenseSheetQuickTicketFlow = ({
     const responseMessage = safeText(response.Message);
     const validationText = formatValidationErrors(response.Errors);
     const retryAfter = safeText(response.RetryAfter);
-    const serviceUnavailable = isQuickCreateServiceUnavailable(response);
     const messageParts: string[] = [];
 
-    if (serviceUnavailable) {
-      messageParts.push(
-        indT("ExpenseSheets_NewTicket_Error_ServiceUnavailable", "Servicio no disponible, intentelo nuevamente.")
-      );
-    } else if (response.HttpStatus === 429) {
+    if (response.HttpStatus === 429) {
       messageParts.push(responseMessage || indT("ExpenseSheets_NewTicket_Error_RateLimit", "Too many requests."));
       if (retryAfter) {
         messageParts.push(
@@ -461,7 +448,7 @@ export const useExpenseSheetQuickTicketFlow = ({
       messageParts.push(indT("Api_RequestFailed", "Request failed."));
     }
 
-    if (!serviceUnavailable && fileId && completedStage) {
+    if (fileId && completedStage) {
       messageParts.push(indFormat("ExpenseSheets_NewTicket_Error_Stage", "Completed stage: {0}.", completedStage));
     }
 
@@ -523,9 +510,8 @@ export const useExpenseSheetQuickTicketFlow = ({
 
         const fileId = safeText(response.Data?.FileId);
         const linkedToSheet = response.Data?.LinkedToSheet === true;
-        const rollbackSucceeded = response.Data?.RollbackSucceeded === true;
         const partialState =
-          fileId && !rollbackSucceeded
+          fileId
             ? {
                 fileId,
                 linkedToSheet,
@@ -556,10 +542,6 @@ export const useExpenseSheetQuickTicketFlow = ({
             linkedToSheet,
             completedStage: safeText(response.Data?.CompletedStage),
             processedByAI: response.Data?.ProcessedByAI ?? null,
-            failedStage: safeText(response.Data?.FailedStage),
-            rollbackAttempted: response.Data?.RollbackAttempted ?? null,
-            rollbackSucceeded: response.Data?.RollbackSucceeded ?? null,
-            rollbackMessage: safeText(response.Data?.RollbackMessage),
             stepTraceIds: response.Data?.StepTraceIds ?? null,
           });
           return;
@@ -575,10 +557,6 @@ export const useExpenseSheetQuickTicketFlow = ({
             linkedToSheet: partialState.linkedToSheet,
             completedStage: partialState.completedStage,
             processedByAI: partialState.processedByAI,
-            failedStage: safeText(response.Data?.FailedStage),
-            rollbackAttempted: response.Data?.RollbackAttempted ?? null,
-            rollbackSucceeded: response.Data?.RollbackSucceeded ?? null,
-            rollbackMessage: safeText(response.Data?.RollbackMessage),
           });
         }
 
@@ -598,11 +576,7 @@ export const useExpenseSheetQuickTicketFlow = ({
           fileId,
           linkedToSheet,
           completedStage: safeText(response.Data?.CompletedStage),
-          failedStage: safeText(response.Data?.FailedStage),
           processedByAI: response.Data?.ProcessedByAI ?? null,
-          rollbackAttempted: response.Data?.RollbackAttempted ?? null,
-          rollbackSucceeded: response.Data?.RollbackSucceeded ?? null,
-          rollbackMessage: safeText(response.Data?.RollbackMessage),
           retryAfter: safeText(response.RetryAfter),
           message: safeText(response.Message),
           resolvedMessage,

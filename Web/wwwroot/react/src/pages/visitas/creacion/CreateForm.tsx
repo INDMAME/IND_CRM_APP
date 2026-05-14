@@ -19,8 +19,8 @@ import { flashActionMark } from "../../../utils/visitasHistory.ts";
 
 function VisitasApp() {
   const { visitTypes, asistenteTipos } = useVisitas();
-  const canCreateVisit = canAccess("VISITAS_CREACION", "Add");
-  const canRollbackDelete = canAccess("VISITAS_HISTORIAL", "FullAccess");
+  const canCreateVisit = canAccess("VISITAS_GESTION", "Add");
+  const canRollbackDelete = canAccess("VISITAS_GESTION", "FullAccess");
 
   const fieldIdComentarios = "Visita.Create.Comentarios";
   const fieldIdAntecedentes = "Visita.Create.Antecedentes";

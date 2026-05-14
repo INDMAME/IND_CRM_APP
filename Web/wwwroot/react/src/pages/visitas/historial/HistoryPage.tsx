@@ -72,6 +72,8 @@ const BASQUE_MONTHS_SHORT = [
   "abe",
 ];
 
+const ZH_MONTH_YEAR_FORMATTER = new Intl.DateTimeFormat("zh-CN", { year: "numeric", month: "long" });
+
 const getUiLocale = () => {
   const fromHtml = typeof document !== "undefined" ? document.documentElement.lang : "";
   if (fromHtml && String(fromHtml).trim()) return normalizeUiLocale(fromHtml);
@@ -123,7 +125,7 @@ const isBefore = (a: Date | null, b: Date | null) => !!(a && b && a.getTime() < 
 
 const formatMonthLabel = (d: Date, locale: string) => {
   if (/^zh/i.test(locale)) {
-    return new Intl.DateTimeFormat(locale, { year: "numeric", month: "long" }).format(d);
+    return ZH_MONTH_YEAR_FORMATTER.format(d);
   }
   if (isBasqueLocale(locale)) {
     return `${BASQUE_MONTHS[d.getMonth()]} ${d.getFullYear()}`;
@@ -206,8 +208,8 @@ const logHistory = (message: string, data?: Record<string, unknown>) => {
 // History page with React state + effects (no legacy DOM logic).
 export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props) => {
   const locale = useMemo(() => getUiLocale(), []);
-  const canViewHistory = canAccess("VISITAS_HISTORIAL", "View");
-  const canCreateVisit = canAccess("VISITAS_CREACION", "Add");
+  const canViewHistory = canAccess("VISITAS_GESTION", "View");
+  const canCreateVisit = canAccess("VISITAS_GESTION", "Add");
   const noDataText = indT("Common_NoData", "No data");
 
   const activatorRef = useRef<HTMLDivElement | null>(null);
@@ -608,7 +610,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
       )}
       {showFilters && (
       <div className="filter-card filter-card--expanded p-2 sm:p-2.5 relative">
-        <div className="space-y-1.5 history-filter-stack flex flex-col">
+        <div className="gap-y-1.5 history-filter-stack flex flex-col">
           <div className="grid grid-cols-2 gap-2 history-quick-filters" aria-label={filterTitle}>
             {quickFilters.map((item) => {
               const isActive = activeQuickFilter === item.id;
@@ -705,10 +707,10 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
 
       <div
         id="resultsLoader"
-        className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
+        className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-neutral-700"
         style={{ display: isLoading ? "flex" : "none" }}
       >
-        <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("History_Loading", "Loading")}>
+        <svg className="ind-spinner size-5" viewBox="0 0 20 20" role="status" aria-label={indT("History_Loading", "Loading")}>
           <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
         </svg>
         {indT("History_Loading", "Loading")}

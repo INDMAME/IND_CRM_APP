@@ -9,37 +9,31 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
     // Registry for module codes and their route prefixes.
     public static class INDModuleRegistry
     {
-        public const string ModuleVisitasCreacion = "VISITAS_CREACION";
-        public const string ModuleVisitasHistorial = "VISITAS_HISTORIAL";
+        public const string ModuleVisitasGestion = "VISITAS_GESTION";
         public const string ModuleGastosHojaGasto = "GASTOS_HOJA_GASTO";
         public const string ModuleGastosTickets = "GASTOS_TICKETS";
 
         private static readonly IReadOnlyDictionary<string, string[]> ModulePrefixes =
             new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
             {
-                [ModuleVisitasCreacion] = new[]
+                [ModuleVisitasGestion] = new[]
                 {
-                    ModuleVisitasCreacion,
+                    ModuleVisitasGestion,
+                    "VISITAS/GESTION",
+                    "VISITAS_GESTION",
                     "VISITAS/CREACION",
-                    "VISITAS_CREACION",
                     "/Visitas/Create",
                     "/Visitas/CreateActivity",
                     "/Visitas/CreateVisitaAsistente",
-                    "/Visitas/GetAccountsForDropdown",
-                    "/Visitas/GetContactsForDropdown"
-                },
-                [ModuleVisitasHistorial] = new[]
-                {
-                    ModuleVisitasHistorial,
-                    "VISITAS_HISTORIAL",
                     "VISITAS/HISTORIAL",
-                    "VISITAS_VISITAS",
                     "/Historial",
                     "/Visitas/Detalle",
                     "/Visitas/UpdateActivity",
                     "/Visitas/DeleteActivity",
                     "/Visitas/UpdateAsistenteTipo",
-                    "/Visitas/GetActivityByCode"
+                    "/Visitas/GetActivityByCode",
+                    "/Visitas/GetAccountsForDropdown",
+                    "/Visitas/GetContactsForDropdown"
                 },
                 [ModuleGastosTickets] = new[]
                 {
@@ -85,18 +79,15 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
             {
                 ["/Visitas/GetAccountsForDropdown"] = new[]
                 {
-                    ModuleVisitasCreacion,
-                    ModuleVisitasHistorial
+                    ModuleVisitasGestion
                 },
                 ["/Visitas/TranscribeSpeech"] = new[]
                 {
-                    ModuleVisitasCreacion,
-                    ModuleVisitasHistorial
+                    ModuleVisitasGestion
                 },
                 ["/TextEditorReact"] = new[]
                 {
-                    ModuleVisitasCreacion,
-                    ModuleVisitasHistorial
+                    ModuleVisitasGestion
                 },
                 ["/api/ia/service/expensefromticket"] = new[]
                 {
@@ -109,18 +100,11 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
         private static readonly IReadOnlyDictionary<string, string[]> ModuleAliases =
             new Dictionary<string, string[]>(StringComparer.OrdinalIgnoreCase)
             {
-                [ModuleVisitasCreacion] = new[]
+                [ModuleVisitasGestion] = new[]
                 {
-                    ModuleVisitasCreacion,
-                    "VISITAS/CREACION",
-                    "VISITAS_CREACION"
-                },
-                [ModuleVisitasHistorial] = new[]
-                {
-                    ModuleVisitasHistorial,
-                    "VISITAS_HISTORIAL",
-                    "VISITAS/HISTORIAL",
-                    "VISITAS_VISITAS"
+                    ModuleVisitasGestion,
+                    "VISITAS/GESTION",
+                    "VISITAS_GESTION"
                 },
                 [ModuleGastosTickets] = new[]
                 {

@@ -1,0 +1,156 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: INDJobMigrateVisitasGestionAccess
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+
+  SOURCE #INDJobMigrateVisitasGestionAccess
+    #static void INDJobMigrateVisitasGestionAccess(Args _args)
+    #{
+    #    boolean                 execute = false;
+    #    str                     appCode = "CRM";
+    #    str                     legacyCreateModule = "VISITAS_CREACION";
+    #    str                     legacyHistoryModule = "VISITAS_HISTORIAL";
+    #    str                     targetModule = "VISITAS_GESTION";
+    #
+    #    INDWebModule            targetWebModule;
+    #    INDWebModuleAccessLevel groupedAccess;
+    #    INDWebModuleAccessLevel sourceAccess;
+    #    INDWebModuleAccessLevel targetAccess;
+    #
+    #    str                     executeMode;
+    #    int                     sourceRows = 0;
+    #    int                     sourceRowsForTarget = 0;
+    #    int                     targetsToCreate = 0;
+    #    int                     targetsToUpdate = 0;
+    #    int                     targetsSkipped = 0;
+    #    ;
+    #
+    #    // Set execute to true only after checking the preview counters.
+    #    if (execute)
+    #        executeMode = "true";
+    #    else
+    #        executeMode = "false";
+    #    info(strFmt("VISITAS_GESTION access migration started. Execute mode: %1", executeMode));
+    #
+    #    select firstOnly targetWebModule
+    #        where targetWebModule.AppCode == appCode
+    #           && targetWebModule.ModuleCode == targetModule;
+    #
+    #    if (!targetWebModule.ModuleCode)
+    #    {
+    #        warning(strFmt("Target module %1 is missing in INDWebModule for AppCode %2. Create or activate it before using the migrated access.", targetModule, appCode));
+    #    }
+    #    else if (targetWebModule.IsActive != NoYes::Yes)
+    #    {
+    #        warning(strFmt("Target module %1 exists in INDWebModule but is not active for AppCode %2.", targetModule, appCode));
+    #    }
+    #
+    #    while select sourceAccess
+    #        where sourceAccess.AppCode == appCode
+    #           && (sourceAccess.ModuleCode == legacyCreateModule
+    #            || sourceAccess.ModuleCode == legacyHistoryModule)
+    #           && sourceAccess.AccessRights != 0
+    #    {
+    #        sourceRows++;
+    #    }
+    #
+    #    if (execute)
+    #    {
+    #        ttsbegin;
+    #    }
+    #
+    #    while select AppCode, RefRecIdCiaPermitida from groupedAccess
+    #        group by groupedAccess.AppCode, groupedAccess.RefRecIdCiaPermitida
+    #        where groupedAccess.AppCode == appCode
+    #           && (groupedAccess.ModuleCode == legacyCreateModule
+    #            || groupedAccess.ModuleCode == legacyHistoryModule)
+    #           && groupedAccess.AccessRights != 0
+    #    {
+    #        sourceAccess.clear();
+    #        select firstOnly sourceAccess
+    #            order by sourceAccess.AccessRights desc
+    #            where sourceAccess.AppCode == groupedAccess.AppCode
+    #               && sourceAccess.RefRecIdCiaPermitida == groupedAccess.RefRecIdCiaPermitida
+    #               && (sourceAccess.ModuleCode == legacyCreateModule
+    #                || sourceAccess.ModuleCode == legacyHistoryModule)
+    #               && sourceAccess.AccessRights != 0;
+    #
+    #        if (!sourceAccess.RecId)
+    #        {
+    #            continue;
+    #        }
+    #
+    #        sourceRowsForTarget++;
+    #        targetAccess.clear();
+    #
+    #        if (execute)
+    #        {
+    #            select firstOnly forUpdate targetAccess
+    #                where targetAccess.AppCode == groupedAccess.AppCode
+    #                   && targetAccess.RefRecIdCiaPermitida == groupedAccess.RefRecIdCiaPermitida
+    #                   && targetAccess.ModuleCode == targetModule;
+    #        }
+    #        else
+    #        {
+    #            select firstOnly targetAccess
+    #                where targetAccess.AppCode == groupedAccess.AppCode
+    #                   && targetAccess.RefRecIdCiaPermitida == groupedAccess.RefRecIdCiaPermitida
+    #                   && targetAccess.ModuleCode == targetModule;
+    #        }
+    #
+    #        if (!targetAccess.RecId)
+    #        {
+    #            targetsToCreate++;
+    #
+    #            if (execute)
+    #            {
+    #                targetAccess.clear();
+    #                targetAccess.AppCode               = sourceAccess.AppCode;
+    #                targetAccess.RefRecIdCiaPermitida = sourceAccess.RefRecIdCiaPermitida;
+    #                targetAccess.ModuleCode            = targetModule;
+    #                targetAccess.AccessRights          = sourceAccess.AccessRights;
+    #                targetAccess.insert();
+    #            }
+    #
+    #            continue;
+    #        }
+    #
+    #        if (targetAccess.AccessRights < sourceAccess.AccessRights)
+    #        {
+    #            targetsToUpdate++;
+    #
+    #            if (execute)
+    #            {
+    #                targetAccess.AccessRights = sourceAccess.AccessRights;
+    #                targetAccess.update();
+    #            }
+    #
+    #            continue;
+    #        }
+    #
+    #        targetsSkipped++;
+    #    }
+    #
+    #    if (execute)
+    #    {
+    #        ttscommit;
+    #    }
+    #
+    #    info(strFmt("Legacy source rows found: %1", sourceRows));
+    #    info(strFmt("Unique VISITAS_GESTION targets evaluated: %1", sourceRowsForTarget));
+    #    info(strFmt("VISITAS_GESTION records to create: %1", targetsToCreate));
+    #    info(strFmt("VISITAS_GESTION records to update with higher access: %1", targetsToUpdate));
+    #    info(strFmt("VISITAS_GESTION records already valid: %1", targetsSkipped));
+    #
+    #    if (!execute)
+    #    {
+    #        info("Preview only. Change execute to true to create or update VISITAS_GESTION access records.");
+    #    }
+    #}
+  ENDSOURCE
+
+***Element: END

@@ -7,6 +7,7 @@ import type {
 } from "../expenseTypes.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
+import { resolveTicketLineAmount } from "../utils/expenseTicketLineAmount.ts";
 
 const TICKET_IMAGE_CACHE_NAME = "ind-expense-ticket-image-v1";
 const TICKET_IMAGE_CACHE_PREFIX = "/__ind_cache__/ticket-image/";
@@ -200,7 +201,7 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
   const data = asRecord(rawData);
   const draftDescription = safeText(getFirstDefined(data, ["description", "Description"]));
   const draftCurrency = safeText(getFirstDefined(data, ["currencyCode", "CurrencyCode"])).toUpperCase();
-  const draftTotalAmount = toPositiveNumber(getFirstDefined(data, ["totalAmount", "TotalAmount"])) || 0;
+  const draftTotalAmount = toNumber(getFirstDefined(data, ["totalAmount", "TotalAmount"]));
   const draftTransDate = toDdMmYyyy(getFirstDefined(data, ["transDate", "TransDate"])) || getTodayDdMmYyyy();
   const draftComment = safeText(getFirstDefined(data, ["comentario", "Comentario"]));
   const draftGastoType = normalizeGastoType(getFirstDefined(data, ["gastoType", "GastoType"]));
@@ -211,11 +212,15 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
   const lines: NormalizedDraftLine[] = lineArray
     .map((entry) => {
       const lineRecord = asRecord(entry);
-      const qty = toPositiveNumber(getFirstDefined(lineRecord, ["qty", "Qty"])) || 1;
-      const price = toPositiveNumber(getFirstDefined(lineRecord, ["price", "Price"])) || 0;
-      const explicitTotal = toPositiveNumber(getFirstDefined(lineRecord, ["totalAmount", "TotalAmount"])) || 0;
-      const computedTotal = explicitTotal > 0 ? explicitTotal : qty * price;
-      if (!(computedTotal > 0)) return null;
+      const qtyCandidate = toNumber(getFirstDefined(lineRecord, ["qty", "Qty"]));
+      const qty = qtyCandidate !== null && qtyCandidate >= 0 ? qtyCandidate : 1;
+      const price = toNumber(getFirstDefined(lineRecord, ["price", "Price"]));
+      const explicitTotal = toNumber(getFirstDefined(lineRecord, ["totalAmount", "TotalAmount"]));
+      const computedTotal = resolveTicketLineAmount({ qty, price, totalAmount: explicitTotal });
+      if (computedTotal === null || !Number.isFinite(computedTotal) || computedTotal === 0) return null;
+
+      const effectivePrice = price !== null && price !== 0 ? price : qty > 0 ? computedTotal / qty : computedTotal;
+      if (effectivePrice === 0 || (qty === 0 && computedTotal >= 0)) return null;
 
       const candidateTypeValue = toPositiveNumber(getFirstDefined(lineRecord, ["typeValue", "TypeValue"]));
       const safeTypeValue = Number.isInteger(candidateTypeValue) ? Number(candidateTypeValue) : null;
@@ -228,7 +233,7 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
         typeValue,
         description: description || "Ticket",
         qty,
-        price: price > 0 ? price : computedTotal,
+        price: effectivePrice,
         totalAmount: computedTotal,
       };
     })
@@ -237,7 +242,7 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
   return {
     description: draftDescription || "Ticket",
     currencyCode: draftCurrency || "EUR",
-    totalAmount: draftTotalAmount > 0 ? draftTotalAmount : lines.reduce((sum, line) => sum + line.totalAmount, 0),
+    totalAmount: draftTotalAmount !== null ? draftTotalAmount : lines.reduce((sum, line) => sum + line.totalAmount, 0),
     transDate: draftTransDate,
     comentario: draftComment,
     gastoType: draftGastoType,
@@ -271,7 +276,7 @@ export const buildTicketIaPayload = (draft: NormalizedDraft, upload: UploadSyncR
   const payload: ExpenseSheetTicketIaRequest = {
     description: draft.description,
     currencyCode: draft.currencyCode,
-    totalAmount: draft.totalAmount > 0 ? draft.totalAmount : undefined,
+    totalAmount: draft.totalAmount !== 0 ? draft.totalAmount : undefined,
     transDate: draft.transDate,
     comentario: draft.comentario || undefined,
     urlFile: upload.urlFile || undefined,

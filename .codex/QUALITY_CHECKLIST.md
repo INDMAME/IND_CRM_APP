@@ -55,8 +55,9 @@
 - Confirm no extra local skills exist under `.codex/skills`; shared skills must be in `C:\Users\marco.meza\.codex\skills`
 - Update `Last updated` date in every touched doc
 
-## DEV to PROD release validation
-- For `genera una release a PROD`, `publica DEV en PROD`, or equivalent DEV to PROD release requests, confirm the active branch is `DEV`
+## DEV to PROD merge validation
+- Run this workflow only when the user explicitly says `merge a prod` or `merge DEV a PROD`; generic publish wording means local IIS publish with `publish.ps1`
+- For explicit `merge a prod` requests, confirm the active branch is `DEV`
 - Run `git status` and stop if release changes are not fully committed or if unrelated local files are present
 - Confirm no local work, commit, merge, fast-forward, or push is being performed directly on `PROD`, `main`, or any production branch
 - Determine the latest safe `Release <N>` from merged release PRs, release PR titles, tags, or merge commits before calculating the next number
@@ -68,7 +69,7 @@
 - Final report must include release name, published `DEV` commit, PR URL and status, auto-merge/check status, and GitHub limitations
 
 ## Local IIS publish validation
-- For `publica en iis`, treat the request as a local web publish only, not as a DEV to PROD release
+- For `publica`, `publica la web`, `republica`, `publica en iis`, or any web publish/deploy request that does not say `merge a prod`, treat the request as a local web publish only, not as a DEV to PROD release
 - Run the required build and validation steps before publishing
 - Execute `publish.ps1` to copy the site to IIS
 - Run `iisreset` or confirm the publish flow restarted IIS as expected
@@ -79,4 +80,4 @@
 - For release tasks, run `iisreset` after publish
 
 ## Last updated
-- 2026-05-04
+- 2026-05-13

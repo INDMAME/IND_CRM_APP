@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMVisitsService descargados en Martes 2/17/2026
+; Navision Axapta Class: INDCRMVisitsService descargados en Miércoles 13/05/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -99,6 +99,14 @@ Formatversion: 1
         #            }
         #
         #            actividadTable.Name = actividadTable.Name ? actividadTable.Name : CustTable::find(_accountNum).Name;
+        #
+        #            //MMS - 2026.05.04 - Campos mandatory
+        #            actividadTable.Status           = CRMActivityStatus::Finalizada;
+        #            actividadTable.Country          = actividadTable.InitCountryId();
+        #            actividadTable.Prioridad        = CRMActivityPrioridad::Normal;
+        #
+        #            if (_company != "RSI")
+        #                actividadTable.VisitaValoracion  = CRMCustVisitaValoracion::Bien;
         #
         #            actividadTable.insert();
         #            ttscommit;
@@ -610,7 +618,7 @@ Formatversion: 1
       SOURCE #getEnvironmentName
         #static container getEnvironmentName()
         #{
-        #    return [["TEST"]];
+        #    return [["PROD"]];
         #}
         #
       ENDSOURCE

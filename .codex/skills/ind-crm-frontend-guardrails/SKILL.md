@@ -1,6 +1,6 @@
 ---
 name: ind-crm-frontend-guardrails
-description: Use when working on IND_CRM_APP frontend scope (Razor views, React islands, Tailwind UI, frontend i18n, UI API consumption, DEV to PROD release commands such as "genera una release a PROD" and "publica DEV en PROD", or local IIS publish commands such as "publica en iis") and changes must follow .codex guardrails.
+description: Use when working on IND_CRM_APP frontend scope (Razor views, React islands, Tailwind UI, frontend i18n, UI API consumption, explicit DEV to PROD commands such as "merge a prod", or local IIS publish commands such as "publica") and changes must follow .codex guardrails.
 ---
 
 # IND CRM Frontend Guardrails
@@ -16,8 +16,8 @@ Use this skill when a task touches one or more of:
 - Frontend hooks, components, UI services, page bootstrap, or API integration from the UI layer.
 - Frontend auth/token usage, localization resources, payload formats, or release validation.
 - Frontend publish validation steps (`C:\inetpub\wwwroot\IND_CRM_APP`, `iisreset`) when release scope requires it.
-- Explicit DEV to PROD release requests such as `genera una release a PROD`, `publica DEV en PROD`, or equivalent wording.
-- Explicit local web publish requests such as `publica en iis`.
+- Explicit DEV to PROD requests such as `merge a prod`.
+- Local web publish requests such as `publica`, `publica la web`, `republica`, or `publica en iis`.
 - `.codex` guardrail documentation or skill maintenance.
 
 ## When NOT to Use
@@ -75,9 +75,9 @@ Conflict precedence:
 | React Doctor gate | Before final response, run `npm run check:react-doctor`, fix diagnostics in changed frontend files, and rerun before closing the task. |
 | Clean-code gate | Before final response, review touched code for low-risk refactors that improve clean code and preserve module boundaries; apply them when safe. |
 | Branch safety | Always work locally on `DEV` and push only to `origin/DEV`; never push, merge, fast-forward, or switch local release work to `PROD`/`main`. Production promotion requires a numbered `DEV` -> `PROD` PR with required checks and auto-merge. |
-| DEV to PROD release keywords | If the user says `genera una release a PROD`, `publica DEV en PROD`, or equivalent DEV to PROD release wording, execute the conservative release workflow from `references/AGENTS.md` and `references/QUALITY_CHECKLIST.md`. |
-| Local IIS publish keyword | If the user says `publica en iis`, treat that as the explicit local web publish command: run the required validation/build steps, execute `publish.ps1`, and confirm IIS restart and site health before closing. |
-| Publish ambiguity rule | Do not treat generic `publica` as enough to choose between release and local IIS publish. If intent is not explicit, stop and clarify. |
+| DEV to PROD release keyword | Only if the user explicitly says `merge a prod` or `merge DEV a PROD`, execute the conservative release workflow from `references/AGENTS.md` and `references/QUALITY_CHECKLIST.md`. |
+| Local IIS publish default | If the user says `publica`, `publica la web`, `republica`, `publica en iis`, or asks to publish/deploy the web without saying `merge a prod`, run the required validation/build steps, execute `publish.ps1`, and confirm IIS restart and site health before closing. |
+| Production safety rule | Never perform a DEV to PROD PR, merge, fast-forward, production branch checkout, or production push unless the user explicitly says `merge a prod`. |
 | Test execution default | IMPORTANT: when user asks to create or run a frontend test, default to public URL E2E (`baseURL`) using real pages. Use local fixtures or mocked fetch only when the user explicitly requests fixture-based testing. |
 | Documentation sync | Edit root `.codex/*.md` files or `.codex/config.toml` and run `npm run sync:skill:local:references` when references are changed. |
 | Completion checks | Run `references/QUALITY_CHECKLIST.md`; publish plus `iisreset` when frontend release tasks require it. |
@@ -143,10 +143,9 @@ Required triggers:
    - Run `npm run check:react-doctor` before the final response. The repo-level `react-doctor.config.json` ignores mirror/generated paths, so diagnostics in changed frontend files are blocking and must be fixed or explicitly justified if unrelated legacy findings remain.
    - Run a final clean-code pass on touched frontend files before closing the task. Check for mixed concerns, duplicated logic, oversized objects, and misplaced responsibilities across page, hook, service, mapper, utility, and component boundaries.
    - If a low-risk refactor would materially improve modularity or clarity, apply it in the same task before closing. If not, explicitly confirm the touched code already fits the modular architecture.
-   - If the user explicitly requests a DEV to PROD release (`genera una release a PROD`, `publica DEV en PROD`, or equivalent), follow the authoritative workflow in `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
+   - If the user explicitly requests `merge a prod`, follow the authoritative DEV to PROD workflow in `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
    - Never use direct merge, fast-forward, or direct push to `PROD`/`main` as a release fallback. If the protected PR auto-merge flow is blocked, report the blocker and stop.
-   - If the user explicitly says `publica en iis`, run the local IIS publish workflow from `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
-   - If the user only says generic `publica`, do not guess between release and local IIS publish. Stop and clarify.
+   - If the user says `publica`, `publica la web`, `republica`, `publica en iis`, or asks to publish/deploy the web without saying `merge a prod`, run the local IIS publish workflow from `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
    - For publish scope, deploy with `publish.ps1` and verify the app is serving current artifacts before accepting results.
 8. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
 
@@ -190,4 +189,4 @@ This addendum stays in force together with the original frontend guardrails abov
 - Debugging or validating behavior against stale runtime/build output.
 
 ## Last updated
-- 2026-05-04
+- 2026-05-13

@@ -163,8 +163,6 @@
             const topbarLeft = document.querySelector(".topbar-left");
             const topbarRight = document.querySelector(".topbar-right");
             const topbarTitle = document.getElementById("topbarTitle");
-            const visitasToggle = document.getElementById("visitasToggle");
-            const gastosToggle = document.getElementById("gastosToggle");
             const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
             const userMenuToggle = document.getElementById("userMenuToggle");
             const langBtn = document.getElementById("indLangButton");
@@ -296,26 +294,6 @@
                 touchTracking = false;
             }
 
-            function toggleVisitas() {
-                const sub = document.getElementById("submenuVisitas");
-                const chevron = document.getElementById("visitasChevron");
-                if (!sub) return;
-                const isHidden = sub.classList.toggle("hidden");
-                const nowOpen = !isHidden;
-                visitasToggle?.setAttribute("aria-expanded", nowOpen.toString());
-                chevron?.classList.toggle("rotate-180", nowOpen);
-            }
-
-            function toggleGastos() {
-                const sub = document.getElementById("submenuGastos");
-                const chevron = document.getElementById("gastosChevron");
-                if (!sub) return;
-                const isHidden = sub.classList.toggle("hidden");
-                const nowOpen = !isHidden;
-                gastosToggle?.setAttribute("aria-expanded", nowOpen.toString());
-                chevron?.classList.toggle("rotate-180", nowOpen);
-            }
-
             function toggleUserMenu() {
                 const menu = document.getElementById("userMenu");
                 const chevron = document.getElementById("userMenuChevron");
@@ -441,8 +419,6 @@
 
             btnMenu?.addEventListener("click", toggleSidebar);
             sidebarCloseBtn?.addEventListener("click", toggleSidebar);
-            visitasToggle?.addEventListener("click", toggleVisitas);
-            gastosToggle?.addEventListener("click", toggleGastos);
             userMenuToggle?.addEventListener("click", toggleUserMenu);
             langBtn?.addEventListener("click", toggleIndLanguageMenu);
             companyBtn?.addEventListener("click", toggleIndCompanyMenu);

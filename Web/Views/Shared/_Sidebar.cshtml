@@ -69,8 +69,7 @@
         return mod != null && mod.AccessRightsInt >= minAccess;
     }
 
-    var canCreateVisit = HasModuleAccess(INDModuleRegistry.ModuleVisitasCreacion, IndAccessRights.Add);
-    var canViewHistory = HasModuleAccess(INDModuleRegistry.ModuleVisitasHistorial, IndAccessRights.View);
+    var canManageVisits = HasModuleAccess(INDModuleRegistry.ModuleVisitasGestion, IndAccessRights.View);
     var canViewExpenseSheets = HasModuleAccess(INDModuleRegistry.ModuleGastosHojaGasto, IndAccessRights.View);
     var canViewExpenseTickets = HasModuleAccess(INDModuleRegistry.ModuleGastosTickets, IndAccessRights.View);
 }
@@ -87,9 +86,9 @@
         <img src="~/images/insertec_logo_blanco.png" alt="@SR["Common_AppLogoAlt"]" />
     </a>
 
-    @if (canCreateVisit || canViewHistory)
+    @if (canManageVisits)
     {
-        <button id="visitasToggle" type="button" class="w-full text-left px-6 py-3 text-sm font-semibold tracking-wide hover:bg-white/15 transition flex items-center justify-between" aria-controls="submenuVisitas" aria-expanded="false">
+        <a asp-controller="Historial" asp-action="History" class="w-full text-left px-6 py-3 text-sm font-semibold tracking-wide hover:bg-white/15 transition flex items-center justify-between">
             <span class="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/90" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
@@ -97,54 +96,21 @@
                 </svg>
                 @SR["Nav_Visits"].Value.ToUpperInvariant()
             </span>
-            <svg id="visitasChevron" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/80 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-        </button>
-
-        <div id="submenuVisitas" class="submenu ml-4 hidden" aria-label="@SR["Nav_Visits"].Value">
-            @if (canCreateVisit)
-            {
-                <a asp-controller="Visitas" asp-action="Create" asp-route-fresh="1" class="block px-6 py-1 text-sm hover:bg-white/15 transition">
-                    <span class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/85" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                        </svg>
-                        @SR["Nav_Visits_Create"]
-                    </span>
-                </a>
-            }
-            @if (canViewHistory)
-            {
-                <a asp-controller="Historial" asp-action="History" class="block px-6 py-1 text-sm hover:bg-white/15 transition">
-                    <span class="flex items-center gap-2">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-white/85" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                            <path d="M3 3v5h5" />
-                            <path d="M12 7v5l4 2" />
-                        </svg>
-                        @SR["Nav_Visits_History"]
-                    </span>
-                </a>
-            }
-        </div>
+        </a>
     }
 
     @if (canViewExpenseSheets || canViewExpenseTickets)
     {
-        <button id="gastosToggle" type="button" class="w-full text-left px-6 py-3 text-sm font-semibold tracking-wide hover:bg-white/15 transition flex items-center justify-between" aria-controls="submenuGastos" aria-expanded="false">
+        <div class="w-full text-left px-6 py-3 text-sm font-semibold tracking-wide flex items-center justify-between" aria-label="@SR["Nav_Expenses"].Value">
             <span class="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/90" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
                 </svg>
                 @SR["Nav_Expenses"].Value.ToUpperInvariant()
             </span>
-            <svg id="gastosChevron" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white/80 transition-transform duration-150" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-            </svg>
-        </button>
+        </div>
 
-        <div id="submenuGastos" class="submenu ml-4 hidden" aria-label="@SR["Nav_Expenses"].Value">
+        <div id="submenuGastos" class="submenu ml-4" aria-label="@SR["Nav_Expenses"].Value">
             @if (canViewExpenseSheets)
             {
                 <a asp-controller="Gastos" asp-action="ExpenseSheets" data-clear-expense-cache="1" class="block px-6 py-1 text-sm hover:bg-white/15 transition">

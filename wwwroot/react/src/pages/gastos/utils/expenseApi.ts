@@ -80,6 +80,7 @@ import {
 } from "./expenseApiMappers.ts";
 import { sanitizeAssistantText } from "./expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "./expenseApiDateUtils.ts";
+import { isValidTicketLineAmount } from "./expenseTicketLineAmount.ts";
 import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
 import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
 import { indT } from "../../../utils/indI18n.ts";
@@ -1980,8 +1981,8 @@ export const createExpenseSheetTicketLine = async (
   payload: ExpenseSheetTicketLineRequest,
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<object>> => {
-  if (!safeText(payload?.description) || !isPositiveNumber(payload?.qty) || !isPositiveNumber(payload?.price)) {
-    throw new ApiFetchError("description, qty > 0 and price > 0 are required.");
+  if (!safeText(payload?.description) || !isValidTicketLineAmount(payload)) {
+    throw new ApiFetchError("description and a valid signed ticket line amount are required.");
   }
 
   const context = await ensureExpenseApiContext(options);
@@ -2003,8 +2004,8 @@ export const updateExpenseSheetTicketLine = async (
   payload: ExpenseSheetTicketLineRequest,
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<object>> => {
-  if (!safeText(payload?.description) || !isPositiveNumber(payload?.qty) || !isPositiveNumber(payload?.price)) {
-    throw new ApiFetchError("description, qty > 0 and price > 0 are required.");
+  if (!safeText(payload?.description) || !isValidTicketLineAmount(payload)) {
+    throw new ApiFetchError("description and a valid signed ticket line amount are required.");
   }
 
   const context = await ensureExpenseApiContext(options);

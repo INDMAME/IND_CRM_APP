@@ -26,8 +26,8 @@ const EDITOR_RETURN_FLAG_TTL_MS = 2 * 60 * 60 * 1000;
 
 const DetailApp = () => {
   const { visitTypes, asistenteTipos } = useVisitas();
-  const canEditHistory = canAccess("VISITAS_HISTORIAL", "Edit");
-  const canDeleteHistory = canAccess("VISITAS_HISTORIAL", "FullAccess");
+  const canEditHistory = canAccess("VISITAS_GESTION", "Edit");
+  const canDeleteHistory = canAccess("VISITAS_GESTION", "FullAccess");
   type ActivityDetailPayload = {
     recId?: string | number;
     RecId?: string | number;
@@ -427,7 +427,7 @@ const DetailApp = () => {
   const conclusionsLabel = indT("Visits_Field_Conclusions", "Conclusions");
   const detailDescriptionClassName = classNames(
     "form-control",
-    isEditing ? "border-slate-200 text-slate-900" : "border-slate-200 ind-readonly-field"
+    isEditing ? "border-neutral-200 text-neutral-900" : "border-neutral-200 ind-readonly-field"
   );
   const detailReadOnlyClassName = classNames("form-control cursor-pointer", !isEditing ? "ind-readonly-field" : "");
 
@@ -450,12 +450,12 @@ const DetailApp = () => {
       />
       <div
         ref={readOnlySurfaceRef}
-        className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]"
+        className="relative shadow-xs glass-panel p-4 space-y-4 border border-neutral-200 rounded-[var(--radius-xl)]"
       >
         {isHydrating && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/70 rounded-[var(--radius-xl)]">
-            <div className="flex items-center gap-2 text-sm text-slate-600">
-              <Spinner size="h-5 w-5" />
+            <div className="flex items-center gap-2 text-sm text-neutral-600">
+              <Spinner size="size-5" />
               <span>{indT("Common_Loading", "Loading")}</span>
             </div>
           </div>
@@ -513,7 +513,7 @@ const DetailApp = () => {
           ]}
         />
 
-        <div className="flex items-center gap-3 text-sm text-slate-600">
+        <div className="flex items-center gap-3 text-sm text-neutral-600">
           <span>{status}</span>
         </div>
       </div>

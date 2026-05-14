@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Miércoles 22/04/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Miércoles 13/05/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -92,7 +92,7 @@ Formatversion: 1
       SOURCE #getEnvironmentName
         #static container getEnvironmentName()
         #{
-        #    return [["PROD"]];
+        #    return [["PROD SP2"]];
         #}
         #
       ENDSOURCE
@@ -114,7 +114,7 @@ Formatversion: 1
         #        msg += infolog.text(i);
         #    }
         #
-        #    msg = strRTrim(strLTrim(msg));
+        #    msg = strLRTrim(msg);
         #
         #    return msg;
         #}
@@ -132,7 +132,7 @@ Formatversion: 1
         #        return '';
         #
         #    msg = infolog.text(n);
-        #    msg = strRTrim(strLTrim(msg));
+        #    msg = strLRTrim(msg);
         #
         #    return msg;
         #}
@@ -476,6 +476,82 @@ Formatversion: 1
         #
         #    return currency.CurrencyCode;
         #}
+      ENDSOURCE
+      SOURCE #validateInternalApiUser
+        #// Method: validateInternalApiUser
+        #// Purpose: Validate an internal API user and return the assigned companies.
+        #// Input _data:
+        #//   1) UserId
+        #//   2) Password
+        #// Output: [ Header, Companies ]
+        #// Header = [[ success, message, userId, userActive, companyCount, userValid ]]
+        #// CompanyItem = [ companyId, companyName ]
+        #// userValid = 1 only when user exists, password matches, Active=Yes and companyCount >= 1
+        #static server container validateInternalApiUser(container _data)
+        #{
+        #    str 1000                    _userId;
+        #    str 1000                    _password;
+        #    INDAPIIntServiceUser        apiUser;
+        #    INDAPIIntServAccessCompany  accessCompany;
+        #    container                   header;
+        #    container                   companiesCon;
+        #    container                   companyItem;
+        #    int                         companyCount;
+        #    ;
+        #
+        #    _userId   = strLRTrim(conPeek(_data, 1));
+        #    _password = conPeek(_data, 2);
+        #
+        #    if (!_userId || !_password)
+        #    {
+        #        header = INDCRMUtilityService::buildHeader(false, "UserId y Password son obligatorios.", [strFmt("%1", _userId), "0", "0", "0"]);
+        #        return [header, conNull()];
+        #    }
+        #
+        #    select firstonly apiUser
+        #        where apiUser.UserId == _userId;
+        #
+        #    if (!apiUser.UserId || apiUser.Password != _password)
+        #    {
+        #        header = INDCRMUtilityService::buildHeader(false, "Credenciales invalidas.", [strFmt("%1", _userId), "0", "0", "0"]);
+        #        return [header, conNull()];
+        #    }
+        #
+        #    if (apiUser.Active != NoYes::Yes)
+        #    {
+        #        header = INDCRMUtilityService::buildHeader(false, "Usuario inactivo.", [strFmt("%1", apiUser.UserId), "0", "0", "0"]);
+        #        return [header, conNull()];
+        #    }
+        #
+        #    companiesCon = conNull();
+        #    companyCount = 0;
+        #
+        #    while select accessCompany
+        #        where accessCompany.UserId == apiUser.UserId
+        #    {
+        #        if (!accessCompany.CompanyId)
+        #            continue;
+        #
+        #        companyItem = [
+        #            strFmt("%1", accessCompany.CompanyId),
+        #            strFmt("%1", accessCompany.CompanyName)
+        #        ];
+        #
+        #        companiesCon = conIns(companiesCon, conLen(companiesCon) + 1, companyItem);
+        #        companyCount++;
+        #    }
+        #
+        #    if (companyCount == 0)
+        #    {
+        #        header = INDCRMUtilityService::buildHeader(false, "Usuario sin companies asignadas.", [strFmt("%1", apiUser.UserId), "1", "0", "0"]);
+        #        return [header, conNull()];
+        #    }
+        #
+        #    header = INDCRMUtilityService::buildHeader(true, "OK", [strFmt("%1", apiUser.UserId), "1", strFmt("%1", companyCount), "1"]);
+        #
+        #    return [header, companiesCon];
+        #}
+        #
       ENDSOURCE
     ENDMETHODS
   ENDCLASS

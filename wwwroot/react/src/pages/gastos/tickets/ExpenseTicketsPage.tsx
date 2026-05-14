@@ -547,7 +547,7 @@ const ExpenseTicketsPageContent = () => {
   const selectedTotalAmount = useMemo(() => {
     return selectedTickets.reduce((sum, item) => {
       const amount = Number(item.totalAmount ?? 0);
-      return amount > 0 ? sum + amount : sum;
+      return Number.isFinite(amount) ? sum + amount : sum;
     }, 0);
   }, [selectedTickets]);
   const selectedTotalAmountText = useMemo(() => formatAmountWithCurrency(selectedTotalAmount, ""), [selectedTotalAmount]);

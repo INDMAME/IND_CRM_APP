@@ -94,24 +94,6 @@ export const normalizeTicketQuickCreateResponse = (
         (rawData as { CompletedStage?: unknown; completedStage?: unknown }).CompletedStage ??
           (rawData as { completedStage?: unknown }).completedStage
       ),
-      FailedStage:
-        safeText(
-          (rawData as { FailedStage?: unknown; failedStage?: unknown }).FailedStage ??
-            (rawData as { failedStage?: unknown }).failedStage
-        ) || null,
-      RollbackAttempted: toNullableBool(
-        (rawData as { RollbackAttempted?: unknown; rollbackAttempted?: unknown }).RollbackAttempted ??
-          (rawData as { rollbackAttempted?: unknown }).rollbackAttempted
-      ),
-      RollbackSucceeded: toNullableBool(
-        (rawData as { RollbackSucceeded?: unknown; rollbackSucceeded?: unknown }).RollbackSucceeded ??
-          (rawData as { rollbackSucceeded?: unknown }).rollbackSucceeded
-      ),
-      RollbackMessage:
-        safeText(
-          (rawData as { RollbackMessage?: unknown; rollbackMessage?: unknown }).RollbackMessage ??
-            (rawData as { rollbackMessage?: unknown }).rollbackMessage
-        ) || null,
       StepTraceIds: stepTraceIds
         ? {
             TicketCreate: safeText(
