@@ -27,6 +27,7 @@ type ExpenseTimelineCardProps = {
   statusClassName?: string;
   statusLabel?: string;
   subtitle?: string;
+  subtitleContent?: React.ReactNode;
   subtitleClassName?: string;
   statusIcon?: React.ReactNode;
   statusIconClassName?: string;
@@ -45,6 +46,7 @@ const ExpenseTimelineCard = ({
   statusClassName,
   statusLabel,
   subtitle = "",
+  subtitleContent,
   subtitleClassName = "expense-sheet-card__subtitle",
   statusIcon,
   statusIconClassName = "expense-sheet-card__status-icon",
@@ -72,13 +74,13 @@ const ExpenseTimelineCard = ({
       onKeyDown={customOnKeyDown}
       {...restInteractionProps}
     >
-      <div className="timeline-date-panel expense-timeline-card__date-panel flex flex-col items-center justify-center gap-1 bg-slate-50 border-r border-slate-200 text-slate-600">
+      <div className="timeline-date-panel expense-timeline-card__date-panel flex flex-col items-center justify-center gap-1 border-r border-[#e2e8f0] bg-[#f8fafc] text-[#00296be0]">
         {datePanelContent ? (
           datePanelContent
         ) : (
           <>
-            <div className="text-xs font-semibold tracking-[0.2em] text-slate-500">{dateParts.year}</div>
-            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{dateParts.month}</div>
+            <div className="text-xs font-semibold tracking-[0.2em] text-[#00296bb8]">{dateParts.year}</div>
+            <div className="text-xs font-semibold uppercase tracking-[0.2em] text-[#00296bb8]">{dateParts.month}</div>
             <div className="text-2xl font-semibold text-primary">{dateParts.day}</div>
           </>
         )}
@@ -93,9 +95,9 @@ const ExpenseTimelineCard = ({
         <p className={titleClassName} data-fulltext={safeTitle}>
           {safeTitle}
         </p>
-        {safeSubtitle ? (
+        {subtitleContent || safeSubtitle ? (
           <p className={subtitleClassName} data-fulltext={safeSubtitle}>
-            {safeSubtitle}
+            {subtitleContent || safeSubtitle}
           </p>
         ) : null}
         <span className={amountClassName} data-fulltext={safeAmount}>

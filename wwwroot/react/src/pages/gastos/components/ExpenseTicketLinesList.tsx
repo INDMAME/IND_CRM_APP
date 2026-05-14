@@ -60,7 +60,7 @@ const TICKET_LINE_DATE_PANEL_ICON = (
     strokeWidth="1"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="h-10 w-10 text-slate-500"
+    className="size-10 text-[#00296be0]"
     aria-hidden="true"
   >
     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -97,12 +97,13 @@ const ExpenseTicketLinesList = ({
             const priceText = formatAmountWithCurrency(line.price, currencyCode);
             const taxPercentText = formatTaxPercentValue(line.taxPercent);
             const title = line.description || line.recId || "-";
-            const subtitleParts = [
+            const primarySubtitleParts = [
               `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}`,
               `${indT("ExpenseSheets_Field_Price", "Price")}: ${priceText}`,
-              taxPercentText ? `${indT("Tickets_Field_TaxPercent", "IVA %")}: ${taxPercentText}` : "",
             ].filter(Boolean);
-            const subtitle = subtitleParts.join("   ");
+            const taxSubtitle = taxPercentText ? `${indT("Tickets_Field_TaxPercent", "IVA %")}: ${taxPercentText}` : "";
+            const primarySubtitle = primarySubtitleParts.join("   ");
+            const subtitle = [primarySubtitle, taxSubtitle].filter(Boolean).join("\n");
             const lineKey =
               String(line.recId || "").trim() ||
               [line.description, line.totalAmount, line.price, line.qty, line.taxPercent]
@@ -116,6 +117,12 @@ const ExpenseTicketLinesList = ({
                   datePanelContent={TICKET_LINE_DATE_PANEL_ICON}
                   title={title}
                   subtitle={subtitle}
+                  subtitleContent={
+                    <>
+                      <span className="block">{primarySubtitle}</span>
+                      {taxSubtitle ? <span className="mt-0.5 block">{taxSubtitle}</span> : null}
+                    </>
+                  }
                   subtitleClassName="expense-sheet-card__subtitle expense-line-card__meta text-left"
                   amountText={amountText}
                   onOpen={() => onOpenLine(line.recId)}
