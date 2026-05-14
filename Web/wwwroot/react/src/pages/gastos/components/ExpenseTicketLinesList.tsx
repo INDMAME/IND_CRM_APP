@@ -35,16 +35,6 @@ const formatQtyValue = (value: number | null): string => {
   });
 };
 
-const formatTaxPercentValue = (value: number | null): string => {
-  const formatted = formatExpenseNumber(value, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-    useGrouping: true,
-    fallback: "",
-  });
-  return formatted ? `${formatted} %` : "";
-};
-
 const EMPTY_DATE_PARTS: ExpenseDateParts = {
   year: "--",
   month: "--",
@@ -95,18 +85,16 @@ const ExpenseTicketLinesList = ({
             const amountText = formatAmountWithCurrency(line.totalAmount, currencyCode);
             const qtyText = formatQtyValue(line.qty);
             const priceText = formatAmountWithCurrency(line.price, currencyCode);
-            const taxPercentText = formatTaxPercentValue(line.taxPercent);
             const title = line.description || line.recId || "-";
             const primarySubtitleParts = [
               `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}`,
               `${indT("ExpenseSheets_Field_Price", "Price")}: ${priceText}`,
             ].filter(Boolean);
-            const taxSubtitle = taxPercentText ? `${indT("Tickets_Field_TaxPercent", "IVA %")}: ${taxPercentText}` : "";
             const primarySubtitle = primarySubtitleParts.join("   ");
-            const subtitle = [primarySubtitle, taxSubtitle].filter(Boolean).join("\n");
+            const subtitle = primarySubtitle;
             const lineKey =
               String(line.recId || "").trim() ||
-              [line.description, line.totalAmount, line.price, line.qty, line.taxPercent]
+              [line.description, line.totalAmount, line.price, line.qty]
                 .map((value) => String(value || "").trim())
                 .join("|");
 
@@ -117,12 +105,6 @@ const ExpenseTicketLinesList = ({
                   datePanelContent={TICKET_LINE_DATE_PANEL_ICON}
                   title={title}
                   subtitle={subtitle}
-                  subtitleContent={
-                    <>
-                      <span className="block">{primarySubtitle}</span>
-                      {taxSubtitle ? <span className="mt-0.5 block">{taxSubtitle}</span> : null}
-                    </>
-                  }
                   subtitleClassName="expense-sheet-card__subtitle expense-line-card__meta text-left"
                   amountText={amountText}
                   onOpen={() => onOpenLine(line.recId)}
