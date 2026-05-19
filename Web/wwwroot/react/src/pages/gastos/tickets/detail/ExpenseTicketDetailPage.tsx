@@ -23,6 +23,7 @@ import { useExpenseTicketDetailDisplay } from "./useExpenseTicketDetailDisplay.t
 import { useExpenseTicketDetailConfirmState } from "./useExpenseTicketDetailConfirmState.ts";
 import { useExpenseTicketDetailInteractions } from "./useExpenseTicketDetailInteractions.ts";
 import ExpenseTicketDetailView from "./ExpenseTicketDetailView.tsx";
+import { useExpenseTicketLinkedSheetLine } from "./useExpenseTicketLinkedSheetLine.ts";
 import { useExpenseTicketsFilterCache } from "../useExpenseTicketsFilterCache.ts";
 import { useExpenseTicketDetailBackNavigation } from "./useExpenseTicketDetailBackNavigation.ts";
 import { useExpenseTicketDetailPreviewPanel } from "./useExpenseTicketDetailPreviewPanel.ts";
@@ -170,6 +171,15 @@ const buildExpenseTicketDetailPreviewView = ({
   onWheel: handlePreviewWheel,
 });
 
+type ExpenseTicketLinkedSheetLineView = {
+  visible: boolean;
+  projectId: string;
+  isLoading: boolean;
+  errorMessage: string;
+  disabled: boolean;
+  onProjectIdChange: (value: string) => void;
+};
+
 const buildExpenseTicketDetailContentView = ({
   isLoading,
   errorMessage,
@@ -206,6 +216,7 @@ const buildExpenseTicketDetailContentView = ({
   setDraftTransDate,
   setDraftTicketTime,
   isFromSheetLink,
+  linkedLine,
   handleOpenExpenseSheet,
   visibleLines,
   totalLinePages,
@@ -252,6 +263,7 @@ const buildExpenseTicketDetailContentView = ({
   setDraftTransDate: (value: string) => void;
   setDraftTicketTime: (value: string) => void;
   isFromSheetLink: boolean;
+  linkedLine: ExpenseTicketLinkedSheetLineView;
   handleOpenExpenseSheet: () => void;
   visibleLines: ExpenseTicketDetailLine[];
   totalLinePages: number;
@@ -305,6 +317,7 @@ const buildExpenseTicketDetailContentView = ({
   onDraftTicketTimeChange: setDraftTicketTime,
   onOpenFile: openFile,
   onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
+  linkedLine,
   visibleLines,
   totalLinePages,
   linePage,
@@ -480,6 +493,12 @@ const useExpenseTicketDetailPageViewModel = () => {
     () => safeText(ticketReturnContext?.sheetId || contextSheetId || header?.hojaGastosIdDisplay),
     [contextSheetId, header?.hojaGastosIdDisplay, ticketReturnContext]
   );
+  const linkedSheetLine = useExpenseTicketLinkedSheetLine({
+    enabled: isFromExpenseLine,
+    sheetId: linkedExpenseSheetId,
+    lineRecId: contextLineRecId,
+    onForbidden: showPermissionModal,
+  });
   const {
     linkSheetLocked,
     linkSheetBlockedMessage,
@@ -628,6 +647,10 @@ const useExpenseTicketDetailPageViewModel = () => {
     setModalError,
     setStatus,
   ]);
+  const handleCancelEditInContext = useCallback(() => {
+    handleCancelEdit();
+    linkedSheetLine.resetDraftProjectId();
+  }, [handleCancelEdit, linkedSheetLine.resetDraftProjectId]);
   const { paginationLabels, previewAltText, statusLabel, gastoTypeLabel, totalAmountText, transDateText, ticketTimeText } =
     useExpenseTicketDetailDisplay({
       header,
@@ -688,6 +711,9 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftUrlFile,
     draftFileName,
     linkedExpenseSheetId,
+    linkedExpenseLineRecId: isFromExpenseLine ? contextLineRecId : "",
+    linkedExpenseLineProjectId: linkedSheetLine.draftProjectId,
+    linkedExpenseLineProjectIdChanged: isFromExpenseLine && linkedSheetLine.projectIdChanged,
     deleteLinkedExpenseLineContext: isFromExpenseLine && linkedExpenseSheetId && contextLineRecId
       ? {
           sheetId: linkedExpenseSheetId,
@@ -707,6 +733,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     onLinkedSheetSyncSuccess: () => {
       setSheetSyncBlocked(false);
       setSheetSyncBlockedMessage("");
+      linkedSheetLine.acceptDraftProjectId();
     },
     setModalError,
     setBusy,
@@ -753,7 +780,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     fileId,
     setModalError,
     handleEnableEdit: handleEnableEditInContext,
-    handleCancelEdit,
+    handleCancelEdit: handleCancelEditInContext,
     canOpenSaveConfirm,
     handleUpdate,
     handleDelete,
@@ -872,6 +899,14 @@ const useExpenseTicketDetailPageViewModel = () => {
       setDraftTransDate,
       setDraftTicketTime,
       isFromSheetLink,
+      linkedLine: {
+        visible: isFromExpenseLine,
+        projectId: linkedSheetLine.draftProjectId,
+        isLoading: linkedSheetLine.isLoading,
+        errorMessage: linkedSheetLine.errorMessage,
+        disabled: busy || isContextLocked || linkedSheetLine.isLoading,
+        onProjectIdChange: linkedSheetLine.setDraftProjectId,
+      },
       handleOpenExpenseSheet,
       visibleLines,
       totalLinePages,
