@@ -182,7 +182,7 @@ const ExpenseSheetDetailPageContent = () => {
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
         style={{ display: controller.isLoading || controller.isRedirectingAfterCreate ? "flex" : "none" }}
       >
-        <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
+        <svg className="ind-spinner size-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
           <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
         </svg>
         {indT("Common_Loading", "Loading")}
@@ -192,18 +192,22 @@ const ExpenseSheetDetailPageContent = () => {
 
       {!controller.isLoading && !controller.isRedirectingAfterCreate && !controller.errorMessage && controller.header ? (
         <ExpenseSheetHeaderForm
-          isCreateMode={controller.isCreateMode}
-          isEditing={controller.isEditing}
-          canEditHeaderFields={controller.canEditHeaderFieldsCurrent}
-          statusCommentMode={controller.statusCommentMode}
+          mode={{
+            isCreateMode: controller.isCreateMode,
+            isEditing: controller.isEditing,
+            canEditHeaderFields: controller.canEditHeaderFieldsCurrent,
+            statusCommentMode: controller.statusCommentMode,
+          }}
+          currencyLocks={{
+            isCurrencyLockedByLines: controller.isCurrencyLockedByLines,
+            isExchangeRateLockedByLines: controller.isExchangeRateLockedByLines,
+            showExchangeRate: controller.showExchangeRate,
+          }}
           header={controller.header}
           projectValue={controller.projectValue}
-          isCurrencyLockedByLines={controller.isCurrencyLockedByLines}
-          isExchangeRateLockedByLines={controller.isExchangeRateLockedByLines}
           normalizedDraftCurrency={controller.normalizedDraftCurrency}
           exchangeRateBaseCurrency={controller.exchangeRateBaseCurrency}
           exchangeRateReferenceAmount={controller.exchangeRateReferenceAmount}
-          showExchangeRate={controller.showExchangeRate}
           exchangeRateValue={controller.exchangeRateValue}
           exchangeRateValidationMessage={controller.exchangeRateValidationMessage}
           totalAmountText={controller.totalAmountText}

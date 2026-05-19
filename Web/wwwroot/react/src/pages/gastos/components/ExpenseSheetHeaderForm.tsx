@@ -9,19 +9,27 @@ import { getExpenseExchangeRateModeLabel } from "../constants/exchangeRateEntryM
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
 
-type ExpenseSheetHeaderFormProps = {
+type ExpenseSheetHeaderFormMode = {
   isCreateMode: boolean;
   isEditing: boolean;
   canEditHeaderFields: boolean;
   statusCommentMode: "hidden" | "read";
-  header: ExpenseSheetHeader;
-  projectValue: string;
+};
+
+type ExpenseSheetHeaderCurrencyLocks = {
   isCurrencyLockedByLines: boolean;
   isExchangeRateLockedByLines: boolean;
+  showExchangeRate: boolean;
+};
+
+type ExpenseSheetHeaderFormProps = {
+  mode: ExpenseSheetHeaderFormMode;
+  currencyLocks: ExpenseSheetHeaderCurrencyLocks;
+  header: ExpenseSheetHeader;
+  projectValue: string;
   normalizedDraftCurrency: string;
   exchangeRateBaseCurrency: string;
   exchangeRateReferenceAmount: number;
-  showExchangeRate: boolean;
   exchangeRateValue: string;
   exchangeRateValidationMessage: string;
   totalAmountText: string;
@@ -42,18 +50,13 @@ const EXCHANGE_RATE_MODE_PREFIX_PATTERN = /^T\.?C\.?\s*/i;
 
 // Pure presentational header form for expense sheet detail/create screens.
 const ExpenseSheetHeaderForm = ({
-  isCreateMode,
-  isEditing,
-  canEditHeaderFields,
-  statusCommentMode,
+  mode,
+  currencyLocks,
   header,
   projectValue,
-  isCurrencyLockedByLines,
-  isExchangeRateLockedByLines,
   normalizedDraftCurrency,
   exchangeRateBaseCurrency,
   exchangeRateReferenceAmount,
-  showExchangeRate,
   exchangeRateValue,
   exchangeRateValidationMessage,
   totalAmountText,
@@ -69,6 +72,8 @@ const ExpenseSheetHeaderForm = ({
   onDraftCurrencyCodeChange,
   onDraftExchangeRateChange,
 }: ExpenseSheetHeaderFormProps) => {
+  const { isCreateMode, isEditing, canEditHeaderFields, statusCommentMode } = mode;
+  const { isCurrencyLockedByLines, isExchangeRateLockedByLines, showExchangeRate } = currencyLocks;
   const isForeignCurrency =
     isEditing && canEditHeaderFields && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
   const expenseCurrencyLabel = isForeignCurrency
@@ -180,9 +185,8 @@ const ExpenseSheetHeaderForm = ({
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
         ) : null}
         <ExpenseSheetHeaderCurrencySection
-          isEditing={isEditing}
-          canEditHeaderFields={canEditHeaderFields}
-          isForeignCurrency={isForeignCurrency}
+          interaction={{ isEditing, canEditHeaderFields }}
+          currencyState={{ isForeignCurrency, isCurrencyLockedByLines, isExchangeRateLockedByLines, showExchangeRate }}
           expenseCurrencyLabel={expenseCurrencyLabel}
           headerCurrencyCode={headerCurrencyCode}
           baseCurrencyCode={baseCurrencyCode}
@@ -191,9 +195,6 @@ const ExpenseSheetHeaderForm = ({
           exchangeRateValue={exchangeRateValue}
           exchangeRateValidationMessage={exchangeRateValidationMessage}
           exchangeRateReferenceAmount={exchangeRateReferenceAmount}
-          showExchangeRate={showExchangeRate}
-          isCurrencyLockedByLines={isCurrencyLockedByLines}
-          isExchangeRateLockedByLines={isExchangeRateLockedByLines}
           exchangeRateInfoMessage={exchangeRateInfoMessage}
           onDraftCurrencyCodeChange={onDraftCurrencyCodeChange}
           onDraftExchangeRateChange={onDraftExchangeRateChange}

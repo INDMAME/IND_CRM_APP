@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useEffectEvent, useLayoutEffect, useMemo, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
@@ -172,7 +172,7 @@ const buildFallbackGastoTypeOptions = (): ExpenseSelectOption[] => {
 };
 
 const NewTicketIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="h-6 w-6">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="size-6">
     <path strokeLinecap="round" strokeLinejoin="round" d="M10 20h-5a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v2" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M14.362 11.15a3 3 0 1 0 -4.144 4.263" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M14 21v-4a2 2 0 1 1 4 0v4" />
@@ -543,13 +543,26 @@ const ExpenseTicketsPageContent = () => {
   );
 
   const selectedTicketCount = resolveSelectedCount(total);
-  const selectedTotalAmount = useMemo(() => {
-    return selectedTickets.reduce((sum, item) => {
+  const selectedTotalAmountText = useMemo(() => {
+    const totalsByCurrency = new Map<string, number>();
+
+    selectedTickets.forEach((item) => {
+      const currencyCode = safeText(item.currencyCode).toUpperCase();
       const amount = Number(item.totalAmount ?? 0);
-      return Number.isFinite(amount) ? sum + amount : sum;
-    }, 0);
+      if (!Number.isFinite(amount)) return;
+      totalsByCurrency.set(currencyCode, (totalsByCurrency.get(currencyCode) ?? 0) + amount);
+    });
+
+    const groupedTotals = Array.from(totalsByCurrency.entries()).sort((left, right) =>
+      left[0].localeCompare(right[0])
+    );
+
+    if (groupedTotals.length < 1) {
+      return formatAmountWithCurrency(0, "");
+    }
+
+    return groupedTotals.map(([currencyCode, amount]) => formatAmountWithCurrency(amount, currencyCode)).join("; ");
   }, [selectedTickets]);
-  const selectedTotalAmountText = useMemo(() => formatAmountWithCurrency(selectedTotalAmount, ""), [selectedTotalAmount]);
   useLayoutEffect(() => {
     revealTopbarActionGroup("expense-tickets-list-actions");
   }, []);
@@ -754,6 +767,7 @@ const ExpenseTicketsPageContent = () => {
       managedUserId: resolvedManagedUserId,
     });
   }, [appliedFilters, currentFilters, normalizeLinkModeSnapshotForLoad, syncManagedUserSelection]);
+  const resolveActiveFiltersEvent = useEffectEvent(resolveActiveFilters);
 
   // Activates backend-driven filtered selection for the current filter snapshot.
   const selectAllMatchingTickets = useCallback(async () => {
@@ -867,23 +881,24 @@ const ExpenseTicketsPageContent = () => {
         return true;
       }
 
-      await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
-
       if (result.failedCount > 0 && result.linkedCount < 1) {
         const failureMessage = response.Message || indT("Api_RequestFailed", "Request failed.");
         setLinkFlowStatus(failureMessage);
         flashActionMark("errorProcess", 1500);
+        await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
         return true;
       }
 
       if (result.failedCount > 0 || result.skippedCount > 0) {
         setLinkFlowStatus(response.Message || indT("Common_OK", "OK"));
         flashActionMark("warningProcess", 1500);
+        await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
         return true;
       }
 
       setLinkFlowStatus(response.Message || indT("Common_OK", "OK"));
       flashActionMark("okProcess", 1200);
+      await loadList(currentPage < 1 ? 1 : currentPage, activeFilters);
       return true;
     } catch (error) {
       const failureMessage = error instanceof Error ? error.message : indT("Api_RequestFailed", "Request failed.");
@@ -1352,7 +1367,7 @@ const ExpenseTicketsPageContent = () => {
     const handlePageShow = (event: PageTransitionEvent) => {
       if (!event.persisted && !isExpenseHistoryBackForwardNavigation()) return;
 
-      const snapshot = resolveActiveFilters();
+      const snapshot = resolveActiveFiltersEvent();
       if (!isLinkMode && (!snapshot.fromDate || !snapshot.toDate)) {
         return;
       }
@@ -1366,7 +1381,7 @@ const ExpenseTicketsPageContent = () => {
     return () => {
       window.removeEventListener("pageshow", handlePageShow);
     };
-  }, [currentPage, hasAccess, isLinkMode, managementBootstrapReady, resolveActiveFilters, runAutomaticListLoad]);
+  }, [currentPage, hasAccess, isLinkMode, managementBootstrapReady, runAutomaticListLoad]);
 
   useEffect(() => {
     const onToggleFilters = () => {
@@ -1378,7 +1393,7 @@ const ExpenseTicketsPageContent = () => {
     };
 
     const onRefresh = () => {
-      const snapshot = resolveActiveFilters();
+      const snapshot = resolveActiveFiltersEvent();
       if (!isLinkMode && (!snapshot?.fromDate || !snapshot?.toDate)) {
         return;
       }
@@ -1392,7 +1407,7 @@ const ExpenseTicketsPageContent = () => {
       window.removeEventListener("expense-tickets-toggle-filter", onToggleFilters);
       window.removeEventListener("expense-tickets-refresh", onRefresh);
     };
-  }, [currentPage, isLinkMode, loadList, resolveActiveFilters, showFilters, toggleFilterPanel]);
+  }, [currentPage, isLinkMode, loadList, showFilters, toggleFilterPanel]);
 
   return (
     <div className="space-y-2">
@@ -1653,7 +1668,7 @@ const ExpenseTicketsPageContent = () => {
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
         style={{ display: showListLoading ? "flex" : "none" }}
       >
-        <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
+        <svg className="ind-spinner size-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
           <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
         </svg>
         {indT("Common_Loading", "Loading")}
@@ -1712,7 +1727,7 @@ const ExpenseTicketsPageContent = () => {
               <>
                 {isAssignedToExpenseSheet ? (
                   <span className="expense-ticket-card__status-icon" role="img" aria-label={statusLabel}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -1727,7 +1742,7 @@ const ExpenseTicketsPageContent = () => {
                     role="img"
                     aria-label={processedByAiLabel}
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-4 w-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M4 18l4-12l4 12" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M6 13h4" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M14 6h6" />
