@@ -3,6 +3,7 @@ import type { RefObject } from "react";
 import ConfirmModal from "../../../../components/commons/ConfirmModal.tsx";
 import { indT } from "../../../../utils/indI18n.ts";
 import ExpenseTicketDetailHeaderForm from "../../components/ExpenseTicketDetailHeaderForm.tsx";
+import ExpenseTicketLinkedSheetLineSection from "../../components/ExpenseTicketLinkedSheetLineSection.tsx";
 import ExpenseTicketLinesList from "../../components/ExpenseTicketLinesList.tsx";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "./expenseTicketDetailTypes.ts";
 import ExpenseTicketPreviewModal from "./ExpenseTicketPreviewModal.tsx";
@@ -85,6 +86,14 @@ type ExpenseTicketDetailViewProps = {
     onDraftTicketTimeChange: (value: string) => void;
     onOpenFile: () => void;
     onOpenExpenseSheet?: () => void;
+    linkedLine: {
+      visible: boolean;
+      projectId: string;
+      isLoading: boolean;
+      errorMessage: string;
+      disabled: boolean;
+      onProjectIdChange: (value: string) => void;
+    };
     visibleLines: ExpenseTicketDetailLine[];
     totalLinePages: number;
     linePage: number;
@@ -132,6 +141,16 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onOpenExpenseSheet={content.onOpenExpenseSheet}
         hideOpenFileAction={content.showStickyPreview}
       />
+      {content.linkedLine.visible ? (
+        <ExpenseTicketLinkedSheetLineSection
+          projectId={content.linkedLine.projectId}
+          isEditing={content.isEditing}
+          isLoading={content.linkedLine.isLoading}
+          disabled={content.linkedLine.disabled}
+          errorMessage={content.linkedLine.errorMessage}
+          onProjectIdChange={content.linkedLine.onProjectIdChange}
+        />
+      ) : null}
       <ExpenseTicketLinesList
         visibleLines={content.visibleLines}
         totalLinePages={content.totalLinePages}

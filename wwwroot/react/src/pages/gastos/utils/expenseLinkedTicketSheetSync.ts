@@ -21,6 +21,8 @@ const DEFAULT_TICKET_GASTO_TYPE = 8;
 type SyncExpenseLinkedTicketSheetLineArgs = {
   fileId: string;
   sheetId: string;
+  lineRecId?: string;
+  projectIdOverride?: string | null;
 };
 
 type SyncedTicketSnapshot = {
@@ -63,10 +65,16 @@ const selectTicket = (items: unknown[], fileId: string): ExpenseSheetTicketDetai
   return selected as ExpenseSheetTicketDetailDto;
 };
 
-const resolveLinkedLine = (sheet: ExpenseSheetDetailDto, fileId: string): ExpenseSheetLine | null => {
+const resolveLinkedLine = (sheet: ExpenseSheetDetailDto, fileId: string, lineRecId?: string): ExpenseSheetLine | null => {
   const safeFileId = safeText(fileId).toUpperCase();
-  const lines = Array.isArray(sheet.Lines) ? sheet.Lines : [];
+  const safeLineRecId = safeText(lineRecId).toUpperCase();
+  const sourceLines = sheet.Lines ?? sheet.lines ?? [];
+  const lines = Array.isArray(sourceLines) ? sourceLines : [];
   const mappedLines = lines.map((entry) => mapExpenseSheetLine(entry));
+  if (safeLineRecId) {
+    return mappedLines.find((entry) => safeText(entry.lineRecId).toUpperCase() === safeLineRecId) || null;
+  }
+
   return mappedLines.find((entry) => safeText(entry.fileId).toUpperCase() === safeFileId) || null;
 };
 
@@ -115,12 +123,20 @@ const buildLinePayload = ({
   sheetProjectId,
   existingLine,
   ticketSnapshot,
+  projectIdOverride,
+  hasProjectIdOverride,
 }: {
   fileId: string;
   sheetProjectId: string;
   existingLine: ExpenseSheetLine | null;
   ticketSnapshot: SyncedTicketSnapshot;
+  projectIdOverride?: string | null;
+  hasProjectIdOverride: boolean;
 }): ExpenseSheetCreateLineRequest => {
+  const resolvedProjectId = hasProjectIdOverride
+    ? safeText(projectIdOverride)
+    : safeText(existingLine?.projId || sheetProjectId);
+
   return {
     transDate: ticketSnapshot.transDate,
     typeValue: ticketSnapshot.gastoType,
@@ -130,16 +146,15 @@ const buildLinePayload = ({
     ticket: true,
     qty: 1,
     price: ticketSnapshot.totalAmount,
-    projId: safeText(existingLine?.projId || sheetProjectId) || undefined,
+    projId: resolvedProjectId || undefined,
     indAttachFiles: safeText(existingLine?.indAttachFiles) || undefined,
   };
 };
 
 // Synchronizes the expense-sheet snapshot line that is linked to one ticket file.
-export const syncExpenseLinkedTicketSheetLine = async ({
-  fileId,
-  sheetId,
-}: SyncExpenseLinkedTicketSheetLineArgs): Promise<void> => {
+export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTicketSheetLineArgs): Promise<void> => {
+  const { fileId, sheetId, lineRecId, projectIdOverride } = args;
+  const hasProjectIdOverride = Object.prototype.hasOwnProperty.call(args, "projectIdOverride");
   const safeFileId = safeText(fileId);
   const safeSheetId = safeText(sheetId);
   if (!safeFileId || !safeSheetId) {
@@ -177,7 +192,11 @@ export const syncExpenseLinkedTicketSheetLine = async ({
     throw new Error(indT("Tickets_Detail_NotFound", "Ticket was not found."));
   }
 
-  const existingLine = resolveLinkedLine(selectedSheet, safeFileId);
+  const existingLine = resolveLinkedLine(selectedSheet, safeFileId, lineRecId);
+  if (safeText(lineRecId) && !existingLine) {
+    throw new Error(indT("ExpenseSheets_NotFound", "Expense sheet was not found."));
+  }
+
   const sheetHeader = mapExpenseSheetHeader(selectedSheet);
   const ticketSnapshot = resolveTicketSnapshot(selectedTicket, existingLine);
   if (!(ticketSnapshot.totalAmount > 0)) {
@@ -191,6 +210,8 @@ export const syncExpenseLinkedTicketSheetLine = async ({
     sheetProjectId: safeText(sheetHeader.projId),
     existingLine,
     ticketSnapshot,
+    projectIdOverride,
+    hasProjectIdOverride,
   });
 
   if (existingLine?.lineRecId) {
