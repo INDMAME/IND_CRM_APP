@@ -59,7 +59,7 @@ import "./chunks/chunk-HF2ANVLM.js";
 import {
   formatAmountWithCurrency,
   navigateToExpenseUrl
-} from "./chunks/chunk-S4F4JMPK.js";
+} from "./chunks/chunk-WIQGJHF6.js";
 import {
   askExpenseSheetsQuestion,
   configureExpenseApiAuth,
