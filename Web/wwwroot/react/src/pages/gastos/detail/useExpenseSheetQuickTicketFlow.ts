@@ -496,7 +496,7 @@ export const useExpenseSheetQuickTicketFlow = ({
             ticketImage: file,
             currencyCode: safeText(currencyCode).toUpperCase() || undefined,
             existingHojaGastosId: linkToSheet ? safeText(sheetId) || undefined : undefined,
-            projectId: linkToSheet ? safeText(projectId) || undefined : undefined,
+            projId: linkToSheet ? safeText(projectId) || undefined : undefined,
           },
           buildApiOptions()
         );

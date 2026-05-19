@@ -411,6 +411,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-crm-projects-list",
+    pattern: "api/crm/projects/list",
+    defaults: new { controller = "Gastos", action = "ApiProjectsList" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
     name: "api-system-exchange-rate",
     pattern: "api/system/exchange-rate",
     defaults: new { controller = "Gastos", action = "ApiSystemExchangeRate" },

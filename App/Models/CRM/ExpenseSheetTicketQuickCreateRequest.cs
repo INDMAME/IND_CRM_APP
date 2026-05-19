@@ -21,6 +21,10 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? ExistingHojaGastosId { get; set; }
 
+        [JsonPropertyName("projId")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? ProjId { get; set; }
+
         [JsonPropertyName("projectId")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? ProjectId { get; set; }

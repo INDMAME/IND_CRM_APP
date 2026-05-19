@@ -3,6 +3,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetCreateLineDraft } from "../expenseTypes.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
+import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 
 type ExpenseSheetCreateLinesEditorProps = {
   lines: ExpenseSheetCreateLineDraft[];
@@ -145,11 +146,11 @@ const ExpenseSheetCreateLinesEditor = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Project", "Project")}</label>
-              <input
-                className="form-control"
+              <ExpenseProjectFilterInput
+                label={indT("ExpenseSheets_Field_Project", "Project")}
+                placeholder={indT("ExpenseSheets_Filter_Project_Placeholder", "Project id")}
                 value={line.projId}
-                onChange={(event) => onLineChange(line.localId, { projId: event.target.value || "" })}
+                onChange={(value) => onLineChange(line.localId, { projId: value || "" })}
               />
             </div>
 

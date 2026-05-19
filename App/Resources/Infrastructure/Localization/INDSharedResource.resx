@@ -58,7 +58,7 @@
     <value>Logo de Insertec</value>
   </data>
   <data name="Nav_Visits" xml:space="preserve">
-    <value>Informes</value>
+    <value>Visitas</value>
   </data>
   <data name="Nav_Visits_Create" xml:space="preserve">
     <value>Creación</value>
@@ -622,7 +622,7 @@
     <value>Cargando datos...</value>
   </data>
   <data name="History_NoDataInRange" xml:space="preserve">
-    <value>No hay informes en este rango</value>
+    <value>No hay visitas en este rango</value>
   </data>
   <data name="History_Page_First" xml:space="preserve">
     <value>Primera</value>
@@ -748,10 +748,10 @@
     <value>Confirmar creación</value>
   </data>
   <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve">
-    <value>¿Deseas crear este informe?</value>
+    <value>¿Deseas crear esta visita?</value>
   </data>
   <data name="Visits_Create_CreatingVisitFor" xml:space="preserve">
-    <value>Creando informe para {0}...</value>
+    <value>Creando visita para {0}...</value>
   </data>
   <data name="Visits_Create_MinChars" xml:space="preserve">
     <value>Escribe al menos {0} caracteres.</value>
@@ -811,10 +811,10 @@
     <value>Falló al crear la actividad.</value>
   </data>
   <data name="Visits_Create_CreateVisitFailed" xml:space="preserve">
-    <value>Falló al crear el informe.</value>
+    <value>Falló al crear la visita.</value>
   </data>
   <data name="Visits_Create_CreateVisitError" xml:space="preserve">
-    <value>Error al crear el informe.</value>
+    <value>Error al crear la visita.</value>
   </data>
   <data name="Visits_Create_ClientCount" xml:space="preserve">
     <value>{0} cliente(s)</value>
@@ -832,7 +832,7 @@
     <value>{0} contacto(s) seleccionado(s)</value>
   </data>
   <data name="Visits_Create_VisitData_Title" xml:space="preserve">
-    <value>Datos del informe</value>
+    <value>Datos de la visita</value>
   </data>
   <data name="Visits_Field_Description" xml:space="preserve">
     <value>Descripción</value>
@@ -847,16 +847,16 @@
     <value>Conclusiones</value>
   </data>
   <data name="Visits_Create_ErrorBoundary" xml:space="preserve">
-    <value>Ocurrió un error al mostrar la página de informes. Recarga y vuelve a intentar.</value>
+    <value>Ocurrió un error al mostrar la página de visitas. Recarga y vuelve a intentar.</value>
   </data>
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
-    <value>Datos del informe</value>
+    <value>Datos de la visita</value>
   </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>Fecha</value>
   </data>
   <data name="Visits_Detail_VisitType_Label" xml:space="preserve">
-    <value>Tipo de informe</value>
+    <value>Tipo de visita</value>
   </data>
   <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve">
     <value>Selecciona tipo</value>
@@ -946,7 +946,7 @@
     <value>Llamada de teléfono</value>
   </data>
   <data name="Enum_ActividadType_Visit" xml:space="preserve">
-    <value>Informe</value>
+    <value>Visita</value>
   </data>
   <data name="Enum_ActividadType_Task" xml:space="preserve">
     <value>Tarea</value>

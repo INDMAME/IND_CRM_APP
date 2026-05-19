@@ -66,6 +66,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                     "/Gastos/DeleteExpenseSheet",
                     "/Gastos/DeleteExpenseSheetLine",
                     "/Gastos/GetProjectsForDropdown",
+                    "/api/crm/projects/list",
                     "/api/crm/expensesheets",
                     "/api/system/exchange-rate",
                     "/api/ia/service/expensefromticket",

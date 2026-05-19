@@ -342,11 +342,11 @@ function VisitasApp() {
 
       {step === 2 && (
         <CreateStepVisitDetails
-          title={indT("Visits_Create_VisitData_Title", "Report details")}
+          title={indT("Visits_Create_VisitData_Title", "Visit details")}
           dateLabel={indT("Visits_Detail_Date_Label", "Date")}
           transDate={transDate}
           onTransDateChange={setTransDate}
-          visitTypeLabel={indT("Visits_Detail_VisitType_Label", "Report type")}
+          visitTypeLabel={indT("Visits_Detail_VisitType_Label", "Visit type")}
           visitTypes={visitTypes}
           visitType={visitType}
           onVisitTypeChange={setVisitType}
@@ -394,7 +394,7 @@ function VisitasApp() {
 // Create flow UI wrapped by the error boundary.
 export default function CreateForm() {
   return (
-    <AppErrorBoundary fallbackMessage={indT("Visits_Create_ErrorBoundary", "An error occurred while rendering the reports page. Reload and try again.")}>
+    <AppErrorBoundary fallbackMessage={indT("Visits_Create_ErrorBoundary", "An error occurred while rendering the visits page. Reload and try again.")}>
       <VisitasApp />
     </AppErrorBoundary>
   );

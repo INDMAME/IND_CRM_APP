@@ -20,21 +20,47 @@ import {
 } from "./expenseApiTransforms.ts";
 import { normalizeExpenseSheetSubordinates } from "./expenseSubordinateMapper.ts";
 
+const getPagedItems = <T,>(response: IndPagedResponse<T>): T[] => {
+  const raw = (response || {}) as { Items?: unknown; items?: unknown };
+  if (Array.isArray(raw.Items)) return raw.Items as T[];
+  if (Array.isArray(raw.items)) return raw.items as T[];
+  return [];
+};
+
 export const normalizeListPagedResponse = (
   response: IndPagedResponse<ExpenseSheetListItemDto>
 ): IndPagedResponse<ExpenseSheetListItemDto> => {
   return {
     ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
+    Items: getPagedItems(response),
   };
 };
 
 export const normalizeDetailPagedResponse = (
   response: IndPagedResponse<ExpenseSheetDetailDto>
 ): IndPagedResponse<ExpenseSheetDetailDto> => {
+  const items = getPagedItems(response);
+  const normalizedItems = items.map((item) => {
+    const rawLines = Array.isArray(item?.Lines)
+      ? item.Lines
+      : (Array.isArray(item?.lines) ? item.lines : []);
+
+    return {
+      ...item,
+      HojaGastosId: safeText(item?.HojaGastosId ?? item?.hojaGastosId),
+      ProjId: safeText(item?.ProjId ?? item?.projId),
+      Lines: rawLines.map((line) => ({
+        ...line,
+        RecId: safeText(line?.RecId ?? line?.recId),
+        LineRecId: safeText(line?.LineRecId ?? line?.lineRecId),
+        ProjId: safeText(line?.ProjId ?? line?.projId),
+      })),
+    };
+  });
+
   return {
     ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
+    Items: normalizedItems,
   };
 };
 
@@ -127,7 +153,7 @@ export const normalizeCurrencyPagedResponse = (
 ): IndPagedResponse<ExpenseSheetCurrencyDto> => {
   return {
     ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
+    Items: getPagedItems(response),
   };
 };
 

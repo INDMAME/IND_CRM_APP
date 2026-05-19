@@ -1622,6 +1622,7 @@ namespace IND_CRM_APP.Services
                 Description = NormalizeOptionalText(req.Description),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 ExistingHojaGastosId = NormalizeOptionalText(req.ExistingHojaGastosId),
+                ProjId = NormalizeOptionalText(req.ProjId) ?? NormalizeOptionalText(req.ProjectId),
                 ProjectId = NormalizeOptionalText(req.ProjectId)
             };
 
@@ -1631,13 +1632,13 @@ namespace IND_CRM_APP.Services
             var streamLength = canReportLength ? ticketImageStream.Length : -1;
 
             _logger.LogInformation(
-                "QuickCreateExpenseSheetTicket request. FileName: {FileName}. ContentType: {ContentType}. StreamLength: {StreamLength}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjectId: {ProjectId}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. DescriptionLength: {DescriptionLength}. ComentarioLength: {ComentarioLength}.",
+                "QuickCreateExpenseSheetTicket request. FileName: {FileName}. ContentType: {ContentType}. StreamLength: {StreamLength}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjId: {ProjId}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. DescriptionLength: {DescriptionLength}. ComentarioLength: {ComentarioLength}.",
                 safeFileName,
                 mime,
                 streamLength,
                 payload.CurrencyCode ?? "<empty>",
                 payload.ExistingHojaGastosId ?? "<empty>",
-                payload.ProjectId ?? "<empty>",
+                payload.ProjId ?? "<empty>",
                 GetSelectedCompanyId() ?? "<empty>",
                 NormalizeOptionalText(axUserIdOverride) ?? "<session>",
                 payload.Description?.Length ?? 0,
@@ -1679,11 +1680,11 @@ namespace IND_CRM_APP.Services
             if (!string.IsNullOrWhiteSpace(payload.ExistingHojaGastosId))
                 form.Add(new StringContent(payload.ExistingHojaGastosId), "existingHojaGastosId");
 
-            if (!string.IsNullOrWhiteSpace(payload.ProjectId))
-                form.Add(new StringContent(payload.ProjectId), "projectId");
+            if (!string.IsNullOrWhiteSpace(payload.ProjId))
+                form.Add(new StringContent(payload.ProjId), "projId");
 
             _logger.LogInformation(
-                "QuickCreateExpenseSheetTicket multipart envelope. FileName: {FileName}. Mime: {Mime}. StreamCanSeek: {StreamCanSeek}. StreamLength: {StreamLength}. HasCurrencyCode: {HasCurrencyCode}. HasDescription: {HasDescription}. HasComentario: {HasComentario}. HasExistingHojaGastosId: {HasExistingHojaGastosId}. HasProjectId: {HasProjectId}.",
+                "QuickCreateExpenseSheetTicket multipart envelope. FileName: {FileName}. Mime: {Mime}. StreamCanSeek: {StreamCanSeek}. StreamLength: {StreamLength}. HasCurrencyCode: {HasCurrencyCode}. HasDescription: {HasDescription}. HasComentario: {HasComentario}. HasExistingHojaGastosId: {HasExistingHojaGastosId}. HasProjId: {HasProjId}.",
                 safeFileName,
                 mime,
                 ticketImageStream.CanSeek,
@@ -1692,7 +1693,7 @@ namespace IND_CRM_APP.Services
                 !string.IsNullOrWhiteSpace(payload.Description),
                 !string.IsNullOrWhiteSpace(payload.Comentario),
                 !string.IsNullOrWhiteSpace(payload.ExistingHojaGastosId),
-                !string.IsNullOrWhiteSpace(payload.ProjectId));
+                !string.IsNullOrWhiteSpace(payload.ProjId));
 
             var result = await SendPostMultipartAsync(
                 ApiRoutes.ExpenseSheetTicketsQuickCreate,

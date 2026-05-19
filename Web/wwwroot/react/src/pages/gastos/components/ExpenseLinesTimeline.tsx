@@ -1,5 +1,6 @@
 import React from "react";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
+import { indT } from "../../../utils/indI18n.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
 import { formatExpenseDateParts, safeText } from "../utils/expenseUiUtils.ts";
@@ -39,6 +40,8 @@ const ExpenseLinesTimeline = ({
   onLinePageChange,
   onOpenLine,
 }: ExpenseLinesTimelineProps) => {
+  const projectLabel = indT("ExpenseSheets_Field_Project", "Project");
+
   return (
     <section className="space-y-0">
       <ExpenseSectionDivider label={linesLabel} className="expense-section-divider--spaced" />
@@ -52,6 +55,8 @@ const ExpenseLinesTimeline = ({
             const description = safeText(line.description);
             const amountText = formatAmountWithCurrency(line.amount ?? null, currencyCode);
             const linkedTicketFileId = safeText(line.fileId);
+            const projectId = safeText(line.projId);
+            const projectSubtitle = projectId ? `${projectLabel}: ${projectId}` : "";
             const dateParts = formatExpenseDateParts(safeText(line.transDate), document?.documentElement?.lang || "es-ES");
             const ticketStatusIcon = linkedTicketFileId ? (
               <svg
@@ -60,7 +65,7 @@ const ExpenseLinesTimeline = ({
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="h-4 w-4"
+                className="size-4"
                 aria-hidden="true"
               >
                 <path
@@ -72,13 +77,15 @@ const ExpenseLinesTimeline = ({
             ) : null;
 
             return (
-              <div key={`${lineId}-${index}`} className="timeline-item">
+              <div key={lineId || `${safeText(line.transDate)}-${description}-${amountText}-${projectId}`} className="timeline-item">
                 <ExpenseTimelineCard
                   dateParts={dateParts}
                   title={description || lineId || "-"}
                   amountText={amountText}
                   onOpen={() => onOpenLine(lineId)}
+                  subtitle={projectSubtitle}
                   titleClassName="timeline-name expense-line-card__title"
+                  subtitleClassName="expense-sheet-card__subtitle expense-line-card__meta"
                   statusIcon={ticketStatusIcon}
                   statusIconClassName="expense-line-card__ticket-icon"
                   statusLabel={linkedTicketFileId || undefined}

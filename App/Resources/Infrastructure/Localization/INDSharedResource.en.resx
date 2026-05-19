@@ -58,7 +58,7 @@
     <value>Insertec logo</value>
   </data>
   <data name="Nav_Visits" xml:space="preserve">
-    <value>Reports</value>
+    <value>Visits</value>
   </data>
   <data name="Nav_Visits_Create" xml:space="preserve">
     <value>Create</value>
@@ -622,7 +622,7 @@
     <value>Loading...</value>
   </data>
   <data name="History_NoDataInRange" xml:space="preserve">
-    <value>No reports in this range</value>
+    <value>No visits in this range</value>
   </data>
   <data name="History_Page_First" xml:space="preserve">
     <value>First</value>
@@ -748,10 +748,10 @@
     <value>Confirm create</value>
   </data>
   <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve">
-    <value>Do you want to create this report?</value>
+    <value>Do you want to create this visit?</value>
   </data>
   <data name="Visits_Create_CreatingVisitFor" xml:space="preserve">
-    <value>Creating report for {0}...</value>
+    <value>Creating visit for {0}...</value>
   </data>
   <data name="Visits_Create_MinChars" xml:space="preserve">
     <value>Type at least {0} characters.</value>
@@ -811,10 +811,10 @@
     <value>Failed to create the activity.</value>
   </data>
   <data name="Visits_Create_CreateVisitFailed" xml:space="preserve">
-    <value>Failed to create the report.</value>
+    <value>Failed to create the visit.</value>
   </data>
   <data name="Visits_Create_CreateVisitError" xml:space="preserve">
-    <value>Error creating the report.</value>
+    <value>Error creating the visit.</value>
   </data>
   <data name="Visits_Create_ClientCount" xml:space="preserve">
     <value>{0} client(s)</value>
@@ -832,7 +832,7 @@
     <value>{0} selected contact(s)</value>
   </data>
   <data name="Visits_Create_VisitData_Title" xml:space="preserve">
-    <value>Report details</value>
+    <value>Visit details</value>
   </data>
   <data name="Visits_Field_Description" xml:space="preserve">
     <value>Description</value>
@@ -847,16 +847,16 @@
     <value>Conclusions</value>
   </data>
   <data name="Visits_Create_ErrorBoundary" xml:space="preserve">
-    <value>There was an error rendering the reports page. Reload and try again.</value>
+    <value>There was an error rendering the visits page. Reload and try again.</value>
   </data>
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
-    <value>Report details</value>
+    <value>Visit details</value>
   </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>Date</value>
   </data>
   <data name="Visits_Detail_VisitType_Label" xml:space="preserve">
-    <value>Report type</value>
+    <value>Visit type</value>
   </data>
   <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve">
     <value>Select type</value>
@@ -946,7 +946,7 @@
     <value>Phone call</value>
   </data>
   <data name="Enum_ActividadType_Visit" xml:space="preserve">
-    <value>Report</value>
+    <value>Visit</value>
   </data>
   <data name="Enum_ActividadType_Task" xml:space="preserve">
     <value>Task</value>

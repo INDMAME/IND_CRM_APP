@@ -58,7 +58,7 @@
     <value>Logo Insertec</value>
   </data>
   <data name="Nav_Visits" xml:space="preserve">
-    <value>Report</value>
+    <value>Visite</value>
   </data>
   <data name="Nav_Visits_Create" xml:space="preserve">
     <value>Crea</value>
@@ -622,7 +622,7 @@
     <value>Caricamento...</value>
   </data>
   <data name="History_NoDataInRange" xml:space="preserve">
-    <value>Nessun report in questo intervallo</value>
+    <value>Nessuna visita in questo intervallo</value>
   </data>
   <data name="History_Page_First" xml:space="preserve">
     <value>Prima</value>
@@ -748,10 +748,10 @@
     <value>Conferma creazione</value>
   </data>
   <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve">
-    <value>Vuoi creare questo report?</value>
+    <value>Vuoi creare questa visita?</value>
   </data>
   <data name="Visits_Create_CreatingVisitFor" xml:space="preserve">
-    <value>Creazione report per {0}...</value>
+    <value>Creazione visita per {0}...</value>
   </data>
   <data name="Visits_Create_MinChars" xml:space="preserve">
     <value>Digita almeno {0} caratteri.</value>
@@ -811,10 +811,10 @@
     <value>Creazione attivita non riuscita.</value>
   </data>
   <data name="Visits_Create_CreateVisitFailed" xml:space="preserve">
-    <value>Creazione report non riuscita.</value>
+    <value>Creazione visita non riuscita.</value>
   </data>
   <data name="Visits_Create_CreateVisitError" xml:space="preserve">
-    <value>Errore durante la creazione del report.</value>
+    <value>Errore durante la creazione della visita.</value>
   </data>
   <data name="Visits_Create_ClientCount" xml:space="preserve">
     <value>{0} cliente(i)</value>
@@ -832,7 +832,7 @@
     <value>{0} contatto(i) selezionato(i)</value>
   </data>
   <data name="Visits_Create_VisitData_Title" xml:space="preserve">
-    <value>Dati report</value>
+    <value>Dati visita</value>
   </data>
   <data name="Visits_Field_Description" xml:space="preserve">
     <value>Descrizione</value>
@@ -847,16 +847,16 @@
     <value>Conclusioni</value>
   </data>
   <data name="Visits_Create_ErrorBoundary" xml:space="preserve">
-    <value>Si e verificato un errore nella pagina report. Ricarica e riprova.</value>
+    <value>Si e verificato un errore nella pagina visite. Ricarica e riprova.</value>
   </data>
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
-    <value>Dati report</value>
+    <value>Dati visita</value>
   </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>Data</value>
   </data>
   <data name="Visits_Detail_VisitType_Label" xml:space="preserve">
-    <value>Tipo report</value>
+    <value>Tipo visita</value>
   </data>
   <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve">
     <value>Seleziona tipo</value>
@@ -946,7 +946,7 @@
     <value>Telefonata</value>
   </data>
   <data name="Enum_ActividadType_Visit" xml:space="preserve">
-    <value>Report</value>
+    <value>Visita</value>
   </data>
   <data name="Enum_ActividadType_Task" xml:space="preserve">
     <value>Attivita</value>

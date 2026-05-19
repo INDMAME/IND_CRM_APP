@@ -1943,6 +1943,7 @@ namespace IND_CRM_APP.Controllers
             [FromForm] string? description,
             [FromForm] string? comentario,
             [FromForm] string? existingHojaGastosId,
+            [FromForm] string? projId,
             [FromForm] string? projectId)
         {
             var token = GetToken();
@@ -1992,6 +1993,7 @@ namespace IND_CRM_APP.Controllers
                 Description = NormalizeOptionalText(description),
                 Comentario = NormalizeOptionalText(comentario),
                 ExistingHojaGastosId = NormalizeOptionalText(existingHojaGastosId),
+                ProjId = NormalizeOptionalText(projId) ?? NormalizeOptionalText(projectId),
                 ProjectId = NormalizeOptionalText(projectId)
             };
             var actionStopwatch = Stopwatch.StartNew();
@@ -3702,9 +3704,22 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // API route used by React clients for /api/crm/projects/list.
+        [HttpGet]
+        public Task<IActionResult> ApiProjectsList(string filter = "", int page = 1, int pageSize = 50)
+        {
+            return GetProjectsListJsonAsync(filter, page, pageSize);
+        }
+
         // Returns projects for optional list filter assistance.
         [HttpGet]
         public async Task<IActionResult> GetProjectsForDropdown(string term = "", int page = 1, int pageSize = 30)
+        {
+            return await GetProjectsListJsonAsync(term, page, pageSize);
+        }
+
+        // Loads project options from IND_CRM_API and emits the dropdown-friendly shape.
+        private async Task<IActionResult> GetProjectsListJsonAsync(string filter, int page, int pageSize)
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -3715,7 +3730,7 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
-                var result = await _apiClient.GetProjectsAsync(token, term ?? string.Empty, safePage, safePageSize);
+                var result = await _apiClient.GetProjectsAsync(token, filter ?? string.Empty, safePage, safePageSize);
                 var items = result.GetAnyItems()
                     .Select(ToProjectOption)
                     .Where(x => !string.IsNullOrWhiteSpace(x.Value) || !string.IsNullOrWhiteSpace(x.Text))
@@ -4779,7 +4794,7 @@ namespace IND_CRM_APP.Controllers
             var iisMaxAllowedContentLength = TryReadIisMaxAllowedContentLength(out iisConfigPath);
 
             _logger.LogInformation(
-                "ApiExpenseSheetTicketQuickCreate ingress. SelectedCompany: {SelectedCompany}. AxUserId: {AxUserId}. RequestContentLength: {RequestContentLength}. RequestContentType: {RequestContentType}. HasFormContentType: {HasFormContentType}. BoundaryLength: {BoundaryLength}. TicketLength: {TicketLength}. TicketContentType: {TicketContentType}. TicketFileName: {TicketFileName}. TicketExtension: {TicketExtension}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjectId: {ProjectId}. DescriptionLength: {DescriptionLength}. ComentarioLength: {ComentarioLength}. MaxRequestBodySize: {MaxRequestBodySize}. MaxRequestBodySizeReadOnly: {MaxRequestBodySizeReadOnly}. IisMaxAllowedContentLength: {IisMaxAllowedContentLength}. IisConfigPath: {IisConfigPath}.",
+                "ApiExpenseSheetTicketQuickCreate ingress. SelectedCompany: {SelectedCompany}. AxUserId: {AxUserId}. RequestContentLength: {RequestContentLength}. RequestContentType: {RequestContentType}. HasFormContentType: {HasFormContentType}. BoundaryLength: {BoundaryLength}. TicketLength: {TicketLength}. TicketContentType: {TicketContentType}. TicketFileName: {TicketFileName}. TicketExtension: {TicketExtension}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjId: {ProjId}. DescriptionLength: {DescriptionLength}. ComentarioLength: {ComentarioLength}. MaxRequestBodySize: {MaxRequestBodySize}. MaxRequestBodySizeReadOnly: {MaxRequestBodySizeReadOnly}. IisMaxAllowedContentLength: {IisMaxAllowedContentLength}. IisConfigPath: {IisConfigPath}.",
                 GetSelectedExpenseCompanyIdForLogs() ?? "<empty>",
                 NormalizeOptionalText(requestAxUserId) ?? "<empty>",
                 Request.ContentLength ?? -1,
@@ -4792,7 +4807,7 @@ namespace IND_CRM_APP.Controllers
                 Path.GetExtension(ticketImage.FileName ?? string.Empty),
                 request.CurrencyCode ?? "<empty>",
                 request.ExistingHojaGastosId ?? "<empty>",
-                request.ProjectId ?? "<empty>",
+                request.ProjId ?? "<empty>",
                 request.Description?.Length ?? 0,
                 request.Comentario?.Length ?? 0,
                 maxRequestBodySize ?? -1,

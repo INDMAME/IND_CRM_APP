@@ -149,7 +149,7 @@ export const useCreateSubmit = ({
             body: JSON.stringify(payloadVisita),
           });
           if (!getLegacyResponseSuccess(resVis)) {
-            throw new Error(getLegacyResponseMessage(resVis) || indT("Visits_Create_CreateVisitFailed", "Failed to create report."));
+            throw new Error(getLegacyResponseMessage(resVis) || indT("Visits_Create_CreateVisitFailed", "Failed to create visit."));
           }
         };
 
@@ -157,7 +157,7 @@ export const useCreateSubmit = ({
           const batch = selectedContacts.slice(idx, idx + assistantBatchSize);
           const first = batch[0];
           if (first) {
-            setStatus(indFormat("Visits_Create_CreatingVisitFor", "Creating report for {0}...", first.text));
+            setStatus(indFormat("Visits_Create_CreatingVisitFor", "Creating visit for {0}...", first.text));
           }
           await Promise.all(batch.map((contact) => createAssistant(contact)));
         }
@@ -189,7 +189,7 @@ export const useCreateSubmit = ({
           // Keep original error flow.
         }
       }
-      const msg = e instanceof Error ? e.message : indT("Visits_Create_CreateVisitError", "Failed to create the report.");
+      const msg = e instanceof Error ? e.message : indT("Visits_Create_CreateVisitError", "Failed to create the visit.");
       setModalError(msg);
       setStatus(msg);
       flashActionMark("errorProcess", 1500);
@@ -236,7 +236,7 @@ export const useCreateSubmit = ({
     setModalError("");
     openConfirm({
       title: indT("Visits_Create_ConfirmCreate_Title", "Confirm create"),
-      message: indT("Visits_Create_ConfirmCreate_Body", "Do you want to create this report?"),
+      message: indT("Visits_Create_ConfirmCreate_Body", "Do you want to create this visit?"),
       confirmText: indT("Confirm_Yes", "Confirm_Yes"),
       onConfirm: doCreate,
     });

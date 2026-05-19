@@ -58,7 +58,7 @@
     <value>Insertec 标志</value>
   </data>
   <data name="Nav_Visits" xml:space="preserve">
-    <value>报告</value>
+    <value>拜访</value>
   </data>
   <data name="Nav_Visits_Create" xml:space="preserve">
     <value>新建</value>
@@ -535,7 +535,7 @@
     <value>加载中...</value>
   </data>
   <data name="History_NoDataInRange" xml:space="preserve">
-    <value>此日期范围内没有报告</value>
+    <value>此日期范围内没有拜访</value>
   </data>
   <data name="History_Page_First" xml:space="preserve">
     <value>首页</value>
@@ -661,10 +661,10 @@
     <value>确认创建</value>
   </data>
   <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve">
-    <value>确定要创建此报告吗？</value>
+    <value>确定要创建此拜访吗？</value>
   </data>
   <data name="Visits_Create_CreatingVisitFor" xml:space="preserve">
-    <value>正在为 {0} 创建报告...</value>
+    <value>正在为 {0} 创建拜访...</value>
   </data>
   <data name="Visits_Create_MinChars" xml:space="preserve">
     <value>请至少输入 {0} 个字符。</value>
@@ -724,10 +724,10 @@
     <value>创建活动失败。</value>
   </data>
   <data name="Visits_Create_CreateVisitFailed" xml:space="preserve">
-    <value>创建报告失败。</value>
+    <value>创建拜访失败。</value>
   </data>
   <data name="Visits_Create_CreateVisitError" xml:space="preserve">
-    <value>创建报告时出错。</value>
+    <value>创建拜访时出错。</value>
   </data>
   <data name="Visits_Create_ClientCount" xml:space="preserve">
     <value>{0} 个客户</value>
@@ -745,7 +745,7 @@
     <value>已选择 {0} 个联系人</value>
   </data>
   <data name="Visits_Create_VisitData_Title" xml:space="preserve">
-    <value>报告信息</value>
+    <value>拜访信息</value>
   </data>
   <data name="Visits_Field_Description" xml:space="preserve">
     <value>描述</value>
@@ -760,16 +760,16 @@
     <value>结论</value>
   </data>
   <data name="Visits_Create_ErrorBoundary" xml:space="preserve">
-    <value>显示报告页面时出错。请刷新后重试。</value>
+    <value>显示拜访页面时出错。请刷新后重试。</value>
   </data>
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
-    <value>报告信息</value>
+    <value>拜访信息</value>
   </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>日期</value>
   </data>
   <data name="Visits_Detail_VisitType_Label" xml:space="preserve">
-    <value>报告类型</value>
+    <value>拜访类型</value>
   </data>
   <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve">
     <value>请选择类型</value>
@@ -859,7 +859,7 @@
     <value>电话</value>
   </data>
   <data name="Enum_ActividadType_Visit" xml:space="preserve">
-    <value>报告</value>
+    <value>拜访</value>
   </data>
   <data name="Enum_ActividadType_Task" xml:space="preserve">
     <value>任务</value>

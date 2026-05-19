@@ -487,7 +487,7 @@ const DetailApp = () => {
             />
           </div>
           <SelectCombobox
-            label={indT("Visits_Detail_VisitType_Label", "Report type")}
+            label={indT("Visits_Detail_VisitType_Label", "Visit type")}
             options={visitTypes}
             value={visitType}
             onChange={setVisitType}
