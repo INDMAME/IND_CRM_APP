@@ -126,11 +126,10 @@ const DetailApp = () => {
     detail.tipoVisita ?? detail.TipoVisita ?? detail.visitType ?? detail.VisitType ?? ""
   );
   const initialVisitType = matchOptionValue(visitTypes, rawInitialVisitType) || defaultVisitType;
-  const defaultContactMethod = String(contactMethods[0]?.value ?? contactMethods[0]?.Value ?? "0");
   const rawInitialContactMethod = String(
     detail.contactMethod ?? detail.ContactMethod ?? ""
   );
-  const initialContactMethod = matchOptionValue(contactMethods, rawInitialContactMethod) || defaultContactMethod;
+  const initialContactMethod = matchOptionValue(contactMethods, rawInitialContactMethod);
   const rawInitialAsistente = String(
     detail.asistenteTipo ?? detail.AsistenteTipo ?? (asistenteTipos[0]?.value ?? asistenteTipos[0]?.Value ?? "")
   );
@@ -317,7 +316,6 @@ const DetailApp = () => {
     contactMethods,
     asistenteTipos,
     defaultVisitType,
-    defaultContactMethod,
     initialAsistente,
     normalizeDateToInput,
     matchOptionValue,
@@ -408,7 +406,6 @@ const DetailApp = () => {
     contactMethods,
     asistenteTipos,
     defaultVisitType,
-    defaultContactMethod,
     rawInitialVisitType,
     rawInitialContactMethod,
     rawInitialAsistente,

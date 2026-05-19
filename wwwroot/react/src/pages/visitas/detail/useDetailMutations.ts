@@ -70,7 +70,6 @@ type UseDetailMutationsArgs = {
   contactMethods: OptionLike[];
   asistenteTipos: OptionLike[];
   defaultVisitType: string;
-  defaultContactMethod: string;
   rawInitialVisitType: string;
   rawInitialContactMethod: string;
   rawInitialAsistente: string;
@@ -103,7 +102,6 @@ export const useDetailMutations = ({
   contactMethods,
   asistenteTipos,
   defaultVisitType,
-  defaultContactMethod,
   rawInitialVisitType,
   rawInitialContactMethod,
   rawInitialAsistente,
@@ -146,13 +144,13 @@ export const useDetailMutations = ({
         rawInitialAsistente;
       const normalizedContactMethod =
         matchOptionValue(contactMethods, contactMethod) ||
-        matchOptionValue(contactMethods, rawInitialContactMethod) ||
-        defaultContactMethod;
+        matchOptionValue(contactMethods, rawInitialContactMethod);
+      const contactMethodValue = Number(normalizedContactMethod);
 
       const payload = {
         accountNum,
         visitType: normalizedVisitType,
-        contactMethod: Number(normalizedContactMethod || 0),
+        contactMethod: Number.isFinite(contactMethodValue) ? contactMethodValue : null,
         asistenteTipo: normalizedAsistenteTipo,
         description,
         transDate,
@@ -201,7 +199,6 @@ export const useDetailMutations = ({
     conclusiones,
     contactMethod,
     contactMethods,
-    defaultContactMethod,
     defaultVisitType,
     description,
     isEditing,

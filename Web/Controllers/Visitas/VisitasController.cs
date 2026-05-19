@@ -351,7 +351,7 @@ namespace IND_CRM_APP.Controllers
                     activity = new ActivityDto();
                 }
 
-                // Fallback to legacy recId lookup if needed or if by-code returned empty data.
+                // Fallback to recId lookup if by-code returns empty data or misses newer fields.
                 long? recIdFallback = null;
                 if (long.TryParse(code, out var recIdParsedFromCode))
                 {
@@ -362,28 +362,32 @@ namespace IND_CRM_APP.Controllers
                     recIdFallback = recIdParsedFromActivity;
                 }
 
-                if ((!byCodeSuccess || IsActivityEmpty(activity)) && recIdFallback.HasValue)
+                var shouldTryRecIdFallback = !byCodeSuccess ||
+                                             IsActivityEmpty(activity) ||
+                                             activity.ContactMethod == null;
+
+                if (shouldTryRecIdFallback && recIdFallback.HasValue)
                 {
                     try
                     {
                         var byRec = await _apiClient.GetActivityByRecIdAsync(token, recIdFallback.Value);
                         if (byRec.Data != null)
                         {
-                            var legacy = byRec.Data;
-                            activity.ActividadId = Pick(activity.ActividadId, legacy.ActividadId);
-                            activity.RecId = Pick(activity.RecId, legacy.RecId);
-                            activity.AccountNum = Pick(activity.AccountNum, legacy.AccountNum);
-                            activity.Name = Pick(activity.Name, legacy.Name);
-                            activity.TransDate = Pick(activity.TransDate, legacy.TransDate);
-                            activity.Country = Pick(activity.Country, legacy.Country);
-                            activity.ActividadType = Pick(activity.ActividadType, legacy.ActividadType);
-                            activity.TipoVisita = Pick(activity.TipoVisita, legacy.TipoVisita);
-                            activity.ContactMethod = activity.ContactMethod ?? legacy.ContactMethod;
-                            activity.Description = Pick(activity.Description, legacy.Description);
-                            activity.Comentarios = Pick(activity.Comentarios, legacy.Comentarios);
-                            activity.Antecedentes = Pick(activity.Antecedentes, legacy.Antecedentes);
-                            activity.Conclusiones = Pick(activity.Conclusiones, legacy.Conclusiones);
-                            activity.Asistentes = activity.Asistentes ?? legacy.Asistentes;
+                            var recIdActivity = byRec.Data;
+                            activity.ActividadId = Pick(activity.ActividadId, recIdActivity.ActividadId);
+                            activity.RecId = Pick(activity.RecId, recIdActivity.RecId);
+                            activity.AccountNum = Pick(activity.AccountNum, recIdActivity.AccountNum);
+                            activity.Name = Pick(activity.Name, recIdActivity.Name);
+                            activity.TransDate = Pick(activity.TransDate, recIdActivity.TransDate);
+                            activity.Country = Pick(activity.Country, recIdActivity.Country);
+                            activity.ActividadType = Pick(activity.ActividadType, recIdActivity.ActividadType);
+                            activity.TipoVisita = Pick(activity.TipoVisita, recIdActivity.TipoVisita);
+                            activity.ContactMethod = activity.ContactMethod ?? recIdActivity.ContactMethod;
+                            activity.Description = Pick(activity.Description, recIdActivity.Description);
+                            activity.Comentarios = Pick(activity.Comentarios, recIdActivity.Comentarios);
+                            activity.Antecedentes = Pick(activity.Antecedentes, recIdActivity.Antecedentes);
+                            activity.Conclusiones = Pick(activity.Conclusiones, recIdActivity.Conclusiones);
+                            activity.Asistentes = activity.Asistentes ?? recIdActivity.Asistentes;
                         }
                     }
                     catch (ApiException ex)
@@ -414,7 +418,9 @@ namespace IND_CRM_APP.Controllers
 
                 string NormalizeContactMethod(int? raw)
                 {
-                    return _crmEnumCatalog.NormalizeContactMethodValue(raw?.ToString());
+                    return raw.HasValue
+                        ? _crmEnumCatalog.NormalizeContactMethodValue(raw.Value.ToString())
+                        : string.Empty;
                 }
 
                 var recIdValue = !string.IsNullOrWhiteSpace(activity.RecId) ? activity.RecId : null

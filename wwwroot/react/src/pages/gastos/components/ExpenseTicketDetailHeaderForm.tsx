@@ -7,6 +7,7 @@ import { hasExpenseTicketImagePreviewSource } from "../tickets/detail/expenseTic
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
+import ExpenseTicketTimeInput from "./ExpenseTicketTimeInput.tsx";
 
 const hasRealExpenseSheetValue = (value: string): boolean => {
   const normalized = safeText(value).toLowerCase();
@@ -189,17 +190,11 @@ const ExpenseTicketDetailHeaderForm = ({
           )}
 
         {isEditing ? (
-          <div className="space-y-1.5">
-            <label className="form-label font-semibold">{indT("Tickets_Field_TicketTime", "Ticket time")}</label>
-            <input
-              className="form-control"
-              type="time"
-              step={1}
-              value={draftTicketTime}
-              onChange={(event) => onDraftTicketTimeChange(event.target.value || "")}
-              aria-label={indT("Tickets_Field_TicketTime", "Ticket time")}
-            />
-          </div>
+          <ExpenseTicketTimeInput
+            label={indT("Tickets_Field_TicketTime", "Ticket time")}
+            value={draftTicketTime}
+            onChange={onDraftTicketTimeChange}
+          />
         ) : (
           <ExpenseReadOnlyField
             label={indT("Tickets_Field_TicketTime", "Ticket time")}

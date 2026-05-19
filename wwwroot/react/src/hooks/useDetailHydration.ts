@@ -46,7 +46,6 @@ type UseDetailHydrationArgs = {
   contactMethods: OptionLike[];
   asistenteTipos: OptionLike[];
   defaultVisitType: string;
-  defaultContactMethod: string;
   initialAsistente: string;
   normalizeDateToInput: (value: string) => string;
   matchOptionValue: (options: OptionLike[], raw: unknown) => string;
@@ -72,7 +71,6 @@ export const useDetailHydration = ({
   contactMethods,
   asistenteTipos,
   defaultVisitType,
-  defaultContactMethod,
   initialAsistente,
   normalizeDateToInput,
   matchOptionValue,
@@ -112,7 +110,7 @@ export const useDetailHydration = ({
       const rawContactMethod = String(
         responseData.contactMethod ?? responseData.ContactMethod ?? ""
       );
-      setContactMethod(matchOptionValue(contactMethods, rawContactMethod) || defaultContactMethod);
+      setContactMethod(matchOptionValue(contactMethods, rawContactMethod));
 
       const asistentesList = responseData.asistentes ?? responseData.Asistentes;
       const firstAsistente = Array.isArray(asistentesList) && asistentesList.length ? asRecord(asistentesList[0]) : null;
@@ -142,7 +140,6 @@ export const useDetailHydration = ({
     applyTextEditorValues,
     asistenteTipos,
     contactMethods,
-    defaultContactMethod,
     defaultVisitType,
     initialAsistente,
     matchOptionValue,
