@@ -24,7 +24,7 @@ const ExpenseTicketLinkedSheetLineSection = ({
 }: ExpenseTicketLinkedSheetLineSectionProps) => {
   return (
     <section className="space-y-0">
-      <ExpenseSectionDivider label={indT("ExpenseSheets_Line", "Line")} className="expense-section-divider--spaced" />
+      <ExpenseSectionDivider label={indT("ExpenseSheets_Line_Expense", "Expense line")} className="expense-section-divider--spaced" />
 
       <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-zinc-200 rounded-[var(--radius-xl)]">
         {isLoading ? (

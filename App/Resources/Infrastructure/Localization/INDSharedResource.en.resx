@@ -1206,6 +1206,9 @@
   <data name="ExpenseSheets_Line" xml:space="preserve">
     <value>Line</value>
   </data>
+  <data name="ExpenseSheets_Line_Expense" xml:space="preserve">
+    <value>Expense line</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve">
     <value>Loading exchange rate...</value>
   </data>

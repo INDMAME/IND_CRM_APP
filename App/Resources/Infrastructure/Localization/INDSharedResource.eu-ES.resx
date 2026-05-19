@@ -1206,6 +1206,9 @@
   <data name="ExpenseSheets_Line" xml:space="preserve">
     <value>Lerroa</value>
   </data>
+  <data name="ExpenseSheets_Line_Expense" xml:space="preserve">
+    <value>Gastu lerroa</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve">
     <value>Truke-tasa egiaztatzen...</value>
   </data>

@@ -1119,6 +1119,9 @@
   <data name="ExpenseSheets_Line" xml:space="preserve">
     <value>线</value>
   </data>
+  <data name="ExpenseSheets_Line_Expense" xml:space="preserve">
+    <value>费用行</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve">
     <value>检查汇率...</value>
   </data>
