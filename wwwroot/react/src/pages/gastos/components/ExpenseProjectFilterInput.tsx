@@ -87,6 +87,7 @@ const ExpenseProjectFilterInput = ({
       pageSize={SEARCH_PAGE_SIZE}
       allowEmptySearch
       loadOnOpen
+      openSearchMode="empty-query"
       infiniteScroll
       disabled={disabled}
       readOnly={readOnly}
