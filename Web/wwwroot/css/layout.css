@@ -35,6 +35,8 @@ html, body {
     --ind-content-inline-padding: 16px;
     --ind-content-top-padding: 10px;
     --ind-content-bottom-padding: 20px;
+    --ind-sidebar-user-bottom-offset: 40px;
+    --ind-sidebar-user-bottom-clearance: 64px;
 }
 
 /* SIDEBAR */
@@ -390,8 +392,10 @@ body.layout-shell--with-chrome #content.content {
 /* USER PANEL (single instance, corrected) */
 .user-panel {
     position: sticky;
-    bottom: 40px;
+    bottom: calc(var(--ind-sidebar-user-bottom-offset) + env(safe-area-inset-bottom, 0px));
     margin-top: auto;
+    /* Keeps the account menu clear of mobile browser controls and safe areas. */
+    padding-bottom: calc(var(--ind-sidebar-user-bottom-clearance) + env(safe-area-inset-bottom, 0px));
     z-index: 3;
 }
 
@@ -489,6 +493,11 @@ body.layout-shell--with-chrome #content.content {
 
 /* RESPONSIVE */
 @media(max-width: 768px) {
+    :root {
+        --ind-sidebar-user-bottom-offset: 56px;
+        --ind-sidebar-user-bottom-clearance: 76px;
+    }
+
     .content.shifted {
         margin-left: 0;
     }

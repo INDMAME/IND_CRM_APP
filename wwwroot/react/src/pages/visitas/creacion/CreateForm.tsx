@@ -18,7 +18,7 @@ import { navigateToTextEditorField } from "../../../utils/textEditorNavigation.t
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
 
 function VisitasApp() {
-  const { visitTypes, asistenteTipos } = useVisitas();
+  const { visitTypes, contactMethods, asistenteTipos } = useVisitas();
   const canCreateVisit = canAccess("VISITAS_GESTION", "Add");
   const canRollbackDelete = canAccess("VISITAS_GESTION", "FullAccess");
 
@@ -38,9 +38,11 @@ function VisitasApp() {
   };
 
   const defaultVisitType = String(visitTypes[0]?.value ?? visitTypes[0]?.Value ?? "");
+  const defaultContactMethod = String(contactMethods[0]?.value ?? contactMethods[0]?.Value ?? "0");
   const defaultAsistenteTipo = String(asistenteTipos[0]?.value ?? asistenteTipos[0]?.Value ?? "0");
 
   const [visitType, setVisitType] = useState<string>(defaultVisitType);
+  const [contactMethod, setContactMethod] = useState<string>(defaultContactMethod);
   const [transDate, setTransDate] = useState(() => todayString());
   const [description, setDescription] = useState("");
   const [comentarios, setComentarios] = useState("");
@@ -87,6 +89,7 @@ function VisitasApp() {
       selectedClient,
       selectedContacts,
       visitType,
+      contactMethod,
       transDate,
       description,
       comentarios,
@@ -94,7 +97,7 @@ function VisitasApp() {
       conclusiones,
       step,
     }),
-    [selectedClient, selectedContacts, visitType, transDate, description, comentarios, antecedentes, conclusiones, step]
+    [selectedClient, selectedContacts, visitType, contactMethod, transDate, description, comentarios, antecedentes, conclusiones, step]
   );
 
   const { persistDraftNow } = useCreateDraft({
@@ -102,6 +105,7 @@ function VisitasApp() {
     setSelectedClient,
     setSelectedContacts,
     setVisitType,
+    setContactMethod,
     setTransDate,
     setDescription,
     setComentarios,
@@ -196,6 +200,7 @@ function VisitasApp() {
       setStep(1);
       setSelectedContacts([]);
       setVisitType(defaultVisitType);
+      setContactMethod(defaultContactMethod);
       setTransDate(todayString());
       setDescription("");
       setComentarios("");
@@ -223,11 +228,12 @@ function VisitasApp() {
     if (selectedContacts.length > 0) return true;
     return (
       description.trim().length > 0 ||
+      contactMethod !== defaultContactMethod ||
       comentarios.trim().length > 0 ||
       antecedentes.trim().length > 0 ||
       conclusiones.trim().length > 0
     );
-  }, [antecedentes, busy, comentarios, conclusiones, description, selectedClient, selectedContacts.length, step]);
+  }, [antecedentes, busy, comentarios, conclusiones, contactMethod, defaultContactMethod, description, selectedClient, selectedContacts.length, step]);
 
   useEffect(() => {
     window.__indSetNavigationGuard?.(hasActiveProcess);
@@ -244,6 +250,7 @@ function VisitasApp() {
     selectedClient,
     selectedContacts,
     visitType,
+    contactMethod,
     defaultAsistenteTipo,
     description,
     transDate,
@@ -345,6 +352,11 @@ function VisitasApp() {
           onVisitTypeChange={setVisitType}
           visitTypePlaceholder={indT("Visits_Detail_VisitType_Placeholder", "Select type")}
           visitTypeInvalid={visitTypeInvalid}
+          contactMethodLabel={indT("Visits_Detail_ContactMethod_Label", "Contact method")}
+          contactMethods={contactMethods}
+          contactMethod={contactMethod}
+          onContactMethodChange={setContactMethod}
+          contactMethodPlaceholder={indT("Visits_Detail_ContactMethod_Placeholder", "Select method")}
           descriptionLabel={descriptionLabel}
           descriptionValue={description}
           descriptionClassName={descriptionInputClassName}

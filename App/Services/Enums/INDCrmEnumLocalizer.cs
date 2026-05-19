@@ -37,6 +37,16 @@ namespace IND_CRM_APP.Services.Enums
             };
         }
 
+        public IEnumerable<dynamic> GetContactMethodItems()
+        {
+            return new[]
+            {
+                new { Value = "0", Text = _sr["Enum_ContactMethod_InPerson"].Value },
+                new { Value = "1", Text = _sr["Enum_ContactMethod_PhoneCall"].Value },
+                new { Value = "2", Text = _sr["Enum_ContactMethod_OnlineMeeting"].Value }
+            };
+        }
+
         public IEnumerable<dynamic> GetActividadOrigenItems()
         {
             return new[]

@@ -20,6 +20,7 @@ declare global {
     __IND_NAV_GUARD_I18N__?: { activeProcessMessage?: string };
     __IND_AUDIO_RECORDER_TESTS__?: boolean;
     __VISIT_TYPES__?: Array<{ value?: string; Value?: string }>;
+    __CONTACT_METHODS__?: Array<{ value?: string; Value?: string; text?: string; Text?: string }>;
     __ASISTENTE_TIPOS__?: Array<{ value?: string; Value?: string }>;
     __EXPENSE_GASTO_TYPES__?: Array<{ value?: string; Value?: string; text?: string; Text?: string }>;
     __ACTIVITY_DETAIL__?: Record<string, unknown>;

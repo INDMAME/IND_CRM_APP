@@ -43,8 +43,10 @@ type UseDetailHydrationArgs = {
   actividadId: string;
   shouldHydrate: boolean;
   visitTypes: OptionLike[];
+  contactMethods: OptionLike[];
   asistenteTipos: OptionLike[];
   defaultVisitType: string;
+  defaultContactMethod: string;
   initialAsistente: string;
   normalizeDateToInput: (value: string) => string;
   matchOptionValue: (options: OptionLike[], raw: unknown) => string;
@@ -54,6 +56,7 @@ type UseDetailHydrationArgs = {
   setIsHydrating: (value: boolean) => void;
   setTransDate: (value: string) => void;
   setVisitType: (value: string) => void;
+  setContactMethod: (value: string) => void;
   setAsistenteTipo: (value: string) => void;
   setDescription: (value: string) => void;
   setComentarios: (value: string) => void;
@@ -66,8 +69,10 @@ export const useDetailHydration = ({
   actividadId,
   shouldHydrate,
   visitTypes,
+  contactMethods,
   asistenteTipos,
   defaultVisitType,
+  defaultContactMethod,
   initialAsistente,
   normalizeDateToInput,
   matchOptionValue,
@@ -77,6 +82,7 @@ export const useDetailHydration = ({
   setIsHydrating,
   setTransDate,
   setVisitType,
+  setContactMethod,
   setAsistenteTipo,
   setDescription,
   setComentarios,
@@ -102,6 +108,11 @@ export const useDetailHydration = ({
         responseData.tipoVisita ?? responseData.TipoVisita ?? responseData.visitType ?? responseData.VisitType ?? ""
       );
       setVisitType(matchOptionValue(visitTypes, rawVisitType) || defaultVisitType);
+
+      const rawContactMethod = String(
+        responseData.contactMethod ?? responseData.ContactMethod ?? ""
+      );
+      setContactMethod(matchOptionValue(contactMethods, rawContactMethod) || defaultContactMethod);
 
       const asistentesList = responseData.asistentes ?? responseData.Asistentes;
       const firstAsistente = Array.isArray(asistentesList) && asistentesList.length ? asRecord(asistentesList[0]) : null;
@@ -130,6 +141,8 @@ export const useDetailHydration = ({
     applyDraftValues,
     applyTextEditorValues,
     asistenteTipos,
+    contactMethods,
+    defaultContactMethod,
     defaultVisitType,
     initialAsistente,
     matchOptionValue,
@@ -143,6 +156,7 @@ export const useDetailHydration = ({
     setStatus,
     setTransDate,
     setVisitType,
+    setContactMethod,
     visitTypes,
   ]);
 

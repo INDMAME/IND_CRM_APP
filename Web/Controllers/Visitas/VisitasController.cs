@@ -120,6 +120,7 @@ namespace IND_CRM_APP.Controllers
                 // Load enum lists for selects
                 ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
                 ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
+                ViewBag.ContactMethodEnum = _enumLocalizer.GetContactMethodItems();
                 ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
                 ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
 
@@ -377,6 +378,7 @@ namespace IND_CRM_APP.Controllers
                             activity.Country = Pick(activity.Country, legacy.Country);
                             activity.ActividadType = Pick(activity.ActividadType, legacy.ActividadType);
                             activity.TipoVisita = Pick(activity.TipoVisita, legacy.TipoVisita);
+                            activity.ContactMethod = activity.ContactMethod ?? legacy.ContactMethod;
                             activity.Description = Pick(activity.Description, legacy.Description);
                             activity.Comentarios = Pick(activity.Comentarios, legacy.Comentarios);
                             activity.Antecedentes = Pick(activity.Antecedentes, legacy.Antecedentes);
@@ -410,6 +412,11 @@ namespace IND_CRM_APP.Controllers
                     return _crmEnumCatalog.NormalizeTipoVisitaValue(raw);
                 }
 
+                string NormalizeContactMethod(int? raw)
+                {
+                    return _crmEnumCatalog.NormalizeContactMethodValue(raw?.ToString());
+                }
+
                 var recIdValue = !string.IsNullOrWhiteSpace(activity.RecId) ? activity.RecId : null
                     ?? (recIdFallback.HasValue ? recIdFallback.Value.ToString() : null)
                     ?? (long.TryParse(code, out var recIdParsed) ? recIdParsed.ToString() : string.Empty);
@@ -420,6 +427,7 @@ namespace IND_CRM_APP.Controllers
                     ActividadId = activity.ActividadId ?? code,
                     AccountNum = activity.AccountNum ?? string.Empty,
                     VisitType = NormalizeVisitType(activity.TipoVisita ?? activity.ActividadType),
+                    ContactMethod = NormalizeContactMethod(activity.ContactMethod),
                     Description = activity.Description ?? string.Empty,
                     TransDate = NormalizeDate(activity.TransDate),
                     Comentarios = activity.Comentarios ?? string.Empty,
@@ -430,6 +438,7 @@ namespace IND_CRM_APP.Controllers
 
                 ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
                 ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
+                ViewBag.ContactMethodEnum = _enumLocalizer.GetContactMethodItems();
                 ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
                 ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
                 ViewData["IsVisitaDetail"] = true;

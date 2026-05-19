@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 13/05/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Martes 19/05/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -77,7 +77,9 @@ Formatversion: 1
         #            strFmt('%1', date2Str(_docuRef.INDTransDate, 123, 2,2,2,2,4)),
         #            strFmt('%1', _docuRef.INDFilename),
         #            strFmt('%1', processedByAIInt),
-        #            strFmt('%1', gastoTypeInt)
+        #            strFmt('%1', gastoTypeInt),
+        #            strFmt('%1', date2Str(_ticketHeader.TicketDate, 123, 2,2,2,2,4)),
+        #            strFmt('%1', _ticketHeader.TicketTime)
         #           ];
         #}
         #
@@ -105,7 +107,9 @@ Formatversion: 1
         #            strFmt('%1', _ticketHeader.TotalAmount),
         #            strFmt('%1', date2Str(_docuRef.INDTransDate, 123, 2,2,2,2,4)),
         #            strFmt('%1', _docuRef.INDFilename),
-        #            strFmt('%1', gastoTypeInt)
+        #            strFmt('%1', gastoTypeInt),
+        #            strFmt('%1', date2Str(_ticketHeader.TicketDate, 123, 2,2,2,2,4)),
+        #            strFmt('%1', _ticketHeader.TicketTime)
         #           ];
         #}
         #
@@ -127,6 +131,25 @@ Formatversion: 1
         #    }
         #
         #    return totalAmount;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateTicketDateTimeForApi
+        #// Method: validateTicketDateTimeForApi
+        #// Purpose: Runs INDTicketInfoTable date/time uniqueness validation before API writes.
+        #static server str validateTicketDateTimeForApi(INDTicketInfoTable _ticketHeader, int _startLine)
+        #{
+        #    str msg;
+        #    ;
+        #
+        #    if (_ticketHeader.validateUniqueTicketDateTime())
+        #        return '';
+        #
+        #    msg = INDCRMUtilityService::getInfologMessagesSince(_startLine);
+        #    if (!msg)
+        #        msg = 'Ya existe otro ticket con la misma fecha y hora.';
+        #
+        #    return msg;
         #}
         #
       ENDSOURCE
@@ -584,7 +607,7 @@ Formatversion: 1
         #    Input _data (container):
         #      1) companyId
         #      2) headerIn
-        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional)]
+        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional), ticketDate(optional), ticketTime(optional)]
         #         - Mode 2  : at least [axUserId]
         #      3) linesIn (container of line containers)
         #         - Each line: [lineDescr, qty, price, lineTotal(optional)]
@@ -619,6 +642,9 @@ Formatversion: 1
         #    str                comentario;
         #    str                urlFile;
         #    str                fileName;
+        #    str                ticketDateStr;
+        #    date               ticketDate;
+        #    int                ticketTime;
         #
         #    str                ocrJson;
         #    str                normalizedJson;
@@ -627,6 +653,7 @@ Formatversion: 1
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
+        #    boolean            hasLineTotal;
         #    int                processedByAI;
         #    int                gastoType;
         #    boolean            hasHeaderTotalAmount;
@@ -634,6 +661,8 @@ Formatversion: 1
         #    boolean            hasGastoType;
         #    boolean            hasOcrJson;
         #    boolean            hasNormalizedJson;
+        #    boolean            hasTicketDate;
+        #    boolean            hasTicketTime;
         #
         #    INDTicketInfoTable ticketHeader;
         #    INDTicketInfoLine  ticketLine;
@@ -668,6 +697,8 @@ Formatversion: 1
         #    hasGastoType        = false;
         #    hasOcrJson          = false;
         #    hasNormalizedJson   = false;
+        #    hasTicketDate       = false;
+        #    hasTicketTime       = false;
         #
         #    if (conLen(optionsIn) >= 1)
         #        mode = conPeek(optionsIn, 1);
@@ -740,6 +771,25 @@ Formatversion: 1
         #            hasNormalizedJson = true;
         #        }
         #
+        #        if (conLen(headerIn) >= 12)
+        #        {
+        #            ticketDateStr = conPeek(headerIn, 12);
+        #            hasTicketDate = true;
+        #
+        #            if (ticketDateStr)
+        #            {
+        #                ticketDate = INDCRMUtilityService::parseYmdDate(ticketDateStr);
+        #                if (!ticketDate)
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('TicketDate invalida (yyyymmdd): %1', ticketDateStr), conNull()), conNull()];
+        #            }
+        #        }
+        #
+        #        if (conLen(headerIn) >= 13)
+        #        {
+        #            ticketTime = conPeek(headerIn, 13);
+        #            hasTicketTime = true;
+        #        }
+        #
         #        hasHeaderTotalAmount = true;
         #
         #        if (!descr)
@@ -765,6 +815,13 @@ Formatversion: 1
         #
         #        if (mode == #ModeCreateHeaderOnly && conLen(linesIn) > 0)
         #            return [INDCRMUtilityService::buildHeader(false, 'Modo CreateHeaderOnly: no se deben enviar lineas.', conNull()), conNull()];
+        #    }
+        #
+        #    if (hasTicketTime &&
+        #        (ticketTime < 0
+        #      || ticketTime > 86399))
+        #    {
+        #        return [INDCRMUtilityService::buildHeader(false, strFmt('TicketTime invalido: %1 (segundos 0..86399).', ticketTime), conNull()), conNull()];
         #    }
         #
         #    if (!axUserId)
@@ -826,7 +883,22 @@ Formatversion: 1
         #                ticketHeader.TotalAmount     = totalAmount;
         #                ticketHeader.GastoType       = hasGastoType ? gastoType : 0;
         #                ticketHeader.ProcessedByAI   = processedByAI;
+        #
+        #                if (hasTicketDate && ticketDate)
+        #                    ticketHeader.TicketDate = ticketDate;
+        #
+        #                if (hasTicketTime)
+        #                    ticketHeader.TicketTime = ticketTime;
+        #
         #                ticketHeader.CreatedByUserId = axUserId;
+        #
+        #                msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #                if (msg)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #                }
+        #
         #                ticketHeader.insert();
         #
         #                //Actualizo referencia en DocuRef
@@ -860,10 +932,12 @@ Formatversion: 1
         #                    price     = conPeek(lineIn, 3);
         #
         #                    lineTotal = qty * price;
+        #                    hasLineTotal = false;
         #                    if (conLen(lineIn) >= 4)
+        #                    {
         #                        lineTotal = conPeek(lineIn, 4);
-        #                    if (qty == 0 && lineTotal == 0 && price < 0)
-        #                        lineTotal = price;
+        #                        hasLineTotal = true;
+        #                    }
         #
         #                    if (!lineDescr)
         #                    {
@@ -877,17 +951,28 @@ Formatversion: 1
         #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty no puede ser negativo en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (qty == 0 && lineTotal >= 0)
-        #                    {
-        #                        ttsabort;
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty 0 solo se permite para descuentos con total negativo en linea %1.', i), conNull()), conNull()];
-        #                    }
-        #
         #                    if (price == 0)
         #                    {
         #                        ttsabort;
         #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price no puede ser 0 en linea %1.', i), conNull()), conNull()];
         #                    }
+        #
+        #                    if (!hasLineTotal)
+        #                    {
+        #                        if (qty == 0 && price < 0)
+        #                            lineTotal = price;
+        #                        else
+        #                            lineTotal = qty * price;
+        #                    }
+        #
+        #                    if (qty == 0 && lineTotal >= 0)
+        #                    {
+        #                        ttsabort;
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty cero solo se permite en descuentos con total negativo en linea %1.', i), conNull()), conNull()];
+        #                    }
+        #
+        #                    if(lineTotal == 0 && qty > 0)
+        #                        lineTotal = qty * price;
         #
         #                    ticketLine.clear();
         #                    ticketLine.initValue();
@@ -914,10 +999,11 @@ Formatversion: 1
         #            if (mode == #ModeCreateHeaderOnly && hasHeaderTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
         #
-        #            if (ticketHeader.TotalAmount < 0)
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
         #            {
         #                ttsabort;
-        #                return [INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull()), conNull()];
+        #                return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
         #            }
         #
         #            ticketHeader.update();
@@ -1017,6 +1103,7 @@ Formatversion: 1
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
+        #    boolean            hasLineTotal;
         #    int                gastoType;
         #    boolean            hasHeaderTotalAmount;
         #    boolean            hasGastoType;
@@ -1179,6 +1266,14 @@ Formatversion: 1
         #                ticketHeader.TotalAmount     = totalAmount;
         #                ticketHeader.GastoType       = hasGastoType ? gastoType : 0;
         #                ticketHeader.CreatedByUserId = axUserId;
+        #
+        #                msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #                if (msg)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #                }
+        #
         #                ticketHeader.insert();
         #                ttscommit;
         #
@@ -1217,10 +1312,12 @@ Formatversion: 1
         #                    price     = conPeek(lineIn, 3);
         #
         #                    lineTotal = qty * price;
+        #                    hasLineTotal = false;
         #                    if (conLen(lineIn) >= 4)
+        #                    {
         #                        lineTotal = conPeek(lineIn, 4);
-        #                    if (qty == 0 && lineTotal == 0 && price < 0)
-        #                        lineTotal = price;
+        #                        hasLineTotal = true;
+        #                    }
         #
         #                    if (!lineDescr)
         #                    {
@@ -1234,17 +1331,28 @@ Formatversion: 1
         #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty no puede ser negativo en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (qty == 0 && lineTotal >= 0)
-        #                    {
-        #
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty 0 solo se permite para descuentos con total negativo en linea %1.', i), conNull()), conNull()];
-        #                    }
-        #
         #                    if (price == 0)
         #                    {
         #
         #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price no puede ser 0 en linea %1.', i), conNull()), conNull()];
         #                    }
+        #
+        #                    if (!hasLineTotal)
+        #                    {
+        #                        if (qty == 0 && price < 0)
+        #                            lineTotal = price;
+        #                        else
+        #                            lineTotal = qty * price;
+        #                    }
+        #
+        #                    if (qty == 0 && lineTotal >= 0)
+        #                    {
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty cero solo se permite en descuentos con total negativo en linea %1.', i), conNull()), conNull()];
+        #                    }
+        #
+        #                    if(lineTotal == 0 && qty > 0)
+        #                        lineTotal = qty * price;
         #
         #                    ticketLine.clear();
         #                    ticketLine.initValue();
@@ -1270,10 +1378,11 @@ Formatversion: 1
         #            if (mode == #ModeCreateHeaderOnly && hasHeaderTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
         #
-        #            if (ticketHeader.TotalAmount < 0)
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
         #            {
         #                ttsabort;
-        #                return [INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull()), conNull()];
+        #                return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
         #            }
         #
         #            ticketHeader.update();
@@ -1348,6 +1457,7 @@ Formatversion: 1
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
+        #    boolean            hasLineTotal;
         #    int                startLine;
         #    str                msg;
         #
@@ -1369,11 +1479,13 @@ Formatversion: 1
         #    qty       = conPeek(_data, 5);
         #    price     = conPeek(_data, 6);
         #    lineTotal = qty * price;
+        #    hasLineTotal = false;
         #
         #    if (conLen(_data) >= 7)
+        #    {
         #        lineTotal = conPeek(_data, 7);
-        #    if (qty == 0 && lineTotal == 0 && price < 0)
-        #        lineTotal = price;
+        #        hasLineTotal = true;
+        #    }
         #
         #    if (!axUserId)
         #        return INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull());
@@ -1387,11 +1499,22 @@ Formatversion: 1
         #    if (qty < 0)
         #        return INDCRMUtilityService::buildHeader(false, 'Qty no puede ser negativo.', conNull());
         #
-        #    if (qty == 0 && lineTotal >= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Qty 0 solo se permite para descuentos con total negativo.', conNull());
-        #
         #    if (price == 0)
         #        return INDCRMUtilityService::buildHeader(false, 'Price no puede ser 0.', conNull());
+        #
+        #    if (!hasLineTotal)
+        #    {
+        #        if (qty == 0 && price < 0)
+        #            lineTotal = price;
+        #        else
+        #            lineTotal = qty * price;
+        #    }
+        #
+        #    if (qty == 0 && lineTotal >= 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty cero solo se permite en descuentos con total negativo.', conNull());
+        #
+        #    if (lineTotal == 0 && qty > 0)
+        #        lineTotal = qty * price;
         #
         #    startLine = infolog.line();
         #
@@ -1427,10 +1550,12 @@ Formatversion: 1
         #            ticketLine.insert();
         #
         #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
-        #            if (ticketHeader.TotalAmount < 0)
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
         #            {
         #                ttsabort;
-        #                return INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull());
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
         #            }
         #
         #            ticketHeader.update();
@@ -1705,6 +1830,14 @@ Formatversion: 1
         #                ticketLine.delete();
         #
         #                ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #
+        #                msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #                if (msg)
+        #                {
+        #                    ttsabort;
+        #                    return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #                }
+        #
         #                ticketHeader.update();
         #
         #                INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
@@ -1852,6 +1985,14 @@ Formatversion: 1
         #            ticketLine.delete();
         #
         #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #            }
+        #
         #            ticketHeader.update();
         #
         #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
@@ -2293,7 +2434,9 @@ Formatversion: 1
         #                                                      strFmt('%1', gastoTypeInt),
         #                                                      strFmt('%1', ticketHeader.hojaGastosIdDisplay()),
         #                                                      strFmt('%1', docuRef.INDOCRJson),
-        #                                                      strFmt('%1', docuRef.INDNormalizedJson)
+        #                                                      strFmt('%1', docuRef.INDNormalizedJson),
+        #                                                      strFmt('%1', date2Str(ticketHeader.TicketDate, 123, 2,2,2,2,4)),
+        #                                                      strFmt('%1', ticketHeader.TicketTime)
         #                                                     ]);
         #
         #        while select ticketLine
@@ -2335,7 +2478,7 @@ Formatversion: 1
         #//  - _data[8] = processedByAI   (optional, 0|1; otros valores = sin filtro)
         #// Fixed filters:
         #//  - Status = Pending
-        #//  - TotalAmount > 0
+        #//  - TotalAmount != 0
         #// Output rows:
         #//  - [[FileId, Description, CurrencyCode, TotalAmount, TransDate, FileName, ProcessedByAI, GastoType], ...]
         #static server container getExpenseSheetTicketsLinkList(container _data)
@@ -2428,7 +2571,7 @@ Formatversion: 1
         #            order by createdDate DESC
         #            where ticketHeader.CreatedByUserId == axUserId
         #               && ticketHeader.Status          == pendingStatus
-        #               && ticketHeader.TotalAmount     > 0
+        #               && ticketHeader.TotalAmount     != 0
         #               && (!filterTxt                  || ticketHeader.SearchKey like likePattern )
         #               && (!currencyCode               || ticketHeader.CurrencyCode == currencyCode)
         #               && (!hasGastoTypeFilter         || ticketHeader.GastoType == gastoTypeFilter)
@@ -2629,7 +2772,8 @@ Formatversion: 1
         #    str        source;
         #
         #    CRMHojaGastosUserPriceKmFechaTable userPriceKmFechaTable;
-        #    CRMParameters                      crmParameters;
+        #    CRMParameters               crmParameters;
+        #    CRMUsuarioTable             usuarioTable;
         #    int        startLine;
         #    str        msg;
         #    ;
@@ -2660,6 +2804,7 @@ Formatversion: 1
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
         #
         #            userPriceKmFechaTable = CRMHojaGastosUserPriceKmFechaTable::FindActive(crmUserId, transDate);
+        #
         #            if (userPriceKmFechaTable.RecId)
         #            {
         #                priceKm = userPriceKmFechaTable.PriceKm;
@@ -2667,9 +2812,21 @@ Formatversion: 1
         #            }
         #            else
         #            {
+        #                usuarioTable  = CRMUsuarioTable::Find(crmUserId);
         #                crmParameters = CRMParameters::find();
-        #                priceKm = crmParameters.PriceKm;
+        #
         #                source  = 'CRMParameters';
+        #                priceKm = usuarioTable.priceKmAFecha(transDate);
+        #
+        #                if (priceKm)
+        #                    priceKm = priceKm;
+        #                else
+        #                {
+        #                    if (usuarioTable.CocheEmpresa)
+        #                        priceKm  = crmParameters.PriceKmEmpresa;
+        #                    else
+        #                        priceKm  = crmParameters.PriceKm;
+        #                }
         #            }
         #
         #            return INDCRMUtilityService::buildHeader(true, 'OK', [strFmt("%1", priceKm), source]);
@@ -2926,6 +3083,8 @@ Formatversion: 1
         #    CRMHojaGastosLine  assignedLine;
         #    INDTicketInfoTable ticketHeader;
         #    boolean            hasAssignedLine;
+        #    int                startLine;
+        #    str                msg;
         #    ;
         #
         #    if (!_fileId)
@@ -2947,12 +3106,22 @@ Formatversion: 1
         #
         #    if (hasAssignedLine && ticketHeader.Status != INDTicketStatus::Assigned)
         #    {
+        #        startLine = infolog.line();
         #        ticketHeader.Status = INDTicketStatus::Assigned;
+        #        msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #        if (msg)
+        #            throw error(msg);
+        #
         #        ticketHeader.update();
         #    }
         #    else if (!hasAssignedLine && ticketHeader.Status != INDTicketStatus::Pending)
         #    {
+        #        startLine = infolog.line();
         #        ticketHeader.Status = INDTicketStatus::Pending;
+        #        msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #        if (msg)
+        #            throw error(msg);
+        #
         #        ticketHeader.update();
         #    }
         #}
@@ -3336,6 +3505,8 @@ Formatversion: 1
         #//  - _data[13] = gastoType (optional)
         #//  - _data[14] = ocrJson (optional)
         #//  - _data[15] = normalizedJson (optional)
+        #//  - _data[16] = ticketDate (optional, yyyymmdd)
+        #//  - _data[17] = ticketTime (optional, seconds since midnight)
         #static server container updateExpenseSheetTicket(container _data)
         #{
         #    DataAreaId         companyId;
@@ -3356,6 +3527,9 @@ Formatversion: 1
         #    int                gastoType;
         #    str                ocrJson;
         #    str                normalizedJson;
+        #    str                ticketDateStr;
+        #    date               ticketDate;
+        #    int                ticketTime;
         #
         #    boolean            hasTotalAmount;
         #    boolean            hasStatus;
@@ -3367,6 +3541,8 @@ Formatversion: 1
         #    boolean            hasGastoType;
         #    boolean            hasOcrJson;
         #    boolean            hasNormalizedJson;
+        #    boolean            hasTicketDate;
+        #    boolean            hasTicketTime;
         #
         #    int                startLine;
         #    str                msg;
@@ -3464,6 +3640,25 @@ Formatversion: 1
         #        hasNormalizedJson = true;
         #    }
         #
+        #    if (conLen(_data) >= 16)
+        #    {
+        #        ticketDateStr = conPeek(_data, 16);
+        #        hasTicketDate = true;
+        #
+        #        if (ticketDateStr)
+        #        {
+        #            ticketDate = INDCRMUtilityService::parseYmdDate(ticketDateStr);
+        #            if (!ticketDate)
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('TicketDate invalida (yyyymmdd): %1', ticketDateStr), conNull());
+        #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 17)
+        #    {
+        #        ticketTime = conPeek(_data, 17);
+        #        hasTicketTime = true;
+        #    }
+        #
         #    if (currencyCode)
         #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
@@ -3484,8 +3679,12 @@ Formatversion: 1
         #    if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
         #        return INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull());
         #
-        #    if (hasTotalAmount && totalAmount < 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull());
+        #    if (hasTicketTime &&
+        #        (ticketTime < 0
+        #      || ticketTime > 86399))
+        #    {
+        #        return INDCRMUtilityService::buildHeader(false, strFmt('TicketTime invalido: %1 (segundos 0..86399).', ticketTime), conNull());
+        #    }
         #
         #    startLine = infolog.line();
         #
@@ -3527,10 +3726,17 @@ Formatversion: 1
         #            if (hasGastoType)
         #                ticketHeader.GastoType = gastoType;
         #
-        #            if (ticketHeader.TotalAmount < 0)
+        #            if (hasTicketDate && ticketDate)
+        #                ticketHeader.TicketDate = ticketDate;
+        #
+        #            if (hasTicketTime)
+        #                ticketHeader.TicketTime = ticketTime;
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
         #            {
         #                ttsabort;
-        #                return INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull());
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
         #            }
         #
         #            ticketHeader.update();
@@ -3636,7 +3842,7 @@ Formatversion: 1
         #//  - Marks ticket as ProcessedByAI = 1.
         #// Input:
         #//  - _data[1] = CompanyId
-        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional)]
+        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional), ticketDate(optional), ticketTime(optional)]
         #//  - _data[3] = linesIn  = container of lines [lineDescr, qty, price, lineTotal(optional)]
         #// Output:
         #//  - [header, linesOutRecIds]
@@ -3662,16 +3868,22 @@ Formatversion: 1
         #    int                gastoType;
         #    str                ocrJson;
         #    str                normalizedJson;
+        #    str                ticketDateStr;
+        #    date               ticketDate;
+        #    int                ticketTime;
         #
         #    str                lineDescr;
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
         #    real               linesTotalAmount;
+        #    boolean            hasLineTotal;
         #    boolean            hasTotalAmount;
         #    boolean            hasGastoType;
         #    boolean            hasOcrJson;
         #    boolean            hasNormalizedJson;
+        #    boolean            hasTicketDate;
+        #    boolean            hasTicketTime;
         #
         #    int                i;
         #    int                lineCount;
@@ -3729,6 +3941,25 @@ Formatversion: 1
         #        hasNormalizedJson = true;
         #    }
         #
+        #    if (conLen(headerIn) >= 13)
+        #    {
+        #        ticketDateStr = conPeek(headerIn, 13);
+        #        hasTicketDate = true;
+        #
+        #        if (ticketDateStr)
+        #        {
+        #            ticketDate = INDCRMUtilityService::parseYmdDate(ticketDateStr);
+        #            if (!ticketDate)
+        #                return [INDCRMUtilityService::buildHeader(false, strFmt('TicketDate invalida (yyyymmdd): %1', ticketDateStr), conNull()), conNull()];
+        #        }
+        #    }
+        #
+        #    if (conLen(headerIn) >= 14)
+        #    {
+        #        ticketTime = conPeek(headerIn, 14);
+        #        hasTicketTime = true;
+        #    }
+        #
         #    hasTotalAmount = true;
         #
         #    if (!axUserId)
@@ -3760,6 +3991,13 @@ Formatversion: 1
         #
         #    if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
         #        return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
+        #
+        #    if (hasTicketTime &&
+        #        (ticketTime < 0
+        #      || ticketTime > 86399))
+        #    {
+        #        return [INDCRMUtilityService::buildHeader(false, strFmt('TicketTime invalido: %1 (segundos 0..86399).', ticketTime), conNull()), conNull()];
+        #    }
         #
         #    lineCount = conLen(linesIn);
         #    if (lineCount <= 0)
@@ -3793,6 +4031,12 @@ Formatversion: 1
         #
         #            if (hasGastoType)
         #                ticketHeader.GastoType = gastoType;
+        #
+        #            if (hasTicketDate && ticketDate)
+        #                ticketHeader.TicketDate = ticketDate;
+        #
+        #            if (hasTicketTime)
+        #                ticketHeader.TicketTime = ticketTime;
         #
         #            select firstonly forupdate docuRef
         #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)
@@ -3856,12 +4100,14 @@ Formatversion: 1
         #                qty       = conPeek(lineIn, 2);
         #                price     = conPeek(lineIn, 3);
         #
+        #                hasLineTotal = false;
         #                if (conLen(lineIn) >= 4)
+        #                {
         #                    lineTotal = conPeek(lineIn, 4);
+        #                    hasLineTotal = true;
+        #                }
         #                else
-        #                    lineTotal = qty * price;
-        #                if (qty == 0 && lineTotal == 0 && price < 0)
-        #                    lineTotal = price;
+        #                    lineTotal = 0;
         #
         #                if (!lineDescr)
         #                {
@@ -3875,17 +4121,28 @@ Formatversion: 1
         #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Qty no puede ser negativo.', i), conNull()), conNull()];
         #                }
         #
-        #                if (qty == 0 && lineTotal >= 0)
-        #                {
-        #                    ttsabort;
-        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Qty 0 solo se permite para descuentos con total negativo.', i), conNull()), conNull()];
-        #                }
-        #
         #                if (price == 0)
         #                {
         #                    ttsabort;
         #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Price no puede ser 0.', i), conNull()), conNull()];
         #                }
+        #
+        #                if (!hasLineTotal)
+        #                {
+        #                    if (qty == 0 && price < 0)
+        #                        lineTotal = price;
+        #                    else
+        #                        lineTotal = qty * price;
+        #                }
+        #
+        #                if (qty == 0 && lineTotal >= 0)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Qty cero solo se permite en descuentos con total negativo.', i), conNull()), conNull()];
+        #                }
+        #
+        #                if (lineTotal == 0 && qty > 0)
+        #                    lineTotal = qty * price;
         #
         #                ticketLine.clear();
         #                ticketLine.initValue();
@@ -3902,11 +4159,16 @@ Formatversion: 1
         #                linesTotalAmount += lineTotal;
         #            }
         #
-        #            ticketHeader.TotalAmount = linesTotalAmount;
-        #            if (ticketHeader.TotalAmount < 0)
+        #            if (hasTotalAmount && totalAmount > 0)
+        #                ticketHeader.TotalAmount = totalAmount;
+        #            else
+        #                ticketHeader.TotalAmount = linesTotalAmount;
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
         #            {
         #                ttsabort;
-        #                return [INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull()), conNull()];
+        #                return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
         #            }
         #
         #            ticketHeader.update();
@@ -3978,6 +4240,7 @@ Formatversion: 1
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
+        #    boolean            hasLineTotal;
         #    int                startLine;
         #    str                msg;
         #
@@ -4000,11 +4263,13 @@ Formatversion: 1
         #    qty        = conPeek(_data, 6);
         #    price      = conPeek(_data, 7);
         #    lineTotal  = qty * price;
+        #    hasLineTotal = false;
         #
         #    if (conLen(_data) >= 8)
+        #    {
         #        lineTotal = conPeek(_data, 8);
-        #    if (qty == 0 && lineTotal == 0 && price < 0)
-        #        lineTotal = price;
+        #        hasLineTotal = true;
+        #    }
         #
         #    if (!axUserId)
         #        return INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull());
@@ -4021,11 +4286,22 @@ Formatversion: 1
         #    if (qty < 0)
         #        return INDCRMUtilityService::buildHeader(false, 'Qty no puede ser negativo.', conNull());
         #
-        #    if (qty == 0 && lineTotal >= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Qty 0 solo se permite para descuentos con total negativo.', conNull());
-        #
         #    if (price == 0)
         #        return INDCRMUtilityService::buildHeader(false, 'Price no puede ser 0.', conNull());
+        #
+        #    if (!hasLineTotal)
+        #    {
+        #        if (qty == 0 && price < 0)
+        #            lineTotal = price;
+        #        else
+        #            lineTotal = qty * price;
+        #    }
+        #
+        #    if (qty == 0 && lineTotal >= 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty cero solo se permite en descuentos con total negativo.', conNull());
+        #
+        #    if (lineTotal == 0 && qty > 0)
+        #        lineTotal = qty * price;
         #
         #    startLine = infolog.line();
         #
@@ -4065,13 +4341,16 @@ Formatversion: 1
         #            ticketLine.Qty         = qty;
         #            ticketLine.Price       = price;
         #            ticketLine.TotalAmount = lineTotal;
+        #
         #            ticketLine.update();
         #
         #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
-        #            if (ticketHeader.TotalAmount < 0)
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
         #            {
         #                ttsabort;
-        #                return INDCRMUtilityService::buildHeader(false, 'El total del ticket no puede ser negativo.', conNull());
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
         #            }
         #
         #            ticketHeader.update();

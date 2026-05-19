@@ -6,6 +6,7 @@ namespace IND_CRM_APP.Services.Enums
     public interface ICrmEnumCatalog
     {
         string NormalizeTipoVisitaValue(string? raw);
+        string NormalizeContactMethodValue(string? raw);
         IReadOnlyDictionary<string, string> GetGastoTypeMap();
         string GetGastoTypeLabel(string? rawTypeValue);
     }

@@ -60,15 +60,19 @@ type UseDetailMutationsArgs = {
   accountNum: string;
   transDate: string;
   visitType: string;
+  contactMethod: string;
   asistenteTipo: string;
   description: string;
   comentarios: string;
   antecedentes: string;
   conclusiones: string;
   visitTypes: OptionLike[];
+  contactMethods: OptionLike[];
   asistenteTipos: OptionLike[];
   defaultVisitType: string;
+  defaultContactMethod: string;
   rawInitialVisitType: string;
+  rawInitialContactMethod: string;
   rawInitialAsistente: string;
   matchOptionValue: (options: OptionLike[], raw: unknown) => string;
   clearDraft: () => void;
@@ -89,15 +93,19 @@ export const useDetailMutations = ({
   accountNum,
   transDate,
   visitType,
+  contactMethod,
   asistenteTipo,
   description,
   comentarios,
   antecedentes,
   conclusiones,
   visitTypes,
+  contactMethods,
   asistenteTipos,
   defaultVisitType,
+  defaultContactMethod,
   rawInitialVisitType,
+  rawInitialContactMethod,
   rawInitialAsistente,
   matchOptionValue,
   clearDraft,
@@ -136,10 +144,15 @@ export const useDetailMutations = ({
         matchOptionValue(asistenteTipos, asistenteTipo) ||
         matchOptionValue(asistenteTipos, rawInitialAsistente) ||
         rawInitialAsistente;
+      const normalizedContactMethod =
+        matchOptionValue(contactMethods, contactMethod) ||
+        matchOptionValue(contactMethods, rawInitialContactMethod) ||
+        defaultContactMethod;
 
       const payload = {
         accountNum,
         visitType: normalizedVisitType,
+        contactMethod: Number(normalizedContactMethod || 0),
         asistenteTipo: normalizedAsistenteTipo,
         description,
         transDate,
@@ -186,11 +199,15 @@ export const useDetailMutations = ({
     clearDraft,
     comentarios,
     conclusiones,
+    contactMethod,
+    contactMethods,
+    defaultContactMethod,
     defaultVisitType,
     description,
     isEditing,
     matchOptionValue,
     rawInitialAsistente,
+    rawInitialContactMethod,
     rawInitialVisitType,
     recId,
     setBusy,

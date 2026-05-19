@@ -28,6 +28,7 @@
 @section Scripts {
     <script nonce="@cspNonce">
         window.__VISIT_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.CRMTipoVisitaEnum ?? new object[] { }));
+        window.__CONTACT_METHODS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ContactMethodEnum ?? new object[] { }));
         window.__ASISTENTE_TIPOS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.AsistenteTipoEnum ?? new object[] { }));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Save = SR["Common_Save"].Value,
@@ -68,6 +69,8 @@
             Visits_Create_ConfirmCreate_Body = SR["Visits_Create_ConfirmCreate_Body"].Value,
             Visits_Create_CreatingVisitFor = SR["Visits_Create_CreatingVisitFor"].Value,
             Visits_Detail_VisitType_Placeholder = SR["Visits_Detail_VisitType_Placeholder"].Value,
+            Visits_Detail_ContactMethod_Label = SR["Visits_Detail_ContactMethod_Label"].Value,
+            Visits_Detail_ContactMethod_Placeholder = SR["Visits_Detail_ContactMethod_Placeholder"].Value,
             Visits_Detail_Date_Label = SR["Visits_Detail_Date_Label"].Value,
             Visits_Detail_VisitType_Label = SR["Visits_Detail_VisitType_Label"].Value,
             Visits_Create_MinChars = SR["Visits_Create_MinChars"].Value,

@@ -58,7 +58,7 @@
     <value>Logotipo da Insertec</value>
   </data>
   <data name="Nav_Visits" xml:space="preserve">
-    <value>Visitas</value>
+    <value>Relatorios</value>
   </data>
   <data name="Nav_Visits_Create" xml:space="preserve">
     <value>Criar</value>
@@ -610,7 +610,7 @@
     <value>A carregar...</value>
   </data>
   <data name="History_NoDataInRange" xml:space="preserve">
-    <value>Nao ha visitas neste intervalo</value>
+    <value>Nao ha relatorios neste intervalo</value>
   </data>
   <data name="History_Page_First" xml:space="preserve">
     <value>Primeira</value>
@@ -736,10 +736,10 @@
     <value>Confirmar criacao</value>
   </data>
   <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve">
-    <value>Deseja criar esta visita?</value>
+    <value>Deseja criar este relatorio?</value>
   </data>
   <data name="Visits_Create_CreatingVisitFor" xml:space="preserve">
-    <value>A criar visita para {0}...</value>
+    <value>A criar relatorio para {0}...</value>
   </data>
   <data name="Visits_Create_MinChars" xml:space="preserve">
     <value>Escreva pelo menos {0} caracteres.</value>
@@ -799,10 +799,10 @@
     <value>Falha ao criar a atividade.</value>
   </data>
   <data name="Visits_Create_CreateVisitFailed" xml:space="preserve">
-    <value>Falha ao criar a visita.</value>
+    <value>Falha ao criar o relatorio.</value>
   </data>
   <data name="Visits_Create_CreateVisitError" xml:space="preserve">
-    <value>Erro ao criar a visita.</value>
+    <value>Erro ao criar o relatorio.</value>
   </data>
   <data name="Visits_Create_ClientCount" xml:space="preserve">
     <value>{0} cliente(s)</value>
@@ -820,7 +820,7 @@
     <value>{0} contacto(s) selecionado(s)</value>
   </data>
   <data name="Visits_Create_VisitData_Title" xml:space="preserve">
-    <value>Dados da visita</value>
+    <value>Dados do relatorio</value>
   </data>
   <data name="Visits_Field_Description" xml:space="preserve">
     <value>Descricao</value>
@@ -835,19 +835,25 @@
     <value>Conclusoes</value>
   </data>
   <data name="Visits_Create_ErrorBoundary" xml:space="preserve">
-    <value>Ocorreu um erro ao mostrar a pagina de visitas. Recarregue e tente novamente.</value>
+    <value>Ocorreu um erro ao mostrar a pagina de relatorios. Recarregue e tente novamente.</value>
   </data>
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
-    <value>Dados da visita</value>
+    <value>Dados do relatorio</value>
   </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>Data</value>
   </data>
   <data name="Visits_Detail_VisitType_Label" xml:space="preserve">
-    <value>Tipo de visita</value>
+    <value>Tipo de relatorio</value>
   </data>
   <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve">
     <value>Selecione tipo</value>
+  </data>
+  <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
+    <value>Metodo de contacto</value>
+  </data>
+  <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
+    <value>Selecione metodo</value>
   </data>
   <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve">
     <value>Guardar alteracoes</value>
@@ -928,7 +934,7 @@
     <value>Chamada telefonica</value>
   </data>
   <data name="Enum_ActividadType_Visit" xml:space="preserve">
-    <value>Visita</value>
+    <value>Relatorio</value>
   </data>
   <data name="Enum_ActividadType_Task" xml:space="preserve">
     <value>Tarefa</value>
@@ -938,6 +944,15 @@
   </data>
   <data name="Enum_TipoVisita_Technical" xml:space="preserve">
     <value>Tecnica</value>
+  </data>
+  <data name="Enum_ContactMethod_InPerson" xml:space="preserve">
+    <value>Presencial</value>
+  </data>
+  <data name="Enum_ContactMethod_PhoneCall" xml:space="preserve">
+    <value>Chamada telefonica</value>
+  </data>
+  <data name="Enum_ContactMethod_OnlineMeeting" xml:space="preserve">
+    <value>Reuniao online</value>
   </data>
   <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve">
     <value>Consulta</value>

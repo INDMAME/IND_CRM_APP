@@ -58,7 +58,7 @@
     <value>Insertec logoa</value>
   </data>
   <data name="Nav_Visits" xml:space="preserve">
-    <value>Bisitak</value>
+    <value>Txostenak</value>
   </data>
   <data name="Nav_Visits_Create" xml:space="preserve">
     <value>Sortu</value>
@@ -622,7 +622,7 @@
     <value>Datuak kargatzen...</value>
   </data>
   <data name="History_NoDataInRange" xml:space="preserve">
-    <value>Ez dago bisitarik tarte honetan</value>
+    <value>Ez dago txostenik tarte honetan</value>
   </data>
   <data name="History_Page_First" xml:space="preserve">
     <value>Lehena</value>
@@ -748,10 +748,10 @@
     <value>Sorrera baieztatu</value>
   </data>
   <data name="Visits_Create_ConfirmCreate_Body" xml:space="preserve">
-    <value>Bisita hau sortu nahi duzu?</value>
+    <value>Txosten hau sortu nahi duzu?</value>
   </data>
   <data name="Visits_Create_CreatingVisitFor" xml:space="preserve">
-    <value>{0}rako bisita sortzen...</value>
+    <value>{0}rako txostena sortzen...</value>
   </data>
   <data name="Visits_Create_MinChars" xml:space="preserve">
     <value>Idatzi gutxienez {0} karaktere.</value>
@@ -811,10 +811,10 @@
     <value>Ezin izan da jarduera sortu.</value>
   </data>
   <data name="Visits_Create_CreateVisitFailed" xml:space="preserve">
-    <value>Ezin izan da bisita sortu.</value>
+    <value>Ezin izan da txostena sortu.</value>
   </data>
   <data name="Visits_Create_CreateVisitError" xml:space="preserve">
-    <value>Errorea bisita sortzean.</value>
+    <value>Errorea txostena sortzean.</value>
   </data>
   <data name="Visits_Create_ClientCount" xml:space="preserve">
     <value>{0} bezero</value>
@@ -832,7 +832,7 @@
     <value>{0} kontaktu hautatuta</value>
   </data>
   <data name="Visits_Create_VisitData_Title" xml:space="preserve">
-    <value>Bisitaren datuak</value>
+    <value>Txostenaren datuak</value>
   </data>
   <data name="Visits_Field_Description" xml:space="preserve">
     <value>Deskribapena</value>
@@ -847,19 +847,25 @@
     <value>Ondorioak</value>
   </data>
   <data name="Visits_Create_ErrorBoundary" xml:space="preserve">
-    <value>Errorea gertatu da bisiten orria erakustean. Berritu eta saiatu berriro.</value>
+    <value>Errorea gertatu da txostenen orria erakustean. Berritu eta saiatu berriro.</value>
   </data>
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
-    <value>Bisitaren datuak</value>
+    <value>Txostenaren datuak</value>
   </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>Data</value>
   </data>
   <data name="Visits_Detail_VisitType_Label" xml:space="preserve">
-    <value>Bisita mota</value>
+    <value>Txosten mota</value>
   </data>
   <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve">
     <value>Aukeratu mota</value>
+  </data>
+  <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
+    <value>Harremanetarako metodoa</value>
+  </data>
+  <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
+    <value>Aukeratu metodoa</value>
   </data>
   <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve">
     <value>Aldaketak gorde</value>
@@ -940,7 +946,7 @@
     <value>Telefono-deia</value>
   </data>
   <data name="Enum_ActividadType_Visit" xml:space="preserve">
-    <value>Bisita</value>
+    <value>Txosten</value>
   </data>
   <data name="Enum_ActividadType_Task" xml:space="preserve">
     <value>Zeregina</value>
@@ -950,6 +956,15 @@
   </data>
   <data name="Enum_TipoVisita_Technical" xml:space="preserve">
     <value>Teknikoa</value>
+  </data>
+  <data name="Enum_ContactMethod_InPerson" xml:space="preserve">
+    <value>Aurrez aurre</value>
+  </data>
+  <data name="Enum_ContactMethod_PhoneCall" xml:space="preserve">
+    <value>Telefono-deia</value>
+  </data>
+  <data name="Enum_ContactMethod_OnlineMeeting" xml:space="preserve">
+    <value>Online bilera</value>
   </data>
   <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve">
     <value>Kontsulta</value>

@@ -51,6 +51,8 @@ export type NormalizedDraft = {
   currencyCode: string;
   totalAmount: number;
   transDate: string;
+  ticketDate: string;
+  ticketTime: string;
   comentario: string;
   gastoType: number | null;
   lines: NormalizedDraftLine[];
@@ -128,6 +130,16 @@ const toDdMmYyyy = (value: unknown): string => {
   return toExpenseApiDdMmYyyy(value);
 };
 
+const toTicketTime = (value: unknown): string => {
+  const raw = safeText(value).replace(/\./g, ":");
+  if (!raw) return "";
+  const match = raw.match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/);
+  if (!match) return "";
+  const hours = Number(match[1]);
+  if (!Number.isInteger(hours) || hours < 0 || hours > 23) return "";
+  return `${String(hours).padStart(2, "0")}:${match[2]}:${match[3] || "00"}`;
+};
+
 export const getTodayDdMmYyyy = (): string => {
   return toDdMmYyyy(new Date());
 };
@@ -203,6 +215,9 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
   const draftCurrency = safeText(getFirstDefined(data, ["currencyCode", "CurrencyCode"])).toUpperCase();
   const draftTotalAmount = toNumber(getFirstDefined(data, ["totalAmount", "TotalAmount"]));
   const draftTransDate = toDdMmYyyy(getFirstDefined(data, ["transDate", "TransDate"])) || getTodayDdMmYyyy();
+  const draftTicketDate =
+    toDdMmYyyy(getFirstDefined(data, ["ticketDate", "TicketDate"])) || draftTransDate;
+  const draftTicketTime = toTicketTime(getFirstDefined(data, ["ticketTime", "TicketTime"]));
   const draftComment = safeText(getFirstDefined(data, ["comentario", "Comentario"]));
   const draftGastoType = normalizeGastoType(getFirstDefined(data, ["gastoType", "GastoType"]));
 
@@ -244,6 +259,8 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
     currencyCode: draftCurrency || "EUR",
     totalAmount: draftTotalAmount !== null ? draftTotalAmount : lines.reduce((sum, line) => sum + line.totalAmount, 0),
     transDate: draftTransDate,
+    ticketDate: draftTicketDate,
+    ticketTime: draftTicketTime,
     comentario: draftComment,
     gastoType: draftGastoType,
     lines,
@@ -278,7 +295,8 @@ export const buildTicketIaPayload = (draft: NormalizedDraft, upload: UploadSyncR
     currencyCode: draft.currencyCode,
     totalAmount: draft.totalAmount !== 0 ? draft.totalAmount : undefined,
     transDate: draft.transDate,
-    ticketDate: draft.transDate,
+    ticketDate: draft.ticketDate || draft.transDate,
+    ticketTime: draft.ticketTime || undefined,
     comentario: draft.comentario || undefined,
     urlFile: upload.urlFile || undefined,
     fileName: upload.fileName || undefined,

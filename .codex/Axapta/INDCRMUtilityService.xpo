@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Miércoles 13/05/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Martes 19/05/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -92,7 +92,7 @@ Formatversion: 1
       SOURCE #getEnvironmentName
         #static container getEnvironmentName()
         #{
-        #    return [["PROD SP2"]];
+        #    return [["APAXTA DEV SP2"]];
         #}
         #
       ENDSOURCE

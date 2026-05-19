@@ -42,6 +42,7 @@ type UseCreateSubmitArgs = {
   selectedClient: { value: string } | null;
   selectedContacts: ContactOption[];
   visitType: string;
+  contactMethod: string;
   defaultAsistenteTipo: string;
   description: string;
   transDate: string;
@@ -70,6 +71,7 @@ export const useCreateSubmit = ({
   selectedClient,
   selectedContacts,
   visitType,
+  contactMethod,
   defaultAsistenteTipo,
   description,
   transDate,
@@ -107,6 +109,7 @@ export const useCreateSubmit = ({
       const payloadActivity = {
         accountNum: selectedClient.value,
         visitType,
+        contactMethod: Number(contactMethod || 0),
         description,
         transDate,
         comentarios,
@@ -201,6 +204,7 @@ export const useCreateSubmit = ({
     closeConfirm,
     comentarios,
     conclusiones,
+    contactMethod,
     defaultAsistenteTipo,
     description,
     selectedClient,

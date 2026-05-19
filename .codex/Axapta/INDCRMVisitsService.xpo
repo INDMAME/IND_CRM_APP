@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMVisitsService descargados en Miércoles 13/05/2026
+; Navision Axapta Class: INDCRMVisitsService descargados en Martes 19/05/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -28,6 +28,7 @@ Formatversion: 1
         #    NumberSeq           numberSeq;
         #    CRMAccountNum       _accountNum;
         #    CRMTipoVisita       _visitType;
+        #    INDContactMethod    _contactMethod;
         #    CRMUserId           _userId;
         #    CRMUserId           _createdByUserId; // Nuevo: usuario autenticado real
         #    Description         _desc;
@@ -62,6 +63,10 @@ Formatversion: 1
         #    _coments           = conPeek(_data, 8);
         #    _antecedentes      = conPeek(_data, 9);
         #    _conclusiones      = conPeek(_data, 10);
+        #    if (conLen(_data) >= 11)
+        #        _contactMethod = conPeek(_data, 11);
+        #    else
+        #        _contactMethod = INDContactMethod::InPerson;
         #
         #    try
         #    {
@@ -84,6 +89,7 @@ Formatversion: 1
         #            actividadTable.Comentarios          = _coments;
         #            actividadTable.VisitaAntecedentes   = _antecedentes;
         #            actividadTable.VisitaConclusiones   = _conclusiones;
+        #            actividadTable.ContactMethod        = _contactMethod;
         #
         #            // Nuevo: registrar el usuario autenticado real (no el usuario tecnico del COM)
         #            actividadTable.INDCreatedByUserId   = _createdByUserId;
@@ -422,6 +428,7 @@ Formatversion: 1
         #             strFmt("%1", actividadTable.Country),
         #             strFmt("%1", actividadTable.ActividadType),
         #             strFmt("%1", actividadTable.TipoVisita),
+        #             strFmt("%1", actividadTable.ContactMethod),
         #             strFmt("%1", actividadTable.Description),
         #             strFmt("%1", actividadTable.Comentarios),
         #             strFmt("%1", actividadTable.VisitaAntecedentes),
@@ -478,11 +485,18 @@ Formatversion: 1
         #
         #        conActividad = [[
         #             strFmt("%1", actividadTable.ActividadId),
+        #             strFmt("%1", actividadTable.RecId),
         #             strFmt("%1", actividadTable.Name),
+        #             strFmt("%1", actividadTable.AccountNum),
         #             strFmt("%1", date2str(actividadTable.TransDate, 123, 2,2,2,2,4)),
         #             strFmt("%1", actividadTable.Country),
         #             strFmt("%1", actividadTable.ActividadType),
+        #             strFmt("%1", actividadTable.TipoVisita),
+        #             strFmt("%1", actividadTable.ContactMethod),
         #             strFmt("%1", actividadTable.Description),
+        #             strFmt("%1", actividadTable.Comentarios),
+        #             strFmt("%1", actividadTable.VisitaAntecedentes),
+        #             strFmt("%1", actividadTable.VisitaConclusiones),
         #             conAsistentes
         #        ]];
         #
@@ -556,12 +570,15 @@ Formatversion: 1
         #
         #            conActividad = [[
         #                 strFmt("%1", actividadTable.ActividadId),
+        #                 strFmt("%1", actividadTable.RecId),
         #                 strFmt("%1", actividadTable.Name),
+        #                 strFmt("%1", actividadTable.AccountNum),
         #                 strFmt("%1", date2str(actividadTable.TransDate, 123, 2,2,2,2,4)),
         #                 strFmt("%1", actividadTable.Country),
         #                 strFmt("%1", actividadTable.ActividadType),
+        #                 strFmt("%1", actividadTable.TipoVisita),
+        #                 strFmt("%1", actividadTable.ContactMethod),
         #                 strFmt("%1", actividadTable.Description),
-        #                 strFmt("%1", actividadTable.AccountNum),
         #                 conAsistentes
         #            ]];
         #
@@ -628,6 +645,7 @@ Formatversion: 1
         #    CRMActividadTable   actividadTable;
         #    CRMAccountNum       _accountNum;
         #    CRMTipoVisita       _visitType;
+        #    INDContactMethod    _contactMethod;
         #    CRMUserId           _userId;
         #    Description         _desc;
         #    TransDate           _transDate;
@@ -654,6 +672,10 @@ Formatversion: 1
         #    _coments        = conPeek(_data, 8);
         #    _antecedentes   = conPeek(_data, 9);
         #    _conclusiones   = conPeek(_data, 10);
+        #    if (conLen(_data) >= 11)
+        #        _contactMethod = conPeek(_data, 11);
+        #    else
+        #        _contactMethod = INDContactMethod::InPerson;
         #
         #    try
         #    {
@@ -682,6 +704,7 @@ Formatversion: 1
         #                actividadTable.Comentarios        = _coments;
         #                actividadTable.VisitaAntecedentes = _antecedentes;
         #                actividadTable.VisitaConclusiones = _conclusiones;
+        #                actividadTable.ContactMethod      = _contactMethod;
         #                actividadTable.ActividadType      = CRMActividadType::Visita;
         #
         #                switch (accountTable.Origen)

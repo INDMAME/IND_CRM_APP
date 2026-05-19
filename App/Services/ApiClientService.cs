@@ -1106,6 +1106,30 @@ namespace IND_CRM_APP.Services
             PrepareRequestHeaders(token, "GetActivityByRecId", requireCompany: true);
 
             var result = await SendGetAsync(ApiRoutes.ActivityByRecId(recId));
+            ApplyRefreshedToken(result.Headers, null);
+
+            try
+            {
+                var pagedEnvelope = JsonSerializer.Deserialize<PagedApiResponse<ActivityDto>>(result.Raw, JsonOptions);
+                var firstItem = pagedEnvelope?.GetAnyItems().FirstOrDefault();
+                if (firstItem != null && !ApiPayloadParser.IsActivityEmpty(firstItem))
+                {
+                    return new ApiResponse<ActivityDto>
+                    {
+                        Success = pagedEnvelope!.Success,
+                        Message = pagedEnvelope.Message,
+                        ErrorCode = pagedEnvelope.ErrorCode,
+                        Errors = pagedEnvelope.Errors ?? new List<IndValidationError>(),
+                        Data = firstItem,
+                        TraceId = pagedEnvelope.TraceId ?? TryGetTraceId(result.Headers)
+                    };
+                }
+            }
+            catch
+            {
+                // Fall through to the standard response parser.
+            }
+
             return BuildApiResponse<ActivityDto>(result, "GetActivityByRecId");
         }
 

@@ -720,7 +720,7 @@ export const HistoryPage = ({ defaultFromDate = "", defaultToDate = "" }: Props)
         <>
           <HistoryTable
             items={timelineItems}
-            noDataText={indT("History_NoDataInRange", "No visits in this range")}
+          noDataText={indT("History_NoDataInRange", "No reports in this range")}
             errorMessage={errorMessage}
             onNavigate={handleNavigate}
           />

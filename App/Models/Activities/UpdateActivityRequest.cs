@@ -23,6 +23,9 @@ namespace IND_CRM_APP.Models.Activities
         [JsonPropertyName("transDate")]
         public string TransDate { get; set; } = string.Empty;
 
+        [JsonPropertyName("contactMethod")]
+        public int? ContactMethod { get; set; }
+
         [JsonPropertyName("comentarios")]
         public string Comentarios { get; set; } = string.Empty;
 

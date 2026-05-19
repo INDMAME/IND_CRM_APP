@@ -23,6 +23,10 @@ namespace IND_CRM_APP.Models.Activities
         [JsonPropertyName("transDate")]
         public string TransDate { get; set; } = string.Empty;
 
+        // Maps ContactMethod -> contactMethod (INDContactMethod enum value).
+        [JsonPropertyName("contactMethod")]
+        public int? ContactMethod { get; set; }
+
         // Mapea Comentarios -> comentarios
         [JsonPropertyName("comentarios")]
         public string Comentarios { get; set; } = string.Empty;

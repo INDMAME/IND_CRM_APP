@@ -25,7 +25,7 @@ import { useDetailMutations } from "./useDetailMutations.ts";
 const EDITOR_RETURN_FLAG_TTL_MS = 2 * 60 * 60 * 1000;
 
 const DetailApp = () => {
-  const { visitTypes, asistenteTipos } = useVisitas();
+  const { visitTypes, contactMethods, asistenteTipos } = useVisitas();
   const canEditHistory = canAccess("VISITAS_GESTION", "Edit");
   const canDeleteHistory = canAccess("VISITAS_GESTION", "FullAccess");
   type ActivityDetailPayload = {
@@ -126,6 +126,11 @@ const DetailApp = () => {
     detail.tipoVisita ?? detail.TipoVisita ?? detail.visitType ?? detail.VisitType ?? ""
   );
   const initialVisitType = matchOptionValue(visitTypes, rawInitialVisitType) || defaultVisitType;
+  const defaultContactMethod = String(contactMethods[0]?.value ?? contactMethods[0]?.Value ?? "0");
+  const rawInitialContactMethod = String(
+    detail.contactMethod ?? detail.ContactMethod ?? ""
+  );
+  const initialContactMethod = matchOptionValue(contactMethods, rawInitialContactMethod) || defaultContactMethod;
   const rawInitialAsistente = String(
     detail.asistenteTipo ?? detail.AsistenteTipo ?? (asistenteTipos[0]?.value ?? asistenteTipos[0]?.Value ?? "")
   );
@@ -133,6 +138,7 @@ const DetailApp = () => {
 
   const [transDate, setTransDate] = useState(initialTransDate);
   const [visitType, setVisitType] = useState(initialVisitType);
+  const [contactMethod, setContactMethod] = useState(initialContactMethod);
   const [asistenteTipo, setAsistenteTipo] = useState(initialAsistente);
   const [description, setDescription] = useState(String(detail.description ?? detail.Description ?? ""));
   const [comentarios, setComentarios] = useState(String(detail.comentarios ?? detail.Comentarios ?? ""));
@@ -158,6 +164,7 @@ const DetailApp = () => {
     setIsEditing,
     transDate,
     visitType,
+    contactMethod,
     asistenteTipo,
     description,
     comentarios,
@@ -165,6 +172,7 @@ const DetailApp = () => {
     conclusiones,
     setTransDate,
     setVisitType,
+    setContactMethod,
     setAsistenteTipo,
     setDescription,
     setComentarios,
@@ -306,8 +314,10 @@ const DetailApp = () => {
     actividadId,
     shouldHydrate,
     visitTypes,
+    contactMethods,
     asistenteTipos,
     defaultVisitType,
+    defaultContactMethod,
     initialAsistente,
     normalizeDateToInput,
     matchOptionValue,
@@ -317,6 +327,7 @@ const DetailApp = () => {
     setIsHydrating,
     setTransDate,
     setVisitType,
+    setContactMethod,
     setAsistenteTipo,
     setDescription,
     setComentarios,
@@ -340,6 +351,7 @@ const DetailApp = () => {
         editSnapshotRef.current = {
           transDate,
           visitType,
+          contactMethod,
           asistenteTipo,
           description,
           comentarios,
@@ -350,7 +362,7 @@ const DetailApp = () => {
       return;
     }
     editSnapshotRef.current = null;
-  }, [isEditing, transDate, visitType, asistenteTipo, description, comentarios, antecedentes, conclusiones]);
+  }, [isEditing, transDate, visitType, contactMethod, asistenteTipo, description, comentarios, antecedentes, conclusiones]);
 
   useEffect(() => {
     if (isEditing) return undefined;
@@ -386,15 +398,19 @@ const DetailApp = () => {
     accountNum,
     transDate,
     visitType,
+    contactMethod,
     asistenteTipo,
     description,
     comentarios,
     antecedentes,
     conclusiones,
     visitTypes,
+    contactMethods,
     asistenteTipos,
     defaultVisitType,
+    defaultContactMethod,
     rawInitialVisitType,
+    rawInitialContactMethod,
     rawInitialAsistente,
     matchOptionValue,
     clearDraft,
@@ -460,7 +476,7 @@ const DetailApp = () => {
             </div>
           </div>
         )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
           <div className="visita-field-text">
             <SingleDatePicker
               label={indT("Visits_Detail_Date_Label", "Date")}
@@ -471,11 +487,21 @@ const DetailApp = () => {
             />
           </div>
           <SelectCombobox
-            label={indT("Visits_Detail_VisitType_Label", "Visit type")}
+            label={indT("Visits_Detail_VisitType_Label", "Report type")}
             options={visitTypes}
             value={visitType}
             onChange={setVisitType}
             placeholder={indT("Visits_Detail_VisitType_Placeholder", "Select type")}
+            disabled={!isEditing}
+            readOnly={!isEditing}
+            usePortal={false}
+          />
+          <SelectCombobox
+            label={indT("Visits_Detail_ContactMethod_Label", "Contact method")}
+            options={contactMethods}
+            value={contactMethod}
+            onChange={setContactMethod}
+            placeholder={indT("Visits_Detail_ContactMethod_Placeholder", "Select method")}
             disabled={!isEditing}
             readOnly={!isEditing}
             usePortal={false}

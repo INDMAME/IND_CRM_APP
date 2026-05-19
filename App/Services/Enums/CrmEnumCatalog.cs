@@ -34,6 +34,27 @@ namespace IND_CRM_APP.Services.Enums
             return value;
         }
 
+        // Normalizes contact method values from API payloads to numeric catalog values.
+        public string NormalizeContactMethodValue(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return "0";
+
+            var value = raw.Trim();
+            if (value is "0" or "1" or "2")
+                return value;
+
+            var key = NormalizeKey(value);
+            if (key is "inperson" or "presencial" or "dipersona")
+                return "0";
+            if (key is "phonecall" or "llamadatelefonica" or "llamadadetelefono" or "telefonata")
+                return "1";
+            if (key is "onlinemeeting" or "reuniononline" or "riunioneonline")
+                return "2";
+
+            return value;
+        }
+
         // Returns a map of gasto type code to localized label.
         public IReadOnlyDictionary<string, string> GetGastoTypeMap()
         {

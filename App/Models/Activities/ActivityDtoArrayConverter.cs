@@ -1,5 +1,6 @@
+using System;
+using System.Collections.Generic;
 using System.Globalization;
-using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -7,8 +8,6 @@ namespace IND_CRM_APP.Models.Activities
 {
     /// <summary>
     /// Allows deserializing responses that return ActivityDto as arrays.
-    /// Expected format:
-    /// ["VC2025-0369","ALUDIUM ALICANTE","24.11.2025","","Visita","DESCRIPCION TXT", [["JAVIER PENA",1,"MANTENIMIENTO"]]]
     /// </summary>
     public class ActivityDtoArrayConverter : JsonConverter<ActivityDto>
     {
@@ -29,184 +28,220 @@ namespace IND_CRM_APP.Models.Activities
             if (reader.TokenType != JsonTokenType.StartArray)
                 throw new JsonException("Se esperaba un array para ActivityDto.");
 
-            // Read array elements in order.
-            reader.Read(); // posicionar en primer valor
-
-            string? actividadId = ReadString(ref reader);
-            string? name = ReadString(ref reader);
-            string? transDate = ReadString(ref reader);
-            string? country = ReadString(ref reader);
-            string? actividadType = ReadString(ref reader);
-            string? description = ReadString(ref reader);
-
-            string? recId = null;
-            string? accountNum = null;
-            string? tipoVisita = null;
-            List<ActivityAsistenteDto>? asistentes = null;
-            var trailingScalars = new List<string?>();
-
-            // Lee el resto de elementos hasta cerrar el array principal
-            while (reader.TokenType != JsonTokenType.EndArray)
+            using var doc = JsonDocument.ParseValue(ref reader);
+            var values = new List<JsonElement>();
+            foreach (var item in doc.RootElement.EnumerateArray())
             {
-                if (reader.TokenType == JsonTokenType.StartArray)
-                {
-                    // Assistant list can arrive as arrays or objects.
-                    var list = new List<ActivityAsistenteDto>();
-                    while (reader.Read() && reader.TokenType != JsonTokenType.EndArray)
-                    {
-                        if (reader.TokenType == JsonTokenType.StartArray || reader.TokenType == JsonTokenType.StartObject)
-                        {
-                            var asistente = ActivityAsistenteDtoArrayConverter.ReadAsistente(ref reader);
-                            list.Add(asistente);
-                        }
-                        else
-                        {
-                            reader.Skip();
-                        }
-                    }
-                    asistentes = list;
-                    reader.Read(); // avanzar después del EndArray de asistentes
-                    continue;
-                }
-
-                // Collect scalar values that can include tipoVisita, recId, accountNum.
-                trailingScalars.Add(ReadValueAsString(ref reader));
+                values.Add(item);
             }
 
-            if (trailingScalars.Count > 0)
-            {
-                var tipoIndex = -1;
+            if (LooksLikeFullDetailArray(values))
+                return MapFullDetailArray(values);
 
-                for (var i = 0; i < trailingScalars.Count; i += 1)
-                {
-                    if (IsTipoVisitaTextCandidate(trailingScalars[i]))
-                    {
-                        tipoIndex = i;
-                        break;
-                    }
-                }
+            if (LooksLikeExpandedListArray(values))
+                return MapExpandedListArray(values);
 
-                if (tipoIndex < 0 && trailingScalars.Count >= 3)
-                {
-                    for (var i = 0; i < trailingScalars.Count; i += 1)
-                    {
-                        if (IsTipoVisitaNumericCandidate(trailingScalars[i]))
-                        {
-                            tipoIndex = i;
-                            break;
-                        }
-                    }
-                }
+            return MapLegacyArray(values);
+        }
 
-                if (tipoIndex >= 0)
-                {
-                    tipoVisita = trailingScalars[tipoIndex];
-                }
-
-                var remaining = new List<string?>(trailingScalars.Count);
-                for (var i = 0; i < trailingScalars.Count; i += 1)
-                {
-                    if (i == tipoIndex) continue;
-                    remaining.Add(trailingScalars[i]);
-                }
-
-                if (remaining.Count > 0) recId = remaining[0];
-                if (remaining.Count > 1) accountNum = remaining[1];
-            }
+        // Maps getActivityByCode/getActivityByRecId rows, including the optional ContactMethod slot.
+        private static ActivityDto MapFullDetailArray(List<JsonElement> values)
+        {
+            var hasContactMethod = values.Count >= 14 && IsContactMethodCandidate(values[8]);
+            var descriptionIndex = hasContactMethod ? 9 : 8;
+            var assistantsIndex = hasContactMethod ? 13 : 12;
 
             return new ActivityDto
             {
-                ActividadId = actividadId,
-                RecId = recId,
-                AccountNum = accountNum,
-                Name = name,
-                TransDate = transDate,
-                Country = country,
-                ActividadType = actividadType,
-                TipoVisita = tipoVisita,
-                Description = description,
-                Asistentes = asistentes
+                ActividadId = ElementToString(values, 0),
+                RecId = ElementToString(values, 1),
+                Name = ElementToString(values, 2),
+                AccountNum = ElementToString(values, 3),
+                TransDate = ElementToString(values, 4),
+                Country = ElementToString(values, 5),
+                ActividadType = ElementToString(values, 6),
+                TipoVisita = ElementToString(values, 7),
+                ContactMethod = hasContactMethod ? ElementToNullableContactMethod(values, 8) : null,
+                Description = ElementToString(values, descriptionIndex),
+                Comentarios = ElementToString(values, descriptionIndex + 1),
+                Antecedentes = ElementToString(values, descriptionIndex + 2),
+                Conclusiones = ElementToString(values, descriptionIndex + 3),
+                Asistentes = ReadAssistants(values, assistantsIndex)
             };
         }
 
-        private static string? ReadString(ref Utf8JsonReader reader)
+        // Maps list rows emitted by getActivityContainer with RecId, AccountNum and ContactMethod.
+        private static ActivityDto MapExpandedListArray(List<JsonElement> values)
         {
-            if (reader.TokenType == JsonTokenType.EndArray) return null;
-            var val = reader.TokenType == JsonTokenType.String ? reader.GetString() : null;
-            reader.Read();
-            return val;
+            var hasContactMethod = values.Count >= 11 && IsContactMethodCandidate(values[8]);
+            var descriptionIndex = hasContactMethod ? 9 : 8;
+            var assistantsIndex = hasContactMethod ? 10 : 9;
+
+            return new ActivityDto
+            {
+                ActividadId = ElementToString(values, 0),
+                RecId = ElementToString(values, 1),
+                Name = ElementToString(values, 2),
+                AccountNum = ElementToString(values, 3),
+                TransDate = ElementToString(values, 4),
+                Country = ElementToString(values, 5),
+                ActividadType = ElementToString(values, 6),
+                TipoVisita = ElementToString(values, 7),
+                ContactMethod = hasContactMethod ? ElementToNullableContactMethod(values, 8) : null,
+                Description = ElementToString(values, descriptionIndex),
+                Asistentes = ReadAssistants(values, assistantsIndex)
+            };
         }
 
-        private static string? ReadValueAsString(ref Utf8JsonReader reader)
+        // Preserves older AX array shapes while the AOS class rollout catches up.
+        private static ActivityDto MapLegacyArray(List<JsonElement> values)
         {
-            string? value = reader.TokenType switch
+            return new ActivityDto
             {
-                JsonTokenType.String => reader.GetString(),
-                JsonTokenType.Number => reader.TryGetInt64(out var num) ? num.ToString() : reader.GetDouble().ToString(),
-                JsonTokenType.Null => null,
+                ActividadId = ElementToString(values, 0),
+                Name = ElementToString(values, 1),
+                TransDate = ElementToString(values, 2),
+                Country = ElementToString(values, 3),
+                ActividadType = ElementToString(values, 4),
+                Description = ElementToString(values, 5),
+                AccountNum = values.Count >= 8 ? ElementToString(values, 6) : null,
+                Asistentes = ReadAssistants(values, values.Count >= 8 ? 7 : 6)
+            };
+        }
+
+        private static bool LooksLikeFullDetailArray(List<JsonElement> values)
+        {
+            return values.Count >= 13 &&
+                   IsLikelyRecId(ElementToString(values, 1)) &&
+                   LooksLikeDate(ElementToString(values, 4));
+        }
+
+        private static bool LooksLikeExpandedListArray(List<JsonElement> values)
+        {
+            return values.Count >= 10 &&
+                   IsLikelyRecId(ElementToString(values, 1)) &&
+                   LooksLikeDate(ElementToString(values, 4));
+        }
+
+        private static string? ElementToString(List<JsonElement> values, int index)
+        {
+            if (index < 0 || index >= values.Count) return null;
+            return ElementToString(values[index]);
+        }
+
+        private static string? ElementToString(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString(),
+                JsonValueKind.Number => element.TryGetInt64(out var num)
+                    ? num.ToString(CultureInfo.InvariantCulture)
+                    : element.GetDouble().ToString(CultureInfo.InvariantCulture),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                JsonValueKind.Null => null,
                 _ => null
             };
-            reader.Read();
-            return value;
         }
 
-        private static bool IsTipoVisitaNumericCandidate(string? value)
+        private static int? ElementToNullableContactMethod(List<JsonElement> values, int index)
+        {
+            return ElementToNullableContactMethod(ElementToString(values, index));
+        }
+
+        private static int? ElementToNullableContactMethod(string? raw)
+        {
+            if (string.IsNullOrWhiteSpace(raw))
+                return null;
+
+            var value = raw.Trim();
+            if (int.TryParse(value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) &&
+                parsed >= 0 &&
+                parsed <= 2)
+            {
+                return parsed;
+            }
+
+            return NormalizeContactMethodKey(value) switch
+            {
+                "inperson" or "presencial" or "dipersona" => 0,
+                "phonecall" or "llamadatelefonica" or "llamadadetelefono" or "telefonata" => 1,
+                "onlinemeeting" or "reuniononline" or "riunioneonline" => 2,
+                _ => null
+            };
+        }
+
+        private static List<ActivityAsistenteDto>? ReadAssistants(List<JsonElement> values, int index)
+        {
+            if (index < 0 || index >= values.Count || values[index].ValueKind != JsonValueKind.Array)
+                return null;
+
+            return JsonSerializer.Deserialize<List<ActivityAsistenteDto>>(values[index].GetRawText(), ObjectOptions);
+        }
+
+        private static bool IsContactMethodCandidate(JsonElement element)
+        {
+            return ElementToNullableContactMethod(ElementToString(element)).HasValue;
+        }
+
+        private static bool IsLikelyRecId(string? value)
         {
             if (string.IsNullOrWhiteSpace(value)) return false;
             var trimmed = value.Trim();
-            if (trimmed.Length > 2) return false;
-            return trimmed is "0" or "1" or "2";
+            if (trimmed[0] == '-') trimmed = trimmed.Substring(1);
+            if (trimmed.Length == 0) return false;
+
+            foreach (var ch in trimmed)
+            {
+                if (!char.IsDigit(ch)) return false;
+            }
+
+            return true;
         }
 
-        private static bool IsTipoVisitaTextCandidate(string? value)
+        private static bool LooksLikeDate(string? value)
         {
             if (string.IsNullOrWhiteSpace(value)) return false;
-            var key = NormalizeKey(value);
-            return key is "comercial" or "tecnica" or "technical" or "commercial";
+
+            var trimmed = value.Trim();
+            var datePart = trimmed.Split('T', ' ')[0];
+            var supportedFormats = new[]
+            {
+                "yyyy-MM-dd",
+                "yyyy.MM.dd",
+                "yyyy/MM/dd",
+                "dd-MM-yyyy",
+                "dd.MM.yyyy",
+                "dd/MM/yyyy",
+                "d-M-yyyy",
+                "d.M.yyyy",
+                "d/M/yyyy"
+            };
+
+            return DateTime.TryParseExact(
+                       datePart,
+                       supportedFormats,
+                       CultureInfo.InvariantCulture,
+                       DateTimeStyles.AllowWhiteSpaces,
+                       out _) ||
+                   DateTime.TryParse(trimmed, CultureInfo.InvariantCulture, DateTimeStyles.AllowWhiteSpaces, out _);
         }
 
-        private static string NormalizeKey(string value)
+        private static string NormalizeContactMethodKey(string value)
         {
-            var v = StripDiacritics(value).ToLowerInvariant().Trim();
-            var sb = new StringBuilder(v.Length);
-            foreach (var ch in v)
+            var normalized = value.Normalize(System.Text.NormalizationForm.FormD).ToLowerInvariant().Trim();
+            var chars = new List<char>(normalized.Length);
+
+            foreach (var ch in normalized)
             {
+                if (CharUnicodeInfo.GetUnicodeCategory(ch) == UnicodeCategory.NonSpacingMark)
+                    continue;
+
                 if (char.IsLetterOrDigit(ch))
-                {
-                    sb.Append(ch);
-                    continue;
-                }
-
-                if (ch == '\u201A')
-                {
-                    sb.Append('e');
-                    continue;
-                }
-
-                if (ch == '\u00A4')
-                {
-                    sb.Append('n');
-                    continue;
-                }
+                    chars.Add(ch);
             }
 
-            return sb.ToString();
-        }
-
-        private static string StripDiacritics(string input)
-        {
-            if (string.IsNullOrEmpty(input)) return string.Empty;
-
-            var normalized = input.Normalize(NormalizationForm.FormD);
-            var sb = new StringBuilder(normalized.Length);
-            foreach (var c in normalized)
-            {
-                if (CharUnicodeInfo.GetUnicodeCategory(c) != UnicodeCategory.NonSpacingMark)
-                {
-                    sb.Append(c);
-                }
-            }
-            return sb.ToString().Normalize(NormalizationForm.FormC);
+            return new string(chars.ToArray()).Normalize(System.Text.NormalizationForm.FormC);
         }
 
         public override void Write(Utf8JsonWriter writer, ActivityDto value, JsonSerializerOptions options)
@@ -281,7 +316,7 @@ namespace IND_CRM_APP.Models.Activities
             reader.Read();
             string? asistenteTipo = reader.TokenType switch
             {
-                JsonTokenType.Number => reader.TryGetInt32(out var num) ? num.ToString() : reader.GetDouble().ToString(),
+                JsonTokenType.Number => reader.TryGetInt32(out var num) ? num.ToString(CultureInfo.InvariantCulture) : reader.GetDouble().ToString(CultureInfo.InvariantCulture),
                 JsonTokenType.String => reader.GetString(),
                 _ => null
             };
