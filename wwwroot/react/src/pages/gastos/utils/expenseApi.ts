@@ -85,9 +85,24 @@ import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
 import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
 import { indT } from "../../../utils/indI18n.ts";
 
+type ProjectDropdownOption = {
+  value?: string;
+  Value?: string;
+  text?: string;
+  Text?: string;
+  projId?: string;
+  ProjId?: string;
+  name?: string;
+  Name?: string;
+  description?: string;
+  Description?: string;
+};
+
 type ProjectDropdownResponse = {
   total?: number;
-  items?: Array<{ value?: string; text?: string }>;
+  Total?: number;
+  items?: ProjectDropdownOption[];
+  Items?: ProjectDropdownOption[];
 };
 
 type LegacyExpenseListItem = {
@@ -1551,7 +1566,7 @@ export const createExpenseSheetTicketQuick = async (
   const safeDescription = safeText(payload?.description);
   const safeComentario = safeText(payload?.comentario);
   const safeSheetId = safeText(payload?.existingHojaGastosId);
-  const safeProjectId = safeText(payload?.projectId);
+  const safeProjectId = safeText(payload?.projId || payload?.projectId);
   const ticketImage = payload.ticketImage;
 
   if (ticketImage instanceof File) {
@@ -1577,7 +1592,7 @@ export const createExpenseSheetTicketQuick = async (
   }
 
   if (safeSheetId && safeProjectId) {
-    form.append("projectId", safeProjectId);
+    form.append("projId", safeProjectId);
   }
 
   const csrfToken = getCsrfToken();
@@ -2118,10 +2133,10 @@ export const fetchExpenseProjects = async (
 ): Promise<ProjectDropdownResponse> => {
   const safeTerm = encodeURIComponent(String(term || ""));
   const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
-  const safePageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 20;
+  const safePageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 50;
 
   return fetchJson<ProjectDropdownResponse>(
-    `/Gastos/GetProjectsForDropdown?term=${safeTerm}&page=${safePage}&pageSize=${safePageSize}`,
+    `/api/crm/projects/list?filter=${safeTerm}&page=${safePage}&pageSize=${safePageSize}`,
     {
       method: "GET",
       ...options,

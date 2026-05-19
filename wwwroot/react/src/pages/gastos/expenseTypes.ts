@@ -171,36 +171,62 @@ export type ExpenseSheetsAskResult = IndApiResponse<ExpenseSheetsAskResponseData
 
 // /api/crm/expensesheets/{hojaGastosId} line contract.
 export type ExpenseSheetLineDto = {
-  RecId: string;
+  RecId?: string;
+  recId?: string;
   LineRecId?: string;
-  TransDate: ExpenseApiDate;
-  TypeValue: number | null;
-  Description: string;
-  Internacional: boolean | null;
-  FileId: string;
-  Ticket: boolean | null;
-  Price: number | null;
-  Qty: number | null;
-  Amount: number | null;
-  ProjId: string;
-  IndAttachFiles: string;
+  lineRecId?: string;
+  TransDate?: ExpenseApiDate;
+  transDate?: ExpenseApiDate;
+  TypeValue?: number | null;
+  typeValue?: number | null;
+  Description?: string;
+  description?: string;
+  Internacional?: boolean | null;
+  internacional?: boolean | null;
+  FileId?: string;
+  fileId?: string;
+  Ticket?: boolean | null;
+  ticket?: boolean | null;
+  Price?: number | null;
+  price?: number | null;
+  Qty?: number | null;
+  qty?: number | null;
+  Amount?: number | null;
+  amount?: number | null;
+  ProjId?: string;
+  projId?: string;
+  IndAttachFiles?: string;
+  indAttachFiles?: string;
 };
 
 // /api/crm/expensesheets/{hojaGastosId} detail contract.
 export type ExpenseSheetDetailDto = {
-  HojaGastosId: string;
-  UserId: string;
-  Description: string;
-  ExpenseSheetStatus: number | null;
-  EstadoComentarios: string | null;
-  CurrencyCode: string;
-  TotalAmount: number | null;
-  ExchRate: number | null;
-  ExchangeRateMode: number | null;
-  ProjId: string;
-  Voucher: string;
-  CreatedDate: ExpenseApiDate | null;
-  Lines: ExpenseSheetLineDto[];
+  HojaGastosId?: string;
+  hojaGastosId?: string;
+  UserId?: string;
+  userId?: string;
+  Description?: string;
+  description?: string;
+  ExpenseSheetStatus?: number | null;
+  expenseSheetStatus?: number | null;
+  EstadoComentarios?: string | null;
+  estadoComentarios?: string | null;
+  CurrencyCode?: string;
+  currencyCode?: string;
+  TotalAmount?: number | null;
+  totalAmount?: number | null;
+  ExchRate?: number | null;
+  exchRate?: number | null;
+  ExchangeRateMode?: number | null;
+  exchangeRateMode?: number | null;
+  ProjId?: string;
+  projId?: string;
+  Voucher?: string;
+  voucher?: string;
+  CreatedDate?: ExpenseApiDate | null;
+  createdDate?: ExpenseApiDate | null;
+  Lines?: ExpenseSheetLineDto[];
+  lines?: ExpenseSheetLineDto[];
 };
 
 export type ExpenseSheetCreateLineRequest = {
@@ -241,6 +267,7 @@ export type ExpenseSheetTicketQuickCreateRequest = {
   description?: string;
   comentario?: string;
   existingHojaGastosId?: string;
+  projId?: string;
   projectId?: string;
 };
 

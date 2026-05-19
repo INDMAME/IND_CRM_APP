@@ -134,12 +134,14 @@ export const useExpenseSheetLineDetailState = ({
   const [fuelPriceMessageIsError, setFuelPriceMessageIsError] = useState(false);
 
   const hydrateDraftFromLine = useCallback((nextLine: ExpenseSheetLine | null, nextHeader: ExpenseSheetHeader | null) => {
+    const isExistingLine = !!safeText(nextLine?.lineRecId);
+    const normalizedLineProjectId = safeText(nextLine?.projId);
     setDraftDescription(safeText(nextLine?.description));
     setDraftTransDate(toInputDate(nextLine?.transDate || nextHeader?.createdDate));
     setDraftTypeValueCode(safeText(nextLine?.typeValueCode));
     setDraftPrice(formatEditableNumber(nextLine?.price));
     setDraftQty(formatEditableQuantity(nextLine?.qty));
-    setDraftProjectId(safeText(nextLine?.projId || nextHeader?.projId));
+    setDraftProjectId(isExistingLine ? normalizedLineProjectId : (normalizedLineProjectId || safeText(nextHeader?.projId)));
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
   }, []);
 

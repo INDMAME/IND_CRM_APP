@@ -6,12 +6,24 @@ import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 import ExpenseCurrencyFlagIcon from "./ExpenseCurrencyFlagIcon.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
-import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
+import { formatAmountWithCurrency } from "../expenseFormatters.ts";
+import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 
-type ExpenseSheetHeaderCurrencySectionProps = {
+type ExpenseSheetHeaderCurrencyInteraction = {
   isEditing: boolean;
   canEditHeaderFields: boolean;
+};
+
+type ExpenseSheetHeaderCurrencyState = {
   isForeignCurrency: boolean;
+  showExchangeRate: boolean;
+  isCurrencyLockedByLines: boolean;
+  isExchangeRateLockedByLines: boolean;
+};
+
+type ExpenseSheetHeaderCurrencySectionProps = {
+  interaction: ExpenseSheetHeaderCurrencyInteraction;
+  currencyState: ExpenseSheetHeaderCurrencyState;
   expenseCurrencyLabel: string;
   headerCurrencyCode: string;
   baseCurrencyCode: string;
@@ -20,9 +32,6 @@ type ExpenseSheetHeaderCurrencySectionProps = {
   exchangeRateValue: string;
   exchangeRateValidationMessage: string;
   exchangeRateReferenceAmount: number;
-  showExchangeRate: boolean;
-  isCurrencyLockedByLines: boolean;
-  isExchangeRateLockedByLines: boolean;
   exchangeRateInfoMessage: string;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
@@ -30,9 +39,8 @@ type ExpenseSheetHeaderCurrencySectionProps = {
 
 // Owns the currency and exchange-rate UI so the header form stays compact.
 const ExpenseSheetHeaderCurrencySection = ({
-  isEditing,
-  canEditHeaderFields,
-  isForeignCurrency,
+  interaction,
+  currencyState,
   expenseCurrencyLabel,
   headerCurrencyCode,
   baseCurrencyCode,
@@ -41,13 +49,12 @@ const ExpenseSheetHeaderCurrencySection = ({
   exchangeRateValue,
   exchangeRateValidationMessage,
   exchangeRateReferenceAmount,
-  showExchangeRate,
-  isCurrencyLockedByLines,
-  isExchangeRateLockedByLines,
   exchangeRateInfoMessage,
   onDraftCurrencyCodeChange,
   onDraftExchangeRateChange,
 }: ExpenseSheetHeaderCurrencySectionProps) => {
+  const { isEditing, canEditHeaderFields } = interaction;
+  const { isForeignCurrency, isCurrencyLockedByLines, isExchangeRateLockedByLines, showExchangeRate } = currencyState;
   const localCurrencyOptions = React.useMemo<ExpenseSelectOption[]>(
     () => [
       {
@@ -162,12 +169,7 @@ const ExpenseSheetHeaderCurrencySection = ({
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Amount", "Amount")}</label>
               <input
                 className="form-control ind-readonly-field"
-                value={formatExpenseNumber(exchangeRateReferenceAmount, {
-                  minimumFractionDigits: 7,
-                  maximumFractionDigits: 7,
-                  useGrouping: true,
-                  fallback: "-",
-                })}
+                value={formatAmountWithCurrency(exchangeRateReferenceAmount, baseCurrencyCode)}
                 aria-label={indT("ExpenseSheets_Field_Amount", "Amount")}
                 readOnly
                 disabled
