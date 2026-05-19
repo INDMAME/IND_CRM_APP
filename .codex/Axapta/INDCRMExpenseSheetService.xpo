@@ -3438,8 +3438,11 @@ Formatversion: 1
         #            line.Price         = price;
         #            line.Amount        = line.CalcAmount();
         #
+        #            // Keep line project explicit and fall back to the header project when omitted.
         #            if (projId)
         #                line.ProjId = projId;
+        #            else
+        #                line.ProjId = header.ProjId;
         #
         #            line.update();
         #
