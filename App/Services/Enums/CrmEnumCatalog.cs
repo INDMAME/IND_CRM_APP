@@ -47,7 +47,7 @@ namespace IND_CRM_APP.Services.Enums
             var key = NormalizeKey(value);
             if (key is "inperson" or "presencial" or "dipersona")
                 return "0";
-            if (key is "phonecall" or "llamadatelefonica" or "llamadadetelefono" or "telefonata")
+            if (key is "phonecall" or "llamadatelefonica" or "llamadadetelefono" or "telefonico" or "telefonata")
                 return "1";
             if (key is "onlinemeeting" or "reuniononline" or "riunioneonline")
                 return "2";

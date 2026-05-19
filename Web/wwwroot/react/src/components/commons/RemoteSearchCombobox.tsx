@@ -13,6 +13,12 @@ export type RemoteSearchOption = {
   subtitle?: string;
 };
 
+type RemoteSearchOpenSearchMode = "current-value" | "empty-query";
+
+type ExecuteSearchOptions = {
+  clearValueOnNoResults?: boolean;
+};
+
 type RemoteSearchComboboxProps = {
   label: string;
   placeholder: string;
@@ -30,6 +36,7 @@ type RemoteSearchComboboxProps = {
   pageSize?: number;
   allowEmptySearch?: boolean;
   loadOnOpen?: boolean;
+  openSearchMode?: RemoteSearchOpenSearchMode;
   infiniteScroll?: boolean;
   disabled?: boolean;
   readOnly?: boolean;
@@ -65,6 +72,7 @@ const RemoteSearchCombobox = ({
   pageSize = 20,
   allowEmptySearch = false,
   loadOnOpen = false,
+  openSearchMode = "current-value",
   infiniteScroll = false,
   disabled = false,
   readOnly = false,
@@ -78,14 +86,17 @@ const RemoteSearchCombobox = ({
   const [loading, setLoading] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [lastSearchedTerm, setLastSearchedTerm] = useState("");
-  const [currentPage, setCurrentPage] = useState(0);
-  const [hasMore, setHasMore] = useState(false);
   const [showNotFoundState, setShowNotFoundState] = useState(false);
 
   const abortRef = useRef<AbortController | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
+  const currentPageRef = useRef(0);
+  const hasMoreRef = useRef(false);
+  const loadedSearchTermRef = useRef("");
+  const loadingRef = useRef(false);
+  const runLoadMoreRef = useRef<(() => Promise<void>) | null>(null);
 
   useOutsideClick([containerRef, listRef], () => {
     setShowNotFoundState(false);
@@ -99,9 +110,18 @@ const RemoteSearchCombobox = ({
     };
   }, []);
 
+  useEffect(() => {
+    loadingRef.current = loading;
+  }, [loading]);
+
   const query = value || "";
+  const loadedSearchTermKey = loadedSearchTermRef.current.trim().toLowerCase();
+  const hasLoadedOpenSearchOptions =
+    openSearchMode === "empty-query" && loadedSearchTermKey === "" && options.length > 0;
+  const shouldShowLoadedOpenOptions = open && hasLoadedOpenSearchOptions;
 
   const filtered = useMemo(() => {
+    if (shouldShowLoadedOpenOptions) return options;
     if (!query.trim()) return options;
     const q = query.trim().toLowerCase();
     return options.filter((option) => {
@@ -110,7 +130,7 @@ const RemoteSearchCombobox = ({
       const subtitleText = String(option.subtitle || "").toLowerCase();
       return valueText.includes(q) || titleText.includes(q) || subtitleText.includes(q);
     });
-  }, [options, query]);
+  }, [options, query, shouldShowLoadedOpenOptions]);
   const resolvedActiveIndex =
     filtered.length > 0 ? Math.min(Math.max(activeIndex, 0), filtered.length - 1) : 0;
 
@@ -124,7 +144,7 @@ const RemoteSearchCombobox = ({
   );
 
   const executeSearch = useCallback(
-    async (term: string, page: number, append: boolean) => {
+    async (term: string, page: number, append: boolean, searchOptions: ExecuteSearchOptions = {}) => {
       abortRef.current?.abort();
       const controller = new AbortController();
       abortRef.current = controller;
@@ -133,61 +153,71 @@ const RemoteSearchCombobox = ({
         setActiveIndex(0);
       }
 
-      const termKey = term.toLowerCase();
+      const normalizedTerm = term.trim();
+      const termKey = normalizedTerm.toLowerCase();
+      const clearValueOnNoResults = searchOptions.clearValueOnNoResults ?? true;
       try {
         if (onSearchPage) {
-          const response = await onSearchPage(term, page, pageSize, controller.signal);
+          const response = await onSearchPage(normalizedTerm, page, pageSize, controller.signal);
           const pageItems = uniqueByValue(Array.isArray(response?.items) ? response.items : []);
           if (!append && pageItems.length === 0) {
             setOptions([]);
-            setCurrentPage(0);
-            setHasMore(false);
+            currentPageRef.current = 0;
+            hasMoreRef.current = false;
             setLastSearchedTerm(termKey);
+            loadedSearchTermRef.current = normalizedTerm;
             setShowNotFoundState(true);
-            onChange("");
+            if (clearValueOnNoResults) {
+              onChange("");
+            }
             setOpen(true);
             return;
           }
 
           setOptions((previous) => (append ? uniqueByValue([...(previous || []), ...pageItems]) : pageItems));
-          setCurrentPage(page);
+          currentPageRef.current = page;
           setShowNotFoundState(false);
 
           const apiTotal = Number(response?.total);
           if (Number.isFinite(apiTotal) && apiTotal > 0) {
-            setHasMore(page * pageSize < apiTotal);
+            hasMoreRef.current = page * pageSize < apiTotal;
           } else {
-            setHasMore(pageItems.length >= pageSize);
+            hasMoreRef.current = pageItems.length >= pageSize;
           }
         } else {
-          const response = await onSearch(term, controller.signal);
+          const response = await onSearch(normalizedTerm, controller.signal);
           const next = uniqueByValue(response || []);
           if (!append && next.length === 0) {
             setOptions([]);
-            setCurrentPage(0);
-            setHasMore(false);
+            currentPageRef.current = 0;
+            hasMoreRef.current = false;
             setLastSearchedTerm(termKey);
+            loadedSearchTermRef.current = normalizedTerm;
             setShowNotFoundState(true);
-            onChange("");
+            if (clearValueOnNoResults) {
+              onChange("");
+            }
             setOpen(true);
             return;
           }
 
           setOptions(next);
-          setCurrentPage(1);
-          setHasMore(false);
+          currentPageRef.current = 1;
+          hasMoreRef.current = false;
           setShowNotFoundState(false);
         }
 
         setLastSearchedTerm(termKey);
+        loadedSearchTermRef.current = normalizedTerm;
         setOpen(true);
       } catch {
         if (!append) {
           setOptions([]);
-          setCurrentPage(0);
-          setHasMore(false);
+          currentPageRef.current = 0;
+          hasMoreRef.current = false;
         }
         setLastSearchedTerm(termKey);
+        loadedSearchTermRef.current = normalizedTerm;
         setShowNotFoundState(false);
         setOpen(true);
       } finally {
@@ -197,7 +227,7 @@ const RemoteSearchCombobox = ({
         setLoading(false);
       }
     },
-    [onSearch, onSearchPage, pageSize]
+    [onChange, onSearch, onSearchPage, pageSize]
   );
 
   const runSearch = useCallback(async () => {
@@ -207,11 +237,12 @@ const RemoteSearchCombobox = ({
 
     if (!canSearchTerm(term)) {
       setOptions([]);
-      setCurrentPage(0);
-      setHasMore(false);
+      currentPageRef.current = 0;
+      hasMoreRef.current = false;
       setShowNotFoundState(false);
       setOpen(false);
       setLastSearchedTerm("");
+      loadedSearchTermRef.current = "";
       return;
     }
 
@@ -223,24 +254,55 @@ const RemoteSearchCombobox = ({
     await executeSearch(term, 1, false);
   }, [canSearchTerm, executeSearch, lastSearchedTerm, loading, onSearchPage, options.length, query, readOnlyMode]);
 
+  const runOpenSearch = useCallback(async () => {
+    if (readOnlyMode || loading || !loadOnOpen) return;
+
+    const term = openSearchMode === "empty-query" ? "" : query.trim();
+    if (!canSearchTerm(term)) {
+      return;
+    }
+
+    await executeSearch(term, 1, false, {
+      clearValueOnNoResults: openSearchMode !== "empty-query",
+    });
+  }, [canSearchTerm, executeSearch, loadOnOpen, loading, openSearchMode, query, readOnlyMode]);
+
   const runLoadMore = useCallback(async () => {
-    if (readOnlyMode || loading || !onSearchPage || !infiniteScroll || !hasMore) {
+    if (readOnlyMode || loading || !onSearchPage || !infiniteScroll || !hasMoreRef.current) {
       return;
     }
 
-    const term = query.trim();
+    const term = openSearchMode === "empty-query" ? loadedSearchTermRef.current.trim() : query.trim();
     const termKey = term.toLowerCase();
-    if (termKey !== lastSearchedTerm) {
+    if (openSearchMode !== "empty-query" && termKey !== lastSearchedTerm) {
       return;
     }
 
-    const nextPage = currentPage + 1;
+    if (!canSearchTerm(term)) {
+      return;
+    }
+
+    const nextPage = currentPageRef.current + 1;
     if (nextPage <= 1) {
       return;
     }
 
-    await executeSearch(term, nextPage, true);
-  }, [currentPage, executeSearch, hasMore, infiniteScroll, lastSearchedTerm, loading, onSearchPage, query, readOnlyMode]);
+    await executeSearch(term, nextPage, true, { clearValueOnNoResults: false });
+  }, [
+    canSearchTerm,
+    executeSearch,
+    infiniteScroll,
+    lastSearchedTerm,
+    loading,
+    onSearchPage,
+    openSearchMode,
+    query,
+    readOnlyMode,
+  ]);
+
+  useEffect(() => {
+    runLoadMoreRef.current = runLoadMore;
+  }, [runLoadMore]);
 
   useEffect(() => {
     if (!open || !onSearchPage || !infiniteScroll) return;
@@ -248,11 +310,11 @@ const RemoteSearchCombobox = ({
     if (!scroller) return;
 
     const onScroll = () => {
-      if (loading || !hasMore) return;
+      if (loadingRef.current || !hasMoreRef.current) return;
       const threshold = 40;
       const isNearBottom = scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - threshold;
       if (isNearBottom) {
-        void runLoadMore();
+        void runLoadMoreRef.current?.();
       }
     };
 
@@ -260,7 +322,7 @@ const RemoteSearchCombobox = ({
     return () => {
       scroller.removeEventListener("scroll", onScroll);
     };
-  }, [hasMore, infiniteScroll, loading, onSearchPage, open, runLoadMore]);
+  }, [infiniteScroll, onSearchPage, open]);
 
   const selectOption = (option: RemoteSearchOption) => {
     const nextValue = String(option.value || "").trim();
@@ -315,7 +377,7 @@ const RemoteSearchCombobox = ({
               }
             }}
             onFocus={() => {
-              if (!readOnlyMode && (filtered.length > 0 || showNotFoundState)) {
+              if (!readOnlyMode && (filtered.length > 0 || hasLoadedOpenSearchOptions || showNotFoundState)) {
                 setOpen(true);
               }
             }}
@@ -342,7 +404,6 @@ const RemoteSearchCombobox = ({
             readOnly={readOnly}
             disabled={disabled}
             aria-label={label}
-            role="combobox"
             aria-expanded={open}
             aria-controls={listId}
             aria-activedescendant={activeId}
@@ -365,7 +426,7 @@ const RemoteSearchCombobox = ({
                 aria-label={indT("Common_Search", "Search")}
                 disabled={readOnlyMode}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 15.75-2.489-2.489m0 0a3.375 3.375 0 1 0-4.773-4.773 3.375 3.375 0 0 0 4.774 4.774ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </button>
@@ -380,19 +441,30 @@ const RemoteSearchCombobox = ({
                   setOpen(false);
                   return;
                 }
+
+                if (openSearchMode === "empty-query" && loadOnOpen) {
+                  if (hasLoadedOpenSearchOptions || (loadedSearchTermKey === "" && showNotFoundState)) {
+                    setOpen(true);
+                    return;
+                  }
+
+                  void runOpenSearch();
+                  return;
+                }
+
                 if (filtered.length > 0) {
                   setOpen(true);
                   return;
                 }
 
                 if (!query.trim() && loadOnOpen) {
-                  void runSearch();
+                  void runOpenSearch();
                 }
               }}
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
               disabled={readOnlyMode}
             >
-              {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
+              {open ? <ChevronUpSvg className="size-5" /> : <ChevronDownSvg className="size-5" />}
             </button>
           </div>
         </div>

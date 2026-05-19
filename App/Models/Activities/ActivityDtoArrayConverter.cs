@@ -165,7 +165,7 @@ namespace IND_CRM_APP.Models.Activities
             return NormalizeContactMethodKey(value) switch
             {
                 "inperson" or "presencial" or "dipersona" => 0,
-                "phonecall" or "llamadatelefonica" or "llamadadetelefono" or "telefonata" => 1,
+                "phonecall" or "llamadatelefonica" or "llamadadetelefono" or "telefonico" or "telefonata" => 1,
                 "onlinemeeting" or "reuniononline" or "riunioneonline" => 2,
                 _ => null
             };

@@ -850,10 +850,10 @@
     <value>Selecione tipo</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
-    <value>Metodo de contacto</value>
+    <value>Método de contacto</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
-    <value>Selecione metodo</value>
+    <value>Selecione método</value>
   </data>
   <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve">
     <value>Guardar alteracoes</value>
@@ -949,10 +949,10 @@
     <value>Presencial</value>
   </data>
   <data name="Enum_ContactMethod_PhoneCall" xml:space="preserve">
-    <value>Chamada telefonica</value>
+    <value>Chamada telefónica</value>
   </data>
   <data name="Enum_ContactMethod_OnlineMeeting" xml:space="preserve">
-    <value>Reuniao online</value>
+    <value>Reunião online</value>
   </data>
   <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve">
     <value>Consulta</value>

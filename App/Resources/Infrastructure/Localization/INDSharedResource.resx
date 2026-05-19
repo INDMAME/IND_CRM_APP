@@ -862,10 +862,10 @@
     <value>Selecciona tipo</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
-    <value>Metodo de contacto</value>
+    <value>Método de contacto</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
-    <value>Selecciona metodo</value>
+    <value>Selecciona método</value>
   </data>
   <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve">
     <value>Guardar cambios</value>
@@ -961,10 +961,10 @@
     <value>Presencial</value>
   </data>
   <data name="Enum_ContactMethod_PhoneCall" xml:space="preserve">
-    <value>Llamada telefonica</value>
+    <value>Llamada telefónica</value>
   </data>
   <data name="Enum_ContactMethod_OnlineMeeting" xml:space="preserve">
-    <value>Reunion online</value>
+    <value>Reunión online</value>
   </data>
   <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve">
     <value>Consulta</value>
