@@ -213,8 +213,6 @@ const buildExpenseTicketDetailContentView = ({
   setDraftDescription,
   setDraftGastoType,
   setDraftCurrencyCode,
-  setDraftTransDate,
-  setDraftTicketTime,
   isFromSheetLink,
   linkedLine,
   handleOpenExpenseSheet,
@@ -260,8 +258,6 @@ const buildExpenseTicketDetailContentView = ({
   setDraftDescription: (value: string) => void;
   setDraftGastoType: (value: string) => void;
   setDraftCurrencyCode: (value: string) => void;
-  setDraftTransDate: (value: string) => void;
-  setDraftTicketTime: (value: string) => void;
   isFromSheetLink: boolean;
   linkedLine: ExpenseTicketLinkedSheetLineView;
   handleOpenExpenseSheet: () => void;
@@ -313,8 +309,6 @@ const buildExpenseTicketDetailContentView = ({
   onDraftDescriptionChange: setDraftDescription,
   onDraftGastoTypeChange: setDraftGastoType,
   onDraftCurrencyCodeChange: setDraftCurrencyCode,
-  onDraftTransDateChange: setDraftTransDate,
-  onDraftTicketTimeChange: setDraftTicketTime,
   onOpenFile: openFile,
   onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
   linkedLine,
@@ -608,8 +602,6 @@ const useExpenseTicketDetailPageViewModel = () => {
     setDraftDescription,
     setDraftGastoType,
     setDraftCurrencyCode,
-    setDraftTransDate,
-    setDraftTicketTime,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,
@@ -896,8 +888,6 @@ const useExpenseTicketDetailPageViewModel = () => {
       setDraftDescription,
       setDraftGastoType,
       setDraftCurrencyCode,
-      setDraftTransDate,
-      setDraftTicketTime,
       isFromSheetLink,
       linkedLine: {
         visible: isFromExpenseLine,

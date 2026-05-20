@@ -63,7 +63,9 @@ export const useFloatingPosition = (
 
       const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-      const overlayHeight = overlayRef?.current?.getBoundingClientRect().height || 0;
+      const overlayElement = overlayRef?.current;
+      const overlayRect = overlayElement?.getBoundingClientRect();
+      const overlayHeight = Math.max(overlayRect?.height || 0, overlayElement?.scrollHeight || 0);
       const nextWidth = Math.min(rect.width, Math.max(0, viewportWidth - viewportPadding * 2));
       const nextLeft = clamp(rect.left, viewportPadding, viewportWidth - nextWidth - viewportPadding);
 
@@ -135,6 +137,18 @@ export const useFloatingPosition = (
       }
     }
 
+    const mutationObserver =
+      typeof MutationObserver === "undefined" || !overlayRef?.current
+        ? null
+        : new MutationObserver(() => {
+            scheduleUpdate();
+          });
+    mutationObserver?.observe(overlayRef.current, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
     const onScroll = () => open && scheduleUpdate();
     window.addEventListener("scroll", onScroll, { capture: true, passive: true });
     window.addEventListener("resize", scheduleUpdate);
@@ -143,6 +157,7 @@ export const useFloatingPosition = (
         window.cancelAnimationFrame(animationFrame);
       }
       resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", scheduleUpdate);
     };

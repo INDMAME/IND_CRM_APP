@@ -245,28 +245,6 @@ export const useExpenseTicketDetailEditor = ({
     [state.draft.currencyCode]
   );
 
-  const setDraftTransDate = useCallback<Dispatch<SetStateAction<string>>>(
-    (value) => {
-      dispatch({
-        type: "set_draft_field",
-        field: "transDate",
-        value: resolveSetStateValue(value, state.draft.transDate),
-      });
-    },
-    [state.draft.transDate]
-  );
-
-  const setDraftTicketTime = useCallback<Dispatch<SetStateAction<string>>>(
-    (value) => {
-      dispatch({
-        type: "set_draft_field",
-        field: "ticketTime",
-        value: resolveSetStateValue(value, state.draft.ticketTime),
-      });
-    },
-    [state.draft.ticketTime]
-  );
-
   const handleEnableEdit = useCallback(() => {
     if (!header || isLoading) return;
     if (isFromSheetLink) return;
@@ -383,8 +361,6 @@ export const useExpenseTicketDetailEditor = ({
     setDraftDescription,
     setDraftGastoType,
     setDraftCurrencyCode,
-    setDraftTransDate,
-    setDraftTicketTime,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,

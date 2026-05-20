@@ -1,13 +1,11 @@
 import React from "react";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
-import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import { hasExpenseTicketImagePreviewSource } from "../tickets/detail/expenseTicketPreviewUtils.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
-import ExpenseTicketTimeInput from "./ExpenseTicketTimeInput.tsx";
 
 const hasRealExpenseSheetValue = (value: string): boolean => {
   const normalized = safeText(value).toLowerCase();
@@ -42,8 +40,6 @@ type ExpenseTicketDetailHeaderFormProps = {
   onDraftDescriptionChange: (value: string) => void;
   onDraftGastoTypeChange: (value: string) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
-  onDraftTransDateChange: (value: string) => void;
-  onDraftTicketTimeChange: (value: string) => void;
   onOpenFile: () => void;
   onOpenExpenseSheet?: () => void;
   hideOpenFileAction?: boolean;
@@ -75,8 +71,6 @@ const ExpenseTicketDetailHeaderForm = ({
   onDraftDescriptionChange,
   onDraftGastoTypeChange,
   onDraftCurrencyCodeChange,
-  onDraftTransDateChange,
-  onDraftTicketTimeChange,
   onOpenFile,
   onOpenExpenseSheet,
   hideOpenFileAction = false,
@@ -84,6 +78,12 @@ const ExpenseTicketDetailHeaderForm = ({
   const previewUrl = safeText(isEditing ? draftUrlFile : header.urlFile);
   const canOpenFile = hasExpenseTicketImagePreviewSource(previewUrl);
   const showExpenseSheetField = hasRealExpenseSheetValue(header.hojaGastosIdDisplay);
+  const locale = document?.documentElement?.lang || "es-ES";
+  const displayDateText =
+    transDateText ||
+    formatExpenseDisplayDate(header.ticketDate || header.transDate, locale) ||
+    "-";
+  const lockedDraftDateText = formatExpenseDisplayDate(draftTransDate, locale) || displayDateText;
 
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-zinc-200 rounded-[var(--radius-xl)]">
@@ -168,41 +168,15 @@ const ExpenseTicketDetailHeaderForm = ({
           value={totalAmountText || "-"}
         />
 
-        {isEditing ? (
-          <div className="visita-field-text">
-            <SingleDatePicker
-              label={indT("Tickets_Field_TicketDate", "Ticket date")}
-              value={draftTransDate}
-              onChange={onDraftTransDateChange}
-              readOnly
-              disabled
-            />
-          </div>
-        ) : (
-          <ExpenseReadOnlyField
-            label={indT("Tickets_Field_TicketDate", "Ticket date")}
-            value={
-              transDateText ||
-              formatExpenseDisplayDate(header.ticketDate || header.transDate, document?.documentElement?.lang || "es-ES") ||
-              "-"
-            }
-          />
-        )}
+        <ExpenseReadOnlyField
+          label={indT("Tickets_Field_TicketDate", "Ticket date")}
+          value={isEditing ? lockedDraftDateText : displayDateText}
+        />
 
-        {isEditing ? (
-          <ExpenseTicketTimeInput
-            label={indT("Tickets_Field_TicketTime", "Ticket time")}
-            value={draftTicketTime}
-            onChange={onDraftTicketTimeChange}
-            readOnly
-            disabled
-          />
-        ) : (
-          <ExpenseReadOnlyField
-            label={indT("Tickets_Field_TicketTime", "Ticket time")}
-            value={ticketTimeText || "-"}
-          />
-        )}
+        <ExpenseReadOnlyField
+          label={indT("Tickets_Field_TicketTime", "Ticket time")}
+          value={isEditing ? draftTicketTime || ticketTimeText || "-" : ticketTimeText || "-"}
+        />
       </div>
 
       {canOpenFile && !hideOpenFileAction ? (

@@ -14,6 +14,14 @@ type ExpenseTicketTimeInputProps = {
   readOnly?: boolean;
 };
 
+type TimeColumnProps = {
+  part: TimePart;
+  values: string[];
+  selectedValue: string;
+  label: string;
+  onSelect: (part: TimePart, value: string) => void;
+};
+
 const HOURS = Array.from({ length: 24 }, (_, index) => String(index).padStart(2, "0"));
 const MINUTES_SECONDS = Array.from({ length: 60 }, (_, index) => String(index).padStart(2, "0"));
 
@@ -58,6 +66,32 @@ const getTimeParts = (value: string): Record<TimePart, string> => {
   const [hour = "00", minute = "00", second = "00"] = normalized.split(":");
   return { hour, minute, second };
 };
+
+// Time option column used by the ticket time dropdown.
+const TimeColumn = ({ part, values, selectedValue, label, onSelect }: TimeColumnProps) => (
+  <div className="max-h-64 overflow-y-auto py-1" role="presentation">
+    {values.map((optionValue) => {
+      const selected = selectedValue === optionValue;
+      return (
+        <button
+          type="button"
+          key={`${part}-${optionValue}`}
+          role="option"
+          aria-selected={selected}
+          className={classNames(
+            "flex h-9 w-full items-center justify-center px-2 text-sm font-semibold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35",
+            selected ? "bg-primary text-white" : "text-[#00296be0] hover:bg-primary/10 hover:text-primary"
+          )}
+          data-selected-time-part={selected ? "true" : undefined}
+          onClick={() => onSelect(part, optionValue)}
+          aria-label={`${label} ${optionValue}`}
+        >
+          {optionValue}
+        </button>
+      );
+    })}
+  </div>
+);
 
 // Ticket time input with an app-controlled dropdown so colors and placement follow the shared UI standard.
 const ExpenseTicketTimeInput = ({
@@ -106,31 +140,6 @@ const ExpenseTicketTimeInput = ({
     onChange(`${nextParts.hour}:${nextParts.minute}:${nextParts.second}`);
   };
 
-  const renderColumn = (part: TimePart, values: string[]) => (
-    <div className="max-h-64 overflow-y-auto py-1" role="presentation">
-      {values.map((optionValue) => {
-        const selected = currentParts[part] === optionValue;
-        return (
-          <button
-            type="button"
-            key={`${part}-${optionValue}`}
-            role="option"
-            aria-selected={selected}
-            className={classNames(
-              "flex h-9 w-full items-center justify-center px-2 text-sm font-semibold transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35",
-              selected ? "bg-primary text-white" : "text-[#00296be0] hover:bg-primary/10 hover:text-primary"
-            )}
-            data-selected-time-part={selected ? "true" : undefined}
-            onClick={() => updatePart(part, optionValue)}
-            aria-label={`${label} ${optionValue}`}
-          >
-            {optionValue}
-          </button>
-        );
-      })}
-    </div>
-  );
-
   return (
     <div className={classNames("space-y-1.5", disabled ? "pointer-events-none select-none" : "")} ref={containerRef}>
       <label className="form-label font-semibold" style={{ color: "#00296be0" }}>
@@ -138,7 +147,7 @@ const ExpenseTicketTimeInput = ({
       </label>
       <div ref={anchorRef} className="relative">
         <input
-          className="form-control pr-10"
+          className={classNames("form-control pr-10", readOnlyMode ? "ind-readonly-field" : "")}
           type="text"
           inputMode="numeric"
           value={value}
@@ -170,7 +179,10 @@ const ExpenseTicketTimeInput = ({
         />
         <button
           type="button"
-          className="absolute inset-y-0 right-0 flex items-center px-2 text-slate-500 hover:text-primary focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35"
+          className={classNames(
+            "absolute inset-y-0 right-0 flex items-center px-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35",
+            readOnlyMode ? "cursor-not-allowed text-slate-400" : "text-slate-500 hover:text-primary"
+          )}
           onClick={() => {
             if (readOnlyMode) return;
             setOpen((previous) => !previous);
@@ -178,7 +190,7 @@ const ExpenseTicketTimeInput = ({
           disabled={readOnlyMode}
           aria-label={label}
         >
-          {isOpen ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
+          {isOpen ? <ChevronUpSvg className="size-5" /> : <ChevronDownSvg className="size-5" />}
         </button>
         <FloatingList
           anchorRef={anchorRef}
@@ -190,9 +202,9 @@ const ExpenseTicketTimeInput = ({
           panelClassName="visitas-typography"
         >
           <div id={listId} ref={listRef} className="grid grid-cols-3 divide-x divide-slate-100" role="group" aria-label={label}>
-            {renderColumn("hour", HOURS)}
-            {renderColumn("minute", MINUTES_SECONDS)}
-            {renderColumn("second", MINUTES_SECONDS)}
+            <TimeColumn part="hour" values={HOURS} selectedValue={currentParts.hour} label={label} onSelect={updatePart} />
+            <TimeColumn part="minute" values={MINUTES_SECONDS} selectedValue={currentParts.minute} label={label} onSelect={updatePart} />
+            <TimeColumn part="second" values={MINUTES_SECONDS} selectedValue={currentParts.second} label={label} onSelect={updatePart} />
           </div>
         </FloatingList>
       </div>
