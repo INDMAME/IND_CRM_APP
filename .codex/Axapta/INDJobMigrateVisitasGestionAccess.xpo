@@ -3,152 +3,80 @@ Formatversion: 1
 
 ***Element: JOB
 
-; Navision Axapta Job: INDJobMigrateVisitasGestionAccess
+; Navision Axapta Job: INDJobMigrateVisitasGestionAccess descargados en Miercoles 20/05/2026
 ; --------------------------------------------------------------------------------
   JOBVERSION 1
 
   SOURCE #INDJobMigrateVisitasGestionAccess
     #static void INDJobMigrateVisitasGestionAccess(Args _args)
     #{
-    #    boolean                 execute = false;
-    #    str                     appCode = "CRM";
-    #    str                     legacyCreateModule = "VISITAS_CREACION";
-    #    str                     legacyHistoryModule = "VISITAS_HISTORIAL";
-    #    str                     targetModule = "VISITAS_GESTION";
+    #    boolean                 execute = FALSE;
+    #    str         50            appCode = "CRM";
+    #    str         50            legacyCreateModule = "VISITAS_CREACION";
+    #    str         50            legacyHistoryModule = "VISITAS_HISTORIAL";
+    #    str         50            targetModule = "VISITAS_GESTION";
     #
-    #    INDWebModule            targetWebModule;
-    #    INDWebModuleAccessLevel groupedAccess;
-    #    INDWebModuleAccessLevel sourceAccess;
-    #    INDWebModuleAccessLevel targetAccess;
+    #    INDWebModuleAccessLevel moduleAccess;
     #
     #    str                     executeMode;
-    #    int                     sourceRows = 0;
-    #    int                     sourceRowsForTarget = 0;
-    #    int                     targetsToCreate = 0;
-    #    int                     targetsToUpdate = 0;
-    #    int                     targetsSkipped = 0;
+    #    int                     recordsUpdated = 0;
+    #    int                     recordsDeleted = 0;
     #    ;
     #
-    #    // Set execute to true only after checking the preview counters.
+    #    // Keep execute false first to preview the affected rows.
     #    if (execute)
     #        executeMode = "true";
     #    else
     #        executeMode = "false";
-    #    info(strFmt("VISITAS_GESTION access migration started. Execute mode: %1", executeMode));
     #
-    #    select firstOnly targetWebModule
-    #        where targetWebModule.AppCode == appCode
-    #           && targetWebModule.ModuleCode == targetModule;
-    #
-    #    if (!targetWebModule.ModuleCode)
-    #    {
-    #        warning(strFmt("Target module %1 is missing in INDWebModule for AppCode %2. Create or activate it before using the migrated access.", targetModule, appCode));
-    #    }
-    #    else if (targetWebModule.IsActive != NoYes::Yes)
-    #    {
-    #        warning(strFmt("Target module %1 exists in INDWebModule but is not active for AppCode %2.", targetModule, appCode));
-    #    }
-    #
-    #    while select sourceAccess
-    #        where sourceAccess.AppCode == appCode
-    #           && (sourceAccess.ModuleCode == legacyCreateModule
-    #            || sourceAccess.ModuleCode == legacyHistoryModule)
-    #           && sourceAccess.AccessRights != 0
-    #    {
-    #        sourceRows++;
-    #    }
+    #    info(strFmt("VISITAS_GESTION access rename started. Execute mode: %1", executeMode));
     #
     #    if (execute)
     #    {
     #        ttsbegin;
-    #    }
     #
-    #    while select AppCode, RefRecIdCiaPermitida from groupedAccess
-    #        group by groupedAccess.AppCode, groupedAccess.RefRecIdCiaPermitida
-    #        where groupedAccess.AppCode == appCode
-    #           && (groupedAccess.ModuleCode == legacyCreateModule
-    #            || groupedAccess.ModuleCode == legacyHistoryModule)
-    #           && groupedAccess.AccessRights != 0
-    #    {
-    #        sourceAccess.clear();
-    #        select firstOnly sourceAccess
-    #            order by sourceAccess.AccessRights desc
-    #            where sourceAccess.AppCode == groupedAccess.AppCode
-    #               && sourceAccess.RefRecIdCiaPermitida == groupedAccess.RefRecIdCiaPermitida
-    #               && (sourceAccess.ModuleCode == legacyCreateModule
-    #                || sourceAccess.ModuleCode == legacyHistoryModule)
-    #               && sourceAccess.AccessRights != 0;
-    #
-    #        if (!sourceAccess.RecId)
+    #        while select forUpdate moduleAccess
+    #            where moduleAccess.AppCode == appCode
+    #               && moduleAccess.ModuleCode == legacyCreateModule
     #        {
-    #            continue;
+    #            moduleAccess.ModuleCode = targetModule;
+    #            moduleAccess.update();
+    #            recordsUpdated++;
     #        }
     #
-    #        sourceRowsForTarget++;
-    #        targetAccess.clear();
+    #        info(strFmt("VISITAS_CREACION records updated to VISITAS_GESTION: %1", recordsUpdated));
     #
-    #        if (execute)
+    #        while select forUpdate moduleAccess
+    #            where moduleAccess.AppCode == appCode
+    #               && moduleAccess.ModuleCode == legacyHistoryModule
     #        {
-    #            select firstOnly forUpdate targetAccess
-    #                where targetAccess.AppCode == groupedAccess.AppCode
-    #                   && targetAccess.RefRecIdCiaPermitida == groupedAccess.RefRecIdCiaPermitida
-    #                   && targetAccess.ModuleCode == targetModule;
-    #        }
-    #        else
-    #        {
-    #            select firstOnly targetAccess
-    #                where targetAccess.AppCode == groupedAccess.AppCode
-    #                   && targetAccess.RefRecIdCiaPermitida == groupedAccess.RefRecIdCiaPermitida
-    #                   && targetAccess.ModuleCode == targetModule;
+    #            moduleAccess.delete();
+    #            recordsDeleted++;
     #        }
     #
-    #        if (!targetAccess.RecId)
-    #        {
-    #            targetsToCreate++;
-    #
-    #            if (execute)
-    #            {
-    #                targetAccess.clear();
-    #                targetAccess.AppCode               = sourceAccess.AppCode;
-    #                targetAccess.RefRecIdCiaPermitida = sourceAccess.RefRecIdCiaPermitida;
-    #                targetAccess.ModuleCode            = targetModule;
-    #                targetAccess.AccessRights          = sourceAccess.AccessRights;
-    #                targetAccess.insert();
-    #            }
-    #
-    #            continue;
-    #        }
-    #
-    #        if (targetAccess.AccessRights < sourceAccess.AccessRights)
-    #        {
-    #            targetsToUpdate++;
-    #
-    #            if (execute)
-    #            {
-    #                targetAccess.AccessRights = sourceAccess.AccessRights;
-    #                targetAccess.update();
-    #            }
-    #
-    #            continue;
-    #        }
-    #
-    #        targetsSkipped++;
-    #    }
-    #
-    #    if (execute)
-    #    {
     #        ttscommit;
+    #        info(strFmt("VISITAS_HISTORIAL records deleted: %1", recordsDeleted));
     #    }
-    #
-    #    info(strFmt("Legacy source rows found: %1", sourceRows));
-    #    info(strFmt("Unique VISITAS_GESTION targets evaluated: %1", sourceRowsForTarget));
-    #    info(strFmt("VISITAS_GESTION records to create: %1", targetsToCreate));
-    #    info(strFmt("VISITAS_GESTION records to update with higher access: %1", targetsToUpdate));
-    #    info(strFmt("VISITAS_GESTION records already valid: %1", targetsSkipped));
-    #
-    #    if (!execute)
+    #    else
     #    {
-    #        info("Preview only. Change execute to true to create or update VISITAS_GESTION access records.");
+    #        while select moduleAccess
+    #            where moduleAccess.AppCode == appCode
+    #               && moduleAccess.ModuleCode == legacyCreateModule
+    #        {
+    #            recordsUpdated++;
+    #        }
+    #
+    #        info(strFmt("VISITAS_CREACION records to update to VISITAS_GESTION: %1", recordsUpdated));
+    #
+    #        while select moduleAccess
+    #            where moduleAccess.AppCode == appCode
+    #               && moduleAccess.ModuleCode == legacyHistoryModule
+    #        {
+    #            recordsDeleted++;
+    #        }
+    #
+    #        info("Preview only. Change execute to true to rename VISITAS_CREACION and delete VISITAS_HISTORIAL.");
+    #        info(strFmt("VISITAS_HISTORIAL records to delete: %1", recordsDeleted));
     #    }
     #}
   ENDSOURCE
