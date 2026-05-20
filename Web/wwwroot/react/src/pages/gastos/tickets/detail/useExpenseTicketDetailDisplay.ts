@@ -9,6 +9,8 @@ type UseExpenseTicketDetailDisplayArgs = {
   header: ExpenseTicketDetailHeader | null;
   draftGastoType: string;
   draftCurrencyCode: string;
+  draftTransDate: string;
+  draftTicketTime: string;
   draftFileName: string;
   isEditing: boolean;
   gastoTypeLabelMap: Map<string, string>;
@@ -40,6 +42,8 @@ export const useExpenseTicketDetailDisplay = ({
   header,
   draftGastoType,
   draftCurrencyCode,
+  draftTransDate,
+  draftTicketTime,
   draftFileName,
   isEditing,
   gastoTypeLabelMap,
@@ -75,13 +79,13 @@ export const useExpenseTicketDetailDisplay = ({
   );
 
   const transDateText = useMemo(
-    () => formatExpenseDisplayDate(header?.ticketDate || header?.transDate, document?.documentElement?.lang || "es-ES"),
-    [header?.ticketDate, header?.transDate]
+    () => formatExpenseDisplayDate(isEditing ? draftTransDate : header?.ticketDate || header?.transDate, document?.documentElement?.lang || "es-ES"),
+    [draftTransDate, header?.ticketDate, header?.transDate, isEditing]
   );
 
   const ticketTimeText = useMemo(
-    () => formatExpenseDisplayTime(header?.ticketTime),
-    [header?.ticketTime]
+    () => formatExpenseDisplayTime(isEditing ? draftTicketTime : header?.ticketTime),
+    [draftTicketTime, header?.ticketTime, isEditing]
   );
 
   return {

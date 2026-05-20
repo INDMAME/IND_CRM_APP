@@ -11,6 +11,7 @@ import {
   fetchExpenseSheetDetail,
   updateExpenseSheetTicket,
 } from "../../utils/expenseApi.ts";
+import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../../utils/expenseApiDateUtils.ts";
 import { syncExpenseLinkedTicketSheetLine } from "../../utils/expenseLinkedTicketSheetSync.ts";
 import { resolveExpenseSheetEditAccess } from "../../utils/expenseSheetEditAccess.ts";
 import { clearExpenseTicketSheetSyncState, saveExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
@@ -30,6 +31,8 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftDescription: string;
   draftGastoType: string;
   draftCurrencyCode: string;
+  draftTransDate: string;
+  draftTicketTime: string;
   draftComentario: string;
   draftUrlFile: string;
   draftFileName: string;
@@ -94,6 +97,8 @@ export const useExpenseTicketDetailMutations = ({
   draftDescription,
   draftGastoType,
   draftCurrencyCode,
+  draftTransDate,
+  draftTicketTime,
   draftComentario,
   draftUrlFile,
   draftFileName,
@@ -182,6 +187,14 @@ export const useExpenseTicketDetailMutations = ({
         return false;
       }
 
+      const rawTransDate = String(draftTransDate || "").trim();
+      const normalizedTransDate = rawTransDate ? toExpenseApiDdMmYyyy(rawTransDate) : "";
+      if (rawTransDate && !normalizedTransDate) {
+        setModalError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+        setStatus(EXPENSE_API_DATE_FORMAT_MESSAGE);
+        return false;
+      }
+
       const validatedSheetId = await validateLinkedSheetBeforeMutation();
       if (validatedSheetId === null) {
         return false;
@@ -190,6 +203,9 @@ export const useExpenseTicketDetailMutations = ({
       const payload: ExpenseSheetTicketUpdateRequest = {
         description: normalizedDescription,
         currencyCode: normalizedCurrency,
+        transDate: normalizedTransDate || undefined,
+        ticketDate: normalizedTransDate || undefined,
+        ticketTime: safeText(draftTicketTime) || undefined,
         comentario: String(draftComentario || "").trim() || undefined,
         urlFile: String(draftUrlFile || "").trim() || undefined,
         fileName: String(draftFileName || "").trim() || undefined,
@@ -256,6 +272,8 @@ export const useExpenseTicketDetailMutations = ({
       draftDescription,
       draftFileName,
       draftGastoType,
+      draftTicketTime,
+      draftTransDate,
       draftUrlFile,
       fileId,
       isEditing,

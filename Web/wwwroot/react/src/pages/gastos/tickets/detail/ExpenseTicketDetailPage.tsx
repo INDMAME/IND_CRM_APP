@@ -206,11 +206,15 @@ const buildExpenseTicketDetailContentView = ({
   draftCurrencyCode,
   currencyCodeInvalid,
   currencyInputRef,
+  draftTransDate,
+  draftTicketTime,
   draftUrlFile,
   draftFileName,
   setDraftDescription,
   setDraftGastoType,
   setDraftCurrencyCode,
+  setDraftTransDate,
+  setDraftTicketTime,
   isFromSheetLink,
   linkedLine,
   handleOpenExpenseSheet,
@@ -249,11 +253,15 @@ const buildExpenseTicketDetailContentView = ({
   draftCurrencyCode: string;
   currencyCodeInvalid: boolean;
   currencyInputRef: React.RefObject<HTMLInputElement | null>;
+  draftTransDate: string;
+  draftTicketTime: string;
   draftUrlFile: string;
   draftFileName: string;
   setDraftDescription: (value: string) => void;
   setDraftGastoType: (value: string) => void;
   setDraftCurrencyCode: (value: string) => void;
+  setDraftTransDate: (value: string) => void;
+  setDraftTicketTime: (value: string) => void;
   isFromSheetLink: boolean;
   linkedLine: ExpenseTicketLinkedSheetLineView;
   handleOpenExpenseSheet: () => void;
@@ -298,11 +306,15 @@ const buildExpenseTicketDetailContentView = ({
   draftCurrencyCode,
   currencyCodeInvalid,
   currencyInputRef,
+  draftTransDate,
+  draftTicketTime,
   draftUrlFile,
   draftFileName,
   onDraftDescriptionChange: setDraftDescription,
   onDraftGastoTypeChange: setDraftGastoType,
   onDraftCurrencyCodeChange: setDraftCurrencyCode,
+  onDraftTransDateChange: setDraftTransDate,
+  onDraftTicketTimeChange: setDraftTicketTime,
   onOpenFile: openFile,
   onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
   linkedLine,
@@ -583,6 +595,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftCurrencyCode,
     currencyCodeInvalid,
     currencyInputRef,
+    draftTransDate,
+    draftTicketTime,
     draftComentario,
     draftUrlFile,
     draftFileName,
@@ -594,6 +608,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     setDraftDescription,
     setDraftGastoType,
     setDraftCurrencyCode,
+    setDraftTransDate,
+    setDraftTicketTime,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,
@@ -640,6 +656,8 @@ const useExpenseTicketDetailPageViewModel = () => {
       header,
       draftGastoType,
       draftCurrencyCode,
+      draftTransDate,
+      draftTicketTime,
       draftFileName,
       isEditing,
       gastoTypeLabelMap,
@@ -687,6 +705,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftDescription,
     draftGastoType,
     draftCurrencyCode,
+    draftTransDate,
+    draftTicketTime,
     draftComentario,
     draftUrlFile,
     draftFileName,
@@ -869,11 +889,15 @@ const useExpenseTicketDetailPageViewModel = () => {
       draftCurrencyCode,
       currencyCodeInvalid,
       currencyInputRef,
+      draftTransDate,
+      draftTicketTime,
       draftUrlFile,
       draftFileName,
       setDraftDescription,
       setDraftGastoType,
       setDraftCurrencyCode,
+      setDraftTransDate,
+      setDraftTicketTime,
       isFromSheetLink,
       linkedLine: {
         visible: isFromExpenseLine,
