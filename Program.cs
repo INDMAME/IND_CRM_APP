@@ -593,6 +593,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "expense-sheet-email-link",
+    pattern: "Gastos/ExpenseSheetLink",
+    defaults: new { controller = "ExpenseSheetLink", action = "Index" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Auth}/{action=Login}/{id?}" 
 );

@@ -89,6 +89,8 @@
     var moduleAccessJson = JsonSerializer.Serialize(moduleAccess);
     var allowSelfManagement = selectedCompany?.AllowSelfManagement == true;
     var permissionRedirectMessage = TempData?["IndPermissionRedirectMessage"] as string;
+    var redirectModalTitle = TempData?["IndRedirectModalTitle"] as string;
+    var redirectModalMessage = TempData?["IndRedirectModalMessage"] as string;
     var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
 <body class="bg-slate-100 font-sans text-[#00296be0] overflow-x-hidden @chromeLayoutClass @bodyClass">
@@ -934,13 +936,14 @@
         })();
     </script>
 
-    @if (!string.IsNullOrWhiteSpace(permissionRedirectMessage))
+    @if (!string.IsNullOrWhiteSpace(permissionRedirectMessage) || !string.IsNullOrWhiteSpace(redirectModalMessage))
     {
         <script nonce="@cspNonce">
             (function () {
-                const message = @Html.Raw(JsonSerializer.Serialize(permissionRedirectMessage));
+                const title = @Html.Raw(JsonSerializer.Serialize(redirectModalTitle));
+                const message = @Html.Raw(JsonSerializer.Serialize(redirectModalMessage ?? permissionRedirectMessage));
                 if (window.IND && typeof window.IND.showPermissionModal === "function") {
-                    window.IND.showPermissionModal({ message: message });
+                    window.IND.showPermissionModal({ title: title, message: message });
                 }
             })();
         </script>

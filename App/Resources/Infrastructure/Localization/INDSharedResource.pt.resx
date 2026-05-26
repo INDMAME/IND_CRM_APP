@@ -1533,4 +1533,25 @@
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>Estou a preparar a resposta...</value>
   </data>
+  <data name="ExpenseSheetLink_InvalidLink" xml:space="preserve">
+    <value>O link da folha de despesas é inválido ou está incompleto.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanyAccessDenied" xml:space="preserve">
+    <value>Não tem acesso à empresa necessária para esta folha de despesas.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitchFailed" xml:space="preserve">
+    <value>Não foi possível alterar o contexto da empresa para abrir esta folha de despesas.</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetAccessDenied" xml:space="preserve">
+    <value>Não tem acesso a esta folha de despesas.</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetNotFound" xml:space="preserve">
+    <value>Não foi possível encontrar a folha de despesas.</value>
+  </data>
+  <data name="ExpenseSheetLink_ResolveFailed" xml:space="preserve">
+    <value>Não foi possível resolver o link da folha de despesas. Tente novamente ou contacte o suporte.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
+    <value>O contexto da empresa foi alterado para abrir a folha de despesas a partir do email.</value>
+  </data>
 </root>

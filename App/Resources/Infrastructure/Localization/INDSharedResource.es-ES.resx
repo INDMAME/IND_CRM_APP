@@ -1533,4 +1533,25 @@
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>Estoy preparando la respuesta...</value>
   </data>
+  <data name="ExpenseSheetLink_InvalidLink" xml:space="preserve">
+    <value>El enlace de la hoja de gastos no es válido o está incompleto.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanyAccessDenied" xml:space="preserve">
+    <value>No tienes acceso a la empresa requerida por esta hoja de gastos.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitchFailed" xml:space="preserve">
+    <value>No se pudo cambiar el contexto de empresa para abrir esta hoja de gastos.</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetAccessDenied" xml:space="preserve">
+    <value>No tienes acceso a esta hoja de gastos.</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetNotFound" xml:space="preserve">
+    <value>No se pudo encontrar la hoja de gastos.</value>
+  </data>
+  <data name="ExpenseSheetLink_ResolveFailed" xml:space="preserve">
+    <value>No se pudo resolver el enlace de la hoja de gastos. Inténtalo de nuevo o contacta con soporte.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
+    <value>Se cambió el contexto de empresa para abrir la hoja de gastos desde el correo.</value>
+  </data>
 </root>

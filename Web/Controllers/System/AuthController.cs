@@ -41,13 +41,16 @@ namespace IND_CRM_APP.Controllers
 
         // Shows login page.
         [HttpGet]
-        public IActionResult Login(bool loggedOut = false)
+        public IActionResult Login(bool loggedOut = false, string? returnUrl = null)
         {
+            var safeReturnUrl = LocalReturnUrlHelper.TryNormalizeLocalReturnUrl(Url, returnUrl);
+            ViewBag.ReturnUrl = safeReturnUrl;
+
             if (User?.Identity?.IsAuthenticated == true &&
                 !TempData.ContainsKey("AuthError") &&
                 !TempData.ContainsKey("IND_ActionMark_Type"))
             {
-                return Redirect("/Home/Index");
+                return Redirect(safeReturnUrl ?? "/Home/Index");
             }
 
             if (loggedOut)
@@ -62,9 +65,7 @@ namespace IND_CRM_APP.Controllers
         [HttpGet]
         public IActionResult EntraLogin(string? returnUrl = null, bool force = false)
         {
-            var safeReturnUrl = !string.IsNullOrWhiteSpace(returnUrl) && Url.IsLocalUrl(returnUrl)
-                ? returnUrl
-                : "/";
+            var safeReturnUrl = LocalReturnUrlHelper.NormalizeLocalReturnUrl(Url, returnUrl);
 
             var props = new AuthenticationProperties
             {
@@ -84,8 +85,11 @@ namespace IND_CRM_APP.Controllers
         // Processes login form and stores token in session.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginRequest model)
+        public async Task<IActionResult> Login(LoginRequest model, string? returnUrl = null)
         {
+            var safeReturnUrl = LocalReturnUrlHelper.TryNormalizeLocalReturnUrl(Url, returnUrl);
+            ViewBag.ReturnUrl = safeReturnUrl;
+
             if (!ModelState.IsValid)
                 return View(model);
 
@@ -106,7 +110,7 @@ namespace IND_CRM_APP.Controllers
                     loginResult.Expires != default ? loginResult.Expires : null
                 );
 
-                return RedirectToAction("Index", "Home");
+                return Redirect(safeReturnUrl ?? "/Home/Index");
             }
             catch (ApiException ex)
             {

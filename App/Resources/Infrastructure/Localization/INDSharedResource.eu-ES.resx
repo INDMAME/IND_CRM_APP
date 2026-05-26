@@ -1533,4 +1533,25 @@
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>Erantzuna prestatzen ari naiz...</value>
   </data>
+  <data name="ExpenseSheetLink_InvalidLink" xml:space="preserve">
+    <value>Gastu-orriaren esteka ez da baliozkoa edo osatu gabe dago.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanyAccessDenied" xml:space="preserve">
+    <value>Ez duzu gastu-orri honek behar duen enpresarako sarbiderik.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitchFailed" xml:space="preserve">
+    <value>Ezin izan da enpresaren testuingurua aldatu gastu-orri hau irekitzeko.</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetAccessDenied" xml:space="preserve">
+    <value>Ez duzu gastu-orri honetarako sarbiderik.</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetNotFound" xml:space="preserve">
+    <value>Ezin izan da gastu-orria aurkitu.</value>
+  </data>
+  <data name="ExpenseSheetLink_ResolveFailed" xml:space="preserve">
+    <value>Ezin izan da gastu-orriaren esteka ebatzi. Saiatu berriro edo jarri harremanetan euskarriarekin.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
+    <value>Enpresaren testuingurua aldatu da gastu-orria mezu elektronikotik irekitzeko.</value>
+  </data>
 </root>
