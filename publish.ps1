@@ -54,7 +54,8 @@ function Get-ExpectedAspNetCoreEnvironment {
     )
 
     switch ($TargetEnvironmentName.Trim().ToUpperInvariant()) {
-        "DEV" { return "Production" }
+        # DEV publishes against the development ASP.NET Core environment.
+        "DEV" { return "Development" }
         "PROD" { return "Production" }
         default { throw "Unsupported target environment '$TargetEnvironmentName'." }
     }

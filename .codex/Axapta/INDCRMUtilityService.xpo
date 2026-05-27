@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Martes 19/05/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Miércoles 27/05/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -476,6 +476,86 @@ Formatversion: 1
         #
         #    return currency.CurrencyCode;
         #}
+      ENDSOURCE
+      SOURCE #sendInternalApiMail
+        #// Purpose: CRM-facing mail facade. The global DLL call lives in INDInternalApiClientServer.
+        #static server boolean sendInternalApiMail(
+        #    str _companyId,
+        #    str _fromEmail,
+        #    str _toEmails,
+        #    str _subject,
+        #    str _htmlBody,
+        #    str _textBody,
+        #    str _sourceProcess,
+        #    str _eventType,
+        #    str _aggregateType,
+        #    str _aggregateId,
+        #    str _idempotencyKey,
+        #    str _correlationId = '')
+        #{
+        #    ;
+        #
+        #    return INDInternalApiClientServer::sendInternalApiMail(
+        #        _companyId,
+        #        _fromEmail,
+        #        _toEmails,
+        #        _subject,
+        #        _htmlBody,
+        #        _textBody,
+        #        _sourceProcess,
+        #        _eventType,
+        #        _aggregateType,
+        #        _aggregateId,
+        #        _idempotencyKey,
+        #        _correlationId);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #sendInternalApiMailEx
+        #// Purpose: CRM-facing extended mail facade. The global DLL call lives in INDInternalApiClientServer.
+        #static server boolean sendInternalApiMailEx(
+        #    str _companyId,
+        #    str _fromEmail,
+        #    str _fromDisplayName,
+        #    str _toEmails,
+        #    str _ccEmails,
+        #    str _bccEmails,
+        #    str _replyToEmails,
+        #    str _subject,
+        #    str _htmlBody,
+        #    str _textBody,
+        #    boolean _saveToSentItems,
+        #    str _importance,
+        #    str _sourceProcess,
+        #    str _eventType,
+        #    str _aggregateType,
+        #    str _aggregateId,
+        #    str _idempotencyKey,
+        #    str _correlationId = '')
+        #{
+        #    ;
+        #
+        #    return INDInternalApiClientServer::sendInternalApiMailEx(
+        #        _companyId,
+        #        _fromEmail,
+        #        _fromDisplayName,
+        #        _toEmails,
+        #        _ccEmails,
+        #        _bccEmails,
+        #        _replyToEmails,
+        #        _subject,
+        #        _htmlBody,
+        #        _textBody,
+        #        _saveToSentItems,
+        #        _importance,
+        #        _sourceProcess,
+        #        _eventType,
+        #        _aggregateType,
+        #        _aggregateId,
+        #        _idempotencyKey,
+        #        _correlationId);
+        #}
+        #
       ENDSOURCE
       SOURCE #validateInternalApiUser
         #// Method: validateInternalApiUser

@@ -82,14 +82,47 @@ namespace IND_CRM_APP.Controllers
                 return RedirectWithMessage("ExpenseSheetLink_ResolveFailed", "Error_Title", warning: false);
             }
 
+            var activeContext = contextResult.Context;
+            var selectedCompanyId = _authContext.GetSelectedCompanyId(activeContext);
+            _logger.LogInformation(
+                "Expense sheet email link context resolved. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; DefaultCompany={DefaultCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; CompanyCount={CompanyCount}; AvailableCompanies={AvailableCompanies}",
+                safeSheetId,
+                safeTargetCompanyId,
+                selectedCompanyId ?? string.Empty,
+                NormalizeOptionalText(activeContext.Header.DefaultCompany) ?? string.Empty,
+                GetSessionAxUserId() ?? string.Empty,
+                NormalizeOptionalText(activeContext.Header.AxUserId) ?? string.Empty,
+                activeContext.Companies.Count,
+                BuildCompanySample(activeContext.Companies));
+
             var targetCompany = FindCompany(contextResult.Context, safeTargetCompanyId);
             if (targetCompany == null)
+            {
+                _logger.LogWarning(
+                    "Expense sheet email link company validation denied. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; AvailableCompanies={AvailableCompanies}",
+                    safeSheetId,
+                    safeTargetCompanyId,
+                    selectedCompanyId ?? string.Empty,
+                    GetSessionAxUserId() ?? string.Empty,
+                    NormalizeOptionalText(activeContext.Header.AxUserId) ?? string.Empty,
+                    BuildCompanySample(activeContext.Companies));
                 return RedirectWithMessage("ExpenseSheetLink_CompanyAccessDenied", "Auth_PermissionDenied_Title", warning: false);
+            }
 
             if (!HasExpenseSheetViewAccess(targetCompany))
+            {
+                _logger.LogWarning(
+                    "Expense sheet email link module validation denied. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; TargetCrmUserId={TargetCrmUserId}; ModuleSummary={ModuleSummary}",
+                    safeSheetId,
+                    targetCompany.CompanyId,
+                    selectedCompanyId ?? string.Empty,
+                    GetSessionAxUserId() ?? string.Empty,
+                    NormalizeOptionalText(activeContext.Header.AxUserId) ?? string.Empty,
+                    NormalizeOptionalText(targetCompany.CrmUserId) ?? string.Empty,
+                    BuildExpenseModuleSummary(targetCompany));
                 return RedirectWithMessage("ExpenseSheetLink_SheetAccessDenied", "Auth_PermissionDenied_Title", warning: false);
+            }
 
-            var selectedCompanyId = _authContext.GetSelectedCompanyId(contextResult.Context);
             var companyChanged = !string.Equals(selectedCompanyId, targetCompany.CompanyId, StringComparison.OrdinalIgnoreCase);
             if (companyChanged)
             {
@@ -103,6 +136,9 @@ namespace IND_CRM_APP.Controllers
 
                 if (!HasExpenseSheetViewAccess(targetCompany))
                     return RedirectWithMessage("ExpenseSheetLink_SheetAccessDenied", "Auth_PermissionDenied_Title", warning: false);
+
+                activeContext = refreshResult.Context;
+                selectedCompanyId = _authContext.GetSelectedCompanyId(activeContext);
             }
 
             var token = _tokenSession.GetToken().Token;
@@ -111,8 +147,20 @@ namespace IND_CRM_APP.Controllers
 
             try
             {
+                _logger.LogInformation(
+                    "Expense sheet email link detail validation started. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; TargetCrmUserId={TargetCrmUserId}; CompanyChanged={CompanyChanged}; ModuleSummary={ModuleSummary}",
+                    safeSheetId,
+                    targetCompany.CompanyId,
+                    selectedCompanyId ?? string.Empty,
+                    GetSessionAxUserId() ?? string.Empty,
+                    NormalizeOptionalText(activeContext.Header.AxUserId) ?? string.Empty,
+                    NormalizeOptionalText(targetCompany.CrmUserId) ?? string.Empty,
+                    companyChanged,
+                    BuildExpenseModuleSummary(targetCompany));
+
                 var detailResult = await _apiClient.GetExpenseSheetDetailAsync(token, safeSheetId);
-                var sheet = SelectSheet(detailResult.GetAnyItems(), safeSheetId);
+                var detailItems = detailResult.GetAnyItems().ToList();
+                var sheet = SelectSheet(detailItems, safeSheetId);
                 if (sheet == null)
                 {
                     var messageKey = IsNotFound(detailResult)
@@ -120,15 +168,33 @@ namespace IND_CRM_APP.Controllers
                         : "ExpenseSheetLink_SheetAccessDenied";
 
                     _logger.LogWarning(
-                        "Expense sheet email link validation failed. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; Success={Success}; ErrorCode={ErrorCode}; TraceId={TraceId}",
+                        "Expense sheet email link detail validation denied. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; TargetCrmUserId={TargetCrmUserId}; UpstreamSuccess={Success}; UpstreamErrorCode={ErrorCode}; UpstreamTraceId={TraceId}; UpstreamItemCount={UpstreamItemCount}; UpstreamMessage={UpstreamMessage}; MessageKey={MessageKey}",
                         safeSheetId,
                         targetCompany.CompanyId,
+                        selectedCompanyId ?? string.Empty,
+                        GetSessionAxUserId() ?? string.Empty,
+                        NormalizeOptionalText(activeContext.Header.AxUserId) ?? string.Empty,
+                        NormalizeOptionalText(targetCompany.CrmUserId) ?? string.Empty,
                         detailResult.Success,
                         detailResult.ErrorCode ?? string.Empty,
-                        detailResult.TraceId ?? string.Empty);
+                        detailResult.TraceId ?? string.Empty,
+                        detailItems.Count,
+                        detailResult.Message ?? string.Empty,
+                        messageKey);
 
                     return RedirectWithMessage(messageKey, "Auth_PermissionDenied_Title", warning: false);
                 }
+
+                _logger.LogInformation(
+                    "Expense sheet email link detail validation allowed. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; ReturnedHojaGastosId={ReturnedHojaGastosId}; LineCount={LineCount}; UpstreamTraceId={TraceId}",
+                    safeSheetId,
+                    targetCompany.CompanyId,
+                    selectedCompanyId ?? string.Empty,
+                    GetSessionAxUserId() ?? string.Empty,
+                    NormalizeOptionalText(activeContext.Header.AxUserId) ?? string.Empty,
+                    NormalizeOptionalText(sheet.HojaGastosId) ?? string.Empty,
+                    sheet.Lines?.Count ?? 0,
+                    detailResult.TraceId ?? string.Empty);
 
                 if (companyChanged)
                 {
@@ -199,6 +265,42 @@ namespace IND_CRM_APP.Controllers
             return company.Modules.Any(module =>
                 module.AccessRightsInt >= IndAccessRights.View &&
                 INDModuleRegistry.MatchesModuleCode(module.ModuleCode, INDModuleRegistry.ModuleGastosHojaGasto));
+        }
+
+        // Builds a compact company list for access diagnostics.
+        private static string BuildCompanySample(IEnumerable<IndWebCompany> companies)
+        {
+            var sample = companies
+                .Take(20)
+                .Select(company => $"{NormalizeOptionalText(company.CompanyId) ?? "<empty>"}:{NormalizeOptionalText(company.CrmUserId) ?? "<empty>"}")
+                .ToList();
+
+            return sample.Count == 0 ? "<none>" : string.Join("|", sample);
+        }
+
+        // Builds a compact module summary so permission denials show the evaluated rights.
+        private static string BuildExpenseModuleSummary(IndWebCompany company)
+        {
+            var matches = company.Modules
+                .Where(module => INDModuleRegistry.MatchesModuleCode(module.ModuleCode, INDModuleRegistry.ModuleGastosHojaGasto))
+                .Select(module => $"{NormalizeOptionalText(module.ModuleCode) ?? "<empty>"}:active={module.IsActive}:access={module.AccessRightsInt}")
+                .ToList();
+
+            if (matches.Count > 0)
+                return string.Join("|", matches);
+
+            var sample = company.Modules
+                .Take(10)
+                .Select(module => $"{NormalizeOptionalText(module.ModuleCode) ?? "<empty>"}:active={module.IsActive}:access={module.AccessRightsInt}")
+                .ToList();
+
+            return sample.Count == 0 ? "<none>" : string.Join("|", sample);
+        }
+
+        // Reads the AX user stored in the current web session for log correlation.
+        private string? GetSessionAxUserId()
+        {
+            return NormalizeOptionalText(HttpContext.Session.GetString("AxUser"));
         }
 
         // Selects the requested sheet from the upstream detail response.

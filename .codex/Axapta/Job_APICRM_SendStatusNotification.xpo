@@ -1,0 +1,73 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_APICRM_SendStatusNotification descargados en Miércoles 27/05/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+
+  SOURCE #Job_APICRM_SendStatusNotification
+    #/*
+    #    Job: Job_INDCRMExpenseSheetService_SendStatusNotification
+    #    Proposito:
+    #      Probar de forma manual el metodo global de INDCRMExpenseSheetService
+    #      que resuelve evento, usuarios, URL y envio de mejor esfuerzo de email.
+    #
+    #    Requisitos:
+    #      - La hoja debe existir en la company actual o en la company configurada abajo.
+    #      - El emisor y el destinatario deben resolver a usuarios CRM distintos.
+    #      - Ambos usuarios deben tener INDPersonaTable.Email informado.
+    #      - La configuracion de IND_INTERNAL_API debe estar disponible para la DLL.
+    #*/
+    #static void Job_APICRM_SendStatusNotification(Args _args)
+    #{
+    #    DataAreaId            companyId      = curext();        // Company donde existe la hoja de gastos.
+    #    CRMHojaGastosId       hojaGastosId   = "HG000059";     // Hoja de gastos real para la prueba.
+    #
+    #    INDExpenseSheetStatus fromStatus     = INDExpenseSheetStatus::InReview;  // Estado anterior simulado.
+    #    INDExpenseSheetStatus toStatus       = INDExpenseSheetStatus::Approved;  // Estado nuevo simulado.
+    #
+    #    str 20                actorUserId    = "IJL";//curUserId();     // Usuario AX/CRM que ejecuta la accion. Debe poder resolverse a CRMUsuarioTable.
+    #    str 20                userPagador    = "";              // Solo para ExpenseSheetPaid. Si se informa, sera el emisor del pago.
+    #    str                   source         = "axapta-job";    // Valor source que se incluira en la URL /Gastos/ExpenseSheetLink.
+    #    str                   correlationId;                     // Trazabilidad compartida con logs de API interna.
+    #
+    #    CRMHojaGastosTable    expenseSheet;                      // Registro AX de la hoja a notificar.
+    #    boolean               sent;                              // true si IND_INTERNAL_API/Graph acepto el envio.
+    #    ;
+    #
+    #    correlationId = strFmt("job-expense-notify-%1-%2", today(), timeNow());
+    #
+    #    changecompany(companyId)
+    #    {
+    #        expenseSheet = CRMHojaGastosTable::Find(hojaGastosId);
+    #
+    #        if (!expenseSheet.RecId)
+    #        {
+    #            error(strFmt("No existe la hoja de gastos %1 en la company %2.", hojaGastosId, companyId));
+    #            return;
+    #        }
+    #
+    #        sent = INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
+    #            expenseSheet,
+    #            fromStatus,
+    #            toStatus,
+    #            actorUserId,
+    #            userPagador,
+    #            source,
+    #            correlationId);
+    #    }
+    #
+    #    if (sent)
+    #    {
+    #        info(strFmt("Email aceptado por la API interna. correlationId=%1", correlationId));
+    #    }
+    #    else
+    #    {
+    #        warning(strFmt("No se envio email. Revisa transicion, usuarios, emails, URL y logs. correlationId=%1", correlationId));
+    #    }
+    #}
+  ENDSOURCE
+
+***Element: END

@@ -1,0 +1,3227 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Navision Axapta Forms unloaded at Jueves 21/05/2026
+; --------------------------------------------------------------------------------
+FRMVERSION 5
+
+FORM #CRMHojaGastosLine
+  PROPERTIES
+    Name                #CRMHojaGastosLine
+  ENDPROPERTIES
+  
+  METHODS
+    Version: 3
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #    CRMUsuarioTable usuarioTable;
+      #    ProjTable       projTable;
+      #}
+    ENDSOURCE
+    SOURCE #close
+      #public void close()
+      #{
+      #    ;
+      #
+      #    if (element.args() && element.args().record() && element.args().record().TableId == TableNum(CRMHojaGastosTable))
+      #        element.args().caller().rereadLine();
+      #
+      #    super();
+      #}
+    ENDSOURCE
+    SOURCE #RereadLine
+      #void RereadLine()
+      #{
+      #    ;
+      #    CRMHojaGastosLine_ds.reread();
+      #    CRMHojaGastosLine_ds.refresh();
+      #}
+    ENDSOURCE
+    SOURCE #EnableFields
+      #void EnableFields()
+      #{
+      #    ;
+      #
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(true);
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(true);
+      #
+      #    //Solamente activo el campo disciplina en las líneas de Montaje
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).enabled(false);
+      #
+      #
+      #    if (CRMHojaGastosLine.Dieta && ! CRMHojaGastosLine.Internacional){
+      #        CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(false);
+      #//        CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #//        CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).enabled(false);
+      #    }
+      #
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Ticket)).enabled(true);
+      #
+      #    //Las dietas de montaje no se pueden introducir a mano. Se calcula el importe según una tabla.
+      #    switch (CRMHojaGastosLine.Type){
+      #            case CRMGastoType::DiaViaje:
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Internacional)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Ticket)).enabled(false);
+      #
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).enabled(true);
+      #            break;
+      #        case CRMGastoType::DiaViajeFestivo:
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Internacional)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Ticket)).enabled(false);
+      #
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).enabled(true);
+      #            break;
+      #        case CRMGastoType::DiaViajeInternacional:
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Internacional)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Ticket)).enabled(false);
+      #
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).enabled(true);
+      #            break;
+      #        case CRMGastoType::DiaViajeInternacionalFestivo:
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Internacional)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Ticket)).enabled(false);
+      #
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).enabled(true);
+      #            break;
+      #        case CRMGastoType::MontajeInternacional:
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Internacional)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Ticket)).enabled(false);
+      #
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).enabled(true);
+      #            break;
+      #        case CRMGastoType::MontajeInternacionalFestivo:
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Internacional)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Ticket)).enabled(false);
+      #
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).enabled(true);
+      #            break;
+      #        case CRMGastoType::MontajeNacional:
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Internacional)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Ticket)).enabled(false);
+      #
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).enabled(true);
+      #            break;
+      #        case CRMGastoType::MontajeNacionalFestivo:
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Qty)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Internacional)).enabled(false);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Ticket)).enabled(false);
+      #
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).enabled(true);
+      #            break;
+      #
+      #        //IJL.15/05/26
+      #        case CRMGastoType::Km:
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
+      #            break;
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #EnableNochesHotel
+      #void EnableNochesHotel()
+      #{
+      #    ;
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, NochesHotel)).enabled(false);
+      #    if (CRMHojaGastosLine.Type  == CRMGastoType::Hotel)
+      #        CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, NochesHotel)).enabled(true);
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    CRMHojaGastosTable  hojaGastosTable;
+      #
+      #    ;
+      #    super();
+      #
+      #    if (! element.args().record())
+      #        throw error("La pantalla debe ser llamada con parámetros.");
+      #
+      #    switch (element.args().record().TableId){
+      #
+      #        case TableNum(CRMHojaGastosTable):
+      #            hojaGastosTable = element.args().record();
+      #            usuarioTable    = CRMUsuarioTable::Find(hojaGastosTable.UserId);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, VisaEmpresa)).visible(usuarioTable.VisaEmpresa);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, UserID)).visible(false);
+      #
+      #            //IJL.14/05/14. No muestro la disciplina a los usuarios con categoría predeterminada.
+      #            if (hojaGastosTable.CategoriaId){
+      #                CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, DisciplinaId)).visible(false);
+      #            }
+      #            break;
+      #
+      #        case TableNum(ProjTable):
+      #            projTable       = element.args().record();
+      #
+      #            if (! projTable.INDPermitirImputarGastos)
+      #                throw error("Este proyecto no permite la imputación de gastos.");
+      #
+      #            if (curUserId() != "IIV" && curUserId() != "IJL" && curUserId() != "IMG"){
+      #                //IIV está autorizada para ver los gastos independientemente de que sea la responsable del proyecto o no.
+      #                if (!projTable.CRMUserIdResponsable)
+      #                    throw error("El proyecto no tiene usuario responsable.");
+      #
+      #                if (projTable.CRMUserIdResponsable != CRMUsuarioTable::Find_AxaptaUserId(curUserId()).UserId){
+      #                    throw error("No estás autorizado a imputar gastos en este proyecto.");
+      #                }
+      #            }
+      #
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, UserID)).visible(true);
+      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, VisaEmpresa)).visible(false);
+      #            break;
+      #    }
+      #
+      #    //IJL.26/03/26. El estado de la HG permite
+      #    if (CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus)){
+      #        CRMHojaGastosLine_ds.allowEdit(  true);
+      #        CRMHojaGastosLine_ds.allowCreate(true);
+      #        CRMHojaGastosLine_ds.allowDelete(true);
+      #
+      #    }
+      #    else {
+      #        CRMHojaGastosLine_ds.allowEdit(  false);
+      #        CRMHojaGastosLine_ds.allowCreate(false);
+      #        CRMHojaGastosLine_ds.allowDelete(false);
+      #    }
+      #
+      #    //IJL.03/04/19. Si la hoja de gastos está aprobada o pagada no se permiten hacer modificaciones.
+      #    CRMHojaGastosLine_ds.allowEdit(  !hojaGastosTable.Aprobado && !hojaGastosTable.Voucher);
+      #    CRMHojaGastosLine_ds.allowCreate(!hojaGastosTable.Aprobado && !hojaGastosTable.Voucher);
+      #    CRMHojaGastosLine_ds.allowDelete(!hojaGastosTable.Aprobado && !hojaGastosTable.Voucher);
+      #
+      #    //IJL.08/08/25. Migración Desarrollos México.
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, ModalidadPago)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
+      #
+      #    //IJL.13/04/26
+      #    if (INDDataAreaParameterTable::Find().ActivarAprobacionHojasDeGastos){
+      #
+      #        /*
+      #        CRMHojaGastosLine_ds.allowEdit(  CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus) && !hojaGastosTable.Voucher);
+      #        CRMHojaGastosLine_ds.allowCreate(CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus) && !hojaGastosTable.Voucher);
+      #        CRMHojaGastosLine_ds.allowDelete(CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus) && !hojaGastosTable.Voucher);
+      #        */
+      #    }
+      #
+      #    //IJL.16/04/26
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).visible(!INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, AmountIVA)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, AmountRetencion)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, InvoiceId)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, VendName)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #CRMHojaGastosLine
+          Table               #CRMHojaGastosLine
+          Index               #
+          Company             #
+          CounterField        #
+          AllowCheck          #Yes
+          AllowEdit           #Yes
+          AllowCreate         #Yes
+          AllowDelete         #Yes
+          StartPosition       #Last
+          AutoSearch          #Yes
+          AutoNotify          #Yes
+          AutoQuery           #Yes
+          OnlyFetchActive     #No
+          JoinSource          #
+          LinkType            #Delayed
+          DelayActive         #Yes
+          InsertAtEnd         #Yes
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+          DATAFIELD Type
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #public void modified()
+                #{
+                #    ;
+                #    super();
+                #
+                #    element.EnableNochesHotel();
+                #
+                #    element.EnableFields();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD Internacional
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    element.EnableFields();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD InformeVisitaId
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #lookup
+                #public void lookup(FormControl _formControl, str _filterStr)
+                #{
+                #    ;
+                #    CRMActividadTable::LookUpVisitas(_formControl, CRMHojaGastosLine.UserId);
+                #    //super(_formControl, _filterStr);
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD Amount
+            PROPERTIES
+              AllowEdit           #No
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+          ENDDATAFIELD
+          
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #active
+          #public int active()
+          #{
+          #    int ret;
+          #    ;
+          #    ret = super();
+          #
+          #    element.EnableNochesHotel();
+          #
+          #    element.EnableFields();
+          #    return ret;
+          #}
+        ENDSOURCE
+        SOURCE #executeQuery
+          #public void executeQuery()
+          #{
+          #    QueryBuildRange     qbr;
+          #    ;
+          #    if (projTable){
+          #        this.query().dataSourceTable(TableNum(CRMHojaGastosLine)).clearDynalinks();
+          #        this.query().dataSourceTable(TableNum(CRMHojaGastosLine)).clearLinks();
+          #
+          #        qbr = this.query().dataSourceTable(TableNum(CRMHojaGastosLine)).findRange(FieldNum(CRMHojaGastosLine, ProjId));
+          #        if (! qbr)
+          #            qbr = this.query().dataSourceTable(TableNum(CRMHojaGastosLine)).addRange(FieldNum(CRMHojaGastosLine, ProjId));
+          #
+          #        qbr.value(projTable.ProjId);
+          #
+          #
+          #        qbr = this.query().dataSourceTable(TableNum(CRMHojaGastosLine)).findRange(FieldNum(CRMHojaGastosLine, Division));
+          #        if (! qbr)
+          #            qbr = this.query().dataSourceTable(TableNum(CRMHojaGastosLine)).addRange(FieldNum(CRMHojaGastosLine, Division));
+          #
+          #        qbr.value("");//strfmt(Enum2str(CRMDivision::Refractarios)));
+          #
+          #    }
+          #    super();
+          #}
+        ENDSOURCE
+        SOURCE #create
+          #public void create(boolean _append = false)
+          #{
+          #    CRMHojaGastosLine  hojaActual = CRMHojaGastosLine.data();
+          #    ;
+          #
+          #    super(_append);
+          #
+          #    if (hojaActual.TransDate)
+          #        crmHojaGastosLine.InitFromPreviousLine(hojaActual);
+          #}
+        ENDSOURCE
+        SOURCE #initValue
+          #public void initValue()
+          #{
+          #    super();
+          #
+          #    CRMHojaGastosLine.InitFromHojaGastosTable();
+          #
+          #    if (projTable){
+          #        CRMHojaGastosLine.HojaGastosId  = projTable.ProjId;
+          #        CRMHojaGastosLine.ProjId        = projTable.ProjId;
+          #        CRMHojaGastosLine.NoCobrar      = NoYes::Yes;
+          #    }
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  JOINS
+  ENDJOINS
+  
+  DESIGN
+    PROPERTIES
+      Left                #Auto (left)
+      Top                 #Auto
+      Width               #Auto
+      Height              #Auto
+      Visible             #Yes
+      Caption             #Hoja de Gastos
+      TitleDatasource     #
+      Frame               #Standard
+      WindowResize        #Auto
+      WindowType          #Standard
+      SaveSize            #No
+      AlwaysOnTop         #No
+      HideToolbar         #No
+      SetCompany          #Yes
+      ColorScheme         #Default
+      CssClass            #
+      ShowWebHelp         #Default
+      BackgroundColor     #Button face (3D)
+      ImageName           #
+      ImageResource       #0
+      Imagemode           #Normal (preserve pict. attributes)
+      Mode                #Watch
+      SubmitMethod        #Auto
+      SupportReload       #No
+      LocalWebMenu        #
+      AllowDocking        #No
+      Font                #
+      FontSize            #0
+      Italic              #No
+      Underline           #No
+      Bold                #Default
+      CharacterSet        #0
+      LabelFont           #
+      LabelFontSize       #0
+      LabelItalic         #No
+      LabelUnderline      #No
+      LabelBold           #Default
+      LabelCharacterSet   #0
+      DataSource          #
+      TopMargin           #Auto
+      BottomMargin        #Auto
+      LeftMargin          #Auto
+      RightMargin         #Auto
+      ArrangeWhen         #Default
+      ArrangeMethod       #Vertical
+      Columns             #2
+      Columnspace         #Auto
+      ArrangeGuide        
+        ARRAY INDEX Columns 
+          #0
+          #0
+        ENDARRAY
+      HideIfEmpty         #Yes
+      AlignChildren       #Yes
+      AlignChild          #Yes
+      AllowUserSetup      #Yes
+      NeededAccessLevel   #NoAccess
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL TAB
+        ;==== controlId:12290, containerId: 0, containerdata: 2   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #Tab
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #No
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          ColorScheme         #Default
+          BackgroundColor     #Button face (3D)
+          BackStyle           #Opaque
+          Tabs                #0
+          Tab                 #Auto
+          TabAppearance       #Normal
+          ShowTabs            #Yes
+          TabPlacement        #Top
+          TabLayout           #One line
+          SelectControl       #Yes
+          DataSource          #
+          TopMargin           #Auto
+          BottomMargin        #Auto
+          LeftMargin          #Auto
+          RightMargin         #Auto
+          ArrangeWhen         #Default
+          ArrangeMethod       #Vertical
+          Columns             #2
+          Columnspace         #Auto
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+          HideIfEmpty         #Yes
+          AlignChildren       #Yes
+          AlignChild          #No
+          AllowUserSetup      #Yes
+          NeededAccessLevel   #View
+          TabAutoChange       #Yes
+        ENDPROPERTIES
+        
+        CONTAINER
+          CONTROL TABPAGE
+            ;==== controlId:12291, containerId:12290, containerdata:12290   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #TabOverview
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Column width
+              Height              #Column height
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #No
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              ColorScheme         #Default
+              BackgroundColor     #Button face (3D)
+              BackStyle           #Opaque
+              TabAppearance       #Normal
+              Caption             #@SYS50012
+              DataSource          #
+              TopMargin           #Auto
+              BottomMargin        #Auto
+              LeftMargin          #Auto
+              RightMargin         #Auto
+              ArrangeWhen         #Default
+              ArrangeMethod       #Vertical
+              Columns             #1
+              Columnspace         #Auto
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                ENDARRAY
+              HideIfEmpty         #Yes
+              AlignChildren       #Yes
+              AlignChild          #Yes
+              AllowUserSetup      #Yes
+              NeededAccessLevel   #View
+              TabAutoChange       #No
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GRID
+                ;==== controlId:12292, containerId:12291, containerdata:12291   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #Grid
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Auto (left)
+                  Top                 #Auto
+                  Width               #Column width
+                  Height              #Column height
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #No
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  ColorScheme         #Default
+                  BackgroundColor     #Window background
+                  TopMargin           #0
+                  BottomMargin        #0
+                  LeftMargin          #0
+                  RightMargin         #0
+                  MultiSelect         #Yes
+                  VisibleCols         #Auto
+                  VisibleRows         #Auto
+                  ShowColLabels       #Yes
+                  ShowRowLabels       #Yes
+                  HighlightActive     #Yes
+                  ActiveBackColor     #Highlight background
+                  ActiveForeColor     #Highlight text
+                  DataSource          #CRMHojaGastosLine
+                  DataGroup           #
+                  AutoDataGroup       #No
+                  GridLines           #Yes
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12293, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_UserId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #UserId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL DATEEDIT
+                      ;==== controlId:12294, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_TransDate
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        DateValue           #
+                        Alignment           #Auto
+                        DateFormat          #Auto
+                        DateSeparator       #Auto
+                        DateYear            #Auto
+                        DateMonth           #Auto
+                        DateDay             #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #TransDate
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12295, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_MediaDieta
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #MediaDieta
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12296, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_AccountNum
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #AccountNum
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12297, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_Type
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Type
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12298, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_ModalidadPago
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #ModalidadPago
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12299, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_TaxPercent
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #TaxPercent
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12300, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_Dieta
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Dieta
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12301, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_Description
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Description
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12302, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_Internacional
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Internacional
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12303, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_Ticket
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Ticket
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12304, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_Factura
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Factura
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12305, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_InvoiceId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #InvoiceId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12306, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_VendName
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #VendName
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12307, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_AmountIVA
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #AmountIVA
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12308, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_AmountRetencion
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #AmountRetencion
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12309, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_VisaEmpresa
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #VisaEmpresa
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12310, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_Qty
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Qty
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12311, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_Price
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Price
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12313, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_Currency
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Currency
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12345, containerId:12292, containerdata: 0   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_ExchRate
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #ExchRate
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12312, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosTable_Amount
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #Amount
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12344, containerId:12292, containerdata: 0   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_AmountMST
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #AmountMST
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12346, containerId:12292, containerdata: 0   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_ReimbursableExpense
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #ReimbursableExpense
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL INTEDIT
+                      ;==== controlId:12314, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_NochesHotel
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Value               #0
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #NochesHotel
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12315, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_InformeVisitaId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #InformeVisitaId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12316, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_ProjId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #ProjId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12317, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_ProjIdHornos
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #ProjIdHornos
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12318, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_DisciplinaId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #DisciplinaId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12319, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CategoriaId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #No
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        DataMethod          #CategoriaId
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12320, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #ProyectosImputados
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #No
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #Proyectos / Clientes Imputados
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        DataMethod          #ProyectosImputados
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12321, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_ViajeId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #ViajeId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12322, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_FileId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #FileId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+          CONTROL TABPAGE
+            ;==== controlId:12323, containerId:12290, containerdata:12290   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #TabGeneral
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Column width
+              Height              #Column height
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #No
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              ColorScheme         #Default
+              BackgroundColor     #Button face (3D)
+              BackStyle           #Opaque
+              TabAppearance       #Normal
+              Caption             #@SYS55776
+              DataSource          #
+              TopMargin           #Auto
+              BottomMargin        #Auto
+              LeftMargin          #Auto
+              RightMargin         #Auto
+              ArrangeWhen         #Default
+              ArrangeMethod       #Vertical
+              Columns             #1
+              Columnspace         #Auto
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                ENDARRAY
+              HideIfEmpty         #Yes
+              AlignChildren       #Yes
+              AlignChild          #Yes
+              AllowUserSetup      #Yes
+              NeededAccessLevel   #View
+              TabAutoChange       #No
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GROUP
+                ;==== controlId:12324, containerId:12323, containerdata:12323   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #Gastos
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Auto (left)
+                  Top                 #Auto
+                  Width               #Auto
+                  Height              #Auto
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #No
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  FrameType           #Auto
+                  FramePosition       #Outside
+                  Caption             #
+                  FrameOptionButton   #None
+                  OptionValue         #1
+                  ColorScheme         #Default
+                  BackStyle           #Opaque
+                  BackgroundColor     #Button face (3D)
+                  Font                #
+                  FontSize            #0
+                  Italic              #No
+                  Underline           #No
+                  Bold                #Default
+                  CharacterSet        #0
+                  LabelFont           #
+                  LabelFontSize       #0
+                  LabelItalic         #No
+                  LabelUnderline      #No
+                  LabelBold           #Default
+                  LabelCharacterSet   #0
+                  DataSource          #CRMHojaGastosLine
+                  TopMargin           #Auto
+                  BottomMargin        #Auto
+                  LeftMargin          #Auto
+                  RightMargin         #Auto
+                  ArrangeWhen         #Default
+                  ArrangeMethod       #Vertical
+                  Columns             #2
+                  Columnspace         #Auto
+                  ArrangeGuide        
+                    ARRAY INDEX Columns 
+                      #0
+                      #0
+                    ENDARRAY
+                  HideIfEmpty         #Yes
+                  AlignChildren       #Yes
+                  AlignChild          #Yes
+                  AllowUserSetup      #Yes
+                  NeededAccessLevel   #View
+                  DataGroup           #Gastos
+                  AutoDataGroup       #Yes
+                ENDPROPERTIES
+                
+                  CONTAINER
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+        ENDCONTAINER
+        
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        ;==== controlId:12325, containerId: 0, containerdata:5296   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #ButtonGroup
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Right edge
+          Top                 #Auto
+          Width               #Auto
+          Height              #Auto
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #No
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          FrameType           #Auto
+          FramePosition       #Outside
+          Caption             #
+          SizeWidth           #Yes
+          SizeHeight          #Yes
+          Font                #
+          FontSize            #0
+          Italic              #No
+          Underline           #No
+          Bold                #Default
+          CharacterSet        #0
+          BackStyle           #Opaque
+          ColorScheme         #Default
+          BackgroundColor     #Button face (3D)
+          DataSource          #
+          TopMargin           #Auto
+          BottomMargin        #Auto
+          LeftMargin          #Auto
+          RightMargin         #Auto
+          ArrangeWhen         #Default
+          ArrangeMethod       #Vertical
+          Columns             #1
+          Columnspace         #Auto
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+            ENDARRAY
+          HideIfEmpty         #Yes
+          AlignChildren       #Yes
+          AlignChild          #Yes
+          AllowUserSetup      #Yes
+          NeededAccessLevel   #View
+        ENDPROPERTIES
+        
+        CONTAINER
+          CONTROL BUTTON
+            ;==== controlId:12326, containerId:12325, containerdata:12325   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #Imprimir
+              AutoDeclaration     #No
+              Visible             #No
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #Yes
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              Text                #Imprimir
+              Value               #No
+              ButtonDisplay       #Text only
+              NormalImage         #
+              NormalResource      #0
+              DisabledImage       #
+              DisabledResource    #0
+              Font                #
+              FontSize            #0
+              Italic              #No
+              Underline           #No
+              Bold                #Default
+              CharacterSet        #0
+              Border              #Auto
+              ShowShortCut        #Yes
+              DefaultButton       #No
+              SaveRecord          #Yes
+              MultiSelect         #Auto
+              ColorScheme         #Default
+              BackStyle           #Opaque
+              BackgroundColor     #Button face (3D)
+              ForegroundColor     #Button text
+              NeededAccessLevel   #View
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #clicked
+                #void clicked()
+                #{
+                #/*
+                #    Dialog          dialog  = new Dialog("Parámetros Impresión");
+                #    DialogField     dialogfromDate, dialogToDate;
+                #    FromDate        fromDate;
+                #    ToDate          toDate;
+                #    SalesLineDelete salesLineDelete;
+                #    Container       c;
+                #
+                #    MenuFunction    mf  = new MenuFunction("CRMHojaGastos", MenuItemType::Output);
+                #    Args            args;
+                #    ;
+                #
+                #    dialogFromDate  = dialog.addField(TypeId(FromDate));
+                #    dialogToDate    = dialog.addField(TypeId(ToDate));
+                #
+                #    if (dialog.run()){
+                #
+                #        fromDate    = dialogFromDate.value();
+                #        toDate      = dialogToDate.value();
+                #
+                #        c   = conIns(c, 1, CRMHojaGastosTable.UserId);
+                #        c   = conIns(c, 2, fromDate);
+                #        c   = conIns(c, 3, toDate);
+                #
+                #        salesLineDelete.SalesLine   = c;
+                #
+                #        args    = new Args();
+                #        args.record(salesLineDelete);
+                #        mf.run(args);
+                #    }
+                #    else {
+                #        error("Informe Cancelado");
+                #    }
+                #*/
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDCONTROL 
+          
+          CONTROL MENUITEMBUTTON
+            ;==== controlId:12327, containerId:12325, containerdata:12325   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #CRMHojaGastosLineCust
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #Yes
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              Text                #Clientes/Proveedores Visitados
+              Value               #No
+              ButtonDisplay       #Text only
+              NormalImage         #
+              NormalResource      #0
+              DisabledImage       #
+              DisabledResource    #0
+              Font                #
+              FontSize            #0
+              Italic              #No
+              Underline           #No
+              Bold                #Default
+              CharacterSet        #0
+              Border              #Auto
+              ShowShortCut        #Yes
+              DefaultButton       #No
+              SaveRecord          #Yes
+              MultiSelect         #Auto
+              ColorScheme         #Default
+              BackStyle           #Opaque
+              BackgroundColor     #Button face (3D)
+              ForegroundColor     #Button text
+              NeededAccessLevel   #View
+              MenuItemType        #Display
+              MenuItemName        #CRMHojaGastosLineCust_cust
+              DataSource          #
+            ENDPROPERTIES
+            
+          ENDCONTROL 
+          
+          CONTROL MENUITEMBUTTON
+            ;==== controlId:12328, containerId:12325, containerdata:12325   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #CRMHojaGastosLineCust_Proj
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #Yes
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              Text                #
+              Value               #No
+              ButtonDisplay       #Text only
+              NormalImage         #
+              NormalResource      #0
+              DisabledImage       #
+              DisabledResource    #0
+              Font                #
+              FontSize            #0
+              Italic              #No
+              Underline           #No
+              Bold                #Default
+              CharacterSet        #0
+              Border              #Auto
+              ShowShortCut        #Yes
+              DefaultButton       #No
+              SaveRecord          #Yes
+              MultiSelect         #Auto
+              ColorScheme         #Default
+              BackStyle           #Opaque
+              BackgroundColor     #Button face (3D)
+              ForegroundColor     #Button text
+              NeededAccessLevel   #View
+              MenuItemType        #Display
+              MenuItemName        #CRMHojaGastosLineCust_Proj
+              DataSource          #
+            ENDPROPERTIES
+            
+          ENDCONTROL 
+          
+          CONTROL MENUITEMBUTTON
+            ;==== controlId:12329, containerId:12325, containerdata:12325   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #CRMHojaGastosLineCust_NoConf
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #Yes
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              Text                #
+              Value               #No
+              ButtonDisplay       #Text only
+              NormalImage         #
+              NormalResource      #0
+              DisabledImage       #
+              DisabledResource    #0
+              Font                #
+              FontSize            #0
+              Italic              #No
+              Underline           #No
+              Bold                #Default
+              CharacterSet        #0
+              Border              #Auto
+              ShowShortCut        #Yes
+              DefaultButton       #No
+              SaveRecord          #Yes
+              MultiSelect         #Auto
+              ColorScheme         #Default
+              BackStyle           #Opaque
+              BackgroundColor     #Button face (3D)
+              ForegroundColor     #Button text
+              NeededAccessLevel   #View
+              MenuItemType        #Display
+              MenuItemName        #CRMHojaGastosLineCust_NoConf
+              DataSource          #
+            ENDPROPERTIES
+            
+          ENDCONTROL 
+          
+          CONTROL MENUITEMBUTTON
+            ;==== controlId:12330, containerId:12325, containerdata:12325   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #CRMHojaGastosLineCust_Subv
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #Yes
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              Text                #
+              Value               #No
+              ButtonDisplay       #Text only
+              NormalImage         #
+              NormalResource      #0
+              DisabledImage       #
+              DisabledResource    #0
+              Font                #
+              FontSize            #0
+              Italic              #No
+              Underline           #No
+              Bold                #Default
+              CharacterSet        #0
+              Border              #Auto
+              ShowShortCut        #Yes
+              DefaultButton       #No
+              SaveRecord          #Yes
+              MultiSelect         #Auto
+              ColorScheme         #Default
+              BackStyle           #Opaque
+              BackgroundColor     #Button face (3D)
+              ForegroundColor     #Button text
+              NeededAccessLevel   #View
+              MenuItemType        #Display
+              MenuItemName        #CRMHojaGastosLineCust_Subv
+              DataSource          #
+            ENDPROPERTIES
+            
+          ENDCONTROL 
+          
+          CONTROL MENUITEMBUTTON
+            ;==== controlId:12331, containerId:12325, containerdata:12325   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #CRMHojaGastosLineCust_Evento
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #Yes
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              Text                #
+              Value               #No
+              ButtonDisplay       #Text only
+              NormalImage         #
+              NormalResource      #0
+              DisabledImage       #
+              DisabledResource    #0
+              Font                #
+              FontSize            #0
+              Italic              #No
+              Underline           #No
+              Bold                #Default
+              CharacterSet        #0
+              Border              #Auto
+              ShowShortCut        #Yes
+              DefaultButton       #No
+              SaveRecord          #Yes
+              MultiSelect         #Auto
+              ColorScheme         #Default
+              BackStyle           #Opaque
+              BackgroundColor     #Button face (3D)
+              ForegroundColor     #Button text
+              NeededAccessLevel   #View
+              MenuItemType        #Display
+              MenuItemName        #CRMHojaGastosLineCust_Evento
+              DataSource          #
+            ENDPROPERTIES
+            
+          ENDCONTROL 
+          
+          CONTROL MENUITEMBUTTON
+            ;==== controlId:12332, containerId:12325, containerdata:12325   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #INDTicketInfoTable
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #Yes
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              Text                #Ver Ticket
+              Value               #No
+              ButtonDisplay       #Text only
+              NormalImage         #
+              NormalResource      #0
+              DisabledImage       #
+              DisabledResource    #0
+              Font                #
+              FontSize            #0
+              Italic              #No
+              Underline           #No
+              Bold                #Default
+              CharacterSet        #0
+              Border              #Auto
+              ShowShortCut        #Yes
+              DefaultButton       #No
+              SaveRecord          #Yes
+              MultiSelect         #Auto
+              ColorScheme         #Default
+              BackStyle           #Opaque
+              BackgroundColor     #Button face (3D)
+              ForegroundColor     #Button text
+              NeededAccessLevel   #View
+              MenuItemType        #Display
+              MenuItemName        #INDTicketInfoTable
+              DataSource          #
+            ENDPROPERTIES
+            
+          ENDCONTROL 
+          
+        ENDCONTAINER
+        
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+ENDFORM
+
+
+***Element: END

@@ -1,0 +1,2497 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : CRMHojaGastosLine unloaded at Jueves 21/05/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #CRMHojaGastosLine
+    PROPERTIES
+      Name                #CRMHojaGastosLine
+      Label               #Hoja de Gastos (Líneas)
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #IND_CRM_Resto
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #Yes
+      ModifiedBy          #Yes
+      ModifiedTransactionId #Yes
+      CreatedDate         #Yes
+      CreatedTime         #Yes
+      CreatedBy           #Yes
+      CreatedTransactionId #Yes
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #UserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #TransDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #TransDate
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #AccountNum
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AccountNum
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #AccountNum
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #Division
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Division
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMDivision
+        ENDPROPERTIES
+        
+      FIELD #Type
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Type
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMGastoType
+        ENDPROPERTIES
+        
+      FIELD #Description
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Description
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Internacional
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Internacional
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #Ticket
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Ticket
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #Qty
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #Qty
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Qty
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #Price
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #Price
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Price
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #Amount
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #Amount
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Amount
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #Currency
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Currency
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CurrencyCode
+              #
+            ENDARRAY
+          StringSize          #3
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Week
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #Week
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Week
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #TaxAmount
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #TaxAmount
+          Label               #IVA
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TaxAmount
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #HojaGastosId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #HojaGastosId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMHojaGastosId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #VisaEmpresa
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #VisaEmpresa
+          Label               #Visa
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #MediaDieta
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #MediaDieta
+          Label               #Media Dieta
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #Dieta
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Dieta
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #ProjId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ProjId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMProjIdPermiteGastos
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #NoCobrar
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #NoCobrar
+          Label               #No Cobrar
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #TaxPercent
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #TaxPercent
+          Label               #% IVA
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Percent
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #NochesHotel
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #NochesHotel
+          Label               #Noches Hotel
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Days
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #PrimasExtranjero
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #PrimasExtranjero
+          Label               #Primas Extranjero
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #ProjIdHornos
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ProjIdHornos
+          Label               #Proyecto
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ProjId
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ViajeId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ViajeId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserViajeId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Factura
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Factura
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #DisciplinaId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #DisciplinaId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserDisciplinaId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #InformeVisitaId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #InformeVisitaId
+          Label               #Informe Visita
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMActividadId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #ModalidadPago
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ModalidadPago
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMHojaGastoModalidadPago
+        ENDPROPERTIES
+        
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #INDCreatedByUserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDCreatedByUserId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDCreatedByUserId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #FileId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #FileId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #VoucherPhysical
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #VoucherPhysical
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Voucher
+              #
+            ENDARRAY
+          StringSize          #30
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #DatePhysical
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #DatePhysical
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #DatePhysical
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #AmountIVA
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #AmountIVA
+          Label               #Importe IVA
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Amount
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #AmountRetencion
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #AmountRetencion
+          Label               #Importe Retención
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Amount
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #InvoiceId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #InvoiceId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #InvoiceId
+              #
+            ENDARRAY
+          StringSize          #30
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #VendName
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #VendName
+          Label               #Nombre Proveedor
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #VendName
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ExchRate
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #ExchRate
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ExchRate
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #ReimbursableExpense
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ReimbursableExpense
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDReimbursableExpense
+        ENDPROPERTIES
+        
+      FIELD #AmountMST
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #AmountMST
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #AmountMST
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Gastos
+        PROPERTIES
+          Name                #Gastos
+          OldName             #
+          Label               #Gastos
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #TransDate
+          #AccountNum
+          #Type
+          #Description
+          #Internacional
+          #Ticket
+          #Qty
+          #Price
+          #Amount
+          #Currency
+          #FileId
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #Index1
+      PROPERTIES
+        Name                #Index1
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #HojaGastosId
+        #UserId
+        #TransDate
+      ENDINDEXFIELDS
+      
+      #Index2
+      PROPERTIES
+        Name                #Index2
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #RecId
+      ENDINDEXFIELDS
+      
+      #Index3
+      PROPERTIES
+        Name                #Index3
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #ViajeId
+      ENDINDEXFIELDS
+      
+      #Index4
+      PROPERTIES
+        Name                #Index4
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #ProjId
+      ENDINDEXFIELDS
+      
+      #ModifiedDateIdx
+      PROPERTIES
+        Name                #ModifiedDateIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #modifiedDate
+      ENDINDEXFIELDS
+      
+      #CreatedDateIdx
+      PROPERTIES
+        Name                #CreatedDateIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #createdDate
+      ENDINDEXFIELDS
+      
+      #FileIdIdx
+      PROPERTIES
+        Name                #FileIdIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #FileId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #CRMHojaGastosTable
+        PROPERTIES
+          Name                #CRMHojaGastosTable
+          Table               #CRMHojaGastosTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMHojaGastosLine
+            Field               #HojaGastosId
+            Table               #CRMHojaGastosTable
+            RelatedField        #HojaGastosId
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMHojaGastosLine
+            Field               #UserId
+            Table               #CRMHojaGastosTable
+            RelatedField        #UserId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CustTable
+        PROPERTIES
+          Name                #CustTable
+          Table               #CustTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMHojaGastosLine
+            Field               #AccountNum
+            Table               #CustTable
+            RelatedField        #AccountNum
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMHojaGastosLine
+            Field               #Division
+            Value               #2
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #INDTicketInfoTable
+        PROPERTIES
+          Name                #INDTicketInfoTable
+          Table               #INDTicketInfoTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMHojaGastosLine
+            Field               #FileId
+            Table               #INDTicketInfoTable
+            RelatedField        #FileId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #ProjTable
+        PROPERTIES
+          Name                #ProjTable
+          Table               #ProjTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMHojaGastosLine
+            Field               #AccountNum
+            Table               #ProjTable
+            RelatedField        #ProjId
+          ENDPROPERTIES
+          
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMHojaGastosLine
+            Field               #Division
+            Value               #1
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+      #INDTicketInfoTable
+      PROPERTIES
+        Table               #INDTicketInfoTable
+        DeleteAction        #Cascade
+      ENDPROPERTIES
+      
+      #CRMHojaGastosLineCust
+      PROPERTIES
+        Table               #CRMHojaGastosLineCust
+        DeleteAction        #Cascade
+      ENDPROPERTIES
+      
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #AccountName
+        #Name AccountName()
+        #{
+        #    CustTable   custTable;
+        #    ProjTable   projTable;
+        #    ;
+        #
+        #    custTable   = CustTable::find(this.AccountNum);
+        #    if (custTable)
+        #        return custTable.Name;
+        #
+        #
+        #    return this.AccountNum; //Código del proyecto
+        #}
+      ENDSOURCE
+      SOURCE #applyHeaderCurrencyDefaults
+        #//MMS - Divisa desde línea - 2026.05.21
+        #void applyHeaderCurrencyDefaults(boolean _recalculateAmountMST = true)
+        #{
+        #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
+        #    ;
+        #
+        #    // Applies header defaults to a line. Various currency is a header marker, not a line currency.
+        #    if (!hojaGastosTable)
+        #        return;
+        #
+        #    if (!hojaGastosTable.isVariousCurrencyDefault())
+        #    {
+        #    this.Currency            = hojaGastosTable.CurrencyCode;
+        #    this.ExchRate            = hojaGastosTable.ExchRate ? hojaGastosTable.ExchRate : (hojaGastosTable.CurrencyCode == CompanyInfo::standardCurrency() ? 100 : 0);
+        #
+        #    if (_recalculateAmountMST)
+        #        this.AmountMST = this.LineAmountMST();
+        #}
+        #
+        #    if (!hojaGastosTable.isVariousReimbursableExpenseDefault())
+        #        this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #BorrarLineaProyecto
+        #void BorrarLineaProyecto(ProjId _projId)
+        #{
+        #    CRMHojaGastosLineCust   CRMHojaGastosLineCust;
+        #    ;
+        #
+        #    select firstonly forupdate CRMHojaGastosLineCust
+        #    where CRMHojaGastosLineCust.RefRecId    == this.RecId   &&
+        #          CRMHojaGastosLineCust.CustAccount == _projId      &&
+        #          CRMHojaGastosLineCust.Origen      == CRMConsultaOrigen::Proyecto;
+        #
+        #    if(CRMHojaGastosLineCust)
+        #        CRMHojaGastosLineCust.doDelete();
+        #}
+      ENDSOURCE
+      SOURCE #BorrarTodasAsignaciones
+        #void BorrarTodasAsignaciones(CRMConsultaOrigen _origen)
+        #{
+        #    CRMHojaGastosLineCust   CRMHojaGastosLineCust;
+        #    ;
+        #    ttsbegin;
+        #    while select forupdate CRMHojaGastosLineCust
+        #    index hint index1
+        #    where CRMHojaGastosLineCust.RefRecId    == this.RecId   &&
+        #          CRMHojaGastosLineCust.Origen      == _origen {
+        #
+        #          CRMHojaGastosLineCust.doDelete();
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #BorrarTodosProyecto
+        #void BorrarTodosProyecto()
+        #{
+        #    CRMHojaGastosLineCust   CRMHojaGastosLineCust;
+        #    ;
+        #    ttsbegin;
+        #    while select forupdate CRMHojaGastosLineCust
+        #    where CRMHojaGastosLineCust.RefRecId    == this.RecId   &&
+        #          //CRMHojaGastosLineCust.CustAccount == _projId      &&
+        #          CRMHojaGastosLineCust.Origen      == CRMConsultaOrigen::Proyecto {
+        #
+        #        CRMHojaGastosLineCust.doDelete();
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #CalcAmount
+        #Amount CalcAmount()
+        #{
+        #    ;
+        #    return Currency::amount(this.Qty * this.Price, this.Currency);
+        #}
+      ENDSOURCE
+      SOURCE #calcExchRateFromAmountMST
+        #//MMS - Divisa desde línea - 2026.05.21
+        #ExchRate calcExchRateFromAmountMST()
+        #{
+        #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
+        #    CurrencyCode currencyCode;
+        #    ;
+        #
+        #    // AX exchange rates are stored in base 100. This derives the rate from Amount and AmountMST.
+        #    currencyCode = this.Currency;
+        #
+        #    if (!currencyCode && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
+        #        currencyCode = hojaGastosTable.CurrencyCode;
+        #
+        #    if (!currencyCode)
+        #        return this.ExchRate;
+        #
+        #    if (currencyCode == CompanyInfo::standardCurrency())
+        #        return 100;
+        #
+        #    if (!this.Amount || !this.AmountMST)
+        #        return this.ExchRate;
+        #
+        #    return (this.Amount * 100) / this.AmountMST;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #CategoriaId
+        #display CRMUserCategoriaId CategoriaId()
+        #{
+        #    CRMUserCategoriaId          categoriaId;
+        #    ;
+        #
+        #    if (this.Type == CRMGastoType::DiaViaje ||
+        #        this.Type == CRMGastoType::DiaViajeFestivo ||
+        #        this.Type == CRMGastoType::MontajeNacional ||
+        #        this.Type == CRMGastoType::MontajeNacionalFestivo){
+        #
+        #        categoriaId     = this.HojaGastosTable().CategoriaId;
+        #        if (! categoriaId){
+        #            //Hoja de Gastos sin Categoría y Usuario sin Categoría implica que el usuario tiene definida una categoría por cada disciplina
+        #            categoriaId = CRMUserDisciplinaCompetenciaTable::CategoriaId(this.UserId, this.DisciplinaId, this.TransDate);
+        #        }
+        #
+        #    }
+        #
+        #    return categoriaId;
+        #}
+      ENDSOURCE
+      SOURCE #CreaActualizaProyectoEnLineCust
+        #void CreaActualizaProyectoEnLineCust()
+        #{
+        #    ;
+        #    if (this.HojaGastosTable().TienDetalleProyectos()){
+        #        this.BorrarTodasAsignaciones(CRMCOnsultaOrigen::Cliente);
+        #        this.CrearDetalleAsignacionEnLineas(CRMCOnsultaOrigen::Cliente);
+        #
+        #        this.BorrarTodasAsignaciones(CRMCOnsultaOrigen::ClientePotencial);
+        #        this.CrearDetalleAsignacionEnLineas(CRMCOnsultaOrigen::ClientePotencial);
+        #    }
+        #    else {
+        #        if (this.ProjId && ! this.TieneProyectoAsignado()){
+        #            this.CreaLineaProyecto();
+        #        }
+        #    }
+        #
+        #    if (this.ProjIdHornos){
+        #        if (! this.TieneProyectoAsignado()){
+        #            //NO tiene nada asignado
+        #            this.CreaLineaProyecto(this.ProjIdHornos);
+        #        }
+        #        else {
+        #            //Hay algún proyecto asignado
+        #            if (this.NumeroProyectosAsignado() == 1){
+        #                //SOlo hay uno así que lo borro y lo sustituyo por el nuevo que hayan puesto
+        #                this.BorrarTodosProyecto();
+        #                this.CreaLineaProyecto(this.ProjIdHornos);
+        #            }
+        #            else {
+        #                //Hay más de un proyecto asignado
+        #                //Mostrar mensaje de error.
+        #                error("Hay varios proyectos asignados. Bórralos y vuelve a rellenar el campo proyecto.");
+        #            }
+        #        }
+        #    }
+        #    else {
+        #        this.BorrarTodosProyecto();
+        #        //¿por qué hago esto?
+        #//        this.CreaLineaProyecto(); //Creo una línea aunque no tenga proyecto después de borrar todas las imputaciones anteriores.
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #CreaLineaProyecto
+        #void CreaLineaProyecto(ProjId _projId = this.ProjIdHornos)
+        #{
+        #    CRMHojaGastosLineCust  CRMHojaGastosLineCust;
+        #    ;
+        #
+        #    if (! _projId)
+        #        return;
+        #
+        #    CRMHojaGastosLineCust.clear();
+        #    CRMHojaGastosLineCust.RefRecId          = this.RecId;
+        #    CRMHojaGastosLineCust.CustAccount       = _projId;//this.ProjId;
+        #    CRMHojaGastosLineCust.Origen            = CRMConsultaOrigen::Proyecto;
+        #    CRMHojaGastosLineCust.TransDate         = this.TransDate;
+        #    CRMHojaGastosLineCust.UserId            = this.UserId;
+        #    CRMHojaGastosLineCust.Percent           = 100;
+        #    CRMHojaGastosLineCust.insert();
+        #}
+      ENDSOURCE
+      SOURCE #CrearDetalleAsignacionEnLineas
+        #void CrearDetalleAsignacionEnLineas(CRMConsultaOrigen _origen)
+        #{
+        #    CRMHojaGastoslineCust   lineCustFrom, lineCustTo;
+        #    ;
+        #
+        #    if (! this.RecId)
+        #        return;
+        #
+        #    ttsbegin;
+        #    while select lineCustFrom
+        #    index hint index1
+        #    where lineCustFrom.RefRecId     == this.HojaGastosTable().RecId
+        #          && lineCustFrom.Origen    == _origen{
+        #
+        #        lineCustTo              = lineCustFrom.data();
+        #        lineCustTo.RefRecId     = this.RecId;
+        #        lineCustTo.UserId       = this.UserId;
+        #        lineCustTo.TransDate    = this.TransDate;
+        #        lineCustTo.insert();
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #HayJustificante
+        #display boolean HayJustificante()
+        #{
+        #    return this.Ticket || this.Factura;
+        #}
+      ENDSOURCE
+      SOURCE #HojaGastosTable
+        #CRMHojaGastosTable HojaGastosTable(boolean _forupdate = false)
+        #{
+        #    return CRMHojaGastosTable::Find(this.HojaGastosId, _forupdate);
+        #}
+      ENDSOURCE
+      SOURCE #InitFromGastoType
+        #void InitFromGastoType()
+        #{
+        #    CRMParameters               crmParameters   = CRMParameters::find();
+        #    CRMUserViajeLineTypeTable   CRMUserViajeLineTypeTable;
+        #    CRMUsuarioTable             usuarioTable    = CRMUsuarioTable::Find(this.UserId);
+        #    CRMTaxParameters            taxParameters   = CRMTaxParameters::Find(this.Type, this.TransDate);
+        #    CRMHojaGastosTable          hojaGastosTable = this.HojaGastosTable();
+        #    CRMUserCategoriaId          categoriaId     = this.CategoriaId();
+        #    Price                       priceKm;
+        #    ;
+        #
+        #    this.TaxPercent = taxParameters.TaxPercent; //IVA para hacer el cálculo.
+        #
+        #    switch(this.Type){
+        #
+        #        case CRMGastoType::Km:
+        #            if (this.HojaGastosTable().PriceKm){
+        #                //Añadido para que en Italia puedan indicar un precio por Km en cada hoja de gastos
+        #                this.Price = this.HojaGastosTable().PriceKm;
+        #            }
+        #            else {
+        #                //IJL.08/08/25. Migración Desarrollos México.
+        #                priceKm = usuarioTable.priceKmAFecha(this.TransDate);
+        #                if (priceKm){
+        #                    this.Price = priceKm;
+        #                }
+        #                else {
+        #
+        #                    if (usuarioTable.CocheEmpresa)
+        #                        this.Price  = crmParameters.PriceKmEmpresa;
+        #                    else
+        #                        this.Price  = crmParameters.PriceKm;
+        #                }
+        #            }
+        #            this.Amount    = this.CalcAmount();
+        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            break;
+        #
+        #        case CRMGastoType::Desayuno:
+        #            this.Qty    = 1;
+        #            this.Dieta  = usuarioTable.Dietas;
+        #            if (this.Dieta){
+        #                this.Price     = crmParameters.PriceDietaDesayuno;
+        #                this.Amount    = this.CalcAmount();
+        #                this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            }
+        #            break;
+        #
+        #        case CRMGastoType::Comida:
+        #            this.Qty    = 1;
+        #            this.Dieta  = usuarioTable.Dietas;
+        #            if (this.Dieta){
+        #                this.Price     = crmParameters.PriceDietaComida;
+        #                this.Amount    = this.CalcAmount();
+        #                this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            }
+        #            break;
+        #
+        #        case CRMGastoType::Cena:
+        #            this.Qty    = 1;
+        #            this.Dieta  = usuarioTable.Dietas;
+        #            if (this.Dieta){
+        #                this.Price     = crmParameters.PriceDietaCena;
+        #                this.Amount    = this.CalcAmount();
+        #                this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            }
+        #            break;
+        #
+        #        case CRMGastoType::MontajeNacional:
+        #            this.Qty    = 1;
+        #
+        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, CategoriaId, this.TransDate);
+        #
+        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - INIT
+        #            this.Price  = CRMUserViajeLineTypeTable.Amount;
+        #           /* if (this.MediaDieta)
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;//this.Price / 2;
+        #            else
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;// crmParameters.PriceMontajeNacionalFestivo; */
+        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - END
+        #            this.Amount    = this.CalcAmount();
+        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            break;
+        #
+        #        case CRMGastoType::MontajeNacionalFestivo:
+        #            this.Qty    = 1;
+        #
+        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, CategoriaId, this.TransDate);
+        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - INIT
+        #            this.Price  = CRMUserViajeLineTypeTable.Amount;
+        #           /*
+        #            if (this.MediaDieta)
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;//this.Price / 2;
+        #            else
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;// crmParameters.PriceMontajeNacionalFestivo;  */
+        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - END
+        #            this.Amount    = this.CalcAmount();
+        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            break;
+        #
+        #        case CRMGastoType::MontajeInternacional:
+        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
+        #
+        #/*
+        #            this.Qty    = 1;
+        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
+        #
+        #            if (this.MediaDieta)
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;//this.Price / 2;
+        #            else
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;// crmParameters.PriceMontajeNacionalFestivo;
+        #
+        #            this.Amount = this.CalcAmount();
+        #*/
+        #            break;
+        #
+        #        case CRMGastoType::MontajeInternacionalFestivo:
+        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
+        #
+        #/*
+        #            this.Qty    = 1;
+        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
+        #
+        #            if (this.MediaDieta)
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
+        #            else
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;
+        #
+        #            this.Amount = this.CalcAmount();
+        #*/
+        #            break;
+        #
+        #        case CRMGastoType::DiaViaje,
+        #              CRMGastoType::DiaViajeFestivo:
+        #            this.Qty    = 1;
+        #
+        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, CategoriaId, this.TransDate);
+        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - INIT
+        #            this.Price  = CRMUserViajeLineTypeTable.Amount;
+        #           /*
+        #            if (this.MediaDieta)
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
+        #            else
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;*/
+        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - END
+        #            this.Amount    = this.CalcAmount();
+        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            break;
+        #
+        #/*
+        #        case CRMGastoType::DiaViajeFestivo:
+        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
+        #/*
+        #            this.Qty    = 1;
+        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
+        #
+        #            if (this.MediaDieta)
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
+        #            else
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;
+        #
+        #            this.Amount = this.CalcAmount();
+        #*/
+        #            break;
+        #*/
+        #
+        #        case CRMGastoType::DiaViajeInternacional:
+        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
+        #/*
+        #            this.Qty    = 1;
+        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
+        #
+        #            if (this.MediaDieta)
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
+        #            else
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;
+        #
+        #            this.Amount = this.CalcAmount();
+        #*/
+        #            break;
+        #
+        #        case CRMGastoType::DiaViajeInternacionalFestivo:
+        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
+        #/*
+        #            this.Qty    = 1;
+        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
+        #
+        #            if (this.MediaDieta)
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
+        #            else
+        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;
+        #
+        #            this.Amount = this.CalcAmount();
+        #*/
+        #            break;
+        #
+        #        case CRMGastoType::HorasProyecto:
+        #            this.NoCobrar   = NoYes::Yes;
+        #            break;
+        #
+        #        case CRMGastoType::Hotel:
+        #            this.Qty            = 1;
+        #            //this.NochesHotel    = 1;
+        #            this.Amount    = this.CalcAmount();
+        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            break;
+        #
+        #        default:
+        #            this.Qty    = 1;
+        #            this.Price  = 0;
+        #            this.Amount    = this.CalcAmount();
+        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            break;
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #InitFromHojaGastosTable
+        #void InitFromHojaGastosTable()
+        #{
+        #    CRMHojaGastosTable  hojaGastosTable = this.HojaGastosTable();
+        #    ;
+        #
+        #    if (! hojaGastosTable)
+        #        return;
+        #
+        #    if (!hojaGastosTable.isVariousCurrencyDefault() && hojaGastosTable.CurrencyCode != CompanyInfo::standardCurrency())
+        #        this.Internacional  = NoYes::Yes;
+        #
+        #    this.Division           = hojaGastosTable.Division;
+        #
+        #    if (!hojaGastosTable.isVariousProjectDefault())
+        #    this.ProjIdHornos       = hojaGastosTable.ProjId;
+        #
+        #    if (!hojaGastosTable.isVariousCurrencyDefault())
+        #    {
+        #    this.Currency           = hojaGastosTable.CurrencyCode;
+        #
+        #    //MMS - Divisa desde línea - 2026.05.22
+        #    if(hojaGastosTable.ExchRate)
+        #        this.ExchRate = hojaGastosTable.ExchRate;
+        #    }
+        #
+        #    this.ViajeId            = hojaGastosTable.ViajeId;
+        #    this.InformeVisitaId    = hojaGastosTable.InformeVisitaId;
+        #
+        #    if(!this.AmountMST)
+        #        this.AmountMST = this.LineAmountMST();
+        #
+        #    if (!hojaGastosTable.isVariousReimbursableExpenseDefault())
+        #    this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #InitFromPreviousLine
+        #void InitFromPreviousLine(CRMHojaGastosLine _hojaGastosLine)
+        #{
+        #    ;
+        #    this.HojaGastosId   = _hojaGastosLine.HojaGastosId;
+        #    this.UserId         = _hojaGastosLine.UserId;
+        #    this.TransDate      = _hojaGastosLine.TransDate;
+        #    this.Division       = _hojaGastosLine.Division;
+        #    this.AccountNum     = _hojaGastosLine.AccountNum;
+        #    this.Type           = CRMGastoType::None;
+        #    this.Description    = "";
+        #    this.Internacional  = _hojaGastosLine.Internacional;
+        #    this.Ticket         = NoYes::No;
+        #    this.Factura        = NoYes::No;
+        #    this.Qty            = 0;
+        #    this.Price          = 0;
+        #    this.Amount         = 0;
+        #    this.Currency       = _hojaGastosLine.Currency;
+        #    this.Week           = _hojaGastosLine.Week;
+        #    this.ProjIdHornos   = _hojaGastosLine.ProjIdHornos;
+        #    this.DisciplinaId   = "";
+        #    //MMS - Divisa desde línea - 2026.05.22
+        #    this.Currency       = _hojaGastosLine.Currency;
+        #    this.ExchRate       = _hojaGastosLine.ExchRate;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #initFromProjTable
+        #void initFromProjTable()
+        #{
+        #    ProjTable   projTable;
+        #    ;
+        #
+        #    if (this.ProjIdHornos){
+        #        //Cargamos el valor de la disciplina del proyecto.
+        #        this.DisciplinaId = ProjTable::find(this.ProjIdHornos).CRMUserDisciplinaId;
+        #    }
+        #    else {
+        #        //Si dejamos en blanco el proyecto también dejo en blanco la disciplina. Si hay que rellenarlo hay que hacerlo a mano.
+        #        this.DisciplinaId   = "";
+        #    }
+        #
+        #    //IJL.28/01/25. No cambio nada al seleccionar el proyecto. Puede que ya hayan metido los datos y se borrarían.
+        #    //this.InitFromGastoType(); //Simulo la introducción de nuevo del valor del campo TIPO de GASTO
+        #//    this.modifiedField(FieldNum(CRMHojaGastosLine, Type));
+        #}
+      ENDSOURCE
+      SOURCE #InitFromUsuarioTable
+        #void InitFromUsuarioTable()
+        #{
+        #    CRMUsuarioTable     usuarioTable    = CRMUsuarioTable::Find(this.UserId);
+        #    ;
+        #
+        #    this.Division   = usuarioTable.Division;
+        #}
+      ENDSOURCE
+      SOURCE #initValue
+        #public void initValue()
+        #{
+        #    ;
+        #    super();
+        #}
+      ENDSOURCE
+      SOURCE #insert
+        #public void insert()
+        #{
+        #    boolean amountMSTWasProvided;    //MMS - Divisa desde línea - 2026.05.21
+        #    ;
+        #
+        #    //IJL.15/04/26
+        #    if (this.ModalidadPago == CRMHojaGastoModalidadPago::TarjetaGasolina)
+        #        this.Type = CRMGastoType::Gasolina;
+        #
+        #    amountMSTWasProvided = this.AmountMST != 0 && !this.ExchRate;  //MMS - Divisa desde línea - 2026.05.21
+        #    this.normalizeCurrencyAmounts(amountMSTWasProvided);  //INDMMS_ExternalCRM - 2026.05.21
+        #
+        #    if (!this.validateCurrencyAmounts())
+        #        throw error("Datos de divisa de la linea invalidos.");
+        #
+        #    super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.03.25
+        #    if(!this.INDCreatedByUserId)
+        #    {
+        #        this.selectForUpdate(true);
+        #        this.INDCreatedByUserId = this.createdBy;
+        #        this.doUpdate();
+        #    }
+        #
+        #    this.CreaActualizaProyectoEnLineCust();
+        #
+        #    this.syncHojaGastosTable(); //INDMMS_ExternalCRM - 2026.03.10
+        #}
+        #
+      ENDSOURCE
+      SOURCE #LineAmountMST
+        #//MMS - Divisa desde línea - 2026.05.21
+        #display Amount LineAmountMST()
+        #{
+        #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
+        #    CurrencyCode currencyCode;
+        #    ExchRate     exchRate;
+        #    ;
+        #
+        #    currencyCode = this.Currency;
+        #    exchRate     = this.ExchRate;
+        #
+        #    if (!currencyCode && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
+        #        currencyCode = hojaGastosTable.CurrencyCode;
+        #
+        #    if (!exchRate && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault() && currencyCode == hojaGastosTable.CurrencyCode)
+        #        exchRate = hojaGastosTable.ExchRate;
+        #
+        #    if (!currencyCode)
+        #        return 0;
+        #
+        #    if (currencyCode == CompanyInfo::standardCurrency() && !exchRate)
+        #        exchRate = 100;
+        #
+        #    return Currency::amountCur2MST(this.Amount, currencyCode, exchRate);
+        #}
+        #/*display Amount LineAmountMST()
+        #{
+        #    return Currency::amountCur2MST(this.Amount, this.Currency, this.ExchRate ? this.ExchRate : this.HojaGastosTable().ExchRate); // this.HojaGastosTable().ExchRate);   //MMS - Divisa desde línea - 2026.05.22
+        #
+        #} */
+        #
+      ENDSOURCE
+      SOURCE #MapLedgerDimension_Amount_Line
+        #Map MapLedgerDimension_Amount_Line(boolean _ignorarErrores = false)
+        #{
+        #    CRMHojaGastosLine       hojaGastosLine;
+        #    CRMHojaGastosLineCust   hojaGastosLineCust;
+        #    Map                     map = new Map(Types::String, Types::Real);
+        #    Description             accountNum_Dimension;
+        #    LedgerAccount           ledgerAccount, ledgerAccountEmpl;
+        #    AccountNum              dimension, dimensionEmpl;
+        #    Dimension               dimensionArray;
+        #
+        #    Amount                  amountLine, amountLineTotalFromCust, amountLineCust;
+        #    CRMUsuarioTable         usuarioTable    = CRMUsuarioTable::Find(this.UserId);
+        #
+        #    //boolean                 dimensionObligatoria;
+        #    Amount                  totalAmountFromHojaGastos   = this.LineAmountMST(); //Total de la línea
+        #    Amount                  totalEnMapa;
+        #    ;
+        #
+        #    //if (usuarioTable.UserId == "EDK")
+        #    //    info("");
+        #
+        #    ledgerAccountEmpl   = INDPersonaTable::findByCRM(usuarioTable.RecId).ledgerAccountGasto();
+        #    dimensionArray      = INDPersonaTable::findByCRM(usuarioTable.RecId).DimensionGasto(); //Debe ser la dimension configurada en el subDepartamento informado en el empleado (HOras)
+        #    dimensionEmpl       = dimensionArray[1];
+        #
+        #
+        #    //if (! ledgerAccount)
+        #    //    throw error(strfmt("El Empleado %1 no tiene informada la cuenta de Gasto en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #    where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
+        #          && hojaGastosLine.RecId           == this.RecId
+        #    {
+        #
+        #        amountLine              = hojaGastosLine.LineAmountMST();
+        #        amountLineTotalFromCust = 0;
+        #
+        #        while select hojaGastosLineCust
+        #        index hint index1
+        #        where hojaGastosLineCust.RefRecId == hojaGastosLine.RecId {
+        #
+        #            amountLineCust              = hojaGastosLineCust.Amount();
+        #            amountLineTotalFromCust     += amountLineCust;
+        #
+        #            accountNum_Dimension    = "";
+        #            ledgerAccount           = "";
+        #            switch (hojaGastosLineCust.Origen){
+        #                case CRMConsultaOrigen::Proyecto:
+        #                    ledgerAccount   = ledgerAccountEmpl;//INDPersonaTable::findByCRM(usuarioTable.RecId).ledgerAccountGasto();
+        #                    dimension       = ProjGroup::Find(ProjTable::find(hojaGastosLineCust.CustAccount).ProjGroupId).INDDimension[1];//"PROYEXT";
+        #                    if (! dimension){
+        #                        //Si el Grupo de Proyectos no tiene informada dimensión debemos contabilizar como si no hubiera proyecto en el gasto
+        #                        dimension       = dimensionEmpl;
+        #                    }
+        #
+        #                    if (! ledgerAccount && ! _ignorarErrores){
+        #                        throw error(strfmt("El Empleado %1 no tiene informada la cuenta de Gasto en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #                    }
+        #
+        #                    if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] == LedgerFieldControl::FillIn && ! dimension && ! _ignorarErrores){
+        #                        throw error(strfmt("El Empleado %1 no tiene informada la DIMENSIÓN en su Departamento Asignado", usuarioTable.Name));
+        #                    }
+        #
+        #                    break;
+        #                case CRMConsultaOrigen::Evento:
+        #                    ledgerAccount   = CRMEventoTable::Find(hojaGastosLineCust.CustAccount).LedgerAccountGasto;
+        #                    dimension       = dimensionEmpl;//LedgerTable::find(ledgerAccount).Dimension[1];//"COMERCIAL";
+        #
+        #                    if (! ledgerAccount && ! _ignorarErrores)
+        #                        throw error(strfmt("El Evento %1 no tiene informada la cuenta de Gasto en su pantalla de 'Eventos'", hojaGastosLineCust.CustAccount));
+        #                    if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] == LedgerFieldControl::FillIn && ! dimension && ! _ignorarErrores)
+        #                        throw error(strfmt("El Evento %1 no tiene informada la DIMENSIÓN", hojaGastosLineCust.CustAccount));
+        #
+        #                    break;
+        #                default:
+        #                    ledgerAccount   = ledgerAccountEmpl;//INDPersonaTable::findByCRM(usuarioTable.RecId).ledgerAccountGasto();
+        #                    dimension       = dimensionEmpl;
+        #
+        #                    if (! ledgerAccount && ! _ignorarErrores)
+        #                        throw error(strfmt("El Empleado %1 no tiene informada la cuenta de Gasto en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #
+        #                    if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] == LedgerFieldControl::FillIn && ! dimension && ! _ignorarErrores)
+        #                        throw error(strfmt("El Empleado %1 no tiene informada la DIMENSIÓN en su DEPARTAMENTO informado en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #                    break;
+        #            }
+        #
+        #            //IJL.27/03/26. Aunque no sea obligatorio si hay algo informado lo coloco.
+        #            /*
+        #            if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] != LedgerFieldControl::FillIn){
+        #                dimension = "";
+        #            }
+        #            */
+        #            accountNum_Dimension    = ledgerAccount + "|" + dimension;
+        #
+        #            if (map.exists(accountNum_Dimension)){
+        #                map.insert(accountNum_Dimension, map.lookup(accountNum_Dimension) + amountLineCust);
+        #            }
+        #            else {
+        #                map.insert(accountNum_Dimension, amountLineCust);
+        #            }
+        #
+        #            totalEnMapa += amountLineCust;
+        #        }
+        #
+        #        if (amountLine != amountLineTotalFromCust){
+        #            //Hay importe no asignado a ningún elemento de detalle como proyecto o Evento
+        #            ledgerAccount           = ledgerAccountEmpl;
+        #            dimension               = dimensionEmpl;
+        #
+        #            if (! ledgerAccount && ! _ignorarErrores)
+        #                throw error(strfmt("El Empleado %1 no tiene informada la cuenta de Gasto en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #
+        #
+        #            if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] == LedgerFieldControl::FillIn && ! dimension && ! _ignorarErrores)
+        #                throw error(strfmt("El Empleado %1 no tiene informada la DIMENSIÓN en su DEPARTAMENTO informado en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #
+        #            if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] != LedgerFieldControl::FillIn){
+        #                dimension = "";
+        #            }
+        #
+        #            accountNum_Dimension    = ledgerAccount + "|" + dimension;
+        #
+        #            if (map.exists(accountNum_Dimension)){
+        #                map.insert(accountNum_Dimension, map.lookup(accountNum_Dimension) + (amountLine - amountLineTotalFromCust));
+        #            }
+        #            else {
+        #                map.insert(accountNum_Dimension, amountLine - amountLineTotalFromCust);
+        #            }
+        #
+        #            totalEnMapa += (amountLine - amountLineTotalFromCust);
+        #        }
+        #    }
+        #
+        #    //Si el valor total de la hoja de gastos es distinto del total de lo metido en el mapa metemos una línea de ajuste en la última combinación que hayamos usado.
+        #    if (totalEnMapa != totalAmountFromHojaGastos){
+        #
+        #        if (map.exists(accountNum_Dimension)){
+        #            map.insert(accountNum_Dimension, map.lookup(accountNum_Dimension) + (totalAmountFromHojaGastos - totalEnMapa));
+        #        }
+        #        else {
+        #            map.insert(accountNum_Dimension, (totalAmountFromHojaGastos - totalEnMapa));
+        #        }
+        #
+        #    }
+        #
+        #    //Este es el detalla del mapa de contabilización de la línea.
+        #    return map;
+        #}
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    CRMTaxParameters            taxParameters;
+        #    ;
+        #    super(_fieldId);
+        #
+        #    switch(_fieldId){
+        #        case FieldNum(CRMHojaGastosLine, TransDate):
+        #            this.Week   = WkofYr(this.TransDate);
+        #            break;
+        #
+        #        case FieldNum(CRMHojaGastosLine, Qty),
+        #             FieldNum(CRMHojaGastosLine, Price):
+        #
+        #            this.Amount    = this.CalcAmount();
+        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            break;
+        #
+        #        case FieldNum(CRMHojaGastosLine, Type),
+        #             FieldNum(CRMHojaGastosLine, MediaDieta):
+        #            this.InitFromGastoType();
+        #            break;
+        #
+        #        case FieldNum(CRMHojaGastosLine, Dieta):
+        #            if (this.Dieta){
+        #                this.InitFromGastoType();
+        #            }
+        #            else {
+        #                this.Price  = 0;
+        #                this.Amount    = this.CalcAmount();
+        #                this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            }
+        #            break;
+        #
+        #        case FieldNum(CRMHojaGastosLine, UserId):
+        #            this.InitFromUsuarioTable();
+        #            break;
+        #
+        #        case FieldNum(CRMHojaGastosLine, Internacional):
+        #            if (this.Internacional){
+        #                this.TaxPercent = 0;
+        #            }
+        #            else {
+        #                //Si quita la marca se asume que es nacional y se tiene que cargar un IVA
+        #                taxParameters   = CRMTaxParameters::Find(this.Type, this.TransDate);
+        #                this.TaxPercent = taxParameters.TaxPercent;
+        #            }
+        #            break;
+        #
+        #        //IJL.14/05/14
+        #        case FieldNum(CRMHojaGastosLine, ProjIdHornos):
+        #            this.initFromProjTable();
+        #            break;
+        #
+        #        case FieldNum(CRMHojaGastosLine, DisciplinaId):
+        #            this.InitFromGastoType();
+        #            break;
+        #
+        #        //MMS - Divisa desde línea - 2026.05.22
+        #        case FieldNum(CRMHojaGastosLine, Amount),
+        #             FieldNum(CRMHojaGastosLine, Qty),
+        #             FieldNum(CRMHojaGastosLine, Price),
+        #             FieldNum(CRMHojaGastosLine, Currency),
+        #             FieldNum(CRMHojaGastosLine, ExchRate):
+        #            this.normalizeCurrencyAmounts(false);
+        #            break;
+        #
+        #        case FieldNum(CRMHojaGastosLine, AmountMST):
+        #            this.normalizeCurrencyAmounts(true);
+        #            break;
+        #
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #normalizeCurrencyAmounts
+        #//MMS - Divisa desde línea - 2026.05.21
+        #void normalizeCurrencyAmounts(boolean _amountMSTChanged = false)
+        #{
+        #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
+        #    ;
+        #
+        #    // Normalizes currency, exchange rate and AmountMST before saving or after user edits.
+        #    if (!this.Currency && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
+        #        this.Currency = hojaGastosTable.CurrencyCode;
+        #
+        #    if (!this.ExchRate && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault() && this.Currency == hojaGastosTable.CurrencyCode)
+        #        this.ExchRate = hojaGastosTable.ExchRate;
+        #
+        #    if (this.Currency == CompanyInfo::standardCurrency())
+        #        this.ExchRate = 100;
+        #
+        #    if (_amountMSTChanged)
+        #        this.ExchRate = this.calcExchRateFromAmountMST();
+        #
+        #    this.AmountMST = this.LineAmountMST();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #NumeroProyectosAsignado
+        #int NumeroProyectosAsignado()
+        #{
+        #    CRMHojaGastosLineCust  CRMHojaGastosLineCust;
+        #    ;
+        #
+        #    select count(RecId) from CRMHojaGastosLineCust
+        #    where CRMHojaGastosLineCust.RefRecId == this.RecId  &&
+        #          CRMHojaGastosLineCust.Origen   == CRMConsultaOrigen::Proyecto;
+        #
+        #    return CRMHojaGastosLineCust.RecId;
+        #}
+      ENDSOURCE
+      SOURCE #ProyectosImputados
+        #display ProjName ProyectosImputados()
+        #{
+        #    CRMHojaGastosLineCust   CRMHojaGastosLineCust;
+        #    ProjName                listaProyectos;
+        #    ;
+        #
+        #    while select CRMHojaGastosLineCust
+        #    where CRMHojaGastosLineCust.RefRecId == this.RecId {
+        #
+        #        if (listaProyectos)
+        #            listaProyectos  = strfmt("%1,%2", listaProyectos, CRMHojaGastosLineCust.CustAccount);
+        #        else
+        #            listaProyectos  = CRMHojaGastosLineCust.CustAccount;
+        #    }
+        #
+        #    return listaProyectos;
+        #}
+      ENDSOURCE
+      SOURCE #setProjId
+        #Set setProjId()
+        #{
+        #    CRMHojaGastosLineCust  CRMHojaGastosLineCust;
+        #    Set                     set = new Set(Types::String);
+        #    ;
+        #
+        #    while select CRMHojaGastosLineCust
+        #    index hint index1
+        #    where CRMHojaGastosLineCust.RefRecId == this.RecId  &&
+        #          CRMHojaGastosLineCust.Origen   == CRMConsultaOrigen::Proyecto {
+        #
+        #        set.add(CRMHojaGastosLineCust.CustAccount);
+        #    }
+        #
+        #    return set;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #SumTax
+        #Amount SumTax()
+        #{
+        #    CRMTaxParameters    crmTaxParameters    = CRMTaxParameters::find(this.Type, this.TransDate);
+        #    Percent             percent             = crmTaxParameters.TaxPercent;
+        #    ;
+        #    if (! this.Internacional){
+        #
+        #        return percent ? (this.Amount / (1 + percent / 100)) * (percent / 100) : 0;
+        #    }
+        #
+        #    return 0;
+        #}
+      ENDSOURCE
+      SOURCE #syncHojaGastosTable
+        #//INDMMS_ExternalCRM - 2026.03.10
+        #void syncHojaGastosTable()
+        #{
+        #    CRMHojaGastosTable hojaGastosTable;
+        #    ;
+        #
+        #    // Updates header markers after a saved line diverges from header defaults.
+        #    ttsbegin;
+        #    hojaGastosTable = this.HojaGastosTable(true);
+        #    if(hojaGastosTable)
+        #        hojaGastosTable.markHeaderVariousFromLine(this);
+        #    ttscommit;
+        #    }
+        #
+      ENDSOURCE
+      SOURCE #TieneProyectoAsignado
+        #boolean TieneProyectoAsignado()
+        #{
+        #    CRMHojaGastosLineCust  CRMHojaGastosLineCust;
+        #    ;
+        #
+        #    select firstonly CRMHojaGastosLineCust
+        #    where CRMHojaGastosLineCust.RefRecId == this.RecId  &&
+        #          CRMHojaGastosLineCust.Origen   == CRMConsultaOrigen::Proyecto;
+        #
+        #    return CRMHojaGastosLineCust ? true : false;
+        #}
+      ENDSOURCE
+      SOURCE #update
+        #public void update()
+        #{
+        #    boolean amountMSTChanged;
+        #    ;
+        #    this.Ticket = this.Ticket ? NoYes::Yes : NoYes::No;  //INDMMS_ExternalCRM - 2026.02.26
+        #
+        #    amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST && (this.orig().ExchRate == this.ExchRate || !this.ExchRate); //MMS - Divisa desde línea - 2026.05.21
+        #
+        #    if (this.Currency != this.orig().Currency && this.ExchRate == this.orig().ExchRate)
+        #    {
+        #        this.ExchRate = 0;
+        #        amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST;
+        #    }
+        #
+        #    this.normalizeCurrencyAmounts(amountMSTChanged);  //INDMMS_ExternalCRM - 2026.05.21
+        #
+        #    if (!this.validateCurrencyAmounts())
+        #        throw error("Datos de divisa de la linea invalidos.");
+        #
+        #    super();
+        #
+        #    this.CreaActualizaProyectoEnLineCust();
+        #
+        #    //IJL.12/07/23. Lanzo la creación de nuevo para que se haga con el valor actualizado.
+        #    INDProjCostRevenueTable::CreateProjCostFromCommon(this);
+        #
+        #    this.syncHojaGastosTable(); //INDMMS_ExternalCRM - 2026.03.10
+        #
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateCurrencyAmounts
+        #//MMS - Divisa desde linea - 2026.05.21
+        #boolean validateCurrencyAmounts()
+        #{
+        #    boolean      ret = true;
+        #    CurrencyCode currencyCode;
+        #    ExchRate     exchRate;
+        #    CRMHojaGastosTable  hojaGastosTable;
+        #    ;
+        #
+        #    // Validates the minimum data needed to keep AmountMST reliable.
+        #    hojaGastosTable = this.HojaGastosTable();
+        #    currencyCode    = this.Currency;
+        #    exchRate        = this.ExchRate;
+        #
+        #    if (!currencyCode && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
+        #        currencyCode = hojaGastosTable.CurrencyCode;
+        #
+        #    if (!exchRate && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault() && currencyCode == hojaGastosTable.CurrencyCode)
+        #        exchRate = hojaGastosTable.ExchRate;
+        #
+        #    if (!currencyCode)
+        #        ret = checkFailed("Debe indicar la divisa de la linea de hoja de gastos.");
+        #
+        #    if (hojaGastosTable && hojaGastosTable.isVariousCurrencyDefault() && currencyCode == hojaGastosTable.CurrencyCode)
+        #        ret = checkFailed("Debe indicar la divisa real de la linea de hoja de gastos.");
+        #
+        #    if (currencyCode && currencyCode != CompanyInfo::standardCurrency() && !exchRate)
+        #        ret = checkFailed(strfmt("Para lineas en divisa distinta a %1 hay que indicar el tipo de cambio.", CompanyInfo::standardCurrency()));
+        #
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateDelete
+        #public boolean validateDelete()
+        #{
+        #    boolean ret;
+        #    ;
+        #    ret = super();
+        #
+        #    //IJL.09/03/22
+        #    if (this.HojaGastosTable().Voucher)
+        #        ret = checkFailed("La Hoja de gastos ya ha sido pagada y no puede ser modificada");
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateField
+        #public boolean validateField(fieldId _fieldIdToCheck)
+        #{
+        #    boolean ret;
+        #    ProjTable       projTable, projTableOrig; //IJL.09/10/23
+        #    CRMUsuarioTable usuarioTable    = CRMUsuarioTable::Find(this.UserId);  //IJL.18/04/25
+        #    PRice           priceKm;
+        #    ;
+        #
+        #    //IJL.09/10/23
+        #    projTableOrig   = ProjTable::find(this.orig().ProjIdHornos);
+        #    projTable       = ProjTable::find(this.ProjIdHornos);
+        #
+        #    ret = super(_fieldIdToCheck);
+        #
+        #    switch (_fieldIdToCheck){
+        #
+        #        case FieldNum(CRMHojaGastosLine, ProjIdHornos):
+        #
+        #            //IJL.09/10/23
+        #            ret = ProjTable::PermitirCambioProyecto(projTableOrig.ProjId, projTable.ProjId);
+        #            if (! ret)
+        #                return false;
+        #
+        #            if (this.ProjIdHornos && ! ProjTable::find(this.ProjIdHornos).INDPermitirImputarGastos)
+        #                ret = checkFailed("El proyecto no permite la imputación de gastos. SI deseas indicar el desplazamiento debes pulsar el botón 'Cliente/Proveedor'");
+        #
+        #            break;
+        #
+        #        case FieldNum(CRMHojaGastosLine, Type):
+        #            if(this.Type == CRMGastoType::DiaViajeInternacional ||
+        #               this.Type == CRMGastoType::DiaViajeInternacionalFestivo ||
+        #               this.Type == CRMGastoType::MontajeInternacional ||
+        #               this.Type == CRMGastoType::MontajeInternacionalFestivo
+        #               //IJL.08/07/24. Tampoco se permiten las primas nacionales. No estaba bien configurada la restricción.
+        #               || this.Type == CRMGastoType::DiaViaje
+        #               || this.Type == CRMGastoType::DiaViajeFestivo
+        #               || this.Type == CRMGastoType::MontajeNacional
+        #               || this.Type == CRMGastoType::MontajeNacionalFestivo
+        #               ){
+        #
+        #                ret = checkFailed("Este valor no está permitido en las hojas de gastos. Para registrar las primas debes hacerlo desde el módulo de viajes");
+        #            }
+        #
+        #            //IJL.18/09/25
+        #            if (this.Type == CRMGastoType::Propinas && !INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico){
+        #                ret = checkFailed("Este tipo de gasto no está permitido en tu compañía.");
+        #            }
+        #
+        #            //IJL.15/04/26
+        #            if (this.Type == CRMGastoType::Gasolina && !INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico){
+        #                ret = checkFailed("Este tipo de gasto no está permitido en tu compañía.");
+        #            }
+        #
+        #            //IJL.18/04/26. En ISI no permitimos registrar Km a usuarios que no tengan configurado un precio por KM.
+        #            if (curExt() == "ISI" && this.Type == CRMGastoType::Km){
+        #                priceKm = usuarioTable.priceKmAFecha(this.TransDate);
+        #                if (! priceKm){
+        #                    ret = checkFailed("Este usuario en esta fecha no tiene configurado un precio por Km y po tanto no s epueden registrar líneas de Hojas de Gasto de este tipo. ");
+        #                }
+        #            }
+        #            break;
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean ret;
+        #    CRMHojaGastosTable hojaGastosTable;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    hojaGastosTable = this.HojaGastosTable(); //MMS - Divisa desde línea - 2026.05.22
+        #
+        #    //IJL.23/01/14.
+        #    if (this.ProjIdHornos && !ProjTable::find(this.ProjIdHornos).INDPermitirImputarGastos){
+        #        ret = checkFailed(strfmt("El proyecto %1 no permite la imputación de gastos", this.ProjIdHornos));
+        #    }
+        #
+        #    //IJL.09/03/22
+        #    if (this.HojaGastosTable().Voucher)
+        #        ret = checkFailed("La Hoja de gastos ya ha sido pagada y no puede ser modificada");
+        #
+        #
+        #    //IJL.25/03/14
+        #    //IJL.27/04/26. Añadimos la condición de que no se valide para México
+        #    if (!Global::ciaEsMexico() && !LedgerPeriod::PeriodOpen(this.TransDate))
+        #        ret = checkFailed(strfmt("El periodo Contable para %1 está cerrado.", this.TransDate));
+        #
+        #    //IJL.24/01/25
+        #    if (Year(this.TransDate) != this.HojaGastosTable().Year){
+        #        ret = checkFailed(strfmt("El año de la fecha de la línea (%1) no coincide con el año de la hoja de gastos (%2). Las líneas de esta hoja de gastos deben tener fecha del año %2",
+        #                                  Year(this.TransDate),
+        #                                  this.HojaGastosTable().Year));
+        #    }
+        #
+        #
+        #    //IJL.17/04/26
+        #    if (INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico){
+        #        if (this.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo && !this.Ticket && !this.Factura)
+        #            ret = checkFailed("Debes marcarla casilla de Ticket o de Factura. Las dos casillas no pueden estar vacías");
+        #
+        #        if (this.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo && this.Ticket && this.Factura)
+        #            ret = checkFailed("No se pueden marcar las casillas de Ticket y factura a la vez. Solamente s edebe marcar una de ellas.");
+        #
+        #        if (this.HojaGastosTable().NoContabilizarGasolina && this.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo && this.Type == CRMGastoType::Km)
+        #            ret = checkFailed("No se pueden indicar Km como efectivo.");
+        #
+        #    }
+        #
+        #    //MMS - Divisa desde línea - 2026.05.22
+        #    if(!this.Currency && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
+        #        this.Currency = hojaGastosTable.CurrencyCode;
+        #
+        #    if(!this.ExchRate && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault() && this.Currency == hojaGastosTable.CurrencyCode)
+        #        this.ExchRate = hojaGastosTable.ExchRate;
+        #
+        #    ret = ret && this.validateCurrencyAmounts();
+        #    this.normalizeCurrencyAmounts(false);
+        #
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #Find
+        #Static CRMHojaGastosLine Find(RecId _id, boolean _forupdate = false)
+        #{
+        #    CRMHojaGastosLine   CRMHojaGastosLine;
+        #    ;
+        #
+        #    CRMHojaGastosLine.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMHojaGastosLine
+        #    index hint index2
+        #    where CRMHojaGastosLine.RecId   == _id;
+        #
+        #    return CRMHojaGastosLine;
+        #}
+      ENDSOURCE
+      SOURCE #FindByFileId
+        #//INDMMS_ExternalCRM - 2026.02.26
+        #Static CRMHojaGastosLine FindByFileId(INDFileId _id, boolean _forupdate = false)
+        #{
+        #    CRMHojaGastosLine   CRMHojaGastosLine;
+        #    ;
+        #
+        #    CRMHojaGastosLine.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMHojaGastosLine
+        #    index hint FileIdIdx
+        #    where CRMHojaGastosLine.FileId   == _id;
+        #
+        #    return CRMHojaGastosLine;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

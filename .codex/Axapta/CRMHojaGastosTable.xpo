@@ -1,0 +1,4342 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : CRMHojaGastosTable unloaded at Jueves 21/05/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #CRMHojaGastosTable
+    PROPERTIES
+      Name                #CRMHojaGastosTable
+      Label               #Hoja de Gastos (Cabecera)
+      FormRef             #
+      TitleField1         #HojaGastosId
+      TitleField2         #Description
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #IND_CRM_Resto
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #Yes
+      ModifiedBy          #Yes
+      ModifiedTransactionId #No
+      CreatedDate         #Yes
+      CreatedTime         #Yes
+      CreatedBy           #Yes
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #HojaGastosId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #HojaGastosId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMHojaGastosId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #UserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #Division
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Division
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMDivision
+        ENDPROPERTIES
+        
+      FIELD #FromDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #FromDate
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #FromDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #ToDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #ToDate
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ToDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #Comentarios
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Comentarios
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMComentarios
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Description
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Description
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #CurrencyCode
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CurrencyCode
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CurrencyCode
+              #
+            ENDARRAY
+          StringSize          #3
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Aprobado
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Aprobado
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #ExchRate
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #ExchRate
+          Label               #
+          HelpText            #Indicar el coste en divisa extranjera de 100 EUR
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ExchRate
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #AmountAnticipo
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #AmountAnticipo
+          Label               #Anticipo
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #No
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Amount
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #DestinoId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #DestinoId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMHojaGastosDestinoId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Year
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #Year
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Yr
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #ViajeId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ViajeId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserViajeId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ProjId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ProjId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ProjId
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #InformeVisitaId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #InformeVisitaId
+          Label               #Nº Informe Visita
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMActividadId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #CategoriaId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CategoriaId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserCategoriaId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Voucher
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Voucher
+          Label               #Asiento Pago
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Voucher
+              #
+            ENDARRAY
+          StringSize          #30
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #PriceKm
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #PriceKm
+          Label               #€ / Km
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Price
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #Month
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Month
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #MonthsOfYear
+        ENDPROPERTIES
+        
+      FIELD #TransDateRegistro_Mex
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #TransDateRegistro_Mex
+          Label               #Fecha Registro
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #UserIdRegistro_Mex
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserIdRegistro_Mex
+          Label               #Usuario que Registra
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #userId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #INDCreatedByUserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDCreatedByUserId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDCreatedByUserId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #INDSearchKey
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #INDSearchKey
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDSearchKey
+              #
+            ENDARRAY
+          StringSize          #130
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ExpenseSheetStatus
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ExpenseSheetStatus
+          Label               #Estado
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDExpenseSheetStatus
+        ENDPROPERTIES
+        
+      FIELD #ExchangeRateMode
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ExchangeRateMode
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDExchangeRateMode
+        ENDPROPERTIES
+        
+      FIELD #EstadoComentarios
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #EstadoComentarios
+          Label               #Comentarios
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMComentarios
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #VoucherPhysical
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #VoucherPhysical
+          Label               #Asiento Devengo
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Voucher
+              #
+            ENDARRAY
+          StringSize          #30
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #DatePhysical
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #DatePhysical
+          Label               #Fecha Aprobación
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #DatePhysical
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #DateFinancial
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #DateFinancial
+          Label               #Fecha de Pago
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #DateFinancial
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #TransDateAprobacion
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #TransDateAprobacion
+          Label               #Fecha Aprobación
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #NoContabilizarGasolina
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #NoContabilizarGasolina
+          Label               #No Pagar Km
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #NecesariaHGImpresa
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #NecesariaHGImpresa
+          Label               #Justificar con HG Impresa
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #ReimbursableExpense
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ReimbursableExpense
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDReimbursableExpense
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Comentarios
+        PROPERTIES
+          Name                #Comentarios
+          OldName             #
+          Label               #Notas
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Comentarios
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Estado
+        PROPERTIES
+          Name                #Estado
+          OldName             #
+          Label               #Estado
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #ExpenseSheetStatus
+          #EstadoComentarios
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #HojaGastos
+        PROPERTIES
+          Name                #HojaGastos
+          OldName             #
+          Label               #Hoja de Gastos
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #HojaGastosId
+          #UserId
+          #Division
+          #FromDate
+          #ToDate
+          #Description
+          #AmountAnticipo
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #PriceKm
+        PROPERTIES
+          Name                #PriceKm
+          OldName             #
+          Label               #Price / Km
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #PriceKm
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #TipoCambio
+        PROPERTIES
+          Name                #TipoCambio
+          OldName             #
+          Label               #Tipo de Cambio
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #ExchRate
+          #ExchangeRateMode
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #Index1
+      PROPERTIES
+        Name                #Index1
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #HojaGastosId
+      ENDINDEXFIELDS
+      
+      #Index2
+      PROPERTIES
+        Name                #Index2
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #ViajeId
+      ENDINDEXFIELDS
+      
+      #INDSearchKeyIdx
+      PROPERTIES
+        Name                #INDSearchKeyIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #INDSearchKey
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #CRMUsuarioTable
+        PROPERTIES
+          Name                #CRMUsuarioTable
+          Table               #CRMUsuarioTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMHojaGastosTable
+            Field               #UserId
+            Table               #CRMUsuarioTable
+            RelatedField        #UserId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+      #CRMHojaGastosLine
+      PROPERTIES
+        Table               #CRMHojaGastosLine
+        DeleteAction        #Cascade
+      ENDPROPERTIES
+      
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #ActualizarClientesEnGastoLineCust
+        #void ActualizarClientesEnGastoLineCust()
+        #{
+        #    CRMHojaGastosLine       gastosLineFrom, gastosLineTo;
+        #    CRMHojaGastosLineCust   gastosLineCustFrom, gastosLineCustTo;
+        #    int                     numClientes;
+        #    ;
+        #
+        #    /*
+        #    1.- Buscar la línea de cada día que tiene los clientes asociados
+        #    2.- Actualizar en esa línea el % de cada asignación repartiendo proporcionalmente
+        #    3.- Copiar las líneas a todos los gastos del mismo día
+        #    */
+        #
+        #    //ACTUALIZAR EL % EN LAS LÍNEAS DE LO QUE ESTÁ REGISTRADO
+        #    while select gastosLineFrom
+        #    where gastosLineFrom.HojaGastosId == this.HojaGastosId {
+        #
+        #        select count(RecId) from gastosLineCustFrom
+        #        where gastosLineCustFrom.RefRecId == gastosLineFrom.RecId;
+        #
+        #        numClientes = gastosLineCustFrom.RecId;
+        #
+        #        if (gastosLineCustFrom.RecId){
+        #            //Hay clientes imputados a la línea
+        #            //Actualizamos el porcentaje repartiendo proporcionalmente al número de clientes registrados
+        #            while select forupdate gastosLineCustFrom
+        #            where gastosLineCustFrom.RefRecId == gastosLineFrom.RecId {
+        #
+        #                gastosLineCustFrom.Percent  = 100 / numClientes;
+        #                gastosLineCustFrom.doUpdate();
+        #            }
+        #        }
+        #    }
+        #
+        #    while select gastosLineFrom
+        #    where gastosLineFrom.HojaGastosId == this.HojaGastosId
+        #    join gastosLineCustFrom
+        #        where gastosLineCustFrom.RefRecId == gastosLineFrom.RecId {
+        #
+        #        //Paso por las líneas de la hoja de gastos del día seleccionado pero que no tengan clientes imputados
+        #        while select gastosLineTo
+        #        where gastosLineTo.HojaGastosId == this.HojaGastosId        &&
+        #              gastosLineTo.TransDate    == gastosLineFrom.TransDate &&
+        #              gastosLineTo.RecId        != gastosLineFrom.RecId {
+        #
+        #            gastosLineCustTo    = gastosLineCustFrom.data();
+        #            gastosLineCustTo.RefRecId   = gastosLineTo.RecId;
+        #            gastosLineCustTo.doInsert();
+        #        }
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #AmountTotalDescontar
+        #display Amount AmountTotalDescontar()
+        #{
+        #    return this.TotalEfectivo() - this.TotalTarjetaGasolina();//this.TotalModalidadPago(CRMHojaGastoModalidadPago::TAG);
+        #}
+      ENDSOURCE
+      SOURCE #Aprobar_DesaprobarHojaDeGastos
+        #void Aprobar_DesaprobarHojaDeGastos(int         _operacion = 1, //1 = Aprobar   2 = DesAprobar
+        #                                    FreeTxt     _estadoComentarios = "")
+        #{
+        #    /*
+        #    APROBAR:
+        #        .- Cambiamos el estado de la hoja de gastos a APROBADA
+        #        .- Creamos un asiento en contabilidad por el importe de la hoja de gastos separando la parte que va a proyectos y la que no
+        #            Cuenta de gastos del empleado
+        #            Hojas de Gastos pendientes de Pago
+        #
+        #    DESAPROBAR:
+        #        .- Cambiamos el estado de la hoja de gastos a BORRADOR
+        #        .- Creamos un asiento en contabilidad por el importe de la hoja de gastos separando la parte que va a proyectos y la que no
+        #            Hojas de Gastos pendientes de Pago
+        #            Cuenta de gastos del empleado
+        #    */
+        #    Map                 mapHojaGastos = this.MapLedgerDimension_Amount();
+        #    MapIterator         mi;
+        #    LedgerJournalTable  journalTable;
+        #    ledgerJournalTrans  journalTrans;
+        #    Voucher             voucher;
+        #    Container           c;
+        #    LedgerAccount       ledgerAccountDebit;
+        #    LedgerAccount       ledgerAccountCredit;
+        #    AccountNum          dimension;
+        #    Amount              amount;
+        #    CRMHojaGastosTable  hojaGastosTableUpdate;
+        #    //MMS - Ajustes CRM - 2026.05.27
+        #    CRMHojaGastosTable  hojaGastosTableNotificacion;
+        #    INDExpenseSheetStatus oldExpenseSheetStatus;
+        #    INDExpenseSheetStatus newExpenseSheetStatus;
+        #
+        #    INDPersonaTable     personaTableAxaptaUser  = INDPersonaTable::findByAxUserId(curUserId());
+        #    boolean             allowSelfManagement     = personaTableAxaptaUser.AllowSelfManagement;
+        #
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    TransDate           transDate;
+        #    LedgerPeriod        ledgerPeriod;
+        #
+        #    boolean             postJournal = false;
+        #
+        #    void UpdateStatus(){
+        #
+        #        ;
+        #        //SI la hoja de Gastos se Aprueba se deja en estado APROBADA. Si se "desaprueba" pasa a estado "Solicitada Aprobación"
+        #        hojaGastosTableUpdate                       = CRMHojaGastosTable::FindRecId(this.RecId, true);
+        #        if (hojaGastosTableUpdate){
+        #            //MMS - Ajustes CRM - 2026.05.27
+        #            oldExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
+        #            hojaGastosTableUpdate.ExpenseSheetStatus    = _operacion == 1 ? INDExpenseSheetStatus::Approved : (allowSelfManagement ? INDExpenseSheetStatus::Draft : INDExpenseSheetStatus::InReview);
+        #            //hojaGastosTableUpdate.VoucherPhysical       = _operacion == 1 ? voucher     : ""; //Si estoy aprobando la HG guardo el asiento donde se ha registrado el devengo del coste.
+        #            //hojaGastosTableUpdate.DatePhysical          = _operacion == 1 ? transDate  : datenull(); //Si estoy aprobando la HG guardo la fecha cuando se ha registrado el devengo del coste.
+        #
+        #            hojaGastosTableUpdate.EstadoComentarios     = _estadoComentarios;
+        #            hojaGastosTableUpdate.TransDateAprobacion   = _operacion == 1 ? today() : datenull();
+        #            //MMS - Ajustes CRM - 2026.05.27
+        #            newExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
+        #            //MMS - Ajustes CRM - 2026.05.27
+        #            hojaGastosTableNotificacion                 = hojaGastosTableUpdate;
+        #            hojaGastosTableUpdate.doUpdate();
+        #
+        #            //Lanzo este proceso de nuevo porque el voucher no se lee en el proceso desde el doUpdate ya que no se ha hecho la inserción en la BBDD cuando se busca la información.
+        #            INDProjCostRevenueTable::CreateLine(hojaGastosTableUpdate);
+        #            //INDProjCostRevenueTable::CreateProjCostFromCommon(hojaGastosTableUpdate);
+        #            //INDProjCostRevenueTable::CreaLineaPagos(hojaGastosTableUpdate);
+        #            //INDProjCostRevenueTable::CreaLineaPendientePago(hojaGastosTableUpdate);
+        #        }
+        #
+        #    }
+        #    ;
+        #
+        #    //IJL.16/04/26
+        #    if (INDDataareaparameterTable::Find().ActivarFuncionalidadesMexico){
+        #        this.Aprobar_DesaprobarHojaDeGastos_MEX(_operacion, _estadoComentarios, true);
+        #        return;
+        #    }
+        #
+        #    //IJL.11/05/26. De momento no registramos el asiento contable.
+        #    if (! postJournal){
+        #        UpdateStatus();
+        #        //MMS - Ajustes CRM - 2026.05.27
+        #        // Envio de mejor esfuerzo fuera del cambio de estado principal.
+        #        if (hojaGastosTableNotificacion.RecId)
+        #            INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
+        #                hojaGastosTableNotificacion,
+        #                oldExpenseSheetStatus,
+        #                newExpenseSheetStatus,
+        #                curUserId(),
+        #                '',
+        #                'axapta',
+        #                strFmt('approve-%1-%2', this.HojaGastosId, timeNow()));
+        #        return;
+        #    }
+        #
+        #    //IJL. Cambio el estado en este caso para que las validaciones posteriores sigan siendo efectivas.
+        #    if (allowSelfManagement && _operacion == 1 && this.ExpenseSheetStatus == INDExpenseSheetStatus::Draft){
+        #        this.ExpenseSheetStatus = INDExpenseSheetStatus::InReview;
+        #    }
+        #
+        #    if (_operacion == 1 && this.ExpenseSheetStatus != INDExpenseSheetStatus::InReview)
+        #        throw error("El Estado de la Hoja de Gastos no permite su Aprobación. El estado debe ser 'Aprobación Solicitada' ");
+        #
+        #    if (_operacion == 2 && this.ExpenseSheetStatus != INDExpenseSheetStatus::Approved)
+        #        throw error("El Estado de la Hoja de Gastos no permite su Aprobación. El estado debe ser 'Aprobada' ");
+        #
+        #    ttsbegin;
+        #    if (! journalTable){
+        #        journalTable    = LedgerJournalTable::CreaCabeceraDiario(LedgerParameters::find().INDJouralNameIdOrdenPago, strfmt("%1 - %2", this.HojaGastosId, this.Description));
+        #        //voucher         = NumberSeq::newGetNumFromCode(journalTable.VoucherSeries).num();
+        #    }
+        #
+        #    while select forupdate hojaGastosLine
+        #    index hint index1
+        #    Order by TransDate
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId {
+        #
+        #        //POs si acaso pongo esto para no procesar dos veces la misma línea.
+        #        //if (_operacion == 1 && hojaGastosLine.VoucherPhysical)
+        #        //    continue;
+        #
+        #        voucher         = NumberSeq::newGetNumFromCode(journalTable.VoucherSeries).num();
+        #
+        #        mapHojaGastos = hojaGastosLine.MapLedgerDimension_Amount_Line();
+        #        mi  = new MapIterator(mapHojaGastos);
+        #        while (mi.more()){
+        #
+        #            c                   = Global::SepararTextoContainer(mi.key(), "|");
+        #
+        #            ledgerAccountDebit  = conpeek(c,1);
+        #            dimension           = conpeek(c,2);
+        #
+        #            amount              = mi.value();
+        #
+        #            transDate           = hojaGastosLine.TransDate;
+        #            //SI el periodo para esta fecha está cerrado buscamos el primer día el periodo abierto más próximo a la fecha del gasto.
+        #            if (!LedgerPeriod::PeriodOpen(transDate)){
+        #                select firstonly ledgerPeriod
+        #                where    ledgerPeriod.PeriodStart >= transDate
+        #                      && ledgerPeriod.PeriodStatus == LedgerPeriodStatus::Open;
+        #
+        #                transDate = ledgerPeriod.PeriodStart;
+        #
+        #                if (! transDate){
+        #                          error(strfmt("No se ha encontrado una fecha correcta para el registro del gasto de la Hoja de Gastos."));
+        #                    throw error(strfmt("La fecha %1 pertenece a un periodo cerrado y no hay periodos abiertos posteriores a esa fecha.", hojaGastosLine.TransDate));
+        #                }
+        #            }
+        #
+        #            journalTrans.clear();
+        #            journalTrans.JournalNum         = journalTable.JournalNum;
+        #            journalTrans.Voucher            = voucher;
+        #            journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #            journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #            journalTrans.AccountNum         = ledgerAccountDebit;
+        #            journalTrans.Dimension[1]       = dimension;
+        #
+        #            //if (! journalTrans.AccountNum)
+        #            //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #            journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #            journalTrans.OffsetAccount      = "";
+        #            journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4",
+        #                                                     _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                     this.HojaGastosId,
+        #                                                     hojaGastosLine.Type,
+        #                                                     hojaGastosLine.Description);
+        #
+        #            journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #            journalTrans.AmountCurCredit    = _operacion == 1 ? 0       : amount;
+        #            journalTrans.AmountCurDebit     = _operacion == 1 ? amount  : 0;
+        #            journalTrans.INDRemesaLineRecId = 0;
+        #            journalTrans.INDRefRecId        = hojaGastosLine.RecId;
+        #            journalTrans.INDRefTableId      = hojaGastosLine.TableId;
+        #            journalTrans.ExchRateSecond     = 100;
+        #            journalTrans.ExchRate           = 100;
+        #
+        #            journalTrans.insert();
+        #
+        #
+        #            mi.next();
+        #        }
+        #
+        #        ledgerAccountCredit             = LedgerParameters::find().INDLedgerAccountHGPendientesPago;
+        #
+        #        //Creamos la línea por el total en la cuenta de Hojas de Gasto Pendientes de Pagar.
+        #        journalTrans.clear();
+        #        journalTrans.JournalNum         = journalTable.JournalNum;
+        #        journalTrans.Voucher            = voucher;
+        #        journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #        journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #        journalTrans.AccountNum         = LedgerParameters::find().INDLedgerAccountHGPendientesPago; //Cuenta de Hojas de Gasto Pendientes de Pagar
+        #
+        #        journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #        journalTrans.OffsetAccount      = "";
+        #        journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4",
+        #                                                 _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                 this.HojaGastosId,
+        #                                                 hojaGastosLine.Type,
+        #                                                 hojaGastosLine.Description);
+        #
+        #        //journalTrans.Txt                = strfmt("%1 - %2", this.HojaGastosId, this.Description);
+        #
+        #        journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #        journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.LineAmountMST() : 0;
+        #        journalTrans.AmountCurDebit     = _operacion == 1 ? 0                               : hojaGastosLine.LineAmountMST();
+        #        journalTrans.INDRemesaLineRecId = 0;
+        #        journalTrans.INDRefRecId        = hojaGastosLine.RecId;
+        #        journalTrans.INDRefTableId      = hojaGastosLine.TableId;
+        #        journalTrans.ExchRateSecond     = 100;
+        #        journalTrans.ExchRate           = 100;
+        #        journalTrans.insert();
+        #
+        #        //Si cancelamos la aprobación dejamos el valor en blanco.
+        #        hojaGastosLine.VoucherPhysical  = _operacion == 1 ? voucher     : "";
+        #        hojaGastosLine.DatePhysical     = _operacion == 1 ? transDate   : datenull();
+        #        hojaGastosLine.doUpdate();
+        #
+        #    }
+        #
+        #    journalTable.ContabilizaDiario();
+        #
+        #    //IJL.11/05/26. Sustituyo el código de abajo por la llamada a este método creado en este método para poder llamarlo también desde más arriba.
+        #    UpdateStatus();
+        #
+        #/*
+        #    //SI la hoja de Gastos se Aprueba se deja en estado APROBADA. Si se "desaprueba" pasa a estado "Solicitada Aprobación"
+        #    hojaGastosTableUpdate                       = CRMHojaGastosTable::FindRecId(this.RecId, true);
+        #    if (hojaGastosTableUpdate){
+        #        hojaGastosTableUpdate.ExpenseSheetStatus    = _operacion == 1 ? INDExpenseSheetStatus::Approved : (allowSelfManagement ? INDExpenseSheetStatus::Draft : INDExpenseSheetStatus::InReview);
+        #        //hojaGastosTableUpdate.VoucherPhysical       = _operacion == 1 ? voucher     : ""; //Si estoy aprobando la HG guardo el asiento donde se ha registrado el devengo del coste.
+        #        //hojaGastosTableUpdate.DatePhysical          = _operacion == 1 ? transDate  : datenull(); //Si estoy aprobando la HG guardo la fecha cuando se ha registrado el devengo del coste.
+        #
+        #        hojaGastosTableUpdate.EstadoComentarios     = _estadoComentarios;
+        #        hojaGastosTableUpdate.TransDateAprobacion   = _operacion == 1 ? today() : datenull();
+        #        hojaGastosTableUpdate.doUpdate();
+        #
+        #        //Lanzo este proceso de nuevo porque el voucher no se lee en el proceso desde el doUpdate ya que no se ha hecho la inserción en la BBDD cuando se busca la información.
+        #        INDProjCostRevenueTable::CreateLine(hojaGastosTableUpdate);
+        #        //INDProjCostRevenueTable::CreateProjCostFromCommon(hojaGastosTableUpdate);
+        #        //INDProjCostRevenueTable::CreaLineaPagos(hojaGastosTableUpdate);
+        #        //INDProjCostRevenueTable::CreaLineaPendientePago(hojaGastosTableUpdate);
+        #    }
+        #*/
+        #    ttscommit;
+        #
+        #    //MMS - Ajustes CRM - 2026.05.27
+        #    // Envio de mejor esfuerzo fuera del tts para no bloquear la aprobacion.
+        #    if (hojaGastosTableNotificacion.RecId)
+        #        INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
+        #            hojaGastosTableNotificacion,
+        #            oldExpenseSheetStatus,
+        #            newExpenseSheetStatus,
+        #            curUserId(),
+        #            '',
+        #            'axapta',
+        #            strFmt('approve-%1-%2', this.HojaGastosId, timeNow()));
+        #
+        #/*
+        #    //Creamos las líneas de gasto por detalle por cuenta y dimensión
+        #
+        #    mi  = new MapIterator(mapHojaGastos);
+        #    while (mi.more()){
+        #
+        #        c                   = Global::SepararTextoContainer(mi.key(), "|");
+        #
+        #        ledgerAccountDebit  = conpeek(c,1);
+        #        dimension           = conpeek(c,2);
+        #
+        #        amount              = mi.value();
+        #
+        #        journalTrans.clear();
+        #        journalTrans.JournalNum         = journalTable.JournalNum;
+        #        journalTrans.Voucher            = voucher;
+        #        journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #        journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #        journalTrans.AccountNum         = ledgerAccountDebit;
+        #        journalTrans.Dimension[1]       = dimension;
+        #
+        #        //if (! journalTrans.AccountNum)
+        #        //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #        journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #        journalTrans.OffsetAccount      = "";
+        #        journalTrans.Txt                = strfmt("%1 - %2", this.HojaGastosId, this.Description);
+        #
+        #        journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #        journalTrans.AmountCurCredit    = _operacion == 1 ? 0       : amount;
+        #        journalTrans.AmountCurDebit     = _operacion == 1 ? amount  : 0;
+        #        journalTrans.INDRemesaLineRecId = 0;
+        #        journalTrans.INDRefRecId        = this.RecId;
+        #        journalTrans.INDRefTableId      = this.TableId;
+        #        journalTrans.ExchRateSecond     = 100;
+        #        journalTrans.ExchRate           = 100;
+        #
+        #        journalTrans.insert();
+        #
+        #        mi.next();
+        #    }
+        #
+        #    ledgerAccountCredit             = LedgerParameters::find().INDLedgerAccountHGPendientesPago;
+        #
+        #    //Creamos la línea por el total en la cuenta de Hojas de Gasto Pendientes de Pagar.
+        #    journalTrans.clear();
+        #    journalTrans.JournalNum         = journalTable.JournalNum;
+        #    journalTrans.Voucher            = voucher;
+        #    journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #    journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #    journalTrans.AccountNum         = LedgerParameters::find().INDLedgerAccountHGPendientesPago; //Cuenta de Hojas de Gasto Pendientes de Pagar
+        #
+        #    journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #    journalTrans.OffsetAccount      = "";
+        #    journalTrans.Txt                = strfmt("%1 - %2", this.HojaGastosId, this.Description);
+        #
+        #    journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #    journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.LineAmountMST()  : 0;
+        #    journalTrans.AmountCurDebit     = _operacion == 1 ? 0                               : hojaGastosLine.LineAmountMST();
+        #    journalTrans.INDRemesaLineRecId = 0;
+        #    journalTrans.INDRefRecId        = this.RecId;
+        #    journalTrans.INDRefTableId      = this.TableId;
+        #    journalTrans.ExchRateSecond     = 100;
+        #    journalTrans.ExchRate           = 100;
+        #    journalTrans.insert();
+        #
+        #    journalTable.ContabilizaDiario();
+        #
+        #    //SI la hoja de Gastos se Aprueba se deja en estado APROBADA. Si se "desaprueba" pasa a estado "Solicitada Aprobación"
+        #    hojaGastosTableUpdate                       = CRMHojaGastosTable::FindRecId(this.RecId, true);
+        #    if (hojaGastosTableUpdate){
+        #        hojaGastosTableUpdate.ExpenseSheetStatus    = _operacion == 1 ? INDExpenseSheetStatus::Approved : (allowSelfManagement ? INDExpenseSheetStatus::Draft : INDExpenseSheetStatus::InReview);
+        #        hojaGastosTableUpdate.VoucherPhysical       = _operacion == 1 ? voucher     : ""; //Si estoy aprobando la HG guardo el asiento donde se ha registrado el devengo del coste.
+        #        hojaGastosTableUpdate.DatePhysical          = _operacion == 1 ? transDate  : datenull(); //Si estoy aprobando la HG guardo la fecha cuando se ha registrado el devengo del coste.
+        #
+        #        hojaGastosTableUpdate.EstadoComentarios     = _estadoComentarios;
+        #        hojaGastosTableUpdate.doUpdate();
+        #
+        #        //Lanzo este proceso de nuevo porque el voucher no se lee en el proceso desde el doUpdate ya que no se ha hecho la inserción en la BBDD cuando se busca la información.
+        #        INDProjCostRevenueTable::CreateLine(hojaGastosTableUpdate);
+        #        //INDProjCostRevenueTable::CreateProjCostFromCommon(hojaGastosTableUpdate);
+        #        //INDProjCostRevenueTable::CreaLineaPagos(hojaGastosTableUpdate);
+        #        //INDProjCostRevenueTable::CreaLineaPendientePago(hojaGastosTableUpdate);
+        #    }
+        #
+        #    ttscommit;
+        #*/
+        #}
+      ENDSOURCE
+      SOURCE #Aprobar_DesaprobarHojaDeGastos_MEX
+        #void Aprobar_DesaprobarHojaDeGastos_MEX(int         _operacion = 1, //1 = Aprobar   2 = DesAprobar
+        #                                        FreeTxt     _estadoComentarios = "",
+        #                                        boolean     _postJournal = true)
+        #{
+        #    /*
+        #    APROBAR:
+        #        .- Cambiamos el estado de la hoja de gastos a APROBADA
+        #        .- Creamos un asiento en contabilidad por el importe de la hoja de gastos separando la parte que va a proyectos y la que no
+        #            Cuenta de gastos del empleado
+        #            Hojas de Gastos pendientes de Pago
+        #
+        #    DESAPROBAR:
+        #        .- Cambiamos el estado de la hoja de gastos a BORRADOR
+        #        .- Creamos un asiento en contabilidad por el importe de la hoja de gastos separando la parte que va a proyectos y la que no
+        #            Hojas de Gastos pendientes de Pago
+        #            Cuenta de gastos del empleado
+        #    */
+        #
+        #
+        #    //Map                 mapHojaGastos = this.MapLedgerDimension_Amount();
+        #    MapIterator         mi;
+        #    LedgerJournalTable  journalTable;
+        #    ledgerJournalTrans  journalTrans;
+        #    Voucher             voucher;
+        #    Container           c;
+        #    LedgerAccount       ledgerAccountDebit;
+        #    LedgerAccount       ledgerAccountCredit;
+        #    AccountNum          dimension;
+        #    Amount              amount;
+        #    CRMHojaGastosTable  hojaGastosTableUpdate;
+        #    //MMS - Ajustes CRM - 2026.05.27
+        #    CRMHojaGastosTable  hojaGastosTableNotificacion;
+        #    INDExpenseSheetStatus oldExpenseSheetStatus;
+        #    INDExpenseSheetStatus newExpenseSheetStatus;
+        #
+        #    INDPersonaTable     personaTableAxaptaUser  = INDPersonaTable::findByAxUserId(curUserId());
+        #    boolean             allowSelfManagement     = personaTableAxaptaUser.AllowSelfManagement;
+        #
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    TransDate           transDate;
+        #    LedgerPeriod        ledgerPeriod;
+        #
+        #    Amount              totalAmountKm, totalAmountGasolina, totalDiferenciaKmGasolina;
+        #    LedgerAccount       ledgerAccountGasto, ledgerAccountAnticipo;
+        #    INDEmplTable        indEmplTableUserHojaGasto;
+        #
+        #    Amount              amountGasto, amountAnticipo, amountIVA, amountRetencion;
+        #    LedgerAccount       ledgerAccountIVA, ledgerAccounRetencion;
+        #
+        #    boolean             postJournal = _postJournal;
+        #
+        #    TaxTrans            taxTrans;
+        #
+        #    TransDate ValidaTransDate(TransDate _transDate){
+        #        ;
+        #
+        #        //SI el periodo para esta fecha está cerrado buscamos el primer día el periodo abierto más próximo a la fecha del gasto.
+        #        if (!LedgerPeriod::PeriodOpen(_transDate)){
+        #            select firstonly ledgerPeriod
+        #            where    ledgerPeriod.PeriodStart >= _transDate
+        #                  && ledgerPeriod.PeriodStatus == LedgerPeriodStatus::Open;
+        #
+        #            _transDate = ledgerPeriod.PeriodStart;
+        #
+        #            if (! _transDate){
+        #                      error(strfmt("No se ha encontrado una fecha correcta para el registro del gasto de la Hoja de Gastos."));
+        #                throw error(strfmt("La fecha %1 pertenece a un periodo cerrado y no hay periodos abiertos posteriores a esa fecha.", _transDate));
+        #            }
+        #        }
+        #
+        #        return _transDate;
+        #    }
+        #    ;
+        #
+        #    if (_operacion == 1 && this.ExpenseSheetStatus == INDExpenseSheetStatus::Approved)
+        #        throw error("La Hoja de Gastos ya está contabilizada.");
+        #
+        #    if (_operacion == 2 && this.ExpenseSheetStatus != INDExpenseSheetStatus::Approved)
+        #        throw error("La Hoja de Gastos todavía no está contabilizada.");
+        #
+        #    if (_operacion == 1 && this.TransDateAprobacion)
+        #        throw error("La Hoja de Gastos ya está contabilizada.");
+        #
+        #
+        #    ttsbegin;
+        #    if (! INDDataAreaparametertable::Find().ActivarAprobacionHojasDeGastos && this.ExpenseSheetStatus == INDExpenseSheetStatus::Draft ){
+        #        this.ExpenseSheetStatus = INDExpenseSheetStatus::InReview;
+        #    }
+        #
+        #    //IJL. Cambio el estado en este caso para que las validaciones posteriores sigan siendo efectivas.
+        #    if (allowSelfManagement && _operacion == 1 && this.ExpenseSheetStatus == INDExpenseSheetStatus::Draft){
+        #        this.ExpenseSheetStatus = INDExpenseSheetStatus::InReview;
+        #    }
+        #
+        #    if (_operacion == 1 && this.ExpenseSheetStatus != INDExpenseSheetStatus::InReview)
+        #        throw error("El Estado de la Hoja de Gastos no permite su Aprobación. El estado debe ser 'Aprobación Solicitada' ");
+        #
+        #    if (_operacion == 2 && this.ExpenseSheetStatus != INDExpenseSheetStatus::Approved)
+        #        throw error("El Estado de la Hoja de Gastos no permite su Aprobación. El estado debe ser 'Aprobada' ");
+        #
+        #
+        #    indEmplTableUserHojaGasto   = INDPersonaTable::findByCRM(CRMUsuarioTable::Find(this.UserId).RecId).getINDEmplTable();
+        #    ledgerAccountGasto          = indEmplTableUserHojaGasto.LedgerAccountGastos;
+        #    ledgerAccountAnticipo       = indEmplTableUserHojaGasto.LedgerAccountAnticiposGastos;
+        #
+        #    if (!ledgerAccountGasto)
+        #        throw error("Este empleado no tiene informada la cuenta de Gasto en su configuración de empleado");
+        #
+        #    if (!ledgerAccountAnticipo)
+        #        throw error("Este empleado no tiene informada la cuenta de Anticipo en su configuración de empleado");
+        #
+        #
+        #    if (! journalTable){
+        #        journalTable    = LedgerJournalTable::CreaCabeceraDiario(LedgerParameters::find().INDJouralNameIdOrdenPago, strfmt("%1 - %2", this.HojaGastosId, this.Description), noYes::Yes);
+        #        //voucher         = NumberSeq::newGetNumFromCode(journalTable.VoucherSeries).num();
+        #    }
+        #
+        #    //Si la Hoja de Gastos está configurada para no contabilizar la gasolina ignoramos este punto.
+        #    if (!this.NoContabilizarGasolina)
+        #    {
+        #        totalAmountKm       = this.TotalAmountMST_Type(CRMGastoType::Km);
+        #        totalAmountGasolina = this.TotalModalidadPago(CRMHojaGastoModalidadPago::TarjetaGasolina);
+        #
+        #        select maxOf(TransDate) from hojaGastosLine
+        #        where hojaGastosLine.HojaGastosId == this.HojaGastosId &&
+        #              (hojaGastosLine.Type == CRMGastoType::Km || hojaGastosLine.Type == CRMGastoType::Gasolina);
+        #
+        #        transDate = hojaGastosLine.TransDate;
+        #
+        #        transDate   = ValidaTransDate(transDate);
+        #
+        #        if (!transDate){
+        #            throw error("Proceso de Contabilización Cancelado");
+        #        }
+        #
+        #        if (totalAmountKm != totalAmountGasolina){
+        #
+        #            voucher         = NumberSeq::newGetNumFromCode(journalTable.VoucherSeries).num();
+        #
+        #            if (totalAmountKm){
+        #                //Lïnea para el total de los km
+        #                journalTrans.clear();
+        #                journalTrans.JournalNum         = journalTable.JournalNum;
+        #                journalTrans.Voucher            = voucher;
+        #                journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #                journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #                journalTrans.AccountNum         = ledgerAccountGasto;
+        #                journalTrans.Dimension[1]       = dimension;
+        #
+        #                //if (! journalTrans.AccountNum)
+        #                //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #                journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #                journalTrans.OffsetAccount      = "";
+        #                journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4",
+        #                                                         _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                         hojaGastosLine.Type,
+        #                                                         this.HojaGastosId,
+        #                                                         "Km");
+        #
+        #                journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #                journalTrans.AmountCurCredit    = _operacion == 1 ? 0       : totalAmountKm;
+        #                journalTrans.AmountCurDebit     = _operacion == 1 ? totalAmountKm  : 0;
+        #                journalTrans.INDRemesaLineRecId = 0;
+        #                journalTrans.INDRefRecId        = this.RecId;
+        #                journalTrans.INDRefTableId      = this.TableId;
+        #                journalTrans.ExchRateSecond     = 100;
+        #                journalTrans.ExchRate           = 100;
+        #                journalTrans.INDNoDeducible     = NoYes::Yes; //Los Km siempre son No Deducibles
+        #
+        #                journalTrans.insert();
+        #            }
+        #
+        #            if (totalAmountGasolina){
+        #                //Lïnea para el total de la gasolina
+        #                journalTrans.clear();
+        #                journalTrans.JournalNum         = journalTable.JournalNum;
+        #                journalTrans.Voucher            = voucher;
+        #                journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #                journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #                journalTrans.AccountNum         = ledgerAccountGasto;
+        #                journalTrans.Dimension[1]       = dimension;
+        #
+        #                //if (! journalTrans.AccountNum)
+        #                //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #                journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #                journalTrans.OffsetAccount      = "";
+        #                journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4",
+        #                                                         _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                         this.HojaGastosId,
+        #                                                         hojaGastosLine.Type,
+        #                                                         "Gasolina");
+        #
+        #                journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #                journalTrans.AmountCurCredit    = _operacion == 1 ? totalAmountGasolina       : 0;
+        #                journalTrans.AmountCurDebit     = _operacion == 1 ? 0  : totalAmountGasolina;
+        #                journalTrans.INDRemesaLineRecId = 0;
+        #                journalTrans.INDRefRecId        = this.RecId;
+        #                journalTrans.INDRefTableId      = this.TableId;
+        #                journalTrans.ExchRateSecond     = 100;
+        #                journalTrans.ExchRate           = 100;
+        #                journalTrans.INDNoDeducible     = NoYes::Yes; //Los Km siempre son No Deducibles
+        #
+        #                journalTrans.insert();
+        #            }
+        #
+        #            //Lïnea para el anticipo de Gaoslina y Km
+        #            journalTrans.clear();
+        #            journalTrans.JournalNum         = journalTable.JournalNum;
+        #            journalTrans.Voucher            = voucher;
+        #            journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #            journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #            journalTrans.AccountNum         = ledgerAccountAnticipo;
+        #            journalTrans.Dimension[1]       = dimension;
+        #
+        #            //if (! journalTrans.AccountNum)
+        #            //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #            journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #            journalTrans.OffsetAccount      = "";
+        #            journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4",
+        #                                                     _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                     this.HojaGastosId,
+        #                                                     hojaGastosLine.Type,
+        #                                                     "Gasolina - Km");
+        #
+        #            journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #            totalDiferenciaKmGasolina       = totalAmountKm - totalAmountGasolina;
+        #
+        #            if (totalDiferenciaKmGasolina > 0){
+        #
+        #                journalTrans.AmountCurDebit     = _operacion == 1 ? 0                           : totalDiferenciaKmGasolina;
+        #                journalTrans.AmountCurCredit    = _operacion == 1 ? totalDiferenciaKmGasolina   : 0;
+        #
+        #            }
+        #            else {
+        #                totalDiferenciaKmGasolina       = totalDiferenciaKmGasolina * -1; //El importe siempre debe ser positivo.
+        #                journalTrans.AmountCurDebit     = _operacion == 1 ? totalDiferenciaKmGasolina   : 0;
+        #                journalTrans.AmountCurCredit    = _operacion == 1 ? 0                           : totalDiferenciaKmGasolina;
+        #            }
+        #
+        #            journalTrans.INDRemesaLineRecId = 0;
+        #            journalTrans.INDRefRecId        = this.RecId;
+        #            journalTrans.INDRefTableId      = this.TableId;
+        #            journalTrans.ExchRateSecond     = 100;
+        #            journalTrans.ExchRate           = 100;
+        #
+        #            journalTrans.insert();
+        #
+        #
+        #            if (postJournal){
+        #                while select forupdate hojaGastosLine
+        #                index hint index1
+        #                Order by TransDate
+        #                where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #                      && (hojaGastosLine.Type        == CRMGastoType::Km ||
+        #                          hojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::TarjetaGasolina){
+        #
+        #                    //Si cancelamos la aprobación dejamos el valor en blanco.
+        #                    hojaGastosLine.VoucherPhysical  = _operacion == 1 ? voucher     : "";
+        #                    hojaGastosLine.DatePhysical     = _operacion == 1 ? transDate   : datenull();
+        #                    hojaGastosLine.doUpdate();
+        #                }
+        #            }
+        #
+        #        }
+        #    }
+        #
+        #    ledgerAccountIVA        = "472000000";
+        #    ledgerAccounRetencion   = "475100006";
+        #
+        #    if (this.NoContabilizarGasolina){
+        #        //Pagamos todo el efectivo
+        #        select forupdate hojaGastosLine
+        #        index hint index1
+        #        Order by TransDate
+        #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
+        #              && hojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::Efectivo;
+        #    }
+        #    else {
+        #        //Pagamos todo el efectivo que no sean ni km ni gasolina
+        #
+        #        select forupdate hojaGastosLine
+        #        index hint index1
+        #        Order by TransDate
+        #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
+        #              && hojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::Efectivo
+        #              && hojaGastosLine.Type            != CRMGastoType::Gasolina
+        #              && hojaGastosLine.Type            != CRMGastoType::Km;
+        #    }
+        #
+        #
+        #/*
+        #    while select forupdate hojaGastosLine
+        #    index hint index1
+        #    Order by TransDate
+        #    where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
+        #          && hojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::Efectivo
+        #          && hojaGastosLine.Type            != CRMGastoType::Gasolina
+        #          && hojaGastosLine.Type            != CRMGastoType::Km
+        #*/
+        #    while (hojaGastosLine)
+        #    {
+        #
+        #        voucher         = NumberSeq::newGetNumFromCode(journalTable.VoucherSeries).num();
+        #
+        #        //Diferenciamos dos casos. Que tenga factura o que no tenga factura.
+        #        if (hojaGastosLine.Factura){
+        #            //La línea tiene Factura
+        #            if (!hojaGastosLine.AmountIVA)
+        #                throw error(strfmt("La línea con descripción %1 tiene marcada la casilla de FACTURA pero no tiene informado el importe de IVA. Infórmalo por favor.", hojaGastosLine.Description));
+        #
+        #
+        #            amountAnticipo      = hojaGastosLine.LineAmountMST();
+        #            amountIVA           = hojaGastosLine.AmountIVA;
+        #            amountRetencion     = hojaGastosLine.AmountRetencion;
+        #            amountGasto         = amountAnticipo + amountRetencion - amountIVA;
+        #
+        #            transDate           = ValidaTransDate(hojaGastosLine.TransDate);
+        #            //Si la fecha de registro no es la misma que la fecha del gasto no podemos reconocer el IVA así que lo dejo a cero y todo erá gasto.
+        #            if (transDate != hojagastosLine.TransDate){
+        #
+        #                amountGasto     += amountIVA;
+        #                amountGasto     -= amountRetencion;
+        #                amountIVA       = 0;
+        #                amountRetencion = 0;
+        #
+        #            }
+        #
+        #
+        #            //ANTICIPO
+        #            if (amountAnticipo){
+        #                journalTrans.clear();
+        #                journalTrans.JournalNum         = journalTable.JournalNum;
+        #                journalTrans.Voucher            = voucher;
+        #                journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #                journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #                journalTrans.AccountNum         = ledgerAccountAnticipo;
+        #                journalTrans.Dimension[1]       = dimension;
+        #
+        #                //if (! journalTrans.AccountNum)
+        #                //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #                journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #                journalTrans.OffsetAccount      = "";
+        #                journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4 - %5 - %6",
+        #                                                         _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                         hojaGastosLine.Type,
+        #                                                         hojaGastosLine.InvoiceId,
+        #                                                         hojaGastosLine.VendName,
+        #                                                         this.HojaGastosId,
+        #                                                         hojaGastosLine.Description);
+        #
+        #                journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #                journalTrans.AmountCurDebit     = _operacion == 1 ? 0               : amountAnticipo;
+        #                journalTrans.AmountCurCredit    = _operacion == 1 ? amountAnticipo  : 0;
+        #
+        #                journalTrans.INDRemesaLineRecId = 0;
+        #                journalTrans.INDRefRecId        = hojaGastosLine.RecId;
+        #                journalTrans.INDRefTableId      = hojaGastosLine.TableId;
+        #                journalTrans.ExchRateSecond     = 100;
+        #                journalTrans.ExchRate           = 100;
+        #
+        #                journalTrans.insert();
+        #                }
+        #
+        #            //RETENCIÓN
+        #            if (amountRetencion){
+        #                journalTrans.clear();
+        #                journalTrans.JournalNum         = journalTable.JournalNum;
+        #                journalTrans.Voucher            = voucher;
+        #                journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #                journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #                journalTrans.AccountNum         = ledgerAccounRetencion;
+        #                journalTrans.Dimension[1]       = dimension;
+        #
+        #                //if (! journalTrans.AccountNum)
+        #                //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #                journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #                journalTrans.OffsetAccount      = "";
+        #                journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4 - %5 - %6",
+        #                                                     _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                     hojaGastosLine.Type,
+        #                                                     hojaGastosLine.InvoiceId,
+        #                                                     hojaGastosLine.VendName,
+        #                                                     this.HojaGastosId,
+        #                                                     hojaGastosLine.Description);
+        #
+        #                journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #                journalTrans.AmountCurDebit     = _operacion == 1 ? 0               : amountRetencion;
+        #                journalTrans.AmountCurCredit    = _operacion == 1 ? amountRetencion : 0;
+        #
+        #                journalTrans.INDRemesaLineRecId = 0;
+        #                journalTrans.INDRefRecId        = hojaGastosLine.RecId;
+        #                journalTrans.INDRefTableId      = hojaGastosLine.TableId;
+        #                journalTrans.ExchRateSecond     = 100;
+        #                journalTrans.ExchRate           = 100;
+        #
+        #                journalTrans.insert();
+        #            }
+        #
+        #
+        #            //IVA
+        #            if (amountIVA){
+        #                journalTrans.clear();
+        #                journalTrans.JournalNum         = journalTable.JournalNum;
+        #                journalTrans.Voucher            = voucher;
+        #                journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #                journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #                journalTrans.AccountNum         = ledgerAccountIVA;
+        #                journalTrans.Dimension[1]       = dimension;
+        #
+        #                //if (! journalTrans.AccountNum)
+        #                //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #                journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #                journalTrans.OffsetAccount      = "";
+        #                journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4 - %5 - %6",
+        #                                                         _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                         hojaGastosLine.Type,
+        #                                                         hojaGastosLine.InvoiceId,
+        #                                                         hojaGastosLine.VendName,
+        #                                                         this.HojaGastosId,
+        #                                                         hojaGastosLine.Description);
+        #
+        #                journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #                journalTrans.AmountCurDebit     = _operacion == 1 ? amountIVA   : 0;
+        #                journalTrans.AmountCurCredit    = _operacion == 1 ? 0           : amountIVA;
+        #
+        #                journalTrans.INDRemesaLineRecId = 0;
+        #                journalTrans.INDRefRecId        = hojaGastosLine.RecId;
+        #                journalTrans.INDRefTableId      = hojaGastosLine.TableId;
+        #                journalTrans.ExchRateSecond     = 100;
+        #                journalTrans.ExchRate           = 100;
+        #
+        #                journalTrans.insert();
+        #            }
+        #
+        #            if (amountIVA){
+        #
+        #                if (_operacion == 1){
+        #                    taxTrans.clear();
+        #                    taxTrans.Voucher        = voucher;
+        #                    taxTrans.TransDate      = transDate;
+        #                    taxTrans.AccountNum     = journalTrans.AccountNum;
+        #                    taxTrans.SourceRecId    = journalTrans.RecId;
+        #                    taxTrans.Source         = TaxModuleType::Voucher;
+        #                    taxTrans.TaxAmount      = amountIVA;
+        #                    taxTrans.TaxBaseAmount  = amountAnticipo - amountIVA;
+        #                    taxTrans.insert();
+        #                }
+        #                else {
+        #                    taxTrans.clear();
+        #                    taxTrans.Voucher        = voucher;
+        #                    taxTrans.TransDate      = transDate;
+        #                    taxTrans.AccountNum     = journalTrans.AccountNum;
+        #                    taxTrans.SourceRecId    = journalTrans.RecId;
+        #                    taxTrans.Source         = TaxModuleType::Voucher;
+        #                    taxTrans.TaxAmount      = amountIVA * -1;
+        #                    taxTrans.TaxBaseAmount  = (amountAnticipo - amountIVA) * -1;
+        #                    taxTrans.insert();
+        #                }
+        #            }
+        #
+        #
+        #
+        #            //GASTO
+        #            journalTrans.clear();
+        #            journalTrans.JournalNum         = journalTable.JournalNum;
+        #            journalTrans.Voucher            = voucher;
+        #            journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #            journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #            journalTrans.AccountNum         = ledgerAccountGasto;
+        #            journalTrans.Dimension[1]       = dimension;
+        #
+        #            //if (! journalTrans.AccountNum)
+        #            //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #            journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #            journalTrans.OffsetAccount      = "";
+        #            journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4 - %5 - %6",
+        #                                                     _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                     hojaGastosLine.Type,
+        #                                                     hojaGastosLine.InvoiceId,
+        #                                                     hojaGastosLine.VendName,
+        #                                                     this.HojaGastosId,
+        #                                                     hojaGastosLine.Description);
+        #
+        #            journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #            journalTrans.AmountCurDebit     = _operacion == 1 ? amountGasto : 0;
+        #            journalTrans.AmountCurCredit    = _operacion == 1 ? 0           : amountGasto;
+        #
+        #            journalTrans.INDRemesaLineRecId = 0;
+        #            journalTrans.INDRefRecId        = hojaGastosLine.RecId;
+        #            journalTrans.INDRefTableId      = hojaGastosLine.TableId;
+        #            journalTrans.ExchRateSecond     = 100;
+        #            journalTrans.ExchRate           = 100;
+        #
+        #            journalTrans.insert();
+        #
+        #       }
+        #        else {
+        #            //La línea NO Tiene Factura . Asiento es Gasto contra ANTICIPO
+        #
+        #            amount      = hojaGastosLine.LineAmountMST();
+        #            transDate   = ValidaTransDate(hojaGastosLine.TransDate);
+        #
+        #            //GASTO
+        #            journalTrans.clear();
+        #            journalTrans.JournalNum         = journalTable.JournalNum;
+        #            journalTrans.Voucher            = voucher;
+        #            journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #            journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #            journalTrans.AccountNum         = ledgerAccountGasto;
+        #            journalTrans.Dimension[1]       = dimension;
+        #
+        #            //if (! journalTrans.AccountNum)
+        #            //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #            journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #            journalTrans.OffsetAccount      = "";
+        #            journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4",
+        #                                                     _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                     hojaGastosLine.Type,
+        #                                                     this.HojaGastosId,
+        #                                                     hojaGastosLine.Description);
+        #
+        #            journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #            journalTrans.AmountCurDebit     = _operacion == 1 ? amount  : 0;
+        #            journalTrans.AmountCurCredit    = _operacion == 1 ? 0       : amount;
+        #
+        #            journalTrans.INDRemesaLineRecId = 0;
+        #            journalTrans.INDRefRecId        = hojaGastosLine.RecId;
+        #            journalTrans.INDRefTableId      = hojaGastosLine.TableId;
+        #            journalTrans.ExchRateSecond     = 100;
+        #            journalTrans.ExchRate           = 100;
+        #
+        #            journalTrans.INDNoDeducible     = hojaGastosLine.Ticket; //Si tiene marcada la casilla de Ticket debemos marcar que es NO Deducible
+        #            journalTrans.insert();
+        #
+        #
+        #            //ANTICIPO
+        #            journalTrans.clear();
+        #            journalTrans.JournalNum         = journalTable.JournalNum;
+        #            journalTrans.Voucher            = voucher;
+        #            journalTrans.TransDate          = transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #            journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #            journalTrans.AccountNum         = ledgerAccountAnticipo;
+        #            journalTrans.Dimension[1]       = dimension;
+        #
+        #            //if (! journalTrans.AccountNum)
+        #            //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #            journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #            journalTrans.OffsetAccount      = "";
+        #            journalTrans.Txt                = strfmt("%1 - %2 - %3 - %4",
+        #                                                     _operacion == 1 ? "Aprobar: " : "Cancelar Aprobación: ",
+        #                                                     hojaGastosLine.Type,
+        #                                                     this.HojaGastosId,
+        #                                                     hojaGastosLine.Description);
+        #
+        #            journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #            journalTrans.AmountCurDebit     = _operacion == 1 ? 0  : amount;
+        #            journalTrans.AmountCurCredit    = _operacion == 1 ? amount       : 0;
+        #
+        #            journalTrans.INDRemesaLineRecId = 0;
+        #            journalTrans.INDRefRecId        = hojaGastosLine.RecId;
+        #            journalTrans.INDRefTableId      = hojaGastosLine.TableId;
+        #            journalTrans.ExchRateSecond     = 100;
+        #            journalTrans.ExchRate           = 100;
+        #
+        #            journalTrans.insert();
+        #        }
+        #
+        #        if (postJournal){
+        #            //Si cancelamos la aprobación dejamos el valor en blanco.
+        #            hojaGastosLine.VoucherPhysical  = _operacion == 1 ? voucher     : "";
+        #            hojaGastosLine.DatePhysical     = _operacion == 1 ? transDate   : datenull();
+        #            hojaGastosLine.doUpdate();
+        #        }
+        #
+        #        next hojaGastosLine;
+        #    }
+        #
+        #    if (postJournal){
+        #
+        #        journalTable.ModificaValorImpuestosLedgerTable(NoYes::No);
+        #
+        #        journalTable.ContabilizaDiario();
+        #
+        #        journalTable.ModificaValorImpuestosLedgerTable(NoYes::Yes);
+        #    }
+        #
+        #    if (postJournal){
+        #        //SI la hoja de Gastos se Aprueba se deja en estado APROBADA. Si se "desaprueba" pasa a estado "Solicitada Aprobación"
+        #        hojaGastosTableUpdate                       = CRMHojaGastosTable::FindRecId(this.RecId, true);
+        #        if (hojaGastosTableUpdate){
+        #            //MMS - Ajustes CRM - 2026.05.27
+        #            oldExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
+        #            hojaGastosTableUpdate.ExpenseSheetStatus    = _operacion == 1 ? INDExpenseSheetStatus::Approved : (allowSelfManagement ? INDExpenseSheetStatus::Draft : INDExpenseSheetStatus::InReview);
+        #
+        #            if (INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico && hojaGastosTableUpdate.ExpenseSheetStatus == INDExpenseSheetStatus::InReview)
+        #                hojaGastosTableUpdate.ExpenseSheetStatus  = INDExpenseSheetStatus::Draft;
+        #            //hojaGastosTableUpdate.VoucherPhysical       = _operacion == 1 ? voucher     : ""; //Si estoy aprobando la HG guardo el asiento donde se ha registrado el devengo del coste.
+        #            //hojaGastosTableUpdate.DatePhysical          = _operacion == 1 ? transDate  : datenull(); //Si estoy aprobando la HG guardo la fecha cuando se ha registrado el devengo del coste.
+        #
+        #            hojaGastosTableUpdate.EstadoComentarios     = _estadoComentarios;
+        #            hojaGastosTableUpdate.TransDateAprobacion   = _operacion == 1 ? today() : datenull();
+        #            //MMS - Ajustes CRM - 2026.05.27
+        #            newExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
+        #            //MMS - Ajustes CRM - 2026.05.27
+        #            hojaGastosTableNotificacion                 = hojaGastosTableUpdate;
+        #            hojaGastosTableUpdate.doUpdate();
+        #
+        #            //Lanzo este proceso de nuevo porque el voucher no se lee en el proceso desde el doUpdate ya que no se ha hecho la inserción en la BBDD cuando se busca la información.
+        #            INDProjCostRevenueTable::CreateLine(hojaGastosTableUpdate);
+        #            //INDProjCostRevenueTable::CreateProjCostFromCommon(hojaGastosTableUpdate);
+        #            //INDProjCostRevenueTable::CreaLineaPagos(hojaGastosTableUpdate);
+        #            //INDProjCostRevenueTable::CreaLineaPendientePago(hojaGastosTableUpdate);
+        #        }
+        #    }
+        #    ttscommit;
+        #
+        #    //MMS - Ajustes CRM - 2026.05.27
+        #    // Envio de mejor esfuerzo fuera del tts para no bloquear la aprobacion MEX.
+        #    if (hojaGastosTableNotificacion.RecId)
+        #        INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
+        #            hojaGastosTableNotificacion,
+        #            oldExpenseSheetStatus,
+        #            newExpenseSheetStatus,
+        #            curUserId(),
+        #            '',
+        #            'axapta',
+        #            strFmt('approve-mex-%1-%2', this.HojaGastosId, timeNow()));
+        #
+        #}
+      ENDSOURCE
+      SOURCE #Aprobar_DesaprobarHojaDeGastos_TOTAL
+        #void Aprobar_DesaprobarHojaDeGastos_TOTAL(TransDate   _transDate,
+        #                                          int         _operacion = 1, //1 = Aprobar   2 = DesAprobar
+        #                                          FreeTxt     _estadoComentarios = "")
+        #{
+        #    /*
+        #    APROBAR:
+        #        .- Cambiamos el estado de la hoja de gastos a APROBADA
+        #        .- Creamos un asiento en contabilidad por el importe de la hoja de gastos separando la parte que va a proyectos y la que no
+        #            Cuenta de gastos del empleado
+        #            Hojas de Gastos pendientes de Pago
+        #
+        #    DESAPROBAR:
+        #        .- Cambiamos el estado de la hoja de gastos a BORRADOR
+        #        .- Creamos un asiento en contabilidad por el importe de la hoja de gastos separando la parte que va a proyectos y la que no
+        #            Hojas de Gastos pendientes de Pago
+        #            Cuenta de gastos del empleado
+        #    */
+        #    Map                 mapHojaGastos = this.MapLedgerDimension_Amount();
+        #    MapIterator         mi;
+        #    LedgerJournalTable  journalTable;
+        #    ledgerJournalTrans  journalTrans;
+        #    Voucher             voucher;
+        #    Container           c;
+        #    LedgerAccount       ledgerAccountDebit;
+        #    LedgerAccount       ledgerAccountCredit;
+        #    AccountNum          dimension;
+        #    Amount              amount;
+        #    CRMHojaGastosTable  hojaGastosTableUpdate;
+        #    //MMS - Ajustes CRM - 2026.05.27
+        #    CRMHojaGastosTable  hojaGastosTableNotificacion;
+        #    INDExpenseSheetStatus oldExpenseSheetStatus;
+        #    INDExpenseSheetStatus newExpenseSheetStatus;
+        #
+        #    INDPersonaTable     personaTableAxaptaUser  = INDPersonaTable::findByAxUserId(curUserId());
+        #    boolean             allowSelfManagement     = personaTableAxaptaUser.AllowSelfManagement;
+        #
+        #    ;
+        #
+        #    //IJL. Cambio el estado en este caso para que las validaciones posteriores sigan siendo efectivas.
+        #    if (allowSelfManagement && _operacion == 1 && this.ExpenseSheetStatus == INDExpenseSheetStatus::Draft){
+        #        this.ExpenseSheetStatus = INDExpenseSheetStatus::InReview;
+        #    }
+        #
+        #    if (_operacion == 1 && this.ExpenseSheetStatus != INDExpenseSheetStatus::InReview)
+        #        throw error("El Estado de la Hoja de Gastos no permite su Aprobación. El estado debe ser 'Aprobación Solicitada' ");
+        #
+        #    if (_operacion == 2 && this.ExpenseSheetStatus != INDExpenseSheetStatus::Approved)
+        #        throw error("El Estado de la Hoja de Gastos no permite su Aprobación. El estado debe ser 'Aprobada' ");
+        #
+        #    ttsbegin;
+        #    if (! journalTable){
+        #        journalTable    = LedgerJournalTable::CreaCabeceraDiario(LedgerParameters::find().INDJouralNameIdOrdenPago, strfmt("%1 - %2", this.HojaGastosId, this.Description));
+        #        voucher         = NumberSeq::newGetNumFromCode(journalTable.VoucherSeries).num();
+        #    }
+        #
+        #    //Creamos las líneas de gasto por detalle por cuenta y dimensión
+        #    mi  = new MapIterator(mapHojaGastos);
+        #    while (mi.more()){
+        #
+        #        c                   = Global::SepararTextoContainer(mi.key(), "|");
+        #
+        #        ledgerAccountDebit  = conpeek(c,1);
+        #        dimension           = conpeek(c,2);
+        #
+        #        amount              = mi.value();
+        #
+        #        journalTrans.clear();
+        #        journalTrans.JournalNum         = journalTable.JournalNum;
+        #        journalTrans.Voucher            = voucher;
+        #        journalTrans.TransDate          = _transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #        journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #        journalTrans.AccountNum         = ledgerAccountDebit;
+        #        journalTrans.Dimension[1]       = dimension;
+        #
+        #        //if (! journalTrans.AccountNum)
+        #        //    throw error(strfmt("La remesa %1 no tiene informada la cuenta contable con la que hacer el registro del asiento. (%2)", this.HojaGastosId, remesaLine.AccountName()));
+        #
+        #        journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #        journalTrans.OffsetAccount      = "";
+        #        journalTrans.Txt                = strfmt("%1 - %2", this.HojaGastosId, this.Description);
+        #
+        #        journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #        journalTrans.AmountCurCredit    = _operacion == 1 ? 0       : amount;
+        #        journalTrans.AmountCurDebit     = _operacion == 1 ? amount  : 0;
+        #        journalTrans.INDRemesaLineRecId = 0;
+        #        journalTrans.INDRefRecId        = this.RecId;
+        #        journalTrans.INDRefTableId      = this.TableId;
+        #        journalTrans.ExchRateSecond     = 100;
+        #        journalTrans.ExchRate           = 100;
+        #
+        #        journalTrans.insert();
+        #
+        #        mi.next();
+        #    }
+        #
+        #    ledgerAccountCredit             = LedgerParameters::find().INDLedgerAccountHGPendientesPago;
+        #
+        #    //Creamos la línea por el total en la cuenta de Hojas de Gasto Pendientes de Pagar.
+        #    journalTrans.clear();
+        #    journalTrans.JournalNum         = journalTable.JournalNum;
+        #    journalTrans.Voucher            = voucher;
+        #    journalTrans.TransDate          = _transDate; //Fecha de la Línea de la Orden de Pago.
+        #
+        #    journalTrans.AccountType        = LedgerJournalACType::Ledger;
+        #    journalTrans.AccountNum         = LedgerParameters::find().INDLedgerAccountHGPendientesPago; //Cuenta de Hojas de Gasto Pendientes de Pagar
+        #
+        #    journalTrans.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #    journalTrans.OffsetAccount      = "";
+        #    journalTrans.Txt                = strfmt("%1 - %2", this.HojaGastosId, this.Description);
+        #
+        #    journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
+        #
+        #    journalTrans.AmountCurCredit    = _operacion == 1 ? this.TotalAmountMST()   : 0;
+        #    journalTrans.AmountCurDebit     = _operacion == 1 ? 0                       : this.TotalAmountMST();
+        #    journalTrans.INDRemesaLineRecId = 0;
+        #    journalTrans.INDRefRecId        = this.RecId;
+        #    journalTrans.INDRefTableId      = this.TableId;
+        #    journalTrans.ExchRateSecond     = 100;
+        #    journalTrans.ExchRate           = 100;
+        #    journalTrans.insert();
+        #
+        #    journalTable.ContabilizaDiario();
+        #
+        #    //SI la hoja de Gastos se Aprueba se deja en estado APROBADA. Si se "desaprueba" pasa a estado "Solicitada Aprobación"
+        #    hojaGastosTableUpdate                       = CRMHojaGastosTable::FindRecId(this.RecId, true);
+        #    if (hojaGastosTableUpdate){
+        #        //MMS - Ajustes CRM - 2026.05.27
+        #        oldExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
+        #        hojaGastosTableUpdate.ExpenseSheetStatus    = _operacion == 1 ? INDExpenseSheetStatus::Approved : (allowSelfManagement ? INDExpenseSheetStatus::Draft : INDExpenseSheetStatus::InReview);
+        #        hojaGastosTableUpdate.VoucherPhysical       = _operacion == 1 ? voucher     : ""; //Si estoy aprobando la HG guardo el asiento donde se ha registrado el devengo del coste.
+        #        hojaGastosTableUpdate.DatePhysical          = _operacion == 1 ? _transDate  : datenull(); //Si estoy aprobando la HG guardo la fecha cuando se ha registrado el devengo del coste.
+        #
+        #        hojaGastosTableUpdate.EstadoComentarios     = _estadoComentarios;
+        #        //MMS - Ajustes CRM - 2026.05.27
+        #        newExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
+        #        //MMS - Ajustes CRM - 2026.05.27
+        #        hojaGastosTableNotificacion                 = hojaGastosTableUpdate;
+        #        hojaGastosTableUpdate.doUpdate();
+        #
+        #        //Lanzo este proceso de nuevo porque el voucher no se lee en el proceso desde el doUpdate ya que no se ha hecho la inserción en la BBDD cuando se busca la información.
+        #        INDProjCostRevenueTable::CreateLine(hojaGastosTableUpdate);
+        #        //INDProjCostRevenueTable::CreateProjCostFromCommon(hojaGastosTableUpdate);
+        #        //INDProjCostRevenueTable::CreaLineaPagos(hojaGastosTableUpdate);
+        #        //INDProjCostRevenueTable::CreaLineaPendientePago(hojaGastosTableUpdate);
+        #    }
+        #
+        #    ttscommit;
+        #
+        #    //MMS - Ajustes CRM - 2026.05.27
+        #    // Envio de mejor esfuerzo fuera del tts para no bloquear la aprobacion total.
+        #    if (hojaGastosTableNotificacion.RecId)
+        #        INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
+        #            hojaGastosTableNotificacion,
+        #            oldExpenseSheetStatus,
+        #            newExpenseSheetStatus,
+        #            curUserId(),
+        #            '',
+        #            'axapta',
+        #            strFmt('approve-total-%1-%2', this.HojaGastosId, timeNow()));
+        #}
+        #
+        #
+      ENDSOURCE
+      SOURCE #CambiarUserId
+        #void CambiarUserId(CRMUserId _newUserId)
+        #{
+        #    CRMHojaGastosTable      hojaGastosTable;
+        #    CRMHojaGastosLine       hojaGastosLine;
+        #    CRMHojaGastosLineCust   hojaGastosLineCust;
+        #    INDRemesaPagoLine       remesaPagoLineLocal;
+        #    ;
+        #
+        #    if (! _newUserId)
+        #        throw error("Debes indicar un usuario de CRM al que asignar la hoja de gastos.");
+        #
+        #
+        #    if (this.Voucher)
+        #        throw error("La hoja de Gastos está pagada y el usuario no puede ser cambiado");
+        #
+        #    remesaPagoLineLocal = INDRemesaPagoLine::FindRefRecId(this.RecId, true);
+        #
+        #    if (remesaPagoLineLocal){
+        #        throw error("La hoja de gastos está seleccionada en una remesa de pago y el usuario no puede ser cambiado. Elimina la Hoja de Gastos de la remesa y cambia el usuario después.");
+        #    }
+        #
+        #    ttsbegin;
+        #    hojaGastosTable         = CRMHojaGastosTable::FindRecId(this.RecId, true);
+        #    hojaGastosTable.UserId  = _newUserId;
+        #    hojaGastosTable.doUpdate();
+        #
+        #    while select forupdate hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId {
+        #
+        #
+        #        hojaGastosLine.UserId   = hojaGastosTable.UserId;
+        #        hojaGastosLine.doUpdate();
+        #
+        #        while select forupdate hojaGastosLineCust
+        #        index hint index1
+        #        where hojaGastosLineCust.RefRecId == hojaGastosLine.RecId {
+        #
+        #            hojaGastosLineCust.UserId = hojaGastosTable.UserId;
+        #            hojaGastosLineCust.doUpdate();
+        #        }
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #canChangeCurrencyDefaults
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #boolean canChangeCurrencyDefaults()
+        #{
+        #    // Kept for explicit propagation safeguards; direct header edits are allowed.
+        #    return !this.hasMultiCurrencyLines();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #CrearDetalleAsignacionEnLineas
+        #void CrearDetalleAsignacionEnLineas(CRMConsultaOrigen _origen)
+        #{
+        #    CRMHojaGastosline       hojaGastosLine;
+        #    CRMHojaGastoslineCust   lineCustFrom, lineCustTo;
+        #    ;
+        #
+        #    if (! this.RecId)
+        #        return;
+        #
+        #    ttsbegin;
+        #    while select hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId {
+        #
+        #        hojaGastosLine.BorrarTodasAsignaciones(_origen);
+        #        hojaGastosLine.CrearDetalleAsignacionEnLineas(_origen);
+        #
+        #        if (_origen == CRMConsultaOrigen::Cliente){
+        #            hojaGastosLine.BorrarTodasAsignaciones(CRMConsultaOrigen::ClientePotencial);
+        #            hojaGastosLine.CrearDetalleAsignacionEnLineas(CRMConsultaOrigen::ClientePotencial);
+        #        }
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #delete
+        #public void delete()
+        #{
+        #    ;
+        #    super();
+        #
+        #    this.DeleteINDImputacionCosteDetalleTable(); //IJL.12/02/26
+        #}
+      ENDSOURCE
+      SOURCE #DeleteINDImputacionCosteDetalleTable
+        #void DeleteINDImputacionCosteDetalleTable()
+        #{
+        #    ;
+        #
+        #    ttsbegin;
+        #
+        #    INDImputacionCosteDetalleTable::DeleteINDImputacionCosteDetalleTable(this.RecId, this.TableId);
+        #
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #DesgloseIVA
+        #str DesgloseIVA()
+        #{
+        #    Map             map = this.TotalTaxAmount();
+        #    MapIterator     mi  = new MapIterator(map);
+        #    str             textoPercent;
+        #    Amount          amount;
+        #    Str             textoDesglose;
+        #    Str             texto;
+        #    ;
+        #
+        #    //if (curExt() == "ITA" || curExt() == "FIL"){
+        #    if (Global::ciaEsITA()){
+        #        //Mostrar el total de lo que tiene marcado factura y el total de lo que tiene marcado Ticket
+        #
+        #        texto   = strfmt("TOTALE TICKET: %1 %5\nTOTALE FATTURE: %2 %5\nTOTALE DOCUMENTATE: %3 %5\nTOTALE NON DOCUMENTATE: %4 %5",
+        #                                                                                    this.TotalAmountTicket(),
+        #                                                                                    this.TotalAmountFactura(),
+        #                                                                                    this.TotalAmountTicket() + this.TotalAmountFactura(),
+        #                                                                                    this.TotalAmountNoTicketNoFactura(),
+        #                                                                                    this.CurrencyCode);
+        #        return texto;
+        #    }
+        #
+        #    while (mi.more()){
+        #
+        #        textoPercent    = mi.key();
+        #        amount          = mi.value();
+        #
+        #        if (! textoDesglose){
+        #            textoDesglose   = strfmt("%1% - %2", textoPercent, amount);
+        #        }
+        #        else {
+        #            textoDesglose   = strfmt("%1\n%2% - %3", textoDesglose, textoPercent, amount);
+        #        }
+        #        mi.next();
+        #    }
+        #
+        #    return textoDesglose;
+        #}
+      ENDSOURCE
+      SOURCE #DesgloseModalidadPago
+        #str DesgloseModalidadPago()
+        #{
+        #    Map             map = this.TotalPorModalidadPago();
+        #    MapIterator     mi  = new MapIterator(map);
+        #    Str             textoDesglose;
+        #
+        #    CRMHojaGastoModalidadPago   modalidad;
+        #    Amount                      amount;
+        #
+        #    ;
+        #
+        #    while (mi.more()){
+        #
+        #        modalidad   = mi.key();
+        #        amount      = mi.value();
+        #
+        #        if (! textoDesglose){
+        #            textoDesglose   = strfmt("%1 - %2", modalidad, amount);
+        #        }
+        #        else {
+        #            textoDesglose   = strfmt("%1\n%2 - %3", textoDesglose, modalidad, amount);
+        #        }
+        #
+        #        mi.next();
+        #    }
+        #
+        #    return textoDesglose;
+        #}
+      ENDSOURCE
+      SOURCE #firstHojaGastosLine
+        #CRMHojaGastosLine firstHojaGastosLine()
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    ;
+        #
+        #    select firstonly firstfast hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId;
+        #
+        #    return hojaGastosLine;
+        #}
+      ENDSOURCE
+      SOURCE #firstLineCurrency
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #CurrencyCode firstLineCurrency()
+        #{
+        #    CRMHojaGastosLine hojaGastosLine;
+        #    ;
+        #
+        #    select firstOnly Currency from hojaGastosLine
+        #        where hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #           && hojaGastosLine.UserId       == this.UserId
+        #           && hojaGastosLine.Currency     != "";
+        #
+        #    return hojaGastosLine.Currency;
+        #}
+      ENDSOURCE
+      SOURCE #hasMultiCurrencyLines
+        #public boolean hasMultiCurrencyLines()
+        #{
+        #    CRMHojaGastosLine firstLine;
+        #    CRMHojaGastosLine otherLine;
+        #    CurrencyCode       firstCurrency;
+        #
+        #    // Returns true when this expense sheet has lines with more than one currency.
+        #    select firstOnly RecId, Currency from firstLine
+        #        where firstLine.HojaGastosId == this.HojaGastosId
+        #           && firstLine.UserId       == this.UserId;
+        #
+        #    if (!firstLine.RecId)
+        #        return false;
+        #
+        #
+        #    firstCurrency = firstLine.Currency;
+        #
+        #    select firstOnly RecId from otherLine
+        #        where otherLine.HojaGastosId == this.HojaGastosId
+        #           && otherLine.UserId        == this.UserId
+        #           && otherLine.Currency      != firstCurrency;
+        #
+        #    return otherLine.RecId != 0;
+        #}
+      ENDSOURCE
+      SOURCE #initFromUsuarioTable
+        #void initFromUsuarioTable()
+        #{
+        #    CRMUsuarioTable usuarioTable    = CRMUsuarioTable::Find(this.UserId);
+        #    ;
+        #
+        #    this.Division       = usuarioTable.Division;
+        #    this.CategoriaId    = usuarioTable.CategoriaId;
+        #
+        #    //IJL.16/04/26
+        #    this.NoContabilizarGasolina = usuarioTable.NoContabilizarGasolina; //Para México
+        #}
+      ENDSOURCE
+      SOURCE #insert
+        #public void insert()
+        #{
+        #    ;
+        #    this.updateSearchKey();   //IND_MMS - API PROJECT - 2025.11.10
+        #    //this.SelfApproved();      //INDMMS_ExternalCRM - 2026.03.10
+        #
+        #    //IJL.11/05/26. Si no Activamos el módulo de aprobación hay que marcar las HG como necesario papel para justificar y Pagar.
+        #    if (!INDDataareaParameterTable::Find().ActivarAprobacionHojasDeGastos){
+        #        this.NecesariaHGImpresa = NoYes::Yes;
+        #    }
+        #    else {
+        #        this.NecesariaHGImpresa = NoYes::No;
+        #    }
+        #
+        #
+        #    super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.03.25
+        #    if(!this.INDCreatedByUserId)
+        #    {
+        #        this.selectForUpdate(true);
+        #        this.INDCreatedByUserId = this.createdBy;
+        #        this.doUpdate();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #Internacional
+        #display NoYes Internacional()
+        #{
+        #    CRMHojaGastosLine   CRMHojaGastosLine;
+        #    ;
+        #
+        #    select firstonly CRMHojaGastosLine
+        #    where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #          CRMHojaGastosLine.Internacional   == NoYes::Yes;
+        #
+        #    return CRMHojaGastosLine ? NoYes::Yes : NoYes::No;
+        #}
+      ENDSOURCE
+      SOURCE #isVariousCurrencyDefault
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #boolean isVariousCurrencyDefault()
+        #{
+        #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
+        #    ;
+        #
+        #    // Identifies the header marker used when line currencies are mixed.
+        #    return defaultParameters.CRMCurrencyVarios && this.CurrencyCode == defaultParameters.CRMCurrencyVarios;
+        #}
+      ENDSOURCE
+      SOURCE #isVariousProjectDefault
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #boolean isVariousProjectDefault()
+        #{
+        #    PurchParameters purchParameters = PurchParameters::find();
+        #    ;
+        #
+        #    // Identifies the header marker used when line projects are mixed.
+        #    return purchParameters.INDProjIdVarious && this.ProjId == purchParameters.INDProjIdVarious;
+        #}
+      ENDSOURCE
+      SOURCE #isVariousReimbursableExpenseDefault
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #boolean isVariousReimbursableExpenseDefault()
+        #{
+        #    // Identifies the header marker used when line reimbursable values are mixed.
+        #    return this.ReimbursableExpense == INDReimbursableExpense::Both;
+        #}
+      ENDSOURCE
+      SOURCE #mapDescripcionDiaHojaGastos
+        #Map mapDescripcionDiaHojaGastos()
+        #{
+        #    CRMHojaGastosLine       hojaGastosLine, hojaGastosLineAgrupado;
+        #    CRMHojaGastosLineCust   hojaGastosLineCust;
+        #    Map                     mapDate = new Map(Types::Date, Types::String);
+        #    Amount                  amountLine, amountAsignadoLine, amountAsignadoLineTotal;
+        #    Map                     mapAmount = new Map(Types::String, Types::Real);
+        #    MapIterator             mi;
+        #    str                     descripcion;
+        #    ;
+        #
+        #    while select hojaGastosLineAgrupado
+        #    index hint index1
+        #    Group by TransDate
+        #    where    hojaGastosLineAgrupado.HojaGastosId    == this.HojaGastosId{
+        #
+        #        mapAmount = new Map(Types::String, Types::Real);
+        #
+        #        while select hojaGastosLine
+        #        index hint index1
+        #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
+        #              && hojaGastosLine.TransDate       == hojaGastosLineAgrupado.TransDate
+        #        {
+        #            amountLine          = hojaGastosLine.LineAmountMST();
+        #
+        #            amountAsignadoLineTotal  = 0;
+        #
+        #            while select hojaGastosLineCust
+        #            index hint index1
+        #            where hojaGastosLineCust.RefRecId == hojaGastosLine.RecId {
+        #
+        #                amountAsignadoLine          = hojaGastosLineCust.Amount();
+        #                amountAsignadoLineTotal     +=  amountAsignadoLine;
+        #
+        #                if (!mapAmount.exists(hojaGastosLineCust.CustAccount)){
+        #                    mapAmount.insert(hojaGastosLineCust.CustAccount, amountAsignadoLine);
+        #                }
+        #                else {
+        #                    mapAmount.insert(hojaGastosLineCust.CustAccount, mapAmount.lookup(hojaGastosLineCust.CustAccount) + amountAsignadoLine);
+        #                }
+        #            }
+        #
+        #            if (amountLine != amountAsignadoLineTotal){
+        #                if (!mapAmount.exists("NO_ASIGNADO")){
+        #                    mapAmount.insert("NO_ASIGNADO", amountLine - amountAsignadoLineTotal);
+        #                }
+        #                else {
+        #                    mapAmount.insert("NO_ASIGNADO", mapAmount.lookup("NO_ASIGNADO") + (amountLine - amountAsignadoLineTotal));
+        #                }
+        #            }
+        #        }
+        #
+        #        descripcion = "";
+        #        mi  = new MapIterator(mapAmount);
+        #        while (mi.more()){
+        #
+        #            if (!descripcion){
+        #                descripcion = strfmt("%1 - %2", mi.key(), mi.value());
+        #            }
+        #            else {
+        #                descripcion = strfmt("%1 / %2 - %3", descripcion, mi.key(), mi.value());
+        #            }
+        #
+        #            mi.next();
+        #        }
+        #
+        #        mapDate.insert(hojaGastosLineAgrupado.TransDate, descripcion);
+        #    }
+        #
+        #    return mapDate;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #MapLedgerDimension_Amount
+        #Map MapLedgerDimension_Amount(boolean _ignorarErrores = false)
+        #{
+        #    CRMHojaGastosLine       hojaGastosLine;
+        #    CRMHojaGastosLineCust   hojaGastosLineCust;
+        #    Map                     map = new Map(Types::String, Types::Real);
+        #    Description             accountNum_Dimension;
+        #    LedgerAccount           ledgerAccount, ledgerAccountEmpl;
+        #    AccountNum              dimension, dimensionEmpl;
+        #    Dimension               dimensionArray;
+        #
+        #    Amount                  amountLine, amountLineTotalFromCust, amountLineCust;
+        #    CRMUsuarioTable         usuarioTable    = CRMUsuarioTable::Find(this.UserId);
+        #
+        #    //boolean                 dimensionObligatoria;
+        #    Amount                  totalAmountFromHojaGastos   = this.TotalAmountMST();
+        #    Amount                  totalEnMapa;
+        #    ;
+        #
+        #    //if (usuarioTable.UserId == "EDK")
+        #    //    info("");
+        #
+        #    ledgerAccountEmpl   = INDPersonaTable::findByCRM(usuarioTable.RecId).ledgerAccountGasto();
+        #    dimensionArray      = INDPersonaTable::findByCRM(usuarioTable.RecId).DimensionGasto(); //Debe ser la dimension configurada en el subDepartamento informado en el empleado (HOras)
+        #    dimensionEmpl       = dimensionArray[1];
+        #
+        #
+        #    //if (! ledgerAccount)
+        #    //    throw error(strfmt("El Empleado %1 no tiene informada la cuenta de Gasto en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId {
+        #
+        #        amountLine              = hojaGastosLine.LineAmountMST();
+        #        amountLineTotalFromCust = 0;
+        #
+        #        while select hojaGastosLineCust
+        #        index hint index1
+        #        where hojaGastosLineCust.RefRecId == hojaGastosLine.RecId {
+        #
+        #            amountLineCust              = hojaGastosLineCust.Amount();
+        #            amountLineTotalFromCust     += amountLineCust;
+        #
+        #            accountNum_Dimension    = "";
+        #            ledgerAccount           = "";
+        #            switch (hojaGastosLineCust.Origen){
+        #                case CRMConsultaOrigen::Proyecto:
+        #                    ledgerAccount   = ledgerAccountEmpl;//INDPersonaTable::findByCRM(usuarioTable.RecId).ledgerAccountGasto();
+        #                    dimension       = ProjGroup::Find(ProjTable::find(hojaGastosLineCust.CustAccount).ProjGroupId).INDDimension[1];//"PROYEXT";
+        #                    if (! dimension){
+        #                        //Si el Grupo de Proyectos no tiene informada dimensión debemos contabilizar como si no hubiera proyecto en el gasto
+        #                        dimension       = dimensionEmpl;
+        #                    }
+        #
+        #                    if (! ledgerAccount && ! _ignorarErrores){
+        #                        throw error(strfmt("El Empleado %1 no tiene informada la cuenta de Gasto en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #                    }
+        #
+        #                    if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] == LedgerFieldControl::FillIn && ! dimension && ! _ignorarErrores){
+        #                        throw error(strfmt("El Empleado %1 no tiene informada la DIMENSIÓN en su Departamento Asignado", usuarioTable.Name));
+        #                    }
+        #
+        #                    break;
+        #                case CRMConsultaOrigen::Evento:
+        #                    ledgerAccount   = CRMEventoTable::Find(hojaGastosLineCust.CustAccount).LedgerAccountGasto;
+        #                    dimension       = dimensionEmpl;//LedgerTable::find(ledgerAccount).Dimension[1];//"COMERCIAL";
+        #
+        #                    if (! ledgerAccount && ! _ignorarErrores)
+        #                        throw error(strfmt("El Evento %1 no tiene informada la cuenta de Gasto en su pantalla de 'Eventos'", hojaGastosLineCust.CustAccount));
+        #                    if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] == LedgerFieldControl::FillIn && ! dimension && ! _ignorarErrores)
+        #                        throw error(strfmt("El Evento %1 no tiene informada la DIMENSIÓN", hojaGastosLineCust.CustAccount));
+        #
+        #                    break;
+        #                default:
+        #                    ledgerAccount   = ledgerAccountEmpl;//INDPersonaTable::findByCRM(usuarioTable.RecId).ledgerAccountGasto();
+        #                    dimension       = dimensionEmpl;
+        #
+        #                    if (! ledgerAccount && ! _ignorarErrores)
+        #                        throw error(strfmt("El Empleado %1 no tiene informada la cuenta de Gasto en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #
+        #                    if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] == LedgerFieldControl::FillIn && ! dimension && ! _ignorarErrores)
+        #                        throw error(strfmt("El Empleado %1 no tiene informada la DIMENSIÓN en su DEPARTAMENTO informado en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #                    break;
+        #            }
+        #
+        #            //IJL.27/03/26. Aunque no sea obligatorio si hay algo informado lo coloco.
+        #            /*
+        #            if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] != LedgerFieldControl::FillIn){
+        #                dimension = "";
+        #            }
+        #            */
+        #            accountNum_Dimension    = ledgerAccount + "|" + dimension;
+        #
+        #            if (map.exists(accountNum_Dimension)){
+        #                map.insert(accountNum_Dimension, map.lookup(accountNum_Dimension) + amountLineCust);
+        #            }
+        #            else {
+        #                map.insert(accountNum_Dimension, amountLineCust);
+        #            }
+        #
+        #            totalEnMapa += amountLineCust;
+        #        }
+        #
+        #        if (amountLine != amountLineTotalFromCust){
+        #            //Hay importe no asignado a ningún elemento de detalle como proyecto o Evento
+        #            ledgerAccount           = ledgerAccountEmpl;
+        #            dimension               = dimensionEmpl;
+        #
+        #            if (! ledgerAccount && ! _ignorarErrores)
+        #                throw error(strfmt("El Empleado %1 no tiene informada la cuenta de Gasto en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #
+        #
+        #            if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] == LedgerFieldControl::FillIn && ! dimension && ! _ignorarErrores)
+        #                throw error(strfmt("El Empleado %1 no tiene informada la DIMENSIÓN en su DEPARTAMENTO informado en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
+        #
+        #            if (LedgerTable::find(ledgerAccount).MandatoryDimension[1] != LedgerFieldControl::FillIn){
+        #                dimension = "";
+        #            }
+        #
+        #            accountNum_Dimension    = ledgerAccount + "|" + dimension;
+        #
+        #            if (map.exists(accountNum_Dimension)){
+        #                map.insert(accountNum_Dimension, map.lookup(accountNum_Dimension) + (amountLine - amountLineTotalFromCust));
+        #            }
+        #            else {
+        #                map.insert(accountNum_Dimension, amountLine - amountLineTotalFromCust);
+        #            }
+        #
+        #            totalEnMapa += (amountLine - amountLineTotalFromCust);
+        #        }
+        #    }
+        #
+        #    //Si el valor total de la hoja de gastos es distinto del total de lo metido en el mapa metemos una línea de ajuste en la última combinación que hayamos usado.
+        #    if (totalEnMapa != totalAmountFromHojaGastos){
+        #
+        #        if (map.exists(accountNum_Dimension)){
+        #            map.insert(accountNum_Dimension, map.lookup(accountNum_Dimension) + (totalAmountFromHojaGastos - totalEnMapa));
+        #        }
+        #        else {
+        #            map.insert(accountNum_Dimension, (totalAmountFromHojaGastos - totalEnMapa));
+        #        }
+        #
+        #    }
+        #
+        #    return map;
+        #}
+      ENDSOURCE
+      SOURCE #markHeaderVariousFromLine
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #void markHeaderVariousFromLine(CRMHojaGastosLine _hojaGastosLine)
+        #{
+        #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
+        #    PurchParameters      purchParameters   = PurchParameters::find();
+        #    CurrencyCode         currencyVarios;
+        #    ProjId               projIdVarios;
+        #    boolean              mustUpdate;
+        #    ;
+        #
+        #    // Marks header defaults as various when one saved line no longer matches them.
+        #    if (!this.RecId || !_hojaGastosLine)
+        #        return;
+        #
+        #    currencyVarios = defaultParameters.CRMCurrencyVarios;
+        #    projIdVarios   = purchParameters.INDProjIdVarious;
+        #
+        #    if (currencyVarios &&
+        #        this.CurrencyCode &&
+        #        _hojaGastosLine.Currency &&
+        #        this.CurrencyCode != currencyVarios &&
+        #        _hojaGastosLine.Currency != this.CurrencyCode)
+        #    {
+        #        this.CurrencyCode = currencyVarios;
+        #        mustUpdate = true;
+        #    }
+        #
+        #    if (projIdVarios &&
+        #        this.ProjId &&
+        #        this.ProjId != projIdVarios &&
+        #        ((_hojaGastosLine.ProjId && _hojaGastosLine.ProjId != this.ProjId) ||
+        #         (_hojaGastosLine.ProjIdHornos && _hojaGastosLine.ProjIdHornos != this.ProjId)))
+        #    {
+        #        this.ProjId = projIdVarios;
+        #        mustUpdate = true;
+        #    }
+        #
+        #    if (!this.isVariousReimbursableExpenseDefault() &&
+        #        _hojaGastosLine.ReimbursableExpense != this.ReimbursableExpense)
+        #    {
+        #        this.ReimbursableExpense = INDReimbursableExpense::Both;
+        #        mustUpdate = true;
+        #    }
+        #
+        #    if (mustUpdate)
+        #        this.doUpdate();
+        #}
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    ;
+        #    super(_fieldId);
+        #
+        #    switch (_fieldId){
+        #
+        #        //IJL.08/08/25. Migración desarrollos México.
+        #        case FieldNum(CRMHojaGastosTable, TransDateRegistro_Mex):
+        #            this.UserIdRegistro_Mex = curUserId();
+        #            break;
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #RechazarHojaDeGastos
+        # void RechazarHojaDeGastos()
+        #{
+        #    /*
+        #    RECHAZAR:
+        #        .- Cambiamos el estado de la hoja de gastos a RECHAZADA
+        #    */
+        #    CRMHojaGastosTable  hojaGastosTableUpdate;
+        #    ;
+        #
+        #    if (this.ExpenseSheetStatus != INDExpenseSheetStatus::InReview)
+        #        throw error("El Estado de la Hoja de Gastos no permite su Rechazo. El estado debe ser 'Aprobación Solicitada' ");
+        #
+        #
+        #    ttsbegin;
+        #
+        #    hojaGastosTableUpdate                       = CRMHojaGastosTable::FindRecId(this.RecId, true);
+        #    if (hojaGastosTableUpdate){
+        #        hojaGastosTableUpdate.ExpenseSheetStatus    = INDExpenseSheetStatus::Rejected;
+        #        //hojaGastosTableUpdate.VoucherPhysical       = _operacion == 1 ? voucher : ""; //Si estoy aprobando la HG guardo el asiento donde se ha registrado el devengo del coste.
+        #        hojaGastosTableUpdate.doUpdate();
+        #    }
+        #
+        #    ttscommit;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #SelfApproved
+        #//INDMMS_ExternalCRM - 2026.03.10
+        #void SelfApproved()
+        #{
+        #    /*if(this.ExpenseSheetStatus == INDExpenseSheetStatus::Approved || this.ExpenseSheetStatus == INDExpenseSheetStatus::Paid)
+        #        continue;
+        #
+        #    if(INDPersonaTable::findByUserAx(curUserId()).AllowSelfManagement && this.TotalAmount())
+        #        this.ExpenseSheetStatus = INDExpenseSheetStatus::Approved;     */
+        #
+        #}
+      ENDSOURCE
+      SOURCE #setProjId
+        #Set setProjId()
+        #{
+        #    CRMHojaGastosLine       hojaGastosLine;
+        #    Set                     setTotal    = new Set(Types::String);
+        #    Set                     setLinea    = new Set(Types::String);
+        #    ;
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId {
+        #
+        #        setLinea    = hojaGastosLine.setProjId();
+        #
+        #        setTotal    = Global::SetUnir(setLinea, setTotal);
+        #    }
+        #
+        #    return setTotal;
+        #}
+      ENDSOURCE
+      SOURCE #SetVoucherPhysical
+        #Set SetVoucherPhysical()
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Set                 set = new Set(Types::String);
+        #    ledgerTrans         ledgerTrans;
+        #    ;
+        #
+        #    if (! this.RecId)
+        #        return set;
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId {
+        #
+        #        while select ledgerTrans
+        #        index hint index4
+        #        where ledgerTrans.INDRefRecId == hojaGastosLine.RecId {
+        #
+        #            set.add(ledgerTrans.Voucher);
+        #        }
+        #    }
+        #
+        #    //Aquí estrará en las líneas de México de Gasolina y Km
+        #    while select ledgerTrans
+        #    index hint index4
+        #    where ledgerTrans.INDRefRecId == this.RecId {
+        #
+        #        set.add(ledgerTrans.Voucher);
+        #    }
+        #
+        #/*
+        #    while select hojaGastosLine
+        #    where    hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #          && hojaGastosLine.VoucherPhysical != ""
+        #    {
+        #        set.add(hojaGastosLine.VoucherPhysical);
+        #    }
+        #*/
+        #    return set;
+        #}
+      ENDSOURCE
+      SOURCE #TienDetalleProyectos
+        #boolean TienDetalleProyectos()
+        #{
+        #    CRMHojaGastoslineCust   lineCustFrom;
+        #    ;
+        #
+        #    if (! this.RecId)
+        #        return false;
+        #
+        #    select firstonly lineCustFrom
+        #    where lineCustFrom.RefRecId == this.RecId;
+        #
+        #    return lineCustFrom ? true : false;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmount
+        #/*
+        # Oculto este campo en el formulario porque como ahora son gastos multidivisa el monto no será correcto,
+        # solo mostraré el AmountMST, que es con el que se efectuará el pago
+        #*/
+        #display Amount TotalAmount()
+        #{
+        #    Amount  amount;
+        #    ;
+        #    amount = (select sum(Amount) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
+        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No).Amount;
+        #
+        #    //IJL.08/08/25. Migración Desarrollos México.
+        #    amount -=  (select sum(Amount) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
+        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
+        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No            &&
+        #                     CRMHojaGastosLine.Type         == CRMGastoType::Km      &&
+        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina).Amount;
+        #
+        #    amount  -= this.TotalEfectivo_Gasolina(); //IJL.17/04/26 //MMS - OJO PORQUE ESTE MÉTODO CALCULA EN MST DESDE EL CÓDIGO ORIGINAL
+        #
+        #    return amount;
+        #
+        #/*
+        #    return (select sum(Amount) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
+        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No).Amount;
+        #*/
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmount_ConTicket
+        #display Amount TotalAmount_ConTicket()
+        #{
+        #    return (select sum(Amount) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #            CRMHojaGastosLine.Ticket             == NoYes::Yes).Amount;
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmount_ConVisa
+        #display Amount TotalAmount_ConVisa()
+        #{
+        #    Amount  amount;
+        #    ;
+        #    amount = (select sum(Amount) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No).Amount;
+        #
+        #    //IJL.08/08/25. Migración Desarrollos México
+        #    amount -=  (select sum(Amount) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
+        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
+        #//                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No            &&
+        #                     CRMHojaGastosLine.Type         == CRMGastoType::Km      &&
+        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina).Amount;
+        #
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmount_SoloVisa
+        #display Amount TotalAmount_SoloVisa()
+        #{
+        #    return (select sum(Amount) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
+        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::Yes).Amount;
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmountFactura
+        #display Amount TotalAmountFactura()
+        #{
+        #    return (select sum(Amount) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.Factura      == NoYes::Yes).Amount;
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmountMST
+        #display Amount TotalAmountMST()
+        #{
+        #    Amount  amount;
+        #    ;
+        #    if (! this.CurrencyCode)
+        #        return 0;
+        #
+        #    amount =  (select sum(AmountMST) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
+        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
+        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #
+        #    //IJL.08/08/25. Migración desarrollos México
+        #    amount -=  (select sum(AmountMST) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
+        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
+        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No            &&
+        #                     CRMHojaGastosLine.Type         == CRMGastoType::Km      &&
+        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #
+        #    amount  -= this.TotalEfectivo_GasolinaMST(); //IJL.17/04/26
+        #
+        #    return amount; //INDMMS_ExternalCRM - 2026.05.21
+        #    //Currency::amountCur2MST(amount, this.CurrencyCode, this.ExchRate);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #TotalAmountMST_Pagar
+        #display Amount TotalAmountMST_Pagar()
+        #{
+        #    Amount  amount;
+        #    ;
+        #    amount =  (select sum(AmountMST) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
+        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
+        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #
+        #    amount  = amount - this.AmountAnticipo; //Obsoleto - MMS
+        #
+        #    return amount; //INDMMS_ExternalCRM - 2026.05.21
+        #    //Currency::amountCur2MST(amount, this.CurrencyCode, this.ExchRate);
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmountMST_Type
+        #Amount TotalAmountMST_Type(CRMGastoType _gastoType)
+        #{
+        #    Amount  amount;
+        #    ;
+        #    if (! this.CurrencyCode)
+        #        return 0;
+        #
+        #    amount =  (select sum(AmountMST) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
+        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
+        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No
+        #                     && CRMHojaGastosLine.Type      == _gastoType).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #
+        #
+        #    return amount; //INDMMS_ExternalCRM - 2026.05.21
+        #    //Currency::amountCur2MST(amount, this.CurrencyCode, this.ExchRate);
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmountNoTicketNoFactura
+        #display Amount TotalAmountNoTicketNoFactura()
+        #{
+        #    return (select sum(Amount) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.Ticket       == NoYes::No &&
+        #                  CRMHojaGastosLine.Factura      == NoYes::No).Amount;
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmountPrimasMontaje
+        #display Amount TotalAmountPrimasMontaje()
+        #{
+        #    CRMHojaGastosLine   CRMHojaGastosLine;
+        #    Amount              amount;
+        #    ;
+        #    while select CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
+        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No           &&
+        #                  CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional   &&
+        #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo &&
+        #                  CRMHojaGastosLine.Type         != CRMGastoType::Taxi {
+        #
+        #
+        #        amount  += CRMHojaGastosLine.Amount;
+        #    }
+        #
+        #    return amount;
+        #
+        #    return (select sum(Amount) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
+        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No           &&
+        #                  CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional   &&
+        #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo).Amount;
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmountPrimasMontajeMST
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #display Amount TotalAmountPrimasMontajeMST()
+        #{
+        #    CRMHojaGastosLine   CRMHojaGastosLine;
+        #    Amount              amount;
+        #    ;
+        #    while select CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
+        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No           &&
+        #                  CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional   &&
+        #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo &&
+        #                  CRMHojaGastosLine.Type         != CRMGastoType::Taxi
+        #    {
+        #
+        #
+        #        amount  += CRMHojaGastosLine.AmountMST;
+        #    }
+        #
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #TotalAmountTicket
+        #display Amount TotalAmountTicket()
+        #{
+        #    return (select sum(Amount) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
+        #                  CRMHojaGastosLine.Ticket       == NoYes::Yes).Amount;
+        #}
+      ENDSOURCE
+      SOURCE #TotalEfectivo
+        #display Amount TotalEfectivo()
+        #{
+        #    return this.TotalModalidadPago(CRMHojaGastoModalidadPago::Efectivo);
+        #}
+      ENDSOURCE
+      SOURCE #TotalEfectivo_Gasolina
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #display Amount TotalEfectivo_Gasolina()
+        #{
+        #    if (this.NoContabilizarGasolina)
+        #        return 0;
+        #
+        #    return (select sum(AmountMST) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId  == this.HojaGastosId
+        #               && CRMHojaGastosLine.Type          == CRMGastoType::Gasolina
+        #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo).AmountMST;
+        #}
+        #/*
+        #display Amount TotalEfectivo_Gasolina()
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Amount              amount;
+        #    ;
+        #    if (this.NoContabilizarGasolina)
+        #        return 0;
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #          && hojaGastosLine.Type == CRMGastoType::Gasolina
+        #          && hojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo {
+        #
+        #        amount  += hojaGastosLine.LineAmountMST();
+        #    }
+        #
+        #    return amount;
+        #}*/
+      ENDSOURCE
+      SOURCE #TotalEfectivo_GasolinaMST
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #display Amount TotalEfectivo_GasolinaMST()
+        #{
+        #    ;
+        #
+        #    if (this.NoContabilizarGasolina)
+        #        return 0;
+        #
+        #    return (select sum(AmountMST) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId  == this.HojaGastosId
+        #               && CRMHojaGastosLine.Type          == CRMGastoType::Gasolina
+        #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo).AmountMST;
+        #}
+      ENDSOURCE
+      SOURCE #TotalModalidadPago
+        #Amount TotalModalidadPago(CRMHojaGastoModalidadPago   _modalidadPago)
+        #{
+        #    Map map = this.TotalPorModalidadPago();
+        #    ;
+        #    if (map.exists(_modalidadPago)){
+        #        return map.lookup(_modalidadPago);
+        #    }
+        #
+        #    return 0;
+        #}
+      ENDSOURCE
+      SOURCE #TotalModalidadPagoMST
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #Amount TotalModalidadPagoMST(CRMHojaGastoModalidadPago _modalidadPago)
+        #{
+        #    Map map = this.TotalPorModalidadPagoMST();
+        #    ;
+        #
+        #    if (map.exists(_modalidadPago))
+        #        return map.lookup(_modalidadPago);
+        #
+        #    return 0;
+        #}
+      ENDSOURCE
+      SOURCE #TotalPorModalidadPago
+        #Map TotalPorModalidadPago()
+        #{
+        #    CRMHojaGAstosLine   hojaGastosLine;
+        #    Map                 map;
+        #    ;
+        #
+        #    map = new Map(Types::String, Types::Real);
+        #
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #          /*
+        #          &&
+        #          hojaGastosLine.Ticket         == NoYes::Yes         &&
+        #          hojaGastosLine.NoCobrar       == NoYes::No          &&
+        #          hojaGastosLine.Internacional  == NoYes::No          &&
+        #          hojaGastosLine.VisaEmpresa    == Noyes::No
+        #          */
+        #    {
+        #        if (map.exists(hojaGastosLine.ModalidadPago)){
+        #            map.insert(hojaGastosLine.ModalidadPago, map.lookup(hojaGastosLine.ModalidadPago) + hojaGastosLine.Amount);
+        #        }
+        #        else {
+        #            map.insert(hojaGastosLine.ModalidadPago, hojaGastosLine.Amount);
+        #        }
+        #    }
+        #    return map;
+        #}
+      ENDSOURCE
+      SOURCE #TotalPorModalidadPagoMST
+        #//MMS - Divisa desde línea - 2026.05.21
+        #Map TotalPorModalidadPagoMST()
+        #{
+        #    CRMHojaGAstosLine   hojaGastosLine;
+        #    Map                 map;
+        #    Amount            amount;
+        #    ;
+        #
+        #    map = new Map(Types::String, Types::Real);
+        #
+        #    while select hojaGastosLine
+        #    index hint index1
+        #        where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #    {
+        #        amount = hojaGastosLine.AmountMST;
+        #
+        #        if (map.exists(hojaGastosLine.ModalidadPago))
+        #            map.insert(hojaGastosLine.ModalidadPago, map.lookup(hojaGastosLine.ModalidadPago) + amount);
+        #        else
+        #            map.insert(hojaGastosLine.ModalidadPago, amount);
+        #    }
+        #
+        #    return map;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #TotalReembolsarMexico
+        #display Amount TotalReembolsarMexico()
+        #{
+        #    Amount      amount;
+        #    ;
+        #
+        #    if (this.NoContabilizarGasolina){
+        #        amount  = this.TotalModalidadPago(CRMHojaGastoModalidadPago::Efectivo);
+        #    }
+        #    else {
+        #        amount  = this.TotalModalidadPago(CRMHojaGastoModalidadPago::Efectivo);
+        #        amount  -= this.TotalModalidadPago(CRMHojaGastoModalidadPago::TarjetaGasolina);
+        #        amount  -= this.TotalEfectivo_Gasolina();
+        #    }
+        #
+        #    /*
+        #    amount  = this.TotalModalidadPago(CRMHojaGastoModalidadPago::Efectivo);
+        #    amount  -= this.TotalModalidadPago(CRMHojaGastoModalidadPago::TarjetaGasolina);
+        #    amount  -= this.TotalEfectivo_Gasolina();
+        #    */
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #TotalTAG
+        #display Amount TotalTAG()
+        #{
+        #    return this.TotalModalidadPago(CRMHojaGastoModalidadPago::TAG);
+        #}
+      ENDSOURCE
+      SOURCE #TotalTarjetaGasolina
+        #display Amount TotalTarjetaGasolina()
+        #{
+        #    return this.TotalModalidadPago(CRMHojaGastoModalidadPago::TarjetaGasolina);
+        #}
+      ENDSOURCE
+      SOURCE #TotalTarjetaViajes
+        #display Amount TotalTarjetaViajes()
+        #{
+        #    return this.TotalModalidadPago(CRMHojaGastoModalidadPago::TarjetaViajes);
+        #}
+      ENDSOURCE
+      SOURCE #TotalTaxAmount
+        #Map TotalTaxAmount()
+        #{
+        #    CRMHojaGAstosLine   hojaGastosLine;
+        #    CRMTaxParameters    taxParameters;
+        #    Amount              taxAmount;
+        #    Map                 map;
+        #    str                 tax;
+        #    Percent             taxPercent;
+        #    Amount              amountTotal     = this.TotalAmount();
+        #    Amount              amountPrimas    = this.TotalAmountPrimasMontaje();
+        #    Amount              amountConIVA;
+        #    ;
+        #
+        #    map = new Map(Types::String, Types::Real);
+        #
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.HojaGastosId   == this.HojaGastosId    &&
+        #          hojaGastosLine.Factura        == NoYes::Yes           &&
+        #//          (hojaGastosLine.Ticket        == NoYes::Yes ||
+        #//           hojaGastosLine.Factura       == NoYes::Yes)          &&
+        #          hojaGastosLine.NoCobrar       == NoYes::No            &&
+        #          hojaGastosLine.Internacional  == NoYes::No            &&
+        #          hojaGastosLine.VisaEmpresa    == Noyes::No {
+        #
+        #        taxParameters   = CRMTaxParameters::Find(hojaGastosLine.Type, hojaGastosLine.TransDate);
+        #
+        #        taxPercent      = hojaGastosLine.TaxPercent ? hojaGastosLine.TaxPercent : taxParameters.TaxPercent;
+        #
+        #        if (taxPercent){
+        #            taxAmount  = hojaGastosLine.Amount;//(hojaGastosLine.Amount / (1 + taxParameters.TaxPercent / 100)) * (taxParameters.TaxPercent / 100);
+        #
+        #            //taxAmount   = hojaGastosLine.Amount - taxAmount;
+        #
+        #            tax         =  int2str(taxPercent);
+        #
+        #            if (map.exists(tax)){
+        #                map.insert(tax, map.lookup(tax)+taxAmount);
+        #            }
+        #            else {
+        #                map.insert(tax, taxAmount);
+        #            }
+        #
+        #            amountConIVA    += taxAmount;
+        #        }
+        #    }
+        #
+        #    map.insert("RESTO", amountTotal - amountPrimas - amountConIVA);
+        #    return map;
+        #}
+      ENDSOURCE
+      SOURCE #TotalTaxAmountMST
+        #//MMS - Divisa desde línea - 2026.05.21
+        #Map TotalTaxAmountMST()
+        #{
+        #    CRMHojaGastosLine hojaGastosLine;
+        #    CRMTaxParameters  taxParameters;
+        #    Amount            taxAmount;
+        #    Map               map;
+        #    str               tax;
+        #    Percent           taxPercent;
+        #    Amount            amountTotal  = this.TotalAmountMST();
+        #    Amount            amountPrimas = this.TotalAmountPrimasMontajeMST();
+        #    Amount            amountConIVA;
+        #    ;
+        #
+        #    map = new Map(Types::String, Types::Real);
+        #
+        #    while select hojaGastosLine
+        #        index hint index1
+        #        where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #           && hojaGastosLine.Factura        == NoYes::Yes
+        #           && hojaGastosLine.NoCobrar       == NoYes::No
+        #           && hojaGastosLine.Internacional  == NoYes::No
+        #           && hojaGastosLine.VisaEmpresa    == NoYes::No
+        #    {
+        #        taxParameters = CRMTaxParameters::Find(hojaGastosLine.Type, hojaGastosLine.TransDate);
+        #        taxPercent    = hojaGastosLine.TaxPercent ? hojaGastosLine.TaxPercent : taxParameters.TaxPercent;
+        #
+        #        if (taxPercent)
+        #        {
+        #            taxAmount = hojaGastosLine.AmountMST;
+        #            tax       = int2str(taxPercent);
+        #
+        #            if (map.exists(tax))
+        #                map.insert(tax, map.lookup(tax) + taxAmount);
+        #            else
+        #                map.insert(tax, taxAmount);
+        #
+        #            amountConIVA += taxAmount;
+        #        }
+        #    }
+        #
+        #    map.insert("RESTO", amountTotal - amountPrimas - amountConIVA);
+        #
+        #    return map;
+        #}
+      ENDSOURCE
+      SOURCE #update
+        #public void update()
+        #{
+        #    CRMHojaGastosTable   tableOrig    = this.orig();
+        #    ;
+        #
+        #    this.updateSearchKey();//IND_MMS - API PROJECT - 2025.11.10
+        #
+        #    super();
+        #
+        #    //IJL.12/07/24
+        #    if (tableOrig.ViajeId != this.ViajeId)
+        #        this.UpdateViajeEnLineas();
+        #
+        #}
+        #
+      ENDSOURCE
+      SOURCE #updateCurrencyDefaultsInLines
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #int updateCurrencyDefaultsInLines(boolean _recalculateAmountMST = true)
+        #{
+        #    CRMHojaGastosLine hojaGastosLine;
+        #    int               updated;
+        #    ;
+        #
+        #    // Applies header currency defaults to all current lines. Call only after the user confirms propagation.
+        #    if (!this.HojaGastosId)
+        #        return 0;
+        #
+        #    if (this.isVariousCurrencyDefault())
+        #        return 0;
+        #
+        #    ttsbegin;
+        #    while select forupdate hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #    {
+        #        hojaGastosLine.Currency = this.CurrencyCode;
+        #        hojaGastosLine.ExchRate = this.ExchRate;
+        #
+        #        if (_recalculateAmountMST)
+        #            hojaGastosLine.normalizeCurrencyAmounts(false);
+        #
+        #        hojaGastosLine.update();
+        #        updated++;
+        #    }
+        #    ttscommit;
+        #
+        #    return updated;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #UpdateDivisaEnLineas
+        #//IJL.14/07/23
+        #void UpdateDivisaEnLineas()
+        #{
+        #    // Keeps the legacy method name, but delegates to the multi-currency helper.
+        #    this.updateCurrencyDefaultsInLines(true); //INDMMS_ExternalCRM - 2026.05.21
+        #}
+        #
+      ENDSOURCE
+      SOURCE #updateProjectDefaultInLines
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #int updateProjectDefaultInLines()
+        #{
+        #    CRMHojaGastosLine hojaGastosLine;
+        #    int               updated;
+        #    ;
+        #
+        #    // Applies header project to all current lines. Call only after the user confirms propagation.
+        #    if (!this.HojaGastosId)
+        #        return 0;
+        #
+        #    if (!this.ProjId || this.isVariousProjectDefault())
+        #        return 0;
+        #
+        #    ttsbegin;
+        #    while select forupdate hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #    {
+        #        hojaGastosLine.ProjId       = this.ProjId;
+        #        hojaGastosLine.ProjIdHornos = this.ProjId;
+        #        hojaGastosLine.doUpdate();
+        #
+        #        hojaGastosLine.BorrarTodosProyecto();
+        #        hojaGastosLine.CreaLineaProyecto(this.ProjId);
+        #        updated++;
+        #    }
+        #    ttscommit;
+        #
+        #    return updated;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #UpdateProjIdEnLineas
+        #//IJL.20/01/26
+        #void UpdateProjIdEnLineas()
+        #{
+        #    // Keeps the legacy method name, but delegates to the project propagation helper.
+        #    this.updateProjectDefaultInLines(); //INDMMS_ExternalCRM - 2026.05.21
+        #}
+      ENDSOURCE
+      SOURCE #updateReimbursableExpenseInLines
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #int updateReimbursableExpenseInLines()
+        #{
+        #    CRMHojaGastosLine hojaGastosLine;
+        #    int               updated;
+        #    ;
+        #
+        #    // Applies header reimbursable value to all current lines. Call only after the user confirms propagation.
+        #    if (!this.HojaGastosId)
+        #        return 0;
+        #
+        #    if (this.isVariousReimbursableExpenseDefault())
+        #        return 0;
+        #
+        #    ttsbegin;
+        #    while select forupdate hojaGastosLine
+        #    index hint index1
+        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
+        #    {
+        #        hojaGastosLine.ReimbursableExpense = this.ReimbursableExpense;
+        #        hojaGastosLine.doUpdate();
+        #        updated++;
+        #    }
+        #    ttscommit;
+        #
+        #    return updated;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #updateSearchKey
+        #//IND_MMS - API PROJECT - 2025.11.10
+        #public void updateSearchKey()
+        #{
+        #    this.INDSearchKey = strLwr(this.HojaGastosId + '|' + this.Description  + ';');
+        #}
+      ENDSOURCE
+      SOURCE #UpdateStatus
+        #void UpdateStatus(INDExpenseSheetStatus _newStatus,
+        #                  FreeText              _estadoComentarios = "")
+        #{
+        #    CRMHojaGastosTable      hojaGastosTableUpdate;
+        #    //MMS - Ajustes CRM - 2026.05.27
+        #    INDExpenseSheetStatus   oldExpenseSheetStatus;
+        #    ;
+        #
+        #    if (! this.RecId)
+        #        return;
+        #
+        #    ttsbegin;
+        #    hojaGastosTableUpdate                       = CRMHojaGastosTable::FindRecId(this.RecId, true);
+        #    //MMS - Ajustes CRM - 2026.05.27
+        #    oldExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
+        #    hojaGastosTableUpdate.ExpenseSheetStatus    = _newStatus;
+        #    hojaGastosTableUpdate.EstadoComentarios     = hojaGastosTableUpdate.EstadoComentarios ? strfmt("%1\n\n%2", hojaGastosTableUpdate.EstadoComentarios, _estadoComentarios) : _estadoComentarios;
+        #    hojaGastosTableUpdate.doUpdate();
+        #    ttscommit;
+        #
+        #    //MMS - Ajustes CRM - 2026.05.27
+        #    // El email se lanza fuera del tts para no bloquear el cambio de estado.
+        #    INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
+        #        hojaGastosTableUpdate,
+        #        oldExpenseSheetStatus,
+        #        _newStatus,
+        #        curUserId(),
+        #        '',
+        #        'axapta',
+        #        strFmt('table-%1-%2', hojaGastosTableUpdate.HojaGastosId, timeNow()));
+        #}
+      ENDSOURCE
+      SOURCE #UpdateViajeEnLineas
+        #//IJL.12/07/24
+        #void UpdateViajeEnLineas()
+        #{
+        #    CRMHojaGastosLine       hojsGastosLine;
+        #    ;
+        #
+        #    if (! this.HojaGastosId)
+        #        return;
+        #
+        #    ttsbegin;
+        #    while select forupdate hojsGastosLine
+        #    index hint index1
+        #    where hojsGastosLine.HojaGastosId == this.HojaGastosId {
+        #
+        #        hojsGastosLine.ViajeId = this.ViajeId;
+        #        hojsGastosLine.doupdate();
+        #    }
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #UserName
+        #display Name UserName()
+        #{
+        #    return CRMUsuarioTable::Find(this.UserId).Name;
+        #}
+      ENDSOURCE
+      SOURCE #validateCanChangeCurrencyDefaults
+        #//INDMMS_ExternalCRM - 2026.05.21
+        #boolean validateCanChangeCurrencyDefaults()
+        #{
+        #    if (!this.canChangeCurrencyDefaults())
+        #        return checkFailed("La hoja de gastos tiene lineas con multiples divisas; no se puede propagar la divisa de cabecera.");
+        #
+        #    return true;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateDelete
+        #public boolean validateDelete()
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    if (this.Voucher)
+        #        ret = checkFailed("La hoja de gastos está pagada y no puede ser borrada.");
+        #
+        #    ret = super();
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateField
+        #public boolean validateField(fieldId _fieldIdToCheck)
+        #{
+        #    boolean ret;
+        #    ;
+        #    ret = super(_fieldIdToCheck);
+        #
+        #    switch (_fieldIdToCheck){
+        #        case FieldNum(CRMHojaGastosTable, ProjId):
+        #
+        #            //IJL.20/01/26
+        #            //Si estoy creando la línea e informo el proyecto no necesito hacer nada. Debo actualizar si la línea ya se ha creado previamente.
+        #            if (this.RecId){
+        #                if (BOX::yesNo("Se van a actualizar los proyectos en todas las líneas, ¿deseas continuar?", DialogButton::No) == DialogButton::Yes){
+        #                    //Actualizar
+        #                    this.write();
+        #
+        #                    this.UpdateProjIdEnLineas();
+        #                }
+        #                else {
+        #                    //NO actualizar y no cambiar el valor del campo
+        #                    ret = false;
+        #                }
+        #            }
+        #
+        #            break;
+        #    }
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean ret;
+        #
+        #    ProjTable       projTable, projTableOrig; //IJL.09/10/23
+        #    ;
+        #
+        #    //IJL.09/10/23
+        #    projTableOrig   = ProjTable::find(this.orig().ProjId);
+        #    projTable       = ProjTable::find(this.ProjId);
+        #
+        #    ret = super();
+        #
+        #
+        #    if (this.CurrencyCode != CompanyInfo::standardCurrency() && ! this.ExchRate && !this.isVariousCurrencyDefault()){
+        #
+        #        ret = checkFailed(strfmt("Para Hojas de Gastos en divisa distinta a %1 hay que indicar el tipo de cambio.", CompanyInfo::standardCurrency()));
+        #    }
+        #
+        #    //IJL.09/10/23
+        #    ret = ret && ProjTable::PermitirCambioProyecto(projTableOrig.ProjId, projTable.ProjId);
+        #    if (! ret)
+        #        return false;
+        #
+        #    if (this.ProjId && !this.isVariousProjectDefault() && this.ProjId != PurchParameters::find().INDProjIdVarious && !ProjTable::find(this.ProjId).INDPermitirImputarGastos){
+        #        ret = checkFailed(strfmt("El proyecto %1 no permite la imputación de gastos", this.ProjId));
+        #    }
+        #
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #AprobarHojaDeGastosFromForm
+        #static void AprobarHojaDeGastosFromForm(CRMHojaGastosTable  _hojaGastosTable,
+        #                                        FormDataSource      _formDataSource,
+        #                                        FormRun             _formRun,
+        #                                        TransDate           _transDate = today())
+        #{
+        #    Object      callerObject = _formRun;
+        #    ;
+        #    if (BOX::yesNo("Se va a Aprobar de la Hoja de Gastos. ¿Deseas Continuar?", DialogButton::No) == DialogButton::Yes){
+        #
+        #        _hojaGastosTable.Aprobar_DesaprobarHojaDeGastos(1);
+        #
+        #        if (_formDataSource){
+        #            _formDataSource.reread();
+        #            _formDataSource.refresh();
+        #        }
+        #
+        #        info("Estado Actualizado");
+        #
+        #        if (callerObject)
+        #            callerObject.EnableButtonsFunciones();
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #CancelarAprobarHojaDeGastosFromForm
+        #static void CancelarAprobarHojaDeGastosFromForm(CRMHojaGastosTable  _hojaGastosTable,
+        #                                                FormDataSource      _formDataSource,
+        #                                                FormRun             _formRun)
+        #{
+        #    Object      callerObject = _formRun;
+        #    ;
+        #    if (BOX::yesNo("Se va a Cancelar la Aprobación de la Hoja de Gastos. ¿Deseas Continuar?", DialogButton::No) == DialogButton::Yes){
+        #
+        #        _hojaGastosTable.Aprobar_DesaprobarHojaDeGastos(2);
+        #
+        #        if (_formDataSource){
+        #            _formDataSource.reread();
+        #            _formDataSource.refresh();
+        #        }
+        #
+        #        info("Estado Actualizado");
+        #
+        #        if (callerObject)
+        #            callerObject.EnableButtonsFunciones();
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #CancelarRechazarHojaDeGastosFromForm
+        #static void CancelarRechazarHojaDeGastosFromForm(CRMHojaGastosTable  _hojaGastosTable,
+        #                                                 FormDataSource      _formDataSource,
+        #                                                 FormRun             _formRun,
+        #                                                 TransDate           _transDate = today())
+        #{
+        #    Object  callerObject    = _formRun;
+        #    ;
+        #    /*
+        #    Al usar esta opción la Hoja de Gastos pasa a Estado "Solicitada Aprobación".
+        #    .- Si la Hoja de Gastos es de un empleado con la casilla marcada de permitir AutoGestión en la tabla de personas la Hoja de Gastos se Aprueba automáticamente.
+        #    */
+        #
+        #    if (_hojaGastosTable.ExpenseSheetStatus != INDExpenseSheetStatus::Rejected)
+        #        throw error("El Estado de la Hoja de Gastos no permite Cancelar su Rechazo. El estado debe ser 'Rechazada' ");
+        #
+        #
+        #    if (BOX::yesNo("Se va a Rechazar la Hoja de Gastos. ¿Deseas Continuar?", DialogButton::No) == DialogButton::Yes){
+        #
+        #        _hojaGastosTable.UpdateStatus(INDExpenseSheetStatus::InReview);
+        #        if (_formDataSource){
+        #            _formDataSource.reread();
+        #            _formDataSource.refresh();
+        #        }
+        #
+        #        if (callerObject)
+        #            callerObject.EnableButtonsFunciones();
+        #        //info("Estado Actualizado");
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #CancelarSolicitarAprobacionFromForm
+        #static void CancelarSolicitarAprobacionFromForm(CRMHojaGastosTable  _hojaGastosTable,
+        #                                                FormDataSource      _formDataSource,
+        #                                                FormRun             _formRun)
+        #{
+        #    CRMUsuarioTable     crmUsuarioTable = CRMUsuarioTable::Find(_hojaGastosTable.UserId);
+        #    INDPersonaTable     personaTable    = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
+        #
+        #    Object              callerObject    = _formRun
+        #    ;
+        #    /*
+        #    Al usar esta opción la Hoja de Gastos pasa a Estado "Solicitada Aprobación".
+        #    .- Si la Hoja de Gastos es de un empleado con la casilla marcada de permitir AutoGestión en la tabla de personas la Hoja de Gastos se Aprueba automáticamente.
+        #    */
+        #
+        #    if (BOX::yesNo("Se va a Cancelar la Solicitud la Aprobación de la Hoja de Gastos y pasará de nuevo a estado 'Borrador'. ¿Deseas Continuar?", DialogButton::No) == DialogButton::Yes){
+        #
+        #        if (personaTable.AllowSelfManagement){
+        #            //CRMHojaGastosTable.Aprobar_DesaprobarHojaDeGastos(today(), 2);
+        #        }
+        #        else {
+        #            _hojaGastosTable.UpdateStatus(INDExpenseSheetStatus::Draft);
+        #        }
+        #
+        #        if (_formDataSource){
+        #            _formDataSource.reread();
+        #            _formDataSource.refresh();
+        #        }
+        #
+        #        if (callerObject)
+        #            callerObject.EnableButtonsFunciones();
+        #        //info("Estado Actualizado");
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #ContabilizaAsientoHojaGastos
+        #static Voucher ContabilizaAsientoHojaGastos(CompanyBankAccountId    _bankAccountId,
+        #                                            TransDate               _transDate,
+        #                                            Set                     _setHojasGasto,
+        #                                            Description             _description,
+        #                                            CurrencyCode            _currencyCode)
+        #{
+        #    //CRMHojaGastosTableVoucher   CRMHojaGastosTableVoucher;
+        #
+        #    LedgerVoucher               ledgerVoucher;
+        #    LedgerVoucherObject         ledgerVoucherObject;
+        #    TransactionTxt              transactionTxt;
+        #    LedgerVoucherTransObject    ledgerVoucherTransObject;
+        #
+        #    LedgerJournalName           journalName;
+        #    NumberSeq                   numberSeq;
+        #    voucher                     voucher;
+        #    TransDate                   transDate   = _transDate;
+        #    Dimension                   dimension;
+        #    boolean                     primeraLinea    = true;
+        #
+        #    SetIterator                 si  = new SetIterator(_setHojasGasto);
+        #    CRMHojaGastosTable          hojaGastosTable;
+        #    Dimension                   dimensionBank;
+        #    Amount                      amountTotal;
+        #    BankAccountTable            bankAccountTable    = BankAccountTable::find(_bankAccountId);
+        #    CurrencyCode                currencyCode        = _currencyCode
+        #    ;
+        #
+        #    ttsbegin;
+        #
+        #    while (si.more()){
+        #
+        #        hojaGastosTable = CRMHojaGastosTable::FindRecId(si.value());
+        #        if (primeraLinea){
+        #            //Inicializar las variables para crear el asiento
+        #            select firstonly journalName
+        #            where journalName.JournalType == LedgerJournalType::Daily;
+        #
+        #            numberSeq   = NumberSeq::newGetNumFromCode(journalName.VoucherSeries);
+        #
+        #            voucher     = numberSeq.num();
+        #
+        #            ledgerVoucher = ledgerVoucher::newLedgerPost(DetailSummary::Detail,
+        #                                                         SysModule::Purch,
+        #                                                         numberSeq.parmVoucherSequenceCode());
+        #
+        #            ledgerVoucherObject = LedgerVoucherObject::newVoucher(voucher,
+        #                                                                  transDate,
+        #                                                                  SysModule::Ledger,
+        #                                                                  LedgerTransType::None,
+        #                                                                  NoYes::No);
+        #
+        #            //Asignar texto de la transacción.
+        #            ledgerVoucherObject.lastTransTxt("PAGO HOJAS DE GASTOS");
+        #
+        #            ledgerVoucher.AddVoucher(ledgerVoucherObject);
+        #
+        #            primeraLinea    = false;
+        #        }
+        #
+        #        amountTotal += hojaGastosTable.TotalAmountMST_Pagar();
+        #
+        #        //Debemos obtener para cada hoja de gastos el importe por la combinación de Cuenta contable de Gasto y Dimension Contable.
+        #        ledgerVoucher.findLedgerVoucherObject().lastTransTxt(_description);
+        #
+        #        /*
+        #        ledgerVoucher.addTrans(
+        #            LedgerVoucherTransObject::newCreateTrans(
+        #                                             ledgerVoucher.findLedgerVoucherObject(),
+        #                                             LedgerPostingType::LedgerJournal,
+        #                                             accountDebit,
+        #                                             dimensionOffset,
+        #                                             currencyCode,
+        #                                             amount * -1,
+        #                                             0,
+        #                                             0,
+        #                                             0, //this.fixedExchRate(),
+        #                                             0, //this.fixedExchRateSecondary(),
+        #                                             0, //this.fixedEuroTriangulation(),
+        #                                             false,
+        #                                             null));//projLedger::newInventSales(salesLine.ProjId,salesLine.InventTransId,number,inventMovement.projAdjustRefId())));
+        #        */
+        #        si.next();
+        #    }
+        #
+        #    //Línea para el banco
+        #        ledgerVoucher.addTrans(
+        #            LedgerVoucherTransObject::newCreateTrans(
+        #                                             ledgerVoucher.findLedgerVoucherObject(),
+        #                                             LedgerPostingType::LedgerJournal,
+        #                                             bankAccountTable.LedgerAccount,
+        #                                             dimensionBank,
+        #                                             currencyCode,
+        #                                             amountTotal * -1,
+        #                                             0,
+        #                                             0,
+        #                                             0, //this.fixedExchRate(),
+        #                                             0, //this.fixedExchRateSecondary(),
+        #                                             0, //this.fixedEuroTriangulation(),
+        #                                             false,
+        #                                             null));//projLedger::newInventSales(salesLine.ProjId,salesLine.InventTransId,number,inventMovement.projAdjustRefId())));
+        #
+        #/*
+        #    while select forupdate CRMHojaGastosTableVoucher
+        #    where CRMHojaGastosTableVoucher.RefRecId    == this.RecId  &&
+        #          CRMHojaGastosTableVoucher.Posted      == NoYes::No {
+        #
+        #        if (! CRMHojaGastosTableVoucher.LedgerAccount){
+        #            throw error("Falta cuenta contable en una línea.");
+        #        }
+        #
+        #        if (! CRMHojaGastosTableVoucher.TransDate){
+        #            throw error("Falta data en una línea.");
+        #        }
+        #
+        #        if (! CRMHojaGastosTableVoucher.Dimension[1]){
+        #            throw error("Falta la dimension");
+        #        }
+        #
+        #        if (! CRMHojaGastosTableVoucher.DimensionOffset[1]){
+        #            throw error("Falta la dimension en la cuenta de contrapartida");
+        #        }
+        #
+        #        transDate   = CRMHojaGastosTableVoucher.TransDate;
+        #
+        #        if (primeraLinea){
+        #            //Inicializar las variables para crear el asiento
+        #            select firstonly journalName
+        #            where journalName.JournalType == LedgerJournalType::Daily;
+        #
+        #            numberSeq   = NumberSeq::newGetNumFromCode(journalName.VoucherSeries);
+        #
+        #            voucher     = numberSeq.num();
+        #
+        #            ledgerVoucher = ledgerVoucher::newLedgerPost(DetailSummary::Detail,
+        #                                                         SysModule::Purch,
+        #                                                         numberSeq.parmVoucherSequenceCode());
+        #
+        #            ledgerVoucherObject = LedgerVoucherObject::newVoucher(voucher,
+        #                                                                  transDate,
+        #                                                                  SysModule::Ledger,
+        #                                                                  LedgerTransType::None,
+        #                                                                  NoYes::No);
+        #
+        #            //Asignar texto de la transacción.
+        #            ledgerVoucherObject.lastTransTxt("IMPOSTOS IMPORTAÇAO");
+        #
+        #            ledgerVoucher.AddVoucher(ledgerVoucherObject);
+        #
+        #            primeraLinea    = false;
+        #        }
+        #
+        #        ledgerVoucher.findLedgerVoucherObject().lastTransTxt(_description);
+        #
+        #        ledgerVoucher.addTrans(
+        #            LedgerVoucherTransObject::newCreateTrans(
+        #                                             ledgerVoucher.findLedgerVoucherObject(),
+        #                                             LedgerPostingType::LedgerJournal,
+        #                                             accountDebit,
+        #                                             dimensionOffset,
+        #                                             currencyCode,
+        #                                             amount * -1,
+        #                                             0,
+        #                                             0,
+        #                                             0, //this.fixedExchRate(),
+        #                                             0, //this.fixedExchRateSecondary(),
+        #                                             0, //this.fixedEuroTriangulation(),
+        #                                             false,
+        #                                             null));//projLedger::newInventSales(salesLine.ProjId,salesLine.InventTransId,number,inventMovement.projAdjustRefId())));
+        #    }
+        #
+        #    //Cerrar el asiento.
+        #    if (primeraLinea == false)
+        #        ledgerVoucher.end(); //Contabilizar el asiento.
+        #
+        #
+        #    CRMHojaGastosTableVoucher.Posted     = NoYes::Yes;
+        #    CRMHojaGastosTableVoucher.Voucher    = voucher;
+        #    CRMHojaGastosTableVoucher.doUpdate();
+        #*/
+        #    ttscommit;
+        #
+        #    if (primeraLinea == false)
+        #    {
+        #        info(strfmt("Creado el asiento %1", voucher));
+        #
+        #        si = new SetIterator(_setHojasGasto);
+        #        while (si.more())
+        #        {
+        #            hojaGastosTable = CRMHojaGastosTable::FindRecId(si.value());
+        #            if (hojaGastosTable.RecId)
+        #            {
+        #                //MMS - Ajustes CRM - 2026.05.27
+        #                INDCRMExpenseSheetService::sendExpenseSheetPaidNotification(hojaGastosTable, curUserId());
+        #            }
+        #
+        #            si.next();
+        #        }
+        #    }
+        #    else
+        #    {
+        #        info("No se ha creado ningun asiento.");
+        #    }
+        #
+        #    return voucher;
+        #}
+      ENDSOURCE
+      SOURCE #EnableButtonsFunciones
+        #static void EnableButtonsFunciones(CRMHojaGastosTable  _hojaGastosTable,
+        #                                   FormButtonControl   _buttonSolicitarAprobacion,
+        #                                   FormButtonControl   _buttonCancelarSolicitarAprobacion,
+        #                                   FormButtonControl   _buttonAprobar,
+        #                                   FormButtonControl   _buttonCancelarAprobacion,
+        #                                   FormButtonControl   _buttonRechazar,
+        #                                   FormButtonControl   _buttonCancelarRechazo)
+        #{
+        #    CRMUsuarioTable     crmUsuarioTable = CRMUsuarioTable::Find(_hojaGastosTable.UserId);
+        #    INDPersonaTable     personaTable    = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
+        #
+        #    boolean             enableSolicitarAprobacion, enableCancelarSolicitarAprobacion, enableAprobar, enableDesAprobar, enableRechazar, enableAnularRechazo;
+        #    Set                 setSubordinados             = crmUsuarioTable.SetSubordinados();
+        #    INDPersonaTable     personaTableAxaptaUser      = INDPersonaTable::findByAxUserId(curUserId());
+        #    CRMUsuarioTable     CRMUsuarioTableAxaptaUser   = CRMUsuarioTable::Find_AxaptaUserId(curUserId());
+        #    boolean             allowSelfManagement         = personaTableAxaptaUser.AllowSelfManagement;
+        #    boolean             hojaGastosEsMia             = _hojaGastosTable.UserId == CRMUsuarioTableAxaptaUser.UserId;
+        #    ;
+        #
+        #    //Solamente se puede solicitar aprobación si la HG está en un estado que permita la edición
+        #    //enableSolicitarAprobacion           = CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(_hojaGastosTable.ExpenseSheetStatus) && !allowSelfManagement;
+        #    enableSolicitarAprobacion           = CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(_hojaGastosTable.ExpenseSheetStatus) && hojaGastosEsMia && !allowSelfManagement;
+        #
+        #    //Solamente s epuede cancelar la solicitud de aprobación si el estado es "Solicitud Aprobada"
+        #    enableCancelarSolicitarAprobacion   = _hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::InReview && hojaGastosEsMia && !allowSelfManagement;
+        #
+        #    //Puede Aprobar aquella persona que tenga más un elemento en el set de subordinados. Como mínimo ese set contiene al propio usuario.
+        #    //Se puede Aprobar una Hoja de Gastos en estado "Solicitud Aprobada"
+        #    if (   (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::InReview && setSubordinados.elements() > 0 && setSubordinados.in(_hojaGastosTable.UserId) && !hojaGastosEsMia)
+        #        || (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Draft    && (allowSelfManagement && hojaGastosEsMia))){
+        #
+        #        enableAprobar = true;
+        #    }
+        #    else
+        #    {
+        #        enableAprobar = false;
+        #    }
+        #
+        #
+        #    if (   (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Approved && setSubordinados.elements() > 0 && setSubordinados.in(_hojaGastosTable.UserId) && !hojaGastosEsMia)
+        #        || (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Approved && (allowSelfManagement && hojaGastosEsMia))){
+        #
+        #        enableDesAprobar    = true;
+        #    }
+        #    else {
+        #        enableDesAprobar    = false;
+        #    }
+        #
+        #    //Solamente se puede Desaprobar una HG que está en estado APROBADA y el usuario tenga potestad para aprobar.
+        #//    enableDesAprobar    = CRMHojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Approved && setSubordinados.elements() > 1;
+        #
+        #    //Puede Rechazar aquella persona que tenga más un elemento en el set de subordinados. Como mínimo ese set contiene al propio usuario.
+        #    //Se puede Rechazar una Hoja de Gastos en estado "Solicitud Aprobada"
+        #    if (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::InReview && setSubordinados.elements() > 0 && setSubordinados.in(_hojaGastosTable.UserId) && !hojaGastosEsMia){
+        #        enableRechazar = true;
+        #    }
+        #    else
+        #    {
+        #        enableRechazar = false;
+        #    }
+        #
+        #    //Solamente se puede Anular el rechazo de una HG que está en estado RECHAZADA y el usuario tenga potestad para rechazar.
+        #    enableAnularRechazo = _hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Rejected && setSubordinados.elements() > 0 && setSubordinados.in(_hojaGastosTable.UserId) && !hojaGastosEsMia;
+        #
+        #    _buttonSolicitarAprobacion.enabled(enableSolicitarAprobacion);
+        #    _buttonCancelarSolicitarAprobacion.enabled(enableCancelarSolicitarAprobacion);
+        #    _buttonAprobar.enabled(enableAprobar);
+        #    _buttonCancelarAprobacion.enabled(enableDesAprobar);
+        #    _ButtonRechazar.enabled(enableRechazar);
+        #    _buttonCancelarRechazo.enabled(enableAnularRechazo);
+        #
+        #    //LedgerTransVoucher.enabled(CRMHojaGastosTable.Voucher || CRMHojaGastosTable.VoucherPhysical);
+        #}
+      ENDSOURCE
+      SOURCE #Find
+        #static CRMHojaGastosTable Find (CRMHojaGastosId _id, boolean _forupdate = false)
+        #{
+        #    CRMHojaGastosTable  CRMHojaGastosTable;
+        #    ;
+        #    CRMHojaGastosTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMHojaGastosTable
+        #    index hint index1
+        #    where CRMHojaGastosTable.HojaGastosId == _id;
+        #
+        #    return CRMHojaGastosTable;
+        #}
+      ENDSOURCE
+      SOURCE #FindRecId
+        #static CRMHojaGastosTable FindRecId(RecId _recId, boolean _forupdate = false)
+        #{
+        #    CRMHojaGastosTable  CRMHojaGastosTable;
+        #    ;
+        #    CRMHojaGastosTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMHojaGastosTable
+        #    index hint index1
+        #    where CRMHojaGastosTable.RecId == _recId;
+        #
+        #    return CRMHojaGastosTable;
+        #}
+      ENDSOURCE
+      SOURCE #lookupHojaGastosTable
+        #static client void lookupHojaGastosTable(FormStringControl  _ctrl,
+        #                                         CRMUserId          _userId,
+        #                                         boolean            _soloPendientes = false)
+        #{
+        #    SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(CRMHojaGastosTable),_ctrl);
+        #    Query                   query = new Query();
+        #    QueryBuildDataSource    queryBuildDataSource = query.addDataSource(tableNum(CRMHojaGastosTable));
+        #    QueryBuildRange         queryBuildRange01   = queryBuildDataSource.addRange(fieldNum(CRMHojaGastosTable, UserId));
+        #    QueryBuildRange         queryBuildRange02   = queryBuildDataSource.addRange(fieldNum(CRMHojaGastosTable, Voucher));
+        #    ;
+        #    sysTableLookup.addLookupfield(fieldNum(CRMHojaGastosTable, HojaGastosId), true);
+        #    sysTableLookup.addLookupfield(fieldNum(CRMHojaGastosTable, Description));
+        #    sysTableLookup.addLookupfield(fieldNum(CRMHojaGastosTable, Year));
+        #
+        #    queryBuildRange01.value(_userId);
+        #    if (_soloPendientes)
+        #        queryBuildRange02.value('""');
+        #
+        #    sysTableLookup.parmQuery(query);
+        #    sysTableLookup.performFormLookup();
+        #}
+      ENDSOURCE
+      SOURCE #RechazarHojaDeGastosFromForm
+        #static void RechazarHojaDeGastosFromForm(CRMHojaGastosTable  _hojaGastosTable,
+        #                                         FormDataSource      _formDataSource,
+        #                                         FormRun             _formRun,
+        #                                         TransDate           _transDate = today())
+        #{
+        #    Object  callerObject    = _formRun;
+        #
+        #    Dialog          dialog  = new Dialog("Motivo del Rechazo");
+        #    DialogField     dialogComentarios;
+        #    FreeTxt         comentarios;
+        #    ;
+        #    /*
+        #    Al usar esta opción la Hoja de Gastos pasa a Estado "Solicitada Aprobación".
+        #    .- Si la Hoja de Gastos es de un empleado con la casilla marcada de permitir AutoGestión en la tabla de personas la Hoja de Gastos se Aprueba automáticamente.
+        #    */
+        #
+        #    if (_hojaGastosTable.ExpenseSheetStatus != INDExpenseSheetStatus::InReview)
+        #        throw error("El Estado de la Hoja de Gastos no permite su Rechazo. El estado debe ser 'Aprobación Solicitada' ");
+        #
+        #
+        #    dialogComentarios   = dialog.addField(TypeId(FreeTxt), "Motivo del Rechazo");
+        #    if (dialog.run()){
+        #
+        #        comentarios = dialogComentarios.value();
+        #        if (! comentarios)
+        #            throw error("Debes indicar un motivo para rechazar la hoja de gastos.");
+        #
+        #        comentarios = strfmt("%1 - RECHAZO\n%2", today(), comentarios);
+        #
+        #        _hojaGastosTable.UpdateStatus(INDExpenseSheetStatus::Rejected, comentarios /*Comentarios*/);
+        #
+        #        if (_formDataSource){
+        #            _formDataSource.reread();
+        #            _formDataSource.refresh();
+        #        }
+        #
+        #        if (callerObject)
+        #            callerObject.EnableButtonsFunciones();
+        #
+        #    }
+        #
+        #    /*
+        #    if (BOX::yesNo("Se va a Rechazar la Hoja de Gastos. ¿Deseas Continuar?", DialogButton::No) == DialogButton::Yes){
+        #
+        #        _hojaGastosTable.UpdateStatus(INDExpenseSheetStatus::Rejected, "" /*Comentarios*/);
+        #
+        #        if (_formDataSource){
+        #            _formDataSource.reread();
+        #            _formDataSource.refresh();
+        #        }
+        #
+        #        if (callerObject)
+        #            callerObject.EnableButtonsFunciones();
+        #        //info("Estado Actualizado");
+        #    }
+        #    */
+        #}
+      ENDSOURCE
+      SOURCE #SetStatusPermitenEdicionHG
+        #Static Set SetStatusPermitenEdicionHG()
+        #{
+        #    Set     set = new Set(Types::Enum);
+        #    ;
+        #
+        #    set.add(INDExpenseSheetStatus::Draft);
+        #    set.add(INDExpenseSheetStatus::Rejected);
+        #
+        #    return set;
+        #}
+      ENDSOURCE
+      SOURCE #SolicitarAprobacionFromForm
+        #static void SolicitarAprobacionFromForm(CRMHojaGastosTable  _hojaGastosTable,
+        #                                        FormDataSource      _formDataSource,
+        #                                        FormRun             _formRun)
+        #{
+        #    CRMUsuarioTable     crmUsuarioTable = CRMUsuarioTable::Find(_hojaGastosTable.UserId);
+        #    INDPersonaTable     personaTable    = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
+        #
+        #    Object              callerObject    = _formRun;
+        #    ;
+        #    /*
+        #    Al usar esta opción la Hoja de Gastos pasa a Estado "Solicitada Aprobación".
+        #    .- Si la Hoja de Gastos es de un empleado con la casilla marcada de permitir AutoGestión en la tabla de personas la Hoja de Gastos se Aprueba automáticamente.
+        #    */
+        #
+        #    if (BOX::yesNo("Se va a Solicitar la Aprobación de la Hoja de Gastos. ¿Deseas Continuar?", DialogButton::No) == DialogButton::Yes){
+        #
+        #        if (personaTable.AllowSelfManagement){
+        #            ttsbegin;
+        #            _hojaGastosTable.UpdateStatus(INDExpenseSheetStatus::InReview);
+        #            if (_formDataSource){
+        #                _formDataSource.reread();
+        #                _formDataSource.refresh();
+        #            }
+        #            //CRMHojaGastosTable.Aprobar_DesaprobarHojaDeGastos(today(), 1);
+        #            ttscommit;
+        #        }
+        #        else {
+        #            _hojaGastosTable.UpdateStatus(INDExpenseSheetStatus::InReview);
+        #        }
+        #
+        #        if (_formDataSource){
+        #            _formDataSource.reread();
+        #            _formDataSource.refresh();
+        #        }
+        #
+        #        if (callerObject)
+        #            callerObject.EnableButtonsFunciones();
+        #        //info("Estado Actualizado");
+        #    }
+        #
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

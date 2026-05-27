@@ -1,0 +1,115 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDInternalApi_SendMail_Extendido descargados en Miércoles 27/05/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+
+  SOURCE #Job_INDInternalApi_SendMail_Extendido
+    #static void Job_INDInternalApi_SendMail_Extendido(Args _args)
+    #{
+    #    COM     clientt;
+    #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
+    #
+    #    // URL base de la API interna DEV.
+    #    str     baseUrl         = defaultParameters.InternalAPIUrlService;
+    #
+    #    // Usuario y password del cliente interno de la API.
+    #    str     apiUser         =  defaultParameters.APIUserId;
+    #    str     apiPassword     = defaultParameters.INDAPIIntServiceUser().Password;
+    #
+    #    // Remitente y nombre visible opcional.
+    #    str     fromEmail       = "i.jauregi@insertec.biz";
+    #    str     fromName        = "Prueba Axapta";
+    #
+    #    // Listas de emails separadas por punto y coma (;).
+    #    str     toEmails        = "marco.meza@insertec.biz";
+    #    str     ccEmails        = "";
+    #    str     bccEmails       = "";
+    #    str     replyToEmails   = "";
+    #
+    #    // Company opcional. Si se informa, debe estar permitida en el JWT del usuario API.
+    #    str     company         = "";
+    #
+    #    // Cuerpos del correo.
+    #    str     htmlBody;
+    #    str     textBody;
+    #
+    #    // Identificadores para rastrear la prueba en logs.
+    #    str     correlationId;
+    #    str     aggregateId;
+    #    str     idempotencyKey;
+    #
+    #    str     healthJson;
+    #    boolean online;
+    #    boolean sent;
+    #    ;
+    #
+    #    correlationId  = strFmt("ax-mail-extended-%1-%2", today(), timeNow());
+    #    aggregateId    = strFmt("%1-%2", today(), timeNow());
+    #    idempotencyKey = strFmt("AX-MailExtendedTest:%1", aggregateId);
+    #
+    #    htmlBody = "<p>Prueba extendida de envío desde Axapta usando IND_INTERNAL_API.</p>" +
+    #               "<p>Este envío prueba CC, BCC, Reply-To, saveToSentItems e importance.</p>";
+    #
+    #    textBody = "Prueba extendida de envío desde Axapta usando IND_INTERNAL_API.";
+    #
+    #    try
+    #    {
+    #        // Crea la instancia COM registrada en el AOS/cliente.
+    #        clientt = new COM("IND.InternalApiClient");
+    #
+    #        // Comprueba que la API responde antes de intentar enviar email.
+    #        healthJson = clientt.GetApiHealthStatusJson(baseUrl, correlationId);
+    #        info(strFmt("Health JSON: %1", healthJson));
+    #
+    #        online = clientt.IsApiOnline(baseUrl, correlationId);
+    #        if (!online)
+    #        {
+    #            error("La API interna no está online o no responde desde Axapta.");
+    #            clientt = null;
+    #            return;
+    #        }
+    #
+    #        // Envía un email extendido con CC, BCC, Reply-To, guardado en enviados e importancia.
+    #        sent = clientt.SendMailEx(
+    #            baseUrl,
+    #            apiUser,
+    #            apiPassword,
+    #            fromEmail,
+    #            fromName,
+    #            toEmails,
+    #            ccEmails,
+    #            bccEmails,
+    #            replyToEmails,
+    #            "Prueba extendida mail IND_INTERNAL_API desde Axapta",
+    #            htmlBody,
+    #            textBody,
+    #            false,          // saveToSentItems: true guarda en enviados; false no lo guarda.
+    #            "high",         // importance: low, normal o high.
+    #            company,
+    #            "AXAPTA",
+    #            "ManualSmokeTest",
+    #            "MailExtendedSmokeTest",
+    #            "ManualTest",
+    #            aggregateId,
+    #            idempotencyKey,
+    #            correlationId);
+    #
+    #        if (sent)
+    #            info("SendMailEx OK. Microsoft Graph aceptó la petición.");
+    #        else
+    #            error("SendMailEx devolvió false. Revisar scope, permisos Graph, configuración y logs de la API.");
+    #    }
+    #    catch (Exception::Error)
+    #    {
+    #        error("Error ejecutando prueba extendida COM IND.InternalApiClient.");
+    #    }
+    #
+    #    clientt = null;
+    #}
+  ENDSOURCE
+
+***Element: END

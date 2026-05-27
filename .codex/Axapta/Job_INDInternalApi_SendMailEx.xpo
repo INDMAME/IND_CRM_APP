@@ -1,0 +1,132 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDInternalApi_SendMailEx descargados en Miércoles 27/05/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+
+  SOURCE #Job_INDInternalApi_SendMailEx
+    #static void Job_INDInternalApi_SendMailEx(Args _args)
+    #{
+    #    COM     clientt;
+    #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
+    #
+    #    // baseUrl: absolute IND_INTERNAL_API URL.
+    #    str     baseUrl         = defaultParameters.InternalAPIUrlService;
+    #
+    #    // apiUser: internal API client/user validated by POST /api/auth/login.
+    #    str     apiUser         = defaultParameters.APIUserId;
+    #
+    #    // apiPassword: password for the internal API client/user. Never hardcode it.
+    #    str     apiPassword     = defaultParameters.INDAPIIntServiceUser().Password;
+    #
+    #    // fromEmail: mailbox used by Graph as sender.
+    #    str     fromEmail       = "i.jauregi@insertec.biz";
+    #
+    #    // fromName: optional sender display name.
+    #    str     fromName        = "Axapta Mail Test";
+    #
+    #    // toEmails: primary recipients. Separate multiple emails with semicolon.
+    #    str     toEmails        = "marco.meza@insertec.biz";
+    #
+    #    // ccEmails: optional copy recipients. Separate multiple emails with semicolon.
+    #    str     ccEmails        = "";
+    #
+    #    // bccEmails: optional hidden copy recipients. Separate multiple emails with semicolon.
+    #    str     bccEmails       = "";
+    #
+    #    // replyToEmails: optional reply-to addresses. Separate multiple emails with semicolon.
+    #    str     replyToEmails   = "";
+    #
+    #    // company: optional company metadata. If informed, JWT must include this claim.
+    #    str     company         = "LAN";
+    #
+    #    // correlationId: trace id shared across Axapta, DLL and API logs.
+    #    str     correlationId;
+    #
+    #    // aggregateId: business/test id used for traceability.
+    #    str     aggregateId;
+    #
+    #    // idempotencyKey: unique logical mail key.
+    #    str     idempotencyKey;
+    #
+    #    // htmlBody: HTML body. Preferred over textBody when informed.
+    #    str     htmlBody;
+    #
+    #    // textBody: plain-text body.
+    #    str     textBody;
+    #
+    #    // healthJson: raw health diagnostic response.
+    #    str     healthJson;
+    #
+    #    // online: true when IND_INTERNAL_API is reachable.
+    #    boolean online;
+    #
+    #    // sent: true when API envelope returns Success=true.
+    #    boolean sent;
+    #    ;
+    #
+    #    correlationId  = strFmt("ax-mail-extended-%1-%2", today(), timeNow());
+    #    aggregateId    = strFmt("%1-%2", today(), timeNow());
+    #    idempotencyKey = strFmt("AX-MailExtendedSmokeTest:%1", aggregateId);
+    #
+    #    htmlBody = "<p>Prueba extendida de envio desde Axapta usando IND_INTERNAL_API.</p>" +
+    #               "<p>Este envio prueba CC, BCC, Reply-To, saveToSentItems e importance.</p>";
+    #    textBody = "Prueba extendida de envio desde Axapta usando IND_INTERNAL_API.";
+    #
+    #    try
+    #    {
+    #        clientt = new COM("IND.InternalApiClient");
+    #
+    #        healthJson = clientt.GetApiHealthStatusJson(baseUrl, correlationId);
+    #        info(strFmt("Health JSON: %1", healthJson));
+    #
+    #        online = clientt.IsApiOnline(baseUrl, correlationId);
+    #        if (!online)
+    #        {
+    #            error("IND_INTERNAL_API no esta online o no responde desde AOS.");
+    #            clientt = null;
+    #            return;
+    #        }
+    #
+    #        sent = clientt.SendMailEx(
+    #            baseUrl,        // baseUrl: absolute IND_INTERNAL_API base URL.
+    #            apiUser,        // username: internal API client/user.
+    #            apiPassword,    // password: internal API client password.
+    #            fromEmail,      // fromEmail: sender mailbox.
+    #            fromName,       // fromDisplayName: optional sender display name.
+    #            toEmails,       // toEmails: semicolon-separated primary recipients.
+    #            ccEmails,       // ccEmails: semicolon-separated copy recipients.
+    #            bccEmails,      // bccEmails: semicolon-separated hidden copy recipients.
+    #            replyToEmails,  // replyToEmails: semicolon-separated reply-to addresses.
+    #            "Prueba extendida mail IND_INTERNAL_API desde Axapta", // subject: email subject.
+    #            htmlBody,       // htmlBody: preferred body.
+    #            textBody,       // textBody: plain-text body.
+    #            false,          // saveToSentItems: true to ask Graph to save in Sent Items.
+    #            "high",         // importance: low, normal, or high.
+    #            company,        // company: optional company metadata/auth claim.
+    #            "AXAPTA",       // sourceSystem: caller system name.
+    #            "ManualSmokeTest",         // sourceProcess: caller process name.
+    #            "MailExtendedSmokeTest",   // eventType: event name.
+    #            "ManualTest",              // aggregateType: entity/process type.
+    #            aggregateId,                // aggregateId: entity/process id.
+    #            idempotencyKey,             // idempotencyKey: unique logical mail key.
+    #            correlationId);             // correlationId: trace id.
+    #
+    #        if (sent)
+    #            info("SendMailEx OK. Microsoft Graph acepto la peticion.");
+    #        else
+    #            error("SendMailEx devolvio false. Revisar permisos, scope internal.mail.send, configuracion Graph y logs de la API.");
+    #    }
+    #    catch (Exception::Error)
+    #    {
+    #        error("Error ejecutando prueba COM IND.InternalApiClient SendMailEx.");
+    #    }
+    #
+    #    clientt = null;
+    #}
+  ENDSOURCE
+
+***Element: END
