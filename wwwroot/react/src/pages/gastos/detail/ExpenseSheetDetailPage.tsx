@@ -13,9 +13,17 @@ import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog
 import { safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { consumeExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
+import { setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 
 const DETAIL_FAB_BOTTOM_WITH_ACTION_BAR = 176;
 const EXPENSE_SHEETS_LIST_URL = "/Gastos/ExpenseSheets";
+
+// Applies the server-resolved acting user for email deep links before detail API calls run.
+const bootstrapExpenseLinkActingUser = () => {
+  const actingUserId = safeText(window.__EXPENSE_ACTING_USER_ID__);
+  if (!actingUserId) return;
+  setExpenseActingUserOverride(actingUserId);
+};
 
 const ExpenseSheetDetailPageContent = () => {
   const controller = useExpenseSheetDetailPageController();
@@ -274,6 +282,7 @@ const ExpenseSheetDetailPage = () => {
 
 const mount = () => {
   bootstrapExpenseApiAuth();
+  bootstrapExpenseLinkActingUser();
   const rootEl = document.getElementById("expense-sheet-detail-root");
   if (!rootEl) return;
   mountReactIsland(rootEl, <ExpenseSheetDetailPage />);

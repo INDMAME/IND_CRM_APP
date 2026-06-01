@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using IND_CRM_APP.Extensions;
 using IND_CRM_APP.Infrastructure.Localization;
@@ -25,6 +27,7 @@ namespace IND_CRM_APP.Controllers
         private const string CompanySelectionSourceUser = "user";
         private const string RedirectModalTitleKey = "IndRedirectModalTitle";
         private const string RedirectModalMessageKey = "IndRedirectModalMessage";
+        public const string ActingUserTempDataKey = "ExpenseSheetLinkActingUserId";
 
         private readonly ICrmApiClient _apiClient;
         private readonly ITokenSessionService _tokenSession;
@@ -158,9 +161,10 @@ namespace IND_CRM_APP.Controllers
                     companyChanged,
                     BuildExpenseModuleSummary(targetCompany));
 
-                var detailResult = await _apiClient.GetExpenseSheetDetailAsync(token, safeSheetId);
-                var detailItems = detailResult.GetAnyItems().ToList();
-                var sheet = SelectSheet(detailItems, safeSheetId);
+                var accessResult = await ResolveExpenseSheetLinkAccessAsync(token, safeSheetId);
+                var detailResult = accessResult.DetailResult;
+                var detailItems = accessResult.DetailItems;
+                var sheet = accessResult.Sheet;
                 if (sheet == null)
                 {
                     var messageKey = IsNotFound(detailResult)
@@ -168,7 +172,7 @@ namespace IND_CRM_APP.Controllers
                         : "ExpenseSheetLink_SheetAccessDenied";
 
                     _logger.LogWarning(
-                        "Expense sheet email link detail validation denied. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; TargetCrmUserId={TargetCrmUserId}; UpstreamSuccess={Success}; UpstreamErrorCode={ErrorCode}; UpstreamTraceId={TraceId}; UpstreamItemCount={UpstreamItemCount}; UpstreamMessage={UpstreamMessage}; MessageKey={MessageKey}",
+                        "Expense sheet email link detail validation denied. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; TargetCrmUserId={TargetCrmUserId}; UpstreamSuccess={Success}; UpstreamErrorCode={ErrorCode}; UpstreamTraceId={TraceId}; UpstreamItemCount={UpstreamItemCount}; UpstreamMessage={UpstreamMessage}; ProbedSubordinates={ProbedSubordinates}; MessageKey={MessageKey}",
                         safeSheetId,
                         targetCompany.CompanyId,
                         selectedCompanyId ?? string.Empty,
@@ -180,18 +184,25 @@ namespace IND_CRM_APP.Controllers
                         detailResult.TraceId ?? string.Empty,
                         detailItems.Count,
                         detailResult.Message ?? string.Empty,
+                        accessResult.ProbedSubordinateCount,
                         messageKey);
 
                     return RedirectWithMessage(messageKey, "Auth_PermissionDenied_Title", warning: false);
                 }
 
+                var resolvedActingUserId = accessResult.ActingAxUserId ?? GetSessionAxUserId();
+                if (!string.IsNullOrWhiteSpace(resolvedActingUserId))
+                    TempData[ActingUserTempDataKey] = resolvedActingUserId;
+
                 _logger.LogInformation(
-                    "Expense sheet email link detail validation allowed. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; ReturnedHojaGastosId={ReturnedHojaGastosId}; LineCount={LineCount}; UpstreamTraceId={TraceId}",
+                    "Expense sheet email link detail validation allowed. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; ActingAxUserId={ActingAxUserId}; UsedSubordinateScope={UsedSubordinateScope}; ReturnedHojaGastosId={ReturnedHojaGastosId}; LineCount={LineCount}; UpstreamTraceId={TraceId}",
                     safeSheetId,
                     targetCompany.CompanyId,
                     selectedCompanyId ?? string.Empty,
                     GetSessionAxUserId() ?? string.Empty,
                     NormalizeOptionalText(activeContext.Header.AxUserId) ?? string.Empty,
+                    resolvedActingUserId ?? string.Empty,
+                    accessResult.UsedSubordinateScope,
                     NormalizeOptionalText(sheet.HojaGastosId) ?? string.Empty,
                     sheet.Lines?.Count ?? 0,
                     detailResult.TraceId ?? string.Empty);
@@ -214,6 +225,96 @@ namespace IND_CRM_APP.Controllers
                 _logger.LogError(ex, "Unhandled error while resolving expense sheet email link.");
                 return RedirectWithMessage("ExpenseSheetLink_ResolveFailed", "Error_Title", warning: false);
             }
+        }
+
+        // Keeps the detail validation result together with the AX user scope that produced it.
+        private sealed class ExpenseSheetLinkAccessResult
+        {
+            public ExpenseSheetLinkAccessResult(
+                PagedApiResponse<ExpenseSheetDetailDto> detailResult,
+                IReadOnlyList<ExpenseSheetDetailDto> detailItems,
+                ExpenseSheetDetailDto? sheet,
+                string? actingAxUserId,
+                bool usedSubordinateScope,
+                int probedSubordinateCount)
+            {
+                DetailResult = detailResult;
+                DetailItems = detailItems;
+                Sheet = sheet;
+                ActingAxUserId = NormalizeOptionalText(actingAxUserId);
+                UsedSubordinateScope = usedSubordinateScope;
+                ProbedSubordinateCount = probedSubordinateCount;
+            }
+
+            public PagedApiResponse<ExpenseSheetDetailDto> DetailResult { get; }
+            public IReadOnlyList<ExpenseSheetDetailDto> DetailItems { get; }
+            public ExpenseSheetDetailDto? Sheet { get; }
+            public string? ActingAxUserId { get; }
+            public bool UsedSubordinateScope { get; }
+            public int ProbedSubordinateCount { get; }
+        }
+
+        // Resolves a sheet first as the signed-in user, then within the user's subordinate scope.
+        private async Task<ExpenseSheetLinkAccessResult> ResolveExpenseSheetLinkAccessAsync(string token, string hojaGastosId)
+        {
+            var directResult = await _apiClient.GetExpenseSheetDetailAsync(token, hojaGastosId);
+            var directItems = directResult.GetAnyItems().ToList();
+            var directSheet = SelectSheet(directItems, hojaGastosId);
+            if (directSheet != null)
+            {
+                return new ExpenseSheetLinkAccessResult(
+                    directResult,
+                    directItems,
+                    directSheet,
+                    actingAxUserId: null,
+                    usedSubordinateScope: false,
+                    probedSubordinateCount: 0);
+            }
+
+            var sessionAxUserId = GetSessionAxUserId();
+            if (string.IsNullOrWhiteSpace(sessionAxUserId))
+                return new ExpenseSheetLinkAccessResult(directResult, directItems, null, null, false, 0);
+
+            var subordinatesResult = await _apiClient.GetExpenseSheetSubordinatesAsync(token, sessionAxUserId);
+            var candidateAxUserIds = subordinatesResult.GetAnyItems()
+                .Select(ReadSubordinateAxUserIdForHeader)
+                .Where(candidate => !string.IsNullOrWhiteSpace(candidate))
+                .Cast<string>()
+                .Where(candidate => !string.Equals(candidate, sessionAxUserId, StringComparison.OrdinalIgnoreCase))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            _logger.LogInformation(
+                "Expense sheet email link subordinate detail probe started. HojaGastosId={HojaGastosId}; CandidateCount={CandidateCount}; SubordinatesSuccess={SubordinatesSuccess}; SubordinatesTraceId={SubordinatesTraceId}",
+                hojaGastosId,
+                candidateAxUserIds.Count,
+                subordinatesResult.Success,
+                subordinatesResult.TraceId ?? string.Empty);
+
+            foreach (var candidateAxUserId in candidateAxUserIds)
+            {
+                var scopedResult = await _apiClient.GetExpenseSheetDetailAsync(token, hojaGastosId, candidateAxUserId);
+                var scopedItems = scopedResult.GetAnyItems().ToList();
+                var scopedSheet = SelectSheet(scopedItems, hojaGastosId);
+                if (scopedSheet == null)
+                    continue;
+
+                return new ExpenseSheetLinkAccessResult(
+                    scopedResult,
+                    scopedItems,
+                    scopedSheet,
+                    candidateAxUserId,
+                    usedSubordinateScope: true,
+                    probedSubordinateCount: candidateAxUserIds.Count);
+            }
+
+            return new ExpenseSheetLinkAccessResult(
+                directResult,
+                directItems,
+                null,
+                actingAxUserId: null,
+                usedSubordinateScope: false,
+                probedSubordinateCount: candidateAxUserIds.Count);
         }
 
         // Switches the selected company using the same session keys as the sidebar flow.
@@ -301,6 +402,53 @@ namespace IND_CRM_APP.Controllers
         private string? GetSessionAxUserId()
         {
             return NormalizeOptionalText(HttpContext.Session.GetString("AxUser"));
+        }
+
+        // Reads the AX user identifier to forward as the acting-user header.
+        private static string? ReadSubordinateAxUserIdForHeader(ExpenseSheetSubordinateDto item)
+        {
+            return NormalizeOptionalText(item.AxUserId)
+                   ?? NormalizeOptionalText(GetExtraString(item.Extra, "axUserId", "AxUserId"))
+                   ?? NormalizeOptionalText(item.UserId)
+                   ?? NormalizeOptionalText(item.CrmUserId)
+                   ?? NormalizeOptionalText(GetExtraString(item.Extra, "userId", "UserId", "crmUserId", "CrmUserId"));
+        }
+
+        // Reads one string value from extension data with tolerant JSON conversion.
+        private static string GetExtraString(Dictionary<string, JsonElement>? extra, params string[] keys)
+        {
+            if (extra == null || keys == null || keys.Length == 0)
+                return string.Empty;
+
+            foreach (var key in keys)
+            {
+                if (string.IsNullOrWhiteSpace(key))
+                    continue;
+
+                var match = extra.FirstOrDefault(entry =>
+                    string.Equals(entry.Key, key, StringComparison.OrdinalIgnoreCase));
+                if (string.IsNullOrWhiteSpace(match.Key))
+                    continue;
+
+                var value = JsonElementToString(match.Value);
+                if (!string.IsNullOrWhiteSpace(value))
+                    return value;
+            }
+
+            return string.Empty;
+        }
+
+        // Converts primitive JSON values to compact diagnostic and identifier text.
+        private static string JsonElementToString(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString() ?? string.Empty,
+                JsonValueKind.Number => element.GetRawText(),
+                JsonValueKind.True => "true",
+                JsonValueKind.False => "false",
+                _ => string.Empty
+            };
         }
 
         // Selects the requested sheet from the upstream detail response.

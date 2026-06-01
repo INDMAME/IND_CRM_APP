@@ -18,6 +18,7 @@
     <script nonce="@cspNonce">
         window.__EXPENSE_SHEET_ID__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.HojaGastosId ?? string.Empty)));
         window.__EXPENSE_SHEET_MODE__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.ExpenseSheetMode ?? "view")));
+        window.__EXPENSE_ACTING_USER_ID__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.ExpenseActingUserId ?? string.Empty)));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Save = SR["Common_Save"].Value,
             Common_Cancel = SR["Common_Cancel"].Value,

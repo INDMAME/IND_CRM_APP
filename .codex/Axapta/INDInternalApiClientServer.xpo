@@ -191,6 +191,26 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #normalizeInternalApiMailImportance
+        #// Normaliza la importancia aceptando texto Graph o el valor numerico del enum INDEmailImportance.
+        #static server str normalizeInternalApiMailImportance(str _importance)
+        #{
+        #    str importance;
+        #    ;
+        #
+        #    importance = strLwr(strLRTrim(_importance));
+        #
+        #    if (importance == 'low' || importance == '0')
+        #        return 'low';
+        #
+        #    if (importance == 'high' || importance == '2')
+        #        return 'high';
+        #
+        #    // Valor por defecto: normal. Tambien cubre 'normal', '1' y valores no reconocidos.
+        #    return 'normal';
+        #}
+        #
+      ENDSOURCE
       SOURCE #sendInternalApiMailEx
         #// Envia un email extendido llamando a IND_INTERNAL_API a traves de la DLL cliente.
         #static server boolean sendInternalApiMailEx(
@@ -239,9 +259,7 @@ Formatversion: 1
         #        return false;
         #    }
         #
-        #    importance = strLwr(strLRTrim(_importance));
-        #    if (!importance || (importance != 'low' && importance != 'normal' && importance != 'high'))
-        #        importance = 'normal';
+        #    importance = INDInternalApiClientServer::normalizeInternalApiMailImportance(_importance);
         #
         #    try
         #    {

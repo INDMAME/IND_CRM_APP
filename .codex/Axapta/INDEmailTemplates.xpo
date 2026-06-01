@@ -1,0 +1,445 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDEmailTemplates unloaded at Lunes 01/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #INDEmailTemplates
+    PROPERTIES
+      Name                #INDEmailTemplates
+      Label               #Email templates
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #No
+      ModifiedBy          #Yes
+      ModifiedTransactionId #No
+      CreatedDate         #Yes
+      CreatedTime         #No
+      CreatedBy           #Yes
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #TemplateId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #TemplateId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDEmailTemplates
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDEmailTemplateId
+              #
+            ENDARRAY
+          StringSize          #25
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Description
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Description
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDEmailTemplates
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #SubjectTemplate
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #SubjectTemplate
+          Label               #Asunto
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDEmailTemplates
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #100
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #HtmlTemplate
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #HtmlTemplate
+          Label               #HTML Body
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDEmailTemplates
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Memo
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #LanguageId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #LanguageId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDEmailTemplates
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #LanguageId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Logo
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Logo
+          Label               #HTML Body
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDEmailTemplates
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Memo
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #TargetModule
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #TargetModule
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDEmailTemplates
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDEmailTemplateTargetModule
+        ENDPROPERTIES
+        
+      FIELD #ToDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #ToDate
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDEmailTemplates
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ToDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #FromDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #FromDate
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDEmailTemplates
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #FromDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #TemplateIdIdx
+      PROPERTIES
+        Name                #TemplateIdIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #TemplateId
+      ENDINDEXFIELDS
+      
+      #TargetLanguageDateIdx
+      PROPERTIES
+        Name                #TargetLanguageDateIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #TargetModule
+        #LanguageId
+        #FromDate
+        #ToDate
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #validateWrite
+        #// Valida la coherencia de la plantilla y evita rangos de vigencia duplicados.
+        #public boolean validateWrite()
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    //MMS - Ajustes CRM - 2026.05.28
+        #    if (this.TargetModule == INDEmailTemplateTargetModule::Empty)
+        #    {
+        #        checkFailed('Modulo destino es obligatorio.');
+        #        ret = false;
+        #    }
+        #
+        #    if (!this.LanguageId)
+        #    {
+        #        checkFailed('Idioma es obligatorio.');
+        #        ret = false;
+        #    }
+        #
+        #    if (!this.FromDate)
+        #    {
+        #        checkFailed('Fecha desde es obligatoria.');
+        #        ret = false;
+        #    }
+        #
+        #    if (this.ToDate && this.FromDate && this.ToDate < this.FromDate)
+        #    {
+        #        checkFailed('Fecha hasta no puede ser menor que fecha desde.');
+        #        ret = false;
+        #    }
+        #
+        #    if (!this.SubjectTemplate)
+        #    {
+        #        checkFailed('Asunto es obligatorio.');
+        #        ret = false;
+        #    }
+        #
+        #    /*if (!this.HtmlTemplate)
+        #    {
+        #        checkFailed('HTML Body es obligatorio.');
+        #        ret = false;
+        #    }      */
+        #
+        #    if (ret && INDEmailTemplates::existsOverlap(this.TargetModule,
+        #                                                this.LanguageId,
+        #                                                this.FromDate,
+        #                                                this.ToDate,
+        #                                                this.RecId))
+        #    {
+        #        checkFailed('Ya existe una plantilla vigente solapada para el mismo modulo e idioma.');
+        #        ret = false;
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #existsOverlap
+        #// Valida si ya existe una plantilla vigente que se solapa para el mismo modulo e idioma.
+        #static server boolean existsOverlap(INDEmailTemplateTargetModule _targetModule,
+        #                                    LanguageId                   _languageId,
+        #                                    date                         _fromDate,
+        #                                    date                         _toDate,
+        #                                    RecId                        _excludeRecId = 0)
+        #{
+        #    INDEmailTemplates template;
+        #    date              newFromDate;
+        #    date              newToDate;
+        #    date              existingToDate;
+        #    ;
+        #
+        #    //MMS - Ajustes CRM - 2026.05.28
+        #    newFromDate = _fromDate ? _fromDate : today();
+        #    newToDate   = _toDate   ? _toDate   : mkDate(31, 12, 2154);
+        #
+        #    while select template
+        #        where template.TargetModule == _targetModule
+        #           && template.LanguageId    == _languageId
+        #           && template.RecId         != _excludeRecId
+        #           && template.FromDate      <= newToDate
+        #    {
+        #        existingToDate = template.ToDate ? template.ToDate : mkDate(31, 12, 2154);
+        #
+        #        if (newFromDate <= existingToDate)
+        #            return true;
+        #    }
+        #
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #findValid
+        #// Devuelve la plantilla vigente para un modulo, idioma y fecha de referencia.
+        #static server INDEmailTemplates findValid(INDEmailTemplateTargetModule _targetModule,
+        #                                          LanguageId                   _languageId,
+        #                                          date                         _asOfDate)
+        #{
+        #    INDEmailTemplates template;
+        #    date              asOfDate;
+        #    ;
+        #
+        #    //MMS - Ajustes CRM - 2026.05.29
+        #    asOfDate = _asOfDate ? _asOfDate : today();
+        #
+        #    while select template
+        #        order by FromDate desc
+        #        where template.TargetModule == _targetModule
+        #           && template.LanguageId    == _languageId
+        #           && template.FromDate      <= asOfDate
+        #    {
+        #        // ToDate vacio significa que la plantilla no vence hasta que se informe una fecha hasta.
+        #        if (!template.ToDate || template.ToDate >= asOfDate)
+        #            return template;
+        #    }
+        #
+        #    template.clear();
+        #    return template;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

@@ -275,6 +275,7 @@ namespace IND_CRM_APP.Controllers
 
             ViewBag.HojaGastosId = (hojaGastosId ?? string.Empty).Trim();
             ViewBag.ExpenseSheetMode = isCreateMode ? "create" : "view";
+            ViewBag.ExpenseActingUserId = NormalizeOptionalText(TempData[ExpenseSheetLinkController.ActingUserTempDataKey]?.ToString()) ?? string.Empty;
             return View("~/Web/Views/Gastos/ExpenseSheetDetail.cshtml");
         }
 

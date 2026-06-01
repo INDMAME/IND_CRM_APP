@@ -1,0 +1,78 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: INDEmailTemplateHtmlEditor descargados en Jueves 28/05/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #INDEmailTemplateHtmlEditor
+    PROPERTIES
+      Name                #INDEmailTemplateHtmlEditor
+      Extends             #SysInetHTMLEditor
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #caption
+        #// Devuelve el titulo visible del editor HTML.
+        #public str caption()
+        #{
+        #    return htmlCaption;
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #class INDEmailTemplateHtmlEditor extends SysInetHTMLEditor
+        #{
+        #    str htmlCaption;
+        #}
+      ENDSOURCE
+      SOURCE #new
+        #// Inicializa el editor con el titulo indicado.
+        #void new(str _caption = 'Editor HTML')
+        #{
+        #    super();
+        #
+        #    htmlCaption = _caption;
+        #}
+      ENDSOURCE
+      SOURCE #editHtml
+        #// Abre el editor HTML estandar y devuelve el contenido editado.
+        #client public static str editHtml(str _htmlText, str _caption = 'Editor HTML')
+        #{
+        #    INDEmailTemplateHtmlEditor editor;
+        #    Args                       args;
+        #    FormRun                    formRun;
+        #    Object                     formObject;
+        #    str                        resultHtml;
+        #     ;
+        #    editor = new INDEmailTemplateHtmlEditor(_caption);
+        #
+        #    args = new Args();
+        #    args.name(formStr(SysInetHTMLEditor));
+        #
+        #    // Obligatorio: el form estandar espera un caller SysInetHTMLEditor.
+        #    args.caller(editor);
+        #
+        #    formRun = ClassFactory.formRunClass(args);
+        #
+        #    formRun.init();
+        #    formRun.run();
+        #
+        #    // Ahora el form ya existe. Cargamos el HTML inicial.
+        #    formObject = formRun;
+        #    formObject.setText(_htmlText);
+        #
+        #    formRun.wait();
+        #
+        #    resultHtml = formObject.getText();
+        #
+        #    return resultHtml;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

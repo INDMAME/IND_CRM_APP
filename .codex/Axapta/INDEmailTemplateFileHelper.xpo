@@ -1,0 +1,98 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: INDEmailTemplateFileHelper descargados en Jueves 28/05/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #INDEmailTemplateFileHelper
+    PROPERTIES
+      Name                #INDEmailTemplateFileHelper
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #class INDEmailTemplateFileHelper
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #readTextFile
+        #// Lee un archivo HTML UTF-8 desde cliente para importarlo en la plantilla.
+        #client public static str readTextFile(Filename _fileName)
+        #{
+        #    COM stream;
+        #    str text;
+        #
+        #    if (!_fileName)
+        #    {
+        #        return '';
+        #    }
+        #
+        #    try
+        #    {
+        #        stream = new COM('ADODB.Stream');
+        #
+        #        stream.Type(2);          // 2 = adTypeText
+        #        stream.Charset('utf-8');
+        #        stream.Open();
+        #
+        #        stream.LoadFromFile(_fileName);
+        #
+        #        // -1 = adReadAll
+        #        text = stream.ReadText(-1);
+        #
+        #        stream.Close();
+        #
+        #        return text;
+        #    }
+        #    catch
+        #    {
+        #        warning(strFmt('No se pudo leer el archivo HTML: %1', _fileName));
+        #        return '';
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #writeTextFile
+        #// Escribe el HTML de la plantilla en un archivo UTF-8 para exportacion o vista previa.
+        #client public static boolean writeTextFile(Filename _fileName, str _text)
+        #{
+        #    COM stream;
+        #
+        #    if (!_fileName)
+        #    {
+        #        return false;
+        #    }
+        #
+        #    try
+        #    {
+        #        // ADODB.Stream permite escribir texto sin que AX lo divida en campos.
+        #        stream = new COM('ADODB.Stream');
+        #
+        #        stream.Type(2);          // 2 = adTypeText
+        #        stream.Charset('utf-8'); // Mantiene acentos y simbolos.
+        #        stream.Open();
+        #
+        #        stream.WriteText(_text);
+        #
+        #        // 2 = adSaveCreateOverWrite
+        #        stream.SaveToFile(_fileName, 2);
+        #        stream.Close();
+        #
+        #        return true;
+        #    }
+        #    catch
+        #    {
+        #        warning(strFmt('No se pudo escribir el archivo HTML: %1', _fileName));
+        #        return false;
+        #    }
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

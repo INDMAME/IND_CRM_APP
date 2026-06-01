@@ -26,6 +26,7 @@ declare global {
     __ACTIVITY_DETAIL__?: Record<string, unknown>;
     __EXPENSE_SHEET_ID__?: string;
     __EXPENSE_SHEET_MODE__?: string;
+    __EXPENSE_ACTING_USER_ID__?: string;
     __EXPENSE_LINE_ID__?: string;
     __EXPENSE_LINE_MODE__?: string;
     __EXPENSE_TICKET_FILE_ID__?: string;
