@@ -2399,6 +2399,7 @@ Formatversion: 1
         #
         #    CRMHojaGastosTable  header;
         #    CRMHojaGastosTable  debugHeader;
+        #    CRMUsuarioTable     ownerUser;
         #    CRMHojaGastosLine   line;
         #    Amount              monto;
         #    Price               price;
@@ -2483,6 +2484,8 @@ Formatversion: 1
         #        exchangeRateMode    = header.ExchangeRateMode;
         #        expenseSheetStatus  = header.ExpenseSheetStatus;
         #        reimbursableExpense = header.ReimbursableExpense;
+        #        // Resuelve el nombre CRM del propietario para exponerlo al detalle web sin cambiar indices anteriores.
+        #        ownerUser           = CRMUsuarioTable::Find(header.UserId);
         #
         #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK',
         #                                                     [
@@ -2498,7 +2501,8 @@ Formatversion: 1
         #                                                      strFmt("%1", header.ProjId),
         #                                                      strFmt("%1", header.Voucher),
         #                                                      strFmt("%1", date2Str(header.CreatedDate, 123, 2,2,2,2,4)),
-        #                                                      strFmt("%1", reimbursableExpense)
+        #                                                      strFmt("%1", reimbursableExpense),
+        #                                                      strFmt("%1", ownerUser.Name)
         #                                                     ]);
         #
         #        while select line
@@ -2584,9 +2588,10 @@ Formatversion: 1
         #        if (actorAxUserId)
         #            actorCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(actorAxUserId);
         #
-        #        if (eventType == 'ExpenseSheetApprovalRequested')
+        #        if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType))
         #        {
         #            // Solicitud de aprobacion: recibe la jefatura directa del propietario.
+        #            // Tambien cubre deshacer rechazo/aprobacion cuando la hoja vuelve a InReview.
         #            managerCrmUserId = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserId(ownerCrmUserId);
         #            if (!managerCrmUserId)
         #                return [INDCRMUtilityService::buildHeader(false, 'No se encontro jefatura para el propietario de la hoja.', conNull()), conNull()];
@@ -2601,10 +2606,9 @@ Formatversion: 1
         #
         #            if (eventType == 'ExpenseSheetApproved' ||
         #                eventType == 'ExpenseSheetRejected' ||
-        #                eventType == 'ExpenseSheetRejectionCancelled' ||
         #                eventType == 'ExpenseSheetPaid')
         #            {
-        #                // Cambio de estado: recibe el propietario o creador de la hoja segun el evento.
+        #                // Cambio final de estado: recibe el propietario o creador de la hoja segun el evento.
         #                if (eventType == 'ExpenseSheetPaid' && header.INDCreatedByUserId)
         #                    recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(header.INDCreatedByUserId);
         #                else
@@ -4227,19 +4231,28 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #isExpenseSheetApprovalRequestEvent
+        #// Indica si el evento debe tratarse como una solicitud pendiente para la jefatura.
+        #// Se incluye ExpenseSheetRejectionCancelled por compatibilidad con llamadas antiguas.
+        #static server boolean isExpenseSheetApprovalRequestEvent(str _eventType)
+        #{
+        #    return _eventType == 'ExpenseSheetApprovalRequested' ||
+        #           _eventType == 'ExpenseSheetRejectionCancelled';
+        #}
+        #
+      ENDSOURCE
       SOURCE #resolveExpenseSheetNotificationEvent
         #// Resuelve el evento de email permitido para una transicion de estado.
+        #// Cualquier retorno a InReview abre una nueva aprobacion pendiente para la jefatura.
         #static server str resolveExpenseSheetNotificationEvent(INDExpenseSheetStatus _fromStatus,
         #                                                       INDExpenseSheetStatus _toStatus)
         #{
         #    if (_toStatus == INDExpenseSheetStatus::Paid)
         #        return 'ExpenseSheetPaid';
         #
-        #    if (_fromStatus == INDExpenseSheetStatus::Rejected &&
-        #        _toStatus   == INDExpenseSheetStatus::InReview)
-        #        return 'ExpenseSheetRejectionCancelled';
-        #
-        #    if (_fromStatus == INDExpenseSheetStatus::Draft &&
+        #    if ((_fromStatus == INDExpenseSheetStatus::Draft ||
+        #         _fromStatus == INDExpenseSheetStatus::Rejected ||
+        #         _fromStatus == INDExpenseSheetStatus::Approved) &&
         #        _toStatus   == INDExpenseSheetStatus::InReview)
         #        return 'ExpenseSheetApprovalRequested';
         #
@@ -4364,9 +4377,10 @@ Formatversion: 1
         #    if (!_actorUserId)
         #        _actorUserId = curUserId();
         #
-        #    if (eventType == 'ExpenseSheetApprovalRequested')
+        #    if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType))
         #    {
         #        // Solicitud de aprobacion: emite el propietario y recibe su jefatura directa.
+        #        // Tambien cubre deshacer rechazo/aprobacion cuando la hoja vuelve a InReview.
         #        senderUserId     = expenseSheet.UserId;
         #        managerCrmUserId = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserId(expenseSheet.UserId);
         #        recipientUserId  = managerCrmUserId;
@@ -4379,7 +4393,7 @@ Formatversion: 1
         #    }
         #    else
         #    {
-        #        // Aprobacion, rechazo y anulacion de rechazo: emite el actor y recibe el propietario.
+        #        // Aprobacion o rechazo final: emite el actor y recibe el propietario.
         #        senderUserId    = _actorUserId;
         #        recipientUserId = expenseSheet.UserId;
         #    }
@@ -4701,6 +4715,7 @@ Formatversion: 1
         #
         #            if (sendStatusNotification)
         #            {
+        #                // Para emails de jefatura, el actor real solo se usa si fue validado contra los subordinados.
         #                notificationActorUserId = axUserId;
         #                if (actorAxUserId &&
         #                    newExpenseSheetStatus != INDExpenseSheetStatus::Paid &&
@@ -5978,7 +5993,7 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #canExpenseSheetActorManageOwner
-        #// Verifies that a forwarded web actor can manage the expense sheet owner.
+        #// Valida que el actor recibido desde la web pueda gestionar al propietario de la hoja.
         #static server boolean canExpenseSheetActorManageOwner(str 20 _actorUserId,
         #                                                      CRMUserId _ownerCrmUserId)
         #{
