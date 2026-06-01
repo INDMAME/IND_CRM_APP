@@ -212,6 +212,7 @@ const ExpenseSheetDetailPageContent = () => {
             showExchangeRate: controller.showExchangeRate,
           }}
           header={controller.header}
+          ownerDisplay={controller.ownerDisplay}
           projectValue={controller.projectValue}
           normalizedDraftCurrency={controller.normalizedDraftCurrency}
           exchangeRateBaseCurrency={controller.exchangeRateBaseCurrency}

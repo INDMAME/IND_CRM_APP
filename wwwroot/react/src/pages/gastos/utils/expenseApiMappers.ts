@@ -64,6 +64,7 @@ export const mapExpenseSheetHeader = (sheet: ExpenseSheetDetailDto): ExpenseShee
     hojaGastosId: safeText(sheet.HojaGastosId ?? sheet.hojaGastosId),
     description: safeText(sheet.Description ?? sheet.description),
     userId: safeText(sheet.UserId ?? sheet.userId),
+    userName: safeText(sheet.UserName ?? sheet.userName) || null,
     expenseSheetStatus: toNullableNumber(sheet.ExpenseSheetStatus ?? sheet.expenseSheetStatus),
     estadoComentarios: safeText(sheet.EstadoComentarios ?? sheet.estadoComentarios) || null,
     currencyCode: safeText(sheet.CurrencyCode ?? sheet.currencyCode),

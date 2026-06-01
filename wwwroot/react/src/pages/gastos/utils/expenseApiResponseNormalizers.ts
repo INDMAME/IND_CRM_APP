@@ -48,6 +48,8 @@ export const normalizeDetailPagedResponse = (
     return {
       ...item,
       HojaGastosId: safeText(item?.HojaGastosId ?? item?.hojaGastosId),
+      UserId: safeText(item?.UserId ?? item?.userId),
+      UserName: safeText(item?.UserName ?? item?.userName) || null,
       ProjId: safeText(item?.ProjId ?? item?.projId),
       Lines: rawLines.map((line) => ({
         ...line,

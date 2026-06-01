@@ -26,6 +26,7 @@ type ExpenseSheetHeaderFormProps = {
   mode: ExpenseSheetHeaderFormMode;
   currencyLocks: ExpenseSheetHeaderCurrencyLocks;
   header: ExpenseSheetHeader;
+  ownerDisplay?: string;
   projectValue: string;
   normalizedDraftCurrency: string;
   exchangeRateBaseCurrency: string;
@@ -53,6 +54,7 @@ const ExpenseSheetHeaderForm = ({
   mode,
   currencyLocks,
   header,
+  ownerDisplay = "",
   projectValue,
   normalizedDraftCurrency,
   exchangeRateBaseCurrency,
@@ -141,6 +143,13 @@ const ExpenseSheetHeaderForm = ({
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {ownerDisplay ? (
+          <ExpenseReadOnlyField
+            label={indT("ExpenseSheets_Field_OwnerUser", "Owner user")}
+            value={ownerDisplay}
+            fullWidth
+          />
+        ) : null}
         {!isCreateMode ? (
           <ExpenseReadOnlyField
             label={indT("ExpenseSheets_Field_SheetId", "Expense sheet code")}

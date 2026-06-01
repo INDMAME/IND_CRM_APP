@@ -333,6 +333,9 @@
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve">
     <value>Usuario</value>
   </data>
+  <data name="ExpenseSheets_Field_OwnerUser" xml:space="preserve">
+    <value>Usuario propietario</value>
+  </data>
   <data name="ExpenseSheets_Field_Project" xml:space="preserve">
     <value>Proyecto</value>
   </data>

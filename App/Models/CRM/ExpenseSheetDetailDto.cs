@@ -10,6 +10,9 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("hojaGastosId")]
         public string HojaGastosId { get; set; } = string.Empty;
 
+        [JsonPropertyName("UserName")]
+        public string? UserName { get; set; }
+
         [JsonPropertyName("lines")]
         public List<ExpenseSheetLineDto> Lines { get; set; } = new();
 

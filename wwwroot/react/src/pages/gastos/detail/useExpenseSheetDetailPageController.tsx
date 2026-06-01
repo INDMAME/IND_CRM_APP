@@ -18,6 +18,7 @@ import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopba
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
+import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "./ExpenseSheetDetailIcons.tsx";
 
 const LINES_PAGE_SIZE = 6;
 const EXPENSE_STATUS_APPROVAL_REQUESTED = 1;
@@ -34,30 +35,6 @@ const hasPositiveTotalAmount = (value: unknown): boolean => {
   const parsed = Number(value);
   return Number.isFinite(parsed) && parsed > 0;
 };
-
-const NewTicketIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="size-5">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M10 20h-5a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h1a2 2 0 0 0 2 -2a1 1 0 0 1 1 -1h6a1 1 0 0 1 1 1a2 2 0 0 0 2 2h1a2 2 0 0 1 2 2v2" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M14.362 11.15a3 3 0 1 0 -4.144 4.263" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M14 21v-4a2 2 0 1 1 4 0v4" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M14 19h4" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M21 15v6" />
-  </svg>
-);
-
-const LinkTicketIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="size-5">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244" />
-  </svg>
-);
-
-const NewLineIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="size-5">
-    <path strokeLinecap="round" strokeLinejoin="round" d="M3 19c3.333 -2 5 -4 5 -6c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 2.877 2.5 4c1.5 2 2.5 2.5 3.5 1c.667 -1 1.167 -1.833 1.5 -2.5c1 2.333 2.333 3.5 4 3.5h2.5" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2" />
-    <path strokeLinecap="round" strokeLinejoin="round" d="M16 7h4" />
-  </svg>
-);
 
 // Initializes auth seed for expense API calls before island effects run.
 export const bootstrapExpenseApiAuth = () => {
@@ -238,6 +215,16 @@ export const useExpenseSheetDetailPageController = () => {
   );
   const hasStatusActionContent = lines.length > 0 || hasPositiveTotalAmount(header?.totalAmount);
   const areStatusActionsDisabled = !hasStatusActionContent;
+  const ownerDisplay = useMemo(() => {
+    const ownerUserId = safeText(header?.userId);
+    const currentUserId = safeText(currentCrmUserId);
+    if (!ownerUserId || !currentUserId || ownerUserId.toUpperCase() === currentUserId.toUpperCase()) {
+      return "";
+    }
+
+    const ownerName = safeText(header?.userName);
+    return [ownerUserId, ownerName].filter(Boolean).join(" ");
+  }, [currentCrmUserId, header?.userId, header?.userName]);
 
   const { handleUpdate, handleStatusTransition, handleDelete } = useExpenseSheetDetailMutations({
     busy,
@@ -535,6 +522,7 @@ export const useExpenseSheetDetailPageController = () => {
     paginationLabels,
     totalAmountText,
     statusCommentMode,
+    ownerDisplay,
     projectValue,
     normalizedDraftCurrency,
     exchangeRateBaseCurrency,

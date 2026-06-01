@@ -205,6 +205,8 @@ export type ExpenseSheetDetailDto = {
   hojaGastosId?: string;
   UserId?: string;
   userId?: string;
+  UserName?: string | null;
+  userName?: string | null;
   Description?: string;
   description?: string;
   ExpenseSheetStatus?: number | null;
@@ -391,6 +393,7 @@ export type ExpenseSheetHeader = {
   hojaGastosId: string;
   description?: string;
   userId?: string;
+  userName?: string | null;
   expenseSheetStatus?: number | null;
   estadoComentarios?: string | null;
   currencyCode?: string;

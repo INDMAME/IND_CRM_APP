@@ -5308,7 +5308,7 @@ namespace IND_CRM_APP.Controllers
                 expenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
                 estadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
                 userId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
-                userName = GetExtraString(sheet.Extra, "userName", "name", "userDisplayName", "nombreUsuario"),
+                userName = GetExpenseSheetOwnerUserName(sheet),
                 voucher = GetExtraString(sheet.Extra, "voucher"),
                 projId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 currencyCode = currencyCode,
@@ -5335,7 +5335,7 @@ namespace IND_CRM_APP.Controllers
                 ExpenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
                 EstadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
                 UserId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
-                UserName = GetExtraString(sheet.Extra, "userName", "name", "userDisplayName", "nombreUsuario"),
+                UserName = GetExpenseSheetOwnerUserName(sheet),
                 Voucher = GetExtraString(sheet.Extra, "voucher"),
                 ProjId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 CurrencyCode = currencyCode,
@@ -5356,6 +5356,7 @@ namespace IND_CRM_APP.Controllers
                 HojaGastosId = sheet.HojaGastosId ?? string.Empty,
                 Description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
                 UserId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
+                UserName = GetExpenseSheetOwnerUserName(sheet),
                 ExpenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
                 EstadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
                 CurrencyCode = currencyCode,
@@ -5530,6 +5531,14 @@ namespace IND_CRM_APP.Controllers
             };
         }
 
+        // Reads the owner display name from typed fields first and then from legacy extension data.
+        private static string GetExpenseSheetOwnerUserName(ExpenseSheetDetailDto sheet)
+        {
+            return NormalizeOptionalText(sheet.UserName)
+                   ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "userName", "UserName", "name", "userDisplayName", "nombreUsuario"))
+                   ?? string.Empty;
+        }
+
         // Public subordinate API contract. Keep only fields expected by consumers.
         private sealed class ExpenseSheetSubordinateApiItem
         {
@@ -5548,6 +5557,7 @@ namespace IND_CRM_APP.Controllers
                 hojaGastosId = sheet.HojaGastosId ?? string.Empty,
                 description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
                 userId = GetExtraString(sheet.Extra, "userId"),
+                userName = GetExpenseSheetOwnerUserName(sheet),
                 estadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
                 currencyCode = currencyCode,
                 totalAmountMST = GetExtraDecimal(sheet.Extra, "totalAmountMST", "totalamountmst"),
