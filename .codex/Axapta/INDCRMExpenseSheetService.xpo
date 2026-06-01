@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 28/05/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Lunes 01/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -23,6 +23,96 @@ Formatversion: 1
         #{
         #
         #}
+      ENDSOURCE
+      SOURCE #buildEmailLogoSrc
+        #// Devuelve el valor src del logo usando el Base64 guardado en la plantilla.
+        #static server str buildEmailLogoSrc(str _logoBase64)
+        #{
+        #    str logo;
+        #    str logoSrc;
+        #    ;
+        #
+        #    logo = strLRTrim(strFmt('%1', _logoBase64));
+        #    logo = strReplace(logo, '\n', '');
+        #    logo = strReplace(logo, '\r', '');
+        #    logo = strReplace(logo, ' ', '');
+        #
+        #    if (!logo)
+        #        return '';
+        #
+        #    if (subStr(strLwr(logo), 1, 5) == 'data:')
+        #        logoSrc = logo;
+        #    else
+        #        logoSrc = 'data:image/png;base64,' + logo;
+        #
+        #    return logoSrc;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetAmountText
+        #// Devuelve el importe total de la hoja con la divisa para usarlo en plantillas.
+        #static server str buildExpenseSheetAmountText(CRMHojaGastosTable _expenseSheet)
+        #{
+        #    Amount       amount;
+        #    CurrencyCode currencyCode;
+        #    str          currencyText;
+        #    ;
+        #
+        #    amount       = _expenseSheet.TotalAmount();
+        #    currencyCode = _expenseSheet.CurrencyCode;
+        #    currencyText = Currency::find(currencyCode).CurrencyCodeISO;
+        #    if (!currencyText)
+        #        currencyText = currencyCode;
+        #
+        #    return strFmt('%1 %2', amount, currencyText);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetEventDisplayText
+        #// Devuelve un texto corto del evento para rellenar plantillas de email.
+        #static server str buildExpenseSheetEventDisplayText(str _eventType)
+        #{
+        #    if (_eventType == 'ExpenseSheetApprovalRequested')
+        #        return 'Aprobacion solicitada';
+        #
+        #    if (_eventType == 'ExpenseSheetApproved')
+        #        return 'Aprobada';
+        #
+        #    if (_eventType == 'ExpenseSheetRejected')
+        #        return 'Rechazada';
+        #
+        #    if (_eventType == 'ExpenseSheetRejectionCancelled')
+        #        return 'Rechazo cancelado';
+        #
+        #    if (_eventType == 'ExpenseSheetPaid')
+        #        return 'Pagada';
+        #
+        #    return _eventType;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetFallbackTextBody
+        #// Monta un texto plano minimo cuando no hay plantilla vigente disponible.
+        #static server str buildExpenseSheetFallbackTextBody(str                 _message,
+        #                                                    CRMHojaGastosTable _expenseSheet,
+        #                                                    str                 _eventType,
+        #                                                    str                 _link)
+        #{
+        #    date sheetDate;
+        #    ;
+        #
+        #    sheetDate = _expenseSheet.CreatedDate ? _expenseSheet.CreatedDate : today();
+        #
+        #    return strFmt('%1\nHoja: %2\nEstado: %3\nImporte: %4\nFecha: %5\nDescripcion: %6\nLink: %7',
+        #                  _message,
+        #                  _expenseSheet.HojaGastosId,
+        #                  INDCRMExpenseSheetService::buildExpenseSheetEventDisplayText(_eventType),
+        #                  INDCRMExpenseSheetService::buildExpenseSheetAmountText(_expenseSheet),
+        #                  date2Str(sheetDate, 123, 2, 2, 2, 2, 4),
+        #                  _expenseSheet.Description,
+        #                  _link);
+        #}
+        #
       ENDSOURCE
       SOURCE #buildExpenseSheetListRow
         #// Purpose: Builds one expense sheet list row with stable output columns.
@@ -56,6 +146,47 @@ Formatversion: 1
         #              ]];
         #
         #    return conItem;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetMonthAbbrev
+        #// Devuelve el mes abreviado en castellano para plantillas de email.
+        #static server str buildExpenseSheetMonthAbbrev(date _date)
+        #{
+        #    int monthNo;
+        #    ;
+        #
+        #    monthNo = mthOfYr(_date);
+        #
+        #    switch (monthNo)
+        #    {
+        #        case 1:
+        #            return 'ENE';
+        #        case 2:
+        #            return 'FEB';
+        #        case 3:
+        #            return 'MAR';
+        #        case 4:
+        #            return 'ABR';
+        #        case 5:
+        #            return 'MAY';
+        #        case 6:
+        #            return 'JUN';
+        #        case 7:
+        #            return 'JUL';
+        #        case 8:
+        #            return 'AGO';
+        #        case 9:
+        #            return 'SEP';
+        #        case 10:
+        #            return 'OCT';
+        #        case 11:
+        #            return 'NOV';
+        #        case 12:
+        #            return 'DIC';
+        #    }
+        #
+        #    return '';
         #}
         #
       ENDSOURCE
@@ -3539,6 +3670,23 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #htmlEncodeText
+        #// Escapa valores de negocio antes de insertarlos en HTML de plantilla.
+        #static server str htmlEncodeText(str _value)
+        #{
+        #    str value;
+        #    ;
+        #
+        #    value = strFmt('%1', _value);
+        #    value = strReplace(value, '&', '&amp;');
+        #    value = strReplace(value, '<', '&lt;');
+        #    value = strReplace(value, '>', '&gt;');
+        #    value = strReplace(value, '"', '&quot;');
+        #
+        #    return value;
+        #}
+        #
+      ENDSOURCE
       SOURCE #isValidGastoType
         #// Method: isValidGastoType
         #// Purpose: Validate allowed CRMGastoType int values (hardcoded)
@@ -3924,154 +4072,6 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #buildEmailLogoSrc
-        #// Devuelve el valor src del logo usando el Base64 guardado en la plantilla.
-        #static server str buildEmailLogoSrc(str _logoBase64)
-        #{
-        #    str logo;
-        #    str logoSrc;
-        #    ;
-        #
-        #    logo = strLRTrim(strFmt('%1', _logoBase64));
-        #    logo = strReplace(logo, '\n', '');
-        #    logo = strReplace(logo, '\r', '');
-        #    logo = strReplace(logo, ' ', '');
-        #
-        #    if (!logo)
-        #        return '';
-        #
-        #    if (subStr(strLwr(logo), 1, 5) == 'data:')
-        #        logoSrc = logo;
-        #    else
-        #        logoSrc = 'data:image/png;base64,' + logo;
-        #
-        #    return logoSrc;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #buildExpenseSheetAmountText
-        #// Devuelve el importe total de la hoja con la divisa para usarlo en plantillas.
-        #static server str buildExpenseSheetAmountText(CRMHojaGastosTable _expenseSheet)
-        #{
-        #    Amount       amount;
-        #    CurrencyCode currencyCode;
-        #    str          currencyText;
-        #    ;
-        #
-        #    amount       = _expenseSheet.TotalAmount();
-        #    currencyCode = _expenseSheet.CurrencyCode;
-        #    currencyText = Currency::find(currencyCode).CurrencyCodeISO;
-        #    if (!currencyText)
-        #        currencyText = currencyCode;
-        #
-        #    return strFmt('%1 %2', amount, currencyText);
-        #}
-        #
-      ENDSOURCE
-      SOURCE #buildExpenseSheetEventDisplayText
-        #// Devuelve un texto corto del evento para rellenar plantillas de email.
-        #static server str buildExpenseSheetEventDisplayText(str _eventType)
-        #{
-        #    if (_eventType == 'ExpenseSheetApprovalRequested')
-        #        return 'Aprobacion solicitada';
-        #
-        #    if (_eventType == 'ExpenseSheetApproved')
-        #        return 'Aprobada';
-        #
-        #    if (_eventType == 'ExpenseSheetRejected')
-        #        return 'Rechazada';
-        #
-        #    if (_eventType == 'ExpenseSheetRejectionCancelled')
-        #        return 'Rechazo cancelado';
-        #
-        #    if (_eventType == 'ExpenseSheetPaid')
-        #        return 'Pagada';
-        #
-        #    return _eventType;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #buildExpenseSheetFallbackTextBody
-        #// Monta un texto plano minimo cuando no hay plantilla vigente disponible.
-        #static server str buildExpenseSheetFallbackTextBody(str                 _message,
-        #                                                    CRMHojaGastosTable _expenseSheet,
-        #                                                    str                 _eventType,
-        #                                                    str                 _link)
-        #{
-        #    date sheetDate;
-        #    ;
-        #
-        #    sheetDate = _expenseSheet.CreatedDate ? _expenseSheet.CreatedDate : today();
-        #
-        #    return strFmt('%1\nHoja: %2\nEstado: %3\nImporte: %4\nFecha: %5\nDescripcion: %6\nLink: %7',
-        #                  _message,
-        #                  _expenseSheet.HojaGastosId,
-        #                  INDCRMExpenseSheetService::buildExpenseSheetEventDisplayText(_eventType),
-        #                  INDCRMExpenseSheetService::buildExpenseSheetAmountText(_expenseSheet),
-        #                  date2Str(sheetDate, 123, 2, 2, 2, 2, 4),
-        #                  _expenseSheet.Description,
-        #                  _link);
-        #}
-        #
-      ENDSOURCE
-      SOURCE #htmlEncodeText
-        #// Escapa valores de negocio antes de insertarlos en HTML de plantilla.
-        #static server str htmlEncodeText(str _value)
-        #{
-        #    str value;
-        #    ;
-        #
-        #    value = strFmt('%1', _value);
-        #    value = strReplace(value, '&', '&amp;');
-        #    value = strReplace(value, '<', '&lt;');
-        #    value = strReplace(value, '>', '&gt;');
-        #    value = strReplace(value, '"', '&quot;');
-        #
-        #    return value;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #buildExpenseSheetMonthAbbrev
-        #// Devuelve el mes abreviado en castellano para plantillas de email.
-        #static server str buildExpenseSheetMonthAbbrev(date _date)
-        #{
-        #    int monthNo;
-        #    ;
-        #
-        #    monthNo = mthOfYr(_date);
-        #
-        #    switch (monthNo)
-        #    {
-        #        case 1:
-        #            return 'ENE';
-        #        case 2:
-        #            return 'FEB';
-        #        case 3:
-        #            return 'MAR';
-        #        case 4:
-        #            return 'ABR';
-        #        case 5:
-        #            return 'MAY';
-        #        case 6:
-        #            return 'JUN';
-        #        case 7:
-        #            return 'JUL';
-        #        case 8:
-        #            return 'AGO';
-        #        case 9:
-        #            return 'SEP';
-        #        case 10:
-        #            return 'OCT';
-        #        case 11:
-        #            return 'NOV';
-        #        case 12:
-        #            return 'DIC';
-        #    }
-        #
-        #    return '';
-        #}
-        #
-      ENDSOURCE
       SOURCE #renderExpenseSheetTemplate
         #// Aplica los valores fijos de hoja de gastos sobre el asunto o HTML de una plantilla.
         #// Orden strFmt: %1 hoja, %2 estado, %3 importe, %4 fecha, %5 descripcion, %6 link, %7 boton, %8 anio, %9 mes, %10 dia, %11 comentarios, %12 logo src.
@@ -4183,63 +4183,6 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #resolveLanguageIdFromCrmUserId
-        #// Lee SysUserInfo.Language del usuario AX vinculado al usuario CRM indicado.
-        #static server LanguageId resolveLanguageIdFromCrmUserId(CRMUserId _crmUserId)
-        #{
-        #    SysUserInfo sysUserInfo;
-        #    str 20      axUserId;
-        #    ;
-        #
-        #    axUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_crmUserId);
-        #    if (!axUserId)
-        #        return '';
-        #
-        #    select firstonly sysUserInfo
-        #        where sysUserInfo.Id == axUserId;
-        #
-        #    return sysUserInfo.Id ? sysUserInfo.Language : '';
-        #}
-        #
-      ENDSOURCE
-      SOURCE #resolveExpenseSheetManagerCrmUserId
-        #// Busca la jefatura directa del propietario de la hoja usando CRMUsuarioSubordinadoTable.
-        #static server CRMUserId resolveExpenseSheetManagerCrmUserId(CRMUserId _ownerCrmUserId)
-        #{
-        #    CRMUsuarioSubordinadoTable subordinadoTable;
-        #    ;
-        #
-        #    if (!_ownerCrmUserId)
-        #        return '';
-        #
-        #    select firstonly subordinadoTable
-        #        where subordinadoTable.UserIdSubordinado == _ownerCrmUserId;
-        #
-        #    return subordinadoTable.UserIdJefe;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #resolveExpenseSheetTemplateTargetModule
-        #// Convierte el evento de hoja de gastos al modulo destino usado por las plantillas.
-        #static server INDEmailTemplateTargetModule resolveExpenseSheetTemplateTargetModule(str _eventType,
-        #                                                                                  INDExpenseSheetStatus _toStatus)
-        #{
-        #    if (_eventType == 'ExpenseSheetPaid' || _toStatus == INDExpenseSheetStatus::Paid)
-        #        return INDEmailTemplateTargetModule::CRMPaid;
-        #
-        #    if (_toStatus == INDExpenseSheetStatus::InReview)
-        #        return INDEmailTemplateTargetModule::CRMInReview;
-        #
-        #    if (_toStatus == INDExpenseSheetStatus::Approved)
-        #        return INDEmailTemplateTargetModule::CRMApproved;
-        #
-        #    if (_toStatus == INDExpenseSheetStatus::Rejected)
-        #        return INDEmailTemplateTargetModule::CRMRejected;
-        #
-        #    return INDEmailTemplateTargetModule::Empty;
-        #}
-        #
-      ENDSOURCE
       SOURCE #resolveCrmUserIdFromAny
         #// Convierte un usuario AX o CRM al UserId CRM para comparar emisor y destinatario.
         #static server CRMUserId resolveCrmUserIdFromAny(str 20 _userId)
@@ -4264,6 +4207,23 @@ Formatversion: 1
         #
         #    // Ultimo recurso: el llamador ya pudo haber enviado un UserId CRM.
         #    return _userId;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveExpenseSheetManagerCrmUserId
+        #// Busca la jefatura directa del propietario de la hoja usando CRMUsuarioSubordinadoTable.
+        #static server CRMUserId resolveExpenseSheetManagerCrmUserId(CRMUserId _ownerCrmUserId)
+        #{
+        #    CRMUsuarioSubordinadoTable subordinadoTable;
+        #    ;
+        #
+        #    if (!_ownerCrmUserId)
+        #        return '';
+        #
+        #    select firstonly subordinadoTable
+        #        where subordinadoTable.UserIdSubordinado == _ownerCrmUserId;
+        #
+        #    return subordinadoTable.UserIdJefe;
         #}
         #
       ENDSOURCE
@@ -4292,6 +4252,46 @@ Formatversion: 1
         #        return 'ExpenseSheetRejected';
         #
         #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveExpenseSheetTemplateTargetModule
+        #// Convierte el evento de hoja de gastos al modulo destino usado por las plantillas.
+        #static server INDEmailTemplateTargetModule resolveExpenseSheetTemplateTargetModule(str _eventType,
+        #                                                                                  INDExpenseSheetStatus _toStatus)
+        #{
+        #    if (_eventType == 'ExpenseSheetPaid' || _toStatus == INDExpenseSheetStatus::Paid)
+        #        return INDEmailTemplateTargetModule::CRMPaid;
+        #
+        #    if (_toStatus == INDExpenseSheetStatus::InReview)
+        #        return INDEmailTemplateTargetModule::CRMInReview;
+        #
+        #    if (_toStatus == INDExpenseSheetStatus::Approved)
+        #        return INDEmailTemplateTargetModule::CRMApproved;
+        #
+        #    if (_toStatus == INDExpenseSheetStatus::Rejected)
+        #        return INDEmailTemplateTargetModule::CRMRejected;
+        #
+        #    return INDEmailTemplateTargetModule::Empty;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveLanguageIdFromCrmUserId
+        #// Lee SysUserInfo.Language del usuario AX vinculado al usuario CRM indicado.
+        #static server LanguageId resolveLanguageIdFromCrmUserId(CRMUserId _crmUserId)
+        #{
+        #    SysUserInfo sysUserInfo;
+        #    str 20      axUserId;
+        #    ;
+        #
+        #    axUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_crmUserId);
+        #    if (!axUserId)
+        #        return '';
+        #
+        #    select firstonly sysUserInfo
+        #        where sysUserInfo.Id == axUserId;
+        #
+        #    return sysUserInfo.Id ? sysUserInfo.Language : '';
         #}
         #
       ENDSOURCE
@@ -4468,24 +4468,24 @@ Formatversion: 1
         #    {
         #        // Usa el envio extendido para marcar la notificacion con importancia alta en Outlook.
         #        return INDCRMUtilityService::sendInternalApiMailEx(
-        #            companyId,
-        #            fromEmail,
-        #            '',
-        #            toEmail,
-        #            '',
-        #            '',
-        #            '',
-        #            subject,
-        #            htmlBody,
-        #            textBody,
-        #            false,
-        #            strFmt('%1', enum2value(INDEmailImportance::high)),
-        #            'AxaptaExpenseSheetStatus',
-        #            eventType,
-        #            'ExpenseSheet',
-        #            expenseSheet.HojaGastosId,
-        #            idempotencyKey,
-        #            _correlationId);
+        #                                                            companyId,
+        #                                                            fromEmail,
+        #                                                            '',
+        #                                                            toEmail,
+        #                                                            '',
+        #                                                            '',
+        #                                                            '',
+        #                                                            subject,
+        #                                                            htmlBody,
+        #                                                            textBody,
+        #                                                            false,
+        #                                                            INDInternalApiClientServer::normalizeInternalApiMailImportance(strFmt("%1", INDEmailImportance::high)),
+        #                                                            'AxaptaExpenseSheetStatus',
+        #                                                            eventType,
+        #                                                            'ExpenseSheet',
+        #                                                            expenseSheet.HojaGastosId,
+        #                                                            idempotencyKey,
+        #                                                            _correlationId);
         #    }
         #    catch (Exception::Error)
         #    {
@@ -4515,11 +4515,14 @@ Formatversion: 1
         #//  - _data[9] = ExchangeRateMode (opcional, entero >= 0; otros valores = sin cambio)
         #//  - _data[10] = estadoComentarios (opcional)
         #//  - _data[11] = ReimbursableExpense (opcional: 0 No, 1 Yes, 2 Both)
+        #//  - _data[12] = actorAxUserId (opcional, solo para notificacion web de jefes)
         #static server container updateExpenseSheetHeader(container _data)
         #{
         #    DataAreaId            companyId;
         #    CRMUserId             crmUserId;
         #    str 20                axUserId;
+        #    str 20                actorAxUserId;
+        #    str 20                notificationActorUserId;
         #    CRMHojaGastosId       hojaId;
         #    str                   descr;
         #    str                   currencyCode;
@@ -4543,6 +4546,7 @@ Formatversion: 1
         #    str 16                exchangeRateModeRaw;
         #    str 16                estadoComentariosRaw;
         #    str 16                reimbursableExpenseRaw;
+        #    str 20                actorAxUserIdRaw;
         #    ;
         #    companyId = INDCRMUtilityService::getCompany(_data);
         #
@@ -4609,6 +4613,13 @@ Formatversion: 1
         #
         #            hasReimbursableExpense = true;
         #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 12)
+        #    {
+        #        actorAxUserIdRaw = strLRTrim(strFmt('%1', conPeek(_data, 12)));
+        #        if (strLwr(actorAxUserIdRaw) != 'null')
+        #            actorAxUserId = actorAxUserIdRaw;
         #    }
         #
         #
@@ -4690,11 +4701,23 @@ Formatversion: 1
         #
         #            if (sendStatusNotification)
         #            {
+        #                notificationActorUserId = axUserId;
+        #                if (actorAxUserId &&
+        #                    newExpenseSheetStatus != INDExpenseSheetStatus::Paid &&
+        #                    INDCRMExpenseSheetService::canExpenseSheetActorManageOwner(actorAxUserId, header.UserId))
+        #                {
+        #                    notificationActorUserId = actorAxUserId;
+        #                }
+        #                else if (actorAxUserId)
+        #                {
+        #                    warning(strFmt('Actor web %1 ignorado para email de hoja %2: no pertenece al ambito de jefatura.', actorAxUserId, header.HojaGastosId));
+        #                }
+        #
         #                INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
         #                    header,
         #                    oldExpenseSheetStatus,
         #                    newExpenseSheetStatus,
-        #                    axUserId,
+        #                    notificationActorUserId,
         #                    '',
         #                    'crm-api',
         #                    strFmt('crm-api-%1-%2', hojaId, timeNow()));
@@ -5951,6 +5974,63 @@ Formatversion: 1
         #        msg = 'Ya existe otro ticket con la misma fecha y hora.';
         #
         #    return msg;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #canExpenseSheetActorManageOwner
+        #// Verifies that a forwarded web actor can manage the expense sheet owner.
+        #static server boolean canExpenseSheetActorManageOwner(str 20 _actorUserId,
+        #                                                      CRMUserId _ownerCrmUserId)
+        #{
+        #    CRMUserId                  actorCrmUserId;
+        #    CRMUsuarioTable            actorUser;
+        #    CRMUsuarioTable            subordinateCrmUser;
+        #    INDPersonaTable            subordinatePersona;
+        #    str                        subordinateList;
+        #    container                  subordinateUsersCon;
+        #    str                        subordinateUserId;
+        #    int                        i;
+        #    ;
+        #
+        #    if (!_actorUserId || !_ownerCrmUserId)
+        #        return false;
+        #
+        #    actorCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(_actorUserId);
+        #    if (!actorCrmUserId || actorCrmUserId == _ownerCrmUserId)
+        #        return false;
+        #
+        #    actorUser = CRMUsuarioTable::Find(actorCrmUserId);
+        #    if (!actorUser.RecId)
+        #        return false;
+        #
+        #    subordinateList = actorUser.ListaSubordinadosByPerTable();
+        #    if (!subordinateList)
+        #        return false;
+        #
+        #    subordinateUsersCon = Global::str2ConKeepStrings(subordinateList, ',');
+        #    for (i = 1; i <= conLen(subordinateUsersCon); i++)
+        #    {
+        #        subordinateUserId = strLRTrim(strFmt('%1', conPeek(subordinateUsersCon, i)));
+        #        if (!subordinateUserId)
+        #            continue;
+        #
+        #        if (subordinateUserId == _ownerCrmUserId)
+        #            return true;
+        #
+        #        subordinateCrmUser = CRMUsuarioTable::Find(subordinateUserId);
+        #        if (subordinateCrmUser.UserId == _ownerCrmUserId)
+        #            return true;
+        #
+        #        subordinatePersona = INDPersonaTable::Find(subordinateUserId);
+        #        if (subordinatePersona.RecId)
+        #        {
+        #            subordinateCrmUser = subordinatePersona.getCRMUsuarioTable();
+        #            if (subordinateCrmUser.UserId == _ownerCrmUserId)
+        #                return true;
+        #        }
+        #    }
+        #
+        #    return false;
         #}
         #
       ENDSOURCE

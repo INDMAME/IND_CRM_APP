@@ -140,7 +140,8 @@ namespace IND_CRM_APP.Services
             string token,
             string hojaGastosId,
             ExpenseSheetUpdateRequest req,
-            string? axUserIdOverride = null
+            string? axUserIdOverride = null,
+            string? actorAxUserIdOverride = null
         );
 
         Task<ApiResponse<object>> UpdateExpenseSheetLineAsync(

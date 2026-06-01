@@ -1442,6 +1442,12 @@ namespace IND_CRM_APP.Controllers
                 request);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+            var actorAxUserId = await ResolveManagedExpenseStatusActorAxUserIdAsync(
+                token,
+                requestAxUserId,
+                mutationGuard,
+                request,
+                nameof(ApiExpenseSheetUpdate));
 
             try
             {
@@ -1450,12 +1456,18 @@ namespace IND_CRM_APP.Controllers
                     "request",
                     ("hojaGastosId", safeSheetId),
                     ("requestedAxUserId", requestAxUserId),
+                    ("actorAxUserId", actorAxUserId),
                     ("currencyCode", request.CurrencyCode),
                     ("exchangeRate", request.ExchRate),
                     ("projectId", request.ProjId),
                     ("expenseSheetStatus", request.ExpenseSheetStatus),
                     ("exchangeRateMode", request.ExchangeRateMode));
-                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, safeSheetId, request, requestAxUserId);
+                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(
+                    token,
+                    safeSheetId,
+                    request,
+                    requestAxUserId,
+                    actorAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
                 LogExpenseCurrencyTrace(
                     nameof(ApiExpenseSheetUpdate),
@@ -4160,6 +4172,60 @@ namespace IND_CRM_APP.Controllers
                     Snapshot = snapshot
                 };
             }
+        }
+
+        // Resolves the real approver actor only for managed-user status transitions.
+        private async Task<string?> ResolveManagedExpenseStatusActorAxUserIdAsync(
+            string token,
+            string? requestAxUserId,
+            ExpenseSheetMutationGuardResult mutationGuard,
+            ExpenseSheetUpdateRequest request,
+            string operationName)
+        {
+            var sessionAxUserId = GetCurrentSessionAxUserId();
+            var normalizedRequestAxUserId = NormalizeOptionalText(requestAxUserId);
+            if (string.IsNullOrWhiteSpace(sessionAxUserId) ||
+                string.IsNullOrWhiteSpace(normalizedRequestAxUserId) ||
+                IsSameExpenseUserId(sessionAxUserId, normalizedRequestAxUserId))
+            {
+                return null;
+            }
+
+            var snapshot = mutationGuard.Snapshot;
+            var policy = mutationGuard.Policy;
+            if (snapshot == null || policy?.IsManagingOtherUser != true)
+                return null;
+
+            var requestedStatus = request.ExpenseSheetStatus;
+            if (!requestedStatus.HasValue || requestedStatus.Value == snapshot.StatusCode)
+                return null;
+
+            try
+            {
+                var items = await GetExpenseSheetSubordinatesForScopeAsync(token);
+                var ownerMatchesScope = items.Any(item => MatchesExpenseSubordinateUserId(item, snapshot.OwnerUserId));
+                var requestMatchesOwner = IsSameExpenseUserId(snapshot.OwnerUserId, normalizedRequestAxUserId) ||
+                                          items.Any(item =>
+                                              MatchesExpenseSubordinateUserId(item, snapshot.OwnerUserId) &&
+                                              MatchesExpenseSubordinateUserId(item, normalizedRequestAxUserId));
+
+                if (ownerMatchesScope && requestMatchesOwner)
+                    return sessionAxUserId;
+
+                _logger.LogInformation(
+                    "Skipped expense status actor forwarding in {Operation}. OwnerMatchesScope={OwnerMatchesScope}. RequestMatchesOwner={RequestMatchesOwner}. RequestAxUserId={RequestAxUserId}. OwnerUserId={OwnerUserId}.",
+                    operationName,
+                    ownerMatchesScope,
+                    requestMatchesOwner,
+                    normalizedRequestAxUserId,
+                    snapshot.OwnerUserId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not resolve expense status actor forwarding in {Operation}.", operationName);
+            }
+
+            return null;
         }
 
         // Reuses the same read-only message for blocked header, line and delete mutations outside allowed modes.

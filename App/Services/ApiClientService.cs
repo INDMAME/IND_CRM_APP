@@ -1264,7 +1264,8 @@ namespace IND_CRM_APP.Services
             string token,
             string hojaGastosId,
             ExpenseSheetUpdateRequest req,
-            string? axUserIdOverride = null)
+            string? axUserIdOverride = null,
+            string? actorAxUserIdOverride = null)
         {
             PrepareRequestHeaders(
                 token,
@@ -1273,11 +1274,12 @@ namespace IND_CRM_APP.Services
                 includeCompanyHeader: true,
                 includeAxUserHeader: true,
                 axUserIdOverride: axUserIdOverride);
+            ApplyOptionalHeader("X-IND-ActorAxUserId", actorAxUserIdOverride);
 
             var safeId = EscapePathSegment(hojaGastosId);
             req ??= new ExpenseSheetUpdateRequest();
             _logger.LogInformation(
-                "UpdateExpenseSheetHeader request. HojaGastosId: {HojaGastosId}. CurrencyCode: {CurrencyCode}. ExchRate: {ExchRate}. ProjId: {ProjId}. ExpenseSheetStatus: {ExpenseSheetStatus}. ExchangeRateMode: {ExchangeRateMode}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}.",
+                "UpdateExpenseSheetHeader request. HojaGastosId: {HojaGastosId}. CurrencyCode: {CurrencyCode}. ExchRate: {ExchRate}. ProjId: {ProjId}. ExpenseSheetStatus: {ExpenseSheetStatus}. ExchangeRateMode: {ExchangeRateMode}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. ActorAxUserIdOverride: {ActorAxUserIdOverride}.",
                 hojaGastosId,
                 NormalizeCurrencyCodeForTrace(req.CurrencyCode),
                 req.ExchRate,
@@ -1285,7 +1287,8 @@ namespace IND_CRM_APP.Services
                 req.ExpenseSheetStatus.HasValue ? req.ExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null",
                 req.ExchangeRateMode.HasValue ? req.ExchangeRateMode.Value.ToString(CultureInfo.InvariantCulture) : "null",
                 GetSelectedCompanyId() ?? "<empty>",
-                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>",
+                NormalizeOptionalText(actorAxUserIdOverride) ?? "<none>");
             var result = await SendPutJsonAsync(ApiRoutes.ExpenseSheetById(safeId), req);
             var response = BuildApiResponse<object>(result, "UpdateExpenseSheetHeader");
             _logger.LogInformation(
@@ -3247,6 +3250,7 @@ namespace IND_CRM_APP.Services
             {
                 _client.DefaultRequestHeaders.Remove("X-IND-AxUserId");
             }
+            _client.DefaultRequestHeaders.Remove("X-IND-ActorAxUserId");
 
             if (includeContextHeaders)
             {
@@ -3281,6 +3285,18 @@ namespace IND_CRM_APP.Services
                 return;
 
             _client.DefaultRequestHeaders.Add("X-IND-AxUserId", axUserId);
+        }
+
+        // Applies an optional forwarding header and clears stale values when absent.
+        private void ApplyOptionalHeader(string headerName, string? value)
+        {
+            _client.DefaultRequestHeaders.Remove(headerName);
+
+            var normalizedValue = NormalizeOptionalText(value);
+            if (string.IsNullOrWhiteSpace(normalizedValue))
+                return;
+
+            _client.DefaultRequestHeaders.Add(headerName, normalizedValue);
         }
 
         private void ApplyContextHeaders()
