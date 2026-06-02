@@ -223,7 +223,7 @@ export const useExpenseSheetDetailPageController = () => {
     }
 
     const ownerName = safeText(header?.userName);
-    return [ownerUserId, ownerName].filter(Boolean).join(" - ");
+    return ownerName ? `${ownerName} (${ownerUserId})` : ownerUserId;
   }, [currentCrmUserId, header?.userId, header?.userName]);
 
   const { handleUpdate, handleStatusTransition, handleDelete } = useExpenseSheetDetailMutations({
