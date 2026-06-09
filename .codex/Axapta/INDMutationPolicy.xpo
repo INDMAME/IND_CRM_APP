@@ -1,0 +1,50 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBE
+
+; Navision Axapta Enumtype : INDMutationPolicy unloaded at Jueves 04/06/2026
+; --------------------------------------------------------------------------------
+  ENUMTYPEVERSION 1
+  
+  ENUMTYPE #INDMutationPolicy
+    PROPERTIES
+      Name                #INDMutationPolicy
+      Label               #Política de modificación
+      Help                #
+      DisplayLength       #Auto
+      Style               #Combo box
+      ConfigurationKey    #
+      UseEnumValue        #Yes
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+      #OwnOnly
+      PROPERTIES
+        Name                #OwnOnly
+        Label               #Solo propios
+        ConfigurationKey    #
+        EnumValue           #0
+      ENDPROPERTIES
+      
+      #SameAsVisibility
+      PROPERTIES
+        Name                #SameAsVisibility
+        Label               #Igual que visibilidad
+        ConfigurationKey    #
+        EnumValue           #1
+      ENDPROPERTIES
+      
+      #ModuleBusinessRules
+      PROPERTIES
+        Name                #ModuleBusinessRules
+        Label               #Reglas del módulo
+        ConfigurationKey    #
+        EnumValue           #2
+      ENDPROPERTIES
+      
+    ENDTYPEELEMENTS
+  ENDENUMTYPE
+  
+
+***Element: END

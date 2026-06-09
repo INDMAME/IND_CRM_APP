@@ -24,12 +24,14 @@ type LoadOverride = {
   fromDate: string;
   toDate: string;
   accountNum?: string;
+  ownerAxUserId?: string;
 };
 
 type UseHistoryActivitiesArgs = {
   fromDateValue: string;
   toDateValue: string;
   accountNumValue: string;
+  ownerAxUserIdValue?: string;
   pageSize: number;
   retryDelayMs?: number;
   normalizeRange: (from: string, to: string) => { from: string; to: string };
@@ -42,6 +44,7 @@ export const useHistoryActivities = ({
   fromDateValue,
   toDateValue,
   accountNumValue,
+  ownerAxUserIdValue = "",
   pageSize,
   retryDelayMs = 600,
   normalizeRange,
@@ -91,6 +94,7 @@ export const useHistoryActivities = ({
       const fromDateStr = override?.fromDate ?? fromDateValue;
       const toDateStr = override?.toDate ?? toDateValue;
       const accountNumStr = override?.accountNum ?? accountNumValue;
+      const ownerAxUserIdStr = override?.ownerAxUserId ?? ownerAxUserIdValue;
 
       if (!fromDateStr || !toDateStr) {
         setIsLoading(false);
@@ -110,7 +114,8 @@ export const useHistoryActivities = ({
       activeAbortRef.current = controller;
 
       const normalized = normalizeRange(fromDateStr, toDateStr);
-      const filterSignature = `${normalized.from}|${normalized.to}|${accountNumStr}|${page}`;
+      const normalizedOwnerAxUserId = ownerAxUserIdStr.trim();
+      const filterSignature = `${normalized.from}|${normalized.to}|${accountNumStr}|${normalizedOwnerAxUserId}|${page}`;
       lastSignatureRef.current = filterSignature;
 
       setIsLoading(true);
@@ -118,11 +123,19 @@ export const useHistoryActivities = ({
       setTotal(0);
       setErrorMessage("");
 
-      const payload = {
+      const payload: {
+        fromDate: string;
+        toDate: string;
+        accountNum: string;
+        ownerAxUserId?: string;
+      } = {
         fromDate: normalized.from,
         toDate: normalized.to,
         accountNum: accountNumStr,
       };
+      if (normalizedOwnerAxUserId) {
+        payload.ownerAxUserId = normalizedOwnerAxUserId;
+      }
 
       onDebug?.("loadActivities:request", { page, pageSize, payload });
 
@@ -160,6 +173,7 @@ export const useHistoryActivities = ({
               fromDate: fromDateStr,
               toDate: toDateStr,
               accountNum: accountNumStr,
+              ownerAxUserId: normalizedOwnerAxUserId,
             });
           }, retryDelayMs);
           return;
@@ -191,6 +205,7 @@ export const useHistoryActivities = ({
       normalizeRange,
       onDebug,
       onForbidden,
+      ownerAxUserIdValue,
       pageSize,
       retryDelayMs,
       toDateValue,

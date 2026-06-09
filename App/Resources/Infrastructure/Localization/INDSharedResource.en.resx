@@ -546,6 +546,18 @@
   <data name="History_Filter_Client" xml:space="preserve">
     <value>Account</value>
   </data>
+  <data name="History_Filter_Owner" xml:space="preserve">
+    <value>Owner</value>
+  </data>
+  <data name="History_Filter_Owner_All" xml:space="preserve">
+    <value>All visible users</value>
+  </data>
+  <data name="History_Filter_Owner_None" xml:space="preserve">
+    <value>No visible users</value>
+  </data>
+  <data name="History_Filter_Owner_Loading" xml:space="preserve">
+    <value>Loading visible users</value>
+  </data>
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>Clear</value>
   </data>

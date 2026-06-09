@@ -33,7 +33,8 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                     "/Visitas/UpdateAsistenteTipo",
                     "/Visitas/GetActivityByCode",
                     "/Visitas/GetAccountsForDropdown",
-                    "/Visitas/GetContactsForDropdown"
+                    "/Visitas/GetContactsForDropdown",
+                    "/api/crm/data-visibility/visible-users"
                 },
                 [ModuleGastosTickets] = new[]
                 {

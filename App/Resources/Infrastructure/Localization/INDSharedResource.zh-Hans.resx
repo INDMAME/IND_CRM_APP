@@ -459,6 +459,18 @@
   <data name="History_Filter_Client" xml:space="preserve">
     <value>账户</value>
   </data>
+  <data name="History_Filter_Owner" xml:space="preserve">
+    <value>负责人</value>
+  </data>
+  <data name="History_Filter_Owner_All" xml:space="preserve">
+    <value>所有可见用户</value>
+  </data>
+  <data name="History_Filter_Owner_None" xml:space="preserve">
+    <value>无可见用户</value>
+  </data>
+  <data name="History_Filter_Owner_Loading" xml:space="preserve">
+    <value>正在加载可见用户</value>
+  </data>
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>清除</value>
   </data>

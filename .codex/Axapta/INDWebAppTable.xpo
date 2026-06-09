@@ -1,0 +1,177 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDWebApp unloaded at Viernes 05/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+
+  TABLE #INDWebApp
+    PROPERTIES
+      Name                #INDWebApp
+      Label               #Configuracion web app
+      FormRef             #INDWebApp
+      TitleField1         #AppCode
+      TitleField2         #Description
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #Found
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #No
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #AppCodeIdx
+      ClusterIndex        #AppCodeIdx
+      ModifiedDate        #No
+      ModifiedTime        #No
+      ModifiedBy          #No
+      ModifiedTransactionId #No
+      CreatedDate         #No
+      CreatedTime         #No
+      CreatedBy           #No
+      CreatedTransactionId #No
+    ENDPROPERTIES
+
+    FIELDS
+      FIELD #AppCode
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AppCode
+          Label               #Codigo sitio web
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDWebApp
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #
+              #
+            ENDARRAY
+          StringSize          #35
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #Description
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Description
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDWebApp
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+
+      FIELD #IsActive
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #IsActive
+          Label               #Activo
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDWebApp
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+
+        GROUPFIELDS
+          #AppCode
+          #Description
+          #IsActive
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+
+    INDICES
+      #AppCodeIdx
+      PROPERTIES
+        Name                #AppCodeIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+
+      INDEXFIELDS
+        #AppCode
+      ENDINDEXFIELDS
+
+    ENDINDICES
+    REFERENCES
+    ENDREFERENCES
+
+    DELETEACTIONS
+    ENDDELETEACTIONS
+
+    METHODS
+      Version: 3
+      SOURCE #initValue
+        #//MMS - Ajustes CRM - 2026.06.05
+        #// Deja las nuevas apps activas por defecto para simplificar la configuracion inicial.
+        #void initValue()
+        #{
+        #    super();
+        #
+        #    this.IsActive = NoYes::Yes;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+
+
+***Element: END

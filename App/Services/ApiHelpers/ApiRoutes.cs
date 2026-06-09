@@ -17,6 +17,7 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string AccountsList = "api/crm/accounts/listAccounts";
         public const string ContactsList = "api/crm/accounts/listContacts";
         public const string ActivitiesList = "api/crm/activities/list";
+        public const string DataVisibilityVisibleUsers = "api/crm/data-visibility/visible-users";
         public const string ActivitiesCreate = "api/crm/activities/create";
         public const string VisitsCreateAsistente = "api/crm/visits/createVisitaAsistente";
         public const string VisitsDeleteAsistente = "api/crm/visits/deleteVisitaAsistente";
@@ -37,6 +38,13 @@ namespace IND_CRM_APP.Services.ApiHelpers
         // Builds the activity by record id route.
         public static string ActivityByRecId(long recId) =>
             $"api/crm/activities/{recId}";
+
+        // Builds the data visibility users route with query parameters.
+        public static string DataVisibilityVisibleUsersByQuery(
+            string safeAppCode,
+            string safeModuleCode,
+            bool includeCrmUserId) =>
+            $"{DataVisibilityVisibleUsers}?appCode={safeAppCode}&moduleCode={safeModuleCode}&includeCrmUserId={(includeCrmUserId ? "true" : "false")}";
 
         // Builds the expense sheet by id route.
         public static string ExpenseSheetById(string safeId) =>

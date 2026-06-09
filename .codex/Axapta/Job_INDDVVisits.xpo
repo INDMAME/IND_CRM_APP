@@ -1,0 +1,51 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDDVVisits descargados en Jueves 04/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job_INDDVVisits
+    #static void Job_INDDVVisits(Args _args)
+    #{
+    #    DataAreaId    companyId      = curext();
+    #    UserId        viewerAxUserId = curUserId();
+    #    str           appCode        = "CRM";
+    #    str           moduleCode     = "VISITAS_GESTION";
+    #    str           fromDateYmd    = "20200101";
+    #    str           toDateYmd      = "20991231";
+    #    CRMAccountNum accountNum     = "";
+    #    container     data;
+    #    container     result;
+    #    container     row;
+    #    int           i;
+    #    ;
+    #
+    #    data = [companyId, viewerAxUserId, fromDateYmd, toDateYmd, accountNum, appCode, moduleCode];
+    #    result = INDCRMVisitsService::getActivityContainer(data);
+    #
+    #    info(strFmt("Filas devueltas: %1", conLen(result)));
+    #
+    #    for (i = 1; i <= conLen(result); i++)
+    #    {
+    #        row = conPeek(result, i);
+    #
+    #        if (conLen(row) == 1)
+    #        {
+    #            info(strFmt("Resultado[%1]: %2", i, conPeek(row, 1)));
+    #        }
+    #        else if (conLen(row) >= 10)
+    #        {
+    #            info(strFmt("Visita[%1] ActivityId=%2 RecId=%3 Name=%4 Account=%5 Date=%6 Type=%7 ContactMethod=%8",
+    #                i, conPeek(row, 1), conPeek(row, 2), conPeek(row, 3),
+    #                conPeek(row, 4), conPeek(row, 5), conPeek(row, 8), conPeek(row, 9)));
+    #        }
+    #    }
+    #
+    #    info("Fin listado.");
+    #}
+  ENDSOURCE
+
+***Element: END

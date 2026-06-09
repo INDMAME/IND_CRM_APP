@@ -14,6 +14,8 @@ export type HistoryCachedFilter = {
   page?: number;
   clientAccount?: string;
   clientText?: string;
+  ownerAxUserId?: string;
+  ownerText?: string;
 };
 
 const HISTORY_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
@@ -26,6 +28,8 @@ const normalizeCachedFilter = (value: HistoryCachedFilter | null): HistoryCached
     page: value.page,
     clientAccount: value.clientAccount || "",
     clientText: value.clientText || "",
+    ownerAxUserId: value.ownerAxUserId || "",
+    ownerText: value.ownerText || "",
   };
 };
 

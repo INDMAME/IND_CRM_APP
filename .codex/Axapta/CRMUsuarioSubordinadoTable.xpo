@@ -1,0 +1,198 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : CRMUsuarioSubordinadoTable unloaded at Martes 02/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #CRMUsuarioSubordinadoTable
+    PROPERTIES
+      Name                #CRMUsuarioSubordinadoTable
+      Label               #
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #No
+      ModifiedTime        #No
+      ModifiedBy          #No
+      ModifiedTransactionId #No
+      CreatedDate         #No
+      CreatedTime         #No
+      CreatedBy           #No
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #UserIdJefe
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserIdJefe
+          Label               #Jefe
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioSubordinadoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #UserIdSubordinado
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserIdSubordinado
+          Label               #Subordinado
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioSubordinadoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioSubordinadoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #Index1
+      PROPERTIES
+        Name                #Index1
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #UserIdJefe
+      ENDINDEXFIELDS
+      
+      #Index2
+      PROPERTIES
+        Name                #Index2
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #UserIdSubordinado
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #UserIdSubordinadoName
+        #display Name UserIdSubordinadoName()
+        #{
+        #    return CRMUsuarioTable::Find(this.UserIdSubordinado).Name;
+        #}
+      ENDSOURCE
+      SOURCE #FindJefe
+        #static CRMUserId FindJefe(CRMUserId _userId)
+        #{
+        #    CRMUsuarioSubordinadoTable  CRMUsuarioSubordinadoTable;
+        #    ;
+        #
+        #    if (_userId == "ANA"){
+        #        return "NY";
+        #    }
+        #
+        #    select firstonly CRMUsuarioSubordinadoTable
+        #    where CRMUsuarioSubordinadoTable.UserIdSubordinado == _userID;
+        #
+        #    return CRMUsuarioSubordinadoTable.UserIdJefe;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

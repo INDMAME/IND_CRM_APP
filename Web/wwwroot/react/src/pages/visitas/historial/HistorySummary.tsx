@@ -9,6 +9,9 @@ type Props = {
   clientLabel?: string;
   clientValue?: string;
   showClient?: boolean;
+  ownerLabel?: string;
+  ownerValue?: string;
+  showOwner?: boolean;
 };
 
 // Renders the reusable date summary block for history filters.
@@ -21,6 +24,9 @@ const HistorySummary = ({
   clientLabel = "",
   clientValue = "",
   showClient = false,
+  ownerLabel = "",
+  ownerValue = "",
+  showOwner = false,
 }: Props) => {
   return (
     <>
@@ -34,6 +40,12 @@ const HistorySummary = ({
         <div className="history-filter-summary mt-1.5 flex items-center gap-2 text-xs min-w-0">
           <span className="font-semibold shrink-0">{clientLabel}:</span>
           <span className="min-w-0 flex-1 truncate">{clientValue}</span>
+        </div>
+      ) : null}
+      {showOwner && ownerValue ? (
+        <div className="history-filter-summary mt-1.5 flex items-center gap-2 text-xs min-w-0">
+          <span className="font-semibold shrink-0">{ownerLabel}:</span>
+          <span className="min-w-0 flex-1 truncate">{ownerValue}</span>
         </div>
       ) : null}
     </>

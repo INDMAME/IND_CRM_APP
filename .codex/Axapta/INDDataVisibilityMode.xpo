@@ -1,0 +1,66 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBE
+
+; Navision Axapta Enumtype : INDDataVisibilityMode unloaded at Jueves 04/06/2026
+; --------------------------------------------------------------------------------
+  ENUMTYPEVERSION 1
+  
+  ENUMTYPE #INDDataVisibilityMode
+    PROPERTIES
+      Name                #INDDataVisibilityMode
+      Label               #Modo de visibilidad de datos
+      Help                #
+      DisplayLength       #Auto
+      Style               #Combo box
+      ConfigurationKey    #
+      UseEnumValue        #Yes
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+      #OwnOnly
+      PROPERTIES
+        Name                #OwnOnly
+        Label               #Solo propios
+        ConfigurationKey    #
+        EnumValue           #0
+      ENDPROPERTIES
+      
+      #OwnAndHierarchy
+      PROPERTIES
+        Name                #OwnAndHierarchy
+        Label               #Propios + jerarquía
+        ConfigurationKey    #
+        EnumValue           #1
+      ENDPROPERTIES
+      
+      #HierarchyOnly
+      PROPERTIES
+        Name                #HierarchyOnly
+        Label               #Solo jerarquía
+        ConfigurationKey    #
+        EnumValue           #2
+      ENDPROPERTIES
+      
+      #ManualTargetsOnly
+      PROPERTIES
+        Name                #ManualTargetsOnly
+        Label               #Solo usuarios configurados
+        ConfigurationKey    #
+        EnumValue           #3
+      ENDPROPERTIES
+      
+      #AllUsers
+      PROPERTIES
+        Name                #AllUsers
+        Label               #Todos los usuarios
+        ConfigurationKey    #
+        EnumValue           #4
+      ENDPROPERTIES
+      
+    ENDTYPEELEMENTS
+  ENDENUMTYPE
+  
+
+***Element: END

@@ -546,6 +546,18 @@
   <data name="History_Filter_Client" xml:space="preserve">
     <value>Kontua</value>
   </data>
+  <data name="History_Filter_Owner" xml:space="preserve">
+    <value>Jabea</value>
+  </data>
+  <data name="History_Filter_Owner_All" xml:space="preserve">
+    <value>Erabiltzaile ikusgai guztiak</value>
+  </data>
+  <data name="History_Filter_Owner_None" xml:space="preserve">
+    <value>Ez dago erabiltzaile ikusgairik</value>
+  </data>
+  <data name="History_Filter_Owner_Loading" xml:space="preserve">
+    <value>Erabiltzaile ikusgaiak kargatzen</value>
+  </data>
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>Garbitu</value>
   </data>

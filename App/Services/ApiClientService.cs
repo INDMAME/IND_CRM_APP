@@ -961,6 +961,24 @@ namespace IND_CRM_APP.Services
             return BuildPagedResponse<ActivityDto>(result, "GetActivities");
         }
 
+        // Requests visible CRM users for the selected module and company context.
+        public async Task<PagedApiResponse<DataVisibilityVisibleUserDto>> GetVisibleUsersAsync(
+            string token,
+            string appCode,
+            string moduleCode,
+            bool includeCrmUserId = true)
+        {
+            PrepareRequestHeaders(token, "GetVisibleUsers", requireCompany: true);
+
+            var route = ApiRoutes.DataVisibilityVisibleUsersByQuery(
+                EscapeQueryValue(appCode),
+                EscapeQueryValue(moduleCode),
+                includeCrmUserId);
+
+            var result = await SendGetAsync(route);
+            return BuildPagedResponse<DataVisibilityVisibleUserDto>(result, "GetVisibleUsers");
+        }
+
         public async Task<ApiResponse<ActivityDto>> GetActivityByCodeAsync(string token, string actividadId)
         {
             PrepareRequestHeaders(token, "GetActivityByCode", requireCompany: true);

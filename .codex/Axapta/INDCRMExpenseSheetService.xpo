@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Lunes 01/06/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 04/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -333,6 +333,63 @@ Formatversion: 1
         #    }
         #
         #    return totalAmount;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #canExpenseSheetActorManageOwner
+        #// Valida que el actor recibido desde la web pueda gestionar al propietario de la hoja.
+        #static server boolean canExpenseSheetActorManageOwner(str 20 _actorUserId,
+        #                                                      CRMUserId _ownerCrmUserId)
+        #{
+        #    CRMUserId                  actorCrmUserId;
+        #    CRMUsuarioTable            actorUser;
+        #    CRMUsuarioTable            subordinateCrmUser;
+        #    INDPersonaTable            subordinatePersona;
+        #    str                        subordinateList;
+        #    container                  subordinateUsersCon;
+        #    str                        subordinateUserId;
+        #    int                        i;
+        #    ;
+        #
+        #    if (!_actorUserId || !_ownerCrmUserId)
+        #        return false;
+        #
+        #    actorCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(_actorUserId);
+        #    if (!actorCrmUserId || actorCrmUserId == _ownerCrmUserId)
+        #        return false;
+        #
+        #    actorUser = CRMUsuarioTable::Find(actorCrmUserId);
+        #    if (!actorUser.RecId)
+        #        return false;
+        #
+        #    subordinateList = actorUser.ListaSubordinadosByPerTable();
+        #    if (!subordinateList)
+        #        return false;
+        #
+        #    subordinateUsersCon = Global::str2ConKeepStrings(subordinateList, ',');
+        #    for (i = 1; i <= conLen(subordinateUsersCon); i++)
+        #    {
+        #        subordinateUserId = strLRTrim(strFmt('%1', conPeek(subordinateUsersCon, i)));
+        #        if (!subordinateUserId)
+        #            continue;
+        #
+        #        if (subordinateUserId == _ownerCrmUserId)
+        #            return true;
+        #
+        #        subordinateCrmUser = CRMUsuarioTable::Find(subordinateUserId);
+        #        if (subordinateCrmUser.UserId == _ownerCrmUserId)
+        #            return true;
+        #
+        #        subordinatePersona = INDPersonaTable::Find(subordinateUserId);
+        #        if (subordinatePersona.RecId)
+        #        {
+        #            subordinateCrmUser = subordinatePersona.getCRMUsuarioTable();
+        #            if (subordinateCrmUser.UserId == _ownerCrmUserId)
+        #                return true;
+        #        }
+        #    }
+        #
+        #    return false;
         #}
         #
       ENDSOURCE
@@ -3691,6 +3748,16 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #isExpenseSheetApprovalRequestEvent
+        #// Indica si el evento debe tratarse como una solicitud pendiente para la jefatura.
+        #// Se incluye ExpenseSheetRejectionCancelled por compatibilidad con llamadas antiguas.
+        #static server boolean isExpenseSheetApprovalRequestEvent(str _eventType)
+        #{
+        #    return _eventType == 'ExpenseSheetApprovalRequested' ||
+        #           _eventType == 'ExpenseSheetRejectionCancelled';
+        #}
+        #
+      ENDSOURCE
       SOURCE #isValidGastoType
         #// Method: isValidGastoType
         #// Purpose: Validate allowed CRMGastoType int values (hardcoded)
@@ -4228,16 +4295,6 @@ Formatversion: 1
         #        where subordinadoTable.UserIdSubordinado == _ownerCrmUserId;
         #
         #    return subordinadoTable.UserIdJefe;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #isExpenseSheetApprovalRequestEvent
-        #// Indica si el evento debe tratarse como una solicitud pendiente para la jefatura.
-        #// Se incluye ExpenseSheetRejectionCancelled por compatibilidad con llamadas antiguas.
-        #static server boolean isExpenseSheetApprovalRequestEvent(str _eventType)
-        #{
-        #    return _eventType == 'ExpenseSheetApprovalRequested' ||
-        #           _eventType == 'ExpenseSheetRejectionCancelled';
         #}
         #
       ENDSOURCE
@@ -5989,63 +6046,6 @@ Formatversion: 1
         #        msg = 'Ya existe otro ticket con la misma fecha y hora.';
         #
         #    return msg;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #canExpenseSheetActorManageOwner
-        #// Valida que el actor recibido desde la web pueda gestionar al propietario de la hoja.
-        #static server boolean canExpenseSheetActorManageOwner(str 20 _actorUserId,
-        #                                                      CRMUserId _ownerCrmUserId)
-        #{
-        #    CRMUserId                  actorCrmUserId;
-        #    CRMUsuarioTable            actorUser;
-        #    CRMUsuarioTable            subordinateCrmUser;
-        #    INDPersonaTable            subordinatePersona;
-        #    str                        subordinateList;
-        #    container                  subordinateUsersCon;
-        #    str                        subordinateUserId;
-        #    int                        i;
-        #    ;
-        #
-        #    if (!_actorUserId || !_ownerCrmUserId)
-        #        return false;
-        #
-        #    actorCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(_actorUserId);
-        #    if (!actorCrmUserId || actorCrmUserId == _ownerCrmUserId)
-        #        return false;
-        #
-        #    actorUser = CRMUsuarioTable::Find(actorCrmUserId);
-        #    if (!actorUser.RecId)
-        #        return false;
-        #
-        #    subordinateList = actorUser.ListaSubordinadosByPerTable();
-        #    if (!subordinateList)
-        #        return false;
-        #
-        #    subordinateUsersCon = Global::str2ConKeepStrings(subordinateList, ',');
-        #    for (i = 1; i <= conLen(subordinateUsersCon); i++)
-        #    {
-        #        subordinateUserId = strLRTrim(strFmt('%1', conPeek(subordinateUsersCon, i)));
-        #        if (!subordinateUserId)
-        #            continue;
-        #
-        #        if (subordinateUserId == _ownerCrmUserId)
-        #            return true;
-        #
-        #        subordinateCrmUser = CRMUsuarioTable::Find(subordinateUserId);
-        #        if (subordinateCrmUser.UserId == _ownerCrmUserId)
-        #            return true;
-        #
-        #        subordinatePersona = INDPersonaTable::Find(subordinateUserId);
-        #        if (subordinatePersona.RecId)
-        #        {
-        #            subordinateCrmUser = subordinatePersona.getCRMUsuarioTable();
-        #            if (subordinateCrmUser.UserId == _ownerCrmUserId)
-        #                return true;
-        #        }
-        #    }
-        #
-        #    return false;
         #}
         #
       ENDSOURCE

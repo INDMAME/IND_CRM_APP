@@ -1,0 +1,1725 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDPersonaTable unloaded at Jueves 04/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #INDPersonaTable
+    PROPERTIES
+      Name                #INDPersonaTable
+      Label               #Maestro de Empleados
+      FormRef             #
+      TitleField1         #Alias
+      TitleField2         #UserId
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #INDPersonaTable
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #Yes
+      ModifiedBy          #Yes
+      ModifiedTransactionId #Yes
+      CreatedDate         #Yes
+      CreatedTime         #Yes
+      CreatedBy           #Yes
+      CreatedTransactionId #Yes
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #Name
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Name
+          Label               #Nombre
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #EmplName
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Alias
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Alias
+          Label               #Código
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDGestPersonaId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #UserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserId
+          Label               #Axapta
+          HelpText            #@SYS118
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #RefRecIdContrato
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefRecIdContrato
+          Label               #Contrato IST
+          HelpText            #RefRecId de la tabla INDEmplTable
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #RefRecIdHora
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefRecIdHora
+          Label               #Parte Horario
+          HelpText            #RefRecId de la tabla EmplTable
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #RefRecIdCRM
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefRecIdCRM
+          Label               #CRM
+          HelpText            #RefRecId de la tabla CRMUsuarioTable
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #RefRecIdSaltoUser
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefRecIdSaltoUser
+          Label               #Salto User
+          HelpText            #RefRecId de la tabla INDSaltoUserTable
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #RefRecIdContratoVigente
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefRecIdContratoVigente
+          Label               #Contrato vigente
+          HelpText            #RefRecId de la tabla INDEmplTable
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #AliasNickname
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AliasNickname
+          Label               #Alias
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Name
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ContractType
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ContractType
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDEmplISTETTSubcontrata
+        ENDPROPERTIES
+        
+      FIELD #RefRecIdSubContratoVigente
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #RefRecIdSubContratoVigente
+          Label               #Subcontrato vigente
+          HelpText            #RefRecId de la tabla INDEmplTable
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #Email
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Email
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Email
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #StartDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #StartDate
+          Label               #F. Creación
+          HelpText            #Esta fecha corresponde a la fecha de creación de registro de la persona.
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #Blocked
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Blocked
+          Label               #Bloqueado
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #ExpectedStartDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #ExpectedStartDate
+          Label               #F. Alta Prevista
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #ExpectedEndDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #ExpectedEndDate
+          Label               #F. Baja Prevista
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #TransDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #ExpectedTypeContractRelation
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ExpectedTypeContractRelation
+          Label               #Tipo Relación Contractual Prevista
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDEmplISTETTSubcontrata
+        ENDPROPERTIES
+        
+      FIELD #AllowSelfManagement
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #AllowSelfManagement
+          Label               #Auto Gestión CRM
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDPersonaTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Alias
+          #Name
+          #UserId
+          #Blocked
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Administration
+        PROPERTIES
+          Name                #Administration
+          OldName             #
+          Label               #Administración
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #ExpectedStartDate
+          #ExpectedEndDate
+          #ExpectedTypeContractRelation
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Identificacion
+        PROPERTIES
+          Name                #Identificacion
+          OldName             #
+          Label               #Identificación
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Alias
+          #Name
+          #AliasNickname
+          #ContractType
+          #UserId
+          #StartDate
+          #Blocked
+          #AllowSelfManagement
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #AliasIdx
+      PROPERTIES
+        Name                #AliasIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #Alias
+        #UserId
+        #Name
+        #RefRecIdContrato
+        #RefRecIdHora
+        #RefRecIdCRM
+      ENDINDEXFIELDS
+      
+      #RecIdIdx
+      PROPERTIES
+        Name                #RecIdIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #RecId
+      ENDINDEXFIELDS
+      
+      #RefRecIdCRMIdx
+      PROPERTIES
+        Name                #RefRecIdCRMIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #RefRecIdCRM
+      ENDINDEXFIELDS
+      
+      #RefRecIdContratoIdx
+      PROPERTIES
+        Name                #RefRecIdContratoIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #RefRecIdContrato
+      ENDINDEXFIELDS
+      
+      #RefRecIdHoraIdx
+      PROPERTIES
+        Name                #RefRecIdHoraIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #RefRecIdHora
+      ENDINDEXFIELDS
+      
+      #AliasIdIdx
+      PROPERTIES
+        Name                #AliasIdIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #Alias
+      ENDINDEXFIELDS
+      
+      #Index1
+      PROPERTIES
+        Name                #Index1
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #Email
+      ENDINDEXFIELDS
+      
+      #UserIdIdx
+      PROPERTIES
+        Name                #UserIdIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #UserId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #Bloqueado
+        #boolean bloqueado()
+        #{
+        #
+        #    return this.Blocked;
+        #}
+      ENDSOURCE
+      SOURCE #DimensionGasto
+        #Dimension DimensionGasto()
+        #{
+        #    ;
+        #    return INDEmplDepartamentoTable::Find(this.getEmplTable().INDEmplDepartamentoId).Dimension;
+        #}
+      ENDSOURCE
+      SOURCE #existsContratoVigente
+        #display NoYes existsContratoVigente()
+        #{
+        #   return this.RefRecIdContratoVigente || this.RefRecIdSubContratoVigente ? NoYes::Yes : NoYes::No;
+        #}
+      ENDSOURCE
+      SOURCE #existsEmplContrato
+        #display NoYes existsEmplContrato()
+        #{
+        #   return this.RefRecIdContrato ? NoYes::Yes : NoYes::No;
+        #}
+      ENDSOURCE
+      SOURCE #existsEmplHora
+        #display NoYes existsEmplHora()
+        #{
+        #   return this.RefRecIdHora ? NoYes::Yes : NoYes::No;
+        #}
+      ENDSOURCE
+      SOURCE #existsSaltoUser
+        #display NoYes existsSaltoUser()
+        #{
+        #   return this.RefRecIdSaltoUser ? NoYes::Yes : NoYes::No;
+        #}
+      ENDSOURCE
+      SOURCE #existsUserAx
+        #display NoYes existsUserAx()
+        #{
+        #   return SysUserInfo::findUserId(this.UserId) ? NoYes::Yes : NoYes::No;
+        #}
+      ENDSOURCE
+      SOURCE #existsUserCRM
+        #display NoYes existsUserCRM()
+        #{
+        #   return this.RefRecIdCRM ? NoYes::Yes : NoYes::No;
+        #}
+      ENDSOURCE
+      SOURCE #getCRMUsuarioTable
+        #CRMUsuarioTable getCRMUsuarioTable(boolean _forupdate = false)
+        #{
+        #    ;
+        #    return CRMUsuarioTable::FindRecId(this.RefRecIdCRM, _forupdate);
+        #}
+      ENDSOURCE
+      SOURCE #getEmplTable
+        #EmplTable getEmplTable(boolean _forupdate = false)
+        #{
+        #    ;
+        #    return EmplTable::findRecId(this.RefRecIdHora, _forupdate);
+        #}
+      ENDSOURCE
+      SOURCE #getINDEmplTable
+        #INDEmplTable getINDEmplTable(boolean _forupdate = false)
+        #{
+        #    ;
+        #    return INDEmplTable::FindRecId(this.RefRecIdContrato, _forupdate);
+        #}
+      ENDSOURCE
+      SOURCE #getMatchingNames
+        #void getMatchingNames()
+        #{
+        #    INDPersonaTable personaExistente,personaExistenteNameOld;
+        #    str 150 NameActual, palabra, nombreComparar;
+        #    str 1000 infoTxt;
+        #    container palabras;
+        #    container aliasCoincidencias;
+        #    int i, j, coincidencias, maxCoincidencias = 0;
+        #    QueryRun qr;
+        #    Query q = new Query();
+        #    QueryBuildDataSource qbds;
+        #
+        #    NameActual = this.Name;
+        #    personaExistenteNameOld = this.orig();
+        #
+        #    // Coincidencia exacta
+        #    select firstonly personaExistente
+        #        where personaExistente.Name == NameActual
+        #           && personaExistente.RecId != this.RecId;
+        #
+        #    if (personaExistente)
+        #        throw error(strFmt("Ya existe una persona con el mismo Nombre [%1]",this.Name));
+        #    /*{
+        #         if(BOX::yesNo(strFmt("Ya existe una persona con el mismo Nombre exacto: %1 (Código: %2). ¿Deseas continuar?", personaExistente.Name, personaExistente.Alias),
+        #            DialogButton::No) == DialogButton::No)
+        #            this.Name = "";
+        #    }  */
+        #
+        #    // Dividir nombre en palabras
+        #    palabras = str2con(Global::EliminaCaracteresEspeciales(Global::strSinCaracteresEspeciales(NameActual)), " ");
+        #
+        #    // Buscar todos los registros
+        #    qbds = q.addDataSource(tablenum(INDPersonaTable));
+        #    qr = new QueryRun(q);
+        #
+        #    while (qr.next())
+        #    {
+        #        personaExistente = qr.get(tablenum(INDPersonaTable));
+        #        if (personaExistente.RecId == this.RecId)
+        #            continue;
+        #
+        #        coincidencias = 0;
+        #        nombreComparar = Global::EliminaCaracteresEspeciales(Global::strSinCaracteresEspeciales(personaExistente.Name));
+        #
+        #        for (i = 1; i <= conlen(palabras); i++)
+        #        {
+        #            if(strLen(conpeek(palabras, i)) >= 4)
+        #                palabra = subStr(conpeek(palabras, i),0,4);
+        #
+        #            if (strScan(nombreComparar, palabra, 1, strlen(nombreComparar)) > 0)
+        #            {
+        #                coincidencias++;
+        #            }
+        #        }
+        #
+        #        if (coincidencias >= 2)
+        #        {
+        #            aliasCoincidencias += [personaExistente.Alias];
+        #        }
+        #    }
+        #
+        #    // Mostrar alias con más coincidencias
+        #    for (j = 1; j <= conlen(aliasCoincidencias); j++)
+        #    {
+        #        personaExistente = INDPersonaTable::Find(conpeek(aliasCoincidencias, j));
+        #        infoTxt += strFmt(" Código: %1 - Nombre: %2 \n ", personaExistente.Alias,personaExistente.Name);
+        #    }
+        #
+        #    if(conlen(aliasCoincidencias) > 0)
+        #        if(BOX::yesNo(strFmt("Se han encontrado coincidencias: \n %1 ¿Deseas continuar?", infoTxt),
+        #            DialogButton::No) == DialogButton::No)
+        #            {
+        #                this.Name = personaExistenteNameOld.Name;
+        #                this.doUpdate();
+        #            }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getOldestDate
+        #date getOldestDate(date date1, date date2, date date3)
+        #{
+        #    date oldestDate;
+        #
+        #    // Comenzamos asumiendo que date1 es la más antigua
+        #    oldestDate = date1;
+        #
+        #    if (date2 < oldestDate)
+        #    {
+        #        oldestDate = date2;
+        #    }
+        #
+        #    if (date3 < oldestDate)
+        #    {
+        #        oldestDate = date3;
+        #    }
+        #
+        #    return oldestDate;
+        #}
+      ENDSOURCE
+      SOURCE #insert
+        #public void insert()
+        #{
+        #
+        #    if(!this.StartDate)
+        #        this.StartDate = today();
+        #
+        #    super();
+        #
+        #
+        #}
+      ENDSOURCE
+      SOURCE #ledgerAccountGasto
+        #LedgerAccount ledgerAccountGasto()
+        #{
+        #    ;
+        #    return this.getINDEmplTable().LedgerAccountGastos;
+        #}
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId, Common _common = Null)
+        #{
+        #    INDEmplTable        indEmplTable;       //Contrato
+        #    EmplTable           emplTable;          //Hora
+        #    CRMUsuarioTable     cmrUsuarioTable;    //CRM
+        #    UserInfo            sysUserTable;       //AXAPTA
+        #    INDPersonaTable     oldTable;
+        #
+        #    super(_fieldId);
+        #
+        #    switch(_fieldId)
+        #    {
+        #
+        #        case(FieldNum(INDPersonaTable, UserId)):
+        #            ttsbegin;
+        #            if(SysUserInfo::findUserId(this.UserId))  //Existe el usuario????
+        #            {
+        #                indEmplTable    = INDPersonaTable::getContrato_indEmplTable(this.RefRecIdContrato, true);
+        #                cmrUsuarioTable = INDPersonaTable::getCRM_cmrUsuarioTable(this.RefRecIdCRM, true);
+        #                if(indEmplTable)
+        #                {
+        #                    indEmplTable.AxaptaUserId = indEmplTable.AxaptaUserId ? indEmplTable.AxaptaUserId : this.UserId;
+        #                    if(cmrUsuarioTable)
+        #                    {
+        #                        indEmplTable.CRMUserId    = cmrUsuarioTable.UserId;
+        #                        indEmplTable.CRM_UserId   = cmrUsuarioTable.UserId;
+        #
+        #                        cmrUsuarioTable.AxaptaUserId = cmrUsuarioTable.AxaptaUserId ? cmrUsuarioTable.AxaptaUserId : this.UserId;
+        #                        cmrUsuarioTable.update();
+        #                        info("Se ha actualizado el registro de CRM.");
+        #                    }
+        #                    indEmplTable.update();
+        #                    this.setContractType();
+        #                    info("Se ha actualizado el registro de Contrato.");
+        #                }
+        #
+        #                emplTable    = INDPersonaTable::getHora_emplTable(this.RefRecIdHora,true);
+        #                if(emplTable)
+        #                {
+        #                    if(indEmplTable && !emplTable.INDEmplId)
+        #                        emplTable.INDEmplId = indEmplTable.EmplId;
+        #
+        #                    emplTable.UserId = emplTable.UserId ? emplTable.UserId : this.UserId;
+        #                    emplTable.update();
+        #                    this.setContractType();
+        #                    info("Se ha actualizado el registro de Horario.");
+        #                }
+        #            }
+        #            ttscommit;
+        #        break;
+        #        case(FieldNum(INDPersonaTable, RefRecIdContrato)):
+        #            ttsbegin;
+        #            indEmplTable    = _common;//this.getContrato_indEmplTable(true);
+        #            cmrUsuarioTable = INDPersonaTable::getCRM_cmrUsuarioTable(this.RefRecIdCRM);
+        #            if(indEmplTable)
+        #            {
+        #                indEmplTable = INDEmplTable::Find(indEmplTable.Empl_EmplId,true);
+        #                indEmplTable.AxaptaUserId = indEmplTable.AxaptaUserId ? indEmplTable.AxaptaUserId : this.UserId;
+        #                if(cmrUsuarioTable)
+        #                {
+        #                    indEmplTable.CRMUserId    = cmrUsuarioTable.UserId;
+        #                    indEmplTable.CRM_UserId   = cmrUsuarioTable.UserId;
+        #                }
+        #
+        #                if(indEmplTable)  //MMS - 2026.04.20
+        #                    indEmplTable.update();
+        #                this.setContractType();
+        #                info("Se ha actualizado el registro de Contrato.");
+        #            }
+        #
+        #            emplTable    = INDPersonaTable::getHora_emplTable(this.RefRecIdHora,true);
+        #            if(emplTable)
+        #            {
+        #                if(indEmplTable && !emplTable.INDEmplId)
+        #                    emplTable.INDEmplId = indEmplTable.EmplId;
+        #
+        #                emplTable.UserId = emplTable.UserId ? emplTable.UserId : this.UserId;
+        #                emplTable.update();
+        #                this.setContractType();
+        #                info("Se ha actualizado el registro de Horario.");
+        #            }
+        #            ttscommit;
+        #
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, RefRecIdHora)):
+        #            ttsbegin;
+        #            indEmplTable = INDPersonaTable::getContrato_indEmplTable(this.RefRecIdContrato);
+        #            emplTable    = _common;//this.getHora_emplTable(true);
+        #            if(emplTable)
+        #            {
+        #                emplTable = EmplTable::find(emplTable.EmplId,true);
+        #                emplTable.INDEmplId = emplTable.INDEmplId ? emplTable.INDEmplId : indEmplTable.EmplId;
+        #                emplTable.UserId    = emplTable.UserId    ? emplTable.UserId    : this.UserId;
+        #                emplTable.update();
+        #                this.setContractType();
+        #                info("Se ha actualizado el registro de Horario.");
+        #            }
+        #
+        #            cmrUsuarioTable = INDPersonaTable::getCRM_cmrUsuarioTable(this.RefRecIdCRM,true);
+        #            if(cmrUsuarioTable)
+        #            {
+        #                cmrUsuarioTable.AxaptaUserId = cmrUsuarioTable.AxaptaUserId ? cmrUsuarioTable.AxaptaUserId : this.UserId;
+        #                if(emplTable && !cmrUsuarioTable.EmplId)
+        #                    cmrUsuarioTable.EmplId = emplTable.EmplId;
+        #                cmrUsuarioTable.update();
+        #                info("Se ha actualizado el registro de CRM.");
+        #            }
+        #            ttscommit;
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, RefRecIdCRM)):
+        #            ttsbegin;
+        #            cmrUsuarioTable =  _common;//this.getCRM_cmrUsuarioTable(true);
+        #            if(cmrUsuarioTable)
+        #            {
+        #                emplTable    = INDPersonaTable::getHora_emplTable(this.RefRecIdHora);
+        #                this.setContractType();
+        #                if(emplTable && !cmrUsuarioTable.EmplId)
+        #                    cmrUsuarioTable.EmplId = emplTable.EmplId;
+        #                cmrUsuarioTable = CRMUsuarioTable::FindRecId(cmrUsuarioTable.RecId,true);
+        #                cmrUsuarioTable.AxaptaUserId = cmrUsuarioTable.AxaptaUserId ? cmrUsuarioTable.AxaptaUserId : this.UserId;
+        #                cmrUsuarioTable.update();
+        #                info("Se ha actualizado el registro de CRM.");
+        #            }
+        #
+        #            indEmplTable = INDPersonaTable::getContrato_indEmplTable(this.RefRecIdContrato,true);
+        #            this.setContractType();
+        #            if(indEmplTable)
+        #            {
+        #                if(cmrUsuarioTable)
+        #                {
+        #                    indEmplTable.CRMUserId    = cmrUsuarioTable.UserId;
+        #                    indEmplTable.CRM_UserId   = cmrUsuarioTable.UserId;
+        #                }
+        #                indEmplTable.AxaptaUserId = indEmplTable.AxaptaUserId ? indEmplTable.AxaptaUserId : this.UserId;
+        #                indEmplTable.update();
+        #                info("Se ha actualizado el registro de Contrato.");
+        #            }
+        #            ttscommit;
+        #        break;
+        #
+        #        case(fieldNum(INDPersonaTable, Name)):
+        #        oldTable        = this.orig();
+        #
+        #        if(this.Name && oldTable.Name != this.Name)
+        #        {
+        #            ttsbegin;
+        #            if(this.RefRecIdContrato)
+        #            {
+        #                warning("No se ha actualizado el nombre del empleado de contrato.");
+        #                /*update_recordset indEmplTable
+        #                  setting Name = this.Name
+        #                    where indEmplTable.RecId   == this.RefRecIdContrato;  */
+        #            }
+        #
+        #            if(this.RefRecIdHora)
+        #            {
+        #                update_recordset emplTable
+        #                  setting Name = this.Name
+        #                    where emplTable.RecId       == this.RefRecIdHora;
+        #            }
+        #
+        #            if(this.RefRecIdCRM)
+        #            {
+        #                update_recordset cmrUsuarioTable
+        #                  setting Name = this.Name
+        #                    where cmrUsuarioTable.RecId == this.RefRecIdCRM;
+        #            }
+        #
+        #            if(this.UserId)
+        #            {
+        #                update_recordset sysUserTable
+        #                  setting Name = this.Name
+        #                    where sysUserTable.Id       == this.UserId;
+        #            }
+        #            ttscommit;
+        #
+        #        }
+        #        break;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #SetClusteres
+        #Set SetClusteres()
+        #{
+        #    Set                     set = new Set(Types::String);
+        #    INDClusterEmplTable     INDClusterEmplTable;
+        #    ;
+        #
+        #    while select INDClusterEmplTable
+        #    index hint index3
+        #    where   INDClusterEmplTable.PersonaId == this.Alias {
+        #
+        #        set.add(INDClusterEmplTable.ClusterId);
+        #    }
+        #
+        #    return set;
+        #}
+      ENDSOURCE
+      SOURCE #setContractType
+        #public void setContractType()
+        #{
+        #    INDEmplTable                    indEmplTable;
+        #    INDPersonaTable                 indPersonaTable;
+        #    INDEmplTipoContratoTable        tipoContratoTable;
+        #    INDEmplTipoEmpleadoFechaTable   subContrata;
+        #
+        #    EmplTable                       emplTable;
+        #    ;
+        #
+        #    this.ContractType   = INDEmplISTETTSubcontrata::None; //IJL.12/06/25. Si no inicializamos el valor no se asigna de forma correcta. Lo dejo inicialmente "sin relación" y después si tiene relación se asignará y si no se quedará "sin relación"
+        #
+        #    while select tipoContratoTable
+        #       index hint index1
+        #        where tipoContratoTable.EmplId == INDPersonaTable::getContrato_indEmplTable(this.RefRecIdContrato).EmplId
+        #    {
+        #         if(tipoContratoTable.ActivoaFecha(today()))
+        #         {
+        #            this.RefRecIdContratoVigente = tipoContratoTable.RecId;
+        #            this.ContractType            = INDEmplISTETTSubcontrata::IST;
+        #         }
+        #    }
+        #
+        #    if (this.ContractType == INDEmplISTETTSubcontrata::None && this.RefRecIdHora){
+        #
+        #        emplTable           = EmplTable::findRecId(this.RefRecIdHora);
+        #        this.ContractType   = emplTable.TipoEmpleado(today());
+        #    }
+        #
+        #/*
+        #//    select firstOnly subContrata
+        #//        where subContrata.EmplId == EmplTable::findRecId(this.RefRecIdHora).EmplId;
+        #
+        #    select firstOnly subContrata
+        #        where subContrata.EmplId == EmplTable::findRecId(this.RefRecIdHora).EmplId
+        #              && subContrata.EmplISTETTSubcontrata == INDEmplISTETTSubcontrata::Subcontrata; //IJL.27/05/25. Hay alguna línea indicando que son personal propio y esas no hay que tenerlas en cuenta.
+        #
+        #    if(subContrata)
+        #        this.ContractType = INDEmplISTETTSubcontrata::Subcontrata;
+        #
+        #    select firstOnly subContrata
+        #        where subContrata.EmplId == EmplTable::findRecId(this.RefRecIdHora).EmplId
+        #              && subContrata.EmplISTETTSubcontrata == INDEmplISTETTSubcontrata::GrupoInsertec; //IJL.27/05/25. Hay alguna línea indicando que son Grupo INSERTEC y esas hay que tenerlas en cuenta como Propio.
+        #
+        #    if(subContrata)
+        #        this.ContractType = INDEmplISTETTSubcontrata::IST;
+        #*/
+        #}
+      ENDSOURCE
+      SOURCE #update
+        #public void update()
+        #{
+        #    this.setContractType();
+        #
+        #    super();
+        #
+        #}
+      ENDSOURCE
+      SOURCE #validateDelete
+        #public boolean validateDelete()
+        #{
+        #    boolean ret;
+        #
+        #     if( SysUserInfo::findUserId(this.UserId) ||  this.RefRecIdContrato
+        #        || this.RefRecIdHora || this.RefRecIdCRM
+        #        || this.RefRecIdContratoVigente || this.RefRecIdSaltoUser)
+        #        throw error("No se puede eliminar el registro, contiene datos relacionados.");
+        #
+        #    ret = super();
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateField
+        #boolean validateField(fieldId p1)
+        #{
+        #    boolean     ret;
+        #
+        #
+        #    ret = super(p1);
+        #
+        #    switch(p1)
+        #    {
+        #        case(FieldNum(INDPersonaTable, Name)):
+        #            if (this.Name)
+        #                this.getMatchingNames();
+        #        break;
+        #        case(FieldNum(INDPersonaTable, Alias)):
+        #            if (EmplTable::find(this.Alias))
+        #                return checkFailed(strFmt("Ya existe el Id de Empleado [%1]",this.Alias));
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, RefRecIdContrato)):
+        #            if(this.RefRecIdContrato && !INDPersonaTable::getContrato_indEmplTable(this.RefRecIdContrato))
+        #                return checkFailed(strFmt("No existe el Empleado Contrato IST [%1]",this.RefRecIdContrato));
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, RefRecIdHora)):
+        #            if(this.RefRecIdHora && !INDPersonaTable::getHora_emplTable(this.RefRecIdHora))
+        #                return checkFailed(strFmt("No existe el Empleado Parte Horario [%1]",this.RefRecIdHora));
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, RefRecIdCRM)):
+        #            if(this.RefRecIdCRM && !INDPersonaTable::getCRM_cmrUsuarioTable(this.RefRecIdCRM))
+        #                return checkFailed(strFmt("No existe el Usuario CRM [%1]",this.RefRecIdCRM));
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, RefRecIdSaltoUser)):
+        #            if(this.RefRecIdSaltoUser && !INDPersonaTable::getSaltoUser(this.RefRecIdSaltoUser))
+        #                return checkFailed(strFmt("No existe el Usuario Salto [%1]",this.RefRecIdSaltoUser));
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, RefRecIdContratoVigente)):
+        #            if(this.RefRecIdContratoVigente && !INDEmplTipoContratoTable::FindRecId(this.RefRecIdContratoVigente))
+        #                return checkFailed(strFmt("No existe el Contrato [%1]",this.RefRecIdContratoVigente));
+        #            else
+        #                this.setContractType();
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, RefRecIdSubContratoVigente)):
+        #            if(this.RefRecIdSubContratoVigente && !INDEmplTipoEmpleadoFechaTable::FindRecId(this.RefRecIdSubContratoVigente))
+        #                return checkFailed(strFmt("No existe el Subcontrato [%1]",this.RefRecIdSubContratoVigente));
+        #            else
+        #                this.setContractType();
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, ExpectedStartDate)):
+        #            if(this.ExpectedStartDate && this.ExpectedEndDate && this.ExpectedStartDate > this.ExpectedEndDate)
+        #                return checkFailed(strFmt("La fecha de ALTA prevista %1 no puede ser mayor a la fecha de BAJA prevista %2.",this.ExpectedStartDate,this.ExpectedEndDate));
+        #        break;
+        #
+        #        case(FieldNum(INDPersonaTable, ExpectedEndDate)):
+        #            if(this.ExpectedEndDate && this.ExpectedStartDate && this.ExpectedEndDate < this.ExpectedStartDate)
+        #                return checkFailed(strFmt("La fecha de BAJA prevista %1 no puede ser menor a la fecha de ALTA prevista %2.",this.ExpectedEndDate,this.ExpectedStartDate));
+        #        break;
+        #
+        #        //IJL.12/06/25
+        #        case FieldNum(INDPersonaTable, Email):
+        #            if (this.Email)
+        #                ret = Global::EmailCorrecto(this.Email);
+        #            break;
+        #
+        #    }
+        #
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #createINDPersonaTable
+        #static INDPersonaTable createINDPersonaTable(EmplAlias _alias, EmplName _name, UserId _userAxapta = "",
+        #                                             RefRecId _contrato = 0, RefRecId _hora = 0, RefRecId _crm = 0)
+        #{
+        #    INDPersonaTable    personaTable;
+        #    ;
+        #
+        #    personaTable.clear();
+        #    personaTable.Alias              = _alias;
+        #    personaTable.Name               = _name;
+        #    personaTable.UserId             = _userAxapta;
+        #    personaTable.RefRecIdContrato   = _contrato;
+        #    personaTable.RefRecIdHora       = _hora;
+        #    personaTable.RefRecIdCRM        = _crm;
+        #    personaTable.insert();
+        #
+        #    return personaTable;
+        #}
+      ENDSOURCE
+      SOURCE #Find
+        #static INDPersonaTable find(INDGestPersonaId _id, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      index hint AliasIdx
+        #        where INDPersonaTable.Alias   == _id;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #findByAxUserId
+        #static INDPersonaTable findByAxUserId(UserId _id, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      //index hint RefRecIdCRMIdx
+        #        where INDPersonaTable.UserId    == _id;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #findByContrato
+        #static INDPersonaTable findByContrato(RecId _id, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      index hint RefRecIdContratoIdx
+        #        where INDPersonaTable.RefRecIdContrato   == _id;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #findByContratoVigente
+        #static INDPersonaTable findByContratoVigente(RecId _id, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      index hint RefRecIdContratoIdx
+        #        where INDPersonaTable.RefRecIdContratoVigente   == _id;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #findByCRM
+        #static INDPersonaTable findByCRM(RecId _id, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      index hint RefRecIdCRMIdx
+        #        where INDPersonaTable.RefRecIdCRM   == _id;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #findByEmail
+        #static INDPersonaTable findByEmail(Email _email, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      index hint index1
+        #        where INDPersonaTable.Email   == _email;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #findByHora
+        #static INDPersonaTable findByHora(RecId _id, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      index hint RefRecIdHoraIdx
+        #        where INDPersonaTable.RefRecIdHora   == _id;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #findBySaltoUser
+        #static INDPersonaTable findBySaltoUser(RecId _id, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      index hint RefRecIdCRMIdx
+        #        where INDPersonaTable.RefRecIdSaltoUser   == _id;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #findByUserAx
+        #static INDPersonaTable findByUserAx(UserId _id, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      index hint UserIdIdx
+        #        where INDPersonaTable.UserId   == _id;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #FindRecId
+        #static INDPersonaTable findRecId(RecId _id, boolean _forupdate = false)
+        #{
+        #    INDPersonaTable    INDPersonaTable;
+        #    ;
+        #
+        #    INDPersonaTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDPersonaTable
+        #      index hint RecIdIdx
+        #        where INDPersonaTable.RecId   == _id;
+        #
+        #    return INDPersonaTable;
+        #}
+      ENDSOURCE
+      SOURCE #getContrato_indEmplTable
+        #static INDEmplTable getContrato_indEmplTable(RecId _recId, boolean _forupdate = false)
+        #{
+        #    INDEmplTable indEmplTable;
+        #    ;
+        #
+        #    indEmplTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly indEmplTable
+        #      index hint Index2
+        #        where indEmplTable.RecId   == _recId;
+        #
+        #    return indEmplTable;
+        #}
+      ENDSOURCE
+      SOURCE #getCRM_cmrUsuarioTable
+        #static CRMUsuarioTable getCRM_cmrUsuarioTable(RecId _recId, boolean _forupdate = false)
+        #{
+        #    CRMUsuarioTable cmrUsuarioTable;
+        #    ;
+        #
+        #    cmrUsuarioTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly cmrUsuarioTable
+        #      index hint RecIdIdx
+        #        where cmrUsuarioTable.RecId   == _recId;
+        #
+        #    return cmrUsuarioTable;
+        #}
+      ENDSOURCE
+      SOURCE #getHora_emplTable
+        #static EmplTable getHora_emplTable(RecId _recId, boolean _forupdate = false)
+        #{
+        #    EmplTable           emplTable;
+        #    ;
+        #
+        #    emplTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly emplTable
+        #      index hint RecIdIdx
+        #        where emplTable.RecId   == _recId;
+        #
+        #    return emplTable;
+        #}
+      ENDSOURCE
+      SOURCE #getSaltoByAlias
+        #static INDSaltoCardTable getSaltoByAlias(INDGestPersonaId _id, DataAreaId _company, boolean _forupdate = false)
+        #{
+        #    INDSaltoCardTable           INDSaltoCardTable;
+        #    ;
+        #
+        #    INDSaltoCardTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDSaltoCardTable
+        #      index hint RecIdIdx
+        #        where INDSaltoCardTable.Alias   == _id
+        #           && INDSaltoCardTable.Company == _company;
+        #
+        #    return INDSaltoCardTable;
+        #}
+      ENDSOURCE
+      SOURCE #getSaltoUser
+        #static INDSaltoCardTable getSaltoUser(RecId _recId, boolean _forupdate = false)
+        #{
+        #    INDSaltoCardTable           INDSaltoCardTable;
+        #    ;
+        #
+        #    INDSaltoCardTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDSaltoCardTable
+        #      index hint RecIdIdx
+        #        where INDSaltoCardTable.RecId   == _recId;
+        #
+        #    return INDSaltoCardTable;
+        #}
+      ENDSOURCE
+      SOURCE #lookupRelacionVigente
+        #static client void lookupRelacionVigente(FormStringControl _ctrl)
+        #{
+        #    SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(INDPersonaTable),_ctrl);
+        #    Query                   query = new Query();
+        #    QueryBuildDataSource    queryBuildDataSource = query.addDataSource(tableNum(INDPersonaTable));
+        #    QueryBuildRange         queryBuildRange      = queryBuildDataSource.addRange(fieldNum(INDPersonaTable, ContractType));
+        #    ;
+        #
+        #    sysTableLookup.addLookupfield(fieldNum(INDPersonaTable, Alias), true);
+        #    sysTableLookup.addLookupfield(fieldNum(INDPersonaTable, Name));
+        #    sysTableLookup.addLookupfield(fieldNum(INDPersonaTable, ContractType)); //IJL.23/02/26
+        #
+        #    queryBuildRange.value(Global::ListaDesdeSET(INDPersonaTable::SetTiposRelacionVigente()));
+        #
+        #    sysTableLookup.parmQuery(query);
+        #    sysTableLookup.performFormLookup();
+        #}
+      ENDSOURCE
+      SOURCE #SetPersonasRelacionVigente
+        #static Set SetPersonasRelacionVigente()
+        #{
+        #    Set                 set                     = new Set(Types::String);
+        #    Set                 setTiposRelacionVigente = INDPersonaTable::SetTiposRelacionVigente();
+        #    INDPersonaTable     INDPersonaTable;
+        #    ;
+        #
+        #    while select INDPersonaTable {
+        #
+        #        if (setTiposRelacionVigente.in(Enum2str(INDPersonaTable.ContractType)))
+        #            set.add(INDPersonaTable.Alias);
+        #    }
+        #
+        #    return set;
+        #}
+      ENDSOURCE
+      SOURCE #SetTiposRelacionVigente
+        #static Set SetTiposRelacionVigente()
+        #{
+        #    Set                 set = new Set(Types::String);
+        #    ;
+        #
+        #    set.add(Enum2str(INDEmplISTETTSubcontrata::ETT));
+        #    set.add(Enum2str(INDEmplISTETTSubcontrata::GrupoInsertec));
+        #    set.add(Enum2str(INDEmplISTETTSubcontrata::IST));
+        #    set.add(Enum2str(INDEmplISTETTSubcontrata::Subcontrata));
+        #
+        #    return set;
+        #}
+      ENDSOURCE
+      SOURCE #updateGlobalRelations
+        #static Common updateGlobalRelations(Common _common)
+        #{
+        #    INDEmplTable    indEmplTable;       //Contrato
+        #    EmplTable       emplTable;          //Hora
+        #    CRMUsuarioTable cmrUsuarioTable;    //CRM
+        #    UserInfo        sysUserTable;       //AXAPTA
+        #   // str             warningRel = "Tabla: %1 RecId: %2, no se encuentra relación %3.";
+        #
+        #     switch (_common.TableId)
+        #     {
+        #
+        #        case TableNum(INDEmplTable):
+        #
+        #            indEmplTable    =  _common;
+        #
+        #            // -- // -- // -- // -- // -- // CRM // -- // -- // -- // -- // -- //
+        #            if(!indEmplTable.CRMUserId || !indEmplTable.CRM_UserId)
+        #            {
+        #                select firstOnly cmrUsuarioTable
+        #                index hint RelationIdx
+        #                    where (cmrUsuarioTable.EmplId       == indEmplTable.Empl_EmplId  && indEmplTable.Empl_EmplId)
+        #                       || (cmrUsuarioTable.UserId       == indEmplTable.CRMUserId    && indEmplTable.CRMUserId)
+        #                       || (cmrUsuarioTable.UserId       == indEmplTable.CRM_UserId   && indEmplTable.CRM_UserId)
+        #                       || (cmrUsuarioTable.AxaptaUserId == indEmplTable.AxaptaUserId && indEmplTable.AxaptaUserId)
+        #                       || (cmrUsuarioTable.Name         == indEmplTable.Name         && indEmplTable.Name);
+        #
+        #                if(cmrUsuarioTable)
+        #                {
+        #                    indEmplTable.CRMUserId    = cmrUsuarioTable.UserId;
+        #                    indEmplTable.CRM_UserId   = cmrUsuarioTable.UserId;
+        #                }
+        #              //  else
+        #                  //  warning(strFmt(warningRel,tableStr(INDEmplTable),indEmplTable.RecId,"CRM"));
+        #            }
+        #
+        #            // -- // -- // -- // -- // -- // USER AX  // -- // -- // -- // -- // -- //
+        #            if(!indEmplTable.AxaptaUserId)
+        #            {
+        #                select firstOnly sysUserTable
+        #                    where (sysUserTable.Id   == indEmplTable.Empl_EmplId && indEmplTable.Empl_EmplId)
+        #                       || (sysUserTable.name == indEmplTable.Name        && indEmplTable.Name);
+        #
+        #                if(sysUserTable)
+        #                    indEmplTable.AxaptaUserId = sysUserTable.Id;
+        #               // else
+        #                  //  warning(strFmt(warningRel,tableStr(INDEmplTable),indEmplTable.RecId,"Axapta"));
+        #            }
+        #
+        #            // -- // -- // -- // -- // -- // HORA  // -- // -- // -- // -- // -- //
+        #            if(!indEmplTable.Empl_EmplId)
+        #            {
+        #                select firstOnly emplTable
+        #                    where indEmplTable.Name
+        #                       && emplTable.name == indEmplTable.Name;
+        #
+        #                if(emplTable)
+        #                    indEmplTable.Empl_EmplId = emplTable.EmplId;
+        #               // else
+        #                  //  warning(strFmt(warningRel,tableStr(INDEmplTable),indEmplTable.RecId,"Hora"));
+        #            }
+        #
+        #            return indEmplTable;
+        #        break;
+        #
+        #        case TableNum(EmplTable):
+        #
+        #            emplTable    = _common;
+        #
+        #            // -- // -- // -- // -- // -- // CONTRATO // -- // -- // -- // -- // -- //
+        #            if(!emplTable.INDEmplId)
+        #            {
+        #                 select firstOnly indEmplTable
+        #                    where (indEmplTable.Empl_EmplId == emplTable.EmplId && emplTable.EmplId)
+        #                       || (indEmplTable.Empl_EmplId == emplTable.Alias  && emplTable.Alias)
+        #                       || (indEmplTable.name        == emplTable.Name   && emplTable.Name);
+        #
+        #                if(indEmplTable)
+        #                    emplTable.INDEmplId = indEmplTable.EmplId;
+        #               // else
+        #                   // warning(strFmt(warningRel,tableStr(EmplTable),emplTable.RecId,"Contrato"));
+        #            }
+        #
+        #            // -- // -- // -- // -- // -- // USER AX  // -- // -- // -- // -- // -- //
+        #            if(!emplTable.UserId)
+        #            {
+        #                select firstOnly sysUserTable
+        #                    where (sysUserTable.Id   == emplTable.EmplId &&  emplTable.EmplId)
+        #                       || (sysUserTable.Id   == emplTable.Alias  &&  emplTable.Alias)
+        #                       || (sysUserTable.name == emplTable.Name   &&  emplTable.Name);
+        #
+        #                if(sysUserTable)
+        #                {
+        #                    emplTable.UserId = sysUserTable.Id;
+        #                    emplTable.Alias  = emplTable.Alias ?  emplTable.Alias : emplTable.UserId;
+        #                }
+        #              //  else
+        #                   // warning(strFmt(warningRel,tableStr(EmplTable),emplTable.RecId,"Axapta"));
+        #            }
+        #
+        #            return emplTable;
+        #        break;
+        #
+        #        case TableNum(CRMUsuarioTable):
+        #
+        #            cmrUsuarioTable =  _common;
+        #
+        #            // -- // -- // -- // -- // -- // USER AX  // -- // -- // -- // -- // -- //
+        #            if(!cmrUsuarioTable.AxaptaUserId)
+        #            {
+        #                select firstOnly sysUserTable
+        #                    where cmrUsuarioTable.Name
+        #                       && sysUserTable.name   == cmrUsuarioTable.Name;
+        #
+        #                if(sysUserTable)
+        #                    cmrUsuarioTable.AxaptaUserId = sysUserTable.Id;
+        #               // else
+        #                 //   warning(strFmt(warningRel,tableStr(CRMUsuarioTable),cmrUsuarioTable.RecId,"Axapta"));
+        #            }
+        #
+        #            // -- // -- // -- // -- // -- // HORA  // -- // -- // -- // -- // -- //
+        #            if(!cmrUsuarioTable.EmplId)
+        #            {
+        #                select firstOnly emplTable
+        #                    where (emplTable.EmplId == cmrUsuarioTable.UserId &&  cmrUsuarioTable.UserId)
+        #                       || (emplTable.name   == cmrUsuarioTable.Name   &&  cmrUsuarioTable.Name);
+        #
+        #                if(emplTable)
+        #                    cmrUsuarioTable.EmplId = emplTable.EmplId;
+        #               // else
+        #                  //  warning(strFmt(warningRel,tableStr(CRMUsuarioTable),cmrUsuarioTable.RecId,"Hora"));
+        #            }
+        #
+        #            return cmrUsuarioTable;
+        #        break;
+        #
+        #
+        #
+        #        default:
+        #            return _common;
+        #
+        #    }
+        #
+        #    return _common;
+        #}
+      ENDSOURCE
+      SOURCE #updateRefRecIds
+        #static INDPersonaTable updateRefRecIds(RecId _recId, RefRecId _contrato = 0, RefRecId _hora = 0, RefRecId _crm = 0, Common _common = Null, boolean _delRefRecId = false)
+        #{
+        #    INDPersonaTable    personaTable;
+        #
+        #
+        #    if(_contrato && !_delRefRecId)
+        #    {
+        #        ttsBegin;
+        #        select forupdate personaTable
+        #          index hint RecIdIdx
+        #            where personaTable.RecId   == _recId;
+        #
+        #        personaTable.RefRecIdContrato = _contrato;
+        #        if(personaTable)
+        #            personaTable.update();
+        #        ttscommit;
+        #        //TODO: DESCOMENTAR AL TERMINAR EL DESARROLLO
+        #        personaTable.modifiedField(fieldNum(INDPersonaTable,RefRecIdContrato), _common);
+        #    }
+        #    else if(_contrato && _delRefRecId)
+        #    {
+        #        ttsBegin;
+        #        select forupdate personaTable
+        #          index hint RecIdIdx
+        #            where personaTable.RecId   == _recId;
+        #
+        #        personaTable.RefRecIdContrato = 0;
+        #        if(personaTable)
+        #            personaTable.update();
+        #        ttscommit;
+        #       //TODO: DESCOMENTAR AL TERMINAR EL DESARROLLO
+        #       personaTable.modifiedField(fieldNum(INDPersonaTable,RefRecIdContrato), _common);
+        #    }
+        #
+        #    if(_hora && !_delRefRecId)
+        #    {
+        #        ttsBegin;
+        #        select forupdate personaTable
+        #          index hint RecIdIdx
+        #            where personaTable.RecId   == _recId;
+        #
+        #        personaTable.RefRecIdHora = _hora;
+        #        if(personaTable)
+        #            personaTable.update();
+        #        ttscommit;
+        #        //TODO: DESCOMENTAR AL TERMINAR EL DESARROLLO
+        #        personaTable.modifiedField(fieldNum(INDPersonaTable,RefRecIdHora), _common);
+        #    }
+        #    else if(_hora && _delRefRecId)
+        #    {
+        #        ttsBegin;
+        #        select forupdate personaTable
+        #          index hint RecIdIdx
+        #            where personaTable.RecId   == _recId;
+        #
+        #        personaTable.RefRecIdHora = 0;
+        #        if(personaTable)
+        #            personaTable.update();
+        #        ttscommit;
+        #        //TODO: DESCOMENTAR AL TERMINAR EL DESARROLLO
+        #        personaTable.modifiedField(fieldNum(INDPersonaTable,RefRecIdHora), _common);
+        #    }
+        #
+        #    if(_crm && !_delRefRecId)
+        #    {
+        #        ttsBegin;
+        #        select forupdate personaTable
+        #          index hint RecIdIdx
+        #            where personaTable.RecId   == _recId;
+        #
+        #        personaTable.RefRecIdCRM = _crm;
+        #        if(personaTable)
+        #            personaTable.update();
+        #        ttscommit;
+        #        //TODO: DESCOMENTAR AL TERMINAR EL DESARROLLO
+        #        personaTable.modifiedField(fieldNum(INDPersonaTable,RefRecIdCRM), _common);
+        #    }
+        #    else if(_crm && _delRefRecId)
+        #    {
+        #        ttsBegin;
+        #        select forupdate personaTable
+        #          index hint RecIdIdx
+        #            where personaTable.RecId   == _recId;
+        #
+        #        personaTable.RefRecIdCRM = 0;
+        #        if(personaTable)
+        #            personaTable.update();
+        #        ttscommit;
+        #        //TODO: DESCOMENTAR AL TERMINAR EL DESARROLLO
+        #        personaTable.modifiedField(fieldNum(INDPersonaTable,RefRecIdCRM), _common);
+        #    }
+        #
+        #    return personaTable;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMVisitsService descargados en Martes 26/05/2026
+; Navision Axapta Class: INDCRMVisitsService descargados en Jueves 04/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -21,6 +21,92 @@ Formatversion: 1
         #{
         #}
       ENDSOURCE
+      SOURCE #activityIsVisibleInResolvedSet
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Comprueba si la visita pertenece a uno de los usuarios Axapta visibles ya resueltos.
+        #static boolean activityIsVisibleInResolvedSet(CRMActividadTable _activity,
+        #                                              Set               _visibleAxUserIds)
+        #{
+        #    UserId ownerAxUserId;
+        #    ;
+        #
+        #    if (!_activity.RecId || !_visibleAxUserIds)
+        #    {
+        #        return false;
+        #    }
+        #
+        #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
+        #
+        #    return ownerAxUserId && _visibleAxUserIds.in(ownerAxUserId);
+        #}
+      ENDSOURCE
+      SOURCE #applyActivityVisibilityRange
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Punto estandar para aplicar visibilidad de visitas; los conjuntos multiples se filtran tras QueryRun.
+        #static void applyActivityVisibilityRange(QueryBuildDataSource _qbds,
+        #                                         Set                  _visibleAxUserIds,
+        #                                         Set                  _visibleCrmUserIds)
+        #{
+        #    ;
+        #
+        #    // Axapta 3.0 no garantiza un range OR limpio para Set dinamicos.
+        #    // El listado aplica el Set resuelto al recorrer QueryRun, manteniendo este metodo como extension estandar.
+        #}
+      ENDSOURCE
+      SOURCE #canViewerAccessActivity
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Valida lectura de una visita con la capa global INDControlDataVisibility.
+        #static boolean canViewerAccessActivity(DataAreaId        _companyId,
+        #                                       UserId            _viewerAxUserId,
+        #                                       CRMActividadTable _activity,
+        #                                       str               _appCode,
+        #                                       str               _moduleCode)
+        #{
+        #    UserId ownerAxUserId;
+        #    ;
+        #
+        #    if (!_companyId || !_viewerAxUserId || !_activity.RecId)
+        #    {
+        #        return false;
+        #    }
+        #
+        #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
+        #
+        #    return INDCRMUtilityService::ctrlCanViewOwnerAxUserId(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        ownerAxUserId);
+        #}
+      ENDSOURCE
+      SOURCE #canViewerMutateActivity
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Valida modificacion de una visita con la capa global INDControlDataVisibility.
+        #static boolean canViewerMutateActivity(DataAreaId        _companyId,
+        #                                       UserId            _viewerAxUserId,
+        #                                       CRMActividadTable _activity,
+        #                                       str               _appCode,
+        #                                       str               _moduleCode)
+        #{
+        #    UserId ownerAxUserId;
+        #    ;
+        #
+        #    if (!_companyId || !_viewerAxUserId || !_activity.RecId)
+        #    {
+        #        return false;
+        #    }
+        #
+        #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
+        #
+        #    return INDCRMUtilityService::ctrlCanMutateOwnerAxUserId(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        ownerAxUserId);
+        #}
+      ENDSOURCE
       SOURCE #createActivity
         #static container createActivity(container _data)
         #{
@@ -30,7 +116,8 @@ Formatversion: 1
         #    CRMTipoVisita       _visitType;
         #    INDContactMethod    _contactMethod;
         #    CRMUserId           _userId;
-        #    CRMUserId           _createdByUserId; // Nuevo: usuario autenticado real
+        #    CRMUserId           _legacyCrmUserId;
+        #    UserId              _createdByUserId; // Nuevo: usuario autenticado real
         #    Description         _desc;
         #    TransDate           _transDate;
         #    CRMAccountTable     accountTable;
@@ -78,12 +165,16 @@ Formatversion: 1
         #            numberSeq    = NumberSeq::newGetNum(CustParameters::numRefCustVsititaRefractariosId());
         #            accountTable = CRMAccountTable::FindByAccountNum(_accountNum);
         #
+        #            //MMS - Ajustes CRM - 2026.06.05
+        #            // El propietario funcional es AX; UserId legacy se informa con el usuario CRM si existe mapeo.
+        #            _legacyCrmUserId = INDCRMVisitsService::resolveLegacyCrmUserIdByAxUserId(_createdByUserId);
+        #
         #            actividadTable.clear();
         #            actividadTable.ActividadId          = numberSeq.num();
         #            actividadTable.AccountNum           = _accountNum;
         #            actividadTable.ActividadType        = CRMActividadType::Visita;
         #            actividadTable.TipoVisita           = _visitType;
-        #            actividadTable.UserId               = _userId;
+        #            actividadTable.UserId               = _legacyCrmUserId ? _legacyCrmUserId : _userId;
         #            actividadTable.Description          = _desc;
         #            actividadTable.TransDate            = _transDate;
         #            actividadTable.Comentarios          = _coments;
@@ -143,9 +234,11 @@ Formatversion: 1
         #    CRMCustVendVisitaAsistente      _asistenteTipo;
         #    Name                            _asistenteId;
         #    RefRecId                        _contactoRecId;
-        #    CRMUserId                       _createdByUserId; // Nuevo: usuario autenticado real
+        #    UserId                          _createdByUserId; // Nuevo: usuario autenticado real
         #    CRMActividadTable               actividadTable;
         #    CRMCustVendVisitaAsistenteTable visita;
+        #    str                             _appCode;
+        #    str                             _moduleCode;
         #
         #    DataAreaId                      _company;
         #
@@ -168,6 +261,9 @@ Formatversion: 1
         #    if (!_createdByUserId)
         #        return INDCRMUtilityService::buildActionResult(false, "CreatedByUserId requerido.");
         #
+        #    _appCode    = conLen(_data) >= 7 ? conPeek(_data, 7) : "CRM";
+        #    _moduleCode = conLen(_data) >= 8 ? conPeek(_data, 8) : "VISITAS_GESTION";
+        #
         #    try
         #    {
         #        changecompany (_company)
@@ -178,6 +274,11 @@ Formatversion: 1
         #            {
         #                success = false;
         #                message = strFmt("Actividad con RecId %1 no existe.", _refRecIdActividad);
+        #            }
+        #            else if (!INDCRMVisitsService::canViewerMutateActivity(_company, _createdByUserId, actividadTable, _appCode, _moduleCode))
+        #            {
+        #                success = false;
+        #                message = "Actividad no encontrada";
         #            }
         #            else
         #            {
@@ -225,6 +326,9 @@ Formatversion: 1
         #    CRMActividadTable               actividadTable;
         #    CRMCustVendVisitaAsistenteTable visitasTable;
         #    RecId                           _actividadRecId;
+        #    UserId                          _viewerAxUserId;
+        #    str                             _appCode;
+        #    str                             _moduleCode;
         #
         #    DataAreaId                      _company;
         #
@@ -237,6 +341,9 @@ Formatversion: 1
         #        return INDCRMUtilityService::buildActionResult(false, "Company requerida.");
         #
         #    _actividadRecId = str2int(conPeek(_data, 2));
+        #    _viewerAxUserId = conLen(_data) >= 3 ? conPeek(_data, 3) : "";
+        #    _appCode        = conLen(_data) >= 4 ? conPeek(_data, 4) : "CRM";
+        #    _moduleCode     = conLen(_data) >= 5 ? conPeek(_data, 5) : "VISITAS_GESTION";
         #
         #    try
         #    {
@@ -248,6 +355,13 @@ Formatversion: 1
         #                where actividadTable.RecId == _actividadRecId;
         #
         #            if (!actividadTable.RecId)
+        #            {
+        #                success = false;
+        #                message = "Actividad no encontrada";
+        #                ttsabort;
+        #            }
+        #            else if (_viewerAxUserId
+        #                  && !INDCRMVisitsService::canViewerMutateActivity(_company, _viewerAxUserId, actividadTable, _appCode, _moduleCode))
         #            {
         #                success = false;
         #                message = "Actividad no encontrada";
@@ -287,7 +401,11 @@ Formatversion: 1
         #{
         #    RefRecId                        _refRecIdActividad;
         #    Name                            _asistenteId;
+        #    UserId                          _viewerAxUserId;
+        #    str                             _appCode;
+        #    str                             _moduleCode;
         #    CRMCustVendVisitaAsistenteTable visita;
+        #    CRMActividadTable               actividadTable;
         #
         #    DataAreaId                      _company;
         #
@@ -301,6 +419,9 @@ Formatversion: 1
         #
         #    _refRecIdActividad = conPeek(_data, 2);
         #    _asistenteId       = conPeek(_data, 3);
+        #    _viewerAxUserId    = conLen(_data) >= 4 ? conPeek(_data, 4) : "";
+        #    _appCode           = conLen(_data) >= 5 ? conPeek(_data, 5) : "CRM";
+        #    _moduleCode        = conLen(_data) >= 6 ? conPeek(_data, 6) : "VISITAS_GESTION";
         #
         #    try
         #    {
@@ -312,10 +433,20 @@ Formatversion: 1
         #                where visita.RefRecId    == _refRecIdActividad
         #                   && visita.AsistenteId == _asistenteId;
         #
+        #            select firstonly actividadTable
+        #                where actividadTable.RecId == _refRecIdActividad;
+        #
         #            if (!visita.RecId)
         #            {
         #                success = false;
         #                message = strFmt("Visita asistente no encontrada para actividad %1.", _refRecIdActividad);
+        #                ttsabort;
+        #            }
+        #            else if (_viewerAxUserId
+        #                  && !INDCRMVisitsService::canViewerMutateActivity(_company, _viewerAxUserId, actividadTable, _appCode, _moduleCode))
+        #            {
+        #                success = false;
+        #                message = "Actividad no encontrada";
         #                ttsabort;
         #            }
         #            else
@@ -384,6 +515,9 @@ Formatversion: 1
         #{
         #    DataAreaId                      _company;
         #    CRMActividadId                  _actividadId;
+        #    UserId                          _viewerAxUserId;
+        #    str                             _appCode;
+        #    str                             _moduleCode;
         #    CRMActividadTable               actividadTable;
         #    CRMCustVendVisitaAsistenteTable visitasTable;
         #
@@ -394,6 +528,9 @@ Formatversion: 1
         #        return [["Sin datos."]];
         #
         #    _actividadId = conPeek(_data, 2);
+        #    _viewerAxUserId = conLen(_data) >= 3 ? conPeek(_data, 3) : "";
+        #    _appCode        = conLen(_data) >= 4 ? conPeek(_data, 4) : "CRM";
+        #    _moduleCode     = conLen(_data) >= 5 ? conPeek(_data, 5) : "VISITAS_GESTION";
         #
         #    changecompany (_company)
         #    {
@@ -401,6 +538,13 @@ Formatversion: 1
         #            where actividadTable.ActividadId == _actividadId;
         #
         #        if (!actividadTable.RecId)
+        #        {
+        #            conResult = [["Sin datos."]];
+        #            return conResult;
+        #        }
+        #
+        #        if (_viewerAxUserId
+        #         && !INDCRMVisitsService::canViewerAccessActivity(_company, _viewerAxUserId, actividadTable, _appCode, _moduleCode))
         #        {
         #            conResult = [["Sin datos."]];
         #            return conResult;
@@ -448,6 +592,9 @@ Formatversion: 1
         #{
         #    DataAreaId                      _company;
         #    RecId                           _actividadRecId;
+        #    UserId                          _viewerAxUserId;
+        #    str                             _appCode;
+        #    str                             _moduleCode;
         #    CRMActividadTable               actividadTable;
         #    CRMCustVendVisitaAsistenteTable visitasTable;
         #
@@ -458,6 +605,9 @@ Formatversion: 1
         #        return [["Sin datos."]];
         #
         #    _actividadRecId = str2int(conPeek(_data, 2));
+        #    _viewerAxUserId = conLen(_data) >= 3 ? conPeek(_data, 3) : "";
+        #    _appCode        = conLen(_data) >= 4 ? conPeek(_data, 4) : "CRM";
+        #    _moduleCode     = conLen(_data) >= 5 ? conPeek(_data, 5) : "VISITAS_GESTION";
         #
         #    changecompany (_company)
         #    {
@@ -465,6 +615,13 @@ Formatversion: 1
         #            where actividadTable.RecId == _actividadRecId;
         #
         #        if (!actividadTable.RecId)
+        #        {
+        #            conResult = [["Sin datos."]];
+        #            return conResult;
+        #        }
+        #
+        #        if (_viewerAxUserId
+        #         && !INDCRMVisitsService::canViewerAccessActivity(_company, _viewerAxUserId, actividadTable, _appCode, _moduleCode))
         #        {
         #            conResult = [["Sin datos."]];
         #            return conResult;
@@ -513,6 +670,12 @@ Formatversion: 1
         #    DataAreaId                      _company;
         #    CRMAccountNum                   _accountNum;
         #    CRMUserId                       _userId;
+        #    UserId                          _ownerAxUserId;
+        #    str                             _appCode;
+        #    str                             _moduleCode;
+        #    boolean                         useControlDataVisibility;
+        #    Set                             visibleAxUserIds;
+        #    Set                             visibleCrmUserIds;
         #    TransDate                       _fromDate, _toDate;
         #    Query                           q;
         #    QueryBuildDataSource            qbds;
@@ -531,16 +694,49 @@ Formatversion: 1
         #    _fromDate   = str2Date(conPeek(_data, 3), 321);
         #    _toDate     = str2Date(conPeek(_data, 4), 321);
         #    _accountNum = conPeek(_data, 5);
+        #    _appCode    = conLen(_data) >= 6 ? conPeek(_data, 6) : "CRM";
+        #    _moduleCode = conLen(_data) >= 7 ? conPeek(_data, 7) : "VISITAS_GESTION";
+        #    _ownerAxUserId = conLen(_data) >= 8 ? conPeek(_data, 8) : "";
+        #
+        #    useControlDataVisibility = conLen(_data) >= 6 && _userId;
         #
         #    changecompany (_company)
         #    {
+        #        if (useControlDataVisibility)
+        #        {
+        #            visibleAxUserIds = INDCRMVisitsService::resolveVisibleActivityOwnerAxUserIds(
+        #                _company,
+        #                _userId,
+        #                _appCode,
+        #                _moduleCode);
+        #        }
+        #
+        #        //MMS - Ajustes CRM - 2026.06.09
+        #        // El filtro de propietario solo reduce el set visible; nunca amplia permisos.
+        #        if (useControlDataVisibility
+        #         && _ownerAxUserId
+        #         && (!visibleAxUserIds || !visibleAxUserIds.in(_ownerAxUserId)))
+        #        {
+        #            visibleAxUserIds = new Set(Types::String);
+        #        }
+        #
         #        q = new Query();
         #        qbds = q.addDataSource(tableNum(CRMActividadTable));
         #        qbds.addSortField(fieldNum(CRMActividadTable, INDCreatedByUserId));
         #        qbds.orderMode(OrderMode::OrderBy);
         #
-        #        if (_userId)
-        #            qbds.addRange(fieldNum(CRMActividadTable, INDCreatedByUserId)).value(_userId);
+        #        if (!useControlDataVisibility)
+        #        {
+        #            if (_ownerAxUserId)
+        #                qbds.addRange(fieldNum(CRMActividadTable, INDCreatedByUserId)).value(_ownerAxUserId);
+        #            else if (_userId)
+        #                qbds.addRange(fieldNum(CRMActividadTable, INDCreatedByUserId)).value(_userId);
+        #        }
+        #
+        #        if (useControlDataVisibility)
+        #        {
+        #            INDCRMVisitsService::applyActivityVisibilityRange(qbds, visibleAxUserIds, visibleCrmUserIds);
+        #        }
         #
         #        if (_accountNum)
         #            qbds.addRange(fieldNum(CRMActividadTable, AccountNum)).value(_accountNum);
@@ -555,6 +751,18 @@ Formatversion: 1
         #        while (qr.next())
         #        {
         #            actividadTable = qr.get(tableNum(CRMActividadTable));
+        #
+        #            if (useControlDataVisibility
+        #             && !INDCRMVisitsService::activityIsVisibleInResolvedSet(actividadTable, visibleAxUserIds))
+        #            {
+        #                continue;
+        #            }
+        #
+        #            if (_ownerAxUserId
+        #             && INDCRMVisitsService::getActivityOwnerAxUserId(actividadTable) != _ownerAxUserId)
+        #            {
+        #                continue;
+        #            }
         #
         #            conAsistentes = conNull();
         #            while select visitasTable
@@ -589,6 +797,91 @@ Formatversion: 1
         #    return conResult ? conResult : [["Sin datos."]];
         #}
         #
+      ENDSOURCE
+      SOURCE #getActivityOwnerAlias
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Devuelve el alias funcional del propietario de la visita.
+        #static str getActivityOwnerAlias(CRMActividadTable _activity)
+        #{
+        #    UserId ownerAxUserId;
+        #    ;
+        #
+        #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
+        #
+        #    return INDControlDataVisibilityResolver::resolvePersonAliasByAxUserId(ownerAxUserId);
+        #}
+      ENDSOURCE
+      SOURCE #getActivityOwnerAxUserId
+        #//MMS - Ajustes CRM - 2026.06.05
+        #// Usa INDCreatedByUserId como propietario funcional y soporta visitas antiguas con UserId CRM.
+        #static UserId getActivityOwnerAxUserId(CRMActividadTable _activity)
+        #{
+        #    CRMUsuarioTable crmUsuarioTable;
+        #    ;
+        #
+        #    if (!_activity.RecId)
+        #    {
+        #        return "";
+        #    }
+        #
+        #    if (_activity.INDCreatedByUserId)
+        #    {
+        #        return _activity.INDCreatedByUserId;
+        #    }
+        #
+        #    if (_activity.UserId)
+        #    {
+        #        crmUsuarioTable = CRMUsuarioTable::Find(_activity.UserId);
+        #
+        #        if (crmUsuarioTable.AxaptaUserId)
+        #            return crmUsuarioTable.AxaptaUserId;
+        #    }
+        #
+        #    return "";
+        #}
+      ENDSOURCE
+      SOURCE #getActivityOwnerCrmUserId
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Devuelve el usuario CRM legacy asociado al propietario cuando existe mapeo.
+        #static CRMUserId getActivityOwnerCrmUserId(CRMActividadTable _activity)
+        #{
+        #    str ownerAlias;
+        #    ;
+        #
+        #    ownerAlias = INDCRMVisitsService::getActivityOwnerAlias(_activity);
+        #
+        #    return INDControlDataVisibilityResolver::resolveCrmUserIdByAlias(ownerAlias);
+        #}
+      ENDSOURCE
+      SOURCE #resolveLegacyCrmUserIdByAxUserId
+        #//MMS - Ajustes CRM - 2026.06.05
+        #// Convierte un usuario AX al usuario CRM legacy usado por tablas antiguas de visitas.
+        #static CRMUserId resolveLegacyCrmUserIdByAxUserId(UserId _axUserId)
+        #{
+        #    CRMUsuarioTable crmUsuarioTable;
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!_axUserId)
+        #        return "";
+        #
+        #    crmUsuarioTable = CRMUsuarioTable::Find_AxaptaUserId(_axUserId);
+        #
+        #    if (crmUsuarioTable.UserId)
+        #        return crmUsuarioTable.UserId;
+        #
+        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(_axUserId);
+        #
+        #    if (person.RefRecIdCRM)
+        #    {
+        #        crmUsuarioTable = CRMUsuarioTable::FindRecId(person.RefRecIdCRM);
+        #
+        #        if (crmUsuarioTable.UserId)
+        #            return crmUsuarioTable.UserId;
+        #    }
+        #
+        #    return "";
+        #}
       ENDSOURCE
       SOURCE #getContactoContainer
         #static container getContactoContainer(container _data)
@@ -639,6 +932,24 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #resolveVisibleActivityOwnerAxUserIds
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve usuarios Axapta visibles para visitas usando el estandar INDControlDataVisibility.
+        #static Set resolveVisibleActivityOwnerAxUserIds(DataAreaId _companyId,
+        #                                                UserId     _viewerAxUserId,
+        #                                                str        _appCode,
+        #                                                str        _moduleCode)
+        #{
+        #    ;
+        #
+        #    return INDCRMUtilityService::ctrlResolveVisibleAxUserIdSet(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        today());
+        #}
+      ENDSOURCE
       SOURCE #updateActivity
         #static container updateActivity(container _data)
         #{
@@ -646,12 +957,15 @@ Formatversion: 1
         #    CRMAccountNum       _accountNum;
         #    CRMTipoVisita       _visitType;
         #    INDContactMethod    _contactMethod;
-        #    CRMUserId           _userId;
+        #    UserId              _userId;
+        #    CRMUserId           _legacyCrmUserId;
         #    Description         _desc;
         #    TransDate           _transDate;
         #    CRMAccountTable     accountTable;
         #    CRMComentarios      _coments, _antecedentes, _conclusiones;
         #    RecId               _actividadRecId;
+        #    str                 _appCode;
+        #    str                 _moduleCode;
         #
         #    DataAreaId          _company;
         #
@@ -677,6 +991,9 @@ Formatversion: 1
         #    else
         #        _contactMethod = INDContactMethod::InPerson;
         #
+        #    _appCode    = conLen(_data) >= 12 ? conPeek(_data, 12) : "CRM";
+        #    _moduleCode = conLen(_data) >= 13 ? conPeek(_data, 13) : "VISITAS_GESTION";
+        #
         #    try
         #    {
         #        changecompany (_company)
@@ -692,13 +1009,27 @@ Formatversion: 1
         #                message = "Actividad no encontrada";
         #                ttsabort;
         #            }
+        #            else if (!INDCRMVisitsService::canViewerMutateActivity(_company, _userId, actividadTable, _appCode, _moduleCode))
+        #            {
+        #                success = false;
+        #                message = "Actividad no encontrada";
+        #                ttsabort;
+        #            }
         #            else
         #            {
         #                accountTable = CRMAccountTable::FindByAccountNum(_accountNum);
         #
+        #                //MMS - Ajustes CRM - 2026.06.05
+        #                // En actualizacion no se reasigna el propietario funcional; solo se normaliza UserId legacy si hay mapeo.
+        #                if (!actividadTable.INDCreatedByUserId)
+        #                    actividadTable.INDCreatedByUserId = _userId;
+        #
+        #                _legacyCrmUserId = INDCRMVisitsService::resolveLegacyCrmUserIdByAxUserId(actividadTable.INDCreatedByUserId);
+        #
         #                actividadTable.AccountNum         = _accountNum;
         #                actividadTable.TipoVisita         = _visitType;
-        #                actividadTable.UserId             = _userId;
+        #                if (_legacyCrmUserId)
+        #                    actividadTable.UserId         = _legacyCrmUserId;
         #                actividadTable.Description        = _desc;
         #                actividadTable.TransDate          = _transDate;
         #                actividadTable.Comentarios        = _coments;

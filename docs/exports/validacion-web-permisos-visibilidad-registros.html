@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Validacion web de permisos y visibilidad de registros</title>
+  <style>
+  :root {
+    color-scheme: dark;
+    --text: #e5edf5;
+    --muted: #a8b3c2;
+    --line: #314154;
+    --soft: #182232;
+    --panel: #111a27;
+    --accent: #58c4ff;
+    --tech: #fb923c;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #07111f;
+    color: var(--text);
+    font-family: "Segoe UI", Arial, sans-serif;
+    line-height: 1.55;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 32px auto;
+    padding: 48px 56px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: #f3f7fb;
+    line-height: 1.25;
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 30px;
+    letter-spacing: 0;
+  }
+
+  h2 {
+    margin: 36px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--line);
+    font-size: 22px;
+  }
+
+  h3 {
+    margin: 28px 0 12px;
+    font-size: 18px;
+  }
+
+  h4 {
+    margin: 22px 0 10px;
+    font-size: 15px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  p {
+    margin: 10px 0;
+  }
+
+  ul,
+  ol {
+    margin: 8px 0 16px 22px;
+    padding: 0;
+  }
+
+  li {
+    margin: 6px 0;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #241a12;
+    color: var(--tech);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.94em;
+    font-weight: 600;
+  }
+
+  pre {
+    overflow: auto;
+    margin: 12px 0 20px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #070d18;
+    color: #e5edf5;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  pre code {
+    padding: 0;
+    background: transparent;
+    color: var(--tech);
+    font-weight: 500;
+  }
+
+  .meta {
+    margin-bottom: 28px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .callout {
+    margin: 18px 0;
+    padding: 14px 16px;
+    border-left: 4px solid var(--accent);
+    background: #0d2537;
+  }
+
+  .inventory-item {
+    margin: 18px 0;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #0e1724;
+  }
+
+  .inventory-item h4 {
+    margin-top: 0;
+    text-transform: none;
+    color: #f3f7fb;
+    font-size: 16px;
+  }
+
+  @media print {
+    body {
+      background: #07111f;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    main {
+      max-width: none;
+      margin: 0;
+      padding: 24mm 18mm;
+      border: 0;
+      box-shadow: none;
+    }
+
+    h2,
+    h3 {
+      break-after: avoid;
+    }
+
+    .inventory-item {
+      break-inside: avoid;
+    }
+  }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Permisos y visibilidad en Visitas</h1>
+    <p class="meta">Explicación funcional. Actualizado: 2026-06-09.</p>
+
+    <section>
+      <h2>Resumen</h2>
+      <p>En Visitas se combinan dos controles: el permiso del módulo y la jerarquía de usuarios. El permiso del módulo define si una persona puede entrar, consultar, crear o modificar. La jerarquía define qué visitas puede ver.</p>
+      <div class="callout">
+        <strong>Idea clave:</strong> una persona solo trabaja con las visitas que le corresponden por su permiso y por su posición dentro de la jerarquía.
+      </div>
+    </section>
+
+    <section>
+      <h2>1. Permiso para entrar al módulo</h2>
+      <p>Lo primero que se comprueba es si la persona tiene acceso al módulo de Visitas. Según su nivel de permiso, la web le permite unas acciones u otras.</p>
+      <ul>
+        <li>Si no tiene acceso, no debería poder entrar al módulo.</li>
+        <li>Si solo tiene permiso de consulta, puede ver las visitas que le correspondan, pero no crear ni modificar.</li>
+        <li>Si tiene permiso para crear, la web le muestra la opción de crear nuevas visitas.</li>
+        <li>Si tiene permiso para modificar, puede editar dentro de los límites marcados por la jerarquía y las reglas del sistema.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>2. Qué visitas puede ver cada persona</h2>
+      <p>Después de comprobar el permiso del módulo, se aplica la jerarquía. Esta jerarquía indica qué usuarios están dentro del alcance de cada persona.</p>
+      <section class="inventory-item">
+        <h4>Persona sin equipo a cargo</h4>
+        <ul>
+          <li>Normalmente ve sus propias visitas.</li>
+          <li>Si tiene permiso de crear, puede registrar nuevas visitas propias.</li>
+          <li>Si solo tiene permiso de consulta, únicamente puede revisarlas.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Responsable con equipo</h4>
+        <ul>
+          <li>Puede ver sus visitas y las visitas de las personas que dependen de él, según la jerarquía configurada.</li>
+          <li>Puede filtrar el historial por una persona concreta de su equipo.</li>
+          <li>Si deja el filtro en todos, verá todas las visitas que tiene permitido consultar.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Persona con alcance ampliado</h4>
+        <ul>
+          <li>Puede ver un conjunto más amplio de usuarios si así lo define la jerarquía.</li>
+          <li>La web no le muestra usuarios que estén fuera de su alcance.</li>
+          <li>El filtro siempre se limita a las personas que realmente puede consultar.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section>
+      <h2>3. Cómo funciona el filtro de personas</h2>
+      <p>Cuando una persona puede ver visitas de varios usuarios, la web muestra un selector para elegir de quién quiere ver las visitas.</p>
+      <section class="inventory-item">
+        <h4>Filtro en todos</h4>
+        <ul>
+          <li>La persona ve todas las visitas permitidas por su jerarquía.</li>
+          <li>No significa ver todas las visitas de la empresa, solo las que entran en su alcance.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Filtro por una persona concreta</h4>
+        <ul>
+          <li>La persona ve únicamente las visitas del usuario seleccionado.</li>
+          <li>Solo se pueden seleccionar usuarios que ya están dentro de su jerarquía visible.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section>
+      <h2>4. Crear o modificar visitas</h2>
+      <p>Poder ver una visita no significa automáticamente poder cambiarla. Para crear o modificar se necesita permiso de acción, además de estar dentro del alcance permitido.</p>
+      <section class="inventory-item">
+        <h4>Crear</h4>
+        <p>La opción de crear aparece cuando la persona tiene permiso para registrar nuevas visitas. Si no lo tiene, puede consultar lo permitido, pero no crear.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Modificar</h4>
+        <p>Para modificar una visita, la persona debe tener permiso para editar y la visita debe estar dentro de su alcance. La jerarquía no amplía permisos de edición por sí sola.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Consultar</h4>
+        <p>Si la persona solo tiene permiso de consulta, podrá revisar las visitas visibles, pero no cambiar su contenido.</p>
+      </section>
+    </section>
+
+    <section>
+      <h2>Regla sencilla</h2>
+      <div class="callout">
+        <strong>Permiso del módulo + jerarquía = lo que puede hacer una persona en Visitas.</strong>
+      </div>
+      <p>El permiso del módulo decide si puede entrar, consultar, crear o modificar. La jerarquía decide sobre qué visitas puede aplicar esas acciones. La web une ambas cosas para que cada persona vea y gestione solo lo que le corresponde.</p>
+    </section>
+  </main>
+</body>
+</html>

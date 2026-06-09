@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Miércoles 27/05/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Jueves 04/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -20,6 +20,124 @@ Formatversion: 1
         #public class INDCRMUtilityService
         #{
         #}
+      ENDSOURCE
+      SOURCE #ctrlCanMutateOwnerAxUserId
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Valida modificacion sobre un propietario usando la capa global INDControlDataVisibility.
+        #static server boolean ctrlCanMutateOwnerAxUserId(UserId      _viewerAxUserId,
+        #                                                                 DataAreaId  _companyId,
+        #                                                                 str         _appCode,
+        #                                                                 str         _moduleCode,
+        #                                                                 UserId      _ownerAxUserId)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::canMutateOwnerAxUserId(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _ownerAxUserId);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlCanViewOwnerAxUserId
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Valida lectura sobre un propietario Axapta usando la capa global INDControlDataVisibility.
+        #static server boolean ctrlCanViewOwnerAxUserId(UserId      _viewerAxUserId,
+        #                                                               DataAreaId  _companyId,
+        #                                                               str         _appCode,
+        #                                                               str         _moduleCode,
+        #                                                               UserId      _ownerAxUserId)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::canViewOwnerAxUserId(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _ownerAxUserId);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlFindModuleAccessLevel
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Localiza el permiso web usado por la capa global INDControlDataVisibility.
+        #static server INDWebModuleAccessLevel ctrlFindModuleAccessLevel(UserId      _viewerAxUserId,
+        #                                                                                DataAreaId  _companyId,
+        #                                                                                str         _appCode,
+        #                                                                                str         _moduleCode)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::findModuleAccessLevel(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlResolveVisibleAxUserIdSet
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve usuarios Axapta visibles para un modulo.
+        #static server Set ctrlResolveVisibleAxUserIdSet(UserId      _viewerAxUserId,
+        #                                                                DataAreaId  _companyId,
+        #                                                                str         _appCode,
+        #                                                                str         _moduleCode,
+        #                                                                date        _asOfDate)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::resolveVisibleAxUserIds(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _asOfDate);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlResolveVisibleCrmUserIdSet
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve usuarios CRM legacy visibles para un modulo.
+        #static server Set ctrlResolveVisibleCrmUserIdSet(UserId      _viewerAxUserId,
+        #                                                                 DataAreaId  _companyId,
+        #                                                                 str         _appCode,
+        #                                                                 str         _moduleCode,
+        #                                                                 date        _asOfDate)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::resolveVisibleCrmUserIds(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _asOfDate);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlResolveVisiblePersonAliasSet
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve alias visibles para un modulo sin usar subordinados legacy de gastos.
+        #static server Set ctrlResolveVisiblePersonAliasSet(UserId      _viewerAxUserId,
+        #                                                                   DataAreaId  _companyId,
+        #                                                                   str         _appCode,
+        #                                                                   str         _moduleCode,
+        #                                                                   date        _asOfDate)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::resolveVisiblePersonAliases(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _asOfDate);
+        #}
+        #
       ENDSOURCE
       SOURCE #buildActionResult
         #// Devuelve un resultado estandar para acciones (success/message).
@@ -50,6 +168,146 @@ Formatversion: 1
         #    header = [row];
         #
         #    return header;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlCanViewOwnerAlias
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Valida lectura sobre un alias propietario usando la capa global INDControlDataVisibility.
+        #static server boolean ctrlCanViewOwnerAlias(UserId      _viewerAxUserId,
+        #                                                            DataAreaId  _companyId,
+        #                                                            str         _appCode,
+        #                                                            str         _moduleCode,
+        #                                                            str         _ownerAlias)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::canViewPersonAlias(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _ownerAlias);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlGetVisibleUsers
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Devuelve usuarios visibles de un modulo para diagnostico y reutilizacion por API.
+        #static server container ctrlGetVisibleUsers(container _data)
+        #{
+        #    DataAreaId      companyId;
+        #    str             appCode;
+        #    str             moduleCode;
+        #    UserId          viewerAxUserId;
+        #    date            asOfDate;
+        #    str             includeCrmUserIdRaw;
+        #    boolean         includeCrmUserId;
+        #    Set             visibleAliases;
+        #    Set             visibleAxUsers;
+        #    SetIterator     si;
+        #    str             personAlias;
+        #    UserId          axUserId;
+        #    CRMUserId       crmUserId;
+        #    INDPersonaTable person;
+        #    str             viewerAlias;
+        #    container       header;
+        #    container       lines;
+        #    ;
+        #
+        #    companyId      = INDCRMUtilityService::getCompany(_data);
+        #    appCode        = conLen(_data) >= 2 ? conPeek(_data, 2) : "";
+        #    moduleCode     = conLen(_data) >= 3 ? conPeek(_data, 3) : "";
+        #    viewerAxUserId = conLen(_data) >= 4 ? conPeek(_data, 4) : "";
+        #
+        #    if (conLen(_data) >= 5 && conPeek(_data, 5))
+        #    {
+        #        asOfDate = INDCRMUtilityService::parseYmdDate(conPeek(_data, 5));
+        #    }
+        #
+        #    if (asOfDate == dateNull())
+        #    {
+        #        asOfDate = today();
+        #    }
+        #
+        #    if (conLen(_data) >= 6)
+        #    {
+        #        includeCrmUserIdRaw = strLwr(strLRTrim(strFmt("%1", conPeek(_data, 6))));
+        #        includeCrmUserId = includeCrmUserIdRaw == "1"
+        #                        || includeCrmUserIdRaw == "true"
+        #                        || includeCrmUserIdRaw == "yes";
+        #    }
+        #
+        #    if (!companyId || !appCode || !moduleCode || !viewerAxUserId)
+        #    {
+        #        header = [[false, "CompanyId, AppCode, ModuleCode y ViewerAxUserId son obligatorios.", viewerAxUserId, "", companyId, appCode, moduleCode]];
+        #        return [header, conNull()];
+        #    }
+        #
+        #    changecompany (companyId)
+        #    {
+        #        viewerAlias = INDControlDataVisibilityResolver::resolvePersonAliasByAxUserId(viewerAxUserId);
+        #    }
+        #
+        #    visibleAliases = INDCRMUtilityService::ctrlResolveVisiblePersonAliasSet(
+        #        viewerAxUserId,
+        #        companyId,
+        #        appCode,
+        #        moduleCode,
+        #        asOfDate);
+        #
+        #    //MMS - Ajustes CRM - 2026.06.09
+        #    // La lista expuesta por API solo debe contener personas con usuario AX resoluble.
+        #    visibleAxUsers = INDCRMUtilityService::ctrlResolveVisibleAxUserIdSet(
+        #        viewerAxUserId,
+        #        companyId,
+        #        appCode,
+        #        moduleCode,
+        #        asOfDate);
+        #    if (!visibleAliases)
+        #    {
+        #        visibleAliases = new Set(Types::String);
+        #    }
+        #
+        #    if (!visibleAxUsers)
+        #    {
+        #        visibleAxUsers = new Set(Types::String);
+        #    }
+        #    lines = conNull();
+        #    si = new SetIterator(visibleAliases);
+        #
+        #    while (si.more())
+        #    {
+        #        personAlias = si.value();
+        #
+        #        changecompany (companyId)
+        #        {
+        #            person = INDControlDataVisibilityResolver::resolveActivePersonByAlias(personAlias);
+        #            axUserId = person.UserId;
+        #            crmUserId = includeCrmUserId
+        #                ? INDControlDataVisibilityResolver::resolveCrmUserIdByAlias(personAlias)
+        #                : "";
+        #        }
+        #
+        #        if (person.RecId
+        #         && axUserId
+        #         && visibleAxUsers.in(axUserId))
+        #        {
+        #            lines += [[
+        #                strFmt("%1", personAlias),
+        #                strFmt("%1", axUserId),
+        #                strFmt("%1", crmUserId),
+        #                strFmt("%1", person.Name),
+        #                "INDControlDataVisibility"
+        #            ]];
+        #        }
+        #
+        #        si.next();
+        #    }
+        #
+        #    header = [[true, "OK", viewerAxUserId, viewerAlias, companyId, appCode, moduleCode]];
+        #
+        #    return [header, lines];
         #}
         #
       ENDSOURCE

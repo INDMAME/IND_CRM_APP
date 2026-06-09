@@ -9,6 +9,7 @@ export type LoadOverride = {
   fromDate: string;
   toDate: string;
   accountNum?: string;
+  ownerAxUserId?: string;
 };
 
 export type FilterLoadRequest = {
@@ -85,6 +86,7 @@ export const useHistoryFiltersState = ({
   const [showManualPickerPanel, setShowManualPickerPanel] = useState(false);
   const [activeQuickFilter, setActiveQuickFilter] = useState<QuickFilterId | null>(null);
   const [selectedClient, setSelectedClient] = useState<ClientOption | null>(null);
+  const [selectedOwnerAxUserId, setSelectedOwnerAxUserId] = useState("");
   const [clientResetKey, setClientResetKey] = useState(0);
   const [showFilters, setShowFilters] = useState(true);
   const [showManualError, setShowManualError] = useState(false);
@@ -134,6 +136,7 @@ export const useHistoryFiltersState = ({
     setCurrentYear(start.getFullYear());
     setActiveQuickFilter(resolveQuickFilterFromRange(start, end));
     setSelectedClient(null);
+    setSelectedOwnerAxUserId("");
     setIsOpen(false);
 
     return {
@@ -159,6 +162,7 @@ export const useHistoryFiltersState = ({
     setActiveQuickFilter(null);
     setShowManualPickerPanel(false);
     setSelectedClient(null);
+    setSelectedOwnerAxUserId("");
     setClientResetKey((prev) => prev + 1);
     setShowManualError(false);
   }, []);
@@ -185,6 +189,7 @@ export const useHistoryFiltersState = ({
       } else {
         setSelectedClient(null);
       }
+      setSelectedOwnerAxUserId(filter.ownerAxUserId || "");
 
       const pageVal = Number(filter.page);
       const pageToLoad = Number.isFinite(pageVal) && pageVal > 0 ? pageVal : 1;
@@ -195,6 +200,7 @@ export const useHistoryFiltersState = ({
           fromDate: filter.fromDate,
           toDate: filter.toDate,
           accountNum: filter.clientAccount || "",
+          ownerAxUserId: filter.ownerAxUserId || "",
         },
       };
     },
@@ -421,6 +427,7 @@ export const useHistoryFiltersState = ({
     showManualPickerPanel,
     activeQuickFilter,
     selectedClient,
+    selectedOwnerAxUserId,
     clientResetKey,
     showFilters,
     showManualError,
@@ -441,6 +448,7 @@ export const useHistoryFiltersState = ({
     setShowManualPickerPanel,
     setActiveQuickFilter,
     setSelectedClient,
+    setSelectedOwnerAxUserId,
     setClientResetKey,
     setShowFilters,
     setShowManualError,

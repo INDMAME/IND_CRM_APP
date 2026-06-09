@@ -64,6 +64,14 @@ namespace IND_CRM_APP.Services
             ActivitiesFilter filter
         );
 
+        // Requests visible CRM users for a module through the backend visibility contract.
+        Task<PagedApiResponse<DataVisibilityVisibleUserDto>> GetVisibleUsersAsync(
+            string token,
+            string appCode,
+            string moduleCode,
+            bool includeCrmUserId = true
+        );
+
         Task<ApiResponse<object>> CreateActivityAsync(
             string token,
             CreateActivityRequest req

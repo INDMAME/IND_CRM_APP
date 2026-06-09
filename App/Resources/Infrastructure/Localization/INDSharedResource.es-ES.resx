@@ -546,6 +546,18 @@
   <data name="History_Filter_Client" xml:space="preserve">
     <value>Cuenta</value>
   </data>
+  <data name="History_Filter_Owner" xml:space="preserve">
+    <value>Propietario</value>
+  </data>
+  <data name="History_Filter_Owner_All" xml:space="preserve">
+    <value>Todos los usuarios visibles</value>
+  </data>
+  <data name="History_Filter_Owner_None" xml:space="preserve">
+    <value>Sin usuarios visibles</value>
+  </data>
+  <data name="History_Filter_Owner_Loading" xml:space="preserve">
+    <value>Cargando usuarios visibles</value>
+  </data>
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>Borrar</value>
   </data>

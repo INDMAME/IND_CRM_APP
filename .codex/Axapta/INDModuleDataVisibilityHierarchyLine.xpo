@@ -1,0 +1,747 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDModuleDataVisibilityHierarchyLine unloaded at Jueves 04/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #INDModuleDataVisibilityHierarchyLine
+    PROPERTIES
+      Name                #INDModuleDataVisibilityHierarchyLine
+      Label               #Jerarquía de visibilidad por módulo
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #No
+      ModifiedTime        #No
+      ModifiedBy          #No
+      ModifiedTransactionId #No
+      CreatedDate         #No
+      CreatedTime         #No
+      CreatedBy           #No
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #ReasonText
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ReasonText
+          Label               #Motivo
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityHierarchyLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Memo
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ValidFrom
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #ValidFrom
+          Label               #Válido desde
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityHierarchyLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ToDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #ValidTo
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #ValidTo
+          Label               #Válido hasta
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityHierarchyLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #FromDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #ParentPersonAlias
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ParentPersonAlias
+          Label               #Responsable
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityHierarchyLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDGestPersonaId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ChildPersonAlias
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ChildPersonAlias
+          Label               #Subordinado
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityHierarchyLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDGestPersonaId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #HierarchyUniqueIdx
+      PROPERTIES
+        Name                #HierarchyUniqueIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #ParentPersonAlias
+        #ChildPersonAlias
+        #ValidFrom
+        #ValidTo
+      ENDINDEXFIELDS
+      
+      #HierarchyParentIdx
+      PROPERTIES
+        Name                #HierarchyParentIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #ParentPersonAlias
+        #ValidFrom
+        #ValidTo
+      ENDINDEXFIELDS
+      
+      #HierarchyChildIdx
+      PROPERTIES
+        Name                #HierarchyChildIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #ChildPersonAlias
+        #ValidFrom
+        #ValidTo
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #INDPersonaTableParent
+        PROPERTIES
+          Name                #INDPersonaTableParent
+          Table               #INDPersonaTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDModuleDataVisibilityHierarchyLine
+            Field               #ParentPersonAlias
+            Table               #INDPersonaTable
+            RelatedField        #Alias
+          ENDPROPERTIES
+          
+          REFERENCETYPE EXTERNFIXED
+          PROPERTIES
+            Value               #0
+            Table               #INDPersonaTable
+            RelatedField        #Blocked
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #INDPersonaTableChild
+        PROPERTIES
+          Name                #INDPersonaTableChild
+          Table               #INDPersonaTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDModuleDataVisibilityHierarchyLine
+            Field               #ChildPersonAlias
+            Table               #INDPersonaTable
+            RelatedField        #Alias
+          ENDPROPERTIES
+          
+          REFERENCETYPE EXTERNFIXED
+          PROPERTIES
+            Value               #0
+            Table               #INDPersonaTable
+            RelatedField        #Blocked
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #isActiveOnDate
+        #static boolean isActiveOnDate(INDModuleDataVisibilityHierarchyLine _line,
+        #                              date                                 _asOfDate)
+        #{
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    if (_line.ValidFrom != dateNull()
+        #     && _line.ValidFrom > _asOfDate)
+        #    {
+        #        return false;
+        #    }
+        #
+        #    if (_line.ValidTo != dateNull()
+        #     && _line.ValidTo < _asOfDate)
+        #    {
+        #        return false;
+        #    }
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #wouldCreateCycle
+        #static boolean wouldCreateCycle(DataAreaId _companyId,
+        #                                str        _parentAlias,
+        #                                str        _childAlias,
+        #                                date       _asOfDate)
+        #{
+        #    Set descendants;
+        #    ;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    if (!_companyId || !_parentAlias || !_childAlias)
+        #        return false;
+        #
+        #    if (_parentAlias == _childAlias)
+        #        return true;
+        #
+        #    descendants = INDModuleDataVisibilityHierarchyLine::resolveDescendants(
+        #        _companyId,
+        #        _childAlias,
+        #        true,
+        #        INDDataVisibilityHierarchyDepth::FullDescendants,
+        #        _asOfDate);
+        #
+        #    return descendants.in(_parentAlias);
+        #}
+      ENDSOURCE
+      SOURCE #wouldCreateCycleInRange
+        #//MMS - Ajustes CRM - 2026.06.05
+        #// Valida ciclos considerando toda la vigencia de la relacion nueva o modificada.
+        #static boolean wouldCreateCycleInRange(DataAreaId _companyId,
+        #                                      str        _parentAlias,
+        #                                      str        _childAlias,
+        #                                      date       _validFrom,
+        #                                      date       _validTo)
+        #{
+        #    INDModuleDataVisibilityHierarchyLine line;
+        #    date                                 checkDate;
+        #    boolean                              ret = false;
+        #    ;
+        #
+        #    if (!_companyId || !_parentAlias || !_childAlias)
+        #        return false;
+        #
+        #    if (_parentAlias == _childAlias)
+        #        return true;
+        #
+        #    checkDate = _validFrom != dateNull() ? _validFrom : today();
+        #
+        #    if (_validTo != dateNull() && checkDate > _validTo)
+        #        checkDate = _validTo;
+        #
+        #    if (INDModuleDataVisibilityHierarchyLine::wouldCreateCycle(
+        #            _companyId,
+        #            _parentAlias,
+        #            _childAlias,
+        #            checkDate))
+        #    {
+        #        return true;
+        #    }
+        #
+        #    changecompany (_companyId)
+        #    {
+        #        while select ValidFrom, ValidTo from line
+        #            where line.dataAreaId == _companyId
+        #               && (line.ValidFrom == dateNull()
+        #                || _validTo == dateNull()
+        #                || line.ValidFrom <= _validTo)
+        #               && (_validFrom == dateNull()
+        #                || line.ValidTo == dateNull()
+        #                || _validFrom <= line.ValidTo)
+        #        {
+        #            checkDate = line.ValidFrom != dateNull()
+        #                ? line.ValidFrom
+        #                : (_validFrom != dateNull() ? _validFrom : today());
+        #
+        #            if (_validFrom != dateNull() && checkDate < _validFrom)
+        #                checkDate = _validFrom;
+        #
+        #            if (_validTo != dateNull() && checkDate > _validTo)
+        #                checkDate = _validTo;
+        #
+        #            if (INDModuleDataVisibilityHierarchyLine::wouldCreateCycle(
+        #                    _companyId,
+        #                    _parentAlias,
+        #                    _childAlias,
+        #                    checkDate))
+        #            {
+        #                ret = true;
+        #                break;
+        #            }
+        #        }
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #resolveDescendants
+        #static Set resolveDescendants(DataAreaId                     _companyId,
+        #                              str                            _rootAlias,
+        #                              boolean                        _includeRoot,
+        #                              INDDataVisibilityHierarchyDepth _depth,
+        #                              date                           _asOfDate)
+        #{
+        #    Set       result  = new Set(Types::String);
+        #    Set       visited = new Set(Types::String);
+        #    container toVisit;
+        #    container children;
+        #    str       currentAlias;
+        #    str       childAlias;
+        #    int       i;
+        #    ;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    if (!_companyId || !_rootAlias)
+        #        return result;
+        #
+        #    visited.add(_rootAlias);
+        #
+        #    if (_includeRoot)
+        #        result.add(_rootAlias);
+        #
+        #    children = INDModuleDataVisibilityHierarchyLine::findActiveChildren(
+        #        _companyId,
+        #        _rootAlias,
+        #        _asOfDate);
+        #
+        #    for (i = 1; i <= conLen(children); i++)
+        #    {
+        #        childAlias = conPeek(children, i);
+        #
+        #        if (!visited.in(childAlias))
+        #        {
+        #            visited.add(childAlias);
+        #            result.add(childAlias);
+        #
+        #            if (_depth == INDDataVisibilityHierarchyDepth::FullDescendants)
+        #                toVisit += [childAlias];
+        #        }
+        #    }
+        #
+        #    while (conLen(toVisit) > 0)
+        #    {
+        #        currentAlias = conPeek(toVisit, 1);
+        #        toVisit      = conDel(toVisit, 1, 1);
+        #
+        #        children = INDModuleDataVisibilityHierarchyLine::findActiveChildren(
+        #            _companyId,
+        #            currentAlias,
+        #            _asOfDate);
+        #
+        #        for (i = 1; i <= conLen(children); i++)
+        #        {
+        #            childAlias = conPeek(children, i);
+        #
+        #            if (!visited.in(childAlias))
+        #            {
+        #                visited.add(childAlias);
+        #                result.add(childAlias);
+        #                toVisit += [childAlias];
+        #            }
+        #        }
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #findActiveParents
+        #static container findActiveParents(
+        #    DataAreaId  _companyId,
+        #    str   10    _childAlias,
+        #    date        _asOfDate)
+        #{
+        #    INDModuleDataVisibilityHierarchyLine line;
+        #    Set         aliases = new Set(Types::String);
+        #    SetIterator iterator;
+        #    container   ret;
+        #    str         alias;
+        #    ;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    if (!_companyId || !_childAlias)
+        #        return ret;
+        #
+        #    //MMS - Ajustes CRM - 2026.06.05
+        #    // La consulta respeta explicitamente la empresa recibida aunque el llamador este en otra company.
+        #    changecompany (_companyId)
+        #    {
+        #        while select ParentPersonAlias from line
+        #            where line.dataAreaId       == _companyId
+        #               && line.ChildPersonAlias == _childAlias
+        #               && (line.ValidFrom       == dateNull()
+        #                || line.ValidFrom       <= _asOfDate)
+        #               && (line.ValidTo         == dateNull()
+        #                || line.ValidTo         >= _asOfDate)
+        #        {
+        #            if (line.ParentPersonAlias)
+        #                aliases.add(line.ParentPersonAlias);
+        #        }
+        #    }
+        #
+        #    iterator = new SetIterator(aliases);
+        #
+        #    while (iterator.more())
+        #    {
+        #        alias = iterator.value();
+        #        ret += [alias];
+        #        iterator.next();
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #findActiveChildren
+        #static container findActiveChildren(
+        #    DataAreaId  _companyId,
+        #    str   10    _parentAlias,
+        #    date        _asOfDate)
+        #{
+        #    INDModuleDataVisibilityHierarchyLine line;
+        #    Set         aliases = new Set(Types::String);
+        #    SetIterator iterator;
+        #    container   ret;
+        #    str         alias;
+        #    ;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    if (!_companyId || !_parentAlias)
+        #        return ret;
+        #
+        #    //MMS - Ajustes CRM - 2026.06.05
+        #    // La consulta respeta explicitamente la empresa recibida aunque el llamador este en otra company.
+        #    changecompany (_companyId)
+        #    {
+        #        while select ChildPersonAlias from line
+        #            where line.dataAreaId        == _companyId
+        #               && line.ParentPersonAlias == _parentAlias
+        #               && (line.ValidFrom        == dateNull()
+        #                || line.ValidFrom        <= _asOfDate)
+        #               && (line.ValidTo          == dateNull()
+        #                || line.ValidTo          >= _asOfDate)
+        #        {
+        #            if (line.ChildPersonAlias)
+        #                aliases.add(line.ChildPersonAlias);
+        #        }
+        #    }
+        #
+        #    iterator = new SetIterator(aliases);
+        #
+        #    while (iterator.more())
+        #    {
+        #        alias = iterator.value();
+        #        ret += [alias];
+        #        iterator.next();
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #existsActiveRelation
+        #static boolean existsActiveRelation(
+        #    DataAreaId  _companyId,
+        #    str    10   _parentAlias,
+        #    str    10   _childAlias,
+        #    date        _asOfDate)
+        #{
+        #    INDModuleDataVisibilityHierarchyLine line;
+        #    ;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    if (!_companyId || !_parentAlias || !_childAlias)
+        #        return false;
+        #
+        #    //MMS - Ajustes CRM - 2026.06.05
+        #    // La consulta respeta explicitamente la empresa recibida aunque el llamador este en otra company.
+        #    changecompany (_companyId)
+        #    {
+        #        select firstOnly RecId from line
+        #            where line.dataAreaId        == _companyId
+        #               && line.ParentPersonAlias == _parentAlias
+        #               && line.ChildPersonAlias  == _childAlias
+        #               && (line.ValidFrom        == dateNull()
+        #                || line.ValidFrom        <= _asOfDate)
+        #               && (line.ValidTo          == dateNull()
+        #                || line.ValidTo          >= _asOfDate);
+        #    }
+        #
+        #    return line.RecId != 0;
+        #}
+      ENDSOURCE
+      SOURCE #Active
+        #display NoYes Active()
+        #{
+        #    return INDModuleDataVisibilityHierarchyLine::isActiveOnDate(this, today())
+        #        ? NoYes::Yes
+        #        : NoYes::No;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #childPersonName
+        #display Name childPersonName()
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!this.ChildPersonAlias)
+        #        return "";
+        #
+        #    select firstOnly Name from person
+        #        where person.Alias == this.ChildPersonAlias;
+        #
+        #    return person.Name;
+        #}
+      ENDSOURCE
+      SOURCE #parentPersonName
+        #display Name parentPersonName()
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!this.ParentPersonAlias)
+        #        return "";
+        #
+        #    select firstOnly Name from person
+        #        where person.Alias == this.ParentPersonAlias;
+        #
+        #    return person.Name;
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #boolean validateWrite()
+        #{
+        #    boolean                              ret;
+        #    INDPersonaTable                      parentPerson;
+        #    INDPersonaTable                      childPerson;
+        #    INDModuleDataVisibilityHierarchyLine duplicateLine;
+        #    boolean                              rangesOverlap;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    if (!this.dataAreaId)
+        #        ret = checkFailed("La empresa es obligatoria.");
+        #
+        #    if (!this.ParentPersonAlias)
+        #        ret = checkFailed("El responsable es obligatorio.");
+        #
+        #    if (!this.ChildPersonAlias)
+        #        ret = checkFailed("El subordinado es obligatorio.");
+        #
+        #    if (this.ParentPersonAlias
+        #     && this.ChildPersonAlias
+        #     && this.ParentPersonAlias == this.ChildPersonAlias)
+        #    {
+        #        ret = checkFailed("El responsable no puede ser el mismo que el subordinado.");
+        #    }
+        #
+        #    if (this.ValidFrom != dateNull()
+        #     && this.ValidTo   != dateNull()
+        #     && this.ValidFrom > this.ValidTo)
+        #    {
+        #        ret = checkFailed("La fecha 'Valido desde' no puede ser mayor que 'Valido hasta'.");
+        #    }
+        #
+        #    if (this.ParentPersonAlias)
+        #    {
+        #        select firstOnly parentPerson
+        #            where parentPerson.Alias == this.ParentPersonAlias;
+        #
+        #        if (!parentPerson.RecId)
+        #            ret = checkFailed(strFmt("No existe la persona responsable con alias %1.", this.ParentPersonAlias));
+        #        else if (parentPerson.Blocked == NoYes::Yes)
+        #            ret = checkFailed(strFmt("La persona responsable %1 esta bloqueada.", this.ParentPersonAlias));
+        #    }
+        #
+        #    if (this.ChildPersonAlias)
+        #    {
+        #        select firstOnly childPerson
+        #            where childPerson.Alias == this.ChildPersonAlias;
+        #
+        #        if (!childPerson.RecId)
+        #            ret = checkFailed(strFmt("No existe la persona subordinada con alias %1.", this.ChildPersonAlias));
+        #        else if (childPerson.Blocked == NoYes::Yes)
+        #            ret = checkFailed(strFmt("La persona subordinada %1 esta bloqueada.", this.ChildPersonAlias));
+        #    }
+        #
+        #    while select duplicateLine
+        #        where duplicateLine.dataAreaId        == this.dataAreaId
+        #           && duplicateLine.ParentPersonAlias == this.ParentPersonAlias
+        #           && duplicateLine.ChildPersonAlias  == this.ChildPersonAlias
+        #           && duplicateLine.RecId             != this.RecId
+        #    {
+        #        rangesOverlap =
+        #            (this.ValidFrom == dateNull()
+        #          || duplicateLine.ValidTo == dateNull()
+        #          || this.ValidFrom <= duplicateLine.ValidTo)
+        #         && (duplicateLine.ValidFrom == dateNull()
+        #          || this.ValidTo == dateNull()
+        #          || duplicateLine.ValidFrom <= this.ValidTo);
+        #
+        #        if (rangesOverlap)
+        #        {
+        #            ret = checkFailed("Ya existe una relacion activa o solapada para la misma empresa, responsable y subordinado.");
+        #            break;
+        #        }
+        #    }
+        #
+        #    if (ret
+        #     && this.dataAreaId
+        #     && this.ParentPersonAlias
+        #     && this.ChildPersonAlias
+        #     && INDModuleDataVisibilityHierarchyLine::wouldCreateCycleInRange(
+        #            this.dataAreaId,
+        #            this.ParentPersonAlias,
+        #            this.ChildPersonAlias,
+        #            this.ValidFrom,
+        #            this.ValidTo))
+        #    {
+        #        ret = checkFailed("La relacion genera un ciclo en la jerarquia.");
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

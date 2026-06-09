@@ -411,6 +411,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-crm-data-visibility-visible-users",
+    pattern: "api/crm/data-visibility/visible-users",
+    defaults: new { controller = "Historial", action = "ApiVisibleVisitUsers" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
     name: "api-crm-projects-list",
     pattern: "api/crm/projects/list",
     defaults: new { controller = "Gastos", action = "ApiProjectsList" },

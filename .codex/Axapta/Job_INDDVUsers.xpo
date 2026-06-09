@@ -1,0 +1,89 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDDVUsers descargados en Jueves 04/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job_INDDVUsers
+    #static void Job_INDDVUsers(Args _args)
+    #{
+    #    DataAreaId  companyId      = curext();
+    #    UserId      viewerAxUserId = curUserId();
+    #    str         appCode        = "CRM";
+    #    str         moduleCode     = "VISITAS_GESTION";
+    #    container   data;
+    #    container   result;
+    #    container   headerWrap;
+    #    container   header;
+    #    container   lines;
+    #    container   line;
+    #    Set         visibleAxUsers;
+    #    SetIterator si;
+    #    int         i;
+    #    ;
+    #
+    #    info(strFmt("Company=%1 Viewer=%2 App=%3 Module=%4",
+    #        companyId, viewerAxUserId, appCode, moduleCode));
+    #
+    #    data = [companyId, appCode, moduleCode, viewerAxUserId, "", "1"];
+    #    result = INDCRMUtilityService::ctrlGetVisibleUsers(data);
+    #
+    #    if (conLen(result) < 2)
+    #    {
+    #        error("ctrlGetVisibleUsers no devolvio Header + Lines.");
+    #        return;
+    #    }
+    #
+    #    headerWrap = conPeek(result, 1);
+    #    lines      = conPeek(result, 2);
+    #
+    #    if (conLen(headerWrap) >= 1)
+    #        header = conPeek(headerWrap, 1);
+    #    else
+    #        header = headerWrap;
+    #
+    #    info(strFmt("Header success=%1 message=%2 viewer=%3 alias=%4 company=%5 app=%6 module=%7",
+    #        conPeek(header, 1), conPeek(header, 2), conPeek(header, 3),
+    #        conPeek(header, 4), conPeek(header, 5), conPeek(header, 6), conPeek(header, 7)));
+    #
+    #    info(strFmt("Lineas visibles: %1", conLen(lines)));
+    #
+    #    for (i = 1; i <= conLen(lines); i++)
+    #    {
+    #        line = conPeek(lines, i);
+    #
+    #        if (conLen(line) >= 5)
+    #        {
+    #            info(strFmt("Visible[%1] alias=%2 axUser=%3 crmUser=%4 name=%5 source=%6",
+    #                i, conPeek(line, 1), conPeek(line, 2), conPeek(line, 3),
+    #                conPeek(line, 4), conPeek(line, 5)));
+    #        }
+    #    }
+    #
+    #    visibleAxUsers = INDCRMUtilityService::ctrlResolveVisibleAxUserIdSet(
+    #        viewerAxUserId, companyId, appCode, moduleCode, today());
+    #
+    #    if (!visibleAxUsers)
+    #    {
+    #        error("ctrlResolveVisibleAxUserIdSet devolvio null.");
+    #        return;
+    #    }
+    #
+    #    i = 0;
+    #    si = new SetIterator(visibleAxUsers);
+    #
+    #    while (si.more())
+    #    {
+    #        i++;
+    #        info(strFmt("Set AxUser[%1]=%2", i, si.value()));
+    #        si.next();
+    #    }
+    #
+    #    info(strFmt("Fin. Total AxUsers en Set=%1", i));
+    #}
+  ENDSOURCE
+
+***Element: END

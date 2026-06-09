@@ -15,7 +15,13 @@
     <link rel="stylesheet" href="~/css/historial.css" asp-append-version="true" />
 }
 
-<div id="visitas-history-root" data-default-from="@ViewBag.DefaultFromDate" data-default-to="@ViewBag.DefaultToDate"></div>
+<div
+    id="visitas-history-root"
+    data-default-from="@ViewBag.DefaultFromDate"
+    data-default-to="@ViewBag.DefaultToDate"
+    data-company-id="@ViewBag.SelectedCompanyId"
+    data-ax-user-id="@ViewBag.CurrentAxUserId"
+    data-permissions-revision="@ViewBag.PermissionsRevision"></div>
 
 @section Scripts {
     <script nonce="@cspNonce">
@@ -24,6 +30,10 @@
             History_To = SR["History_To"].Value,
             History_Filter_Date = SR["History_Filter_Date"].Value,
             History_Filter_Client = SR["History_Filter_Client"].Value,
+            History_Filter_Owner = SR["History_Filter_Owner"].Value,
+            History_Filter_Owner_All = SR["History_Filter_Owner_All"].Value,
+            History_Filter_Owner_None = SR["History_Filter_Owner_None"].Value,
+            History_Filter_Owner_Loading = SR["History_Filter_Owner_Loading"].Value,
             History_Filter_Clear = SR["History_Filter_Clear"].Value,
             History_Filter_Apply = SR["History_Filter_Apply"].Value,
             History_Quick_Custom = SR["History_Quick_Custom"].Value,

@@ -1,0 +1,682 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDModuleDataVisibilityTarget unloaded at Jueves 04/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #INDModuleDataVisibilityTarget
+    PROPERTIES
+      Name                #INDModuleDataVisibilityTarget
+      Label               #Excepción de visibilidad por módulo
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #No
+      ModifiedTime        #No
+      ModifiedBy          #No
+      ModifiedTransactionId #No
+      CreatedDate         #No
+      CreatedTime         #No
+      CreatedBy           #No
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #ReasonText
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #ReasonText
+          Label               #Motivo
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Memo
+              #
+            ENDARRAY
+          StringSize          #(Memo)
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ValidTo
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #ValidTo
+          Label               #Válido hasta
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ToDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #ValidFrom
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #ValidFrom
+          Label               #Válido desde
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #FromDate
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #TargetScope
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #TargetScope
+          Label               #Alcance
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDDataVisibilityTargetScope
+        ENDPROPERTIES
+        
+      FIELD #TargetAction
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #TargetAction
+          Label               #Acción
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDDataVisibilityTargetAction
+        ENDPROPERTIES
+        
+      FIELD #TargetPersonAlias
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #TargetPersonAlias
+          Label               #Persona objetivo
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDGestPersonaId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #INDWebModuleAccessLevel
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDWebModuleAccessLevel
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #TargetUniqueIdx
+      PROPERTIES
+        Name                #TargetUniqueIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #INDWebModuleAccessLevel
+        #TargetPersonAlias
+        #TargetAction
+        #TargetScope
+        #ValidFrom
+        #ValidTo
+      ENDINDEXFIELDS
+      
+      #TargetLookupIdx
+      PROPERTIES
+        Name                #TargetLookupIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #INDWebModuleAccessLevel
+        #ValidFrom
+        #ValidTo
+      ENDINDEXFIELDS
+      
+      #TargetActionIdx
+      PROPERTIES
+        Name                #TargetActionIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #INDWebModuleAccessLevel
+        #TargetAction
+        #ValidFrom
+        #ValidTo
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #INDPersonaTable
+        PROPERTIES
+          Name                #INDPersonaTable
+          Table               #INDPersonaTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDModuleDataVisibilityTarget
+            Field               #TargetPersonAlias
+            Table               #INDPersonaTable
+            RelatedField        #Alias
+          ENDPROPERTIES
+          
+          REFERENCETYPE EXTERNFIXED
+          PROPERTIES
+            Value               #0
+            Table               #INDPersonaTable
+            RelatedField        #Blocked
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #INDWebModuleAccessLevel
+        PROPERTIES
+          Name                #INDWebModuleAccessLevel
+          Table               #INDWebModuleAccessLevel
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDModuleDataVisibilityTarget
+            Field               #INDWebModuleAccessLevel
+            Table               #INDWebModuleAccessLevel
+            RelatedField        #RecId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #hasOppositeActionOverlap
+        #static boolean hasOppositeActionOverlap(
+        #    RefRecId                          _moduleAccessLevelRecId,
+        #    str              10               _targetPersonAlias,
+        #    INDDataVisibilityTargetAction     _targetAction,
+        #    INDDataVisibilityTargetScope      _targetScope,
+        #    date                             _validFrom,
+        #    date                             _validTo,
+        #    RecId                            _currentRecId)
+        #{
+        #    INDModuleDataVisibilityTarget existingTarget;
+        #    ;
+        #
+        #    if (!_moduleAccessLevelRecId || !_targetPersonAlias)
+        #        return false;
+        #
+        #    select firstOnly RecId from existingTarget
+        #        where existingTarget.INDWebModuleAccessLevel == _moduleAccessLevelRecId
+        #           && existingTarget.TargetPersonAlias       == _targetPersonAlias
+        #           && existingTarget.TargetScope             == _targetScope
+        #           && existingTarget.TargetAction            != _targetAction
+        #           && existingTarget.RecId                   != _currentRecId
+        #           && (existingTarget.ValidFrom == dateNull()
+        #            || _validTo == dateNull()
+        #            || existingTarget.ValidFrom <= _validTo)
+        #           && (_validFrom == dateNull()
+        #            || existingTarget.ValidTo == dateNull()
+        #            || _validFrom <= existingTarget.ValidTo);
+        #
+        #    return existingTarget.RecId != 0;
+        #}
+      ENDSOURCE
+      SOURCE #personName
+        #display Name personName()
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!this.TargetPersonAlias)
+        #        return "";
+        #
+        #    select firstOnly Name from person
+        #        where person.Alias == this.TargetPersonAlias;
+        #
+        #    return person.Name;
+        #}
+      ENDSOURCE
+      SOURCE #isActiveOnDate
+        #static boolean isActiveOnDate(INDModuleDataVisibilityTarget _target,
+        #                              date                          _asOfDate)
+        #{
+        #    if (!_target.RecId)
+        #        return false;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    if (_target.ValidFrom != dateNull()
+        #     && _target.ValidFrom > _asOfDate)
+        #    {
+        #        return false;
+        #    }
+        #
+        #    if (_target.ValidTo != dateNull()
+        #     && _target.ValidTo < _asOfDate)
+        #    {
+        #        return false;
+        #    }
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #resolveTargetLine
+        #static Set resolveTargetLine(DataAreaId                     _companyId,
+        #                             INDModuleDataVisibilityTarget  _target,
+        #                             INDDataVisibilityHierarchyDepth _depth,
+        #                             date                           _asOfDate)
+        #{
+        #    Set             resultSet = new Set(Types::String);
+        #    Set             descendantsSet;
+        #    SetIterator     descendantsIterator;
+        #    str             personAlias;
+        #    INDPersonaTable targetPerson;
+        #    ;
+        #
+        #    if (!_companyId || !_target.RecId || !_target.TargetPersonAlias)
+        #        return resultSet;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    if (!INDModuleDataVisibilityTarget::isActiveOnDate(_target, _asOfDate))
+        #        return resultSet;
+        #
+        #    //MMS - Ajustes CRM - 2026.06.05
+        #    // La persona objetivo se resuelve en la empresa indicada por el llamador.
+        #    changecompany (_companyId)
+        #    {
+        #        select firstOnly targetPerson
+        #            where targetPerson.Alias   == _target.TargetPersonAlias
+        #               && targetPerson.Blocked == NoYes::No;
+        #    }
+        #
+        #    if (!targetPerson.RecId)
+        #        return resultSet;
+        #
+        #    switch (_target.TargetScope)
+        #    {
+        #        case INDDataVisibilityTargetScope::TargetOnly:
+        #            resultSet.add(_target.TargetPersonAlias);
+        #            break;
+        #
+        #        case INDDataVisibilityTargetScope::TargetAndHierarchy:
+        #            descendantsSet = INDModuleDataVisibilityHierarchyLine::resolveDescendants(
+        #                _companyId,
+        #                _target.TargetPersonAlias,
+        #                true,
+        #                _depth,
+        #                _asOfDate);
+        #
+        #            descendantsIterator = new SetIterator(descendantsSet);
+        #
+        #            while (descendantsIterator.more())
+        #            {
+        #                personAlias = descendantsIterator.value();
+        #
+        #                if (personAlias)
+        #                    resultSet.add(personAlias);
+        #
+        #                descendantsIterator.next();
+        #            }
+        #            break;
+        #    }
+        #
+        #    return resultSet;
+        #}
+      ENDSOURCE
+      SOURCE #resolveTargets
+        #static Set resolveTargets(DataAreaId                       _companyId,
+        #                          RefRecId                         _moduleAccessLevelRecId,
+        #                          INDDataVisibilityTargetAction    _action,
+        #                          INDDataVisibilityHierarchyDepth   _depth,
+        #                          date                             _asOfDate)
+        #{
+        #    Set                           resultSet = new Set(Types::String);
+        #    Set                           lineSet;
+        #    SetIterator                   lineIterator;
+        #    str                           personAlias;
+        #    INDModuleDataVisibilityTarget target;
+        #    ;
+        #
+        #    if (!_companyId || !_moduleAccessLevelRecId)
+        #        return resultSet;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    //MMS - Ajustes CRM - 2026.06.05
+        #    // Los targets son por empresa; se cambia de company antes de leer la tabla.
+        #    changecompany (_companyId)
+        #    {
+        #        while select target
+        #            where target.INDWebModuleAccessLevel == _moduleAccessLevelRecId
+        #               && target.TargetAction            == _action
+        #               && (target.ValidFrom == dateNull() || target.ValidFrom <= _asOfDate)
+        #               && (target.ValidTo   == dateNull() || target.ValidTo   >= _asOfDate)
+        #        {
+        #            lineSet = INDModuleDataVisibilityTarget::resolveTargetLine(
+        #                _companyId,
+        #                target,
+        #                _depth,
+        #                _asOfDate);
+        #
+        #            lineIterator = new SetIterator(lineSet);
+        #
+        #            while (lineIterator.more())
+        #            {
+        #                personAlias = lineIterator.value();
+        #
+        #                if (personAlias)
+        #                    resultSet.add(personAlias);
+        #
+        #                lineIterator.next();
+        #            }
+        #        }
+        #    }
+        #
+        #    return resultSet;
+        #}
+      ENDSOURCE
+      SOURCE #findActiveTargets
+        #static container findActiveTargets(RefRecId _moduleAccessLevelRecId,
+        #                                   date     _asOfDate)
+        #{
+        #    INDModuleDataVisibilityTarget target;
+        #    container                     targetRecIds = conNull();
+        #    ;
+        #
+        #    if (!_moduleAccessLevelRecId)
+        #        return targetRecIds;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    while select RecId from target
+        #        where target.INDWebModuleAccessLevel == _moduleAccessLevelRecId
+        #           && (target.ValidFrom == dateNull() || target.ValidFrom <= _asOfDate)
+        #           && (target.ValidTo   == dateNull() || target.ValidTo   >= _asOfDate)
+        #    {
+        #        targetRecIds = conIns(targetRecIds, conLen(targetRecIds) + 1, target.RecId);
+        #    }
+        #
+        #    return targetRecIds;
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean                      ret;
+        #    INDWebModuleAccessLevel       moduleAccessLevel;
+        #    INDPersonaTable               targetPerson;
+        #    INDModuleDataVisibilityTarget duplicateTarget;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    if (!this.INDWebModuleAccessLevel)
+        #        ret = checkFailed("El permiso de modulo es obligatorio.");
+        #
+        #    select firstOnly moduleAccessLevel
+        #        where moduleAccessLevel.RecId == this.INDWebModuleAccessLevel;
+        #
+        #    if (!moduleAccessLevel.RecId)
+        #        ret = checkFailed("El permiso de modulo indicado no existe.");
+        #
+        #    if (!this.TargetPersonAlias)
+        #        ret = checkFailed("La persona objetivo es obligatoria.");
+        #
+        #    select firstOnly targetPerson
+        #        where targetPerson.Alias   == this.TargetPersonAlias
+        #           && targetPerson.Blocked == NoYes::No;
+        #
+        #    if (!targetPerson.RecId)
+        #        ret = checkFailed("La persona objetivo no existe o esta bloqueada.");
+        #
+        #    if (this.ValidFrom != dateNull()
+        #     && this.ValidTo   != dateNull()
+        #     && this.ValidFrom > this.ValidTo)
+        #    {
+        #        ret = checkFailed("La fecha Valido desde no puede ser posterior a Valido hasta.");
+        #    }
+        #
+        #    switch (this.TargetAction)
+        #    {
+        #        case INDDataVisibilityTargetAction::Add:
+        #        case INDDataVisibilityTargetAction::Remove:
+        #            break;
+        #
+        #        default:
+        #            ret = checkFailed("La accion de visibilidad no es valida.");
+        #            break;
+        #    }
+        #
+        #    switch (this.TargetScope)
+        #    {
+        #        case INDDataVisibilityTargetScope::TargetOnly:
+        #        case INDDataVisibilityTargetScope::TargetAndHierarchy:
+        #            break;
+        #
+        #        default:
+        #            ret = checkFailed("El alcance de visibilidad no es valido.");
+        #            break;
+        #    }
+        #
+        #    select firstOnly duplicateTarget
+        #        where duplicateTarget.INDWebModuleAccessLevel == this.INDWebModuleAccessLevel
+        #           && duplicateTarget.TargetPersonAlias       == this.TargetPersonAlias
+        #           && duplicateTarget.TargetAction            == this.TargetAction
+        #           && duplicateTarget.TargetScope             == this.TargetScope
+        #           && duplicateTarget.RecId                   != this.RecId
+        #           && (duplicateTarget.ValidFrom == dateNull()
+        #            || this.ValidTo == dateNull()
+        #            || duplicateTarget.ValidFrom <= this.ValidTo)
+        #           && (this.ValidFrom == dateNull()
+        #            || duplicateTarget.ValidTo == dateNull()
+        #            || this.ValidFrom <= duplicateTarget.ValidTo);
+        #
+        #    if (duplicateTarget.RecId)
+        #        ret = checkFailed("Ya existe una excepcion equivalente con una vigencia solapada.");
+        #
+        #    if (INDModuleDataVisibilityTarget::hasOppositeActionOverlap(
+        #            this.INDWebModuleAccessLevel,
+        #            this.TargetPersonAlias,
+        #            this.TargetAction,
+        #            this.TargetScope,
+        #            this.ValidFrom,
+        #            this.ValidTo,
+        #            this.RecId))
+        #    {
+        #        ret = checkFailed("No se puede configurar la misma persona y alcance como Agregar y Quitar en una vigencia solapada.");
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #Active
+        #display NoYes Active()
+        #{
+        #    date asOfDate = today();
+        #    ;
+        #
+        #    if (this.ValidFrom != dateNull()
+        #     && this.ValidFrom > asOfDate)
+        #    {
+        #        return NoYes::No;
+        #    }
+        #
+        #    if (this.ValidTo != dateNull()
+        #     && this.ValidTo < asOfDate)
+        #    {
+        #        return NoYes::No;
+        #    }
+        #
+        #    return NoYes::Yes;
+        #}
+      ENDSOURCE
+      SOURCE #hasActiveTargets
+        #static boolean hasActiveTargets(RefRecId _moduleAccessLevelRecId,
+        #                                date     _asOfDate)
+        #{
+        #    INDModuleDataVisibilityTarget target;
+        #    ;
+        #
+        #    if (!_moduleAccessLevelRecId)
+        #        return false;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    select firstOnly RecId from target
+        #        where target.INDWebModuleAccessLevel == _moduleAccessLevelRecId
+        #           && (target.ValidFrom == dateNull() || target.ValidFrom <= _asOfDate)
+        #           && (target.ValidTo   == dateNull() || target.ValidTo   >= _asOfDate);
+        #
+        #    return target.RecId != 0;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

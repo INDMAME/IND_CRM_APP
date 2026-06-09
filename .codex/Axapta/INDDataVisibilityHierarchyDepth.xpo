@@ -1,0 +1,42 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBE
+
+; Navision Axapta Enumtype : INDDataVisibilityHierarchyDepth unloaded at Jueves 04/06/2026
+; --------------------------------------------------------------------------------
+  ENUMTYPEVERSION 1
+  
+  ENUMTYPE #INDDataVisibilityHierarchyDepth
+    PROPERTIES
+      Name                #INDDataVisibilityHierarchyDepth
+      Label               #Profundidad de jerarquía
+      Help                #
+      DisplayLength       #Auto
+      Style               #Combo box
+      ConfigurationKey    #
+      UseEnumValue        #Yes
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+      #DirectOnly
+      PROPERTIES
+        Name                #DirectOnly
+        Label               #Solo directos
+        ConfigurationKey    #
+        EnumValue           #0
+      ENDPROPERTIES
+      
+      #FullDescendants
+      PROPERTIES
+        Name                #FullDescendants
+        Label               #Jerarquía completa
+        ConfigurationKey    #
+        EnumValue           #1
+      ENDPROPERTIES
+      
+    ENDTYPEELEMENTS
+  ENDENUMTYPE
+  
+
+***Element: END
