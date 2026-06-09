@@ -550,7 +550,7 @@
     <value>Jabea</value>
   </data>
   <data name="History_Filter_Owner_All" xml:space="preserve">
-    <value>Erabiltzaile ikusgai guztiak</value>
+    <value>Nire mendeko guztiak</value>
   </data>
   <data name="History_Filter_Owner_None" xml:space="preserve">
     <value>Ez dago erabiltzaile ikusgairik</value>
@@ -866,6 +866,9 @@
   </data>
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
     <value>Bisitaren datuak</value>
+  </data>
+  <data name="Visits_Detail_Owner_Label" xml:space="preserve">
+    <value>Jabea</value>
   </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>Data</value>

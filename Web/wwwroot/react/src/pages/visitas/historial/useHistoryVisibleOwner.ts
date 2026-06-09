@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { showPermissionModal } from "../../../utils/permissions.ts";
-import { useVisibleVisitUsers } from "./useVisibleVisitUsers.ts";
-import { formatVisibleVisitUserLabel } from "./visibleVisitUsers.ts";
+import { useVisibleVisitUsers } from "../../../hooks/useVisibleVisitUsers.ts";
+import { formatVisibleVisitUserLabel } from "../../../utils/visibleVisitUsers.ts";
 
 type Args = {
   enabled: boolean;
@@ -21,7 +21,7 @@ export const useHistoryVisibleOwner = ({
   selectedOwnerAxUserId,
   onDebug,
 }: Args) => {
-  const { visibleVisitUsers, visibleUsersLoading, visibleUsersError } = useVisibleVisitUsers({
+  const { visibleVisitUsers, visibleUsersLoading, visibleUsersError, visibleUsersReady } = useVisibleVisitUsers({
     enabled,
     companyId,
     axUserId,
@@ -30,18 +30,23 @@ export const useHistoryVisibleOwner = ({
     onDebug,
   });
 
+  const currentAxUserId = axUserId.trim();
+  const hasVisibleSubordinates = visibleUsersReady && visibleVisitUsers.length > 0;
   const selectedOwner = useMemo(() => {
-    if (!selectedOwnerAxUserId || visibleVisitUsers.length <= 1) return null;
+    if (!selectedOwnerAxUserId || !hasVisibleSubordinates) return null;
     return (
       visibleVisitUsers.find((user) => user.axUserId.toUpperCase() === selectedOwnerAxUserId.toUpperCase()) || null
     );
-  }, [selectedOwnerAxUserId, visibleVisitUsers]);
+  }, [hasVisibleSubordinates, selectedOwnerAxUserId, visibleVisitUsers]);
+
+  const fallbackOwnerText = !hasVisibleSubordinates && visibleUsersReady && currentAxUserId ? currentAxUserId : "";
 
   return {
     visibleVisitUsers,
     visibleUsersLoading,
     visibleUsersError,
-    selectedOwnerText: selectedOwner ? formatVisibleVisitUserLabel(selectedOwner) : "",
-    effectiveSelectedOwnerAxUserId: selectedOwner?.axUserId || "",
+    visibleUsersReady,
+    selectedOwnerText: selectedOwner ? formatVisibleVisitUserLabel(selectedOwner) : fallbackOwnerText,
+    effectiveSelectedOwnerAxUserId: selectedOwner?.axUserId || fallbackOwnerText,
   };
 };

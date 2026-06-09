@@ -6,7 +6,7 @@ import HistoryManualDatePicker, { type HistoryManualDayCell } from "./HistoryMan
 import HistorySummary from "./HistorySummary.tsx";
 import VisibleVisitOwnerSelect from "./VisibleVisitOwnerSelect.tsx";
 import type { QuickFilterId } from "./useHistoryFiltersState.ts";
-import type { DataVisibilityVisibleUser } from "./visibleVisitUsers.ts";
+import type { DataVisibilityVisibleUser } from "../../../utils/visibleVisitUsers.ts";
 
 type QuickFilterOption = {
   id: QuickFilterId;
@@ -48,6 +48,7 @@ type Props = {
   selectedClient: ClientOption | null;
   clientLabel: string;
   visibleVisitUsers: DataVisibilityVisibleUser[];
+  currentOwnerAxUserId: string;
   selectedOwnerAxUserId: string;
   visibleUsersLoading: boolean;
   visibleUsersError: string;
@@ -109,6 +110,7 @@ const HistoryFilterPanel = ({
   selectedClient,
   clientLabel,
   visibleVisitUsers,
+  currentOwnerAxUserId,
   selectedOwnerAxUserId,
   visibleUsersLoading,
   visibleUsersError,
@@ -198,6 +200,19 @@ const HistoryFilterPanel = ({
           />
         )}
 
+        <VisibleVisitOwnerSelect
+          users={visibleVisitUsers}
+          currentOwnerAxUserId={currentOwnerAxUserId}
+          selectedOwnerAxUserId={selectedOwnerAxUserId}
+          loading={visibleUsersLoading}
+          errorMessage={visibleUsersError}
+          label={ownerLabel}
+          allLabel={ownerAllLabel}
+          noUsersLabel={ownerNoUsersLabel}
+          loadingLabel={ownerLoadingLabel}
+          onChange={onOwnerChange}
+        />
+
         <ClientSearchCombobox
           key={clientResetKey}
           value={selectedClient}
@@ -208,18 +223,6 @@ const HistoryFilterPanel = ({
           showLabel={false}
           idBase="history-client"
           portalClassName="visitas-typography"
-        />
-
-        <VisibleVisitOwnerSelect
-          users={visibleVisitUsers}
-          selectedOwnerAxUserId={selectedOwnerAxUserId}
-          loading={visibleUsersLoading}
-          errorMessage={visibleUsersError}
-          label={ownerLabel}
-          allLabel={ownerAllLabel}
-          noUsersLabel={ownerNoUsersLabel}
-          loadingLabel={ownerLoadingLabel}
-          onChange={onOwnerChange}
         />
 
         {showFilterActions && (

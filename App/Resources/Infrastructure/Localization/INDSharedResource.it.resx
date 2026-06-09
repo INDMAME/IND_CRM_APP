@@ -550,7 +550,7 @@
     <value>Proprietario</value>
   </data>
   <data name="History_Filter_Owner_All" xml:space="preserve">
-    <value>Tutti gli utenti visibili</value>
+    <value>Tutti i miei subordinati</value>
   </data>
   <data name="History_Filter_Owner_None" xml:space="preserve">
     <value>Nessun utente visibile</value>
@@ -866,6 +866,9 @@
   </data>
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
     <value>Dati visita</value>
+  </data>
+  <data name="Visits_Detail_Owner_Label" xml:space="preserve">
+    <value>Proprietario</value>
   </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>Data</value>

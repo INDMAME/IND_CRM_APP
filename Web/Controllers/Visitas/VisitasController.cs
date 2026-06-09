@@ -1,4 +1,5 @@
 ﻿using IND_CRM_APP.Models.Activities;
+using IND_CRM_APP.Models.CRM;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using IND_CRM_APP.Extensions;
@@ -19,6 +20,8 @@ namespace IND_CRM_APP.Controllers
         private readonly IINDCrmEnumLocalizer _enumLocalizer;
         private readonly ICrmEnumCatalog _crmEnumCatalog;
         private readonly IStringLocalizer<INDSharedResource> _sr;
+        private const string DataVisibilityAppCode = "CRM";
+        private const string DataVisibilityVisitsModuleCode = "VISITAS_GESTION";
 
         public VisitasController(
             ICrmApiClient apiClient,
@@ -321,6 +324,10 @@ namespace IND_CRM_APP.Controllers
                 return RedirectToAction("Login", "Auth");
 
             await LoadEnvironmentInfoAsync();
+            ViewBag.SelectedCompanyId = HttpContext.Session.GetString("INDCompanySelected") ?? string.Empty;
+            ViewBag.CurrentAxUserId = GetCurrentSessionAxUserId() ?? string.Empty;
+            ViewBag.PermissionsRevision = HttpContext.Session.GetString("INDPermissionsRevision") ?? string.Empty;
+            ViewBag.VisibleVisitUsers = await LoadVisibleVisitUsersForViewAsync(token);
 
             if (string.IsNullOrWhiteSpace(code))
                 return NotFound();
@@ -387,6 +394,12 @@ namespace IND_CRM_APP.Controllers
                             activity.Comentarios = Pick(activity.Comentarios, recIdActivity.Comentarios);
                             activity.Antecedentes = Pick(activity.Antecedentes, recIdActivity.Antecedentes);
                             activity.Conclusiones = Pick(activity.Conclusiones, recIdActivity.Conclusiones);
+                            activity.OwnerAxUserId = Pick(activity.OwnerAxUserId, recIdActivity.OwnerAxUserId);
+                            activity.OwnerName = Pick(activity.OwnerName, recIdActivity.OwnerName);
+                            activity.OwnerAlias = Pick(activity.OwnerAlias, recIdActivity.OwnerAlias);
+                            activity.UserId = Pick(activity.UserId, recIdActivity.UserId);
+                            activity.CreatedByUserId = Pick(activity.CreatedByUserId, recIdActivity.CreatedByUserId);
+                            activity.INDCreatedByUserId = Pick(activity.INDCreatedByUserId, recIdActivity.INDCreatedByUserId);
                             activity.Asistentes = activity.Asistentes ?? recIdActivity.Asistentes;
                         }
                     }
@@ -426,6 +439,9 @@ namespace IND_CRM_APP.Controllers
                 var recIdValue = !string.IsNullOrWhiteSpace(activity.RecId) ? activity.RecId : null
                     ?? (recIdFallback.HasValue ? recIdFallback.Value.ToString() : null)
                     ?? (long.TryParse(code, out var recIdParsed) ? recIdParsed.ToString() : string.Empty);
+                var ownerAxUserId = Pick(
+                    activity.OwnerAxUserId,
+                    Pick(activity.INDCreatedByUserId, Pick(activity.CreatedByUserId, activity.UserId))) ?? string.Empty;
 
                 var detail = new
                 {
@@ -439,7 +455,13 @@ namespace IND_CRM_APP.Controllers
                     Comentarios = activity.Comentarios ?? string.Empty,
                     Antecedentes = activity.Antecedentes ?? string.Empty,
                     Conclusiones = activity.Conclusiones ?? string.Empty,
-                    Cliente = activity.Name ?? string.Empty
+                    Cliente = activity.Name ?? string.Empty,
+                    OwnerAxUserId = ownerAxUserId,
+                    OwnerName = activity.OwnerName ?? string.Empty,
+                    OwnerAlias = activity.OwnerAlias ?? string.Empty,
+                    CreatedByUserId = activity.CreatedByUserId ?? string.Empty,
+                    UserId = activity.UserId ?? string.Empty,
+                    INDCreatedByUserId = activity.INDCreatedByUserId ?? string.Empty
                 };
 
                 ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
@@ -596,6 +618,62 @@ namespace IND_CRM_APP.Controllers
             {
                 _logger.LogError(ex, "Unhandled error in DeleteActivity");
                 return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
+            }
+        }
+
+        // Reads the current AX user id from the session context.
+        private string? GetCurrentSessionAxUserId()
+        {
+            return NormalizeOptionalText(HttpContext?.Session.GetString("AxUser"));
+        }
+
+        // Trims optional text and preserves null for empty values.
+        private static string? NormalizeOptionalText(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        private static string SanitizeValue(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        // Sanitizes visible-user fields before passing them to React.
+        private static DataVisibilityVisibleUserDto NormalizeVisibleUser(DataVisibilityVisibleUserDto item)
+        {
+            return new DataVisibilityVisibleUserDto
+            {
+                Alias = SanitizeValue(item.Alias),
+                AxUserId = SanitizeValue(item.AxUserId),
+                CrmUserId = SanitizeValue(item.CrmUserId),
+                Name = SanitizeValue(item.Name),
+                Source = SanitizeValue(item.Source)
+            };
+        }
+
+        // Preloads subordinate visit owners so the detail page can decide whether to show owner metadata.
+        private async Task<List<DataVisibilityVisibleUserDto>> LoadVisibleVisitUsersForViewAsync(string token)
+        {
+            try
+            {
+                var result = await _apiClient.GetVisibleUsersAsync(
+                    token,
+                    DataVisibilityAppCode,
+                    DataVisibilityVisitsModuleCode,
+                    includeCrmUserId: false);
+
+                return result.GetAnyItems()
+                    .Select(NormalizeVisibleUser)
+                    .Where(x => !string.IsNullOrWhiteSpace(x.AxUserId))
+                    .GroupBy(x => x.AxUserId, StringComparer.OrdinalIgnoreCase)
+                    .Select(x => x.First())
+                    .OrderBy(x => string.IsNullOrWhiteSpace(x.Name) ? x.AxUserId : x.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not preload visible visit users for detail view.");
+                return new List<DataVisibilityVisibleUserDto>();
             }
         }
     }

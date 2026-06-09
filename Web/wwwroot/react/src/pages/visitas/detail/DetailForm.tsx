@@ -19,13 +19,34 @@ import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { useDetailHydration } from "../../../hooks/useDetailHydration.ts";
 import { useDetailTopbarActions } from "../../../hooks/useDetailTopbarActions.ts";
 import { useTextEditorFields } from "../../../hooks/useTextEditorFields.ts";
+import { useVisibleVisitUsers } from "../../../hooks/useVisibleVisitUsers.ts";
 import { useDetailEditSession } from "./useDetailEditSession.ts";
 import { useDetailMutations } from "./useDetailMutations.ts";
+import { formatVisibleVisitUserLabel } from "../../../utils/visibleVisitUsers.ts";
+import DetailOwnerField from "./DetailOwnerField.tsx";
 
 const EDITOR_RETURN_FLAG_TTL_MS = 2 * 60 * 60 * 1000;
 
-const DetailApp = () => {
+type DetailFormProps = {
+  companyId?: string;
+  axUserId?: string;
+  permissionsRevision?: string;
+};
+
+const safeDetailText = (value: unknown): string => String(value ?? "").trim();
+
+const firstDetailText = (...values: unknown[]): string => {
+  for (const value of values) {
+    const text = safeDetailText(value);
+    if (text) return text;
+  }
+
+  return "";
+};
+
+const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: DetailFormProps) => {
   const { visitTypes, contactMethods, asistenteTipos } = useVisitas();
+  const canViewHistory = canAccess("VISITAS_GESTION", "View");
   const canEditHistory = canAccess("VISITAS_GESTION", "Edit");
   const canDeleteHistory = canAccess("VISITAS_GESTION", "FullAccess");
   type ActivityDetailPayload = {
@@ -38,10 +59,29 @@ const DetailApp = () => {
     readOnly?: boolean;
     allowEdit?: boolean;
     editModeKey?: string;
+    ownerAxUserId?: string;
+    OwnerAxUserId?: string;
+    ownerName?: string;
+    OwnerName?: string;
+    ownerAlias?: string;
+    OwnerAlias?: string;
+    createdByUserId?: string;
+    CreatedByUserId?: string;
+    userId?: string;
+    UserId?: string;
+    indCreatedByUserId?: string;
+    INDCreatedByUserId?: string;
     [key: string]: unknown;
   };
 
   const detail = (window.__ACTIVITY_DETAIL__ as ActivityDetailPayload) || {};
+  const { visibleVisitUsers, visibleUsersReady } = useVisibleVisitUsers({
+    enabled: canViewHistory,
+    companyId,
+    axUserId,
+    permissionsRevision,
+    onForbidden: showPermissionModal,
+  });
 
   const resolveActivityRecId = (payload: ActivityDetailPayload): string => {
     const candidates = [
@@ -154,6 +194,25 @@ const DetailApp = () => {
   const recId = activityRecId;
   const accountNum = String(detail.accountNum ?? detail.AccountNum ?? "");
   const actividadId = String(detail.actividadId ?? detail.ActividadId ?? "");
+  const detailOwnerAxUserId = firstDetailText(
+    detail.ownerAxUserId,
+    detail.OwnerAxUserId,
+    detail.indCreatedByUserId,
+    detail.INDCreatedByUserId,
+    detail.createdByUserId,
+    detail.CreatedByUserId,
+    detail.userId,
+    detail.UserId
+  );
+  const detailOwnerRawText = firstDetailText(detail.ownerName, detail.OwnerName, detail.ownerAlias, detail.OwnerAlias);
+  const visibleOwner = useMemo(() => {
+    if (!detailOwnerAxUserId) return null;
+    return (
+      visibleVisitUsers.find((user) => user.axUserId.toUpperCase() === detailOwnerAxUserId.toUpperCase()) || null
+    );
+  }, [detailOwnerAxUserId, visibleVisitUsers]);
+  const detailOwnerText = visibleOwner ? formatVisibleVisitUserLabel(visibleOwner) : detailOwnerRawText || detailOwnerAxUserId;
+  const showOwnerField = visibleUsersReady && visibleVisitUsers.length > 0;
 
   const { editModeKeyRef, syncEditModeFlag, clearDraft, applyDraftValues } = useDetailEditSession({
     actividadId,
@@ -473,7 +532,11 @@ const DetailApp = () => {
             </div>
           </div>
         )}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+        {showOwnerField && (
+          <DetailOwnerField label={indT("Visits_Detail_Owner_Label", "Owner")} value={detailOwnerText} />
+        )}
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
           <div className="visita-field-text">
             <SingleDatePicker
               label={indT("Visits_Detail_Date_Label", "Date")}
@@ -545,10 +608,10 @@ const DetailApp = () => {
 };
 
 // Detail UI wrapped by the error boundary.
-export default function DetailForm() {
+export default function DetailForm(props: DetailFormProps) {
   return (
     <AppErrorBoundary fallbackMessage={indT("Visits_Detail_ErrorBoundary", "An error occurred while rendering the detail page. Reload and try again.")}>
-      <DetailApp />
+      <DetailApp {...props} />
     </AppErrorBoundary>
   );
 }

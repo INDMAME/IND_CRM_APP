@@ -422,6 +422,7 @@ export const HistoryPage = ({
           selectedClient={selectedClient}
           clientLabel={clientLabel}
           visibleVisitUsers={visibleVisitUsers}
+          currentOwnerAxUserId={axUserId}
           selectedOwnerAxUserId={effectiveSelectedOwnerAxUserId}
           visibleUsersLoading={visibleUsersLoading}
           visibleUsersError={visibleUsersError}

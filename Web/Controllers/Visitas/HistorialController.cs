@@ -51,6 +51,7 @@ namespace IND_CRM_APP.Controllers
             ViewBag.SelectedCompanyId = HttpContext.Session.GetString("INDCompanySelected") ?? string.Empty;
             ViewBag.CurrentAxUserId = GetCurrentSessionAxUserId() ?? string.Empty;
             ViewBag.PermissionsRevision = HttpContext.Session.GetString("INDPermissionsRevision") ?? string.Empty;
+            ViewBag.VisibleVisitUsers = await LoadVisibleVisitUsersForViewAsync(token);
 
             return View("~/Web/Views/Visitas/History.cshtml");
         }
@@ -60,7 +61,7 @@ namespace IND_CRM_APP.Controllers
         public async Task<IActionResult> ApiVisibleVisitUsers(
             string? appCode = DataVisibilityAppCode,
             string? moduleCode = DataVisibilityVisitsModuleCode,
-            bool includeCrmUserId = true)
+            bool includeCrmUserId = false)
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -253,6 +254,32 @@ namespace IND_CRM_APP.Controllers
                 Name = SanitizeValue(item.Name),
                 Source = SanitizeValue(item.Source)
             };
+        }
+
+        // Preloads subordinate visit owners so React can render the filter in the correct state.
+        private async Task<List<DataVisibilityVisibleUserDto>> LoadVisibleVisitUsersForViewAsync(string token)
+        {
+            try
+            {
+                var result = await _apiClient.GetVisibleUsersAsync(
+                    token,
+                    DataVisibilityAppCode,
+                    DataVisibilityVisitsModuleCode,
+                    includeCrmUserId: false);
+
+                return result.GetAnyItems()
+                    .Select(NormalizeVisibleUser)
+                    .Where(x => !string.IsNullOrWhiteSpace(x.AxUserId))
+                    .GroupBy(x => x.AxUserId, StringComparer.OrdinalIgnoreCase)
+                    .Select(x => x.First())
+                    .OrderBy(x => string.IsNullOrWhiteSpace(x.Name) ? x.AxUserId : x.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not preload visible visit users for history view.");
+                return new List<DataVisibilityVisibleUserDto>();
+            }
         }
 
         // Creates JSON responses with upstream casing preserved.

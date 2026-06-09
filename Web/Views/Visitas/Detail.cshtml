@@ -10,7 +10,11 @@
 } 
 
 <div class="visita-page w-full max-w-3xl mx-auto pb-8 px-4 md:px-6 mt-4 md:mt-6" style="overflow: visible;">
-    <div id="visita-detail-root"></div>
+    <div
+        id="visita-detail-root"
+        data-company-id="@ViewBag.SelectedCompanyId"
+        data-ax-user-id="@ViewBag.CurrentAxUserId"
+        data-permissions-revision="@ViewBag.PermissionsRevision"></div>
 </div>
 
 @section Styles {
@@ -23,6 +27,7 @@
         window.__CONTACT_METHODS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ContactMethodEnum ?? new object[] { }, jsonOptions));
         window.__ASISTENTE_TIPOS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.AsistenteTipoEnum ?? new object[] { }, jsonOptions));
         window.__ACTIVITY_DETAIL__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ActivityDetail ?? new { }, jsonOptions));
+        window.__IND_VISIBLE_VISIT_USERS__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.VisibleVisitUsers ?? new object[] { }, jsonOptions));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Save = SR["Common_Save"].Value,
             Common_Cancel = SR["Common_Cancel"].Value,
@@ -48,6 +53,7 @@
             History_Day_Sat = SR["History_Day_Sat"].Value,
             History_Day_Sun = SR["History_Day_Sun"].Value,
             Visits_Detail_VisitData_Title = SR["Visits_Detail_VisitData_Title"].Value,
+            Visits_Detail_Owner_Label = SR["Visits_Detail_Owner_Label"].Value,
             Visits_Detail_Date_Label = SR["Visits_Detail_Date_Label"].Value,
             Visits_Detail_VisitType_Label = SR["Visits_Detail_VisitType_Label"].Value,
             Visits_Detail_VisitType_Placeholder = SR["Visits_Detail_VisitType_Placeholder"].Value,

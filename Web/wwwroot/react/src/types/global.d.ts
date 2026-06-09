@@ -16,6 +16,7 @@ declare global {
     __IND_ENTRA_OID__?: string;
     __IND_APP_CODE__?: string;
     __IND_EXPENSE_STRICT_API__?: boolean | string;
+    __IND_VISIBLE_VISIT_USERS__?: unknown[];
     __IND_PERMISSION_I18N__?: { title?: string; message?: string; ok?: string };
     __IND_NAV_GUARD_I18N__?: { activeProcessMessage?: string };
     __IND_AUDIO_RECORDER_TESTS__?: boolean;
@@ -55,5 +56,6 @@ declare global {
     __IND_ENTRA_OID__?: string;
     __IND_APP_CODE__?: string;
     __IND_EXPENSE_STRICT_API__?: boolean | string;
+    __IND_VISIBLE_VISIT_USERS__?: unknown[];
   }
 }
