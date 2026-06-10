@@ -120,6 +120,8 @@ Formatversion: 1
         #{
         #    int       expenseSheetStatus, exchangeRateMode, reimbursableExpense;
         #    Amount    monto;
+        #    str       ownerAxUserId;
+        #    str       ownerName;
         #    container conItem;
         #    ;
         #
@@ -127,6 +129,10 @@ Formatversion: 1
         #    exchangeRateMode    = _hoja.ExchangeRateMode;
         #    expenseSheetStatus  = _hoja.ExpenseSheetStatus;
         #    reimbursableExpense = _hoja.ReimbursableExpense;
+        #    ownerAxUserId       = _hoja.INDCreatedByUserId;
+        #    if (!ownerAxUserId)
+        #        ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_hoja.UserId);
+        #    ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ownerAxUserId ? ownerAxUserId : _hoja.UserId);
         #
         #    conItem = [[
         #                 strFmt("%1", _hoja.HojaGastosId),
@@ -142,7 +148,9 @@ Formatversion: 1
         #                 strFmt("%1", _hoja.ProjId),
         #                 strFmt("%1", _hoja.Voucher),
         #                 strFmt("%1", date2Str(_hoja.CreatedDate, 123, 2,2,2,2,4)),
-        #                 strFmt("%1", reimbursableExpense)
+        #                 strFmt("%1", reimbursableExpense),
+        #                 strFmt("%1", ownerAxUserId),
+        #                 strFmt("%1", ownerName)
         #              ]];
         #
         #    return conItem;
@@ -258,7 +266,9 @@ Formatversion: 1
         #            strFmt('%1', processedByAIInt),
         #            strFmt('%1', gastoTypeInt),
         #            strFmt('%1', date2Str(_ticketHeader.TicketDate, 123, 2,2,2,2,4)),
-        #            strFmt('%1', _ticketHeader.TicketTime)
+        #            strFmt('%1', _ticketHeader.TicketTime),
+        #            strFmt('%1', _ticketHeader.CreatedByUserId),
+        #            strFmt('%1', INDCRMExpenseSheetService::getPersonaNameByUserId(_ticketHeader.CreatedByUserId))
         #           ];
         #}
         #
@@ -288,7 +298,9 @@ Formatversion: 1
         #            strFmt('%1', _docuRef.INDFilename),
         #            strFmt('%1', gastoTypeInt),
         #            strFmt('%1', date2Str(_ticketHeader.TicketDate, 123, 2,2,2,2,4)),
-        #            strFmt('%1', _ticketHeader.TicketTime)
+        #            strFmt('%1', _ticketHeader.TicketTime),
+        #            strFmt('%1', _ticketHeader.CreatedByUserId),
+        #            strFmt('%1', INDCRMExpenseSheetService::getPersonaNameByUserId(_ticketHeader.CreatedByUserId))
         #           ];
         #}
         #
@@ -2457,6 +2469,8 @@ Formatversion: 1
         #    CRMHojaGastosTable  header;
         #    CRMHojaGastosTable  debugHeader;
         #    CRMUsuarioTable     ownerUser;
+        #    str                 ownerAxUserId;
+        #    str                 ownerName;
         #    CRMHojaGastosLine   line;
         #    Amount              monto;
         #    Price               price;
@@ -2541,8 +2555,14 @@ Formatversion: 1
         #        exchangeRateMode    = header.ExchangeRateMode;
         #        expenseSheetStatus  = header.ExpenseSheetStatus;
         #        reimbursableExpense = header.ReimbursableExpense;
-        #        // Resuelve el nombre CRM del propietario para exponerlo al detalle web sin cambiar indices anteriores.
+        #        // Resuelve el propietario para exponerlo al detalle web sin cambiar indices anteriores.
         #        ownerUser           = CRMUsuarioTable::Find(header.UserId);
+        #        ownerAxUserId       = header.INDCreatedByUserId;
+        #        if (!ownerAxUserId)
+        #            ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(header.UserId);
+        #        ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ownerAxUserId ? ownerAxUserId : header.UserId);
+        #        if (!ownerName)
+        #            ownerName = ownerUser.Name;
         #
         #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK',
         #                                                     [
@@ -2559,7 +2579,9 @@ Formatversion: 1
         #                                                      strFmt("%1", header.Voucher),
         #                                                      strFmt("%1", date2Str(header.CreatedDate, 123, 2,2,2,2,4)),
         #                                                      strFmt("%1", reimbursableExpense),
-        #                                                      strFmt("%1", ownerUser.Name)
+        #                                                      strFmt("%1", ownerUser.Name),
+        #                                                      strFmt("%1", ownerAxUserId),
+        #                                                      strFmt("%1", ownerName)
         #                                                     ]);
         #
         #        while select line
@@ -2943,6 +2965,7 @@ Formatversion: 1
         #    int                ticketStatusInt;
         #    int                processedByAIInt;
         #    int                gastoTypeInt;
+        #    str                ownerName;
         #    ;
         #
         #    companyId = INDCRMUtilityService::getCompany(_data);
@@ -2981,6 +3004,7 @@ Formatversion: 1
         #        ticketStatusInt = ticketHeader.Status;
         #        processedByAIInt = ticketHeader.ProcessedByAI;
         #        gastoTypeInt = ticketHeader.GastoType;
+        #        ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ticketHeader.CreatedByUserId);
         #
         #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK',
         #                                                     [
@@ -3000,7 +3024,9 @@ Formatversion: 1
         #                                                      strFmt('%1', docuRef.INDOCRJson),
         #                                                      strFmt('%1', docuRef.INDNormalizedJson),
         #                                                      strFmt('%1', date2Str(ticketHeader.TicketDate, 123, 2,2,2,2,4)),
-        #                                                      strFmt('%1', ticketHeader.TicketTime)
+        #                                                      strFmt('%1', ticketHeader.TicketTime),
+        #                                                      strFmt('%1', ticketHeader.CreatedByUserId),
+        #                                                      strFmt('%1', ownerName)
         #                                                     ]);
         #
         #        while select ticketLine

@@ -18,6 +18,7 @@ type GetVisibleUsersOptions = Pick<ApiFetchOptions, "signal" | "suppressPermissi
 };
 
 // Calls the standard module data-visibility endpoint for any app/module scope.
+// includeCrmUserId controls legacy CRM id hydration; it does not grant visibility.
 export const getVisibleUsers = (
   appCode: string,
   moduleCode: string,

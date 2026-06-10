@@ -323,6 +323,12 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("GastoType")]
         public int? GastoType { get; set; }
+
+        [JsonPropertyName("OwnerAxUserId")]
+        public string OwnerAxUserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("OwnerName")]
+        public string OwnerName { get; set; } = string.Empty;
     }
 
     // Ticket item returned by link-mode list endpoint.
@@ -357,6 +363,12 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("GastoType")]
         public int? GastoType { get; set; }
+
+        [JsonPropertyName("OwnerAxUserId")]
+        public string OwnerAxUserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("OwnerName")]
+        public string OwnerName { get; set; } = string.Empty;
     }
 
     // Ticket line item returned by detail endpoint.
@@ -431,6 +443,12 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("GastoType")]
         public int? GastoType { get; set; }
+
+        [JsonPropertyName("OwnerAxUserId")]
+        public string OwnerAxUserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("OwnerName")]
+        public string OwnerName { get; set; } = string.Empty;
 
         [JsonPropertyName("Lines")]
         public List<ExpenseSheetTicketLineDto> Lines { get; set; } = new();

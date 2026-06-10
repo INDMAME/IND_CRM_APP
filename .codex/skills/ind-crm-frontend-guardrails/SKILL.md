@@ -1,6 +1,6 @@
 ---
 name: ind-crm-frontend-guardrails
-description: Use when working on IND_CRM_APP frontend scope (Razor views, React islands, Tailwind UI, frontend i18n, UI API consumption, explicit DEV to PROD commands such as "merge a prod", or local IIS publish commands such as "publica") and changes must follow .codex guardrails.
+description: Use when working on IND_CRM_APP frontend scope (Razor views, React islands, Tailwind UI, frontend i18n, UI API consumption, record-level security/data visibility, explicit DEV to PROD commands such as "merge a prod", or local IIS publish commands such as "publica") and changes must follow .codex guardrails.
 ---
 
 # IND CRM Frontend Guardrails
@@ -15,6 +15,7 @@ Use this skill when a task touches one or more of:
 - Razor or React islands UI, forms, dropdowns, filters, calendars, or event handlers.
 - Frontend hooks, components, UI services, page bootstrap, or API integration from the UI layer.
 - Frontend auth/token usage, localization resources, payload formats, or release validation.
+- Record-level security, module data visibility, visible users, subordinates, owner-based filters, or CRUD gated by record ownership.
 - Frontend publish validation steps (`C:\inetpub\wwwroot\IND_CRM_APP`, `iisreset`) when release scope requires it.
 - Explicit DEV to PROD requests such as `merge a prod`.
 - Local web publish requests such as `publica`, `publica la web`, `republica`, or `publica en iis`.
@@ -64,6 +65,7 @@ Conflict precedence:
 | Numeric format baseline | Currency/price/qty/amount/exchange-rate fields must render as `#,##0.00` (comma thousands, dot decimals, always 2 decimal digits). Use shared formatter/parser utilities and normalize editable values on blur. |
 | Security baseline | Permission-gate edit/delete/create controls, gate self-management flows with AuthContext `allowSelfManagement`, keep server as source of truth, and use integrated confirm/unsaved-change modals. |
 | Self-management permission | Read `allowSelfManagement` from `useAuthContext()` only (selected company source) and gate both editable UI states and protected mutation payload fields. |
+| Record-level security | Use `useModuleDataVisibility`, require `OwnerAxUserId` from list/detail contracts when possible, and keep API/AX as the authorization source of truth. |
 | Performance baseline | Avoid client waterfalls, deduplicate global listeners, and keep effect dependencies stable and primitive when possible. |
 | Composition baseline | Avoid boolean prop proliferation; prefer explicit variants/composition and keep shared components dumb. |
 | Module boundary | Keep orchestration state in module page hooks; promote to shared only when two modules reuse same contract. |
@@ -113,6 +115,14 @@ Required triggers:
    - Define page decomposition (container, dumb components, hooks, utilities/services, and target paths).
    - If decomposition is unclear, ask clarifying questions before coding.
    - Confirm input type for every new input-like field (`remote-search-dropdown`, `fixed-enum-instant-search`, `fixed-enum-select`).
+   - For record-level security or module data visibility, ask:
+     - Which `appCode` and `moduleCode` apply?
+     - Which API/AX field identifies the owner AX user, and is `OwnerAxUserId` guaranteed in list and detail responses?
+     - Which operations are gated: view/filter, create, edit, delete, or all mutations?
+     - What should the UI do when mutation is not allowed?
+     - Which mutation policy applies, and does the endpoint return `CanMutate` plus policy fields?
+     - Should `includeCrmUserId` be enabled?
+     - How should preload/cache scope include company, AX user, and permissions revision?
    - IMPORTANT: run monolith prevention gate for every new functionality:
      - Identify current large objects likely to absorb new logic.
      - Propose focused split (page container, dumb components, hooks, service adapters, mappers, utilities).
@@ -189,4 +199,4 @@ This addendum stays in force together with the original frontend guardrails abov
 - Debugging or validating behavior against stale runtime/build output.
 
 ## Last updated
-- 2026-05-13
+- 2026-06-10

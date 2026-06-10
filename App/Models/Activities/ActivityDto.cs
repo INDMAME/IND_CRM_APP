@@ -21,13 +21,13 @@
         public string? Comentarios { get; set; }
         public string? Antecedentes { get; set; }
         public string? Conclusiones { get; set; }
-        // AX user id that owns the activity when the API returns ownership metadata.
+        // AX user id that owns the activity. Detail endpoints should return this for strict record-level mutation gating.
         public string? OwnerAxUserId { get; set; }
         // Display name for the owner when available from the API.
         public string? OwnerName { get; set; }
         // Short owner alias when the full name is not returned.
         public string? OwnerAlias { get; set; }
-        // Backward-compatible owner fields used by older AX/API payloads.
+        // Backward-compatible owner fields used only when older AX/API payloads do not return OwnerAxUserId.
         public string? UserId { get; set; }
         public string? CreatedByUserId { get; set; }
         public string? INDCreatedByUserId { get; set; }

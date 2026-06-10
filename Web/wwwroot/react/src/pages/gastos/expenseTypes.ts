@@ -139,6 +139,10 @@ export type ExpenseSheetListItemDto = {
   ExchRate: number | null;
   ExchangeRateMode: number | null;
   CreatedDate: ExpenseApiDate | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
 };
 
 export type ExpenseSheetListResponseEnvelope = IndPagedResponse<ExpenseSheetListItemDto>;
@@ -207,6 +211,10 @@ export type ExpenseSheetDetailDto = {
   userId?: string;
   UserName?: string | null;
   userName?: string | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
   Description?: string;
   description?: string;
   ExpenseSheetStatus?: number | null;
@@ -379,6 +387,8 @@ export type ExpenseSheetCard = {
   estadoComentarios?: string | null;
   userId?: string;
   userName?: string | null;
+  ownerAxUserId?: string | null;
+  ownerName?: string | null;
   voucher?: string;
   projId?: string;
   currencyCode?: string;
@@ -394,6 +404,8 @@ export type ExpenseSheetHeader = {
   description?: string;
   userId?: string;
   userName?: string | null;
+  ownerAxUserId?: string | null;
+  ownerName?: string | null;
   expenseSheetStatus?: number | null;
   estadoComentarios?: string | null;
   currencyCode?: string;
@@ -516,6 +528,10 @@ export type ExpenseSheetTicketListItemDto = {
   TicketTime: string;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
 };
 
 export type ExpenseSheetTicketLinkListItemDto = {
@@ -529,6 +545,10 @@ export type ExpenseSheetTicketLinkListItemDto = {
   TicketTime: string;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
 };
 
 export type ExpenseSheetTicketDetailDto = {
@@ -547,6 +567,10 @@ export type ExpenseSheetTicketDetailDto = {
   UrlFile: string;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
   Lines: ExpenseSheetTicketLineDto[];
 };
 

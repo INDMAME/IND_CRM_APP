@@ -210,7 +210,10 @@ Formatversion: 1
         #    UserId          axUserId;
         #    CRMUserId       crmUserId;
         #    INDPersonaTable person;
+        #    INDWebModuleAccessLevel moduleAccessLevel;
         #    str             viewerAlias;
+        #    str             mutationPolicyLabel;
+        #    boolean         canMutate;
         #    container       header;
         #    container       lines;
         #    ;
@@ -256,6 +259,16 @@ Formatversion: 1
         #        moduleCode,
         #        asOfDate);
         #
+        #    moduleAccessLevel = INDCRMUtilityService::ctrlFindModuleAccessLevel(
+        #        viewerAxUserId,
+        #        companyId,
+        #        appCode,
+        #        moduleCode);
+        #
+        #    if (moduleAccessLevel.RecId)
+        #    {
+        #        mutationPolicyLabel = moduleAccessLevel.mutationPolicyLabel();
+        #    }
         #    //MMS - Ajustes CRM - 2026.06.09
         #    // La lista expuesta por API solo debe contener personas con usuario AX resoluble.
         #    visibleAxUsers = INDCRMUtilityService::ctrlResolveVisibleAxUserIdSet(
@@ -293,12 +306,23 @@ Formatversion: 1
         #         && axUserId
         #         && visibleAxUsers.in(axUserId))
         #        {
+        #            canMutate = INDCRMUtilityService::ctrlCanMutateOwnerAxUserId(
+        #                viewerAxUserId,
+        #                companyId,
+        #                appCode,
+        #                moduleCode,
+        #                axUserId);
+        #
         #            lines += [[
         #                strFmt("%1", personAlias),
         #                strFmt("%1", axUserId),
         #                strFmt("%1", crmUserId),
         #                strFmt("%1", person.Name),
-        #                "INDControlDataVisibility"
+        #                "INDControlDataVisibility",
+        #                strFmt("%1", moduleAccessLevel.MutationPolicy),
+        #                strFmt("%1", enum2int(moduleAccessLevel.MutationPolicy)),
+        #                strFmt("%1", mutationPolicyLabel),
+        #                strFmt("%1", canMutate)
         #            ]];
         #        }
         #

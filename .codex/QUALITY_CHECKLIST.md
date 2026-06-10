@@ -39,6 +39,13 @@
 - Verify no new secrets, passwords, tokens, connection strings, base URLs, or other environment-specific values were hardcoded in touched files.
 - Run a short clean-code review on touched backend files and confirm responsibilities still follow module ownership and focused object boundaries
 
+## Record-level security
+- For pages that show or mutate records owned by another AX user, confirm the list/detail response exposes `OwnerAxUserId` or documents a temporary compatibility fallback.
+- Confirm the visible-users endpoint returns the owner AX user list and, when mutation gating is required, `CanMutate` plus mutation policy fields.
+- Confirm UI actions are gated by both module permission and record mutation permission when the backend contract provides them.
+- Confirm backend/API/AX remains the source of truth and rejects unauthorized direct mutation requests where testable.
+- Confirm filters, cache keys, and preload data are scoped by company, AX user, app code, module code, `includeCrmUserId`, and permissions revision.
+
 ## Regression checks
 - Date range selection works (from/to focus and payload format)
 - Permission modal still triggers on 403
@@ -80,4 +87,4 @@
 - For release tasks, run `iisreset` after publish
 
 ## Last updated
-- 2026-05-13
+- 2026-06-10

@@ -30,9 +30,16 @@ const getPagedItems = <T,>(response: IndPagedResponse<T>): T[] => {
 export const normalizeListPagedResponse = (
   response: IndPagedResponse<ExpenseSheetListItemDto>
 ): IndPagedResponse<ExpenseSheetListItemDto> => {
+  const items = getPagedItems(response);
+  const normalizedItems = items.map((item) => ({
+    ...item,
+    OwnerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId) || null,
+    OwnerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
+  }));
+
   return {
     ...response,
-    Items: getPagedItems(response),
+    Items: normalizedItems,
   };
 };
 
@@ -50,6 +57,8 @@ export const normalizeDetailPagedResponse = (
       HojaGastosId: safeText(item?.HojaGastosId ?? item?.hojaGastosId),
       UserId: safeText(item?.UserId ?? item?.userId),
       UserName: safeText(item?.UserName ?? item?.userName) || null,
+      OwnerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId),
+      OwnerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
       ProjId: safeText(item?.ProjId ?? item?.projId),
       Lines: rawLines.map((line) => ({
         ...line,
@@ -188,6 +197,14 @@ export const normalizeTicketListPagedResponse = (
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
     ),
+    OwnerAxUserId: safeText(
+      (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.OwnerAxUserId ??
+        (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.ownerAxUserId
+    ),
+    OwnerName: safeText(
+      (item as { OwnerName?: unknown; ownerName?: unknown })?.OwnerName ??
+        (item as { OwnerName?: unknown; ownerName?: unknown })?.ownerName
+    ) || null,
   }));
 
   return {
@@ -210,6 +227,14 @@ export const normalizeTicketLinkListPagedResponse = (
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
     ),
+    OwnerAxUserId: safeText(
+      (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.OwnerAxUserId ??
+        (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.ownerAxUserId
+    ),
+    OwnerName: safeText(
+      (item as { OwnerName?: unknown; ownerName?: unknown })?.OwnerName ??
+        (item as { OwnerName?: unknown; ownerName?: unknown })?.ownerName
+    ) || null,
   }));
 
   return {
@@ -240,6 +265,14 @@ export const normalizeTicketDetailPagedResponse = (
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
     ),
+    OwnerAxUserId: safeText(
+      (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.OwnerAxUserId ??
+        (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.ownerAxUserId
+    ),
+    OwnerName: safeText(
+      (item as { OwnerName?: unknown; ownerName?: unknown })?.OwnerName ??
+        (item as { OwnerName?: unknown; ownerName?: unknown })?.ownerName
+    ) || null,
     Lines: Array.isArray(item?.Lines) ? item.Lines : [],
   }));
 

@@ -86,6 +86,28 @@
 - Subordinates bootstrap rule: after Entra context is resolved on login, load `/api/crm/expensesheets/subordinates` for the selected company and cache it in the same `entraOid + companyId` scope.
 - If cached subordinates data is missing when needed, trigger one automatic fallback fetch before rendering subordinate-dependent filters/actions.
 
+## Record-level security and module data visibility
+
+- Applies to any page or feature that filters by visible users, shows records owned by another AX user, or gates create/edit/delete by record ownership.
+- Use the shared module data visibility layer instead of creating page-specific clones:
+  - `Web/wwwroot/react/src/hooks/useModuleDataVisibility.ts`
+  - `Web/wwwroot/react/src/services/moduleDataVisibilityService.ts`
+  - `Web/wwwroot/react/src/utils/moduleDataVisibility.ts`
+- Server and AX authorization remain the source of truth. The frontend only hides or disables controls for a better and safer UX.
+- Record ownership must be evaluated with the functional AX owner id. The preferred detail/list contract field is `OwnerAxUserId`.
+- Strict UI mutation gating requires both:
+  - the record detail or list row returns the owner AX user id, preferably `OwnerAxUserId`;
+  - the visible-users endpoint returns mutation policy fields, including `CanMutate`.
+- If ownership cannot be resolved, do not invent ownership. Preserve an existing compatibility fallback only when the current behavior depends on it and the backend still enforces mutation permissions.
+- Before implementing record-level security on a new page or feature, ask the user these targeted questions:
+  1. What `appCode` and `moduleCode` apply?
+  2. Which API/AX field identifies the record owner AX user, and is `OwnerAxUserId` guaranteed in list and detail responses?
+  3. Which operations are gated: view/filter, create, edit, delete, or all mutations?
+  4. What should the UI do when mutation is not allowed: hide actions, disable actions, show read-only fields, or show a message?
+  5. Which mutation policy is expected: `OwnOnly`, `SameAsVisibility`, or module-specific business rules, and does the endpoint return `CanMutate` plus policy fields?
+  6. Should `includeCrmUserId` be enabled, or is AX ownership enough for this module?
+  7. How should preload/cache scope include company, AX user, and permissions revision?
+
 ## UI, design system and frontend architecture
 
 - Allowed UI architecture:
@@ -356,4 +378,4 @@ Required `merge a prod` workflow:
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-05-13
+- 2026-06-10

@@ -75,7 +75,8 @@ const readPreloadedUsers = (preloadedUsers: unknown[] | null | undefined): Modul
   return normalizeModuleDataVisibilityUsers(preloadedUsers);
 };
 
-// Loads module data visibility and exposes a case-insensitive owner lookup.
+// Standard hook for module record visibility.
+// Use it for owner filters, subordinate scopes, and record-level edit/delete gates.
 export const useModuleDataVisibility = ({
   enabled,
   companyId,

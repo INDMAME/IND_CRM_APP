@@ -63,6 +63,23 @@
 - `subordinates` must be loaded as part of the Entra context bootstrap right after login context resolution for the selected company.
 - If `subordinates` is missing at runtime, run one automatic recovery call to `/api/crm/expensesheets/subordinates` and persist the result in the same `entraOid + companyId` scope.
 
+## Module data visibility and record-level security
+- Standard endpoint: `/api/crm/data-visibility/visible-users?appCode={appCode}&moduleCode={moduleCode}&includeCrmUserId={true|false}`.
+- Standard frontend objects:
+  - Hook: `Web/wwwroot/react/src/hooks/useModuleDataVisibility.ts`
+  - Service: `Web/wwwroot/react/src/services/moduleDataVisibilityService.ts`
+  - Utilities: `Web/wwwroot/react/src/utils/moduleDataVisibility.ts`
+- Standard usage:
+  - preload visible users on the Razor/MVC page when available, then pass them as `preloadedUsers`;
+  - call `useModuleDataVisibility({ enabled, companyId, axUserId, permissionsRevision, appCode, moduleCode, preloadedUsers })`;
+  - resolve record ownership with `getVisibleUserForOwner(...)`;
+  - gate mutation with `hasMutationPolicy(owner)` plus `canMutateOwner(...)`;
+  - format owner labels with `formatModuleVisibleUserLabel(...)`.
+- Cache scope must include company, AX user, permissions revision, app code, module code, and `includeCrmUserId`.
+- New modules must not create `useVisibleXUsers` clones. Extend the shared hook/service/utils only when the behavior is truly generic.
+- Strict record-level UI gating requires the record contract to expose the owner AX user id, preferably as `OwnerAxUserId`.
+- The frontend must not treat missing owner metadata as proof of ownership. Use a documented compatibility fallback only for existing flows while server/AX authorization remains authoritative.
+
 ## Localization
 - UI localization only. Use `App/Resources/Infrastructure/Localization/INDSharedResource.*.resx`.
 - Razor: `IStringLocalizer<INDSharedResource>`.
@@ -146,4 +163,4 @@
 - Legacy JS must be migrated into `Web/wwwroot/react/src/legacy` as TS and compiled.
 
 ## Last updated
-- 2026-03-27
+- 2026-06-10

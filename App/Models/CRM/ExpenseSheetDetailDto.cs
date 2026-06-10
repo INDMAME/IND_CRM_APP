@@ -13,6 +13,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("UserName")]
         public string? UserName { get; set; }
 
+        [JsonPropertyName("OwnerAxUserId")]
+        public string? OwnerAxUserId { get; set; }
+
+        [JsonPropertyName("OwnerName")]
+        public string? OwnerName { get; set; }
+
         [JsonPropertyName("lines")]
         public List<ExpenseSheetLineDto> Lines { get; set; } = new();
 

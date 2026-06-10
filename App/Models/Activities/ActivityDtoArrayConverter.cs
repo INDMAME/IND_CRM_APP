@@ -50,6 +50,8 @@ namespace IND_CRM_APP.Models.Activities
             var hasContactMethod = values.Count >= 14 && IsContactMethodCandidate(values[8]);
             var descriptionIndex = hasContactMethod ? 9 : 8;
             var assistantsIndex = hasContactMethod ? 13 : 12;
+            var ownerAxUserIdIndex = assistantsIndex + 1;
+            var ownerNameIndex = assistantsIndex + 2;
 
             return new ActivityDto
             {
@@ -66,6 +68,8 @@ namespace IND_CRM_APP.Models.Activities
                 Comentarios = ElementToString(values, descriptionIndex + 1),
                 Antecedentes = ElementToString(values, descriptionIndex + 2),
                 Conclusiones = ElementToString(values, descriptionIndex + 3),
+                OwnerAxUserId = ElementToString(values, ownerAxUserIdIndex),
+                OwnerName = ElementToString(values, ownerNameIndex),
                 Asistentes = ReadAssistants(values, assistantsIndex)
             };
         }
@@ -76,6 +80,8 @@ namespace IND_CRM_APP.Models.Activities
             var hasContactMethod = values.Count >= 11 && IsContactMethodCandidate(values[8]);
             var descriptionIndex = hasContactMethod ? 9 : 8;
             var assistantsIndex = hasContactMethod ? 10 : 9;
+            var ownerAxUserIdIndex = assistantsIndex + 1;
+            var ownerNameIndex = assistantsIndex + 2;
 
             return new ActivityDto
             {
@@ -89,6 +95,8 @@ namespace IND_CRM_APP.Models.Activities
                 TipoVisita = ElementToString(values, 7),
                 ContactMethod = hasContactMethod ? ElementToNullableContactMethod(values, 8) : null,
                 Description = ElementToString(values, descriptionIndex),
+                OwnerAxUserId = ElementToString(values, ownerAxUserIdIndex),
+                OwnerName = ElementToString(values, ownerNameIndex),
                 Asistentes = ReadAssistants(values, assistantsIndex)
             };
         }

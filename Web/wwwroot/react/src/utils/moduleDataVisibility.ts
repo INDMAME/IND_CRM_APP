@@ -1,3 +1,4 @@
+// Shared row returned by /api/crm/data-visibility/visible-users for owner visibility and mutation checks.
 export type ModuleDataVisibilityVisibleUser = {
   alias: string;
   axUserId: string;
@@ -65,6 +66,7 @@ const normalizeVisibleUser = (item: RawVisibleUser): ModuleDataVisibilityVisible
 };
 
 // Normalizes data-visibility rows and drops entries without an AX user id.
+// Record-level checks must key ownership by the functional AX user, not by display text.
 export const normalizeModuleDataVisibilityUsers = (source: unknown): ModuleDataVisibilityVisibleUser[] => {
   if (!Array.isArray(source)) return [];
 
@@ -99,6 +101,7 @@ export const buildVisibleUserByOwnerMap = (
 };
 
 // Resolves the visible-user row that owns a record.
+// Pass the record detail owner field here, preferably OwnerAxUserId from the API/AX contract.
 export const getVisibleUserForOwner = (
   usersByOwnerAxUserId: ReadonlyMap<string, ModuleDataVisibilityVisibleUser>,
   ownerAxUserId: unknown
@@ -108,6 +111,7 @@ export const getVisibleUserForOwner = (
 };
 
 // Uses the API-provided CanMutate flag for a record owner.
+// Call this only after hasMutationPolicy(owner) is true so old contracts do not overblock the UI.
 export const canMutateOwner = (
   usersByOwnerAxUserId: ReadonlyMap<string, ModuleDataVisibilityVisibleUser>,
   ownerAxUserId: unknown
@@ -116,6 +120,7 @@ export const canMutateOwner = (
 };
 
 // Detects whether the endpoint returned the extended mutation policy fields.
+// Without this contract, CanMutate may be false only because older AX did not return the column.
 export const hasMutationPolicy = (user: ModuleDataVisibilityVisibleUser | null | undefined): boolean => {
   if (!user) return false;
   return !!safeText(user.mutationPolicy) ||

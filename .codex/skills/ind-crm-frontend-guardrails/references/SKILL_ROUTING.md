@@ -11,6 +11,7 @@
 4. If no additional trigger applies, continue with `ind-crm-frontend-guardrails` only.
 5. Tailwind helper skills are advisory only. Project style rules in `.codex/AGENTS.md` and `.codex/UI_GUIDE.md` are mandatory and take precedence.
 6. When editing `.codex` docs or skill docs, `writing-skills` is required and root `.codex/*.md` is the source of truth.
+7. Record-level security keywords (`OwnerAxUserId`, `CanMutate`, `MutationPolicy`, visible users, subordinates, CRUD by owner) require the local guardrails and the targeted record-level security questions before implementation.
 
 ## Installed skills matrix
 
@@ -55,4 +56,4 @@
 - After editing `.codex/*.md` or `.codex/config.toml`, run `npm run sync:skill:local:references` (also enforced by pre-commit).
 
 ## Last updated
-- 2026-03-27
+- 2026-06-10

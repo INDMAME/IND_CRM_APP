@@ -577,7 +577,9 @@ Formatversion: 1
         #             strFmt("%1", actividadTable.Comentarios),
         #             strFmt("%1", actividadTable.VisitaAntecedentes),
         #             strFmt("%1", actividadTable.VisitaConclusiones),
-        #             conAsistentes
+        #             conAsistentes,
+        #             strFmt("%1", INDCRMVisitsService::getActivityOwnerAxUserId(actividadTable)),
+        #             strFmt("%1", INDCRMVisitsService::getActivityOwnerName(actividadTable))
         #        ]];
         #
         #        conResult += conActividad;
@@ -654,7 +656,9 @@ Formatversion: 1
         #             strFmt("%1", actividadTable.Comentarios),
         #             strFmt("%1", actividadTable.VisitaAntecedentes),
         #             strFmt("%1", actividadTable.VisitaConclusiones),
-        #             conAsistentes
+        #             conAsistentes,
+        #             strFmt("%1", INDCRMVisitsService::getActivityOwnerAxUserId(actividadTable)),
+        #             strFmt("%1", INDCRMVisitsService::getActivityOwnerName(actividadTable))
         #        ]];
         #
         #        conResult += conActividad;
@@ -787,7 +791,9 @@ Formatversion: 1
         #                 strFmt("%1", actividadTable.TipoVisita),
         #                 strFmt("%1", actividadTable.ContactMethod),
         #                 strFmt("%1", actividadTable.Description),
-        #                 conAsistentes
+        #                 conAsistentes,
+        #                 strFmt("%1", INDCRMVisitsService::getActivityOwnerAxUserId(actividadTable)),
+        #                 strFmt("%1", INDCRMVisitsService::getActivityOwnerName(actividadTable))
         #            ]];
         #
         #            conResult += conActividad;
@@ -809,6 +815,24 @@ Formatversion: 1
         #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
         #
         #    return INDControlDataVisibilityResolver::resolvePersonAliasByAxUserId(ownerAxUserId);
+        #}
+      ENDSOURCE
+      SOURCE #getActivityOwnerName
+        #//MMS - CRM adjustments - 2026.06.10
+        #// Returns the display name for the functional visit owner.
+        #static str getActivityOwnerName(CRMActividadTable _activity)
+        #{
+        #    UserId          ownerAxUserId;
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
+        #    if (!ownerAxUserId)
+        #        return "";
+        #
+        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(ownerAxUserId);
+        #
+        #    return person.Name;
         #}
       ENDSOURCE
       SOURCE #getActivityOwnerAxUserId
