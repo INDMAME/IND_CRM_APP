@@ -550,7 +550,7 @@
     <value>Jabea</value>
   </data>
   <data name="History_Filter_Owner_All" xml:space="preserve">
-    <value>Nire mendeko guztiak</value>
+    <value>Erabiltzaile ikusgarri guztiak</value>
   </data>
   <data name="History_Filter_Owner_None" xml:space="preserve">
     <value>Ez dago erabiltzaile ikusgairik</value>

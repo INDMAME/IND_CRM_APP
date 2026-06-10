@@ -19,5 +19,17 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("Source")]
         public string Source { get; set; } = string.Empty;
+
+        [JsonPropertyName("MutationPolicy")]
+        public string MutationPolicy { get; set; } = string.Empty;
+
+        [JsonPropertyName("MutationPolicyInt")]
+        public int MutationPolicyInt { get; set; }
+
+        [JsonPropertyName("MutationPolicyLabel")]
+        public string MutationPolicyLabel { get; set; } = string.Empty;
+
+        [JsonPropertyName("CanMutate")]
+        public bool CanMutate { get; set; }
     }
 }

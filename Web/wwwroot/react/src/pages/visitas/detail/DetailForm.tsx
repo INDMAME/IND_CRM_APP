@@ -19,13 +19,21 @@ import { useConfirmDialog } from "../../../hooks/useConfirmDialog.ts";
 import { useDetailHydration } from "../../../hooks/useDetailHydration.ts";
 import { useDetailTopbarActions } from "../../../hooks/useDetailTopbarActions.ts";
 import { useTextEditorFields } from "../../../hooks/useTextEditorFields.ts";
-import { useVisibleVisitUsers } from "../../../hooks/useVisibleVisitUsers.ts";
+import { useModuleDataVisibility } from "../../../hooks/useModuleDataVisibility.ts";
 import { useDetailEditSession } from "./useDetailEditSession.ts";
 import { useDetailMutations } from "./useDetailMutations.ts";
-import { formatVisibleVisitUserLabel } from "../../../utils/visibleVisitUsers.ts";
+import {
+  canMutateOwner,
+  formatModuleVisibleUserLabel,
+  getVisibleUserForOwner,
+  hasMutationPolicy,
+  normalizeOwnerAxUserId,
+} from "../../../utils/moduleDataVisibility.ts";
 import DetailOwnerField from "./DetailOwnerField.tsx";
 
 const EDITOR_RETURN_FLAG_TTL_MS = 2 * 60 * 60 * 1000;
+const APP_CODE = "CRM";
+const MODULE_CODE = "VISITAS_GESTION";
 
 type DetailFormProps = {
   companyId?: string;
@@ -75,11 +83,14 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   };
 
   const detail = (window.__ACTIVITY_DETAIL__ as ActivityDetailPayload) || {};
-  const { visibleVisitUsers, visibleUsersReady } = useVisibleVisitUsers({
-    enabled: canViewHistory,
+  const { visibleUserByOwnerAxUserId, visibleUsersReady } = useModuleDataVisibility({
+    enabled: canViewHistory || canEditHistory || canDeleteHistory,
     companyId,
     axUserId,
     permissionsRevision,
+    appCode: APP_CODE,
+    moduleCode: MODULE_CODE,
+    preloadedUsers: typeof window !== "undefined" ? window.__IND_VISIBLE_VISIT_USERS__ : undefined,
     onForbidden: showPermissionModal,
   });
 
@@ -206,18 +217,23 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   );
   const detailOwnerRawText = firstDetailText(detail.ownerName, detail.OwnerName, detail.ownerAlias, detail.OwnerAlias);
   const visibleOwner = useMemo(() => {
-    if (!detailOwnerAxUserId) return null;
-    return (
-      visibleVisitUsers.find((user) => user.axUserId.toUpperCase() === detailOwnerAxUserId.toUpperCase()) || null
-    );
-  }, [detailOwnerAxUserId, visibleVisitUsers]);
-  const detailOwnerText = visibleOwner ? formatVisibleVisitUserLabel(visibleOwner) : detailOwnerRawText || detailOwnerAxUserId;
-  const showOwnerField = visibleUsersReady && visibleVisitUsers.length > 0;
+    return getVisibleUserForOwner(visibleUserByOwnerAxUserId, detailOwnerAxUserId);
+  }, [detailOwnerAxUserId, visibleUserByOwnerAxUserId]);
+  const detailOwnerText = visibleOwner ? formatModuleVisibleUserLabel(visibleOwner) : detailOwnerRawText || detailOwnerAxUserId;
+  const isCurrentOwner =
+    !!detailOwnerAxUserId && normalizeOwnerAxUserId(detailOwnerAxUserId) === normalizeOwnerAxUserId(axUserId);
+  const showOwnerField = visibleUsersReady && !!visibleOwner && !isCurrentOwner;
+  // Only hide actions when the endpoint returned a resolved mutation policy for the owner.
+  const ownerCanMutate = !visibleUsersReady || !hasMutationPolicy(visibleOwner)
+    ? true
+    : canMutateOwner(visibleUserByOwnerAxUserId, detailOwnerAxUserId);
+  const canEditVisit = canEditHistory && ownerCanMutate;
+  const canDeleteVisit = canDeleteHistory && ownerCanMutate;
 
   const { editModeKeyRef, syncEditModeFlag, clearDraft, applyDraftValues } = useDetailEditSession({
     actividadId,
     recId,
-    canEditHistory,
+    canEditHistory: canEditVisit,
     isEditing,
     setIsEditing,
     transDate,
@@ -269,10 +285,10 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     event.preventDefault();
     openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios, {
       readOnly: !isEditing,
-      allowEdit: canEditHistory,
+      allowEdit: canEditVisit,
       editModeKey: editModeKeyRef.current
     });
-  }, [comentarios, isEditing, canEditHistory, openTextEditor]);
+  }, [comentarios, editModeKeyRef, fieldIdComentarios, isEditing, canEditVisit, openTextEditor]);
 
   const handleComentariosHold = useCallback((target, clientY) => {
     if (!target || !isOverflowing(target)) return false;
@@ -284,10 +300,10 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     event.preventDefault();
     openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes, {
       readOnly: !isEditing,
-      allowEdit: canEditHistory,
+      allowEdit: canEditVisit,
       editModeKey: editModeKeyRef.current
     });
-  }, [antecedentes, isEditing, canEditHistory, openTextEditor]);
+  }, [antecedentes, editModeKeyRef, fieldIdAntecedentes, isEditing, canEditVisit, openTextEditor]);
 
   const handleAntecedentesHold = useCallback((target, clientY) => {
     if (!target || !isOverflowing(target)) return false;
@@ -299,10 +315,10 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     event.preventDefault();
     openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones, {
       readOnly: !isEditing,
-      allowEdit: canEditHistory,
+      allowEdit: canEditVisit,
       editModeKey: editModeKeyRef.current
     });
-  }, [conclusiones, isEditing, canEditHistory, openTextEditor]);
+  }, [conclusiones, editModeKeyRef, fieldIdConclusiones, isEditing, canEditVisit, openTextEditor]);
 
   const handleConclusionesHold = useCallback((target, clientY) => {
     if (!target || !isOverflowing(target)) return false;
@@ -427,14 +443,14 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   }, [isEditing]);
 
   const handleEnableEdit = useCallback(() => {
-    if (!canEditHistory) {
+    if (!canEditVisit) {
       showPermissionModal();
       return;
     }
     setIsEditing(true);
     syncEditModeFlag(true);
     setStatus(indT("Visits_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditHistory, syncEditModeFlag]);
+  }, [canEditVisit, syncEditModeFlag]);
 
   const handleCancelEdit = useCallback(() => {
     if (!isEditing) return;
@@ -449,8 +465,8 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const { handleUpdate, handleDelete } = useDetailMutations({
     busy,
     isEditing,
-    canEditHistory,
-    canDeleteHistory,
+    canEditHistory: canEditVisit,
+    canDeleteHistory: canDeleteVisit,
     recId,
     accountNum,
     transDate,
@@ -481,8 +497,8 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     busy,
     modalOpen: modal.open,
     isEditing,
-    canEditHistory,
-    canDeleteHistory,
+    canEditHistory: canEditVisit,
+    canDeleteHistory: canDeleteVisit,
     transDate,
     setModalError,
     handleEnableEdit,
@@ -491,6 +507,7 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     handleDelete,
     openConfirm,
     closeConfirm,
+    permissionsReady: visibleUsersReady,
   });
 
   const descriptionLabel = indT("Visits_Field_Description", "Description");

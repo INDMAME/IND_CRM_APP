@@ -647,11 +647,15 @@ namespace IND_CRM_APP.Controllers
                 AxUserId = SanitizeValue(item.AxUserId),
                 CrmUserId = SanitizeValue(item.CrmUserId),
                 Name = SanitizeValue(item.Name),
-                Source = SanitizeValue(item.Source)
+                Source = SanitizeValue(item.Source),
+                MutationPolicy = SanitizeValue(item.MutationPolicy),
+                MutationPolicyInt = item.MutationPolicyInt,
+                MutationPolicyLabel = SanitizeValue(item.MutationPolicyLabel),
+                CanMutate = item.CanMutate
             };
         }
 
-        // Preloads subordinate visit owners so the detail page can decide whether to show owner metadata.
+        // Preloads visible visit owners so the detail page can apply owner mutation policy.
         private async Task<List<DataVisibilityVisibleUserDto>> LoadVisibleVisitUsersForViewAsync(string token)
         {
             try
@@ -660,7 +664,7 @@ namespace IND_CRM_APP.Controllers
                     token,
                     DataVisibilityAppCode,
                     DataVisibilityVisitsModuleCode,
-                    includeCrmUserId: false);
+                    includeCrmUserId: true);
 
                 return result.GetAnyItems()
                     .Select(NormalizeVisibleUser)

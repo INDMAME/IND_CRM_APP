@@ -6,7 +6,7 @@ import HistoryManualDatePicker, { type HistoryManualDayCell } from "./HistoryMan
 import HistorySummary from "./HistorySummary.tsx";
 import VisibleVisitOwnerSelect from "./VisibleVisitOwnerSelect.tsx";
 import type { QuickFilterId } from "./useHistoryFiltersState.ts";
-import type { DataVisibilityVisibleUser } from "../../../utils/visibleVisitUsers.ts";
+import type { ModuleDataVisibilityVisibleUser } from "../../../utils/moduleDataVisibility.ts";
 
 type QuickFilterOption = {
   id: QuickFilterId;
@@ -47,8 +47,7 @@ type Props = {
   clientResetKey: number;
   selectedClient: ClientOption | null;
   clientLabel: string;
-  visibleVisitUsers: DataVisibilityVisibleUser[];
-  currentOwnerAxUserId: string;
+  visibleVisitUsers: ModuleDataVisibilityVisibleUser[];
   selectedOwnerAxUserId: string;
   visibleUsersLoading: boolean;
   visibleUsersError: string;
@@ -110,7 +109,6 @@ const HistoryFilterPanel = ({
   selectedClient,
   clientLabel,
   visibleVisitUsers,
-  currentOwnerAxUserId,
   selectedOwnerAxUserId,
   visibleUsersLoading,
   visibleUsersError,
@@ -202,7 +200,6 @@ const HistoryFilterPanel = ({
 
         <VisibleVisitOwnerSelect
           users={visibleVisitUsers}
-          currentOwnerAxUserId={currentOwnerAxUserId}
           selectedOwnerAxUserId={selectedOwnerAxUserId}
           loading={visibleUsersLoading}
           errorMessage={visibleUsersError}

@@ -61,7 +61,7 @@ namespace IND_CRM_APP.Controllers
         public async Task<IActionResult> ApiVisibleVisitUsers(
             string? appCode = DataVisibilityAppCode,
             string? moduleCode = DataVisibilityVisitsModuleCode,
-            bool includeCrmUserId = false)
+            bool includeCrmUserId = true)
         {
             var token = GetToken();
             if (string.IsNullOrWhiteSpace(token))
@@ -252,11 +252,15 @@ namespace IND_CRM_APP.Controllers
                 AxUserId = SanitizeValue(item.AxUserId),
                 CrmUserId = SanitizeValue(item.CrmUserId),
                 Name = SanitizeValue(item.Name),
-                Source = SanitizeValue(item.Source)
+                Source = SanitizeValue(item.Source),
+                MutationPolicy = SanitizeValue(item.MutationPolicy),
+                MutationPolicyInt = item.MutationPolicyInt,
+                MutationPolicyLabel = SanitizeValue(item.MutationPolicyLabel),
+                CanMutate = item.CanMutate
             };
         }
 
-        // Preloads subordinate visit owners so React can render the filter in the correct state.
+        // Preloads visible visit owners so React can render the filter in the correct state.
         private async Task<List<DataVisibilityVisibleUserDto>> LoadVisibleVisitUsersForViewAsync(string token)
         {
             try
@@ -265,7 +269,7 @@ namespace IND_CRM_APP.Controllers
                     token,
                     DataVisibilityAppCode,
                     DataVisibilityVisitsModuleCode,
-                    includeCrmUserId: false);
+                    includeCrmUserId: true);
 
                 return result.GetAnyItems()
                     .Select(NormalizeVisibleUser)
