@@ -28,6 +28,9 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("FileId")]
         public string FileId { get; set; } = string.Empty;
 
+        [JsonPropertyName("Ticket")]
+        public bool? Ticket { get; set; }
+
         [JsonPropertyName("Price")]
         public decimal? Price { get; set; }
 
@@ -39,6 +42,21 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("ProjId")]
         public string ProjId { get; set; } = string.Empty;
+
+        [JsonPropertyName("IndAttachFiles")]
+        public string IndAttachFiles { get; set; } = string.Empty;
+
+        [JsonPropertyName("ReimbursableExpense")]
+        public int? ReimbursableExpense { get; set; }
+
+        [JsonPropertyName("CurrencyCode")]
+        public string CurrencyCode { get; set; } = string.Empty;
+
+        [JsonPropertyName("AmountMST")]
+        public decimal? AmountMST { get; set; }
+
+        [JsonPropertyName("ExchRate")]
+        public decimal? ExchRate { get; set; }
 
         [JsonExtensionData]
         public Dictionary<string, JsonElement>? Extra { get; set; }

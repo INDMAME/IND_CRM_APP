@@ -35,7 +35,7 @@ type UseModuleDataVisibilityArgs = {
   onDebug?: (message: string, data?: Record<string, unknown>) => void;
 };
 
-const CACHE_PREFIX = "module_data_visibility_v1";
+const CACHE_PREFIX = "module_data_visibility_v2";
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 const normalizeScopePart = (value: unknown): string => {
@@ -69,7 +69,9 @@ const buildCacheKey = (
   ].join("_");
 };
 
-const hasPreloadedUsers = (preloadedUsers: unknown[] | null | undefined): boolean => Array.isArray(preloadedUsers);
+const hasPreloadedUsers = (preloadedUsers: unknown[] | null | undefined): boolean => {
+  return Array.isArray(preloadedUsers) && preloadedUsers.length > 0;
+};
 
 const readPreloadedUsers = (preloadedUsers: unknown[] | null | undefined): ModuleDataVisibilityVisibleUser[] => {
   return normalizeModuleDataVisibilityUsers(preloadedUsers);

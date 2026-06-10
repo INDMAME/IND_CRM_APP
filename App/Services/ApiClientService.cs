@@ -1385,6 +1385,7 @@ namespace IND_CRM_APP.Services
             var normalizedPageSize = req.PageSize <= 0 ? 50 : req.PageSize;
             var normalizedBilledMode = req.BilledMode is >= 0 and <= 2 ? req.BilledMode.Value : 2;
             var normalizedExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null;
+            var normalizedReimbursableExpense = req.ReimbursableExpense is >= 0 and <= 2 ? req.ReimbursableExpense : null;
             var normalizedFilter = NormalizeOptionalText(req.Filter) ?? string.Empty;
             var normalizedCreatedDateFrom = NormalizeAxListDate(req.CreatedDateFrom) ?? string.Empty;
             var normalizedCreatedDateTo = NormalizeAxListDate(req.CreatedDateTo) ?? string.Empty;
@@ -1401,6 +1402,7 @@ namespace IND_CRM_APP.Services
                 ["projId"] = normalizedProjId,
                 ["currencyCode"] = normalizedCurrencyCode,
                 ["expenseSheetStatus"] = normalizedExpenseSheetStatus,
+                ["reimbursableExpense"] = normalizedReimbursableExpense,
                 ["includeSubordinates"] = normalizedIncludeSubordinates,
                 ["page"] = normalizedPage,
                 ["pageSize"] = normalizedPageSize
@@ -1587,6 +1589,8 @@ namespace IND_CRM_APP.Services
                 TicketTime = NormalizeOptionalText(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
+                OcrJson = NormalizeOptionalText(req.OcrJson),
+                NormalizedJson = NormalizeOptionalText(req.NormalizedJson),
                 FileName = NormalizeOptionalText(req.FileName),
                 FileExtension = NormalizeOptionalText(req.FileExtension),
                 ProcessedByAI = req.ProcessedByAI,
@@ -2157,6 +2161,8 @@ namespace IND_CRM_APP.Services
                 TicketTime = NormalizeOptionalText(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
+                OcrJson = NormalizeOptionalText(req.OcrJson),
+                NormalizedJson = NormalizeOptionalText(req.NormalizedJson),
                 FileName = NormalizeOptionalText(req.FileName),
                 ProcessedByAI = req.ProcessedByAI,
                 FileExtension = NormalizeOptionalText(req.FileExtension),
@@ -2541,6 +2547,7 @@ namespace IND_CRM_APP.Services
                 ProjId = NormalizeOptionalText(request.ProjId),
                 CurrencyCode = NormalizeOptionalText(request.CurrencyCode)?.ToUpperInvariant(),
                 ExpenseSheetStatus = request.ExpenseSheetStatus is >= 0 and <= 4 ? request.ExpenseSheetStatus : null,
+                ReimbursableExpense = request.ReimbursableExpense is >= 0 and <= 2 ? request.ReimbursableExpense : null,
                 IncludeSubordinates = request.IncludeSubordinates,
                 Page = request.Page < 1 ? 1 : request.Page,
                 PageSize = request.PageSize <= 0 ? 50 : request.PageSize

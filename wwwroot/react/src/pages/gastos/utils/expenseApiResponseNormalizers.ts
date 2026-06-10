@@ -33,6 +33,7 @@ export const normalizeListPagedResponse = (
   const items = getPagedItems(response);
   const normalizedItems = items.map((item) => ({
     ...item,
+    ReimbursableExpense: toNullableNumber(item?.ReimbursableExpense ?? item?.reimbursableExpense),
     OwnerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId) || null,
     OwnerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
   }));
@@ -59,12 +60,17 @@ export const normalizeDetailPagedResponse = (
       UserName: safeText(item?.UserName ?? item?.userName) || null,
       OwnerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId),
       OwnerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
+      ReimbursableExpense: toNullableNumber(item?.ReimbursableExpense ?? item?.reimbursableExpense),
       ProjId: safeText(item?.ProjId ?? item?.projId),
       Lines: rawLines.map((line) => ({
         ...line,
         RecId: safeText(line?.RecId ?? line?.recId),
         LineRecId: safeText(line?.LineRecId ?? line?.lineRecId),
         ProjId: safeText(line?.ProjId ?? line?.projId),
+        ReimbursableExpense: toNullableNumber(line?.ReimbursableExpense ?? line?.reimbursableExpense),
+        CurrencyCode: safeText(line?.CurrencyCode ?? line?.currencyCode),
+        AmountMST: toNullableNumber(line?.AmountMST ?? line?.amountMST),
+        ExchRate: toNullableNumber(line?.ExchRate ?? line?.exchRate),
       })),
     };
   });
@@ -273,6 +279,8 @@ export const normalizeTicketDetailPagedResponse = (
       (item as { OwnerName?: unknown; ownerName?: unknown })?.OwnerName ??
         (item as { OwnerName?: unknown; ownerName?: unknown })?.ownerName
     ) || null,
+    OcrJson: safeText(item?.OcrJson ?? item?.ocrJson) || null,
+    NormalizedJson: safeText(item?.NormalizedJson ?? item?.normalizedJson) || null,
     Lines: Array.isArray(item?.Lines) ? item.Lines : [],
   }));
 

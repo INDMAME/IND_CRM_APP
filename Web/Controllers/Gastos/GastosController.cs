@@ -125,6 +125,7 @@ namespace IND_CRM_APP.Controllers
             public string? Voucher { get; init; }
             public int? ExchangeRateMode { get; init; }
             public string? StatusComment { get; init; }
+            public int? ReimbursableExpense { get; init; }
             public bool IsPaid { get; init; }
         }
 
@@ -382,6 +383,7 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
+                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
                 IncludeSubordinates = req.IncludeSubordinates,
                 Page = page,
                 PageSize = pageSize
@@ -479,6 +481,7 @@ namespace IND_CRM_APP.Controllers
                         ProjId = NormalizeOptionalText(req.ListRequest.ProjId),
                         CurrencyCode = NormalizeOptionalText(req.ListRequest.CurrencyCode)?.ToUpperInvariant(),
                         ExpenseSheetStatus = req.ListRequest.ExpenseSheetStatus is >= 0 and <= 4 ? req.ListRequest.ExpenseSheetStatus : null,
+                        ReimbursableExpense = NormalizeReimbursableExpense(req.ListRequest.ReimbursableExpense),
                         IncludeSubordinates = req.ListRequest.IncludeSubordinates,
                         Page = req.ListRequest.Page < 1 ? 1 : req.ListRequest.Page,
                         PageSize = req.ListRequest.PageSize <= 0 ? 50 : req.ListRequest.PageSize
@@ -1247,6 +1250,10 @@ namespace IND_CRM_APP.Controllers
                     Qty = line.Qty,
                     Price = line.Price,
                     ProjId = NormalizeOptionalText(line.ProjId),
+                    ReimbursableExpense = NormalizeReimbursableExpense(line.ReimbursableExpense),
+                    CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
+                    AmountMST = line.AmountMST,
+                    ExchRate = line.ExchRate > 0 ? line.ExchRate : null,
                     IndAttachFiles = line.IndAttachFiles ?? string.Empty
                 })
                 .ToList();
@@ -1268,6 +1275,7 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjId),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                 ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
+                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
                 Lines = normalizedLines
             };
 
@@ -1426,7 +1434,8 @@ namespace IND_CRM_APP.Controllers
                 Voucher = normalizedVoucher,
                 ExpenseSheetStatus = normalizedExpenseSheetStatus,
                 ExchangeRateMode = normalizedExchangeRateMode,
-                EstadoComentarios = normalizedEstadoComentarios
+                EstadoComentarios = normalizedEstadoComentarios,
+                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense)
             };
 
             var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetUpdate));
@@ -1549,6 +1558,10 @@ namespace IND_CRM_APP.Controllers
                 Qty = req.Qty,
                 Price = req.Price,
                 ProjId = NormalizeOptionalText(req.ProjId),
+                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
+                CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                AmountMST = req.AmountMST,
+                ExchRate = req.ExchRate > 0 ? req.ExchRate : null,
                 IndAttachFiles = req.IndAttachFiles ?? string.Empty
             };
 
@@ -1877,6 +1890,8 @@ namespace IND_CRM_APP.Controllers
                 TicketTime = NormalizeTicketTime(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
+                OcrJson = NormalizeOptionalText(req.OcrJson),
+                NormalizedJson = NormalizeOptionalText(req.NormalizedJson),
                 FileName = NormalizeOptionalText(req.FileName),
                 FileExtension = NormalizeOptionalText(req.FileExtension),
                 ProcessedByAI = req.ProcessedByAI,
@@ -2612,6 +2627,8 @@ namespace IND_CRM_APP.Controllers
                 TicketTime = NormalizeTicketTime(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
+                OcrJson = NormalizeOptionalText(req.OcrJson),
+                NormalizedJson = NormalizeOptionalText(req.NormalizedJson),
                 FileName = NormalizeOptionalText(req.FileName),
                 ProcessedByAI = req.ProcessedByAI,
                 FileExtension = NormalizeOptionalText(req.FileExtension),
@@ -3323,6 +3340,10 @@ namespace IND_CRM_APP.Controllers
                         Qty = line.Qty,
                         Price = line.Price,
                         ProjId = NormalizeOptionalText(line.ProjId),
+                        ReimbursableExpense = NormalizeReimbursableExpense(line.ReimbursableExpense),
+                        CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
+                        AmountMST = line.AmountMST,
+                        ExchRate = line.ExchRate > 0 ? line.ExchRate : null,
                         IndAttachFiles = line.IndAttachFiles ?? string.Empty
                     })
                     .ToList();
@@ -3344,6 +3365,7 @@ namespace IND_CRM_APP.Controllers
                     ProjId = NormalizeOptionalText(req.ProjId),
                     ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                     ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
+                    ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
                     Lines = normalizedLines
                 };
 
@@ -3477,7 +3499,8 @@ namespace IND_CRM_APP.Controllers
                     Voucher = normalizedVoucher,
                     ExpenseSheetStatus = normalizedExpenseSheetStatus,
                     ExchangeRateMode = normalizedExchangeRateMode,
-                    EstadoComentarios = normalizedEstadoComentarios
+                    EstadoComentarios = normalizedEstadoComentarios,
+                    ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense)
                 };
 
                 var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(UpdateExpenseSheetHeader));
@@ -3567,6 +3590,10 @@ namespace IND_CRM_APP.Controllers
                     Qty = req.Qty,
                     Price = req.Price,
                     ProjId = NormalizeOptionalText(req.ProjId),
+                    ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
+                    CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
+                    AmountMST = req.AmountMST,
+                    ExchRate = req.ExchRate > 0 ? req.ExchRate : null,
                     IndAttachFiles = req.IndAttachFiles ?? string.Empty
                 };
 
@@ -3941,17 +3968,26 @@ namespace IND_CRM_APP.Controllers
         {
             return new ExpenseSheetSnapshot
             {
-                OwnerUserId = NormalizeOptionalText(GetExtraString(sheet.Extra, "userId", "axUserId", "usuario")) ?? string.Empty,
-                StatusCode = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
-                Description = NormalizeOptionalText(GetExtraString(sheet.Extra, "description", "descripcion", "desc")) ?? string.Empty,
-                CurrencyCode = (NormalizeOptionalText(GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa")) ?? string.Empty).ToUpperInvariant(),
+                OwnerUserId = NormalizeOptionalText(sheet.OwnerAxUserId)
+                              ?? NormalizeOptionalText(sheet.UserId)
+                              ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "ownerAxUserId", "OwnerAxUserId", "userId", "axUserId", "usuario"))
+                              ?? string.Empty,
+                StatusCode = sheet.ExpenseSheetStatus ?? GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
+                Description = NormalizeOptionalText(sheet.Description)
+                              ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "description", "descripcion", "desc"))
+                              ?? string.Empty,
+                CurrencyCode = (NormalizeOptionalText(sheet.CurrencyCode)
+                                ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"))
+                                ?? string.Empty).ToUpperInvariant(),
                 ExchangeRate = NormalizeExpenseSheetExchangeRateForRead(
-                    GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
-                    GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")) ?? 0m,
-                ProjectId = NormalizeOptionalText(GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project")),
-                Voucher = NormalizeOptionalText(GetExtraString(sheet.Extra, "voucher")),
-                ExchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
-                StatusComment = NormalizeOptionalText(GetExtraString(sheet.Extra, "estadoComentarios")),
+                    sheet.CurrencyCode ?? GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa"),
+                    sheet.ExchRate ?? GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")) ?? 0m,
+                ProjectId = NormalizeOptionalText(sheet.ProjId)
+                            ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project")),
+                Voucher = NormalizeOptionalText(sheet.Voucher) ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "voucher")),
+                ExchangeRateMode = sheet.ExchangeRateMode ?? GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
+                StatusComment = NormalizeOptionalText(sheet.EstadoComentarios) ?? NormalizeOptionalText(GetExtraString(sheet.Extra, "estadoComentarios")),
+                ReimbursableExpense = sheet.ReimbursableExpense ?? GetExtraInt(sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
                 IsPaid = IsPaidExpenseSheet(sheet)
             };
         }
@@ -4094,6 +4130,9 @@ namespace IND_CRM_APP.Controllers
                 return true;
 
             if (NormalizeExpenseNullableInt(request.ExchangeRateMode) != NormalizeExpenseNullableInt(snapshot.ExchangeRateMode))
+                return true;
+
+            if (NormalizeExpenseNullableInt(request.ReimbursableExpense) != NormalizeExpenseNullableInt(snapshot.ReimbursableExpense))
                 return true;
 
             return false;
@@ -4423,6 +4462,7 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjectId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
+                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
                 IncludeSubordinates = req.IncludeSubordinates,
                 Page = page,
                 PageSize = pageSize
@@ -4450,6 +4490,12 @@ namespace IND_CRM_APP.Controllers
         private static int? NormalizeTicketGastoType(int? gastoType)
         {
             return IsValidTicketGastoType(gastoType) ? gastoType : null;
+        }
+
+        // Normalizes AX INDReimbursableExpense enum values before proxying upstream.
+        private static int? NormalizeReimbursableExpense(int? reimbursableExpense)
+        {
+            return reimbursableExpense is >= 0 and <= 2 ? reimbursableExpense : null;
         }
 
         // Validates an optional gastoType field read from a raw JSON payload.
@@ -5208,11 +5254,11 @@ namespace IND_CRM_APP.Controllers
         // Treats voucher assignment or paid status code as immutable paid state.
         private static bool IsPaidExpenseSheet(ExpenseSheetDetailDto sheet)
         {
-            var statusCode = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado");
+            var statusCode = sheet.ExpenseSheetStatus ?? GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado");
             if (statusCode == ExpenseSheetStatusPaid)
                 return true;
 
-            return HasAssignedVoucher(GetExtraString(sheet.Extra, "voucher"));
+            return HasAssignedVoucher(sheet.Voucher ?? GetExtraString(sheet.Extra, "voucher"));
         }
 
         // Matches the same voucher semantics used by the React expense pages.
@@ -5296,78 +5342,87 @@ namespace IND_CRM_APP.Controllers
         // Maps a list item to a card payload for the list screen.
         private static object ToExpenseSheetCard(ExpenseSheetDetailDto sheet)
         {
-            var currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa");
+            var currencyCode = ReadTypedOrExtraString(sheet.CurrencyCode, sheet.Extra, "currencyCode", "currency", "divisa");
             var normalizedExchangeRate = NormalizeExpenseSheetExchangeRateForRead(
                 currencyCode,
-                GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
+                ReadTypedOrExtraDecimal(sheet.ExchRate, sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
 
             return new
             {
                 hojaGastosId = sheet.HojaGastosId ?? string.Empty,
-                description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
-                expenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
-                estadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
-                userId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
+                description = ReadTypedOrExtraString(sheet.Description, sheet.Extra, "description", "descripcion", "desc"),
+                expenseSheetStatus = ReadTypedOrExtraInt(sheet.ExpenseSheetStatus, sheet.Extra, "expenseSheetStatus", "status", "estado"),
+                estadoComentarios = ReadTypedOrExtraString(sheet.EstadoComentarios, sheet.Extra, "estadoComentarios"),
+                userId = ReadTypedOrExtraString(sheet.UserId, sheet.Extra, "userId", "axUserId", "usuario"),
                 userName = GetExpenseSheetOwnerUserName(sheet),
-                voucher = GetExtraString(sheet.Extra, "voucher"),
-                projId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
+                ownerAxUserId = ReadTypedOrExtraString(sheet.OwnerAxUserId, sheet.Extra, "ownerAxUserId", "OwnerAxUserId"),
+                ownerName = ReadTypedOrExtraString(sheet.OwnerName, sheet.Extra, "ownerName", "OwnerName"),
+                voucher = ReadTypedOrExtraString(sheet.Voucher, sheet.Extra, "voucher"),
+                projId = ReadTypedOrExtraString(sheet.ProjId, sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 currencyCode = currencyCode,
-                totalAmount = GetExtraDecimal(sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
-                totalAmountMST = GetExtraDecimal(sheet.Extra, "totalAmountMST", "totalamountmst"),
+                totalAmount = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
+                totalAmountMST = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmountMST", "totalamountmst"),
                 exchRate = normalizedExchangeRate,
-                exchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
-                createdDate = NormalizeDate(GetExtraString(sheet.Extra, "createdDate", "creationDate", "transDate", "fechaCreacion"))
+                exchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
+                reimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
+                createdDate = NormalizeDate(ReadTypedOrExtraString(sheet.CreatedDate, sheet.Extra, "createdDate", "creationDate", "transDate", "fechaCreacion"))
             };
         }
 
         // Maps a list item to API contract fields expected by /api/crm/expensesheets/list.
         private static object ToExpenseSheetApiListItem(ExpenseSheetDetailDto sheet)
         {
-            var currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa");
+            var currencyCode = ReadTypedOrExtraString(sheet.CurrencyCode, sheet.Extra, "currencyCode", "currency", "divisa");
             var normalizedExchangeRate = NormalizeExpenseSheetExchangeRateForRead(
                 currencyCode,
-                GetExtraDecimal(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
+                ReadTypedOrExtraDecimal(sheet.ExchRate, sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
 
             return new
             {
                 HojaGastosId = sheet.HojaGastosId ?? string.Empty,
-                Description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
-                ExpenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
-                EstadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
-                UserId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
+                Description = ReadTypedOrExtraString(sheet.Description, sheet.Extra, "description", "descripcion", "desc"),
+                ExpenseSheetStatus = ReadTypedOrExtraInt(sheet.ExpenseSheetStatus, sheet.Extra, "expenseSheetStatus", "status", "estado"),
+                EstadoComentarios = ReadTypedOrExtraString(sheet.EstadoComentarios, sheet.Extra, "estadoComentarios"),
+                UserId = ReadTypedOrExtraString(sheet.UserId, sheet.Extra, "userId", "axUserId", "usuario"),
                 UserName = GetExpenseSheetOwnerUserName(sheet),
-                Voucher = GetExtraString(sheet.Extra, "voucher"),
-                ProjId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
+                OwnerAxUserId = ReadTypedOrExtraString(sheet.OwnerAxUserId, sheet.Extra, "ownerAxUserId", "OwnerAxUserId"),
+                OwnerName = ReadTypedOrExtraString(sheet.OwnerName, sheet.Extra, "ownerName", "OwnerName"),
+                Voucher = ReadTypedOrExtraString(sheet.Voucher, sheet.Extra, "voucher"),
+                ProjId = ReadTypedOrExtraString(sheet.ProjId, sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 CurrencyCode = currencyCode,
-                TotalAmount = GetExtraDecimal(sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
+                TotalAmount = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
                 ExchRate = normalizedExchangeRate,
-                ExchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
-                CreatedDate = NormalizeDate(GetExtraString(sheet.Extra, "createdDate", "creationDate", "transDate", "fechaCreacion"))
+                ExchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
+                ReimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
+                CreatedDate = NormalizeDate(ReadTypedOrExtraString(sheet.CreatedDate, sheet.Extra, "createdDate", "creationDate", "transDate", "fechaCreacion"))
             };
         }
 
         // Maps one detail item to API contract fields expected by /api/crm/expensesheets/{hojaGastosId}.
         private static object ToExpenseSheetApiDetailItem(ExpenseSheetDetailDto sheet)
         {
-            var currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa");
+            var currencyCode = ReadTypedOrExtraString(sheet.CurrencyCode, sheet.Extra, "currencyCode", "currency", "divisa");
 
             return new
             {
                 HojaGastosId = sheet.HojaGastosId ?? string.Empty,
-                Description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
-                UserId = GetExtraString(sheet.Extra, "userId", "axUserId", "usuario"),
+                Description = ReadTypedOrExtraString(sheet.Description, sheet.Extra, "description", "descripcion", "desc"),
+                UserId = ReadTypedOrExtraString(sheet.UserId, sheet.Extra, "userId", "axUserId", "usuario"),
                 UserName = GetExpenseSheetOwnerUserName(sheet),
-                ExpenseSheetStatus = GetExtraInt(sheet.Extra, "expenseSheetStatus", "status", "estado"),
-                EstadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
+                OwnerAxUserId = ReadTypedOrExtraString(sheet.OwnerAxUserId, sheet.Extra, "ownerAxUserId", "OwnerAxUserId"),
+                OwnerName = ReadTypedOrExtraString(sheet.OwnerName, sheet.Extra, "ownerName", "OwnerName"),
+                ExpenseSheetStatus = ReadTypedOrExtraInt(sheet.ExpenseSheetStatus, sheet.Extra, "expenseSheetStatus", "status", "estado"),
+                EstadoComentarios = ReadTypedOrExtraString(sheet.EstadoComentarios, sheet.Extra, "estadoComentarios"),
                 CurrencyCode = currencyCode,
-                TotalAmount = GetExtraDecimal(sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
+                TotalAmount = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
                 ExchRate = NormalizeExpenseSheetExchangeRateText(
                     currencyCode,
-                    GetExtraString(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
-                ExchangeRateMode = GetExtraInt(sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
-                ProjId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
-                Voucher = GetExtraString(sheet.Extra, "voucher"),
-                CreatedDate = NormalizeDate(GetExtraString(sheet.Extra, "createdDate", "creationDate", "transDate", "fechaCreacion")),
+                    ReadTypedOrExtraString(sheet.ExchRate?.ToString(CultureInfo.InvariantCulture), sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
+                ExchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
+                ReimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
+                ProjId = ReadTypedOrExtraString(sheet.ProjId, sheet.Extra, "projId", "projectId", "proyectoId", "project"),
+                Voucher = ReadTypedOrExtraString(sheet.Voucher, sheet.Extra, "voucher"),
+                CreatedDate = NormalizeDate(ReadTypedOrExtraString(sheet.CreatedDate, sheet.Extra, "createdDate", "creationDate", "transDate", "fechaCreacion")),
                 Lines = (sheet.Lines ?? new List<ExpenseSheetLineDto>())
                     .Select(ToExpenseSheetApiDetailLine)
                     .ToList()
@@ -5391,12 +5446,16 @@ namespace IND_CRM_APP.Controllers
                 Description = !string.IsNullOrWhiteSpace(line.Description) ? line.Description : GetExtraString(line.Extra, "description", "descripcion"),
                 Internacional = line.Internacional ?? GetExtraBool(line.Extra, "internacional", "international"),
                 FileId = fileId ?? string.Empty,
-                Ticket = GetExtraBool(line.Extra, "ticket"),
+                Ticket = line.Ticket ?? GetExtraBool(line.Extra, "ticket"),
                 Price = line.Price ?? GetExtraDecimal(line.Extra, "price", "precio"),
                 Qty = line.Qty ?? GetExtraDecimal(line.Extra, "qty", "cantidad"),
                 Amount = line.Amount ?? GetExtraDecimal(line.Extra, "amount", "importe"),
                 ProjId = !string.IsNullOrWhiteSpace(line.ProjId) ? line.ProjId : GetExtraString(line.Extra, "projId", "projectId", "proyectoId"),
-                IndAttachFiles = GetExtraString(line.Extra, "indAttachFiles", "attachFiles", "attachments")
+                IndAttachFiles = ReadTypedOrExtraString(line.IndAttachFiles, line.Extra, "indAttachFiles", "attachFiles", "attachments"),
+                ReimbursableExpense = line.ReimbursableExpense ?? GetExtraInt(line.Extra, "reimbursableExpense", "ReimbursableExpense"),
+                CurrencyCode = ReadTypedOrExtraString(line.CurrencyCode, line.Extra, "currencyCode", "CurrencyCode"),
+                AmountMST = line.AmountMST ?? GetExtraDecimal(line.Extra, "amountMST", "AmountMST", "amountMst"),
+                ExchRate = line.ExchRate ?? GetExtraDecimal(line.Extra, "exchRate", "ExchRate", "exchangeRate")
             };
         }
 
@@ -5428,7 +5487,9 @@ namespace IND_CRM_APP.Controllers
                 TicketDate = NormalizeDate(item.TicketDate),
                 TicketTime = NormalizeTicketTime(item.TicketTime) ?? string.Empty,
                 FileName = item.FileName ?? string.Empty,
-                GastoType = NormalizeTicketGastoType(item.GastoType)
+                GastoType = NormalizeTicketGastoType(item.GastoType),
+                OwnerAxUserId = item.OwnerAxUserId ?? string.Empty,
+                OwnerName = item.OwnerName ?? string.Empty
             };
         }
 
@@ -5446,7 +5507,9 @@ namespace IND_CRM_APP.Controllers
                 TicketDate = NormalizeDate(item.TicketDate),
                 TicketTime = NormalizeTicketTime(item.TicketTime) ?? string.Empty,
                 FileName = item.FileName ?? string.Empty,
-                GastoType = NormalizeTicketGastoType(item.GastoType)
+                GastoType = NormalizeTicketGastoType(item.GastoType),
+                OwnerAxUserId = item.OwnerAxUserId ?? string.Empty,
+                OwnerName = item.OwnerName ?? string.Empty
             };
         }
 
@@ -5468,8 +5531,12 @@ namespace IND_CRM_APP.Controllers
                 TicketTime = NormalizeTicketTime(item.TicketTime) ?? string.Empty,
                 Comentario = item.Comentario ?? string.Empty,
                 UrlFile = item.UrlFile ?? string.Empty,
+                OcrJson = item.OcrJson ?? string.Empty,
+                NormalizedJson = item.NormalizedJson ?? string.Empty,
                 FileName = item.FileName ?? string.Empty,
                 GastoType = NormalizeTicketGastoType(item.GastoType),
+                OwnerAxUserId = item.OwnerAxUserId ?? string.Empty,
+                OwnerName = item.OwnerName ?? string.Empty,
                 Lines = (item.Lines ?? new List<ExpenseSheetTicketLineDto>())
                     .Select(ToExpenseSheetTicketApiDetailLine)
                     .ToList()
@@ -5550,22 +5617,27 @@ namespace IND_CRM_APP.Controllers
         // Maps one sheet to a detail header payload.
         private static object ToExpenseSheetHeader(ExpenseSheetDetailDto sheet)
         {
-            var currencyCode = GetExtraString(sheet.Extra, "currencyCode", "currency", "divisa");
+            var currencyCode = ReadTypedOrExtraString(sheet.CurrencyCode, sheet.Extra, "currencyCode", "currency", "divisa");
 
             return new
             {
                 hojaGastosId = sheet.HojaGastosId ?? string.Empty,
-                description = GetExtraString(sheet.Extra, "description", "descripcion", "desc"),
-                userId = GetExtraString(sheet.Extra, "userId"),
+                description = ReadTypedOrExtraString(sheet.Description, sheet.Extra, "description", "descripcion", "desc"),
+                userId = ReadTypedOrExtraString(sheet.UserId, sheet.Extra, "userId"),
                 userName = GetExpenseSheetOwnerUserName(sheet),
-                estadoComentarios = GetExtraString(sheet.Extra, "estadoComentarios"),
+                ownerAxUserId = ReadTypedOrExtraString(sheet.OwnerAxUserId, sheet.Extra, "ownerAxUserId", "OwnerAxUserId"),
+                ownerName = ReadTypedOrExtraString(sheet.OwnerName, sheet.Extra, "ownerName", "OwnerName"),
+                expenseSheetStatus = ReadTypedOrExtraInt(sheet.ExpenseSheetStatus, sheet.Extra, "expenseSheetStatus", "status", "estado"),
+                estadoComentarios = ReadTypedOrExtraString(sheet.EstadoComentarios, sheet.Extra, "estadoComentarios"),
                 currencyCode = currencyCode,
-                totalAmountMST = GetExtraDecimal(sheet.Extra, "totalAmountMST", "totalamountmst"),
+                totalAmountMST = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmountMST", "totalamountmst"),
                 exchRate = NormalizeExpenseSheetExchangeRateText(
                     currencyCode,
-                    GetExtraString(sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
-                projId = GetExtraString(sheet.Extra, "projId", "projectId", "proyectoId", "project"),
-                voucher = GetExtraString(sheet.Extra, "voucher")
+                    ReadTypedOrExtraString(sheet.ExchRate?.ToString(CultureInfo.InvariantCulture), sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
+                exchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
+                reimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
+                projId = ReadTypedOrExtraString(sheet.ProjId, sheet.Extra, "projId", "projectId", "proyectoId", "project"),
+                voucher = ReadTypedOrExtraString(sheet.Voucher, sheet.Extra, "voucher")
             };
         }
 
@@ -5590,12 +5662,16 @@ namespace IND_CRM_APP.Controllers
                 description = !string.IsNullOrWhiteSpace(line.Description) ? line.Description : GetExtraString(line.Extra, "description", "descripcion"),
                 internacional = line.Internacional ?? GetExtraBool(line.Extra, "internacional", "international"),
                 fileId = fileId ?? string.Empty,
-                ticket = GetExtraBool(line.Extra, "ticket"),
+                ticket = line.Ticket ?? GetExtraBool(line.Extra, "ticket"),
                 price = line.Price ?? GetExtraDecimal(line.Extra, "price", "precio"),
                 qty = line.Qty ?? GetExtraDecimal(line.Extra, "qty", "cantidad"),
                 amount = line.Amount ?? GetExtraDecimal(line.Extra, "amount", "importe"),
                 projId = !string.IsNullOrWhiteSpace(line.ProjId) ? line.ProjId : GetExtraString(line.Extra, "projId", "projectId", "proyectoId"),
-                indAttachFiles = GetExtraString(line.Extra, "indAttachFiles", "attachFiles", "attachments")
+                indAttachFiles = ReadTypedOrExtraString(line.IndAttachFiles, line.Extra, "indAttachFiles", "attachFiles", "attachments"),
+                reimbursableExpense = line.ReimbursableExpense ?? GetExtraInt(line.Extra, "reimbursableExpense", "ReimbursableExpense"),
+                currencyCode = ReadTypedOrExtraString(line.CurrencyCode, line.Extra, "currencyCode", "CurrencyCode"),
+                amountMST = line.AmountMST ?? GetExtraDecimal(line.Extra, "amountMST", "AmountMST", "amountMst"),
+                exchRate = line.ExchRate ?? GetExtraDecimal(line.Extra, "exchRate", "ExchRate", "exchangeRate")
             };
         }
 
@@ -5616,13 +5692,31 @@ namespace IND_CRM_APP.Controllers
         // Maps a project dto to simple option values.
         private static (string Value, string Text) ToProjectOption(ProjectDto dto)
         {
-            var value = GetExtraString(dto.Extra, "projId", "projectId", "projectCode", "code", "id");
-            var text = GetExtraString(dto.Extra, "name", "projectName", "projName", "description", "text");
+            var value = ReadTypedOrExtraString(dto.ProjId, dto.Extra, "projId", "projectId", "projectCode", "code", "id");
+            var text = ReadTypedOrExtraString(dto.Name, dto.Extra, "name", "projectName", "projName", "description", "text");
 
             if (string.IsNullOrWhiteSpace(text))
                 text = value;
 
             return (value, text);
+        }
+
+        // Reads the current typed API field first, then falls back to legacy JsonExtensionData keys.
+        private static string ReadTypedOrExtraString(string? typedValue, Dictionary<string, JsonElement>? extra, params string[] keys)
+        {
+            return NormalizeOptionalText(typedValue) ?? GetExtraString(extra, keys);
+        }
+
+        // Reads the current typed integer API field first, then falls back to legacy JsonExtensionData keys.
+        private static int? ReadTypedOrExtraInt(int? typedValue, Dictionary<string, JsonElement>? extra, params string[] keys)
+        {
+            return typedValue ?? GetExtraInt(extra, keys);
+        }
+
+        // Reads the current typed decimal API field first, then falls back to legacy JsonExtensionData keys.
+        private static decimal? ReadTypedOrExtraDecimal(decimal? typedValue, Dictionary<string, JsonElement>? extra, params string[] keys)
+        {
+            return typedValue ?? GetExtraDecimal(extra, keys);
         }
 
         // Reads the first matching extra value as string.

@@ -56,6 +56,7 @@ export const mapExpenseSheetListItemToCard = (item: ExpenseSheetListItemDto): Ex
     totalAmount: toNullableNumber(item.TotalAmount),
     exchRate: toNullableNumber(item.ExchRate),
     exchangeRateMode: toNullableNumber(item.ExchangeRateMode),
+    reimbursableExpense: toNullableNumber(item.ReimbursableExpense ?? item.reimbursableExpense),
     createdDate: safeText(item.CreatedDate),
   };
 };
@@ -75,6 +76,7 @@ export const mapExpenseSheetHeader = (sheet: ExpenseSheetDetailDto): ExpenseShee
     totalAmount: toNullableNumber(sheet.TotalAmount ?? sheet.totalAmount),
     exchRate: safeText(sheet.ExchRate ?? sheet.exchRate),
     exchangeRateMode: toNullableNumber(sheet.ExchangeRateMode ?? sheet.exchangeRateMode),
+    reimbursableExpense: toNullableNumber(sheet.ReimbursableExpense ?? sheet.reimbursableExpense),
     projId: safeText(sheet.ProjId ?? sheet.projId),
     voucher: safeText(sheet.Voucher ?? sheet.voucher),
     createdDate: safeText(sheet.CreatedDate ?? sheet.createdDate),
@@ -99,6 +101,10 @@ export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine
     qty: toNullableNumber(line.Qty ?? line.qty),
     amount: toNullableNumber(line.Amount ?? line.amount),
     projId: safeText(line.ProjId ?? line.projId),
+    reimbursableExpense: toNullableNumber(line.ReimbursableExpense ?? line.reimbursableExpense),
+    currencyCode: safeText(line.CurrencyCode ?? line.currencyCode),
+    amountMST: toNullableNumber(line.AmountMST ?? line.amountMST),
+    exchRate: toNullableNumber(line.ExchRate ?? line.exchRate),
     indAttachFiles: safeText(line.IndAttachFiles ?? line.indAttachFiles),
   };
 };

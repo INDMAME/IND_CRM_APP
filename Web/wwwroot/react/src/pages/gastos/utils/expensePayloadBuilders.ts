@@ -102,6 +102,7 @@ export const buildExpenseListPayload = (
     projId: normalizeOptionalText(filters.projectId),
     currencyCode: normalizeOptionalText(filters.currencyCode),
     expenseSheetStatus: resolveExpenseSheetStatus(filters.statusFilter),
+    reimbursableExpense: filters.reimbursableExpense ?? null,
     includeSubordinates: filters.includeSubordinates === true,
     page: nextPage,
     pageSize: nextPageSize,

@@ -13,6 +13,11 @@ type QuickFilterOption = {
   label: string;
 };
 
+type VisitOwnerSelectOption = {
+  value: string;
+  text: string;
+};
+
 type Props = {
   activatorRef: React.RefObject<HTMLDivElement | null>;
   popoverRef: React.RefObject<HTMLDivElement | null>;
@@ -50,8 +55,9 @@ type Props = {
   visibleVisitUsers: ModuleDataVisibilityVisibleUser[];
   selectedOwnerAxUserId: string;
   visibleUsersLoading: boolean;
+  ownerFilterDisabled: boolean;
   visibleUsersError: string;
-  ownerAllLabel: string;
+  ownerAllOption?: VisitOwnerSelectOption | null;
   ownerNoUsersLabel: string;
   ownerLoadingLabel: string;
   showFilterActions: boolean;
@@ -111,8 +117,9 @@ const HistoryFilterPanel = ({
   visibleVisitUsers,
   selectedOwnerAxUserId,
   visibleUsersLoading,
+  ownerFilterDisabled,
   visibleUsersError,
-  ownerAllLabel,
+  ownerAllOption,
   ownerNoUsersLabel,
   ownerLoadingLabel,
   showFilterActions,
@@ -202,9 +209,10 @@ const HistoryFilterPanel = ({
           users={visibleVisitUsers}
           selectedOwnerAxUserId={selectedOwnerAxUserId}
           loading={visibleUsersLoading}
+          disabled={ownerFilterDisabled}
           errorMessage={visibleUsersError}
           label={ownerLabel}
-          allLabel={ownerAllLabel}
+          allOption={ownerAllOption}
           noUsersLabel={ownerNoUsersLabel}
           loadingLabel={ownerLoadingLabel}
           onChange={onOwnerChange}

@@ -30,5 +30,9 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("estadoComentarios")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? EstadoComentarios { get; set; }
+
+        [JsonPropertyName("reimbursableExpense")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? ReimbursableExpense { get; set; }
     }
 }

@@ -71,7 +71,7 @@ export const useHistoryLabels = (locale: string) => {
     applyLabel: indT("History_Filter_Apply", "Apply"),
     clientLabel: indT("History_Filter_Client", "Account"),
     ownerLabel: indT("History_Filter_Owner", "Owner"),
-    ownerAllLabel: indT("History_Filter_Owner_All", "All visible users"),
+    ownerAllLabel: indT("History_Filter_Owner_All", "All my subordinates"),
     ownerNoUsersLabel: indT("History_Filter_Owner_None", "No visible users"),
     ownerLoadingLabel: indT("History_Filter_Owner_Loading", "Loading visible users"),
     loadingLabel: indT("History_Loading", "Loading"),

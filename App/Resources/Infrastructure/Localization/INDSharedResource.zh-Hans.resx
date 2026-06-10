@@ -463,7 +463,7 @@
     <value>负责人</value>
   </data>
   <data name="History_Filter_Owner_All" xml:space="preserve">
-    <value>所有可见用户</value>
+    <value>我的所有下属</value>
   </data>
   <data name="History_Filter_Owner_None" xml:space="preserve">
     <value>无可见用户</value>

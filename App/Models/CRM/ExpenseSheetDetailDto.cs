@@ -10,6 +10,42 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("hojaGastosId")]
         public string HojaGastosId { get; set; } = string.Empty;
 
+        [JsonPropertyName("UserId")]
+        public string? UserId { get; set; }
+
+        [JsonPropertyName("Description")]
+        public string? Description { get; set; }
+
+        [JsonPropertyName("ExpenseSheetStatus")]
+        public int? ExpenseSheetStatus { get; set; }
+
+        [JsonPropertyName("CurrencyCode")]
+        public string? CurrencyCode { get; set; }
+
+        [JsonPropertyName("TotalAmount")]
+        public decimal? TotalAmount { get; set; }
+
+        [JsonPropertyName("ExchRate")]
+        public decimal? ExchRate { get; set; }
+
+        [JsonPropertyName("ExchangeRateMode")]
+        public int? ExchangeRateMode { get; set; }
+
+        [JsonPropertyName("ProjId")]
+        public string? ProjId { get; set; }
+
+        [JsonPropertyName("Voucher")]
+        public string? Voucher { get; set; }
+
+        [JsonPropertyName("CreatedDate")]
+        public string? CreatedDate { get; set; }
+
+        [JsonPropertyName("EstadoComentarios")]
+        public string? EstadoComentarios { get; set; }
+
+        [JsonPropertyName("ReimbursableExpense")]
+        public int? ReimbursableExpense { get; set; }
+
         [JsonPropertyName("UserName")]
         public string? UserName { get; set; }
 

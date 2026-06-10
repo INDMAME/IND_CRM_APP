@@ -201,6 +201,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? UrlFile { get; set; }
 
+        [JsonPropertyName("ocrJson")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? OcrJson { get; set; }
+
+        [JsonPropertyName("normalizedJson")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? NormalizedJson { get; set; }
+
         [JsonPropertyName("fileName")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? FileName { get; set; }
@@ -260,6 +268,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("urlFile")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? UrlFile { get; set; }
+
+        [JsonPropertyName("ocrJson")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? OcrJson { get; set; }
+
+        [JsonPropertyName("normalizedJson")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? NormalizedJson { get; set; }
 
         [JsonPropertyName("fileName")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -437,6 +453,12 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("UrlFile")]
         public string UrlFile { get; set; } = string.Empty;
+
+        [JsonPropertyName("OcrJson")]
+        public string OcrJson { get; set; } = string.Empty;
+
+        [JsonPropertyName("NormalizedJson")]
+        public string NormalizedJson { get; set; } = string.Empty;
 
         [JsonPropertyName("FileName")]
         public string FileName { get; set; } = string.Empty;

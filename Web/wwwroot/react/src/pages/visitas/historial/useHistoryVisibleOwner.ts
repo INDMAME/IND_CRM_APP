@@ -1,7 +1,13 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { showPermissionModal } from "../../../utils/permissions.ts";
 import { useModuleDataVisibility } from "../../../hooks/useModuleDataVisibility.ts";
-import { formatModuleVisibleUserLabel, getVisibleUserForOwner } from "../../../utils/moduleDataVisibility.ts";
+import { buildVisibleUserByOwnerMap, formatModuleVisibleUserLabel, getVisibleUserForOwner } from "../../../utils/moduleDataVisibility.ts";
+import {
+  ensureCurrentHistoryVisibleOwnerInList,
+  hasHistoryVisibleSubordinates,
+  resolveHistoryEffectiveOwnerAxUserId,
+  resolveHistoryVisibleOwnerSelectValue,
+} from "./historyVisibleOwnerSelection.ts";
 
 type Args = {
   enabled: boolean;
@@ -26,7 +32,6 @@ export const useHistoryVisibleOwner = ({
 }: Args) => {
   const {
     visibleUsers,
-    visibleUserByOwnerAxUserId,
     visibleUsersLoading,
     visibleUsersError,
     visibleUsersReady,
@@ -42,16 +47,57 @@ export const useHistoryVisibleOwner = ({
     onDebug,
   });
 
+  const visibleVisitUsers = useMemo(() => {
+    return ensureCurrentHistoryVisibleOwnerInList(visibleUsers, axUserId);
+  }, [axUserId, visibleUsers]);
+
+  const visibleVisitUserByOwnerAxUserId = useMemo(() => {
+    return buildVisibleUserByOwnerMap(visibleVisitUsers);
+  }, [visibleVisitUsers]);
+
+  const canManageVisibleOwners = useMemo(() => {
+    return visibleUsersReady && hasHistoryVisibleSubordinates(visibleVisitUsers, axUserId);
+  }, [axUserId, visibleUsersReady, visibleVisitUsers]);
+
+  const ownerSelectValue = useMemo(() => {
+    return resolveHistoryVisibleOwnerSelectValue({
+      selectedOwnerAxUserId,
+      currentAxUserId: axUserId,
+      users: visibleVisitUsers,
+      canManageVisibleOwners,
+    });
+  }, [axUserId, canManageVisibleOwners, selectedOwnerAxUserId, visibleVisitUsers]);
+
+  const resolveEffectiveOwnerAxUserId = useCallback(
+    (requestedOwnerAxUserId?: string) => {
+      return resolveHistoryEffectiveOwnerAxUserId({
+        selectedOwnerAxUserId: requestedOwnerAxUserId ?? selectedOwnerAxUserId,
+        currentAxUserId: axUserId,
+        users: visibleVisitUsers,
+        canManageVisibleOwners,
+      });
+    },
+    [axUserId, canManageVisibleOwners, selectedOwnerAxUserId, visibleVisitUsers]
+  );
+
+  const effectiveSelectedOwnerAxUserId = useMemo(() => {
+    return resolveEffectiveOwnerAxUserId(selectedOwnerAxUserId);
+  }, [resolveEffectiveOwnerAxUserId, selectedOwnerAxUserId]);
+
   const selectedOwner = useMemo(() => {
-    return getVisibleUserForOwner(visibleUserByOwnerAxUserId, selectedOwnerAxUserId);
-  }, [selectedOwnerAxUserId, visibleUserByOwnerAxUserId]);
+    return getVisibleUserForOwner(visibleVisitUserByOwnerAxUserId, effectiveSelectedOwnerAxUserId);
+  }, [effectiveSelectedOwnerAxUserId, visibleVisitUserByOwnerAxUserId]);
 
   return {
-    visibleVisitUsers: visibleUsers,
+    visibleVisitUsers,
     visibleUsersLoading,
     visibleUsersError,
     visibleUsersReady,
+    ownerSelectValue,
+    ownerFilterDisabled: !visibleUsersReady || visibleUsersLoading || !canManageVisibleOwners,
+    canManageVisibleOwners,
     selectedOwnerText: selectedOwner ? formatModuleVisibleUserLabel(selectedOwner) : "",
-    effectiveSelectedOwnerAxUserId: selectedOwner?.axUserId || "",
+    effectiveSelectedOwnerAxUserId,
+    resolveEffectiveOwnerAxUserId,
   };
 };

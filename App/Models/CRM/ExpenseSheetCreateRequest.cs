@@ -34,6 +34,10 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("exchangeRateMode")]
         public int? ExchangeRateMode { get; set; }
 
+        [JsonPropertyName("reimbursableExpense")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? ReimbursableExpense { get; set; }
+
         [JsonPropertyName("lines")]
         public List<ExpenseSheetLineRequest> Lines { get; set; } = new();
     }

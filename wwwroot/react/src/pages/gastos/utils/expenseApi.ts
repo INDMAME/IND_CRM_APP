@@ -120,6 +120,7 @@ type LegacyExpenseListItem = {
   ownerAxUserId?: unknown;
   ownerName?: unknown;
   exchangeRateMode?: unknown;
+  reimbursableExpense?: unknown;
   expenseSheetStatus?: unknown;
   createdDate?: unknown;
 };
@@ -199,6 +200,15 @@ const toNullableBool = toNullableBoolTransform;
 const normalizeOptionalTicketProcessedByAI = normalizeOptionalTicketProcessedByAITransform;
 const normalizeExpenseSheetListStatusFilter = normalizeExpenseSheetListStatusFilterTransform;
 const toFlagBool = toFlagBoolTransform;
+
+const normalizeExpenseSheetReimbursable = (value: unknown): number | null => {
+  const parsed = toNullableNumber(value);
+  if (parsed === null || !Number.isInteger(parsed) || parsed < 0 || parsed > 2) {
+    return null;
+  }
+
+  return parsed;
+};
 
 const readExpenseWindowRuntime = (): ExpenseWindowRuntime => {
   if (typeof window === "undefined") return {};
@@ -655,6 +665,7 @@ const toLegacyListRequestPayload = (payload: ExpenseSheetListApiRequest) => {
     projectId: safeText(payload.projId),
     currencyCode: safeText(payload.currencyCode),
     expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
+    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
     includeSubordinates: payload.includeSubordinates === true,
     page: Number.isFinite(payload.page) && payload.page > 0 ? payload.page : 1,
     pageSize: Number.isFinite(payload.pageSize) && payload.pageSize > 0 ? payload.pageSize : 50,
@@ -677,6 +688,7 @@ const mapLegacyListItemToApiListItem = (item: LegacyExpenseListItem): ExpenseShe
     TotalAmount: toNullableNumber(item.totalAmount ?? item.totalAmountMST),
     ExchRate: toNullableNumber(item.exchRate),
     ExchangeRateMode: toNullableNumber(item.exchangeRateMode),
+    ReimbursableExpense: normalizeExpenseSheetReimbursable(item.reimbursableExpense),
     CreatedDate: safeText(item.createdDate) || null,
   };
 };
@@ -791,6 +803,7 @@ export const fetchExpenseSheetList = async (
     createdDateFrom,
     createdDateTo,
     expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
+    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
     includeSubordinates: payload.includeSubordinates === true,
   };
   const serializedPayload = cloneJsonCompatibleValue(safePayload);
@@ -1205,6 +1218,10 @@ export const createExpenseSheet = async (
   const normalizedLines = lines.map((line) => ({
     ...line,
     transDate: normalizeRequiredApiDate(line.transDate),
+    reimbursableExpense: normalizeExpenseSheetReimbursable(line.reimbursableExpense),
+    currencyCode: safeText(line.currencyCode).toUpperCase() || undefined,
+    amountMST: toNullableNumber(line.amountMST),
+    exchRate: toNullableNumber(line.exchRate),
   }));
   const hasInvalidLinePayload = normalizedLines.some((line) => {
     return (
@@ -1261,6 +1278,7 @@ export const createExpenseSheet = async (
     description: safeText(payload.description) || undefined,
     currencyCode: safeText(payload.currencyCode) || undefined,
     projId: safeText(payload.projId) || undefined,
+    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
     lines: mode === 1 ? [] : normalizedLines,
   };
   const includeAxUserOverride = mode === 2;
@@ -1293,11 +1311,16 @@ export const updateExpenseSheetHeader = async (
     throw new ApiFetchError("exchangeRateMode must be greater or equal to 0.");
   }
 
+  const safePayload: ExpenseSheetHeaderUpdateRequest = {
+    ...payload,
+    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
+  };
+
   const response = await fetchJson<IndApiResponse<{ HojaGastosId: string }>>(`/api/crm/expensesheets/${safeSheetId}`, {
     ...options,
     method: "PUT",
     headers: buildExpenseHeaders(context, options, true),
-    body: JSON.stringify(payload),
+    body: JSON.stringify(safePayload),
   });
 
   return normalizeApiResponse(response);
@@ -1352,6 +1375,10 @@ export const updateExpenseSheetLine = async (
       body: JSON.stringify({
         ...payload,
         transDate: normalizedTransDate,
+        reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
+        currencyCode: safeText(payload.currencyCode).toUpperCase() || undefined,
+        amountMST: toNullableNumber(payload.amountMST),
+        exchRate: toNullableNumber(payload.exchRate),
       }),
     }
   );

@@ -13,6 +13,7 @@ import { useHistoryPageListeners } from "./useHistoryPageListeners.ts";
 import { useHistoryPickerStepSync } from "./useHistoryPickerStepSync.ts";
 import { useHistoryTimelineItems } from "./useHistoryTimelineItems.ts";
 import { useHistoryVisibleOwner } from "./useHistoryVisibleOwner.ts";
+import { HISTORY_VISIBLE_OWNER_ALL_VALUE } from "./historyVisibleOwnerSelection.ts";
 import FloatingActionButton from "../../../components/commons/FloatingActionButton.tsx";
 import { useHistoryActivities } from "../../../hooks/useHistoryActivities.ts";
 import { useHistoryFilterCache } from "../../../hooks/useHistoryFilterCache.ts";
@@ -230,7 +231,18 @@ export const HistoryPage = ({
     isBefore,
   });
 
-  const { visibleVisitUsers, visibleUsersLoading, visibleUsersError, selectedOwnerText, effectiveSelectedOwnerAxUserId } =
+  const {
+    visibleVisitUsers,
+    visibleUsersLoading,
+    visibleUsersError,
+    visibleUsersReady,
+    ownerSelectValue,
+    ownerFilterDisabled,
+    canManageVisibleOwners,
+    selectedOwnerText,
+    effectiveSelectedOwnerAxUserId,
+    resolveEffectiveOwnerAxUserId,
+  } =
     useHistoryVisibleOwner({
       enabled: canViewHistory,
       companyId,
@@ -275,6 +287,7 @@ export const HistoryPage = ({
   const totalPages = Math.ceil((total || 0) / PAGE_SIZE);
 
   useHistoryPageListeners({
+    readyToLoad: visibleUsersReady,
     isOpen,
     activatorRef,
     popoverRef,
@@ -285,6 +298,7 @@ export const HistoryPage = ({
     consumeReturnFlag,
     readCachedFilter,
     applyCachedFilter,
+    resolveOwnerAxUserIdForLoad: resolveEffectiveOwnerAxUserId,
     loadActivities,
     setIsOpen,
     setHoverDate,
@@ -293,6 +307,7 @@ export const HistoryPage = ({
   });
 
   useHistoryInitialLoad({
+    readyToLoad: visibleUsersReady,
     defaultFromDate,
     defaultToDate,
     didInitFilterRef,
@@ -302,6 +317,7 @@ export const HistoryPage = ({
     readCachedFilter,
     applyCachedFilter,
     applyDefaultRangeFromProps,
+    resolveOwnerAxUserIdForLoad: resolveEffectiveOwnerAxUserId,
     loadActivities,
     resetActivities,
     resetHistoryFilters,
@@ -422,10 +438,11 @@ export const HistoryPage = ({
           selectedClient={selectedClient}
           clientLabel={clientLabel}
           visibleVisitUsers={visibleVisitUsers}
-          selectedOwnerAxUserId={selectedOwnerAxUserId}
+          selectedOwnerAxUserId={ownerSelectValue}
           visibleUsersLoading={visibleUsersLoading}
+          ownerFilterDisabled={ownerFilterDisabled}
           visibleUsersError={visibleUsersError}
-          ownerAllLabel={ownerAllLabel}
+          ownerAllOption={canManageVisibleOwners ? { value: HISTORY_VISIBLE_OWNER_ALL_VALUE, text: ownerAllLabel } : null}
           ownerNoUsersLabel={ownerNoUsersLabel}
           ownerLoadingLabel={ownerLoadingLabel}
           showFilterActions={showFilterActions}

@@ -47,7 +47,7 @@ namespace IND_CRM_APP.Models.Activities
         // Maps getActivityByCode/getActivityByRecId rows, including the optional ContactMethod slot.
         private static ActivityDto MapFullDetailArray(List<JsonElement> values)
         {
-            var hasContactMethod = values.Count >= 14 && IsContactMethodCandidate(values[8]);
+            var hasContactMethod = HasFullDetailContactMethod(values);
             var descriptionIndex = hasContactMethod ? 9 : 8;
             var assistantsIndex = hasContactMethod ? 13 : 12;
             var ownerAxUserIdIndex = assistantsIndex + 1;
@@ -77,7 +77,7 @@ namespace IND_CRM_APP.Models.Activities
         // Maps list rows emitted by getActivityContainer with RecId, AccountNum and ContactMethod.
         private static ActivityDto MapExpandedListArray(List<JsonElement> values)
         {
-            var hasContactMethod = values.Count >= 11 && IsContactMethodCandidate(values[8]);
+            var hasContactMethod = HasExpandedListContactMethod(values);
             var descriptionIndex = hasContactMethod ? 9 : 8;
             var assistantsIndex = hasContactMethod ? 10 : 9;
             var ownerAxUserIdIndex = assistantsIndex + 1;
@@ -119,16 +119,48 @@ namespace IND_CRM_APP.Models.Activities
 
         private static bool LooksLikeFullDetailArray(List<JsonElement> values)
         {
-            return values.Count >= 13 &&
-                   IsLikelyRecId(ElementToString(values, 1)) &&
-                   LooksLikeDate(ElementToString(values, 4));
+            if (!LooksLikeActivityArray(values))
+                return false;
+
+            var assistantsIndex = HasFullDetailContactMethod(values) ? 13 : 12;
+            return IsArrayAt(values, assistantsIndex);
         }
 
         private static bool LooksLikeExpandedListArray(List<JsonElement> values)
         {
+            if (!LooksLikeActivityArray(values))
+                return false;
+
+            var assistantsIndex = HasExpandedListContactMethod(values) ? 10 : 9;
+            return IsArrayAt(values, assistantsIndex);
+        }
+
+        private static bool LooksLikeActivityArray(List<JsonElement> values)
+        {
             return values.Count >= 10 &&
                    IsLikelyRecId(ElementToString(values, 1)) &&
                    LooksLikeDate(ElementToString(values, 4));
+        }
+
+        private static bool HasFullDetailContactMethod(List<JsonElement> values)
+        {
+            return values.Count >= 14 &&
+                   IsContactMethodCandidate(values[8]) &&
+                   IsArrayAt(values, 13);
+        }
+
+        private static bool HasExpandedListContactMethod(List<JsonElement> values)
+        {
+            return values.Count >= 11 &&
+                   IsContactMethodCandidate(values[8]) &&
+                   IsArrayAt(values, 10);
+        }
+
+        private static bool IsArrayAt(List<JsonElement> values, int index)
+        {
+            return index >= 0 &&
+                   index < values.Count &&
+                   values[index].ValueKind == JsonValueKind.Array;
         }
 
         private static string? ElementToString(List<JsonElement> values, int index)

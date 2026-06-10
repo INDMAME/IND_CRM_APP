@@ -550,7 +550,7 @@
     <value>Propietario</value>
   </data>
   <data name="History_Filter_Owner_All" xml:space="preserve">
-    <value>Todos los usuarios visibles</value>
+    <value>Todos mis subordinados</value>
   </data>
   <data name="History_Filter_Owner_None" xml:space="preserve">
     <value>Sin usuarios visibles</value>

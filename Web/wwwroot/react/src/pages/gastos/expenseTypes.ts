@@ -121,6 +121,7 @@ export type ExpenseSheetListApiRequest = {
   projId?: string;
   currencyCode?: string;
   expenseSheetStatus?: number | null;
+  reimbursableExpense?: number | null;
   includeSubordinates?: boolean;
 };
 
@@ -138,6 +139,8 @@ export type ExpenseSheetListItemDto = {
   TotalAmount: number | null;
   ExchRate: number | null;
   ExchangeRateMode: number | null;
+  ReimbursableExpense?: number | null;
+  reimbursableExpense?: number | null;
   CreatedDate: ExpenseApiDate | null;
   OwnerAxUserId?: string | null;
   ownerAxUserId?: string | null;
@@ -201,6 +204,14 @@ export type ExpenseSheetLineDto = {
   projId?: string;
   IndAttachFiles?: string;
   indAttachFiles?: string;
+  ReimbursableExpense?: number | null;
+  reimbursableExpense?: number | null;
+  CurrencyCode?: string;
+  currencyCode?: string;
+  AmountMST?: number | null;
+  amountMST?: number | null;
+  ExchRate?: number | null;
+  exchRate?: number | null;
 };
 
 // /api/crm/expensesheets/{hojaGastosId} detail contract.
@@ -229,6 +240,8 @@ export type ExpenseSheetDetailDto = {
   exchRate?: number | null;
   ExchangeRateMode?: number | null;
   exchangeRateMode?: number | null;
+  ReimbursableExpense?: number | null;
+  reimbursableExpense?: number | null;
   ProjId?: string;
   projId?: string;
   Voucher?: string;
@@ -249,6 +262,10 @@ export type ExpenseSheetCreateLineRequest = {
   qty: number;
   price: number;
   projId?: string;
+  reimbursableExpense?: number | null;
+  currencyCode?: string;
+  amountMST?: number | null;
+  exchRate?: number | null;
   indAttachFiles?: string;
 };
 
@@ -263,6 +280,7 @@ export type ExpenseSheetCreateRequest = {
   projId?: string;
   expenseSheetStatus?: number;
   exchangeRateMode?: number;
+  reimbursableExpense?: number | null;
   lines?: ExpenseSheetCreateLineRequest[] | null;
 };
 
@@ -343,6 +361,7 @@ export type ExpenseSheetHeaderUpdateRequest = {
   expenseSheetStatus?: number;
   exchangeRateMode?: number;
   estadoComentarios?: string;
+  reimbursableExpense?: number | null;
 };
 
 // /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId} update line request contract.
@@ -356,6 +375,10 @@ export type ExpenseSheetLineUpdateRequest = {
   qty: number;
   price: number;
   projId?: string;
+  reimbursableExpense?: number | null;
+  currencyCode?: string;
+  amountMST?: number | null;
+  exchRate?: number | null;
   indAttachFiles?: string;
 };
 
@@ -376,6 +399,7 @@ export type ExpenseSheetListFilters = {
   hojaGastosId: string;
   currencyCode: string;
   managedUserId: string;
+  reimbursableExpense?: number | null;
   includeSubordinates: boolean;
 };
 
@@ -395,6 +419,7 @@ export type ExpenseSheetCard = {
   totalAmount?: number | null;
   exchRate?: number | null;
   exchangeRateMode?: number | null;
+  reimbursableExpense?: number | null;
   createdDate?: string;
 };
 
@@ -412,6 +437,7 @@ export type ExpenseSheetHeader = {
   totalAmount?: number | null;
   exchRate?: string;
   exchangeRateMode?: number | null;
+  reimbursableExpense?: number | null;
   projId?: string;
   voucher?: string;
   createdDate?: string;
@@ -431,6 +457,10 @@ export type ExpenseSheetLine = {
   qty?: number | null;
   amount?: number | null;
   projId?: string;
+  reimbursableExpense?: number | null;
+  currencyCode?: string;
+  amountMST?: number | null;
+  exchRate?: number | null;
   indAttachFiles?: string;
 };
 
@@ -478,6 +508,8 @@ export type ExpenseSheetTicketCreateRequest = {
   ticketTime?: string;
   comentario?: string;
   urlFile?: string;
+  ocrJson?: string;
+  normalizedJson?: string;
   fileName?: string;
   fileExtension?: string;
   processedByAI?: boolean;
@@ -495,6 +527,8 @@ export type ExpenseSheetTicketUpdateRequest = {
   ticketTime?: string;
   comentario?: string;
   urlFile?: string;
+  ocrJson?: string;
+  normalizedJson?: string;
   fileName?: string;
   processedByAI?: boolean;
   fileExtension?: string;
@@ -565,6 +599,10 @@ export type ExpenseSheetTicketDetailDto = {
   TicketTime: string;
   Comentario: string;
   UrlFile: string;
+  OcrJson?: string | null;
+  ocrJson?: string | null;
+  NormalizedJson?: string | null;
+  normalizedJson?: string | null;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
   OwnerAxUserId?: string | null;
