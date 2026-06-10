@@ -11,6 +11,8 @@ export type ExpenseTicketDetailHeader = {
   currencyCode: string;
   totalAmount: number | null;
   createdByUserId: string;
+  ownerAxUserId: string;
+  ownerName: string | null;
   transDate: string;
   ticketDate: string;
   ticketTime: string;
@@ -73,6 +75,8 @@ export const mapExpenseTicketDetailHeader = (item: ExpenseSheetTicketDetailDto):
     currencyCode: safeText(item?.CurrencyCode),
     totalAmount: toNullableNumber(item?.TotalAmount),
     createdByUserId: safeText(item?.CreatedByUserId),
+    ownerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId),
+    ownerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
     transDate: safeText(item?.TransDate),
     ticketDate: safeText(item?.TicketDate),
     ticketTime: safeText(item?.TicketTime),

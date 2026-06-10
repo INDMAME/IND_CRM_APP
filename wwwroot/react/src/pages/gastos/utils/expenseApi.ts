@@ -117,6 +117,8 @@ type LegacyExpenseListItem = {
   exchRate?: unknown;
   userId?: unknown;
   userName?: unknown;
+  ownerAxUserId?: unknown;
+  ownerName?: unknown;
   exchangeRateMode?: unknown;
   expenseSheetStatus?: unknown;
   createdDate?: unknown;
@@ -667,6 +669,8 @@ const mapLegacyListItemToApiListItem = (item: LegacyExpenseListItem): ExpenseShe
     EstadoComentarios: safeText(item.estadoComentarios) || null,
     UserId: safeText(item.userId) || null,
     UserName: safeText(item.userName) || null,
+    OwnerAxUserId: safeText(item.ownerAxUserId) || null,
+    OwnerName: safeText(item.ownerName) || null,
     Voucher: safeText(item.voucher),
     ProjId: safeText(item.projId),
     CurrencyCode: safeText(item.currencyCode),

@@ -205,6 +205,8 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const recId = activityRecId;
   const accountNum = String(detail.accountNum ?? detail.AccountNum ?? "");
   const actividadId = String(detail.actividadId ?? detail.ActividadId ?? "");
+  // Strict record-level UI gating needs the detail API to return OwnerAxUserId.
+  // Legacy fallbacks keep existing records usable while AX/API remains the final enforcement point.
   const detailOwnerAxUserId = firstDetailText(
     detail.ownerAxUserId,
     detail.OwnerAxUserId,
