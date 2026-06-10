@@ -6,7 +6,7 @@ import HistoryManualDatePicker, { type HistoryManualDayCell } from "./HistoryMan
 import HistorySummary from "./HistorySummary.tsx";
 import VisibleVisitOwnerSelect from "./VisibleVisitOwnerSelect.tsx";
 import type { QuickFilterId } from "./useHistoryFiltersState.ts";
-import type { DataVisibilityVisibleUser } from "./visibleVisitUsers.ts";
+import type { ModuleDataVisibilityVisibleUser } from "../../../utils/moduleDataVisibility.ts";
 
 type QuickFilterOption = {
   id: QuickFilterId;
@@ -47,7 +47,7 @@ type Props = {
   clientResetKey: number;
   selectedClient: ClientOption | null;
   clientLabel: string;
-  visibleVisitUsers: DataVisibilityVisibleUser[];
+  visibleVisitUsers: ModuleDataVisibilityVisibleUser[];
   selectedOwnerAxUserId: string;
   visibleUsersLoading: boolean;
   visibleUsersError: string;
@@ -198,18 +198,6 @@ const HistoryFilterPanel = ({
           />
         )}
 
-        <ClientSearchCombobox
-          key={clientResetKey}
-          value={selectedClient}
-          onSelected={onClientSelected}
-          label={clientLabel}
-          placeholder={clientLabel}
-          variant="compact"
-          showLabel={false}
-          idBase="history-client"
-          portalClassName="visitas-typography"
-        />
-
         <VisibleVisitOwnerSelect
           users={visibleVisitUsers}
           selectedOwnerAxUserId={selectedOwnerAxUserId}
@@ -220,6 +208,18 @@ const HistoryFilterPanel = ({
           noUsersLabel={ownerNoUsersLabel}
           loadingLabel={ownerLoadingLabel}
           onChange={onOwnerChange}
+        />
+
+        <ClientSearchCombobox
+          key={clientResetKey}
+          value={selectedClient}
+          onSelected={onClientSelected}
+          label={clientLabel}
+          placeholder={clientLabel}
+          variant="compact"
+          showLabel={false}
+          idBase="history-client"
+          portalClassName="visitas-typography"
         />
 
         {showFilterActions && (

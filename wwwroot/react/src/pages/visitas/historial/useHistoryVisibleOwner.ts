@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { showPermissionModal } from "../../../utils/permissions.ts";
-import { useVisibleVisitUsers } from "./useVisibleVisitUsers.ts";
-import { formatVisibleVisitUserLabel } from "./visibleVisitUsers.ts";
+import { useModuleDataVisibility } from "../../../hooks/useModuleDataVisibility.ts";
+import { formatModuleVisibleUserLabel, getVisibleUserForOwner } from "../../../utils/moduleDataVisibility.ts";
 
 type Args = {
   enabled: boolean;
@@ -12,6 +12,9 @@ type Args = {
   onDebug: (message: string, data?: Record<string, unknown>) => void;
 };
 
+const APP_CODE = "CRM";
+const MODULE_CODE = "VISITAS_GESTION";
+
 // Loads visible visit owners and resolves the currently selected owner safely.
 export const useHistoryVisibleOwner = ({
   enabled,
@@ -21,27 +24,34 @@ export const useHistoryVisibleOwner = ({
   selectedOwnerAxUserId,
   onDebug,
 }: Args) => {
-  const { visibleVisitUsers, visibleUsersLoading, visibleUsersError } = useVisibleVisitUsers({
+  const {
+    visibleUsers,
+    visibleUserByOwnerAxUserId,
+    visibleUsersLoading,
+    visibleUsersError,
+    visibleUsersReady,
+  } = useModuleDataVisibility({
     enabled,
     companyId,
     axUserId,
     permissionsRevision,
+    appCode: APP_CODE,
+    moduleCode: MODULE_CODE,
+    preloadedUsers: typeof window !== "undefined" ? window.__IND_VISIBLE_VISIT_USERS__ : undefined,
     onForbidden: showPermissionModal,
     onDebug,
   });
 
   const selectedOwner = useMemo(() => {
-    if (!selectedOwnerAxUserId || visibleVisitUsers.length <= 1) return null;
-    return (
-      visibleVisitUsers.find((user) => user.axUserId.toUpperCase() === selectedOwnerAxUserId.toUpperCase()) || null
-    );
-  }, [selectedOwnerAxUserId, visibleVisitUsers]);
+    return getVisibleUserForOwner(visibleUserByOwnerAxUserId, selectedOwnerAxUserId);
+  }, [selectedOwnerAxUserId, visibleUserByOwnerAxUserId]);
 
   return {
-    visibleVisitUsers,
+    visibleVisitUsers: visibleUsers,
     visibleUsersLoading,
     visibleUsersError,
-    selectedOwnerText: selectedOwner ? formatVisibleVisitUserLabel(selectedOwner) : "",
+    visibleUsersReady,
+    selectedOwnerText: selectedOwner ? formatModuleVisibleUserLabel(selectedOwner) : "",
     effectiveSelectedOwnerAxUserId: selectedOwner?.axUserId || "",
   };
 };
