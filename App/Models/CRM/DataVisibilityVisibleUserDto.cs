@@ -45,7 +45,7 @@ namespace IND_CRM_APP.Models.CRM
         /// Numeric mutation policy value when AX/API returns enum-style policies.
         /// </summary>
         [JsonPropertyName("MutationPolicyInt")]
-        public int MutationPolicyInt { get; set; }
+        public int? MutationPolicyInt { get; set; }
 
         /// <summary>
         /// Human-readable mutation policy label for diagnostics or admin views.

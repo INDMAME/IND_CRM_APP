@@ -246,7 +246,7 @@ namespace IND_CRM_APP.Services
                     NormalizeLogValue(cached.EntraOid));
             }
 
-            var token = await EnsureInternalTokenAsync(ctx);
+            var token = await EnsureInternalTokenAsync(ctx, forceRefresh);
             if (string.IsNullOrWhiteSpace(token))
             {
                 return new IndAuthContextResult
@@ -261,6 +261,18 @@ namespace IND_CRM_APP.Services
             {
                 _logger.LogInformation("Requesting Entra context for OID {EntraOid} and app {AppCode}.", entraOid, IndAuthEnv.AppCode);
                 var response = await _apiClient.GetEntraContextAsync(token, entraOid, IndAuthEnv.AppCode);
+                if (!forceRefresh && ShouldRetryContextAfterInternalLogin(response))
+                {
+                    _logger.LogWarning(
+                        "Entra context load failed with a recoverable upstream error. Reauthenticating internal API session once. ErrorCode={ErrorCode}; Message={Message}",
+                        NormalizeLogValue(response?.ErrorCode),
+                        NormalizeLogValue(response?.Message));
+
+                    token = await EnsureInternalTokenAsync(ctx, forceRefresh: true);
+                    if (!string.IsNullOrWhiteSpace(token))
+                        response = await _apiClient.GetEntraContextAsync(token, entraOid, IndAuthEnv.AppCode);
+                }
+
                 if (response == null || response.Items.Count == 0)
                 {
                     _logger.LogWarning("Entra context not available for OID {EntraOid}. Message: {Message}", entraOid, response?.Message);
@@ -343,10 +355,10 @@ namespace IND_CRM_APP.Services
             }
         }
 
-        private async Task<string?> EnsureInternalTokenAsync(HttpContext ctx)
+        private async Task<string?> EnsureInternalTokenAsync(HttpContext ctx, bool forceRefresh = false)
         {
             var (token, _) = _tokenSession.GetToken();
-            if (!string.IsNullOrWhiteSpace(token))
+            if (!forceRefresh && !string.IsNullOrWhiteSpace(token))
                 return token;
 
             var login = await _apiClient.AuthenticateAsync(IndAuthEnv.ServiceUser, IndAuthEnv.ServicePass);
@@ -358,6 +370,30 @@ namespace IND_CRM_APP.Services
                 login.Expires != default ? login.Expires : null);
 
             return login.Token;
+        }
+
+        // Detects API process restarts where the JWT is still valid but the AX password cache is gone.
+        private static bool ShouldRetryContextAfterInternalLogin(IndEntraContextResponse? response)
+        {
+            if (response == null)
+                return true;
+
+            if (response.Items.Count > 0)
+                return false;
+
+            var errorCode = NormalizeErrorCode(response.ErrorCode);
+            if (string.Equals(errorCode, ErrorCodeUpstream, StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "INTERNAL_ERROR", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "AX_SESSION_ERROR", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "AX_COM_ERROR", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var message = (response.Message ?? string.Empty).Trim();
+            return message.Contains("Error interno", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("No hay credenciales disponibles", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("Context API error", StringComparison.OrdinalIgnoreCase);
         }
 
         // Stores the signed context metadata needed for downstream API calls.

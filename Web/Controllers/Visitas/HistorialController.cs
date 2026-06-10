@@ -1,6 +1,7 @@
 ﻿using IND_CRM_APP.Models.Activities;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Models.CRM;
+using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Infrastructure.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -13,6 +14,7 @@ namespace IND_CRM_APP.Controllers
     // Controller for activity history
     public class HistorialController : BaseMvcController
     {
+        private readonly IIndAuthContextService _authContext;
         private readonly ILogger<HistorialController> _logger;
         private readonly IStringLocalizer<INDSharedResource> _sr;
         private const string DataVisibilityAppCode = "CRM";
@@ -21,9 +23,11 @@ namespace IND_CRM_APP.Controllers
         public HistorialController(
             ICrmApiClient apiClient,
             ITokenSessionService tokenSession,
+            IIndAuthContextService authContext,
             ILogger<HistorialController> logger,
             IStringLocalizer<INDSharedResource> sr) : base(apiClient, tokenSession)
         {
+            _authContext = authContext;
             _logger = logger;
             _sr = sr;
         }
@@ -36,9 +40,8 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Auth");
 
-            // Load environment and company using API client
-            var environment = await _apiClient.GetEnvironmentAsync(token);
-            var company = await _apiClient.GetCompanyNameAsync(token);
+            var environment = await LoadEnvironmentNameOrDefaultAsync(token);
+            var company = await LoadCompanyNameOrDefaultAsync(token);
 
             ViewBag.Environment = string.IsNullOrWhiteSpace(environment) ? "Unknown" : environment;
             ViewBag.Company = string.IsNullOrWhiteSpace(company) ? "N/A" : company;
@@ -89,7 +92,7 @@ namespace IND_CRM_APP.Controllers
                     normalizedAppCode,
                     normalizedModuleCode);
 
-                var result = await _apiClient.GetVisibleUsersAsync(
+                var result = await GetVisibleUsersWithRecoveryAsync(
                     token,
                     normalizedAppCode,
                     normalizedModuleCode,
@@ -163,7 +166,7 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 // Call API client (maps to api/crm/activities/list)
-                var result = await _apiClient.GetActivitiesAsync(token, filter);
+                var result = await GetActivitiesWithRecoveryAsync(token, filter);
 
                 if (result == null)
                     return Json(new { total = 0, items = Array.Empty<object>() });
@@ -237,6 +240,38 @@ namespace IND_CRM_APP.Controllers
             return NormalizeOptionalText(HttpContext?.Session.GetString("AxUser"));
         }
 
+        // Loads environment name without letting a non-critical header lookup break the page.
+        private async Task<string> LoadEnvironmentNameOrDefaultAsync(string token)
+        {
+            try
+            {
+                return await _apiClient.GetEnvironmentAsync(token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load environment name for history view.");
+                return "Unknown";
+            }
+        }
+
+        // Loads company display name from cache first, then API, with selected company id as last fallback.
+        private async Task<string> LoadCompanyNameOrDefaultAsync(string token)
+        {
+            var cachedCompanyName = GetCachedCompanyName();
+            if (!string.IsNullOrWhiteSpace(cachedCompanyName))
+                return cachedCompanyName;
+
+            try
+            {
+                return await _apiClient.GetCompanyNameAsync(token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load company name for history view.");
+                return HttpContext.Session.GetString("INDCompanySelected") ?? "N/A";
+            }
+        }
+
         // Trims optional text and preserves null for empty values.
         private static string? NormalizeOptionalText(string? value)
         {
@@ -265,7 +300,7 @@ namespace IND_CRM_APP.Controllers
         {
             try
             {
-                var result = await _apiClient.GetVisibleUsersAsync(
+                var result = await GetVisibleUsersWithRecoveryAsync(
                     token,
                     DataVisibilityAppCode,
                     DataVisibilityVisitsModuleCode,
@@ -284,6 +319,85 @@ namespace IND_CRM_APP.Controllers
                 _logger.LogWarning(ex, "Could not preload visible visit users for history view.");
                 return new List<DataVisibilityVisibleUserDto>();
             }
+        }
+
+        // Reads visible users and retries once after reseeding the internal AX session.
+        private async Task<PagedApiResponse<DataVisibilityVisibleUserDto>> GetVisibleUsersWithRecoveryAsync(
+            string token,
+            string appCode,
+            string moduleCode,
+            bool includeCrmUserId)
+        {
+            var result = await _apiClient.GetVisibleUsersAsync(token, appCode, moduleCode, includeCrmUserId);
+            if (!ShouldRetryAfterAxSessionFailure(result))
+                return result;
+
+            var retryToken = await RecoverInternalApiSessionAsync("GetVisibleUsers");
+            if (string.IsNullOrWhiteSpace(retryToken))
+                return result;
+
+            return await _apiClient.GetVisibleUsersAsync(retryToken, appCode, moduleCode, includeCrmUserId);
+        }
+
+        // Reads activities and retries once after reseeding the internal AX session.
+        private async Task<PagedApiResponse<ActivityDto>> GetActivitiesWithRecoveryAsync(string token, ActivitiesFilter filter)
+        {
+            var result = await _apiClient.GetActivitiesAsync(token, filter);
+            if (!ShouldRetryAfterAxSessionFailure(result))
+                return result;
+
+            var retryToken = await RecoverInternalApiSessionAsync("GetActivities");
+            if (string.IsNullOrWhiteSpace(retryToken))
+                return result;
+
+            return await _apiClient.GetActivitiesAsync(retryToken, filter);
+        }
+
+        // Forces context refresh so the API login endpoint caches the service AX password again.
+        private async Task<string?> RecoverInternalApiSessionAsync(string operation)
+        {
+            try
+            {
+                var refreshResult = await _authContext.EnsureContextAsync(forceRefresh: true);
+                if (!refreshResult.Success)
+                {
+                    _logger.LogWarning(
+                        "Could not recover internal API session before retrying {Operation}. ErrorCode={ErrorCode}; Message={Message}",
+                        operation,
+                        refreshResult.ErrorCode ?? string.Empty,
+                        refreshResult.Message ?? string.Empty);
+                    return null;
+                }
+
+                var retryToken = GetToken();
+                _logger.LogInformation("Recovered internal API session before retrying {Operation}.", operation);
+                return retryToken;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Internal API session recovery failed before retrying {Operation}.", operation);
+                return null;
+            }
+        }
+
+        // Detects backend AX session-cache failures that are recoverable by a service login.
+        private static bool ShouldRetryAfterAxSessionFailure<T>(PagedApiResponse<T>? response)
+        {
+            if (response == null || response.Success || response.GetAnyItems().Any())
+                return false;
+
+            var errorCode = (response.ErrorCode ?? string.Empty).Trim();
+            if (string.Equals(errorCode, "AX_SESSION_ERROR", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "AX_COM_ERROR", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "INTERNAL_ERROR", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "UPSTREAM_ERROR", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var message = (response.Message ?? string.Empty).Trim();
+            return message.Contains("No hay credenciales disponibles", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("Error interno", StringComparison.OrdinalIgnoreCase);
         }
 
         // Creates JSON responses with upstream casing preserved.

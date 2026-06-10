@@ -20,9 +20,8 @@ namespace IND_CRM_APP.Controllers
 
         public async Task<IActionResult> Index()
         {
-            // Refresh context on every Index load to reflect permission changes, preserving company selection.
-            _authContext.ClearContextCache(preserveCompanySelection: true);
-            await _authContext.EnsureContextAsync();
+            // Force-refresh without clearing first so a temporary API failure does not destroy a valid context.
+            await _authContext.EnsureContextAsync(forceRefresh: true);
 
             await LoadEnvironmentInfoAsync();
             return View();

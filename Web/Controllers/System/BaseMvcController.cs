@@ -80,7 +80,7 @@ namespace IND_CRM_APP.Controllers
         }
 
         // Resolves the selected company name from cached context, if available.
-        private string? GetCachedCompanyName()
+        protected string? GetCachedCompanyName()
         {
             var cached = HttpContext.Session.GetString(CompanyNameKey);
             if (!string.IsNullOrWhiteSpace(cached))
