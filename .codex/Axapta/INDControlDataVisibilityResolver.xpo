@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDControlDataVisibilityResolver descargados en Jueves 04/06/2026
+; Navision Axapta Class: INDControlDataVisibilityResolver descargados en Miércoles 10/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -197,6 +197,7 @@ Formatversion: 1
         #
         #    return moduleAccessLevel;
         #}
+        #
       ENDSOURCE
       SOURCE #resolveActivePersonByAlias
         #//MMS - Ajustes CRM - 2026.06.04

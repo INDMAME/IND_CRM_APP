@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Jueves 04/06/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Miércoles 10/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -20,6 +20,38 @@ Formatversion: 1
         #public class INDCRMUtilityService
         #{
         #}
+      ENDSOURCE
+      SOURCE #buildActionResult
+        #// Devuelve un resultado estandar para acciones (success/message).
+        #static container buildActionResult(boolean _success, str _message)
+        #{
+        #    return [[ strFmt("%1", _success), strFmt("%1", _message) ]];
+        #}
+      ENDSOURCE
+      SOURCE #buildHeader
+        #// Method: buildHeader
+        #// Purpose: Build standard header response: [ [success(0/1), message, extras...] ]
+        #static server container buildHeader(boolean _success, str _message, container _extras)
+        #{
+        #    container row;
+        #    container header;
+        #    int i;
+        #    ;
+        #    row = [_success ? 1 : 0, _message];
+        #
+        #    if (conLen(_extras) > 0)
+        #    {
+        #        for (i = 1; i <= conLen(_extras); i++)
+        #        {
+        #            row = conIns(row, conLen(row) + 1, conPeek(_extras, i));
+        #        }
+        #    }
+        #
+        #    header = [row];
+        #
+        #    return header;
+        #}
+        #
       ENDSOURCE
       SOURCE #ctrlCanMutateOwnerAxUserId
         #//MMS - Ajustes CRM - 2026.06.04
@@ -38,6 +70,26 @@ Formatversion: 1
         #        _appCode,
         #        _moduleCode,
         #        _ownerAxUserId);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlCanViewOwnerAlias
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Valida lectura sobre un alias propietario usando la capa global INDControlDataVisibility.
+        #static server boolean ctrlCanViewOwnerAlias(UserId      _viewerAxUserId,
+        #                                                            DataAreaId  _companyId,
+        #                                                            str         _appCode,
+        #                                                            str         _moduleCode,
+        #                                                            str         _ownerAlias)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::canViewPersonAlias(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _ownerAlias);
         #}
         #
       ENDSOURCE
@@ -76,118 +128,6 @@ Formatversion: 1
         #        _companyId,
         #        _appCode,
         #        _moduleCode);
-        #}
-        #
-      ENDSOURCE
-      SOURCE #ctrlResolveVisibleAxUserIdSet
-        #//MMS - Ajustes CRM - 2026.06.04
-        #// Resuelve usuarios Axapta visibles para un modulo.
-        #static server Set ctrlResolveVisibleAxUserIdSet(UserId      _viewerAxUserId,
-        #                                                                DataAreaId  _companyId,
-        #                                                                str         _appCode,
-        #                                                                str         _moduleCode,
-        #                                                                date        _asOfDate)
-        #{
-        #    ;
-        #
-        #    return INDControlDataVisibilityResolver::resolveVisibleAxUserIds(
-        #        _viewerAxUserId,
-        #        _companyId,
-        #        _appCode,
-        #        _moduleCode,
-        #        _asOfDate);
-        #}
-        #
-      ENDSOURCE
-      SOURCE #ctrlResolveVisibleCrmUserIdSet
-        #//MMS - Ajustes CRM - 2026.06.04
-        #// Resuelve usuarios CRM legacy visibles para un modulo.
-        #static server Set ctrlResolveVisibleCrmUserIdSet(UserId      _viewerAxUserId,
-        #                                                                 DataAreaId  _companyId,
-        #                                                                 str         _appCode,
-        #                                                                 str         _moduleCode,
-        #                                                                 date        _asOfDate)
-        #{
-        #    ;
-        #
-        #    return INDControlDataVisibilityResolver::resolveVisibleCrmUserIds(
-        #        _viewerAxUserId,
-        #        _companyId,
-        #        _appCode,
-        #        _moduleCode,
-        #        _asOfDate);
-        #}
-        #
-      ENDSOURCE
-      SOURCE #ctrlResolveVisiblePersonAliasSet
-        #//MMS - Ajustes CRM - 2026.06.04
-        #// Resuelve alias visibles para un modulo sin usar subordinados legacy de gastos.
-        #static server Set ctrlResolveVisiblePersonAliasSet(UserId      _viewerAxUserId,
-        #                                                                   DataAreaId  _companyId,
-        #                                                                   str         _appCode,
-        #                                                                   str         _moduleCode,
-        #                                                                   date        _asOfDate)
-        #{
-        #    ;
-        #
-        #    return INDControlDataVisibilityResolver::resolveVisiblePersonAliases(
-        #        _viewerAxUserId,
-        #        _companyId,
-        #        _appCode,
-        #        _moduleCode,
-        #        _asOfDate);
-        #}
-        #
-      ENDSOURCE
-      SOURCE #buildActionResult
-        #// Devuelve un resultado estandar para acciones (success/message).
-        #static container buildActionResult(boolean _success, str _message)
-        #{
-        #    return [[ strFmt("%1", _success), strFmt("%1", _message) ]];
-        #}
-      ENDSOURCE
-      SOURCE #buildHeader
-        #// Method: buildHeader
-        #// Purpose: Build standard header response: [ [success(0/1), message, extras...] ]
-        #static server container buildHeader(boolean _success, str _message, container _extras)
-        #{
-        #    container row;
-        #    container header;
-        #    int i;
-        #    ;
-        #    row = [_success ? 1 : 0, _message];
-        #
-        #    if (conLen(_extras) > 0)
-        #    {
-        #        for (i = 1; i <= conLen(_extras); i++)
-        #        {
-        #            row = conIns(row, conLen(row) + 1, conPeek(_extras, i));
-        #        }
-        #    }
-        #
-        #    header = [row];
-        #
-        #    return header;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #ctrlCanViewOwnerAlias
-        #//MMS - Ajustes CRM - 2026.06.04
-        #// Valida lectura sobre un alias propietario usando la capa global INDControlDataVisibility.
-        #static server boolean ctrlCanViewOwnerAlias(UserId      _viewerAxUserId,
-        #                                                            DataAreaId  _companyId,
-        #                                                            str         _appCode,
-        #                                                            str         _moduleCode,
-        #                                                            str         _ownerAlias)
-        #{
-        #    ;
-        #
-        #    return INDControlDataVisibilityResolver::canViewPersonAlias(
-        #        _viewerAxUserId,
-        #        _companyId,
-        #        _appCode,
-        #        _moduleCode,
-        #        _ownerAlias);
         #}
         #
       ENDSOURCE
@@ -320,7 +260,7 @@ Formatversion: 1
         #                strFmt("%1", person.Name),
         #                "INDControlDataVisibility",
         #                strFmt("%1", moduleAccessLevel.MutationPolicy),
-        #                strFmt("%1", enum2int(moduleAccessLevel.MutationPolicy)),
+        #                strFmt("%1", enum2Value(moduleAccessLevel.MutationPolicy)),
         #                strFmt("%1", mutationPolicyLabel),
         #                strFmt("%1", canMutate)
         #            ]];
@@ -332,6 +272,66 @@ Formatversion: 1
         #    header = [[true, "OK", viewerAxUserId, viewerAlias, companyId, appCode, moduleCode]];
         #
         #    return [header, lines];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlResolveVisibleAxUserIdSet
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve usuarios Axapta visibles para un modulo.
+        #static server Set ctrlResolveVisibleAxUserIdSet(UserId      _viewerAxUserId,
+        #                                                DataAreaId  _companyId,
+        #                                                str         _appCode,
+        #                                                str         _moduleCode,
+        #                                                date        _asOfDate)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::resolveVisibleAxUserIds(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _asOfDate);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlResolveVisibleCrmUserIdSet
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve usuarios CRM legacy visibles para un modulo.
+        #static server Set ctrlResolveVisibleCrmUserIdSet(UserId      _viewerAxUserId,
+        #                                                                 DataAreaId  _companyId,
+        #                                                                 str         _appCode,
+        #                                                                 str         _moduleCode,
+        #                                                                 date        _asOfDate)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::resolveVisibleCrmUserIds(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _asOfDate);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ctrlResolveVisiblePersonAliasSet
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve alias visibles para un modulo sin usar subordinados legacy de gastos.
+        #static server Set ctrlResolveVisiblePersonAliasSet(UserId      _viewerAxUserId,
+        #                                                                   DataAreaId  _companyId,
+        #                                                                   str         _appCode,
+        #                                                                   str         _moduleCode,
+        #                                                                   date        _asOfDate)
+        #{
+        #    ;
+        #
+        #    return INDControlDataVisibilityResolver::resolveVisiblePersonAliases(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _asOfDate);
         #}
         #
       ENDSOURCE
@@ -759,42 +759,8 @@ Formatversion: 1
         #    return currency.CurrencyCode;
         #}
       ENDSOURCE
-      SOURCE #sendInternalApiMail
-        #// Purpose: CRM-facing mail facade. The global DLL call lives in INDInternalApiClientServer.
-        #static server boolean sendInternalApiMail(
-        #    str _companyId,
-        #    str _fromEmail,
-        #    str _toEmails,
-        #    str _subject,
-        #    str _htmlBody,
-        #    str _textBody,
-        #    str _sourceProcess,
-        #    str _eventType,
-        #    str _aggregateType,
-        #    str _aggregateId,
-        #    str _idempotencyKey,
-        #    str _correlationId = '')
-        #{
-        #    ;
-        #
-        #    return INDInternalApiClientServer::sendInternalApiMail(
-        #        _companyId,
-        #        _fromEmail,
-        #        _toEmails,
-        #        _subject,
-        #        _htmlBody,
-        #        _textBody,
-        #        _sourceProcess,
-        #        _eventType,
-        #        _aggregateType,
-        #        _aggregateId,
-        #        _idempotencyKey,
-        #        _correlationId);
-        #}
-        #
-      ENDSOURCE
       SOURCE #sendInternalApiMailEx
-        #// Purpose: CRM-facing extended mail facade. The global DLL call lives in INDInternalApiClientServer.
+        #// Purpose: CRM-facing mail facade for the SendMailEx-only DLL contract.
         #static server boolean sendInternalApiMailEx(
         #    str _companyId,
         #    str _fromEmail,
@@ -806,6 +772,7 @@ Formatversion: 1
         #    str _subject,
         #    str _htmlBody,
         #    str _textBody,
+        #    str _attachmentFilePaths,
         #    boolean _saveToSentItems,
         #    str _importance,
         #    str _sourceProcess,
@@ -828,6 +795,7 @@ Formatversion: 1
         #        _subject,
         #        _htmlBody,
         #        _textBody,
+        #        _attachmentFilePaths,
         #        _saveToSentItems,
         #        _importance,
         #        _sourceProcess,

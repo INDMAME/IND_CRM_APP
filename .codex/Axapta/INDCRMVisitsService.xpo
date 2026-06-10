@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMVisitsService descargados en Jueves 04/06/2026
+; Navision Axapta Class: INDCRMVisitsService descargados en Miércoles 10/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -817,24 +817,6 @@ Formatversion: 1
         #    return INDControlDataVisibilityResolver::resolvePersonAliasByAxUserId(ownerAxUserId);
         #}
       ENDSOURCE
-      SOURCE #getActivityOwnerName
-        #//MMS - CRM adjustments - 2026.06.10
-        #// Returns the display name for the functional visit owner.
-        #static str getActivityOwnerName(CRMActividadTable _activity)
-        #{
-        #    UserId          ownerAxUserId;
-        #    INDPersonaTable person;
-        #    ;
-        #
-        #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
-        #    if (!ownerAxUserId)
-        #        return "";
-        #
-        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(ownerAxUserId);
-        #
-        #    return person.Name;
-        #}
-      ENDSOURCE
       SOURCE #getActivityOwnerAxUserId
         #//MMS - Ajustes CRM - 2026.06.05
         #// Usa INDCreatedByUserId como propietario funcional y soporta visitas antiguas con UserId CRM.
@@ -875,36 +857,6 @@ Formatversion: 1
         #    ownerAlias = INDCRMVisitsService::getActivityOwnerAlias(_activity);
         #
         #    return INDControlDataVisibilityResolver::resolveCrmUserIdByAlias(ownerAlias);
-        #}
-      ENDSOURCE
-      SOURCE #resolveLegacyCrmUserIdByAxUserId
-        #//MMS - Ajustes CRM - 2026.06.05
-        #// Convierte un usuario AX al usuario CRM legacy usado por tablas antiguas de visitas.
-        #static CRMUserId resolveLegacyCrmUserIdByAxUserId(UserId _axUserId)
-        #{
-        #    CRMUsuarioTable crmUsuarioTable;
-        #    INDPersonaTable person;
-        #    ;
-        #
-        #    if (!_axUserId)
-        #        return "";
-        #
-        #    crmUsuarioTable = CRMUsuarioTable::Find_AxaptaUserId(_axUserId);
-        #
-        #    if (crmUsuarioTable.UserId)
-        #        return crmUsuarioTable.UserId;
-        #
-        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(_axUserId);
-        #
-        #    if (person.RefRecIdCRM)
-        #    {
-        #        crmUsuarioTable = CRMUsuarioTable::FindRecId(person.RefRecIdCRM);
-        #
-        #        if (crmUsuarioTable.UserId)
-        #            return crmUsuarioTable.UserId;
-        #    }
-        #
-        #    return "";
         #}
       ENDSOURCE
       SOURCE #getContactoContainer
@@ -955,6 +907,36 @@ Formatversion: 1
         #    return [["PROD"]];
         #}
         #
+      ENDSOURCE
+      SOURCE #resolveLegacyCrmUserIdByAxUserId
+        #//MMS - Ajustes CRM - 2026.06.05
+        #// Convierte un usuario AX al usuario CRM legacy usado por tablas antiguas de visitas.
+        #static CRMUserId resolveLegacyCrmUserIdByAxUserId(UserId _axUserId)
+        #{
+        #    CRMUsuarioTable crmUsuarioTable;
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!_axUserId)
+        #        return "";
+        #
+        #    crmUsuarioTable = CRMUsuarioTable::Find_AxaptaUserId(_axUserId);
+        #
+        #    if (crmUsuarioTable.UserId)
+        #        return crmUsuarioTable.UserId;
+        #
+        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(_axUserId);
+        #
+        #    if (person.RefRecIdCRM)
+        #    {
+        #        crmUsuarioTable = CRMUsuarioTable::FindRecId(person.RefRecIdCRM);
+        #
+        #        if (crmUsuarioTable.UserId)
+        #            return crmUsuarioTable.UserId;
+        #    }
+        #
+        #    return "";
+        #}
       ENDSOURCE
       SOURCE #resolveVisibleActivityOwnerAxUserIds
         #//MMS - Ajustes CRM - 2026.06.04
@@ -1095,6 +1077,24 @@ Formatversion: 1
         #    return result;
         #}
         #
+      ENDSOURCE
+      SOURCE #getActivityOwnerName
+        #//MMS - CRM adjustments - 2026.06.10
+        #// Returns the display name for the functional visit owner.
+        #static str getActivityOwnerName(CRMActividadTable _activity)
+        #{
+        #    UserId          ownerAxUserId;
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
+        #    if (!ownerAxUserId)
+        #        return "";
+        #
+        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(ownerAxUserId);
+        #
+        #    return person.Name;
+        #}
       ENDSOURCE
     ENDMETHODS
   ENDCLASS

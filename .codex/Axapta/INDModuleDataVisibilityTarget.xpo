@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDModuleDataVisibilityTarget unloaded at Jueves 04/06/2026
+; Navision Axapta Table : INDModuleDataVisibilityTarget unloaded at Miércoles 10/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -37,12 +37,61 @@ Formatversion: 1
     ENDPROPERTIES
     
     FIELDS
-      FIELD #ReasonText
+      FIELD #INDWebModuleAccessLevel
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDWebModuleAccessLevel
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #TargetPersonAlias
         STRING
         PROPERTIES
           Type                #String
-          Name                #ReasonText
-          Label               #Motivo
+          Name                #TargetPersonAlias
+          Label               #Persona objetivo
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDGestPersonaId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #TargetAction
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #TargetAction
+          Label               #Acción
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes
@@ -55,11 +104,34 @@ Formatversion: 1
           AliasFor            #
           ExtendedDataType    
             ARRAY 
-              #Memo
+              #
               #
             ENDARRAY
-          StringSize          #(Memo)
-          Adjustment          #Left
+          EnumType            #INDDataVisibilityTargetAction
+        ENDPROPERTIES
+        
+      FIELD #TargetScope
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #TargetScope
+          Label               #Alcance para quitado
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDModuleDataVisibilityTarget
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDDataVisibilityTargetScope
         ENDPROPERTIES
         
       FIELD #ValidTo
@@ -108,64 +180,16 @@ Formatversion: 1
             ENDARRAY
         ENDPROPERTIES
         
-      FIELD #TargetScope
-        ENUM
-        PROPERTIES
-          Type                #Enum
-          Name                #TargetScope
-          Label               #Alcance
-          HelpText            #
-          GroupPrompt         #
-          SaveContents        #Yes
-          Mandatory           #No
-          AllowEditOnCreate   #Yes
-          AllowEdit           #Yes
-          Visible             #Yes
-          ConfigurationKey    #
-          Table               #INDModuleDataVisibilityTarget
-          AliasFor            #
-          ExtendedDataType    
-            ARRAY 
-              #
-              #
-            ENDARRAY
-          EnumType            #INDDataVisibilityTargetScope
-        ENDPROPERTIES
-        
-      FIELD #TargetAction
-        ENUM
-        PROPERTIES
-          Type                #Enum
-          Name                #TargetAction
-          Label               #Acción
-          HelpText            #
-          GroupPrompt         #
-          SaveContents        #Yes
-          Mandatory           #No
-          AllowEditOnCreate   #Yes
-          AllowEdit           #Yes
-          Visible             #Yes
-          ConfigurationKey    #
-          Table               #INDModuleDataVisibilityTarget
-          AliasFor            #
-          ExtendedDataType    
-            ARRAY 
-              #
-              #
-            ENDARRAY
-          EnumType            #INDDataVisibilityTargetAction
-        ENDPROPERTIES
-        
-      FIELD #TargetPersonAlias
+      FIELD #ReasonText
         STRING
         PROPERTIES
           Type                #String
-          Name                #TargetPersonAlias
-          Label               #Persona objetivo
+          Name                #ReasonText
+          Label               #Motivo
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes
-          Mandatory           #Yes
+          Mandatory           #No
           AllowEditOnCreate   #Yes
           AllowEdit           #Yes
           Visible             #Yes
@@ -174,35 +198,11 @@ Formatversion: 1
           AliasFor            #
           ExtendedDataType    
             ARRAY 
-              #INDGestPersonaId
+              #Memo
               #
             ENDARRAY
-          StringSize          #10
+          StringSize          #(Memo)
           Adjustment          #Left
-        ENDPROPERTIES
-        
-      FIELD #INDWebModuleAccessLevel
-        INT
-        PROPERTIES
-          Type                #Integer
-          Name                #INDWebModuleAccessLevel
-          Label               #
-          HelpText            #
-          GroupPrompt         #
-          SaveContents        #Yes
-          Mandatory           #Yes
-          AllowEditOnCreate   #Yes
-          AllowEdit           #Yes
-          Visible             #Yes
-          ConfigurationKey    #
-          Table               #INDModuleDataVisibilityTarget
-          AliasFor            #
-          ExtendedDataType    
-            ARRAY 
-              #RefRecId
-              #
-            ENDARRAY
-          FieldUpdate         #Absolute
         ENDPROPERTIES
         
     ENDFIELDS
@@ -328,6 +328,178 @@ Formatversion: 1
     
     METHODS
       Version: 3
+      SOURCE #Active
+        #display NoYes Active()
+        #{
+        #    date asOfDate = today();
+        #    ;
+        #
+        #    if (this.ValidFrom != dateNull()
+        #     && this.ValidFrom > asOfDate)
+        #    {
+        #        return NoYes::No;
+        #    }
+        #
+        #    if (this.ValidTo != dateNull()
+        #     && this.ValidTo < asOfDate)
+        #    {
+        #        return NoYes::No;
+        #    }
+        #
+        #    return NoYes::Yes;
+        #}
+      ENDSOURCE
+      SOURCE #personName
+        #display Name personName()
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!this.TargetPersonAlias)
+        #        return "";
+        #
+        #    select firstOnly Name from person
+        #        where person.Alias == this.TargetPersonAlias;
+        #
+        #    return person.Name;
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean                      ret;
+        #    INDWebModuleAccessLevel       moduleAccessLevel;
+        #    INDPersonaTable               targetPerson;
+        #    INDModuleDataVisibilityTarget duplicateTarget;
+        #    ;
+        #
+        #    ret = super();
+        #
+        #    if (!this.INDWebModuleAccessLevel)
+        #        ret = checkFailed("El permiso de modulo es obligatorio.");
+        #
+        #    select firstOnly moduleAccessLevel
+        #        where moduleAccessLevel.RecId == this.INDWebModuleAccessLevel;
+        #
+        #    if (!moduleAccessLevel.RecId)
+        #        ret = checkFailed("El permiso de modulo indicado no existe.");
+        #
+        #    if (!this.TargetPersonAlias)
+        #        ret = checkFailed("La persona objetivo es obligatoria.");
+        #
+        #    select firstOnly targetPerson
+        #        where targetPerson.Alias   == this.TargetPersonAlias
+        #           && targetPerson.Blocked == NoYes::No;
+        #
+        #    if (!targetPerson.RecId)
+        #        ret = checkFailed("La persona objetivo no existe o esta bloqueada.");
+        #
+        #    if (this.ValidFrom != dateNull()
+        #     && this.ValidTo   != dateNull()
+        #     && this.ValidFrom > this.ValidTo)
+        #    {
+        #        ret = checkFailed("La fecha Valido desde no puede ser posterior a Valido hasta.");
+        #    }
+        #
+        #    switch (this.TargetAction)
+        #    {
+        #        case INDDataVisibilityTargetAction::Add:
+        #        case INDDataVisibilityTargetAction::Remove:
+        #            break;
+        #
+        #        default:
+        #            ret = checkFailed("La accion de visibilidad no es valida.");
+        #            break;
+        #    }
+        #
+        #    switch (this.TargetScope)
+        #    {
+        #        case INDDataVisibilityTargetScope::TargetOnly:
+        #        case INDDataVisibilityTargetScope::TargetAndHierarchy:
+        #            break;
+        #
+        #        default:
+        #            ret = checkFailed("El alcance de visibilidad no es valido.");
+        #            break;
+        #    }
+        #
+        #    select firstOnly duplicateTarget
+        #        where duplicateTarget.INDWebModuleAccessLevel == this.INDWebModuleAccessLevel
+        #           && duplicateTarget.TargetPersonAlias       == this.TargetPersonAlias
+        #           && duplicateTarget.TargetAction            == this.TargetAction
+        #           && duplicateTarget.TargetScope             == this.TargetScope
+        #           && duplicateTarget.RecId                   != this.RecId
+        #           && (duplicateTarget.ValidFrom == dateNull()
+        #            || this.ValidTo == dateNull()
+        #            || duplicateTarget.ValidFrom <= this.ValidTo)
+        #           && (this.ValidFrom == dateNull()
+        #            || duplicateTarget.ValidTo == dateNull()
+        #            || this.ValidFrom <= duplicateTarget.ValidTo);
+        #
+        #    if (duplicateTarget.RecId)
+        #        ret = checkFailed("Ya existe una excepcion equivalente con una vigencia solapada.");
+        #
+        #    if (INDModuleDataVisibilityTarget::hasOppositeActionOverlap(
+        #            this.INDWebModuleAccessLevel,
+        #            this.TargetPersonAlias,
+        #            this.TargetAction,
+        #            this.TargetScope,
+        #            this.ValidFrom,
+        #            this.ValidTo,
+        #            this.RecId))
+        #    {
+        #        ret = checkFailed("No se puede configurar la misma persona y alcance como Agregar y Quitar en una vigencia solapada.");
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #findActiveTargets
+        #static container findActiveTargets(RefRecId _moduleAccessLevelRecId,
+        #                                   date     _asOfDate)
+        #{
+        #    INDModuleDataVisibilityTarget target;
+        #    container                     targetRecIds = conNull();
+        #    ;
+        #
+        #    if (!_moduleAccessLevelRecId)
+        #        return targetRecIds;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    while select RecId from target
+        #        where target.INDWebModuleAccessLevel == _moduleAccessLevelRecId
+        #           && (target.ValidFrom == dateNull() || target.ValidFrom <= _asOfDate)
+        #           && (target.ValidTo   == dateNull() || target.ValidTo   >= _asOfDate)
+        #    {
+        #        targetRecIds = conIns(targetRecIds, conLen(targetRecIds) + 1, target.RecId);
+        #    }
+        #
+        #    return targetRecIds;
+        #}
+      ENDSOURCE
+      SOURCE #hasActiveTargets
+        #static boolean hasActiveTargets(RefRecId _moduleAccessLevelRecId,
+        #                                date     _asOfDate)
+        #{
+        #    INDModuleDataVisibilityTarget target;
+        #    ;
+        #
+        #    if (!_moduleAccessLevelRecId)
+        #        return false;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    select firstOnly RecId from target
+        #        where target.INDWebModuleAccessLevel == _moduleAccessLevelRecId
+        #           && (target.ValidFrom == dateNull() || target.ValidFrom <= _asOfDate)
+        #           && (target.ValidTo   == dateNull() || target.ValidTo   >= _asOfDate);
+        #
+        #    return target.RecId != 0;
+        #}
+      ENDSOURCE
       SOURCE #hasOppositeActionOverlap
         #static boolean hasOppositeActionOverlap(
         #    RefRecId                          _moduleAccessLevelRecId,
@@ -358,21 +530,6 @@ Formatversion: 1
         #            || _validFrom <= existingTarget.ValidTo);
         #
         #    return existingTarget.RecId != 0;
-        #}
-      ENDSOURCE
-      SOURCE #personName
-        #display Name personName()
-        #{
-        #    INDPersonaTable person;
-        #    ;
-        #
-        #    if (!this.TargetPersonAlias)
-        #        return "";
-        #
-        #    select firstOnly Name from person
-        #        where person.Alias == this.TargetPersonAlias;
-        #
-        #    return person.Name;
         #}
       ENDSOURCE
       SOURCE #isActiveOnDate
@@ -516,163 +673,6 @@ Formatversion: 1
         #    }
         #
         #    return resultSet;
-        #}
-      ENDSOURCE
-      SOURCE #findActiveTargets
-        #static container findActiveTargets(RefRecId _moduleAccessLevelRecId,
-        #                                   date     _asOfDate)
-        #{
-        #    INDModuleDataVisibilityTarget target;
-        #    container                     targetRecIds = conNull();
-        #    ;
-        #
-        #    if (!_moduleAccessLevelRecId)
-        #        return targetRecIds;
-        #
-        #    if (_asOfDate == dateNull())
-        #        _asOfDate = today();
-        #
-        #    while select RecId from target
-        #        where target.INDWebModuleAccessLevel == _moduleAccessLevelRecId
-        #           && (target.ValidFrom == dateNull() || target.ValidFrom <= _asOfDate)
-        #           && (target.ValidTo   == dateNull() || target.ValidTo   >= _asOfDate)
-        #    {
-        #        targetRecIds = conIns(targetRecIds, conLen(targetRecIds) + 1, target.RecId);
-        #    }
-        #
-        #    return targetRecIds;
-        #}
-      ENDSOURCE
-      SOURCE #validateWrite
-        #public boolean validateWrite()
-        #{
-        #    boolean                      ret;
-        #    INDWebModuleAccessLevel       moduleAccessLevel;
-        #    INDPersonaTable               targetPerson;
-        #    INDModuleDataVisibilityTarget duplicateTarget;
-        #    ;
-        #
-        #    ret = super();
-        #
-        #    if (!this.INDWebModuleAccessLevel)
-        #        ret = checkFailed("El permiso de modulo es obligatorio.");
-        #
-        #    select firstOnly moduleAccessLevel
-        #        where moduleAccessLevel.RecId == this.INDWebModuleAccessLevel;
-        #
-        #    if (!moduleAccessLevel.RecId)
-        #        ret = checkFailed("El permiso de modulo indicado no existe.");
-        #
-        #    if (!this.TargetPersonAlias)
-        #        ret = checkFailed("La persona objetivo es obligatoria.");
-        #
-        #    select firstOnly targetPerson
-        #        where targetPerson.Alias   == this.TargetPersonAlias
-        #           && targetPerson.Blocked == NoYes::No;
-        #
-        #    if (!targetPerson.RecId)
-        #        ret = checkFailed("La persona objetivo no existe o esta bloqueada.");
-        #
-        #    if (this.ValidFrom != dateNull()
-        #     && this.ValidTo   != dateNull()
-        #     && this.ValidFrom > this.ValidTo)
-        #    {
-        #        ret = checkFailed("La fecha Valido desde no puede ser posterior a Valido hasta.");
-        #    }
-        #
-        #    switch (this.TargetAction)
-        #    {
-        #        case INDDataVisibilityTargetAction::Add:
-        #        case INDDataVisibilityTargetAction::Remove:
-        #            break;
-        #
-        #        default:
-        #            ret = checkFailed("La accion de visibilidad no es valida.");
-        #            break;
-        #    }
-        #
-        #    switch (this.TargetScope)
-        #    {
-        #        case INDDataVisibilityTargetScope::TargetOnly:
-        #        case INDDataVisibilityTargetScope::TargetAndHierarchy:
-        #            break;
-        #
-        #        default:
-        #            ret = checkFailed("El alcance de visibilidad no es valido.");
-        #            break;
-        #    }
-        #
-        #    select firstOnly duplicateTarget
-        #        where duplicateTarget.INDWebModuleAccessLevel == this.INDWebModuleAccessLevel
-        #           && duplicateTarget.TargetPersonAlias       == this.TargetPersonAlias
-        #           && duplicateTarget.TargetAction            == this.TargetAction
-        #           && duplicateTarget.TargetScope             == this.TargetScope
-        #           && duplicateTarget.RecId                   != this.RecId
-        #           && (duplicateTarget.ValidFrom == dateNull()
-        #            || this.ValidTo == dateNull()
-        #            || duplicateTarget.ValidFrom <= this.ValidTo)
-        #           && (this.ValidFrom == dateNull()
-        #            || duplicateTarget.ValidTo == dateNull()
-        #            || this.ValidFrom <= duplicateTarget.ValidTo);
-        #
-        #    if (duplicateTarget.RecId)
-        #        ret = checkFailed("Ya existe una excepcion equivalente con una vigencia solapada.");
-        #
-        #    if (INDModuleDataVisibilityTarget::hasOppositeActionOverlap(
-        #            this.INDWebModuleAccessLevel,
-        #            this.TargetPersonAlias,
-        #            this.TargetAction,
-        #            this.TargetScope,
-        #            this.ValidFrom,
-        #            this.ValidTo,
-        #            this.RecId))
-        #    {
-        #        ret = checkFailed("No se puede configurar la misma persona y alcance como Agregar y Quitar en una vigencia solapada.");
-        #    }
-        #
-        #    return ret;
-        #}
-      ENDSOURCE
-      SOURCE #Active
-        #display NoYes Active()
-        #{
-        #    date asOfDate = today();
-        #    ;
-        #
-        #    if (this.ValidFrom != dateNull()
-        #     && this.ValidFrom > asOfDate)
-        #    {
-        #        return NoYes::No;
-        #    }
-        #
-        #    if (this.ValidTo != dateNull()
-        #     && this.ValidTo < asOfDate)
-        #    {
-        #        return NoYes::No;
-        #    }
-        #
-        #    return NoYes::Yes;
-        #}
-      ENDSOURCE
-      SOURCE #hasActiveTargets
-        #static boolean hasActiveTargets(RefRecId _moduleAccessLevelRecId,
-        #                                date     _asOfDate)
-        #{
-        #    INDModuleDataVisibilityTarget target;
-        #    ;
-        #
-        #    if (!_moduleAccessLevelRecId)
-        #        return false;
-        #
-        #    if (_asOfDate == dateNull())
-        #        _asOfDate = today();
-        #
-        #    select firstOnly RecId from target
-        #        where target.INDWebModuleAccessLevel == _moduleAccessLevelRecId
-        #           && (target.ValidFrom == dateNull() || target.ValidFrom <= _asOfDate)
-        #           && (target.ValidTo   == dateNull() || target.ValidTo   >= _asOfDate);
-        #
-        #    return target.RecId != 0;
         #}
       ENDSOURCE
     ENDMETHODS

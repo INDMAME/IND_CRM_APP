@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: JOB
 
-; Navision Axapta Job: Job_INDDVUsers descargados en Jueves 04/06/2026
+; Navision Axapta Job: Job_INDDVUsers descargados en Miércoles 10/06/2026
 ; --------------------------------------------------------------------------------
   JOBVERSION 1
   
@@ -84,6 +84,7 @@ Formatversion: 1
     #
     #    info(strFmt("Fin. Total AxUsers en Set=%1", i));
     #}
+    #
   ENDSOURCE
 
 ***Element: END
