@@ -9,7 +9,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
 using System;
+using System.Globalization;
 using System.Linq;
+using System.Text;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -509,6 +511,10 @@ namespace IND_CRM_APP.Controllers
                 if (req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
+                var guardResponse = await ValidateVisitMutationPermissionAsync(token, recId);
+                if (guardResponse != null)
+                    return guardResponse;
+
                 var response = await _apiClient.UpdateActivityAsync(token, recId, req);
 
                 if (IND_SetActionMark && response.Success)
@@ -600,6 +606,10 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
+                var guardResponse = await ValidateVisitMutationPermissionAsync(token, recId);
+                if (guardResponse != null)
+                    return guardResponse;
+
                 var response = await _apiClient.DeleteActivityAsync(token, recId);
 
                 if (IND_SetActionMark && response.Success)
@@ -636,6 +646,138 @@ namespace IND_CRM_APP.Controllers
         private static string SanitizeValue(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        private static string FirstNonEmpty(params string?[] values)
+        {
+            foreach (var value in values)
+            {
+                var normalized = NormalizeOptionalText(value);
+                if (!string.IsNullOrWhiteSpace(normalized))
+                    return normalized;
+            }
+
+            return string.Empty;
+        }
+
+        private static string NormalizeOwnerAxUserId(string? value)
+        {
+            return SanitizeValue(value).ToUpperInvariant();
+        }
+
+        private static string ResolveActivityOwnerAxUserId(ActivityDto? activity)
+        {
+            if (activity == null)
+                return string.Empty;
+
+            return FirstNonEmpty(
+                activity.OwnerAxUserId,
+                activity.INDCreatedByUserId,
+                activity.CreatedByUserId,
+                activity.UserId);
+        }
+
+        private static string NormalizeMutationPolicyToken(string? value)
+        {
+            var normalized = SanitizeValue(value).Normalize(NormalizationForm.FormD);
+            var builder = new StringBuilder(normalized.Length);
+
+            foreach (var ch in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(ch) == UnicodeCategory.NonSpacingMark)
+                    continue;
+
+                if (char.IsLetterOrDigit(ch))
+                    builder.Append(char.ToLowerInvariant(ch));
+            }
+
+            return builder.ToString();
+        }
+
+        private static bool IsSameAsVisibilityMutationPolicy(DataVisibilityVisibleUserDto? item)
+        {
+            if (item == null)
+                return false;
+
+            if (item.MutationPolicyInt == 1)
+                return true;
+
+            var policy = NormalizeMutationPolicyToken(item.MutationPolicy);
+            var label = NormalizeMutationPolicyToken(item.MutationPolicyLabel);
+
+            return policy == "sameasvisibility"
+                || label == "sameasvisibility"
+                || label == "igualquevisibilidad";
+        }
+
+        private static bool CanMutateVisibleVisitOwner(
+            DataVisibilityVisibleUserDto? visibleOwner,
+            string ownerAxUserId,
+            string viewerAxUserId)
+        {
+            var ownerKey = NormalizeOwnerAxUserId(ownerAxUserId);
+            var viewerKey = NormalizeOwnerAxUserId(viewerAxUserId);
+
+            if (!string.IsNullOrWhiteSpace(ownerKey) && ownerKey == viewerKey)
+                return true;
+
+            if (!IsSameAsVisibilityMutationPolicy(visibleOwner))
+                return false;
+
+            return visibleOwner?.CanMutate == true;
+        }
+
+        // Guards visit mutations with the same owner policy used by the detail UI.
+        private async Task<IActionResult?> ValidateVisitMutationPermissionAsync(string token, long recId)
+        {
+            var viewerAxUserId = GetCurrentSessionAxUserId();
+            if (string.IsNullOrWhiteSpace(viewerAxUserId))
+                return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
+
+            try
+            {
+                var activityResult = await _apiClient.GetActivityByRecIdAsync(token, recId);
+                var activity = activityResult.Data;
+                if (activity == null)
+                    return NotFound(new { success = false, message = activityResult.GetMessageOrDefault(_sr["Api_RequestFailed"].Value) });
+
+                var ownerAxUserId = ResolveActivityOwnerAxUserId(activity);
+                if (string.IsNullOrWhiteSpace(ownerAxUserId))
+                {
+                    _logger.LogWarning(
+                        "Visit mutation denied because owner could not be resolved. RecId={RecId}; ViewerAxUserId={ViewerAxUserId}",
+                        recId,
+                        viewerAxUserId);
+
+                    return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "No se pudo validar el propietario de la visita." });
+                }
+
+                if (NormalizeOwnerAxUserId(ownerAxUserId) == NormalizeOwnerAxUserId(viewerAxUserId))
+                    return null;
+
+                var visibleUsers = await LoadVisibleVisitUsersForViewAsync(token);
+                var visibleOwner = visibleUsers.FirstOrDefault(x =>
+                    NormalizeOwnerAxUserId(x.AxUserId) == NormalizeOwnerAxUserId(ownerAxUserId));
+
+                if (CanMutateVisibleVisitOwner(visibleOwner, ownerAxUserId, viewerAxUserId))
+                    return null;
+
+                _logger.LogWarning(
+                    "Visit mutation denied by owner policy. RecId={RecId}; ViewerAxUserId={ViewerAxUserId}; OwnerAxUserId={OwnerAxUserId}; MutationPolicy={MutationPolicy}; MutationPolicyInt={MutationPolicyInt}; CanMutate={CanMutate}",
+                    recId,
+                    viewerAxUserId,
+                    ownerAxUserId,
+                    visibleOwner?.MutationPolicyLabel ?? visibleOwner?.MutationPolicy ?? string.Empty,
+                    visibleOwner?.MutationPolicyInt,
+                    visibleOwner?.CanMutate);
+
+                return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "No tienes permiso para modificar esta visita." });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error while validating visit mutation permission.");
+                return StatusCode(StatusCodes.Status502BadGateway, new { success = false, message = _sr["Api_RequestFailed"].Value });
+            }
         }
 
         // Sanitizes visible-user fields before passing them to React.

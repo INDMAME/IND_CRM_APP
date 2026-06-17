@@ -48,6 +48,14 @@ const parseCanMutate = (value: unknown): boolean => {
 
 export const normalizeOwnerAxUserId = (ownerAxUserId: unknown): string => safeText(ownerAxUserId).toUpperCase();
 
+const normalizePolicyToken = (value: unknown): string => {
+  return safeText(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+};
+
 const normalizeVisibleUser = (item: RawVisibleUser): ModuleDataVisibilityVisibleUser | null => {
   const axUserId = safeText(item.axUserId ?? item.AxUserId);
   if (!axUserId) return null;
@@ -110,13 +118,51 @@ export const getVisibleUserForOwner = (
   return key ? usersByOwnerAxUserId.get(key) || null : null;
 };
 
-// Uses the API-provided CanMutate flag for a record owner.
-// Call this only after hasMutationPolicy(owner) is true so old contracts do not overblock the UI.
+export const isSameAsVisibilityMutationPolicy = (
+  user: ModuleDataVisibilityVisibleUser | null | undefined
+): boolean => {
+  if (!user) return false;
+  if (user.mutationPolicyInt === 1) return true;
+
+  const policy = normalizePolicyToken(user.mutationPolicy);
+  const label = normalizePolicyToken(user.mutationPolicyLabel);
+  return policy === "sameasvisibility" ||
+    label === "sameasvisibility" ||
+    label === "igualquevisibilidad";
+};
+
+export const isOwnOnlyMutationPolicy = (
+  user: ModuleDataVisibilityVisibleUser | null | undefined
+): boolean => {
+  if (!user) return false;
+  if (user.mutationPolicyInt === 0) return true;
+
+  const policy = normalizePolicyToken(user.mutationPolicy);
+  const label = normalizePolicyToken(user.mutationPolicyLabel);
+  return policy === "ownonly" ||
+    label === "ownonly" ||
+    label === "solopropios";
+};
+
+// Resolves mutation for the owner using policy fields before trusting CanMutate.
+// VISITAS_GESTION treats OwnOnly and ModuleBusinessRules as own-record-only.
 export const canMutateOwner = (
   usersByOwnerAxUserId: ReadonlyMap<string, ModuleDataVisibilityVisibleUser>,
-  ownerAxUserId: unknown
+  ownerAxUserId: unknown,
+  viewerAxUserId?: unknown
 ): boolean => {
-  return getVisibleUserForOwner(usersByOwnerAxUserId, ownerAxUserId)?.canMutate === true;
+  const owner = getVisibleUserForOwner(usersByOwnerAxUserId, ownerAxUserId);
+  if (!owner) return false;
+
+  const ownerKey = normalizeOwnerAxUserId(ownerAxUserId);
+  const viewerKey = normalizeOwnerAxUserId(viewerAxUserId);
+  if (ownerKey && viewerKey && ownerKey === viewerKey) return true;
+
+  if (isSameAsVisibilityMutationPolicy(owner)) {
+    return owner.canMutate === true;
+  }
+
+  return false;
 };
 
 // Detects whether the endpoint returned the extended mutation policy fields.

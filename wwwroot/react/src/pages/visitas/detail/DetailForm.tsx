@@ -238,8 +238,8 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
       return false;
     }
 
-    return canMutateOwner(visibleUserByOwnerAxUserId, detailOwnerAxUserId);
-  }, [detailOwnerAxUserId, isCurrentOwner, visibleOwner, visibleUserByOwnerAxUserId, visibleUsersReady]);
+    return canMutateOwner(visibleUserByOwnerAxUserId, detailOwnerAxUserId, axUserId);
+  }, [axUserId, detailOwnerAxUserId, isCurrentOwner, visibleOwner, visibleUserByOwnerAxUserId, visibleUsersReady]);
   const canEditVisit = canEditHistory && ownerCanMutate;
   const canDeleteVisit = canDeleteHistory && ownerCanMutate;
 
