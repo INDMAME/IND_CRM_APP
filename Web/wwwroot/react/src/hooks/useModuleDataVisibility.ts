@@ -35,7 +35,7 @@ type UseModuleDataVisibilityArgs = {
   onDebug?: (message: string, data?: Record<string, unknown>) => void;
 };
 
-const CACHE_PREFIX = "module_data_visibility_v2";
+const CACHE_PREFIX = "module_data_visibility_v3";
 const CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 const normalizeScopePart = (value: unknown): string => {
@@ -122,16 +122,6 @@ export const useModuleDataVisibility = ({
       }
 
       const cacheKey = buildCacheKey(companyId, axUserId, permissionsRevision, appCode, moduleCode, includeCrmUserId);
-      const cached = force ? null : getSessionJsonWithExpiry<ModuleDataVisibilityCacheEntry>(cacheKey);
-      if (cached && Array.isArray(cached.users)) {
-        setVisibleUsers(cached.users);
-        setVisibleUsersLoading(false);
-        setVisibleUsersError("");
-        setVisibleUsersReady(true);
-        onDebug?.("moduleDataVisibility:cache", { appCode, moduleCode, count: cached.users.length, cacheKey });
-        return;
-      }
-
       const preloaded = readPreloadedUsers(preloadedUsers);
       if (!force && hasPreloadedUsers(preloadedUsers)) {
         setVisibleUsers(preloaded);
@@ -140,6 +130,16 @@ export const useModuleDataVisibility = ({
         setVisibleUsersReady(true);
         setSessionJsonWithExpiry(cacheKey, { users: preloaded, total: preloaded.length }, CACHE_TTL_MS);
         onDebug?.("moduleDataVisibility:preloaded", { appCode, moduleCode, count: preloaded.length, cacheKey });
+        return;
+      }
+
+      const cached = force ? null : getSessionJsonWithExpiry<ModuleDataVisibilityCacheEntry>(cacheKey);
+      if (cached && Array.isArray(cached.users)) {
+        setVisibleUsers(cached.users);
+        setVisibleUsersLoading(false);
+        setVisibleUsersError("");
+        setVisibleUsersReady(true);
+        onDebug?.("moduleDataVisibility:cache", { appCode, moduleCode, count: cached.users.length, cacheKey });
         return;
       }
 

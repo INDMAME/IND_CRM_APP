@@ -11,6 +11,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Linq;
 using System.Threading;
 
@@ -39,6 +40,7 @@ namespace IND_CRM_APP.Services
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             PropertyNameCaseInsensitive = true,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString,
             Converters =
             {
                 new ActivityDtoArrayConverter(),

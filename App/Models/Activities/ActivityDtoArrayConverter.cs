@@ -14,6 +14,7 @@ namespace IND_CRM_APP.Models.Activities
         private static readonly JsonSerializerOptions ObjectOptions = new()
         {
             PropertyNameCaseInsensitive = true,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString,
             Converters = { new ActivityAsistenteDtoArrayConverter() }
         };
 
@@ -40,6 +41,9 @@ namespace IND_CRM_APP.Models.Activities
 
             if (LooksLikeExpandedListArray(values))
                 return MapExpandedListArray(values);
+
+            if (LooksLikeCompactListArray(values))
+                return MapCompactListArray(values);
 
             return MapLegacyArray(values);
         }
@@ -101,6 +105,37 @@ namespace IND_CRM_APP.Models.Activities
             };
         }
 
+        // Maps intermediate list rows that include RecId/AccountNum but not the assistant container.
+        private static ActivityDto MapCompactListArray(List<JsonElement> values)
+        {
+            var hasVisitType = values.Count >= 9 && IsVisitTypeCandidate(ElementToString(values, 7));
+            var hasContactMethod = hasVisitType &&
+                                   values.Count >= 10 &&
+                                   IsContactMethodCandidate(values[8]);
+            var hasBlankContactMethodSlot = hasVisitType &&
+                                            values.Count >= 10 &&
+                                            string.IsNullOrWhiteSpace(ElementToString(values, 8)) &&
+                                            !IsArrayAt(values, 9);
+            var descriptionIndex = hasVisitType
+                ? (hasContactMethod || hasBlankContactMethodSlot ? 9 : 8)
+                : 7;
+
+            return new ActivityDto
+            {
+                ActividadId = ElementToString(values, 0),
+                RecId = ElementToString(values, 1),
+                Name = ElementToString(values, 2),
+                AccountNum = ElementToString(values, 3),
+                TransDate = ElementToString(values, 4),
+                Country = ElementToString(values, 5),
+                ActividadType = ElementToString(values, 6),
+                TipoVisita = hasVisitType ? ElementToString(values, 7) : null,
+                ContactMethod = hasContactMethod ? ElementToNullableContactMethod(values, 8) : null,
+                Description = ElementToString(values, descriptionIndex),
+                Asistentes = ReadAssistants(values, descriptionIndex + 1)
+            };
+        }
+
         // Preserves older AX array shapes while the AOS class rollout catches up.
         private static ActivityDto MapLegacyArray(List<JsonElement> values)
         {
@@ -122,8 +157,7 @@ namespace IND_CRM_APP.Models.Activities
             if (!LooksLikeActivityArray(values))
                 return false;
 
-            var assistantsIndex = HasFullDetailContactMethod(values) ? 13 : 12;
-            return IsArrayAt(values, assistantsIndex);
+            return IsArrayAt(values, 13) || IsArrayAt(values, 12);
         }
 
         private static bool LooksLikeExpandedListArray(List<JsonElement> values)
@@ -131,8 +165,14 @@ namespace IND_CRM_APP.Models.Activities
             if (!LooksLikeActivityArray(values))
                 return false;
 
-            var assistantsIndex = HasExpandedListContactMethod(values) ? 10 : 9;
-            return IsArrayAt(values, assistantsIndex);
+            return IsArrayAt(values, 10) || IsArrayAt(values, 9);
+        }
+
+        private static bool LooksLikeCompactListArray(List<JsonElement> values)
+        {
+            return values.Count >= 8 &&
+                   IsLikelyRecId(ElementToString(values, 1)) &&
+                   LooksLikeDate(ElementToString(values, 4));
         }
 
         private static bool LooksLikeActivityArray(List<JsonElement> values)
@@ -144,15 +184,15 @@ namespace IND_CRM_APP.Models.Activities
 
         private static bool HasFullDetailContactMethod(List<JsonElement> values)
         {
+            // ContactMethod can be blank per row; the assistant position tells us whether the slot exists.
             return values.Count >= 14 &&
-                   IsContactMethodCandidate(values[8]) &&
                    IsArrayAt(values, 13);
         }
 
         private static bool HasExpandedListContactMethod(List<JsonElement> values)
         {
+            // ContactMethod can be blank per row; the assistant position tells us whether the slot exists.
             return values.Count >= 11 &&
-                   IsContactMethodCandidate(values[8]) &&
                    IsArrayAt(values, 10);
         }
 
@@ -222,6 +262,26 @@ namespace IND_CRM_APP.Models.Activities
         private static bool IsContactMethodCandidate(JsonElement element)
         {
             return ElementToNullableContactMethod(ElementToString(element)).HasValue;
+        }
+
+        private static bool IsVisitTypeCandidate(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return false;
+
+            var trimmed = value.Trim();
+            if (int.TryParse(trimmed, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed) &&
+                parsed >= 0 &&
+                parsed <= 2)
+            {
+                return true;
+            }
+
+            return NormalizeContactMethodKey(trimmed) switch
+            {
+                "comercial" or "commercial" or "tecnica" or "technical" => true,
+                _ => false
+            };
         }
 
         private static bool IsLikelyRecId(string? value)

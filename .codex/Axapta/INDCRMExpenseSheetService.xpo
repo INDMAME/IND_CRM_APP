@@ -126,9 +126,9 @@ Formatversion: 1
         #    ;
         #
         #    monto               = _hoja.TotalAmount();
-        #    exchangeRateMode    = _hoja.ExchangeRateMode;
-        #    expenseSheetStatus  = _hoja.ExpenseSheetStatus;
-        #    reimbursableExpense = _hoja.ReimbursableExpense;
+        #    exchangeRateMode    = any2int(_hoja.ExchangeRateMode);
+        #    expenseSheetStatus  = any2int(_hoja.ExpenseSheetStatus);
+        #    reimbursableExpense = any2int(_hoja.ReimbursableExpense);
         #    ownerAxUserId       = _hoja.INDCreatedByUserId;
         #    if (!ownerAxUserId)
         #        ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_hoja.UserId);
@@ -253,8 +253,8 @@ Formatversion: 1
         #    int gastoTypeInt;
         #    ;
         #
-        #    processedByAIInt = _ticketHeader.ProcessedByAI;
-        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #    processedByAIInt = any2int(_ticketHeader.ProcessedByAI);
+        #    gastoTypeInt     = any2int(_ticketHeader.GastoType);
         #
         #    return [
         #            strFmt('%1', _ticketHeader.FileId),
@@ -283,9 +283,9 @@ Formatversion: 1
         #    int gastoTypeInt;
         #    ;
         #
-        #    ticketStatusInt  = _ticketHeader.Status;
-        #    processedByAIInt = _ticketHeader.ProcessedByAI;
-        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #    ticketStatusInt  = any2int(_ticketHeader.Status);
+        #    processedByAIInt = any2int(_ticketHeader.ProcessedByAI);
+        #    gastoTypeInt     = any2int(_ticketHeader.GastoType);
         #
         #    return [
         #            strFmt('%1', _ticketHeader.FileId),
@@ -2529,7 +2529,7 @@ Formatversion: 1
         #            debugSheetExists = '1';
         #            debugSheetUserId = debugHeader.UserId;
         #            debugSheetCreatedByUserId = debugHeader.INDCreatedByUserId;
-        #            debugSheetStatus = strFmt('%1', debugHeader.ExpenseSheetStatus);
+        #            debugSheetStatus = strFmt('%1', any2int(debugHeader.ExpenseSheetStatus));
         #        }
         #
         #        select firstonly header
@@ -2552,9 +2552,9 @@ Formatversion: 1
         #                                                   ]), conNull()];
         #
         #        monto               = header.TotalAmount();
-        #        exchangeRateMode    = header.ExchangeRateMode;
-        #        expenseSheetStatus  = header.ExpenseSheetStatus;
-        #        reimbursableExpense = header.ReimbursableExpense;
+        #        exchangeRateMode    = any2int(header.ExchangeRateMode);
+        #        expenseSheetStatus  = any2int(header.ExpenseSheetStatus);
+        #        reimbursableExpense = any2int(header.ReimbursableExpense);
         #        // Resuelve el propietario para exponerlo al detalle web sin cambiar indices anteriores.
         #        ownerUser           = CRMUsuarioTable::Find(header.UserId);
         #        ownerAxUserId       = header.INDCreatedByUserId;
@@ -2589,17 +2589,17 @@ Formatversion: 1
         #            where line.UserId       == crmUserId
         #               && line.HojaGastosId == hojaId
         #        {
-        #             gastoTypeInt = line.Type;
+        #             gastoTypeInt = any2int(line.Type);
         #             price        = line.Price;
         #             monto        = line.Amount;
-        #             lineReimbursableExpense = line.ReimbursableExpense;
+        #             lineReimbursableExpense = any2int(line.ReimbursableExpense);
         #
         #             lineRow = [
         #                         strFmt("%1", line.RecId),
         #                         strFmt("%1", date2Str(line.TransDate, 123, 2,2,2,2,4)),
         #                         strFmt("%1", gastoTypeInt),
         #                         strFmt("%1", line.Description ? line.Description : enum2str(line.Type)),
-        #                         strFmt("%1", line.Internacional),
+        #                         strFmt("%1", any2int(line.Internacional)),
         #                         strFmt("%1", line.FileId),
         #                         strFmt("%1", line.Price),
         #                         strFmt("%1", line.Qty),
@@ -3001,9 +3001,9 @@ Formatversion: 1
         #               && docuRef.RefRecId   == ticketHeader.RecId
         #               && docuRef.INDFileId  == ticketHeader.FileId;
         #
-        #        ticketStatusInt = ticketHeader.Status;
-        #        processedByAIInt = ticketHeader.ProcessedByAI;
-        #        gastoTypeInt = ticketHeader.GastoType;
+        #        ticketStatusInt = any2int(ticketHeader.Status);
+        #        processedByAIInt = any2int(ticketHeader.ProcessedByAI);
+        #        gastoTypeInt = any2int(ticketHeader.GastoType);
         #        ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ticketHeader.CreatedByUserId);
         #
         #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK',
@@ -5435,7 +5435,7 @@ Formatversion: 1
         #            else
         #                docuRef.update();
         #
-        #            outputProcessedByAI = ticketHeader.ProcessedByAI;
+        #            outputProcessedByAI = any2int(ticketHeader.ProcessedByAI);
         #
         #            ttscommit;
         #
@@ -5817,7 +5817,7 @@ Formatversion: 1
         #
         #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
         #
-        #            outputProcessedByAI = ticketHeader.ProcessedByAI;
+        #            outputProcessedByAI = any2int(ticketHeader.ProcessedByAI);
         #
         #            ttscommit;
         #

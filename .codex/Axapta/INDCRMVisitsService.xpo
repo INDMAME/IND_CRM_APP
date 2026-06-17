@@ -558,7 +558,7 @@ Formatversion: 1
         #        {
         #            conAsistentes += [[
         #                visitasTable.AsistenteId,
-        #                visitasTable.AsistenteTipo,
+        #                any2int(visitasTable.AsistenteTipo),
         #                visitasTable.AsistenteCargo
         #            ]];
         #        }
@@ -570,9 +570,9 @@ Formatversion: 1
         #             strFmt("%1", actividadTable.AccountNum),
         #             strFmt("%1", date2str(actividadTable.TransDate, 123, 2,2,2,2,4)),
         #             strFmt("%1", actividadTable.Country),
-        #             strFmt("%1", actividadTable.ActividadType),
-        #             strFmt("%1", actividadTable.TipoVisita),
-        #             strFmt("%1", actividadTable.ContactMethod),
+        #             strFmt("%1", any2int(actividadTable.ActividadType)),
+        #             strFmt("%1", any2int(actividadTable.TipoVisita)),
+        #             strFmt("%1", any2int(actividadTable.ContactMethod)),
         #             strFmt("%1", actividadTable.Description),
         #             strFmt("%1", actividadTable.Comentarios),
         #             strFmt("%1", actividadTable.VisitaAntecedentes),
@@ -637,7 +637,7 @@ Formatversion: 1
         #        {
         #            conAsistentes += [[
         #                visitasTable.AsistenteId,
-        #                visitasTable.AsistenteTipo,
+        #                any2int(visitasTable.AsistenteTipo),
         #                visitasTable.AsistenteCargo
         #            ]];
         #        }
@@ -649,9 +649,9 @@ Formatversion: 1
         #             strFmt("%1", actividadTable.AccountNum),
         #             strFmt("%1", date2str(actividadTable.TransDate, 123, 2,2,2,2,4)),
         #             strFmt("%1", actividadTable.Country),
-        #             strFmt("%1", actividadTable.ActividadType),
-        #             strFmt("%1", actividadTable.TipoVisita),
-        #             strFmt("%1", actividadTable.ContactMethod),
+        #             strFmt("%1", any2int(actividadTable.ActividadType)),
+        #             strFmt("%1", any2int(actividadTable.TipoVisita)),
+        #             strFmt("%1", any2int(actividadTable.ContactMethod)),
         #             strFmt("%1", actividadTable.Description),
         #             strFmt("%1", actividadTable.Comentarios),
         #             strFmt("%1", actividadTable.VisitaAntecedentes),
@@ -775,7 +775,7 @@ Formatversion: 1
         #            {
         #                conAsistentes += [[
         #                    visitasTable.AsistenteId,
-        #                    visitasTable.AsistenteTipo,
+        #                    any2int(visitasTable.AsistenteTipo),
         #                    visitasTable.AsistenteCargo
         #                ]];
         #            }
@@ -787,9 +787,9 @@ Formatversion: 1
         #                 strFmt("%1", actividadTable.AccountNum),
         #                 strFmt("%1", date2str(actividadTable.TransDate, 123, 2,2,2,2,4)),
         #                 strFmt("%1", actividadTable.Country),
-        #                 strFmt("%1", actividadTable.ActividadType),
-        #                 strFmt("%1", actividadTable.TipoVisita),
-        #                 strFmt("%1", actividadTable.ContactMethod),
+        #                 strFmt("%1", any2int(actividadTable.ActividadType)),
+        #                 strFmt("%1", any2int(actividadTable.TipoVisita)),
+        #                 strFmt("%1", any2int(actividadTable.ContactMethod)),
         #                 strFmt("%1", actividadTable.Description),
         #                 conAsistentes,
         #                 strFmt("%1", INDCRMVisitsService::getActivityOwnerAxUserId(actividadTable)),
@@ -857,6 +857,24 @@ Formatversion: 1
         #    ownerAlias = INDCRMVisitsService::getActivityOwnerAlias(_activity);
         #
         #    return INDControlDataVisibilityResolver::resolveCrmUserIdByAlias(ownerAlias);
+        #}
+      ENDSOURCE
+      SOURCE #getActivityOwnerName
+        #//MMS - CRM adjustments - 2026.06.10
+        #// Returns the display name for the functional visit owner.
+        #static str getActivityOwnerName(CRMActividadTable _activity)
+        #{
+        #    UserId          ownerAxUserId;
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
+        #    if (!ownerAxUserId)
+        #        return "";
+        #
+        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(ownerAxUserId);
+        #
+        #    return person.Name;
         #}
       ENDSOURCE
       SOURCE #getContactoContainer
@@ -1077,24 +1095,6 @@ Formatversion: 1
         #    return result;
         #}
         #
-      ENDSOURCE
-      SOURCE #getActivityOwnerName
-        #//MMS - CRM adjustments - 2026.06.10
-        #// Returns the display name for the functional visit owner.
-        #static str getActivityOwnerName(CRMActividadTable _activity)
-        #{
-        #    UserId          ownerAxUserId;
-        #    INDPersonaTable person;
-        #    ;
-        #
-        #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(_activity);
-        #    if (!ownerAxUserId)
-        #        return "";
-        #
-        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(ownerAxUserId);
-        #
-        #    return person.Name;
-        #}
       ENDSOURCE
     ENDMETHODS
   ENDCLASS

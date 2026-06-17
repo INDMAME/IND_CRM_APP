@@ -225,10 +225,21 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const isCurrentOwner =
     !!detailOwnerAxUserId && normalizeOwnerAxUserId(detailOwnerAxUserId) === normalizeOwnerAxUserId(axUserId);
   const showOwnerField = visibleUsersReady && !!visibleOwner && !isCurrentOwner;
-  // Only hide actions when the endpoint returned a resolved mutation policy for the owner.
-  const ownerCanMutate = !visibleUsersReady || !hasMutationPolicy(visibleOwner)
-    ? true
-    : canMutateOwner(visibleUserByOwnerAxUserId, detailOwnerAxUserId);
+  const ownerCanMutate = useMemo(() => {
+    if (!detailOwnerAxUserId) {
+      return true;
+    }
+
+    if (isCurrentOwner) {
+      return true;
+    }
+
+    if (!visibleUsersReady || !visibleOwner || !hasMutationPolicy(visibleOwner)) {
+      return false;
+    }
+
+    return canMutateOwner(visibleUserByOwnerAxUserId, detailOwnerAxUserId);
+  }, [detailOwnerAxUserId, isCurrentOwner, visibleOwner, visibleUserByOwnerAxUserId, visibleUsersReady]);
   const canEditVisit = canEditHistory && ownerCanMutate;
   const canDeleteVisit = canDeleteHistory && ownerCanMutate;
 

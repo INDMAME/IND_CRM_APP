@@ -28,6 +28,8 @@ const HistorySummary = ({
   ownerValue = "",
   showOwner = false,
 }: Props) => {
+  const detailRowClassName = `history-filter-summary mt-1.5 flex items-center gap-2 text-xs min-w-0 ${className}`.trim();
+
   return (
     <>
       <div className={`history-filter-summary flex flex-wrap items-center gap-x-3 gap-y-2 text-xs ${className}`.trim()}>
@@ -37,13 +39,13 @@ const HistorySummary = ({
         <span>{toValue}</span>
       </div>
       {showClient && clientValue ? (
-        <div className="history-filter-summary mt-1.5 flex items-center gap-2 text-xs min-w-0">
+        <div className={detailRowClassName}>
           <span className="font-semibold shrink-0">{clientLabel}:</span>
           <span className="min-w-0 flex-1 truncate">{clientValue}</span>
         </div>
       ) : null}
       {showOwner && ownerValue ? (
-        <div className="history-filter-summary mt-1.5 flex items-center gap-2 text-xs min-w-0">
+        <div className={detailRowClassName}>
           <span className="font-semibold shrink-0">{ownerLabel}:</span>
           <span className="min-w-0 flex-1 truncate">{ownerValue}</span>
         </div>
