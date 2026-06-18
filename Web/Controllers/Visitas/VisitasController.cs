@@ -1,5 +1,4 @@
 ﻿using IND_CRM_APP.Models.Activities;
-using IND_CRM_APP.Models.CRM;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using IND_CRM_APP.Extensions;
@@ -11,7 +10,6 @@ using Microsoft.Extensions.Localization;
 using System;
 using System.Globalization;
 using System.Linq;
-using System.Text;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -21,9 +19,8 @@ namespace IND_CRM_APP.Controllers
         private readonly ILogger<VisitasController> _logger;
         private readonly IINDCrmEnumLocalizer _enumLocalizer;
         private readonly ICrmEnumCatalog _crmEnumCatalog;
+        private readonly IVisitMutationPermissionService _visitMutationPermissions;
         private readonly IStringLocalizer<INDSharedResource> _sr;
-        private const string DataVisibilityAppCode = "CRM";
-        private const string DataVisibilityVisitsModuleCode = "VISITAS_GESTION";
 
         public VisitasController(
             ICrmApiClient apiClient,
@@ -31,11 +28,13 @@ namespace IND_CRM_APP.Controllers
             ILogger<VisitasController> logger,
             IINDCrmEnumLocalizer enumLocalizer,
             ICrmEnumCatalog crmEnumCatalog,
+            IVisitMutationPermissionService visitMutationPermissions,
             IStringLocalizer<INDSharedResource> sr) : base(apiClient, tokenSession)
         {
             _logger = logger;
             _enumLocalizer = enumLocalizer;
             _crmEnumCatalog = crmEnumCatalog;
+            _visitMutationPermissions = visitMutationPermissions;
             _sr = sr;
         }
 
@@ -187,6 +186,16 @@ namespace IND_CRM_APP.Controllers
                 if (req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
+                if (!TryResolveActivityRecId(req.RefRecIdActividad, out var assistantActivityRecId))
+                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
+
+                var assistantGuardResponse = ModuleRecordMutationActionResults.ToActionResult(
+                    this,
+                    await _visitMutationPermissions.ValidateAsync(token, assistantActivityRecId),
+                    _sr);
+                if (assistantGuardResponse != null)
+                    return assistantGuardResponse;
+
                 var response = await _apiClient.CreateVisitaAsistenteAsync(token, req);
 
                 if (IND_SetActionMark && response.Success)
@@ -329,7 +338,7 @@ namespace IND_CRM_APP.Controllers
             ViewBag.SelectedCompanyId = HttpContext.Session.GetString("INDCompanySelected") ?? string.Empty;
             ViewBag.CurrentAxUserId = GetCurrentSessionAxUserId() ?? string.Empty;
             ViewBag.PermissionsRevision = HttpContext.Session.GetString("INDPermissionsRevision") ?? string.Empty;
-            ViewBag.VisibleVisitUsers = await LoadVisibleVisitUsersForViewAsync(token);
+            ViewBag.VisibleVisitUsers = await _visitMutationPermissions.GetVisibleVisitUsersForViewAsync(token);
 
             if (string.IsNullOrWhiteSpace(code))
                 return NotFound();
@@ -444,6 +453,26 @@ namespace IND_CRM_APP.Controllers
                 var ownerAxUserId = Pick(
                     activity.OwnerAxUserId,
                     Pick(activity.INDCreatedByUserId, Pick(activity.CreatedByUserId, activity.UserId))) ?? string.Empty;
+                bool? canMutateVisit = null;
+                var mutationPermissionStatus = string.Empty;
+                if (long.TryParse(recIdValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var detailRecId) &&
+                    detailRecId != 0)
+                {
+                    var mutationPermission = await _visitMutationPermissions.ValidateActivityAsync(
+                        token,
+                        detailRecId,
+                        activity,
+                        "visit-detail-preload");
+                    canMutateVisit = mutationPermission.IsAllowed;
+                    mutationPermissionStatus = mutationPermission.Status.ToString();
+                    _logger.LogInformation(
+                        "Visit detail mutation permission preload. Code={Code}; RecId={RecId}; OwnerAxUserId={OwnerAxUserId}; CanMutate={CanMutate}; Status={Status}",
+                        code,
+                        detailRecId,
+                        ownerAxUserId,
+                        canMutateVisit,
+                        mutationPermissionStatus);
+                }
 
                 var detail = new
                 {
@@ -463,7 +492,9 @@ namespace IND_CRM_APP.Controllers
                     OwnerAlias = activity.OwnerAlias ?? string.Empty,
                     CreatedByUserId = activity.CreatedByUserId ?? string.Empty,
                     UserId = activity.UserId ?? string.Empty,
-                    INDCreatedByUserId = activity.INDCreatedByUserId ?? string.Empty
+                    INDCreatedByUserId = activity.INDCreatedByUserId ?? string.Empty,
+                    CanMutateVisit = canMutateVisit,
+                    MutationPermissionStatus = mutationPermissionStatus
                 };
 
                 ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
@@ -511,7 +542,10 @@ namespace IND_CRM_APP.Controllers
                 if (req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
-                var guardResponse = await ValidateVisitMutationPermissionAsync(token, recId);
+                var guardResponse = ModuleRecordMutationActionResults.ToActionResult(
+                    this,
+                    await _visitMutationPermissions.ValidateAsync(token, recId),
+                    _sr);
                 if (guardResponse != null)
                     return guardResponse;
 
@@ -551,6 +585,13 @@ namespace IND_CRM_APP.Controllers
 
                 if (req == null || string.IsNullOrWhiteSpace(req.AsistenteTipo))
                     return BadRequest(new { success = false, message = _sr["Api_MissingAsistenteTipo"].Value });
+
+                var guardResponse = ModuleRecordMutationActionResults.ToActionResult(
+                    this,
+                    await _visitMutationPermissions.ValidateAsync(token, recId),
+                    _sr);
+                if (guardResponse != null)
+                    return guardResponse;
 
                 var activityResp = await _apiClient.GetActivityByRecIdAsync(token, recId);
                 var asistentes = activityResp.Data?.Asistentes ?? new List<ActivityAsistenteDto>();
@@ -606,7 +647,10 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
-                var guardResponse = await ValidateVisitMutationPermissionAsync(token, recId);
+                var guardResponse = ModuleRecordMutationActionResults.ToActionResult(
+                    this,
+                    await _visitMutationPermissions.ValidateAsync(token, recId),
+                    _sr);
                 if (guardResponse != null)
                     return guardResponse;
 
@@ -643,184 +687,16 @@ namespace IND_CRM_APP.Controllers
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
         }
 
-        private static string SanitizeValue(string? value)
+        // Parses activity RecIds from assistant mutation payloads.
+        private static bool TryResolveActivityRecId(string? value, out long recId)
         {
-            return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+            return long.TryParse(
+                    value?.Trim(),
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out recId)
+                && recId != 0;
         }
 
-        private static string FirstNonEmpty(params string?[] values)
-        {
-            foreach (var value in values)
-            {
-                var normalized = NormalizeOptionalText(value);
-                if (!string.IsNullOrWhiteSpace(normalized))
-                    return normalized;
-            }
-
-            return string.Empty;
-        }
-
-        private static string NormalizeOwnerAxUserId(string? value)
-        {
-            return SanitizeValue(value).ToUpperInvariant();
-        }
-
-        private static string ResolveActivityOwnerAxUserId(ActivityDto? activity)
-        {
-            if (activity == null)
-                return string.Empty;
-
-            return FirstNonEmpty(
-                activity.OwnerAxUserId,
-                activity.INDCreatedByUserId,
-                activity.CreatedByUserId,
-                activity.UserId);
-        }
-
-        private static string NormalizeMutationPolicyToken(string? value)
-        {
-            var normalized = SanitizeValue(value).Normalize(NormalizationForm.FormD);
-            var builder = new StringBuilder(normalized.Length);
-
-            foreach (var ch in normalized)
-            {
-                if (CharUnicodeInfo.GetUnicodeCategory(ch) == UnicodeCategory.NonSpacingMark)
-                    continue;
-
-                if (char.IsLetterOrDigit(ch))
-                    builder.Append(char.ToLowerInvariant(ch));
-            }
-
-            return builder.ToString();
-        }
-
-        private static bool IsSameAsVisibilityMutationPolicy(DataVisibilityVisibleUserDto? item)
-        {
-            if (item == null)
-                return false;
-
-            if (item.MutationPolicyInt == 1)
-                return true;
-
-            var policy = NormalizeMutationPolicyToken(item.MutationPolicy);
-            var label = NormalizeMutationPolicyToken(item.MutationPolicyLabel);
-
-            return policy == "sameasvisibility"
-                || label == "sameasvisibility"
-                || label == "igualquevisibilidad";
-        }
-
-        private static bool CanMutateVisibleVisitOwner(
-            DataVisibilityVisibleUserDto? visibleOwner,
-            string ownerAxUserId,
-            string viewerAxUserId)
-        {
-            var ownerKey = NormalizeOwnerAxUserId(ownerAxUserId);
-            var viewerKey = NormalizeOwnerAxUserId(viewerAxUserId);
-
-            if (!string.IsNullOrWhiteSpace(ownerKey) && ownerKey == viewerKey)
-                return true;
-
-            if (!IsSameAsVisibilityMutationPolicy(visibleOwner))
-                return false;
-
-            return visibleOwner?.CanMutate == true;
-        }
-
-        // Guards visit mutations with the same owner policy used by the detail UI.
-        private async Task<IActionResult?> ValidateVisitMutationPermissionAsync(string token, long recId)
-        {
-            var viewerAxUserId = GetCurrentSessionAxUserId();
-            if (string.IsNullOrWhiteSpace(viewerAxUserId))
-                return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
-
-            try
-            {
-                var activityResult = await _apiClient.GetActivityByRecIdAsync(token, recId);
-                var activity = activityResult.Data;
-                if (activity == null)
-                    return NotFound(new { success = false, message = activityResult.GetMessageOrDefault(_sr["Api_RequestFailed"].Value) });
-
-                var ownerAxUserId = ResolveActivityOwnerAxUserId(activity);
-                if (string.IsNullOrWhiteSpace(ownerAxUserId))
-                {
-                    _logger.LogWarning(
-                        "Visit mutation denied because owner could not be resolved. RecId={RecId}; ViewerAxUserId={ViewerAxUserId}",
-                        recId,
-                        viewerAxUserId);
-
-                    return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "No se pudo validar el propietario de la visita." });
-                }
-
-                if (NormalizeOwnerAxUserId(ownerAxUserId) == NormalizeOwnerAxUserId(viewerAxUserId))
-                    return null;
-
-                var visibleUsers = await LoadVisibleVisitUsersForViewAsync(token);
-                var visibleOwner = visibleUsers.FirstOrDefault(x =>
-                    NormalizeOwnerAxUserId(x.AxUserId) == NormalizeOwnerAxUserId(ownerAxUserId));
-
-                if (CanMutateVisibleVisitOwner(visibleOwner, ownerAxUserId, viewerAxUserId))
-                    return null;
-
-                _logger.LogWarning(
-                    "Visit mutation denied by owner policy. RecId={RecId}; ViewerAxUserId={ViewerAxUserId}; OwnerAxUserId={OwnerAxUserId}; MutationPolicy={MutationPolicy}; MutationPolicyInt={MutationPolicyInt}; CanMutate={CanMutate}",
-                    recId,
-                    viewerAxUserId,
-                    ownerAxUserId,
-                    visibleOwner?.MutationPolicyLabel ?? visibleOwner?.MutationPolicy ?? string.Empty,
-                    visibleOwner?.MutationPolicyInt,
-                    visibleOwner?.CanMutate);
-
-                return StatusCode(StatusCodes.Status403Forbidden, new { success = false, message = "No tienes permiso para modificar esta visita." });
-            }
-            catch (ApiException ex)
-            {
-                _logger.LogError(ex, "Upstream API error while validating visit mutation permission.");
-                return StatusCode(StatusCodes.Status502BadGateway, new { success = false, message = _sr["Api_RequestFailed"].Value });
-            }
-        }
-
-        // Sanitizes visible-user fields before passing them to React.
-        private static DataVisibilityVisibleUserDto NormalizeVisibleUser(DataVisibilityVisibleUserDto item)
-        {
-            return new DataVisibilityVisibleUserDto
-            {
-                Alias = SanitizeValue(item.Alias),
-                AxUserId = SanitizeValue(item.AxUserId),
-                CrmUserId = SanitizeValue(item.CrmUserId),
-                Name = SanitizeValue(item.Name),
-                Source = SanitizeValue(item.Source),
-                MutationPolicy = SanitizeValue(item.MutationPolicy),
-                MutationPolicyInt = item.MutationPolicyInt,
-                MutationPolicyLabel = SanitizeValue(item.MutationPolicyLabel),
-                CanMutate = item.CanMutate
-            };
-        }
-
-        // Preloads visible visit owners so the detail page can apply owner mutation policy.
-        private async Task<List<DataVisibilityVisibleUserDto>> LoadVisibleVisitUsersForViewAsync(string token)
-        {
-            try
-            {
-                var result = await _apiClient.GetVisibleUsersAsync(
-                    token,
-                    DataVisibilityAppCode,
-                    DataVisibilityVisitsModuleCode,
-                    includeCrmUserId: true);
-
-                return result.GetAnyItems()
-                    .Select(NormalizeVisibleUser)
-                    .Where(x => !string.IsNullOrWhiteSpace(x.AxUserId))
-                    .GroupBy(x => x.AxUserId, StringComparer.OrdinalIgnoreCase)
-                    .Select(x => x.First())
-                    .OrderBy(x => string.IsNullOrWhiteSpace(x.Name) ? x.AxUserId : x.Name, StringComparer.OrdinalIgnoreCase)
-                    .ToList();
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Could not preload visible visit users for detail view.");
-                return new List<DataVisibilityVisibleUserDto>();
-            }
-        }
     }
 }

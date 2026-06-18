@@ -91,6 +91,10 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                 {
                     ModuleVisitasGestion
                 },
+                ["/ModulePermissions/Trace"] = new[]
+                {
+                    ModuleVisitasGestion
+                },
                 ["/api/ia/service/expensefromticket"] = new[]
                 {
                     ModuleGastosHojaGasto,

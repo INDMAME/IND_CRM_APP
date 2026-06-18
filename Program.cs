@@ -296,6 +296,8 @@ builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
 builder.Services.AddScoped<IIndAuthContextService, IndAuthContextService>();
 builder.Services.AddScoped<IINDCrmEnumLocalizer, INDCrmEnumLocalizer>();
 builder.Services.AddScoped<ICrmEnumCatalog, CrmEnumCatalog>();
+builder.Services.AddScoped<IModuleRecordMutationPermissionService, ModuleRecordMutationPermissionService>();
+builder.Services.AddScoped<IVisitMutationPermissionService, VisitMutationPermissionService>();
 builder.Services.AddScoped<INDModuleAuthorizeFilter>();
 builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Information);
 

@@ -1408,13 +1408,7 @@ namespace IND_CRM_APP.Controllers
                     "INVALID_REQUEST");
 
             var normalizedCurrency = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant() ?? string.Empty;
-            if (!string.Equals(normalizedCurrency, "EUR", StringComparison.OrdinalIgnoreCase) && req.ExchRate <= 0)
-            {
-                return CreateApiCommandError(
-                    StatusCodes.Status400BadRequest,
-                    _sr["ExpenseSheets_Validation_ExchangeRateRequired"].Value,
-                    "VALIDATION_ERROR");
-            }
+            var hasInvalidExchangeRate = !string.Equals(normalizedCurrency, "EUR", StringComparison.OrdinalIgnoreCase) && req.ExchRate <= 0;
 
             var normalizedExpenseSheetStatus = req.ExpenseSheetStatus.HasValue && req.ExpenseSheetStatus.Value >= 0
                 ? req.ExpenseSheetStatus.Value
@@ -1451,11 +1445,25 @@ namespace IND_CRM_APP.Controllers
                 request);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
+            if (hasInvalidExchangeRate && ShouldValidateExpenseSheetExchangeRate(mutationGuard))
+            {
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["ExpenseSheets_Validation_ExchangeRateRequired"].Value,
+                    "VALIDATION_ERROR");
+            }
+
+            var effectiveRequest = BuildExpenseSheetEffectiveHeaderUpdateRequest(
+                mutationGuard,
+                request,
+                nameof(ApiExpenseSheetUpdate),
+                safeSheetId);
             var actorAxUserId = await ResolveManagedExpenseStatusActorAxUserIdAsync(
                 token,
                 requestAxUserId,
                 mutationGuard,
-                request,
+                effectiveRequest,
                 nameof(ApiExpenseSheetUpdate));
 
             try
@@ -1466,15 +1474,15 @@ namespace IND_CRM_APP.Controllers
                     ("hojaGastosId", safeSheetId),
                     ("requestedAxUserId", requestAxUserId),
                     ("actorAxUserId", actorAxUserId),
-                    ("currencyCode", request.CurrencyCode),
-                    ("exchangeRate", request.ExchRate),
-                    ("projectId", request.ProjId),
-                    ("expenseSheetStatus", request.ExpenseSheetStatus),
-                    ("exchangeRateMode", request.ExchangeRateMode));
+                    ("currencyCode", effectiveRequest.CurrencyCode),
+                    ("exchangeRate", effectiveRequest.ExchRate),
+                    ("projectId", effectiveRequest.ProjId),
+                    ("expenseSheetStatus", effectiveRequest.ExpenseSheetStatus),
+                    ("exchangeRateMode", effectiveRequest.ExchangeRateMode));
                 var response = await _apiClient.UpdateExpenseSheetHeaderAsync(
                     token,
                     safeSheetId,
-                    request,
+                    effectiveRequest,
                     requestAxUserId,
                     actorAxUserId);
                 var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
@@ -1483,8 +1491,8 @@ namespace IND_CRM_APP.Controllers
                     "response",
                     ("hojaGastosId", safeSheetId),
                     ("requestedAxUserId", requestAxUserId),
-                    ("currencyCode", request.CurrencyCode),
-                    ("exchangeRate", request.ExchRate),
+                    ("currencyCode", effectiveRequest.CurrencyCode),
+                    ("exchangeRate", effectiveRequest.ExchRate),
                     ("success", response.Success),
                     ("traceId", response.TraceId ?? string.Empty),
                     ("message", response.Message ?? string.Empty));
@@ -3472,14 +3480,7 @@ namespace IND_CRM_APP.Controllers
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var normalizedCurrency = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant() ?? string.Empty;
-                if (!string.Equals(normalizedCurrency, "EUR", StringComparison.OrdinalIgnoreCase) && req.ExchRate <= 0)
-                {
-                    return BadRequest(new
-                    {
-                        success = false,
-                        message = _sr["ExpenseSheets_Validation_ExchangeRateRequired"].Value
-                    });
-                }
+                var hasInvalidExchangeRate = !string.Equals(normalizedCurrency, "EUR", StringComparison.OrdinalIgnoreCase) && req.ExchRate <= 0;
 
                 var normalizedExpenseSheetStatus = req.ExpenseSheetStatus.HasValue && req.ExpenseSheetStatus.Value >= 0
                     ? req.ExpenseSheetStatus.Value
@@ -3516,24 +3517,39 @@ namespace IND_CRM_APP.Controllers
                     request);
                 if (!mutationGuard.Allowed)
                     return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
+
+                if (hasInvalidExchangeRate && ShouldValidateExpenseSheetExchangeRate(mutationGuard))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = _sr["ExpenseSheets_Validation_ExchangeRateRequired"].Value
+                    });
+                }
+
+                var effectiveRequest = BuildExpenseSheetEffectiveHeaderUpdateRequest(
+                    mutationGuard,
+                    request,
+                    nameof(UpdateExpenseSheetHeader),
+                    hojaGastosId.Trim());
                 LogExpenseCurrencyTrace(
                     nameof(UpdateExpenseSheetHeader),
                     "request",
                     ("hojaGastosId", hojaGastosId.Trim()),
                     ("requestedAxUserId", requestAxUserId),
-                    ("currencyCode", request.CurrencyCode),
-                    ("exchangeRate", request.ExchRate),
-                    ("projectId", request.ProjId),
-                    ("expenseSheetStatus", request.ExpenseSheetStatus),
-                    ("exchangeRateMode", request.ExchangeRateMode));
-                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, hojaGastosId.Trim(), request, requestAxUserId);
+                    ("currencyCode", effectiveRequest.CurrencyCode),
+                    ("exchangeRate", effectiveRequest.ExchRate),
+                    ("projectId", effectiveRequest.ProjId),
+                    ("expenseSheetStatus", effectiveRequest.ExpenseSheetStatus),
+                    ("exchangeRateMode", effectiveRequest.ExchangeRateMode));
+                var response = await _apiClient.UpdateExpenseSheetHeaderAsync(token, hojaGastosId.Trim(), effectiveRequest, requestAxUserId);
                 LogExpenseCurrencyTrace(
                     nameof(UpdateExpenseSheetHeader),
                     "response",
                     ("hojaGastosId", hojaGastosId.Trim()),
                     ("requestedAxUserId", requestAxUserId),
-                    ("currencyCode", request.CurrencyCode),
-                    ("exchangeRate", request.ExchRate),
+                    ("currencyCode", effectiveRequest.CurrencyCode),
+                    ("exchangeRate", effectiveRequest.ExchRate),
                     ("success", response.Success),
                     ("traceId", response.TraceId ?? string.Empty),
                     ("message", response.Message ?? string.Empty));
@@ -4064,7 +4080,6 @@ namespace IND_CRM_APP.Controllers
             ExpenseSheetSnapshot snapshot,
             ExpenseSheetUpdateRequest request)
         {
-            var hasHeaderFieldChanges = HasExpenseSheetHeaderFieldChanges(snapshot, request);
             var currentStatus = snapshot.StatusCode;
             var requestedStatus = request.ExpenseSheetStatus ?? currentStatus;
             var requestedStatusChanged = requestedStatus != currentStatus;
@@ -4075,13 +4090,13 @@ namespace IND_CRM_APP.Controllers
             }
 
             if (policy.InteractionMode == ExpenseSheetInteractionMode.CommentOnlyEdit &&
-                hasHeaderFieldChanges)
+                HasExpenseSheetHeaderFieldChanges(snapshot, request))
             {
                 return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
             }
 
             if (policy.InteractionMode == ExpenseSheetInteractionMode.StatusActionOnly &&
-                (hasHeaderFieldChanges || !requestedStatusChanged))
+                !requestedStatusChanged)
             {
                 return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
             }
@@ -4109,6 +4124,51 @@ namespace IND_CRM_APP.Controllers
                 Snapshot = snapshot,
                 Policy = policy
             };
+        }
+
+        // Keeps status-only actions from mutating header fields echoed by the client form.
+        private ExpenseSheetUpdateRequest BuildExpenseSheetEffectiveHeaderUpdateRequest(
+            ExpenseSheetMutationGuardResult mutationGuard,
+            ExpenseSheetUpdateRequest request,
+            string operationName,
+            string hojaGastosId)
+        {
+            if (mutationGuard.Policy?.InteractionMode != ExpenseSheetInteractionMode.StatusActionOnly ||
+                mutationGuard.Snapshot == null)
+            {
+                return request;
+            }
+
+            var snapshot = mutationGuard.Snapshot;
+            var effectiveRequest = new ExpenseSheetUpdateRequest
+            {
+                Description = snapshot.Description,
+                CurrencyCode = snapshot.CurrencyCode,
+                ExchRate = NormalizeExpenseSheetExchangeRateForWrite(snapshot.CurrencyCode, snapshot.ExchangeRate),
+                ProjId = snapshot.ProjectId,
+                Voucher = snapshot.Voucher,
+                ExpenseSheetStatus = request.ExpenseSheetStatus,
+                ExchangeRateMode = snapshot.ExchangeRateMode,
+                EstadoComentarios = request.EstadoComentarios,
+                ReimbursableExpense = snapshot.ReimbursableExpense
+            };
+
+            _logger.LogInformation(
+                "Sanitized expense sheet status-only update in {Operation}. HojaGastosId: {HojaGastosId}. CurrentStatus: {CurrentStatus}. TargetStatus: {TargetStatus}. IsManagingOtherUser: {IsManagingOtherUser}. AllowSelfManagement: {AllowSelfManagement}.",
+                operationName,
+                hojaGastosId,
+                snapshot.StatusCode?.ToString(CultureInfo.InvariantCulture) ?? "<null>",
+                request.ExpenseSheetStatus?.ToString(CultureInfo.InvariantCulture) ?? "<null>",
+                mutationGuard.Policy.IsManagingOtherUser,
+                mutationGuard.Policy.AllowSelfManagement);
+
+            return effectiveRequest;
+        }
+
+        // Status-only actions reuse the stored snapshot, so request exchange-rate validation only applies to editable header payloads.
+        private static bool ShouldValidateExpenseSheetExchangeRate(ExpenseSheetMutationGuardResult mutationGuard)
+        {
+            return mutationGuard.Policy?.InteractionMode != ExpenseSheetInteractionMode.StatusActionOnly;
         }
 
         // Detects any non-comment header mutation so comment-only mode can stay locked down.

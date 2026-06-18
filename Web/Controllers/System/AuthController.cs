@@ -299,7 +299,14 @@ namespace IND_CRM_APP.Controllers
                         module.ModuleCode,
                         module.Description,
                         module.IsActive,
-                        module.AccessRightsInt
+                        module.AccessRightsInt,
+                        module.DataVisibilityMode,
+                        module.DataVisibilityModeInt,
+                        module.HierarchyDepth,
+                        module.HierarchyDepthInt,
+                        module.MutationPolicy,
+                        module.MutationPolicyInt,
+                        module.MutationPolicyLabel
                     }).ToList()
                 }).ToList()
             };

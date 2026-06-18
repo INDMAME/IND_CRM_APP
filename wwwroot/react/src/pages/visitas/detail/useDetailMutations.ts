@@ -1,7 +1,6 @@
 ﻿import React, { useCallback } from "react";
 import { fetchJson } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
-import { showPermissionModal } from "../../../utils/permissions.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
 
 type OptionLike = {
@@ -76,6 +75,7 @@ type UseDetailMutationsArgs = {
   matchOptionValue: (options: OptionLike[], raw: unknown) => string;
   clearDraft: () => void;
   syncEditModeFlag: (enabled: boolean) => void;
+  onPermissionBlocked?: (operation: "update" | "delete") => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
@@ -108,6 +108,7 @@ export const useDetailMutations = ({
   matchOptionValue,
   clearDraft,
   syncEditModeFlag,
+  onPermissionBlocked,
   setModalError,
   setBusy,
   setStatus,
@@ -116,7 +117,7 @@ export const useDetailMutations = ({
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
     if (!canEditHistory) {
-      showPermissionModal();
+      onPermissionBlocked?.("update");
       return false;
     }
 
@@ -203,6 +204,7 @@ export const useDetailMutations = ({
     description,
     isEditing,
     matchOptionValue,
+    onPermissionBlocked,
     rawInitialAsistente,
     rawInitialContactMethod,
     rawInitialVisitType,
@@ -220,7 +222,7 @@ export const useDetailMutations = ({
   const handleDelete = useCallback(async () => {
     if (busy) return false;
     if (!canDeleteHistory) {
-      showPermissionModal();
+      onPermissionBlocked?.("delete");
       return false;
     }
 
@@ -258,7 +260,7 @@ export const useDetailMutations = ({
     } finally {
       setBusy(false);
     }
-  }, [busy, canDeleteHistory, recId, setBusy, setModalError, setStatus]);
+  }, [busy, canDeleteHistory, onPermissionBlocked, recId, setBusy, setModalError, setStatus]);
 
   return {
     handleUpdate,

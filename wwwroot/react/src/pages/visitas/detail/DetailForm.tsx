@@ -12,6 +12,7 @@ import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { bindReadOnlyGuard } from "../../../utils/domGuards.ts";
 import { hasValue } from "../../../utils/strings.ts";
 import { navigateToTextEditorField } from "../../../utils/textEditorNavigation.ts";
+import { clearTextEditorValue } from "../../../utils/textEditor.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
 import { setPreviewAnchor, showPreviewTooltip, isOverflowing } from "../../../utils/previewTooltip.ts";
 import { useTapGuard } from "../../../hooks/useTapGuard.ts";
@@ -23,13 +24,14 @@ import { useModuleDataVisibility } from "../../../hooks/useModuleDataVisibility.
 import { useDetailEditSession } from "./useDetailEditSession.ts";
 import { useDetailMutations } from "./useDetailMutations.ts";
 import {
-  canMutateOwner,
   formatModuleVisibleUserLabel,
-  getVisibleUserForOwner,
-  hasMutationPolicy,
-  normalizeOwnerAxUserId,
+  resolveModuleOwnerMutationAccess,
 } from "../../../utils/moduleDataVisibility.ts";
 import DetailOwnerField from "./DetailOwnerField.tsx";
+import {
+  postModulePermissionTrace,
+  type ModulePermissionTracePayload,
+} from "../../../services/modulePermissionTraceService.ts";
 
 const EDITOR_RETURN_FLAG_TTL_MS = 2 * 60 * 60 * 1000;
 const APP_CODE = "CRM";
@@ -79,21 +81,14 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     UserId?: string;
     indCreatedByUserId?: string;
     INDCreatedByUserId?: string;
+    canMutateVisit?: boolean | null;
+    CanMutateVisit?: boolean | null;
+    mutationPermissionStatus?: string;
+    MutationPermissionStatus?: string;
     [key: string]: unknown;
   };
 
   const detail = (window.__ACTIVITY_DETAIL__ as ActivityDetailPayload) || {};
-  const { visibleUserByOwnerAxUserId, visibleUsersReady } = useModuleDataVisibility({
-    enabled: canViewHistory || canEditHistory || canDeleteHistory,
-    companyId,
-    axUserId,
-    permissionsRevision,
-    appCode: APP_CODE,
-    moduleCode: MODULE_CODE,
-    preloadedUsers: typeof window !== "undefined" ? window.__IND_VISIBLE_VISIT_USERS__ : undefined,
-    onForbidden: showPermissionModal,
-  });
-
   const resolveActivityRecId = (payload: ActivityDetailPayload): string => {
     const candidates = [
       payload.recId,
@@ -115,6 +110,65 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   };
 
   const activityRecId = resolveActivityRecId(detail);
+  // Strict record-level UI gating needs the detail API to return OwnerAxUserId.
+  // Legacy fallbacks keep existing records usable while AX/API remains the final enforcement point.
+  const detailOwnerAxUserId = firstDetailText(
+    detail.ownerAxUserId,
+    detail.OwnerAxUserId,
+    detail.indCreatedByUserId,
+    detail.INDCreatedByUserId,
+    detail.createdByUserId,
+    detail.CreatedByUserId,
+    detail.userId,
+    detail.UserId
+  );
+  const detailOwnerRawText = firstDetailText(detail.ownerName, detail.OwnerName, detail.ownerAlias, detail.OwnerAlias);
+  const rawServerCanMutateVisit = detail.canMutateVisit ?? detail.CanMutateVisit;
+  const hasServerMutationDecision = typeof rawServerCanMutateVisit === "boolean";
+  const serverCanMutateVisit = rawServerCanMutateVisit === true;
+  const serverMutationPermissionStatus = firstDetailText(
+    detail.mutationPermissionStatus,
+    detail.MutationPermissionStatus
+  );
+  const logPermissionTrace = useCallback(
+    (eventName: string, data: ModulePermissionTracePayload = {}) => {
+      postModulePermissionTrace(eventName, {
+        recId: activityRecId,
+        ownerAxUserId: detailOwnerAxUserId,
+        viewerAxUserId: axUserId,
+        companyId,
+        permissionsRevision,
+        serverCanMutateVisit: hasServerMutationDecision ? serverCanMutateVisit : null,
+        serverMutationPermissionStatus,
+        appCode: APP_CODE,
+        moduleCode: MODULE_CODE,
+        ...data,
+      });
+    },
+    [
+      activityRecId,
+      axUserId,
+      companyId,
+      detailOwnerAxUserId,
+      hasServerMutationDecision,
+      permissionsRevision,
+      serverCanMutateVisit,
+      serverMutationPermissionStatus,
+    ]
+  );
+
+  const { visibleUserByOwnerAxUserId, visibleUsersReady } = useModuleDataVisibility({
+    enabled: canViewHistory || canEditHistory || canDeleteHistory,
+    companyId,
+    axUserId,
+    permissionsRevision,
+    appCode: APP_CODE,
+    moduleCode: MODULE_CODE,
+    allowCachedUsers: false,
+    preloadedUsers: typeof window !== "undefined" ? window.__IND_VISIBLE_VISIT_USERS__ : undefined,
+    onForbidden: showPermissionModal,
+    onDebug: logPermissionTrace,
+  });
 
   const textEditorBaseId = activityRecId ? `Visita.${activityRecId}` : "Visita";
   const fieldIdComentarios = `${textEditorBaseId}.Comentarios`;
@@ -201,53 +255,137 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const [modalError, setModalError] = useState("");
   const readOnlySurfaceRef = useRef(null);
   const editSnapshotRef = useRef(null);
+  const permissionTraceRef = useRef("");
 
   const recId = activityRecId;
   const accountNum = String(detail.accountNum ?? detail.AccountNum ?? "");
   const actividadId = String(detail.actividadId ?? detail.ActividadId ?? "");
-  // Strict record-level UI gating needs the detail API to return OwnerAxUserId.
-  // Legacy fallbacks keep existing records usable while AX/API remains the final enforcement point.
-  const detailOwnerAxUserId = firstDetailText(
-    detail.ownerAxUserId,
-    detail.OwnerAxUserId,
-    detail.indCreatedByUserId,
-    detail.INDCreatedByUserId,
-    detail.createdByUserId,
-    detail.CreatedByUserId,
-    detail.userId,
-    detail.UserId
-  );
-  const detailOwnerRawText = firstDetailText(detail.ownerName, detail.OwnerName, detail.ownerAlias, detail.OwnerAlias);
-  const visibleOwner = useMemo(() => {
-    return getVisibleUserForOwner(visibleUserByOwnerAxUserId, detailOwnerAxUserId);
-  }, [detailOwnerAxUserId, visibleUserByOwnerAxUserId]);
+  const mutationAccess = useMemo(() => {
+    return resolveModuleOwnerMutationAccess({
+      usersByOwnerAxUserId: visibleUserByOwnerAxUserId,
+      ownerAxUserId: detailOwnerAxUserId,
+      viewerAxUserId: axUserId,
+      visibleUsersReady,
+    });
+  }, [axUserId, detailOwnerAxUserId, visibleUserByOwnerAxUserId, visibleUsersReady]);
+  const visibleOwner = mutationAccess.owner;
   const detailOwnerText = visibleOwner ? formatModuleVisibleUserLabel(visibleOwner) : detailOwnerRawText || detailOwnerAxUserId;
-  const isCurrentOwner =
-    !!detailOwnerAxUserId && normalizeOwnerAxUserId(detailOwnerAxUserId) === normalizeOwnerAxUserId(axUserId);
-  const showOwnerField = visibleUsersReady && !!visibleOwner && !isCurrentOwner;
-  const ownerCanMutate = useMemo(() => {
-    if (!detailOwnerAxUserId) {
-      return true;
-    }
-
-    if (isCurrentOwner) {
-      return true;
-    }
-
-    if (!visibleUsersReady || !visibleOwner || !hasMutationPolicy(visibleOwner)) {
-      return false;
-    }
-
-    return canMutateOwner(visibleUserByOwnerAxUserId, detailOwnerAxUserId, axUserId);
-  }, [axUserId, detailOwnerAxUserId, isCurrentOwner, visibleOwner, visibleUserByOwnerAxUserId, visibleUsersReady]);
+  const showOwnerField = mutationAccess.ready && !!visibleOwner && !mutationAccess.isCurrentOwner;
+  const ownerCanMutate = mutationAccess.canMutate && hasServerMutationDecision && serverCanMutateVisit;
   const canEditVisit = canEditHistory && ownerCanMutate;
   const canDeleteVisit = canDeleteHistory && ownerCanMutate;
+  const isVisitEditable = isEditing && canEditVisit;
+  const logBlockedPermission = useCallback(
+    (operation: "edit" | "update" | "delete") => {
+      logPermissionTrace("visitDetail:permission-blocked", {
+        operation,
+        reason: mutationAccess.reason,
+        permissionsReady: mutationAccess.ready,
+        isCurrentOwner: mutationAccess.isCurrentOwner,
+        ownerCanMutate,
+        clientCanMutate: mutationAccess.canMutate,
+        hasServerMutationDecision,
+        serverCanMutateVisit: hasServerMutationDecision ? serverCanMutateVisit : null,
+        serverMutationPermissionStatus,
+        canEditModule: canEditHistory,
+        canDeleteModule: canDeleteHistory,
+        canEditVisit,
+        canDeleteVisit,
+        visibleOwnerFound: !!visibleOwner,
+        visibleOwnerPolicy: visibleOwner?.mutationPolicy || "",
+        visibleOwnerPolicyInt: visibleOwner?.mutationPolicyInt ?? null,
+        visibleOwnerPolicyLabel: visibleOwner?.mutationPolicyLabel || "",
+        visibleOwnerCanMutate: visibleOwner?.canMutate ?? null,
+      });
+    },
+    [
+      canDeleteHistory,
+      canDeleteVisit,
+      canEditHistory,
+      canEditVisit,
+      logPermissionTrace,
+      mutationAccess.canMutate,
+      mutationAccess.isCurrentOwner,
+      mutationAccess.reason,
+      mutationAccess.ready,
+      hasServerMutationDecision,
+      ownerCanMutate,
+      serverCanMutateVisit,
+      serverMutationPermissionStatus,
+      visibleOwner,
+    ]
+  );
+
+  useEffect(() => {
+    const traceKey = [
+      recId,
+      axUserId,
+      detailOwnerAxUserId,
+      mutationAccess.reason,
+      mutationAccess.ready ? "ready" : "pending",
+      mutationAccess.canMutate ? "can" : "cannot",
+      hasServerMutationDecision ? (serverCanMutateVisit ? "server-can" : "server-cannot") : "server-missing",
+      serverMutationPermissionStatus,
+      mutationAccess.isCurrentOwner ? "own" : "foreign",
+      visibleOwner?.mutationPolicy || "",
+      visibleOwner?.mutationPolicyInt ?? "",
+      visibleOwner?.mutationPolicyLabel || "",
+      visibleOwner?.canMutate ?? "",
+      canEditVisit ? "edit" : "read",
+      canDeleteVisit ? "delete" : "nodelete",
+    ].join("|");
+
+    if (permissionTraceRef.current === traceKey) return;
+    permissionTraceRef.current = traceKey;
+
+    logPermissionTrace("visitDetail:mutation-decision", {
+      reason: mutationAccess.reason,
+      permissionsReady: mutationAccess.ready,
+      isCurrentOwner: mutationAccess.isCurrentOwner,
+      ownerCanMutate,
+      clientCanMutate: mutationAccess.canMutate,
+      hasServerMutationDecision,
+      serverCanMutateVisit: hasServerMutationDecision ? serverCanMutateVisit : null,
+      serverMutationPermissionStatus,
+      canEditModule: canEditHistory,
+      canDeleteModule: canDeleteHistory,
+      canEditVisit,
+      canDeleteVisit,
+      visibleUsersReady,
+      visibleOwnerFound: !!visibleOwner,
+      visibleOwnerAxUserId: visibleOwner?.axUserId || "",
+      visibleOwnerSource: visibleOwner?.source || "",
+      visibleOwnerPolicy: visibleOwner?.mutationPolicy || "",
+      visibleOwnerPolicyInt: visibleOwner?.mutationPolicyInt ?? null,
+      visibleOwnerPolicyLabel: visibleOwner?.mutationPolicyLabel || "",
+      visibleOwnerCanMutate: visibleOwner?.canMutate ?? null,
+    });
+  }, [
+    axUserId,
+    canDeleteHistory,
+    canDeleteVisit,
+    canEditHistory,
+    canEditVisit,
+    detailOwnerAxUserId,
+    hasServerMutationDecision,
+    logPermissionTrace,
+    mutationAccess.canMutate,
+    mutationAccess.isCurrentOwner,
+    mutationAccess.reason,
+    mutationAccess.ready,
+    ownerCanMutate,
+    recId,
+    serverCanMutateVisit,
+    serverMutationPermissionStatus,
+    visibleOwner,
+    visibleUsersReady,
+  ]);
 
   const { editModeKeyRef, syncEditModeFlag, clearDraft, applyDraftValues } = useDetailEditSession({
     actividadId,
     recId,
     canEditHistory: canEditVisit,
-    isEditing,
+    isEditing: isVisitEditable,
     setIsEditing,
     transDate,
     visitType,
@@ -297,11 +435,11 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const handleComentariosTap = useCallback((event) => {
     event.preventDefault();
     openTextEditor(fieldIdComentarios, indT("Visits_Field_Comments", "Comments"), comentarios, {
-      readOnly: !isEditing,
+      readOnly: !isVisitEditable,
       allowEdit: canEditVisit,
       editModeKey: editModeKeyRef.current
     });
-  }, [comentarios, editModeKeyRef, fieldIdComentarios, isEditing, canEditVisit, openTextEditor]);
+  }, [comentarios, editModeKeyRef, fieldIdComentarios, isVisitEditable, canEditVisit, openTextEditor]);
 
   const handleComentariosHold = useCallback((target, clientY) => {
     if (!target || !isOverflowing(target)) return false;
@@ -312,11 +450,11 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const handleAntecedentesTap = useCallback((event) => {
     event.preventDefault();
     openTextEditor(fieldIdAntecedentes, indT("Visits_Field_Background", "Background"), antecedentes, {
-      readOnly: !isEditing,
+      readOnly: !isVisitEditable,
       allowEdit: canEditVisit,
       editModeKey: editModeKeyRef.current
     });
-  }, [antecedentes, editModeKeyRef, fieldIdAntecedentes, isEditing, canEditVisit, openTextEditor]);
+  }, [antecedentes, editModeKeyRef, fieldIdAntecedentes, isVisitEditable, canEditVisit, openTextEditor]);
 
   const handleAntecedentesHold = useCallback((target, clientY) => {
     if (!target || !isOverflowing(target)) return false;
@@ -327,11 +465,11 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const handleConclusionesTap = useCallback((event) => {
     event.preventDefault();
     openTextEditor(fieldIdConclusiones, indT("Visits_Field_Conclusions", "Conclusions"), conclusiones, {
-      readOnly: !isEditing,
+      readOnly: !isVisitEditable,
       allowEdit: canEditVisit,
       editModeKey: editModeKeyRef.current
     });
-  }, [conclusiones, editModeKeyRef, fieldIdConclusiones, isEditing, canEditVisit, openTextEditor]);
+  }, [conclusiones, editModeKeyRef, fieldIdConclusiones, isVisitEditable, canEditVisit, openTextEditor]);
 
   const handleConclusionesHold = useCallback((target, clientY) => {
     if (!target || !isOverflowing(target)) return false;
@@ -355,7 +493,16 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const { applyValues: applyTextEditorValues } = useTextEditorFields(textEditorBindings, {
     applyOnMount: !actividadId,
     listenPageShow: true,
+    enabled: canEditVisit,
   });
+
+  useEffect(() => {
+    if (!mutationAccess.ready || canEditVisit) return;
+
+    clearTextEditorValue(fieldIdComentarios);
+    clearTextEditorValue(fieldIdAntecedentes);
+    clearTextEditorValue(fieldIdConclusiones);
+  }, [canEditVisit, fieldIdAntecedentes, fieldIdComentarios, fieldIdConclusiones, mutationAccess.ready]);
 
   const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "Confirm_Yes"),
@@ -388,7 +535,7 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     handleModalConfirm();
   }, [busy, modalError, closeConfirm, handleModalConfirm]);
 
-  const hasActiveProcess = useMemo(() => busy || isEditing, [busy, isEditing]);
+  const hasActiveProcess = useMemo(() => busy || isVisitEditable, [busy, isVisitEditable]);
 
   useEffect(() => {
     window.__indSetNavigationGuard?.(hasActiveProcess);
@@ -424,15 +571,15 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   useEffect(() => {
     const el = readOnlySurfaceRef.current;
     if (!el) return;
-    if (!isEditing) {
+    if (!isVisitEditable) {
       el.classList.add("ind-readonly-surface");
     } else {
       el.classList.remove("ind-readonly-surface");
     }
-  }, [isEditing]);
+  }, [isVisitEditable]);
 
   useEffect(() => {
-    if (isEditing) {
+    if (isVisitEditable) {
       if (!editSnapshotRef.current) {
         editSnapshotRef.current = {
           transDate,
@@ -448,22 +595,22 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
       return;
     }
     editSnapshotRef.current = null;
-  }, [isEditing, transDate, visitType, contactMethod, asistenteTipo, description, comentarios, antecedentes, conclusiones]);
+  }, [isVisitEditable, transDate, visitType, contactMethod, asistenteTipo, description, comentarios, antecedentes, conclusiones]);
 
   useEffect(() => {
-    if (isEditing) return undefined;
+    if (isVisitEditable) return undefined;
     return bindReadOnlyGuard(readOnlySurfaceRef.current);
-  }, [isEditing]);
+  }, [isVisitEditable]);
 
   const handleEnableEdit = useCallback(() => {
     if (!canEditVisit) {
-      showPermissionModal();
+      logBlockedPermission("edit");
       return;
     }
     setIsEditing(true);
     syncEditModeFlag(true);
     setStatus(indT("Visits_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditVisit, syncEditModeFlag]);
+  }, [canEditVisit, logBlockedPermission, syncEditModeFlag]);
 
   const handleCancelEdit = useCallback(() => {
     if (!isEditing) return;
@@ -477,7 +624,7 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
 
   const { handleUpdate, handleDelete } = useDetailMutations({
     busy,
-    isEditing,
+    isEditing: isVisitEditable,
     canEditHistory: canEditVisit,
     canDeleteHistory: canDeleteVisit,
     recId,
@@ -500,6 +647,7 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     matchOptionValue,
     clearDraft,
     syncEditModeFlag,
+    onPermissionBlocked: logBlockedPermission,
     setModalError,
     setBusy,
     setStatus,
@@ -509,7 +657,7 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   useDetailTopbarActions({
     busy,
     modalOpen: modal.open,
-    isEditing,
+    isEditing: isVisitEditable,
     canEditHistory: canEditVisit,
     canDeleteHistory: canDeleteVisit,
     transDate,
@@ -518,9 +666,10 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
     handleCancelEdit,
     handleUpdate,
     handleDelete,
+    onPermissionBlocked: logBlockedPermission,
     openConfirm,
     closeConfirm,
-    permissionsReady: visibleUsersReady,
+    permissionsReady: mutationAccess.ready,
   });
 
   const descriptionLabel = indT("Visits_Field_Description", "Description");
@@ -529,9 +678,9 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
   const conclusionsLabel = indT("Visits_Field_Conclusions", "Conclusions");
   const detailDescriptionClassName = classNames(
     "form-control",
-    isEditing ? "border-neutral-200 text-neutral-900" : "border-neutral-200 ind-readonly-field"
+    isVisitEditable ? "border-neutral-200 text-neutral-900" : "border-neutral-200 ind-readonly-field"
   );
-  const detailReadOnlyClassName = classNames("form-control cursor-pointer", !isEditing ? "ind-readonly-field" : "");
+  const detailReadOnlyClassName = classNames("form-control cursor-pointer", !isVisitEditable ? "ind-readonly-field" : "");
 
   return (
     <div className="space-y-4">
@@ -572,8 +721,8 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
               label={indT("Visits_Detail_Date_Label", "Date")}
               value={transDate}
               onChange={setTransDate}
-              disabled={!isEditing}
-              readOnly={!isEditing}
+              disabled={!isVisitEditable}
+              readOnly={!isVisitEditable}
             />
           </div>
           <SelectCombobox
@@ -582,8 +731,8 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
             value={visitType}
             onChange={setVisitType}
             placeholder={indT("Visits_Detail_VisitType_Placeholder", "Select type")}
-            disabled={!isEditing}
-            readOnly={!isEditing}
+            disabled={!isVisitEditable}
+            readOnly={!isVisitEditable}
             usePortal={false}
           />
           <SelectCombobox
@@ -592,8 +741,8 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
             value={contactMethod}
             onChange={setContactMethod}
             placeholder={indT("Visits_Detail_ContactMethod_Placeholder", "Select method")}
-            disabled={!isEditing}
-            readOnly={!isEditing}
+            disabled={!isVisitEditable}
+            readOnly={!isVisitEditable}
             usePortal={false}
           />
         </div>
@@ -602,7 +751,7 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
           descriptionLabel={descriptionLabel}
           descriptionValue={description}
           descriptionClassName={detailDescriptionClassName}
-          descriptionDisabled={!isEditing}
+          descriptionDisabled={!isVisitEditable}
           onDescriptionChange={setDescription}
           tapFields={[
             {

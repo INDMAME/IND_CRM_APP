@@ -30,6 +30,7 @@ type UseModuleDataVisibilityArgs = {
   appCode: string;
   moduleCode: string;
   includeCrmUserId?: boolean;
+  allowCachedUsers?: boolean;
   preloadedUsers?: unknown[] | null;
   onForbidden?: () => void;
   onDebug?: (message: string, data?: Record<string, unknown>) => void;
@@ -87,6 +88,7 @@ export const useModuleDataVisibility = ({
   appCode,
   moduleCode,
   includeCrmUserId = true,
+  allowCachedUsers = true,
   preloadedUsers,
   onForbidden,
   onDebug,
@@ -133,7 +135,7 @@ export const useModuleDataVisibility = ({
         return;
       }
 
-      const cached = force ? null : getSessionJsonWithExpiry<ModuleDataVisibilityCacheEntry>(cacheKey);
+      const cached = force || !allowCachedUsers ? null : getSessionJsonWithExpiry<ModuleDataVisibilityCacheEntry>(cacheKey);
       if (cached && Array.isArray(cached.users)) {
         setVisibleUsers(cached.users);
         setVisibleUsersLoading(false);
@@ -203,6 +205,7 @@ export const useModuleDataVisibility = ({
     },
     [
       abortActiveRequest,
+      allowCachedUsers,
       appCode,
       axUserId,
       companyId,

@@ -9,21 +9,25 @@ type FieldBinding = {
 type Options = {
   applyOnMount?: boolean;
   listenPageShow?: boolean;
+  enabled?: boolean;
 };
 
 // Synchronizes field values that return from the full-screen text editor.
 export const useTextEditorFields = (fields: FieldBinding[], options?: Options) => {
   const applyOnMount = options?.applyOnMount !== false;
   const listenPageShow = options?.listenPageShow !== false;
+  const enabled = options?.enabled !== false;
 
   const applyValues = useCallback(() => {
+    if (!enabled) return;
+
     fields.forEach((field) => {
       const value = readAndClearTextEditorValue(field.fieldId);
       if (value !== null) {
         field.applyValue(value);
       }
     });
-  }, [fields]);
+  }, [enabled, fields]);
 
   useEffect(() => {
     if (applyOnMount) {

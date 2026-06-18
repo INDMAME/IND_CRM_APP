@@ -538,7 +538,42 @@ namespace IND_CRM_APP.Services
                                 ModuleCode = m.ModuleCode ?? string.Empty,
                                 Description = m.Description ?? string.Empty,
                                 IsActive = ToBool(m.IsActive),
-                                AccessRightsInt = ToInt(m.AccessRightsInt) ?? ToInt(m.AccessRights) ?? 0
+                                AccessRightsInt = FirstAccessRights(
+                                    m.AccessRightsInt,
+                                    m.AccessRights,
+                                    FirstModuleExtra(m, AccessRightsAliases)) ?? IndAccessRights.NoAccess,
+                                DataVisibilityMode = FirstText(
+                                    m.DataVisibilityModeLabel,
+                                    m.DataVisibilityMode,
+                                    m.VisibilityMode,
+                                    FirstModuleExtra(m, DataVisibilityModeTextAliases)),
+                                DataVisibilityModeInt = FirstInt(
+                                    m.DataVisibilityModeInt,
+                                    m.VisibilityModeInt,
+                                    FirstModuleExtra(m, DataVisibilityModeIntAliases)),
+                                HierarchyDepth = FirstText(
+                                    m.HierarchyDepthLabel,
+                                    m.HierarchyDepth,
+                                    FirstModuleExtra(m, HierarchyDepthTextAliases)),
+                                HierarchyDepthInt = FirstInt(
+                                    m.HierarchyDepthInt,
+                                    FirstModuleExtra(m, HierarchyDepthIntAliases)),
+                                MutationPolicy = FirstText(
+                                    m.MutationPolicy,
+                                    m.ModificationPolicy,
+                                    m.MutationPolicyLabel,
+                                    m.ModificationPolicyLabel,
+                                    FirstModuleExtra(m, MutationPolicyTextAliases)),
+                                MutationPolicyInt = FirstInt(
+                                    m.MutationPolicyInt,
+                                    m.ModificationPolicyInt,
+                                    FirstModuleExtra(m, MutationPolicyIntAliases)),
+                                MutationPolicyLabel = FirstText(
+                                    m.MutationPolicyLabel,
+                                    m.ModificationPolicyLabel,
+                                    m.MutationPolicy,
+                                    m.ModificationPolicy,
+                                    FirstModuleExtra(m, MutationPolicyLabelAliases))
                             });
                         }
                     }
@@ -626,6 +661,231 @@ namespace IND_CRM_APP.Services
                 return parsed;
 
             return rawString.Trim() == "1";
+        }
+
+        // Returns the first non-empty string-like value from raw API fields.
+        private static string FirstText(params object?[] values)
+        {
+            foreach (var value in values)
+            {
+                var text = ToText(value);
+                if (!string.IsNullOrWhiteSpace(text))
+                    return text;
+            }
+
+            return string.Empty;
+        }
+
+        // Returns the first int-like value from raw API fields.
+        private static int? FirstInt(params object?[] values)
+        {
+            foreach (var value in values)
+            {
+                var result = ToInt(value);
+                if (result.HasValue)
+                    return result;
+            }
+
+            return null;
+        }
+
+        private static readonly string[] DataVisibilityModeTextAliases =
+        {
+            "DataVisibilityMode",
+            "DataVisibilityModeLabel",
+            "DataVisibilityModeName",
+            "DataVisibilityModeText",
+            "VisibilityMode",
+            "VisibilityModeLabel",
+            "VisibilityModeName",
+            "Modo de visibilidad de datos",
+            "Modo de visibilidad",
+            "ModoVisibilidadDatos",
+            "ModoVisibilidad"
+        };
+
+        private static readonly string[] AccessRightsAliases =
+        {
+            "AccessRights",
+            "AccessRightsInt",
+            "AccessRightsLabel",
+            "AccessRight",
+            "AccessLevel",
+            "AccessLevelInt",
+            "NivelAcceso",
+            "DerechosAcceso"
+        };
+
+        private static readonly string[] DataVisibilityModeIntAliases =
+        {
+            "DataVisibilityModeInt",
+            "DataVisibilityModeValue",
+            "DataVisibilityModeId",
+            "VisibilityModeInt",
+            "VisibilityModeValue",
+            "VisibilityModeId"
+        };
+
+        private static readonly string[] HierarchyDepthTextAliases =
+        {
+            "HierarchyDepth",
+            "HierarchyDepthLabel",
+            "HierarchyDepthName",
+            "HierarchyDepthText",
+            "Profundidad de jerarquia",
+            "Profundidad de jerarquía",
+            "ProfundidadJerarquia",
+            "Depth",
+            "DepthLabel"
+        };
+
+        private static readonly string[] HierarchyDepthIntAliases =
+        {
+            "HierarchyDepthInt",
+            "HierarchyDepthValue",
+            "HierarchyDepthId",
+            "DepthInt",
+            "DepthValue"
+        };
+
+        private static readonly string[] MutationPolicyTextAliases =
+        {
+            "MutationPolicy",
+            "MutationPolicyLabel",
+            "MutationPolicyName",
+            "MutationPolicyText",
+            "ModificationPolicy",
+            "ModificationPolicyLabel",
+            "ModificationPolicyName",
+            "ModificationPolicyText",
+            "Politica de modificacion",
+            "Política de modificación",
+            "PoliticaModificacion",
+            "ModificationMode",
+            "ModificationModeLabel"
+        };
+
+        private static readonly string[] MutationPolicyIntAliases =
+        {
+            "MutationPolicyInt",
+            "MutationPolicyValue",
+            "MutationPolicyId",
+            "ModificationPolicyInt",
+            "ModificationPolicyValue",
+            "ModificationPolicyId",
+            "ModificationModeInt",
+            "ModificationModeValue"
+        };
+
+        private static readonly string[] MutationPolicyLabelAliases =
+        {
+            "MutationPolicyLabel",
+            "MutationPolicyName",
+            "MutationPolicyText",
+            "ModificationPolicyLabel",
+            "ModificationPolicyName",
+            "ModificationPolicyText",
+            "Politica de modificacion",
+            "Política de modificación",
+            "PoliticaModificacion"
+        };
+
+        // Reads a module field from unknown API aliases captured by JsonExtensionData.
+        private static object? FirstModuleExtra(IndEntraModule module, params string[] aliases)
+        {
+            if (module.ExtensionData == null || module.ExtensionData.Count == 0 || aliases.Length == 0)
+                return null;
+
+            foreach (var alias in aliases)
+            {
+                var normalizedAlias = NormalizeJsonFieldName(alias);
+                if (string.IsNullOrWhiteSpace(normalizedAlias))
+                    continue;
+
+                foreach (var entry in module.ExtensionData)
+                {
+                    if (NormalizeJsonFieldName(entry.Key) == normalizedAlias)
+                        return entry.Value;
+                }
+            }
+
+            return null;
+        }
+
+        // Returns the first access-right value from numeric or label-style API fields.
+        private static int? FirstAccessRights(params object?[] values)
+        {
+            foreach (var value in values)
+            {
+                var result = ToAccessRights(value);
+                if (result.HasValue)
+                    return result;
+            }
+
+            return null;
+        }
+
+        // Converts access-right labels into the internal numeric scale.
+        private static int? ToAccessRights(object? raw)
+        {
+            var numeric = ToInt(raw);
+            if (numeric.HasValue)
+                return numeric;
+
+            var token = NormalizeJsonFieldName(ToText(raw));
+            if (string.IsNullOrWhiteSpace(token))
+                return null;
+
+            return token switch
+            {
+                "noaccess" or "sinacceso" or "ninguno" => IndAccessRights.NoAccess,
+                "view" or "read" or "lectura" or "sololectura" or "ver" => IndAccessRights.View,
+                "edit" or "edicion" or "editar" or "modificar" => IndAccessRights.Edit,
+                "add" or "create" or "agregar" or "crear" or "alta" => IndAccessRights.Add,
+                "fullaccess" or "controltotal" or "totalcontrol" or "total" => IndAccessRights.FullAccess,
+                _ => null
+            };
+        }
+
+        // Normalizes dynamic JSON field names and labels for resilient matching.
+        private static string NormalizeJsonFieldName(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            var normalized = value.Trim().Normalize(NormalizationForm.FormD);
+            var builder = new StringBuilder(normalized.Length);
+            foreach (var ch in normalized)
+            {
+                if (CharUnicodeInfo.GetUnicodeCategory(ch) == UnicodeCategory.NonSpacingMark)
+                    continue;
+
+                if (char.IsLetterOrDigit(ch))
+                    builder.Append(char.ToLowerInvariant(ch));
+            }
+
+            return builder.ToString();
+        }
+
+        // Converts string/number/JsonElement values into trimmed text.
+        private static string ToText(object? raw)
+        {
+            if (raw == null)
+                return string.Empty;
+
+            if (raw is JsonElement el)
+            {
+                return el.ValueKind switch
+                {
+                    JsonValueKind.String => el.GetString()?.Trim() ?? string.Empty,
+                    JsonValueKind.Number => el.GetRawText(),
+                    JsonValueKind.True => "true",
+                    JsonValueKind.False => "false",
+                    _ => string.Empty
+                };
+            }
+
+            return raw.ToString()?.Trim() ?? string.Empty;
         }
 
         // Converts string/number/JsonElement values into an int when possible.
