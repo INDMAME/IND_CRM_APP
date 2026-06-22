@@ -32,7 +32,6 @@ namespace IND_CRM_APP.Services
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<ApiClientService> _logger;
         private readonly int _accountsTimeoutSeconds;
-        private static readonly HashSet<int> AllowedGastoTypeCodes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
         private const int MinSupportedExpenseYear = 1900;
         private const int MaxSupportedExpenseYear = 2100;
         private const int TwoDigitExpenseYearPivot = 50;
@@ -580,10 +579,10 @@ namespace IND_CRM_APP.Services
             return normalized;
         }
 
-        // Normalizes optional gasto type values against the fixed enum set.
+        // Normalizes optional AX enum values while leaving catalog validation to the API.
         private static int? NormalizeTicketGastoType(int? gastoType)
         {
-            return gastoType.HasValue && AllowedGastoTypeCodes.Contains(gastoType.Value)
+            return gastoType.HasValue && gastoType.Value >= 0
                 ? gastoType
                 : null;
         }
@@ -899,6 +898,27 @@ namespace IND_CRM_APP.Services
 
             var result = await SendGetAsync(ApiRoutes.HealthPing);
             return BuildApiResponse<object>(result, "GetHealthPing");
+        }
+
+        // Gets configured AX enum options by enum name for the active company.
+        public async Task<PagedApiResponse<CrmEnumCatalogDto>> GetEnumCatalogByNameAsync(
+            string token,
+            string? appCode,
+            IEnumerable<string>? axEnumNames)
+        {
+            PrepareRequestHeaders(token, "GetEnumCatalogByName", requireCompany: true);
+
+            var safeAppCode = EscapeQueryValue(string.IsNullOrWhiteSpace(appCode) ? "CRM" : appCode.Trim());
+            var names = axEnumNames == null
+                ? string.Empty
+                : string.Join(",", axEnumNames
+                    .Select(name => (name ?? string.Empty).Trim())
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .Distinct(StringComparer.OrdinalIgnoreCase));
+            var safeNames = EscapeQueryValue(names);
+
+            var result = await SendGetAsync(ApiRoutes.CrmEnumsByNameByQuery(safeAppCode, safeNames));
+            return BuildPagedResponse<CrmEnumCatalogDto>(result, "GetEnumCatalogByName");
         }
 
         // ======================================================
@@ -1386,8 +1406,8 @@ namespace IND_CRM_APP.Services
             var normalizedPage = req.Page < 1 ? 1 : req.Page;
             var normalizedPageSize = req.PageSize <= 0 ? 50 : req.PageSize;
             var normalizedBilledMode = req.BilledMode is >= 0 and <= 2 ? req.BilledMode.Value : 2;
-            var normalizedExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null;
-            var normalizedReimbursableExpense = req.ReimbursableExpense is >= 0 and <= 2 ? req.ReimbursableExpense : null;
+            var normalizedExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null;
+            var normalizedReimbursableExpense = req.ReimbursableExpense is >= 0 ? req.ReimbursableExpense : null;
             var normalizedFilter = NormalizeOptionalText(req.Filter) ?? string.Empty;
             var normalizedCreatedDateFrom = NormalizeAxListDate(req.CreatedDateFrom) ?? string.Empty;
             var normalizedCreatedDateTo = NormalizeAxListDate(req.CreatedDateTo) ?? string.Empty;
@@ -2548,8 +2568,8 @@ namespace IND_CRM_APP.Services
                 CreatedDateTo = NormalizeAxListDate(request.CreatedDateTo),
                 ProjId = NormalizeOptionalText(request.ProjId),
                 CurrencyCode = NormalizeOptionalText(request.CurrencyCode)?.ToUpperInvariant(),
-                ExpenseSheetStatus = request.ExpenseSheetStatus is >= 0 and <= 4 ? request.ExpenseSheetStatus : null,
-                ReimbursableExpense = request.ReimbursableExpense is >= 0 and <= 2 ? request.ReimbursableExpense : null,
+                ExpenseSheetStatus = request.ExpenseSheetStatus is >= 0 ? request.ExpenseSheetStatus : null,
+                ReimbursableExpense = request.ReimbursableExpense is >= 0 ? request.ReimbursableExpense : null,
                 IncludeSubordinates = request.IncludeSubordinates,
                 Page = request.Page < 1 ? 1 : request.Page,
                 PageSize = request.PageSize <= 0 ? 50 : request.PageSize

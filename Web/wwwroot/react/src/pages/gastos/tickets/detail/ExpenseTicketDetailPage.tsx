@@ -9,7 +9,8 @@ import { mountReactIsland, mountWhenDocumentReady } from "../../../../utils/reac
 import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
 import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../../utils/expenseNavigation.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
-import { mapWindowEnumOptions, type ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
+import { getExpenseGastoTypeOptions } from "../../constants/expenseGastoTypeCatalog.ts";
+import type { ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
 import { buildExpenseSheetDetailUrl } from "../../utils/expenseTicketReturnContext.ts";
 import { readExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
@@ -29,20 +30,7 @@ import { useExpenseTicketDetailBackNavigation } from "./useExpenseTicketDetailBa
 import { useExpenseTicketDetailPreviewPanel } from "./useExpenseTicketDetailPreviewPanel.ts";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "./expenseTicketDetailTypes.ts";
 
-const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const LINES_PAGE_SIZE = 6;
-const GASTO_TYPE_LABEL_KEYS: Record<number, { key: string; fallback: string }> = {
-  0: { key: "Enum_None", fallback: "None" },
-  1: { key: "Enum_GastoType_Peaje", fallback: "Peaje" },
-  2: { key: "Enum_GastoType_Parking", fallback: "Parking" },
-  3: { key: "Enum_GastoType_Km", fallback: "Km" },
-  4: { key: "Enum_GastoType_Desayuno", fallback: "Desayuno" },
-  5: { key: "Enum_GastoType_Comida", fallback: "Comida" },
-  6: { key: "Enum_GastoType_Cena", fallback: "Cena" },
-  7: { key: "Enum_GastoType_Hotel", fallback: "Hotel" },
-  8: { key: "Enum_GastoType_Varios", fallback: "Varios" },
-  14: { key: "Enum_GastoType_Taxi", fallback: "Taxi" },
-};
 
 const NewLineIcon = () => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="size-5">
@@ -66,15 +54,6 @@ const bootstrapExpenseApiAuth = () => {
     entraOid: safeText(window.__IND_ENTRA_OID__),
     appCode: safeText(window.__IND_APP_CODE__),
   });
-};
-
-const buildFallbackGastoTypeOptions = (): ExpenseSelectOption[] => {
-  return Object.entries(GASTO_TYPE_LABEL_KEYS)
-    .map(([code, cfg]) => ({
-      value: String(code),
-      text: indT(cfg.key, cfg.fallback),
-    }))
-    .sort((left, right) => Number(left.value) - Number(right.value));
 };
 
 const resolveLinkedTicketBlockedMessage = (isPaid: boolean): string => {
@@ -458,19 +437,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     selectedManagedUserId,
     managementBootstrapReady,
   } = useExpenseTicketDetailPermissionState();
-  const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
-    const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
-    const mapped = mapWindowEnumOptions(source).filter((entry) => {
-      const parsed = Number(entry.value);
-      return Number.isInteger(parsed) && ALLOWED_GASTO_TYPES.has(parsed);
-    });
-
-    if (mapped.length > 0) {
-      return mapped.sort((left, right) => Number(left.value) - Number(right.value));
-    }
-
-    return buildFallbackGastoTypeOptions();
-  }, []);
+  const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => getExpenseGastoTypeOptions(), []);
   const gastoTypeLabelMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const option of gastoTypeOptions) {

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using IND_CRM_APP.Models.CRM;
 
 namespace IND_CRM_APP.Services.Enums
 {
@@ -7,6 +8,10 @@ namespace IND_CRM_APP.Services.Enums
     {
         string NormalizeTipoVisitaValue(string? raw);
         string NormalizeContactMethodValue(string? raw);
+        IEnumerable<dynamic> GetOptionsByAxEnumName(
+            IEnumerable<CrmEnumCatalogDto>? catalog,
+            string axEnumName,
+            IEnumerable<dynamic>? fallback = null);
         IReadOnlyDictionary<string, string> GetGastoTypeMap();
         string GetGastoTypeLabel(string? rawTypeValue);
     }

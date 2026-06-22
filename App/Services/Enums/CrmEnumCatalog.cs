@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.Linq;
 using System.Text;
+using IND_CRM_APP.Models.CRM;
 
 namespace IND_CRM_APP.Services.Enums
 {
@@ -53,6 +55,36 @@ namespace IND_CRM_APP.Services.Enums
                 return "2";
 
             return value;
+        }
+
+        // Returns select-ready options for one AX enum from the remote catalog.
+        public IEnumerable<dynamic> GetOptionsByAxEnumName(
+            IEnumerable<CrmEnumCatalogDto>? catalog,
+            string axEnumName,
+            IEnumerable<dynamic>? fallback = null)
+        {
+            var fallbackItems = fallback ?? Enumerable.Empty<dynamic>();
+            if (catalog == null || string.IsNullOrWhiteSpace(axEnumName))
+                return fallbackItems;
+
+            var enumGroup = catalog.FirstOrDefault(item =>
+                string.Equals(item.AxEnumName, axEnumName, StringComparison.OrdinalIgnoreCase));
+            if (enumGroup == null || !enumGroup.Found || enumGroup.Options == null || enumGroup.Options.Count == 0)
+                return fallbackItems;
+
+            var options = enumGroup.Options
+                .Where(option => option.Active && option.Value.HasValue && !string.IsNullOrWhiteSpace(option.Label))
+                .OrderBy(option => option.SortOrder ?? int.MaxValue)
+                .ThenBy(option => option.Value ?? int.MaxValue)
+                .Select(option => new
+                {
+                    Value = option.Value!.Value.ToString(CultureInfo.InvariantCulture),
+                    Text = option.Label.Trim()
+                })
+                .Cast<dynamic>()
+                .ToList();
+
+            return options.Count > 0 ? options : fallbackItems;
         }
 
         // Returns a map of gasto type code to localized label.

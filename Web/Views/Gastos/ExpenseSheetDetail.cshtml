@@ -19,6 +19,10 @@
         window.__EXPENSE_SHEET_ID__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.HojaGastosId ?? string.Empty)));
         window.__EXPENSE_SHEET_MODE__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.ExpenseSheetMode ?? "view")));
         window.__EXPENSE_ACTING_USER_ID__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.ExpenseActingUserId ?? string.Empty)));
+        window.__EXPENSE_GASTO_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.GastoTypeOptions ?? new object[0]));
+        window.__EXPENSE_SHEET_STATUSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ExpenseSheetStatusOptions ?? new object[0]));
+        window.__EXPENSE_EXCHANGE_RATE_MODES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ExchangeRateModeOptions ?? new object[0]));
+        window.__EXPENSE_REIMBURSABLE_EXPENSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ReimbursableExpenseOptions ?? new object[0]));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Save = SR["Common_Save"].Value,
             Common_Cancel = SR["Common_Cancel"].Value,

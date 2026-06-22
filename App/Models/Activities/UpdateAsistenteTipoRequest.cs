@@ -9,8 +9,9 @@ namespace IND_CRM_APP.Models.Activities
     /// </summary>
     public class UpdateAsistenteTipoRequest
     {
+        // AX assistant type enum numeric value.
         [JsonPropertyName("asistenteTipo")]
-        public string AsistenteTipo { get; set; } = string.Empty;
+        public int? AsistenteTipo { get; set; }
     }
 }
 

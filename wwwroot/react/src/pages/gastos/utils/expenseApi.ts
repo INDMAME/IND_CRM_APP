@@ -203,7 +203,7 @@ const toFlagBool = toFlagBoolTransform;
 
 const normalizeExpenseSheetReimbursable = (value: unknown): number | null => {
   const parsed = toNullableNumber(value);
-  if (parsed === null || !Number.isInteger(parsed) || parsed < 0 || parsed > 2) {
+  if (parsed === null || !Number.isInteger(parsed) || parsed < 0) {
     return null;
   }
 

@@ -11,15 +11,15 @@ namespace IND_CRM_APP.Models.Activities
         [JsonPropertyName("accountNum")]
         public string AccountNum { get; set; } = string.Empty;
 
-        // Mapea VisitType -> visitType
+        // Maps VisitType -> visitType as the AX enum numeric value.
         [JsonPropertyName("visitType")]
-        public string VisitType { get; set; } = string.Empty;
+        public int? VisitType { get; set; }
 
-        // Mapea Description -> description
+        // Maps Description -> description.
         [JsonPropertyName("description")]
         public string Description { get; set; } = string.Empty;
 
-        // Mapea TransDate -> transDate
+        // Maps TransDate -> transDate.
         [JsonPropertyName("transDate")]
         public string TransDate { get; set; } = string.Empty;
 
@@ -27,15 +27,15 @@ namespace IND_CRM_APP.Models.Activities
         [JsonPropertyName("contactMethod")]
         public int? ContactMethod { get; set; }
 
-        // Mapea Comentarios -> comentarios
+        // Maps Comentarios -> comentarios.
         [JsonPropertyName("comentarios")]
         public string Comentarios { get; set; } = string.Empty;
 
-        // Mapea Antecedentes -> antecedentes
+        // Maps Antecedentes -> antecedentes.
         [JsonPropertyName("antecedentes")]
         public string Antecedentes { get; set; } = string.Empty;
 
-        // Mapea Conclusiones -> conclusiones
+        // Maps Conclusiones -> conclusiones.
         [JsonPropertyName("conclusiones")]
         public string Conclusiones { get; set; } = string.Empty;
     }

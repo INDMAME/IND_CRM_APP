@@ -99,6 +99,12 @@ namespace IND_CRM_APP.Infrastructure.Security.Modules
                 {
                     ModuleGastosHojaGasto,
                     ModuleGastosTickets
+                },
+                ["/api/crm/enums/by-name"] = new[]
+                {
+                    ModuleVisitasGestion,
+                    ModuleGastosHojaGasto,
+                    ModuleGastosTickets
                 }
             };
 

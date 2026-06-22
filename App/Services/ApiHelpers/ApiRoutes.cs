@@ -14,6 +14,7 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string SystemExchangeRatePublicDirect = "api/system/exchange-rate/public-direct";
         public const string Health = "api/health/health";
         public const string HealthPing = "api/health/ping";
+        public const string CrmEnumsByName = "api/crm/enums/by-name";
         public const string AccountsList = "api/crm/accounts/listAccounts";
         public const string ContactsList = "api/crm/accounts/listContacts";
         public const string ActivitiesList = "api/crm/activities/list";
@@ -45,6 +46,16 @@ namespace IND_CRM_APP.Services.ApiHelpers
             string safeModuleCode,
             bool includeCrmUserId) =>
             $"{DataVisibilityVisibleUsers}?appCode={safeAppCode}&moduleCode={safeModuleCode}&includeCrmUserId={(includeCrmUserId ? "true" : "false")}";
+
+        // Builds the CRM enum catalog route by AX enum names.
+        public static string CrmEnumsByNameByQuery(string safeAppCode, string safeAxEnumNames)
+        {
+            var route = $"{CrmEnumsByName}?appCode={safeAppCode}";
+            if (!string.IsNullOrWhiteSpace(safeAxEnumNames))
+                route = $"{route}&axEnumNames={safeAxEnumNames}";
+
+            return route;
+        }
 
         // Builds the expense sheet by id route.
         public static string ExpenseSheetById(string safeId) =>

@@ -9,7 +9,7 @@ export const normalizeExpenseFilterSnapshot = (
     (value as { expenseSheetStatus?: unknown } | null | undefined)?.expenseSheetStatus
   );
   const billedModeRaw = Number((value as { billedMode?: unknown } | null | undefined)?.billedMode);
-  const hasExplicitStatus = Number.isInteger(expenseSheetStatusRaw) && expenseSheetStatusRaw >= 0 && expenseSheetStatusRaw <= 4;
+  const hasExplicitStatus = Number.isInteger(expenseSheetStatusRaw) && expenseSheetStatusRaw >= 0;
   const legacyStatusFallback = billedModeRaw === 1 ? 4 : billedModeRaw === 0 ? 0 : DEFAULT_EXPENSE_STATUS_FILTER;
   const statusFilter = normalizeExpenseStatusFilterCode(
     hasExplicitStatus ? expenseSheetStatusRaw : value?.statusFilter,

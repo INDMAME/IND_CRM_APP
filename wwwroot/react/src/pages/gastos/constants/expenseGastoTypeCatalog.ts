@@ -1,0 +1,142 @@
+import { indT } from "../../../utils/indI18n.ts";
+import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
+import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
+
+type GastoTypeFallbackOption = {
+  value: ExpenseGastoTypeCode;
+  labelKey: string;
+  fallback: string;
+};
+
+export const FALLBACK_EXPENSE_GASTO_TYPE_CODES: ExpenseGastoTypeCode[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 14];
+
+const FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS: GastoTypeFallbackOption[] = [
+  { value: 0, labelKey: "Enum_None", fallback: "None" },
+  { value: 1, labelKey: "Enum_GastoType_Peaje", fallback: "Peaje" },
+  { value: 2, labelKey: "Enum_GastoType_Parking", fallback: "Parking" },
+  { value: 3, labelKey: "Enum_GastoType_Km", fallback: "Km" },
+  { value: 4, labelKey: "Enum_GastoType_Desayuno", fallback: "Desayuno" },
+  { value: 5, labelKey: "Enum_GastoType_Comida", fallback: "Comida" },
+  { value: 6, labelKey: "Enum_GastoType_Cena", fallback: "Cena" },
+  { value: 7, labelKey: "Enum_GastoType_Hotel", fallback: "Hotel" },
+  { value: 8, labelKey: "Enum_GastoType_Varios", fallback: "Varios" },
+  { value: 14, labelKey: "Enum_GastoType_Taxi", fallback: "Taxi" },
+];
+
+const toIntegerGastoTypeCode = (value: unknown): ExpenseGastoTypeCode | null => {
+  if (value === null || value === undefined) return null;
+  if (typeof value === "string" && !value.trim()) return null;
+
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+};
+
+const getCatalogSource = () => {
+  if (typeof window === "undefined" || !Array.isArray(window.__EXPENSE_GASTO_TYPES__)) {
+    return [];
+  }
+
+  return window.__EXPENSE_GASTO_TYPES__;
+};
+
+const getCatalogOptions = (): ExpenseSelectOption[] => {
+  const seen = new Set<string>();
+  const options: ExpenseSelectOption[] = [];
+
+  for (const option of mapWindowEnumOptions(getCatalogSource())) {
+    const code = toIntegerGastoTypeCode(option.value);
+    if (code === null) continue;
+
+    const key = String(code);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    options.push({
+      value: key,
+      text: option.text,
+    });
+  }
+
+  return options;
+};
+
+const getFallbackOptions = (): ExpenseSelectOption[] => {
+  return FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS.map((option) => ({
+    value: String(option.value),
+    text: indT(option.labelKey, option.fallback),
+  }));
+};
+
+// Returns catalog options in backend SortOrder order, falling back only when the catalog is unavailable.
+export const getExpenseGastoTypeOptions = (): ExpenseSelectOption[] => {
+  const catalogOptions = getCatalogOptions();
+  return catalogOptions.length > 0 ? catalogOptions : getFallbackOptions();
+};
+
+// Builds the active value set used by filters, caches, and request payload guards.
+export const getExpenseGastoTypeCodeSet = ({
+  includeFallbackIfEmpty = true,
+}: {
+  includeFallbackIfEmpty?: boolean;
+} = {}): Set<ExpenseGastoTypeCode> => {
+  const catalogOptions = getCatalogOptions();
+  if (catalogOptions.length > 0) {
+    return new Set(
+      catalogOptions
+        .map((option) => toIntegerGastoTypeCode(option.value))
+        .filter((code): code is ExpenseGastoTypeCode => code !== null)
+    );
+  }
+
+  return includeFallbackIfEmpty ? new Set(FALLBACK_EXPENSE_GASTO_TYPE_CODES) : new Set();
+};
+
+// Converts unknown input to a valid CRMGastoType value from the active catalog.
+export const toExpenseGastoTypeCode = (
+  value: unknown,
+  {
+    allowNone = true,
+    includeFallbackIfEmpty = true,
+  }: {
+    allowNone?: boolean;
+    includeFallbackIfEmpty?: boolean;
+  } = {}
+): ExpenseGastoTypeCode | null => {
+  const code = toIntegerGastoTypeCode(value);
+  if (code === null) return null;
+  if (!allowNone && code === 0) return null;
+
+  return getExpenseGastoTypeCodeSet({ includeFallbackIfEmpty }).has(code) ? code : null;
+};
+
+// Checks whether a value can be used as a CRMGastoType business value.
+export const isExpenseGastoTypeCode = (
+  value: unknown,
+  options?: {
+    allowNone?: boolean;
+    includeFallbackIfEmpty?: boolean;
+  }
+): boolean => {
+  return toExpenseGastoTypeCode(value, options) !== null;
+};
+
+// Resolves a positive default category for generated ticket-to-sheet lines.
+export const getDefaultExpenseGastoTypeCode = (preferred: ExpenseGastoTypeCode = 8): ExpenseGastoTypeCode => {
+  const preferredCode = toExpenseGastoTypeCode(preferred, { allowNone: false });
+  if (preferredCode !== null) return preferredCode;
+
+  for (const option of getExpenseGastoTypeOptions()) {
+    const code = toExpenseGastoTypeCode(option.value, { allowNone: false });
+    if (code !== null) return code;
+  }
+
+  return preferred;
+};
+
+// Formats a defensive validation message using the active catalog values.
+export const formatExpenseGastoTypeAllowedMessage = ({ allowNone = true }: { allowNone?: boolean } = {}): string => {
+  const codes = Array.from(getExpenseGastoTypeCodeSet())
+    .filter((code) => allowNone || code !== 0)
+    .join(",");
+
+  return `gastoType must be one of: ${codes}.`;
+};

@@ -420,6 +420,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-crm-enums-by-name",
+    pattern: "api/crm/enums/by-name",
+    defaults: new { controller = "CrmEnums", action = "ApiCrmEnumsByName" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
     name: "api-crm-projects-list",
     pattern: "api/crm/projects/list",
     defaults: new { controller = "Gastos", action = "ApiProjectsList" },

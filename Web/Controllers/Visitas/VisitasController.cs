@@ -1,4 +1,5 @@
 ﻿using IND_CRM_APP.Models.Activities;
+using IND_CRM_APP.Models.CRM;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using IND_CRM_APP.Extensions;
@@ -21,6 +22,15 @@ namespace IND_CRM_APP.Controllers
         private readonly ICrmEnumCatalog _crmEnumCatalog;
         private readonly IVisitMutationPermissionService _visitMutationPermissions;
         private readonly IStringLocalizer<INDSharedResource> _sr;
+        private const string CrmAppCode = "CRM";
+        private static readonly string[] VisitCatalogEnumNames =
+        {
+            "CRMActividadType",
+            "CRMTipoVisita",
+            "INDContactMethod",
+            "CRMActividadOrigen",
+            "CRMCustVendVisitaAsistente"
+        };
 
         public VisitasController(
             ICrmApiClient apiClient,
@@ -121,18 +131,14 @@ namespace IND_CRM_APP.Controllers
 
                 await LoadEnvironmentInfoAsync();
 
-                // Load enum lists for selects
-                ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
-                ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
-                ViewBag.ContactMethodEnum = _enumLocalizer.GetContactMethodItems();
-                ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
-                ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
+                await LoadVisitEnumViewBagsAsync(token);
 
                 return View();
             }
             catch
             {
                 // In case of error, still return view
+                LoadVisitEnumFallbackViewBags();
                 return View();
             }
         }
@@ -497,11 +503,7 @@ namespace IND_CRM_APP.Controllers
                     MutationPermissionStatus = mutationPermissionStatus
                 };
 
-                ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
-                ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
-                ViewBag.ContactMethodEnum = _enumLocalizer.GetContactMethodItems();
-                ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
-                ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
+                await LoadVisitEnumViewBagsAsync(token);
                 ViewData["IsVisitaDetail"] = true;
                 ViewBag.ActivityDetail = detail;
 
@@ -583,7 +585,7 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
-                if (req == null || string.IsNullOrWhiteSpace(req.AsistenteTipo))
+                if (req == null || !req.AsistenteTipo.HasValue)
                     return BadRequest(new { success = false, message = _sr["Api_MissingAsistenteTipo"].Value });
 
                 var guardResponse = ModuleRecordMutationActionResults.ToActionResult(
@@ -608,7 +610,7 @@ namespace IND_CRM_APP.Controllers
                     var upsertReq = new CreateVisitaAsistenteRequest
                     {
                         RefRecIdActividad = recId.ToString(),
-                        AsistenteTipo = req.AsistenteTipo.Trim(),
+                        AsistenteTipo = req.AsistenteTipo,
                         AsistenteId = a.AsistenteId.Trim(),
                         ContactoRecId = string.Empty
                     };
@@ -696,6 +698,58 @@ namespace IND_CRM_APP.Controllers
                     CultureInfo.InvariantCulture,
                     out recId)
                 && recId != 0;
+        }
+
+        // Loads visit select options from the AX enum catalog with local fallback.
+        private async Task LoadVisitEnumViewBagsAsync(string token)
+        {
+            LoadVisitEnumFallbackViewBags();
+
+            try
+            {
+                var result = await _apiClient.GetEnumCatalogByNameAsync(token, CrmAppCode, VisitCatalogEnumNames);
+                var catalog = result.GetAnyItems().ToList();
+                if (!result.Success && catalog.Count == 0)
+                {
+                    _logger.LogWarning("Visit enum catalog returned no usable data. Message={Message} TraceId={TraceId}", result.Message, result.TraceId);
+                    return;
+                }
+
+                ViewBag.CRMTipoVisitaEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                    catalog,
+                    "CRMTipoVisita",
+                    _enumLocalizer.GetTipoVisitaItems());
+                ViewBag.CRMActividadTypeEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                    catalog,
+                    "CRMActividadType",
+                    _enumLocalizer.GetActividadTypeItems());
+                ViewBag.ContactMethodEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                    catalog,
+                    "INDContactMethod",
+                    _enumLocalizer.GetContactMethodItems());
+                ViewBag.CRMActividadOrigenEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                    catalog,
+                    "CRMActividadOrigen",
+                    _enumLocalizer.GetActividadOrigenItems());
+                ViewBag.AsistenteTipoEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                    catalog,
+                    "CRMCustVendVisitaAsistente",
+                    _enumLocalizer.GetAsistenteTipoItems());
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load visit enum catalog. Local fallback options will be used.");
+            }
+        }
+
+        // Loads stable local fallback select options for visit screens.
+        private void LoadVisitEnumFallbackViewBags()
+        {
+            ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
+            ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
+            ViewBag.ContactMethodEnum = _enumLocalizer.GetContactMethodItems();
+            ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
+            ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
         }
 
     }

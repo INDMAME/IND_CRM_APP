@@ -16,6 +16,9 @@
 
 @section Scripts {
     <script nonce="@cspNonce">
+        window.__EXPENSE_SHEET_STATUSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ExpenseSheetStatusOptions ?? new object[0]));
+        window.__EXPENSE_EXCHANGE_RATE_MODES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ExchangeRateModeOptions ?? new object[0]));
+        window.__EXPENSE_REIMBURSABLE_EXPENSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ReimbursableExpenseOptions ?? new object[0]));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Loading = SR["Common_Loading"].Value,
             Common_NoData = SR["Common_NoData"].Value,

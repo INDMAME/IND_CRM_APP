@@ -1,11 +1,10 @@
 import { normalizeExpenseTicketStatusFilterCode } from "../constants/expenseTicketStatusCatalog.ts";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
 import type {
   ExpenseTicketAppliedFilterSnapshot,
   ExpenseTicketProcessedByIaFilter,
 } from "./expenseTicketListTypes.ts";
-
-const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 const normalizeGastoTypeFilter = (value: unknown): "" | ExpenseGastoTypeCode => {
   if (value === null || value === undefined) {
@@ -17,12 +16,7 @@ const normalizeGastoTypeFilter = (value: unknown): "" | ExpenseGastoTypeCode => 
     return "";
   }
 
-  const parsed = Number(raw);
-  if (!Number.isInteger(parsed) || !ALLOWED_GASTO_TYPES.has(parsed)) {
-    return "";
-  }
-
-  return parsed as ExpenseGastoTypeCode;
+  return toExpenseGastoTypeCode(raw) ?? "";
 };
 
 const normalizeProcessedByIaFilter = (value: unknown): ExpenseTicketProcessedByIaFilter => {

@@ -30,6 +30,16 @@ namespace IND_CRM_APP.Controllers
         private readonly ITicketBlobPreviewService _ticketBlobPreviewService;
         private readonly IIndAuthContextService _authContext;
         private readonly IStringLocalizer<INDSharedResource> _sr;
+        private const string CrmAppCode = "CRM";
+        private const string GastoTypeEnumName = "CRMGastoType";
+        private static readonly string[] ExpenseCatalogEnumNames =
+        {
+            "CRMGastoType",
+            "INDExpenseSheetStatus",
+            "INDReimbursableExpense",
+            "INDExchangeRateMode",
+            "INDTicketStatus"
+        };
         private const int ExpenseSheetStatusDraft = 0;
         private const int ExpenseSheetStatusApprovalRequested = 1;
         private const int ExpenseSheetStatusApproved = 2;
@@ -42,7 +52,6 @@ namespace IND_CRM_APP.Controllers
         private const string ExpenseManagedUserReadOnlyErrorCode = "CRM_EXPENSE_MANAGED_USER_READ_ONLY";
         private const string ExpenseManagedUserScopeDeniedErrorCode = "CRM_EXPENSE_MANAGED_USER_SCOPE_DENIED";
         private const string ExpenseSubordinatesScopeCacheKey = "__expense_subordinates_scope_cache";
-        private static readonly HashSet<int> AllowedTicketGastoTypes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
         private static readonly HashSet<string> AllowedTicketImageContentTypes = new(StringComparer.OrdinalIgnoreCase)
         {
             "image/jpeg",
@@ -148,6 +157,7 @@ namespace IND_CRM_APP.Controllers
                 return RedirectToAction("Login", "Auth");
 
             await LoadEnvironmentInfoAsync();
+            await LoadExpenseEnumViewBagsAsync(token);
 
             return View("~/Web/Views/Gastos/ExpenseSheets.cshtml");
         }
@@ -168,11 +178,7 @@ namespace IND_CRM_APP.Controllers
                 ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetDetail?hojaGastosId={Uri.EscapeDataString(safeSheetId)}";
             }
 
-            ViewBag.GastoTypeOptions = _crmEnumCatalog
-                .GetGastoTypeMap()
-                .Select(x => new { value = x.Key, text = x.Value })
-                .OrderBy(x => int.TryParse(x.value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var code) ? code : int.MaxValue)
-                .ToList();
+            await LoadExpenseEnumViewBagsAsync(token);
             return View("~/Web/Views/Gastos/Tickets.cshtml");
         }
 
@@ -189,13 +195,9 @@ namespace IND_CRM_APP.Controllers
                 return RedirectToAction(nameof(Tickets));
 
             await LoadEnvironmentInfoAsync();
+            await LoadExpenseEnumViewBagsAsync(token);
 
             ViewBag.TicketFileId = safeFileId;
-            ViewBag.GastoTypeOptions = _crmEnumCatalog
-                .GetGastoTypeMap()
-                .Select(x => new { value = x.Key, text = x.Value })
-                .OrderBy(x => int.TryParse(x.value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var code) ? code : int.MaxValue)
-                .ToList();
             var normalizedOrigin = (origin ?? string.Empty).Trim().ToLowerInvariant();
             if (normalizedOrigin == "expense-line" && !string.IsNullOrWhiteSpace(sheetId) && !string.IsNullOrWhiteSpace(lineRecId))
             {
@@ -277,6 +279,7 @@ namespace IND_CRM_APP.Controllers
             ViewBag.HojaGastosId = (hojaGastosId ?? string.Empty).Trim();
             ViewBag.ExpenseSheetMode = isCreateMode ? "create" : "view";
             ViewBag.ExpenseActingUserId = NormalizeOptionalText(TempData[ExpenseSheetLinkController.ActingUserTempDataKey]?.ToString()) ?? string.Empty;
+            await LoadExpenseEnumViewBagsAsync(token);
             return View("~/Web/Views/Gastos/ExpenseSheetDetail.cshtml");
         }
 
@@ -303,11 +306,7 @@ namespace IND_CRM_APP.Controllers
             ViewBag.HojaGastosId = safeSheetId;
             ViewBag.LineRecId = (lineRecId ?? string.Empty).Trim();
             ViewBag.ExpenseSheetLineMode = isCreateMode ? "create" : isEditMode ? "edit" : "view";
-            ViewBag.GastoTypeOptions = _crmEnumCatalog
-                .GetGastoTypeMap()
-                .Select(x => new { value = x.Key, text = x.Value })
-                .OrderBy(x => int.TryParse(x.value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var code) ? code : int.MaxValue)
-                .ToList();
+            await LoadExpenseEnumViewBagsAsync(token);
             ViewData["TopbarBackUrl"] = $"/Gastos/ExpenseSheetDetail?hojaGastosId={Uri.EscapeDataString(safeSheetId)}";
             return View("~/Web/Views/Gastos/ExpenseSheetLineDetail.cshtml");
         }
@@ -382,7 +381,7 @@ namespace IND_CRM_APP.Controllers
                 CreatedDateTo = NormalizeListDateFilter(req.CreatedDateTo),
                 ProjId = NormalizeOptionalText(req.ProjId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
-                ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
+                ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                 ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
                 IncludeSubordinates = req.IncludeSubordinates,
                 Page = page,
@@ -480,7 +479,7 @@ namespace IND_CRM_APP.Controllers
                         CreatedDateTo = NormalizeListDateFilter(req.ListRequest.CreatedDateTo),
                         ProjId = NormalizeOptionalText(req.ListRequest.ProjId),
                         CurrencyCode = NormalizeOptionalText(req.ListRequest.CurrencyCode)?.ToUpperInvariant(),
-                        ExpenseSheetStatus = req.ListRequest.ExpenseSheetStatus is >= 0 and <= 4 ? req.ListRequest.ExpenseSheetStatus : null,
+                        ExpenseSheetStatus = req.ListRequest.ExpenseSheetStatus is >= 0 ? req.ListRequest.ExpenseSheetStatus : null,
                         ReimbursableExpense = NormalizeReimbursableExpense(req.ListRequest.ReimbursableExpense),
                         IncludeSubordinates = req.ListRequest.IncludeSubordinates,
                         Page = req.ListRequest.Page < 1 ? 1 : req.ListRequest.Page,
@@ -4521,7 +4520,7 @@ namespace IND_CRM_APP.Controllers
                 CreatedDateTo = NormalizeListDateFilter(req.ToDate),
                 ProjId = NormalizeOptionalText(req.ProjectId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
-                ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null,
+                ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                 ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
                 IncludeSubordinates = req.IncludeSubordinates,
                 Page = page,
@@ -4540,10 +4539,10 @@ namespace IND_CRM_APP.Controllers
                 : req.HojaGastosId.Trim();
         }
 
-        // Validates optional ticket gasto type values against the fixed enum set.
+        // Validates optional ticket gasto type values as numeric AX enum values.
         private static bool IsValidTicketGastoType(int? gastoType)
         {
-            return !gastoType.HasValue || AllowedTicketGastoTypes.Contains(gastoType.Value);
+            return !gastoType.HasValue || gastoType.Value >= 0;
         }
 
         // Normalizes optional ticket gasto type values before proxying upstream.
@@ -4555,7 +4554,7 @@ namespace IND_CRM_APP.Controllers
         // Normalizes AX INDReimbursableExpense enum values before proxying upstream.
         private static int? NormalizeReimbursableExpense(int? reimbursableExpense)
         {
-            return reimbursableExpense is >= 0 and <= 2 ? reimbursableExpense : null;
+            return reimbursableExpense is >= 0 ? reimbursableExpense : null;
         }
 
         // Validates an optional gastoType field read from a raw JSON payload.
@@ -4569,7 +4568,7 @@ namespace IND_CRM_APP.Controllers
             if (!int.TryParse(normalized, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsed))
                 return false;
 
-            return AllowedTicketGastoTypes.Contains(parsed);
+            return parsed >= 0;
         }
 
         // Resolves signed ticket line totals while preserving zero-quantity discounts.
@@ -5702,7 +5701,7 @@ namespace IND_CRM_APP.Controllers
         }
 
         // Maps one line to a detail payload used by detail and line screens.
-        // Resolves typeValue text from fixed gasto type enums and preserves typeValueCode.
+        // Preserves the numeric typeValueCode and includes a defensive label for legacy callers.
         private object ToExpenseSheetLine(ExpenseSheetLineDto line)
         {
             var rawTypeValue = line.TypeValue.HasValue
@@ -5747,6 +5746,61 @@ namespace IND_CRM_APP.Controllers
                 return direct;
 
             return GetExtraString(line.Extra, "lineRecId", "recId");
+        }
+
+        // Loads expense enum select options from the AX catalog with defensive fallbacks.
+        private async Task LoadExpenseEnumViewBagsAsync(string token)
+        {
+            var gastoTypeFallback = LoadFallbackGastoTypeOptions();
+            ViewBag.GastoTypeOptions = gastoTypeFallback;
+            ViewBag.ExpenseSheetStatusOptions = Array.Empty<object>();
+            ViewBag.ReimbursableExpenseOptions = Array.Empty<object>();
+            ViewBag.ExchangeRateModeOptions = Array.Empty<object>();
+            ViewBag.TicketStatusOptions = Array.Empty<object>();
+
+            try
+            {
+                var result = await _apiClient.GetEnumCatalogByNameAsync(token, CrmAppCode, ExpenseCatalogEnumNames);
+                var catalog = result.GetAnyItems().ToList();
+                if (!result.Success && catalog.Count == 0)
+                {
+                    _logger.LogWarning("Expense enum catalog returned no usable data. Message={Message} TraceId={TraceId}", result.Message, result.TraceId);
+                    return;
+                }
+
+                ViewBag.GastoTypeOptions = LoadOptionsFromCatalog(catalog, GastoTypeEnumName, gastoTypeFallback);
+                ViewBag.ExpenseSheetStatusOptions = LoadOptionsFromCatalog(catalog, "INDExpenseSheetStatus");
+                ViewBag.ReimbursableExpenseOptions = LoadOptionsFromCatalog(catalog, "INDReimbursableExpense");
+                ViewBag.ExchangeRateModeOptions = LoadOptionsFromCatalog(catalog, "INDExchangeRateMode");
+                ViewBag.TicketStatusOptions = LoadOptionsFromCatalog(catalog, "INDTicketStatus");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load expense enum catalog. Local fallback options will be used.");
+            }
+        }
+
+        // Resolves one enum option list from a loaded catalog.
+        private List<dynamic> LoadOptionsFromCatalog(
+            IEnumerable<CrmEnumCatalogDto> catalog,
+            string axEnumName,
+            IEnumerable<dynamic>? fallback = null)
+        {
+            return _crmEnumCatalog
+                .GetOptionsByAxEnumName(catalog, axEnumName, fallback ?? Enumerable.Empty<dynamic>())
+                .Cast<dynamic>()
+                .ToList();
+        }
+
+        // Builds stable local fallback options for CRMGastoType.
+        private List<dynamic> LoadFallbackGastoTypeOptions()
+        {
+            return _crmEnumCatalog
+                .GetGastoTypeMap()
+                .Select(x => new { value = x.Key, text = x.Value })
+                .OrderBy(x => int.TryParse(x.value, NumberStyles.Integer, CultureInfo.InvariantCulture, out var code) ? code : int.MaxValue)
+                .Cast<dynamic>()
+                .ToList();
         }
 
         // Maps a project dto to simple option values.

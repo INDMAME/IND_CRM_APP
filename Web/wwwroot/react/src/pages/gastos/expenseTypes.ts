@@ -1,8 +1,8 @@
-export type ExpenseStatusCode = 0 | 1 | 2 | 3 | 4;
-export type ExpenseStatusFilterCode = ExpenseStatusCode | 5;
-export type ExpenseExchangeRateModeCode = 0 | 1;
+export type ExpenseStatusCode = number;
+export type ExpenseStatusFilterCode = number;
+export type ExpenseExchangeRateModeCode = number;
 export type ExpenseSheetCreateMode = 0 | 1 | 2;
-export type ExpenseGastoTypeCode = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 14;
+export type ExpenseGastoTypeCode = number;
 // Backend date contract for gastos/tickets:
 // request accepts DDMMYYYY or DD.MM.YYYY, response returns DD.MM.YYYY.
 export type ExpenseApiDate = string;
@@ -186,6 +186,8 @@ export type ExpenseSheetLineDto = {
   transDate?: ExpenseApiDate;
   TypeValue?: number | null;
   typeValue?: number | null;
+  TypeValueCode?: string | number | null;
+  typeValueCode?: string | number | null;
   Description?: string;
   description?: string;
   Internacional?: boolean | null;
@@ -471,7 +473,7 @@ export type ExpenseSheetTicketListRequest = {
   createdDateTo?: ExpenseApiDate;
   searchKey?: string;
   filter?: string;
-  status?: 0 | 1 | null;
+  status?: number | null;
   currencyCode?: string;
   gastoType?: ExpenseGastoTypeCode | null;
   processedByAI?: boolean | null;

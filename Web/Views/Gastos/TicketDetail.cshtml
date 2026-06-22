@@ -18,6 +18,7 @@
     <script nonce="@cspNonce">
         window.__EXPENSE_TICKET_FILE_ID__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.TicketFileId ?? string.Empty)));
         window.__EXPENSE_GASTO_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.GastoTypeOptions ?? new object[0]));
+        window.__EXPENSE_TICKET_STATUSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.TicketStatusOptions ?? new object[0]));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Save = SR["Common_Save"].Value,
             Common_Cancel = SR["Common_Cancel"].Value,

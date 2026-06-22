@@ -6,6 +6,10 @@ import type {
   ExpenseSheetTicketDetailDto,
 } from "../expenseTypes.ts";
 import {
+  getDefaultExpenseGastoTypeCode,
+  toExpenseGastoTypeCode,
+} from "../constants/expenseGastoTypeCatalog.ts";
+import {
   createExpenseSheet,
   fetchExpenseSheetDetail,
   fetchExpenseSheetTicket,
@@ -16,7 +20,7 @@ import {
 import { toExpenseApiDdMmYyyy } from "./expenseApiDateUtils.ts";
 import { safeText } from "./expenseUiUtils.ts";
 
-const DEFAULT_TICKET_GASTO_TYPE = 8;
+const PREFERRED_TICKET_GASTO_TYPE = 8;
 
 type SyncExpenseLinkedTicketSheetLineArgs = {
   fileId: string;
@@ -101,14 +105,15 @@ const resolveTicketSnapshot = (ticket: ExpenseSheetTicketDetailDto, existingLine
     : 0;
   const fallbackExistingAmount = Number(existingLine?.amount || existingLine?.price || 0);
   const totalAmount = hasTicketLines ? lineTotal : headerTotal !== 0 ? headerTotal : fallbackExistingAmount;
-  const parsedGastoType = Number(ticket.GastoType);
-  const existingTypeValue = Number(existingLine?.typeValueCode);
+  const parsedGastoType = toExpenseGastoTypeCode(ticket.GastoType, { allowNone: false });
+  const existingTypeValue = toExpenseGastoTypeCode(existingLine?.typeValueCode, { allowNone: false });
+  const defaultGastoType = getDefaultExpenseGastoTypeCode(PREFERRED_TICKET_GASTO_TYPE);
   const gastoType =
-    Number.isInteger(parsedGastoType) && parsedGastoType > 0
+    parsedGastoType !== null
       ? parsedGastoType
-      : Number.isInteger(existingTypeValue) && existingTypeValue > 0
+      : existingTypeValue !== null
         ? existingTypeValue
-        : DEFAULT_TICKET_GASTO_TYPE;
+        : defaultGastoType;
 
   return {
     description,

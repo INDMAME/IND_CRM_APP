@@ -26,6 +26,12 @@ const getCommandMessage = (response: VisitCommandResponse): string => {
   return typeof raw === "string" ? raw.trim() : "";
 };
 
+// Converts select values to numeric enum payload values.
+const toNullableEnumNumber = (value: string): number | null => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+};
+
 // Keep recId as a normalized signed integer string to avoid long precision loss in JS numbers.
 const resolveSafeRecId = (rawRecId: string): string | null => {
   const normalized = String(rawRecId ?? "").trim();
@@ -146,13 +152,12 @@ export const useDetailMutations = ({
       const normalizedContactMethod =
         matchOptionValue(contactMethods, contactMethod) ||
         matchOptionValue(contactMethods, rawInitialContactMethod);
-      const contactMethodValue = Number(normalizedContactMethod);
 
       const payload = {
         accountNum,
-        visitType: normalizedVisitType,
-        contactMethod: Number.isFinite(contactMethodValue) ? contactMethodValue : null,
-        asistenteTipo: normalizedAsistenteTipo,
+        visitType: toNullableEnumNumber(normalizedVisitType),
+        contactMethod: toNullableEnumNumber(normalizedContactMethod),
+        asistenteTipo: toNullableEnumNumber(normalizedAsistenteTipo),
         description,
         transDate,
         comentarios,

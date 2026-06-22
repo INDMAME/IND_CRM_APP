@@ -11,9 +11,9 @@ import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
 import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
+import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
 import {
   mapBooleanEnumOptions,
-  mapWindowEnumOptions,
   type ExpenseSelectOption,
 } from "../utils/expenseSelectOptions.ts";
 import { useExpenseSheetLineDetailMutations } from "./useExpenseSheetLineDetailMutations.ts";
@@ -192,8 +192,7 @@ const ExpenseSheetLineDetailContent = () => {
   });
 
   const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
-    const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
-    const mapped = mapWindowEnumOptions(source);
+    const mapped = getExpenseGastoTypeOptions();
 
     const currentTypeCode = safeText(line?.typeValueCode);
     const currentTypeLabel = safeText(line?.typeValue);

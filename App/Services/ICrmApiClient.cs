@@ -42,6 +42,13 @@ namespace IND_CRM_APP.Services
         Task<ApiResponse<object>> GetHealthAsync(string token);
         Task<ApiResponse<object>> GetHealthPingAsync(string token);
 
+        // CRM enum catalog.
+        Task<PagedApiResponse<CrmEnumCatalogDto>> GetEnumCatalogByNameAsync(
+            string token,
+            string? appCode,
+            IEnumerable<string>? axEnumNames
+        );
+
         // CRM accounts.
         Task<PagedApiResponse<AccountDto>> GetAccountsAsync(
             string token,

@@ -57,10 +57,10 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.04
         #// Valida modificacion sobre un propietario usando la capa global INDControlDataVisibility.
         #static server boolean ctrlCanMutateOwnerAxUserId(UserId      _viewerAxUserId,
-        #                                                 DataAreaId  _companyId,
-        #                                                 str         _appCode,
-        #                                                 str         _moduleCode,
-        #                                                 UserId      _ownerAxUserId)
+        #                                                                 DataAreaId  _companyId,
+        #                                                                 str         _appCode,
+        #                                                                 str         _moduleCode,
+        #                                                                 UserId      _ownerAxUserId)
         #{
         #    ;
         #
@@ -77,10 +77,10 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.04
         #// Valida lectura sobre un alias propietario usando la capa global INDControlDataVisibility.
         #static server boolean ctrlCanViewOwnerAlias(UserId      _viewerAxUserId,
-        #                                            DataAreaId  _companyId,
-        #                                            str         _appCode,
-        #                                            str         _moduleCode,
-        #                                            str         _ownerAlias)
+        #                                                            DataAreaId  _companyId,
+        #                                                            str         _appCode,
+        #                                                            str         _moduleCode,
+        #                                                            str         _ownerAlias)
         #{
         #    ;
         #
@@ -97,10 +97,10 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.04
         #// Valida lectura sobre un propietario Axapta usando la capa global INDControlDataVisibility.
         #static server boolean ctrlCanViewOwnerAxUserId(UserId      _viewerAxUserId,
-        #                                               DataAreaId  _companyId,
-        #                                               str         _appCode,
-        #                                               str         _moduleCode,
-        #                                               UserId      _ownerAxUserId)
+        #                                                               DataAreaId  _companyId,
+        #                                                               str         _appCode,
+        #                                                               str         _moduleCode,
+        #                                                               UserId      _ownerAxUserId)
         #{
         #    ;
         #
@@ -117,9 +117,9 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.04
         #// Localiza el permiso web usado por la capa global INDControlDataVisibility.
         #static server INDWebModuleAccessLevel ctrlFindModuleAccessLevel(UserId      _viewerAxUserId,
-        #                                                                DataAreaId  _companyId,
-        #                                                                str         _appCode,
-        #                                                                str         _moduleCode)
+        #                                                                                DataAreaId  _companyId,
+        #                                                                                str         _appCode,
+        #                                                                                str         _moduleCode)
         #{
         #    ;
         #
@@ -259,8 +259,8 @@ Formatversion: 1
         #                strFmt("%1", crmUserId),
         #                strFmt("%1", person.Name),
         #                "INDControlDataVisibility",
-        #                strFmt("%1", any2int(moduleAccessLevel.MutationPolicy)),
-        #                strFmt("%1", any2int(moduleAccessLevel.MutationPolicy)),
+        #                strFmt("%1", moduleAccessLevel.MutationPolicy),
+        #                strFmt("%1", enum2Value(moduleAccessLevel.MutationPolicy)),
         #                strFmt("%1", mutationPolicyLabel),
         #                strFmt("%1", canMutate)
         #            ]];
@@ -299,10 +299,10 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.04
         #// Resuelve usuarios CRM legacy visibles para un modulo.
         #static server Set ctrlResolveVisibleCrmUserIdSet(UserId      _viewerAxUserId,
-        #                                                 DataAreaId  _companyId,
-        #                                                 str         _appCode,
-        #                                                 str         _moduleCode,
-        #                                                 date        _asOfDate)
+        #                                                                 DataAreaId  _companyId,
+        #                                                                 str         _appCode,
+        #                                                                 str         _moduleCode,
+        #                                                                 date        _asOfDate)
         #{
         #    ;
         #
@@ -319,10 +319,10 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.04
         #// Resuelve alias visibles para un modulo sin usar subordinados legacy de gastos.
         #static server Set ctrlResolveVisiblePersonAliasSet(UserId      _viewerAxUserId,
-        #                                                   DataAreaId  _companyId,
-        #                                                   str         _appCode,
-        #                                                   str         _moduleCode,
-        #                                                   date        _asOfDate)
+        #                                                                   DataAreaId  _companyId,
+        #                                                                   str         _appCode,
+        #                                                                   str         _moduleCode,
+        #                                                                   date        _asOfDate)
         #{
         #    ;
         #
@@ -378,7 +378,328 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #getInfologMessagesSince
+      SOURCE #enumCatalogSplitValues
+        #//MMS - Ajustes CRM - 2026.06.19
+        #// Convierte una lista separada por comas en un container de valores limpios.
+        #static server container enumCatalogSplitValues(str _values)
+        #{
+        #    container result = conNull();
+        #    str       remaining;
+        #    str       token;
+        #    int       separatorPos;
+        #    int       remainingLen;
+        #    ;
+        #
+        #    remaining = strLRTrim(_values);
+        #
+        #    while (strLen(remaining))
+        #    {
+        #        remainingLen = strLen(remaining);
+        #        separatorPos = strFind(remaining, ',', 1, remainingLen);
+        #
+        #        if (separatorPos)
+        #        {
+        #            token     = subStr(remaining, 1, separatorPos - 1);
+        #            remaining = subStr(remaining, separatorPos + 1, remainingLen - separatorPos);
+        #        }
+        #        else
+        #        {
+        #            token     = remaining;
+        #            remaining = '';
+        #        }
+        #
+        #        token = strLRTrim(token);
+        #
+        #        if (token)
+        #        {
+        #            result += [token];
+        #        }
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #enumCatalogOptionsByName
+        #//MMS - Ajustes CRM - 2026.06.19
+        #// Devuelve las opciones activas configuradas para un enum por nombre dentro de la company actual.
+        #static server container enumCatalogOptionsByName(str _appCode, Description _axEnumName)
+        #{
+        #    INDAxEnumAppCatalogTable catalogTable;
+        #    INDAxEnumsTable          axEnum;
+        #    container                options = conNull();
+        #    ;
+        #
+        #    while select catalogTable
+        #        order by SortOrder
+        #        where catalogTable.AppCode == _appCode
+        #           && catalogTable.Active  == NoYes::Yes
+        #        join axEnum
+        #            where axEnum.RecId      == catalogTable.AxEnumsTableRefRecId
+        #               && axEnum.AxEnumName == _axEnumName
+        #    {
+        #        options += [[
+        #            strFmt('%1', axEnum.EnumValue),
+        #            strFmt('%1', axEnum.EnumIndex),
+        #            strFmt('%1', catalogTable.effectiveLabel()),
+        #            strFmt('%1', catalogTable.effectiveDescription()),
+        #            catalogTable.Active == NoYes::Yes ? '1' : '0',
+        #            strFmt('%1', catalogTable.effectiveSortOrder()),
+        #            strFmt('%1', catalogTable.AxEnumsTableRefRecId)
+        #        ]];
+        #    }
+        #
+        #    return options;
+        #}
+      ENDSOURCE
+      SOURCE #enumCatalogOptionsById
+        #//MMS - Ajustes CRM - 2026.06.19
+        #// Devuelve las opciones activas configuradas para un enum por id dentro de la company actual.
+        #static server container enumCatalogOptionsById(str _appCode, int _axEnumId)
+        #{
+        #    INDAxEnumAppCatalogTable catalogTable;
+        #    INDAxEnumsTable          axEnum;
+        #    container                options = conNull();
+        #    ;
+        #
+        #    while select catalogTable
+        #        order by SortOrder
+        #        where catalogTable.AppCode == _appCode
+        #           && catalogTable.Active  == NoYes::Yes
+        #        join axEnum
+        #            where axEnum.RecId    == catalogTable.AxEnumsTableRefRecId
+        #               && axEnum.AxEnumId == _axEnumId
+        #    {
+        #        options += [[
+        #            strFmt('%1', axEnum.EnumValue),
+        #            strFmt('%1', axEnum.EnumIndex),
+        #            strFmt('%1', catalogTable.effectiveLabel()),
+        #            strFmt('%1', catalogTable.effectiveDescription()),
+        #            catalogTable.Active == NoYes::Yes ? '1' : '0',
+        #            strFmt('%1', catalogTable.effectiveSortOrder()),
+        #            strFmt('%1', catalogTable.AxEnumsTableRefRecId)
+        #        ]];
+        #    }
+        #
+        #    return options;
+        #}
+      ENDSOURCE
+      SOURCE #enumCatalogGroupByName
+        #//MMS - Ajustes CRM - 2026.06.19
+        #// Construye un grupo de respuesta para un enum solicitado por nombre.
+        #static server container enumCatalogGroupByName(str _appCode, Description _axEnumName)
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    container       options;
+        #    ;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.AxEnumName == _axEnumName;
+        #
+        #    if (!axEnum.RecId)
+        #    {
+        #        return [strFmt('%1', _axEnumName), '', '0', conNull()];
+        #    }
+        #
+        #    options = INDCRMUtilityService::enumCatalogOptionsByName(_appCode, _axEnumName);
+        #
+        #    return [
+        #        strFmt('%1', axEnum.AxEnumName),
+        #        strFmt('%1', axEnum.AxEnumId),
+        #        '1',
+        #        options
+        #    ];
+        #}
+      ENDSOURCE
+      SOURCE #enumCatalogGroupById
+        #//MMS - Ajustes CRM - 2026.06.19
+        #// Construye un grupo de respuesta para un enum solicitado por id.
+        #static server container enumCatalogGroupById(str _appCode, int _axEnumId)
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    container       options;
+        #    ;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.AxEnumId == _axEnumId;
+        #
+        #    if (!axEnum.RecId)
+        #    {
+        #        return ['', strFmt('%1', _axEnumId), '0', conNull()];
+        #    }
+        #
+        #    options = INDCRMUtilityService::enumCatalogOptionsById(_appCode, _axEnumId);
+        #
+        #    return [
+        #        strFmt('%1', axEnum.AxEnumName),
+        #        strFmt('%1', axEnum.AxEnumId),
+        #        '1',
+        #        options
+        #    ];
+        #}
+      ENDSOURCE
+      SOURCE #enumCatalogAllGroups
+        #//MMS - Ajustes CRM - 2026.06.19
+        #// Devuelve todos los grupos de enum configurados para el aplicativo en la company actual.
+        #static server container enumCatalogAllGroups(str _appCode)
+        #{
+        #    INDAxEnumAppCatalogTable catalogTable;
+        #    INDAxEnumsTable          axEnum;
+        #    Set                      emittedEnumKeys = new Set(Types::String);
+        #    str                      enumKey;
+        #    container                groups = conNull();
+        #    ;
+        #
+        #    while select catalogTable
+        #        where catalogTable.AppCode == _appCode
+        #           && catalogTable.Active  == NoYes::Yes
+        #        join axEnum
+        #            where axEnum.RecId == catalogTable.AxEnumsTableRefRecId
+        #    {
+        #        enumKey = strFmt('%1|%2', axEnum.AxEnumName, axEnum.AxEnumId);
+        #
+        #        if (!emittedEnumKeys.in(enumKey))
+        #        {
+        #            emittedEnumKeys.add(enumKey);
+        #            groups += [INDCRMUtilityService::enumCatalogGroupByName(_appCode, axEnum.AxEnumName)];
+        #        }
+        #    }
+        #
+        #    return groups;
+        #}
+      ENDSOURCE
+      SOURCE #getEnumValuesByName
+        #//MMS - Ajustes CRM - 2026.06.19
+        #// Devuelve catalogos de enum activos por nombre para un aplicativo y company.
+        #static server container getEnumValuesByName(container _data)
+        #{
+        #    DataAreaId  companyId;
+        #    str         appCode;
+        #    str         axEnumNamesRaw;
+        #    container   axEnumNames;
+        #    container   groups = conNull();
+        #    container   group;
+        #    boolean     success = true;
+        #    str         message = 'OK';
+        #    str         missingMessage = '';
+        #    Description axEnumName;
+        #    int         i;
+        #    ;
+        #
+        #    companyId      = INDCRMUtilityService::getCompany(_data);
+        #    appCode        = conLen(_data) >= 2 ? strLRTrim(conPeek(_data, 2)) : '';
+        #    axEnumNamesRaw = conLen(_data) >= 3 ? strLRTrim(conPeek(_data, 3)) : '';
+        #
+        #    if (!companyId || !appCode)
+        #    {
+        #        return [INDCRMUtilityService::buildHeader(false, 'Company y AppCode son obligatorios.', [strFmt('%1', companyId), strFmt('%1', appCode)]), conNull()];
+        #    }
+        #
+        #    changecompany (companyId)
+        #    {
+        #        if (!axEnumNamesRaw)
+        #        {
+        #            groups = INDCRMUtilityService::enumCatalogAllGroups(appCode);
+        #        }
+        #        else
+        #        {
+        #            axEnumNames = INDCRMUtilityService::enumCatalogSplitValues(axEnumNamesRaw);
+        #
+        #            for (i = 1; i <= conLen(axEnumNames); i++)
+        #            {
+        #                axEnumName = conPeek(axEnumNames, i);
+        #                group = INDCRMUtilityService::enumCatalogGroupByName(appCode, axEnumName);
+        #
+        #                if (conPeek(group, 3) != '1')
+        #                {
+        #                    success = false;
+        #                    missingMessage += strFmt(' Enum no encontrado: %1.', axEnumName);
+        #                }
+        #
+        #                groups += [group];
+        #            }
+        #        }
+        #    }
+        #
+        #    if (!success)
+        #    {
+        #        message = strLRTrim(missingMessage);
+        #    }
+        #
+        #    return [INDCRMUtilityService::buildHeader(success, message, [strFmt('%1', companyId), strFmt('%1', appCode)]), groups];
+        #}
+      ENDSOURCE
+      SOURCE #getEnumValuesById
+        #//MMS - Ajustes CRM - 2026.06.19
+        #// Devuelve catalogos de enum activos por id para un aplicativo y company.
+        #static server container getEnumValuesById(container _data)
+        #{
+        #    DataAreaId companyId;
+        #    str        appCode;
+        #    str        axEnumIdsRaw;
+        #    container  axEnumIds;
+        #    container  groups = conNull();
+        #    container  group;
+        #    boolean    success = true;
+        #    str        message = 'OK';
+        #    str        missingMessage = '';
+        #    str        axEnumIdRaw;
+        #    int        axEnumId;
+        #    int        i;
+        #    ;
+        #
+        #    companyId    = INDCRMUtilityService::getCompany(_data);
+        #    appCode      = conLen(_data) >= 2 ? strLRTrim(conPeek(_data, 2)) : '';
+        #    axEnumIdsRaw = conLen(_data) >= 3 ? strLRTrim(conPeek(_data, 3)) : '';
+        #
+        #    if (!companyId || !appCode)
+        #    {
+        #        return [INDCRMUtilityService::buildHeader(false, 'Company y AppCode son obligatorios.', [strFmt('%1', companyId), strFmt('%1', appCode)]), conNull()];
+        #    }
+        #
+        #    changecompany (companyId)
+        #    {
+        #        if (!axEnumIdsRaw)
+        #        {
+        #            groups = INDCRMUtilityService::enumCatalogAllGroups(appCode);
+        #        }
+        #        else
+        #        {
+        #            axEnumIds = INDCRMUtilityService::enumCatalogSplitValues(axEnumIdsRaw);
+        #
+        #            for (i = 1; i <= conLen(axEnumIds); i++)
+        #            {
+        #                axEnumIdRaw = strLRTrim(conPeek(axEnumIds, i));
+        #                axEnumId    = str2Int(axEnumIdRaw);
+        #
+        #                if (!axEnumId && axEnumIdRaw != '0')
+        #                {
+        #                    success = false;
+        #                    missingMessage += strFmt(' AxEnumId invalido: %1.', axEnumIdRaw);
+        #                    groups += [['', axEnumIdRaw, '0', conNull()]];
+        #                    continue;
+        #                }
+        #
+        #                group = INDCRMUtilityService::enumCatalogGroupById(appCode, axEnumId);
+        #
+        #                if (conPeek(group, 3) != '1')
+        #                {
+        #                    success = false;
+        #                    missingMessage += strFmt(' Enum no encontrado por id: %1.', axEnumId);
+        #                }
+        #
+        #                groups += [group];
+        #            }
+        #        }
+        #    }
+        #
+        #    if (!success)
+        #    {
+        #        message = strLRTrim(missingMessage);
+        #    }
+        #
+        #    return [INDCRMUtilityService::buildHeader(success, message, [strFmt('%1', companyId), strFmt('%1', appCode)]), groups];
+        #}
+      ENDSOURCE      SOURCE #getInfologMessagesSince
         #// Method: getInfologMessagesSince
         #// Purpose: Returns concatenated infolog messages added after _startLine.
         #static server str getInfologMessagesSince(int _startLine)

@@ -6,13 +6,13 @@ import type {
   ExpenseSheetTicketListRequest,
 } from "../expenseTypes.ts";
 import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog.ts";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import type { ExpenseTicketAppliedFilterSnapshot } from "../tickets/expenseTicketListTypes.ts";
 
 const DEFAULT_SUGGEST_PAGE_SIZE = 50;
-const ALLOWED_TICKET_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 const isValidExpenseSheetStatus = (value: unknown): value is number => {
-  return Number.isInteger(value) && Number(value) >= 0 && Number(value) <= 4;
+  return Number.isInteger(value) && Number(value) >= 0;
 };
 
 // Resolves the optional API status filter from UI filter state.
@@ -49,8 +49,8 @@ const resolveProcessedByAiFilter = (
 
 const resolveTicketStatusFilter = (
   value: ExpenseTicketAppliedFilterSnapshot["statusFilter"]
-): 0 | 1 | null => {
-  return value === 0 || value === 1 ? value : null;
+): number | null => {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0 ? value : null;
 };
 
 const resolveTicketGastoTypeFilter = (
@@ -60,12 +60,7 @@ const resolveTicketGastoTypeFilter = (
     return null;
   }
 
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || !ALLOWED_TICKET_GASTO_TYPES.has(parsed)) {
-    return null;
-  }
-
-  return parsed as ExpenseSheetTicketListRequest["gastoType"];
+  return toExpenseGastoTypeCode(value) as ExpenseSheetTicketListRequest["gastoType"];
 };
 
 const buildExpenseTicketFilterPayload = (

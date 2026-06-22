@@ -1,6 +1,6 @@
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseStatusFilterCode } from "../expenseTypes.ts";
-import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
+import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 
 type ExpenseStatusUiMeta = {
   labelKey: string;
@@ -9,11 +9,11 @@ type ExpenseStatusUiMeta = {
   badgeClassName: string;
 };
 
-export const DEFAULT_EXPENSE_STATUS_FILTER: ExpenseStatusFilterCode = 5;
-const EXPENSE_STATUS_CODES: ExpenseStatusFilterCode[] = [5, 0, 1, 2, 3, 4];
+export const DEFAULT_EXPENSE_STATUS_FILTER: ExpenseStatusFilterCode = -1;
+const EXPENSE_STATUS_CODES: ExpenseStatusFilterCode[] = [-1, 0, 1, 2, 3, 4];
 const EXPENSE_SHEET_STATUS_CODES: ExpenseStatusFilterCode[] = [0, 1, 2, 3, 4];
 
-const STATUS_UI_BY_CODE: Record<ExpenseStatusFilterCode, ExpenseStatusUiMeta> = {
+const STATUS_UI_BY_CODE: Partial<Record<ExpenseStatusFilterCode, ExpenseStatusUiMeta>> = {
   0: {
     labelKey: "ExpenseSheets_Filter_Status_Draft",
     fallback: "Borrador",
@@ -44,12 +44,30 @@ const STATUS_UI_BY_CODE: Record<ExpenseStatusFilterCode, ExpenseStatusUiMeta> = 
     colorHex: "#00296b",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--paid",
   },
-  5: {
+  [-1]: {
     labelKey: "ExpenseSheets_Filter_Status_All",
     fallback: "Todos",
     colorHex: "#64748b",
     badgeClassName: "expense-sheet-card__status expense-sheet-card__status--all",
   },
+};
+
+const getExpenseSheetStatusCatalogOptions = (): ExpenseSelectOption[] => {
+  const source = typeof window !== "undefined" && Array.isArray(window.__EXPENSE_SHEET_STATUSES__)
+    ? window.__EXPENSE_SHEET_STATUSES__
+    : [];
+
+  return mapWindowEnumOptions(source).filter((option) => {
+    const parsed = Number(option.value);
+    return Number.isInteger(parsed) && parsed >= 0;
+  });
+};
+
+const getExpenseSheetStatusCatalogLabel = (value: ExpenseStatusFilterCode): string => {
+  if (value === DEFAULT_EXPENSE_STATUS_FILTER) return "";
+
+  const match = getExpenseSheetStatusCatalogOptions().find((option) => Number(option.value) === value);
+  return match?.text || "";
 };
 
 // Normalizes any unknown status filter value to a safe list filter code.
@@ -58,31 +76,45 @@ export const normalizeExpenseStatusFilterCode = (
   fallback: ExpenseStatusFilterCode = DEFAULT_EXPENSE_STATUS_FILTER
 ): ExpenseStatusFilterCode => {
   const parsed = Number(value);
-  if (parsed >= 0 && parsed <= 5) {
-    return parsed as ExpenseStatusFilterCode;
+  if (Number.isInteger(parsed) && (parsed === DEFAULT_EXPENSE_STATUS_FILTER || parsed >= 0)) {
+    return parsed;
   }
   return fallback;
 };
 
 // Builds fixed status filter options for the expense list filter panel.
 export const getExpenseStatusFilterOptions = (): ExpenseSelectOption[] => {
-  return EXPENSE_STATUS_CODES
-    .map((code) => {
-      const meta = STATUS_UI_BY_CODE[code];
-      return {
-        value: String(code),
-        text: indT(meta.labelKey, meta.fallback),
-      };
-    });
+  const catalogOptions = getExpenseSheetStatusCatalogOptions();
+  if (catalogOptions.length > 0) {
+    const allMeta = STATUS_UI_BY_CODE[DEFAULT_EXPENSE_STATUS_FILTER];
+    return [
+      {
+        value: String(DEFAULT_EXPENSE_STATUS_FILTER),
+        text: allMeta ? indT(allMeta.labelKey, allMeta.fallback) : indT("ExpenseSheets_Filter_Status_All", "Todos"),
+      },
+      ...catalogOptions,
+    ];
+  }
+
+  return EXPENSE_STATUS_CODES.map((code) => {
+    const meta = STATUS_UI_BY_CODE[code];
+    return {
+      value: String(code),
+      text: meta ? indT(meta.labelKey, meta.fallback) : String(code),
+    };
+  });
 };
 
 // Builds fixed status options for expense sheet state updates (without "all").
 export const getExpenseSheetStatusOptions = (): ExpenseSelectOption[] => {
+  const catalogOptions = getExpenseSheetStatusCatalogOptions();
+  if (catalogOptions.length > 0) return catalogOptions;
+
   return EXPENSE_SHEET_STATUS_CODES.map((code) => {
     const meta = STATUS_UI_BY_CODE[code];
     return {
       value: String(code),
-      text: indT(meta.labelKey, meta.fallback),
+      text: meta ? indT(meta.labelKey, meta.fallback) : String(code),
     };
   });
 };
@@ -90,18 +122,21 @@ export const getExpenseSheetStatusOptions = (): ExpenseSelectOption[] => {
 // Returns the localized status label for filter summaries and badges.
 export const getExpenseStatusLabel = (value: unknown): string => {
   const normalized = normalizeExpenseStatusFilterCode(value);
+  const catalogLabel = getExpenseSheetStatusCatalogLabel(normalized);
+  if (catalogLabel) return catalogLabel;
+
   const meta = STATUS_UI_BY_CODE[normalized];
-  return indT(meta.labelKey, meta.fallback);
+  return meta ? indT(meta.labelKey, meta.fallback) : String(normalized);
 };
 
 // Returns the color token for UI elements that represent a status code.
 export const getExpenseStatusColorHex = (value: unknown): string => {
   const normalized = normalizeExpenseStatusFilterCode(value);
-  return STATUS_UI_BY_CODE[normalized].colorHex;
+  return STATUS_UI_BY_CODE[normalized]?.colorHex || "#64748b";
 };
 
 // Returns the default badge class name used by timeline cards.
 export const getExpenseStatusBadgeClassName = (value: unknown): string => {
   const normalized = normalizeExpenseStatusFilterCode(value);
-  return STATUS_UI_BY_CODE[normalized].badgeClassName;
+  return STATUS_UI_BY_CODE[normalized]?.badgeClassName || "expense-sheet-card__status expense-sheet-card__status--all";
 };

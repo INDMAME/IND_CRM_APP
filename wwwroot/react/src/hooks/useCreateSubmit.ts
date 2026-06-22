@@ -34,6 +34,12 @@ const getLegacyResponseData = (response: LegacyCommandResponse): unknown => {
   return response.data ?? response.Data;
 };
 
+// Converts select values to numeric enum payload values.
+const toNullableEnumNumber = (value: string): number | null => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+};
+
 type UseCreateSubmitArgs = {
   busy: boolean;
   modalOpen: boolean;
@@ -108,8 +114,8 @@ export const useCreateSubmit = ({
     try {
       const payloadActivity = {
         accountNum: selectedClient.value,
-        visitType,
-        contactMethod: Number(contactMethod || 0),
+        visitType: toNullableEnumNumber(visitType),
+        contactMethod: toNullableEnumNumber(contactMethod || "0"),
         description,
         transDate,
         comentarios,
@@ -139,7 +145,7 @@ export const useCreateSubmit = ({
         const createAssistant = async (contact: ContactOption) => {
           const payloadVisita = {
             refRecIdActividad: recIdActividad,
-            asistenteTipo: defaultAsistenteTipo,
+            asistenteTipo: toNullableEnumNumber(defaultAsistenteTipo || "0"),
             asistenteId: contact.text,
             contactoRecId: contact.value,
           };

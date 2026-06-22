@@ -1,7 +1,8 @@
 import React, { useMemo } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetCreateLineDraft } from "../expenseTypes.ts";
-import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
+import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
+import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 
@@ -29,8 +30,7 @@ const ExpenseSheetCreateLinesEditor = ({
   onLineChange,
 }: ExpenseSheetCreateLinesEditorProps) => {
   const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
-    const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
-    return mapWindowEnumOptions(source);
+    return getExpenseGastoTypeOptions();
   }, []);
 
   const internationalOptions = useMemo<ExpenseSelectOption[]>(() => getInternationalOptions(), []);

@@ -1,4 +1,5 @@
 import { normalizeExpenseTicketFilterSnapshot } from "./expenseTicketFilterSnapshot.ts";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import type {
   ExpenseTicketAppliedFilterSnapshot,
   ExpenseTicketLinkCard,
@@ -9,7 +10,6 @@ import { getExpenseScopeToken } from "../utils/expenseScope.ts";
 
 const EXPENSE_TICKET_LINK_RETURN_STATE_KEY_PREFIX = "expense_ticket_link_return_state_v1";
 const EXPENSE_TICKET_LINK_RETURN_STATE_TTL_MS = 12 * 60 * 60 * 1000;
-const ALLOWED_TICKET_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 export type ExpenseTicketLinkReturnState = {
   sheetId: string;
@@ -45,11 +45,7 @@ const normalizeNullableNumber = (value: unknown): number | null => {
 };
 
 const normalizeTicketGastoType = (value: unknown): ExpenseTicketLinkCard["gastoType"] => {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || !ALLOWED_TICKET_GASTO_TYPES.has(parsed)) {
-    return null;
-  }
-  return parsed as ExpenseTicketLinkCard["gastoType"];
+  return toExpenseGastoTypeCode(value) as ExpenseTicketLinkCard["gastoType"];
 };
 
 const normalizeSelectionMode = (value: unknown): ExpenseTicketLinkSelectionMode => {

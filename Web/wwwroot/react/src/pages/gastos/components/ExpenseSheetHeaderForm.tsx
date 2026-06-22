@@ -5,7 +5,10 @@ import ExpenseSheetHeaderCurrencySection from "./ExpenseSheetHeaderCurrencySecti
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
-import { getExpenseExchangeRateModeLabel } from "../constants/exchangeRateEntryModeCatalog.ts";
+import {
+  getExpenseExchangeRateModeLabel,
+  normalizeExpenseExchangeRateMode,
+} from "../constants/exchangeRateEntryModeCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
 
@@ -107,7 +110,7 @@ const ExpenseSheetHeaderForm = ({
       fallback: "0.0000000",
     }
   );
-  const exchangeRateModeValue = Number(header.exchangeRateMode) === 1 ? 1 : 0;
+  const exchangeRateModeValue = normalizeExpenseExchangeRateMode(header.exchangeRateMode) ?? 0;
   const exchangeRateModeKey =
     exchangeRateModeValue === 1
       ? "ExpenseSheets_Filter_ExchangeRateMode_Manual"

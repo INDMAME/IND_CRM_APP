@@ -17,6 +17,7 @@
 @section Scripts {
     <script nonce="@cspNonce">
         window.__EXPENSE_GASTO_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.GastoTypeOptions ?? new object[0]));
+        window.__EXPENSE_TICKET_STATUSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.TicketStatusOptions ?? new object[0]));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Loading = SR["Common_Loading"].Value,
             Common_NoData = SR["Common_NoData"].Value,

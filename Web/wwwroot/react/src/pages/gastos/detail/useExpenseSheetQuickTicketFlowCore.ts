@@ -5,6 +5,10 @@ import type {
   ExpenseSheetDraftResponse,
   ExpenseSheetTicketIaRequest,
 } from "../expenseTypes.ts";
+import {
+  getDefaultExpenseGastoTypeCode,
+  toExpenseGastoTypeCode,
+} from "../constants/expenseGastoTypeCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { resolveTicketLineAmount } from "../utils/expenseTicketLineAmount.ts";
@@ -25,8 +29,7 @@ const TICKET_MIME_TO_EXTENSION: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
 };
-const ALLOWED_TICKET_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
-const DEFAULT_TICKET_GASTO_TYPE = 8;
+const PREFERRED_TICKET_GASTO_TYPE = 8;
 export const DEFAULT_CREATE_MODE = "manual" as "ia" | "manual";
 
 export type TicketImageSource = "camera" | "gallery";
@@ -145,11 +148,7 @@ export const getTodayDdMmYyyy = (): string => {
 };
 
 const normalizeGastoType = (value: unknown): number | null => {
-  const parsed = toNumber(value);
-  if (parsed === null || !Number.isInteger(parsed) || !ALLOWED_TICKET_GASTO_TYPES.has(parsed)) {
-    return null;
-  }
-  return parsed;
+  return toExpenseGastoTypeCode(value);
 };
 
 const normalizeImageExtension = (value: string): string => {
@@ -238,8 +237,10 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
       if (effectivePrice === 0 || (qty === 0 && computedTotal >= 0)) return null;
 
       const candidateTypeValue = toPositiveNumber(getFirstDefined(lineRecord, ["typeValue", "TypeValue"]));
-      const safeTypeValue = Number.isInteger(candidateTypeValue) ? Number(candidateTypeValue) : null;
-      const typeValue = safeTypeValue && safeTypeValue > 0 ? safeTypeValue : draftGastoType || DEFAULT_TICKET_GASTO_TYPE;
+      const safeTypeValue = toExpenseGastoTypeCode(candidateTypeValue, { allowNone: false });
+      const safeDraftGastoType = toExpenseGastoTypeCode(draftGastoType, { allowNone: false });
+      const defaultGastoType = getDefaultExpenseGastoTypeCode(PREFERRED_TICKET_GASTO_TYPE);
+      const typeValue = safeTypeValue ?? safeDraftGastoType ?? defaultGastoType;
       const description = safeText(getFirstDefined(lineRecord, ["description", "Description"])) || draftDescription;
       const transDate = toDdMmYyyy(getFirstDefined(lineRecord, ["transDate", "TransDate"])) || draftTransDate;
 
@@ -322,9 +323,9 @@ export const buildSheetLinePayload = (
   const effectiveTotal = headerTotal > 0 ? headerTotal : fallbackTotal;
   if (!(effectiveTotal > 0)) return null;
 
-  const typeValueCandidate = draft.gastoType || lineFromDraft?.typeValue || DEFAULT_TICKET_GASTO_TYPE;
-  const safeTypeValue = Number(typeValueCandidate);
-  const typeValue = Number.isInteger(safeTypeValue) && safeTypeValue > 0 ? safeTypeValue : DEFAULT_TICKET_GASTO_TYPE;
+  const defaultGastoType = getDefaultExpenseGastoTypeCode(PREFERRED_TICKET_GASTO_TYPE);
+  const typeValueCandidate = draft.gastoType || lineFromDraft?.typeValue || defaultGastoType;
+  const typeValue = toExpenseGastoTypeCode(typeValueCandidate, { allowNone: false }) ?? defaultGastoType;
 
   return {
     transDate: draft.transDate || lineFromDraft?.transDate || getTodayDdMmYyyy(),

@@ -7,36 +7,16 @@
   ExpenseSheetListItemDto,
 } from "../expenseTypes.ts";
 import { safeText, toNullableBool, toNullableNumber } from "./expenseApiTransforms.ts";
-
-type ExpenseWindowRuntime = {
-  __EXPENSE_GASTO_TYPES__?: Array<{
-    value?: unknown;
-    Value?: unknown;
-    text?: unknown;
-    Text?: unknown;
-  }>;
-};
-
-type ExpenseGastoTypeEntry = NonNullable<ExpenseWindowRuntime["__EXPENSE_GASTO_TYPES__"]>[number];
-
-const readExpenseWindowRuntime = (): ExpenseWindowRuntime => {
-  if (typeof window === "undefined") return {};
-  return window as unknown as ExpenseWindowRuntime;
-};
+import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
 
 const resolveTypeLabel = (typeValueCode: string): string => {
-  if (!typeValueCode || typeof window === "undefined") {
+  if (!typeValueCode) {
     return typeValueCode;
   }
 
-  const rawCatalogSource = readExpenseWindowRuntime().__EXPENSE_GASTO_TYPES__;
-  const rawCatalog = Array.isArray(rawCatalogSource) ? rawCatalogSource : [];
-  const match = rawCatalog.find((entry: ExpenseGastoTypeEntry) => {
-    const entryCode = safeText(entry?.value || entry?.Value);
-    return entryCode === typeValueCode;
-  });
+  const match = getExpenseGastoTypeOptions().find((entry) => safeText(entry.value) === typeValueCode);
 
-  return safeText(match?.text || match?.Text) || typeValueCode;
+  return safeText(match?.text) || typeValueCode;
 };
 
 // Maps /api/crm/expensesheets/list item contract to list card UI model.
@@ -85,14 +65,15 @@ export const mapExpenseSheetHeader = (sheet: ExpenseSheetDetailDto): ExpenseShee
 
 // Maps /api/crm/expensesheets/{hojaGastosId} line contract to UI model.
 export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine => {
-  const typeValueCode = safeText(line.TypeValue ?? line.typeValue);
+  const typeValueCode = safeText(line.TypeValueCode ?? line.typeValueCode ?? line.TypeValue ?? line.typeValue);
+  const typeValueLabel = safeText(line.TypeValue ?? line.typeValue);
   const explicitLineRecId = safeText(line.LineRecId ?? line.lineRecId);
 
   return {
     lineRecId: explicitLineRecId || safeText(line.RecId ?? line.recId),
     transDate: safeText(line.TransDate ?? line.transDate),
     typeValueCode,
-    typeValue: resolveTypeLabel(typeValueCode),
+    typeValue: typeValueLabel && typeValueLabel !== typeValueCode ? typeValueLabel : resolveTypeLabel(typeValueCode),
     description: safeText(line.Description ?? line.description),
     internacional: toNullableBool(line.Internacional ?? line.internacional),
     fileId: safeText(line.FileId ?? line.fileId),

@@ -1,11 +1,12 @@
 import type { ExpenseGastoTypeCode, ExpenseSheetTicketLineDto } from "../../expenseTypes.ts";
+import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 import type { ExpenseSheetTicketDetailDto } from "../../expenseTypes.ts";
 
 export type ExpenseTicketDetailHeader = {
   fileId: string;
   description: string;
-  status: 0 | 1 | null;
+  status: number | null;
   hojaGastosIdDisplay: string;
   processedByAI: boolean | null;
   currencyCode: string;
@@ -49,16 +50,12 @@ export const toNullableBool = (value: unknown): boolean | null => {
 };
 
 const toNullableGastoType = (value: unknown): ExpenseGastoTypeCode | null => {
-  const parsed = Number(value);
-  if (parsed === 0 || parsed === 1 || parsed === 2 || parsed === 3 || parsed === 4 || parsed === 5 || parsed === 6 || parsed === 7 || parsed === 8 || parsed === 14) {
-    return parsed;
-  }
-  return null;
+  return toExpenseGastoTypeCode(value);
 };
 
-const toNullableTicketStatus = (value: unknown): 0 | 1 | null => {
+const toNullableTicketStatus = (value: unknown): number | null => {
   const parsed = Number(value);
-  if (parsed === 0 || parsed === 1) {
+  if (Number.isInteger(parsed) && parsed >= 0) {
     return parsed;
   }
   return null;

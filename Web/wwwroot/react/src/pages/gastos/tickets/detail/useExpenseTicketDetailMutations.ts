@@ -3,6 +3,7 @@ import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../../utils/permissions.ts";
 import type { ExpenseSheetTicketUpdateRequest } from "../../expenseTypes.ts";
+import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
 import { executeExpenseMutation } from "../../hooks/expenseMutationUtils.ts";
 import {
   deleteExpenseSheetLine,
@@ -52,15 +53,6 @@ type UseExpenseTicketDetailMutationsArgs = {
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
-};
-
-const REQUIRED_GASTO_TYPES = new Set<number>([1, 2, 3, 4, 5, 6, 7, 8, 14]);
-
-const parseOptionalInteger = (raw: string): number | undefined => {
-  const value = String(raw || "").trim();
-  if (!value) return undefined;
-  const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) ? parsed : undefined;
 };
 
 // Tries to infer a safe extension for update payload from file name or URL.
@@ -179,8 +171,8 @@ export const useExpenseTicketDetailMutations = ({
         return false;
       }
 
-      const parsedGastoType = parseOptionalInteger(draftGastoType);
-      if (parsedGastoType === undefined || !REQUIRED_GASTO_TYPES.has(parsedGastoType)) {
+      const parsedGastoType = toExpenseGastoTypeCode(draftGastoType, { allowNone: false });
+      if (parsedGastoType === null) {
         const message = indT("Tickets_Validation_CategoryRequired", "Category is required.");
         setModalError(message);
         setStatus(message);
@@ -210,7 +202,7 @@ export const useExpenseTicketDetailMutations = ({
         urlFile: String(draftUrlFile || "").trim() || undefined,
         fileName: String(draftFileName || "").trim() || undefined,
         fileExtension: resolveTicketFileExtension(draftFileName, draftUrlFile),
-        gastoType: parsedGastoType as ExpenseSheetTicketUpdateRequest["gastoType"],
+        gastoType: parsedGastoType,
       };
 
       const result = await executeExpenseMutation({
