@@ -11,6 +11,7 @@ using Microsoft.Extensions.Localization;
 using System;
 using System.Globalization;
 using System.Linq;
+using System.Text.Json;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -158,6 +159,10 @@ namespace IND_CRM_APP.Controllers
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var response = await _apiClient.CreateActivityAsync(token, req);
+                if (response.Success)
+                {
+                    LogCreatedActivityResponse(response.Data, response.Message);
+                }
 
                 return Json(new
                 {
@@ -677,16 +682,178 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // Logs the owner metadata returned by the activity create command.
+        private void LogCreatedActivityResponse(object? responseData, string? responseMessage)
+        {
+            var recIdText = TryResolveActivityRecId(responseData, out var recId)
+                ? recId.ToString(CultureInfo.InvariantCulture)
+                : TryResolveActivityRecId(responseMessage, out recId)
+                    ? recId.ToString(CultureInfo.InvariantCulture)
+                    : string.Empty;
+            var ownerResolution = ResolveActivityOwnerFromResponseData(responseData);
+
+            _logger.LogInformation(
+                "Visit activity create response resolved. RecId={RecId}; OwnerAxUserId={OwnerAxUserId}; OwnerSource={OwnerSource}; CurrentAxUserId={CurrentAxUserId}; CompanyId={CompanyId}",
+                recIdText,
+                ownerResolution.OwnerAxUserId,
+                ownerResolution.Source,
+                GetCurrentSessionAxUserId() ?? string.Empty,
+                GetCurrentSessionCompanyId() ?? string.Empty);
+        }
+
         // Reads the current AX user id from the session context.
         private string? GetCurrentSessionAxUserId()
         {
             return NormalizeOptionalText(HttpContext?.Session.GetString("AxUser"));
         }
 
+        // Reads the current selected company id from the session context.
+        private string? GetCurrentSessionCompanyId()
+        {
+            return NormalizeOptionalText(HttpContext?.Session.GetString("INDCompanySelected"));
+        }
+
         // Trims optional text and preserves null for empty values.
         private static string? NormalizeOptionalText(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        // Resolves owner fields from the create response Data payload for diagnostics only.
+        private static (string OwnerAxUserId, string Source) ResolveActivityOwnerFromResponseData(object? value)
+        {
+            if (!TryConvertResponseDataToJsonElement(value, out var element) ||
+                element.ValueKind != JsonValueKind.Object)
+            {
+                return (string.Empty, string.Empty);
+            }
+
+            return FirstJsonTextPropertyWithSource(
+                element,
+                ("OwnerAxUserId", nameof(ActivityDto.OwnerAxUserId)),
+                ("ownerAxUserId", nameof(ActivityDto.OwnerAxUserId)),
+                ("INDCreatedByUserId", nameof(ActivityDto.INDCreatedByUserId)),
+                ("indCreatedByUserId", nameof(ActivityDto.INDCreatedByUserId)),
+                ("CreatedByUserId", nameof(ActivityDto.CreatedByUserId)),
+                ("createdByUserId", nameof(ActivityDto.CreatedByUserId)),
+                ("UserId", nameof(ActivityDto.UserId)),
+                ("userId", nameof(ActivityDto.UserId)));
+        }
+
+        // Converts arbitrary response Data values to JsonElement for tolerant field reads.
+        private static bool TryConvertResponseDataToJsonElement(object? value, out JsonElement element)
+        {
+            if (value is JsonElement jsonElement)
+            {
+                element = jsonElement;
+                return true;
+            }
+
+            element = default;
+            if (value == null)
+                return false;
+
+            try
+            {
+                using var document = JsonDocument.Parse(JsonSerializer.Serialize(value));
+                element = document.RootElement.Clone();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // Reads the first non-empty string-like JSON property in priority order.
+        private static (string Value, string Source) FirstJsonTextPropertyWithSource(
+            JsonElement element,
+            params (string PropertyName, string Source)[] properties)
+        {
+            foreach (var (propertyName, source) in properties)
+            {
+                if (element.TryGetProperty(propertyName, out var property))
+                {
+                    var value = ReadJsonStringLikeValue(property);
+                    if (!string.IsNullOrWhiteSpace(value))
+                        return (value, source);
+                }
+            }
+
+            return (string.Empty, string.Empty);
+        }
+
+        // Reads a JSON primitive as trimmed text.
+        private static string ReadJsonStringLikeValue(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString()?.Trim() ?? string.Empty,
+                JsonValueKind.Number => element.GetRawText().Trim(),
+                JsonValueKind.True => bool.TrueString,
+                JsonValueKind.False => bool.FalseString,
+                _ => string.Empty
+            };
+        }
+
+        // Parses activity RecIds from API command response payloads.
+        private static bool TryResolveActivityRecId(object? value, out long recId)
+        {
+            recId = 0;
+            if (value == null)
+                return false;
+
+            if (value is JsonElement element)
+                return TryResolveActivityRecId(element, out recId);
+
+            var rawValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+            if (TryResolveActivityRecId(rawValue, out recId))
+                return true;
+
+            return TryConvertResponseDataToJsonElement(value, out element) &&
+                   TryResolveActivityRecId(element, out recId);
+        }
+
+        // Parses activity RecIds from JSON response values.
+        private static bool TryResolveActivityRecId(JsonElement element, out long recId)
+        {
+            recId = 0;
+            if (element.ValueKind == JsonValueKind.Number)
+                return element.TryGetInt64(out recId) && recId != 0;
+
+            if (element.ValueKind == JsonValueKind.String)
+                return TryResolveActivityRecId(element.GetString(), out recId);
+
+            if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (TryResolveActivityRecId(item, out recId))
+                        return true;
+                }
+
+                return false;
+            }
+
+            if (element.ValueKind != JsonValueKind.Object)
+                return false;
+
+            return TryResolveJsonPropertyRecId(element, "recId", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "RecId", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "refRecId", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "RefRecId", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "refRecIdActividad", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "RefRecIdActividad", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "data", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "Data", out recId);
+        }
+
+        // Parses an activity RecId from one JSON object property.
+        private static bool TryResolveJsonPropertyRecId(JsonElement element, string propertyName, out long recId)
+        {
+            recId = 0;
+            return element.TryGetProperty(propertyName, out var property) &&
+                   TryResolveActivityRecId(property, out recId);
         }
 
         // Parses activity RecIds from assistant mutation payloads.
