@@ -225,11 +225,13 @@
             // Keeps the hidden sidebar out of both the accessibility tree and tab order.
             function setSidebarHidden(isHidden) {
                 if (!sidebar) return;
-                sidebar.setAttribute("aria-hidden", isHidden ? "true" : "false");
                 if (isHidden) {
+                    moveFocusOutOfSidebar();
                     sidebar.setAttribute("inert", "");
+                    sidebar.setAttribute("aria-hidden", "true");
                 } else {
                     sidebar.removeAttribute("inert");
+                    sidebar.setAttribute("aria-hidden", "false");
                 }
             }
 

@@ -31,56 +31,56 @@ const STATUS_REJECTED = 3;
 const ACTION_APPROVE: ExpenseSheetStatusAction = {
   id: "approve",
   labelKey: "ExpenseSheets_BottomActions_Approve",
-  fallback: "Approve",
+  fallback: "Aprobar",
   nextStatus: STATUS_APPROVED,
 };
 
 const ACTION_REJECT: ExpenseSheetStatusAction = {
   id: "reject",
   labelKey: "ExpenseSheets_BottomActions_Reject",
-  fallback: "Reject",
+  fallback: "Rechazar",
   nextStatus: STATUS_REJECTED,
 };
 
 const ACTION_UNDO_APPROVAL: ExpenseSheetStatusAction = {
   id: "undo_approval",
   labelKey: "ExpenseSheets_BottomActions_UndoApproval",
-  fallback: "Undo approval",
+  fallback: "Deshacer aprobacion",
   nextStatus: STATUS_APPROVAL_REQUESTED,
 };
 
 const ACTION_UNDO_SELF_APPROVAL: ExpenseSheetStatusAction = {
   id: "undo_approval",
   labelKey: "ExpenseSheets_BottomActions_UndoApproval",
-  fallback: "Undo approval",
+  fallback: "Deshacer aprobacion",
   nextStatus: STATUS_DRAFT,
 };
 
 const ACTION_UNDO_REJECTION: ExpenseSheetStatusAction = {
   id: "undo_rejection",
   labelKey: "ExpenseSheets_BottomActions_UndoRejection",
-  fallback: "Undo rejection",
+  fallback: "Deshacer rechazo",
   nextStatus: STATUS_APPROVAL_REQUESTED,
 };
 
 const ACTION_MOVE_TO_DRAFT: ExpenseSheetStatusAction = {
   id: "move_to_draft",
   labelKey: "ExpenseSheets_BottomActions_MoveToDraft",
-  fallback: "Move to draft",
+  fallback: "Pasar a Borrador",
   nextStatus: STATUS_DRAFT,
 };
 
 const ACTION_REQUEST_APPROVAL: ExpenseSheetStatusAction = {
   id: "request_approval",
   labelKey: "ExpenseSheets_BottomActions_RequestApproval",
-  fallback: "Request approval",
+  fallback: "Solicitar aprobacion",
   nextStatus: STATUS_APPROVAL_REQUESTED,
 };
 
 const ACTION_UNDO_REQUEST: ExpenseSheetStatusAction = {
   id: "undo_request",
   labelKey: "ExpenseSheets_BottomActions_UndoRequest",
-  fallback: "Undo request",
+  fallback: "Deshacer solicitud",
   nextStatus: STATUS_DRAFT,
 };
 
