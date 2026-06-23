@@ -258,6 +258,9 @@
   <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve">
     <value>La cantidad y el precio deben ser mayores que 0.</value>
   </data>
+  <data name="ExpenseTickets_Line_Validation_AmountQty" xml:space="preserve">
+    <value>La cantidad no puede ser negativa, el precio no puede ser 0 y la cantidad 0 solo se permite en descuentos negativos.</value>
+  </data>
   <data name="ExpenseSheets_Filter_Project" xml:space="preserve">
     <value>Proyecto</value>
   </data>
@@ -1550,6 +1553,9 @@
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>Estoy preparando la respuesta...</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_ChooseChartType_Question" xml:space="preserve">
+    <value>¿Qué tipo de visualización quieres ver?</value>
   </data>
   <data name="ExpenseSheetLink_InvalidLink" xml:space="preserve">
     <value>El enlace de la hoja de gastos no es válido o está incompleto.</value>

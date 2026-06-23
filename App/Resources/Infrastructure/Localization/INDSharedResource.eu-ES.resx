@@ -258,6 +258,9 @@
   <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve">
     <value>Kantitatea eta prezioa 0 baino handiagoak izan behar dira.</value>
   </data>
+  <data name="ExpenseTickets_Line_Validation_AmountQty" xml:space="preserve">
+    <value>Kantitatea ezin da negatiboa izan, prezioa ezin da 0 izan eta 0 kantitatea deskontu negatiboetan bakarrik onartzen da.</value>
+  </data>
   <data name="ExpenseSheets_Filter_Project" xml:space="preserve">
     <value>Proiektua</value>
   </data>
@@ -1550,6 +1553,9 @@
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>Erantzuna prestatzen ari naiz...</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_ChooseChartType_Question" xml:space="preserve">
+    <value>Zein bistaratze mota nahi duzu?</value>
   </data>
   <data name="ExpenseSheetLink_InvalidLink" xml:space="preserve">
     <value>Gastu-orriaren esteka ez da baliozkoa edo osatu gabe dago.</value>

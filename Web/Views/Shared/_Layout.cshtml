@@ -178,7 +178,7 @@
             let touchStartY = 0;
             let touchTracking = false;
 
-            sidebar?.setAttribute("aria-hidden", "true");
+            setSidebarHidden(true);
             overlay?.setAttribute("aria-hidden", "true");
 
             function updateTopbarTitleLayout() {
@@ -222,6 +222,42 @@
                 sidebar.style.setProperty("--sidebar-height", `${Math.round(targetHeight)}px`);
             }
 
+            // Keeps the hidden sidebar out of both the accessibility tree and tab order.
+            function setSidebarHidden(isHidden) {
+                if (!sidebar) return;
+                sidebar.setAttribute("aria-hidden", isHidden ? "true" : "false");
+                if (isHidden) {
+                    sidebar.setAttribute("inert", "");
+                } else {
+                    sidebar.removeAttribute("inert");
+                }
+            }
+
+            // Moves focus to the menu opener before the sidebar is hidden.
+            function moveFocusOutOfSidebar() {
+                if (!sidebar || !btnMenu) return;
+                const activeElement = document.activeElement;
+                if (activeElement instanceof HTMLElement && sidebar.contains(activeElement)) {
+                    btnMenu.focus({ preventScroll: true });
+                }
+            }
+
+            // Closes nested account menus so reopening the sidebar starts from a stable state.
+            function closeUserMenuPanels() {
+                const menu = document.getElementById("userMenu");
+                const chevron = document.getElementById("userMenuChevron");
+                const langSub = document.getElementById("indLangSubmenu");
+                const userChip = document.querySelector(".user-chip");
+
+                menu?.classList.remove("open");
+                chevron?.classList.remove("rotate-180");
+                langSub?.classList.add("hidden");
+                langBtn?.setAttribute("aria-expanded", "false");
+                companySub?.classList.add("hidden");
+                companyBtn?.setAttribute("aria-expanded", "false");
+                userChip?.setAttribute("aria-expanded", "false");
+            }
+
             const toggleSidebar = () => {
                 if (!sidebar || !overlay || !content || !btnMenu || !topbar) return;
 
@@ -231,7 +267,7 @@
                     sidebar.classList.add("open");
                     sidebar.classList.add("sidebar--dock-user");
                     overlay.classList.add("visible");
-                    sidebar.setAttribute("aria-hidden", "false");
+                    setSidebarHidden(false);
                     overlay.setAttribute("aria-hidden", "false");
                     btnMenu.style.opacity = "0";
                     btnMenu.style.pointerEvents = "none";
@@ -247,11 +283,13 @@
                     sidebar.classList.remove("open");
                     sidebar.classList.remove("sidebar--dock-user");
                     overlay.classList.remove("visible");
-                    sidebar.setAttribute("aria-hidden", "true");
-                    overlay.setAttribute("aria-hidden", "true");
                     btnMenu.style.opacity = "1";
                     btnMenu.style.pointerEvents = "auto";
                     btnMenu.setAttribute("aria-expanded", "false");
+                    moveFocusOutOfSidebar();
+                    closeUserMenuPanels();
+                    setSidebarHidden(true);
+                    overlay.setAttribute("aria-hidden", "true");
                     content.classList.remove("shifted");
                     topbar.classList.remove("shifted");
                     updateTopbarTitleLayout();
@@ -299,20 +337,16 @@
             function toggleUserMenu() {
                 const menu = document.getElementById("userMenu");
                 const chevron = document.getElementById("userMenuChevron");
-                const langSub = document.getElementById("indLangSubmenu");
-                const langBtn = document.getElementById("indLangButton");
+                if (!menu) return;
 
                 const isOpen = menu.classList.toggle("open");
                 if (chevron) {
                     chevron.classList.toggle("rotate-180", isOpen);
                 }
 
-                // Defensive: close language submenu when the user menu closes.
                 if (!isOpen) {
-                    langSub?.classList.add("hidden");
-                    langBtn?.setAttribute("aria-expanded", "false");
-                    companySub?.classList.add("hidden");
-                    companyBtn?.setAttribute("aria-expanded", "false");
+                    closeUserMenuPanels();
+                    return;
                 }
                 const userChip = document.querySelector(".user-chip");
                 if (userChip) {
