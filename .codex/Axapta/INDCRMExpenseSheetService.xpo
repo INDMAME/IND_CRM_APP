@@ -4437,6 +4437,7 @@ Formatversion: 1
         #    INDEmailTemplates             emailTemplate;
         #    LanguageId                    languageId;
         #    str                           logoSrc;
+        #    boolean                       sentOk;
         #    ;
         #
         #    if (!_expenseSheet.RecId)
@@ -4563,8 +4564,20 @@ Formatversion: 1
         #
         #    try
         #    {
+        #        info(strFmt('Email hoja gastos: intento eventType=%1 company=%2 hoja=%3 fromStatus=%4 toStatus=%5 source=%6 correlationId=%7 templateRecId=%8 htmlLength=%9 textLength=%10.',
+        #                    eventType,
+        #                    companyId,
+        #                    expenseSheet.HojaGastosId,
+        #                    _fromStatus,
+        #                    _toStatus,
+        #                    _source,
+        #                    _correlationId,
+        #                    emailTemplate.RecId,
+        #                    strLen(htmlBody),
+        #                    strLen(textBody)));
+        #
         #        // Usa el envio extendido para marcar la notificacion con importancia alta en Outlook.
-        #        return INDCRMUtilityService::sendInternalApiMailEx(
+        #        sentOk = INDCRMUtilityService::sendInternalApiMailEx(
         #                                                            companyId,
         #                                                            fromEmail,
         #                                                            '',
@@ -4584,15 +4597,32 @@ Formatversion: 1
         #                                                            expenseSheet.HojaGastosId,
         #                                                            idempotencyKey,
         #                                                            _correlationId);
+        #
+        #        if (!sentOk)
+        #            warning(strFmt('Email hoja gastos no aceptado por transporte: eventType=%1 hoja=%2 company=%3 correlationId=%4 idempotencyKey=%5.',
+        #                           eventType, expenseSheet.HojaGastosId, companyId, _correlationId, idempotencyKey));
+        #        else
+        #            info(strFmt('Email hoja gastos aceptado por transporte: eventType=%1 hoja=%2 company=%3 correlationId=%4 idempotencyKey=%5.',
+        #                        eventType, expenseSheet.HojaGastosId, companyId, _correlationId, idempotencyKey));
+        #
+        #        return sentOk;
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        warning(strFmt('Fallo DDE/COM de mejor esfuerzo enviando email %1 para hoja %2. company=%3 correlationId=%4 idempotencyKey=%5.',
+        #                       eventType, expenseSheet.HojaGastosId, companyId, _correlationId, idempotencyKey));
+        #        return false;
         #    }
         #    catch (Exception::Error)
         #    {
-        #        warning(strFmt('Fallo de mejor esfuerzo enviando email %1 para hoja %2.', eventType, expenseSheet.HojaGastosId));
+        #        warning(strFmt('Fallo de mejor esfuerzo enviando email %1 para hoja %2. company=%3 correlationId=%4 idempotencyKey=%5.',
+        #                       eventType, expenseSheet.HojaGastosId, companyId, _correlationId, idempotencyKey));
         #        return false;
         #    }
         #    catch (Exception::Internal)
         #    {
-        #        warning(strFmt('Fallo interno de mejor esfuerzo enviando email %1 para hoja %2.', eventType, expenseSheet.HojaGastosId));
+        #        warning(strFmt('Fallo interno de mejor esfuerzo enviando email %1 para hoja %2. company=%3 correlationId=%4 idempotencyKey=%5.',
+        #                       eventType, expenseSheet.HojaGastosId, companyId, _correlationId, idempotencyKey));
         #        return false;
         #    }
         #}
@@ -4640,11 +4670,13 @@ Formatversion: 1
         #    INDExpenseSheetStatus oldExpenseSheetStatus;
         #    INDExpenseSheetStatus newExpenseSheetStatus;
         #    boolean               sendStatusNotification;
+        #    boolean               notificationSent;
         #    str 16                expenseSheetStatusRaw;
         #    str 16                exchangeRateModeRaw;
         #    str 16                estadoComentariosRaw;
         #    str 16                reimbursableExpenseRaw;
         #    str 20                actorAxUserIdRaw;
+        #    str                   notificationCorrelationId;
         #    ;
         #    companyId = INDCRMUtilityService::getCompany(_data);
         #
@@ -4812,14 +4844,41 @@ Formatversion: 1
         #                    warning(strFmt('Actor web %1 ignorado para email de hoja %2: no pertenece al ambito de jefatura.', actorAxUserId, header.HojaGastosId));
         #                }
         #
-        #                INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
-        #                    header,
-        #                    oldExpenseSheetStatus,
-        #                    newExpenseSheetStatus,
-        #                    notificationActorUserId,
-        #                    '',
-        #                    'crm-api',
-        #                    strFmt('crm-api-%1-%2', hojaId, timeNow()));
+        #                notificationCorrelationId = strFmt('crm-api-%1-%2', hojaId, timeNow());
+        #
+        #                try
+        #                {
+        #                    info(strFmt('Email hoja gastos: disparo best-effort tras commit company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #
+        #                    notificationSent = INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
+        #                        header,
+        #                        oldExpenseSheetStatus,
+        #                        newExpenseSheetStatus,
+        #                        notificationActorUserId,
+        #                        '',
+        #                        'crm-api',
+        #                        notificationCorrelationId);
+        #
+        #                    if (!notificationSent)
+        #                        warning(strFmt('Email hoja gastos: best-effort sin envio company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                       companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #                }
+        #                catch (Exception::DDEerror)
+        #                {
+        #                    warning(strFmt('Email hoja gastos: fallo DDE/COM best-effort no bloqueante company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                   companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #                }
+        #                catch (Exception::Error)
+        #                {
+        #                    warning(strFmt('Email hoja gastos: fallo best-effort no bloqueante company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                   companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #                }
+        #                catch (Exception::Internal)
+        #                {
+        #                    warning(strFmt('Email hoja gastos: fallo interno best-effort no bloqueante company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                   companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #                }
         #            }
         #
         #            return INDCRMUtilityService::buildHeader(true, 'Hoja de gastos actualizada correctamente.', conNull());

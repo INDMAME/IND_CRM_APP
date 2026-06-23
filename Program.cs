@@ -256,6 +256,20 @@ builder.Services.AddAuthentication(options =>
             }
 
             return Task.CompletedTask;
+        },
+        OnRemoteFailure = context =>
+        {
+            var failureMessage = context.Failure?.Message ?? string.Empty;
+            if (!failureMessage.Contains("Correlation failed", StringComparison.OrdinalIgnoreCase))
+                return Task.CompletedTask;
+
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            // Keep stale or duplicate OIDC callbacks from leaking framework error pages.
+            logger.LogWarning("OIDC remote failure handled as stale login callback. Failure: {FailureMessage}", failureMessage);
+
+            context.HandleResponse();
+            context.Response.Redirect("/Auth/Login?loggedOut=true");
+            return Task.CompletedTask;
         }
     };
     // OIDC callback is a cross-site POST, so correlation/nonce must be SameSite=None.

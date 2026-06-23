@@ -184,11 +184,23 @@ Formatversion: 1
         #
         #    importance = INDInternalApiClientServer::normalizeInternalApiMailImportance(_importance);
         #
+        #    info(strFmt('IND_INTERNAL_API mail: preparando SendMailEx company=%1 sourceProcess=%2 eventType=%3 aggregateType=%4 aggregateId=%5 correlationId=%6 attachmentFilePathsLength=%7 saveToSentItems=%8 importance=%9.',
+        #                _companyId,
+        #                _sourceProcess,
+        #                _eventType,
+        #                _aggregateType,
+        #                _aggregateId,
+        #                _correlationId,
+        #                strLen(_attachmentFilePaths),
+        #                _saveToSentItems,
+        #                importance));
+        #
         #    try
         #    {
         #        // attachmentFilePaths contains staged absolute paths separated by semicolon.
         #        // The DLL reads those files from AOS, infers type and converts them to base64.
         #        clientAPI = new COM("IND.InternalApiClient");
+        #        info(strFmt('IND_INTERNAL_API mail: invocando COM SendMailEx parameterCount=23 aggregateId=%1 correlationId=%2.', _aggregateId, _correlationId));
         #        sentOk = clientAPI.SendMailEx(
         #            baseUrl,
         #            clientId,
@@ -215,11 +227,28 @@ Formatversion: 1
         #            _correlationId);
         #
         #        if (!sentOk)
-        #            warning("Email no aceptado por IND_INTERNAL_API.");
+        #            warning(strFmt('IND_INTERNAL_API mail: SendMailEx devolvio false aggregateId=%1 eventType=%2 correlationId=%3.',
+        #                           _aggregateId, _eventType, _correlationId));
+        #        else
+        #            info(strFmt('IND_INTERNAL_API mail: SendMailEx aceptado aggregateId=%1 eventType=%2 correlationId=%3.',
+        #                        _aggregateId, _eventType, _correlationId));
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        warning(strFmt('IND_INTERNAL_API mail: error DDE/COM enviando email aggregateId=%1 eventType=%2 correlationId=%3.',
+        #                       _aggregateId, _eventType, _correlationId));
+        #        sentOk = false;
         #    }
         #    catch (Exception::Error)
         #    {
-        #        warning("Error enviando email por IND_INTERNAL_API.");
+        #        warning(strFmt('IND_INTERNAL_API mail: error enviando email aggregateId=%1 eventType=%2 correlationId=%3.',
+        #                       _aggregateId, _eventType, _correlationId));
+        #        sentOk = false;
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        warning(strFmt('IND_INTERNAL_API mail: error interno enviando email aggregateId=%1 eventType=%2 correlationId=%3.',
+        #                       _aggregateId, _eventType, _correlationId));
         #        sentOk = false;
         #    }
         #
