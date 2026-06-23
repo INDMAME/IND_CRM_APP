@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: JOB
 
-; Navision Axapta Job: Job_INDDVGuard descargados en Jueves 04/06/2026
+; Navision Axapta Job: Job_INDDVGuard descargados en Lunes 22/06/2026
 ; --------------------------------------------------------------------------------
   JOBVERSION 1
   
@@ -11,7 +11,7 @@ Formatversion: 1
     #static void Job_INDDVGuard(Args _args)
     #{
     #    DataAreaId        companyId      = curext();
-    #    UserId            viewerAxUserId = curUserId();
+    #    UserId            viewerAxUserId = "AZAAM";//curUserId();
     #    str               appCode        = "CRM";
     #    str               moduleCode     = "VISITAS_GESTION";
     #    str               fromDateYmd    = "20200101";

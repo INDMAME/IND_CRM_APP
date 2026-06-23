@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMVisitsService descargados en Miércoles 10/06/2026
+; Navision Axapta Class: INDCRMVisitsService descargados en Martes 23/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -194,6 +194,10 @@ Formatversion: 1
         #                    actividadTable.InitFromClientePotencialTable(CRMClientePotencialTable::Find(_accountNum));
         #                    break;
         #            }
+        #
+        #            //MMS - Ajustes CRM - 2026.06.22
+        #            // Reafirma el propietario funcional tras las inicializaciones de cuenta.
+        #            actividadTable.INDCreatedByUserId   = _createdByUserId;
         #
         #            actividadTable.Name = actividadTable.Name ? actividadTable.Name : CustTable::find(_accountNum).Name;
         #
@@ -982,6 +986,7 @@ Formatversion: 1
         #    CRMTipoVisita       _visitType;
         #    INDContactMethod    _contactMethod;
         #    UserId              _userId;
+        #    UserId              _ownerAxUserId;
         #    CRMUserId           _legacyCrmUserId;
         #    Description         _desc;
         #    TransDate           _transDate;
@@ -1048,7 +1053,8 @@ Formatversion: 1
         #                if (!actividadTable.INDCreatedByUserId)
         #                    actividadTable.INDCreatedByUserId = _userId;
         #
-        #                _legacyCrmUserId = INDCRMVisitsService::resolveLegacyCrmUserIdByAxUserId(actividadTable.INDCreatedByUserId);
+        #                _ownerAxUserId = actividadTable.INDCreatedByUserId;
+        #                _legacyCrmUserId = INDCRMVisitsService::resolveLegacyCrmUserIdByAxUserId(_ownerAxUserId);
         #
         #                actividadTable.AccountNum         = _accountNum;
         #                actividadTable.TipoVisita         = _visitType;
@@ -1072,6 +1078,10 @@ Formatversion: 1
         #                        actividadTable.InitFromClientePotencialTable(CRMClientePotencialTable::Find(_accountNum));
         #                        break;
         #                }
+        #
+        #                //MMS - Ajustes CRM - 2026.06.22
+        #                // Conserva el propietario funcional despues de las inicializaciones de cuenta.
+        #                actividadTable.INDCreatedByUserId = _ownerAxUserId;
         #
         #                actividadTable.Name = actividadTable.Name ? actividadTable.Name : CustTable::find(_accountNum).Name;
         #

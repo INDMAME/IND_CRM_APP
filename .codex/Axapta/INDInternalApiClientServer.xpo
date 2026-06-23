@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDInternalApiClientServer descargados en Miércoles 27/05/2026
+; Navision Axapta Class: INDInternalApiClientServer descargados en Lunes 22/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -94,103 +94,6 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #resolveInternalApiConnection
-        #// Resuelve la configuracion de IND_INTERNAL_API usando la misma fuente que los jobs manuales.
-        #static server container resolveInternalApiConnection()
-        #{
-        #    INDDefaultParameters defaultParameters;
-        #    str                  baseUrl;
-        #    str                  clientId;
-        #    str                  clientSecret;
-        #    ;
-        #
-        #    defaultParameters = INDDefaultParameters::find();
-        #    baseUrl          = defaultParameters.InternalAPIUrlService;
-        #    clientId         = defaultParameters.APIUserId;
-        #    clientSecret     = defaultParameters.INDAPIIntServiceUser().Password;
-        #
-        #    return [baseUrl, clientId, clientSecret];
-        #}
-        #
-      ENDSOURCE
-      SOURCE #sendInternalApiMail
-        #// Envia un email simple llamando a IND_INTERNAL_API a traves de la DLL cliente.
-        #static server boolean sendInternalApiMail(
-        #    str _companyId,
-        #    str _fromEmail,
-        #    str _toEmails,
-        #    str _subject,
-        #    str _htmlBody,
-        #    str _textBody,
-        #    str _sourceProcess,
-        #    str _eventType,
-        #    str _aggregateType,
-        #    str _aggregateId,
-        #    str _idempotencyKey,
-        #    str _correlationId = '')
-        #{
-        #    COM                            clientAPI;
-        #    str                            baseUrl;
-        #    str                            clientId;
-        #    str                            clientSecret;
-        #    container                      connectionInfo;
-        #    boolean                        sentOk;
-        #    ;
-        #
-        #    connectionInfo = INDInternalApiClientServer::resolveInternalApiConnection();
-        #    baseUrl        = conPeek(connectionInfo, 1);
-        #    clientId       = conPeek(connectionInfo, 2);
-        #    clientSecret   = conPeek(connectionInfo, 3);
-        #
-        #    if (!baseUrl || !clientId || !clientSecret)
-        #    {
-        #        warning("No se envio email: falta configuracion de IND_INTERNAL_API.");
-        #        return false;
-        #    }
-        #
-        #    if (!_fromEmail || !_toEmails || !_subject || (!_htmlBody && !_textBody))
-        #    {
-        #        warning("No se envio email: faltan From, To, Subject o Body.");
-        #        return false;
-        #    }
-        #
-        #    try
-        #    {
-        #        // Se usa COM directo para evitar depender del wrapper AX regenerado.
-        #        clientAPI = new COM("IND.InternalApiClient");
-        #        sentOk = clientAPI.SendMail(
-        #            baseUrl,
-        #            clientId,
-        #            clientSecret,
-        #            _fromEmail,
-        #            _toEmails,
-        #            _subject,
-        #            _htmlBody,
-        #            _textBody,
-        #            _companyId,
-        #            'AXAPTA',
-        #            _sourceProcess,
-        #            _eventType,
-        #            _aggregateType,
-        #            _aggregateId,
-        #            _idempotencyKey,
-        #            _correlationId);
-        #
-        #        if (!sentOk)
-        #            warning("Email no aceptado por IND_INTERNAL_API.");
-        #    }
-        #    catch (Exception::Error)
-        #    {
-        #        warning("Error enviando email por IND_INTERNAL_API.");
-        #        sentOk = false;
-        #    }
-        #
-        #    clientAPI = null;
-        #
-        #    return sentOk;
-        #}
-        #
-      ENDSOURCE
       SOURCE #normalizeInternalApiMailImportance
         #// Normaliza la importancia aceptando texto Graph o el valor numerico del enum INDEmailImportance.
         #static server str normalizeInternalApiMailImportance(str _importance)
@@ -211,8 +114,27 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #resolveInternalApiConnection
+        #// Resuelve la configuracion de IND_INTERNAL_API usando la misma fuente que los jobs manuales.
+        #static server container resolveInternalApiConnection()
+        #{
+        #    INDDefaultParameters defaultParameters;
+        #    str                  baseUrl;
+        #    str                  clientId;
+        #    str                  clientSecret;
+        #    ;
+        #
+        #    defaultParameters = INDDefaultParameters::find();
+        #    baseUrl          = defaultParameters.InternalAPIUrlService;
+        #    clientId         = defaultParameters.APIUserId;
+        #    clientSecret     = defaultParameters.INDAPIIntServiceUser().Password;
+        #
+        #    return [baseUrl, clientId, clientSecret];
+        #}
+        #
+      ENDSOURCE
       SOURCE #sendInternalApiMailEx
-        #// Envia un email extendido llamando a IND_INTERNAL_API a traves de la DLL cliente.
+        #// Sends email through the only supported DLL mail method: SendMailEx.
         #static server boolean sendInternalApiMailEx(
         #    str _companyId,
         #    str _fromEmail,
@@ -224,6 +146,7 @@ Formatversion: 1
         #    str _subject,
         #    str _htmlBody,
         #    str _textBody,
+        #    str _attachmentFilePaths,
         #    boolean _saveToSentItems,
         #    str _importance,
         #    str _sourceProcess,
@@ -263,7 +186,8 @@ Formatversion: 1
         #
         #    try
         #    {
-        #        // Se usa COM directo para evitar depender del wrapper AX regenerado.
+        #        // attachmentFilePaths contains staged absolute paths separated by semicolon.
+        #        // The DLL reads those files from AOS, infers type and converts them to base64.
         #        clientAPI = new COM("IND.InternalApiClient");
         #        sentOk = clientAPI.SendMailEx(
         #            baseUrl,
@@ -278,6 +202,7 @@ Formatversion: 1
         #            _subject,
         #            _htmlBody,
         #            _textBody,
+        #            _attachmentFilePaths,
         #            _saveToSentItems,
         #            importance,
         #            _companyId,

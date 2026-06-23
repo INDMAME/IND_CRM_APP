@@ -1,470 +1,279 @@
 Exportfile for AOT version 1.0 or later
 Formatversion: 1
 
-***Element: FRM
+***Element: DBT
 
-; Navision Axapta Forms unloaded at Jueves 04/06/2026
+; Navision Axapta Table : INDCiasPermitidas unloaded at Lunes 22/06/2026
 ; --------------------------------------------------------------------------------
-FRMVERSION 5
-
-FORM #INDCiasPermitidas
-  PROPERTIES
-    Name                #INDCiasPermitidas
-  ENDPROPERTIES
+  TABLEVERSION 1
   
-  METHODS
-    Version: 3
-    SOURCE #classDeclaration
-      #public class FormRun extends ObjectRun
-      #{
-      #}
-    ENDSOURCE
-  ENDMETHODS
-  OBJECTBANK
-    DATASOURCE
-      OBJECTPOOL
-        PROPERTIES
-          Name                #INDCiasPermitidas
-          Table               #INDCiasPermitidas
-          Index               #
-          Company             #
-          CounterField        #
-          AllowCheck          #Yes
-          AllowEdit           #Yes
-          AllowCreate         #Yes
-          AllowDelete         #Yes
-          StartPosition       #First
-          AutoSearch          #Yes
-          AutoNotify          #Yes
-          AutoQuery           #Yes
-          OnlyFetchActive     #No
-          JoinSource          #
-          LinkType            #Delayed
-          DelayActive         #Yes
-          InsertAtEnd         #Yes
-          InsertIfEmpty       #No
-        ENDPROPERTIES
-        
-        FIELDLIST
-        ENDFIELDLIST
-      ENDOBJECTPOOL
-    ENDDATASOURCE
-  ENDOBJECTBANK
-  
-  JOINS
-  ENDJOINS
-  
-  DESIGN
+  TABLE #INDCiasPermitidas
     PROPERTIES
-      Left                #Auto (left)
-      Top                 #Auto
-      Width               #Auto
-      Height              #Auto
-      Visible             #Yes
-      Caption             #Compañías Permitidas
-      TitleDatasource     #
-      Frame               #Standard
-      WindowResize        #Auto
-      WindowType          #Standard
-      SaveSize            #No
-      AlwaysOnTop         #No
-      HideToolbar         #No
-      SetCompany          #Yes
-      ColorScheme         #Default
-      CssClass            #
-      ShowWebHelp         #Default
-      BackgroundColor     #Button face (3D)
-      ImageName           #
-      ImageResource       #0
-      Imagemode           #Normal (preserve pict. attributes)
-      Mode                #Watch
-      SubmitMethod        #Auto
-      SupportReload       #No
-      LocalWebMenu        #
-      AllowDocking        #No
-      Font                #
-      FontSize            #0
-      Italic              #No
-      Underline           #No
-      Bold                #Default
-      CharacterSet        #0
-      LabelFont           #
-      LabelFontSize       #0
-      LabelItalic         #No
-      LabelUnderline      #No
-      LabelBold           #Default
-      LabelCharacterSet   #0
-      DataSource          #
-      TopMargin           #Auto
-      BottomMargin        #Auto
-      LeftMargin          #Auto
-      RightMargin         #Auto
-      ArrangeWhen         #Default
-      ArrangeMethod       #Vertical
-      Columns             #2
-      Columnspace         #Auto
-      ArrangeGuide        
-        ARRAY INDEX Columns 
-          #0
-          #0
-        ENDARRAY
-      HideIfEmpty         #Yes
-      AlignChildren       #Yes
-      AlignChild          #Yes
-      AllowUserSetup      #Yes
-      NeededAccessLevel   #NoAccess
+      Name                #INDCiasPermitidas
+      Label               #Compañías Permitidas
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #No
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #Index1
+      ClusterIndex        #
+      ModifiedDate        #No
+      ModifiedTime        #No
+      ModifiedBy          #No
+      ModifiedTransactionId #No
+      CreatedDate         #No
+      CreatedTime         #No
+      CreatedBy           #No
+      CreatedTransactionId #No
     ENDPROPERTIES
     
-    CONTAINER
-      CONTROL GRID
-        ;==== controlId:12290, containerId: 0, containerdata: 0   
-        ;----------------------------------------------------------
+    FIELDS
+      FIELD #UserId
+        STRING
         PROPERTIES
-          Name                #Grid
-          AutoDeclaration     #No
-          Visible             #Yes
-          AllowEdit           #Yes
-          Left                #Auto (left)
-          Top                 #Auto
-          Width               #Column width
-          Height              #Column height
-          VerticalSpacing     #Auto
-          Enabled             #Yes
-          Skip                #No
-          AlignControl        #No
+          Type                #String
+          Name                #UserId
+          Label               #
           HelpText            #
-          ConfigurationKey    #
-          SecurityKey         #
-          DragDrop            #None
-          ColorScheme         #Default
-          BackgroundColor     #Window background
-          TopMargin           #0
-          BottomMargin        #0
-          LeftMargin          #0
-          RightMargin         #0
-          MultiSelect         #Yes
-          VisibleCols         #Auto
-          VisibleRows         #Auto
-          ShowColLabels       #Yes
-          ShowRowLabels       #Yes
-          HighlightActive     #Yes
-          ActiveBackColor     #Highlight background
-          ActiveForeColor     #Highlight text
-          DataSource          #INDCiasPermitidas
-          DataGroup           #
-          AutoDataGroup       #No
-          GridLines           #Yes
-        ENDPROPERTIES
-        
-          CONTAINER
-            CONTROL STRINGEDIT
-              ;==== controlId:12292, containerId:12290, containerdata: 0   
-              ;----------------------------------------------------------
-              PROPERTIES
-                Name                #INDCiasPermitidas_CiaId
-                AutoDeclaration     #No
-                Visible             #Yes
-                AllowEdit           #Yes
-                Left                #Auto (left)
-                Top                 #Auto
-                Width               #Auto
-                Height              #Auto
-                VerticalSpacing     #Auto
-                Enabled             #Yes
-                Skip                #No
-                AlignControl        #Yes
-                HelpText            #
-                ConfigurationKey    #
-                SecurityKey         #
-                DragDrop            #None
-                LookupButton        #Auto
-                ReplaceOnLookup     #Yes
-                LimitText           #Auto
-                DisplayLength       #Auto
-                DisplayHeight       #Auto
-                Border              #Auto
-                Text                #
-                PasswordStyle       #No
-                Alignment           #Auto
-                ChangeCase          #Auto
-                MultiLine           #No
-                ColorScheme         #Default
-                BackStyle           #Opaque
-                BackgroundColor     #Window background
-                ForegroundColor     #Window text
-                Font                #
-                FontSize            #0
-                Italic              #No
-                Underline           #No
-                Bold                #Default
-                CharacterSet        #0
-                LabelForegroundColor #Window text
-                ShowLabel           #Yes
-                Label               #
-                LabelFont           #
-                LabelFontSize       #0
-                LabelItalic         #No
-                LabelUnderline      #No
-                LabelBold           #Default
-                LabelCharacterSet   #0
-                LabelWidth          #Auto
-                LabelHeight         #Auto
-                LabelPosition       #Left
-                LabelAlignment      #Right
-                DataSource          #INDCiasPermitidas
-                DataField           #CiaId
-                Mandatory           #No
-                ArrayIndex          #0
-                SearchMode          #None
-              ENDPROPERTIES
-              
-            ENDCONTROL 
-            
-            CONTROL STRINGEDIT
-              ;==== controlId:12293, containerId:12290, containerdata: 0   
-              ;----------------------------------------------------------
-              PROPERTIES
-                Name                #DataAreaName
-                AutoDeclaration     #No
-                Visible             #Yes
-                AllowEdit           #No
-                Left                #Auto (left)
-                Top                 #Auto
-                Width               #Auto
-                Height              #Auto
-                VerticalSpacing     #Auto
-                Enabled             #Yes
-                Skip                #No
-                AlignControl        #Yes
-                HelpText            #
-                ConfigurationKey    #
-                SecurityKey         #
-                DragDrop            #None
-                LookupButton        #Auto
-                ReplaceOnLookup     #Yes
-                LimitText           #Auto
-                DisplayLength       #Auto
-                DisplayHeight       #Auto
-                Border              #Auto
-                Text                #
-                PasswordStyle       #No
-                Alignment           #Auto
-                ChangeCase          #Auto
-                MultiLine           #No
-                ColorScheme         #Default
-                BackStyle           #Opaque
-                BackgroundColor     #Window background
-                ForegroundColor     #Window text
-                Font                #
-                FontSize            #0
-                Italic              #No
-                Underline           #No
-                Bold                #Default
-                CharacterSet        #0
-                LabelForegroundColor #Window text
-                ShowLabel           #Yes
-                Label               #
-                LabelFont           #
-                LabelFontSize       #0
-                LabelItalic         #No
-                LabelUnderline      #No
-                LabelBold           #Default
-                LabelCharacterSet   #0
-                LabelWidth          #Auto
-                LabelHeight         #Auto
-                LabelPosition       #Left
-                LabelAlignment      #Right
-                DataSource          #INDCiasPermitidas
-                DataField           #
-                Mandatory           #No
-                ArrayIndex          #0
-                DataMethod          #DataAreaName
-                SearchMode          #None
-              ENDPROPERTIES
-              
-            ENDCONTROL 
-            
-            CONTROL STRINGEDIT
-              ;==== controlId:12291, containerId:12290, containerdata: 0   
-              ;----------------------------------------------------------
-              PROPERTIES
-                Name                #INDCiasPermitidas_UserId
-                AutoDeclaration     #No
-                Visible             #Yes
-                AllowEdit           #No
-                Left                #Auto (left)
-                Top                 #Auto
-                Width               #Auto
-                Height              #Auto
-                VerticalSpacing     #Auto
-                Enabled             #Yes
-                Skip                #No
-                AlignControl        #Yes
-                HelpText            #
-                ConfigurationKey    #
-                SecurityKey         #
-                DragDrop            #None
-                LookupButton        #Auto
-                ReplaceOnLookup     #Yes
-                LimitText           #Auto
-                DisplayLength       #Auto
-                DisplayHeight       #Auto
-                Border              #Auto
-                Text                #
-                PasswordStyle       #No
-                Alignment           #Auto
-                ChangeCase          #Auto
-                MultiLine           #No
-                ColorScheme         #Default
-                BackStyle           #Opaque
-                BackgroundColor     #Window background
-                ForegroundColor     #Window text
-                Font                #
-                FontSize            #0
-                Italic              #No
-                Underline           #No
-                Bold                #Default
-                CharacterSet        #0
-                LabelForegroundColor #Window text
-                ShowLabel           #Yes
-                Label               #
-                LabelFont           #
-                LabelFontSize       #0
-                LabelItalic         #No
-                LabelUnderline      #No
-                LabelBold           #Default
-                LabelCharacterSet   #0
-                LabelWidth          #Auto
-                LabelHeight         #Auto
-                LabelPosition       #Left
-                LabelAlignment      #Right
-                DataSource          #INDCiasPermitidas
-                DataField           #UserId
-                Mandatory           #No
-                ArrayIndex          #0
-                SearchMode          #None
-              ENDPROPERTIES
-              
-            ENDCONTROL 
-            
-          ENDCONTAINER
-          
-      ENDCONTROL 
-      
-      CONTROL BUTTONGROUP
-        ;==== controlId:12294, containerId: 0, containerdata: 0   
-        ;----------------------------------------------------------
-        PROPERTIES
-          Name                #ButtonGroup
-          AutoDeclaration     #No
-          Visible             #Yes
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
           AllowEdit           #Yes
-          Left                #Right edge
-          Top                 #Auto
-          Width               #Auto
-          Height              #Auto
-          VerticalSpacing     #Auto
-          Enabled             #Yes
-          Skip                #No
-          AlignControl        #No
-          HelpText            #
+          Visible             #Yes
           ConfigurationKey    #
-          SecurityKey         #
-          DragDrop            #None
-          FrameType           #Auto
-          FramePosition       #Outside
-          Caption             #
-          SizeWidth           #Yes
-          SizeHeight          #Yes
-          Font                #
-          FontSize            #0
-          Italic              #No
-          Underline           #No
-          Bold                #Default
-          CharacterSet        #0
-          BackStyle           #Opaque
-          ColorScheme         #Default
-          BackgroundColor     #Button face (3D)
-          DataSource          #
-          TopMargin           #Auto
-          BottomMargin        #Auto
-          LeftMargin          #Auto
-          RightMargin         #Auto
-          ArrangeWhen         #Default
-          ArrangeMethod       #Vertical
-          Columns             #1
-          Columnspace         #Auto
-          ArrangeGuide        
-            ARRAY INDEX Columns 
-              #0
+          Table               #INDCiasPermitidas
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #userId
+              #
             ENDARRAY
-          HideIfEmpty         #Yes
-          AlignChildren       #Yes
-          AlignChild          #Yes
-          AllowUserSetup      #Yes
-          NeededAccessLevel   #View
+          StringSize          #5
+          Adjustment          #Left
         ENDPROPERTIES
         
-        CONTAINER
-          CONTROL MENUITEMBUTTON
-            ;==== controlId:12295, containerId:12294, containerdata: 0   
-            ;----------------------------------------------------------
-            PROPERTIES
-              Name                #INDWebModuleAccessLevel
-              AutoDeclaration     #No
-              Visible             #Yes
-              AllowEdit           #Yes
-              Left                #Auto (left)
-              Top                 #Auto
-              Width               #Auto
-              Height              #Auto
-              VerticalSpacing     #Auto
-              Enabled             #Yes
-              Skip                #Yes
-              AlignControl        #No
-              HelpText            #
-              ConfigurationKey    #
-              SecurityKey         #
-              DragDrop            #None
-              Text                #
-              Value               #No
-              ButtonDisplay       #Text only
-              NormalImage         #
-              NormalResource      #0
-              DisabledImage       #
-              DisabledResource    #0
-              Font                #
-              FontSize            #0
-              Italic              #No
-              Underline           #No
-              Bold                #Default
-              CharacterSet        #0
-              Border              #Auto
-              ShowShortCut        #Yes
-              DefaultButton       #No
-              SaveRecord          #Yes
-              MultiSelect         #Auto
-              ColorScheme         #Default
-              BackStyle           #Opaque
-              BackgroundColor     #Button face (3D)
-              ForegroundColor     #Button text
-              NeededAccessLevel   #View
-              MenuItemType        #Display
-              MenuItemName        #INDWebModuleAccessLevel
-              DataSource          #
-            ENDPROPERTIES
-            
-          ENDCONTROL 
-          
-        ENDCONTAINER
+      FIELD #CiaId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CiaId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDCiasPermitidas
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #dataAreaId
+              #
+            ENDARRAY
+          StringSize          #3
+          Adjustment          #Left
+        ENDPROPERTIES
         
-      ENDCONTROL 
-      
-    ENDCONTAINER
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDCiasPermitidas
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
     
-  ENDDESIGN
+    INDICES
+      #Index1
+      PROPERTIES
+        Name                #Index1
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #UserId
+        #CiaId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #INDPersonaTable
+        PROPERTIES
+          Name                #INDPersonaTable
+          Table               #INDPersonaTable
+          Validate            #No
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDCiasPermitidas
+            Field               #UserId
+            Table               #INDPersonaTable
+            RelatedField        #UserId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #SysUserInfo
+        PROPERTIES
+          Name                #SysUserInfo
+          Table               #SysUserInfo
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDCiasPermitidas
+            Field               #UserId
+            Table               #SysUserInfo
+            RelatedField        #Id
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #DataAreaName
+        #display Name DataAreaName()
+        #{
+        #    return (select firstonly dataArea where dataArea.id == this.CiaId).Name;
+        #}
+      ENDSOURCE
+      SOURCE #Find
+        #static INDCiasPermitidas Find(UserId        _userId,
+        #                              DataAreaId    _areaId,
+        #                              boolean       _forupdate = false)
+        #{
+        #    INDCiasPermitidas   INDCiasPermitidas;
+        #    ;
+        #
+        #    INDCiasPermitidas.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDCiasPermitidas
+        #    index hint index1
+        #    where INDCiasPermitidas.UserId == _userId   &&
+        #          INDCiasPermitidas.CiaId  == _areaId;
+        #
+        #    return INDCiasPermitidas;
+        #}
+      ENDSOURCE
+      SOURCE #ListaCias
+        #static str ListaCias(UserId _userId = curUserId())
+        #{
+        #    INDCiasPermitidas   INDCiasPermitidas;
+        #    str                 lista;
+        #    ;
+        #
+        #    while select INDCiasPermitidas
+        #    where INDCiasPermitidas.UserId == _userId {
+        #        if (! lista){
+        #            lista = INDCiasPermitidas.CiaId;
+        #        }
+        #        else {
+        #            lista = strfmt("%1,%2", lista, INDCiasPermitidas.CiaId);
+        #        }
+        #    }
+        #
+        #    return lista;
+        #}
+      ENDSOURCE
+      SOURCE #lookupCias
+        #static client void lookupCias(FormStringControl _ctrl, str _userId)
+        #{
+        #/*
+        #    SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(INDCiasPermitidas),_ctrl);
+        #    Query                   query = new Query();
+        #    QueryBuildDataSource    queryBuildDataSource = query.addDataSource(tableNum(INDCiasPermitidas));
+        #    QueryBuildRange         queryBuildRange      = queryBuildDataSource.addRange(fieldNum(INDCiasPermitidas, UserId));
+        #    ;
+        #
+        #    sysTableLookup.addLookupfield(fieldNum(INDCiasPermitidas, CiaId), true);
+        #
+        #    queryBuildRange.value(_userId);
+        #
+        #    sysTableLookup.parmQuery(query);
+        #    sysTableLookup.performFormLookup();
+        #*/
+        #    SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(DataArea),_ctrl);
+        #    Query                   query = new Query();
+        #    QueryBuildDataSource    queryBuildDataSource = query.addDataSource(tableNum(DataArea));
+        #    QueryBuildRange         queryBuildRange      = queryBuildDataSource.addRange(fieldNum(DataArea, Id));
+        #    ;
+        #
+        #    sysTableLookup.addLookupfield(fieldNum(DataArea, Id), true);
+        #    sysTableLookup.addLookupfield(fieldNum(DataArea, Name));
+        #
+        #
+        #    queryBuildRange.value(INDCiasPermitidas::ListaCias(_userId));
+        #
+        #    sysTableLookup.parmQuery(query);
+        #    sysTableLookup.performFormLookup();
+        #
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
   
-ENDFORM
-
 
 ***Element: END

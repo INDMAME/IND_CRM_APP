@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDWebModule unloaded at Jueves 04/06/2026
+; Navision Axapta Table : INDWebModule unloaded at Lunes 22/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -164,9 +164,9 @@ Formatversion: 1
     ENDGROUPS
     
     INDICES
-      #AppModuleIdx
+      #ModuleCodeIdx
       PROPERTIES
-        Name                #AppModuleIdx
+        Name                #ModuleCodeIdx
         AllowDuplicates     #No
         Enabled             #Yes
         ConfigurationKey    #

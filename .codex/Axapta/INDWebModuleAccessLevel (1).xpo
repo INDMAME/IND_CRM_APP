@@ -407,7 +407,12 @@ Formatversion: 1
       SOURCE #hasActiveRemoveTargets
         #display NoYes hasActiveRemoveTargets()
         #{
-        #    return this.activeRemoveTargetCount() > 0 ? NoYes::Yes : NoYes::No;
+        #    if (this.activeRemoveTargetCount() > 0)
+        #    {
+        #        return NoYes::Yes;
+        #    }
+        #
+        #    return NoYes::No;
         #}
       ENDSOURCE
       SOURCE #hasVisibilityTargets
@@ -503,7 +508,11 @@ Formatversion: 1
         #public boolean validateWrite()
         #{
         #    boolean ret;
+        #    INDCiasPermitidas       currentCiaPerm;
+        #    INDCiasPermitidas       duplicateCiaPerm;
+        #    INDWebModuleAccessLevel duplicateAccessLevel;
         #
+        #    ;
         #
         #    ret = super();
         #
@@ -515,8 +524,45 @@ Formatversion: 1
         #            warning("No existe configuracion de Microsoft Entra para este usuario y app. El permiso no sera usable hasta crear el mapeo.");
         #    }
         #
+        #    if (ret
+        #     && this.AccessRights != 0
+        #     && this.RefRecIdCiaPermitida
+        #     && this.AppCode
+        #     && this.ModuleCode)
+        #    {
+        #        //MMS - Ajustes CRM - 2026.06.22
+        #        // Evita duplicados efectivos: el permiso debe ser unico por usuario, empresa, app y modulo.
+        #        select firstOnly currentCiaPerm
+        #            where currentCiaPerm.RecId == this.RefRecIdCiaPermitida;
+        #
+        #        if (currentCiaPerm.RecId)
+        #        {
+        #            select firstOnly duplicateAccessLevel
+        #                where duplicateAccessLevel.RecId        != this.RecId
+        #                   && duplicateAccessLevel.AppCode      == this.AppCode
+        #                   && duplicateAccessLevel.ModuleCode   == this.ModuleCode
+        #                   && duplicateAccessLevel.AccessRights != 0
+        #            join duplicateCiaPerm
+        #                where duplicateCiaPerm.RecId  == duplicateAccessLevel.RefRecIdCiaPermitida
+        #                   && duplicateCiaPerm.UserId == currentCiaPerm.UserId
+        #                   && duplicateCiaPerm.CiaId  == currentCiaPerm.CiaId;
+        #
+        #            if (duplicateAccessLevel.RecId)
+        #            {
+        #                ret = checkFailed(strFmt(
+        #                    "Ya existe otro permiso activo para usuario %1, empresa %2, app %3 y modulo %4. Revise el permiso RecId %5 antes de guardar.",
+        #                    currentCiaPerm.UserId,
+        #                    currentCiaPerm.CiaId,
+        #                    this.AppCode,
+        #                    this.ModuleCode,
+        #                    duplicateAccessLevel.RecId));
+        #            }
+        #        }
+        #    }
+        #
         #    return ret;
         #}
+        #
       ENDSOURCE
     ENDMETHODS
   ENDTABLE

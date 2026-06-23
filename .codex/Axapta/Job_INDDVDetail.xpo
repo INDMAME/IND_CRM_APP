@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: JOB
 
-; Navision Axapta Job: Job_INDDVDetail descargados en Jueves 04/06/2026
+; Navision Axapta Job: Job_INDDVDetail descargados en Lunes 22/06/2026
 ; --------------------------------------------------------------------------------
   JOBVERSION 1
   
@@ -55,7 +55,7 @@ Formatversion: 1
     #        info(strFmt("Detalle por RecId filas=%1", conLen(detailByRecId)));
     #
     #        if (conLen(detailByRecId) >= 1)
-    #            info(strFmt("Primera fila RecId: %1", conPeek(detailByRecId, 1)));
+    #            info(strFmt("Primera fila RecId: %1", conPeek(conPeek(detailByRecId, 1), 1)));
     #    }
     #
     #    if (activityId)
@@ -66,7 +66,7 @@ Formatversion: 1
     #        info(strFmt("Detalle por codigo filas=%1", conLen(detailByCode)));
     #
     #        if (conLen(detailByCode) >= 1)
-    #            info(strFmt("Primera fila codigo: %1", conPeek(detailByCode, 1)));
+    #            info(strFmt("Primera fila codigo: %1", conPeek(conPeek(detailByCode, 1), 1)));
     #    }
     #
     #    info("Fin detalle.");

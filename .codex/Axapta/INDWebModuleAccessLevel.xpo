@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDWebModuleAccessLevel unloaded at Miércoles 10/06/2026
+; Navision Axapta Table : INDWebModuleAccessLevel unloaded at Lunes 22/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -42,7 +42,7 @@ Formatversion: 1
         PROPERTIES
           Type                #Enum
           Name                #AccessRights
-          Label               #
+          Label               #Acceso Módulo
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes
@@ -387,7 +387,12 @@ Formatversion: 1
       SOURCE #hasActiveRemoveTargets
         #display NoYes hasActiveRemoveTargets()
         #{
-        #    return this.activeRemoveTargetCount() > 0 ? NoYes::Yes : NoYes::No;
+        #    if (this.activeRemoveTargetCount() > 0)
+        #    {
+        #        return NoYes::Yes;
+        #    }
+        #
+        #    return NoYes::No;
         #}
       ENDSOURCE
       SOURCE #hasVisibilityTargets
@@ -446,7 +451,7 @@ Formatversion: 1
         #
         #    this.DataVisibilityMode = INDDataVisibilityMode::OwnOnly;
         #    this.HierarchyDepth     = INDDataVisibilityHierarchyDepth::FullDescendants;
-        #    this.MutationPolicy     = INDMutationPolicy::ModuleBusinessRules;
+        #    //this.MutationPolicy     = INDMutationPolicy::ModuleBusinessRules;
         #}
       ENDSOURCE
       SOURCE #mutationPolicyLabel
@@ -458,8 +463,8 @@ Formatversion: 1
         #            return "Solo propios";
         #        case INDMutationPolicy::SameAsVisibility:
         #            return "Igual que visibilidad";
-        #        case INDMutationPolicy::ModuleBusinessRules:
-        #            return "Reglas del módulo";
+        #        //case INDMutationPolicy::ModuleBusinessRules:
+        #            //return "Reglas del módulo";
         #    }
         #
         #    return enum2str(this.MutationPolicy);
@@ -485,7 +490,11 @@ Formatversion: 1
         #public boolean validateWrite()
         #{
         #    boolean ret;
+        #    INDCiasPermitidas       currentCiaPerm;
+        #    INDCiasPermitidas       duplicateCiaPerm;
+        #    INDWebModuleAccessLevel duplicateAccessLevel;
         #
+        #    ;
         #
         #    ret = super();
         #
@@ -495,6 +504,42 @@ Formatversion: 1
         #        // Se permite preparar permisos antes de crear la identidad Entra; login sigue bloqueando si no hay mapeo.
         #        if (!this.INDWebUserEntraIdentity())
         #            warning("No existe configuracion de Microsoft Entra para este usuario y app. El permiso no sera usable hasta crear el mapeo.");
+        #    }
+        #
+        #    if (ret
+        #     && this.AccessRights != 0
+        #     && this.RefRecIdCiaPermitida
+        #     && this.AppCode
+        #     && this.ModuleCode)
+        #    {
+        #        //MMS - Ajustes CRM - 2026.06.22
+        #        // Evita duplicados efectivos: el permiso debe ser unico por usuario, empresa, app y modulo.
+        #        select firstOnly currentCiaPerm
+        #            where currentCiaPerm.RecId == this.RefRecIdCiaPermitida;
+        #
+        #        if (currentCiaPerm.RecId)
+        #        {
+        #            select firstOnly duplicateAccessLevel
+        #                where duplicateAccessLevel.RecId        != this.RecId
+        #                   && duplicateAccessLevel.AppCode      == this.AppCode
+        #                   && duplicateAccessLevel.ModuleCode   == this.ModuleCode
+        #                   && duplicateAccessLevel.AccessRights != 0
+        #            join duplicateCiaPerm
+        #                where duplicateCiaPerm.RecId  == duplicateAccessLevel.RefRecIdCiaPermitida
+        #                   && duplicateCiaPerm.UserId == currentCiaPerm.UserId
+        #                   && duplicateCiaPerm.CiaId  == currentCiaPerm.CiaId;
+        #
+        #            if (duplicateAccessLevel.RecId)
+        #            {
+        #                ret = checkFailed(strFmt(
+        #                    "Ya existe otro permiso activo para usuario %1, empresa %2, app %3 y modulo %4. Revise el permiso RecId %5 antes de guardar.",
+        #                    currentCiaPerm.UserId,
+        #                    currentCiaPerm.CiaId,
+        #                    this.AppCode,
+        #                    this.ModuleCode,
+        #                    duplicateAccessLevel.RecId));
+        #            }
+        #        }
         #    }
         #
         #    return ret;

@@ -1,0 +1,602 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDDVUsersDiag descargados en Martes 23/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job_INDDVUsersDiag
+    #static void Job_INDDVUsersDiag(Args _args)
+    #{
+    #    DataAreaId                      companyId      = curext();
+    #    UserId                          viewerAxUserId = curUserId();
+    #    str             50                appCode        = "CRM";
+    #    str             50                moduleCode     = "VISITAS_GESTION";
+    #    date                            asOfDate       = today();
+    #    container                       data;
+    #    container                       result;
+    #    container                       headerWrap;
+    #    container                       header;
+    #    container                       lines;
+    #    container                       line;
+    #    Set                             visibleAliases;
+    #    Set                             visibleAxUsers;
+    #    Set                             expectedAliases;
+    #    Set                             filteredAliases;
+    #    Set                             directAliases;
+    #    Set                             fullAliases;
+    #    Set                             addAliases;
+    #    Set                             removeAliases;
+    #    SetIterator                     si;
+    #    int                             i;
+    #    str           50                  personAlias;
+    #    str           50                  rowAlias;
+    #    UserId                          axUserId;
+    #    boolean                         hasMismatch;
+    #    INDPersonaTable                 viewerPerson;
+    #    INDPersonaTable                 person;
+    #    INDWebModuleAccessLevel         moduleAccessLevel;
+    #    INDWebModuleAccessLevel         candidateAccessLevel;
+    #    INDWebModuleAccessLevel         legacyAccessLevel;
+    #    INDCiasPermitidas               ciasPerm;
+    #    INDCiasPermitidas               candidateCiasPerm;
+    #    INDCiasPermitidas               legacyCiasPerm;
+    #    INDWebApp                       legacyWebApp;
+    #    INDWebModule                    legacyWebModule;
+    #    UserId                          canonicalViewerAxUserId;
+    #    str           50                  viewerAlias;
+    #    str           100                 utilityBuild;
+    #    int                             runtimeCandidateNo;
+    #    int                             candidateNo;
+    #    int                             aliasCandidateNo;
+    #    ;
+    #
+    #    //MMS - Ajustes CRM - 2026.06.23
+    #    // Diagnostica la visibilidad efectiva del usuario actual y bloquea validaciones con clases viejas.
+    #    info("DIAG build=2026.06.23-runtime-version-gate");
+    #
+    #    info(strFmt("DIAG input company=%1 viewerAxUser=%2 app=%3 module=%4 asOfDate=%5",
+    #        companyId, viewerAxUserId, appCode, moduleCode, asOfDate));
+    #
+    #    info(strFmt("DIAG FieldIds INDWebModuleAccessLevel AccessRights=%1 ModuleCode=%2 RefCia=%3 AppCode=%4 DataVisibilityMode=%5 MutationPolicy=%6 HierarchyDepth=%7",
+    #        fieldNum(INDWebModuleAccessLevel, AccessRights),
+    #        fieldNum(INDWebModuleAccessLevel, ModuleCode),
+    #        fieldNum(INDWebModuleAccessLevel, RefRecIdCiaPermitida),
+    #        fieldNum(INDWebModuleAccessLevel, AppCode),
+    #        fieldNum(INDWebModuleAccessLevel, DataVisibilityMode),
+    #        fieldNum(INDWebModuleAccessLevel, MutationPolicy),
+    #        fieldNum(INDWebModuleAccessLevel, HierarchyDepth)));
+    #
+    #    if (fieldNum(INDWebModuleAccessLevel, DataVisibilityMode) < fieldNum(INDWebModuleAccessLevel, AppCode))
+    #    {
+    #        warning("DIAG INDWebModuleAccessLevel parece usar el layout historico: DataVisibilityMode aparece antes de AppCode. No importes el XPO espejo junto al actual.");
+    #    }
+    #
+    #    if (fieldNum(INDWebModuleAccessLevel, MutationPolicy) < fieldNum(INDWebModuleAccessLevel, DataVisibilityMode))
+    #    {
+    #        warning("DIAG INDWebModuleAccessLevel tiene MutationPolicy antes de DataVisibilityMode. Revisa FieldIds antes de validar ABI.");
+    #    }
+    #
+    #    moduleAccessLevel = INDCRMUtilityService::ctrlFindModuleAccessLevel(
+    #        viewerAxUserId,
+    #        companyId,
+    #        appCode,
+    #        moduleCode);
+    #
+    #    changecompany (companyId)
+    #    {
+    #        viewerPerson = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(viewerAxUserId);
+    #
+    #        canonicalViewerAxUserId = viewerAxUserId;
+    #        viewerAlias = "";
+    #
+    #        if (viewerPerson.RecId)
+    #        {
+    #            if (viewerPerson.UserId)
+    #                canonicalViewerAxUserId = viewerPerson.UserId;
+    #
+    #            viewerAlias = viewerPerson.Alias;
+    #        }
+    #
+    #        if (moduleAccessLevel.RecId)
+    #        {
+    #            select firstOnly ciasPerm
+    #                where ciasPerm.RecId == moduleAccessLevel.RefRecIdCiaPermitida;
+    #        }
+    #
+    #        //MMS - Ajustes CRM - 2026.06.22
+    #        // Reproduce la seleccion firstOnly anterior para comparar si la fila antigua ampliaba visibilidad.
+    #        select firstOnly legacyAccessLevel
+    #            where legacyAccessLevel.AppCode      == appCode
+    #               && legacyAccessLevel.ModuleCode   == moduleCode
+    #               && legacyAccessLevel.AccessRights != 0
+    #        join legacyCiasPerm
+    #            where legacyCiasPerm.RecId  == legacyAccessLevel.RefRecIdCiaPermitida
+    #               && legacyCiasPerm.UserId == viewerAxUserId
+    #               && legacyCiasPerm.CiaId  == companyId
+    #        join legacyWebModule
+    #            where legacyWebModule.AppCode    == legacyAccessLevel.AppCode
+    #               && legacyWebModule.ModuleCode == legacyAccessLevel.ModuleCode
+    #               && legacyWebModule.IsActive   == NoYes::Yes
+    #        join legacyWebApp
+    #            where legacyWebApp.AppCode       == legacyWebModule.AppCode
+    #               && legacyWebApp.IsActive      == NoYes::Yes;
+    #    }
+    #
+    #    info(strFmt("DIAG identity raw=%1 canonicalAxUser=%2 alias=%3 personRecId=%4",
+    #        viewerAxUserId,
+    #        canonicalViewerAxUserId,
+    #        viewerAlias,
+    #        viewerPerson.RecId));
+    #
+    #    runtimeCandidateNo = 0;
+    #
+    #    changecompany (companyId)
+    #    {
+    #        while select candidateAccessLevel
+    #            where candidateAccessLevel.AppCode    == appCode
+    #               && candidateAccessLevel.ModuleCode == moduleCode
+    #        {
+    #            candidateCiasPerm.clear();
+    #            select firstOnly candidateCiasPerm
+    #                where candidateCiasPerm.RecId == candidateAccessLevel.RefRecIdCiaPermitida
+    #                   && candidateCiasPerm.CiaId == companyId;
+    #
+    #            if (!candidateCiasPerm.RecId)
+    #                continue;
+    #
+    #            if (candidateCiasPerm.UserId != viewerAxUserId
+    #             && candidateCiasPerm.UserId != canonicalViewerAxUserId
+    #             && candidateCiasPerm.UserId != viewerAlias)
+    #            {
+    #                continue;
+    #            }
+    #
+    #            runtimeCandidateNo++;
+    #
+    #            info(strFmt("DIAG runtimeCandidateAccess[%1] recId=%2 refCia=%3 access=%4/%5 dataVis=%6/%7 selected=%8 consideredByFind=%9",
+    #                runtimeCandidateNo,
+    #                candidateAccessLevel.RecId,
+    #                candidateAccessLevel.RefRecIdCiaPermitida,
+    #                any2int(candidateAccessLevel.AccessRights),
+    #                candidateAccessLevel.AccessRights,
+    #                any2int(candidateAccessLevel.DataVisibilityMode),
+    #                enum2str(candidateAccessLevel.DataVisibilityMode),
+    #                candidateAccessLevel.RecId == moduleAccessLevel.RecId,
+    #                candidateAccessLevel.AccessRights != 0));
+    #
+    #            info(strFmt("DIAG runtimeCandidateAccess[%1] depth=%2/%3 mutation=%4/%5 ciaUser=%6 ciaCompany=%7",
+    #                runtimeCandidateNo,
+    #                any2int(candidateAccessLevel.HierarchyDepth),
+    #                enum2str(candidateAccessLevel.HierarchyDepth),
+    #                any2int(candidateAccessLevel.MutationPolicy),
+    #                enum2str(candidateAccessLevel.MutationPolicy),
+    #                candidateCiasPerm.UserId,
+    #                candidateCiasPerm.CiaId));
+    #        }
+    #    }
+    #
+    #    info(strFmt("DIAG runtimeCandidateAccess count=%1", runtimeCandidateNo));
+    #
+    #    if (legacyAccessLevel.RecId)
+    #    {
+    #        info(strFmt("DIAG legacyFirstOnlyAccess recId=%1 refCia=%2 rowUser=%3 rowCompany=%4",
+    #            legacyAccessLevel.RecId,
+    #            legacyAccessLevel.RefRecIdCiaPermitida,
+    #            legacyCiasPerm.UserId,
+    #            legacyCiasPerm.CiaId));
+    #
+    #        info(strFmt("DIAG legacyFirstOnlyAccess access=%1/%2 dataVis=%3/%4 depth=%5/%6 mutation=%7/%8",
+    #            any2int(legacyAccessLevel.AccessRights),
+    #            legacyAccessLevel.AccessRights,
+    #            any2int(legacyAccessLevel.DataVisibilityMode),
+    #            enum2str(legacyAccessLevel.DataVisibilityMode),
+    #            any2int(legacyAccessLevel.HierarchyDepth),
+    #            enum2str(legacyAccessLevel.HierarchyDepth),
+    #            any2int(legacyAccessLevel.MutationPolicy),
+    #            enum2str(legacyAccessLevel.MutationPolicy)));
+    #    }
+    #    else
+    #    {
+    #        warning("DIAG legacyFirstOnlyAccess no encontro fila.");
+    #    }
+    #
+    #    candidateNo = 0;
+    #
+    #    changecompany (companyId)
+    #    {
+    #        while select candidateAccessLevel
+    #            where candidateAccessLevel.AppCode    == appCode
+    #               && candidateAccessLevel.ModuleCode == moduleCode
+    #        join candidateCiasPerm
+    #            where candidateCiasPerm.RecId  == candidateAccessLevel.RefRecIdCiaPermitida
+    #               && candidateCiasPerm.UserId == viewerAxUserId
+    #               && candidateCiasPerm.CiaId  == companyId
+    #        {
+    #            candidateNo++;
+    #
+    #            info(strFmt("DIAG candidateAccess[%1] recId=%2 refCia=%3 access=%4/%5 dataVis=%6/%7 selected=%8 consideredByFind=%9",
+    #                candidateNo,
+    #                candidateAccessLevel.RecId,
+    #                candidateAccessLevel.RefRecIdCiaPermitida,
+    #                any2int(candidateAccessLevel.AccessRights),
+    #                candidateAccessLevel.AccessRights,
+    #                any2int(candidateAccessLevel.DataVisibilityMode),
+    #                enum2str(candidateAccessLevel.DataVisibilityMode),
+    #                candidateAccessLevel.RecId == moduleAccessLevel.RecId,
+    #                candidateAccessLevel.AccessRights != 0));
+    #
+    #            info(strFmt("DIAG candidateAccess[%1] depth=%2/%3 mutation=%4/%5 ciaUser=%6 ciaCompany=%7",
+    #                candidateNo,
+    #                any2int(candidateAccessLevel.HierarchyDepth),
+    #                enum2str(candidateAccessLevel.HierarchyDepth),
+    #                any2int(candidateAccessLevel.MutationPolicy),
+    #                enum2str(candidateAccessLevel.MutationPolicy),
+    #                candidateCiasPerm.UserId,
+    #                candidateCiasPerm.CiaId));
+    #        }
+    #    }
+    #
+    #    info(strFmt("DIAG candidateAccess count=%1", candidateNo));
+    #
+    #    aliasCandidateNo = 0;
+    #
+    #    changecompany (companyId)
+    #    {
+    #        while select candidateAccessLevel
+    #            where candidateAccessLevel.AppCode    == appCode
+    #               && candidateAccessLevel.ModuleCode == moduleCode
+    #        join candidateCiasPerm
+    #            where candidateCiasPerm.RecId  == candidateAccessLevel.RefRecIdCiaPermitida
+    #               && candidateCiasPerm.UserId == viewerPerson.Alias
+    #               && candidateCiasPerm.CiaId  == companyId
+    #        {
+    #            aliasCandidateNo++;
+    #
+    #            info(strFmt("DIAG aliasCandidateAccess[%1] recId=%2 refCia=%3 access=%4/%5 dataVis=%6/%7 selected=%8 consideredByFind=%9",
+    #                aliasCandidateNo,
+    #                candidateAccessLevel.RecId,
+    #                candidateAccessLevel.RefRecIdCiaPermitida,
+    #                any2int(candidateAccessLevel.AccessRights),
+    #                candidateAccessLevel.AccessRights,
+    #                any2int(candidateAccessLevel.DataVisibilityMode),
+    #                enum2str(candidateAccessLevel.DataVisibilityMode),
+    #                candidateAccessLevel.RecId == moduleAccessLevel.RecId,
+    #                candidateAccessLevel.AccessRights != 0));
+    #
+    #            info(strFmt("DIAG aliasCandidateAccess[%1] depth=%2/%3 mutation=%4/%5 ciaUser=%6 ciaCompany=%7",
+    #                aliasCandidateNo,
+    #                any2int(candidateAccessLevel.HierarchyDepth),
+    #                enum2str(candidateAccessLevel.HierarchyDepth),
+    #                any2int(candidateAccessLevel.MutationPolicy),
+    #                enum2str(candidateAccessLevel.MutationPolicy),
+    #                candidateCiasPerm.UserId,
+    #                candidateCiasPerm.CiaId));
+    #        }
+    #    }
+    #
+    #    info(strFmt("DIAG aliasCandidateAccess count=%1 viewerAlias=%2", aliasCandidateNo, viewerPerson.Alias));
+    #
+    #    if (!viewerPerson.RecId)
+    #    {
+    #        error(strFmt("No existe persona activa para el usuario AX %1.", viewerAxUserId));
+    #        return;
+    #    }
+    #
+    #    if (!moduleAccessLevel.RecId)
+    #    {
+    #        error(strFmt("No existe permiso efectivo para %1/%2/%3/%4.", companyId, viewerAxUserId, appCode, moduleCode));
+    #        return;
+    #    }
+    #
+    #    info(strFmt("DIAG viewer alias=%1 name=%2 personRecId=%3",
+    #        viewerPerson.Alias, viewerPerson.Name, viewerPerson.RecId));
+    #
+    #    info(strFmt("DIAG effective access RecId=%1 RefRecIdCiaPermitida=%2 rowUser=%3 rowCompany=%4 rowApp=%5 rowModule=%6",
+    #        moduleAccessLevel.RecId,
+    #        moduleAccessLevel.RefRecIdCiaPermitida,
+    #        ciasPerm.UserId,
+    #        ciasPerm.CiaId,
+    #        moduleAccessLevel.AppCode,
+    #        moduleAccessLevel.ModuleCode));
+    #
+    #    info(strFmt("DIAG effective enums AccessRights=%1/%2 DataVisibilityMode=%3/%4 HierarchyDepth=%5/%6 MutationPolicy=%7/%8",
+    #        any2int(moduleAccessLevel.AccessRights),
+    #        moduleAccessLevel.AccessRights,
+    #        any2int(moduleAccessLevel.DataVisibilityMode),
+    #        enum2str(moduleAccessLevel.DataVisibilityMode),
+    #        any2int(moduleAccessLevel.HierarchyDepth),
+    #        enum2str(moduleAccessLevel.HierarchyDepth),
+    #        any2int(moduleAccessLevel.MutationPolicy),
+    #        enum2str(moduleAccessLevel.MutationPolicy)));
+    #
+    #    directAliases = INDModuleDataVisibilityHierarchyLine::resolveDescendants(
+    #        companyId,
+    #        viewerPerson.Alias,
+    #        false,
+    #        INDDataVisibilityHierarchyDepth::DirectOnly,
+    #        asOfDate);
+    #
+    #    fullAliases = INDModuleDataVisibilityHierarchyLine::resolveDescendants(
+    #        companyId,
+    #        viewerPerson.Alias,
+    #        false,
+    #        INDDataVisibilityHierarchyDepth::FullDescendants,
+    #        asOfDate);
+    #
+    #    if (!directAliases)
+    #        directAliases = new Set(Types::String);
+    #
+    #    if (!fullAliases)
+    #        fullAliases = new Set(Types::String);
+    #
+    #    info(strFmt("DIAG hierarchy directCount=%1 fullCount=%2", directAliases.elements(), fullAliases.elements()));
+    #
+    #    addAliases = new Set(Types::String);
+    #    removeAliases = new Set(Types::String);
+    #    expectedAliases = new Set(Types::String);
+    #
+    #    switch (moduleAccessLevel.DataVisibilityMode)
+    #    {
+    #        case INDDataVisibilityMode::OwnOnly:
+    #            expectedAliases.add(viewerPerson.Alias);
+    #            break;
+    #
+    #        case INDDataVisibilityMode::OwnAndHierarchy:
+    #            expectedAliases.add(viewerPerson.Alias);
+    #            INDControlDataVisibilityResolver::addSetToSet(expectedAliases,
+    #                INDModuleDataVisibilityHierarchyLine::resolveDescendants(
+    #                    companyId,
+    #                    viewerPerson.Alias,
+    #                    false,
+    #                    moduleAccessLevel.HierarchyDepth,
+    #                    asOfDate));
+    #            break;
+    #
+    #        case INDDataVisibilityMode::HierarchyOnly:
+    #            INDControlDataVisibilityResolver::addSetToSet(expectedAliases,
+    #                INDModuleDataVisibilityHierarchyLine::resolveDescendants(
+    #                    companyId,
+    #                    viewerPerson.Alias,
+    #                    false,
+    #                    moduleAccessLevel.HierarchyDepth,
+    #                    asOfDate));
+    #            break;
+    #
+    #        case INDDataVisibilityMode::ManualTargetsOnly:
+    #            break;
+    #
+    #        case INDDataVisibilityMode::AllUsers:
+    #            changecompany (companyId)
+    #            {
+    #                while select person
+    #                    where person.Blocked == NoYes::No
+    #                {
+    #                    if (person.Alias)
+    #                        expectedAliases.add(person.Alias);
+    #                }
+    #            }
+    #            break;
+    #
+    #        default:
+    #            expectedAliases.add(viewerPerson.Alias);
+    #            break;
+    #    }
+    #
+    #    if (moduleAccessLevel.DataVisibilityMode != INDDataVisibilityMode::OwnOnly)
+    #    {
+    #        addAliases = INDModuleDataVisibilityTarget::resolveTargets(
+    #            companyId,
+    #            moduleAccessLevel.RecId,
+    #            INDDataVisibilityTargetAction::Add,
+    #            moduleAccessLevel.HierarchyDepth,
+    #            asOfDate);
+    #
+    #        removeAliases = INDModuleDataVisibilityTarget::resolveTargets(
+    #            companyId,
+    #            moduleAccessLevel.RecId,
+    #            INDDataVisibilityTargetAction::Remove,
+    #            moduleAccessLevel.HierarchyDepth,
+    #            asOfDate);
+    #
+    #        if (!addAliases)
+    #            addAliases = new Set(Types::String);
+    #
+    #        if (!removeAliases)
+    #            removeAliases = new Set(Types::String);
+    #
+    #        INDControlDataVisibilityResolver::addSetToSet(expectedAliases, addAliases);
+    #
+    #        filteredAliases = new Set(Types::String);
+    #        si = new SetIterator(expectedAliases);
+    #        while (si.more())
+    #        {
+    #            personAlias = si.value();
+    #            if (personAlias && !removeAliases.in(personAlias))
+    #                filteredAliases.add(personAlias);
+    #            si.next();
+    #        }
+    #
+    #        expectedAliases = filteredAliases;
+    #    }
+    #
+    #    info(strFmt("DIAG targets addCount=%1 removeCount=%2", addAliases.elements(), removeAliases.elements()));
+    #
+    #    visibleAliases = INDCRMUtilityService::ctrlResolveVisiblePersonAliasSet(
+    #        viewerAxUserId,
+    #        companyId,
+    #        appCode,
+    #        moduleCode,
+    #        asOfDate);
+    #
+    #    visibleAxUsers = INDCRMUtilityService::ctrlResolveVisibleAxUserIdSet(
+    #        viewerAxUserId,
+    #        companyId,
+    #        appCode,
+    #        moduleCode,
+    #        asOfDate);
+    #
+    #    if (!visibleAliases)
+    #        visibleAliases = new Set(Types::String);
+    #
+    #    if (!visibleAxUsers)
+    #        visibleAxUsers = new Set(Types::String);
+    #
+    #    si = new SetIterator(expectedAliases);
+    #    while (si.more())
+    #    {
+    #        personAlias = si.value();
+    #        if (personAlias && !visibleAliases.in(personAlias))
+    #        {
+    #            hasMismatch = true;
+    #            warning(strFmt("DIAG missing expected alias=%1", personAlias));
+    #        }
+    #        si.next();
+    #    }
+    #
+    #    si = new SetIterator(visibleAliases);
+    #    while (si.more())
+    #    {
+    #        personAlias = si.value();
+    #        if (personAlias && !expectedAliases.in(personAlias))
+    #        {
+    #            hasMismatch = true;
+    #            warning(strFmt("DIAG unexpected actual alias=%1", personAlias));
+    #        }
+    #        si.next();
+    #    }
+    #
+    #    info(strFmt("DIAG expectedAliases=%1 actualAliases=%2 finalAxUsers=%3 mismatch=%4",
+    #        expectedAliases.elements(), visibleAliases.elements(), visibleAxUsers.elements(), hasMismatch));
+    #
+    #    i = 0;
+    #    si = new SetIterator(visibleAliases);
+    #    while (si.more())
+    #    {
+    #        i++;
+    #        personAlias = si.value();
+    #        axUserId = "";
+    #
+    #        changecompany (companyId)
+    #        {
+    #            person.clear();
+    #
+    #            select firstOnly person
+    #                where person.Alias == personAlias
+    #                   && person.Blocked == NoYes::No;
+    #
+    #            if (person.RecId)
+    #                axUserId = person.UserId;
+    #        }
+    #
+    #        info(strFmt("DIAG actualAlias[%1]=%2 axUser=%3", i, personAlias, axUserId));
+    #        si.next();
+    #    }
+    #
+    #    data = [companyId, appCode, moduleCode, viewerAxUserId, "", "1"];
+    #    info(strFmt("DIAG Calling ctrlGetVisibleUsers build=2026.06.23-runtime-version-gate. Company=%1 Viewer=%2 App=%3 Module=%4",
+    #        companyId,
+    #        viewerAxUserId,
+    #        appCode,
+    #        moduleCode));
+    #
+    #    result = INDCRMUtilityService::ctrlGetVisibleUsers(data);
+    #
+    #    if (conLen(result) >= 1)
+    #    {
+    #        headerWrap = conPeek(result, 1);
+    #        if (conLen(headerWrap) >= 1)
+    #            header = conPeek(headerWrap, 1);
+    #        else
+    #            header = headerWrap;
+    #
+    #        utilityBuild = "<no utility build>";
+    #        if (conLen(header) >= 8)
+    #            utilityBuild = conPeek(header, 8);
+    #
+    #        info(strFmt("DIAG ctrlGetVisibleUsers header success=%1 message=%2 viewer=%3 alias=%4 company=%5 app=%6 module=%7 utilityBuild=%8",
+    #            conPeek(header, 1),
+    #            conPeek(header, 2),
+    #            conPeek(header, 3),
+    #            conPeek(header, 4),
+    #            conPeek(header, 5),
+    #            conPeek(header, 6),
+    #            conPeek(header, 7),
+    #            utilityBuild));
+    #
+    #        if (utilityBuild != "INDCRMUtilityService build=2026.06.22-ownonly-guard")
+    #        {
+    #            throw error(strFmt("DIAG detecta INDCRMUtilityService vieja o sin compilar. utilityBuild=%1. Reimporte y compile INDCRMUtilityService antes de validar ABI.",
+    #                utilityBuild));
+    #        }
+    #
+    #        if (conLen(header) >= 20)
+    #        {
+    #            info(strFmt("DIAG header effective access recId=%1 dataVis=%2/%3 depth=%4/%5 mutation=%6/%7",
+    #                conPeek(header, 9),
+    #                conPeek(header, 10),
+    #                conPeek(header, 11),
+    #                conPeek(header, 12),
+    #                conPeek(header, 13),
+    #                conPeek(header, 14),
+    #                conPeek(header, 15)));
+    #
+    #            info(strFmt("DIAG header effective row refCia=%1 rowUser=%2 rowCompany=%3 access=%4/%5",
+    #                conPeek(header, 16),
+    #                conPeek(header, 17),
+    #                conPeek(header, 18),
+    #                conPeek(header, 19),
+    #                conPeek(header, 20)));
+    #        }
+    #        else
+    #        {
+    #            throw error("DIAG header sin diagnostico efectivo extendido. Recompile INDCRMUtilityService para comparar la fila usada por ctrlGetVisibleUsers.");
+    #        }
+    #    }
+    #
+    #    if (conLen(result) >= 2)
+    #        lines = conPeek(result, 2);
+    #    else
+    #        lines = conNull();
+    #
+    #    info(strFmt("DIAG ctrlGetVisibleUsers lineCount=%1", conLen(lines)));
+    #
+    #    for (i = 1; i <= conLen(lines); i++)
+    #    {
+    #        line = conPeek(lines, i);
+    #
+    #        if (conLen(line) >= 9)
+    #        {
+    #            rowAlias = conPeek(line, 1);
+    #            info(strFmt("DIAG line %1 alias=%2 axUser=%3 crmUser=%4 name=%5 source=%6 mutationPolicy=%7 mutationPolicyInt=%8 mutationPolicyLabel=%9",
+    #                i,
+    #                rowAlias,
+    #                conPeek(line, 2),
+    #                conPeek(line, 3),
+    #                conPeek(line, 4),
+    #                conPeek(line, 5),
+    #                conPeek(line, 6),
+    #                conPeek(line, 7),
+    #                conPeek(line, 8)));
+    #
+    #            info(strFmt("DIAG line %1 canMutate=%2", i, conPeek(line, 9)));
+    #
+    #            if (moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnOnly
+    #             && rowAlias != viewerPerson.Alias)
+    #            {
+    #                hasMismatch = true;
+    #                error(strFmt("DIAG OwnOnly devolvio un alias no propio. viewerAlias=%1 rowAlias=%2", viewerPerson.Alias, rowAlias));
+    #            }
+    #        }
+    #    }
+    #
+    #    if (hasMismatch)
+    #        error("DIAG termino con diferencias entre calculo esperado y resolver.");
+    #    else
+    #        info("DIAG termino sin diferencias entre calculo esperado y resolver.");
+    #}
+  ENDSOURCE
+
+***Element: END

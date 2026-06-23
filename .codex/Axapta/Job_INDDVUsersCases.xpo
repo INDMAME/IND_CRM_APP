@@ -1,0 +1,231 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDDVUsersCases descargados en Martes 23/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job_INDDVUsersCases
+    #static void Job_INDDVUsersCases(Args _args)
+    #{
+    #   DataAreaId              companyId      = curext();
+    #   UserId                  viewerAxUserId = curUserId();
+    #   str                     appCode        = "CRM";
+    #   str                     moduleCode     = "VISITAS_GESTION";
+    #   date                    asOfDate       = today();
+    #   INDWebModuleAccessLevel moduleAccessLevel;
+    #   INDPersonaTable         viewerPerson;
+    #   Set                     visibleAliases;
+    #   Set                     directAliases;
+    #   Set                     fullAliases;
+    #   SetIterator             si;
+    #   str                     personAlias;
+    #   str                     rowAlias;
+    #   str                     canMutateRaw;
+    #   container               data;
+    #   container               result;
+    #   container               headerWrap;
+    #   container               header;
+    #   container               lines;
+    #   container               line;
+    #   str                     utilityBuild;
+    #   int                     i;
+    #   boolean                 canMutate;
+    #   boolean                 ok          = true;
+    #   boolean                 caseMatched = false;
+    #   ;
+    #
+    #   //MMS - Ajustes CRM - 2026.06.23
+    #   // Valida el caso activo A/B/C/D y bloquea validaciones con clases AX antiguas.
+    #   info("Job_INDDVUsersCases build=2026.06.23-runtime-version-gate");
+    #
+    #   moduleAccessLevel = INDCRMUtilityService::ctrlFindModuleAccessLevel(viewerAxUserId, companyId, appCode, moduleCode);
+    #
+    #   changecompany (companyId)
+    #   {
+    #       viewerPerson = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(viewerAxUserId);
+    #   }
+    #
+    #   if (!viewerPerson.RecId)
+    #   {
+    #       error(strFmt("No existe persona activa para el usuario AX %1.", viewerAxUserId));
+    #       return;
+    #   }
+    #
+    #   if (!moduleAccessLevel.RecId)
+    #   {
+    #       error(strFmt("No existe permiso efectivo para %1/%2/%3/%4.", companyId, viewerAxUserId, appCode, moduleCode));
+    #       return;
+    #   }
+    #
+    #   data = [companyId, appCode, moduleCode, viewerAxUserId, "", "1"];
+    #   result = INDCRMUtilityService::ctrlGetVisibleUsers(data);
+    #
+    #   if (conLen(result) < 2)
+    #       throw error("ctrlGetVisibleUsers no devolvio Header + Lines.");
+    #
+    #   headerWrap = conPeek(result, 1);
+    #   lines      = conPeek(result, 2);
+    #
+    #   if (conLen(headerWrap) >= 1)
+    #       header = conPeek(headerWrap, 1);
+    #   else
+    #       header = headerWrap;
+    #
+    #   utilityBuild = "<no utility build>";
+    #   if (conLen(header) >= 8)
+    #       utilityBuild = conPeek(header, 8);
+    #
+    #   info(strFmt("VALIDACION utilityBuild=%1", utilityBuild));
+    #
+    #   if (utilityBuild != "INDCRMUtilityService build=2026.06.22-ownonly-guard")
+    #   {
+    #       throw error(strFmt("INDCRMUtilityService vieja o sin compilar. utilityBuild=%1. Reimporte y compile antes de validar A/B/C/D.",
+    #           utilityBuild));
+    #   }
+    #
+    #   if (conLen(header) < 20)
+    #   {
+    #       throw error("Header sin diagnostico efectivo extendido. Recompile INDCRMUtilityService antes de validar A/B/C/D.");
+    #   }
+    #
+    #   visibleAliases = INDCRMUtilityService::ctrlResolveVisiblePersonAliasSet(viewerAxUserId, companyId, appCode, moduleCode, asOfDate);
+    #   if (!visibleAliases)
+    #       visibleAliases = new Set(Types::String);
+    #
+    #   directAliases = INDModuleDataVisibilityHierarchyLine::resolveDescendants(companyId, viewerPerson.Alias, false, INDDataVisibilityHierarchyDepth::DirectOnly, asOfDate);
+    #   fullAliases = INDModuleDataVisibilityHierarchyLine::resolveDescendants(companyId, viewerPerson.Alias, false, INDDataVisibilityHierarchyDepth::FullDescendants, asOfDate);
+    #
+    #   if (!directAliases)
+    #       directAliases = new Set(Types::String);
+    #
+    #   if (!fullAliases)
+    #       fullAliases = new Set(Types::String);
+    #
+    #   info(strFmt("VALIDACION company=%1 viewer=%2 alias=%3 app=%4 module=%5 recIdPermiso=%6 vis=%7 depth=%8 mutation=%9",
+    #       companyId, viewerAxUserId, viewerPerson.Alias, appCode, moduleCode, moduleAccessLevel.RecId,
+    #       enum2str(moduleAccessLevel.DataVisibilityMode), enum2str(moduleAccessLevel.HierarchyDepth),
+    #       enum2str(moduleAccessLevel.MutationPolicy)));
+    #
+    #   info(strFmt("VALIDACION visibles=%1", visibleAliases.elements()));
+    #
+    #   if (INDModuleDataVisibilityTarget::hasActiveTargets(moduleAccessLevel.RecId, asOfDate))
+    #       warning("El caso activo tiene excepciones Add/Remove. Los casos A/B/C/D esperados deben ejecutarse sin excepciones.");
+    #
+    #   if (moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnOnly)
+    #   {
+    #       caseMatched = true;
+    #       if (visibleAliases.elements() != 1 || !visibleAliases.in(viewerPerson.Alias))
+    #       {
+    #           ok = false;
+    #           warning("CASO A incorrecto: Solo propios debe devolver unicamente el visor.");
+    #       }
+    #       else
+    #           info("CASO A OK: Solo propios devuelve unicamente el visor.");
+    #   }
+    #
+    #   if (moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnAndHierarchy
+    #    && moduleAccessLevel.HierarchyDepth == INDDataVisibilityHierarchyDepth::DirectOnly)
+    #   {
+    #       caseMatched = true;
+    #
+    #       if (!visibleAliases.in(viewerPerson.Alias))
+    #       {
+    #           ok = false;
+    #           warning(strFmt("CASO B incorrecto: falta el visor %1.", viewerPerson.Alias));
+    #       }
+    #
+    #       si = new SetIterator(directAliases);
+    #       while (si.more())
+    #       {
+    #           personAlias = si.value();
+    #           if (personAlias && !visibleAliases.in(personAlias))
+    #           {
+    #               ok = false;
+    #               warning(strFmt("CASO B incorrecto: falta directo %1.", personAlias));
+    #           }
+    #           si.next();
+    #       }
+    #
+    #       si = new SetIterator(fullAliases);
+    #       while (si.more())
+    #       {
+    #           personAlias = si.value();
+    #           if (personAlias && !directAliases.in(personAlias) && visibleAliases.in(personAlias))
+    #           {
+    #               ok = false;
+    #               warning(strFmt("CASO B incorrecto: aparece indirecto %1 con Solo directos.", personAlias));
+    #           }
+    #           si.next();
+    #       }
+    #
+    #       if (ok)
+    #           info("CASO B OK: Propios + jerarquia con Solo directos no devuelve indirectos.");
+    #   }
+    #
+    #   if (moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnAndHierarchy
+    #    && moduleAccessLevel.HierarchyDepth == INDDataVisibilityHierarchyDepth::FullDescendants)
+    #   {
+    #       caseMatched = true;
+    #
+    #       if (!visibleAliases.in(viewerPerson.Alias))
+    #       {
+    #           ok = false;
+    #           warning(strFmt("CASO C incorrecto: falta el visor %1.", viewerPerson.Alias));
+    #       }
+    #
+    #       si = new SetIterator(fullAliases);
+    #       while (si.more())
+    #       {
+    #           personAlias = si.value();
+    #           if (personAlias && !visibleAliases.in(personAlias))
+    #           {
+    #               ok = false;
+    #               warning(strFmt("CASO C incorrecto: falta descendiente %1.", personAlias));
+    #           }
+    #           si.next();
+    #       }
+    #
+    #       if (ok)
+    #           info("CASO C OK: Propios + jerarquia completa devuelve directos e indirectos.");
+    #   }
+    #
+    #   for (i = 1; i <= conLen(lines); i++)
+    #   {
+    #       line = conPeek(lines, i);
+    #       if (conLen(line) < 9)
+    #           continue;
+    #
+    #       rowAlias = conPeek(line, 1);
+    #       canMutateRaw = strLwr(strLRTrim(strFmt("%1", conPeek(line, 9))));
+    #       canMutate = canMutateRaw == "1" || canMutateRaw == "true";
+    #
+    #       if (moduleAccessLevel.MutationPolicy == INDMutationPolicy::OwnOnly && rowAlias != viewerPerson.Alias && canMutate)
+    #       {
+    #           ok = false;
+    #           warning(strFmt("CASO MUTACION incorrecto: %1 no es propio y llega CanMutate=true.", rowAlias));
+    #       }
+    #
+    #       if (moduleAccessLevel.MutationPolicy == INDMutationPolicy::SameAsVisibility && !canMutate)
+    #       {
+    #           ok = false;
+    #           warning(strFmt("CASO D incorrecto: %1 es visible y deberia llegar CanMutate=true.", rowAlias));
+    #       }
+    #   }
+    #
+    #   if (moduleAccessLevel.MutationPolicy == INDMutationPolicy::SameAsVisibility)
+    #       info("CASO D validado: Igual que visibilidad revisado sobre CanMutate.");
+    #
+    #   if (!caseMatched)
+    #       warning("La configuracion activa no corresponde a A, B o C. Revise DataVisibilityMode y HierarchyDepth.");
+    #
+    #   if (ok)
+    #       info("VALIDACION OK.");
+    #   else
+    #       error("VALIDACION CON ERRORES. Revise las advertencias anteriores.");
+    #}
+  ENDSOURCE
+
+***Element: END

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDModuleDataVisibilityTarget unloaded at Miércoles 10/06/2026
+; Navision Axapta Table : INDModuleDataVisibilityTarget unloaded at Martes 23/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -22,7 +22,7 @@ Formatversion: 1
       MaxAccessMode       #Delete
       CacheLookup         #None
       CreateRecIdIndex    #No
-      SaveDataPerCompany  #Yes
+      SaveDataPerCompany  #No
       TableGroup          #Miscellaneous
       PrimaryIndex        #
       ClusterIndex        #
@@ -347,6 +347,36 @@ Formatversion: 1
         #    }
         #
         #    return NoYes::Yes;
+        #}
+      ENDSOURCE
+      SOURCE #AxaptaUser
+        #display Name AxaptaUser()
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!this.TargetPersonAlias)
+        #        return "";
+        #
+        #    select firstOnly person
+        #        where person.Alias == this.TargetPersonAlias;
+        #
+        #    return person.UserId;
+        #}
+      ENDSOURCE
+      SOURCE #CRMUserId
+        #display Name CRMUserId()
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!this.TargetPersonAlias)
+        #        return "";
+        #
+        #    select firstOnly person
+        #        where person.Alias == this.TargetPersonAlias;
+        #
+        #    return person.getCRMUsuarioTable().UserId;
         #}
       ENDSOURCE
       SOURCE #personName
