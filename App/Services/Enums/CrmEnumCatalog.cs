@@ -64,27 +64,17 @@ namespace IND_CRM_APP.Services.Enums
             IEnumerable<dynamic>? fallback = null)
         {
             var fallbackItems = fallback ?? Enumerable.Empty<dynamic>();
-            if (catalog == null || string.IsNullOrWhiteSpace(axEnumName))
-                return fallbackItems;
-
-            var enumGroup = catalog.FirstOrDefault(item =>
-                string.Equals(item.AxEnumName, axEnumName, StringComparison.OrdinalIgnoreCase));
-            if (enumGroup == null || !enumGroup.Found || enumGroup.Options == null || enumGroup.Options.Count == 0)
-                return fallbackItems;
-
-            var options = enumGroup.Options
-                .Where(option => option.Active && option.Value.HasValue && !string.IsNullOrWhiteSpace(option.Label))
-                .OrderBy(option => option.SortOrder ?? int.MaxValue)
-                .ThenBy(option => option.Value ?? int.MaxValue)
-                .Select(option => new
-                {
-                    Value = option.Value!.Value.ToString(CultureInfo.InvariantCulture),
-                    Text = option.Label.Trim()
-                })
-                .Cast<dynamic>()
-                .ToList();
+            var options = BuildUsableOptionsByAxEnumName(catalog, axEnumName).ToList();
 
             return options.Count > 0 ? options : fallbackItems;
+        }
+
+        // Reports whether the remote catalog has active options for the requested AX enum.
+        public bool HasUsableOptionsByAxEnumName(
+            IEnumerable<CrmEnumCatalogDto>? catalog,
+            string axEnumName)
+        {
+            return BuildUsableOptionsByAxEnumName(catalog, axEnumName).Any();
         }
 
         // Returns a map of gasto type code to localized label.
@@ -147,6 +137,32 @@ namespace IND_CRM_APP.Services.Enums
             }
 
             return value;
+        }
+
+        // Builds active select options from the remote AX enum catalog.
+        private static IEnumerable<dynamic> BuildUsableOptionsByAxEnumName(
+            IEnumerable<CrmEnumCatalogDto>? catalog,
+            string axEnumName)
+        {
+            if (catalog == null || string.IsNullOrWhiteSpace(axEnumName))
+                return Enumerable.Empty<dynamic>();
+
+            var enumGroup = catalog.FirstOrDefault(item =>
+                string.Equals(item.AxEnumName, axEnumName, StringComparison.OrdinalIgnoreCase));
+            if (enumGroup == null || !enumGroup.Found || enumGroup.Options == null || enumGroup.Options.Count == 0)
+                return Enumerable.Empty<dynamic>();
+
+            return enumGroup.Options
+                .Where(option => option.Active && option.Value.HasValue && !string.IsNullOrWhiteSpace(option.Label))
+                .OrderBy(option => option.SortOrder ?? int.MaxValue)
+                .ThenBy(option => option.Value ?? int.MaxValue)
+                .Select(option => new
+                {
+                    Value = option.Value!.Value.ToString(CultureInfo.InvariantCulture),
+                    Text = option.Label.Trim()
+                })
+                .Cast<dynamic>()
+                .ToList();
         }
 
         private static string NormalizeKey(string value)

@@ -5768,11 +5768,11 @@ namespace IND_CRM_APP.Controllers
                     return;
                 }
 
-                ViewBag.GastoTypeOptions = LoadOptionsFromCatalog(catalog, GastoTypeEnumName, gastoTypeFallback);
-                ViewBag.ExpenseSheetStatusOptions = LoadOptionsFromCatalog(catalog, "INDExpenseSheetStatus");
-                ViewBag.ReimbursableExpenseOptions = LoadOptionsFromCatalog(catalog, "INDReimbursableExpense");
-                ViewBag.ExchangeRateModeOptions = LoadOptionsFromCatalog(catalog, "INDExchangeRateMode");
-                ViewBag.TicketStatusOptions = LoadOptionsFromCatalog(catalog, "INDTicketStatus");
+                ViewBag.GastoTypeOptions = LoadOptionsFromCatalog(catalog, GastoTypeEnumName, gastoTypeFallback, result.TraceId);
+                ViewBag.ExpenseSheetStatusOptions = LoadOptionsFromCatalog(catalog, "INDExpenseSheetStatus", traceId: result.TraceId);
+                ViewBag.ReimbursableExpenseOptions = LoadOptionsFromCatalog(catalog, "INDReimbursableExpense", traceId: result.TraceId);
+                ViewBag.ExchangeRateModeOptions = LoadOptionsFromCatalog(catalog, "INDExchangeRateMode", traceId: result.TraceId);
+                ViewBag.TicketStatusOptions = LoadOptionsFromCatalog(catalog, "INDTicketStatus", traceId: result.TraceId);
             }
             catch (Exception ex)
             {
@@ -5784,12 +5784,37 @@ namespace IND_CRM_APP.Controllers
         private List<dynamic> LoadOptionsFromCatalog(
             IEnumerable<CrmEnumCatalogDto> catalog,
             string axEnumName,
-            IEnumerable<dynamic>? fallback = null)
+            IEnumerable<dynamic>? fallback = null,
+            string? traceId = null)
         {
-            return _crmEnumCatalog
-                .GetOptionsByAxEnumName(catalog, axEnumName, fallback ?? Enumerable.Empty<dynamic>())
+            var catalogList = catalog?.ToList() ?? new List<CrmEnumCatalogDto>();
+            var fallbackItems = fallback?.Cast<dynamic>().ToList() ?? new List<dynamic>();
+            var options = _crmEnumCatalog
+                .GetOptionsByAxEnumName(catalogList, axEnumName, fallbackItems)
                 .Cast<dynamic>()
                 .ToList();
+
+            if (!_crmEnumCatalog.HasUsableOptionsByAxEnumName(catalogList, axEnumName))
+            {
+                _logger.LogWarning(
+                    "Expense enum catalog fallback used. AppCode={AppCode}; Company={Company}; AxEnumName={AxEnumName}; FallbackCount={FallbackCount}; ReturnedOptionCount={ReturnedOptionCount}; TraceId={TraceId}",
+                    CrmAppCode,
+                    ResolveCatalogCompany(catalogList),
+                    axEnumName,
+                    fallbackItems.Count,
+                    options.Count,
+                    traceId);
+            }
+
+            return options;
+        }
+
+        // Resolves the company from returned enum catalog rows for fallback logging.
+        private static string ResolveCatalogCompany(IEnumerable<CrmEnumCatalogDto> catalog)
+        {
+            return catalog
+                .Select(item => item.Company)
+                .FirstOrDefault(company => !string.IsNullOrWhiteSpace(company)) ?? string.Empty;
         }
 
         // Builds stable local fallback options for CRMGastoType.

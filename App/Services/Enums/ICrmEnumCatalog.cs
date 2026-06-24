@@ -12,6 +12,9 @@ namespace IND_CRM_APP.Services.Enums
             IEnumerable<CrmEnumCatalogDto>? catalog,
             string axEnumName,
             IEnumerable<dynamic>? fallback = null);
+        bool HasUsableOptionsByAxEnumName(
+            IEnumerable<CrmEnumCatalogDto>? catalog,
+            string axEnumName);
         IReadOnlyDictionary<string, string> GetGastoTypeMap();
         string GetGastoTypeLabel(string? rawTypeValue);
     }

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Text.Json;
@@ -882,31 +883,73 @@ namespace IND_CRM_APP.Controllers
                     return;
                 }
 
-                ViewBag.CRMTipoVisitaEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                ViewBag.CRMTipoVisitaEnum = LoadVisitOptionsFromCatalog(
                     catalog,
                     "CRMTipoVisita",
-                    _enumLocalizer.GetTipoVisitaItems());
-                ViewBag.CRMActividadTypeEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                    _enumLocalizer.GetTipoVisitaItems(),
+                    result.TraceId);
+                ViewBag.CRMActividadTypeEnum = LoadVisitOptionsFromCatalog(
                     catalog,
                     "CRMActividadType",
-                    _enumLocalizer.GetActividadTypeItems());
-                ViewBag.ContactMethodEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                    _enumLocalizer.GetActividadTypeItems(),
+                    result.TraceId);
+                ViewBag.ContactMethodEnum = LoadVisitOptionsFromCatalog(
                     catalog,
                     "INDContactMethod",
-                    _enumLocalizer.GetContactMethodItems());
-                ViewBag.CRMActividadOrigenEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                    _enumLocalizer.GetContactMethodItems(),
+                    result.TraceId);
+                ViewBag.CRMActividadOrigenEnum = LoadVisitOptionsFromCatalog(
                     catalog,
                     "CRMActividadOrigen",
-                    _enumLocalizer.GetActividadOrigenItems());
-                ViewBag.AsistenteTipoEnum = _crmEnumCatalog.GetOptionsByAxEnumName(
+                    _enumLocalizer.GetActividadOrigenItems(),
+                    result.TraceId);
+                ViewBag.AsistenteTipoEnum = LoadVisitOptionsFromCatalog(
                     catalog,
                     "CRMCustVendVisitaAsistente",
-                    _enumLocalizer.GetAsistenteTipoItems());
+                    _enumLocalizer.GetAsistenteTipoItems(),
+                    result.TraceId);
             }
             catch (Exception ex)
             {
                 _logger.LogWarning(ex, "Could not load visit enum catalog. Local fallback options will be used.");
             }
+        }
+
+        // Resolves visit enum options and logs when the local fallback is used.
+        private List<dynamic> LoadVisitOptionsFromCatalog(
+            IEnumerable<CrmEnumCatalogDto> catalog,
+            string axEnumName,
+            IEnumerable<dynamic> fallback,
+            string? traceId)
+        {
+            var catalogList = catalog?.ToList() ?? new List<CrmEnumCatalogDto>();
+            var fallbackItems = fallback?.Cast<dynamic>().ToList() ?? new List<dynamic>();
+            var options = _crmEnumCatalog
+                .GetOptionsByAxEnumName(catalogList, axEnumName, fallbackItems)
+                .Cast<dynamic>()
+                .ToList();
+
+            if (!_crmEnumCatalog.HasUsableOptionsByAxEnumName(catalogList, axEnumName))
+            {
+                _logger.LogWarning(
+                    "Visit enum catalog fallback used. AppCode={AppCode}; Company={Company}; AxEnumName={AxEnumName}; FallbackCount={FallbackCount}; ReturnedOptionCount={ReturnedOptionCount}; TraceId={TraceId}",
+                    CrmAppCode,
+                    ResolveCatalogCompany(catalogList),
+                    axEnumName,
+                    fallbackItems.Count,
+                    options.Count,
+                    traceId);
+            }
+
+            return options;
+        }
+
+        // Resolves the company from returned enum catalog rows for fallback logging.
+        private static string ResolveCatalogCompany(IEnumerable<CrmEnumCatalogDto> catalog)
+        {
+            return catalog
+                .Select(item => item.Company)
+                .FirstOrDefault(company => !string.IsNullOrWhiteSpace(company)) ?? string.Empty;
         }
 
         // Loads stable local fallback select options for visit screens.
