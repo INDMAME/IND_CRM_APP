@@ -9,10 +9,12 @@ namespace IND_CRM_APP.Models.CRM
         public string Description { get; set; } = string.Empty;
 
         [JsonPropertyName("currencyCode")]
-        public string CurrencyCode { get; set; } = string.Empty;
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CurrencyCode { get; set; }
 
         [JsonPropertyName("exchRate")]
-        public decimal ExchRate { get; set; }
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? ExchRate { get; set; }
 
         [JsonPropertyName("projId")]
         public string? ProjId { get; set; }

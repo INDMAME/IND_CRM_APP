@@ -3,6 +3,7 @@ import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import { hasExpenseTicketImagePreviewSource } from "../tickets/detail/expenseTicketPreviewUtils.ts";
+import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
@@ -33,6 +34,9 @@ type ExpenseTicketDetailHeaderFormProps = {
   draftCurrencyCode: string;
   currencyCodeInvalid: boolean;
   currencyInputRef: React.Ref<HTMLInputElement>;
+  draftTotalAmount: string;
+  totalAmountInvalid: boolean;
+  totalAmountInputRef: React.Ref<HTMLInputElement>;
   draftTransDate: string;
   draftTicketTime: string;
   draftUrlFile: string;
@@ -40,6 +44,7 @@ type ExpenseTicketDetailHeaderFormProps = {
   onDraftDescriptionChange: (value: string) => void;
   onDraftGastoTypeChange: (value: string) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
+  onDraftTotalAmountChange: (value: string) => void;
   onOpenFile: () => void;
   onOpenExpenseSheet?: () => void;
   hideOpenFileAction?: boolean;
@@ -64,6 +69,9 @@ const ExpenseTicketDetailHeaderForm = ({
   draftCurrencyCode,
   currencyCodeInvalid,
   currencyInputRef,
+  draftTotalAmount,
+  totalAmountInvalid,
+  totalAmountInputRef,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -71,6 +79,7 @@ const ExpenseTicketDetailHeaderForm = ({
   onDraftDescriptionChange,
   onDraftGastoTypeChange,
   onDraftCurrencyCodeChange,
+  onDraftTotalAmountChange,
   onOpenFile,
   onOpenExpenseSheet,
   hideOpenFileAction = false,
@@ -84,6 +93,16 @@ const ExpenseTicketDetailHeaderForm = ({
     formatExpenseDisplayDate(header.ticketDate || header.transDate, locale) ||
     "-";
   const lockedDraftDateText = formatExpenseDisplayDate(draftTransDate, locale) || displayDateText;
+  const handleTotalAmountBlur = () => {
+    onDraftTotalAmountChange(
+      formatExpenseInputNumber(draftTotalAmount, {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+        useGrouping: true,
+        fallback: "",
+      })
+    );
+  };
 
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-zinc-200 rounded-[var(--radius-xl)]">
@@ -163,10 +182,26 @@ const ExpenseTicketDetailHeaderForm = ({
           />
         )}
 
-        <ExpenseReadOnlyField
-          label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")}
-          value={totalAmountText || "-"}
-        />
+        {isEditing ? (
+          <div className="space-y-1.5">
+            <label className="form-label font-semibold">{indT("ExpenseSheets_Field_TotalAmount", "Total amount")}</label>
+            <input
+              ref={totalAmountInputRef}
+              className={`form-control${totalAmountInvalid ? " border-rose-400 bg-rose-50 focus:border-rose-400 focus:ring-rose-200" : ""}`}
+              value={draftTotalAmount}
+              onChange={(event) => onDraftTotalAmountChange(event.target.value || "")}
+              onBlur={handleTotalAmountBlur}
+              inputMode="decimal"
+              aria-invalid={totalAmountInvalid ? "true" : "false"}
+              aria-label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")}
+            />
+          </div>
+        ) : (
+          <ExpenseReadOnlyField
+            label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")}
+            value={totalAmountText || "-"}
+          />
+        )}
 
         <ExpenseReadOnlyField
           label={indT("Tickets_Field_TicketDate", "Ticket date")}

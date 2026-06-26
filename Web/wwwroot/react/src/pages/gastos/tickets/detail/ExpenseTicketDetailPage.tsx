@@ -185,6 +185,9 @@ const buildExpenseTicketDetailContentView = ({
   draftCurrencyCode,
   currencyCodeInvalid,
   currencyInputRef,
+  draftTotalAmount,
+  totalAmountInvalid,
+  totalAmountInputRef,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -192,6 +195,7 @@ const buildExpenseTicketDetailContentView = ({
   setDraftDescription,
   setDraftGastoType,
   setDraftCurrencyCode,
+  setDraftTotalAmount,
   isFromSheetLink,
   linkedLine,
   handleOpenExpenseSheet,
@@ -230,6 +234,9 @@ const buildExpenseTicketDetailContentView = ({
   draftCurrencyCode: string;
   currencyCodeInvalid: boolean;
   currencyInputRef: React.RefObject<HTMLInputElement | null>;
+  draftTotalAmount: string;
+  totalAmountInvalid: boolean;
+  totalAmountInputRef: React.RefObject<HTMLInputElement | null>;
   draftTransDate: string;
   draftTicketTime: string;
   draftUrlFile: string;
@@ -237,6 +244,7 @@ const buildExpenseTicketDetailContentView = ({
   setDraftDescription: (value: string) => void;
   setDraftGastoType: (value: string) => void;
   setDraftCurrencyCode: (value: string) => void;
+  setDraftTotalAmount: (value: string) => void;
   isFromSheetLink: boolean;
   linkedLine: ExpenseTicketLinkedSheetLineView;
   handleOpenExpenseSheet: () => void;
@@ -281,6 +289,9 @@ const buildExpenseTicketDetailContentView = ({
   draftCurrencyCode,
   currencyCodeInvalid,
   currencyInputRef,
+  draftTotalAmount,
+  totalAmountInvalid,
+  totalAmountInputRef,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -288,6 +299,7 @@ const buildExpenseTicketDetailContentView = ({
   onDraftDescriptionChange: setDraftDescription,
   onDraftGastoTypeChange: setDraftGastoType,
   onDraftCurrencyCodeChange: setDraftCurrencyCode,
+  onDraftTotalAmountChange: setDraftTotalAmount,
   onOpenFile: openFile,
   onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
   linkedLine,
@@ -556,6 +568,9 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftCurrencyCode,
     currencyCodeInvalid,
     currencyInputRef,
+    draftTotalAmount,
+    totalAmountInvalid,
+    totalAmountInputRef,
     draftTransDate,
     draftTicketTime,
     draftComentario,
@@ -569,6 +584,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     setDraftDescription,
     setDraftGastoType,
     setDraftCurrencyCode,
+    setDraftTotalAmount,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,
@@ -615,6 +631,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       header,
       draftGastoType,
       draftCurrencyCode,
+      draftTotalAmount,
       draftTransDate,
       draftTicketTime,
       draftFileName,
@@ -664,6 +681,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftDescription,
     draftGastoType,
     draftCurrencyCode,
+    draftTotalAmount,
+    currentTotalAmount: header?.totalAmount,
     draftTransDate,
     draftTicketTime,
     draftComentario,
@@ -848,6 +867,9 @@ const useExpenseTicketDetailPageViewModel = () => {
       draftCurrencyCode,
       currencyCodeInvalid,
       currencyInputRef,
+      draftTotalAmount,
+      totalAmountInvalid,
+      totalAmountInputRef,
       draftTransDate,
       draftTicketTime,
       draftUrlFile,
@@ -855,6 +877,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       setDraftDescription,
       setDraftGastoType,
       setDraftCurrencyCode,
+      setDraftTotalAmount,
       isFromSheetLink,
       linkedLine: {
         visible: isFromExpenseLine,

@@ -294,6 +294,41 @@ namespace IND_CRM_APP.Models.CRM
         public int? GastoType { get; set; }
     }
 
+    // Request payload for ticket total amount adjustment.
+    public class ExpenseSheetTicketTotalAdjustmentRequest
+    {
+        [JsonPropertyName("totalAmount")]
+        public decimal? TotalAmount { get; set; }
+    }
+
+    // Result payload returned after a ticket total amount adjustment.
+    public class ExpenseSheetTicketTotalAdjustmentResultDto
+    {
+        [JsonPropertyName("FileId")]
+        public string FileId { get; set; } = string.Empty;
+
+        [JsonPropertyName("PreviousTotalAmount")]
+        public decimal? PreviousTotalAmount { get; set; }
+
+        [JsonPropertyName("NewTotalAmount")]
+        public decimal? NewTotalAmount { get; set; }
+
+        [JsonPropertyName("DifferenceAmount")]
+        public decimal? DifferenceAmount { get; set; }
+
+        [JsonPropertyName("AdjustmentLineRecId")]
+        public string AdjustmentLineRecId { get; set; } = string.Empty;
+
+        [JsonPropertyName("AdjustmentLineCreated")]
+        public bool? AdjustmentLineCreated { get; set; }
+
+        [JsonPropertyName("AdjustmentDescription")]
+        public string AdjustmentDescription { get; set; } = string.Empty;
+
+        [JsonPropertyName("AdjustmentAmount")]
+        public bool? AdjustmentAmount { get; set; }
+    }
+
     // Request payload for ticket file preview loading.
     public class ExpenseSheetTicketPreviewRequest
     {
@@ -410,6 +445,9 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("CreatedByUserId")]
         public string CreatedByUserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("AdjustmentAmount")]
+        public bool? AdjustmentAmount { get; set; }
     }
 
     // Ticket detail with line collection.

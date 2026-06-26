@@ -2,14 +2,12 @@ import React, { useCallback } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
 import type { ExpenseSheetCreateRequest, ExpenseSheetHeaderUpdateRequest } from "../expenseTypes.ts";
-import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
+import { executeExpenseMutation } from "../hooks/expenseMutationUtils.ts";
 import {
   createExpenseSheet,
   deleteExpenseSheet,
   updateExpenseSheetHeader,
 } from "../utils/expenseApi.ts";
-
-const SAME_CURRENCY_EXCHANGE_RATE = 100;
 
 type UseExpenseSheetDetailMutationsArgs = {
   busy: boolean;
@@ -35,19 +33,11 @@ type UseExpenseSheetDetailMutationsArgs = {
   draftEstadoComentarios: string;
   exchangeRateBaseCurrency: string;
   currentExpenseSheetStatus?: number | null;
-  currentExchangeRateMode?: number | null;
   onCreateSuccess: (createdSheetId: string) => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
-};
-
-const normalizeExchangeRate = (raw: string): number | null => parseDecimalInput(raw);
-// Compares rates with tolerance to avoid floating point mismatch on payload mode.
-const areRatesEquivalent = (left: number | null, right: number | null): boolean => {
-  if (left == null || right == null) return false;
-  return Math.abs(left - right) < 0.0000001;
 };
 
 // Encapsulates update and delete mutations for expense sheet header detail.
@@ -75,7 +65,6 @@ export const useExpenseSheetDetailMutations = ({
   draftEstadoComentarios,
   exchangeRateBaseCurrency,
   currentExpenseSheetStatus,
-  currentExchangeRateMode,
   onCreateSuccess,
   setModalError,
   setBusy,
@@ -88,84 +77,25 @@ export const useExpenseSheetDetailMutations = ({
       statusCommentOverride?: string | null
     ): { payload: ExpenseSheetHeaderUpdateRequest } | { error: string } => {
       const hasExplicitStatusCommentOverride = statusCommentOverride !== undefined;
-      const normalizedCurrency = String(
-        isCurrencyLockedByLines ? (lockedCurrencyCode || draftCurrencyCode || "") : (draftCurrencyCode || "")
-      )
-        .trim()
-        .toUpperCase();
       const normalizedDescription = String(draftDescription || "").trim();
       const normalizedProjectId = String(draftProjectId || "").trim();
       const normalizedEstadoComentarios = String(
         statusCommentOverride ?? draftEstadoComentarios ?? ""
       ).trim();
-      const normalizedExchangeRateRaw = String(
-        isExchangeRateLockedByLines ? (lockedExchangeRate || draftExchangeRate || "") : (draftExchangeRate || "")
-      );
-      const normalizedBaseCurrency = String(exchangeRateBaseCurrency || "EUR").trim().toUpperCase() || "EUR";
-      const requiresExchangeRate =
-        canEditHeaderFields && normalizedCurrency !== "" && normalizedCurrency !== normalizedBaseCurrency;
-      const usesSameCurrencyRate = canEditHeaderFields && normalizedCurrency !== "" && !requiresExchangeRate;
-      const parsedExchangeRate = normalizeExchangeRate(normalizedExchangeRateRaw);
-      const officialExchangeRate = normalizeExchangeRate(officialExchangeRateValue);
-      const originalExchangeRate = normalizeExchangeRate(lockedExchangeRate);
-      const parsedCurrentExchangeRateMode = Number(currentExchangeRateMode);
-      const hasCurrentExchangeRateMode = Number.isInteger(parsedCurrentExchangeRateMode) && parsedCurrentExchangeRateMode >= 0;
-      const hasValidRate = parsedExchangeRate != null && parsedExchangeRate > 0;
-      const hasManualRateEditOnUpdate =
-        canEditHeaderFields &&
-        !isCreateMode &&
-        hasValidRate &&
-        (originalExchangeRate == null || !areRatesEquivalent(parsedExchangeRate, originalExchangeRate));
-      // Only send exchangeRateMode when the user actually changed the rate manually.
-      const isManualExchangeRate = (() => {
-        if (!canEditHeaderFields) return false;
-        if (!requiresExchangeRate || !hasValidRate) return false;
-        if (isExchangeRateLockedByLines) return false;
-        if (!isCreateMode && !hasManualRateEditOnUpdate) return false;
-        if (officialExchangeRate == null) return true;
-        return !areRatesEquivalent(parsedExchangeRate, officialExchangeRate);
-      })();
-      const resolvedExchangeRateMode = canEditHeaderFields
-        ? (isManualExchangeRate ? 1 : (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : 0))
-        : (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : undefined);
       const resolvedExpenseSheetStatus =
         nextStatus ?? (currentExpenseSheetStatus != null ? Number(currentExpenseSheetStatus) : undefined);
-      // Status/comment-only flows still submit the full header payload, so keep the stored rate untouched.
-      const resolvedExchangeRate = canEditHeaderFields
-        ? (usesSameCurrencyRate ? SAME_CURRENCY_EXCHANGE_RATE : (hasValidRate ? Number(parsedExchangeRate) : 1))
-        : (originalExchangeRate ?? parsedExchangeRate ?? 0);
 
-      if (isCreateMode) {
-        if (!normalizedDescription) {
-          return {
-            error: indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required."),
-          };
-        }
-
-        if (!normalizedCurrency) {
-          return {
-            error: indT("ExpenseSheets_Validation_CurrencyRequired", "Currency is required."),
-          };
-        }
-      }
-
-      if (requiresExchangeRate && !hasValidRate) {
+      if (!normalizedDescription) {
         return {
-          error: indT(
-            "ExpenseSheets_Validation_ExchangeRateRequired",
-            "Exchange rate is required when currency is different from base currency."
-          ),
+          error: indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required."),
         };
       }
 
       return {
         payload: {
           description: normalizedDescription,
-          currencyCode: normalizedCurrency,
-          exchRate: resolvedExchangeRate,
           projId: normalizedProjectId || undefined,
           expenseSheetStatus: resolvedExpenseSheetStatus,
-          exchangeRateMode: resolvedExchangeRateMode,
           // Preserve explicit empty status comments so the backend can clear the stored value.
           estadoComentarios: hasExplicitStatusCommentOverride
             ? normalizedEstadoComentarios
@@ -175,20 +105,11 @@ export const useExpenseSheetDetailMutations = ({
     },
     [
       canEditHeaderFields,
-      currentExchangeRateMode,
       currentExpenseSheetStatus,
-      draftCurrencyCode,
       draftDescription,
       draftEstadoComentarios,
-      draftExchangeRate,
       draftProjectId,
-      exchangeRateBaseCurrency,
       isCreateMode,
-      isCurrencyLockedByLines,
-      isExchangeRateLockedByLines,
-      lockedCurrencyCode,
-      lockedExchangeRate,
-      officialExchangeRateValue,
     ]
   );
 
@@ -224,11 +145,8 @@ export const useExpenseSheetDetailMutations = ({
             mode: 1,
             existingHojaGastosId: undefined,
             description: createPayload.description,
-            currencyCode: createPayload.currencyCode,
-            exchRate: createPayload.exchRate,
             projId: createPayload.projId,
             expenseSheetStatus: 0,
-            exchangeRateMode: createPayload.exchangeRateMode,
             lines: [],
           };
 

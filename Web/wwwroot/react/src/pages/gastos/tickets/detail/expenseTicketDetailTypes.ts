@@ -31,6 +31,7 @@ export type ExpenseTicketDetailLine = {
   totalAmount: number | null;
   refRecIdTable: string;
   createdByUserId: string;
+  adjustmentAmount: boolean | null;
 };
 
 export const toNullableNumber = (value: unknown): number | null => {
@@ -94,5 +95,6 @@ export const mapExpenseTicketDetailLine = (line: ExpenseSheetTicketLineDto): Exp
     totalAmount: typeof line?.TotalAmount === "number" ? line.TotalAmount : null,
     refRecIdTable: String(line?.RefRecIdTable || "").trim(),
     createdByUserId: String(line?.CreatedByUserId || "").trim(),
+    adjustmentAmount: toNullableBool(line?.AdjustmentAmount ?? (line as { adjustmentAmount?: unknown })?.adjustmentAmount),
   };
 };

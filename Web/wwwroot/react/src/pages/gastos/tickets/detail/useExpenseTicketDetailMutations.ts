@@ -4,8 +4,9 @@ import { indT } from "../../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../../utils/permissions.ts";
 import type { ExpenseSheetTicketUpdateRequest } from "../../expenseTypes.ts";
 import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
-import { executeExpenseMutation } from "../../hooks/expenseMutationUtils.ts";
+import { executeExpenseMutation, parseDecimalInput } from "../../hooks/expenseMutationUtils.ts";
 import {
+  adjustExpenseSheetTicketTotalAmount,
   deleteExpenseSheetLine,
   deleteExpenseSheetTicket,
   deleteExpenseSheetTicketFile,
@@ -32,6 +33,8 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftDescription: string;
   draftGastoType: string;
   draftCurrencyCode: string;
+  draftTotalAmount: string;
+  currentTotalAmount?: number | null;
   draftTransDate: string;
   draftTicketTime: string;
   draftComentario: string;
@@ -89,6 +92,8 @@ export const useExpenseTicketDetailMutations = ({
   draftDescription,
   draftGastoType,
   draftCurrencyCode,
+  draftTotalAmount,
+  currentTotalAmount,
   draftTransDate,
   draftTicketTime,
   draftComentario,
@@ -171,6 +176,14 @@ export const useExpenseTicketDetailMutations = ({
         return false;
       }
 
+      const parsedTotalAmount = parseDecimalInput(draftTotalAmount);
+      if (parsedTotalAmount == null || parsedTotalAmount < 0) {
+        const message = indT("Tickets_Validation_TotalAmountRequired", "Total amount must be greater than or equal to 0.");
+        setModalError(message);
+        setStatus(message);
+        return false;
+      }
+
       const parsedGastoType = toExpenseGastoTypeCode(draftGastoType, { allowNone: false });
       if (parsedGastoType === null) {
         const message = indT("Tickets_Validation_CategoryRequired", "Category is required.");
@@ -214,7 +227,18 @@ export const useExpenseTicketDetailMutations = ({
         action: async () => {
           const response = await updateExpenseSheetTicket(fileId, payload);
           if (!response.Success) {
-            throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+              throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+          }
+
+          const previousTotalAmount = Number(currentTotalAmount ?? 0);
+          const hasTotalAmountChange = Math.abs(Number(parsedTotalAmount) - previousTotalAmount) >= 0.005;
+          if (hasTotalAmountChange) {
+            const totalAdjustmentResponse = await adjustExpenseSheetTicketTotalAmount(fileId, {
+              totalAmount: Number(parsedTotalAmount),
+            });
+            if (!totalAdjustmentResponse.Success) {
+              throw new Error(totalAdjustmentResponse.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+            }
           }
 
           if (syncSheetLine && validatedSheetId) {
@@ -264,11 +288,13 @@ export const useExpenseTicketDetailMutations = ({
       draftDescription,
       draftFileName,
       draftGastoType,
+      draftTotalAmount,
       draftTicketTime,
       draftTransDate,
       draftUrlFile,
       fileId,
       isEditing,
+      currentTotalAmount,
       linkedExpenseLineProjectId,
       linkedExpenseLineProjectIdChanged,
       linkedExpenseLineRecId,

@@ -249,6 +249,12 @@ namespace IND_CRM_APP.Services
             ExpenseSheetTicketUpdateRequest req
         );
 
+        Task<ApiResponse<ExpenseSheetTicketTotalAdjustmentResultDto>> AdjustExpenseSheetTicketTotalAmountAsync(
+            string token,
+            string fileId,
+            ExpenseSheetTicketTotalAdjustmentRequest req
+        );
+
         Task<ApiResponse<object>> DeleteExpenseSheetTicketAsync(
             string token,
             string fileId,

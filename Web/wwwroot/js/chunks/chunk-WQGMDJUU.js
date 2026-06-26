@@ -1,6 +1,6 @@
 import {
   safeText
-} from "./chunk-L5GTS5QB.js";
+} from "./chunk-GDLOXSCF.js";
 import {
   getExpenseScopeToken
 } from "./chunk-HGU6IHIX.js";

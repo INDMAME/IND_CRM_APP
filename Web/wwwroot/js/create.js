@@ -52,7 +52,7 @@ import {
 } from "./chunks/chunk-CBDB7NMA.js";
 import {
   VisitasPageProviders_default
-} from "./chunks/chunk-MFMV3TBB.js";
+} from "./chunks/chunk-FBPSAJMQ.js";
 import "./chunks/chunk-HGU6IHIX.js";
 import {
   Spinner_default,

@@ -73,6 +73,10 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public static string ExpenseSheetTicketIa(string safeFileId) =>
             $"api/crm/expensesheets/tickets/{safeFileId}/ia";
 
+        // Builds the expense sheet ticket total adjustment route.
+        public static string ExpenseSheetTicketTotalAdjustment(string safeFileId) =>
+            $"api/crm/expensesheets/tickets/{safeFileId}/total-adjustment";
+
         // Builds the expense sheet ticket file route with optional extension query.
         public static string ExpenseSheetTicketFile(string safeFileId, string? safeExtension = null)
         {

@@ -2215,6 +2215,39 @@ namespace IND_CRM_APP.Services
             return response;
         }
 
+        public async Task<ApiResponse<ExpenseSheetTicketTotalAdjustmentResultDto>> AdjustExpenseSheetTicketTotalAmountAsync(
+            string token,
+            string fileId,
+            ExpenseSheetTicketTotalAdjustmentRequest req)
+        {
+            PrepareRequestHeaders(token, "AdjustExpenseSheetTicketTotalAmount", requireCompany: true);
+
+            req ??= new ExpenseSheetTicketTotalAdjustmentRequest();
+            var payload = new ExpenseSheetTicketTotalAdjustmentRequest
+            {
+                TotalAmount = req.TotalAmount
+            };
+
+            var safeFileId = EscapePathSegment(fileId);
+            _logger.LogInformation(
+                "AdjustExpenseSheetTicketTotalAmount request. FileId: {FileId}. TotalAmount: {TotalAmount}. SelectedCompany: {SelectedCompany}.",
+                fileId,
+                payload.TotalAmount,
+                GetSelectedCompanyId() ?? "<empty>");
+            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketTotalAdjustment(safeFileId), payload);
+            var response = BuildApiResponse<ExpenseSheetTicketTotalAdjustmentResultDto>(result, "AdjustExpenseSheetTicketTotalAmount");
+            _logger.LogInformation(
+                "AdjustExpenseSheetTicketTotalAmount upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. AdjustmentLineCreated: {AdjustmentLineCreated}.",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                fileId,
+                response.Data?.AdjustmentLineCreated);
+            return response;
+        }
+
         public async Task<ApiResponse<object>> DeleteExpenseSheetTicketAsync(
             string token,
             string fileId,

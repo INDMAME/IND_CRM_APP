@@ -553,6 +553,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-total-adjustment",
+    pattern: "api/crm/expensesheets/tickets/{fileId}/total-adjustment",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketTotalAdjustment" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
     name: "api-expense-sheet-ticket-apply-ia",
     pattern: "api/crm/expensesheets/tickets/{fileId}/ia",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketApplyIa" },

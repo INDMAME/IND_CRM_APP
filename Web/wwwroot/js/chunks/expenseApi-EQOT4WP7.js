@@ -1,4 +1,5 @@
 import {
+  adjustExpenseSheetTicketTotalAmount,
   applyExpenseSheetTicketIa,
   askExpenseSheetsQuestion,
   configureExpenseApiAuth,
@@ -36,13 +37,14 @@ import {
   updateExpenseSheetTicket,
   updateExpenseSheetTicketLine,
   uploadExpenseSheetTicketFile
-} from "./chunk-L5GTS5QB.js";
+} from "./chunk-GDLOXSCF.js";
 import "./chunk-HGU6IHIX.js";
 import "./chunk-DY2B5JHI.js";
 import "./chunk-63VW7TTG.js";
 import "./chunk-6HGCHSZG.js";
 import "./chunk-W7NC74ZX.js";
 export {
+  adjustExpenseSheetTicketTotalAmount,
   applyExpenseSheetTicketIa,
   askExpenseSheetsQuestion,
   configureExpenseApiAuth,

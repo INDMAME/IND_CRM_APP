@@ -1226,15 +1226,10 @@ namespace IND_CRM_APP.Controllers
             req ??= new ExpenseSheetCreateRequest();
             var normalizedMode = req.Mode is >= 0 and <= 2 ? req.Mode : 0;
             var normalizedExistingSheetId = NormalizeOptionalText(req.ExistingHojaGastosId);
-
             var normalizedCurrency = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant();
-            if (string.IsNullOrWhiteSpace(normalizedCurrency))
-                normalizedCurrency = "EUR";
-
-            var normalizedExchRate = NormalizeExpenseSheetExchangeRateForWrite(
-                normalizedCurrency,
-                req.ExchRate > 0 ? req.ExchRate : null,
-                fallbackNonEurRate: 1m);
+            var normalizedExchRate = req.ExchRate.HasValue && req.ExchRate.Value > 0m
+                ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
+                : (decimal?)null;
             var normalizedDescription = (req.Description ?? string.Empty).Trim();
             var normalizedLines = (req.Lines ?? new List<ExpenseSheetLineRequest>())
                 .Where(line => line != null)
@@ -1295,8 +1290,8 @@ namespace IND_CRM_APP.Controllers
             if (normalizedMode == 2)
             {
                 request.Description = string.Empty;
-                request.CurrencyCode = string.Empty;
-                request.ExchRate = 0m;
+                request.CurrencyCode = null;
+                request.ExchRate = null;
                 request.ProjId = null;
             }
 
@@ -1406,8 +1401,10 @@ namespace IND_CRM_APP.Controllers
                     _sr["Api_RequestFailed"].Value,
                     "INVALID_REQUEST");
 
-            var normalizedCurrency = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant() ?? string.Empty;
-            var hasInvalidExchangeRate = !string.Equals(normalizedCurrency, "EUR", StringComparison.OrdinalIgnoreCase) && req.ExchRate <= 0;
+            var normalizedCurrency = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant();
+            var normalizedExchRate = req.ExchRate.HasValue && req.ExchRate.Value > 0m
+                ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
+                : (decimal?)null;
 
             var normalizedExpenseSheetStatus = req.ExpenseSheetStatus.HasValue && req.ExpenseSheetStatus.Value >= 0
                 ? req.ExpenseSheetStatus.Value
@@ -1422,7 +1419,7 @@ namespace IND_CRM_APP.Controllers
             {
                 Description = (req.Description ?? string.Empty).Trim(),
                 CurrencyCode = normalizedCurrency,
-                ExchRate = NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate),
+                ExchRate = normalizedExchRate,
                 ProjId = NormalizeOptionalText(req.ProjId),
                 Voucher = normalizedVoucher,
                 ExpenseSheetStatus = normalizedExpenseSheetStatus,
@@ -1444,14 +1441,6 @@ namespace IND_CRM_APP.Controllers
                 request);
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
-
-            if (hasInvalidExchangeRate && ShouldValidateExpenseSheetExchangeRate(mutationGuard))
-            {
-                return CreateApiCommandError(
-                    StatusCodes.Status400BadRequest,
-                    _sr["ExpenseSheets_Validation_ExchangeRateRequired"].Value,
-                    "VALIDATION_ERROR");
-            }
 
             var effectiveRequest = BuildExpenseSheetEffectiveHeaderUpdateRequest(
                 mutationGuard,
@@ -2702,6 +2691,86 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}/total-adjustment.
+        [HttpPost]
+        public async Task<IActionResult> ApiExpenseSheetTicketTotalAdjustment(string fileId, [FromBody] ExpenseSheetTicketTotalAdjustmentRequest req)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeFileId = NormalizeOptionalText(fileId);
+            if (string.IsNullOrWhiteSpace(safeFileId) || req == null || !req.TotalAmount.HasValue || req.TotalAmount.Value < 0m)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetTicketTotalAdjustment));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
+            var managedUserGuard = ValidateManagedUserMutation(requestAxUserId, nameof(ApiExpenseSheetTicketTotalAdjustment));
+            if (managedUserGuard != null)
+                return CreateApiCommandError(managedUserGuard.StatusCode, managedUserGuard.Message, managedUserGuard.ErrorCode);
+
+            var request = new ExpenseSheetTicketTotalAdjustmentRequest
+            {
+                TotalAmount = req.TotalAmount
+            };
+
+            try
+            {
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketTotalAdjustment),
+                    "request",
+                    ("fileId", safeFileId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("totalAmount", request.TotalAmount));
+                var response = await _apiClient.AdjustExpenseSheetTicketTotalAmountAsync(token, safeFileId, request);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+                LogExpenseCurrencyTrace(
+                    nameof(ApiExpenseSheetTicketTotalAdjustment),
+                    "response",
+                    ("fileId", safeFileId),
+                    ("requestedAxUserId", requestAxUserId),
+                    ("success", response.Success),
+                    ("traceId", response.TraceId ?? string.Empty),
+                    ("adjustmentLineCreated", response.Data?.AdjustmentLineCreated),
+                    ("adjustmentLineRecId", response.Data?.AdjustmentLineRecId));
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetTicketTotalAdjustment");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetTicketTotalAdjustment");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
         // API route used by React clients for /api/crm/expensesheets/tickets/{fileId}.
         [HttpDelete]
         public async Task<IActionResult> ApiExpenseSheetTicketDelete(string fileId, [FromQuery] int? lineRecId = null)
@@ -3324,15 +3393,10 @@ namespace IND_CRM_APP.Controllers
                 req ??= new ExpenseSheetCreateRequest();
                 var normalizedMode = req.Mode is >= 0 and <= 2 ? req.Mode : 0;
                 var normalizedExistingSheetId = NormalizeOptionalText(req.ExistingHojaGastosId);
-
                 var normalizedCurrency = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant();
-                if (string.IsNullOrWhiteSpace(normalizedCurrency))
-                    normalizedCurrency = "EUR";
-
-                var normalizedExchRate = NormalizeExpenseSheetExchangeRateForWrite(
-                    normalizedCurrency,
-                    req.ExchRate > 0 ? req.ExchRate : null,
-                    fallbackNonEurRate: 1m);
+                var normalizedExchRate = req.ExchRate.HasValue && req.ExchRate.Value > 0m
+                    ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
+                    : (decimal?)null;
                 var normalizedDescription = (req.Description ?? string.Empty).Trim();
                 var normalizedLines = (req.Lines ?? new List<ExpenseSheetLineRequest>())
                     .Where(line => line != null)
@@ -3387,13 +3451,13 @@ namespace IND_CRM_APP.Controllers
                 }
 
                 // Mode 2 adds lines to existing header and does not need header fields.
-                if (normalizedMode == 2)
-                {
-                    request.Description = string.Empty;
-                    request.CurrencyCode = string.Empty;
-                    request.ExchRate = 0m;
-                    request.ProjId = null;
-                }
+            if (normalizedMode == 2)
+            {
+                request.Description = string.Empty;
+                request.CurrencyCode = null;
+                request.ExchRate = null;
+                request.ProjId = null;
+            }
 
                 var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(CreateExpenseSheet));
                 if (actingUser.Error != null)
@@ -3478,8 +3542,10 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrWhiteSpace(hojaGastosId) || req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
-                var normalizedCurrency = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant() ?? string.Empty;
-                var hasInvalidExchangeRate = !string.Equals(normalizedCurrency, "EUR", StringComparison.OrdinalIgnoreCase) && req.ExchRate <= 0;
+                var normalizedCurrency = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant();
+                var normalizedExchRate = req.ExchRate.HasValue && req.ExchRate.Value > 0m
+                    ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
+                    : (decimal?)null;
 
                 var normalizedExpenseSheetStatus = req.ExpenseSheetStatus.HasValue && req.ExpenseSheetStatus.Value >= 0
                     ? req.ExpenseSheetStatus.Value
@@ -3494,7 +3560,7 @@ namespace IND_CRM_APP.Controllers
                 {
                     Description = (req.Description ?? string.Empty).Trim(),
                     CurrencyCode = normalizedCurrency,
-                    ExchRate = NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate),
+                    ExchRate = normalizedExchRate,
                     ProjId = NormalizeOptionalText(req.ProjId),
                     Voucher = normalizedVoucher,
                     ExpenseSheetStatus = normalizedExpenseSheetStatus,
@@ -3516,15 +3582,6 @@ namespace IND_CRM_APP.Controllers
                     request);
                 if (!mutationGuard.Allowed)
                     return StatusCode(mutationGuard.StatusCode, new { success = false, message = mutationGuard.Message });
-
-                if (hasInvalidExchangeRate && ShouldValidateExpenseSheetExchangeRate(mutationGuard))
-                {
-                    return BadRequest(new
-                    {
-                        success = false,
-                        message = _sr["ExpenseSheets_Validation_ExchangeRateRequired"].Value
-                    });
-                }
 
                 var effectiveRequest = BuildExpenseSheetEffectiveHeaderUpdateRequest(
                     mutationGuard,
@@ -4176,19 +4233,10 @@ namespace IND_CRM_APP.Controllers
             if (!string.Equals((request.Description ?? string.Empty).Trim(), snapshot.Description, StringComparison.Ordinal))
                 return true;
 
-            if (!string.Equals((NormalizeOptionalText(request.CurrencyCode) ?? string.Empty).ToUpperInvariant(), snapshot.CurrencyCode, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (!AreExpenseDecimalsEquivalent(request.ExchRate, snapshot.ExchangeRate))
-                return true;
-
             if (!string.Equals(NormalizeOptionalText(request.ProjId) ?? string.Empty, snapshot.ProjectId ?? string.Empty, StringComparison.OrdinalIgnoreCase))
                 return true;
 
             if (!string.Equals(NormalizeOptionalText(request.Voucher) ?? string.Empty, snapshot.Voucher ?? string.Empty, StringComparison.OrdinalIgnoreCase))
-                return true;
-
-            if (NormalizeExpenseNullableInt(request.ExchangeRateMode) != NormalizeExpenseNullableInt(snapshot.ExchangeRateMode))
                 return true;
 
             if (NormalizeExpenseNullableInt(request.ReimbursableExpense) != NormalizeExpenseNullableInt(snapshot.ReimbursableExpense))
@@ -5613,7 +5661,8 @@ namespace IND_CRM_APP.Controllers
                 Price = line.Price,
                 TotalAmount = line.TotalAmount,
                 RefRecIdTable = line.RefRecIdTable ?? string.Empty,
-                CreatedByUserId = line.CreatedByUserId ?? string.Empty
+                CreatedByUserId = line.CreatedByUserId ?? string.Empty,
+                AdjustmentAmount = line.AdjustmentAmount
             };
         }
 
