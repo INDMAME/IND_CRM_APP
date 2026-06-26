@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Jueves 21/05/2026
+; Navision Axapta Forms unloaded at Viernes 26/06/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -808,7 +808,7 @@ FORM #CRMHojaGastosTable
           #    ;
           #
           #    tableOrig = CRMHojaGastosTable.orig();
-          #    currencyDefaultsChanged    = CRMHojaGastosTable.RecId && (tableOrig.CurrencyCode != CRMHojaGastosTable.CurrencyCode || tableOrig.ExchRate != CRMHojaGastosTable.ExchRate);
+          #    currencyDefaultsChanged    = false; //MMS - Ajustes CRM - 2026.06.26: cabecera local fija, sin propagacion de divisa.
           #    reimbursableExpenseChanged = CRMHojaGastosTable.RecId && tableOrig.ReimbursableExpense != CRMHojaGastosTable.ReimbursableExpense;
           #    hasLines                   = CRMHojaGastosTable.firstHojaGastosLine().RecId ? true : false;
           #
@@ -1857,6 +1857,118 @@ FORM #CRMHojaGastosTable
                           ENDCONTROL 
                           
                           CONTROL COMBOBOX
+                            ;==== controlId:12489, containerId:12297, containerdata: 0   
+                            ;----------------------------------------------------------
+                            PROPERTIES
+                              Name                #CRMHojaGastosTable_ExpenseSheetStatus
+                              AutoDeclaration     #No
+                              Visible             #Yes
+                              AllowEdit           #Yes
+                              Left                #Auto (left)
+                              Top                 #Auto
+                              Width               #Auto
+                              Height              #Auto
+                              VerticalSpacing     #Auto
+                              Enabled             #Yes
+                              Skip                #No
+                              AlignControl        #Yes
+                              HelpText            #
+                              ConfigurationKey    #
+                              SecurityKey         #
+                              DragDrop            #None
+                              Selection           #0
+                              DisplayLength       #Auto
+                              HideFirstEntry      #No
+                              ColorScheme         #Default
+                              BackStyle           #Opaque
+                              BackgroundColor     #Window background
+                              ForegroundColor     #Window text
+                              Font                #
+                              FontSize            #0
+                              Italic              #No
+                              Underline           #No
+                              Bold                #Default
+                              CharacterSet        #0
+                              LabelForegroundColor #Window text
+                              ShowLabel           #Yes
+                              Label               #
+                              LabelFont           #
+                              LabelFontSize       #0
+                              LabelItalic         #No
+                              LabelUnderline      #No
+                              LabelBold           #Default
+                              LabelCharacterSet   #0
+                              LabelWidth          #Auto
+                              LabelHeight         #Auto
+                              LabelPosition       #Left
+                              LabelAlignment      #Right
+                              DataSource          #CRMHojaGastosTable
+                              DataField           #ExpenseSheetStatus
+                              ArrayIndex          #0
+                              Border              #Auto
+                              ComboType           #Standard
+                              AppendNew           #No
+                            ENDPROPERTIES
+                            
+                          ENDCONTROL 
+                          
+                          CONTROL COMBOBOX
+                            ;==== controlId:12851, containerId:12297, containerdata: 0   
+                            ;----------------------------------------------------------
+                            PROPERTIES
+                              Name                #CRMHojaGastosTable_ReimbursableExpense
+                              AutoDeclaration     #No
+                              Visible             #Yes
+                              AllowEdit           #Yes
+                              Left                #Auto (left)
+                              Top                 #Auto
+                              Width               #Auto
+                              Height              #Auto
+                              VerticalSpacing     #Auto
+                              Enabled             #Yes
+                              Skip                #No
+                              AlignControl        #Yes
+                              HelpText            #
+                              ConfigurationKey    #
+                              SecurityKey         #
+                              DragDrop            #None
+                              Selection           #0
+                              DisplayLength       #Auto
+                              HideFirstEntry      #No
+                              ColorScheme         #Default
+                              BackStyle           #Opaque
+                              BackgroundColor     #Window background
+                              ForegroundColor     #Window text
+                              Font                #
+                              FontSize            #0
+                              Italic              #No
+                              Underline           #No
+                              Bold                #Default
+                              CharacterSet        #0
+                              LabelForegroundColor #Window text
+                              ShowLabel           #Yes
+                              Label               #
+                              LabelFont           #
+                              LabelFontSize       #0
+                              LabelItalic         #No
+                              LabelUnderline      #No
+                              LabelBold           #Default
+                              LabelCharacterSet   #0
+                              LabelWidth          #Auto
+                              LabelHeight         #Auto
+                              LabelPosition       #Left
+                              LabelAlignment      #Right
+                              DataSource          #CRMHojaGastosTable
+                              DataField           #ReimbursableExpense
+                              ArrayIndex          #0
+                              Border              #Auto
+                              ComboType           #Standard
+                              AppendNew           #No
+                            ENDPROPERTIES
+                            
+                          ENDCONTROL 
+                          
+                          CONTROL COMBOBOX
                             ;==== controlId:12303, containerId:12297, containerdata:12297   
                             ;----------------------------------------------------------
                             PROPERTIES
@@ -2515,7 +2627,7 @@ FORM #CRMHojaGastosTable
                               CharacterSet        #0
                               LabelForegroundColor #Window text
                               ShowLabel           #Yes
-                              Label               #
+                              Label               #Importe Divisa
                               LabelFont           #
                               LabelFontSize       #0
                               LabelItalic         #No
@@ -2586,7 +2698,7 @@ FORM #CRMHojaGastosTable
                               CharacterSet        #0
                               LabelForegroundColor #Window text
                               ShowLabel           #Yes
-                              Label               #Amount (EUR)
+                              Label               #Importe Reembolso (EUR)
                               LabelFont           #
                               LabelFontSize       #0
                               LabelItalic         #No
@@ -3492,118 +3604,6 @@ FORM #CRMHojaGastosTable
                             
                           ENDCONTROL 
                           
-                          CONTROL COMBOBOX
-                            ;==== controlId:12489, containerId:12297, containerdata: 0   
-                            ;----------------------------------------------------------
-                            PROPERTIES
-                              Name                #CRMHojaGastosTable_ExpenseSheetStatus
-                              AutoDeclaration     #No
-                              Visible             #Yes
-                              AllowEdit           #Yes
-                              Left                #Auto (left)
-                              Top                 #Auto
-                              Width               #Auto
-                              Height              #Auto
-                              VerticalSpacing     #Auto
-                              Enabled             #Yes
-                              Skip                #No
-                              AlignControl        #Yes
-                              HelpText            #
-                              ConfigurationKey    #
-                              SecurityKey         #
-                              DragDrop            #None
-                              Selection           #0
-                              DisplayLength       #Auto
-                              HideFirstEntry      #No
-                              ColorScheme         #Default
-                              BackStyle           #Opaque
-                              BackgroundColor     #Window background
-                              ForegroundColor     #Window text
-                              Font                #
-                              FontSize            #0
-                              Italic              #No
-                              Underline           #No
-                              Bold                #Default
-                              CharacterSet        #0
-                              LabelForegroundColor #Window text
-                              ShowLabel           #Yes
-                              Label               #
-                              LabelFont           #
-                              LabelFontSize       #0
-                              LabelItalic         #No
-                              LabelUnderline      #No
-                              LabelBold           #Default
-                              LabelCharacterSet   #0
-                              LabelWidth          #Auto
-                              LabelHeight         #Auto
-                              LabelPosition       #Left
-                              LabelAlignment      #Right
-                              DataSource          #CRMHojaGastosTable
-                              DataField           #ExpenseSheetStatus
-                              ArrayIndex          #0
-                              Border              #Auto
-                              ComboType           #Standard
-                              AppendNew           #No
-                            ENDPROPERTIES
-                            
-                          ENDCONTROL 
-                          
-                          CONTROL COMBOBOX
-                            ;==== controlId:12851, containerId:12297, containerdata: 0   
-                            ;----------------------------------------------------------
-                            PROPERTIES
-                              Name                #CRMHojaGastosTable_ReimbursableExpense
-                              AutoDeclaration     #No
-                              Visible             #Yes
-                              AllowEdit           #Yes
-                              Left                #Auto (left)
-                              Top                 #Auto
-                              Width               #Auto
-                              Height              #Auto
-                              VerticalSpacing     #Auto
-                              Enabled             #Yes
-                              Skip                #No
-                              AlignControl        #Yes
-                              HelpText            #
-                              ConfigurationKey    #
-                              SecurityKey         #
-                              DragDrop            #None
-                              Selection           #0
-                              DisplayLength       #Auto
-                              HideFirstEntry      #No
-                              ColorScheme         #Default
-                              BackStyle           #Opaque
-                              BackgroundColor     #Window background
-                              ForegroundColor     #Window text
-                              Font                #
-                              FontSize            #0
-                              Italic              #No
-                              Underline           #No
-                              Bold                #Default
-                              CharacterSet        #0
-                              LabelForegroundColor #Window text
-                              ShowLabel           #Yes
-                              Label               #
-                              LabelFont           #
-                              LabelFontSize       #0
-                              LabelItalic         #No
-                              LabelUnderline      #No
-                              LabelBold           #Default
-                              LabelCharacterSet   #0
-                              LabelWidth          #Auto
-                              LabelHeight         #Auto
-                              LabelPosition       #Left
-                              LabelAlignment      #Right
-                              DataSource          #CRMHojaGastosTable
-                              DataField           #ReimbursableExpense
-                              ArrayIndex          #0
-                              Border              #Auto
-                              ComboType           #Standard
-                              AppendNew           #No
-                            ENDPROPERTIES
-                            
-                          ENDCONTROL 
-                          
                         ENDCONTAINER
                         
                     ENDCONTROL 
@@ -3860,13 +3860,13 @@ FORM #CRMHojaGastosTable
                                     Name                #CRMHojaGastosTable_CurrencyCode1
                                     AutoDeclaration     #No
                                     Visible             #Yes
-                                    AllowEdit           #Yes
+                                    AllowEdit           #No
                                     Left                #Auto (left)
                                     Top                 #Auto
                                     Width               #Auto
                                     Height              #Auto
                                     VerticalSpacing     #Auto
-                                    Enabled             #Yes
+                                    Enabled             #No
                                     Skip                #No
                                     AlignControl        #Yes
                                     HelpText            #
@@ -3923,13 +3923,13 @@ FORM #CRMHojaGastosTable
                                     Name                #TipoCambio_ExchRate
                                     AutoDeclaration     #No
                                     Visible             #Yes
-                                    AllowEdit           #Yes
+                                    AllowEdit           #No
                                     Left                #Auto (left)
                                     Top                 #Auto
                                     Width               #Auto
                                     Height              #Auto
                                     VerticalSpacing     #Auto
-                                    Enabled             #Yes
+                                    Enabled             #No
                                     Skip                #No
                                     AlignControl        #Yes
                                     HelpText            #

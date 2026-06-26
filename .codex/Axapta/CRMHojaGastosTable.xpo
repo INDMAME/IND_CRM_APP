@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosTable unloaded at Jueves 21/05/2026
+; Navision Axapta Table : CRMHojaGastosTable unloaded at Viernes 26/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -212,13 +212,13 @@ Formatversion: 1
         PROPERTIES
           Type                #String
           Name                #CurrencyCode
-          Label               #
+          Label               #Divisa de reembolso
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes
           Mandatory           #Yes
-          AllowEditOnCreate   #Yes
-          AllowEdit           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
           Visible             #Yes
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
@@ -266,8 +266,8 @@ Formatversion: 1
           GroupPrompt         #
           SaveContents        #Yes
           Mandatory           #No
-          AllowEditOnCreate   #Yes
-          AllowEdit           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
           Visible             #Yes
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
@@ -1150,8 +1150,11 @@ Formatversion: 1
         #
         #        ;
         #        //SI la hoja de Gastos se Aprueba se deja en estado APROBADA. Si se "desaprueba" pasa a estado "Solicitada Aprobación"
+        #        ttsbegin;
         #        hojaGastosTableUpdate                       = CRMHojaGastosTable::FindRecId(this.RecId, true);
-        #        if (hojaGastosTableUpdate){
+        #
+        #        if (hojaGastosTableUpdate)
+        #        {
         #            //MMS - Ajustes CRM - 2026.05.27
         #            oldExpenseSheetStatus                       = hojaGastosTableUpdate.ExpenseSheetStatus;
         #            hojaGastosTableUpdate.ExpenseSheetStatus    = _operacion == 1 ? INDExpenseSheetStatus::Approved : (allowSelfManagement ? INDExpenseSheetStatus::Draft : INDExpenseSheetStatus::InReview);
@@ -1172,6 +1175,7 @@ Formatversion: 1
         #            //INDProjCostRevenueTable::CreaLineaPagos(hojaGastosTableUpdate);
         #            //INDProjCostRevenueTable::CreaLineaPendientePago(hojaGastosTableUpdate);
         #        }
+        #        ttscommit;
         #
         #    }
         #    ;
@@ -1458,6 +1462,7 @@ Formatversion: 1
         #    ttscommit;
         #*/
         #}
+        #
       ENDSOURCE
       SOURCE #Aprobar_DesaprobarHojaDeGastos_MEX
         #void Aprobar_DesaprobarHojaDeGastos_MEX(int         _operacion = 1, //1 = Aprobar   2 = DesAprobar
@@ -2116,6 +2121,7 @@ Formatversion: 1
         #            strFmt('approve-mex-%1-%2', this.HojaGastosId, timeNow()));
         #
         #}
+        #
       ENDSOURCE
       SOURCE #Aprobar_DesaprobarHojaDeGastos_TOTAL
         #void Aprobar_DesaprobarHojaDeGastos_TOTAL(TransDate   _transDate,
@@ -2330,11 +2336,11 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #canChangeCurrencyDefaults
-        #//INDMMS_ExternalCRM - 2026.05.21
+        #//MMS - Ajustes CRM - 2026.06.26
         #boolean canChangeCurrencyDefaults()
         #{
-        #    // Kept for explicit propagation safeguards; direct header edits are allowed.
-        #    return !this.hasMultiCurrencyLines();
+        #    // La cabecera ya no propaga divisa a lineas; se conserva por compatibilidad con llamadas legacy.
+        #    return true;
         #}
         #
       ENDSOURCE
@@ -2523,20 +2529,34 @@ Formatversion: 1
         #    this.NoContabilizarGasolina = usuarioTable.NoContabilizarGasolina; //Para México
         #}
       ENDSOURCE
+      SOURCE #initValue
+        #public void initValue()
+        #{
+        #    super();
+        #
+        #    //MMS - Ajustes CRM - 2026.06.26
+        #    this.normalizeReimbursementCurrencyDefaults();
+        #}
+        #
+      ENDSOURCE
       SOURCE #insert
         #public void insert()
         #{
         #    ;
         #    this.updateSearchKey();   //IND_MMS - API PROJECT - 2025.11.10
+        #    this.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
         #    //this.SelfApproved();      //INDMMS_ExternalCRM - 2026.03.10
         #
         #    //IJL.11/05/26. Si no Activamos el módulo de aprobación hay que marcar las HG como necesario papel para justificar y Pagar.
+        #/*
         #    if (!INDDataareaParameterTable::Find().ActivarAprobacionHojasDeGastos){
         #        this.NecesariaHGImpresa = NoYes::Yes;
         #    }
         #    else {
         #        this.NecesariaHGImpresa = NoYes::No;
         #    }
+        #*/
+        #    this.NecesariaHGImpresa = this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
         #
         #
         #    super();
@@ -2549,6 +2569,7 @@ Formatversion: 1
         #        this.doUpdate();
         #    }
         #}
+        #
       ENDSOURCE
       SOURCE #Internacional
         #display NoYes Internacional()
@@ -2563,27 +2584,17 @@ Formatversion: 1
         #    return CRMHojaGastosLine ? NoYes::Yes : NoYes::No;
         #}
       ENDSOURCE
-      SOURCE #isVariousCurrencyDefault
-        #//INDMMS_ExternalCRM - 2026.05.21
-        #boolean isVariousCurrencyDefault()
-        #{
-        #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
-        #    ;
-        #
-        #    // Identifies the header marker used when line currencies are mixed.
-        #    return defaultParameters.CRMCurrencyVarios && this.CurrencyCode == defaultParameters.CRMCurrencyVarios;
-        #}
-      ENDSOURCE
       SOURCE #isVariousProjectDefault
         #//INDMMS_ExternalCRM - 2026.05.21
         #boolean isVariousProjectDefault()
         #{
-        #    PurchParameters purchParameters = PurchParameters::find();
+        #    PurchParameters      purchParameters   = PurchParameters::find();
         #    ;
         #
         #    // Identifies the header marker used when line projects are mixed.
         #    return purchParameters.INDProjIdVarious && this.ProjId == purchParameters.INDProjIdVarious;
         #}
+        #
       ENDSOURCE
       SOURCE #isVariousReimbursableExpenseDefault
         #//INDMMS_ExternalCRM - 2026.05.21
@@ -2816,32 +2827,20 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #markHeaderVariousFromLine
-        #//INDMMS_ExternalCRM - 2026.05.21
+        #//MMS - Ajustes CRM - 2026.06.26
         #void markHeaderVariousFromLine(CRMHojaGastosLine _hojaGastosLine)
         #{
-        #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
         #    PurchParameters      purchParameters   = PurchParameters::find();
-        #    CurrencyCode         currencyVarios;
         #    ProjId               projIdVarios;
         #    boolean              mustUpdate;
         #    ;
         #
-        #    // Marks header defaults as various when one saved line no longer matches them.
+        #    // Solo mantiene marcadores de proyecto/reembolso; la divisa de cabecera no se marca como varios.
         #    if (!this.RecId || !_hojaGastosLine)
         #        return;
         #
-        #    currencyVarios = defaultParameters.CRMCurrencyVarios;
+        #    this.normalizeReimbursementCurrencyDefaults();
         #    projIdVarios   = purchParameters.INDProjIdVarious;
-        #
-        #    if (currencyVarios &&
-        #        this.CurrencyCode &&
-        #        _hojaGastosLine.Currency &&
-        #        this.CurrencyCode != currencyVarios &&
-        #        _hojaGastosLine.Currency != this.CurrencyCode)
-        #    {
-        #        this.CurrencyCode = currencyVarios;
-        #        mustUpdate = true;
-        #    }
         #
         #    if (projIdVarios &&
         #        this.ProjId &&
@@ -2863,6 +2862,7 @@ Formatversion: 1
         #    if (mustUpdate)
         #        this.doUpdate();
         #}
+        #
       ENDSOURCE
       SOURCE #modifiedField
         #public void modifiedField(fieldId _fieldId)
@@ -2879,6 +2879,19 @@ Formatversion: 1
         #    }
         #
         #}
+      ENDSOURCE
+      SOURCE #normalizeReimbursementCurrencyDefaults
+        #//MMS - Ajustes CRM - 2026.06.26
+        #void normalizeReimbursementCurrencyDefaults()
+        #{
+        #    ;
+        #
+        #    // La cabecera representa siempre la divisa local de reembolso; las divisas reales viven en lineas.
+        #    this.CurrencyCode     = CompanyInfo::standardCurrency();
+        #    this.ExchRate         = 100;
+        #    this.ExchangeRateMode = INDExchangeRateMode::Manual;
+        #}
+        #
       ENDSOURCE
       SOURCE #RechazarHojaDeGastos
         # void RechazarHojaDeGastos()
@@ -3488,6 +3501,7 @@ Formatversion: 1
         #    ;
         #
         #    this.updateSearchKey();//IND_MMS - API PROJECT - 2025.11.10
+        #    this.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
         #
         #    super();
         #
@@ -3499,45 +3513,21 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #updateCurrencyDefaultsInLines
-        #//INDMMS_ExternalCRM - 2026.05.21
+        #//MMS - Ajustes CRM - 2026.06.26
         #int updateCurrencyDefaultsInLines(boolean _recalculateAmountMST = true)
         #{
-        #    CRMHojaGastosLine hojaGastosLine;
-        #    int               updated;
         #    ;
         #
-        #    // Applies header currency defaults to all current lines. Call only after the user confirms propagation.
-        #    if (!this.HojaGastosId)
+        #    // Obsoleto: la cabecera ya no propaga divisa/tipo; cada linea conserva su divisa real.
         #        return 0;
-        #
-        #    if (this.isVariousCurrencyDefault())
-        #        return 0;
-        #
-        #    ttsbegin;
-        #    while select forupdate hojaGastosLine
-        #    index hint index1
-        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
-        #    {
-        #        hojaGastosLine.Currency = this.CurrencyCode;
-        #        hojaGastosLine.ExchRate = this.ExchRate;
-        #
-        #        if (_recalculateAmountMST)
-        #            hojaGastosLine.normalizeCurrencyAmounts(false);
-        #
-        #        hojaGastosLine.update();
-        #        updated++;
         #    }
-        #    ttscommit;
-        #
-        #    return updated;
-        #}
         #
       ENDSOURCE
       SOURCE #UpdateDivisaEnLineas
         #//IJL.14/07/23
         #void UpdateDivisaEnLineas()
         #{
-        #    // Keeps the legacy method name, but delegates to the multi-currency helper.
+        #    // Metodo legacy: ya no propaga divisa porque la cabecera es siempre local.
         #    this.updateCurrencyDefaultsInLines(true); //INDMMS_ExternalCRM - 2026.05.21
         #}
         #
@@ -3582,7 +3572,8 @@ Formatversion: 1
         #{
         #    // Keeps the legacy method name, but delegates to the project propagation helper.
         #    this.updateProjectDefaultInLines(); //INDMMS_ExternalCRM - 2026.05.21
-        #}
+        #    }
+        #
       ENDSOURCE
       SOURCE #updateReimbursableExpenseInLines
         #//INDMMS_ExternalCRM - 2026.05.21
@@ -3653,6 +3644,7 @@ Formatversion: 1
         #        'axapta',
         #        strFmt('table-%1-%2', hojaGastosTableUpdate.HojaGastosId, timeNow()));
         #}
+        #
       ENDSOURCE
       SOURCE #UpdateViajeEnLineas
         #//IJL.12/07/24
@@ -3682,12 +3674,12 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #validateCanChangeCurrencyDefaults
-        #//INDMMS_ExternalCRM - 2026.05.21
+        #//MMS - Ajustes CRM - 2026.06.26
         #boolean validateCanChangeCurrencyDefaults()
         #{
-        #    if (!this.canChangeCurrencyDefaults())
-        #        return checkFailed("La hoja de gastos tiene lineas con multiples divisas; no se puede propagar la divisa de cabecera.");
+        #    ;
         #
+        #    // No hay propagacion de divisa de cabecera; se conserva para compatibilidad legacy.
         #    return true;
         #}
         #
@@ -3745,17 +3737,15 @@ Formatversion: 1
         #    ProjTable       projTable, projTableOrig; //IJL.09/10/23
         #    ;
         #
+        #    //MMS - Ajustes CRM - 2026.06.26
+        #    // Refuerza la invariante de cabecera local incluso si llega desde API o proceso AX.
+        #    this.normalizeReimbursementCurrencyDefaults();
+        #
         #    //IJL.09/10/23
         #    projTableOrig   = ProjTable::find(this.orig().ProjId);
         #    projTable       = ProjTable::find(this.ProjId);
         #
         #    ret = super();
-        #
-        #
-        #    if (this.CurrencyCode != CompanyInfo::standardCurrency() && ! this.ExchRate && !this.isVariousCurrencyDefault()){
-        #
-        #        ret = checkFailed(strfmt("Para Hojas de Gastos en divisa distinta a %1 hay que indicar el tipo de cambio.", CompanyInfo::standardCurrency()));
-        #    }
         #
         #    //IJL.09/10/23
         #    ret = ret && ProjTable::PermitirCambioProyecto(projTableOrig.ProjId, projTable.ProjId);
@@ -4090,10 +4080,11 @@ Formatversion: 1
         #    else
         #    {
         #        info("No se ha creado ningun asiento.");
-        #    }
+        #}
         #
         #    return voucher;
         #}
+        #
       ENDSOURCE
       SOURCE #EnableButtonsFunciones
         #static void EnableButtonsFunciones(CRMHojaGastosTable  _hojaGastosTable,

@@ -1,0 +1,918 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDTicketInfoTable unloaded at Viernes 26/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #INDTicketInfoTable
+    PROPERTIES
+      Name                #INDTicketInfoTable
+      Label               #Tickets
+      FormRef             #
+      TitleField1         #FileId
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #No
+      ModifiedBy          #Yes
+      ModifiedTransactionId #No
+      CreatedDate         #Yes
+      CreatedTime         #No
+      CreatedBy           #Yes
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #FileId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #FileId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDFileId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Description
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Description
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Status
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Status
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #INDTicketStatus
+        ENDPROPERTIES
+        
+      FIELD #CurrencyCode
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CurrencyCode
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CurrencyCode
+              #
+            ENDARRAY
+          StringSize          #3
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #TotalAmount
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #TotalAmount
+          Label               #Importe divisa
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Amount
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #CreatedByUserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CreatedByUserId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDCreatedByUserId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #ProcessedByAI
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ProcessedByAI
+          Label               #Procesado por IA
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #GastoType
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #GastoType
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMGastoType
+        ENDPROPERTIES
+        
+      FIELD #SearchKey
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #SearchKey
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDSearchKey
+              #
+            ENDARRAY
+          StringSize          #130
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #TicketDate
+        DATE
+        PROPERTIES
+          Type                #Date
+          Name                #TicketDate
+          Label               #Fecha
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #TicketTime
+        TIME
+        PROPERTIES
+          Type                #Time
+          Name                #TicketTime
+          Label               #Hora
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #timeOfDay
+              #
+            ENDARRAY
+        ENDPROPERTIES
+        
+      FIELD #AmountMST
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #AmountMST
+          Label               #Importe Reembolso (EUR)
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #AmountMST
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #ExchRate
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #ExchRate
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDTicketInfoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #ExchRate
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #RecIdx
+      PROPERTIES
+        Name                #RecIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #RecId
+      ENDINDEXFIELDS
+      
+      #FileIdx
+      PROPERTIES
+        Name                #FileIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #FileId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #DocuRef
+        PROPERTIES
+          Name                #DocuRef
+          Table               #DocuRef
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE EXTERNFIXED
+          PROPERTIES
+            Value               #1
+            Table               #DocuRef
+            RelatedField        #INDFileAllocationType
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDTicketInfoTable
+            Field               #FileId
+            Table               #DocuRef
+            RelatedField        #INDFileId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+      #INDTicketInfoLine
+      PROPERTIES
+        Table               #INDTicketInfoLine
+        DeleteAction        #Cascade
+      ENDPROPERTIES
+      
+      #DocuRef
+      PROPERTIES
+        Table               #DocuRef
+        DeleteAction        #Cascade
+      ENDPROPERTIES
+      
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #adjustTotalAmount
+        #//MMS - Ajustes CRM - 2026.06.26
+        #// Ajusta el total de cabecera y crea una linea diferencial marcada como ajuste.
+        #public container adjustTotalAmount(Amount _newTotalAmount, str 20 _createdByUserId)
+        #{
+        #    INDTicketInfoTable ticketInfoTable;
+        #    INDTicketInfoLine  ticketInfoLine;
+        #    Amount             oldTotalAmount;
+        #    Amount             differenceAmount;
+        #    boolean            lineCreated;
+        #    RecId              adjustmentLineRecId;
+        #    ;
+        #
+        #    if (!this.RecId)
+        #        throw error("Ticket no encontrado.");
+        #
+        #    if (_newTotalAmount < 0)
+        #        throw error("TotalAmount no puede ser negativo.");
+        #
+        #    ttsbegin;
+        #
+        #    select firstonly forupdate ticketInfoTable
+        #        where ticketInfoTable.RecId == this.RecId;
+        #
+        #    if (!ticketInfoTable.RecId)
+        #    {
+        #        ttsabort;
+        #        throw error("Ticket no encontrado.");
+        #    }
+        #
+        #    oldTotalAmount   = ticketInfoTable.TotalAmount;
+        #    differenceAmount = _newTotalAmount - oldTotalAmount;
+        #
+        #    ticketInfoTable.TotalAmount = _newTotalAmount;
+        #    ticketInfoTable.updateSearchKey();
+        #    ticketInfoTable.normalizeCurrencyAmounts(false);
+        #
+        #    if (!ticketInfoTable.validateCurrencyAmounts())
+        #    {
+        #        ttsabort;
+        #        throw error("Datos de divisa del ticket invalidos.");
+        #    }
+        #
+        #    ticketInfoTable.doUpdate();
+        #    ticketInfoTable.syncHojaGastoLine();
+        #
+        #    if (differenceAmount != 0)
+        #    {
+        #        ticketInfoLine.clear();
+        #        ticketInfoLine.initValue();
+        #        ticketInfoLine.FileId          = ticketInfoTable.FileId;
+        #        ticketInfoLine.RefRecIdTable   = ticketInfoTable.RecId;
+        #        ticketInfoLine.Description     = "AJUSTE DE IMPORTE TOTAL";
+        #        ticketInfoLine.Qty             = 1;
+        #        ticketInfoLine.Price           = differenceAmount;
+        #        ticketInfoLine.TotalAmount     = differenceAmount;
+        #        ticketInfoLine.Adjustment      = NoYes::Yes;
+        #        ticketInfoLine.CreatedByUserId = _createdByUserId;
+        #        ticketInfoLine.doInsert();
+        #
+        #        lineCreated = true;
+        #        adjustmentLineRecId = ticketInfoLine.RecId;
+        #    }
+        #
+        #    ttscommit;
+        #
+        #    return [lineCreated, oldTotalAmount, _newTotalAmount, differenceAmount, adjustmentLineRecId];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #calcExchRateFromAmountMST
+        #//MMS - Ajustes CRM - 2026.06.26
+        #ExchRate calcExchRateFromAmountMST()
+        #{
+        #    ;
+        #
+        #    // Calcula el tipo de cambio AX en base 100 desde el importe y el reembolso.
+        #    if (!this.CurrencyCode)
+        #        return this.ExchRate;
+        #
+        #    if (this.CurrencyCode == CompanyInfo::standardCurrency())
+        #        return 100;
+        #
+        #    if (!this.TotalAmount || !this.AmountMST)
+        #        return this.ExchRate;
+        #
+        #    return (this.TotalAmount * 100) / this.AmountMST;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #calcTotalAmount
+        #Amount calcTotalAmount(boolean _amountMSTChanged = false,
+        #                       boolean _preserveWhenNoLines = false)
+        #{
+        #    Amount  amount;
+        #    INDTicketInfoLine ticketInfoLine;
+        #    ;
+        #
+        #    select firstOnly RecId from ticketInfoLine
+        #        where ticketInfoLine.FileId == this.FileId;
+        #
+        #    if (!ticketInfoLine.RecId && _preserveWhenNoLines)
+        #    {
+        #        this.normalizeCurrencyAmounts(_amountMSTChanged);
+        #        return this.TotalAmount;
+        #    }
+        #
+        #    select sum(TotalAmount) from ticketInfoLine
+        #        where ticketInfoLine.FileId == this.FileId;
+        #
+        #    amount = ticketInfoLine.TotalAmount;
+        #
+        #    this.TotalAmount = amount;
+        #    this.normalizeCurrencyAmounts(_amountMSTChanged);
+        #
+        #    return amount;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #delete
+        #public void delete()
+        #{
+        #    str urlFileId;
+        #    ;
+        #
+        #    urlFileId = this.DocuRef().INDURLFile; // antes de super()
+        #
+        #    super();
+        #
+        #    if (urlFileId)
+        #    {
+        #        this.deleteAzureBlobFileByUrl(urlFileId);
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #deleteAzureBlobFileByUrl
+        #server void deleteAzureBlobFileByUrl(str _urlFileId)
+        #{
+        #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
+        #    str baseUrl  = defaultParameters.InternalAPIUrlService;//.APIURLInternalService;
+        #    str username = defaultParameters.APIUserId;
+        #    str password = defaultParameters.INDAPIIntServiceUser().Password;
+        #    str correlationId = strFmt("AX-API-BLOB-DELETE-%1", timeNow());
+        #    boolean deleted;
+        #    ;
+        #
+        #    if (!username || !password || !_urlFileId)
+        #    {
+        #        warning(strFmt("Missing API parameters or urlFileId. correlationId=%1", correlationId));
+        #        return;
+        #    }
+        #
+        #    deleted = INDInternalApiClientServer::DeleteBlobFileByUrl(
+        #        baseUrl,
+        #        username,
+        #        password,
+        #        _urlFileId,
+        #        correlationId);
+        #
+        #    if (deleted)
+        #    {
+        #        info(strFmt("Blob delete completed. correlationId=%1 \n URL=%2", correlationId, _urlFileId));
+        #    }
+        #    else
+        #    {
+        #        warning(strFmt("Blob delete failed or API returned Success=false. correlationId=%1", correlationId));
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #DocuRef
+        #DocuRef DocuRef()
+        #{
+        #    DocuRef docuRef;
+        #
+        #    select firstOnly docuRef
+        #        where docuRef.INDFileId  == this.FileId
+        #           && docuRef.INDFileAllocationType == INDFileAllocationType::ExpenseSheet;
+        #
+        #    return docuRef;
+        #}
+      ENDSOURCE
+      SOURCE #existHojaGastosId
+        #boolean existHojaGastosId()
+        #{
+        #    return CRMHojaGastosLine::FindByFileId(this.FileId).HojaGastosId ? true : false;
+        #}
+      ENDSOURCE
+      SOURCE #hojaGastosIdDisplay
+        #display CRMHojaGastosId hojaGastosIdDisplay()
+        #{
+        #    return CRMHojaGastosLine::FindByFileId(this.FileId).HojaGastosId;
+        #}
+      ENDSOURCE
+      SOURCE #initValue
+        #public void initValue()
+        #{
+        #    ;
+        #    super();
+        #
+        #    //MMS - Ajustes CRM - 2026.06.26
+        #    // Inicializa el ticket en divisa local, manteniendo la divisa editable para tickets extranjeros.
+        #    this.CurrencyCode = CompanyInfo::standardCurrency();
+        #    this.ExchRate     = 100;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #insert
+        #public void insert()
+        #{
+        #    boolean amountMSTWasProvided;
+        #    ;
+        #
+        #    this.updateSearchKey();
+        #
+        #    if(!this.TotalAmount)
+        #        this.calcTotalAmount(false, true);
+        #
+        #    amountMSTWasProvided = this.AmountMST != 0 && !this.ExchRate;
+        #    this.normalizeCurrencyAmounts(amountMSTWasProvided);
+        #
+        #    if (!this.validateCurrencyAmounts())
+        #        throw error("Datos de divisa del ticket invalidos.");
+        #
+        #    super();
+        #
+        #    //INDMMS_ExternalCRM - 2026.03.25
+        #    if(!this.CreatedByUserId)
+        #    {
+        #        this.selectForUpdate(true);
+        #        this.CreatedByUserId = this.createdBy;
+        #        this.doUpdate();
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    ;
+        #    super(_fieldId);
+        #
+        #    switch (_fieldId)
+        #    {
+        #        //MMS - Ajustes CRM - 2026.06.26
+        #        case FieldNum(INDTicketInfoTable, TotalAmount),
+        #             FieldNum(INDTicketInfoTable, CurrencyCode),
+        #             FieldNum(INDTicketInfoTable, ExchRate):
+        #            this.normalizeCurrencyAmounts(false);
+        #            break;
+        #
+        #        case FieldNum(INDTicketInfoTable, AmountMST):
+        #            this.normalizeCurrencyAmounts(true);
+        #            break;
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #normalizeCurrencyAmounts
+        #//MMS - Ajustes CRM - 2026.06.26
+        #void normalizeCurrencyAmounts(boolean _amountMSTChanged = false)
+        #{
+        #    ;
+        #
+        #    // Normaliza divisa, tipo de cambio e importe de reembolso antes de guardar o tras editar.
+        #    if (!this.CurrencyCode)
+        #        this.CurrencyCode = CompanyInfo::standardCurrency();
+        #
+        #    if (this.CurrencyCode == CompanyInfo::standardCurrency())
+        #        this.ExchRate = 100;
+        #
+        #    if (_amountMSTChanged)
+        #        this.ExchRate = this.calcExchRateFromAmountMST();
+        #
+        #    this.AmountMST = this.ticketAmountMST();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #syncHojaGastoLine
+        #void syncHojaGastoLine()
+        #{
+        #    CRMHojaGastosLine gastosLine;
+        #
+        #    ttsbegin;
+        #
+        #    select firstOnly forUpdate gastosLine
+        #        index FileIdIdx
+        #        where gastosLine.FileId == this.FileId;
+        #
+        #    if (gastosLine)
+        #    {
+        #        gastosLine.Description = this.Description;
+        #        gastosLine.Amount      = this.TotalAmount;
+        #        //MMS - Ajustes CRM - 2026.06.26
+        #        gastosLine.Currency    = this.CurrencyCode;
+        #        gastosLine.ExchRate    = this.ExchRate;
+        #        gastosLine.AmountMST   = this.AmountMST;
+        #        gastosLine.normalizeCurrencyAmounts(false);
+        #        gastosLine.update();
+        #    }
+        #
+        #    ttscommit;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #ticketAmountMST
+        #//MMS - Ajustes CRM - 2026.06.26
+        #Amount ticketAmountMST()
+        #{
+        #    ExchRate exchRate;
+        #    ;
+        #
+        #    // Convierte el importe del ticket a divisa local usando el tipo de cambio AX en base 100.
+        #    if (!this.CurrencyCode)
+        #        return 0;
+        #
+        #    exchRate = this.ExchRate;
+        #
+        #    if (this.CurrencyCode == CompanyInfo::standardCurrency() && !exchRate)
+        #        exchRate = 100;
+        #
+        #    return Currency::amountCur2MST(this.TotalAmount, this.CurrencyCode, exchRate);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #update
+        #void update()
+        #{
+        #    boolean amountMSTChanged;
+        #    ;
+        #
+        #    amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST && (this.orig().ExchRate == this.ExchRate || !this.ExchRate);
+        #
+        #    if (this.CurrencyCode != this.orig().CurrencyCode && this.ExchRate == this.orig().ExchRate)
+        #    {
+        #        this.ExchRate = 0;
+        #        amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST;
+        #    }
+        #
+        #    this.updateSearchKey();
+        #    this.calcTotalAmount(amountMSTChanged, true);
+        #
+        #    if (!this.validateCurrencyAmounts())
+        #        throw error("Datos de divisa del ticket invalidos.");
+        #
+        #    super();
+        #
+        #    this.syncHojaGastoLine();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #updateSearchKey
+        #//IND_MMS - API PROJECT - 2025.11.10
+        #public void updateSearchKey()
+        #{
+        #    this.SearchKey = strLwr(this.FileId + '|' + this.Description  + '|' + this.hojaGastosIdDisplay() + ';');
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateCurrencyAmounts
+        #//MMS - Ajustes CRM - 2026.06.26
+        #boolean validateCurrencyAmounts()
+        #{
+        #    boolean ret = true;
+        #    ;
+        #
+        #    // Valida los datos minimos para mantener fiable el importe de reembolso.
+        #    if (!this.CurrencyCode)
+        #        ret = checkFailed("Debe indicar la divisa del ticket.");
+        #
+        #    if (this.CurrencyCode && this.CurrencyCode != CompanyInfo::standardCurrency() && !this.ExchRate)
+        #        ret = checkFailed(strFmt("Para tickets en divisa distinta a %1 hay que indicar el tipo de cambio.", CompanyInfo::standardCurrency()));
+        #
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateUniqueTicketDateTime
+        #public boolean validateUniqueTicketDateTime()
+        #{
+        #    INDTicketInfoTable ticketInfoTable;
+        #
+        #    if (!this.TicketDate)
+        #    {
+        #        return true;
+        #    }
+        #
+        #    select firstonly RecId
+        #        from ticketInfoTable
+        #        where ticketInfoTable.TicketDate == this.TicketDate
+        #           && ticketInfoTable.TicketTime == this.TicketTime
+        #           && ticketInfoTable.RecId      != this.RecId;
+        #
+        #    if (ticketInfoTable.RecId)
+        #    {
+        #        return checkFailed(strFmt(
+        #            "Ya existe otro ticket (%1) con la misma fecha (%2) y hora (%3).",
+        #            this.FileId,
+        #            this.TicketDate,
+        #            this.TicketTime));
+        #    }
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #public boolean validateWrite()
+        #{
+        #    boolean ret;
+        #
+        #    ret = super();
+        #
+        #    if (ret)
+        #    {
+        #        ret = this.validateUniqueTicketDateTime();
+        #    }
+        #
+        #    this.normalizeCurrencyAmounts(false);
+        #    ret = ret && this.validateCurrencyAmounts();
+        #
+        #    return ret;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #findByFileId
+        #static INDTicketInfoTable findByFileId(INDFileId   _fileId,
+        #                                       boolean     _forUpdate  = false)
+        #{
+        #    INDTicketInfoTable     table;
+        #    ;
+        #
+        #    if (! _fileId)
+        #        return table;
+        #
+        #    table.selectForUpdate(_forUpdate);
+        #
+        #    select table
+        #      index hint FileIdx
+        #        where table.FileId == _fileId;
+        #
+        #    return table;
+        #}
+      ENDSOURCE
+      SOURCE #findRecId
+        #static INDTicketInfoTable findRecId(
+        #    recId       recId,
+        #    boolean     _forUpdate  = false)
+        #{
+        #    INDTicketInfoTable     table;
+        #    ;
+        #
+        #    if (! recId)
+        #        return table;
+        #
+        #    table.selectForUpdate(_forUpdate);
+        #
+        #    select table
+        #        index hint RecIdx
+        #        where table.recId == recId;
+        #
+        #    return table;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

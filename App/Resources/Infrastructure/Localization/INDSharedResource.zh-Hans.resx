@@ -969,6 +969,12 @@
   <data name="Enum_GastoType_Taxi" xml:space="preserve">
     <value>出租车</value>
   </data>
+  <data name="Enum_GastoType_Gasolina" xml:space="preserve">
+    <value>汽油</value>
+  </data>
+  <data name="Enum_GastoType_AdjustmentAmount" xml:space="preserve">
+    <value>调整金额</value>
+  </data>
   <data name="Confirm_Delete_Title" xml:space="preserve">
     <value>删除</value>
   </data>

@@ -1056,6 +1056,12 @@
   <data name="Enum_GastoType_Taxi" xml:space="preserve">
     <value>Taxi</value>
   </data>
+  <data name="Enum_GastoType_Gasolina" xml:space="preserve">
+    <value>Fuel</value>
+  </data>
+  <data name="Enum_GastoType_AdjustmentAmount" xml:space="preserve">
+    <value>Adjustment amount</value>
+  </data>
   <data name="Confirm_Delete_Title" xml:space="preserve">
     <value>Delete</value>
   </data>

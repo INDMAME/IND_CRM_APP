@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosLine unloaded at Jueves 21/05/2026
+; Navision Axapta Table : CRMHojaGastosLine unloaded at Viernes 26/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -284,13 +284,13 @@ Formatversion: 1
         PROPERTIES
           Type                #Real 
           Name                #Amount
-          Label               #
+          Label               #Importe divisa
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes
           Mandatory           #No
-          AllowEditOnCreate   #No
-          AllowEdit           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
           Visible             #Yes
           ConfigurationKey    #
           Table               #CRMHojaGastosLine
@@ -1015,7 +1015,7 @@ Formatversion: 1
         PROPERTIES
           Type                #Real 
           Name                #AmountMST
-          Label               #
+          Label               #Importe Reembolso (EUR)
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes
@@ -1297,24 +1297,21 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #applyHeaderCurrencyDefaults
-        #//MMS - Divisa desde línea - 2026.05.21
+        #//MMS - Ajustes CRM - 2026.06.26
         #void applyHeaderCurrencyDefaults(boolean _recalculateAmountMST = true)
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
         #    ;
         #
-        #    // Applies header defaults to a line. Various currency is a header marker, not a line currency.
+        #    // Aplica la divisa local de cabecera solo como valor inicial de linea.
         #    if (!hojaGastosTable)
         #        return;
         #
-        #    if (!hojaGastosTable.isVariousCurrencyDefault())
-        #    {
         #    this.Currency            = hojaGastosTable.CurrencyCode;
-        #    this.ExchRate            = hojaGastosTable.ExchRate ? hojaGastosTable.ExchRate : (hojaGastosTable.CurrencyCode == CompanyInfo::standardCurrency() ? 100 : 0);
+        #    this.ExchRate = hojaGastosTable.ExchRate ? hojaGastosTable.ExchRate : 100;
         #
         #    if (_recalculateAmountMST)
         #        this.AmountMST = this.LineAmountMST();
-        #}
         #
         #    if (!hojaGastosTable.isVariousReimbursableExpenseDefault())
         #        this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense;
@@ -1376,17 +1373,17 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #calcExchRateFromAmountMST
-        #//MMS - Divisa desde línea - 2026.05.21
+        #//MMS - Ajustes CRM - 2026.06.26
         #ExchRate calcExchRateFromAmountMST()
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
         #    CurrencyCode currencyCode;
         #    ;
         #
-        #    // AX exchange rates are stored in base 100. This derives the rate from Amount and AmountMST.
+        #    // Calcula el tipo AX en base 100 desde el importe en divisa y el reembolso local.
         #    currencyCode = this.Currency;
         #
-        #    if (!currencyCode && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
+        #    if (!currencyCode && hojaGastosTable)
         #        currencyCode = hojaGastosTable.CurrencyCode;
         #
         #    if (!currencyCode)
@@ -1559,7 +1556,7 @@ Formatversion: 1
         #                }
         #            }
         #            this.Amount    = this.CalcAmount();
-        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            break;
         #
         #        case CRMGastoType::Desayuno:
@@ -1568,7 +1565,7 @@ Formatversion: 1
         #            if (this.Dieta){
         #                this.Price     = crmParameters.PriceDietaDesayuno;
         #                this.Amount    = this.CalcAmount();
-        #                this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #                this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            }
         #            break;
         #
@@ -1578,7 +1575,7 @@ Formatversion: 1
         #            if (this.Dieta){
         #                this.Price     = crmParameters.PriceDietaComida;
         #                this.Amount    = this.CalcAmount();
-        #                this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #                this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            }
         #            break;
         #
@@ -1588,7 +1585,7 @@ Formatversion: 1
         #            if (this.Dieta){
         #                this.Price     = crmParameters.PriceDietaCena;
         #                this.Amount    = this.CalcAmount();
-        #                this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #                this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            }
         #            break;
         #
@@ -1605,7 +1602,7 @@ Formatversion: 1
         #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;// crmParameters.PriceMontajeNacionalFestivo; */
         #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - END
         #            this.Amount    = this.CalcAmount();
-        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            break;
         #
         #        case CRMGastoType::MontajeNacionalFestivo:
@@ -1621,7 +1618,7 @@ Formatversion: 1
         #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;// crmParameters.PriceMontajeNacionalFestivo;  */
         #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - END
         #            this.Amount    = this.CalcAmount();
-        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            break;
         #
         #        case CRMGastoType::MontajeInternacional:
@@ -1670,7 +1667,7 @@ Formatversion: 1
         #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;*/
         #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - END
         #            this.Amount    = this.CalcAmount();
-        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            break;
         #
         #/*
@@ -1728,14 +1725,14 @@ Formatversion: 1
         #            this.Qty            = 1;
         #            //this.NochesHotel    = 1;
         #            this.Amount    = this.CalcAmount();
-        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            break;
         #
         #        default:
         #            this.Qty    = 1;
         #            this.Price  = 0;
         #            this.Amount    = this.CalcAmount();
-        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            break;
         #    }
         #}
@@ -1750,22 +1747,15 @@ Formatversion: 1
         #    if (! hojaGastosTable)
         #        return;
         #
-        #    if (!hojaGastosTable.isVariousCurrencyDefault() && hojaGastosTable.CurrencyCode != CompanyInfo::standardCurrency())
-        #        this.Internacional  = NoYes::Yes;
-        #
         #    this.Division           = hojaGastosTable.Division;
         #
         #    if (!hojaGastosTable.isVariousProjectDefault())
         #    this.ProjIdHornos       = hojaGastosTable.ProjId;
         #
-        #    if (!hojaGastosTable.isVariousCurrencyDefault())
-        #    {
+        #    //MMS - Ajustes CRM - 2026.06.26
+        #    // La cabecera siempre aporta la divisa local inicial; la divisa extranjera se informa en la linea.
         #    this.Currency           = hojaGastosTable.CurrencyCode;
-        #
-        #    //MMS - Divisa desde línea - 2026.05.22
-        #    if(hojaGastosTable.ExchRate)
-        #        this.ExchRate = hojaGastosTable.ExchRate;
-        #    }
+        #    this.ExchRate = hojaGastosTable.ExchRate ? hojaGastosTable.ExchRate : 100;
         #
         #    this.ViajeId            = hojaGastosTable.ViajeId;
         #    this.InformeVisitaId    = hojaGastosTable.InformeVisitaId;
@@ -1874,7 +1864,7 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #LineAmountMST
-        #//MMS - Divisa desde línea - 2026.05.21
+        #//MMS - Ajustes CRM - 2026.06.26
         #display Amount LineAmountMST()
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
@@ -1882,13 +1872,14 @@ Formatversion: 1
         #    ExchRate     exchRate;
         #    ;
         #
+        #    // Convierte el importe real de linea a la divisa local de reembolso.
         #    currencyCode = this.Currency;
         #    exchRate     = this.ExchRate;
         #
-        #    if (!currencyCode && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
+        #    if (!currencyCode && hojaGastosTable)
         #        currencyCode = hojaGastosTable.CurrencyCode;
         #
-        #    if (!exchRate && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault() && currencyCode == hojaGastosTable.CurrencyCode)
+        #    if (!exchRate && hojaGastosTable && currencyCode == hojaGastosTable.CurrencyCode)
         #        exchRate = hojaGastosTable.ExchRate;
         #
         #    if (!currencyCode)
@@ -2073,7 +2064,7 @@ Formatversion: 1
         #             FieldNum(CRMHojaGastosLine, Price):
         #
         #            this.Amount    = this.CalcAmount();
-        #            this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            break;
         #
         #        case FieldNum(CRMHojaGastosLine, Type),
@@ -2088,7 +2079,7 @@ Formatversion: 1
         #            else {
         #                this.Price  = 0;
         #                this.Amount    = this.CalcAmount();
-        #                this.AmountMST = this.LineAmountMST();  //MMS - 2026.05.22
+        #                this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
         #            }
         #            break;
         #
@@ -2118,8 +2109,6 @@ Formatversion: 1
         #
         #        //MMS - Divisa desde línea - 2026.05.22
         #        case FieldNum(CRMHojaGastosLine, Amount),
-        #             FieldNum(CRMHojaGastosLine, Qty),
-        #             FieldNum(CRMHojaGastosLine, Price),
         #             FieldNum(CRMHojaGastosLine, Currency),
         #             FieldNum(CRMHojaGastosLine, ExchRate):
         #            this.normalizeCurrencyAmounts(false);
@@ -2134,17 +2123,17 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #normalizeCurrencyAmounts
-        #//MMS - Divisa desde línea - 2026.05.21
+        #//MMS - Ajustes CRM - 2026.06.26
         #void normalizeCurrencyAmounts(boolean _amountMSTChanged = false)
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
         #    ;
         #
-        #    // Normalizes currency, exchange rate and AmountMST before saving or after user edits.
-        #    if (!this.Currency && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
+        #    // Normaliza divisa de linea, tipo de cambio e importe de reembolso antes de guardar o tras editar.
+        #    if (!this.Currency && hojaGastosTable)
         #        this.Currency = hojaGastosTable.CurrencyCode;
         #
-        #    if (!this.ExchRate && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault() && this.Currency == hojaGastosTable.CurrencyCode)
+        #    if (!this.ExchRate && hojaGastosTable && this.Currency == hojaGastosTable.CurrencyCode)
         #        this.ExchRate = hojaGastosTable.ExchRate;
         #
         #    if (this.Currency == CompanyInfo::standardCurrency())
@@ -2284,7 +2273,7 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #validateCurrencyAmounts
-        #//MMS - Divisa desde linea - 2026.05.21
+        #//MMS - Ajustes CRM - 2026.06.26
         #boolean validateCurrencyAmounts()
         #{
         #    boolean      ret = true;
@@ -2293,25 +2282,22 @@ Formatversion: 1
         #    CRMHojaGastosTable  hojaGastosTable;
         #    ;
         #
-        #    // Validates the minimum data needed to keep AmountMST reliable.
+        #    // Valida los datos minimos para mantener fiable el importe de reembolso.
         #    hojaGastosTable = this.HojaGastosTable();
         #    currencyCode    = this.Currency;
         #    exchRate        = this.ExchRate;
         #
-        #    if (!currencyCode && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
+        #    if (!currencyCode && hojaGastosTable)
         #        currencyCode = hojaGastosTable.CurrencyCode;
         #
-        #    if (!exchRate && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault() && currencyCode == hojaGastosTable.CurrencyCode)
+        #    if (!exchRate && hojaGastosTable && currencyCode == hojaGastosTable.CurrencyCode)
         #        exchRate = hojaGastosTable.ExchRate;
         #
         #    if (!currencyCode)
         #        ret = checkFailed("Debe indicar la divisa de la linea de hoja de gastos.");
         #
-        #    if (hojaGastosTable && hojaGastosTable.isVariousCurrencyDefault() && currencyCode == hojaGastosTable.CurrencyCode)
-        #        ret = checkFailed("Debe indicar la divisa real de la linea de hoja de gastos.");
-        #
-        #    if (currencyCode && currencyCode != CompanyInfo::standardCurrency() && !exchRate)
-        #        ret = checkFailed(strfmt("Para lineas en divisa distinta a %1 hay que indicar el tipo de cambio.", CompanyInfo::standardCurrency()));
+        #    if (currencyCode && currencyCode != CompanyInfo::standardCurrency() && exchRate <= 0)
+        #        ret = checkFailed(strfmt("Para lineas en divisa distinta a %1 hay que indicar un tipo de cambio mayor que cero.", CompanyInfo::standardCurrency()));
         #
         #    return ret;
         #}
@@ -2445,15 +2431,9 @@ Formatversion: 1
         #
         #    }
         #
-        #    //MMS - Divisa desde línea - 2026.05.22
-        #    if(!this.Currency && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault())
-        #        this.Currency = hojaGastosTable.CurrencyCode;
-        #
-        #    if(!this.ExchRate && hojaGastosTable && !hojaGastosTable.isVariousCurrencyDefault() && this.Currency == hojaGastosTable.CurrencyCode)
-        #        this.ExchRate = hojaGastosTable.ExchRate;
-        #
-        #    ret = ret && this.validateCurrencyAmounts();
+        #    //MMS - Ajustes CRM - 2026.06.26
         #    this.normalizeCurrencyAmounts(false);
+        #    ret = ret && this.validateCurrencyAmounts();
         #
         #    return ret;
         #}
