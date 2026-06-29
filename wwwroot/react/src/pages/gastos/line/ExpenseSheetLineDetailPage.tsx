@@ -1,7 +1,8 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
+import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
@@ -18,6 +19,11 @@ import {
   calculateExpenseLineExchangeRate,
   normalizeExpenseLineCurrencyCode,
 } from "../utils/expenseLineCurrency.ts";
+import {
+  buildExpenseExchangeRateInfoMessage,
+  fetchExpenseOfficialExchangeRate,
+  formatExpenseExchangeRateInputValue,
+} from "../utils/expenseExchangeRate.ts";
 import {
   mapBooleanEnumOptions,
   type ExpenseSelectOption,
@@ -71,6 +77,8 @@ const ExpenseSheetLineDetailContent = () => {
   const isCreateMode = lineMode === "create";
   const startInEditMode = lineMode === "edit";
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
+  const exchangeRateRequestIdRef = useRef(0);
+  const [exchangeRateInfoMessage, setExchangeRateInfoMessage] = useState("");
 
   useEffect(() => {
     if (!startInEditMode) {
@@ -247,6 +255,12 @@ const ExpenseSheetLineDetailContent = () => {
     });
   }, []);
 
+  const localExchangeRateInput = useMemo(() => formatLineExchangeRateInput(100), [formatLineExchangeRateInput]);
+  const isDraftCurrencyLocal = useMemo(() => {
+    const normalizedDraftCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
+    return !!normalizedDraftCurrencyCode && !!localCurrencyCode && normalizedDraftCurrencyCode === localCurrencyCode;
+  }, [draftCurrencyCode, localCurrencyCode]);
+
   const resolveDraftLineAmount = useCallback(
     (priceRaw: string, qtyRaw: string): number | null => {
       const nextPrice = parseDecimalInput(priceRaw);
@@ -274,58 +288,161 @@ const ExpenseSheetLineDetailContent = () => {
     [formatLineMoneyInput, resolveDraftLineAmount, setDraftAmountMST]
   );
 
+  const loadOfficialLineExchangeRate = useCallback(
+    async (currencyCode: string, transDate: string) => {
+      const nextCurrencyCode = normalizeExpenseLineCurrencyCode(currencyCode);
+      if (!nextCurrencyCode || !localCurrencyCode) {
+        setExchangeRateInfoMessage("");
+        return;
+      }
+
+      const requestId = exchangeRateRequestIdRef.current + 1;
+      exchangeRateRequestIdRef.current = requestId;
+
+      try {
+        const officialExchangeRate = await fetchExpenseOfficialExchangeRate({
+          localCurrencyCode,
+          expenseCurrencyCode: nextCurrencyCode,
+          date: transDate,
+        });
+        if (requestId !== exchangeRateRequestIdRef.current || !officialExchangeRate) {
+          return;
+        }
+
+        const nextExchangeRate = formatExpenseExchangeRateInputValue(officialExchangeRate.exchangeRate);
+        setDraftExchangeRate(nextExchangeRate);
+        recalculateAmountMSTFromRate(draftPrice, draftQty, nextExchangeRate);
+        setExchangeRateInfoMessage(
+          buildExpenseExchangeRateInfoMessage({
+            rawRate: officialExchangeRate.rawRate,
+            date: officialExchangeRate.date,
+            source: officialExchangeRate.source,
+          })
+        );
+      } catch (error) {
+        if (requestId !== exchangeRateRequestIdRef.current) {
+          return;
+        }
+
+        const message =
+          error instanceof Error && safeText(error.message)
+            ? safeText(error.message)
+            : indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio.");
+        setExchangeRateInfoMessage(message);
+      }
+    },
+    [draftPrice, draftQty, localCurrencyCode, recalculateAmountMSTFromRate, setDraftExchangeRate]
+  );
+
   const handleLinePriceChange = useCallback(
     (value: string) => {
       handleDraftPriceChange(value);
-      recalculateAmountMSTFromRate(value, draftQty, draftExchangeRate);
+      const effectiveExchangeRate = isDraftCurrencyLocal ? localExchangeRateInput : draftExchangeRate;
+      if (isDraftCurrencyLocal && draftExchangeRate !== localExchangeRateInput) {
+        setDraftExchangeRate(localExchangeRateInput);
+      }
+      recalculateAmountMSTFromRate(value, draftQty, effectiveExchangeRate);
     },
-    [draftExchangeRate, draftQty, handleDraftPriceChange, recalculateAmountMSTFromRate]
+    [
+      draftExchangeRate,
+      draftQty,
+      handleDraftPriceChange,
+      isDraftCurrencyLocal,
+      localExchangeRateInput,
+      recalculateAmountMSTFromRate,
+      setDraftExchangeRate,
+    ]
   );
 
   const handleLineQtyChange = useCallback(
     (value: string) => {
       handleDraftQtyChange(value);
-      recalculateAmountMSTFromRate(draftPrice, value, draftExchangeRate);
+      const effectiveExchangeRate = isDraftCurrencyLocal ? localExchangeRateInput : draftExchangeRate;
+      if (isDraftCurrencyLocal && draftExchangeRate !== localExchangeRateInput) {
+        setDraftExchangeRate(localExchangeRateInput);
+      }
+      recalculateAmountMSTFromRate(draftPrice, value, effectiveExchangeRate);
     },
-    [draftExchangeRate, draftPrice, handleDraftQtyChange, recalculateAmountMSTFromRate]
+    [
+      draftExchangeRate,
+      draftPrice,
+      handleDraftQtyChange,
+      isDraftCurrencyLocal,
+      localExchangeRateInput,
+      recalculateAmountMSTFromRate,
+      setDraftExchangeRate,
+    ]
   );
 
   const handleLineCurrencyChange = useCallback(
     (value: string) => {
       const nextCurrencyCode = normalizeExpenseLineCurrencyCode(value);
       setDraftCurrencyCode(nextCurrencyCode);
-      if (nextCurrencyCode && nextCurrencyCode === localCurrencyCode && !parseDecimalInput(draftExchangeRate)) {
-        const localExchangeRate = formatLineExchangeRateInput(100);
-        setDraftExchangeRate(localExchangeRate);
-        recalculateAmountMSTFromRate(draftPrice, draftQty, localExchangeRate);
+      setExchangeRateInfoMessage("");
+      if (nextCurrencyCode && nextCurrencyCode === localCurrencyCode) {
+        exchangeRateRequestIdRef.current += 1;
+        setDraftExchangeRate(localExchangeRateInput);
+        recalculateAmountMSTFromRate(draftPrice, draftQty, localExchangeRateInput);
         return;
       }
 
-      recalculateAmountMSTFromRate(draftPrice, draftQty, draftExchangeRate);
+      void loadOfficialLineExchangeRate(nextCurrencyCode, draftTransDate);
     },
     [
-      draftExchangeRate,
       draftPrice,
       draftQty,
-      formatLineExchangeRateInput,
+      draftTransDate,
+      loadOfficialLineExchangeRate,
       localCurrencyCode,
+      localExchangeRateInput,
       recalculateAmountMSTFromRate,
       setDraftCurrencyCode,
       setDraftExchangeRate,
     ]
   );
 
+  const handleLineTransDateChange = useCallback(
+    (value: string) => {
+      setDraftTransDate(value);
+      const currentCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
+      if (currentCurrencyCode && currentCurrencyCode !== localCurrencyCode) {
+        void loadOfficialLineExchangeRate(currentCurrencyCode, value);
+      }
+    },
+    [draftCurrencyCode, loadOfficialLineExchangeRate, localCurrencyCode, setDraftTransDate]
+  );
+
   const handleLineExchangeRateChange = useCallback(
     (value: string) => {
+      setExchangeRateInfoMessage("");
+      if (isDraftCurrencyLocal) {
+        setDraftExchangeRate(localExchangeRateInput);
+        recalculateAmountMSTFromRate(draftPrice, draftQty, localExchangeRateInput);
+        return;
+      }
+
       setDraftExchangeRate(value);
       recalculateAmountMSTFromRate(draftPrice, draftQty, value);
     },
-    [draftPrice, draftQty, recalculateAmountMSTFromRate, setDraftExchangeRate]
+    [
+      draftPrice,
+      draftQty,
+      isDraftCurrencyLocal,
+      localExchangeRateInput,
+      recalculateAmountMSTFromRate,
+      setDraftExchangeRate,
+    ]
   );
 
   const handleLineAmountMSTChange = useCallback(
     (value: string) => {
+      setExchangeRateInfoMessage("");
       setDraftAmountMST(value);
+      if (isDraftCurrencyLocal) {
+        setDraftExchangeRate(localExchangeRateInput);
+        return;
+      }
+
       const amount = resolveDraftLineAmount(draftPrice, draftQty);
       const amountMST = parseDecimalInput(value);
       const nextExchangeRate = amount != null && amountMST != null
@@ -335,7 +452,16 @@ const ExpenseSheetLineDetailContent = () => {
         setDraftExchangeRate(formatLineExchangeRateInput(nextExchangeRate));
       }
     },
-    [draftPrice, draftQty, formatLineExchangeRateInput, resolveDraftLineAmount, setDraftAmountMST, setDraftExchangeRate]
+    [
+      draftPrice,
+      draftQty,
+      formatLineExchangeRateInput,
+      isDraftCurrencyLocal,
+      localExchangeRateInput,
+      resolveDraftLineAmount,
+      setDraftAmountMST,
+      setDraftExchangeRate,
+    ]
   );
 
   const {
@@ -391,6 +517,11 @@ const ExpenseSheetLineDetailContent = () => {
       ? "view_only"
       : "default";
 
+  const handleCancelLineEdit = useCallback(() => {
+    setExchangeRateInfoMessage("");
+    handleCancelEdit();
+  }, [handleCancelEdit]);
+
   const handleEditLinkedTicket = useCallback(() => {
     const safeFileId = safeText(linkedTicketFileId);
     const safeSheetId = safeText(sheetId);
@@ -429,7 +560,7 @@ const ExpenseSheetLineDetailContent = () => {
     sheetId,
     setModalError,
     handleEnableEdit: hasLinkedTicket ? handleEditLinkedTicket : handleEnableEdit,
-    handleCancelEdit,
+    handleCancelEdit: handleCancelLineEdit,
     canOpenSaveConfirm,
     handleUpdate,
     handleDelete,
@@ -499,6 +630,7 @@ const ExpenseSheetLineDetailContent = () => {
         draftAmountMST={draftAmountMST}
         draftExchangeRate={draftExchangeRate}
         localCurrencyCode={localCurrencyCode}
+        exchangeRateInfoMessage={exchangeRateInfoMessage}
         typeInputRef={typeInputRef}
         priceInputRef={priceInputRef}
         qtyInputRef={qtyInputRef}
@@ -506,7 +638,7 @@ const ExpenseSheetLineDetailContent = () => {
         priceInvalid={priceInvalid}
         qtyInvalid={qtyInvalid}
         onDraftDescriptionChange={setDraftDescription}
-        onDraftTransDateChange={setDraftTransDate}
+        onDraftTransDateChange={handleLineTransDateChange}
         onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
         onDraftPriceChange={handleLinePriceChange}
         onDraftQtyChange={handleLineQtyChange}

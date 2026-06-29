@@ -160,9 +160,10 @@ export const useExpenseSheetLineDetailState = ({
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
     const localCurrencyCode = safeText(nextHeader?.currencyCode).toUpperCase() || "EUR";
     const lineCurrencyCode = safeText(nextLine?.currencyCode).toUpperCase() || localCurrencyCode;
+    const lineExchangeRate = lineCurrencyCode === localCurrencyCode ? 100 : nextLine?.exchRate;
     setDraftCurrencyCode(lineCurrencyCode);
     setDraftAmountMST(formatEditableNumber(nextLine?.amountMST));
-    setDraftExchangeRate(formatEditableExchangeRate(nextLine?.exchRate ?? (lineCurrencyCode === localCurrencyCode ? 100 : null)));
+    setDraftExchangeRate(formatEditableExchangeRate(lineExchangeRate));
   }, []);
 
   useEffect(() => {

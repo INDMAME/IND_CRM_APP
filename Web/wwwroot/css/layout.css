@@ -37,6 +37,8 @@ html, body {
     --ind-content-bottom-padding: 20px;
     --ind-sidebar-user-bottom-offset: 40px;
     --ind-sidebar-user-bottom-clearance: 64px;
+    --ind-sidebar-menu-bg: #00296b;
+    --ind-sidebar-menu-active-bg: #244c82;
 }
 
 /* SIDEBAR */
@@ -445,7 +447,7 @@ body.layout-shell--with-chrome #content.content {
 
 /* USER DROPDOWN MENU */
 .user-menu {
-    background: rgba(0, 0, 0, 0.22);
+    background: var(--ind-sidebar-menu-bg);
     border-radius: 5px;
     border: 1px solid rgba(255, 255, 255, 0.15);
     position: absolute;
@@ -457,7 +459,6 @@ body.layout-shell--with-chrome #content.content {
     pointer-events: none;
     transform: translateY(-6px);
     transition: opacity 0.15s ease, transform 0.15s ease;
-    backdrop-filter: blur(4px);
 }
 
     .user-menu.open {
@@ -471,7 +472,7 @@ body.layout-shell--with-chrome #content.content {
 .user-menu-item {
     width: 100%;
     text-align: left;
-    background: transparent;
+    background: var(--ind-sidebar-menu-bg);
     border: none;
     color: #ffffff;
     padding: 6px 10px 6px 12px;
@@ -481,8 +482,9 @@ body.layout-shell--with-chrome #content.content {
     font-size: 13px;
 }
 
-    .user-menu-item:hover {
-        background: rgba(255, 255, 255, 0.12);
+    .user-menu-item:hover,
+    .user-menu-item[aria-expanded="true"] {
+        background: var(--ind-sidebar-menu-active-bg);
         color: #ffffff;
     }
 

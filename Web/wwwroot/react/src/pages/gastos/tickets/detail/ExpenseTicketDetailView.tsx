@@ -78,6 +78,14 @@ type ExpenseTicketDetailViewProps = {
     draftTotalAmount: string;
     totalAmountInvalid: boolean;
     totalAmountInputRef: RefObject<HTMLInputElement | null>;
+    draftExchangeRate: string;
+    exchangeRateInvalid: boolean;
+    exchangeRateInputRef: RefObject<HTMLInputElement | null>;
+    exchangeRateInfoMessage: string;
+    draftAmountMST: string;
+    amountMSTInvalid: boolean;
+    amountMSTInputRef: RefObject<HTMLInputElement | null>;
+    localCurrencyCode: string;
     draftTransDate: string;
     draftTicketTime: string;
     draftUrlFile: string;
@@ -86,6 +94,8 @@ type ExpenseTicketDetailViewProps = {
     onDraftGastoTypeChange: (value: string) => void;
     onDraftCurrencyCodeChange: (value: string) => void;
     onDraftTotalAmountChange: (value: string) => void;
+    onDraftExchangeRateChange: (value: string) => void;
+    onDraftAmountMSTChange: (value: string) => void;
     onOpenFile: () => void;
     onOpenExpenseSheet?: () => void;
     linkedLine: {
@@ -133,6 +143,14 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         draftTotalAmount={content.draftTotalAmount}
         totalAmountInvalid={content.totalAmountInvalid}
         totalAmountInputRef={content.totalAmountInputRef}
+        draftExchangeRate={content.draftExchangeRate}
+        exchangeRateInvalid={content.exchangeRateInvalid}
+        exchangeRateInputRef={content.exchangeRateInputRef}
+        exchangeRateInfoMessage={content.exchangeRateInfoMessage}
+        draftAmountMST={content.draftAmountMST}
+        amountMSTInvalid={content.amountMSTInvalid}
+        amountMSTInputRef={content.amountMSTInputRef}
+        localCurrencyCode={content.localCurrencyCode}
         draftTransDate={content.draftTransDate}
         draftTicketTime={content.draftTicketTime}
         draftUrlFile={content.draftUrlFile}
@@ -141,6 +159,8 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onDraftGastoTypeChange={content.onDraftGastoTypeChange}
         onDraftCurrencyCodeChange={content.onDraftCurrencyCodeChange}
         onDraftTotalAmountChange={content.onDraftTotalAmountChange}
+        onDraftExchangeRateChange={content.onDraftExchangeRateChange}
+        onDraftAmountMSTChange={content.onDraftAmountMSTChange}
         onOpenFile={content.onOpenFile}
         onOpenExpenseSheet={content.onOpenExpenseSheet}
         hideOpenFileAction={content.showStickyPreview}

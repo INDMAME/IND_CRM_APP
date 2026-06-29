@@ -611,6 +611,10 @@ export type ExpenseSheetTicketDetailDto = {
   ProcessedByAI: boolean | null;
   CurrencyCode: string;
   TotalAmount: number | null;
+  AmountMST?: number | null;
+  amountMST?: number | null;
+  ExchRate?: number | null;
+  exchRate?: number | null;
   CreatedByUserId: string;
   TransDate: ExpenseApiDate;
   TicketDate: ExpenseApiDate;

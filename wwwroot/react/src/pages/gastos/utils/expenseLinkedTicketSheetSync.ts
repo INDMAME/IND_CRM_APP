@@ -27,6 +27,9 @@ type SyncExpenseLinkedTicketSheetLineArgs = {
   sheetId: string;
   lineRecId?: string;
   projectIdOverride?: string | null;
+  currencyCodeOverride?: string | null;
+  amountMSTOverride?: number | null;
+  exchangeRateOverride?: number | null;
 };
 
 type SyncedTicketSnapshot = {
@@ -34,6 +37,9 @@ type SyncedTicketSnapshot = {
   transDate: string;
   totalAmount: number;
   gastoType: number;
+  currencyCode: string;
+  amountMST: number | null;
+  exchRate: number | null;
 };
 
 const selectSheet = (items: unknown[], sheetId: string): ExpenseSheetDetailDto | null => {
@@ -82,7 +88,25 @@ const resolveLinkedLine = (sheet: ExpenseSheetDetailDto, fileId: string, lineRec
   return mappedLines.find((entry) => safeText(entry.fileId).toUpperCase() === safeFileId) || null;
 };
 
-const resolveTicketSnapshot = (ticket: ExpenseSheetTicketDetailDto, existingLine: ExpenseSheetLine | null): SyncedTicketSnapshot => {
+const toFiniteNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const resolvePositiveNumberOverride = (value: number | null | undefined): number | null => {
+  const parsed = toFiniteNumber(value);
+  return parsed != null && parsed > 0 ? parsed : null;
+};
+
+const resolveTicketSnapshot = (
+  ticket: ExpenseSheetTicketDetailDto,
+  existingLine: ExpenseSheetLine | null,
+  overrides: {
+    currencyCodeOverride?: string | null;
+    amountMSTOverride?: number | null;
+    exchangeRateOverride?: number | null;
+  }
+): SyncedTicketSnapshot => {
   const description = safeText(ticket.Description) || safeText(existingLine?.description) || "Ticket";
   const transDate =
     toExpenseApiDdMmYyyy(ticket.TransDate) || safeText(existingLine?.transDate) || toExpenseApiDdMmYyyy(new Date());
@@ -113,13 +137,26 @@ const resolveTicketSnapshot = (ticket: ExpenseSheetTicketDetailDto, existingLine
       ? parsedGastoType
       : existingTypeValue !== null
         ? existingTypeValue
-        : defaultGastoType;
+      : defaultGastoType;
+  const currencyCode =
+    safeText(overrides.currencyCodeOverride).toUpperCase() ||
+    safeText(ticket.CurrencyCode).toUpperCase() ||
+    safeText(existingLine?.currencyCode).toUpperCase();
+  const amountMST =
+    resolvePositiveNumberOverride(overrides.amountMSTOverride) ??
+    toFiniteNumber(existingLine?.amountMST ?? ticket.AmountMST ?? ticket.amountMST);
+  const exchRate =
+    resolvePositiveNumberOverride(overrides.exchangeRateOverride) ??
+    resolvePositiveNumberOverride(existingLine?.exchRate ?? ticket.ExchRate ?? ticket.exchRate);
 
   return {
     description,
     transDate,
     totalAmount,
     gastoType,
+    currencyCode,
+    amountMST,
+    exchRate,
   };
 };
 
@@ -152,13 +189,24 @@ const buildLinePayload = ({
     qty: 1,
     price: ticketSnapshot.totalAmount,
     projId: resolvedProjectId || undefined,
+    currencyCode: ticketSnapshot.currencyCode || undefined,
+    amountMST: ticketSnapshot.amountMST,
+    exchRate: ticketSnapshot.exchRate,
     indAttachFiles: safeText(existingLine?.indAttachFiles) || undefined,
   };
 };
 
 // Synchronizes the expense-sheet snapshot line that is linked to one ticket file.
 export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTicketSheetLineArgs): Promise<void> => {
-  const { fileId, sheetId, lineRecId, projectIdOverride } = args;
+  const {
+    fileId,
+    sheetId,
+    lineRecId,
+    projectIdOverride,
+    currencyCodeOverride,
+    amountMSTOverride,
+    exchangeRateOverride,
+  } = args;
   const hasProjectIdOverride = Object.prototype.hasOwnProperty.call(args, "projectIdOverride");
   const safeFileId = safeText(fileId);
   const safeSheetId = safeText(sheetId);
@@ -203,7 +251,11 @@ export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTi
   }
 
   const sheetHeader = mapExpenseSheetHeader(selectedSheet);
-  const ticketSnapshot = resolveTicketSnapshot(selectedTicket, existingLine);
+  const ticketSnapshot = resolveTicketSnapshot(selectedTicket, existingLine, {
+    currencyCodeOverride,
+    amountMSTOverride,
+    exchangeRateOverride,
+  });
   if (!(ticketSnapshot.totalAmount > 0)) {
     throw new Error(
       indT("ExpenseTickets_SheetSync_InvalidTotal", "The ticket must keep a positive total amount to sync the expense line.")

@@ -6,7 +6,7 @@ import { useTimelineCardEffects } from "../../../../hooks/useTimelineCardEffects
 import { canAccess, showPermissionModal } from "../../../../utils/permissions.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../../utils/reactIsland.tsx";
-import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
+import { configureExpenseApiAuth, getExpenseSheetDefaultCurrencyCode } from "../../utils/expenseApi.ts";
 import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../../utils/expenseNavigation.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { getExpenseGastoTypeOptions } from "../../constants/expenseGastoTypeCatalog.ts";
@@ -14,6 +14,12 @@ import type { ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
 import { buildExpenseSheetDetailUrl } from "../../utils/expenseTicketReturnContext.ts";
 import { readExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
+import { normalizeExpenseLineCurrencyCode } from "../../utils/expenseLineCurrency.ts";
+import {
+  buildExpenseExchangeRateInfoMessage,
+  fetchExpenseOfficialExchangeRate,
+  formatExpenseExchangeRateInputValue,
+} from "../../utils/expenseExchangeRate.ts";
 import { useExpenseTicketLinkSheetGate } from "../useExpenseTicketLinkSheetGate.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
 import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutations.ts";
@@ -188,6 +194,14 @@ const buildExpenseTicketDetailContentView = ({
   draftTotalAmount,
   totalAmountInvalid,
   totalAmountInputRef,
+  draftAmountMST,
+  amountMSTInvalid,
+  amountMSTInputRef,
+  draftExchangeRate,
+  exchangeRateInvalid,
+  exchangeRateInputRef,
+  exchangeRateInfoMessage,
+  localCurrencyCode,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -196,6 +210,8 @@ const buildExpenseTicketDetailContentView = ({
   setDraftGastoType,
   setDraftCurrencyCode,
   setDraftTotalAmount,
+  setDraftAmountMST,
+  setDraftExchangeRate,
   isFromSheetLink,
   linkedLine,
   handleOpenExpenseSheet,
@@ -237,6 +253,14 @@ const buildExpenseTicketDetailContentView = ({
   draftTotalAmount: string;
   totalAmountInvalid: boolean;
   totalAmountInputRef: React.RefObject<HTMLInputElement | null>;
+  draftAmountMST: string;
+  amountMSTInvalid: boolean;
+  amountMSTInputRef: React.RefObject<HTMLInputElement | null>;
+  draftExchangeRate: string;
+  exchangeRateInvalid: boolean;
+  exchangeRateInputRef: React.RefObject<HTMLInputElement | null>;
+  exchangeRateInfoMessage: string;
+  localCurrencyCode: string;
   draftTransDate: string;
   draftTicketTime: string;
   draftUrlFile: string;
@@ -245,6 +269,8 @@ const buildExpenseTicketDetailContentView = ({
   setDraftGastoType: (value: string) => void;
   setDraftCurrencyCode: (value: string) => void;
   setDraftTotalAmount: (value: string) => void;
+  setDraftAmountMST: (value: string) => void;
+  setDraftExchangeRate: (value: string) => void;
   isFromSheetLink: boolean;
   linkedLine: ExpenseTicketLinkedSheetLineView;
   handleOpenExpenseSheet: () => void;
@@ -292,6 +318,14 @@ const buildExpenseTicketDetailContentView = ({
   draftTotalAmount,
   totalAmountInvalid,
   totalAmountInputRef,
+  draftAmountMST,
+  amountMSTInvalid,
+  amountMSTInputRef,
+  draftExchangeRate,
+  exchangeRateInvalid,
+  exchangeRateInputRef,
+  exchangeRateInfoMessage,
+  localCurrencyCode,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -300,6 +334,8 @@ const buildExpenseTicketDetailContentView = ({
   onDraftGastoTypeChange: setDraftGastoType,
   onDraftCurrencyCodeChange: setDraftCurrencyCode,
   onDraftTotalAmountChange: setDraftTotalAmount,
+  onDraftAmountMSTChange: setDraftAmountMST,
+  onDraftExchangeRateChange: setDraftExchangeRate,
   onOpenFile: openFile,
   onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
   linkedLine,
@@ -491,6 +527,34 @@ const useExpenseTicketDetailPageViewModel = () => {
   const [sheetSyncBlockedMessage, setSheetSyncBlockedMessage] = useState(() =>
     safeText(readExpenseTicketSheetSyncState(fileId)?.message)
   );
+  const exchangeRateRequestIdRef = useRef(0);
+  const [exchangeRateInfoMessage, setExchangeRateInfoMessage] = useState("");
+  const [contextDefaultCurrencyCode, setContextDefaultCurrencyCode] = useState("");
+
+  useEffect(() => {
+    let isCancelled = false;
+    const controller = new AbortController();
+
+    const loadDefaultCurrencyCode = async () => {
+      const defaultCurrencyCode = normalizeExpenseLineCurrencyCode(
+        await getExpenseSheetDefaultCurrencyCode({
+          suppressPermissionModal: true,
+          signal: controller.signal,
+        })
+      );
+
+      if (!isCancelled) {
+        setContextDefaultCurrencyCode(defaultCurrencyCode);
+      }
+    };
+
+    void loadDefaultCurrencyCode();
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const syncState = readExpenseTicketSheetSyncState(fileId);
@@ -553,6 +617,10 @@ const useExpenseTicketDetailPageViewModel = () => {
   });
   const canEditLinkedTicket = !linkedExpenseSheetId || (!linkSheetCheckBusy && !linkSheetLocked);
   const allowAssignedDraftEdit = isFromExpenseSheetCreate || (!!linkedExpenseSheetId && canEditLinkedTicket);
+  const ticketLocalCurrencyCode = useMemo(
+    () => normalizeExpenseLineCurrencyCode(contextDefaultCurrencyCode || linkedSheetLine.localCurrencyCode),
+    [contextDefaultCurrencyCode, linkedSheetLine.localCurrencyCode]
+  );
   const {
     busy,
     status,
@@ -571,6 +639,13 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftTotalAmount,
     totalAmountInvalid,
     totalAmountInputRef,
+    draftAmountMST,
+    amountMSTInvalid,
+    amountMSTInputRef,
+    draftExchangeRate,
+    exchangeRateInvalid,
+    exchangeRateInputRef,
+    localCurrencyCode,
     draftTransDate,
     draftTicketTime,
     draftComentario,
@@ -585,11 +660,15 @@ const useExpenseTicketDetailPageViewModel = () => {
     setDraftGastoType,
     setDraftCurrencyCode,
     setDraftTotalAmount,
+    setDraftAmountMST,
+    setDraftExchangeRate,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,
   } = useExpenseTicketDetailEditor({
     header,
+    linkedExpenseLine: linkedSheetLine.line,
+    localCurrencyCode: ticketLocalCurrencyCode,
     lineCount: lines.length,
     pageSize: LINES_PAGE_SIZE,
     canEditTicket: canEditTicket && canEditLinkedTicket,
@@ -598,6 +677,67 @@ const useExpenseTicketDetailPageViewModel = () => {
     isFromSheetLink,
     onForbidden: showPermissionModal,
   });
+  const handleTicketCurrencyCodeChange = useCallback(
+    (value: string) => {
+      const nextCurrencyCode = normalizeExpenseLineCurrencyCode(value);
+      setDraftCurrencyCode(nextCurrencyCode);
+      setExchangeRateInfoMessage("");
+
+      if (!nextCurrencyCode || !localCurrencyCode) {
+        return;
+      }
+
+      const requestId = exchangeRateRequestIdRef.current + 1;
+      exchangeRateRequestIdRef.current = requestId;
+
+      void (async () => {
+        try {
+          const officialExchangeRate = await fetchExpenseOfficialExchangeRate({
+            localCurrencyCode,
+            expenseCurrencyCode: nextCurrencyCode,
+            date: draftTransDate || header?.ticketDate || header?.transDate,
+          });
+          if (requestId !== exchangeRateRequestIdRef.current || !officialExchangeRate) {
+            return;
+          }
+
+          setDraftExchangeRate(formatExpenseExchangeRateInputValue(officialExchangeRate.exchangeRate));
+          setExchangeRateInfoMessage(
+            buildExpenseExchangeRateInfoMessage({
+              rawRate: officialExchangeRate.rawRate,
+              date: officialExchangeRate.date,
+              source: officialExchangeRate.source,
+            })
+          );
+        } catch (error) {
+          if (requestId !== exchangeRateRequestIdRef.current) {
+            return;
+          }
+
+          const message =
+            error instanceof Error && safeText(error.message)
+              ? safeText(error.message)
+              : indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio.");
+          setExchangeRateInfoMessage(message);
+        }
+      })();
+    },
+    [draftTransDate, header?.ticketDate, header?.transDate, localCurrencyCode, setDraftCurrencyCode, setDraftExchangeRate]
+  );
+  const handleTicketExchangeRateChange = useCallback(
+    (value: string) => {
+      setExchangeRateInfoMessage("");
+      setDraftExchangeRate(value);
+    },
+    [setDraftExchangeRate]
+  );
+  const handleTicketAmountMSTChange = useCallback(
+    (value: string) => {
+      setExchangeRateInfoMessage("");
+      setDraftAmountMST(value);
+    },
+    [setDraftAmountMST]
+  );
   const handleEnableEditInContext = useCallback(() => {
     if (linkSheetCheckBusy) {
       return;
@@ -612,6 +752,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       return;
     }
 
+    setExchangeRateInfoMessage("");
     handleEnableEdit();
   }, [
     handleEnableEdit,
@@ -623,6 +764,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     setStatus,
   ]);
   const handleCancelEditInContext = useCallback(() => {
+    setExchangeRateInfoMessage("");
     handleCancelEdit();
     linkedSheetLine.resetDraftProjectId();
   }, [handleCancelEdit, linkedSheetLine.resetDraftProjectId]);
@@ -682,6 +824,9 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftGastoType,
     draftCurrencyCode,
     draftTotalAmount,
+    draftAmountMST,
+    draftExchangeRate,
+    localCurrencyCode,
     currentTotalAmount: header?.totalAmount,
     draftTransDate,
     draftTicketTime,
@@ -870,14 +1015,24 @@ const useExpenseTicketDetailPageViewModel = () => {
       draftTotalAmount,
       totalAmountInvalid,
       totalAmountInputRef,
+      draftAmountMST,
+      amountMSTInvalid,
+      amountMSTInputRef,
+      draftExchangeRate,
+      exchangeRateInvalid,
+      exchangeRateInputRef,
+      exchangeRateInfoMessage,
+      localCurrencyCode,
       draftTransDate,
       draftTicketTime,
       draftUrlFile,
       draftFileName,
       setDraftDescription,
       setDraftGastoType,
-      setDraftCurrencyCode,
+      setDraftCurrencyCode: handleTicketCurrencyCodeChange,
       setDraftTotalAmount,
+      setDraftAmountMST: handleTicketAmountMSTChange,
+      setDraftExchangeRate: handleTicketExchangeRateChange,
       isFromSheetLink,
       linkedLine: {
         visible: isFromExpenseLine,

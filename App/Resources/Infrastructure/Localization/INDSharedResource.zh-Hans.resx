@@ -285,6 +285,12 @@
   <data name="ExpenseSheets_Field_ExchangeRate" xml:space="preserve">
     <value>汇率</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount" xml:space="preserve">
+    <value>报销金额</value>
+  </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
+    <value>报销额({0})</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>线路编号</value>
   </data>
@@ -293,6 +299,9 @@
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>进口</value>
+  </data>
+  <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
+    <value>币种金额</value>
   </data>
   <data name="ExpenseSheets_Field_Price" xml:space="preserve">
     <value>单价</value>
@@ -314,6 +323,9 @@
   </data>
   <data name="ExpenseSheets_Validation_ExchangeRateRequired" xml:space="preserve">
     <value>欧元以外货币的强制汇率。</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
+    <value>外币行需要大于 0 的汇率或报销金额。</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>票</value>
@@ -1192,7 +1204,7 @@
     <value>来自全局配置。</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Text" xml:space="preserve">
-    <value>已获取汇率 0.0000000</value>
+    <value>用于计算报销的汇率。</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Aria" xml:space="preserve">
     <value>显示汇率信息</value>

@@ -7,9 +7,9 @@ import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
-import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
+import ExpenseCurrencySettlementFields from "./ExpenseCurrencySettlementFields.tsx";
 
 type ExpenseSheetLineFormProps = {
   line: ExpenseSheetLine;
@@ -39,6 +39,7 @@ type ExpenseSheetLineFormProps = {
   draftAmountMST: string;
   draftExchangeRate: string;
   localCurrencyCode: string;
+  exchangeRateInfoMessage: string;
   linkedTicketFileId: string;
   showLinkedTicketField: boolean;
   typeInputRef?: React.Ref<HTMLInputElement>;
@@ -78,6 +79,7 @@ type ExpenseSheetLineCurrencyFieldsProps = {
   draftAmountMST: string;
   draftExchangeRate: string;
   localCurrencyCode: string;
+  exchangeRateInfoMessage: string;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftAmountMSTChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
@@ -93,94 +95,38 @@ const ExpenseSheetLineCurrencyFields = ({
   draftAmountMST,
   draftExchangeRate,
   localCurrencyCode,
+  exchangeRateInfoMessage,
   onDraftCurrencyCodeChange,
   onDraftAmountMSTChange,
   onDraftExchangeRateChange,
-}: ExpenseSheetLineCurrencyFieldsProps) => (
-  <>
-    <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_AmountCurrency", "Amount currency")} value={amountText || "-"} />
+}: ExpenseSheetLineCurrencyFieldsProps) => {
+  const normalizedExpenseCurrencyCode = safeText(isEditing ? draftCurrencyCode : line.currencyCode).toUpperCase();
+  const exchangeRateValue = isEditing
+    ? draftExchangeRate
+    : formatExpenseNumber(line.exchRate ?? null, {
+        minimumFractionDigits: 7,
+        maximumFractionDigits: 7,
+        useGrouping: true,
+        fallback: "-",
+      });
+  const reimbursementAmountValue = isEditing ? draftAmountMST : amountMSTText || "-";
 
-    {isEditing ? (
-      <ExpenseCurrencyFilterSelect
-        label={indT("ExpenseSheets_Field_Currency", "Currency")}
-        placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
-        value={draftCurrencyCode}
-        onChange={onDraftCurrencyCodeChange}
-        idBase="expense-line-currency"
-      />
-    ) : (
-      <ExpenseReadOnlyField
-        label={indT("ExpenseSheets_Field_Currency", "Currency")}
-        value={safeText(line.currencyCode) || localCurrencyCode || "-"}
-      />
-    )}
-
-    {isEditing ? (
-      <div className="space-y-1.5">
-        <label className="form-label font-semibold">{indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}</label>
-        <input
-          className="form-control"
-          type="text"
-          inputMode="decimal"
-          value={draftExchangeRate}
-          onChange={(event) => onDraftExchangeRateChange(event.target.value || "")}
-          onBlur={(event) =>
-            onDraftExchangeRateChange(
-              formatExpenseInputNumber(event.target.value, {
-                minimumFractionDigits: 7,
-                maximumFractionDigits: 7,
-                useGrouping: true,
-                fallback: "",
-              })
-            )
-          }
-          aria-label={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}
-        />
-      </div>
-    ) : (
-      <ExpenseReadOnlyField
-        label={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}
-        value={formatExpenseNumber(line.exchRate ?? null, {
-          minimumFractionDigits: 7,
-          maximumFractionDigits: 7,
-          useGrouping: true,
-          fallback: "-",
-        })}
-      />
-    )}
-
-    {isEditing ? (
-      <div className="space-y-1.5">
-        <label className="form-label font-semibold">
-          {indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
-        </label>
-        <input
-          className="form-control"
-          type="text"
-          inputMode="decimal"
-          value={draftAmountMST}
-          onChange={(event) => onDraftAmountMSTChange(event.target.value || "")}
-          onBlur={(event) =>
-            onDraftAmountMSTChange(
-              formatExpenseInputNumber(event.target.value, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-                useGrouping: true,
-                fallback: "",
-              })
-            )
-          }
-          aria-label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
-        />
-      </div>
-    ) : (
-      <ExpenseReadOnlyField
-        label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
-        value={amountMSTText || "-"}
-      />
-    )}
-  </>
-);
+  return (
+    <ExpenseCurrencySettlementFields
+      isEditing={isEditing}
+      expenseCurrencyCode={normalizedExpenseCurrencyCode}
+      localCurrencyCode={localCurrencyCode}
+      exchangeRate={exchangeRateValue}
+      exchangeRateInfoMessage={exchangeRateInfoMessage}
+      amountCurrency={amountText || "-"}
+      amountCurrencyMode="readonly"
+      reimbursementAmount={reimbursementAmountValue}
+      onExpenseCurrencyChange={onDraftCurrencyCodeChange}
+      onExchangeRateChange={onDraftExchangeRateChange}
+      onReimbursementAmountChange={onDraftAmountMSTChange}
+    />
+  );
+};
 
 // Pure form renderer for expense line detail in read and edit modes.
 const ExpenseSheetLineForm = ({
@@ -211,6 +157,7 @@ const ExpenseSheetLineForm = ({
   draftAmountMST,
   draftExchangeRate,
   localCurrencyCode,
+  exchangeRateInfoMessage,
   linkedTicketFileId,
   showLinkedTicketField,
   typeInputRef,
@@ -388,6 +335,7 @@ const ExpenseSheetLineForm = ({
             draftAmountMST={draftAmountMST}
             draftExchangeRate={draftExchangeRate}
             localCurrencyCode={localCurrencyCode}
+            exchangeRateInfoMessage={exchangeRateInfoMessage}
             onDraftCurrencyCodeChange={onDraftCurrencyCodeChange}
             onDraftAmountMSTChange={onDraftAmountMSTChange}
             onDraftExchangeRateChange={onDraftExchangeRateChange}

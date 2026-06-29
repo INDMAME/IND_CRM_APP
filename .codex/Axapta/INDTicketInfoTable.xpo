@@ -727,9 +727,17 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #syncHojaGastoLine
+        #//MMS - Ajustes CRM - 2026.06.29
         #void syncHojaGastoLine()
         #{
         #    CRMHojaGastosLine gastosLine;
+        #    INDTicketInfoLine ticketInfoLine;
+        #    INDTicketInfoLine ticketInfoLineCount;
+        #    int               ticketLineCount;
+        #    ;
+        #
+        #    if (!this.FileId)
+        #        return;
         #
         #    ttsbegin;
         #
@@ -739,14 +747,47 @@ Formatversion: 1
         #
         #    if (gastosLine)
         #    {
-        #        gastosLine.Description = this.Description;
+        #        if (!gastosLine.canSyncLinkedTicket())
+        #        {
+        #            ttscommit;
+        #            return;
+        #        }
+        #
+        #        select count(RecId) from ticketInfoLineCount
+        #            where ticketInfoLineCount.FileId == this.FileId;
+        #
+        #        ticketLineCount = ticketInfoLineCount.RecId;
+        #
         #        gastosLine.Amount      = this.TotalAmount;
-        #        //MMS - Ajustes CRM - 2026.06.26
+        #
+        #        if (ticketLineCount == 1)
+        #        {
+        #            select firstOnly ticketInfoLine
+        #                where ticketInfoLine.FileId == this.FileId;
+        #
+        #            if (ticketInfoLine && ticketInfoLine.TotalAmount == this.TotalAmount)
+        #            {
+        #                gastosLine.Qty   = ticketInfoLine.Qty;
+        #                gastosLine.Price = ticketInfoLine.Price;
+        #            }
+        #        }
+        #
+        #        gastosLine.Description = this.Description;
         #        gastosLine.Currency    = this.CurrencyCode;
         #        gastosLine.ExchRate    = this.ExchRate;
         #        gastosLine.AmountMST   = this.AmountMST;
         #        gastosLine.normalizeCurrencyAmounts(false);
-        #        gastosLine.update();
+        #
+        #        if (!gastosLine.validateCurrencyAmounts())
+        #        {
+        #            ttsabort;
+        #            throw error("Datos de divisa de la linea invalidos.");
+        #        }
+        #
+        #        gastosLine.doUpdate();
+        #        gastosLine.CreaActualizaProyectoEnLineCust();
+        #        INDProjCostRevenueTable::CreateProjCostFromCommon(gastosLine);
+        #        gastosLine.syncHojaGastosTable();
         #    }
         #
         #    ttscommit;

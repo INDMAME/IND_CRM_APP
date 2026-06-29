@@ -3,10 +3,9 @@ import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import { hasExpenseTicketImagePreviewSource } from "../tickets/detail/expenseTicketPreviewUtils.ts";
-import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
-import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
+import ExpenseTicketCurrencySettlementFields from "./ExpenseTicketCurrencySettlementFields.tsx";
 
 const hasRealExpenseSheetValue = (value: string): boolean => {
   const normalized = safeText(value).toLowerCase();
@@ -37,6 +36,14 @@ type ExpenseTicketDetailHeaderFormProps = {
   draftTotalAmount: string;
   totalAmountInvalid: boolean;
   totalAmountInputRef: React.Ref<HTMLInputElement>;
+  draftExchangeRate: string;
+  exchangeRateInvalid: boolean;
+  exchangeRateInputRef: React.Ref<HTMLInputElement>;
+  exchangeRateInfoMessage: string;
+  draftAmountMST: string;
+  amountMSTInvalid: boolean;
+  amountMSTInputRef: React.Ref<HTMLInputElement>;
+  localCurrencyCode: string;
   draftTransDate: string;
   draftTicketTime: string;
   draftUrlFile: string;
@@ -45,6 +52,8 @@ type ExpenseTicketDetailHeaderFormProps = {
   onDraftGastoTypeChange: (value: string) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftTotalAmountChange: (value: string) => void;
+  onDraftExchangeRateChange: (value: string) => void;
+  onDraftAmountMSTChange: (value: string) => void;
   onOpenFile: () => void;
   onOpenExpenseSheet?: () => void;
   hideOpenFileAction?: boolean;
@@ -72,6 +81,14 @@ const ExpenseTicketDetailHeaderForm = ({
   draftTotalAmount,
   totalAmountInvalid,
   totalAmountInputRef,
+  draftExchangeRate,
+  exchangeRateInvalid,
+  exchangeRateInputRef,
+  exchangeRateInfoMessage,
+  draftAmountMST,
+  amountMSTInvalid,
+  amountMSTInputRef,
+  localCurrencyCode,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -80,6 +97,8 @@ const ExpenseTicketDetailHeaderForm = ({
   onDraftGastoTypeChange,
   onDraftCurrencyCodeChange,
   onDraftTotalAmountChange,
+  onDraftExchangeRateChange,
+  onDraftAmountMSTChange,
   onOpenFile,
   onOpenExpenseSheet,
   hideOpenFileAction = false,
@@ -93,32 +112,12 @@ const ExpenseTicketDetailHeaderForm = ({
     formatExpenseDisplayDate(header.ticketDate || header.transDate, locale) ||
     "-";
   const lockedDraftDateText = formatExpenseDisplayDate(draftTransDate, locale) || displayDateText;
-  const handleTotalAmountBlur = () => {
-    onDraftTotalAmountChange(
-      formatExpenseInputNumber(draftTotalAmount, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-        useGrouping: true,
-        fallback: "",
-      })
-    );
-  };
 
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-zinc-200 rounded-[var(--radius-xl)]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ExpenseReadOnlyField
-          label={indT("Tickets_Field_FileId", "Ticket")}
-          value={header.fileId || "-"}
-        />
-
-        <ExpenseReadOnlyField
-          label={indT("Tickets_Field_Status", "Status")}
-          value={statusLabel || "-"}
-        />
-
         {isEditing ? (
-          <div className="sm:col-span-2 space-y-1.5">
+          <div className="md:col-span-2 space-y-1.5">
             <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Description", "Description")}</label>
             <input
               ref={descriptionInputRef}
@@ -136,6 +135,40 @@ const ExpenseTicketDetailHeaderForm = ({
             fullWidth
           />
         )}
+
+        <ExpenseTicketCurrencySettlementFields
+          isEditing={isEditing}
+          expenseCurrencyCode={isEditing ? draftCurrencyCode : safeText(header.currencyCode)}
+          expenseCurrencyInvalid={currencyCodeInvalid}
+          expenseCurrencyInputRef={currencyInputRef}
+          localCurrencyCode={localCurrencyCode}
+          exchangeRate={draftExchangeRate}
+          exchangeRateInvalid={exchangeRateInvalid}
+          exchangeRateInputRef={exchangeRateInputRef}
+          exchangeRateInfoMessage={exchangeRateInfoMessage}
+          amountCurrency={isEditing ? draftTotalAmount : totalAmountText || "-"}
+          amountCurrencyInvalid={totalAmountInvalid}
+          amountCurrencyInputRef={totalAmountInputRef}
+          reimbursementAmount={draftAmountMST}
+          reimbursementAmountInvalid={amountMSTInvalid}
+          reimbursementAmountInputRef={amountMSTInputRef}
+          onExpenseCurrencyChange={onDraftCurrencyCodeChange}
+          onExchangeRateChange={onDraftExchangeRateChange}
+          onAmountCurrencyChange={onDraftTotalAmountChange}
+          onReimbursementAmountChange={onDraftAmountMSTChange}
+        />
+
+        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+          <ExpenseReadOnlyField
+            label={indT("Tickets_Field_TicketDate", "Ticket date")}
+            value={isEditing ? lockedDraftDateText : displayDateText}
+          />
+
+          <ExpenseReadOnlyField
+            label={indT("Tickets_Field_TicketTime", "Ticket time")}
+            value={isEditing ? draftTicketTime || ticketTimeText || "-" : ticketTimeText || "-"}
+          />
+        </div>
 
         {isEditing ? (
           <SelectCombobox
@@ -157,6 +190,16 @@ const ExpenseTicketDetailHeaderForm = ({
           />
         )}
 
+        <ExpenseReadOnlyField
+          label={indT("Tickets_Field_Status", "Status")}
+          value={statusLabel || "-"}
+        />
+
+        <ExpenseReadOnlyField
+          label={indT("Tickets_Field_FileId", "Ticket")}
+          value={header.fileId || "-"}
+        />
+
         {showExpenseSheetField ? (
           <ExpenseReadOnlyField
             label={indT("Tickets_Field_ExpenseSheetDisplay", "Expense sheet")}
@@ -164,54 +207,6 @@ const ExpenseTicketDetailHeaderForm = ({
             onClick={onOpenExpenseSheet}
           />
         ) : null}
-
-        {isEditing ? (
-          <ExpenseCurrencyFilterSelect
-            label={indT("ExpenseSheets_Field_Currency", "Currency")}
-            placeholder={indT("ExpenseSheets_Field_Currency", "Currency")}
-            value={draftCurrencyCode}
-            onChange={onDraftCurrencyCodeChange}
-            invalid={currencyCodeInvalid}
-            inputRef={currencyInputRef}
-            idBase="expense-ticket-detail-currency"
-          />
-        ) : (
-          <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_Currency", "Currency")}
-            value={header.currencyCode || "-"}
-          />
-        )}
-
-        {isEditing ? (
-          <div className="space-y-1.5">
-            <label className="form-label font-semibold">{indT("ExpenseSheets_Field_TotalAmount", "Total amount")}</label>
-            <input
-              ref={totalAmountInputRef}
-              className={`form-control${totalAmountInvalid ? " border-rose-400 bg-rose-50 focus:border-rose-400 focus:ring-rose-200" : ""}`}
-              value={draftTotalAmount}
-              onChange={(event) => onDraftTotalAmountChange(event.target.value || "")}
-              onBlur={handleTotalAmountBlur}
-              inputMode="decimal"
-              aria-invalid={totalAmountInvalid ? "true" : "false"}
-              aria-label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")}
-            />
-          </div>
-        ) : (
-          <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")}
-            value={totalAmountText || "-"}
-          />
-        )}
-
-        <ExpenseReadOnlyField
-          label={indT("Tickets_Field_TicketDate", "Ticket date")}
-          value={isEditing ? lockedDraftDateText : displayDateText}
-        />
-
-        <ExpenseReadOnlyField
-          label={indT("Tickets_Field_TicketTime", "Ticket time")}
-          value={isEditing ? draftTicketTime || ticketTimeText || "-" : ticketTimeText || "-"}
-        />
       </div>
 
       {canOpenFile && !hideOpenFileAction ? (

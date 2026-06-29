@@ -372,6 +372,12 @@
   <data name="ExpenseSheets_Field_ExchangeRate" xml:space="preserve">
     <value>Kanbio-tasa</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount" xml:space="preserve">
+    <value>Itzulketa zenbatekoa</value>
+  </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
+    <value>Itzul. zenb. ({0})</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>lerroko id</value>
   </data>
@@ -380,6 +386,9 @@
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Inportatua</value>
+  </data>
+  <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
+    <value>Dib. zenb.</value>
   </data>
   <data name="ExpenseSheets_Field_Price" xml:space="preserve">
     <value>Prezioa</value>
@@ -401,6 +410,9 @@
   </data>
   <data name="ExpenseSheets_Validation_ExchangeRateRequired" xml:space="preserve">
     <value>Derrigorrezko truke-tasa EURa ez den moneta.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
+    <value>Atzerriko dibisako lerroek 0 baino handiagoa den kanbio-tasa edo itzulketa zenbatekoa behar dute.</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>Txartela</value>
@@ -1294,7 +1306,7 @@
     <value>Konfigurazio globaletik lortua.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Text" xml:space="preserve">
-    <value>Truke tasa lortua 0.0000000</value>
+    <value>Itzulketa kalkulatzeko aplikatutako truke tasa.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Aria" xml:space="preserve">
     <value>Erakutsi truke tasaren informazioa</value>

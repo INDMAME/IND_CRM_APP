@@ -25,12 +25,51 @@ const FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS: GastoTypeFallbackOption[] = [
   { value: 21, labelKey: "Enum_GastoType_AdjustmentAmount", fallback: "AdjustmentAmount" },
 ];
 
+const TAXI_GASTO_TYPE_CODE = 14;
+
 const toIntegerGastoTypeCode = (value: unknown): ExpenseGastoTypeCode | null => {
   if (value === null || value === undefined) return null;
   if (typeof value === "string" && !value.trim()) return null;
 
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+};
+
+const isNumericLabel = (value: string): boolean => /^\d+$/.test(value.trim());
+
+const getKnownFallbackLabel = (code: ExpenseGastoTypeCode): string => {
+  const fallback = FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS.find((option) => option.value === code);
+  return fallback ? indT(fallback.labelKey, fallback.fallback) : "";
+};
+
+const getCatalogTaxiLabel = (options: ExpenseSelectOption[]): string => {
+  const configuredTaxi = options.find((option) => {
+    const code = toIntegerGastoTypeCode(option.value);
+    return code !== TAXI_GASTO_TYPE_CODE && option.text.trim().toLowerCase().includes("taxi");
+  });
+
+  return configuredTaxi?.text.trim() || "";
+};
+
+// Repairs numeric labels from partially refreshed AX catalog responses without changing the business value.
+const resolveCatalogText = (
+  code: ExpenseGastoTypeCode,
+  rawText: string,
+  sourceOptions: ExpenseSelectOption[]
+): string => {
+  const text = rawText.trim();
+  if (!isNumericLabel(text) || text !== String(code)) {
+    return text;
+  }
+
+  if (code === TAXI_GASTO_TYPE_CODE) {
+    const taxiLabel = getCatalogTaxiLabel(sourceOptions);
+    if (taxiLabel) {
+      return taxiLabel;
+    }
+  }
+
+  return getKnownFallbackLabel(code) || text;
 };
 
 const getCatalogSource = () => {
@@ -44,17 +83,25 @@ const getCatalogSource = () => {
 const getCatalogOptions = (): ExpenseSelectOption[] => {
   const seen = new Set<string>();
   const options: ExpenseSelectOption[] = [];
+  const sourceOptions = mapWindowEnumOptions(getCatalogSource());
+  const hasNumericTaxiOption = sourceOptions.some((option) => {
+    const code = toIntegerGastoTypeCode(option.value);
+    return code === TAXI_GASTO_TYPE_CODE && option.text.trim() === String(TAXI_GASTO_TYPE_CODE);
+  });
 
-  for (const option of mapWindowEnumOptions(getCatalogSource())) {
+  for (const option of sourceOptions) {
     const code = toIntegerGastoTypeCode(option.value);
     if (code === null) continue;
+    if (hasNumericTaxiOption && code === 8 && option.text.trim().toLowerCase().includes("taxi")) {
+      continue;
+    }
 
     const key = String(code);
     if (seen.has(key)) continue;
     seen.add(key);
     options.push({
       value: key,
-      text: option.text,
+      text: resolveCatalogText(code, option.text, sourceOptions),
     });
   }
 

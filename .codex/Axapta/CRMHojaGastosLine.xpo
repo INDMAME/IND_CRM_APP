@@ -1318,6 +1318,24 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #canSyncLinkedTicket
+        #//MMS - Ajustes CRM - 2026.06.29
+        #boolean canSyncLinkedTicket()
+        #{
+        #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
+        #    ;
+        #
+        #    // Evita sincronizar tickets desde hojas bloqueadas por aprobacion, pago o estado no editable.
+        #    if (!this.FileId || !hojaGastosTable)
+        #        return false;
+        #
+        #    if (hojaGastosTable.Voucher || hojaGastosTable.Aprobado)
+        #        return false;
+        #
+        #    return CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus);
+        #}
+        #
+      ENDSOURCE
       SOURCE #BorrarLineaProyecto
         #void BorrarLineaProyecto(ProjId _projId)
         #{
@@ -1863,6 +1881,7 @@ Formatversion: 1
         #
         #    this.CreaActualizaProyectoEnLineCust();
         #
+        #    this.syncLinkedTicket(); //MMS - Ajustes CRM - 2026.06.29
         #    this.syncHojaGastosTable(); //INDMMS_ExternalCRM - 2026.03.10
         #}
         #
@@ -2215,6 +2234,70 @@ Formatversion: 1
         #    return 0;
         #}
       ENDSOURCE
+      SOURCE #syncLinkedTicket
+        #//MMS - Ajustes CRM - 2026.06.29
+        #void syncLinkedTicket()
+        #{
+        #    INDTicketInfoTable ticketInfoTable;
+        #    INDTicketInfoLine  ticketInfoLine;
+        #    INDTicketInfoLine  ticketInfoLineCount;
+        #    int                ticketLineCount;
+        #    ;
+        #
+        #    if (!this.canSyncLinkedTicket())
+        #        return;
+        #
+        #    ttsbegin;
+        #
+        #    ticketInfoTable = INDTicketInfoTable::findByFileId(this.FileId, true);
+        #
+        #    if (ticketInfoTable)
+        #    {
+        #        ticketInfoTable.Description  = this.Description;
+        #        ticketInfoTable.CurrencyCode = this.Currency;
+        #        ticketInfoTable.TotalAmount  = this.Amount;
+        #        ticketInfoTable.ExchRate     = this.ExchRate;
+        #        ticketInfoTable.AmountMST    = this.AmountMST;
+        #        ticketInfoTable.updateSearchKey();
+        #        ticketInfoTable.normalizeCurrencyAmounts(false);
+        #
+        #        if (!ticketInfoTable.validateCurrencyAmounts())
+        #        {
+        #            ttsabort;
+        #            throw error("Datos de divisa del ticket invalidos.");
+        #        }
+        #
+        #        ticketInfoTable.doUpdate();
+        #
+        #        select count(RecId) from ticketInfoLineCount
+        #            where ticketInfoLineCount.FileId == this.FileId;
+        #
+        #        ticketLineCount = ticketInfoLineCount.RecId;
+        #
+        #        if (ticketLineCount == 1)
+        #        {
+        #            select firstOnly forUpdate ticketInfoLine
+        #                where ticketInfoLine.FileId == this.FileId;
+        #
+        #            if (ticketInfoLine)
+        #            {
+        #                ticketInfoLine.Description = this.Description;
+        #                ticketInfoLine.Qty         = this.Qty;
+        #                ticketInfoLine.Price       = this.Price;
+        #                ticketInfoLine.TotalAmount = this.Amount;
+        #
+        #                if (!ticketInfoLine.RefRecIdTable)
+        #                    ticketInfoLine.RefRecIdTable = ticketInfoTable.RecId;
+        #
+        #                ticketInfoLine.doUpdate();
+        #            }
+        #        }
+        #    }
+        #
+        #    ttscommit;
+        #}
+        #
+      ENDSOURCE
       SOURCE #syncHojaGastosTable
         #//INDMMS_ExternalCRM - 2026.03.10
         #void syncHojaGastosTable()
@@ -2276,6 +2359,7 @@ Formatversion: 1
         #    //IJL.12/07/23. Lanzo la creación de nuevo para que se haga con el valor actualizado.
         #    INDProjCostRevenueTable::CreateProjCostFromCommon(this);
         #
+        #    this.syncLinkedTicket(); //MMS - Ajustes CRM - 2026.06.29
         #    this.syncHojaGastosTable(); //INDMMS_ExternalCRM - 2026.03.10
         #
         #}

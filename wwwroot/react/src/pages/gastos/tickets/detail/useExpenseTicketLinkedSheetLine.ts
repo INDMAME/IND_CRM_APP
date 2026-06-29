@@ -43,6 +43,7 @@ export const useExpenseTicketLinkedSheetLine = ({
   const [line, setLine] = useState<ExpenseSheetLine | null>(null);
   const [originalProjectId, setOriginalProjectId] = useState("");
   const [draftProjectId, setDraftProjectId] = useState("");
+  const [localCurrencyCode, setLocalCurrencyCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
@@ -53,6 +54,7 @@ export const useExpenseTicketLinkedSheetLine = ({
       setLine(null);
       setOriginalProjectId("");
       setDraftProjectId("");
+      setLocalCurrencyCode("");
       setErrorMessage("");
       setIsLoading(false);
       return;
@@ -70,16 +72,19 @@ export const useExpenseTicketLinkedSheetLine = ({
         setLine(null);
         setOriginalProjectId("");
         setDraftProjectId("");
+        setLocalCurrencyCode("");
         setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
         return;
       }
 
       const sheet = selectSheet(response?.Items || [], safeSheetId);
+      const sheetLocalCurrencyCode = safeText(sheet?.CurrencyCode ?? sheet?.currencyCode).toUpperCase();
       const selectedLine = sheet ? selectLine(sheet, safeLineRecId) : null;
       if (!selectedLine) {
         setLine(null);
         setOriginalProjectId("");
         setDraftProjectId("");
+        setLocalCurrencyCode(sheetLocalCurrencyCode);
         setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet was not found."));
         return;
       }
@@ -88,6 +93,7 @@ export const useExpenseTicketLinkedSheetLine = ({
       setLine(selectedLine);
       setOriginalProjectId(projectId);
       setDraftProjectId(projectId);
+      setLocalCurrencyCode(sheetLocalCurrencyCode);
     } catch (error) {
       if (error instanceof ApiFetchError && error.status === 403) {
         onForbidden();
@@ -97,6 +103,7 @@ export const useExpenseTicketLinkedSheetLine = ({
       setLine(null);
       setOriginalProjectId("");
       setDraftProjectId("");
+      setLocalCurrencyCode("");
       setErrorMessage(error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
     } finally {
       setIsLoading(false);
@@ -122,6 +129,7 @@ export const useExpenseTicketLinkedSheetLine = ({
 
   return {
     line,
+    localCurrencyCode,
     isLoading,
     errorMessage,
     originalProjectId,

@@ -43,6 +43,8 @@ type SelectComboboxProps = {
   idBase?: string;
   portalClassName?: string;
   panelClassName?: string;
+  containerClassName?: string;
+  labelClassName?: string;
   showSearchButton?: boolean;
   allowTextInput?: boolean;
   showLabel?: boolean;
@@ -81,6 +83,8 @@ const SelectCombobox = ({
   idBase,
   portalClassName,
   panelClassName,
+  containerClassName = "space-y-2",
+  labelClassName = "form-label font-semibold",
   showSearchButton = false,
   allowTextInput = true,
   showLabel = true,
@@ -97,7 +101,7 @@ const SelectCombobox = ({
   optionTextClassName = "",
   optionDefaultClassName = "text-slate-900",
   optionActiveClassName = "bg-primary text-white",
-  optionSelectedClassName = "bg-primary text-white",
+  optionSelectedClassName = "text-primary",
   selectedInputPaddingClassName = "pl-9",
   panelStyle,
   clearOnEmptyInput = false,
@@ -185,8 +189,17 @@ const SelectCombobox = ({
       return optionText.includes(normalizedQuery) || optionValue.includes(normalizedQuery);
     });
   }, [data, query]);
+  const selectedValue = String(selected?.value ?? "").trim();
+  const selectedIndex = filtered.findIndex((option) => String(option.value) === selectedValue);
+  const preferredActiveIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const resolvedActiveIndex =
     filtered.length > 0 ? Math.min(Math.max(activeIndex, 0), filtered.length - 1) : 0;
+
+  const openListAtCurrentSelection = () => {
+    setActiveIndex(preferredActiveIndex);
+    setShowNotFoundState(false);
+    setOpen(true);
+  };
 
   const selectOption = (opt: NormalizedOption) => {
     setSelected(opt);
@@ -202,13 +215,19 @@ const SelectCombobox = ({
     if (disabled) return;
     if (ev.key === "ArrowDown") {
       ev.preventDefault();
-      setOpen(true);
+      if (!open) {
+        openListAtCurrentSelection();
+        return;
+      }
       if (filtered.length) setActiveIndex((idx) => (idx + 1) % filtered.length);
       return;
     }
     if (ev.key === "ArrowUp") {
       ev.preventDefault();
-      setOpen(true);
+      if (!open) {
+        openListAtCurrentSelection();
+        return;
+      }
       if (filtered.length) setActiveIndex((idx) => (idx - 1 + filtered.length) % filtered.length);
       return;
     }
@@ -224,8 +243,7 @@ const SelectCombobox = ({
       } else if (query !== null && query.trim()) {
         clearManualValue(true, true);
       } else {
-        setShowNotFoundState(false);
-        setOpen(true);
+        openListAtCurrentSelection();
       }
     }
     if (ev.key === "Escape") {
@@ -244,7 +262,6 @@ const SelectCombobox = ({
   const activeId =
     open && filtered[resolvedActiveIndex] ? `select-opt-${safeId}-${filtered[resolvedActiveIndex].value}` : undefined;
   const listOpen = open && !disabled;
-  const selectedValue = String(selected?.value ?? "").trim();
   const selectedDisplayText = selectedTextMode === "value" ? selectedValue : selected?.text || "";
   const displayValue = query !== null ? query : (selectedValue ? selectedDisplayText : "");
   const showSelectedIcon = query === null && !!selectedValue && !!selected?.icon;
@@ -297,7 +314,7 @@ const SelectCombobox = ({
       {filtered.map((opt, idx) => {
         const sel = selected?.value === opt.value;
         const isActive = idx === resolvedActiveIndex;
-        const optionStateClassName = sel ? optionSelectedClassName : isActive ? optionActiveClassName : optionDefaultClassName;
+        const optionStateClassName = isActive ? optionActiveClassName : sel ? optionSelectedClassName : optionDefaultClassName;
         return (
           <button
             type="button"
@@ -360,10 +377,10 @@ const SelectCombobox = ({
 
   return (
     <div
-      className={classNames("space-y-2", disabled ? "pointer-events-none select-none" : "")}
+      className={classNames(containerClassName, disabled ? "pointer-events-none select-none" : "")}
       ref={containerRef}
     >
-      {showLabel ? <label className={classNames("form-label font-semibold", invalid ? "text-rose-700" : "")}>{label}</label> : null}
+      {showLabel ? <label className={classNames(labelClassName, invalid ? "text-rose-700" : "")}>{label}</label> : null}
       <div className="relative">
         <div
           ref={boxRef}
@@ -401,7 +418,7 @@ const SelectCombobox = ({
             }}
             onKeyDown={handleKeyDown}
             onFocus={() => {
-              if (!disabled) setOpen(true);
+              if (!disabled) openListAtCurrentSelection();
             }}
             placeholder={placeholder}
             readOnly={readOnlyMode || !allowTextInput}
@@ -427,7 +444,7 @@ const SelectCombobox = ({
                     clearManualValue(true, true);
                     return;
                   }
-                  setOpen(true);
+                  openListAtCurrentSelection();
                 }}
                 aria-label={indT("Common_Search", "Search")}
                 disabled={disabled}
@@ -446,7 +463,11 @@ const SelectCombobox = ({
                   clearManualValue(false, false);
                   return;
                 }
-                setOpen((prev) => !prev);
+                if (open) {
+                  setOpen(false);
+                  return;
+                }
+                openListAtCurrentSelection();
               }}
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
               disabled={disabled}

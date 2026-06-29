@@ -694,6 +694,16 @@ Formatversion: 1
         #                // Audit
         #                header.INDCreatedByUserId = axUserId;
         #
+        #                msg = INDCRMExpenseSheetService::validateExpenseSheetHeaderForApi(header); //MMS - Ajustes CRM - 2026.06.29
+        #                if (msg)
+        #                {
+        #                    ttsabort;
+        #                    if (numberSeq)
+        #                        numberSeq.abort();
+        #
+        #                    return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #                }
+        #
         #                header.insert();
         #            }
         #
@@ -903,6 +913,16 @@ Formatversion: 1
         #
         #                    // Audit
         #                    line.INDCreatedByUserId = axUserId;
+        #
+        #                    msg = INDCRMExpenseSheetService::validateExpenseSheetLineForApi(line); //MMS - Ajustes CRM - 2026.06.29
+        #                    if (msg)
+        #                    {
+        #                        ttsabort;
+        #                        if (numberSeq)
+        #                            numberSeq.abort();
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: %2', i, msg), conNull()), conNull()];
+        #                    }
         #
         #                    line.insert();
         #
@@ -3821,6 +3841,7 @@ Formatversion: 1
         #        case 7:  // Hotel
         #        case 8:  // Varios (per requirement)
         #        case 14: // Taxi (per requirement)
+        #        case 19: // Propinas: table validateField decides if company allows it.
         #            return true;
         #
         #        default:
@@ -3835,6 +3856,71 @@ Formatversion: 1
         #static server boolean isValidReimbursableExpense(int _value)
         #{
         #    return _value == 0 || _value == 1 || _value == 2;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateExpenseSheetHeaderForApi
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Ejecuta validaciones de cabecera antes de guardar desde API y devuelve el motivo funcional.
+        #static server str validateExpenseSheetHeaderForApi(CRMHojaGastosTable _header)
+        #{
+        #    int startLine;
+        #    str msg;
+        #    ;
+        #
+        #    if (!_header.RecId)
+        #    {
+        #        startLine = infolog.line();
+        #        if (!_header.validateField(FieldNum(CRMHojaGastosTable, ProjId)))
+        #        {
+        #            msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #            return msg ? msg : 'Validacion de proyecto de cabecera no superada.';
+        #        }
+        #    }
+        #
+        #    // No llama validateField(ProjId) en actualizacion porque ese metodo abre dialogo cliente.
+        #    startLine = infolog.line();
+        #    if (!_header.validateWrite())
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de cabecera de hoja de gastos no superada.';
+        #    }
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateExpenseSheetLineForApi
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Ejecuta validateField de linea antes de insert/update para devolver mensajes de negocio claros.
+        #static server str validateExpenseSheetLineForApi(CRMHojaGastosLine _line)
+        #{
+        #    int startLine;
+        #    str msg;
+        #    ;
+        #
+        #    startLine = infolog.line();
+        #    if (!_line.validateField(FieldNum(CRMHojaGastosLine, Type)))
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de tipo de gasto no superada.';
+        #    }
+        #
+        #    startLine = infolog.line();
+        #    if (!_line.validateField(FieldNum(CRMHojaGastosLine, ProjIdHornos)))
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de proyecto de linea no superada.';
+        #    }
+        #
+        #    startLine = infolog.line();
+        #    if (!_line.validateWrite())
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de linea de hoja de gastos no superada.';
+        #    }
+        #
+        #    return '';
         #}
         #
       ENDSOURCE
@@ -4879,6 +4965,7 @@ Formatversion: 1
         #    }
         #
         #
+        #    startLine = infolog.line(); //MMS - Ajustes CRM - 2026.06.29
         #    sendStatusNotification = false;
         #    try
         #    {
@@ -4933,6 +5020,13 @@ Formatversion: 1
         #                header.EstadoComentarios = estadoComentarios;
         #
         #            header.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
+        #            msg = INDCRMExpenseSheetService::validateExpenseSheetHeaderForApi(header); //MMS - Ajustes CRM - 2026.06.29
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #            }
+        #
         #            header.update();
         #
         #            newExpenseSheetStatus = header.ExpenseSheetStatus;
@@ -5003,7 +5097,6 @@ Formatversion: 1
         #    catch (Exception::DDEerror)
         #    {
         #        ttsabort;
-        #        startLine = infolog.line();
         #        // Mensaje desde infolog desde el inicio del try
         #        return INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull());
         #    }
@@ -5247,6 +5340,13 @@ Formatversion: 1
         #            {
         #                line.ProjId       = header.ProjId;
         #                line.ProjIdHornos = header.ProjId;
+        #            }
+        #
+        #            msg = INDCRMExpenseSheetService::validateExpenseSheetLineForApi(line); //MMS - Ajustes CRM - 2026.06.29
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
         #            }
         #
         #            line.update();

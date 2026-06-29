@@ -372,6 +372,12 @@
   <data name="ExpenseSheets_Field_ExchangeRate" xml:space="preserve">
     <value>Tasso di cambio</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount" xml:space="preserve">
+    <value>Importo rimborso</value>
+  </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
+    <value>Imp. rimborso ({0})</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>identificativo della linea</value>
   </data>
@@ -380,6 +386,9 @@
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Importato</value>
+  </data>
+  <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
+    <value>Imp. divisa</value>
   </data>
   <data name="ExpenseSheets_Field_Price" xml:space="preserve">
     <value>Prezzo</value>
@@ -401,6 +410,9 @@
   </data>
   <data name="ExpenseSheets_Validation_ExchangeRateRequired" xml:space="preserve">
     <value>Tasso di cambio obbligatorio per valute diverse dall'EUR.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
+    <value>Le righe in valuta estera richiedono un tasso di cambio maggiore di 0 o un importo di rimborso.</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>Biglietto</value>
@@ -1294,7 +1306,7 @@
     <value>Ottenuto dalla configurazione globale.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Text" xml:space="preserve">
-    <value>Tasso di cambio ottenuto 0.0000000</value>
+    <value>Tasso di cambio applicato per calcolare il rimborso.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Aria" xml:space="preserve">
     <value>Mostra informazioni sul tasso di cambio</value>

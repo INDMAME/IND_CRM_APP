@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Viernes 19/06/2026
+; Navision Axapta Forms unloaded at Lunes 29/06/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -55,6 +55,22 @@ FORM #INDAxEnumAppCatalogTableForm
         FIELDLIST
         ENDFIELDLIST
       ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #initValue
+          #//MMS - Ajustes CRM - 2026.06.29
+          #public void initValue()
+          #{
+          #    INDAxEnumsTable axEnum;
+          #    ;
+          #
+          #    super();
+          #
+          #    axEnum = INDAxEnumsTable_ds.cursor();
+          #    INDAxEnumAppCatalogTable.initFromINDAxEnumsTable(axEnum);
+          #}
+        ENDSOURCE
+      ENDMETHODS
     ENDDATASOURCE
     DATASOURCE
       OBJECTPOOL
@@ -480,7 +496,7 @@ FORM #INDAxEnumAppCatalogTableForm
                 ConfigurationKey    #
                 SecurityKey         #
                 DragDrop            #None
-                FrameType           #Auto
+                FrameType           #None
                 FramePosition       #Outside
                 Caption             #
                 FrameOptionButton   #None

@@ -11,6 +11,8 @@ export type ExpenseTicketDetailHeader = {
   processedByAI: boolean | null;
   currencyCode: string;
   totalAmount: number | null;
+  amountMST: number | null;
+  exchRate: number | null;
   createdByUserId: string;
   ownerAxUserId: string;
   ownerName: string | null;
@@ -72,6 +74,8 @@ export const mapExpenseTicketDetailHeader = (item: ExpenseSheetTicketDetailDto):
     processedByAI: toNullableBool(item?.ProcessedByAI),
     currencyCode: safeText(item?.CurrencyCode),
     totalAmount: toNullableNumber(item?.TotalAmount),
+    amountMST: toNullableNumber(item?.AmountMST ?? item?.amountMST),
+    exchRate: toNullableNumber(item?.ExchRate ?? item?.exchRate),
     createdByUserId: safeText(item?.CreatedByUserId),
     ownerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId),
     ownerName: safeText(item?.OwnerName ?? item?.ownerName) || null,

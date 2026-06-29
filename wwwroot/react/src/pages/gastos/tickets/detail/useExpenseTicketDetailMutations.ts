@@ -34,6 +34,9 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftGastoType: string;
   draftCurrencyCode: string;
   draftTotalAmount: string;
+  draftAmountMST: string;
+  draftExchangeRate: string;
+  localCurrencyCode: string;
   currentTotalAmount?: number | null;
   draftTransDate: string;
   draftTicketTime: string;
@@ -93,6 +96,9 @@ export const useExpenseTicketDetailMutations = ({
   draftGastoType,
   draftCurrencyCode,
   draftTotalAmount,
+  draftAmountMST,
+  draftExchangeRate,
+  localCurrencyCode,
   currentTotalAmount,
   draftTransDate,
   draftTicketTime,
@@ -184,6 +190,25 @@ export const useExpenseTicketDetailMutations = ({
         return false;
       }
 
+      const parsedAmountMST = parseDecimalInput(draftAmountMST);
+      const parsedExchangeRate = parseDecimalInput(draftExchangeRate);
+      const normalizedLocalCurrency = safeText(localCurrencyCode).toUpperCase();
+      const requiresForeignCurrencySettlement =
+        !!normalizedLocalCurrency && normalizedCurrency !== normalizedLocalCurrency;
+      const hasForeignCurrencySettlement =
+        !requiresForeignCurrencySettlement ||
+        (parsedExchangeRate != null && parsedExchangeRate > 0) ||
+        (parsedAmountMST != null && parsedAmountMST > 0);
+      if (!hasForeignCurrencySettlement) {
+        const message = indT(
+          "ExpenseSheets_Line_Validation_ForeignCurrencySettlement",
+          "Foreign currency lines require an exchange rate greater than 0 or a reimbursement amount."
+        );
+        setModalError(message);
+        setStatus(message);
+        return false;
+      }
+
       const parsedGastoType = toExpenseGastoTypeCode(draftGastoType, { allowNone: false });
       if (parsedGastoType === null) {
         const message = indT("Tickets_Validation_CategoryRequired", "Category is required.");
@@ -247,6 +272,9 @@ export const useExpenseTicketDetailMutations = ({
                 fileId,
                 sheetId: validatedSheetId,
                 lineRecId: safeText(linkedExpenseLineRecId) || undefined,
+                currencyCodeOverride: normalizedCurrency,
+                amountMSTOverride: parsedAmountMST,
+                exchangeRateOverride: parsedExchangeRate != null && parsedExchangeRate > 0 ? parsedExchangeRate : undefined,
                 ...(linkedExpenseLineProjectIdChanged
                   ? { projectIdOverride: safeText(linkedExpenseLineProjectId) }
                   : {}),
@@ -288,12 +316,15 @@ export const useExpenseTicketDetailMutations = ({
       draftDescription,
       draftFileName,
       draftGastoType,
+      draftAmountMST,
+      draftExchangeRate,
       draftTotalAmount,
       draftTicketTime,
       draftTransDate,
       draftUrlFile,
       fileId,
       isEditing,
+      localCurrencyCode,
       currentTotalAmount,
       linkedExpenseLineProjectId,
       linkedExpenseLineProjectIdChanged,
@@ -316,9 +347,9 @@ export const useExpenseTicketDetailMutations = ({
 
   const handlePersistHeaderDraft = useCallback(async () => {
     return runHeaderUpdate({
-      syncSheetLine: linkedExpenseLineProjectIdChanged,
+      syncSheetLine: linkedExpenseLineProjectIdChanged || !!safeText(linkedExpenseSheetId),
     });
-  }, [linkedExpenseLineProjectIdChanged, runHeaderUpdate]);
+  }, [linkedExpenseLineProjectIdChanged, linkedExpenseSheetId, runHeaderUpdate]);
 
   const resolveLinkedExpenseLineContext = useCallback(async (): Promise<DeleteLinkedExpenseLineContext | null> => {
     if (deleteLinkedExpenseLineContext) {
