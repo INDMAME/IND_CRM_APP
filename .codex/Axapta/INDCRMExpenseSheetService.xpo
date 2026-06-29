@@ -3832,16 +3832,26 @@ Formatversion: 1
         #    switch (_typeValue)
         #    {
         #        case 0:  // None
-        #        case 1:  // Peaje
+        #        case 1:  // Peajes
         #        case 2:  // Parking
         #        case 3:  // Km
         #        case 4:  // Desayuno
         #        case 5:  // Comida
         #        case 6:  // Cena
         #        case 7:  // Hotel
-        #        case 8:  // Varios (per requirement)
-        #        case 14: // Taxi (per requirement)
-        #        case 19: // Propinas: table validateField decides if company allows it.
+        #        case 8:  // Varios
+        #        case 9:  // Montaje Nacional
+        #        case 10: // Montaje Nacional Festivo
+        #        case 11: // Montaje Internacional
+        #        case 12: // Montaje Internacional Festivo
+        #        case 13: // Dia de Viaje Nacional
+        #        case 14: // Taxi
+        #        case 15: // Dia Viaje Festivo Nacional
+        #        case 16: // Dia Viaje Internacional
+        #        case 17: // Dia Viaje Festivo Internacional
+        #        case 18: // Horas
+        #        case 19: // Propinas
+        #        case 20: // Gasolina
         #            return true;
         #
         #        default:

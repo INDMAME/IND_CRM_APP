@@ -8,6 +8,7 @@ import type {
   ExpenseSheetLineUpdateRequest,
 } from "../expenseTypes.ts";
 import { parseExpenseInternationalValue } from "../constants/internationalOptions.ts";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
@@ -119,7 +120,7 @@ export const useExpenseSheetLineDetailMutations = ({
     }
 
     const normalizedDate = normalizeLineDate(draftTransDate);
-    const parsedTypeValue = Number.parseInt(String(draftTypeValueCode || "").trim(), 10);
+    const parsedTypeValue = toExpenseGastoTypeCode(draftTypeValueCode, { allowNone: false });
     const parsedPrice = parseNumber(draftPrice);
     const parsedQty = parseNumber(draftQty);
     const parsedInternational = parseExpenseInternationalValue(draftInternational);
@@ -146,7 +147,7 @@ export const useExpenseSheetLineDetailMutations = ({
       return false;
     }
 
-    if (!Number.isFinite(parsedTypeValue) || parsedTypeValue <= 0) {
+    if (parsedTypeValue === null) {
       onInvalidType?.();
       return false;
     }

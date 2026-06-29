@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 
 type UseExpenseSheetLineTypeValidationArgs = {
   draftTypeValueCode: string;
@@ -93,8 +94,7 @@ export const useExpenseSheetLineTypeValidation = ({
   }, [draftQty]);
 
   const canOpenSaveConfirm = useCallback(() => {
-    const parsedTypeValue = Number.parseInt(String(draftTypeValueCode || "").trim(), 10);
-    if (!Number.isFinite(parsedTypeValue) || parsedTypeValue <= 0) {
+    if (toExpenseGastoTypeCode(draftTypeValueCode, { allowNone: false }) === null) {
       focusTypeField();
       return false;
     }

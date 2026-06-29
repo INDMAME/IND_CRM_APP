@@ -90,9 +90,18 @@ namespace IND_CRM_APP.Services.Enums
                 new { Value = "6", Text = _sr["Enum_GastoType_Cena"].Value },
                 new { Value = "7", Text = _sr["Enum_GastoType_Hotel"].Value },
                 new { Value = "8", Text = _sr["Enum_GastoType_Varios"].Value },
+                new { Value = "9", Text = _sr["Enum_GastoType_MontajeNacional"].Value },
+                new { Value = "10", Text = _sr["Enum_GastoType_MontajeNacionalFestivo"].Value },
+                new { Value = "11", Text = _sr["Enum_GastoType_MontajeInternacional"].Value },
+                new { Value = "12", Text = _sr["Enum_GastoType_MontajeInternacionalFestivo"].Value },
+                new { Value = "13", Text = _sr["Enum_GastoType_DiaViajeNacional"].Value },
                 new { Value = "14", Text = _sr["Enum_GastoType_Taxi"].Value },
-                new { Value = "20", Text = _sr["Enum_GastoType_Gasolina"].Value },
-                new { Value = "21", Text = _sr["Enum_GastoType_AdjustmentAmount"].Value }
+                new { Value = "15", Text = _sr["Enum_GastoType_DiaViajeFestivoNacional"].Value },
+                new { Value = "16", Text = _sr["Enum_GastoType_DiaViajeInternacional"].Value },
+                new { Value = "17", Text = _sr["Enum_GastoType_DiaViajeFestivoInternacional"].Value },
+                new { Value = "18", Text = _sr["Enum_GastoType_Horas"].Value },
+                new { Value = "19", Text = _sr["Enum_GastoType_Propinas"].Value },
+                new { Value = "20", Text = _sr["Enum_GastoType_Gasolina"].Value }
             };
         }
     }

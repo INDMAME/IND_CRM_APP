@@ -1042,7 +1042,7 @@
     <value>Comercial</value>
   </data>
   <data name="Enum_GastoType_Peaje" xml:space="preserve">
-    <value>Peaje</value>
+    <value>Peajes</value>
   </data>
   <data name="Enum_GastoType_Parking" xml:space="preserve">
     <value>Aparcamiento</value>
@@ -1065,8 +1065,38 @@
   <data name="Enum_GastoType_Varios" xml:space="preserve">
     <value>Varios</value>
   </data>
+  <data name="Enum_GastoType_MontajeNacional" xml:space="preserve">
+    <value>Montaje Nacional</value>
+  </data>
+  <data name="Enum_GastoType_MontajeNacionalFestivo" xml:space="preserve">
+    <value>Montaje Nacional Festivo</value>
+  </data>
+  <data name="Enum_GastoType_MontajeInternacional" xml:space="preserve">
+    <value>Montaje Internacional</value>
+  </data>
+  <data name="Enum_GastoType_MontajeInternacionalFestivo" xml:space="preserve">
+    <value>Montaje Internacional Festivo</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeNacional" xml:space="preserve">
+    <value>Dia de Viaje Nacional</value>
+  </data>
   <data name="Enum_GastoType_Taxi" xml:space="preserve">
     <value>Taxi</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeFestivoNacional" xml:space="preserve">
+    <value>Dia Viaje Festivo Nacional</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeInternacional" xml:space="preserve">
+    <value>Dia Viaje Internacional</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeFestivoInternacional" xml:space="preserve">
+    <value>Dia Viaje Festivo Internacional</value>
+  </data>
+  <data name="Enum_GastoType_Horas" xml:space="preserve">
+    <value>Horas</value>
+  </data>
+  <data name="Enum_GastoType_Propinas" xml:space="preserve">
+    <value>Propinas</value>
   </data>
   <data name="Enum_GastoType_Gasolina" xml:space="preserve">
     <value>Gasolina</value>

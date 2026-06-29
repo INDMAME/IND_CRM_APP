@@ -6,6 +6,7 @@ import {
   calculateExpenseLineAmountMST,
   calculateExpenseLineExchangeRate,
 } from "../../utils/expenseLineCurrency.ts";
+import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
 import { parseExpenseDate, safeText, toIsoDate } from "../../utils/expenseUiUtils.ts";
 import { formatExpenseInputNumber, parseExpenseNumericInput } from "../../utils/expenseNumberFormat.ts";
 import type { ExpenseTicketDetailHeader } from "./expenseTicketDetailTypes.ts";
@@ -217,8 +218,7 @@ const createInitialState = (): EditorState => ({
 });
 
 const isValidRequiredGastoType = (rawValue: string): boolean => {
-  const parsedValue = Number.parseInt(String(rawValue || "").trim(), 10);
-  return Number.isInteger(parsedValue) && parsedValue > 0;
+  return toExpenseGastoTypeCode(rawValue, { allowNone: false }) !== null;
 };
 
 const editorReducer = (state: EditorState, action: EditorAction): EditorState => {

@@ -84,6 +84,7 @@ import { sanitizeAssistantText } from "./expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "./expenseApiDateUtils.ts";
 import { isValidTicketLineAmount } from "./expenseTicketLineAmount.ts";
 import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
 import { indT } from "../../../utils/indI18n.ts";
 
@@ -1253,6 +1254,7 @@ export const createExpenseSheet = async (
   const normalizedLines = lines.map((line) => ({
     ...line,
     transDate: normalizeRequiredApiDate(line.transDate),
+    typeValue: toExpenseGastoTypeCode(line.typeValue, { allowNone: false }) ?? line.typeValue,
     reimbursableExpense: normalizeExpenseSheetReimbursable(line.reimbursableExpense),
     currencyCode: safeText(line.currencyCode).toUpperCase() || undefined,
     amountMST: toNullableNumber(line.amountMST),
@@ -1261,8 +1263,7 @@ export const createExpenseSheet = async (
   const hasInvalidLinePayload = normalizedLines.some((line) => {
     return (
       !safeText(line.transDate) ||
-      !Number.isInteger(Number(line.typeValue)) ||
-      Number(line.typeValue) <= 0 ||
+      toExpenseGastoTypeCode(line.typeValue, { allowNone: false }) === null ||
       !isPositiveNumber(line.qty) ||
       !isPositiveNumber(line.price)
     );
@@ -1397,17 +1398,18 @@ export const updateExpenseSheetLine = async (
   const normalizedTransDate = normalizeRequiredApiDate(payload.transDate);
   const context = await ensureExpenseApiContext(options);
   const localCurrencyCode = normalizeCurrencyCode(context.defaultCurrencyCode) || "EUR";
+  const normalizedTypeValue = toExpenseGastoTypeCode(payload.typeValue, { allowNone: false });
   const normalizedPayload: ExpenseSheetLineUpdateRequest = {
     ...payload,
     transDate: normalizedTransDate,
+    typeValue: normalizedTypeValue ?? payload.typeValue,
     reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
     currencyCode: normalizeCurrencyCode(payload.currencyCode) || undefined,
     amountMST: toNullableNumber(payload.amountMST),
     exchRate: toNullableNumber(payload.exchRate),
   };
   if (
-    !Number.isInteger(Number(normalizedPayload.typeValue)) ||
-    Number(normalizedPayload.typeValue) <= 0 ||
+    normalizedTypeValue === null ||
     !isPositiveNumber(normalizedPayload.qty) ||
     !isPositiveNumber(normalizedPayload.price)
   ) {

@@ -8,11 +8,13 @@ type GastoTypeFallbackOption = {
   fallback: string;
 };
 
-export const FALLBACK_EXPENSE_GASTO_TYPE_CODES: ExpenseGastoTypeCode[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 20, 21];
+export const FALLBACK_EXPENSE_GASTO_TYPE_CODES: ExpenseGastoTypeCode[] = [
+  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
+];
 
 const FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS: GastoTypeFallbackOption[] = [
   { value: 0, labelKey: "Enum_None", fallback: "None" },
-  { value: 1, labelKey: "Enum_GastoType_Peaje", fallback: "Peaje" },
+  { value: 1, labelKey: "Enum_GastoType_Peaje", fallback: "Peajes" },
   { value: 2, labelKey: "Enum_GastoType_Parking", fallback: "Parking" },
   { value: 3, labelKey: "Enum_GastoType_Km", fallback: "Km" },
   { value: 4, labelKey: "Enum_GastoType_Desayuno", fallback: "Desayuno" },
@@ -20,9 +22,18 @@ const FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS: GastoTypeFallbackOption[] = [
   { value: 6, labelKey: "Enum_GastoType_Cena", fallback: "Cena" },
   { value: 7, labelKey: "Enum_GastoType_Hotel", fallback: "Hotel" },
   { value: 8, labelKey: "Enum_GastoType_Varios", fallback: "Varios" },
+  { value: 9, labelKey: "Enum_GastoType_MontajeNacional", fallback: "Montaje Nacional" },
+  { value: 10, labelKey: "Enum_GastoType_MontajeNacionalFestivo", fallback: "Montaje Nacional Festivo" },
+  { value: 11, labelKey: "Enum_GastoType_MontajeInternacional", fallback: "Montaje Internacional" },
+  { value: 12, labelKey: "Enum_GastoType_MontajeInternacionalFestivo", fallback: "Montaje Internacional Festivo" },
+  { value: 13, labelKey: "Enum_GastoType_DiaViajeNacional", fallback: "Dia de Viaje Nacional" },
   { value: 14, labelKey: "Enum_GastoType_Taxi", fallback: "Taxi" },
+  { value: 15, labelKey: "Enum_GastoType_DiaViajeFestivoNacional", fallback: "Dia Viaje Festivo Nacional" },
+  { value: 16, labelKey: "Enum_GastoType_DiaViajeInternacional", fallback: "Dia Viaje Internacional" },
+  { value: 17, labelKey: "Enum_GastoType_DiaViajeFestivoInternacional", fallback: "Dia Viaje Festivo Internacional" },
+  { value: 18, labelKey: "Enum_GastoType_Horas", fallback: "Horas" },
+  { value: 19, labelKey: "Enum_GastoType_Propinas", fallback: "Propinas" },
   { value: 20, labelKey: "Enum_GastoType_Gasolina", fallback: "Gasolina" },
-  { value: 21, labelKey: "Enum_GastoType_AdjustmentAmount", fallback: "AdjustmentAmount" },
 ];
 
 const TAXI_GASTO_TYPE_CODE = 14;
@@ -42,34 +53,21 @@ const getKnownFallbackLabel = (code: ExpenseGastoTypeCode): string => {
   return fallback ? indT(fallback.labelKey, fallback.fallback) : "";
 };
 
-const getCatalogTaxiLabel = (options: ExpenseSelectOption[]): string => {
-  const configuredTaxi = options.find((option) => {
-    const code = toIntegerGastoTypeCode(option.value);
-    return code !== TAXI_GASTO_TYPE_CODE && option.text.trim().toLowerCase().includes("taxi");
-  });
-
-  return configuredTaxi?.text.trim() || "";
-};
-
 // Repairs numeric labels from partially refreshed AX catalog responses without changing the business value.
-const resolveCatalogText = (
-  code: ExpenseGastoTypeCode,
-  rawText: string,
-  sourceOptions: ExpenseSelectOption[]
-): string => {
+const resolveCatalogText = (code: ExpenseGastoTypeCode, rawText: string): string => {
   const text = rawText.trim();
-  if (!isNumericLabel(text) || text !== String(code)) {
-    return text;
+  const knownLabel = getKnownFallbackLabel(code);
+  const normalizedText = text.toLowerCase();
+
+  if (isNumericLabel(text) && text === String(code)) {
+    return knownLabel || text;
   }
 
-  if (code === TAXI_GASTO_TYPE_CODE) {
-    const taxiLabel = getCatalogTaxiLabel(sourceOptions);
-    if (taxiLabel) {
-      return taxiLabel;
-    }
+  if (code !== TAXI_GASTO_TYPE_CODE && normalizedText.includes("taxi")) {
+    return knownLabel || text;
   }
 
-  return getKnownFallbackLabel(code) || text;
+  return text;
 };
 
 const getCatalogSource = () => {
@@ -84,24 +82,17 @@ const getCatalogOptions = (): ExpenseSelectOption[] => {
   const seen = new Set<string>();
   const options: ExpenseSelectOption[] = [];
   const sourceOptions = mapWindowEnumOptions(getCatalogSource());
-  const hasNumericTaxiOption = sourceOptions.some((option) => {
-    const code = toIntegerGastoTypeCode(option.value);
-    return code === TAXI_GASTO_TYPE_CODE && option.text.trim() === String(TAXI_GASTO_TYPE_CODE);
-  });
 
   for (const option of sourceOptions) {
     const code = toIntegerGastoTypeCode(option.value);
     if (code === null) continue;
-    if (hasNumericTaxiOption && code === 8 && option.text.trim().toLowerCase().includes("taxi")) {
-      continue;
-    }
 
     const key = String(code);
     if (seen.has(key)) continue;
     seen.add(key);
     options.push({
       value: key,
-      text: resolveCatalogText(code, option.text, sourceOptions),
+      text: resolveCatalogText(code, option.text),
     });
   }
 
