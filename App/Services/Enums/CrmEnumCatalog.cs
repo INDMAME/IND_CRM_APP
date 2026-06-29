@@ -153,16 +153,27 @@ namespace IND_CRM_APP.Services.Enums
                 return Enumerable.Empty<dynamic>();
 
             return enumGroup.Options
-                .Where(option => option.Active && option.Value.HasValue && !string.IsNullOrWhiteSpace(option.Label))
-                .OrderBy(option => option.SortOrder ?? int.MaxValue)
-                .ThenBy(option => option.Value ?? int.MaxValue)
                 .Select(option => new
                 {
-                    Value = option.Value!.Value.ToString(CultureInfo.InvariantCulture),
-                    Text = option.Label.Trim()
+                    Option = option,
+                    BusinessValue = ResolveBusinessEnumValue(option)
+                })
+                .Where(entry => entry.Option.Active && entry.BusinessValue.HasValue && !string.IsNullOrWhiteSpace(entry.Option.Label))
+                .OrderBy(entry => entry.Option.SortOrder ?? int.MaxValue)
+                .ThenBy(entry => entry.BusinessValue ?? int.MaxValue)
+                .Select(entry => new
+                {
+                    Value = entry.BusinessValue!.Value.ToString(CultureInfo.InvariantCulture),
+                    Text = entry.Option.Label.Trim()
                 })
                 .Cast<dynamic>()
                 .ToList();
+        }
+
+        // Resolves the enum value that business endpoints must persist.
+        private static int? ResolveBusinessEnumValue(CrmEnumOptionDto option)
+        {
+            return option?.EnumIndex ?? option?.Value;
         }
 
         private static string NormalizeKey(string value)

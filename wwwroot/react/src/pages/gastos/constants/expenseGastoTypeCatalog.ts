@@ -36,38 +36,12 @@ const FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS: GastoTypeFallbackOption[] = [
   { value: 20, labelKey: "Enum_GastoType_Gasolina", fallback: "Gasolina" },
 ];
 
-const TAXI_GASTO_TYPE_CODE = 14;
-
 const toIntegerGastoTypeCode = (value: unknown): ExpenseGastoTypeCode | null => {
   if (value === null || value === undefined) return null;
   if (typeof value === "string" && !value.trim()) return null;
 
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
-};
-
-const isNumericLabel = (value: string): boolean => /^\d+$/.test(value.trim());
-
-const getKnownFallbackLabel = (code: ExpenseGastoTypeCode): string => {
-  const fallback = FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS.find((option) => option.value === code);
-  return fallback ? indT(fallback.labelKey, fallback.fallback) : "";
-};
-
-// Repairs numeric labels from partially refreshed AX catalog responses without changing the business value.
-const resolveCatalogText = (code: ExpenseGastoTypeCode, rawText: string): string => {
-  const text = rawText.trim();
-  const knownLabel = getKnownFallbackLabel(code);
-  const normalizedText = text.toLowerCase();
-
-  if (isNumericLabel(text) && text === String(code)) {
-    return knownLabel || text;
-  }
-
-  if (code !== TAXI_GASTO_TYPE_CODE && normalizedText.includes("taxi")) {
-    return knownLabel || text;
-  }
-
-  return text;
 };
 
 const getCatalogSource = () => {
@@ -92,7 +66,7 @@ const getCatalogOptions = (): ExpenseSelectOption[] => {
     seen.add(key);
     options.push({
       value: key,
-      text: resolveCatalogText(code, option.text),
+      text: option.text.trim(),
     });
   }
 

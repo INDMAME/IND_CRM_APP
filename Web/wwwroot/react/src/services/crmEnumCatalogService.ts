@@ -29,7 +29,7 @@ const readAxEnumName = (catalog: CrmEnumCatalogDto): string => {
 };
 
 const readOptionValue = (option: CrmEnumOptionDto): number | null => {
-  const raw = option.value ?? option.Value;
+  const raw = option.enumIndex ?? option.EnumIndex ?? option.value ?? option.Value;
   return typeof raw === "number" && Number.isFinite(raw) ? raw : null;
 };
 
@@ -71,7 +71,7 @@ export const fetchCrmEnumCatalogByName = async (
   return readCatalogItems(response);
 };
 
-// Returns select options for one AX enum using Option.Value and Option.Label.
+// Returns select options for one AX enum using the business enum index and option label.
 export const getCrmEnumOptionsByName = (
   catalog: CrmEnumCatalogDto[],
   axEnumName: string,
