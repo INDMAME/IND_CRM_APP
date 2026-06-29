@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosTable unloaded at Viernes 26/06/2026
+; Navision Axapta Table : CRMHojaGastosTable unloaded at Lunes 29/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -868,7 +868,7 @@ Formatversion: 1
         PROPERTIES
           Type                #Enum
           Name                #ReimbursableExpense
-          Label               #
+          Label               #Reembolsable
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes

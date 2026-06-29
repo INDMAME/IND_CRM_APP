@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosLine unloaded at Viernes 26/06/2026
+; Navision Axapta Table : CRMHojaGastosLine unloaded at Lunes 29/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -991,7 +991,7 @@ Formatversion: 1
         PROPERTIES
           Type                #Enum
           Name                #ReimbursableExpense
-          Label               #
+          Label               #Reembolsable
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes
@@ -1841,6 +1841,10 @@ Formatversion: 1
         #    if (this.ModalidadPago == CRMHojaGastoModalidadPago::TarjetaGasolina)
         #        this.Type = CRMGastoType::Gasolina;
         #
+        #    //MMS - Recalculo guardado linea - 2026.06.29
+        #    if (!this.Amount && this.Qty && this.Price)
+        #        this.Amount = this.CalcAmount();
+        #
         #    amountMSTWasProvided = this.AmountMST != 0 && !this.ExchRate;  //MMS - Divisa desde línea - 2026.05.21
         #    this.normalizeCurrencyAmounts(amountMSTWasProvided);  //INDMMS_ExternalCRM - 2026.05.21
         #
@@ -2247,6 +2251,11 @@ Formatversion: 1
         #    ;
         #    this.Ticket = this.Ticket ? NoYes::Yes : NoYes::No;  //INDMMS_ExternalCRM - 2026.02.26
         #
+        #    //MMS - Recalculo guardado linea - 2026.06.29
+        #    if ((this.Qty != this.orig().Qty || this.Price != this.orig().Price || !this.Amount)
+        #        && this.Qty && this.Price)
+        #        this.Amount = this.CalcAmount();
+        #
         #    amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST && (this.orig().ExchRate == this.ExchRate || !this.ExchRate); //MMS - Divisa desde línea - 2026.05.21
         #
         #    if (this.Currency != this.orig().Currency && this.ExchRate == this.orig().ExchRate)
@@ -2296,7 +2305,7 @@ Formatversion: 1
         #    if (!currencyCode)
         #        ret = checkFailed("Debe indicar la divisa de la linea de hoja de gastos.");
         #
-        #    if (currencyCode && currencyCode != CompanyInfo::standardCurrency() && exchRate <= 0)
+        #    if (currencyCode && currencyCode != CompanyInfo::standardCurrency() && exchRate <= 0 && this.AmountMST <= 0)
         #        ret = checkFailed(strfmt("Para lineas en divisa distinta a %1 hay que indicar un tipo de cambio mayor que cero.", CompanyInfo::standardCurrency()));
         #
         #    return ret;
@@ -2431,8 +2440,8 @@ Formatversion: 1
         #
         #    }
         #
-        #    //MMS - Ajustes CRM - 2026.06.26
-        #    this.normalizeCurrencyAmounts(false);
+        #    //MMS - Recalculo guardado linea - 2026.06.29
+        #    // La normalizacion se ejecuta en insert/update para no pisar cambios pendientes.
         #    ret = ret && this.validateCurrencyAmounts();
         #
         #    return ret;

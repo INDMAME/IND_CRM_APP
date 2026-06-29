@@ -11,6 +11,7 @@ import { parseExpenseInternationalValue } from "../constants/internationalOption
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
+import { normalizeExpenseLineCurrencyCode } from "../utils/expenseLineCurrency.ts";
 import {
   createExpenseSheet,
   deleteExpenseSheetLine,
@@ -39,6 +40,10 @@ type UseExpenseSheetLineDetailMutationsArgs = {
   draftQty: string;
   draftProjectId: string;
   draftInternational: string;
+  draftCurrencyCode: string;
+  draftAmountMST: string;
+  draftExchangeRate: string;
+  localCurrencyCode: string;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
@@ -75,6 +80,10 @@ export const useExpenseSheetLineDetailMutations = ({
   draftQty,
   draftProjectId,
   draftInternational,
+  draftCurrencyCode,
+  draftAmountMST,
+  draftExchangeRate,
+  localCurrencyCode,
   setModalError,
   setBusy,
   setStatus,
@@ -114,6 +123,10 @@ export const useExpenseSheetLineDetailMutations = ({
     const parsedPrice = parseNumber(draftPrice);
     const parsedQty = parseNumber(draftQty);
     const parsedInternational = parseExpenseInternationalValue(draftInternational);
+    const parsedAmountMST = parseNumber(draftAmountMST);
+    const parsedExchangeRate = parseNumber(draftExchangeRate);
+    const normalizedCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
+    const normalizedLocalCurrencyCode = normalizeExpenseLineCurrencyCode(localCurrencyCode) || "EUR";
 
     const hasValidQtyPrice = parsedQty != null && parsedQty > 0 && parsedPrice != null && parsedPrice > 0;
     if (!hasValidQtyPrice) {
@@ -138,6 +151,20 @@ export const useExpenseSheetLineDetailMutations = ({
       return false;
     }
 
+    const isForeignCurrency = !!normalizedCurrencyCode && normalizedCurrencyCode !== normalizedLocalCurrencyCode;
+    const hasForeignCurrencySettlement =
+      (parsedExchangeRate != null && parsedExchangeRate > 0) ||
+      (parsedAmountMST != null && parsedAmountMST > 0);
+    if (isForeignCurrency && !hasForeignCurrencySettlement) {
+      const validationMessage = indT(
+        "ExpenseSheets_Line_Validation_ForeignCurrencySettlement",
+        "Foreign currency lines require an exchange rate greater than 0 or a reimbursement amount."
+      );
+      setModalError(validationMessage);
+      setStatus(validationMessage);
+      return false;
+    }
+
     const result = await executeExpenseMutation({
       startStatus: isCreateMode
         ? indT("ExpenseSheets_Line_Detail_Creating", "Creating expense line...")
@@ -156,6 +183,9 @@ export const useExpenseSheetLineDetailMutations = ({
           qty: Number(parsedQty),
           price: Number(parsedPrice),
           projId: String(draftProjectId || "").trim() || undefined,
+          currencyCode: normalizedCurrencyCode || undefined,
+          amountMST: parsedAmountMST,
+          exchRate: parsedExchangeRate != null && parsedExchangeRate > 0 ? parsedExchangeRate : null,
           indAttachFiles: safeText(line?.indAttachFiles),
         };
 
@@ -193,6 +223,9 @@ export const useExpenseSheetLineDetailMutations = ({
     draftPrice,
     draftDescription,
     draftInternational,
+    draftAmountMST,
+    draftCurrencyCode,
+    draftExchangeRate,
     draftProjectId,
     draftQty,
     draftTransDate,
@@ -202,6 +235,7 @@ export const useExpenseSheetLineDetailMutations = ({
     isEditing,
     line,
     lineId,
+    localCurrencyCode,
     onCreateSuccess,
     onInvalidAmountQty,
     onInvalidType,

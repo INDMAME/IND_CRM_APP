@@ -2,12 +2,14 @@ import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { indT } from "../../../../utils/indI18n.ts";
 import { parseExpenseDate, safeText, toIsoDate } from "../../utils/expenseUiUtils.ts";
+import { formatExpenseInputNumber, parseExpenseNumericInput } from "../../utils/expenseNumberFormat.ts";
 import type { ExpenseTicketDetailHeader } from "./expenseTicketDetailTypes.ts";
 
 type DraftState = {
   description: string;
   gastoType: string;
   currencyCode: string;
+  totalAmount: string;
   transDate: string;
   ticketTime: string;
   comentario: string;
@@ -47,6 +49,7 @@ const createEmptyDraft = (): DraftState => ({
   description: "",
   gastoType: "",
   currencyCode: "",
+  totalAmount: "",
   transDate: "",
   ticketTime: "",
   comentario: "",
@@ -85,6 +88,12 @@ const createDraftFromHeader = (header: ExpenseTicketDetailHeader | null): DraftS
     description: safeText(header?.description),
     gastoType: header?.gastoType === null || header?.gastoType === undefined ? "" : String(header.gastoType),
     currencyCode: safeText(header?.currencyCode).toUpperCase(),
+    totalAmount: formatExpenseInputNumber(header?.totalAmount, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: true,
+      fallback: "",
+    }),
     transDate: toInputDate(header?.ticketDate || header?.transDate),
     ticketTime: toInputTime(header?.ticketTime),
     comentario: safeText(header?.comentario),
@@ -151,9 +160,11 @@ export const useExpenseTicketDetailEditor = ({
   const [descriptionInvalid, setDescriptionInvalid] = useState(false);
   const [gastoTypeInvalid, setGastoTypeInvalid] = useState(false);
   const [currencyCodeInvalid, setCurrencyCodeInvalid] = useState(false);
+  const [totalAmountInvalid, setTotalAmountInvalid] = useState(false);
   const descriptionInputRef = useRef<HTMLInputElement | null>(null);
   const gastoTypeInputRef = useRef<HTMLInputElement | null>(null);
   const currencyInputRef = useRef<HTMLInputElement | null>(null);
+  const totalAmountInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     if (state.isEditing) return;
@@ -172,6 +183,7 @@ export const useExpenseTicketDetailEditor = ({
     setDescriptionInvalid(false);
     setGastoTypeInvalid(false);
     setCurrencyCodeInvalid(false);
+    setTotalAmountInvalid(false);
   }, [state.isEditing]);
 
   const setBusy = useCallback<Dispatch<SetStateAction<boolean>>>(
@@ -245,6 +257,18 @@ export const useExpenseTicketDetailEditor = ({
     [state.draft.currencyCode]
   );
 
+  const setDraftTotalAmount = useCallback<Dispatch<SetStateAction<string>>>(
+    (value) => {
+      setTotalAmountInvalid(false);
+      dispatch({
+        type: "set_draft_field",
+        field: "totalAmount",
+        value: resolveSetStateValue(value, state.draft.totalAmount),
+      });
+    },
+    [state.draft.totalAmount]
+  );
+
   const handleEnableEdit = useCallback(() => {
     if (!header || isLoading) return;
     if (isFromSheetLink) return;
@@ -256,6 +280,7 @@ export const useExpenseTicketDetailEditor = ({
 
     setGastoTypeInvalid(false);
     setCurrencyCodeInvalid(false);
+    setTotalAmountInvalid(false);
     dispatch({ type: "hydrate_from_header", header });
     dispatch({
       type: "patch_state",
@@ -276,6 +301,7 @@ export const useExpenseTicketDetailEditor = ({
 
     setGastoTypeInvalid(false);
     setCurrencyCodeInvalid(false);
+    setTotalAmountInvalid(false);
     dispatch({ type: "hydrate_from_header", header });
     dispatch({
       type: "patch_state",
@@ -290,15 +316,18 @@ export const useExpenseTicketDetailEditor = ({
   const canOpenSaveConfirm = useCallback(() => {
     const normalizedDescription = String(state.draft.description || "").trim();
     const normalizedCurrencyCode = String(state.draft.currencyCode || "").trim().toUpperCase();
+    const parsedTotalAmount = parseExpenseNumericInput(state.draft.totalAmount);
     const descriptionIsValid = !!normalizedDescription;
     const gastoTypeIsValid = isValidRequiredGastoType(state.draft.gastoType);
     const currencyIsValid = !!normalizedCurrencyCode;
+    const totalAmountIsValid = parsedTotalAmount != null && parsedTotalAmount >= 0;
 
     setDescriptionInvalid(!descriptionIsValid);
     setGastoTypeInvalid(!gastoTypeIsValid);
     setCurrencyCodeInvalid(!currencyIsValid);
+    setTotalAmountInvalid(!totalAmountIsValid);
 
-    if (descriptionIsValid && gastoTypeIsValid && currencyIsValid) {
+    if (descriptionIsValid && gastoTypeIsValid && currencyIsValid && totalAmountIsValid) {
       return true;
     }
 
@@ -306,7 +335,9 @@ export const useExpenseTicketDetailEditor = ({
       ? indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required.")
       : !gastoTypeIsValid
         ? indT("Tickets_Validation_CategoryRequired", "Category is required.")
-        : indT("ExpenseSheets_Validation_CurrencyRequired", "Currency is required.");
+        : !currencyIsValid
+          ? indT("ExpenseSheets_Validation_CurrencyRequired", "Currency is required.")
+          : indT("Tickets_Validation_TotalAmountRequired", "Total amount must be greater than or equal to 0.");
 
     dispatch({
       type: "patch_state",
@@ -327,11 +358,18 @@ export const useExpenseTicketDetailEditor = ({
         return;
       }
 
-      currencyInputRef.current?.focus();
+      if (!currencyIsValid) {
+        currencyInputRef.current?.focus();
+        return;
+      }
+
+      if (!totalAmountIsValid) {
+        totalAmountInputRef.current?.focus();
+      }
     });
 
     return false;
-  }, [state.draft.currencyCode, state.draft.gastoType]);
+  }, [state.draft.currencyCode, state.draft.description, state.draft.gastoType, state.draft.totalAmount]);
 
   return {
     busy: state.busy,
@@ -348,6 +386,9 @@ export const useExpenseTicketDetailEditor = ({
     draftCurrencyCode: state.draft.currencyCode,
     currencyCodeInvalid,
     currencyInputRef,
+    draftTotalAmount: state.draft.totalAmount,
+    totalAmountInvalid,
+    totalAmountInputRef,
     draftTransDate: state.draft.transDate,
     draftTicketTime: state.draft.ticketTime,
     draftComentario: state.draft.comentario,
@@ -361,6 +402,7 @@ export const useExpenseTicketDetailEditor = ({
     setDraftDescription,
     setDraftGastoType,
     setDraftCurrencyCode,
+    setDraftTotalAmount,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,

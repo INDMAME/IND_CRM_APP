@@ -44,6 +44,15 @@ const formatEditableQuantity = (value: number | null | undefined): string => {
   });
 };
 
+const formatEditableExchangeRate = (value: number | null | undefined): string => {
+  return formatExpenseInputNumber(value, {
+    minimumFractionDigits: 7,
+    maximumFractionDigits: 7,
+    useGrouping: true,
+    fallback: "",
+  });
+};
+
 const normalizeFuelTransDate = (raw: string): string => {
   return toExpenseApiDdMmYyyy(raw);
 };
@@ -69,7 +78,7 @@ const resolveFuelPriceSourceMessage = (source: string, effectiveDate: string): s
     : `${sourceLabel}: ${normalizedSource}`;
 };
 
-const buildCreateLineDraft = (baseDate: string, projectId: string): ExpenseSheetLine => {
+const buildCreateLineDraft = (baseDate: string, projectId: string, currencyCode: string): ExpenseSheetLine => {
   return {
     lineRecId: "",
     transDate: baseDate,
@@ -82,6 +91,9 @@ const buildCreateLineDraft = (baseDate: string, projectId: string): ExpenseSheet
     qty: 1,
     amount: null,
     projId: projectId,
+    currencyCode,
+    amountMST: null,
+    exchRate: 100,
     indAttachFiles: "",
   };
 };
@@ -129,6 +141,9 @@ export const useExpenseSheetLineDetailState = ({
   const [draftQty, setDraftQty] = useState("");
   const [draftProjectId, setDraftProjectId] = useState("");
   const [draftInternational, setDraftInternational] = useState("");
+  const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
+  const [draftAmountMST, setDraftAmountMST] = useState("");
+  const [draftExchangeRate, setDraftExchangeRate] = useState("");
   const [isFuelPriceLoading, setIsFuelPriceLoading] = useState(false);
   const [fuelPriceMessage, setFuelPriceMessage] = useState("");
   const [fuelPriceMessageIsError, setFuelPriceMessageIsError] = useState(false);
@@ -143,6 +158,11 @@ export const useExpenseSheetLineDetailState = ({
     setDraftQty(formatEditableQuantity(nextLine?.qty));
     setDraftProjectId(isExistingLine ? normalizedLineProjectId : (normalizedLineProjectId || safeText(nextHeader?.projId)));
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
+    const localCurrencyCode = safeText(nextHeader?.currencyCode).toUpperCase() || "EUR";
+    const lineCurrencyCode = safeText(nextLine?.currencyCode).toUpperCase() || localCurrencyCode;
+    setDraftCurrencyCode(lineCurrencyCode);
+    setDraftAmountMST(formatEditableNumber(nextLine?.amountMST));
+    setDraftExchangeRate(formatEditableExchangeRate(nextLine?.exchRate ?? (lineCurrencyCode === localCurrencyCode ? 100 : null)));
   }, []);
 
   useEffect(() => {
@@ -215,7 +235,11 @@ export const useExpenseSheetLineDetailState = ({
             return;
           }
 
-          const draftLine = buildCreateLineDraft(toIsoDate(new Date()), safeText(loadedHeader.projId));
+          const draftLine = buildCreateLineDraft(
+            toIsoDate(new Date()),
+            safeText(loadedHeader.projId),
+            safeText(loadedHeader.currencyCode).toUpperCase() || "EUR"
+          );
           setHeader(loadedHeader);
           setLine(draftLine);
           setIsEditing(true);
@@ -550,6 +574,9 @@ export const useExpenseSheetLineDetailState = ({
     draftQty,
     draftProjectId,
     draftInternational,
+    draftCurrencyCode,
+    draftAmountMST,
+    draftExchangeRate,
     isKmType,
     isFuelPriceLoading,
     fuelPriceMessage,
@@ -575,6 +602,9 @@ export const useExpenseSheetLineDetailState = ({
     setDraftQty,
     setDraftProjectId,
     setDraftInternational,
+    setDraftCurrencyCode,
+    setDraftAmountMST,
+    setDraftExchangeRate,
     handleEnableEdit,
     handleCancelEdit,
     handleOpenCreateMode,

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Viernes 26/06/2026
+; Navision Axapta Forms unloaded at Lunes 29/06/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -335,22 +335,22 @@ FORM #CRMHojaGastosLine
             ENDMETHODS
           ENDDATAFIELD
           
-          DATAFIELD Amount
-            PROPERTIES
-              AllowEdit           #No
-              Enabled             #Yes
-              Skip                #No
-              Visible             #Yes
-              AllowAdd            #Restricted
-              Mandatory           #No
-            ENDPROPERTIES
-            
-          ENDDATAFIELD
-          
         ENDFIELDLIST
       ENDOBJECTPOOL
       METHODS
         Version: 3
+        SOURCE #validateWrite
+          #public boolean validateWrite()
+          #{
+          #    boolean ret;
+          #
+          #    ret = super();
+          #
+          #    this.refresh();
+          #
+          #    return ret;
+          #}
+        ENDSOURCE
         SOURCE #active
           #public int active()
           #{
@@ -693,7 +693,7 @@ FORM #CRMHojaGastosLine
                       ;==== controlId:12294, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_TransDate
+                        Name                #CRMHojaGastosLine_TransDate
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -803,7 +803,7 @@ FORM #CRMHojaGastosLine
                       ;==== controlId:12296, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_AccountNum
+                        Name                #CRMHojaGastosLine_AccountNum
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -866,7 +866,7 @@ FORM #CRMHojaGastosLine
                       ;==== controlId:12297, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_Type
+                        Name                #CRMHojaGastosLine_Type
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -1093,7 +1093,7 @@ FORM #CRMHojaGastosLine
                       ;==== controlId:12301, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_Description
+                        Name                #CRMHojaGastosLine_Description
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -1156,7 +1156,7 @@ FORM #CRMHojaGastosLine
                       ;==== controlId:12302, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_Internacional
+                        Name                #CRMHojaGastosLine_Internacional
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -1201,7 +1201,7 @@ FORM #CRMHojaGastosLine
                       ;==== controlId:12303, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_Ticket
+                        Name                #CRMHojaGastosLine_Ticket
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -1599,10 +1599,10 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12310, containerId:12292, containerdata:12292   
+                      ;==== controlId:12381, containerId:12292, containerdata: 0
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_Qty
+                        Name                #CRMHojaGastosLine_Qty
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -1669,10 +1669,10 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12311, containerId:12292, containerdata:12292   
+                      ;==== controlId:12382, containerId:12292, containerdata: 0
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_Price
+                        Name                #CRMHojaGastosLine_Price
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -1739,10 +1739,10 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12313, containerId:12292, containerdata:12292   
+                      ;==== controlId:12383, containerId:12292, containerdata: 0
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_Currency
+                        Name                #CRMHojaGastosLine_Currency
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -1802,7 +1802,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12345, containerId:12292, containerdata: 0   
+                      ;==== controlId:12345, containerId:12292, containerdata: 0
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_ExchRate
@@ -1872,10 +1872,10 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12312, containerId:12292, containerdata:12292   
+                      ;==== controlId:12380, containerId:12292, containerdata: 0
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosTable_Amount
+                        Name                #CRMHojaGastosLine_Amount
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
@@ -1942,7 +1942,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12344, containerId:12292, containerdata: 0   
+                      ;==== controlId:12344, containerId:12292, containerdata: 0
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_AmountMST
@@ -2012,7 +2012,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL COMBOBOX
-                      ;==== controlId:12346, containerId:12292, containerdata: 0   
+                      ;==== controlId:12346, containerId:12292, containerdata: 0
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_ReimbursableExpense

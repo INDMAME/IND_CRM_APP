@@ -7,6 +7,7 @@ import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
+import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 
@@ -17,6 +18,7 @@ type ExpenseSheetLineFormProps = {
   projectValue: string;
   priceText: string;
   amountText: string;
+  amountMSTText: string;
   internacionalLabel: string;
   isKmType: boolean;
   isFuelPriceLoading: boolean;
@@ -33,6 +35,10 @@ type ExpenseSheetLineFormProps = {
   draftQty: string;
   draftProjectId: string;
   draftInternational: string;
+  draftCurrencyCode: string;
+  draftAmountMST: string;
+  draftExchangeRate: string;
+  localCurrencyCode: string;
   linkedTicketFileId: string;
   showLinkedTicketField: boolean;
   typeInputRef?: React.Ref<HTMLInputElement>;
@@ -48,6 +54,9 @@ type ExpenseSheetLineFormProps = {
   onDraftQtyChange: (value: string) => void;
   onDraftProjectIdChange: (value: string) => void;
   onDraftInternationalChange: (value: string) => void;
+  onDraftCurrencyCodeChange: (value: string) => void;
+  onDraftAmountMSTChange: (value: string) => void;
+  onDraftExchangeRateChange: (value: string) => void;
   onOpenLinkedTicket: () => void;
 };
 
@@ -60,6 +69,119 @@ const formatQtyValue = (value: number | null | undefined): string => {
   });
 };
 
+type ExpenseSheetLineCurrencyFieldsProps = {
+  line: ExpenseSheetLine;
+  amountText: string;
+  amountMSTText: string;
+  isEditing: boolean;
+  draftCurrencyCode: string;
+  draftAmountMST: string;
+  draftExchangeRate: string;
+  localCurrencyCode: string;
+  onDraftCurrencyCodeChange: (value: string) => void;
+  onDraftAmountMSTChange: (value: string) => void;
+  onDraftExchangeRateChange: (value: string) => void;
+};
+
+// Renders per-line currency and reimbursement controls.
+const ExpenseSheetLineCurrencyFields = ({
+  line,
+  amountText,
+  amountMSTText,
+  isEditing,
+  draftCurrencyCode,
+  draftAmountMST,
+  draftExchangeRate,
+  localCurrencyCode,
+  onDraftCurrencyCodeChange,
+  onDraftAmountMSTChange,
+  onDraftExchangeRateChange,
+}: ExpenseSheetLineCurrencyFieldsProps) => (
+  <>
+    <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_AmountCurrency", "Amount currency")} value={amountText || "-"} />
+
+    {isEditing ? (
+      <ExpenseCurrencyFilterSelect
+        label={indT("ExpenseSheets_Field_Currency", "Currency")}
+        placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
+        value={draftCurrencyCode}
+        onChange={onDraftCurrencyCodeChange}
+        idBase="expense-line-currency"
+      />
+    ) : (
+      <ExpenseReadOnlyField
+        label={indT("ExpenseSheets_Field_Currency", "Currency")}
+        value={safeText(line.currencyCode) || localCurrencyCode || "-"}
+      />
+    )}
+
+    {isEditing ? (
+      <div className="space-y-1.5">
+        <label className="form-label font-semibold">{indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}</label>
+        <input
+          className="form-control"
+          type="text"
+          inputMode="decimal"
+          value={draftExchangeRate}
+          onChange={(event) => onDraftExchangeRateChange(event.target.value || "")}
+          onBlur={(event) =>
+            onDraftExchangeRateChange(
+              formatExpenseInputNumber(event.target.value, {
+                minimumFractionDigits: 7,
+                maximumFractionDigits: 7,
+                useGrouping: true,
+                fallback: "",
+              })
+            )
+          }
+          aria-label={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}
+        />
+      </div>
+    ) : (
+      <ExpenseReadOnlyField
+        label={indT("ExpenseSheets_Field_ExchangeRate", "Exchange rate")}
+        value={formatExpenseNumber(line.exchRate ?? null, {
+          minimumFractionDigits: 7,
+          maximumFractionDigits: 7,
+          useGrouping: true,
+          fallback: "-",
+        })}
+      />
+    )}
+
+    {isEditing ? (
+      <div className="space-y-1.5">
+        <label className="form-label font-semibold">
+          {indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+        </label>
+        <input
+          className="form-control"
+          type="text"
+          inputMode="decimal"
+          value={draftAmountMST}
+          onChange={(event) => onDraftAmountMSTChange(event.target.value || "")}
+          onBlur={(event) =>
+            onDraftAmountMSTChange(
+              formatExpenseInputNumber(event.target.value, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+                useGrouping: true,
+                fallback: "",
+              })
+            )
+          }
+          aria-label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+        />
+      </div>
+    ) : (
+      <ExpenseReadOnlyField
+        label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+        value={amountMSTText || "-"}
+      />
+    )}
+  </>
+);
+
 // Pure form renderer for expense line detail in read and edit modes.
 const ExpenseSheetLineForm = ({
   line,
@@ -68,6 +190,7 @@ const ExpenseSheetLineForm = ({
   projectValue,
   priceText,
   amountText,
+  amountMSTText,
   internacionalLabel,
   isKmType,
   isFuelPriceLoading,
@@ -84,6 +207,10 @@ const ExpenseSheetLineForm = ({
   draftQty,
   draftProjectId,
   draftInternational,
+  draftCurrencyCode,
+  draftAmountMST,
+  draftExchangeRate,
+  localCurrencyCode,
   linkedTicketFileId,
   showLinkedTicketField,
   typeInputRef,
@@ -99,6 +226,9 @@ const ExpenseSheetLineForm = ({
   onDraftQtyChange,
   onDraftProjectIdChange,
   onDraftInternationalChange,
+  onDraftCurrencyCodeChange,
+  onDraftAmountMSTChange,
+  onDraftExchangeRateChange,
   onOpenLinkedTicket,
 }: ExpenseSheetLineFormProps) => {
   return (
@@ -249,7 +379,19 @@ const ExpenseSheetLineForm = ({
             />
           )}
 
-          <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Amount", "Amount")} value={amountText || "-"} />
+          <ExpenseSheetLineCurrencyFields
+            line={line}
+            amountText={amountText}
+            amountMSTText={amountMSTText}
+            isEditing={isEditing}
+            draftCurrencyCode={draftCurrencyCode}
+            draftAmountMST={draftAmountMST}
+            draftExchangeRate={draftExchangeRate}
+            localCurrencyCode={localCurrencyCode}
+            onDraftCurrencyCodeChange={onDraftCurrencyCodeChange}
+            onDraftAmountMSTChange={onDraftAmountMSTChange}
+            onDraftExchangeRateChange={onDraftExchangeRateChange}
+          />
 
           {isEditing ? (
             <ExpenseProjectFilterInput

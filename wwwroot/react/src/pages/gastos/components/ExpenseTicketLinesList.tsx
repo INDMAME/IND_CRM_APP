@@ -87,6 +87,7 @@ const ExpenseTicketLinesList = ({
             const priceText = formatAmountWithCurrency(line.price, currencyCode);
             const title = line.description || line.recId || "-";
             const primarySubtitleParts = [
+              line.adjustmentAmount ? indT("Enum_GastoType_AdjustmentAmount", "Adjustment amount") : "",
               `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}`,
               `${indT("ExpenseSheets_Field_Price", "Price")}: ${priceText}`,
             ].filter(Boolean);

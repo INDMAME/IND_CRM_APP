@@ -357,8 +357,8 @@ export type ExpenseSheetDraftTicketCreationResult = {
 // /api/crm/expensesheets/{hojaGastosId} update header request contract.
 export type ExpenseSheetHeaderUpdateRequest = {
   description: string;
-  currencyCode: string;
-  exchRate: number;
+  currencyCode?: string;
+  exchRate?: number | null;
   projId?: string;
   expenseSheetStatus?: number;
   exchangeRateMode?: number;
@@ -537,6 +537,21 @@ export type ExpenseSheetTicketUpdateRequest = {
   gastoType?: ExpenseGastoTypeCode;
 };
 
+export type ExpenseSheetTicketTotalAdjustmentRequest = {
+  totalAmount: number;
+};
+
+export type ExpenseSheetTicketTotalAdjustmentResultDto = {
+  FileId?: string;
+  PreviousTotalAmount?: number | null;
+  NewTotalAmount?: number | null;
+  DifferenceAmount?: number | null;
+  AdjustmentLineRecId?: string;
+  AdjustmentLineCreated?: boolean | null;
+  AdjustmentDescription?: string;
+  AdjustmentAmount?: boolean | null;
+};
+
 export type ExpenseSheetTicketIaRequest = {
   gastoType?: ExpenseGastoTypeCode;
   [key: string]: unknown;
@@ -550,6 +565,7 @@ export type ExpenseSheetTicketLineDto = {
   TotalAmount: number | null;
   RefRecIdTable: string;
   CreatedByUserId: string;
+  AdjustmentAmount?: boolean | null;
 };
 
 export type ExpenseSheetTicketListItemDto = {
@@ -657,6 +673,9 @@ export type ExpenseSheetCreateLineDraft = {
   ticket: boolean;
   qty: string;
   price: string;
+  currencyCode: string;
+  amountMST: string;
+  exchRate: string;
   projId: string;
   indAttachFiles: string;
 };

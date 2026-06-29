@@ -303,18 +303,11 @@ export const useExpenseSheetDetailState = ({
     if (parsedDate) return toIsoDate(parsedDate);
     return toIsoDate(new Date());
   }, [header?.createdDate]);
-  const exchangeRateRequired =
-    isEditing && canEditHeaderFieldsCurrent && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
-  const exchangeRateValidationMessage =
-    exchangeRateRequired && !draftExchangeRate.trim()
-      ? indT(
-          "ExpenseSheets_Validation_ExchangeRateRequired",
-          "Exchange rate is required when currency is different from base currency."
-        )
-      : "";
-  // Currency type can be edited whenever the sheet itself is editable (not approved/paid).
+  const shouldLoadHeaderExchangeRate = false;
+  const exchangeRateValidationMessage = "";
+  // Header currency is legacy/read-only; editable currency now belongs to each line.
   const isCurrencyLockedByLines = false;
-  const isExchangeRateLockedByLines = isEditing && canEditHeaderFieldsCurrent && hasLines && showExchangeRate;
+  const isExchangeRateLockedByLines = false;
 
   useEffect(() => {
     let isCancelled = false;
@@ -332,7 +325,7 @@ export const useExpenseSheetDetailState = ({
       }
     };
 
-    if (!isEditing || !canEditHeaderFieldsCurrent || isExchangeRateLockedByLines) {
+    if (!shouldLoadHeaderExchangeRate || !isEditing || !canEditHeaderFieldsCurrent || isExchangeRateLockedByLines) {
       setIsExchangeRateLoading(false);
       setExchangeRateMessage("");
       setExchangeRateMessageIsError(false);
@@ -487,6 +480,7 @@ export const useExpenseSheetDetailState = ({
     isEditing,
     isExchangeRateLockedByLines,
     normalizedDraftCurrency,
+    shouldLoadHeaderExchangeRate,
     uiLocale,
     setDraftExchangeRate,
   ]);

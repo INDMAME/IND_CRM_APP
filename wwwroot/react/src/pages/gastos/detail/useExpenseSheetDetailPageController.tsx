@@ -249,7 +249,6 @@ export const useExpenseSheetDetailPageController = () => {
     draftProjectId,
     draftEstadoComentarios,
     currentExpenseSheetStatus: header?.expenseSheetStatus,
-    currentExchangeRateMode: header?.exchangeRateMode,
     exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
       createdSheetIdRef.current = safeText(createdSheetId);

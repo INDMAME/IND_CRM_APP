@@ -8,7 +8,7 @@ type GastoTypeFallbackOption = {
   fallback: string;
 };
 
-export const FALLBACK_EXPENSE_GASTO_TYPE_CODES: ExpenseGastoTypeCode[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 14];
+export const FALLBACK_EXPENSE_GASTO_TYPE_CODES: ExpenseGastoTypeCode[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 20, 21];
 
 const FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS: GastoTypeFallbackOption[] = [
   { value: 0, labelKey: "Enum_None", fallback: "None" },
@@ -21,6 +21,8 @@ const FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS: GastoTypeFallbackOption[] = [
   { value: 7, labelKey: "Enum_GastoType_Hotel", fallback: "Hotel" },
   { value: 8, labelKey: "Enum_GastoType_Varios", fallback: "Varios" },
   { value: 14, labelKey: "Enum_GastoType_Taxi", fallback: "Taxi" },
+  { value: 20, labelKey: "Enum_GastoType_Gasolina", fallback: "Gasolina" },
+  { value: 21, labelKey: "Enum_GastoType_AdjustmentAmount", fallback: "AdjustmentAmount" },
 ];
 
 const toIntegerGastoTypeCode = (value: unknown): ExpenseGastoTypeCode | null => {

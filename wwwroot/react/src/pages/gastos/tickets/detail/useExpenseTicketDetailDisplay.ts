@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { formatAmountWithCurrency } from "../../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../../constants/expenseTicketStatusCatalog.ts";
 import { formatExpenseDisplayDate, safeText } from "../../utils/expenseUiUtils.ts";
+import { parseExpenseNumericInput } from "../../utils/expenseNumberFormat.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "./expenseTicketDetailTypes.ts";
 
@@ -9,6 +10,7 @@ type UseExpenseTicketDetailDisplayArgs = {
   header: ExpenseTicketDetailHeader | null;
   draftGastoType: string;
   draftCurrencyCode: string;
+  draftTotalAmount: string;
   draftTransDate: string;
   draftTicketTime: string;
   draftFileName: string;
@@ -42,6 +44,7 @@ export const useExpenseTicketDetailDisplay = ({
   header,
   draftGastoType,
   draftCurrencyCode,
+  draftTotalAmount,
   draftTransDate,
   draftTicketTime,
   draftFileName,
@@ -74,8 +77,14 @@ export const useExpenseTicketDetailDisplay = ({
   }, [draftGastoType, gastoTypeLabelMap, header?.gastoType, isEditing]);
 
   const totalAmountText = useMemo(
-    () => formatAmountWithCurrency(header?.totalAmount ?? null, (isEditing ? draftCurrencyCode : header?.currencyCode) || header?.currencyCode),
-    [draftCurrencyCode, header?.currencyCode, header?.totalAmount, isEditing]
+    () => {
+      const editableTotalAmount = parseExpenseNumericInput(draftTotalAmount);
+      return formatAmountWithCurrency(
+        isEditing && editableTotalAmount != null ? editableTotalAmount : header?.totalAmount ?? null,
+        (isEditing ? draftCurrencyCode : header?.currencyCode) || header?.currencyCode
+      );
+    },
+    [draftCurrencyCode, draftTotalAmount, header?.currencyCode, header?.totalAmount, isEditing]
   );
 
   const transDateText = useMemo(

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDTicketInfoTable unloaded at Viernes 26/06/2026
+; Navision Axapta Table : INDTicketInfoTable unloaded at Lunes 29/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -818,7 +818,7 @@ Formatversion: 1
         #    if (!this.CurrencyCode)
         #        ret = checkFailed("Debe indicar la divisa del ticket.");
         #
-        #    if (this.CurrencyCode && this.CurrencyCode != CompanyInfo::standardCurrency() && !this.ExchRate)
+        #    if (this.CurrencyCode && this.CurrencyCode != CompanyInfo::standardCurrency() && !this.ExchRate && this.AmountMST <= 0)
         #        ret = checkFailed(strFmt("Para tickets en divisa distinta a %1 hay que indicar el tipo de cambio.", CompanyInfo::standardCurrency()));
         #
         #    return ret;
@@ -865,7 +865,8 @@ Formatversion: 1
         #        ret = this.validateUniqueTicketDateTime();
         #    }
         #
-        #    this.normalizeCurrencyAmounts(false);
+        #    //MMS - Recalculo guardado ticket - 2026.06.29
+        #    // La normalizacion se ejecuta en insert/update para no pisar cambios pendientes.
         #    ret = ret && this.validateCurrencyAmounts();
         #
         #    return ret;

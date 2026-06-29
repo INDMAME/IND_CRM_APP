@@ -75,6 +75,9 @@ type ExpenseTicketDetailViewProps = {
     draftCurrencyCode: string;
     currencyCodeInvalid: boolean;
     currencyInputRef: RefObject<HTMLInputElement | null>;
+    draftTotalAmount: string;
+    totalAmountInvalid: boolean;
+    totalAmountInputRef: RefObject<HTMLInputElement | null>;
     draftTransDate: string;
     draftTicketTime: string;
     draftUrlFile: string;
@@ -82,6 +85,7 @@ type ExpenseTicketDetailViewProps = {
     onDraftDescriptionChange: (value: string) => void;
     onDraftGastoTypeChange: (value: string) => void;
     onDraftCurrencyCodeChange: (value: string) => void;
+    onDraftTotalAmountChange: (value: string) => void;
     onOpenFile: () => void;
     onOpenExpenseSheet?: () => void;
     linkedLine: {
@@ -126,6 +130,9 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         draftCurrencyCode={content.draftCurrencyCode}
         currencyCodeInvalid={content.currencyCodeInvalid}
         currencyInputRef={content.currencyInputRef}
+        draftTotalAmount={content.draftTotalAmount}
+        totalAmountInvalid={content.totalAmountInvalid}
+        totalAmountInputRef={content.totalAmountInputRef}
         draftTransDate={content.draftTransDate}
         draftTicketTime={content.draftTicketTime}
         draftUrlFile={content.draftUrlFile}
@@ -133,6 +140,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onDraftDescriptionChange={content.onDraftDescriptionChange}
         onDraftGastoTypeChange={content.onDraftGastoTypeChange}
         onDraftCurrencyCodeChange={content.onDraftCurrencyCodeChange}
+        onDraftTotalAmountChange={content.onDraftTotalAmountChange}
         onOpenFile={content.onOpenFile}
         onOpenExpenseSheet={content.onOpenExpenseSheet}
         hideOpenFileAction={content.showStickyPreview}
