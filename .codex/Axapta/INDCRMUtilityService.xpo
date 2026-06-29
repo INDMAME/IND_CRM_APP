@@ -589,7 +589,7 @@ Formatversion: 1
         #            activeFlag = '1';
         #
         #        options += [[
-        #            strFmt('%1', axEnum.EnumValue),
+        #            strFmt('%1', axEnum.EnumIndex),
         #            strFmt('%1', axEnum.EnumIndex),
         #            strFmt('%1', catalogTable.effectiveLabel()),
         #            strFmt('%1', catalogTable.effectiveDescription()),
@@ -628,7 +628,7 @@ Formatversion: 1
         #            activeFlag = '1';
         #
         #        options += [[
-        #            strFmt('%1', axEnum.EnumValue),
+        #            strFmt('%1', axEnum.EnumIndex),
         #            strFmt('%1', axEnum.EnumIndex),
         #            strFmt('%1', catalogTable.effectiveLabel()),
         #            strFmt('%1', catalogTable.effectiveDescription()),

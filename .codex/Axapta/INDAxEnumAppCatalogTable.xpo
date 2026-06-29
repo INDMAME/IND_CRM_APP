@@ -455,7 +455,7 @@ Formatversion: 1
       ENDSOURCE
       SOURCE #enumValue
         #//MMS - Ajustes CRM - 2026.06.18
-        #// Muestra el valor numerico real que debe enviar la API.
+        #// Muestra el EnumValue tecnico de AX; los endpoints CRM deben usar enumIndex.
         #display int enumValue()
         #{
         #    INDAxEnumsTable axEnum;
