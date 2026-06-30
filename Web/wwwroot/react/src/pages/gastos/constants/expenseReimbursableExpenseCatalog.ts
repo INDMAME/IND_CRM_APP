@@ -48,7 +48,7 @@ export const getExpenseReimbursableExpenseOptions = (): ExpenseSelectOption[] =>
   return FALLBACK_REIMBURSABLE_OPTIONS;
 };
 
-// Header edit keeps the automatic mixed value visible only in read mode.
+// Header edit keeps the automatic mixed value visible, but not selectable.
 export const getEditableExpenseReimbursableExpenseOptions = (): ExpenseSelectOption[] => {
   return getExpenseReimbursableExpenseOptions().filter(
     (option) => Number(option.value) !== REIMBURSABLE_EXPENSE_BOTH_VALUE

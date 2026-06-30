@@ -108,6 +108,13 @@ const ExpenseSheetHeaderForm = ({
     (option) => Number(option.value) === reimbursableExpenseValue
   );
   const reimbursableExpenseLabel = getExpenseReimbursableExpenseLabel(reimbursableExpenseValue);
+  const selectedReimbursableExpenseOption = React.useMemo(
+    () =>
+      hasEditableReimbursableExpenseValue
+        ? undefined
+        : { value: String(reimbursableExpenseValue), text: reimbursableExpenseLabel },
+    [hasEditableReimbursableExpenseValue, reimbursableExpenseLabel, reimbursableExpenseValue]
+  );
   // Status comment is now edited only in the status transition popup.
   const statusCommentValue = safeText(header.estadoComentarios);
   const showStatusCommentField = !isCreateMode && statusCommentMode !== "hidden";
@@ -166,7 +173,8 @@ const ExpenseSheetHeaderForm = ({
         label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
         placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
         options={reimbursableExpenseOptions}
-        value={hasEditableReimbursableExpenseValue ? String(reimbursableExpenseValue) : ""}
+        selectedOption={selectedReimbursableExpenseOption}
+        value={String(reimbursableExpenseValue)}
         onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseReimbursableExpense(value))}
         readOnly={!isEditing || !canEditHeaderFields}
         disabled={!isEditing || !canEditHeaderFields}

@@ -681,6 +681,12 @@
   <data name="History_Page_Last" xml:space="preserve">
     <value>Ultima</value>
   </data>
+  <data name="RecordNavigator_AriaLabel" xml:space="preserve">
+    <value>Navigazione dei record</value>
+  </data>
+  <data name="RecordNavigator_Position" xml:space="preserve">
+    <value>{0} di {1}</value>
+  </data>
   <data name="Common_OK" xml:space="preserve">
     <value>Accettare</value>
   </data>

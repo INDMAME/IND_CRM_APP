@@ -87,7 +87,6 @@ const CreateStepVisitDetails = ({
           onChange={(nextValue) => onVisitTypeChange(String(nextValue ?? ""))}
           placeholder={visitTypePlaceholder}
           invalid={visitTypeInvalid}
-          emitOnValueChange
           portalClassName="visitas-typography"
         />
         <SelectCombobox
@@ -96,7 +95,6 @@ const CreateStepVisitDetails = ({
           value={contactMethod}
           onChange={(nextValue) => onContactMethodChange(String(nextValue ?? ""))}
           placeholder={contactMethodPlaceholder}
-          emitOnValueChange
           portalClassName="visitas-typography"
         />
       </div>

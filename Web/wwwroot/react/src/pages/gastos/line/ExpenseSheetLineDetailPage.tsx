@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
+import RecordNavigator from "../../../components/commons/RecordNavigator.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
-import { indT } from "../../../utils/indI18n.ts";
+import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
@@ -93,6 +94,7 @@ const ExpenseSheetLineDetailContent = () => {
     line,
     isLoading,
     errorMessage,
+    lineNavigation,
     busy,
     status,
     isEditing,
@@ -138,6 +140,7 @@ const ExpenseSheetLineDetailContent = () => {
     handleEnableEdit,
     handleCancelEdit,
     navigateToSheetDetail,
+    navigateToLineDetail,
   } = useExpenseSheetLineDetailState({
     hasAccess,
     allowSelfManagement,
@@ -603,6 +606,53 @@ const ExpenseSheetLineDetailContent = () => {
     });
   }, [isEditing, line?.lineRecId, lineId, linkedTicketFileId, sheetId]);
 
+  const lineNavigatorLabels = useMemo(
+    () => ({
+      navigation: indT("RecordNavigator_AriaLabel", "Record navigation"),
+      first: indT("History_Page_First", "First"),
+      previous: indT("History_Page_Prev", "Previous"),
+      next: indT("History_Page_Next", "Next"),
+      last: indT("History_Page_Last", "Last"),
+      position: indFormat(
+        "RecordNavigator_Position",
+        "{0} of {1}",
+        lineNavigation.currentIndex,
+        lineNavigation.totalLines
+      ),
+    }),
+    [lineNavigation.currentIndex, lineNavigation.totalLines]
+  );
+
+  const handleNavigateFirstLine = useCallback(() => {
+    navigateToLineDetail(lineNavigation.firstLineId);
+  }, [lineNavigation.firstLineId, navigateToLineDetail]);
+
+  const handleNavigatePreviousLine = useCallback(() => {
+    navigateToLineDetail(lineNavigation.previousLineId);
+  }, [lineNavigation.previousLineId, navigateToLineDetail]);
+
+  const handleNavigateNextLine = useCallback(() => {
+    navigateToLineDetail(lineNavigation.nextLineId);
+  }, [lineNavigation.nextLineId, navigateToLineDetail]);
+
+  const handleNavigateLastLine = useCallback(() => {
+    navigateToLineDetail(lineNavigation.lastLineId);
+  }, [lineNavigation.lastLineId, navigateToLineDetail]);
+
+  const lineNavigator =
+    !isCreateMode && line && lineNavigation.totalLines > 1 ? (
+      <RecordNavigator
+        currentIndex={lineNavigation.currentIndex}
+        totalItems={lineNavigation.totalLines}
+        labels={lineNavigatorLabels}
+        disabled={isLoading || busy || isRedirectingAfterCreate}
+        onFirst={handleNavigateFirstLine}
+        onPrevious={handleNavigatePreviousLine}
+        onNext={handleNavigateNextLine}
+        onLast={handleNavigateLastLine}
+      />
+    ) : null;
+
   const detailBody =
     !isLoading && !isRedirectingAfterCreate && !errorMessage && line ? (
       <ExpenseSheetLineForm
@@ -697,6 +747,7 @@ const ExpenseSheetLineDetailContent = () => {
         isLoading,
         isRedirectingAfterCreate,
         errorMessage,
+        lineNavigator,
         detailBody,
       }}
     />

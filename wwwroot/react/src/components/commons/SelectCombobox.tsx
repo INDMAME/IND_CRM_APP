@@ -24,6 +24,18 @@ type NormalizedOption = {
 
 const EMPTY_OPTION: NormalizedOption = { value: "", text: "" };
 
+const normalizeOption = (o: RawOption): NormalizedOption => {
+  if (Array.isArray(o)) {
+    return { value: o[0] ?? "", text: o[1] ?? "" };
+  }
+
+  return {
+    value: o?.value ?? o?.Value ?? "",
+    text: o?.text ?? o?.Text ?? "",
+    icon: o?.icon ?? o?.Icon,
+  };
+};
+
 const normalizeLookupText = (value: string | number | null | undefined): string => {
   return String(value ?? "").trim().toLowerCase();
 };
@@ -31,6 +43,7 @@ const normalizeLookupText = (value: string | number | null | undefined): string 
 type SelectComboboxProps = {
   label: string;
   options: RawOption[];
+  selectedOption?: RawOption;
   value: string | number;
   onChange: (value: string) => void;
   inputRef?: React.Ref<HTMLInputElement>;
@@ -39,7 +52,6 @@ type SelectComboboxProps = {
   disabled?: boolean;
   readOnly?: boolean;
   usePortal?: boolean;
-  emitOnValueChange?: boolean;
   idBase?: string;
   portalClassName?: string;
   panelClassName?: string;
@@ -72,6 +84,7 @@ type SelectComboboxProps = {
 const SelectCombobox = ({
   label,
   options,
+  selectedOption,
   value,
   onChange,
   inputRef,
@@ -80,7 +93,6 @@ const SelectCombobox = ({
   disabled = false,
   readOnly = false,
   usePortal = true,
-  emitOnValueChange = false,
   idBase,
   portalClassName,
   panelClassName,
@@ -123,22 +135,25 @@ const SelectCombobox = ({
   const inlineDropdownPlacementClass = dropdownPlacement === "top" ? "bottom-full mb-1" : "mt-1";
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
   const data = useMemo(() => {
-    return (options || []).map<NormalizedOption>((o) => {
-      if (Array.isArray(o)) {
-        return { value: o[0] ?? "", text: o[1] ?? "" };
-      }
-      return {
-        value: o?.value ?? o?.Value ?? "",
-        text: o?.text ?? o?.Text ?? "",
-        icon: o?.icon ?? o?.Icon,
-      };
-    });
+    return (options || []).map<NormalizedOption>(normalizeOption);
   }, [options]);
+  const selectedDataOption = useMemo(() => {
+    if (!selectedOption) return null;
+    return normalizeOption(selectedOption);
+  }, [selectedOption]);
+  const selected = useMemo<NormalizedOption>(() => {
+    const optionValue = value;
+    const normalizedValue = String(optionValue ?? "");
+    if (!normalizedValue.trim()) return EMPTY_OPTION;
+
+    return (
+      data.find((d) => String(d.value) === normalizedValue) ||
+      (selectedDataOption && String(selectedDataOption.value) === normalizedValue ? selectedDataOption : EMPTY_OPTION)
+    );
+  }, [value, data, selectedDataOption]);
+  const selectedValue = String(selected?.value ?? "").trim();
 
   const [query, setQuery] = useState<string | null>(null);
-  const [selected, setSelected] = useState(
-    data.find((d) => String(d.value) === String(value)) || EMPTY_OPTION
-  );
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showNotFoundState, setShowNotFoundState] = useState(false);
@@ -148,14 +163,11 @@ const SelectCombobox = ({
   const initialDropdownWidthRef = useRef<number | null>(null);
 
   const clearManualValue = (nextOpen: boolean, showNotFound: boolean) => {
-    setSelected(EMPTY_OPTION);
     setQuery("");
     setActiveIndex(0);
     setShowNotFoundState(showNotFound);
     setOpen(nextOpen);
-    if (!emitOnValueChange) {
-      onChange("");
-    }
+    onChange("");
   };
 
   useOutsideClick([containerRef, listRef], () => {
@@ -169,19 +181,11 @@ const SelectCombobox = ({
   });
 
   useEffect(() => {
-    const nextSelected = data.find((d) => String(d.value) === String(value)) || EMPTY_OPTION;
-    setSelected(nextSelected);
-
     if (String(value ?? "").trim()) {
       setQuery(null);
       setShowNotFoundState(false);
     }
-  }, [value, data]);
-
-  useEffect(() => {
-    if (!emitOnValueChange) return;
-    onChange(selected?.value ? String(selected.value) : "");
-  }, [emitOnValueChange, onChange, selected]);
+  }, [value]);
 
   const filtered = useMemo(() => {
     if (!query || !query.trim()) return data;
@@ -192,7 +196,6 @@ const SelectCombobox = ({
       return optionText.includes(normalizedQuery) || optionValue.includes(normalizedQuery);
     });
   }, [data, query]);
-  const selectedValue = String(selected?.value ?? "").trim();
   const selectedIndex = filtered.findIndex((option) => String(option.value) === selectedValue);
   const preferredActiveIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const resolvedActiveIndex =
@@ -205,13 +208,11 @@ const SelectCombobox = ({
   };
 
   const selectOption = (opt: NormalizedOption) => {
-    setSelected(opt);
+    const nextValue = String(opt?.value ?? "");
     setQuery(null);
     setShowNotFoundState(false);
     setOpen(false);
-    if (!emitOnValueChange) {
-      onChange(opt?.value ? String(opt.value) : "");
-    }
+    onChange(nextValue);
   };
 
   const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {

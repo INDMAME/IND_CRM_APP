@@ -1,0 +1,111 @@
+import React from "react";
+import {
+  ChevronDoubleLeftIcon,
+  ChevronDoubleRightIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@heroicons/react/24/outline";
+import { classNames } from "../../utils/classNames.ts";
+
+type RecordNavigatorLabels = {
+  navigation: string;
+  first: string;
+  previous: string;
+  next: string;
+  last: string;
+  position: string;
+};
+
+type RecordNavigatorProps = {
+  currentIndex: number;
+  totalItems: number;
+  labels: RecordNavigatorLabels;
+  disabled?: boolean;
+  className?: string;
+  onFirst: () => void;
+  onPrevious: () => void;
+  onNext: () => void;
+  onLast: () => void;
+};
+
+type RecordNavigatorButtonProps = {
+  label: string;
+  disabled: boolean;
+  icon: React.ComponentType<React.ComponentProps<"svg">>;
+  onClick: () => void;
+};
+
+// Icon-only control for the shared record navigator.
+const RecordNavigatorButton = ({ label, disabled, icon: Icon, onClick }: RecordNavigatorButtonProps) => {
+  return (
+    <button
+      type="button"
+      className={classNames(
+        "inline-flex h-8 w-8 items-center justify-center rounded-[5px] border-0 bg-transparent text-primary transition",
+        "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2",
+        disabled ? "cursor-not-allowed opacity-35" : "hover:bg-primary/5 active:bg-primary/10"
+      )}
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={(event) => {
+        event.preventDefault();
+        if (disabled) return;
+        onClick();
+      }}
+    >
+      <Icon className="h-4 w-4" aria-hidden="true" />
+    </button>
+  );
+};
+
+// Dumb record-to-record navigator with fixed controls and caller-owned navigation state.
+const RecordNavigator = ({
+  currentIndex,
+  totalItems,
+  labels,
+  disabled = false,
+  className,
+  onFirst,
+  onPrevious,
+  onNext,
+  onLast,
+}: RecordNavigatorProps) => {
+  const safeTotal = Math.max(0, totalItems || 0);
+  const safeCurrent = Math.min(Math.max(1, currentIndex || 1), safeTotal || 1);
+  if (safeTotal <= 1) return null;
+
+  const atFirst = safeCurrent <= 1;
+  const atLast = safeCurrent >= safeTotal;
+  const disableFirst = disabled || atFirst;
+  const disablePrevious = disabled || atFirst;
+  const disableNext = disabled || atLast;
+  const disableLast = disabled || atLast;
+
+  return (
+    <nav
+      className={classNames(
+        "grid min-h-12 grid-cols-[1fr_auto_1fr] items-center border-y border-slate-200 bg-white px-3 py-2",
+        className || ""
+      )}
+      aria-label={labels.navigation}
+    >
+      <div className="flex items-center justify-start gap-2">
+        <RecordNavigatorButton label={labels.first} disabled={disableFirst} icon={ChevronDoubleLeftIcon} onClick={onFirst} />
+        <RecordNavigatorButton label={labels.previous} disabled={disablePrevious} icon={ChevronLeftIcon} onClick={onPrevious} />
+      </div>
+
+      <div className="min-w-[6.5rem] text-center text-xs font-semibold leading-none text-slate-950" aria-live="polite">
+        {labels.position}
+      </div>
+
+      <div className="flex items-center justify-end gap-2">
+        <RecordNavigatorButton label={labels.next} disabled={disableNext} icon={ChevronRightIcon} onClick={onNext} />
+        <RecordNavigatorButton label={labels.last} disabled={disableLast} icon={ChevronDoubleRightIcon} onClick={onLast} />
+      </div>
+    </nav>
+  );
+};
+
+export type { RecordNavigatorLabels, RecordNavigatorProps };
+export default RecordNavigator;

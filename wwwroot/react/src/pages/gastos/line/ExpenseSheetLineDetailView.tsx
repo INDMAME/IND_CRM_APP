@@ -44,6 +44,7 @@ type ExpenseSheetLineDetailViewProps = {
     isLoading: boolean;
     isRedirectingAfterCreate: boolean;
     errorMessage: string;
+    lineNavigator: ReactNode;
     detailBody: ReactNode;
   };
 };
@@ -94,6 +95,8 @@ const ExpenseSheetLineDetailView = ({ modal, preview, content }: ExpenseSheetLin
       </div>
 
       {content.errorMessage ? <div className="text-danger">{content.errorMessage}</div> : null}
+
+      {content.detailBody && content.lineNavigator ? content.lineNavigator : null}
 
       {content.detailBody ? (
         preview.showStickyPreview ? (

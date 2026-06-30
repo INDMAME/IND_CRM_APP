@@ -25,6 +25,62 @@ const FUEL_PRICE_SOURCE_GLOBAL_CONFIG = "CRMParameters";
 const EXPENSE_STATUS_APPROVED = 2;
 const EXPENSE_STATUS_PAID = 4;
 
+type ExpenseSheetLineNavigation = {
+  currentIndex: number;
+  totalLines: number;
+  firstLineId: string;
+  previousLineId: string;
+  nextLineId: string;
+  lastLineId: string;
+};
+
+const EMPTY_LINE_NAVIGATION: ExpenseSheetLineNavigation = {
+  currentIndex: 0,
+  totalLines: 0,
+  firstLineId: "",
+  previousLineId: "",
+  nextLineId: "",
+  lastLineId: "",
+};
+
+const resolveLineNavigationId = (line: ExpenseSheetLine | null | undefined): string => {
+  return safeText(line?.lineRecId);
+};
+
+// Builds adjacent line navigation from the already-loaded sheet detail lines.
+const buildLineNavigation = (lines: ExpenseSheetLine[], currentLineId: string): ExpenseSheetLineNavigation => {
+  const normalizedCurrentLineId = safeText(currentLineId).toUpperCase();
+  if (!normalizedCurrentLineId || lines.length <= 0) {
+    return EMPTY_LINE_NAVIGATION;
+  }
+
+  const currentIndex = lines.findIndex(
+    (entry) => resolveLineNavigationId(entry).toUpperCase() === normalizedCurrentLineId
+  );
+  if (currentIndex < 0) {
+    return EMPTY_LINE_NAVIGATION;
+  }
+
+  const firstNavigableLine = lines.find((entry) => !!resolveLineNavigationId(entry));
+  const previousNavigableLine = lines
+    .slice(0, currentIndex)
+    .reverse()
+    .find((entry) => !!resolveLineNavigationId(entry));
+  const nextNavigableLine = lines
+    .slice(currentIndex + 1)
+    .find((entry) => !!resolveLineNavigationId(entry));
+  const lastNavigableLine = [...lines].reverse().find((entry) => !!resolveLineNavigationId(entry));
+
+  return {
+    currentIndex: currentIndex + 1,
+    totalLines: lines.length,
+    firstLineId: resolveLineNavigationId(firstNavigableLine),
+    previousLineId: resolveLineNavigationId(previousNavigableLine),
+    nextLineId: resolveLineNavigationId(nextNavigableLine),
+    lastLineId: resolveLineNavigationId(lastNavigableLine),
+  };
+};
+
 const toInputDate = (raw?: string): string => {
   const parsed = parseExpenseDate(raw);
   return parsed ? toIsoDate(parsed) : "";
@@ -158,6 +214,7 @@ export const useExpenseSheetLineDetailState = ({
   const [isFuelPriceLoading, setIsFuelPriceLoading] = useState(false);
   const [fuelPriceMessage, setFuelPriceMessage] = useState("");
   const [fuelPriceMessageIsError, setFuelPriceMessageIsError] = useState(false);
+  const [lineNavigation, setLineNavigation] = useState<ExpenseSheetLineNavigation>(EMPTY_LINE_NAVIGATION);
 
   const hydrateDraftFromLine = useCallback((nextLine: ExpenseSheetLine | null, nextHeader: ExpenseSheetHeader | null) => {
     const isExistingLine = !!safeText(nextLine?.lineRecId);
@@ -189,6 +246,7 @@ export const useExpenseSheetLineDetailState = ({
         setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
         setHeader(null);
         setLine(null);
+        setLineNavigation(EMPTY_LINE_NAVIGATION);
         return;
       }
 
@@ -205,6 +263,7 @@ export const useExpenseSheetLineDetailState = ({
             setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
             setHeader(null);
             setLine(null);
+            setLineNavigation(EMPTY_LINE_NAVIGATION);
             return;
           }
 
@@ -216,6 +275,7 @@ export const useExpenseSheetLineDetailState = ({
             setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
             setHeader(null);
             setLine(null);
+            setLineNavigation(EMPTY_LINE_NAVIGATION);
             return;
           }
 
@@ -240,6 +300,7 @@ export const useExpenseSheetLineDetailState = ({
             setErrorMessage(indT("ExpenseSheets_Detail_PaidReadOnly", "Paid expense sheets are read-only."));
             setHeader(loadedHeader);
             setLine(null);
+            setLineNavigation(EMPTY_LINE_NAVIGATION);
             setIsEditing(false);
             return;
           }
@@ -255,6 +316,7 @@ export const useExpenseSheetLineDetailState = ({
           );
           setHeader(loadedHeader);
           setLine(draftLine);
+          setLineNavigation(EMPTY_LINE_NAVIGATION);
           setIsEditing(true);
           hydrateDraftFromLine(draftLine, loadedHeader);
           setStatus("");
@@ -265,6 +327,7 @@ export const useExpenseSheetLineDetailState = ({
           setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
           setHeader(null);
           setLine(null);
+          setLineNavigation(EMPTY_LINE_NAVIGATION);
           return;
         }
 
@@ -276,6 +339,7 @@ export const useExpenseSheetLineDetailState = ({
           setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
           setHeader(null);
           setLine(null);
+          setLineNavigation(EMPTY_LINE_NAVIGATION);
           return;
         }
 
@@ -287,6 +351,7 @@ export const useExpenseSheetLineDetailState = ({
           setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
           setHeader(null);
           setLine(null);
+          setLineNavigation(EMPTY_LINE_NAVIGATION);
           return;
         }
 
@@ -301,11 +366,13 @@ export const useExpenseSheetLineDetailState = ({
           setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet line was not found."));
           setHeader(mappedHeader);
           setLine(null);
+          setLineNavigation(EMPTY_LINE_NAVIGATION);
           return;
         }
 
         setHeader(mappedHeader);
         setLine(selectedLine);
+        setLineNavigation(buildLineNavigation(mappedLines, selectedLine.lineRecId));
         const loadedStatusCode = typeof mappedHeader.expenseSheetStatus === "number" ? mappedHeader.expenseSheetStatus : null;
         const loadedIsSheetApproved = loadedStatusCode === EXPENSE_STATUS_APPROVED;
         const loadedIsSheetPaidByStatus = loadedStatusCode === EXPENSE_STATUS_PAID;
@@ -347,6 +414,7 @@ export const useExpenseSheetLineDetailState = ({
         setErrorMessage(error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load line detail."));
         setHeader(null);
         setLine(null);
+        setLineNavigation(EMPTY_LINE_NAVIGATION);
       } finally {
         setIsLoading(false);
       }
@@ -571,9 +639,27 @@ export const useExpenseSheetLineDetailState = ({
     navigateToExpenseUrl(targetUrl);
   }, [sheetId]);
 
+  const navigateToLineDetail = useCallback(
+    (targetLineId: string) => {
+      const safeSheetId = safeText(sheetId);
+      const safeLineId = safeText(targetLineId);
+      if (isCreateMode || !safeSheetId || !safeLineId) return;
+
+      const query = new URLSearchParams({
+        hojaGastosId: safeSheetId,
+        lineRecId: safeLineId,
+      });
+      navigateToExpenseUrl(`/Gastos/ExpenseSheetLineDetail?${query.toString()}`, {
+        askConfirmation: isEditing,
+      });
+    },
+    [isCreateMode, isEditing, sheetId]
+  );
+
   return {
     header,
     line,
+    lineNavigation,
     isLoading,
     errorMessage,
     busy,
@@ -624,5 +710,6 @@ export const useExpenseSheetLineDetailState = ({
     handleCancelEdit,
     handleOpenCreateMode,
     navigateToSheetDetail,
+    navigateToLineDetail,
   };
 };

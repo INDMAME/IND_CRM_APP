@@ -594,6 +594,12 @@
   <data name="History_Page_Last" xml:space="preserve">
     <value>末页</value>
   </data>
+  <data name="RecordNavigator_AriaLabel" xml:space="preserve">
+    <value>记录导航</value>
+  </data>
+  <data name="RecordNavigator_Position" xml:space="preserve">
+    <value>{0} / {1}</value>
+  </data>
   <data name="Common_OK" xml:space="preserve">
     <value>确定</value>
   </data>
