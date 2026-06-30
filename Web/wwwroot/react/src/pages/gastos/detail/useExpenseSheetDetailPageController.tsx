@@ -208,12 +208,12 @@ export const useExpenseSheetDetailPageController = () => {
 
   const handleModalButtonConfirm = useCallback(() => {
     if (!busy && modalError) {
-      handleCloseConfirm();
+      handleCancelConfirm();
       return;
     }
 
     void handleModalConfirm();
-  }, [busy, handleCloseConfirm, handleModalConfirm, modalError]);
+  }, [busy, handleCancelConfirm, handleModalConfirm, modalError]);
 
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
@@ -223,16 +223,6 @@ export const useExpenseSheetDetailPageController = () => {
   );
   const hasStatusActionContent = lines.length > 0 || hasPositiveTotalAmount(header?.totalAmount);
   const areStatusActionsDisabled = !hasStatusActionContent;
-  const shouldPropagateReimbursableExpenseToLines =
-    !isCreateMode &&
-    isEditing &&
-    canEditHeaderFieldsCurrent &&
-    lines.length > 0 &&
-    normalizeExpenseReimbursableExpense(draftReimbursableExpense) !==
-      normalizeExpenseReimbursableExpense(header?.reimbursableExpense);
-  const resetDraftReimbursableExpenseToOriginal = useCallback(() => {
-    setDraftReimbursableExpense(normalizeExpenseReimbursableExpense(header?.reimbursableExpense));
-  }, [header?.reimbursableExpense, setDraftReimbursableExpense]);
   const ownerDisplay = useMemo(() => {
     const ownerUserId = safeText(header?.userId);
     const currentUserId = safeText(currentCrmUserId);
@@ -244,7 +234,12 @@ export const useExpenseSheetDetailPageController = () => {
     return ownerName ? `${ownerName} (${ownerUserId})` : ownerUserId;
   }, [currentCrmUserId, header?.userId, header?.userName]);
 
-  const { handleUpdate, handleStatusTransition, handleDelete } = useExpenseSheetDetailMutations({
+  const {
+    handleUpdate,
+    handlePropagateReimbursableExpenseToLines,
+    handleStatusTransition,
+    handleDelete,
+  } = useExpenseSheetDetailMutations({
     busy,
     isEditing,
     isCreateMode,
@@ -269,7 +264,6 @@ export const useExpenseSheetDetailPageController = () => {
     draftEstadoComentarios,
     currentExpenseSheetStatus: header?.expenseSheetStatus,
     currentLines: lines,
-    propagateReimbursableExpenseToLines: shouldPropagateReimbursableExpenseToLines,
     exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
       createdSheetIdRef.current = safeText(createdSheetId);
@@ -279,6 +273,57 @@ export const useExpenseSheetDetailPageController = () => {
     setStatus,
     setIsEditing,
   });
+
+  const handleDraftReimbursableExpenseChange = useCallback(
+    (value: number) => {
+      const nextValue = normalizeExpenseReimbursableExpense(value);
+      const previousValue = normalizeExpenseReimbursableExpense(draftReimbursableExpense);
+      if (nextValue === previousValue) return;
+
+      const shouldConfirmPropagation =
+        !isCreateMode && isEditing && canEditHeaderFieldsCurrent && lines.length > 0;
+
+      if (!shouldConfirmPropagation) {
+        setDraftReimbursableExpense(nextValue);
+        return;
+      }
+
+      if (busy || modal.open) return;
+
+      setDraftReimbursableExpense(nextValue);
+      openConfirm({
+        title: indT("ExpenseSheets_Detail_PropagateReimbursable_Title", "Update lines"),
+        message: indT(
+          "ExpenseSheets_Detail_PropagateReimbursable_Body",
+          "The reimbursable change will be propagated to every expense sheet line. Do you want to continue?"
+        ),
+        confirmText: indT("Confirm_Yes", "OK"),
+        onCancel: () => {
+          setDraftReimbursableExpense(previousValue);
+        },
+        onConfirm: async () => {
+          const ok = await handlePropagateReimbursableExpenseToLines(nextValue);
+          if (ok) {
+            setIsEditing(true);
+          }
+          return ok;
+        },
+      });
+    },
+    [
+      busy,
+      canEditHeaderFieldsCurrent,
+      draftReimbursableExpense,
+      handlePropagateReimbursableExpenseToLines,
+      isCreateMode,
+      isEditing,
+      lines.length,
+      modal.open,
+      openConfirm,
+      setDraftReimbursableExpense,
+      setIsEditing,
+    ]
+  );
 
   const handleOpenLineDetail = useCallback(
     async (lineRecId: string) => {
@@ -406,18 +451,6 @@ export const useExpenseSheetDetailPageController = () => {
       invalidateCachedListForRefetch();
       navigateToExpenseUrl("/Gastos/ExpenseSheets");
     },
-    saveConfirmTitle: shouldPropagateReimbursableExpenseToLines
-      ? indT("ExpenseSheets_Detail_PropagateReimbursable_Title", "Update lines")
-      : undefined,
-    saveConfirmMessage: shouldPropagateReimbursableExpenseToLines
-      ? indT(
-          "ExpenseSheets_Detail_PropagateReimbursable_Body",
-          "The reimbursable change will be propagated to every expense sheet line. Do you want to continue?"
-        )
-      : undefined,
-    saveConfirmOnCancel: shouldPropagateReimbursableExpenseToLines
-      ? resetDraftReimbursableExpenseToOriginal
-      : undefined,
     openConfirm,
     closeConfirm,
   });
@@ -583,7 +616,7 @@ export const useExpenseSheetDetailPageController = () => {
     setDraftProjectId,
     setDraftCurrencyCode,
     setDraftExchangeRate,
-    setDraftReimbursableExpense,
+    setDraftReimbursableExpense: handleDraftReimbursableExpenseChange,
     setDraftEstadoComentarios,
     navigateToLineDetail: handleOpenLineDetail,
     handleModalButtonConfirm,

@@ -47,7 +47,6 @@ type UseExpenseSheetDetailMutationsArgs = {
   exchangeRateBaseCurrency: string;
   currentExpenseSheetStatus?: number | null;
   currentLines: ExpenseSheetLine[];
-  propagateReimbursableExpenseToLines: boolean;
   onCreateSuccess: (createdSheetId: string) => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -160,7 +159,6 @@ export const useExpenseSheetDetailMutations = ({
   exchangeRateBaseCurrency,
   currentExpenseSheetStatus,
   currentLines,
-  propagateReimbursableExpenseToLines,
   onCreateSuccess,
   setModalError,
   setBusy,
@@ -274,15 +272,6 @@ export const useExpenseSheetDetailMutations = ({
           throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
         }
 
-        if (propagateReimbursableExpenseToLines) {
-          setStatus(indT("ExpenseSheets_Detail_PropagatingReimbursable", "Updating expense sheet lines..."));
-          await updateReimbursableExpenseOnLines(
-            sheetId,
-            currentLines,
-            normalizeExpenseReimbursableExpense(payloadResult.payload.reimbursableExpense)
-          );
-        }
-
         setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
         setIsEditing(false);
         return true;
@@ -295,18 +284,61 @@ export const useExpenseSheetDetailMutations = ({
     buildUpdatePayload,
     canCreateExpense,
     canEditExpense,
-    currentLines,
     isCreateMode,
     isEditLocked,
     isEditing,
     onCreateSuccess,
-    propagateReimbursableExpenseToLines,
     setBusy,
     setIsEditing,
     setModalError,
     setStatus,
     sheetId,
   ]);
+
+  const handlePropagateReimbursableExpenseToLines = useCallback(
+    async (nextReimbursableExpense: number) => {
+      if (busy || isCreateMode || !isEditing) return false;
+      if (isEditLocked || !canEditExpense || !canEditHeaderFields) {
+        showPermissionModal();
+        return false;
+      }
+
+      const result = await executeExpenseMutation({
+        startStatus: indT("ExpenseSheets_Detail_PropagatingReimbursable", "Updating expense sheet lines..."),
+        fallbackErrorMessage: indT("ExpenseSheets_Detail_UpdateError", "Update error."),
+        setModalError,
+        setBusy,
+        setStatus,
+        action: async () => {
+          await updateReimbursableExpenseOnLines(
+            sheetId,
+            currentLines,
+            normalizeExpenseReimbursableExpense(nextReimbursableExpense)
+          );
+
+          setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
+          setIsEditing(true);
+          return true;
+        },
+      });
+
+      return result.ok;
+    },
+    [
+      busy,
+      canEditExpense,
+      canEditHeaderFields,
+      currentLines,
+      isCreateMode,
+      isEditLocked,
+      isEditing,
+      setBusy,
+      setIsEditing,
+      setModalError,
+      setStatus,
+      sheetId,
+    ]
+  );
 
   const handleStatusTransition = useCallback(
     async (nextStatus: number, startStatus: string, statusCommentOverride?: string | null) => {
@@ -388,6 +420,7 @@ export const useExpenseSheetDetailMutations = ({
 
   return {
     handleUpdate,
+    handlePropagateReimbursableExpenseToLines,
     handleStatusTransition,
     handleDelete,
   };

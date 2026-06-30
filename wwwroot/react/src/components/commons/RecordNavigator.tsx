@@ -41,9 +41,9 @@ const RecordNavigatorButton = ({ label, disabled, icon: Icon, onClick }: RecordN
     <button
       type="button"
       className={classNames(
-        "inline-flex h-8 w-8 items-center justify-center rounded-[5px] border-0 bg-transparent text-primary transition",
-        "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2",
-        disabled ? "cursor-not-allowed opacity-35" : "hover:bg-primary/5 active:bg-primary/10"
+        "inline-flex h-8 w-8 items-center justify-center rounded-[5px] border-0 bg-transparent text-primary/80 transition",
+        "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-0",
+        disabled ? "cursor-not-allowed text-primary/25" : "hover:bg-primary/8 hover:text-primary active:bg-primary/10"
       )}
       aria-label={label}
       title={label}
@@ -85,7 +85,7 @@ const RecordNavigator = ({
   return (
     <nav
       className={classNames(
-        "grid min-h-12 grid-cols-[1fr_auto_1fr] items-center border-y border-slate-200 bg-white px-3 py-2",
+        "grid min-h-12 grid-cols-[1fr_auto_1fr] items-center bg-transparent px-3 py-1.5 font-sans text-primary",
         className || ""
       )}
       aria-label={labels.navigation}
@@ -95,7 +95,7 @@ const RecordNavigator = ({
         <RecordNavigatorButton label={labels.previous} disabled={disablePrevious} icon={ChevronLeftIcon} onClick={onPrevious} />
       </div>
 
-      <div className="min-w-[6.5rem] text-center text-xs font-semibold leading-none text-slate-950" aria-live="polite">
+      <div className="min-w-[6.5rem] text-center text-sm font-semibold leading-none text-primary" aria-live="polite">
         {labels.position}
       </div>
 
