@@ -1007,7 +1007,7 @@ Formatversion: 1
               #
               #
             ENDARRAY
-          EnumType            #INDReimbursableExpense
+          EnumType            #INDReimbursableExpenseLines
         ENDPROPERTIES
         
       FIELD #AmountMST
@@ -1314,7 +1314,10 @@ Formatversion: 1
         #        this.AmountMST = this.LineAmountMST();
         #
         #    if (!hojaGastosTable.isVariousReimbursableExpenseDefault())
-        #        this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense;
+        #    {
+        #        //MMS - Ajustes CRM - 2026.06.29
+        #        this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense == INDReimbursableExpense::No ? INDReimbursableExpenseLines::No : INDReimbursableExpenseLines::Yes;
+        #    }
         #}
         #
       ENDSOURCE
@@ -1782,7 +1785,10 @@ Formatversion: 1
         #        this.AmountMST = this.LineAmountMST();
         #
         #    if (!hojaGastosTable.isVariousReimbursableExpenseDefault())
-        #    this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense;
+        #    {
+        #        //MMS - Ajustes CRM - 2026.06.29
+        #        this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense == INDReimbursableExpense::No ? INDReimbursableExpenseLines::No : INDReimbursableExpenseLines::Yes;
+        #    }
         #}
         #
       ENDSOURCE
@@ -1847,6 +1853,9 @@ Formatversion: 1
         #{
         #    ;
         #    super();
+        #
+        #    //MMS - Ajustes CRM - 2026.06.29
+        #    this.ReimbursableExpense = INDReimbursableExpenseLines::Yes;
         #}
       ENDSOURCE
       SOURCE #insert

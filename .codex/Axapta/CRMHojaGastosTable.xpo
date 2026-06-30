@@ -2534,6 +2534,9 @@ Formatversion: 1
         #{
         #    super();
         #
+        #    //MMS - Ajustes CRM - 2026.06.29
+        #    this.ReimbursableExpense = INDReimbursableExpense::Yes;
+        #
         #    //MMS - Ajustes CRM - 2026.06.26
         #    this.normalizeReimbursementCurrencyDefaults();
         #}
@@ -2853,7 +2856,7 @@ Formatversion: 1
         #    }
         #
         #    if (!this.isVariousReimbursableExpenseDefault() &&
-        #        _hojaGastosLine.ReimbursableExpense != this.ReimbursableExpense)
+        #        any2int(_hojaGastosLine.ReimbursableExpense) != any2int(this.ReimbursableExpense))
         #    {
         #        this.ReimbursableExpense = INDReimbursableExpense::Both;
         #        mustUpdate = true;
@@ -3595,7 +3598,8 @@ Formatversion: 1
         #    index hint index1
         #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
         #    {
-        #        hojaGastosLine.ReimbursableExpense = this.ReimbursableExpense;
+        #        //MMS - Ajustes CRM - 2026.06.29
+        #        hojaGastosLine.ReimbursableExpense = this.ReimbursableExpense == INDReimbursableExpense::No ? INDReimbursableExpenseLines::No : INDReimbursableExpenseLines::Yes;
         #        hojaGastosLine.doUpdate();
         #        updated++;
         #    }

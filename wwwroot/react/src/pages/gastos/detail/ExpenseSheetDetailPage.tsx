@@ -224,6 +224,7 @@ const ExpenseSheetDetailPageContent = () => {
           draftProjectId={controller.draftProjectId}
           draftCurrencyCode={controller.draftCurrencyCode}
           draftExchangeRate={controller.draftExchangeRate}
+          draftReimbursableExpense={controller.draftReimbursableExpense}
           officialExchangeRateRawValue={controller.officialExchangeRateRawValue}
           officialExchangeRateDate={controller.officialExchangeRateDate}
           officialExchangeRateSource={controller.officialExchangeRateSource}
@@ -231,6 +232,7 @@ const ExpenseSheetDetailPageContent = () => {
           onDraftProjectIdChange={controller.setDraftProjectId}
           onDraftCurrencyCodeChange={controller.setDraftCurrencyCode}
           onDraftExchangeRateChange={controller.setDraftExchangeRate}
+          onDraftReimbursableExpenseChange={controller.setDraftReimbursableExpense}
         />
       ) : null}
 

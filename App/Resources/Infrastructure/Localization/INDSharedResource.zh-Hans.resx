@@ -273,6 +273,9 @@
   <data name="ExpenseSheets_Field_StatusComment" xml:space="preserve">
     <value>状态备注</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursableExpense" xml:space="preserve">
+    <value>可报销</value>
+  </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>总金额</value>
   </data>

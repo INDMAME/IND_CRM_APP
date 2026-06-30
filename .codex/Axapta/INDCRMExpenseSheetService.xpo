@@ -469,7 +469,7 @@ Formatversion: 1
         #    real      qty;
         #    real      price;
         #    str       lineProjId;
-        #    INDReimbursableExpense lineReimbursableExpense;
+        #    INDReimbursableExpenseLines lineReimbursableExpense;
         #    boolean   hasLineReimbursableExpense;
         #    str 16    lineReimbursableExpenseRaw;
         #    CurrencyCode lineCurrencyCode;
@@ -745,14 +745,14 @@ Formatversion: 1
         #                        if (lineReimbursableExpenseRaw == '0' || str2Int(lineReimbursableExpenseRaw) != 0)
         #                        {
         #                            lineReimbursableExpense = str2Int(lineReimbursableExpenseRaw);
-        #                            if (!INDCRMExpenseSheetService::isValidReimbursableExpense(lineReimbursableExpense))
+        #                            if (!INDCRMExpenseSheetService::isValidLineReimbursableExpense(lineReimbursableExpense))
         #                            {
         #                                if (appl.ttsLevel() > 0)
         #                                    ttsabort;
         #                                if (numberSeq)
         #                                    numberSeq.abort();
         #
-        #                                return [INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense invalido: %1.', lineReimbursableExpense), conNull()), conNull()];
+        #                                return [INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense de linea invalido: %1.', lineReimbursableExpense), conNull()), conNull()];
         #                            }
         #
         #                            hasLineReimbursableExpense = true;
@@ -3869,6 +3869,16 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #isValidLineReimbursableExpense
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Method: isValidLineReimbursableExpense
+        #// Purpose: Validate allowed INDReimbursableExpenseLines int values.
+        #static server boolean isValidLineReimbursableExpense(int _value)
+        #{
+        #    return _value == 0 || _value == 1;
+        #}
+        #
+      ENDSOURCE
       SOURCE #validateExpenseSheetHeaderForApi
         #//MMS - Ajustes CRM - 2026.06.29
         #// Ejecuta validaciones de cabecera antes de guardar desde API y devuelve el motivo funcional.
@@ -5152,7 +5162,7 @@ Formatversion: 1
         #    real  qty;
         #    real  price;
         #    str   projId;
-        #    INDReimbursableExpense lineReimbursableExpense;
+        #    INDReimbursableExpenseLines lineReimbursableExpense;
         #    boolean hasLineReimbursableExpense;
         #    str 16  lineReimbursableExpenseRaw;
         #    CurrencyCode lineCurrencyCode;
@@ -5200,8 +5210,8 @@ Formatversion: 1
         #        if (lineReimbursableExpenseRaw == '0' || str2Int(lineReimbursableExpenseRaw) != 0)
         #        {
         #            lineReimbursableExpense = str2Int(lineReimbursableExpenseRaw);
-        #            if (!INDCRMExpenseSheetService::isValidReimbursableExpense(lineReimbursableExpense))
-        #                return INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense invalido: %1.', lineReimbursableExpense), conNull());
+        #            if (!INDCRMExpenseSheetService::isValidLineReimbursableExpense(lineReimbursableExpense))
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense de linea invalido: %1.', lineReimbursableExpense), conNull());
         #
         #            hasLineReimbursableExpense = true;
         #        }

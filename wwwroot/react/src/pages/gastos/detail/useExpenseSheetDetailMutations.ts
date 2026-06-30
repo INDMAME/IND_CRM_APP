@@ -2,6 +2,7 @@ import React, { useCallback } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
 import type { ExpenseSheetCreateRequest, ExpenseSheetHeaderUpdateRequest } from "../expenseTypes.ts";
+import { normalizeExpenseReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { executeExpenseMutation } from "../hooks/expenseMutationUtils.ts";
 import {
   createExpenseSheet,
@@ -28,6 +29,7 @@ type UseExpenseSheetDetailMutationsArgs = {
   draftDescription: string;
   draftCurrencyCode: string;
   draftExchangeRate: string;
+  draftReimbursableExpense: number | null;
   officialExchangeRateValue: string;
   draftProjectId: string;
   draftEstadoComentarios: string;
@@ -60,6 +62,7 @@ export const useExpenseSheetDetailMutations = ({
   draftDescription,
   draftCurrencyCode,
   draftExchangeRate,
+  draftReimbursableExpense,
   officialExchangeRateValue,
   draftProjectId,
   draftEstadoComentarios,
@@ -82,6 +85,7 @@ export const useExpenseSheetDetailMutations = ({
       const normalizedEstadoComentarios = String(
         statusCommentOverride ?? draftEstadoComentarios ?? ""
       ).trim();
+      const normalizedReimbursableExpense = normalizeExpenseReimbursableExpense(draftReimbursableExpense);
       const resolvedExpenseSheetStatus =
         nextStatus ?? (currentExpenseSheetStatus != null ? Number(currentExpenseSheetStatus) : undefined);
 
@@ -96,6 +100,7 @@ export const useExpenseSheetDetailMutations = ({
           description: normalizedDescription,
           projId: normalizedProjectId || undefined,
           expenseSheetStatus: resolvedExpenseSheetStatus,
+          reimbursableExpense: normalizedReimbursableExpense,
           // Preserve explicit empty status comments so the backend can clear the stored value.
           estadoComentarios: hasExplicitStatusCommentOverride
             ? normalizedEstadoComentarios
@@ -109,6 +114,7 @@ export const useExpenseSheetDetailMutations = ({
       draftDescription,
       draftEstadoComentarios,
       draftProjectId,
+      draftReimbursableExpense,
       isCreateMode,
     ]
   );
@@ -147,6 +153,7 @@ export const useExpenseSheetDetailMutations = ({
             description: createPayload.description,
             projId: createPayload.projId,
             expenseSheetStatus: 0,
+            reimbursableExpense: createPayload.reimbursableExpense,
             lines: [],
           };
 

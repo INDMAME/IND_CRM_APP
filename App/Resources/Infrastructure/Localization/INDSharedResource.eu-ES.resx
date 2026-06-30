@@ -360,6 +360,9 @@
   <data name="ExpenseSheets_Field_StatusComment" xml:space="preserve">
     <value>Egoeraren iruzkina</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursableExpense" xml:space="preserve">
+    <value>Itzulgarria</value>
+  </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Zenbateko osoa</value>
   </data>
