@@ -8,6 +8,7 @@ import type {
   ExpenseSheetLineUpdateRequest,
 } from "../expenseTypes.ts";
 import { parseExpenseInternationalValue } from "../constants/internationalOptions.ts";
+import { normalizeExpenseLineReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
@@ -41,6 +42,7 @@ type UseExpenseSheetLineDetailMutationsArgs = {
   draftQty: string;
   draftProjectId: string;
   draftInternational: string;
+  draftReimbursableExpense: number | null;
   draftCurrencyCode: string;
   draftAmountMST: string;
   draftExchangeRate: string;
@@ -81,6 +83,7 @@ export const useExpenseSheetLineDetailMutations = ({
   draftQty,
   draftProjectId,
   draftInternational,
+  draftReimbursableExpense,
   draftCurrencyCode,
   draftAmountMST,
   draftExchangeRate,
@@ -124,6 +127,7 @@ export const useExpenseSheetLineDetailMutations = ({
     const parsedPrice = parseNumber(draftPrice);
     const parsedQty = parseNumber(draftQty);
     const parsedInternational = parseExpenseInternationalValue(draftInternational);
+    const normalizedReimbursableExpense = normalizeExpenseLineReimbursableExpense(draftReimbursableExpense);
     const parsedAmountMST = parseNumber(draftAmountMST);
     const parsedExchangeRate = parseNumber(draftExchangeRate);
     const normalizedCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
@@ -184,6 +188,7 @@ export const useExpenseSheetLineDetailMutations = ({
           qty: Number(parsedQty),
           price: Number(parsedPrice),
           projId: String(draftProjectId || "").trim() || undefined,
+          reimbursableExpense: normalizedReimbursableExpense,
           currencyCode: normalizedCurrencyCode || undefined,
           amountMST: parsedAmountMST,
           exchRate: parsedExchangeRate != null && parsedExchangeRate > 0 ? parsedExchangeRate : null,
@@ -231,6 +236,7 @@ export const useExpenseSheetLineDetailMutations = ({
     draftQty,
     draftTransDate,
     draftTypeValueCode,
+    draftReimbursableExpense,
     isCreateMode,
     isEditLocked,
     isEditing,

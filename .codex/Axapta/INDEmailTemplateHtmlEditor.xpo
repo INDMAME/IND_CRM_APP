@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDEmailTemplateHtmlEditor descargados en Jueves 28/05/2026
+; Navision Axapta Class: INDEmailTemplateHtmlEditor descargados en Martes 30/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -22,6 +22,7 @@ Formatversion: 1
         #{
         #    return htmlCaption;
         #}
+        #
       ENDSOURCE
       SOURCE #classDeclaration
         #class INDEmailTemplateHtmlEditor extends SysInetHTMLEditor
@@ -37,6 +38,7 @@ Formatversion: 1
         #
         #    htmlCaption = _caption;
         #}
+        #
       ENDSOURCE
       SOURCE #editHtml
         #// Abre el editor HTML estandar y devuelve el contenido editado.
@@ -71,6 +73,7 @@ Formatversion: 1
         #
         #    return resultHtml;
         #}
+        #
       ENDSOURCE
     ENDMETHODS
   ENDCLASS

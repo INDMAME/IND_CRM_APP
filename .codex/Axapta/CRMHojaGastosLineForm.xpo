@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Lunes 29/06/2026
+; Navision Axapta Forms unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -1599,7 +1599,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12381, containerId:12292, containerdata: 0
+                      ;==== controlId:12381, containerId:12292, containerdata: 0   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_Qty
@@ -1669,7 +1669,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12382, containerId:12292, containerdata: 0
+                      ;==== controlId:12382, containerId:12292, containerdata: 0   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_Price
@@ -1739,7 +1739,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12383, containerId:12292, containerdata: 0
+                      ;==== controlId:12383, containerId:12292, containerdata: 0   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_Currency
@@ -1802,7 +1802,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12345, containerId:12292, containerdata: 0
+                      ;==== controlId:12345, containerId:12292, containerdata: 0   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_ExchRate
@@ -1872,7 +1872,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12380, containerId:12292, containerdata: 0
+                      ;==== controlId:12380, containerId:12292, containerdata: 0   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_Amount
@@ -1942,7 +1942,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12344, containerId:12292, containerdata: 0
+                      ;==== controlId:12344, containerId:12292, containerdata: 0   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_AmountMST
@@ -2012,7 +2012,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL COMBOBOX
-                      ;==== controlId:12346, containerId:12292, containerdata: 0
+                      ;==== controlId:12346, containerId:12292, containerdata: 0   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_ReimbursableExpense

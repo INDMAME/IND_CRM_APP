@@ -37,6 +37,7 @@ namespace IND_CRM_APP.Controllers
             "CRMGastoType",
             "INDExpenseSheetStatus",
             "INDReimbursableExpense",
+            "INDReimbursableExpenseLines",
             "INDExchangeRateMode",
             "INDTicketStatus"
         };
@@ -5804,6 +5805,7 @@ namespace IND_CRM_APP.Controllers
             ViewBag.GastoTypeOptions = gastoTypeFallback;
             ViewBag.ExpenseSheetStatusOptions = Array.Empty<object>();
             ViewBag.ReimbursableExpenseOptions = Array.Empty<object>();
+            ViewBag.ReimbursableExpenseLineOptions = Array.Empty<object>();
             ViewBag.ExchangeRateModeOptions = Array.Empty<object>();
             ViewBag.TicketStatusOptions = Array.Empty<object>();
 
@@ -5820,6 +5822,7 @@ namespace IND_CRM_APP.Controllers
                 ViewBag.GastoTypeOptions = LoadOptionsFromCatalog(catalog, GastoTypeEnumName, gastoTypeFallback, result.TraceId);
                 ViewBag.ExpenseSheetStatusOptions = LoadOptionsFromCatalog(catalog, "INDExpenseSheetStatus", traceId: result.TraceId);
                 ViewBag.ReimbursableExpenseOptions = LoadOptionsFromCatalog(catalog, "INDReimbursableExpense", traceId: result.TraceId);
+                ViewBag.ReimbursableExpenseLineOptions = LoadOptionsFromCatalog(catalog, "INDReimbursableExpenseLines", traceId: result.TraceId);
                 ViewBag.ExchangeRateModeOptions = LoadOptionsFromCatalog(catalog, "INDExchangeRateMode", traceId: result.TraceId);
                 ViewBag.TicketStatusOptions = LoadOptionsFromCatalog(catalog, "INDTicketStatus", traceId: result.TraceId);
             }

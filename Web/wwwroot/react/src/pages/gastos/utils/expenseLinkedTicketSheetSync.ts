@@ -9,6 +9,7 @@ import {
   getDefaultExpenseGastoTypeCode,
   toExpenseGastoTypeCode,
 } from "../constants/expenseGastoTypeCatalog.ts";
+import { normalizeExpenseLineReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import {
   createExpenseSheet,
   fetchExpenseSheetDetail,
@@ -27,6 +28,7 @@ type SyncExpenseLinkedTicketSheetLineArgs = {
   sheetId: string;
   lineRecId?: string;
   projectIdOverride?: string | null;
+  reimbursableExpenseOverride?: number | null;
   currencyCodeOverride?: string | null;
   amountMSTOverride?: number | null;
   exchangeRateOverride?: number | null;
@@ -167,6 +169,8 @@ const buildLinePayload = ({
   ticketSnapshot,
   projectIdOverride,
   hasProjectIdOverride,
+  reimbursableExpenseOverride,
+  hasReimbursableExpenseOverride,
 }: {
   fileId: string;
   sheetProjectId: string;
@@ -174,10 +178,15 @@ const buildLinePayload = ({
   ticketSnapshot: SyncedTicketSnapshot;
   projectIdOverride?: string | null;
   hasProjectIdOverride: boolean;
+  reimbursableExpenseOverride?: number | null;
+  hasReimbursableExpenseOverride: boolean;
 }): ExpenseSheetCreateLineRequest => {
   const resolvedProjectId = hasProjectIdOverride
     ? safeText(projectIdOverride)
     : safeText(existingLine?.projId || sheetProjectId);
+  const resolvedReimbursableExpense = hasReimbursableExpenseOverride
+    ? normalizeExpenseLineReimbursableExpense(reimbursableExpenseOverride)
+    : normalizeExpenseLineReimbursableExpense(existingLine?.reimbursableExpense);
 
   return {
     transDate: ticketSnapshot.transDate,
@@ -189,6 +198,7 @@ const buildLinePayload = ({
     qty: 1,
     price: ticketSnapshot.totalAmount,
     projId: resolvedProjectId || undefined,
+    reimbursableExpense: resolvedReimbursableExpense,
     currencyCode: ticketSnapshot.currencyCode || undefined,
     amountMST: ticketSnapshot.amountMST,
     exchRate: ticketSnapshot.exchRate,
@@ -203,11 +213,13 @@ export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTi
     sheetId,
     lineRecId,
     projectIdOverride,
+    reimbursableExpenseOverride,
     currencyCodeOverride,
     amountMSTOverride,
     exchangeRateOverride,
   } = args;
   const hasProjectIdOverride = Object.prototype.hasOwnProperty.call(args, "projectIdOverride");
+  const hasReimbursableExpenseOverride = Object.prototype.hasOwnProperty.call(args, "reimbursableExpenseOverride");
   const safeFileId = safeText(fileId);
   const safeSheetId = safeText(sheetId);
   if (!safeFileId || !safeSheetId) {
@@ -269,6 +281,8 @@ export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTi
     ticketSnapshot,
     projectIdOverride,
     hasProjectIdOverride,
+    reimbursableExpenseOverride,
+    hasReimbursableExpenseOverride,
   });
 
   if (existingLine?.lineRecId) {

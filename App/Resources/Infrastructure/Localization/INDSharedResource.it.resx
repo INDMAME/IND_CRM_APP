@@ -180,6 +180,15 @@
   <data name="ExpenseSheets_Detail_SaveChanges_Body" xml:space="preserve">
     <value>Vuoi salvare le modifiche alla nota spese?</value>
   </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Title" xml:space="preserve">
+    <value>Aggiorna righe</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Body" xml:space="preserve">
+    <value>La modifica di rimborsabile verrà propagata a tutte le righe della nota spese. Vuoi continuare?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingReimbursable" xml:space="preserve">
+    <value>Aggiornamento delle righe della nota spese...</value>
+  </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>Elimina la nota spese</value>
   </data>
@@ -362,6 +371,9 @@
   </data>
   <data name="ExpenseSheets_Field_ReimbursableExpense" xml:space="preserve">
     <value>Rimborsabile</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
+    <value>Entrambi</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Importo totale</value>

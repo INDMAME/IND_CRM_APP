@@ -1,27 +1,41 @@
 import React from "react";
+import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { indT } from "../../../utils/indI18n.ts";
+import {
+  getExpenseLineReimbursableExpenseLabel,
+  getExpenseLineReimbursableExpenseOptions,
+  normalizeExpenseLineReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 
 type ExpenseTicketLinkedSheetLineSectionProps = {
   projectId: string;
+  reimbursableExpense: number;
   isEditing: boolean;
   isLoading: boolean;
   disabled?: boolean;
   errorMessage?: string;
   onProjectIdChange: (value: string) => void;
+  onReimbursableExpenseChange: (value: number) => void;
 };
 
 // Renders expense-sheet line fields that are edited from the linked ticket detail flow.
 const ExpenseTicketLinkedSheetLineSection = ({
   projectId,
+  reimbursableExpense,
   isEditing,
   isLoading,
   disabled = false,
   errorMessage = "",
   onProjectIdChange,
+  onReimbursableExpenseChange,
 }: ExpenseTicketLinkedSheetLineSectionProps) => {
+  const reimbursableExpenseOptions = React.useMemo(() => getExpenseLineReimbursableExpenseOptions(), []);
+  const normalizedReimbursableExpense = normalizeExpenseLineReimbursableExpense(reimbursableExpense);
+  const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(normalizedReimbursableExpense);
+
   return (
     <section className="space-y-0">
       <ExpenseSectionDivider label={indT("ExpenseSheets_Line_Expense", "Expense line")} className="expense-section-divider--spaced" />
@@ -51,6 +65,26 @@ const ExpenseTicketLinkedSheetLineSection = ({
               <ExpenseReadOnlyField
                 label={indT("ExpenseSheets_Field_Project", "Project")}
                 value={projectId || "-"}
+              />
+            )}
+            {isEditing ? (
+              <SelectCombobox
+                label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+                options={reimbursableExpenseOptions}
+                value={String(normalizedReimbursableExpense)}
+                onChange={(value) => onReimbursableExpenseChange(normalizeExpenseLineReimbursableExpense(value))}
+                placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+                disabled={disabled}
+                readOnly={disabled}
+                usePortal={false}
+                dropdownPlacement="top"
+                allowTextInput={false}
+                showSearchButton={false}
+              />
+            ) : (
+              <ExpenseReadOnlyField
+                label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+                value={reimbursableExpenseLabel}
               />
             )}
           </div>

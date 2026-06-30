@@ -1,0 +1,268 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: INDCRMActividadUserIdRepair descargados en Martes 30/06/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #INDCRMActividadUserIdRepair
+    PROPERTIES
+      Name                #INDCRMActividadUserIdRepair
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #class INDCRMActividadUserIdRepair
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #crmUserExists
+        #/// <summary>
+        #/// Checks whether the CRM user exists in the current company context.
+        #/// </summary>
+        #private static boolean crmUserExists(str 15 _crmUserId)
+        #{
+        #    CRMUsuarioTable crmUser;
+        #
+        #    if (_crmUserId == '')
+        #    {
+        #        return false;
+        #    }
+        #
+        #    select firstOnly RecId from crmUser
+        #        where crmUser.UserId == _crmUserId;
+        #
+        #    return crmUser.RecId != 0;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #processFillEmptyUserIdsInCompany
+        #/// <summary>
+        #/// Processes one company for empty UserId values.
+        #/// </summary>
+        #private static void processFillEmptyUserIdsInCompany(DataAreaId _companyId, boolean _editMode)
+        #{
+        #    CRMActividadTable activity;
+        #    str               expectedCrmUserId;
+        #    int               candidates;
+        #    int               updated;
+        #    int               skipped;
+        #
+        #    changeCompany(_companyId)
+        #    {
+        #        while select activity
+        #            where activity.UserId == ''
+        #        {
+        #            /*if (activity.INDCreatedByUserId == '')
+        #            {
+        #                skipped++;
+        #                warning(strFmt("Company %1 | RecId %2 | UserId is empty but INDCreatedByUserId is empty. No proposal.",
+        #                    _companyId, activity.RecId));
+        #                continue;
+        #            } */
+        #
+        #            expectedCrmUserId = strLRTrim(INDCRMVisitsService::resolveLegacyCrmUserIdByAxUserId(activity.INDCreatedByUserId));
+        #
+        #            if(!expectedCrmUserId)
+        #                expectedCrmUserId = strLRTrim(INDCRMVisitsService::resolveLegacyCrmUserIdByAxUserId(activity.createdBy));
+        #
+        #            if (expectedCrmUserId == '' || !INDCRMActividadUserIdRepair::crmUserExists(expectedCrmUserId))
+        #            {
+        #                skipped++;
+        #                warning(strFmt("Company %1 | RecId %2 | AX user %3 | Could not resolve a valid CRM UserId.",
+        #                    _companyId, activity.RecId, activity.INDCreatedByUserId));
+        #                continue;
+        #            }
+        #
+        #            candidates++;
+        #
+        #            info(strFmt("Company %1 | RecId %2 | EMPTY UserId | AX user %3 | Current '%4' -> Expected CRM '%5'",
+        #                _companyId, activity.RecId, activity.INDCreatedByUserId, activity.UserId, expectedCrmUserId));
+        #
+        #            if (_editMode)
+        #            {
+        #                if (INDCRMActividadUserIdRepair::updateActivityUserId(
+        #                        activity.RecId,
+        #                        activity.UserId,
+        #                        expectedCrmUserId,
+        #                        activity.INDCreatedByUserId,
+        #                        _companyId))
+        #                {
+        #                    updated++;
+        #                }
+        #                else
+        #                {
+        #                    skipped++;
+        #                }
+        #            }
+        #        }
+        #
+        #        if (candidates || skipped || updated)
+        #        {
+        #            info(strFmt("Company %1 | Empty UserId summary | Candidates %2 | Updated %3",
+        #                _companyId, candidates, updated));
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #processFixInvalidUserIdsInCompany
+        #/// <summary>
+        #/// Processes one company for UserId values that do not exist in CRMUsuarioTable.
+        #/// </summary>
+        #private static void processFixInvalidUserIdsInCompany(DataAreaId _companyId, boolean _editMode)
+        #{
+        #    CRMActividadTable activity;
+        #    CRMUsuarioTable   crmUser;
+        #    str               expectedCrmUserId;
+        #    int               candidates;
+        #    int               updated;
+        #    int               skipped;
+        #
+        #    changeCompany(_companyId)
+        #    {
+        #        while select activity
+        #            where activity.UserId != ''
+        #               && activity.INDCreatedByUserId
+        #            notexists join crmUser
+        #                where crmUser.UserId == activity.UserId
+        #        {
+        #           /* if (activity.INDCreatedByUserId == '')
+        #            {
+        #                skipped++;
+        #                warning(strFmt("Company %1 | RecId %2 | Invalid UserId '%3' but INDCreatedByUserId is empty. No proposal.",
+        #                    _companyId, activity.RecId, activity.UserId));
+        #                continue;
+        #            } */
+        #
+        #            expectedCrmUserId = strLRTrim(INDCRMVisitsService::resolveLegacyCrmUserIdByAxUserId(activity.INDCreatedByUserId));
+        #
+        #            if(!expectedCrmUserId)
+        #                expectedCrmUserId = strLRTrim(INDCRMVisitsService::resolveLegacyCrmUserIdByAxUserId(activity.createdBy));
+        #
+        #            if (expectedCrmUserId == '' || !INDCRMActividadUserIdRepair::crmUserExists(expectedCrmUserId))
+        #            {
+        #                skipped++;
+        #                warning(strFmt("Company %1 | RecId %2 | Current invalid UserId '%3' | AX user %4 | Could not resolve a valid CRM UserId.",
+        #                    _companyId, activity.RecId, activity.UserId, activity.INDCreatedByUserId));
+        #                continue;
+        #            }
+        #
+        #            candidates++;
+        #
+        #            info(strFmt("Company %1 | RecId %2 | INVALID UserId | AX user %3 | Current '%4' -> Expected CRM '%5'",
+        #                _companyId, activity.RecId, activity.INDCreatedByUserId, activity.UserId, expectedCrmUserId));
+        #
+        #            if (_editMode)
+        #            {
+        #                if (INDCRMActividadUserIdRepair::updateActivityUserId(
+        #                        activity.RecId,
+        #                        activity.UserId,
+        #                        expectedCrmUserId,
+        #                        activity.INDCreatedByUserId,
+        #                        _companyId))
+        #                {
+        #                    updated++;
+        #                }
+        #                else
+        #                {
+        #                    skipped++;
+        #                }
+        #            }
+        #        }
+        #
+        #        if (candidates || skipped || updated)
+        #        {
+        #            info(strFmt("Company %1 | Invalid UserId summary | Candidates %2 | Updated %3",
+        #                _companyId, candidates, updated));
+        #        }
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #runFillEmptyUserIds
+        #/// <summary>
+        #/// Runs the repair for activities where UserId is empty.
+        #/// </summary>
+        #public static void runFillEmptyUserIds(boolean _editMode = false)
+        #{
+        #    DataArea dataArea;
+        #     ;
+        #    info(strFmt("CRMActividadTable empty UserId process started. Edit mode: %1", _editMode));
+        #
+        #    while select Id from dataArea
+        #       // where dataArea.id == "RIS"
+        #    {
+        #        INDCRMActividadUserIdRepair::processFillEmptyUserIdsInCompany(dataArea.Id, _editMode);
+        #    }
+        #
+        #    info("CRMActividadTable empty UserId process finished.");
+        #}
+      ENDSOURCE
+      SOURCE #runFixInvalidUserIds
+        #/// <summary>
+        #/// Runs the repair proposal for activities where UserId does not exist in CRMUsuarioTable.
+        #/// </summary>
+        #public static void runFixInvalidUserIds(boolean _editMode = false)
+        #{
+        #    DataArea dataArea;
+        #      ;
+        #    info(strFmt("CRMActividadTable invalid UserId process started. Edit mode: %1", _editMode));
+        #
+        #    while select Id from dataArea
+        #    {
+        #        INDCRMActividadUserIdRepair::processFixInvalidUserIdsInCompany(dataArea.Id, _editMode);
+        #    }
+        #
+        #    info("CRMActividadTable invalid UserId process finished.");
+        #}
+      ENDSOURCE
+      SOURCE #updateActivityUserId
+        #/// <summary>
+        #/// Updates one activity with its own transaction to reduce production locks.
+        #/// </summary>
+        #private static boolean updateActivityUserId(
+        #    RecId      _activityRecId,
+        #    str   15     _oldUserId,
+        #    str   15     _newUserId,
+        #    str   15     _createdByUserId,
+        #    DataAreaId _companyId)
+        #{
+        #    CRMActividadTable activityForUpdate;
+        #    boolean           updated;
+        #
+        #    try
+        #    {
+        #        ttsBegin;
+        #
+        #        select firstOnly forUpdate activityForUpdate
+        #            where activityForUpdate.RecId == _activityRecId
+        #               && activityForUpdate.UserId == _oldUserId
+        #               && activityForUpdate.INDCreatedByUserId == _createdByUserId;
+        #
+        #        if (activityForUpdate.RecId)
+        #        {
+        #            activityForUpdate.UserId = _newUserId;
+        #            activityForUpdate.update();
+        #            updated = true;
+        #        }
+        #
+        #        ttsCommit;
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsAbort;
+        #        error(strFmt("Company %1 | RecId %2 | Error updating UserId.", _companyId, _activityRecId));
+        #        updated = false;
+        #    }
+        #
+        #    return updated;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

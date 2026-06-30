@@ -39,7 +39,7 @@ const readOptionSortOrder = (option: CrmEnumOptionDto): number | null => {
 };
 
 const readOptionLabel = (option: CrmEnumOptionDto): string => {
-  return safeText(option.label ?? option.Label);
+  return safeText(option.label ?? option.Label) || safeText(option.description ?? option.Description);
 };
 
 const readOptionActive = (option: CrmEnumOptionDto): boolean => {
@@ -71,7 +71,7 @@ export const fetchCrmEnumCatalogByName = async (
   return readCatalogItems(response);
 };
 
-// Returns select options for one AX enum using the business enum index and option label.
+// Returns select options for one AX enum using the business enum index and effective option text.
 export const getCrmEnumOptionsByName = (
   catalog: CrmEnumCatalogDto[],
   axEnumName: string,

@@ -180,6 +180,15 @@
   <data name="ExpenseSheets_Detail_SaveChanges_Body" xml:space="preserve">
     <value>Deseja salvar as alterações na planilha de despesas?</value>
   </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Title" xml:space="preserve">
+    <value>Atualizar linhas</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Body" xml:space="preserve">
+    <value>A alteração de reembolsável será propagada para todas as linhas da planilha de despesas. Deseja continuar?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingReimbursable" xml:space="preserve">
+    <value>Atualizando linhas da planilha de despesas...</value>
+  </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>Excluir planilha de despesas</value>
   </data>
@@ -350,6 +359,9 @@
   </data>
   <data name="ExpenseSheets_Field_ReimbursableExpense" xml:space="preserve">
     <value>Reembolsavel</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
+    <value>Ambos</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Montante total</value>

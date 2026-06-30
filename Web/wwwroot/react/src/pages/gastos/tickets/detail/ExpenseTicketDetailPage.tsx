@@ -159,10 +159,12 @@ const buildExpenseTicketDetailPreviewView = ({
 type ExpenseTicketLinkedSheetLineView = {
   visible: boolean;
   projectId: string;
+  reimbursableExpense: number;
   isLoading: boolean;
   errorMessage: string;
   disabled: boolean;
   onProjectIdChange: (value: string) => void;
+  onReimbursableExpenseChange: (value: number) => void;
 };
 
 const buildExpenseTicketDetailContentView = ({
@@ -767,7 +769,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     setExchangeRateInfoMessage("");
     handleCancelEdit();
     linkedSheetLine.resetDraftProjectId();
-  }, [handleCancelEdit, linkedSheetLine.resetDraftProjectId]);
+    linkedSheetLine.resetDraftReimbursableExpense();
+  }, [handleCancelEdit, linkedSheetLine.resetDraftProjectId, linkedSheetLine.resetDraftReimbursableExpense]);
   const { paginationLabels, previewAltText, statusLabel, gastoTypeLabel, totalAmountText, transDateText, ticketTimeText } =
     useExpenseTicketDetailDisplay({
       header,
@@ -837,6 +840,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     linkedExpenseLineRecId: isFromExpenseLine ? contextLineRecId : "",
     linkedExpenseLineProjectId: linkedSheetLine.draftProjectId,
     linkedExpenseLineProjectIdChanged: isFromExpenseLine && linkedSheetLine.projectIdChanged,
+    linkedExpenseLineReimbursableExpense: linkedSheetLine.draftReimbursableExpense,
+    linkedExpenseLineReimbursableExpenseChanged: isFromExpenseLine && linkedSheetLine.reimbursableExpenseChanged,
     deleteLinkedExpenseLineContext: isFromExpenseLine && linkedExpenseSheetId && contextLineRecId
       ? {
           sheetId: linkedExpenseSheetId,
@@ -857,6 +862,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       setSheetSyncBlocked(false);
       setSheetSyncBlockedMessage("");
       linkedSheetLine.acceptDraftProjectId();
+      linkedSheetLine.acceptDraftReimbursableExpense();
     },
     setModalError,
     setBusy,
@@ -1037,10 +1043,12 @@ const useExpenseTicketDetailPageViewModel = () => {
       linkedLine: {
         visible: isFromExpenseLine,
         projectId: linkedSheetLine.draftProjectId,
+        reimbursableExpense: linkedSheetLine.draftReimbursableExpense,
         isLoading: linkedSheetLine.isLoading,
         errorMessage: linkedSheetLine.errorMessage,
         disabled: busy || isContextLocked || linkedSheetLine.isLoading,
         onProjectIdChange: linkedSheetLine.setDraftProjectId,
+        onReimbursableExpenseChange: linkedSheetLine.setDraftReimbursableExpense,
       },
       handleOpenExpenseSheet,
       visibleLines,

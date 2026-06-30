@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDEmailTemplateFileHelper descargados en Jueves 28/05/2026
+; Navision Axapta Class: INDEmailTemplateFileHelper descargados en Martes 30/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -56,6 +56,7 @@ Formatversion: 1
         #        return '';
         #    }
         #}
+        #
       ENDSOURCE
       SOURCE #writeTextFile
         #// Escribe el HTML de la plantilla en un archivo UTF-8 para exportacion o vista previa.
@@ -91,6 +92,7 @@ Formatversion: 1
         #        return false;
         #    }
         #}
+        #
       ENDSOURCE
     ENDMETHODS
   ENDCLASS

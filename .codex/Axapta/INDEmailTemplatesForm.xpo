@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Lunes 01/06/2026
+; Navision Axapta Forms unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -530,7 +530,7 @@ FORM #INDEmailTemplates
                             #    INDEmailTemplates.HtmlTemplate = html;
                             #
                             #    INDEmailTemplates_ds.write();
-                            #    INDEmailTemplates_ds.research();
+                            #    INDEmailTemplates_ds.refresh();
                             #
                             #    info('Plantilla HTML importada correctamente.');
                             #}
@@ -611,7 +611,7 @@ FORM #INDEmailTemplates
                             #        '',
                             #        'Guardar plantilla HTML',
                             #        '',
-                            #        'html'
+                            #        INDEmailTemplates.TemplateId//'html'
                             #    );
                             #
                             #    if (!fileName)
@@ -963,9 +963,9 @@ FORM #INDEmailTemplates
                         #            subject,
                         #            htmlBody,
                         #            textBody,
-                        #            "",
+                        #            '',
                         #            false,
-                        #            strFmt("%1", enum2value(INDEmailImportance::high)),
+                        #            INDInternalApiClientServer::normalizeInternalApiMailImportance(strFmt("%1", INDEmailImportance::high)),
                         #            "AxaptaEmailTemplateFormTest",
                         #            eventType,
                         #            "ExpenseSheet",
@@ -1109,7 +1109,7 @@ FORM #INDEmailTemplates
                         #    dfToEmails      = dialog.addField(typeid(Name), "Para email(s)");
                         #    dfCcEmails      = dialog.addField(typeid(Name), "CC email(s)");
                         #    dfBccEmails     = dialog.addField(typeid(Name), "CCO email(s)");
-                        #    dfReplyToEmails = dialog.addField(typeid(Name), "Responder a");
+                        #    dfReplyToEmails = dialog.addField(typeid(Name), "Responder a (reply)");
                         #    dfLink          = dialog.addField(typeid(Description), "Link de prueba (opcional)");
                         #    dfImportance    = dialog.addField(typeid(INDEmailImportance), "Importancia");
                         #
@@ -1181,7 +1181,7 @@ FORM #INDEmailTemplates
                         #    if (link == "#")
                         #        textBody = "Prueba directa EMAIL TEST.";
                         #    else
-                        #        textBody = strFmt("Prueba directa EMAIL TEST. Link: %1", link);
+                        #    textBody = strFmt("Prueba directa EMAIL TEST. Link: %1", link);
                         #    companyId = curext();
                         #    correlationId = strFmt("email-test-direct-%1-%2", today(), timeNow());
                         #    idempotencyKey = strFmt("EmailTemplateDirectTest:%1:%2:%3", companyId, emailTemplate.RecId, correlationId);
@@ -1199,7 +1199,7 @@ FORM #INDEmailTemplates
                         #            subject,
                         #            htmlBody,
                         #            textBody,
-                        #            "",
+                        #            '',
                         #            false,
                         #            importance,
                         #            "AxaptaEmailTemplateDirectTest",

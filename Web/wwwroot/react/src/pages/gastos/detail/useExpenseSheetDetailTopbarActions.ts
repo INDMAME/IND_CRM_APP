@@ -22,11 +22,15 @@ type UseExpenseSheetDetailTopbarActionsArgs = {
   handleDelete: () => Promise<boolean>;
   onSaveSuccess: () => void;
   onDeleteSuccess?: () => void;
+  saveConfirmTitle?: string;
+  saveConfirmMessage?: string;
+  saveConfirmOnCancel?: () => void;
   openConfirm: (opts: {
     title: string;
     message: string;
     confirmText?: string;
     onConfirm?: () => Promise<boolean | void> | boolean | void;
+    onCancel?: () => void;
   }) => void;
   closeConfirm: () => void;
 };
@@ -52,6 +56,9 @@ export const useExpenseSheetDetailTopbarActions = ({
   handleDelete,
   onSaveSuccess,
   onDeleteSuccess,
+  saveConfirmTitle,
+  saveConfirmMessage,
+  saveConfirmOnCancel,
   openConfirm,
   closeConfirm,
 }: UseExpenseSheetDetailTopbarActionsArgs) => {
@@ -86,9 +93,10 @@ export const useExpenseSheetDetailTopbarActions = ({
     handleCancelEdit,
     handleSave: handleUpdate,
     handleDelete,
-    saveConfirmTitle: indT("ExpenseSheets_Detail_SaveChanges_Title", "Save changes"),
-    saveConfirmMessage: indT("ExpenseSheets_Detail_SaveChanges_Body", "Do you want to save changes?"),
+    saveConfirmTitle: saveConfirmTitle || indT("ExpenseSheets_Detail_SaveChanges_Title", "Save changes"),
+    saveConfirmMessage: saveConfirmMessage || indT("ExpenseSheets_Detail_SaveChanges_Body", "Do you want to save changes?"),
     saveConfirmText: indT("Common_Save", "Save"),
+    saveConfirmOnCancel,
     deleteConfirmTitle: indT("ExpenseSheets_Detail_DeleteSheet_Title", "Delete expense sheet"),
     deleteConfirmMessage: indT("ExpenseSheets_Detail_DeleteSheet_Body", "Do you want to delete this expense sheet?"),
     deleteConfirmText: indT("Common_Delete", "Delete"),

@@ -52,6 +52,7 @@ type SelectComboboxProps = {
   dropdownExpandPx?: number;
   dropdownMinWidthPx?: number;
   dropdownMaxHeightClass?: string;
+  dropdownPlacement?: "bottom" | "top";
   selectedIconClassName?: string;
   optionIconClassName?: string;
   allowOptionHorizontalScroll?: boolean;
@@ -92,6 +93,7 @@ const SelectCombobox = ({
   dropdownExpandPx = 0,
   dropdownMinWidthPx = 0,
   dropdownMaxHeightClass = "max-h-72",
+  dropdownPlacement = "bottom",
   selectedIconClassName = "h-4 w-4",
   optionIconClassName = "h-4 w-4",
   allowOptionHorizontalScroll = false,
@@ -118,6 +120,7 @@ const SelectCombobox = ({
   };
 
   const readOnlyMode = readOnly || disabled;
+  const inlineDropdownPlacementClass = dropdownPlacement === "top" ? "bottom-full mb-1" : "mt-1";
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
   const data = useMemo(() => {
     return (options || []).map<NormalizedOption>((o) => {
@@ -494,7 +497,12 @@ const SelectCombobox = ({
         ) : (
           listOpen && (
             <div
-              className={`absolute z-360000 mt-1 w-full rounded-[var(--radius-xl)] bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden ${dropdownMaxHeightClass} overflow-auto ${panelClassName || ""}`}
+              className={classNames(
+                "absolute z-360000 w-full rounded-[var(--radius-xl)] bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden overflow-auto",
+                inlineDropdownPlacementClass,
+                dropdownMaxHeightClass,
+                panelClassName || ""
+              )}
               style={{ ...inlineDropdownStyle, ...(panelStyle || {}) }}
             >
               {listBody}

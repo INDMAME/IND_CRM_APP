@@ -13,6 +13,7 @@ import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigat
 import { saveExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
+import { normalizeExpenseReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
@@ -165,7 +166,7 @@ export const useExpenseSheetDetailPageController = () => {
   const detailPermissionsReady = managementBootstrapReady && (isCreateMode || !!header);
   const { invalidateCachedListForRefetch } = useExpenseSheetsFilterCache();
 
-  const { modal, openConfirm, closeConfirm, handleConfirm } = useConfirmDialog({
+  const { modal, openConfirm, closeConfirm, cancelConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
     defaultCancelText: indT("Confirm_No", "Cancel"),
   });
@@ -180,6 +181,11 @@ export const useExpenseSheetDetailPageController = () => {
     resetStatusTransitionDialog();
     closeConfirm();
   }, [closeConfirm, resetStatusTransitionDialog]);
+
+  const handleCancelConfirm = useCallback(() => {
+    resetStatusTransitionDialog();
+    cancelConfirm();
+  }, [cancelConfirm, resetStatusTransitionDialog]);
 
   const handleModalConfirm = useCallback(async () => {
     setModalError("");
@@ -217,6 +223,16 @@ export const useExpenseSheetDetailPageController = () => {
   );
   const hasStatusActionContent = lines.length > 0 || hasPositiveTotalAmount(header?.totalAmount);
   const areStatusActionsDisabled = !hasStatusActionContent;
+  const shouldPropagateReimbursableExpenseToLines =
+    !isCreateMode &&
+    isEditing &&
+    canEditHeaderFieldsCurrent &&
+    lines.length > 0 &&
+    normalizeExpenseReimbursableExpense(draftReimbursableExpense) !==
+      normalizeExpenseReimbursableExpense(header?.reimbursableExpense);
+  const resetDraftReimbursableExpenseToOriginal = useCallback(() => {
+    setDraftReimbursableExpense(normalizeExpenseReimbursableExpense(header?.reimbursableExpense));
+  }, [header?.reimbursableExpense, setDraftReimbursableExpense]);
   const ownerDisplay = useMemo(() => {
     const ownerUserId = safeText(header?.userId);
     const currentUserId = safeText(currentCrmUserId);
@@ -252,6 +268,8 @@ export const useExpenseSheetDetailPageController = () => {
     draftProjectId,
     draftEstadoComentarios,
     currentExpenseSheetStatus: header?.expenseSheetStatus,
+    currentLines: lines,
+    propagateReimbursableExpenseToLines: shouldPropagateReimbursableExpenseToLines,
     exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
       createdSheetIdRef.current = safeText(createdSheetId);
@@ -388,6 +406,18 @@ export const useExpenseSheetDetailPageController = () => {
       invalidateCachedListForRefetch();
       navigateToExpenseUrl("/Gastos/ExpenseSheets");
     },
+    saveConfirmTitle: shouldPropagateReimbursableExpenseToLines
+      ? indT("ExpenseSheets_Detail_PropagateReimbursable_Title", "Update lines")
+      : undefined,
+    saveConfirmMessage: shouldPropagateReimbursableExpenseToLines
+      ? indT(
+          "ExpenseSheets_Detail_PropagateReimbursable_Body",
+          "The reimbursable change will be propagated to every expense sheet line. Do you want to continue?"
+        )
+      : undefined,
+    saveConfirmOnCancel: shouldPropagateReimbursableExpenseToLines
+      ? resetDraftReimbursableExpenseToOriginal
+      : undefined,
     openConfirm,
     closeConfirm,
   });
@@ -558,6 +588,6 @@ export const useExpenseSheetDetailPageController = () => {
     navigateToLineDetail: handleOpenLineDetail,
     handleModalButtonConfirm,
     handleStatusActionClick,
-    closeConfirm: handleCloseConfirm,
+    closeConfirm: handleCancelConfirm,
   };
 };

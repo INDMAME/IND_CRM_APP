@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDAxEnumAppCatalogTable unloaded at Lunes 29/06/2026
+; Navision Axapta Table : INDAxEnumAppCatalogTable unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -263,6 +263,12 @@ Formatversion: 1
     ENDREFERENCES
     
     DELETEACTIONS
+      #INDAxEnumsTable
+      PROPERTIES
+        Table               #INDAxEnumsTable
+        DeleteAction        #Cascade
+      ENDPROPERTIES
+      
     ENDDELETEACTIONS
     
     METHODS
@@ -466,6 +472,7 @@ Formatversion: 1
         #
         #    return axEnum.EnumValue;
         #}
+        #
       ENDSOURCE
       SOURCE #initFromINDAxEnumsTable
         #//MMS - Ajustes CRM - 2026.06.29

@@ -1,0 +1,326 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: INDTicketExpenseSheetLink descargados en Martes 30/06/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #INDTicketExpenseSheetLink
+    PROPERTIES
+      Name                #INDTicketExpenseSheetLink
+      Extends             #RunBase
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #canGoBatch
+        #public boolean canGoBatch()
+        #{
+        #   return false;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #classDeclaration
+        #class INDTicketExpenseSheetLink extends RunBase
+        #{
+        #    DialogField          dlgHojaGastosId;
+        #
+        #    Map                  selectedTickets;
+        #    CRMHojaGastosId      hojaGastosId;
+        #
+        #    #define.CurrentVersion(1)
+        #}
+      ENDSOURCE
+      SOURCE #dialog
+        #/// <summary>
+        #/// Construcción del diálogo.
+        #/// </summary>
+        #Object dialog()
+        #{
+        #    DialogRunbase dialog = super();
+        #    ;
+        #    dialog.caption("Vincular ticket(s)");
+        #    dlgHojaGastosId = dialog.addField(typeId(CRMHojaGastosId));
+        #
+        #    return dialog;
+        #}
+      ENDSOURCE
+      SOURCE #dialogPostRun
+        #/// <summary>
+        #/// Hook post-run del diálogo para habilitar overloads de control.
+        #/// </summary>
+        #void dialogPostRun(DialogRunbase _dialog)
+        #{
+        #    super(_dialog);
+        #
+        #    _dialog.formRun().controlMethodOverload(true);
+        #    _dialog.formRun().controlMethodOverloadObject(this);
+        #
+        #    // Ayuda para depuración:
+        #    // En AX 3.0 el nombre real del control puede ser Fld1_1, Fld2_1, etc.
+        #    // Descomenta temporalmente si necesitas confirmar el nombre runtime.
+        #    // info(strFmt("Control name: %1", dlgHojaGastosId.control().name()));
+        #}
+      ENDSOURCE
+      SOURCE #Fld1_1_lookup
+        #void Fld1_1_lookup()
+        #{
+        #    this.lookupHojaGastos();
+        #}
+      ENDSOURCE
+      SOURCE #getFromDialog
+        #/// <summary>
+        #/// Captura valores del diálogo.
+        #/// </summary>
+        #boolean getFromDialog()
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    hojaGastosId = dlgHojaGastosId.value();
+        #
+        #    ret = super();
+        #
+        #
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #lookupHojaGastos
+        #void lookupHojaGastos()
+        #{
+        #    SysTableLookup       sysTableLookup;
+        #    Query                query;
+        #    QueryBuildDataSource qbds;
+        #    CRMUsuarioTable      crmUsuario;
+        #    ;
+        #
+        #    sysTableLookup = SysTableLookup::newParameters(
+        #        tableNum(CRMHojaGastosTable),
+        #        dlgHojaGastosId.control());
+        #
+        #    query = new Query();
+        #    qbds  = query.addDataSource(tableNum(CRMHojaGastosTable));
+        #    qbds.addSortField(FieldNum(CRMHojaGastosTable, HojaGastosId), SortOrder::Descending);
+        #
+        #    sysTableLookup.addLookupfield(fieldNum(CRMHojaGastosTable, HojaGastosId));
+        #    sysTableLookup.addLookupfield(fieldNum(CRMHojaGastosTable, Description));
+        #    sysTableLookup.addLookupfield(fieldNum(CRMHojaGastosTable, ExpenseSheetStatus));
+        #    crmUsuario = SysUserInfo::getCRMUsuarioTable(curUserId());
+        #
+        #    if (crmUsuario.UserId)
+        #    {
+        #        qbds.addRange(fieldNum(CRMHojaGastosTable, UserId))
+        #            .value(queryValue(crmUsuario.UserId));
+        #    }
+        #
+        #    qbds.addRange(fieldNum(CRMHojaGastosTable, ExpenseSheetStatus)).value(queryValue(INDExpenseSheetStatus::Draft));
+        #    qbds.addRange(fieldNum(CRMHojaGastosTable, ExpenseSheetStatus)).value(queryValue(INDExpenseSheetStatus::Rejected));
+        #    sysTableLookup.parmQuery(query);
+        #    sysTableLookup.performFormLookup();
+        #}
+      ENDSOURCE
+      SOURCE #pack
+        #public container pack()
+        #{
+        #    return [#CurrentVersion, hojaGastosId];
+        #}
+      ENDSOURCE
+      SOURCE #parmSelectedTickets
+        #/// <summary>
+        #/// Recibe o devuelve el Map de tickets seleccionados.
+        #/// key   = RecId
+        #/// value = RecId (o dummy)
+        #/// </summary>
+        #Map parmSelectedTickets(Map _selectedTickets = selectedTickets)
+        #{
+        #    Map            newMap;
+        #    MapEnumerator  mapEnum;
+        #    ;
+        #
+        #    if (_selectedTickets)
+        #    {
+        #        // Copia defensiva para no depender de la referencia externa
+        #        newMap = new Map(Types::Integer, Types::Integer);
+        #        mapEnum = _selectedTickets.getEnumerator();
+        #
+        #        while (mapEnum.moveNext())
+        #        {
+        #            newMap.insert(mapEnum.currentKey(), mapEnum.currentValue());
+        #        }
+        #
+        #        selectedTickets = newMap;
+        #    }
+        #
+        #    return selectedTickets;
+        #}
+      ENDSOURCE
+      SOURCE #run
+        #/// <summary>
+        #/// Proceso principal.
+        #/// </summary>
+        #public void run()
+        #{
+        #    MapEnumerator        mapEnum;
+        #    RecId                ticketRecId;
+        #    INDTicketInfoTable   ticket;
+        #    CRMHojaGastosLine    hojaGastosLine;
+        #    ;
+        #
+        #    if (!selectedTickets || selectedTickets.elements() == 0)
+        #    {
+        #        warning("No hay tickets seleccionados.");
+        #        return;
+        #    }
+        #
+        #    ttsbegin;
+        #
+        #    mapEnum = selectedTickets.getEnumerator();
+        #
+        #    while (mapEnum.moveNext())
+        #    {
+        #        ticketRecId = mapEnum.currentKey();
+        #        ticket = INDTicketInfoTable::findRecId(ticketRecId);
+        #
+        #        if (ticket.RecId)
+        #        {
+        #            // Protección defensiva
+        #            if (ticket.Status != INDTicketStatus::Pending)
+        #                continue;
+        #
+        #
+        #            hojaGastosLine.clear();
+        #            hojaGastosLine.initValue();
+        #
+        #            hojaGastosLine.HojaGastosId = hojaGastosId;
+        #            hojaGastosLine.InitFromHojaGastosTable();
+        #
+        #            hojaGastosLine.UserId = SysUserInfo::getCRMUsuarioTable(curUserId()).UserId;
+        #            hojaGastosLine.InitFromUsuarioTable();
+        #
+        #            hojaGastosLine.TransDate = ticket.createdDate;
+        #            hojaGastosLine.Type      = ticket.GastoType;
+        #            hojaGastosLine.InitFromGastoType();
+        #
+        #            hojaGastosLine.Description = ticket.Description;
+        #            hojaGastosLine.FileId      = ticket.FileId;
+        #            hojaGastosLine.Price       = ticket.TotalAmount;
+        #            hojaGastosLine.Qty         = 1;
+        #            hojaGastosLine.Amount      = ticket.TotalAmount;
+        #
+        #            // Audit
+        #            hojaGastosLine.INDCreatedByUserId = curUserId();
+        #
+        #            hojaGastosLine.insert();
+        #
+        #            // Actualización estado ticket
+        #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(curUserId(), ticket.FileId);
+        #
+        #            info(strFmt("Ticket %1 vinculado a hoja de gasto %2",
+        #                        ticket.FileId,
+        #                        hojaGastosId));
+        #        }
+        #    }
+        #
+        #    ttscommit;
+        #}
+      ENDSOURCE
+      SOURCE #unpack
+        #public boolean unpack(container _packedClass)
+        #{
+        #    Integer version;
+        #    ;
+        #
+        #    version = conPeek(_packedClass, 1);
+        #
+        #    switch (version)
+        #    {
+        #        case #CurrentVersion:
+        #            [version, hojaGastosId] = _packedClass;
+        #            break;
+        #
+        #        default:
+        #            return false;
+        #    }
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #validate
+        #boolean validate(Object _calledFrom = null)
+        #{
+        #    boolean             ret;
+        #    CRMHojaGastosTable  hojaGastosTable;
+        #    CRMUsuarioTable     crmUsuario;
+        #    ;
+        #
+        #    ret = super(_calledFrom);
+        #
+        #    if (!hojaGastosId)
+        #    {
+        #        ret = checkFailed("Debe seleccionar una hoja de gastos para vincular los tickets.");
+        #    }
+        #
+        #    if (ret)
+        #    {
+        #        hojaGastosTable = CRMHojaGastosTable::find(hojaGastosId);
+        #
+        #        if (!hojaGastosTable.RecId)
+        #        {
+        #            ret = checkFailed("La hoja de gastos seleccionada no existe.");
+        #        }
+        #    }
+        #
+        #    if (ret)
+        #    {
+        #        crmUsuario = SysUserInfo::getCRMUsuarioTable(curUserId());
+        #
+        #        // Ajusta esta validación si funcionalmente pueden elegirse hojas de otros usuarios
+        #        if (crmUsuario.UserId && hojaGastosTable.UserId != crmUsuario.UserId)
+        #        {
+        #            ret = checkFailed("La hoja de gastos seleccionada no pertenece al usuario actual.");
+        #        }
+        #    }
+        #
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #construct
+        #server static INDTicketExpenseSheetLink construct()
+        #{
+        #    return new INDTicketExpenseSheetLink();
+        #}
+      ENDSOURCE
+      SOURCE #description
+        #// Here goes a description of the class
+        #static ClassDescription description()
+        #{
+        #    return "Vincular ticket(s)";
+        #}
+      ENDSOURCE
+      SOURCE #main
+        #/// <summary>
+        #/// Punto de entrada opcional.
+        #/// </summary>
+        #static void main(Args _args)
+        #{
+        #
+        #    INDTicketExpenseSheetLink linker;
+        #    ;
+        #
+        #    linker = INDTicketExpenseSheetLink::construct();
+        #
+        #    if (linker.prompt())
+        #    {
+        #        linker.run();
+        #    }
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

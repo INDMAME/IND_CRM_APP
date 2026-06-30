@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import type { ExpenseSheetDetailDto, ExpenseSheetLine } from "../../expenseTypes.ts";
+import {
+  DEFAULT_LINE_REIMBURSABLE_EXPENSE,
+  normalizeExpenseLineReimbursableExpense,
+} from "../../constants/expenseReimbursableExpenseCatalog.ts";
 import { fetchExpenseSheetDetail, mapExpenseSheetLine } from "../../utils/expenseApi.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
@@ -43,6 +47,8 @@ export const useExpenseTicketLinkedSheetLine = ({
   const [line, setLine] = useState<ExpenseSheetLine | null>(null);
   const [originalProjectId, setOriginalProjectId] = useState("");
   const [draftProjectId, setDraftProjectId] = useState("");
+  const [originalReimbursableExpense, setOriginalReimbursableExpense] = useState(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+  const [draftReimbursableExpense, setDraftReimbursableExpense] = useState(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
   const [localCurrencyCode, setLocalCurrencyCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -54,6 +60,8 @@ export const useExpenseTicketLinkedSheetLine = ({
       setLine(null);
       setOriginalProjectId("");
       setDraftProjectId("");
+      setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+      setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
       setLocalCurrencyCode("");
       setErrorMessage("");
       setIsLoading(false);
@@ -72,6 +80,8 @@ export const useExpenseTicketLinkedSheetLine = ({
         setLine(null);
         setOriginalProjectId("");
         setDraftProjectId("");
+        setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+        setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
         setLocalCurrencyCode("");
         setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
         return;
@@ -84,15 +94,20 @@ export const useExpenseTicketLinkedSheetLine = ({
         setLine(null);
         setOriginalProjectId("");
         setDraftProjectId("");
+        setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+        setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
         setLocalCurrencyCode(sheetLocalCurrencyCode);
         setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet was not found."));
         return;
       }
 
       const projectId = safeText(selectedLine.projId);
+      const reimbursableExpense = normalizeExpenseLineReimbursableExpense(selectedLine.reimbursableExpense);
       setLine(selectedLine);
       setOriginalProjectId(projectId);
       setDraftProjectId(projectId);
+      setOriginalReimbursableExpense(reimbursableExpense);
+      setDraftReimbursableExpense(reimbursableExpense);
       setLocalCurrencyCode(sheetLocalCurrencyCode);
     } catch (error) {
       if (error instanceof ApiFetchError && error.status === 403) {
@@ -103,6 +118,8 @@ export const useExpenseTicketLinkedSheetLine = ({
       setLine(null);
       setOriginalProjectId("");
       setDraftProjectId("");
+      setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+      setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
       setLocalCurrencyCode("");
       setErrorMessage(error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
     } finally {
@@ -118,14 +135,26 @@ export const useExpenseTicketLinkedSheetLine = ({
     () => safeText(draftProjectId) !== safeText(originalProjectId),
     [draftProjectId, originalProjectId]
   );
+  const reimbursableExpenseChanged = useMemo(
+    () => draftReimbursableExpense !== originalReimbursableExpense,
+    [draftReimbursableExpense, originalReimbursableExpense]
+  );
   const resetDraftProjectId = useCallback(() => {
     setDraftProjectId(originalProjectId);
   }, [originalProjectId]);
+  const resetDraftReimbursableExpense = useCallback(() => {
+    setDraftReimbursableExpense(originalReimbursableExpense);
+  }, [originalReimbursableExpense]);
   const acceptDraftProjectId = useCallback(() => {
     const safeProjectId = safeText(draftProjectId);
     setOriginalProjectId(safeProjectId);
     setDraftProjectId(safeProjectId);
   }, [draftProjectId]);
+  const acceptDraftReimbursableExpense = useCallback(() => {
+    const safeReimbursableExpense = normalizeExpenseLineReimbursableExpense(draftReimbursableExpense);
+    setOriginalReimbursableExpense(safeReimbursableExpense);
+    setDraftReimbursableExpense(safeReimbursableExpense);
+  }, [draftReimbursableExpense]);
 
   return {
     line,
@@ -135,9 +164,15 @@ export const useExpenseTicketLinkedSheetLine = ({
     originalProjectId,
     draftProjectId,
     projectIdChanged,
+    originalReimbursableExpense,
+    draftReimbursableExpense,
+    reimbursableExpenseChanged,
     setDraftProjectId,
+    setDraftReimbursableExpense,
     resetDraftProjectId,
+    resetDraftReimbursableExpense,
     acceptDraftProjectId,
+    acceptDraftReimbursableExpense,
     reloadLine,
   };
 };

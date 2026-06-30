@@ -156,15 +156,16 @@ namespace IND_CRM_APP.Services.Enums
                 .Select(option => new
                 {
                     Option = option,
-                    BusinessValue = ResolveBusinessEnumValue(option)
+                    BusinessValue = ResolveBusinessEnumValue(option),
+                    DisplayText = ResolveOptionDisplayText(option)
                 })
-                .Where(entry => entry.Option.Active && entry.BusinessValue.HasValue && !string.IsNullOrWhiteSpace(entry.Option.Label))
+                .Where(entry => entry.Option.Active && entry.BusinessValue.HasValue && !string.IsNullOrWhiteSpace(entry.DisplayText))
                 .OrderBy(entry => entry.Option.SortOrder ?? int.MaxValue)
                 .ThenBy(entry => entry.BusinessValue ?? int.MaxValue)
                 .Select(entry => new
                 {
                     Value = entry.BusinessValue!.Value.ToString(CultureInfo.InvariantCulture),
-                    Text = entry.Option.Label.Trim()
+                    Text = entry.DisplayText
                 })
                 .Cast<dynamic>()
                 .ToList();
@@ -174,6 +175,17 @@ namespace IND_CRM_APP.Services.Enums
         private static int? ResolveBusinessEnumValue(CrmEnumOptionDto option)
         {
             return option?.EnumIndex ?? option?.Value;
+        }
+
+        // Uses the configured label and falls back to AX description when no override exists.
+        private static string ResolveOptionDisplayText(CrmEnumOptionDto option)
+        {
+            if (option == null)
+                return string.Empty;
+
+            return !string.IsNullOrWhiteSpace(option.Label)
+                ? option.Label.Trim()
+                : (option.Description ?? string.Empty).Trim();
         }
 
         private static string NormalizeKey(string value)

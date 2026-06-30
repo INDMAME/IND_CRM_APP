@@ -1,0 +1,947 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Navision Axapta Forms unloaded at Martes 30/06/2026
+; --------------------------------------------------------------------------------
+FRMVERSION 5
+
+FORM #INDWebModuleAccessLevel
+  PROPERTIES
+    Name                #INDWebModuleAccessLevel
+  ENDPROPERTIES
+  
+  METHODS
+    Version: 3
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #INDWebModuleAccessLevel
+          Table               #INDWebModuleAccessLevel
+          Index               #
+          Company             #
+          CounterField        #
+          AllowCheck          #Yes
+          AllowEdit           #Yes
+          AllowCreate         #Yes
+          AllowDelete         #Yes
+          StartPosition       #First
+          AutoSearch          #Yes
+          AutoNotify          #Yes
+          AutoQuery           #Yes
+          OnlyFetchActive     #No
+          JoinSource          #
+          LinkType            #Delayed
+          DelayActive         #Yes
+          InsertAtEnd         #Yes
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  JOINS
+  ENDJOINS
+  
+  DESIGN
+    PROPERTIES
+      Left                #Auto (left)
+      Top                 #Auto
+      Width               #Auto
+      Height              #Auto
+      Visible             #Yes
+      Caption             #Permisos de accesos
+      TitleDatasource     #
+      Frame               #Standard
+      WindowResize        #Auto
+      WindowType          #Standard
+      SaveSize            #No
+      AlwaysOnTop         #No
+      HideToolbar         #No
+      SetCompany          #Yes
+      ColorScheme         #Default
+      CssClass            #
+      ShowWebHelp         #Default
+      BackgroundColor     #Button face (3D)
+      ImageName           #
+      ImageResource       #0
+      Imagemode           #Normal (preserve pict. attributes)
+      Mode                #Watch
+      SubmitMethod        #Auto
+      SupportReload       #No
+      LocalWebMenu        #
+      AllowDocking        #No
+      Font                #
+      FontSize            #0
+      Italic              #No
+      Underline           #No
+      Bold                #Default
+      CharacterSet        #0
+      LabelFont           #
+      LabelFontSize       #0
+      LabelItalic         #No
+      LabelUnderline      #No
+      LabelBold           #Default
+      LabelCharacterSet   #0
+      DataSource          #
+      TopMargin           #Auto
+      BottomMargin        #Auto
+      LeftMargin          #Auto
+      RightMargin         #Auto
+      ArrangeWhen         #Default
+      ArrangeMethod       #Vertical
+      Columns             #2
+      Columnspace         #Auto
+      ArrangeGuide        
+        ARRAY INDEX Columns 
+          #0
+          #0
+        ENDARRAY
+      HideIfEmpty         #Yes
+      AlignChildren       #Yes
+      AlignChild          #Yes
+      AllowUserSetup      #Yes
+      NeededAccessLevel   #NoAccess
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL GRID
+        ;==== controlId:12290, containerId: 0, containerdata: 0   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #Grid
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Auto
+          Height              #Auto
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #No
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          ColorScheme         #Default
+          BackgroundColor     #Window background
+          TopMargin           #0
+          BottomMargin        #0
+          LeftMargin          #0
+          RightMargin         #0
+          MultiSelect         #Yes
+          VisibleCols         #Auto
+          VisibleRows         #Auto
+          ShowColLabels       #Yes
+          ShowRowLabels       #Yes
+          HighlightActive     #Yes
+          ActiveBackColor     #Highlight background
+          ActiveForeColor     #Highlight text
+          DataSource          #INDWebModuleAccessLevel
+          DataGroup           #
+          AutoDataGroup       #No
+          GridLines           #Yes
+        ENDPROPERTIES
+        
+          CONTAINER
+            CONTROL STRINGEDIT
+              ;==== controlId:12291, containerId:12290, containerdata:12290   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #INDWebModuleAccessLevel_AppCode
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #100
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                LookupButton        #Auto
+                ReplaceOnLookup     #Yes
+                LimitText           #Auto
+                DisplayLength       #Auto
+                DisplayHeight       #Auto
+                Border              #Auto
+                Text                #
+                PasswordStyle       #No
+                Alignment           #Auto
+                ChangeCase          #Auto
+                MultiLine           #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #AppCode
+                Mandatory           #No
+                ArrayIndex          #0
+                SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL STRINGEDIT
+              ;==== controlId:12292, containerId:12290, containerdata:12290   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #INDWebModuleAccessLevel_ModuleCode
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #130
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                LookupButton        #Auto
+                ReplaceOnLookup     #Yes
+                LimitText           #Auto
+                DisplayLength       #Auto
+                DisplayHeight       #Auto
+                Border              #Auto
+                Text                #
+                PasswordStyle       #No
+                Alignment           #Auto
+                ChangeCase          #Auto
+                MultiLine           #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #ModuleCode
+                Mandatory           #No
+                ArrayIndex          #0
+                SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL COMBOBOX
+              ;==== controlId:12293, containerId:12290, containerdata:12290   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #INDWebModuleAccessLevel_AccessRights
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                Selection           #0
+                DisplayLength       #Auto
+                HideFirstEntry      #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #AccessRights
+                ArrayIndex          #0
+                Border              #Auto
+                ComboType           #Standard
+                AppendNew           #No
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL COMBOBOX
+              ;==== controlId:12294, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #INDWebModuleAccessLevel_DataVisibilityMode
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                Selection           #0
+                DisplayLength       #Auto
+                HideFirstEntry      #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #DataVisibilityMode
+                ArrayIndex          #0
+                Border              #Auto
+                ComboType           #Standard
+                AppendNew           #No
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL COMBOBOX
+              ;==== controlId:12296, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #INDWebModuleAccessLevel_HierarchyDepth
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                Selection           #0
+                DisplayLength       #Auto
+                HideFirstEntry      #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #HierarchyDepth
+                ArrayIndex          #0
+                Border              #Auto
+                ComboType           #Standard
+                AppendNew           #No
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL COMBOBOX
+              ;==== controlId:12295, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #INDWebModuleAccessLevel_MutationPolicy
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                Selection           #0
+                DisplayLength       #Auto
+                HideFirstEntry      #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #MutationPolicy
+                ArrayIndex          #0
+                Border              #Auto
+                ComboType           #Standard
+                AppendNew           #No
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL STRINGEDIT
+              ;==== controlId:12297, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #visibilitySummary
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #3
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                LookupButton        #Auto
+                ReplaceOnLookup     #Yes
+                LimitText           #Auto
+                DisplayLength       #Auto
+                DisplayHeight       #Auto
+                Border              #Auto
+                Text                #
+                PasswordStyle       #No
+                Alignment           #Auto
+                ChangeCase          #Auto
+                MultiLine           #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #Resumen de visibilidad
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #
+                Mandatory           #No
+                ArrayIndex          #0
+                DataMethod          #visibilitySummary
+                SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL STRINGEDIT
+              ;==== controlId:12298, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #targetSummary
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #3
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                LookupButton        #Auto
+                ReplaceOnLookup     #Yes
+                LimitText           #Auto
+                DisplayLength       #Auto
+                DisplayHeight       #Auto
+                Border              #Auto
+                Text                #
+                PasswordStyle       #No
+                Alignment           #Auto
+                ChangeCase          #Auto
+                MultiLine           #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #Excepciones
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #
+                Mandatory           #No
+                ArrayIndex          #0
+                DataMethod          #targetSummary
+                SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL INTEDIT
+              ;==== controlId:12299, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #activeAddTargetCount
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #3
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                LookupButton        #Auto
+                ReplaceOnLookup     #Yes
+                LimitText           #Auto
+                DisplayLength       #Auto
+                DisplayHeight       #Auto
+                Border              #Auto
+                Value               #0
+                Alignment           #Auto
+                SignDisplay         #Auto
+                RotateSign          #Auto
+                ShowZero            #Auto
+                DisplaceNegative    #Auto
+                AllowNegative       #Auto
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #Usuarios agregados
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #
+                Mandatory           #No
+                ArrayIndex          #0
+                DataMethod          #activeAddTargetCount
+                SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL INTEDIT
+              ;==== controlId:12300, containerId:12290, containerdata:12290   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #activeRemoveTargetCount
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #3
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                LookupButton        #Auto
+                ReplaceOnLookup     #Yes
+                LimitText           #Auto
+                DisplayLength       #Auto
+                DisplayHeight       #Auto
+                Border              #Auto
+                Value               #0
+                Alignment           #Auto
+                SignDisplay         #Auto
+                RotateSign          #Auto
+                ShowZero            #Auto
+                DisplaceNegative    #Auto
+                AllowNegative       #Auto
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #Usuarios quitados
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #
+                Mandatory           #No
+                ArrayIndex          #0
+                DataMethod          #activeRemoveTargetCount
+                SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL COMBOBOX
+              ;==== controlId:12301, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #hasActiveRemoveTargets
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                Selection           #0
+                DisplayLength       #Auto
+                HideFirstEntry      #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #Tiene bloqueos
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #INDWebModuleAccessLevel
+                DataField           #
+                ArrayIndex          #0
+                DataMethod          #hasActiveRemoveTargets
+                Border              #Auto
+                ComboType           #Standard
+                AppendNew           #No
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+          ENDCONTAINER
+          
+      ENDCONTROL 
+      
+      CONTROL BUTTONGROUP
+        ;==== controlId:12302, containerId: 0, containerdata: 4   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #ButtonGroup
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Right edge
+          Top                 #Auto
+          Width               #Auto
+          Height              #Auto
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #No
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          FrameType           #Auto
+          FramePosition       #Outside
+          Caption             #
+          SizeWidth           #Yes
+          SizeHeight          #Yes
+          Font                #
+          FontSize            #0
+          Italic              #No
+          Underline           #No
+          Bold                #Default
+          CharacterSet        #0
+          BackStyle           #Opaque
+          ColorScheme         #Default
+          BackgroundColor     #Button face (3D)
+          DataSource          #
+          TopMargin           #Auto
+          BottomMargin        #Auto
+          LeftMargin          #Auto
+          RightMargin         #Auto
+          ArrangeWhen         #Default
+          ArrangeMethod       #Vertical
+          Columns             #1
+          Columnspace         #Auto
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+            ENDARRAY
+          HideIfEmpty         #Yes
+          AlignChildren       #Yes
+          AlignChild          #Yes
+          AllowUserSetup      #Yes
+          NeededAccessLevel   #View
+        ENDPROPERTIES
+        
+        CONTAINER
+          CONTROL MENUITEMBUTTON
+            ;==== controlId:12303, containerId:12302, containerdata:12302   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #INDModuleDataVisibilityTargetForm
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #Yes
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              Text                #
+              Value               #No
+              ButtonDisplay       #Text only
+              NormalImage         #
+              NormalResource      #0
+              DisabledImage       #
+              DisabledResource    #0
+              Font                #
+              FontSize            #0
+              Italic              #No
+              Underline           #No
+              Bold                #Default
+              CharacterSet        #0
+              Border              #Auto
+              ShowShortCut        #Yes
+              DefaultButton       #No
+              SaveRecord          #Yes
+              MultiSelect         #Auto
+              ColorScheme         #Default
+              BackStyle           #Opaque
+              BackgroundColor     #Button face (3D)
+              ForegroundColor     #Button text
+              NeededAccessLevel   #View
+              MenuItemType        #Display
+              MenuItemName        #INDModuleDataVisibilityTargetForm
+              DataSource          #INDWebModuleAccessLevel
+            ENDPROPERTIES
+            
+          ENDCONTROL 
+          
+        ENDCONTAINER
+        
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+ENDFORM
+
+
+***Element: END

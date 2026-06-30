@@ -19,6 +19,7 @@
         window.__EXPENSE_TICKET_FILE_ID__ = @Html.Raw(JsonSerializer.Serialize((string)(ViewBag.TicketFileId ?? string.Empty)));
         window.__EXPENSE_GASTO_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.GastoTypeOptions ?? new object[0]));
         window.__EXPENSE_TICKET_STATUSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.TicketStatusOptions ?? new object[0]));
+        window.__EXPENSE_REIMBURSABLE_EXPENSE_LINES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ReimbursableExpenseLineOptions ?? new object[0]));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Save = SR["Common_Save"].Value,
             Common_Cancel = SR["Common_Cancel"].Value,
@@ -102,6 +103,7 @@
             ExpenseSheets_Field_Price = SR["ExpenseSheets_Field_Price"].Value,
             ExpenseSheets_Field_Amount = SR["ExpenseSheets_Field_Amount"].Value,
             ExpenseSheets_Field_Project = SR["ExpenseSheets_Field_Project"].Value,
+            ExpenseSheets_Field_ReimbursableExpense = SR["ExpenseSheets_Field_ReimbursableExpense"].Value,
             ExpenseSheets_Field_UserId = SR["ExpenseSheets_Field_UserId"].Value,
             ExpenseSheets_Field_SheetId = SR["ExpenseSheets_Field_SheetId"].Value,
             ExpenseSheets_Filter_Currency_Placeholder = SR["ExpenseSheets_Filter_Currency_Placeholder"].Value,

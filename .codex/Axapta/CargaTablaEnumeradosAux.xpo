@@ -1,0 +1,84 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: CargaTablaEnumeradosAux descargados en Martes 30/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #CargaTablaEnumeradosAux
+    #public static void CargaTablaEnumeradosAux(Args _args)
+    #{
+    #    int                     row = 1;
+    #    FileName                fileName;
+    #
+    #    DictEnum                de;
+    #    int                     i;
+    #    int                     j;
+    #
+    #    INDAxEnumsTable         INDAxEnumsTable;
+    #    ;
+    #
+    #    ttsbegin;
+    #
+    #    delete_from INDAxEnumsTable;
+    #
+    #    for (j = 1; j <= 63000; j++){
+    #        de = new DictEnum(j);
+    #        if (de){
+    #            for (i=0; i < de.values(); i++)
+    #            {
+    #                INDAxEnumsTable = INDAxEnumsTable::Find(de.name(), de.index2Value(i), true);
+    #                if (! INDAxEnumsTable){
+    #                    INDAxEnumsTable.clear();
+    #                    INDAxEnumsTable.AxEnumName  = de.name();
+    #                    //INDAxEnumsTable.EnumIndex   = i;
+    #                    INDAxEnumsTable.EnumIndex   = de.index2Value(i);
+    #                    INDAxEnumsTable.EnumValue   = i;
+    #
+    #                    INDAxEnumsTable.Description = de.value2Label(INDAxEnumsTable.EnumIndex);
+    #                    INDAxEnumsTable.AxEnumId    = de.id();
+    #                    INDAxEnumsTable.insert();
+    #                }
+    #                else {
+    #                    INDAxEnumsTable.Description = de.value2Label(INDAxEnumsTable.EnumIndex);
+    #                    INDAxEnumsTable.EnumIndex   = de.index2Value(i);
+    #                    INDAxEnumsTable.EnumValue   = i;
+    #                    INDAxEnumsTable.AxEnumId    = de.id();
+    #                    INDAxEnumsTable.doUpdate();
+    #                }
+    #            }
+    #        }
+    #    }
+    #
+    #/*
+    #    for (j = 1; j <= 63000; j++){
+    #        de = new DictEnum(j);
+    #        if (de){
+    #            for (i=0; i < de.values(); i++)
+    #            {
+    #                INDAxEnumsTable = INDAxEnumsTable::Find(de.name(), i, true);
+    #                if (! INDAxEnumsTable){
+    #                    INDAxEnumsTable.clear();
+    #                    INDAxEnumsTable.AxEnumName  = de.name();
+    #                    INDAxEnumsTable.EnumIndex   = i;
+    #                    INDAxEnumsTable.Description = de.index2Label(i);
+    #                    INDAxEnumsTable.AxEnumId    = de.id();
+    #                    INDAxEnumsTable.insert();
+    #                }
+    #                else {
+    #                    INDAxEnumsTable.Description = de.index2Label(i);
+    #                    INDAxEnumsTable.AxEnumId    = de.id();
+    #                    INDAxEnumsTable.doUpdate();
+    #                }
+    #            }
+    #        }
+    #    }
+    #*/
+    #    ttscommit;
+    #    info("Fin");
+    #}
+  ENDSOURCE
+
+***Element: END

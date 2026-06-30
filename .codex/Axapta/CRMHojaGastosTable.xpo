@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosTable unloaded at Lunes 29/06/2026
+; Navision Axapta Table : CRMHojaGastosTable unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -947,6 +947,7 @@ Formatversion: 1
           #ToDate
           #Description
           #AmountAnticipo
+          #ReimbursableExpense
         ENDGROUPFIELDS
       ENDGROUP
       GROUP #PriceKm
@@ -2534,9 +2535,6 @@ Formatversion: 1
         #{
         #    super();
         #
-        #    //MMS - Ajustes CRM - 2026.06.29
-        #    this.ReimbursableExpense = INDReimbursableExpense::Yes;
-        #
         #    //MMS - Ajustes CRM - 2026.06.26
         #    this.normalizeReimbursementCurrencyDefaults();
         #}
@@ -3598,8 +3596,7 @@ Formatversion: 1
         #    index hint index1
         #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
         #    {
-        #        //MMS - Ajustes CRM - 2026.06.29
-        #        hojaGastosLine.ReimbursableExpense = this.ReimbursableExpense == INDReimbursableExpense::No ? INDReimbursableExpenseLines::No : INDReimbursableExpenseLines::Yes;
+        #        hojaGastosLine.ReimbursableExpense = any2int(this.ReimbursableExpense);
         #        hojaGastosLine.doUpdate();
         #        updated++;
         #    }

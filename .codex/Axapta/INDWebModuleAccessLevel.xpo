@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDWebModuleAccessLevel unloaded at Lunes 22/06/2026
+; Navision Axapta Table : INDWebModuleAccessLevel unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -387,12 +387,7 @@ Formatversion: 1
       SOURCE #hasActiveRemoveTargets
         #display NoYes hasActiveRemoveTargets()
         #{
-        #    if (this.activeRemoveTargetCount() > 0)
-        #    {
-        #        return NoYes::Yes;
-        #    }
-        #
-        #    return NoYes::No;
+        #    return this.activeRemoveTargetCount() > 0 ? NoYes::Yes : NoYes::No;
         #}
       ENDSOURCE
       SOURCE #hasVisibilityTargets
@@ -451,7 +446,7 @@ Formatversion: 1
         #
         #    this.DataVisibilityMode = INDDataVisibilityMode::OwnOnly;
         #    this.HierarchyDepth     = INDDataVisibilityHierarchyDepth::FullDescendants;
-        #    //this.MutationPolicy     = INDMutationPolicy::ModuleBusinessRules;
+        #
         #}
       ENDSOURCE
       SOURCE #mutationPolicyLabel

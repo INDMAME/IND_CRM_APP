@@ -101,10 +101,12 @@ type ExpenseTicketDetailViewProps = {
     linkedLine: {
       visible: boolean;
       projectId: string;
+      reimbursableExpense: number;
       isLoading: boolean;
       errorMessage: string;
       disabled: boolean;
       onProjectIdChange: (value: string) => void;
+      onReimbursableExpenseChange: (value: number) => void;
     };
     visibleLines: ExpenseTicketDetailLine[];
     totalLinePages: number;
@@ -168,11 +170,13 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
       {content.linkedLine.visible ? (
         <ExpenseTicketLinkedSheetLineSection
           projectId={content.linkedLine.projectId}
+          reimbursableExpense={content.linkedLine.reimbursableExpense}
           isEditing={content.isEditing}
           isLoading={content.linkedLine.isLoading}
           disabled={content.linkedLine.disabled}
           errorMessage={content.linkedLine.errorMessage}
           onProjectIdChange={content.linkedLine.onProjectIdChange}
+          onReimbursableExpenseChange={content.linkedLine.onReimbursableExpenseChange}
         />
       ) : null}
       <ExpenseTicketLinesList

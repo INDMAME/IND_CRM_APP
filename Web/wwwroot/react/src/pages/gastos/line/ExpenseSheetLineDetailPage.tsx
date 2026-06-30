@@ -104,6 +104,7 @@ const ExpenseSheetLineDetailContent = () => {
     draftQty,
     draftProjectId,
     draftInternational,
+    draftReimbursableExpense,
     draftCurrencyCode,
     draftAmountMST,
     draftExchangeRate,
@@ -130,6 +131,7 @@ const ExpenseSheetLineDetailContent = () => {
     setDraftQty,
     setDraftProjectId,
     setDraftInternational,
+    setDraftReimbursableExpense,
     setDraftCurrencyCode,
     setDraftAmountMST,
     setDraftExchangeRate,
@@ -499,6 +501,7 @@ const ExpenseSheetLineDetailContent = () => {
     draftQty,
     draftProjectId,
     draftInternational,
+    draftReimbursableExpense,
     draftCurrencyCode,
     draftAmountMST,
     draftExchangeRate,
@@ -626,6 +629,7 @@ const ExpenseSheetLineDetailContent = () => {
         draftQty={draftQty}
         draftProjectId={draftProjectId}
         draftInternational={draftInternational}
+        draftReimbursableExpense={draftReimbursableExpense}
         draftCurrencyCode={draftCurrencyCode}
         draftAmountMST={draftAmountMST}
         draftExchangeRate={draftExchangeRate}
@@ -644,6 +648,7 @@ const ExpenseSheetLineDetailContent = () => {
         onDraftQtyChange={handleLineQtyChange}
         onDraftProjectIdChange={setDraftProjectId}
         onDraftInternationalChange={setDraftInternational}
+        onDraftReimbursableExpenseChange={setDraftReimbursableExpense}
         onDraftCurrencyCodeChange={handleLineCurrencyChange}
         onDraftAmountMSTChange={handleLineAmountMSTChange}
         onDraftExchangeRateChange={handleLineExchangeRateChange}

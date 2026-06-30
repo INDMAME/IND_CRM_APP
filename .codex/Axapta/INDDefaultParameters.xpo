@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDDefaultParameters unloaded at Lunes 22/06/2026
+; Navision Axapta Table : INDDefaultParameters unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -22,7 +22,7 @@ Formatversion: 1
       MaxAccessMode       #Delete
       CacheLookup         #None
       CreateRecIdIndex    #No
-      SaveDataPerCompany  #Yes
+      SaveDataPerCompany  #No
       TableGroup          #Parameter
       PrimaryIndex        #
       ClusterIndex        #
@@ -84,31 +84,6 @@ Formatversion: 1
               #
             ENDARRAY
           StringSize          #100
-          Adjustment          #Left
-        ENDPROPERTIES
-        
-      FIELD #CRMCurrencyVarios
-        STRING
-        PROPERTIES
-          Type                #String
-          Name                #CRMCurrencyVarios
-          Label               #Divisa
-          HelpText            #
-          GroupPrompt         #
-          SaveContents        #Yes
-          Mandatory           #No
-          AllowEditOnCreate   #Yes
-          AllowEdit           #Yes
-          Visible             #Yes
-          ConfigurationKey    #
-          Table               #INDDefaultParameters
-          AliasFor            #
-          ExtendedDataType    
-            ARRAY 
-              #
-              #
-            ENDARRAY
-          StringSize          #10
           Adjustment          #Left
         ENDPROPERTIES
         

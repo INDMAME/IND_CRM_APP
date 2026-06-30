@@ -10,10 +10,12 @@ type ConfirmModalState = {
   showCancel: boolean;
   showConfirm: boolean;
   onConfirm: (() => Promise<boolean | void> | boolean | void) | null;
+  onCancel: (() => void) | null;
 };
 
-type ConfirmOpenOptions = Partial<Omit<ConfirmModalState, "open" | "onConfirm">> & {
+type ConfirmOpenOptions = Partial<Omit<ConfirmModalState, "open" | "onConfirm" | "onCancel">> & {
   onConfirm?: (() => Promise<boolean | void> | boolean | void) | null;
+  onCancel?: (() => void) | null;
 };
 
 type UseConfirmDialogArgs = {
@@ -38,6 +40,7 @@ export const useConfirmDialog = ({ defaultConfirmText, defaultCancelText }: UseC
     showCancel: true,
     showConfirm: true,
     onConfirm: null,
+    onCancel: null,
   });
 
   const confirmInFlightRef = useRef(false);
@@ -53,6 +56,7 @@ export const useConfirmDialog = ({ defaultConfirmText, defaultCancelText }: UseC
         showCancel: opts?.showCancel !== false,
         showConfirm: opts?.showConfirm !== false,
         onConfirm: opts?.onConfirm || null,
+        onCancel: opts?.onCancel || null,
       });
     },
     [defaultCancelText, defaultConfirmText]
@@ -61,6 +65,15 @@ export const useConfirmDialog = ({ defaultConfirmText, defaultCancelText }: UseC
   const closeConfirm = useCallback(() => {
     setModal((prev) => ({ ...prev, open: false }));
   }, []);
+
+  const cancelConfirm = useCallback(() => {
+    const cb = modal.onCancel;
+    try {
+      cb?.();
+    } finally {
+      closeConfirm();
+    }
+  }, [closeConfirm, modal.onCancel]);
 
   const handleConfirm = useCallback(
     async ({ busy, onError, defaultErrorMessage }: HandleConfirmArgs) => {
@@ -94,6 +107,7 @@ export const useConfirmDialog = ({ defaultConfirmText, defaultCancelText }: UseC
     modal,
     openConfirm,
     closeConfirm,
+    cancelConfirm,
     handleConfirm,
   };
 };

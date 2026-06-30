@@ -13,6 +13,10 @@ import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import { resolveExpenseSheetDetailPolicy } from "../detail/expenseSheetDetailPolicy.ts";
 import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
+import {
+  DEFAULT_LINE_REIMBURSABLE_EXPENSE,
+  normalizeExpenseLineReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 
 const KM_GASTO_TYPE_CODE = "3";
 const FUEL_PRICE_DEBOUNCE_MS = 300;
@@ -78,7 +82,12 @@ const resolveFuelPriceSourceMessage = (source: string, effectiveDate: string): s
     : `${sourceLabel}: ${normalizedSource}`;
 };
 
-const buildCreateLineDraft = (baseDate: string, projectId: string, currencyCode: string): ExpenseSheetLine => {
+const buildCreateLineDraft = (
+  baseDate: string,
+  projectId: string,
+  currencyCode: string,
+  reimbursableExpense: number = DEFAULT_LINE_REIMBURSABLE_EXPENSE
+): ExpenseSheetLine => {
   return {
     lineRecId: "",
     transDate: baseDate,
@@ -91,6 +100,7 @@ const buildCreateLineDraft = (baseDate: string, projectId: string, currencyCode:
     qty: 1,
     amount: null,
     projId: projectId,
+    reimbursableExpense,
     currencyCode,
     amountMST: null,
     exchRate: 100,
@@ -141,6 +151,7 @@ export const useExpenseSheetLineDetailState = ({
   const [draftQty, setDraftQty] = useState("");
   const [draftProjectId, setDraftProjectId] = useState("");
   const [draftInternational, setDraftInternational] = useState("");
+  const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
   const [draftAmountMST, setDraftAmountMST] = useState("");
   const [draftExchangeRate, setDraftExchangeRate] = useState("");
@@ -158,6 +169,7 @@ export const useExpenseSheetLineDetailState = ({
     setDraftQty(formatEditableQuantity(nextLine?.qty));
     setDraftProjectId(isExistingLine ? normalizedLineProjectId : (normalizedLineProjectId || safeText(nextHeader?.projId)));
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
+    setDraftReimbursableExpense(normalizeExpenseLineReimbursableExpense(nextLine?.reimbursableExpense));
     const localCurrencyCode = safeText(nextHeader?.currencyCode).toUpperCase() || "EUR";
     const lineCurrencyCode = safeText(nextLine?.currencyCode).toUpperCase() || localCurrencyCode;
     const lineExchangeRate = lineCurrencyCode === localCurrencyCode ? 100 : nextLine?.exchRate;
@@ -575,6 +587,7 @@ export const useExpenseSheetLineDetailState = ({
     draftQty,
     draftProjectId,
     draftInternational,
+    draftReimbursableExpense,
     draftCurrencyCode,
     draftAmountMST,
     draftExchangeRate,
@@ -603,6 +616,7 @@ export const useExpenseSheetLineDetailState = ({
     setDraftQty,
     setDraftProjectId,
     setDraftInternational,
+    setDraftReimbursableExpense,
     setDraftCurrencyCode,
     setDraftAmountMST,
     setDraftExchangeRate,

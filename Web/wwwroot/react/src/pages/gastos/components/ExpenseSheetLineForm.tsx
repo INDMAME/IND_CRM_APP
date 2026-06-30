@@ -10,6 +10,11 @@ import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 import ExpenseCurrencySettlementFields from "./ExpenseCurrencySettlementFields.tsx";
+import {
+  getExpenseLineReimbursableExpenseLabel,
+  getExpenseLineReimbursableExpenseOptions,
+  normalizeExpenseLineReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 
 type ExpenseSheetLineFormProps = {
   line: ExpenseSheetLine;
@@ -35,6 +40,7 @@ type ExpenseSheetLineFormProps = {
   draftQty: string;
   draftProjectId: string;
   draftInternational: string;
+  draftReimbursableExpense: number | null;
   draftCurrencyCode: string;
   draftAmountMST: string;
   draftExchangeRate: string;
@@ -55,6 +61,7 @@ type ExpenseSheetLineFormProps = {
   onDraftQtyChange: (value: string) => void;
   onDraftProjectIdChange: (value: string) => void;
   onDraftInternationalChange: (value: string) => void;
+  onDraftReimbursableExpenseChange: (value: number) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftAmountMSTChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
@@ -153,6 +160,7 @@ const ExpenseSheetLineForm = ({
   draftQty,
   draftProjectId,
   draftInternational,
+  draftReimbursableExpense,
   draftCurrencyCode,
   draftAmountMST,
   draftExchangeRate,
@@ -173,11 +181,54 @@ const ExpenseSheetLineForm = ({
   onDraftQtyChange,
   onDraftProjectIdChange,
   onDraftInternationalChange,
+  onDraftReimbursableExpenseChange,
   onDraftCurrencyCodeChange,
   onDraftAmountMSTChange,
   onDraftExchangeRateChange,
   onOpenLinkedTicket,
 }: ExpenseSheetLineFormProps) => {
+  const reimbursableExpenseOptions = React.useMemo(() => getExpenseLineReimbursableExpenseOptions(), []);
+  const reimbursableExpenseValue = normalizeExpenseLineReimbursableExpense(
+    isEditing ? draftReimbursableExpense : line.reimbursableExpense
+  );
+  const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(reimbursableExpenseValue);
+  const internationalField = isEditing ? (
+    <SelectCombobox
+      label={indT("ExpenseSheets_Field_International", "International")}
+      options={internationalOptions}
+      value={draftInternational || ""}
+      onChange={onDraftInternationalChange}
+      placeholder={indT("ExpenseSheets_Field_International", "International")}
+      usePortal={false}
+      dropdownPlacement="top"
+      allowTextInput={false}
+      showSearchButton={false}
+    />
+  ) : (
+    <ExpenseReadOnlyField
+      label={indT("ExpenseSheets_Field_International", "International")}
+      value={internacionalLabel}
+    />
+  );
+  const reimbursableExpenseField = isEditing ? (
+    <SelectCombobox
+      label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      options={reimbursableExpenseOptions}
+      value={String(reimbursableExpenseValue)}
+      onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseLineReimbursableExpense(value))}
+      placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      usePortal={false}
+      dropdownPlacement="top"
+      allowTextInput={false}
+      showSearchButton={false}
+    />
+  ) : (
+    <ExpenseReadOnlyField
+      label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      value={reimbursableExpenseLabel}
+    />
+  );
+
   return (
     <section className="space-y-0">
       <ExpenseSectionDivider
@@ -354,23 +405,10 @@ const ExpenseSheetLineForm = ({
             <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
           ) : null}
 
-          {isEditing ? (
-            <SelectCombobox
-              label={indT("ExpenseSheets_Field_International", "International")}
-              options={internationalOptions}
-              value={draftInternational || ""}
-              onChange={onDraftInternationalChange}
-              placeholder={indT("ExpenseSheets_Field_International", "International")}
-              usePortal={false}
-              allowTextInput={false}
-              showSearchButton={false}
-            />
-          ) : (
-            <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_International", "International")}
-              value={internacionalLabel}
-            />
-          )}
+          <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
+            {internationalField}
+            {reimbursableExpenseField}
+          </div>
         </div>
         <div className="flex items-center gap-3 text-sm text-slate-600">
           <span>{status}</span>

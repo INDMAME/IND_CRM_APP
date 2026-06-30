@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDTicketInfoTable unloaded at Lunes 29/06/2026
+; Navision Axapta Table : INDTicketInfoTable unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -448,16 +448,18 @@ Formatversion: 1
     METHODS
       Version: 3
       SOURCE #adjustTotalAmount
-        #//MMS - Ajustes CRM - 2026.06.26
-        #// Ajusta el total de cabecera y crea una linea diferencial marcada como ajuste.
+        #//MMS - Recalculates a single ticket adjustment line - 2026.06.30
+        #// Updates the header total and reuses the differential adjustment line.
         #public container adjustTotalAmount(Amount _newTotalAmount, str 20 _createdByUserId)
         #{
         #    INDTicketInfoTable ticketInfoTable;
-        #    INDTicketInfoLine  ticketInfoLine;
         #    Amount             oldTotalAmount;
         #    Amount             differenceAmount;
+        #    Amount             adjustmentAmount;
         #    boolean            lineCreated;
+        #    boolean            adjustmentLineExists;
         #    RecId              adjustmentLineRecId;
+        #    container          adjustmentResult;
         #    ;
         #
         #    if (!this.RecId)
@@ -481,6 +483,13 @@ Formatversion: 1
         #    differenceAmount = _newTotalAmount - oldTotalAmount;
         #
         #    ticketInfoTable.TotalAmount = _newTotalAmount;
+        #    adjustmentResult = ticketInfoTable.syncAdjustmentLineToTotal(_createdByUserId, true);
+        #
+        #    lineCreated          = conPeek(adjustmentResult, 1);
+        #    adjustmentAmount     = conPeek(adjustmentResult, 3);
+        #    adjustmentLineRecId  = conPeek(adjustmentResult, 4);
+        #    adjustmentLineExists = conPeek(adjustmentResult, 5);
+        #
         #    ticketInfoTable.updateSearchKey();
         #    ticketInfoTable.normalizeCurrencyAmounts(false);
         #
@@ -493,27 +502,9 @@ Formatversion: 1
         #    ticketInfoTable.doUpdate();
         #    ticketInfoTable.syncHojaGastoLine();
         #
-        #    if (differenceAmount != 0)
-        #    {
-        #        ticketInfoLine.clear();
-        #        ticketInfoLine.initValue();
-        #        ticketInfoLine.FileId          = ticketInfoTable.FileId;
-        #        ticketInfoLine.RefRecIdTable   = ticketInfoTable.RecId;
-        #        ticketInfoLine.Description     = "AJUSTE DE IMPORTE TOTAL";
-        #        ticketInfoLine.Qty             = 1;
-        #        ticketInfoLine.Price           = differenceAmount;
-        #        ticketInfoLine.TotalAmount     = differenceAmount;
-        #        ticketInfoLine.Adjustment      = NoYes::Yes;
-        #        ticketInfoLine.CreatedByUserId = _createdByUserId;
-        #        ticketInfoLine.doInsert();
-        #
-        #        lineCreated = true;
-        #        adjustmentLineRecId = ticketInfoLine.RecId;
-        #    }
-        #
         #    ttscommit;
         #
-        #    return [lineCreated, oldTotalAmount, _newTotalAmount, differenceAmount, adjustmentLineRecId];
+        #    return [lineCreated, oldTotalAmount, _newTotalAmount, differenceAmount, adjustmentLineRecId, adjustmentAmount, adjustmentLineExists];
         #}
         #
       ENDSOURCE
@@ -543,7 +534,22 @@ Formatversion: 1
         #{
         #    Amount  amount;
         #    INDTicketInfoLine ticketInfoLine;
+        #    container adjustmentResult;
         #    ;
+        #
+        #    select firstOnly RecId from ticketInfoLine
+        #        where ticketInfoLine.FileId        == this.FileId
+        #           && ticketInfoLine.RefRecIdTable == this.RecId
+        #           && ticketInfoLine.Adjustment    == NoYes::Yes;
+        #
+        #    if (ticketInfoLine.RecId)
+        #    {
+        #        adjustmentResult = this.syncAdjustmentLineToTotal('', false);
+        #        this.normalizeCurrencyAmounts(_amountMSTChanged);
+        #        return conPeek(adjustmentResult, 2);
+        #    }
+        #
+        #    ticketInfoLine.clear();
         #
         #    select firstOnly RecId from ticketInfoLine
         #        where ticketInfoLine.FileId == this.FileId;
@@ -723,6 +729,102 @@ Formatversion: 1
         #        this.ExchRate = this.calcExchRateFromAmountMST();
         #
         #    this.AmountMST = this.ticketAmountMST();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #syncAdjustmentLineToTotal
+        #//MMS - Recalculates a single ticket adjustment line - 2026.06.30
+        #// Keeps the Adjustment line aligned with the manual header total.
+        #public container syncAdjustmentLineToTotal(str 20 _createdByUserId = '',
+        #                                           boolean _allowCreate = false)
+        #{
+        #    INDTicketInfoLine  adjustmentLine;
+        #    INDTicketInfoLine  duplicateAdjustmentLine;
+        #    INDTicketInfoLine  regularLine;
+        #    INDTicketInfoLine  allLine;
+        #    Amount             targetTotalAmount;
+        #    Amount             regularLinesTotal;
+        #    Amount             adjustmentAmount;
+        #    boolean            lineCreated;
+        #    boolean            adjustmentLineExists;
+        #    RecId              adjustmentLineRecId;
+        #    ;
+        #
+        #    if (!this.RecId)
+        #        throw error("Ticket no encontrado.");
+        #
+        #    targetTotalAmount = this.TotalAmount;
+        #
+        #    select firstonly forupdate adjustmentLine
+        #        where adjustmentLine.FileId        == this.FileId
+        #           && adjustmentLine.RefRecIdTable == this.RecId
+        #           && adjustmentLine.Adjustment    == NoYes::Yes;
+        #
+        #    if (!adjustmentLine.RecId && !_allowCreate)
+        #    {
+        #        select sum(TotalAmount) from allLine
+        #            where allLine.FileId        == this.FileId
+        #               && allLine.RefRecIdTable == this.RecId;
+        #
+        #        this.TotalAmount = allLine.TotalAmount;
+        #        this.normalizeCurrencyAmounts(false);
+        #
+        #        return [false, this.TotalAmount, 0, 0, false];
+        #    }
+        #
+        #    select sum(TotalAmount) from regularLine
+        #        where regularLine.FileId        == this.FileId
+        #           && regularLine.RefRecIdTable == this.RecId
+        #           && regularLine.Adjustment    != NoYes::Yes;
+        #
+        #    regularLinesTotal = regularLine.TotalAmount;
+        #    adjustmentAmount  = targetTotalAmount - regularLinesTotal;
+        #
+        #    if (!adjustmentLine.RecId)
+        #    {
+        #        if (adjustmentAmount == 0)
+        #        {
+        #            this.TotalAmount = targetTotalAmount;
+        #            this.normalizeCurrencyAmounts(false);
+        #
+        #            return [false, this.TotalAmount, adjustmentAmount, 0, false];
+        #        }
+        #
+        #        adjustmentLine.clear();
+        #        adjustmentLine.initValue();
+        #        adjustmentLine.FileId          = this.FileId;
+        #        adjustmentLine.RefRecIdTable   = this.RecId;
+        #        adjustmentLine.CreatedByUserId = _createdByUserId ? _createdByUserId : this.CreatedByUserId;
+        #        lineCreated = true;
+        #    }
+        #
+        #    adjustmentLine.Description = "AJUSTE DE IMPORTE TOTAL";
+        #    adjustmentLine.Qty         = 1;
+        #    adjustmentLine.Price       = adjustmentAmount;
+        #    adjustmentLine.TotalAmount = adjustmentAmount;
+        #    adjustmentLine.Adjustment  = NoYes::Yes;
+        #
+        #    if (lineCreated)
+        #        adjustmentLine.doInsert();
+        #    else
+        #        adjustmentLine.doUpdate();
+        #
+        #    adjustmentLineRecId   = adjustmentLine.RecId;
+        #    adjustmentLineExists  = adjustmentLineRecId ? true : false;
+        #
+        #    while select forupdate duplicateAdjustmentLine
+        #        where duplicateAdjustmentLine.FileId        == this.FileId
+        #           && duplicateAdjustmentLine.RefRecIdTable == this.RecId
+        #           && duplicateAdjustmentLine.Adjustment    == NoYes::Yes
+        #           && duplicateAdjustmentLine.RecId         != adjustmentLineRecId
+        #    {
+        #        duplicateAdjustmentLine.doDelete();
+        #    }
+        #
+        #    this.TotalAmount = targetTotalAmount;
+        #    this.normalizeCurrencyAmounts(false);
+        #
+        #    return [lineCreated, this.TotalAmount, adjustmentAmount, adjustmentLineRecId, adjustmentLineExists];
         #}
         #
       ENDSOURCE

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosLine unloaded at Lunes 29/06/2026
+; Navision Axapta Table : CRMHojaGastosLine unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -1075,6 +1075,7 @@ Formatversion: 1
           #Amount
           #Currency
           #FileId
+          #ReimbursableExpense
         ENDGROUPFIELDS
       ENDGROUP
     ENDGROUPS
@@ -1317,25 +1318,7 @@ Formatversion: 1
         #    {
         #        //MMS - Ajustes CRM - 2026.06.29
         #        this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense == INDReimbursableExpense::No ? INDReimbursableExpenseLines::No : INDReimbursableExpenseLines::Yes;
-        #    }
         #}
-        #
-      ENDSOURCE
-      SOURCE #canSyncLinkedTicket
-        #//MMS - Ajustes CRM - 2026.06.29
-        #boolean canSyncLinkedTicket()
-        #{
-        #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
-        #    ;
-        #
-        #    // Evita sincronizar tickets desde hojas bloqueadas por aprobacion, pago o estado no editable.
-        #    if (!this.FileId || !hojaGastosTable)
-        #        return false;
-        #
-        #    if (hojaGastosTable.Voucher || hojaGastosTable.Aprobado)
-        #        return false;
-        #
-        #    return CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus);
         #}
         #
       ENDSOURCE
@@ -1417,6 +1400,24 @@ Formatversion: 1
         #        return this.ExchRate;
         #
         #    return (this.Amount * 100) / this.AmountMST;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #canSyncLinkedTicket
+        #//MMS - Ajustes CRM - 2026.06.29
+        #boolean canSyncLinkedTicket()
+        #{
+        #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
+        #    ;
+        #
+        #    // Evita sincronizar tickets desde hojas bloqueadas por aprobacion, pago o estado no editable.
+        #    if (!this.FileId || !hojaGastosTable)
+        #        return false;
+        #
+        #    if (hojaGastosTable.Voucher || hojaGastosTable.Aprobado)
+        #        return false;
+        #
+        #    return CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus);
         #}
         #
       ENDSOURCE
@@ -1788,7 +1789,7 @@ Formatversion: 1
         #    {
         #        //MMS - Ajustes CRM - 2026.06.29
         #        this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense == INDReimbursableExpense::No ? INDReimbursableExpenseLines::No : INDReimbursableExpenseLines::Yes;
-        #    }
+        #}
         #}
         #
       ENDSOURCE
@@ -1857,6 +1858,7 @@ Formatversion: 1
         #    //MMS - Ajustes CRM - 2026.06.29
         #    this.ReimbursableExpense = INDReimbursableExpenseLines::Yes;
         #}
+        #
       ENDSOURCE
       SOURCE #insert
         #public void insert()
@@ -2243,6 +2245,22 @@ Formatversion: 1
         #    return 0;
         #}
       ENDSOURCE
+      SOURCE #syncHojaGastosTable
+        #//INDMMS_ExternalCRM - 2026.03.10
+        #void syncHojaGastosTable()
+        #{
+        #    CRMHojaGastosTable hojaGastosTable;
+        #    ;
+        #
+        #    // Updates header markers after a saved line diverges from header defaults.
+        #    ttsbegin;
+        #    hojaGastosTable = this.HojaGastosTable(true);
+        #    if(hojaGastosTable)
+        #        hojaGastosTable.markHeaderVariousFromLine(this);
+        #    ttscommit;
+        #    }
+        #
+      ENDSOURCE
       SOURCE #syncLinkedTicket
         #//MMS - Ajustes CRM - 2026.06.29
         #void syncLinkedTicket()
@@ -2305,22 +2323,6 @@ Formatversion: 1
         #
         #    ttscommit;
         #}
-        #
-      ENDSOURCE
-      SOURCE #syncHojaGastosTable
-        #//INDMMS_ExternalCRM - 2026.03.10
-        #void syncHojaGastosTable()
-        #{
-        #    CRMHojaGastosTable hojaGastosTable;
-        #    ;
-        #
-        #    // Updates header markers after a saved line diverges from header defaults.
-        #    ttsbegin;
-        #    hojaGastosTable = this.HojaGastosTable(true);
-        #    if(hojaGastosTable)
-        #        hojaGastosTable.markHeaderVariousFromLine(this);
-        #    ttscommit;
-        #    }
         #
       ENDSOURCE
       SOURCE #TieneProyectoAsignado

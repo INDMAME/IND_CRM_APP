@@ -43,6 +43,7 @@ type UseExpenseTopbarCrudActionsArgs = {
   saveConfirmTitle: string;
   saveConfirmMessage: string;
   saveConfirmText: string;
+  saveConfirmOnCancel?: () => void;
   deleteConfirmTitle: string;
   deleteConfirmMessage: string;
   deleteConfirmText: string;
@@ -53,6 +54,7 @@ type UseExpenseTopbarCrudActionsArgs = {
     message: string;
     confirmText?: string;
     onConfirm?: () => Promise<boolean | void> | boolean | void;
+    onCancel?: () => void;
   }) => void;
   closeConfirm: () => void;
 };
@@ -84,6 +86,7 @@ export const useExpenseTopbarCrudActions = ({
   saveConfirmTitle,
   saveConfirmMessage,
   saveConfirmText,
+  saveConfirmOnCancel,
   deleteConfirmTitle,
   deleteConfirmMessage,
   deleteConfirmText,
@@ -267,6 +270,7 @@ export const useExpenseTopbarCrudActions = ({
           title: saveConfirmTitle,
           message: saveConfirmMessage,
           confirmText: saveConfirmText,
+          onCancel: saveConfirmOnCancel,
           onConfirm: async () => {
             const ok = await handleSave();
             if (ok) {
@@ -356,6 +360,7 @@ export const useExpenseTopbarCrudActions = ({
     resolvedDeleteLock,
     resolvedEditLock,
     saveConfirmMessage,
+    saveConfirmOnCancel,
     saveConfirmText,
     saveConfirmTitle,
     setModalError,

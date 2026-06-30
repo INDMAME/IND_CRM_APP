@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Lunes 29/06/2026
+; Navision Axapta Forms unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -261,7 +261,7 @@ FORM #INDAxEnumAppCatalogTableForm
     PROPERTIES
       Left                #Auto (left)
       Top                 #Auto
-      Width               #Column width
+      Width               #Auto
       Height              #Auto
       Visible             #Yes
       Caption             #Catálogo de enums por aplicativo
@@ -330,7 +330,7 @@ FORM #INDAxEnumAppCatalogTableForm
           Left                #Auto (left)
           Top                 #Auto
           Width               #Column width
-          Height              #Auto
+          Height              #Column height
           VerticalSpacing     #Auto
           Enabled             #Yes
           Skip                #No
@@ -487,7 +487,7 @@ FORM #INDAxEnumAppCatalogTableForm
                 Left                #Auto (left)
                 Top                 #Auto
                 Width               #Auto
-                Height              #Auto
+                Height              #Column height
                 VerticalSpacing     #Auto
                 Enabled             #Yes
                 Skip                #No
@@ -550,8 +550,8 @@ FORM #INDAxEnumAppCatalogTableForm
                       AllowEdit           #Yes
                       Left                #Auto (left)
                       Top                 #Auto
-                      Width               #Column width
-                      Height              #Auto
+                      Width               #Auto
+                      Height              #Column height
                       VerticalSpacing     #Auto
                       Enabled             #Yes
                       Skip                #No
@@ -614,7 +614,7 @@ FORM #INDAxEnumAppCatalogTableForm
                             Left                #Auto (left)
                             Top                 #Auto
                             Width               #Column width
-                            Height              #Auto
+                            Height              #Column height
                             VerticalSpacing     #Auto
                             Enabled             #Yes
                             Skip                #No
@@ -790,8 +790,8 @@ FORM #INDAxEnumAppCatalogTableForm
                       AllowEdit           #Yes
                       Left                #Auto (left)
                       Top                 #Auto
-                      Width               #Column width
-                      Height              #Auto
+                      Width               #Auto
+                      Height              #Column height
                       VerticalSpacing     #Auto
                       Enabled             #Yes
                       Skip                #No
@@ -854,7 +854,7 @@ FORM #INDAxEnumAppCatalogTableForm
                             Left                #Auto (left)
                             Top                 #Auto
                             Width               #Column width
-                            Height              #Auto
+                            Height              #Column height
                             VerticalSpacing     #Auto
                             Enabled             #Yes
                             Skip                #No
@@ -1146,7 +1146,7 @@ FORM #INDAxEnumAppCatalogTableForm
                                 PROPERTIES
                                   Name                #INDAxEnumsTable_EnumValue
                                   AutoDeclaration     #No
-                                  Visible             #Yes
+                                  Visible             #No
                                   AllowEdit           #Yes
                                   Left                #Auto (left)
                                   Top                 #Auto

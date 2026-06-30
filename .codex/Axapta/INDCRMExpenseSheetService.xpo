@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Viernes 26/06/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Martes 30/06/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -23,6 +23,123 @@ Formatversion: 1
         #{
         #
         #}
+      ENDSOURCE
+      SOURCE #adjustExpenseSheetTicketTotalAmount
+        #// Method: adjustExpenseSheetTicketTotalAmount
+        #// Purpose: Updates ticket header total and creates a differential adjustment line.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #//  - _data[3] = fileId
+        #//  - _data[4] = newTotalAmount
+        #static server container adjustExpenseSheetTicketTotalAmount(container _data)
+        #{
+        #    DataAreaId         companyId;
+        #    str 20             axUserId;
+        #    CRMUserId          crmUserId;
+        #    INDFileId          fileId;
+        #    Amount             newTotalAmount;
+        #
+        #    INDTicketInfoTable ticketHeader;
+        #    container          adjustResult;
+        #    boolean            lineCreated;
+        #    Amount             previousTotalAmount;
+        #    Amount             savedTotalAmount;
+        #    Amount             differenceAmount;
+        #    RecId              adjustmentLineRecId;
+        #    boolean            adjustmentLineExists;
+        #    int                startLine;
+        #    str                msg;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    if (conLen(_data) < 4)
+        #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan 4 campos.', conNull());
+        #
+        #    axUserId       = conPeek(_data, 2);
+        #    fileId         = conPeek(_data, 3);
+        #    newTotalAmount = conPeek(_data, 4);
+        #
+        #    if (!axUserId)
+        #        return INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull());
+        #
+        #    if (!fileId)
+        #        return INDCRMUtilityService::buildHeader(false, 'FileId es obligatorio.', conNull());
+        #
+        #    if (newTotalAmount < 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'TotalAmount no puede ser negativo.', conNull());
+        #
+        #    startLine = infolog.line();
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId);
+        #
+        #            if (!crmUserId)
+        #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
+        #
+        #            select firstonly ticketHeader
+        #                where ticketHeader.FileId          == fileId
+        #                   && ticketHeader.CreatedByUserId == axUserId;
+        #
+        #            if (!ticketHeader.RecId)
+        #                return INDCRMUtilityService::buildHeader(false, 'Ticket no encontrado.', conNull());
+        #
+        #            adjustResult = ticketHeader.adjustTotalAmount(newTotalAmount, axUserId);
+        #
+        #            lineCreated         = conPeek(adjustResult, 1);
+        #            previousTotalAmount = conPeek(adjustResult, 2);
+        #            savedTotalAmount    = conPeek(adjustResult, 3);
+        #            differenceAmount    = conPeek(adjustResult, 4);
+        #            adjustmentLineRecId = conPeek(adjustResult, 5);
+        #            adjustmentLineExists = conPeek(adjustResult, 7);
+        #
+        #            return INDCRMUtilityService::buildHeader(true, 'Importe total ajustado correctamente.',
+        #                                                     [ticketHeader.FileId,
+        #                                                      strFmt('%1', previousTotalAmount),
+        #                                                      strFmt('%1', savedTotalAmount),
+        #                                                      strFmt('%1', differenceAmount),
+        #                                                      strFmt('%1', adjustmentLineRecId),
+        #                                                      lineCreated ? '1' : '0',
+        #                                                      'AJUSTE DE IMPORTE TOTAL',
+        #                                                      adjustmentLineExists ? '1' : '0']);
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
       ENDSOURCE
       SOURCE #buildEmailLogoSrc
         #// Devuelve el valor src del logo usando el Base64 guardado en la plantilla.
@@ -897,7 +1014,7 @@ Formatversion: 1
         #                    line.normalizeCurrencyAmounts(hasLineAmountMST);
         #
         #                    if (hasLineReimbursableExpense)
-        #                        line.ReimbursableExpense = lineReimbursableExpense;
+        #                        line.ReimbursableExpense = any2int(lineReimbursableExpense);
         #
         #                    // Prefer line project else header project
         #                    if (lineProjId)
@@ -3860,15 +3977,6 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #isValidReimbursableExpense
-        #// Method: isValidReimbursableExpense
-        #// Purpose: Validate allowed INDReimbursableExpense int values.
-        #static server boolean isValidReimbursableExpense(int _value)
-        #{
-        #    return _value == 0 || _value == 1 || _value == 2;
-        #}
-        #
-      ENDSOURCE
       SOURCE #isValidLineReimbursableExpense
         #//MMS - Ajustes CRM - 2026.06.29
         #// Method: isValidLineReimbursableExpense
@@ -3879,68 +3987,12 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #validateExpenseSheetHeaderForApi
-        #//MMS - Ajustes CRM - 2026.06.29
-        #// Ejecuta validaciones de cabecera antes de guardar desde API y devuelve el motivo funcional.
-        #static server str validateExpenseSheetHeaderForApi(CRMHojaGastosTable _header)
+      SOURCE #isValidReimbursableExpense
+        #// Method: isValidReimbursableExpense
+        #// Purpose: Validate allowed INDReimbursableExpense int values.
+        #static server boolean isValidReimbursableExpense(int _value)
         #{
-        #    int startLine;
-        #    str msg;
-        #    ;
-        #
-        #    if (!_header.RecId)
-        #    {
-        #        startLine = infolog.line();
-        #        if (!_header.validateField(FieldNum(CRMHojaGastosTable, ProjId)))
-        #        {
-        #            msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
-        #            return msg ? msg : 'Validacion de proyecto de cabecera no superada.';
-        #        }
-        #    }
-        #
-        #    // No llama validateField(ProjId) en actualizacion porque ese metodo abre dialogo cliente.
-        #    startLine = infolog.line();
-        #    if (!_header.validateWrite())
-        #    {
-        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
-        #        return msg ? msg : 'Validacion de cabecera de hoja de gastos no superada.';
-        #    }
-        #
-        #    return '';
-        #}
-        #
-      ENDSOURCE
-      SOURCE #validateExpenseSheetLineForApi
-        #//MMS - Ajustes CRM - 2026.06.29
-        #// Ejecuta validateField de linea antes de insert/update para devolver mensajes de negocio claros.
-        #static server str validateExpenseSheetLineForApi(CRMHojaGastosLine _line)
-        #{
-        #    int startLine;
-        #    str msg;
-        #    ;
-        #
-        #    startLine = infolog.line();
-        #    if (!_line.validateField(FieldNum(CRMHojaGastosLine, Type)))
-        #    {
-        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
-        #        return msg ? msg : 'Validacion de tipo de gasto no superada.';
-        #    }
-        #
-        #    startLine = infolog.line();
-        #    if (!_line.validateField(FieldNum(CRMHojaGastosLine, ProjIdHornos)))
-        #    {
-        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
-        #        return msg ? msg : 'Validacion de proyecto de linea no superada.';
-        #    }
-        #
-        #    startLine = infolog.line();
-        #    if (!_line.validateWrite())
-        #    {
-        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
-        #        return msg ? msg : 'Validacion de linea de hoja de gastos no superada.';
-        #    }
-        #
-        #    return '';
+        #    return _value == 0 || _value == 1 || _value == 2;
         #}
         #
       ENDSOURCE
@@ -5348,7 +5400,7 @@ Formatversion: 1
         #            line.normalizeCurrencyAmounts(hasLineAmountMST);
         #
         #            if (hasLineReimbursableExpense)
-        #                line.ReimbursableExpense = lineReimbursableExpense;
+        #                line.ReimbursableExpense = any2int(lineReimbursableExpense);
         #
         #            // Keep line project explicit and fall back to the header project when omitted.
         #            if (projId)
@@ -6347,6 +6399,71 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #validateExpenseSheetHeaderForApi
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Ejecuta validaciones de cabecera antes de guardar desde API y devuelve el motivo funcional.
+        #static server str validateExpenseSheetHeaderForApi(CRMHojaGastosTable _header)
+        #{
+        #    int startLine;
+        #    str msg;
+        #    ;
+        #
+        #    if (!_header.RecId)
+        #    {
+        #        startLine = infolog.line();
+        #        if (!_header.validateField(FieldNum(CRMHojaGastosTable, ProjId)))
+        #        {
+        #            msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #            return msg ? msg : 'Validacion de proyecto de cabecera no superada.';
+        #        }
+        #    }
+        #
+        #    // No llama validateField(ProjId) en actualizacion porque ese metodo abre dialogo cliente.
+        #    startLine = infolog.line();
+        #    if (!_header.validateWrite())
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de cabecera de hoja de gastos no superada.';
+        #    }
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateExpenseSheetLineForApi
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Ejecuta validateField de linea antes de insert/update para devolver mensajes de negocio claros.
+        #static server str validateExpenseSheetLineForApi(CRMHojaGastosLine _line)
+        #{
+        #    int startLine;
+        #    str msg;
+        #    ;
+        #
+        #    startLine = infolog.line();
+        #    if (!_line.validateField(FieldNum(CRMHojaGastosLine, Type)))
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de tipo de gasto no superada.';
+        #    }
+        #
+        #    startLine = infolog.line();
+        #    if (!_line.validateField(FieldNum(CRMHojaGastosLine, ProjIdHornos)))
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de proyecto de linea no superada.';
+        #    }
+        #
+        #    startLine = infolog.line();
+        #    if (!_line.validateWrite())
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de linea de hoja de gastos no superada.';
+        #    }
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
       SOURCE #validateTicketDateTimeForApi
         #// Method: validateTicketDateTimeForApi
         #// Purpose: Runs INDTicketInfoTable date/time uniqueness validation before API writes.
@@ -6363,121 +6480,6 @@ Formatversion: 1
         #        msg = 'Ya existe otro ticket con la misma fecha y hora.';
         #
         #    return msg;
-        #}
-        #
-      ENDSOURCE
-      SOURCE #adjustExpenseSheetTicketTotalAmount
-        #// Method: adjustExpenseSheetTicketTotalAmount
-        #// Purpose: Updates ticket header total and creates a differential adjustment line.
-        #// Input:
-        #//  - _data[1] = CompanyId
-        #//  - _data[2] = axUserId
-        #//  - _data[3] = fileId
-        #//  - _data[4] = newTotalAmount
-        #static server container adjustExpenseSheetTicketTotalAmount(container _data)
-        #{
-        #    DataAreaId         companyId;
-        #    str 20             axUserId;
-        #    CRMUserId          crmUserId;
-        #    INDFileId          fileId;
-        #    Amount             newTotalAmount;
-        #
-        #    INDTicketInfoTable ticketHeader;
-        #    container          adjustResult;
-        #    boolean            lineCreated;
-        #    Amount             previousTotalAmount;
-        #    Amount             savedTotalAmount;
-        #    Amount             differenceAmount;
-        #    RecId              adjustmentLineRecId;
-        #    int                startLine;
-        #    str                msg;
-        #    ;
-        #
-        #    companyId = INDCRMUtilityService::getCompany(_data);
-        #
-        #    if (!companyId)
-        #        return INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
-        #
-        #    if (conLen(_data) < 4)
-        #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan 4 campos.', conNull());
-        #
-        #    axUserId       = conPeek(_data, 2);
-        #    fileId         = conPeek(_data, 3);
-        #    newTotalAmount = conPeek(_data, 4);
-        #
-        #    if (!axUserId)
-        #        return INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull());
-        #
-        #    if (!fileId)
-        #        return INDCRMUtilityService::buildHeader(false, 'FileId es obligatorio.', conNull());
-        #
-        #    if (newTotalAmount < 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'TotalAmount no puede ser negativo.', conNull());
-        #
-        #    startLine = infolog.line();
-        #
-        #    try
-        #    {
-        #        changecompany(companyId)
-        #        {
-        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId);
-        #
-        #            if (!crmUserId)
-        #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
-        #
-        #            select firstonly ticketHeader
-        #                where ticketHeader.FileId          == fileId
-        #                   && ticketHeader.CreatedByUserId == axUserId;
-        #
-        #            if (!ticketHeader.RecId)
-        #                return INDCRMUtilityService::buildHeader(false, 'Ticket no encontrado.', conNull());
-        #
-        #            adjustResult = ticketHeader.adjustTotalAmount(newTotalAmount, axUserId);
-        #
-        #            lineCreated         = conPeek(adjustResult, 1);
-        #            previousTotalAmount = conPeek(adjustResult, 2);
-        #            savedTotalAmount    = conPeek(adjustResult, 3);
-        #            differenceAmount    = conPeek(adjustResult, 4);
-        #            adjustmentLineRecId = conPeek(adjustResult, 5);
-        #
-        #            return INDCRMUtilityService::buildHeader(true, 'Importe total ajustado correctamente.',
-        #                                                     [ticketHeader.FileId,
-        #                                                      strFmt('%1', previousTotalAmount),
-        #                                                      strFmt('%1', savedTotalAmount),
-        #                                                      strFmt('%1', differenceAmount),
-        #                                                      strFmt('%1', adjustmentLineRecId),
-        #                                                      lineCreated ? '1' : '0',
-        #                                                      'AJUSTE DE IMPORTE TOTAL',
-        #                                                      lineCreated ? '1' : '0']);
-        #        }
-        #    }
-        #    catch (Exception::Deadlock)
-        #    {
-        #        ttsabort;
-        #        return INDCRMUtilityService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
-        #    }
-        #    catch (Exception::DDEerror)
-        #    {
-        #        ttsabort;
-        #        return INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull());
-        #    }
-        #    catch (Exception::Internal)
-        #    {
-        #        ttsabort;
-        #        return INDCRMUtilityService::buildHeader(false, 'Error interno del sistema.', conNull());
-        #    }
-        #    catch (Exception::Error)
-        #    {
-        #        ttsabort;
-        #
-        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
-        #        if (!msg)
-        #            msg = 'Error en el proceso. Revisar infolog.';
-        #
-        #        return INDCRMUtilityService::buildHeader(false, msg, conNull());
-        #    }
-        #
-        #    return INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull());
         #}
         #
       ENDSOURCE

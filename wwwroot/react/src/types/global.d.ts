@@ -28,6 +28,7 @@ declare global {
     __EXPENSE_TICKET_STATUSES__?: Array<{ value?: string; Value?: string; text?: string; Text?: string }>;
     __EXPENSE_EXCHANGE_RATE_MODES__?: Array<{ value?: string; Value?: string; text?: string; Text?: string }>;
     __EXPENSE_REIMBURSABLE_EXPENSES__?: Array<{ value?: string; Value?: string; text?: string; Text?: string }>;
+    __EXPENSE_REIMBURSABLE_EXPENSE_LINES__?: Array<{ value?: string; Value?: string; text?: string; Text?: string }>;
     __ACTIVITY_DETAIL__?: Record<string, unknown>;
     __EXPENSE_SHEET_ID__?: string;
     __EXPENSE_SHEET_MODE__?: string;

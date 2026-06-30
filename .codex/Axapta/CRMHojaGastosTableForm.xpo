@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Lunes 29/06/2026
+; Navision Axapta Forms unloaded at Martes 30/06/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -6111,7 +6111,7 @@ FORM #CRMHojaGastosTable
                   ConfigurationKey    #
                   SecurityKey         #
                   DragDrop            #None
-                  Text                #Cancelar Solicitar Aprobación
+                  Text                #Deshacer Solicitar Aprobación
                   Value               #No
                   ButtonDisplay       #Text only
                   NormalImage         #
@@ -6270,7 +6270,7 @@ FORM #CRMHojaGastosTable
                   ConfigurationKey    #
                   SecurityKey         #
                   DragDrop            #None
-                  Text                #Cancelar Aprobación
+                  Text                #Deshacer Aprobación
                   Value               #No
                   ButtonDisplay       #Text only
                   NormalImage         #
@@ -6421,7 +6421,7 @@ FORM #CRMHojaGastosTable
                   ConfigurationKey    #
                   SecurityKey         #
                   DragDrop            #None
-                  Text                #Cancelar Rechazo
+                  Text                #Deshacer Rechazo
                   Value               #No
                   ButtonDisplay       #Text only
                   NormalImage         #

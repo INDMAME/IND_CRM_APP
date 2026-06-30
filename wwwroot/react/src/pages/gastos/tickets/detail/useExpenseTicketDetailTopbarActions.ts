@@ -25,6 +25,7 @@ type UseExpenseTicketDetailTopbarActionsArgs = {
     message: string;
     confirmText?: string;
     onConfirm?: () => Promise<boolean | void> | boolean | void;
+    onCancel?: () => void;
   }) => void;
   closeConfirm: () => void;
 };

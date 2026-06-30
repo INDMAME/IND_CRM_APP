@@ -7,8 +7,8 @@ import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import {
+  getEditableExpenseReimbursableExpenseOptions,
   getExpenseReimbursableExpenseLabel,
-  getExpenseReimbursableExpenseOptions,
   normalizeExpenseReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import {
@@ -100,9 +100,12 @@ const ExpenseSheetHeaderForm = ({
       : getExpenseStatusLabel(header.expenseSheetStatus);
   const headerCurrencyCode = safeText(header.currencyCode).toUpperCase();
   const baseCurrencyCode = safeText(exchangeRateBaseCurrency).toUpperCase();
-  const reimbursableExpenseOptions = React.useMemo(() => getExpenseReimbursableExpenseOptions(), []);
+  const reimbursableExpenseOptions = React.useMemo(() => getEditableExpenseReimbursableExpenseOptions(), []);
   const reimbursableExpenseValue = normalizeExpenseReimbursableExpense(
     isEditing ? draftReimbursableExpense : header.reimbursableExpense
+  );
+  const hasEditableReimbursableExpenseValue = reimbursableExpenseOptions.some(
+    (option) => Number(option.value) === reimbursableExpenseValue
   );
   const reimbursableExpenseLabel = getExpenseReimbursableExpenseLabel(reimbursableExpenseValue);
   // Status comment is now edited only in the status transition popup.
@@ -157,6 +160,27 @@ const ExpenseSheetHeaderForm = ({
     exchangeRateInfoValue
   );
   const exchangeRateInfoMessage = hasEndpointExchangeRateData ? endpointExchangeRateInfoMessage : storedExchangeRateInfoMessage;
+  const reimbursableExpenseField =
+    isEditing && canEditHeaderFields ? (
+      <SelectCombobox
+        label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+        placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+        options={reimbursableExpenseOptions}
+        value={hasEditableReimbursableExpenseValue ? String(reimbursableExpenseValue) : ""}
+        onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseReimbursableExpense(value))}
+        readOnly={!isEditing || !canEditHeaderFields}
+        disabled={!isEditing || !canEditHeaderFields}
+        idBase="expense-sheet-reimbursable-expense"
+        portalClassName="visitas-typography"
+        panelClassName="visitas-typography"
+        allowTextInput={false}
+      />
+    ) : (
+      <ExpenseReadOnlyField
+        label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+        value={reimbursableExpenseLabel}
+      />
+    );
 
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]">
@@ -211,41 +235,24 @@ const ExpenseSheetHeaderForm = ({
         ) : projectValue ? (
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
         ) : null}
-        {isEditing && canEditHeaderFields ? (
-          <SelectCombobox
-            label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
-            placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
-            options={reimbursableExpenseOptions}
-            value={String(reimbursableExpenseValue)}
-            onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseReimbursableExpense(value))}
-            readOnly={!isEditing || !canEditHeaderFields}
-            disabled={!isEditing || !canEditHeaderFields}
-            idBase="expense-sheet-reimbursable-expense"
-            portalClassName="visitas-typography"
-            panelClassName="visitas-typography"
-            allowTextInput={false}
+        <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
+          {reimbursableExpenseField}
+          <ExpenseSheetHeaderCurrencySection
+            interaction={{ isEditing, canEditHeaderFields }}
+            currencyState={{ isForeignCurrency, isCurrencyLockedByLines, isExchangeRateLockedByLines, showExchangeRate }}
+            expenseCurrencyLabel={expenseCurrencyLabel}
+            headerCurrencyCode={headerCurrencyCode}
+            baseCurrencyCode={baseCurrencyCode}
+            draftCurrencyCode={draftCurrencyCode}
+            draftExchangeRate={draftExchangeRate}
+            exchangeRateValue={exchangeRateValue}
+            exchangeRateValidationMessage={exchangeRateValidationMessage}
+            exchangeRateReferenceAmount={exchangeRateReferenceAmount}
+            exchangeRateInfoMessage={exchangeRateInfoMessage}
+            onDraftCurrencyCodeChange={onDraftCurrencyCodeChange}
+            onDraftExchangeRateChange={onDraftExchangeRateChange}
           />
-        ) : (
-          <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
-            value={reimbursableExpenseLabel}
-          />
-        )}
-        <ExpenseSheetHeaderCurrencySection
-          interaction={{ isEditing, canEditHeaderFields }}
-          currencyState={{ isForeignCurrency, isCurrencyLockedByLines, isExchangeRateLockedByLines, showExchangeRate }}
-          expenseCurrencyLabel={expenseCurrencyLabel}
-          headerCurrencyCode={headerCurrencyCode}
-          baseCurrencyCode={baseCurrencyCode}
-          draftCurrencyCode={draftCurrencyCode}
-          draftExchangeRate={draftExchangeRate}
-          exchangeRateValue={exchangeRateValue}
-          exchangeRateValidationMessage={exchangeRateValidationMessage}
-          exchangeRateReferenceAmount={exchangeRateReferenceAmount}
-          exchangeRateInfoMessage={exchangeRateInfoMessage}
-          onDraftCurrencyCodeChange={onDraftCurrencyCodeChange}
-          onDraftExchangeRateChange={onDraftExchangeRateChange}
-        />
+        </div>
         {!isCreateMode ? <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")} value={totalAmountText} /> : null}
       </div>
     </section>

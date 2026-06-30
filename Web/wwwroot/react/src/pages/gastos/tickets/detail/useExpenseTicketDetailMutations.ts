@@ -47,6 +47,8 @@ type UseExpenseTicketDetailMutationsArgs = {
   linkedExpenseLineRecId?: string;
   linkedExpenseLineProjectId?: string;
   linkedExpenseLineProjectIdChanged?: boolean;
+  linkedExpenseLineReimbursableExpense?: number | null;
+  linkedExpenseLineReimbursableExpenseChanged?: boolean;
   deleteLinkedExpenseLineContext?: DeleteLinkedExpenseLineContext | null;
   allowSelfManagement: boolean;
   canManageOtherUsers: boolean;
@@ -109,6 +111,8 @@ export const useExpenseTicketDetailMutations = ({
   linkedExpenseLineRecId,
   linkedExpenseLineProjectId,
   linkedExpenseLineProjectIdChanged = false,
+  linkedExpenseLineReimbursableExpense,
+  linkedExpenseLineReimbursableExpenseChanged = false,
   deleteLinkedExpenseLineContext,
   allowSelfManagement,
   canManageOtherUsers,
@@ -278,6 +282,9 @@ export const useExpenseTicketDetailMutations = ({
                 ...(linkedExpenseLineProjectIdChanged
                   ? { projectIdOverride: safeText(linkedExpenseLineProjectId) }
                   : {}),
+                ...(linkedExpenseLineReimbursableExpenseChanged
+                  ? { reimbursableExpenseOverride: linkedExpenseLineReimbursableExpense }
+                  : {}),
               };
               await syncExpenseLinkedTicketSheetLine(syncPayload);
               clearExpenseTicketSheetSyncState();
@@ -328,6 +335,8 @@ export const useExpenseTicketDetailMutations = ({
       currentTotalAmount,
       linkedExpenseLineProjectId,
       linkedExpenseLineProjectIdChanged,
+      linkedExpenseLineReimbursableExpense,
+      linkedExpenseLineReimbursableExpenseChanged,
       linkedExpenseLineRecId,
       onLinkedSheetSyncFailure,
       onLinkedSheetSyncSuccess,
@@ -347,9 +356,17 @@ export const useExpenseTicketDetailMutations = ({
 
   const handlePersistHeaderDraft = useCallback(async () => {
     return runHeaderUpdate({
-      syncSheetLine: linkedExpenseLineProjectIdChanged || !!safeText(linkedExpenseSheetId),
+      syncSheetLine:
+        linkedExpenseLineProjectIdChanged ||
+        linkedExpenseLineReimbursableExpenseChanged ||
+        !!safeText(linkedExpenseSheetId),
     });
-  }, [linkedExpenseLineProjectIdChanged, linkedExpenseSheetId, runHeaderUpdate]);
+  }, [
+    linkedExpenseLineProjectIdChanged,
+    linkedExpenseLineReimbursableExpenseChanged,
+    linkedExpenseSheetId,
+    runHeaderUpdate,
+  ]);
 
   const resolveLinkedExpenseLineContext = useCallback(async (): Promise<DeleteLinkedExpenseLineContext | null> => {
     if (deleteLinkedExpenseLineContext) {

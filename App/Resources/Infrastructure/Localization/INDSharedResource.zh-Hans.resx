@@ -105,6 +105,15 @@
   <data name="ExpenseSheets_Detail_SaveChanges_Body" xml:space="preserve">
     <value>您想保存对费用表的更改吗？</value>
   </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Title" xml:space="preserve">
+    <value>更新行</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Body" xml:space="preserve">
+    <value>可报销字段的更改将传播到费用表的所有行。是否继续？</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingReimbursable" xml:space="preserve">
+    <value>正在更新费用表行...</value>
+  </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>删除费用表</value>
   </data>
@@ -275,6 +284,9 @@
   </data>
   <data name="ExpenseSheets_Field_ReimbursableExpense" xml:space="preserve">
     <value>可报销</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
+    <value>两者</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>总金额</value>
