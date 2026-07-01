@@ -4978,15 +4978,25 @@ namespace IND_CRM_APP.Controllers
             try
             {
                 var items = await GetExpenseSheetSubordinatesForScopeAsync(token);
-                var isAllowed = items.Any(item => MatchesExpenseSubordinateUserId(item, normalizedOverride));
+                var matchingSubordinate = items.FirstOrDefault(item => MatchesExpenseSubordinateUserId(item, normalizedOverride));
 
-                if (isAllowed)
+                if (matchingSubordinate != null)
                 {
+                    var effectiveAxUserId = ResolveExpenseSubordinateAxUserId(matchingSubordinate) ?? normalizedOverride;
+                    if (!IsSameExpenseUserId(effectiveAxUserId, normalizedOverride))
+                    {
+                        _logger.LogInformation(
+                            "Resolved expense acting-user override in {Operation}. RequestedUserId={RequestedUserId}; EffectiveAxUserId={EffectiveAxUserId}",
+                            operationName,
+                            normalizedOverride,
+                            effectiveAxUserId);
+                    }
+
                     return new ExpenseActingUserGuardResult
                     {
                         Allowed = true,
                         StatusCode = StatusCodes.Status200OK,
-                        AxUserId = normalizedOverride
+                        AxUserId = effectiveAxUserId
                     };
                 }
 
@@ -5066,6 +5076,17 @@ namespace IND_CRM_APP.Controllers
                    IsSameExpenseUserId(GetExtraString(item?.Extra, "axUserId", "AxUserId"), normalizedUserId) ||
                    IsSameExpenseUserId(GetExtraString(item?.Extra, "crmUserId", "CrmUserId"), normalizedUserId) ||
                    IsSameExpenseUserId(GetExtraString(item?.Extra, "userId", "UserId"), normalizedUserId);
+        }
+
+        // Returns the Ax user id that must be sent to upstream for a subordinate match.
+        private static string? ResolveExpenseSubordinateAxUserId(ExpenseSheetSubordinateDto item)
+        {
+            return NormalizeOptionalText(item?.AxUserId)
+                   ?? NormalizeOptionalText(GetExtraString(item?.Extra, "axUserId", "AxUserId"))
+                   ?? NormalizeOptionalText(item?.CrmUserId)
+                   ?? NormalizeOptionalText(GetExtraString(item?.Extra, "crmUserId", "CrmUserId"))
+                   ?? NormalizeOptionalText(item?.UserId)
+                   ?? NormalizeOptionalText(GetExtraString(item?.Extra, "userId", "UserId"));
         }
 
         // Treats voucher assignment or paid status code as immutable paid state.
