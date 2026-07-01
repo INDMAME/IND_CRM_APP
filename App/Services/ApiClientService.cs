@@ -2177,6 +2177,8 @@ namespace IND_CRM_APP.Services
                 Description = NormalizeOptionalText(req.Description),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                 TotalAmount = req.TotalAmount,
+                AmountMST = req.AmountMST,
+                ExchRate = req.ExchRate,
                 Status = req.Status,
                 TransDate = NormalizeOptionalText(req.TransDate),
                 TicketDate = NormalizeOptionalText(req.TicketDate),
@@ -2193,10 +2195,12 @@ namespace IND_CRM_APP.Services
 
             var safeFileId = EscapePathSegment(fileId);
             _logger.LogInformation(
-                "UpdateExpenseSheetTicket request. FileId: {FileId}. CurrencyCode: {CurrencyCode}. TotalAmount: {TotalAmount}. TransDate: {TransDate}. GastoType: {GastoType}. ProcessedByAI: {ProcessedByAI}. SelectedCompany: {SelectedCompany}.",
+                "UpdateExpenseSheetTicket request. FileId: {FileId}. CurrencyCode: {CurrencyCode}. TotalAmount: {TotalAmount}. AmountMST: {AmountMST}. ExchRate: {ExchRate}. TransDate: {TransDate}. GastoType: {GastoType}. ProcessedByAI: {ProcessedByAI}. SelectedCompany: {SelectedCompany}.",
                 fileId,
                 NormalizeCurrencyCodeForTrace(payload.CurrencyCode),
                 payload.TotalAmount,
+                payload.AmountMST,
+                payload.ExchRate,
                 payload.TransDate ?? "<empty>",
                 payload.GastoType.HasValue ? payload.GastoType.Value.ToString(CultureInfo.InvariantCulture) : "null",
                 payload.ProcessedByAI.HasValue ? payload.ProcessedByAI.Value.ToString(CultureInfo.InvariantCulture) : "null",

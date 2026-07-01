@@ -245,6 +245,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public decimal? TotalAmount { get; set; }
 
+        [JsonPropertyName("amountMST")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? AmountMST { get; set; }
+
+        [JsonPropertyName("exchRate")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? ExchRate { get; set; }
+
         [JsonPropertyName("status")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public int? Status { get; set; }

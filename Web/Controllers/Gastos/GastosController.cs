@@ -2618,6 +2618,8 @@ namespace IND_CRM_APP.Controllers
                 Description = NormalizeOptionalText(req.Description),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                 TotalAmount = req.TotalAmount,
+                AmountMST = req.AmountMST,
+                ExchRate = req.ExchRate,
                 Status = req.Status is >= 0 ? req.Status : null,
                 TransDate = NormalizeTicketTransDate(req.TransDate) ?? NormalizeOptionalText(req.TransDate),
                 TicketDate = NormalizeTicketTransDate(req.TicketDate ?? req.TransDate) ?? NormalizeOptionalText(req.TicketDate),
@@ -2648,6 +2650,8 @@ namespace IND_CRM_APP.Controllers
                     ("requestedAxUserId", requestAxUserId),
                     ("currencyCode", request.CurrencyCode),
                     ("totalAmount", request.TotalAmount),
+                    ("amountMST", request.AmountMST),
+                    ("exchRate", request.ExchRate),
                     ("transDate", request.TransDate),
                     ("gastoType", request.GastoType),
                     ("processedByAI", request.ProcessedByAI));

@@ -3182,7 +3182,9 @@ Formatversion: 1
         #                                                      strFmt('%1', date2Str(ticketHeader.TicketDate, 123, 2,2,2,2,4)),
         #                                                      strFmt('%1', ticketHeader.TicketTime),
         #                                                      strFmt('%1', ticketHeader.CreatedByUserId),
-        #                                                      strFmt('%1', ownerName)
+        #                                                      strFmt('%1', ownerName),
+        #                                                      strFmt('%1', ticketHeader.AmountMST),
+        #                                                      strFmt('%1', ticketHeader.ExchRate)
         #                                                     ]);
         #
         #        while select ticketLine
@@ -5487,6 +5489,8 @@ Formatversion: 1
         #//  - _data[15] = normalizedJson (optional)
         #//  - _data[16] = ticketDate (optional, yyyymmdd)
         #//  - _data[17] = ticketTime (optional, seconds since midnight)
+        #//  - _data[18] = amountMST (optional)
+        #//  - _data[19] = exchRate (optional)
         #static server container updateExpenseSheetTicket(container _data)
         #{
         #    DataAreaId         companyId;
@@ -5510,6 +5514,10 @@ Formatversion: 1
         #    str                ticketDateStr;
         #    date               ticketDate;
         #    int                ticketTime;
+        #    real               amountMST;
+        #    real               exchRate;
+        #    str 32             amountMSTRaw;
+        #    str 32             exchRateRaw;
         #
         #    boolean            hasTotalAmount;
         #    boolean            hasStatus;
@@ -5523,6 +5531,8 @@ Formatversion: 1
         #    boolean            hasNormalizedJson;
         #    boolean            hasTicketDate;
         #    boolean            hasTicketTime;
+        #    boolean            hasAmountMST;
+        #    boolean            hasExchRate;
         #
         #    int                startLine;
         #    str                msg;
@@ -5639,6 +5649,26 @@ Formatversion: 1
         #        hasTicketTime = true;
         #    }
         #
+        #    if (conLen(_data) >= 18)
+        #    {
+        #        amountMSTRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 18))));
+        #        if (amountMSTRaw && amountMSTRaw != 'null')
+        #        {
+        #            amountMST = conPeek(_data, 18);
+        #            hasAmountMST = true;
+        #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 19)
+        #    {
+        #        exchRateRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 19))));
+        #        if (exchRateRaw && exchRateRaw != 'null')
+        #        {
+        #            exchRate = conPeek(_data, 19);
+        #            hasExchRate = true;
+        #        }
+        #    }
+        #
         #    if (currencyCode)
         #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
@@ -5665,6 +5695,12 @@ Formatversion: 1
         #    {
         #        return INDCRMUtilityService::buildHeader(false, strFmt('TicketTime invalido: %1 (segundos 0..86399).', ticketTime), conNull());
         #    }
+        #
+        #    if (hasAmountMST && amountMST < 0)
+        #        return INDCRMUtilityService::buildHeader(false, strFmt('AmountMST invalido: %1.', amountMST), conNull());
+        #
+        #    if (hasExchRate && exchRate < 0)
+        #        return INDCRMUtilityService::buildHeader(false, strFmt('ExchRate invalido: %1.', exchRate), conNull());
         #
         #    startLine = infolog.line();
         #
@@ -5698,6 +5734,12 @@ Formatversion: 1
         #
         #            if (hasTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
+        #
+        #            if (hasAmountMST)
+        #                ticketHeader.AmountMST = amountMST;
+        #
+        #            if (hasExchRate)
+        #                ticketHeader.ExchRate = exchRate;
         #
         #            if (hasStatus)
         #                ticketHeader.Status = status;

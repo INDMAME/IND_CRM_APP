@@ -523,6 +523,8 @@ export type ExpenseSheetTicketUpdateRequest = {
   description?: string;
   currencyCode?: string;
   totalAmount?: number;
+  amountMST?: number;
+  exchRate?: number;
   status?: number;
   transDate?: string;
   ticketDate?: string;
