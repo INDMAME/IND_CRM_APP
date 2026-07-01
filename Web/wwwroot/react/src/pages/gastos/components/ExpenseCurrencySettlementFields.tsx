@@ -89,9 +89,9 @@ const ExpenseCurrencySettlementFields = ({
     !!normalizedExpenseCurrencyCode &&
     !!normalizedLocalCurrencyCode &&
     normalizedExpenseCurrencyCode === normalizedLocalCurrencyCode;
-  const exchangeRateReadOnly = !isEditing || sameCurrencySettlement;
-  const effectiveExchangeRate = sameCurrencySettlement ? formatExchangeRateInput("100") : exchangeRate;
-  const effectiveExchangeRateInvalid = exchangeRateInvalid && !sameCurrencySettlement;
+  const exchangeRateReadOnly = !isEditing;
+  const effectiveExchangeRate = safeText(exchangeRate) || (sameCurrencySettlement ? formatExchangeRateInput("100") : "");
+  const effectiveExchangeRateInvalid = exchangeRateInvalid;
   const reimbursementCurrencyLabel = normalizedLocalCurrencyCode || indT("Common_NotAvailable", "N/A");
   const reimbursementLabel = indFormat(
     "ExpenseSheets_Field_ReimbursementAmount_WithCurrency",

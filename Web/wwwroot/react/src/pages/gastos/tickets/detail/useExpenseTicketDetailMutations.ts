@@ -237,6 +237,7 @@ export const useExpenseTicketDetailMutations = ({
       const payload: ExpenseSheetTicketUpdateRequest = {
         description: normalizedDescription,
         currencyCode: normalizedCurrency,
+        totalAmount: Number(parsedTotalAmount),
         amountMST: parsedAmountMST ?? undefined,
         exchRate: parsedExchangeRate != null && parsedExchangeRate > 0 ? parsedExchangeRate : undefined,
         transDate: normalizedTransDate || undefined,

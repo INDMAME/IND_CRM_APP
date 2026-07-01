@@ -351,6 +351,21 @@ const ExpenseSheetLineDetailContent = () => {
     return !!normalizedDraftCurrencyCode && !!localCurrencyCode && normalizedDraftCurrencyCode === localCurrencyCode;
   }, [draftCurrencyCode, localCurrencyCode]);
 
+  const resolveExchangeRateForLineCalculation = useCallback(
+    (exchangeRateRaw: string): string => {
+      const parsedExchangeRate = parseDecimalInput(exchangeRateRaw);
+      if (isDraftCurrencyLocal && (parsedExchangeRate == null || parsedExchangeRate <= 0)) {
+        if (exchangeRateRaw !== localExchangeRateInput) {
+          setDraftExchangeRate(localExchangeRateInput);
+        }
+        return localExchangeRateInput;
+      }
+
+      return exchangeRateRaw;
+    },
+    [isDraftCurrencyLocal, localExchangeRateInput, setDraftExchangeRate]
+  );
+
   const resolveDraftLineAmount = useCallback(
     (priceRaw: string, qtyRaw: string): number | null => {
       const nextPrice = parseDecimalInput(priceRaw);
@@ -427,40 +442,30 @@ const ExpenseSheetLineDetailContent = () => {
   const handleLinePriceChange = useCallback(
     (value: string) => {
       handleDraftPriceChange(value);
-      const effectiveExchangeRate = isDraftCurrencyLocal ? localExchangeRateInput : draftExchangeRate;
-      if (isDraftCurrencyLocal && draftExchangeRate !== localExchangeRateInput) {
-        setDraftExchangeRate(localExchangeRateInput);
-      }
+      const effectiveExchangeRate = resolveExchangeRateForLineCalculation(draftExchangeRate);
       recalculateAmountMSTFromRate(value, draftQty, effectiveExchangeRate);
     },
     [
       draftExchangeRate,
       draftQty,
       handleDraftPriceChange,
-      isDraftCurrencyLocal,
-      localExchangeRateInput,
       recalculateAmountMSTFromRate,
-      setDraftExchangeRate,
+      resolveExchangeRateForLineCalculation,
     ]
   );
 
   const handleLineQtyChange = useCallback(
     (value: string) => {
       handleDraftQtyChange(value);
-      const effectiveExchangeRate = isDraftCurrencyLocal ? localExchangeRateInput : draftExchangeRate;
-      if (isDraftCurrencyLocal && draftExchangeRate !== localExchangeRateInput) {
-        setDraftExchangeRate(localExchangeRateInput);
-      }
+      const effectiveExchangeRate = resolveExchangeRateForLineCalculation(draftExchangeRate);
       recalculateAmountMSTFromRate(draftPrice, value, effectiveExchangeRate);
     },
     [
       draftExchangeRate,
       draftPrice,
       handleDraftQtyChange,
-      isDraftCurrencyLocal,
-      localExchangeRateInput,
       recalculateAmountMSTFromRate,
-      setDraftExchangeRate,
+      resolveExchangeRateForLineCalculation,
     ]
   );
 
@@ -505,20 +510,12 @@ const ExpenseSheetLineDetailContent = () => {
   const handleLineExchangeRateChange = useCallback(
     (value: string) => {
       setExchangeRateInfoMessage("");
-      if (isDraftCurrencyLocal) {
-        setDraftExchangeRate(localExchangeRateInput);
-        recalculateAmountMSTFromRate(draftPrice, draftQty, localExchangeRateInput);
-        return;
-      }
-
       setDraftExchangeRate(value);
       recalculateAmountMSTFromRate(draftPrice, draftQty, value);
     },
     [
       draftPrice,
       draftQty,
-      isDraftCurrencyLocal,
-      localExchangeRateInput,
       recalculateAmountMSTFromRate,
       setDraftExchangeRate,
     ]
@@ -528,10 +525,6 @@ const ExpenseSheetLineDetailContent = () => {
     (value: string) => {
       setExchangeRateInfoMessage("");
       setDraftAmountMST(value);
-      if (isDraftCurrencyLocal) {
-        setDraftExchangeRate(localExchangeRateInput);
-        return;
-      }
 
       const amount = resolveDraftLineAmount(draftPrice, draftQty);
       const amountMST = parseDecimalInput(value);
@@ -546,8 +539,6 @@ const ExpenseSheetLineDetailContent = () => {
       draftPrice,
       draftQty,
       formatLineExchangeRateInput,
-      isDraftCurrencyLocal,
-      localExchangeRateInput,
       resolveDraftLineAmount,
       setDraftAmountMST,
       setDraftExchangeRate,

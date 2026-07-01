@@ -1393,11 +1393,13 @@ Formatversion: 1
         #    if (!currencyCode)
         #        return this.ExchRate;
         #
-        #    if (currencyCode == CompanyInfo::standardCurrency())
-        #        return 100;
-        #
         #    if (!this.Amount || !this.AmountMST)
+        #    {
+        #        if (currencyCode == CompanyInfo::standardCurrency() && !this.ExchRate)
+        #            return 100;
+        #
         #        return this.ExchRate;
+        #    }
         #
         #    return (this.Amount * 100) / this.AmountMST;
         #}
@@ -1880,7 +1882,7 @@ Formatversion: 1
         #    if (!this.Amount && this.Qty && this.Price)
         #        this.Amount = this.CalcAmount();
         #
-        #    amountMSTWasProvided = this.AmountMST != 0 && !this.ExchRate;  //MMS - Divisa desde línea - 2026.05.21
+        #    amountMSTWasProvided = this.AmountMST != 0;  //MMS - Preserva reembolso informado - 2026.07.01
         #    this.normalizeCurrencyAmounts(amountMSTWasProvided);  //INDMMS_ExternalCRM - 2026.05.21
         #
         #    if (!this.validateCurrencyAmounts())
@@ -1928,7 +1930,10 @@ Formatversion: 1
         #    if (currencyCode == CompanyInfo::standardCurrency() && !exchRate)
         #        exchRate = 100;
         #
-        #    return Currency::amountCur2MST(this.Amount, currencyCode, exchRate);
+        #    if (!exchRate)
+        #        return 0;
+        #
+        #    return Currency::amount(this.Amount * 100 / exchRate, CompanyInfo::standardCurrency());
         #}
         #/*display Amount LineAmountMST()
         #{
@@ -2176,11 +2181,14 @@ Formatversion: 1
         #    if (!this.ExchRate && hojaGastosTable && this.Currency == hojaGastosTable.CurrencyCode)
         #        this.ExchRate = hojaGastosTable.ExchRate;
         #
-        #    if (this.Currency == CompanyInfo::standardCurrency())
-        #        this.ExchRate = 100;
-        #
         #    if (_amountMSTChanged)
+        #    {
         #        this.ExchRate = this.calcExchRateFromAmountMST();
+        #        return;
+        #    }
+        #
+        #    if (this.Currency == CompanyInfo::standardCurrency() && !this.ExchRate)
+        #        this.ExchRate = 100;
         #
         #    this.AmountMST = this.LineAmountMST();
         #}
@@ -2329,7 +2337,7 @@ Formatversion: 1
         #        }
         #
         #        ticketInfoTable.updateSearchKey();
-        #        ticketInfoTable.normalizeCurrencyAmounts(false);
+        #        ticketInfoTable.normalizeCurrencyAmounts(ticketInfoTable.AmountMST != 0);
         #
         #        if (!ticketInfoTable.validateCurrencyAmounts())
         #        {
@@ -2369,7 +2377,7 @@ Formatversion: 1
         #        && this.Qty && this.Price)
         #        this.Amount = this.CalcAmount();
         #
-        #    amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST && (this.orig().ExchRate == this.ExchRate || !this.ExchRate); //MMS - Divisa desde línea - 2026.05.21
+        #    amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST; //MMS - Preserva reembolso informado - 2026.07.01
         #
         #    if (this.Currency != this.orig().Currency && this.ExchRate == this.orig().ExchRate)
         #    {

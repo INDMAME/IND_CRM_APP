@@ -518,11 +518,13 @@ Formatversion: 1
         #    if (!this.CurrencyCode)
         #        return this.ExchRate;
         #
-        #    if (this.CurrencyCode == CompanyInfo::standardCurrency())
-        #        return 100;
-        #
         #    if (!this.TotalAmount || !this.AmountMST)
+        #    {
+        #        if (this.CurrencyCode == CompanyInfo::standardCurrency() && !this.ExchRate)
+        #            return 100;
+        #
         #        return this.ExchRate;
+        #    }
         #
         #    return (this.TotalAmount * 100) / this.AmountMST;
         #}
@@ -673,7 +675,7 @@ Formatversion: 1
         #    if(!this.TotalAmount)
         #        this.calcTotalAmount(false, true);
         #
-        #    amountMSTWasProvided = this.AmountMST != 0 && !this.ExchRate;
+        #    amountMSTWasProvided = this.AmountMST != 0; //MMS - Preserva reembolso informado - 2026.07.01
         #    this.normalizeCurrencyAmounts(amountMSTWasProvided);
         #
         #    if (!this.validateCurrencyAmounts())
@@ -723,11 +725,14 @@ Formatversion: 1
         #    if (!this.CurrencyCode)
         #        this.CurrencyCode = CompanyInfo::standardCurrency();
         #
-        #    if (this.CurrencyCode == CompanyInfo::standardCurrency())
-        #        this.ExchRate = 100;
-        #
         #    if (_amountMSTChanged)
+        #    {
         #        this.ExchRate = this.calcExchRateFromAmountMST();
+        #        return;
+        #    }
+        #
+        #    if (this.CurrencyCode == CompanyInfo::standardCurrency() && !this.ExchRate)
+        #        this.ExchRate = 100;
         #
         #    this.AmountMST = this.ticketAmountMST();
         #}
@@ -886,7 +891,7 @@ Formatversion: 1
         #        gastosLine.Currency    = this.CurrencyCode;
         #        gastosLine.ExchRate    = this.ExchRate;
         #        gastosLine.AmountMST   = this.AmountMST;
-        #        gastosLine.normalizeCurrencyAmounts(false);
+        #        gastosLine.normalizeCurrencyAmounts(gastosLine.AmountMST != 0);
         #
         #        if (!gastosLine.validateCurrencyAmounts())
         #        {
@@ -920,7 +925,10 @@ Formatversion: 1
         #    if (this.CurrencyCode == CompanyInfo::standardCurrency() && !exchRate)
         #        exchRate = 100;
         #
-        #    return Currency::amountCur2MST(this.TotalAmount, this.CurrencyCode, exchRate);
+        #    if (!exchRate)
+        #        return 0;
+        #
+        #    return Currency::amount(this.TotalAmount * 100 / exchRate, CompanyInfo::standardCurrency());
         #}
         #
       ENDSOURCE
@@ -930,7 +938,7 @@ Formatversion: 1
         #    boolean amountMSTChanged;
         #    ;
         #
-        #    amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST && (this.orig().ExchRate == this.ExchRate || !this.ExchRate);
+        #    amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST; //MMS - Preserva reembolso informado - 2026.07.01
         #
         #    if (this.CurrencyCode != this.orig().CurrencyCode && this.ExchRate == this.orig().ExchRate)
         #    {

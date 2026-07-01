@@ -229,7 +229,11 @@ export const useExpenseSheetLineDetailState = ({
     setDraftReimbursableExpense(normalizeExpenseLineReimbursableExpense(nextLine?.reimbursableExpense));
     const localCurrencyCode = safeText(nextHeader?.currencyCode).toUpperCase() || "EUR";
     const lineCurrencyCode = safeText(nextLine?.currencyCode).toUpperCase() || localCurrencyCode;
-    const lineExchangeRate = lineCurrencyCode === localCurrencyCode ? 100 : nextLine?.exchRate;
+    const lineExchangeRate = nextLine?.exchRate && nextLine.exchRate > 0
+      ? nextLine.exchRate
+      : lineCurrencyCode === localCurrencyCode
+        ? 100
+        : nextLine?.exchRate;
     setDraftCurrencyCode(lineCurrencyCode);
     setDraftAmountMST(formatEditableNumber(nextLine?.amountMST));
     setDraftExchangeRate(formatEditableExchangeRate(lineExchangeRate));

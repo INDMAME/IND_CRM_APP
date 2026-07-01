@@ -686,6 +686,11 @@ const useExpenseTicketDetailPageViewModel = () => {
         return;
       }
 
+      if (nextCurrencyCode === normalizeExpenseLineCurrencyCode(localCurrencyCode)) {
+        exchangeRateRequestIdRef.current += 1;
+        return;
+      }
+
       const requestId = exchangeRateRequestIdRef.current + 1;
       exchangeRateRequestIdRef.current = requestId;
 
