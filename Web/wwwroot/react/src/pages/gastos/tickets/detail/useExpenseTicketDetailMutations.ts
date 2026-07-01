@@ -6,7 +6,6 @@ import type { ExpenseSheetTicketUpdateRequest } from "../../expenseTypes.ts";
 import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../../hooks/expenseMutationUtils.ts";
 import {
-  adjustExpenseSheetTicketTotalAmount,
   deleteExpenseSheetLine,
   deleteExpenseSheetTicket,
   deleteExpenseSheetTicketFile,
@@ -37,7 +36,6 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftAmountMST: string;
   draftExchangeRate: string;
   localCurrencyCode: string;
-  currentTotalAmount?: number | null;
   draftTransDate: string;
   draftTicketTime: string;
   draftComentario: string;
@@ -101,7 +99,6 @@ export const useExpenseTicketDetailMutations = ({
   draftAmountMST,
   draftExchangeRate,
   localCurrencyCode,
-  currentTotalAmount,
   draftTransDate,
   draftTicketTime,
   draftComentario,
@@ -262,17 +259,6 @@ export const useExpenseTicketDetailMutations = ({
               throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
           }
 
-          const previousTotalAmount = Number(currentTotalAmount ?? 0);
-          const hasTotalAmountChange = Math.abs(Number(parsedTotalAmount) - previousTotalAmount) >= 0.005;
-          if (hasTotalAmountChange) {
-            const totalAdjustmentResponse = await adjustExpenseSheetTicketTotalAmount(fileId, {
-              totalAmount: Number(parsedTotalAmount),
-            });
-            if (!totalAdjustmentResponse.Success) {
-              throw new Error(totalAdjustmentResponse.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
-            }
-          }
-
           if (syncSheetLine && validatedSheetId) {
             try {
               const syncPayload = {
@@ -335,7 +321,6 @@ export const useExpenseTicketDetailMutations = ({
       fileId,
       isEditing,
       localCurrencyCode,
-      currentTotalAmount,
       linkedExpenseLineProjectId,
       linkedExpenseLineProjectIdChanged,
       linkedExpenseLineReimbursableExpense,

@@ -832,7 +832,6 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftAmountMST,
     draftExchangeRate,
     localCurrencyCode,
-    currentTotalAmount: header?.totalAmount,
     draftTransDate,
     draftTicketTime,
     draftComentario,

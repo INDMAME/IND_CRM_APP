@@ -5491,6 +5491,7 @@ Formatversion: 1
         #//  - _data[17] = ticketTime (optional, seconds since midnight)
         #//  - _data[18] = amountMST (optional)
         #//  - _data[19] = exchRate (optional)
+        #//  - _data[20] = manualTotalAdjustment (optional: 0|1)
         #static server container updateExpenseSheetTicket(container _data)
         #{
         #    DataAreaId         companyId;
@@ -5518,6 +5519,7 @@ Formatversion: 1
         #    real               exchRate;
         #    str 32             amountMSTRaw;
         #    str 32             exchRateRaw;
+        #    int                manualTotalAdjustment;
         #
         #    boolean            hasTotalAmount;
         #    boolean            hasStatus;
@@ -5533,6 +5535,7 @@ Formatversion: 1
         #    boolean            hasTicketTime;
         #    boolean            hasAmountMST;
         #    boolean            hasExchRate;
+        #    boolean            hasManualTotalAdjustment;
         #
         #    int                startLine;
         #    str                msg;
@@ -5669,6 +5672,12 @@ Formatversion: 1
         #        }
         #    }
         #
+        #    if (conLen(_data) >= 20)
+        #    {
+        #        manualTotalAdjustment = conPeek(_data, 20);
+        #        hasManualTotalAdjustment = manualTotalAdjustment ? true : false;
+        #    }
+        #
         #    if (currencyCode)
         #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
@@ -5702,6 +5711,9 @@ Formatversion: 1
         #    if (hasExchRate && exchRate < 0)
         #        return INDCRMUtilityService::buildHeader(false, strFmt('ExchRate invalido: %1.', exchRate), conNull());
         #
+        #    if (manualTotalAdjustment < 0 || manualTotalAdjustment > 1)
+        #        return INDCRMUtilityService::buildHeader(false, strFmt('manualTotalAdjustment invalido: %1 (valores: 0|1).', manualTotalAdjustment), conNull());
+        #
         #    startLine = infolog.line();
         #
         #    try
@@ -5734,6 +5746,15 @@ Formatversion: 1
         #
         #            if (hasTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
+        #
+        #            if (hasManualTotalAdjustment && hasTotalAmount)
+        #            {
+        #                ticketHeader.syncAdjustmentLineToTotal(axUserId, true);
+        #
+        #                // Keep AmountMST intent clear; update() recalculates it unless the caller supplied it.
+        #                if (!hasAmountMST)
+        #                    ticketHeader.AmountMST = ticketHeader.orig().AmountMST;
+        #            }
         #
         #            if (hasAmountMST)
         #                ticketHeader.AmountMST = amountMST;
@@ -5824,7 +5845,11 @@ Formatversion: 1
         #            ttscommit;
         #
         #            return INDCRMUtilityService::buildHeader(true, 'Ticket actualizado correctamente.',
-        #                                                     [ticketHeader.FileId, strFmt('%1', outputProcessedByAI)]);
+        #                                                     [ticketHeader.FileId,
+        #                                                      strFmt('%1', outputProcessedByAI),
+        #                                                      strFmt('%1', ticketHeader.TotalAmount),
+        #                                                      strFmt('%1', ticketHeader.AmountMST),
+        #                                                      strFmt('%1', ticketHeader.ExchRate)]);
         #        }
         #    }
         #    catch (Exception::Deadlock)

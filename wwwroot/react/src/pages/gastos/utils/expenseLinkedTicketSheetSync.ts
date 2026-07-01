@@ -130,7 +130,7 @@ const resolveTicketSnapshot = (
       }, 0)
     : 0;
   const fallbackExistingAmount = Number(existingLine?.amount || existingLine?.price || 0);
-  const totalAmount = hasTicketLines ? lineTotal : headerTotal !== 0 ? headerTotal : fallbackExistingAmount;
+  const totalAmount = headerTotal !== 0 ? headerTotal : hasTicketLines ? lineTotal : fallbackExistingAmount;
   const parsedGastoType = toExpenseGastoTypeCode(ticket.GastoType, { allowNone: false });
   const existingTypeValue = toExpenseGastoTypeCode(existingLine?.typeValueCode, { allowNone: false });
   const defaultGastoType = getDefaultExpenseGastoTypeCode(PREFERRED_TICKET_GASTO_TYPE);

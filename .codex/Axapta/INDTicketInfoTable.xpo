@@ -536,25 +536,11 @@ Formatversion: 1
         #{
         #    Amount  amount;
         #    INDTicketInfoLine ticketInfoLine;
-        #    container adjustmentResult;
         #    ;
         #
-        #    //MMS - Ajustes CRM - 2026.07.01
-        #    // Si existe ajuste manual, conserva el total informado y recalcula solo la linea de ajuste.
+        #    //MMS - Recalculo ticket desde lineas - 2026.07.01
+        #    // Los cambios de lineas actualizan la cabecera; el ajuste solo se recalcula en ediciones manuales de cabecera.
         #    select firstOnly RecId from ticketInfoLine
-        #        where ticketInfoLine.FileId     == this.FileId
-        #           && ticketInfoLine.Adjustment == NoYes::Yes;
-        #
-        #    if (ticketInfoLine.RecId)
-        #    {
-        #        adjustmentResult = this.syncAdjustmentLineToTotal('', false);
-        #        this.normalizeCurrencyAmounts(_amountMSTChanged);
-        #        return conPeek(adjustmentResult, 2);
-        #    }
-        #
-        #    ticketInfoLine.clear();
-        #
-        #   select firstOnly RecId from ticketInfoLine
         #        where ticketInfoLine.FileId == this.FileId;
         #
         #    if (!ticketInfoLine.RecId && _preserveWhenNoLines)
@@ -562,6 +548,8 @@ Formatversion: 1
         #        this.normalizeCurrencyAmounts(_amountMSTChanged);
         #        return this.TotalAmount;
         #    }
+        #
+        #    ticketInfoLine.clear();
         #
         #    select sum(TotalAmount) from ticketInfoLine
         #        where ticketInfoLine.FileId == this.FileId;
