@@ -156,8 +156,9 @@ FORM #INDTicketInfoTable
           #
           #    ret = super();
           #
-          #    INDTicketInfoTable_DS.allowDelete(INDTicketInfoTable.Status == INDTicketStatus::Pending);
-          #    INDTicketInfoLine_DS.allowDelete(INDTicketInfoTable.Status == INDTicketStatus::Pending);
+          #    //MMS - Permite borrar tickets y lineas tras los nuevos reajustes - 2026.07.01
+          #    INDTicketInfoTable_DS.allowDelete(true);
+          #    INDTicketInfoLine_DS.allowDelete(true);
           #    editSelectToLink.enabled(INDTicketInfoTable.Status == INDTicketStatus::Pending);
           #    CRMHojaGastosTableBtn.enabled(INDTicketInfoTable.Status == INDTicketStatus::Assigned);
           #

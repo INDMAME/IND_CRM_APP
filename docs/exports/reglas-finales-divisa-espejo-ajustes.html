@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reglas finales de divisa, espejo y ajustes</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --text: #e5edf5;
+      --muted: #a8b3c2;
+      --line: #314154;
+      --soft: #182232;
+      --panel: #111a27;
+      --accent: #58c4ff;
+      --tech: #fb923c;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      background: #07111f;
+      color: var(--text);
+      font-family: "Segoe UI", Arial, sans-serif;
+      line-height: 1.55;
+    }
+
+    main {
+      max-width: 980px;
+      margin: 32px auto;
+      padding: 48px 56px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+    }
+
+    h1,
+    h2,
+    h3,
+    h4 {
+      color: #f3f7fb;
+      line-height: 1.25;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+
+    h2 {
+      margin: 36px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--line);
+      font-size: 22px;
+    }
+
+    h3 {
+      margin: 28px 0 12px;
+      font-size: 18px;
+    }
+
+    h4 {
+      margin: 22px 0 10px;
+      font-size: 15px;
+      color: var(--accent);
+      text-transform: uppercase;
+    }
+
+    p {
+      margin: 10px 0;
+    }
+
+    ul,
+    ol {
+      margin: 8px 0 16px 22px;
+      padding: 0;
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    code {
+      padding: 1px 5px;
+      border-radius: 4px;
+      background: #241a12;
+      color: var(--tech);
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 0.94em;
+      font-weight: 600;
+    }
+
+    pre {
+      overflow: auto;
+      margin: 12px 0 20px;
+      padding: 16px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #070d18;
+      color: #e5edf5;
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    pre code {
+      padding: 0;
+      background: transparent;
+      color: var(--tech);
+      font-weight: 500;
+    }
+
+    .meta {
+      margin-bottom: 28px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .callout {
+      margin: 18px 0;
+      padding: 14px 16px;
+      border-left: 4px solid var(--accent);
+      background: #0d2537;
+    }
+
+    .inventory-item {
+      margin: 18px 0;
+      padding: 14px 16px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #0e1724;
+    }
+
+    .inventory-item h4 {
+      margin-top: 0;
+      text-transform: none;
+      color: #f3f7fb;
+      font-size: 16px;
+    }
+
+    @media print {
+      body {
+        background: #07111f;
+        print-color-adjust: exact;
+        -webkit-print-color-adjust: exact;
+      }
+
+      main {
+        max-width: none;
+        margin: 0;
+        padding: 24mm 18mm;
+        border: 0;
+        box-shadow: none;
+      }
+
+      h2,
+      h3 {
+        break-after: avoid;
+      }
+
+      .inventory-item {
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Reglas finales de divisa, espejo y ajustes</h1>
+    <p class="meta">Fuente: seccion "Actualizacion 2026-07-01 - reglas finales de divisa, espejo y ajustes" de la pagina de Notion <a href="https://app.notion.com/p/366d344f5188804eb448dfd4802f17cc">Divisas en linea para Hoja de gastos</a>. Exportado: 2026-07-01.</p>
+
+    <div class="callout">
+      <strong>Decision operativa:</strong> AX mantiene la logica de calculo y ajuste. El frontend no debe duplicar la creacion de lineas de ajuste ni recalcular por su cuenta valores que dependen de AX.
+    </div>
+
+    <h2>Objetivo</h2>
+    <p>Mantener coherentes estos cuatro campos en lineas de hoja de gasto, tickets y lineas de ticket:</p>
+    <ul>
+      <li><code>Importe divisa</code> / <code>Amount</code></li>
+      <li><code>Divisa</code> / <code>CurrencyCode</code></li>
+      <li><code>Tipo de cambio</code> / <code>ExchRate</code></li>
+      <li><code>Importe reembolso (EUR)</code> / <code>AmountMST</code></li>
+    </ul>
+
+    <section class="inventory-item">
+      <h4>Formula AX vigente</h4>
+      <pre><code>AmountMST = Amount * 100 / ExchRate</code></pre>
+      <p>Cuando se modifica manualmente <code>AmountMST</code>, el calculo inverso es:</p>
+      <pre><code>ExchRate = Amount * 100 / AmountMST</code></pre>
+      <p>Por tanto, <code>120 USD</code> con <code>ExchRate = 92.5000</code> da <code>129.73 EUR</code>.</p>
+    </section>
+
+    <h2>Fuente de verdad por operacion</h2>
+    <ul>
+      <li>Si se modifica una linea de ticket, la cabecera del ticket se recalcula desde la suma de sus lineas.</li>
+      <li>Si se modifica directamente el <code>Importe divisa</code> de la cabecera del ticket, se considera un ajuste manual de total y se crea o recalcula una unica linea <code>AJUSTE DE IMPORTE TOTAL</code>.</li>
+      <li>Si ya existe una linea de ajuste, se reutiliza. No deben generarse lineas de ajuste duplicadas.</li>
+      <li>La linea de ajuste siempre debe hacer que <code>suma de lineas del ticket = Importe divisa de cabecera</code>.</li>
+      <li>El espejo contra la linea de hoja de gasto usa la cabecera del ticket como fuente principal tras guardar.</li>
+      <li>En tickets multilinea, editar la linea de hoja de gasto vinculada equivale a editar manualmente la cabecera del ticket y por tanto puede recalcular la linea de ajuste.</li>
+    </ul>
+
+    <h2>Reglas de recalculo</h2>
+    <section class="inventory-item">
+      <h4>1. Cambios de importe base</h4>
+      <ul>
+        <li>Al cambiar <code>Cantidad</code> o <code>Precio</code> de una linea, se recalcula <code>Importe divisa = Cantidad * Precio</code>.</li>
+        <li>Al cambiar <code>Importe divisa</code>, se recalcula <code>Importe reembolso (EUR)</code> con el tipo de cambio vigente.</li>
+      </ul>
+    </section>
+
+    <section class="inventory-item">
+      <h4>2. Cambios de cambio y reembolso</h4>
+      <ul>
+        <li>Al cambiar <code>Tipo de cambio</code>, se mantiene <code>Importe divisa</code> y se recalcula <code>Importe reembolso (EUR)</code>.</li>
+        <li>Al cambiar <code>Importe reembolso (EUR)</code>, se mantiene <code>Importe divisa</code> y se recalcula <code>Tipo de cambio</code>.</li>
+      </ul>
+    </section>
+
+    <section class="inventory-item">
+      <h4>3. Divisa local y divisa extranjera</h4>
+      <ul>
+        <li>Si la divisa es la local de la empresa y no hay tipo de cambio informado, <code>Tipo de cambio = 100</code>.</li>
+        <li>Aunque la divisa sea local, <code>Importe reembolso (EUR)</code> puede editarse si el usuario necesita reflejar comisiones, intereses o una tasa aplicada por tarjeta. En ese caso se recalcula <code>Tipo de cambio</code>.</li>
+        <li>Para divisa extranjera, debe existir un <code>Tipo de cambio &gt; 0</code> o un <code>Importe reembolso (EUR) &gt; 0</code> para poder guardar.</li>
+      </ul>
+    </section>
+
+    <h2>Espejo ticket - linea de hoja de gasto</h2>
+    <h3>Al guardar un ticket asociado a una hoja de gasto</h3>
+    <ul>
+      <li>La linea de hoja de gasto copia <code>Descripcion</code>, <code>Importe divisa</code>, <code>Divisa</code>, <code>Tipo de cambio</code> e <code>Importe reembolso (EUR)</code> desde la cabecera del ticket.</li>
+      <li>Si el ticket tiene una unica linea no marcada como ajuste, tambien se copian <code>Cantidad</code> y <code>Precio</code>.</li>
+      <li>Si el ticket tiene varias lineas, la linea de hoja de gasto representa el total del ticket, no cada linea granular.</li>
+      <li>Si el usuario cambia <code>Proyecto</code> o <code>Reembolsable</code> desde la pantalla de ticket vinculada, esos campos se sincronizan con la linea de hoja de gasto.</li>
+    </ul>
+
+    <h3>Al guardar una linea de hoja de gasto vinculada a un ticket</h3>
+    <ul>
+      <li>Si el ticket tiene una unica linea no marcada como ajuste, se actualizan tambien la linea granular del ticket y la cabecera.</li>
+      <li>Si el ticket tiene varias lineas, se actualiza la cabecera del ticket y se recalcula la unica linea de ajuste para cuadrar el total.</li>
+    </ul>
+
+    <h2>Linea de ajuste de ticket</h2>
+    <p>La linea <code>AJUSTE DE IMPORTE TOTAL</code> se calcula asi:</p>
+    <pre><code>Ajuste = Importe divisa cabecera - suma de lineas normales</code></pre>
+
+    <section class="inventory-item">
+      <h4>Casos de ajuste</h4>
+      <ul>
+        <li>Si la suma de lineas normales es <code>95.00</code> y la cabecera se edita a <code>100.00</code>, el ajuste debe ser <code>5.00</code>.</li>
+        <li>Si la suma de lineas normales es <code>100.00</code> y la cabecera se edita a <code>95.00</code>, el ajuste debe ser <code>-5.00</code>.</li>
+        <li>Si se vuelve a editar la cabecera y ya existe ajuste, se recalcula la misma linea.</li>
+        <li>Si el ajuste queda en <code>0.00</code>, no debe crearse una linea nueva; si existe una linea de ajuste previa, debe quedar coherente con el total o eliminarse segun la implementacion AX disponible.</li>
+        <li>Si luego se modifica una linea normal del ticket, la cabecera pasa a ser la suma real de todas las lineas. El ajuste no se recalcula como diferencia contra el total anterior salvo que el usuario vuelva a editar manualmente la cabecera.</li>
+      </ul>
+    </section>
+
+    <h2>Ejemplos de validacion - linea de hoja de gasto</h2>
+    <section class="inventory-item">
+      <h4>Caso base</h4>
+      <ul>
+        <li><code>Cantidad = 2</code></li>
+        <li><code>Precio = 60.00</code></li>
+        <li><code>Divisa = USD</code></li>
+        <li><code>Tipo de cambio = 92.5000</code></li>
+        <li>Esperado: <code>Importe divisa = 120.00</code></li>
+        <li>Esperado: <code>Importe reembolso (EUR) = 120.00 * 100 / 92.5 = 129.73</code></li>
+      </ul>
+    </section>
+
+    <section class="inventory-item">
+      <h4>Cambios concretos</h4>
+      <ul>
+        <li>Cambiar <code>Precio</code> a <code>70.00</code>: esperado <code>Importe divisa = 140.00</code> e <code>Importe reembolso (EUR) = 151.35</code>.</li>
+        <li>Cambiar <code>Cantidad</code> a <code>3</code>: esperado <code>Importe divisa = 210.00</code> e <code>Importe reembolso (EUR) = 227.03</code>.</li>
+        <li>Cambiar <code>Tipo de cambio</code> a <code>100.0000</code>: esperado <code>Importe divisa = 210.00</code> e <code>Importe reembolso (EUR) = 210.00</code>.</li>
+        <li>Cambiar <code>Importe reembolso (EUR)</code> a <code>200.00</code>: esperado <code>Importe divisa = 210.00</code> y <code>Tipo de cambio = 105.0000</code>.</li>
+      </ul>
+    </section>
+
+    <h2>Ejemplos de validacion - ticket</h2>
+    <section class="inventory-item">
+      <h4>Ticket en EUR sin ajuste</h4>
+      <ul>
+        <li>Linea 1: <code>Cantidad = 1</code>, <code>Precio = 30.55</code>, <code>Importe divisa = 30.55</code>.</li>
+        <li>Linea 2: <code>Cantidad = 1</code>, <code>Precio = 2.00</code>, <code>Importe divisa = 2.00</code>.</li>
+        <li>Esperado cabecera: <code>Importe divisa = 32.55</code>.</li>
+        <li>Esperado cabecera: <code>Tipo de cambio = 100.0000</code>.</li>
+        <li>Esperado cabecera: <code>Importe reembolso (EUR) = 32.55</code>.</li>
+        <li>Esperado linea de gasto espejo: <code>Importe divisa = 32.55</code>, <code>Importe reembolso (EUR) = 32.55</code>.</li>
+      </ul>
+    </section>
+
+    <section class="inventory-item">
+      <h4>Ticket en USD con tipo de cambio</h4>
+      <ul>
+        <li>Suma de lineas normales: <code>120.00 USD</code>.</li>
+        <li><code>Tipo de cambio = 92.5000</code>.</li>
+        <li>Esperado cabecera: <code>Importe divisa = 120.00</code>.</li>
+        <li>Esperado cabecera: <code>Importe reembolso (EUR) = 129.73</code>.</li>
+        <li>Esperado linea de gasto espejo: mismos valores de cabecera.</li>
+      </ul>
+    </section>
+
+    <section class="inventory-item">
+      <h4>Editar <code>Importe reembolso (EUR)</code> en cabecera de ticket</h4>
+      <ul>
+        <li><code>Importe divisa = 210.00 USD</code>.</li>
+        <li>Usuario informa <code>Importe reembolso (EUR) = 200.00</code>.</li>
+        <li>Esperado: <code>Tipo de cambio = 105.0000</code>.</li>
+        <li>Esperado: la linea de gasto espejo conserva <code>Importe divisa = 210.00</code> y copia <code>Importe reembolso (EUR) = 200.00</code>.</li>
+      </ul>
+    </section>
+
+    <section class="inventory-item">
+      <h4>Editar total manual de cabecera con ajuste</h4>
+      <ul>
+        <li>Lineas normales suman <code>95.00</code>.</li>
+        <li>Usuario cambia cabecera a <code>100.00</code>.</li>
+        <li>Esperado: crear o recalcular una unica linea <code>AJUSTE DE IMPORTE TOTAL = 5.00</code>.</li>
+        <li>Esperado: suma de lineas del ticket = <code>100.00</code>.</li>
+        <li>Esperado: linea de gasto espejo = <code>100.00</code>.</li>
+      </ul>
+    </section>
+
+    <section class="inventory-item">
+      <h4>Modificar una linea normal tras tener ajuste</h4>
+      <ul>
+        <li>Estado inicial: lineas normales <code>95.00</code>, ajuste <code>5.00</code>, cabecera <code>100.00</code>.</li>
+        <li>Usuario cambia una linea normal y la suma total de lineas pasa a <code>110.00</code>.</li>
+        <li>Esperado: cabecera <code>Importe divisa = 110.00</code>.</li>
+        <li>Esperado: linea de gasto espejo <code>Importe divisa = 110.00</code>.</li>
+        <li>La linea de ajuste no se recalcula contra el total anterior en este caso; solo se recalcula si el usuario edita manualmente la cabecera otra vez.</li>
+      </ul>
+    </section>
+
+    <h2>Checklist funcional</h2>
+    <ul>
+      <li>Guardar una linea de hoja de gasto en <code>USD</code> con <code>Cantidad</code>, <code>Precio</code>, <code>Divisa</code>, <code>Tipo de cambio</code> y validar que <code>AmountMST</code> persiste al cerrar y reabrir.</li>
+      <li>Guardar una linea cambiando manualmente <code>AmountMST</code> y validar que persiste el <code>ExchRate</code> recalculado.</li>
+      <li>Guardar un ticket en <code>EUR</code> con varias lineas y validar que cabecera, suma de lineas y linea de gasto espejo coinciden.</li>
+      <li>Guardar un ticket en <code>USD</code> cambiando <code>Tipo de cambio</code> y validar que <code>AmountMST</code> se recalcula con <code>Amount * 100 / ExchRate</code>.</li>
+      <li>Guardar un ticket cambiando manualmente <code>AmountMST</code> y validar que <code>ExchRate</code> se recalcula con <code>Amount * 100 / AmountMST</code>.</li>
+      <li>Editar manualmente el <code>Importe divisa</code> de cabecera del ticket y validar que existe una unica linea de ajuste.</li>
+      <li>Editar una linea normal de un ticket con ajuste y validar que la cabecera pasa a ser la suma real de lineas.</li>
+      <li>Validar que la linea de hoja de gasto vinculada queda sincronizada tras cada guardado.</li>
+      <li>Cerrar y reabrir el ticket y la hoja de gasto para confirmar persistencia en AX.</li>
+    </ul>
+
+    <h2>Notas de implementacion</h2>
+    <ul>
+      <li>El guardado web de cabecera de ticket debe enviar el cambio de total manual al API en la misma operacion de actualizacion, no como una segunda llamada posterior.</li>
+      <li>AX debe decidir cuando recalcular la linea de ajuste. El frontend no debe intentar calcular ni duplicar esa logica.</li>
+      <li>Los campos numericos visibles en web deben alinearse a la derecha, pero los identificadores, codigos, fechas, horas, estados, proyectos y divisas deben mantenerse alineados a la izquierda.</li>
+    </ul>
+  </main>
+</body>
+</html>
