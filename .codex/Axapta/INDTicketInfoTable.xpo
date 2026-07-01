@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDTicketInfoTable unloaded at Martes 30/06/2026
+; Navision Axapta Table : INDTicketInfoTable unloaded at Miércoles 01/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -537,10 +537,11 @@ Formatversion: 1
         #    container adjustmentResult;
         #    ;
         #
+        #    //MMS - Ajustes CRM - 2026.07.01
+        #    // Si existe ajuste manual, conserva el total informado y recalcula solo la linea de ajuste.
         #    select firstOnly RecId from ticketInfoLine
-        #        where ticketInfoLine.FileId        == this.FileId
-        #           && ticketInfoLine.RefRecIdTable == this.RecId
-        #           && ticketInfoLine.Adjustment    == NoYes::Yes;
+        #        where ticketInfoLine.FileId     == this.FileId
+        #           && ticketInfoLine.Adjustment == NoYes::Yes;
         #
         #    if (ticketInfoLine.RecId)
         #    {
@@ -551,7 +552,7 @@ Formatversion: 1
         #
         #    ticketInfoLine.clear();
         #
-        #    select firstOnly RecId from ticketInfoLine
+        #   select firstOnly RecId from ticketInfoLine
         #        where ticketInfoLine.FileId == this.FileId;
         #
         #    if (!ticketInfoLine.RecId && _preserveWhenNoLines)
@@ -760,11 +761,19 @@ Formatversion: 1
         #           && adjustmentLine.RefRecIdTable == this.RecId
         #           && adjustmentLine.Adjustment    == NoYes::Yes;
         #
+        #    if (!adjustmentLine.RecId)
+        #    {
+        #        //MMS - Ajustes CRM - 2026.06.30
+        #        // Repair legacy adjustment lines that were created without the ticket reference.
+        #        select firstonly forupdate adjustmentLine
+        #            where adjustmentLine.FileId     == this.FileId
+        #               && adjustmentLine.Adjustment == NoYes::Yes;
+        #    }
+        #
         #    if (!adjustmentLine.RecId && !_allowCreate)
         #    {
         #        select sum(TotalAmount) from allLine
-        #            where allLine.FileId        == this.FileId
-        #               && allLine.RefRecIdTable == this.RecId;
+        #            where allLine.FileId == this.FileId;
         #
         #        this.TotalAmount = allLine.TotalAmount;
         #        this.normalizeCurrencyAmounts(false);
@@ -774,7 +783,6 @@ Formatversion: 1
         #
         #    select sum(TotalAmount) from regularLine
         #        where regularLine.FileId        == this.FileId
-        #           && regularLine.RefRecIdTable == this.RecId
         #           && regularLine.Adjustment    != NoYes::Yes;
         #
         #    regularLinesTotal = regularLine.TotalAmount;
@@ -803,6 +811,7 @@ Formatversion: 1
         #    adjustmentLine.Price       = adjustmentAmount;
         #    adjustmentLine.TotalAmount = adjustmentAmount;
         #    adjustmentLine.Adjustment  = NoYes::Yes;
+        #    adjustmentLine.RefRecIdTable = this.RecId;
         #
         #    if (lineCreated)
         #        adjustmentLine.doInsert();
@@ -814,7 +823,6 @@ Formatversion: 1
         #
         #    while select forupdate duplicateAdjustmentLine
         #        where duplicateAdjustmentLine.FileId        == this.FileId
-        #           && duplicateAdjustmentLine.RefRecIdTable == this.RecId
         #           && duplicateAdjustmentLine.Adjustment    == NoYes::Yes
         #           && duplicateAdjustmentLine.RecId         != adjustmentLineRecId
         #    {
@@ -843,9 +851,9 @@ Formatversion: 1
         #
         #    ttsbegin;
         #
-        #    select firstOnly forUpdate gastosLine
-        #        index FileIdIdx
-        #        where gastosLine.FileId == this.FileId;
+        #    //MMS - Ajustes CRM - 2026.06.30
+        #    // Usa la busqueda canonica para no actualizar una linea de gasto equivocada cuando FileId no es unico.
+        #    gastosLine = CRMHojaGastosLine::FindByFileId(this.FileId, true);
         #
         #    if (gastosLine)
         #    {
@@ -931,7 +939,9 @@ Formatversion: 1
         #    }
         #
         #    this.updateSearchKey();
-        #    this.calcTotalAmount(amountMSTChanged, true);
+        #    //MMS - Ajustes CRM - 2026.07.01
+        #    // La cabecera no actualiza lineas desde update(); los cambios de lineas y ajustes manuales tienen su propio TTS.
+        #    this.normalizeCurrencyAmounts(amountMSTChanged);
         #
         #    if (!this.validateCurrencyAmounts())
         #        throw error("Datos de divisa del ticket invalidos.");

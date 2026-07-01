@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Martes 30/06/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 01/07/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -1509,7 +1509,7 @@ Formatversion: 1
         #            }
         #
         #            ticketHeader = INDTicketInfoTable::findByFileId(ticketHeader.FileId,true);
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
         #
         #            if (hasProcessedByAI)
         #                ticketHeader.ProcessedByAI = processedByAI;
@@ -1892,7 +1892,7 @@ Formatversion: 1
         #
         #            ttsbegin;
         #            ticketHeader = INDTicketInfoTable::findByFileId(ticketHeader.FileId,true);
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
         #
         #            if (mode == #ModeCreateHeaderOnly && hasHeaderTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
@@ -2069,7 +2069,7 @@ Formatversion: 1
         #            ticketLine.CreatedByUserId = axUserId;
         #            ticketLine.insert();
         #
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
         #
         #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
         #            if (msg)
@@ -2351,7 +2351,7 @@ Formatversion: 1
         #
         #                ticketLine.delete();
         #
-        #                ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #                ticketHeader.calcTotalAmount();
         #
         #                msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
         #                if (msg)
@@ -2507,7 +2507,7 @@ Formatversion: 1
         #
         #            ticketLine.delete();
         #
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
         #
         #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
         #            if (msg)
@@ -6330,7 +6330,7 @@ Formatversion: 1
         #
         #            ticketLine.update();
         #
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
         #
         #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
         #            if (msg)

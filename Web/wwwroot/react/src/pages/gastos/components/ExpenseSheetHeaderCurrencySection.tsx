@@ -51,7 +51,7 @@ const ExpenseSheetHeaderCurrencySection = ({
 
   return (
     <SelectCombobox
-      label={indT("ExpenseSheets_Field_LocalCurrency", "Local currency")}
+      label={indT("ExpenseSheets_Field_ReimbursementCurrency", "Reimbursement currency")}
       options={reimbursementCurrencyOptions}
       value={reimbursementCurrencyCode}
       onChange={() => undefined}
@@ -67,6 +67,8 @@ const ExpenseSheetHeaderCurrencySection = ({
       selectedIconClassName="h-6 w-6"
       optionIconClassName="h-6 w-6"
       selectedInputPaddingClassName="pl-12"
+      containerClassName="space-y-1.5"
+      labelClassName="form-label font-semibold inline-flex h-6 items-center leading-none"
       idBase="expense-header-local-currency-readonly"
       portalClassName="visitas-typography"
       panelClassName="visitas-typography"

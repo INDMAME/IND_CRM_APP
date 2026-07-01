@@ -114,6 +114,15 @@
   <data name="ExpenseSheets_Detail_PropagatingReimbursable" xml:space="preserve">
     <value>正在更新费用表行...</value>
   </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Title" xml:space="preserve">
+    <value>更新行</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Body" xml:space="preserve">
+    <value>所有行中的项目都将更新。是否继续？</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingProject" xml:space="preserve">
+    <value>正在更新行项目...</value>
+  </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>删除费用表</value>
   </data>
@@ -255,6 +264,9 @@
   <data name="ExpenseSheets_Field_SheetId" xml:space="preserve">
     <value>费用表代码</value>
   </data>
+  <data name="ExpenseSheets_Detail_Field_Identifier" xml:space="preserve">
+    <value>标识符</value>
+  </data>
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve">
     <value>用户</value>
   </data>
@@ -276,6 +288,9 @@
   <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve">
     <value>当地货币</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementCurrency" xml:space="preserve">
+    <value>报销币种</value>
+  </data>
   <data name="ExpenseSheets_Field_Status" xml:space="preserve">
     <value>状态</value>
   </data>
@@ -287,6 +302,12 @@
   </data>
   <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
     <value>两者</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Text" xml:space="preserve">
+    <value>该值可以在表头设置为默认值。若之后更改，将提供使用新值更新所有行的选项。若某一行更改继承的值，表头将显示"两者"。</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Aria" xml:space="preserve">
+    <value>显示可报销信息</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>总金额</value>
@@ -310,7 +331,7 @@
     <value>线路编号</value>
   </data>
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
-    <value>类型</value>
+    <value>类别</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>进口</value>
@@ -1303,19 +1324,19 @@
     <value>否</value>
   </data>
   <data name="Tickets_Field_FileId" xml:space="preserve">
-    <value>票据</value>
+    <value>Ticket Id.</value>
   </data>
   <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
-    <value>报销单</value>
+    <value>报销单 ID</value>
   </data>
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>状态</value>
   </data>
   <data name="Tickets_Field_TicketDate" xml:space="preserve">
-    <value>Ticket date</value>
+    <value>日期</value>
   </data>
   <data name="Tickets_Field_TicketTime" xml:space="preserve">
-    <value>Ticket time</value>
+    <value>时间</value>
   </data>
   <data name="Tickets_Detail_Title" xml:space="preserve">
     <value>票据详情</value>

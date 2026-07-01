@@ -57,6 +57,7 @@ type ExpenseTicketDetailHeaderFormProps = {
   onOpenFile: () => void;
   onOpenExpenseSheet?: () => void;
   hideOpenFileAction?: boolean;
+  children?: React.ReactNode;
 };
 
 // Read-only and editable header form for ticket detail.
@@ -102,6 +103,7 @@ const ExpenseTicketDetailHeaderForm = ({
   onOpenFile,
   onOpenExpenseSheet,
   hideOpenFileAction = false,
+  children,
 }: ExpenseTicketDetailHeaderFormProps) => {
   const previewUrl = safeText(isEditing ? draftUrlFile : header.urlFile);
   const canOpenFile = hasExpenseTicketImagePreviewSource(previewUrl);
@@ -112,6 +114,44 @@ const ExpenseTicketDetailHeaderForm = ({
     formatExpenseDisplayDate(header.ticketDate || header.transDate, locale) ||
     "-";
   const lockedDraftDateText = formatExpenseDisplayDate(draftTransDate, locale) || displayDateText;
+  const categoryField = isEditing ? (
+    <SelectCombobox
+      label={indT("Tickets_Filter_Category", "Category")}
+      options={gastoTypeOptions}
+      value={draftGastoType}
+      onChange={onDraftGastoTypeChange}
+      placeholder={indT("Tickets_Filter_Category", "Category")}
+      inputRef={gastoTypeInputRef}
+      invalid={gastoTypeInvalid}
+      usePortal
+      allowTextInput={false}
+      showSearchButton={false}
+    />
+  ) : (
+    <ExpenseReadOnlyField
+      label={indT("Tickets_Filter_Category", "Category")}
+      value={gastoTypeLabel || "-"}
+    />
+  );
+  const statusField = (
+    <ExpenseReadOnlyField
+      label={indT("Tickets_Field_Status", "Status")}
+      value={statusLabel || "-"}
+    />
+  );
+  const ticketField = (
+    <ExpenseReadOnlyField
+      label={indT("Tickets_Field_FileId", "Ticket Id.")}
+      value={header.fileId || "-"}
+    />
+  );
+  const expenseSheetField = showExpenseSheetField ? (
+    <ExpenseReadOnlyField
+      label={indT("Tickets_Field_ExpenseSheetDisplay", "Expense sheet Id.")}
+      value={header.hojaGastosIdDisplay || "-"}
+      onClick={onOpenExpenseSheet}
+    />
+  ) : null;
 
   return (
     <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-zinc-200 rounded-[var(--radius-xl)]">
@@ -160,53 +200,31 @@ const ExpenseTicketDetailHeaderForm = ({
 
         <div className="md:col-span-2 grid grid-cols-2 gap-4">
           <ExpenseReadOnlyField
-            label={indT("Tickets_Field_TicketDate", "Ticket date")}
+            label={indT("Tickets_Field_TicketDate", "Date")}
             value={isEditing ? lockedDraftDateText : displayDateText}
           />
 
           <ExpenseReadOnlyField
-            label={indT("Tickets_Field_TicketTime", "Ticket time")}
+            label={indT("Tickets_Field_TicketTime", "Time")}
             value={isEditing ? draftTicketTime || ticketTimeText || "-" : ticketTimeText || "-"}
           />
         </div>
 
-        {isEditing ? (
-          <SelectCombobox
-            label={indT("Tickets_Filter_Category", "Category")}
-            options={gastoTypeOptions}
-            value={draftGastoType}
-            onChange={onDraftGastoTypeChange}
-            placeholder={indT("Tickets_Filter_Category", "Category")}
-            inputRef={gastoTypeInputRef}
-            invalid={gastoTypeInvalid}
-            usePortal
-            allowTextInput={false}
-            showSearchButton={false}
-          />
+        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+          {categoryField}
+          {statusField}
+        </div>
+
+        {expenseSheetField ? (
+          <div className="md:col-span-2 grid grid-cols-2 gap-4">
+            {ticketField}
+            {expenseSheetField}
+          </div>
         ) : (
-          <ExpenseReadOnlyField
-            label={indT("Tickets_Filter_Category", "Category")}
-            value={gastoTypeLabel || "-"}
-          />
+          ticketField
         )}
 
-        <ExpenseReadOnlyField
-          label={indT("Tickets_Field_Status", "Status")}
-          value={statusLabel || "-"}
-        />
-
-        <ExpenseReadOnlyField
-          label={indT("Tickets_Field_FileId", "Ticket")}
-          value={header.fileId || "-"}
-        />
-
-        {showExpenseSheetField ? (
-          <ExpenseReadOnlyField
-            label={indT("Tickets_Field_ExpenseSheetDisplay", "Expense sheet")}
-            value={header.hojaGastosIdDisplay || "-"}
-            onClick={onOpenExpenseSheet}
-          />
-        ) : null}
+        {children}
       </div>
 
       {canOpenFile && !hideOpenFileAction ? (

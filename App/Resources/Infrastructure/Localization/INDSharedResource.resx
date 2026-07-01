@@ -109,19 +109,19 @@
     <value>No</value>
   </data>
   <data name="Tickets_Field_FileId" xml:space="preserve">
-    <value>Ticket</value>
+    <value>Ticket Id.</value>
   </data>
   <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
-    <value>Hoja de gastos</value>
+    <value>Hoja de gasto Id.</value>
   </data>
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>Estado</value>
   </data>
   <data name="Tickets_Field_TicketDate" xml:space="preserve">
-    <value>Fecha ticket</value>
+    <value>Fecha</value>
   </data>
   <data name="Tickets_Field_TicketTime" xml:space="preserve">
-    <value>Hora ticket</value>
+    <value>Hora</value>
   </data>
   <data name="Tickets_Detail_Title" xml:space="preserve">
     <value>Detalle ticket</value>
@@ -188,6 +188,15 @@
   </data>
   <data name="ExpenseSheets_Detail_PropagatingReimbursable" xml:space="preserve">
     <value>Actualizando líneas de la hoja de gastos...</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Title" xml:space="preserve">
+    <value>Actualizar líneas</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Body" xml:space="preserve">
+    <value>Se van a actualizar los proyectos en todas las líneas, ¿deseas continuar?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingProject" xml:space="preserve">
+    <value>Actualizando proyectos de las líneas...</value>
   </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>Eliminar hoja de gastos</value>
@@ -342,6 +351,9 @@
   <data name="ExpenseSheets_Field_SheetId" xml:space="preserve">
     <value>Código hoja de gasto</value>
   </data>
+  <data name="ExpenseSheets_Detail_Field_Identifier" xml:space="preserve">
+    <value>Identificador</value>
+  </data>
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve">
     <value>Usuario</value>
   </data>
@@ -363,6 +375,9 @@
   <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve">
     <value>Divisa local</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementCurrency" xml:space="preserve">
+    <value>Divisa Reembolso</value>
+  </data>
   <data name="ExpenseSheets_Field_Status" xml:space="preserve">
     <value>Estado</value>
   </data>
@@ -374,6 +389,12 @@
   </data>
   <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
     <value>Ambos</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Text" xml:space="preserve">
+    <value>Este valor puede definirse por defecto en la cabecera. Si se cambia m&#225;s adelante, se ofrecer&#225; la opci&#243;n de actualizar todas las l&#237;neas con el nuevo valor. Si una l&#237;nea modifica el valor heredado, la cabecera pasar&#225; a mostrar "Ambos".</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Aria" xml:space="preserve">
+    <value>Mostrar informaci&#243;n de reembolsable</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Importe total</value>
@@ -397,7 +418,7 @@
     <value>Id línea</value>
   </data>
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
-    <value>Tipo</value>
+    <value>Categoría</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Importe</value>

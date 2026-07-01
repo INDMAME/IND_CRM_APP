@@ -1,7 +1,7 @@
 import { indT } from "../../../utils/indI18n.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 
-export const DEFAULT_REIMBURSABLE_EXPENSE = 1;
+export const DEFAULT_REIMBURSABLE_EXPENSE = 0;
 export const DEFAULT_LINE_REIMBURSABLE_EXPENSE = 0;
 export const REIMBURSABLE_EXPENSE_BOTH_VALUE = 2;
 

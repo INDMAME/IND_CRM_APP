@@ -16,11 +16,14 @@ type RecordNavigatorLabels = {
   position: string;
 };
 
+type RecordNavigatorVariant = "standard" | "compact";
+
 type RecordNavigatorProps = {
   currentIndex: number;
   totalItems: number;
   labels: RecordNavigatorLabels;
   disabled?: boolean;
+  variant?: RecordNavigatorVariant;
   className?: string;
   onFirst: () => void;
   onPrevious: () => void;
@@ -65,6 +68,7 @@ const RecordNavigator = ({
   totalItems,
   labels,
   disabled = false,
+  variant = "standard",
   className,
   onFirst,
   onPrevious,
@@ -81,11 +85,13 @@ const RecordNavigator = ({
   const disablePrevious = disabled || atFirst;
   const disableNext = disabled || atLast;
   const disableLast = disabled || atLast;
+  const spacingClassName = variant === "compact" ? "min-h-10 px-3 py-0.5" : "min-h-12 px-3 py-1.5";
 
   return (
     <nav
       className={classNames(
-        "grid min-h-12 grid-cols-[1fr_auto_1fr] items-center bg-transparent px-3 py-1.5 font-sans text-primary",
+        "grid grid-cols-[1fr_auto_1fr] items-center bg-transparent font-sans text-primary",
+        spacingClassName,
         className || ""
       )}
       aria-label={labels.navigation}

@@ -230,6 +230,7 @@ const ExpenseSheetDetailPageContent = () => {
           officialExchangeRateSource={controller.officialExchangeRateSource}
           onDraftDescriptionChange={controller.setDraftDescription}
           onDraftProjectIdChange={controller.setDraftProjectId}
+          onDraftProjectIdCommit={controller.commitDraftProjectId}
           onDraftCurrencyCodeChange={controller.setDraftCurrencyCode}
           onDraftExchangeRateChange={controller.setDraftExchangeRate}
           onDraftReimbursableExpenseChange={controller.setDraftReimbursableExpense}

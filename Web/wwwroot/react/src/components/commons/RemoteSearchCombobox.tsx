@@ -24,6 +24,7 @@ type RemoteSearchComboboxProps = {
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  onCommit?: (value: string) => void;
   onSearch: (term: string, signal: AbortSignal) => Promise<RemoteSearchOption[]>;
   onSearchPage?: (
     term: string,
@@ -41,6 +42,8 @@ type RemoteSearchComboboxProps = {
   disabled?: boolean;
   readOnly?: boolean;
   showLabel?: boolean;
+  containerClassName?: string;
+  labelClassName?: string;
   panelClassName?: string;
 };
 
@@ -59,12 +62,15 @@ const uniqueByValue = (items: RemoteSearchOption[]): RemoteSearchOption[] => {
   return Array.from(map.values());
 };
 
+const compactActionButtonClassName = "flex h-8 w-6 items-center justify-center p-0";
+
 // Generic remote-search combobox that supports manual search and optional paged loading on open.
 const RemoteSearchCombobox = ({
   label,
   placeholder,
   value,
   onChange,
+  onCommit,
   onSearch,
   onSearchPage,
   idBase,
@@ -77,6 +83,8 @@ const RemoteSearchCombobox = ({
   disabled = false,
   readOnly = false,
   showLabel = true,
+  containerClassName = "space-y-2",
+  labelClassName = "form-label font-semibold",
   panelClassName = "visitas-typography",
 }: RemoteSearchComboboxProps) => {
   const readOnlyMode = readOnly || disabled;
@@ -328,6 +336,7 @@ const RemoteSearchCombobox = ({
     const nextValue = String(option.value || "").trim();
     setShowNotFoundState(false);
     onChange(nextValue);
+    onCommit?.(nextValue);
     setLastSearchedTerm(nextValue.toLowerCase());
     setOpen(false);
   };
@@ -343,11 +352,12 @@ const RemoteSearchCombobox = ({
   const activeId =
     open && filtered[resolvedActiveIndex] ? `${idBase}-opt-${filtered[resolvedActiveIndex].value}` : undefined;
   const showLoadingOnlyState = loading && filtered.length === 0;
+  const inputActionPaddingClassName = showSearchIcon || loading ? "pr-14" : "pr-9";
 
   return (
-    <div className="space-y-2" ref={containerRef}>
+    <div className={containerClassName} ref={containerRef}>
       {showLabel ? (
-        <label className="form-label font-semibold" style={{ color: "#00296be0" }}>
+        <label className={labelClassName} style={{ color: "#00296be0" }}>
           {label}
         </label>
       ) : null}
@@ -361,7 +371,8 @@ const RemoteSearchCombobox = ({
         >
           <input
             className={classNames(
-              "w-full rounded-[var(--radius-xl)] border px-3 py-2 pr-20 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+              "w-full rounded-[var(--radius-xl)] border px-3 py-2 text-sm sm:text-base leading-5 focus:outline-hidden focus:ring-2 disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-200 disabled:cursor-not-allowed",
+              inputActionPaddingClassName,
               "border-slate-200 focus:ring-primary focus:border-primary",
               readOnlyMode ? "ind-readonly-field" : "text-slate-900"
             )}
@@ -409,9 +420,9 @@ const RemoteSearchCombobox = ({
             aria-activedescendant={activeId}
           />
 
-          <div className="absolute inset-y-0 right-0 flex items-center gap-1 pr-2">
+          <div className="absolute inset-y-0 right-1 flex items-center gap-0">
             {loading ? (
-              <span className="flex items-center px-1.5" aria-hidden="true">
+              <span className="flex h-8 w-6 items-center justify-center" aria-hidden="true">
                 <Spinner size="h-4 w-4" />
               </span>
             ) : null}
@@ -419,14 +430,14 @@ const RemoteSearchCombobox = ({
             {showSearchIcon ? (
               <button
                 type="button"
-                className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
+                className={`${compactActionButtonClassName} text-slate-400 hover:text-slate-500`}
                 onClick={() => {
                   void runSearch();
                 }}
                 aria-label={indT("Common_Search", "Search")}
                 disabled={readOnlyMode}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-5">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-4">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 15.75-2.489-2.489m0 0a3.375 3.375 0 1 0-4.773-4.773 3.375 3.375 0 0 0 4.774 4.774ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
               </button>
@@ -434,7 +445,7 @@ const RemoteSearchCombobox = ({
 
             <button
               type="button"
-              className="flex items-center p-1.5 text-slate-500 hover:text-slate-600"
+              className={`${compactActionButtonClassName} text-slate-500 hover:text-slate-600`}
               onClick={() => {
                 if (readOnlyMode) return;
                 if (open) {
@@ -464,7 +475,7 @@ const RemoteSearchCombobox = ({
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
               disabled={readOnlyMode}
             >
-              {open ? <ChevronUpSvg className="size-5" /> : <ChevronDownSvg className="size-5" />}
+              {open ? <ChevronUpSvg className="size-4" /> : <ChevronDownSvg className="size-4" />}
             </button>
           </div>
         </div>

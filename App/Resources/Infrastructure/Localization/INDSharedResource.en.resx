@@ -109,19 +109,19 @@
     <value>No</value>
   </data>
   <data name="Tickets_Field_FileId" xml:space="preserve">
-    <value>Ticket</value>
+    <value>Ticket Id.</value>
   </data>
   <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
-    <value>Expense sheet</value>
+    <value>Expense sheet Id.</value>
   </data>
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>Status</value>
   </data>
   <data name="Tickets_Field_TicketDate" xml:space="preserve">
-    <value>Ticket date</value>
+    <value>Date</value>
   </data>
   <data name="Tickets_Field_TicketTime" xml:space="preserve">
-    <value>Ticket time</value>
+    <value>Time</value>
   </data>
   <data name="Tickets_Detail_Title" xml:space="preserve">
     <value>Ticket detail</value>
@@ -188,6 +188,15 @@
   </data>
   <data name="ExpenseSheets_Detail_PropagatingReimbursable" xml:space="preserve">
     <value>Updating expense sheet lines...</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Title" xml:space="preserve">
+    <value>Update lines</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Body" xml:space="preserve">
+    <value>The projects on all lines will be updated. Do you want to continue?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingProject" xml:space="preserve">
+    <value>Updating line projects...</value>
   </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>Delete expense sheet</value>
@@ -342,6 +351,9 @@
   <data name="ExpenseSheets_Field_SheetId" xml:space="preserve">
     <value>Expense sheet code</value>
   </data>
+  <data name="ExpenseSheets_Detail_Field_Identifier" xml:space="preserve">
+    <value>Identifier</value>
+  </data>
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve">
     <value>User</value>
   </data>
@@ -363,6 +375,9 @@
   <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve">
     <value>Local currency</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementCurrency" xml:space="preserve">
+    <value>Reimbursement currency</value>
+  </data>
   <data name="ExpenseSheets_Field_Status" xml:space="preserve">
     <value>Status</value>
   </data>
@@ -374,6 +389,12 @@
   </data>
   <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
     <value>Both</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Text" xml:space="preserve">
+    <value>This value can be set as the header default. If it is changed later, you can update all lines with the new value. If a line changes the inherited value, the header switches to "Both".</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Aria" xml:space="preserve">
+    <value>Show reimbursable information</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Total amount</value>
@@ -397,7 +418,7 @@
     <value>Line id</value>
   </data>
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
-    <value>Type</value>
+    <value>Category</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Amount</value>

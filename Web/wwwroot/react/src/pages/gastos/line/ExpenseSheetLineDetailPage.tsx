@@ -2,17 +2,19 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
 import RecordNavigator from "../../../components/commons/RecordNavigator.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
+import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
+import ExpenseTicketLinesList from "../components/ExpenseTicketLinesList.tsx";
 import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "../constants/internationalOptions.ts";
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
-import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
+import { appendExpenseTicketReturnQuery, saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import {
@@ -36,6 +38,16 @@ import { useExpenseSheetLineDetailState } from "./useExpenseSheetLineDetailState
 import { useExpenseSheetLineTicketPreview } from "./useExpenseSheetLineTicketPreview.ts";
 import ExpenseSheetLineDetailView from "./ExpenseSheetLineDetailView.tsx";
 import { useExpenseSheetLineTypeValidation } from "./useExpenseSheetLineTypeValidation.ts";
+import { useExpenseTicketDetailState } from "../tickets/detail/useExpenseTicketDetailState.ts";
+
+const LINKED_TICKET_LINES_PAGE_SIZE = 6;
+
+const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
+  if (!items.length) return [];
+  const safePage = Math.max(1, page);
+  const start = (safePage - 1) * pageSize;
+  return items.slice(start, start + pageSize);
+};
 
 // Initializes auth seed for expense API calls before island effects run.
 const bootstrapExpenseApiAuth = () => {
@@ -72,13 +84,16 @@ const ExpenseSheetLineDetailContent = () => {
     managementBootstrapReady,
   } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
+  const canViewLinkedTicketLines = canAccess("GASTOS_TICKETS", "View");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
   const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
   const isCreateMode = lineMode === "create";
   const startInEditMode = lineMode === "edit";
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
+  const [linkedTicketLinePaging, setLinkedTicketLinePaging] = useState({ fileId: "", page: 1 });
   const exchangeRateRequestIdRef = useRef(0);
+  const linkedTicketLineContainerRef = useRef<HTMLDivElement | null>(null);
   const [exchangeRateInfoMessage, setExchangeRateInfoMessage] = useState("");
 
   useEffect(() => {
@@ -200,6 +215,76 @@ const ExpenseSheetLineDetailContent = () => {
   const projectValue = safeText(line?.projId || header?.projId);
   const sheetDescription = safeText(header?.description) || "-";
   const internacionalLabel = getExpenseInternationalLabel(line?.internacional);
+  const linkedTicketFileIdValue = safeText(linkedTicketFileId);
+  const showLinkedTicketLines = hasLinkedTicket && !!linkedTicketFileIdValue && canViewLinkedTicketLines;
+  const linkedTicketDetail = useExpenseTicketDetailState({
+    enabled: showLinkedTicketLines,
+    hasAccess: canViewLinkedTicketLines,
+    fileId: linkedTicketFileIdValue,
+    onForbidden: showPermissionModal,
+  });
+  const totalLinkedTicketLinePages = Math.ceil((linkedTicketDetail.lines.length || 0) / LINKED_TICKET_LINES_PAGE_SIZE);
+  const requestedLinkedTicketLinePage =
+    linkedTicketLinePaging.fileId === linkedTicketFileIdValue
+      ? linkedTicketLinePaging.page
+      : 1;
+  const linkedTicketLinePage =
+    totalLinkedTicketLinePages > 0
+      ? Math.min(Math.max(1, requestedLinkedTicketLinePage), totalLinkedTicketLinePages)
+      : 1;
+  const visibleLinkedTicketLines = useMemo(
+    () => pagedSlice(linkedTicketDetail.lines, linkedTicketLinePage, LINKED_TICKET_LINES_PAGE_SIZE),
+    [linkedTicketDetail.lines, linkedTicketLinePage]
+  );
+  const linkedTicketLinePaginationLabels = useMemo(
+    () => ({
+      first: indT("History_Page_First", "First"),
+      prev: indT("History_Page_Prev", "Previous"),
+      next: indT("History_Page_Next", "Next"),
+      last: indT("History_Page_Last", "Last"),
+    }),
+    []
+  );
+  const handleLinkedTicketLinePageChange = useCallback(
+    (page: number) => {
+      setLinkedTicketLinePaging({
+        fileId: linkedTicketFileIdValue,
+        page,
+      });
+    },
+    [linkedTicketFileIdValue]
+  );
+  const linkedTicketReturnContext = useMemo(() => {
+    const safeFileId = linkedTicketFileIdValue;
+    const safeSheetId = safeText(sheetId);
+    const safeLineId = safeText(lineId || line?.lineRecId);
+    if (!safeFileId || !safeSheetId || !safeLineId) return null;
+
+    return {
+      fileId: safeFileId,
+      origin: "expense-line" as const,
+      sheetId: safeSheetId,
+      sheetLineRecId: safeLineId,
+    };
+  }, [line?.lineRecId, lineId, linkedTicketFileIdValue, sheetId]);
+  const resolveLinkedTicketLineCard = useCallback(
+    (target: EventTarget | null) => {
+      const node = target as HTMLElement | null;
+      if (!node || typeof node.closest !== "function") return null;
+      const card = node.closest<HTMLElement>(".timeline-card--clickable");
+      if (!card) return null;
+      if (!linkedTicketLineContainerRef.current?.contains(card)) return null;
+      return card;
+    },
+    []
+  );
+
+  useTimelineCardEffects({
+    containerRef: linkedTicketLineContainerRef,
+    errorMessage: linkedTicketDetail.errorMessage,
+    items: visibleLinkedTicketLines,
+    resolveClickableCard: resolveLinkedTicketLineCard,
+  });
   const {
     showStickyPreview,
     previewOpen,
@@ -529,28 +614,18 @@ const ExpenseSheetLineDetailContent = () => {
   }, [handleCancelEdit]);
 
   const handleEditLinkedTicket = useCallback(() => {
-    const safeFileId = safeText(linkedTicketFileId);
-    const safeSheetId = safeText(sheetId);
-    const safeLineId = safeText(lineId || line?.lineRecId);
-    if (!safeFileId || !safeSheetId || !safeLineId) return;
+    if (!linkedTicketReturnContext) return;
 
     const query = new URLSearchParams({
-      fileId: safeFileId,
-      origin: "expense-line",
-      sheetId: safeSheetId,
-      sheetLineRecId: safeLineId,
+      fileId: linkedTicketReturnContext.fileId,
       mode: "edit",
     });
-    saveExpenseTicketReturnContext({
-      fileId: safeFileId,
-      origin: "expense-line",
-      sheetId: safeSheetId,
-      sheetLineRecId: safeLineId,
-    });
+    appendExpenseTicketReturnQuery(query, linkedTicketReturnContext);
+    saveExpenseTicketReturnContext(linkedTicketReturnContext);
     navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
       askConfirmation: isEditing,
     });
-  }, [isEditing, line?.lineRecId, lineId, linkedTicketFileId, sheetId]);
+  }, [isEditing, linkedTicketReturnContext]);
 
   useExpenseSheetLineDetailTopbarActions({
     busy: busy || isRedirectingAfterCreate,
@@ -584,27 +659,39 @@ const ExpenseSheetLineDetailContent = () => {
   });
 
   const handleOpenLinkedTicket = useCallback(() => {
-    const safeFileId = safeText(linkedTicketFileId);
-    const safeSheetId = safeText(sheetId);
-    const safeLineId = safeText(lineId || line?.lineRecId);
-    if (!safeFileId || !safeSheetId || !safeLineId) return;
+    if (!linkedTicketReturnContext) return;
 
     const query = new URLSearchParams({
-      fileId: safeFileId,
-      origin: "expense-line",
-      sheetId: safeSheetId,
-      sheetLineRecId: safeLineId,
+      fileId: linkedTicketReturnContext.fileId,
     });
-    saveExpenseTicketReturnContext({
-      fileId: safeFileId,
-      origin: "expense-line",
-      sheetId: safeSheetId,
-      sheetLineRecId: safeLineId,
-    });
+    appendExpenseTicketReturnQuery(query, linkedTicketReturnContext);
+    saveExpenseTicketReturnContext(linkedTicketReturnContext);
     navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
       askConfirmation: isEditing,
     });
-  }, [isEditing, line?.lineRecId, lineId, linkedTicketFileId, sheetId]);
+  }, [isEditing, linkedTicketReturnContext]);
+
+  const handleOpenLinkedTicketLine = useCallback(
+    (ticketLineRecId: string) => {
+      if (!linkedTicketReturnContext) return;
+      const safeTicketLineRecId = safeText(ticketLineRecId);
+      if (!safeTicketLineRecId) return;
+
+      const query = new URLSearchParams({
+        fileId: linkedTicketReturnContext.fileId,
+        lineRecId: safeTicketLineRecId,
+      });
+      if (isEditing) {
+        query.set("mode", "edit");
+      }
+      appendExpenseTicketReturnQuery(query, linkedTicketReturnContext);
+      saveExpenseTicketReturnContext(linkedTicketReturnContext);
+      navigateToExpenseUrl(`/Gastos/TicketLineDetail?${query.toString()}`, {
+        askConfirmation: isEditing,
+      });
+    },
+    [isEditing, linkedTicketReturnContext]
+  );
 
   const lineNavigatorLabels = useMemo(
     () => ({
@@ -646,6 +733,7 @@ const ExpenseSheetLineDetailContent = () => {
         totalItems={lineNavigation.totalLines}
         labels={lineNavigatorLabels}
         disabled={isLoading || busy || isRedirectingAfterCreate}
+        variant="compact"
         onFirst={handleNavigateFirstLine}
         onPrevious={handleNavigatePreviousLine}
         onNext={handleNavigateNextLine}
@@ -653,59 +741,86 @@ const ExpenseSheetLineDetailContent = () => {
       />
     ) : null;
 
+  const linkedTicketLinesSection =
+    showLinkedTicketLines ? (
+      linkedTicketDetail.isLoading ? (
+        <div className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-zinc-700">
+          <svg className="ind-spinner size-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
+            <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
+          </svg>
+          {indT("Common_Loading", "Loading")}
+        </div>
+      ) : linkedTicketDetail.errorMessage ? (
+        <div className="text-danger">{linkedTicketDetail.errorMessage}</div>
+      ) : (
+        <ExpenseTicketLinesList
+          visibleLines={visibleLinkedTicketLines}
+          totalLinePages={totalLinkedTicketLinePages}
+          linePage={linkedTicketLinePage}
+          currencyCode={safeText(linkedTicketDetail.header?.currencyCode) || effectiveLineCurrencyCode}
+          paginationLabels={linkedTicketLinePaginationLabels}
+          containerRef={linkedTicketLineContainerRef}
+          onLinePageChange={handleLinkedTicketLinePageChange}
+          onOpenLine={handleOpenLinkedTicketLine}
+        />
+      )
+    ) : null;
+
   const detailBody =
     !isLoading && !isRedirectingAfterCreate && !errorMessage && line ? (
-      <ExpenseSheetLineForm
-        line={line}
-        fallbackDate={safeText(header?.createdDate)}
-        sheetDescription={sheetDescription}
-        projectValue={projectValue}
-        priceText={priceText}
-        amountText={amountText}
-        amountMSTText={amountMSTText}
-        internacionalLabel={internacionalLabel}
-        isKmType={isKmType}
-        isFuelPriceLoading={isFuelPriceLoading}
-        fuelPriceMessage={fuelPriceMessage}
-        fuelPriceMessageIsError={fuelPriceMessageIsError}
-        status={status}
-        isEditing={isEditing}
-        gastoTypeOptions={gastoTypeOptions}
-        internationalOptions={internationalOptions}
-        draftDescription={draftDescription}
-        draftTransDate={draftTransDate}
-        draftTypeValueCode={draftTypeValueCode}
-        draftPrice={draftPrice}
-        draftQty={draftQty}
-        draftProjectId={draftProjectId}
-        draftInternational={draftInternational}
-        draftReimbursableExpense={draftReimbursableExpense}
-        draftCurrencyCode={draftCurrencyCode}
-        draftAmountMST={draftAmountMST}
-        draftExchangeRate={draftExchangeRate}
-        localCurrencyCode={localCurrencyCode}
-        exchangeRateInfoMessage={exchangeRateInfoMessage}
-        typeInputRef={typeInputRef}
-        priceInputRef={priceInputRef}
-        qtyInputRef={qtyInputRef}
-        typeInvalid={typeInvalid}
-        priceInvalid={priceInvalid}
-        qtyInvalid={qtyInvalid}
-        onDraftDescriptionChange={setDraftDescription}
-        onDraftTransDateChange={handleLineTransDateChange}
-        onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
-        onDraftPriceChange={handleLinePriceChange}
-        onDraftQtyChange={handleLineQtyChange}
-        onDraftProjectIdChange={setDraftProjectId}
-        onDraftInternationalChange={setDraftInternational}
-        onDraftReimbursableExpenseChange={setDraftReimbursableExpense}
-        onDraftCurrencyCodeChange={handleLineCurrencyChange}
-        onDraftAmountMSTChange={handleLineAmountMSTChange}
-        onDraftExchangeRateChange={handleLineExchangeRateChange}
-        linkedTicketFileId={linkedTicketFileId}
-        showLinkedTicketField={hasLinkedTicket}
-        onOpenLinkedTicket={handleOpenLinkedTicket}
-      />
+      <>
+        <ExpenseSheetLineForm
+          line={line}
+          fallbackDate={safeText(header?.createdDate)}
+          sheetDescription={sheetDescription}
+          projectValue={projectValue}
+          priceText={priceText}
+          amountText={amountText}
+          amountMSTText={amountMSTText}
+          internacionalLabel={internacionalLabel}
+          isKmType={isKmType}
+          isFuelPriceLoading={isFuelPriceLoading}
+          fuelPriceMessage={fuelPriceMessage}
+          fuelPriceMessageIsError={fuelPriceMessageIsError}
+          isEditing={isEditing}
+          gastoTypeOptions={gastoTypeOptions}
+          internationalOptions={internationalOptions}
+          draftDescription={draftDescription}
+          draftTransDate={draftTransDate}
+          draftTypeValueCode={draftTypeValueCode}
+          draftPrice={draftPrice}
+          draftQty={draftQty}
+          draftProjectId={draftProjectId}
+          draftInternational={draftInternational}
+          draftReimbursableExpense={draftReimbursableExpense}
+          draftCurrencyCode={draftCurrencyCode}
+          draftAmountMST={draftAmountMST}
+          draftExchangeRate={draftExchangeRate}
+          localCurrencyCode={localCurrencyCode}
+          exchangeRateInfoMessage={exchangeRateInfoMessage}
+          typeInputRef={typeInputRef}
+          priceInputRef={priceInputRef}
+          qtyInputRef={qtyInputRef}
+          typeInvalid={typeInvalid}
+          priceInvalid={priceInvalid}
+          qtyInvalid={qtyInvalid}
+          onDraftDescriptionChange={setDraftDescription}
+          onDraftTransDateChange={handleLineTransDateChange}
+          onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
+          onDraftPriceChange={handleLinePriceChange}
+          onDraftQtyChange={handleLineQtyChange}
+          onDraftProjectIdChange={setDraftProjectId}
+          onDraftInternationalChange={setDraftInternational}
+          onDraftReimbursableExpenseChange={setDraftReimbursableExpense}
+          onDraftCurrencyCodeChange={handleLineCurrencyChange}
+          onDraftAmountMSTChange={handleLineAmountMSTChange}
+          onDraftExchangeRateChange={handleLineExchangeRateChange}
+          linkedTicketFileId={linkedTicketFileId}
+          showLinkedTicketField={hasLinkedTicket}
+          onOpenLinkedTicket={handleOpenLinkedTicket}
+        />
+        {linkedTicketLinesSection}
+      </>
     ) : null;
 
   return (

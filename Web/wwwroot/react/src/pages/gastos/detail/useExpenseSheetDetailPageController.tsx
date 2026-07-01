@@ -76,6 +76,7 @@ export const useExpenseSheetDetailPageController = () => {
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
   const [statusTransitionComment, setStatusTransitionComment] = useState("");
   const [showStatusTransitionCommentField, setShowStatusTransitionCommentField] = useState(false);
+  const [confirmedProjectId, setConfirmedProjectId] = useState("");
   const statusTransitionCommentRef = useRef("");
 
   const paginationLabels = useMemo(
@@ -237,6 +238,7 @@ export const useExpenseSheetDetailPageController = () => {
   const {
     handleUpdate,
     handlePropagateReimbursableExpenseToLines,
+    handlePropagateProjectIdToLines,
     handleStatusTransition,
     handleDelete,
   } = useExpenseSheetDetailMutations({
@@ -273,6 +275,79 @@ export const useExpenseSheetDetailPageController = () => {
     setStatus,
     setIsEditing,
   });
+
+  React.useEffect(() => {
+    if (isEditing) return;
+    setConfirmedProjectId(safeText(projectValue));
+  }, [isEditing, projectValue]);
+
+  const handleConfirmProjectPropagation = useCallback(
+    async (nextProjectId: string) => {
+      const safeProjectId = safeText(nextProjectId);
+      const ok = await handlePropagateProjectIdToLines(safeProjectId);
+      if (ok) {
+        setConfirmedProjectId(safeProjectId);
+        setDraftProjectId(safeProjectId);
+        setIsEditing(true);
+      }
+
+      return ok;
+    },
+    [handlePropagateProjectIdToLines, setDraftProjectId, setIsEditing]
+  );
+
+  const handleDraftProjectIdCommit = useCallback(
+    (value: string) => {
+      const nextValue = safeText(value);
+      const previousValue = safeText(confirmedProjectId);
+      if (nextValue === previousValue) {
+        setDraftProjectId(nextValue);
+        return;
+      }
+
+      const shouldConfirmPropagation =
+        !isCreateMode && isEditing && canEditHeaderFieldsCurrent && lines.length > 0;
+
+      if (!shouldConfirmPropagation) {
+        setDraftProjectId(nextValue);
+        setConfirmedProjectId(nextValue);
+        return;
+      }
+
+      if (busy || modal.open) {
+        setDraftProjectId(previousValue);
+        return;
+      }
+
+      setDraftProjectId(nextValue);
+      openConfirm({
+        title: indT("ExpenseSheets_Detail_PropagateProject_Title", "Update lines"),
+        message: indT(
+          "ExpenseSheets_Detail_PropagateProject_Body",
+          "The projects on all lines will be updated. Do you want to continue?"
+        ),
+        confirmText: indT("Confirm_Yes", "OK"),
+        onCancel: () => {
+          setDraftProjectId(previousValue);
+        },
+        onConfirm: async () => {
+          return handleConfirmProjectPropagation(nextValue);
+        },
+      });
+    },
+    [
+      busy,
+      canEditHeaderFieldsCurrent,
+      confirmedProjectId,
+      handleConfirmProjectPropagation,
+      isCreateMode,
+      isEditing,
+      lines.length,
+      modal.open,
+      openConfirm,
+      setDraftProjectId,
+    ]
+  );
 
   const handleDraftReimbursableExpenseChange = useCallback(
     (value: number) => {
@@ -325,6 +400,38 @@ export const useExpenseSheetDetailPageController = () => {
     ]
   );
 
+  const hasPendingProjectPropagation =
+    !isCreateMode &&
+    isEditing &&
+    canEditHeaderFieldsCurrent &&
+    lines.length > 0 &&
+    safeText(draftProjectId) !== safeText(confirmedProjectId);
+
+  const handlePendingProjectPropagationCancel = useCallback(() => {
+    if (!hasPendingProjectPropagation) return;
+    setDraftProjectId(safeText(confirmedProjectId));
+  }, [confirmedProjectId, hasPendingProjectPropagation, setDraftProjectId]);
+
+  const handleUpdateWithProjectPropagation = useCallback(async () => {
+    if (hasPendingProjectPropagation) {
+      const ok = await handleConfirmProjectPropagation(draftProjectId);
+      if (!ok) return false;
+    }
+
+    return handleUpdate();
+  }, [draftProjectId, handleConfirmProjectPropagation, handleUpdate, hasPendingProjectPropagation]);
+
+  const projectPropagationSaveTitle = hasPendingProjectPropagation
+    ? indT("ExpenseSheets_Detail_PropagateProject_Title", "Update lines")
+    : undefined;
+  const projectPropagationSaveMessage = hasPendingProjectPropagation
+    ? indT(
+        "ExpenseSheets_Detail_PropagateProject_Body",
+        "The projects on all lines will be updated. Do you want to continue?"
+      )
+    : undefined;
+  const projectPropagationSaveConfirmText = hasPendingProjectPropagation ? indT("Confirm_Yes", "OK") : undefined;
+
   const handleOpenLineDetail = useCallback(
     async (lineRecId: string) => {
       const safeLineId = safeText(lineRecId);
@@ -333,7 +440,7 @@ export const useExpenseSheetDetailPageController = () => {
       }
 
       if (isEditing && canEditHeaderFieldsCurrent) {
-        const ok = await handleUpdate();
+        const ok = await handleUpdateWithProjectPropagation();
         if (!ok) {
           return;
         }
@@ -351,7 +458,7 @@ export const useExpenseSheetDetailPageController = () => {
     [
       busy,
       canEditHeaderFieldsCurrent,
-      handleUpdate,
+      handleUpdateWithProjectPropagation,
       isEditing,
       isRedirectingAfterCreate,
       navigateToLineDetail,
@@ -444,13 +551,17 @@ export const useExpenseSheetDetailPageController = () => {
     setModalError,
     handleEnableEdit,
     handleCancelEdit,
-    handleUpdate,
+    handleUpdate: handleUpdateWithProjectPropagation,
     handleDelete,
     onSaveSuccess: handleSaveSuccess,
     onDeleteSuccess: () => {
       invalidateCachedListForRefetch();
       navigateToExpenseUrl("/Gastos/ExpenseSheets");
     },
+    saveConfirmTitle: projectPropagationSaveTitle,
+    saveConfirmMessage: projectPropagationSaveMessage,
+    saveConfirmText: projectPropagationSaveConfirmText,
+    saveConfirmOnCancel: handlePendingProjectPropagationCancel,
     openConfirm,
     closeConfirm,
   });
@@ -614,6 +725,7 @@ export const useExpenseSheetDetailPageController = () => {
     setLinePage,
     setDraftDescription,
     setDraftProjectId,
+    commitDraftProjectId: handleDraftProjectIdCommit,
     setDraftCurrencyCode,
     setDraftExchangeRate,
     setDraftReimbursableExpense: handleDraftReimbursableExpenseChange,

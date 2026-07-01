@@ -180,18 +180,18 @@ const createDraftFromHeader = (
   const normalizedCurrencyCode =
     normalizeCurrencyCode(header?.currencyCode) || normalizeCurrencyCode(linkedExpenseLine?.currencyCode) || normalizedLocalCurrencyCode;
   const totalAmount = toFiniteNumber(header?.totalAmount) ?? toFiniteNumber(linkedExpenseLine?.amount) ?? toFiniteNumber(linkedExpenseLine?.price);
-  const linkedExchangeRate = toFiniteNumber(linkedExpenseLine?.exchRate ?? header?.exchRate);
-  const linkedAmountMST = toFiniteNumber(linkedExpenseLine?.amountMST ?? header?.amountMST);
+  const ticketExchangeRate = toFiniteNumber(header?.exchRate ?? linkedExpenseLine?.exchRate);
+  const ticketAmountMST = toFiniteNumber(header?.amountMST ?? linkedExpenseLine?.amountMST);
   const sameCurrency =
     !!normalizedCurrencyCode &&
     !!normalizedLocalCurrencyCode &&
     normalizedCurrencyCode === normalizedLocalCurrencyCode;
-  const exchangeRate = sameCurrency ? 100 : linkedExchangeRate != null && linkedExchangeRate > 0 ? linkedExchangeRate : null;
+  const exchangeRate = sameCurrency ? 100 : ticketExchangeRate != null && ticketExchangeRate > 0 ? ticketExchangeRate : null;
   const calculatedAmountMST =
     totalAmount != null && exchangeRate != null
       ? calculateExpenseLineAmountMST(totalAmount, exchangeRate)
       : null;
-  const amountMST = linkedAmountMST ?? (sameCurrency ? totalAmount : calculatedAmountMST);
+  const amountMST = ticketAmountMST ?? (sameCurrency ? totalAmount : calculatedAmountMST);
 
   return {
     description: safeText(header?.description),

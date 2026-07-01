@@ -523,7 +523,6 @@ const ExpenseTicketLineDetailContent = () => {
         <ExpenseTicketLineDetailForm
           header={view.header}
           line={view.line}
-          status={view.status}
           isEditing={view.isEditing}
           draftDescription={view.draftDescription}
           draftQty={view.draftQty}

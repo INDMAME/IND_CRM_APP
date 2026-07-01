@@ -5633,6 +5633,8 @@ namespace IND_CRM_APP.Controllers
                 ProcessedByAI = item.ProcessedByAI,
                 CurrencyCode = item.CurrencyCode ?? string.Empty,
                 TotalAmount = item.TotalAmount,
+                AmountMST = item.AmountMST,
+                ExchRate = item.ExchRate,
                 CreatedByUserId = item.CreatedByUserId ?? string.Empty,
                 TransDate = NormalizeDate(item.TransDate),
                 TicketDate = NormalizeDate(item.TicketDate),

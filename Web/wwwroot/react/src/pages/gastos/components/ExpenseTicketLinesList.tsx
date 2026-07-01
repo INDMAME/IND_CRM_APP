@@ -84,15 +84,8 @@ const ExpenseTicketLinesList = ({
           {visibleLines.map((line) => {
             const amountText = formatAmountWithCurrency(line.totalAmount, currencyCode);
             const qtyText = formatQtyValue(line.qty);
-            const priceText = formatAmountWithCurrency(line.price, currencyCode);
             const title = line.description || line.recId || "-";
-            const primarySubtitleParts = [
-              line.adjustmentAmount ? indT("Enum_GastoType_AdjustmentAmount", "Adjustment amount") : "",
-              `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}`,
-              `${indT("ExpenseSheets_Field_Price", "Price")}: ${priceText}`,
-            ].filter(Boolean);
-            const primarySubtitle = primarySubtitleParts.join("   ");
-            const subtitle = primarySubtitle;
+            const subtitle = `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}`;
             const lineKey =
               String(line.recId || "").trim() ||
               [line.description, line.totalAmount, line.price, line.qty]

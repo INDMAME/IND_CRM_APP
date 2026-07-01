@@ -3,12 +3,10 @@ import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
-import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 
 type ExpenseTicketLineDetailFormProps = {
   header: ExpenseTicketDetailHeader;
   line: ExpenseTicketDetailLine | null;
-  status: string;
   isEditing: boolean;
   draftDescription: string;
   draftQty: string;
@@ -33,7 +31,6 @@ const formatQtyValue = (value: number | null): string => {
 const ExpenseTicketLineDetailForm = ({
   header,
   line,
-  status,
   isEditing,
   draftDescription,
   draftQty,
@@ -44,18 +41,71 @@ const ExpenseTicketLineDetailForm = ({
   onDraftQtyChange,
   onDraftPriceChange,
 }: ExpenseTicketLineDetailFormProps) => {
+  const quantityField = isEditing ? (
+    <div className="space-y-1.5">
+      <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>
+      <input
+        className="form-control text-right tabular-nums"
+        type="text"
+        inputMode="decimal"
+        value={draftQty}
+        onChange={(event) => onDraftQtyChange(event.target.value || "")}
+        onBlur={(event) =>
+          onDraftQtyChange(
+            formatExpenseInputNumber(event.target.value, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+              useGrouping: true,
+              fallback: "",
+            })
+          )
+        }
+        aria-label={indT("ExpenseSheets_Field_Qty", "Quantity")}
+      />
+    </div>
+  ) : (
+    <ExpenseReadOnlyField
+      label={indT("ExpenseSheets_Field_Qty", "Quantity")}
+      value={formatQtyValue(line?.qty ?? null)}
+      valueAlign="right"
+    />
+  );
+  const priceField = isEditing ? (
+    <div className="space-y-1.5">
+      <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Price", "Price")}</label>
+      <input
+        className="form-control text-right tabular-nums"
+        type="text"
+        inputMode="decimal"
+        value={draftPrice}
+        onChange={(event) => onDraftPriceChange(event.target.value || "")}
+        onBlur={(event) =>
+          onDraftPriceChange(
+            formatExpenseInputNumber(event.target.value, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+              useGrouping: true,
+              fallback: "",
+            })
+          )
+        }
+        aria-label={indT("ExpenseSheets_Field_Price", "Price")}
+      />
+    </div>
+  ) : (
+    <ExpenseReadOnlyField
+      label={indT("ExpenseSheets_Field_Price", "Price")}
+      value={priceText || "-"}
+      valueAlign="right"
+    />
+  );
+
   return (
     <section className="space-y-0">
-      <ExpenseSectionDivider
-        label={indT("ExpenseSheets_Line", "Line")}
-        className="expense-section-divider--spaced"
-        labelClassName="expense-section-divider__label--title"
-      />
-
       <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-[#e2e8f0] rounded-[var(--radius-xl)]">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <ExpenseReadOnlyField
-            label={indT("Tickets_Field_FileId", "Ticket")}
+            label={indT("Tickets_Field_FileId", "Ticket Id.")}
             value={header.fileId || "-"}
           />
 
@@ -77,72 +127,16 @@ const ExpenseTicketLineDetailForm = ({
             />
           )}
 
-          {isEditing ? (
-            <div className="space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>
-              <input
-                className="form-control"
-                type="text"
-                inputMode="decimal"
-                value={draftQty}
-                onChange={(event) => onDraftQtyChange(event.target.value || "")}
-                onBlur={(event) =>
-                  onDraftQtyChange(
-                    formatExpenseInputNumber(event.target.value, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                      useGrouping: true,
-                      fallback: "",
-                    })
-                  )
-                }
-                aria-label={indT("ExpenseSheets_Field_Qty", "Quantity")}
-              />
-            </div>
-          ) : (
-            <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_Qty", "Quantity")}
-              value={formatQtyValue(line?.qty ?? null)}
-            />
-          )}
-
-          {isEditing ? (
-            <div className="space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Price", "Price")}</label>
-              <input
-                className="form-control"
-                type="text"
-                inputMode="decimal"
-                value={draftPrice}
-                onChange={(event) => onDraftPriceChange(event.target.value || "")}
-                onBlur={(event) =>
-                  onDraftPriceChange(
-                    formatExpenseInputNumber(event.target.value, {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                      useGrouping: true,
-                      fallback: "",
-                    })
-                  )
-                }
-                aria-label={indT("ExpenseSheets_Field_Price", "Price")}
-              />
-            </div>
-          ) : (
-            <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_Price", "Price")}
-              value={priceText || "-"}
-            />
-          )}
+          <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
+            {quantityField}
+            {priceField}
+          </div>
 
           <ExpenseReadOnlyField
             label={indT("ExpenseSheets_Field_Amount", "Amount")}
             value={amountText || "-"}
+            valueAlign="right"
           />
-        </div>
-
-        <div className="flex items-center gap-3 text-sm text-[#00296bb8]">
-          <span>{status}</span>
         </div>
       </section>
     </section>

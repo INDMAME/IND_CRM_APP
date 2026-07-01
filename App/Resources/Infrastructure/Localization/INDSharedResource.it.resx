@@ -109,19 +109,19 @@
     <value>No</value>
   </data>
   <data name="Tickets_Field_FileId" xml:space="preserve">
-    <value>Ticket</value>
+    <value>Ticket Id.</value>
   </data>
   <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
-    <value>Nota spese</value>
+    <value>ID nota spese</value>
   </data>
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>Stato</value>
   </data>
   <data name="Tickets_Field_TicketDate" xml:space="preserve">
-    <value>Data ticket</value>
+    <value>Data</value>
   </data>
   <data name="Tickets_Field_TicketTime" xml:space="preserve">
-    <value>Ora ticket</value>
+    <value>Ora</value>
   </data>
   <data name="Tickets_Detail_Title" xml:space="preserve">
     <value>Dettaglio ticket</value>
@@ -188,6 +188,15 @@
   </data>
   <data name="ExpenseSheets_Detail_PropagatingReimbursable" xml:space="preserve">
     <value>Aggiornamento delle righe della nota spese...</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Title" xml:space="preserve">
+    <value>Aggiorna righe</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Body" xml:space="preserve">
+    <value>I progetti di tutte le righe verranno aggiornati. Vuoi continuare?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingProject" xml:space="preserve">
+    <value>Aggiornamento dei progetti delle righe...</value>
   </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>Elimina la nota spese</value>
@@ -342,6 +351,9 @@
   <data name="ExpenseSheets_Field_SheetId" xml:space="preserve">
     <value>Codice della nota spese</value>
   </data>
+  <data name="ExpenseSheets_Detail_Field_Identifier" xml:space="preserve">
+    <value>Identificativo</value>
+  </data>
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve">
     <value>Utente</value>
   </data>
@@ -363,6 +375,9 @@
   <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve">
     <value>Valuta locale</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementCurrency" xml:space="preserve">
+    <value>Valuta rimborso</value>
+  </data>
   <data name="ExpenseSheets_Field_Status" xml:space="preserve">
     <value>Stato</value>
   </data>
@@ -374,6 +389,12 @@
   </data>
   <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
     <value>Entrambi</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Text" xml:space="preserve">
+    <value>Questo valore pu&#242; essere impostato come predefinito nella testata. Se viene modificato in seguito, verr&#224; proposta l&apos;opzione per aggiornare tutte le righe con il nuovo valore. Se una riga modifica il valore ereditato, la testata mostrer&#224; "Entrambi".</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Aria" xml:space="preserve">
+    <value>Mostra informazioni sul rimborsabile</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Importo totale</value>
@@ -397,7 +418,7 @@
     <value>identificativo della linea</value>
   </data>
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
-    <value>Tipo</value>
+    <value>Categoria</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Importato</value>

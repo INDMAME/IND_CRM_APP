@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Lunes 29/06/2026
+; Navision Axapta Forms unloaded at Miércoles 01/07/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -19,7 +19,9 @@ FORM #INDTicketInfoTable
       #{
       #     Map                selectedTickets;
       #     CRMHojaGastosLine  callerHojaGastosLine;
+      #     boolean            ticketLineSyncInProgress;
       #}
+      #
     ENDSOURCE
     SOURCE #init
       #public void init()
@@ -51,6 +53,16 @@ FORM #INDTicketInfoTable
       #    selectedTickets = new Map(Types::Integer, Types::Integer);
       #
       #    INDTicketInfoTable_DS.executeQuery();
+      #}
+    ENDSOURCE
+    SOURCE #refreshTicketAfterLineSync
+      #//MMS - Ajustes CRM - 2026.07.01
+      #void refreshTicketAfterLineSync()
+      #{
+      #    // Recarga la cabecera despues de un cambio de linea para evitar conflictos de version del datasource.
+      #    INDTicketInfoTable_DS.reRead();
+      #    INDTicketInfoTable_DS.refresh();
+      #    //INDTicketInfoLine_DS.executeQuery();
       #}
     ENDSOURCE
   ENDMETHODS
@@ -97,6 +109,41 @@ FORM #INDTicketInfoTable
           #    if (urlFileId)
           #    {
           #        INDTicketInfoTable.deleteAzureBlobFileByUrl(urlFileId);
+          #    }
+          #}
+          #
+        ENDSOURCE
+        SOURCE #write
+          #public void write()
+          #{
+          #    Amount  manualTotalAmount;
+          #    boolean manualTotalChanged;
+          #    ;
+          #
+          #    //MMS - Ajustes CRM - 2026.07.01
+          #    // Evita guardar la cabecera antigua cuando el recalculo viene del datasource de lineas.
+          #    if (ticketLineSyncInProgress)
+          #    {
+          #        element.refreshTicketAfterLineSync();
+          #        return;
+          #    }
+          #
+          #    //MMS - Ajustes CRM - 2026.06.30
+          #    // Preserve manual header total edits from the form and recalculate the adjustment line after the normal save.
+          #    manualTotalChanged = INDTicketInfoTable.RecId
+          #                      && INDTicketInfoTable.TotalAmount != INDTicketInfoTable.orig().TotalAmount;
+          #    manualTotalAmount  = INDTicketInfoTable.TotalAmount;
+          #
+          #    if (manualTotalChanged && manualTotalAmount < 0)
+          #        throw error("TotalAmount no puede ser negativo.");
+          #
+          #    super();
+          #
+          #    if (manualTotalChanged)
+          #    {
+          #        INDTicketInfoTable.adjustTotalAmount(manualTotalAmount, curUserId());
+          #
+          #        element.refreshTicketAfterLineSync();
           #    }
           #}
           #
@@ -240,8 +287,8 @@ FORM #INDTicketInfoTable
           CounterField        #
           AllowCheck          #Yes
           AllowEdit           #Yes
-          AllowCreate         #No
-          AllowDelete         #No
+          AllowCreate         #Yes
+          AllowDelete         #Yes
           StartPosition       #First
           AutoSearch          #Yes
           AutoNotify          #Yes
@@ -257,6 +304,39 @@ FORM #INDTicketInfoTable
         FIELDLIST
         ENDFIELDLIST
       ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #delete
+          #public void delete()
+          #{
+          #    ;
+          #
+          #    //MMS - Ajustes CRM - 2026.07.01
+          #    // La linea recalcula la cabecera por tabla; el formulario solo debe recargarla.
+          #    ticketLineSyncInProgress = true;
+          #    super();
+          #    element.refreshTicketAfterLineSync();
+          #    ticketLineSyncInProgress = false;
+          #}
+          #
+        ENDSOURCE
+        SOURCE #write
+          #public void write()
+          #{
+          #    ;
+          #
+          #    //MMS - Ajustes CRM - 2026.07.01
+          #    // La linea recalcula la cabecera por tabla; el formulario solo debe recargarla.
+          #    ticketLineSyncInProgress = true;
+          #    super();
+          #    element.refreshTicketAfterLineSync();
+          #    ticketLineSyncInProgress = false;
+          #
+          #    INDTicketInfoLine_DS.executeQuery();
+          #}
+          #
+        ENDSOURCE
+      ENDMETHODS
     ENDDATASOURCE
     DATASOURCE
       OBJECTPOOL
@@ -366,7 +446,7 @@ FORM #INDTicketInfoTable
           Left                #Auto (left)
           Top                 #Auto
           Width               #1100
-          Height              #Auto
+          Height              #Column height
           VerticalSpacing     #Auto
           Enabled             #Yes
           Skip                #No
@@ -1008,7 +1088,7 @@ FORM #INDTicketInfoTable
                               Left                #Auto (left)
                               Top                 #Auto
                               Width               #1050
-                              Height              #300
+                              Height              #Column height
                               VerticalSpacing     #Auto
                               Enabled             #Yes
                               Skip                #No
@@ -1881,7 +1961,7 @@ FORM #INDTicketInfoTable
                         LabelUnderline      #No
                         LabelBold           #Default
                         LabelCharacterSet   #0
-                        DataSource          #
+                        DataSource          #INDTicketInfoLine
                         TopMargin           #Auto
                         BottomMargin        #Auto
                         LeftMargin          #Auto
@@ -1915,7 +1995,7 @@ FORM #INDTicketInfoTable
                               Left                #Auto (left)
                               Top                 #Auto
                               Width               #1050
-                              Height              #200
+                              Height              #Column height
                               VerticalSpacing     #Auto
                               Enabled             #Yes
                               Skip                #No

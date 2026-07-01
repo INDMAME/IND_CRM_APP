@@ -225,7 +225,6 @@ const buildExpenseTicketDetailContentView = ({
   lineContainerRef,
   setLinePage,
   openLineDetail,
-  status,
 }: {
   isLoading: boolean;
   errorMessage: string;
@@ -289,7 +288,6 @@ const buildExpenseTicketDetailContentView = ({
   lineContainerRef: React.RefObject<HTMLDivElement | null>;
   setLinePage: (page: number) => void;
   openLineDetail: (lineRecId: string) => void;
-  status: string;
 }) => ({
   isLoading,
   errorMessage,
@@ -349,7 +347,6 @@ const buildExpenseTicketDetailContentView = ({
   containerRef: lineContainerRef,
   onLinePageChange: setLinePage,
   onOpenLine: openLineDetail,
-  status,
 });
 
 type ExpenseTicketDetailModalViewArgs = Parameters<typeof buildExpenseTicketDetailModalView>[0];
@@ -1059,7 +1056,6 @@ const useExpenseTicketDetailPageViewModel = () => {
       lineContainerRef,
       setLinePage,
       openLineDetail,
-      status,
     },
   });
 

@@ -116,7 +116,6 @@ type ExpenseTicketDetailViewProps = {
     containerRef: RefObject<HTMLDivElement | null>;
     onLinePageChange: (page: number) => void;
     onOpenLine: (lineRecId: string) => void;
-    status: string;
   };
 };
 
@@ -166,19 +165,20 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onOpenFile={content.onOpenFile}
         onOpenExpenseSheet={content.onOpenExpenseSheet}
         hideOpenFileAction={content.showStickyPreview}
-      />
-      {content.linkedLine.visible ? (
-        <ExpenseTicketLinkedSheetLineSection
-          projectId={content.linkedLine.projectId}
-          reimbursableExpense={content.linkedLine.reimbursableExpense}
-          isEditing={content.isEditing}
-          isLoading={content.linkedLine.isLoading}
-          disabled={content.linkedLine.disabled}
-          errorMessage={content.linkedLine.errorMessage}
-          onProjectIdChange={content.linkedLine.onProjectIdChange}
-          onReimbursableExpenseChange={content.linkedLine.onReimbursableExpenseChange}
-        />
-      ) : null}
+      >
+        {content.linkedLine.visible ? (
+          <ExpenseTicketLinkedSheetLineSection
+            projectId={content.linkedLine.projectId}
+            reimbursableExpense={content.linkedLine.reimbursableExpense}
+            isEditing={content.isEditing}
+            isLoading={content.linkedLine.isLoading}
+            disabled={content.linkedLine.disabled}
+            errorMessage={content.linkedLine.errorMessage}
+            onProjectIdChange={content.linkedLine.onProjectIdChange}
+            onReimbursableExpenseChange={content.linkedLine.onReimbursableExpenseChange}
+          />
+        ) : null}
+      </ExpenseTicketDetailHeaderForm>
       <ExpenseTicketLinesList
         visibleLines={content.visibleLines}
         totalLinePages={content.totalLinePages}
@@ -189,7 +189,6 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onLinePageChange={content.onLinePageChange}
         onOpenLine={content.onOpenLine}
       />
-      <div className="text-sm text-zinc-600">{content.status}</div>
     </>
   );
 

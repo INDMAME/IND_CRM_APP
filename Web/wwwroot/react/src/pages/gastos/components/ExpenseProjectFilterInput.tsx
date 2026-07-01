@@ -7,9 +7,12 @@ type ExpenseProjectFilterInputProps = {
   placeholder: string;
   value: string;
   onChange: (value: string) => void;
+  onCommit?: (value: string) => void;
   readOnly?: boolean;
   disabled?: boolean;
   showLabel?: boolean;
+  containerClassName?: string;
+  labelClassName?: string;
 };
 
 type ProjectOptionLike = {
@@ -49,9 +52,12 @@ const ExpenseProjectFilterInput = ({
   placeholder,
   value,
   onChange,
+  onCommit,
   readOnly = false,
   disabled = false,
   showLabel = true,
+  containerClassName,
+  labelClassName,
 }: ExpenseProjectFilterInputProps) => {
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
     const response = await fetchExpenseProjects(term, 1, SEARCH_PAGE_SIZE, {
@@ -80,6 +86,7 @@ const ExpenseProjectFilterInput = ({
       placeholder={placeholder}
       value={value}
       onChange={onChange}
+      onCommit={onCommit}
       onSearch={loadOptions}
       onSearchPage={loadOptionsPage}
       idBase="expense-project-filter"
@@ -92,6 +99,8 @@ const ExpenseProjectFilterInput = ({
       disabled={disabled}
       readOnly={readOnly}
       showLabel={showLabel}
+      containerClassName={containerClassName}
+      labelClassName={labelClassName}
       panelClassName="visitas-typography"
     />
   );

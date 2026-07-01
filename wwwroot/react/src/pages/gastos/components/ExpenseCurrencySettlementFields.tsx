@@ -45,6 +45,7 @@ const EXCHANGE_RATE_INPUT_FORMAT = {
 const buildInputClassName = (invalid: boolean, readOnly = false): string => {
   return [
     "form-control",
+    "text-right tabular-nums",
     readOnly ? "ind-readonly-field" : "",
     invalid ? "border-rose-400 bg-rose-50 focus:border-rose-400 focus:ring-rose-200" : "",
   ]
@@ -107,44 +108,6 @@ const ExpenseCurrencySettlementFields = ({
 
   return (
     <div className="md:col-span-2 grid grid-cols-2 gap-x-4 gap-y-3 items-start">
-      <ExpenseCurrencyFilterSelect
-        label={indT("ExpenseSheets_Field_ExpenseCurrency", "Divisa gasto")}
-        placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
-        value={normalizedExpenseCurrencyCode}
-        onChange={onExpenseCurrencyChange}
-        invalid={expenseCurrencyInvalid}
-        inputRef={expenseCurrencyInputRef}
-        readOnly={!isEditing}
-        containerClassName={fieldContainerClassName}
-        labelClassName={fieldLabelClassName}
-        idBase="expense-currency-settlement-expense-currency"
-        dropdownMinWidthPx={260}
-      />
-
-      <div className={fieldContainerClassName}>
-        <div className="flex min-h-6 items-center justify-between gap-2">
-          <label className={fieldLabelClassName}>{indT("ExpenseSheets_Field_ExchangeRate", "Tipo cambio")}</label>
-          <InfoPopoverIconButton
-            content={safeText(exchangeRateInfoMessage) || fallbackExchangeRateInfoMessage}
-            ariaLabel={indT("ExpenseSheets_ExchangeRate_InfoPopover_Aria", "Exchange rate information")}
-            className="shrink-0"
-          />
-        </div>
-        <input
-          ref={exchangeRateInputRef}
-          className={buildInputClassName(effectiveExchangeRateInvalid, exchangeRateReadOnly)}
-          type="text"
-          inputMode="decimal"
-          value={effectiveExchangeRate}
-          onChange={!exchangeRateReadOnly ? (event) => onExchangeRateChange(event.target.value || "") : undefined}
-          onBlur={!exchangeRateReadOnly ? (event) => onExchangeRateChange(formatExchangeRateInput(event.target.value)) : undefined}
-          readOnly={exchangeRateReadOnly}
-          aria-readonly={exchangeRateReadOnly ? "true" : "false"}
-          aria-invalid={effectiveExchangeRateInvalid ? "true" : "false"}
-          aria-label={indT("ExpenseSheets_Field_ExchangeRate", "Tipo cambio")}
-        />
-      </div>
-
       <div className={fieldContainerClassName}>
         <label className={fieldLabelClassName}>{indT("ExpenseSheets_Field_AmountCurrency", "Imp. divisa")}</label>
         <input
@@ -182,6 +145,44 @@ const ExpenseCurrencySettlementFields = ({
           readOnly={!isEditing}
           aria-invalid={reimbursementAmountInvalid ? "true" : "false"}
           aria-label={reimbursementLabel}
+        />
+      </div>
+
+      <ExpenseCurrencyFilterSelect
+        label={indT("ExpenseSheets_Field_ExpenseCurrency", "Divisa gasto")}
+        placeholder={indT("ExpenseSheets_Filter_Currency_Placeholder", "Currency code")}
+        value={normalizedExpenseCurrencyCode}
+        onChange={onExpenseCurrencyChange}
+        invalid={expenseCurrencyInvalid}
+        inputRef={expenseCurrencyInputRef}
+        readOnly={!isEditing}
+        containerClassName={fieldContainerClassName}
+        labelClassName={fieldLabelClassName}
+        idBase="expense-currency-settlement-expense-currency"
+        dropdownMinWidthPx={260}
+      />
+
+      <div className={fieldContainerClassName}>
+        <div className="flex min-h-6 items-center justify-between gap-2">
+          <label className={fieldLabelClassName}>{indT("ExpenseSheets_Field_ExchangeRate", "Tipo cambio")}</label>
+          <InfoPopoverIconButton
+            content={safeText(exchangeRateInfoMessage) || fallbackExchangeRateInfoMessage}
+            ariaLabel={indT("ExpenseSheets_ExchangeRate_InfoPopover_Aria", "Exchange rate information")}
+            className="shrink-0"
+          />
+        </div>
+        <input
+          ref={exchangeRateInputRef}
+          className={buildInputClassName(effectiveExchangeRateInvalid, exchangeRateReadOnly)}
+          type="text"
+          inputMode="decimal"
+          value={effectiveExchangeRate}
+          onChange={!exchangeRateReadOnly ? (event) => onExchangeRateChange(event.target.value || "") : undefined}
+          onBlur={!exchangeRateReadOnly ? (event) => onExchangeRateChange(formatExchangeRateInput(event.target.value)) : undefined}
+          readOnly={exchangeRateReadOnly}
+          aria-readonly={exchangeRateReadOnly ? "true" : "false"}
+          aria-invalid={effectiveExchangeRateInvalid ? "true" : "false"}
+          aria-label={indT("ExpenseSheets_Field_ExchangeRate", "Tipo cambio")}
         />
       </div>
     </div>

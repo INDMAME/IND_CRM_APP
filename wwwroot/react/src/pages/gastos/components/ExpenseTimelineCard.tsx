@@ -42,7 +42,7 @@ const ExpenseTimelineCard = ({
   amountText,
   onOpen,
   titleClassName = "timeline-name",
-  amountClassName = "expense-sheet-card__amount",
+  amountClassName = "expense-sheet-card__amount text-right tabular-nums",
   statusClassName,
   statusLabel,
   subtitle = "",

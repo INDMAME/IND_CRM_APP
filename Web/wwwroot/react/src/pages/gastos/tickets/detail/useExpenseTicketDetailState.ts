@@ -10,16 +10,25 @@ type UseExpenseTicketDetailStateArgs = {
   hasAccess: boolean;
   fileId: string;
   onForbidden: () => void;
+  enabled?: boolean;
 };
 
 // Owns read state and API loading behavior for the ticket detail page.
-export const useExpenseTicketDetailState = ({ hasAccess, fileId, onForbidden }: UseExpenseTicketDetailStateArgs) => {
+export const useExpenseTicketDetailState = ({ hasAccess, fileId, onForbidden, enabled = true }: UseExpenseTicketDetailStateArgs) => {
   const [header, setHeader] = useState<ExpenseTicketDetailHeader | null>(null);
   const [lines, setLines] = useState<ExpenseTicketDetailLine[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   const reloadDetail = useCallback(async () => {
+    if (!enabled) {
+      setHeader(null);
+      setLines([]);
+      setErrorMessage("");
+      setIsLoading(false);
+      return;
+    }
+
     if (!hasAccess) {
       onForbidden();
       return;
@@ -77,7 +86,7 @@ export const useExpenseTicketDetailState = ({ hasAccess, fileId, onForbidden }: 
     } finally {
       setIsLoading(false);
     }
-  }, [fileId, hasAccess, onForbidden]);
+  }, [enabled, fileId, hasAccess, onForbidden]);
 
   useEffect(() => {
     void reloadDetail();

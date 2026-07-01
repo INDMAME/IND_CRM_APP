@@ -64,8 +64,9 @@ const toPositiveNumber = (value: unknown): number | null => {
   return parsed != null && parsed > 0 ? parsed : null;
 };
 
-const buildReimbursableLineUpdatePayload = (
+const buildLineUpdatePayload = (
   line: ExpenseSheetLine,
+  projectId: string,
   reimbursableExpense: number
 ): ExpenseSheetLineUpdateRequest => {
   const typeValue = toExpenseGastoTypeCode(line.typeValueCode || line.typeValue, { allowNone: false });
@@ -89,13 +90,31 @@ const buildReimbursableLineUpdatePayload = (
     ticket: line.ticket === true,
     qty,
     price,
-    projId: safeText(line.projId) || undefined,
+    projId: safeText(projectId) || undefined,
     reimbursableExpense,
     currencyCode: safeText(line.currencyCode).toUpperCase() || undefined,
     amountMST: toFiniteNumber(line.amountMST),
     exchRate: toFiniteNumber(line.exchRate),
     indAttachFiles: safeText(line.indAttachFiles) || undefined,
   };
+};
+
+const buildReimbursableLineUpdatePayload = (
+  line: ExpenseSheetLine,
+  reimbursableExpense: number
+): ExpenseSheetLineUpdateRequest => {
+  return buildLineUpdatePayload(line, safeText(line.projId), reimbursableExpense);
+};
+
+const buildProjectLineUpdatePayload = (
+  line: ExpenseSheetLine,
+  projectId: string
+): ExpenseSheetLineUpdateRequest => {
+  return buildLineUpdatePayload(
+    line,
+    projectId,
+    normalizeExpenseLineReimbursableExpense(line.reimbursableExpense)
+  );
 };
 
 const updateReimbursableExpenseOnLines = async (
@@ -116,6 +135,40 @@ const updateReimbursableExpenseOnLines = async (
     return {
       lineRecId,
       payload: buildReimbursableLineUpdatePayload(line, nextLineReimbursableExpense),
+    };
+  });
+
+  await Promise.all(
+    updates.map(async ({ lineRecId, payload }) => {
+      const response = await updateExpenseSheetLine(safeSheetId, lineRecId, payload, {
+        suppressPermissionModal: true,
+      });
+
+      if (!response.Success) {
+        throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+      }
+    })
+  );
+};
+
+const updateProjectIdOnLines = async (
+  sheetId: string,
+  lines: ExpenseSheetLine[],
+  projectId: string
+): Promise<void> => {
+  const safeSheetId = safeText(sheetId);
+  if (!safeSheetId || lines.length < 1) return;
+
+  const safeProjectId = safeText(projectId);
+  const updates = lines.map((line) => {
+    const lineRecId = safeText(line.lineRecId);
+    if (!lineRecId) {
+      throw new Error(indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+    }
+
+    return {
+      lineRecId,
+      payload: buildProjectLineUpdatePayload(line, safeProjectId),
     };
   });
 
@@ -340,6 +393,47 @@ export const useExpenseSheetDetailMutations = ({
     ]
   );
 
+  const handlePropagateProjectIdToLines = useCallback(
+    async (nextProjectId: string) => {
+      if (busy || isCreateMode || !isEditing) return false;
+      if (isEditLocked || !canEditExpense || !canEditHeaderFields) {
+        showPermissionModal();
+        return false;
+      }
+
+      const result = await executeExpenseMutation({
+        startStatus: indT("ExpenseSheets_Detail_PropagatingProject", "Updating expense sheet lines..."),
+        fallbackErrorMessage: indT("ExpenseSheets_Detail_UpdateError", "Update error."),
+        setModalError,
+        setBusy,
+        setStatus,
+        action: async () => {
+          await updateProjectIdOnLines(sheetId, currentLines, nextProjectId);
+
+          setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
+          setIsEditing(true);
+          return true;
+        },
+      });
+
+      return result.ok;
+    },
+    [
+      busy,
+      canEditExpense,
+      canEditHeaderFields,
+      currentLines,
+      isCreateMode,
+      isEditLocked,
+      isEditing,
+      setBusy,
+      setIsEditing,
+      setModalError,
+      setStatus,
+      sheetId,
+    ]
+  );
+
   const handleStatusTransition = useCallback(
     async (nextStatus: number, startStatus: string, statusCommentOverride?: string | null) => {
       if (busy || isCreateMode || !sheetId) return false;
@@ -421,6 +515,7 @@ export const useExpenseSheetDetailMutations = ({
   return {
     handleUpdate,
     handlePropagateReimbursableExpenseToLines,
+    handlePropagateProjectIdToLines,
     handleStatusTransition,
     handleDelete,
   };

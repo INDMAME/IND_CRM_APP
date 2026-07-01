@@ -146,10 +146,10 @@ const resolveTicketSnapshot = (
     safeText(existingLine?.currencyCode).toUpperCase();
   const amountMST =
     resolvePositiveNumberOverride(overrides.amountMSTOverride) ??
-    toFiniteNumber(existingLine?.amountMST ?? ticket.AmountMST ?? ticket.amountMST);
+    toFiniteNumber(ticket.AmountMST ?? ticket.amountMST ?? existingLine?.amountMST);
   const exchRate =
     resolvePositiveNumberOverride(overrides.exchangeRateOverride) ??
-    resolvePositiveNumberOverride(existingLine?.exchRate ?? ticket.ExchRate ?? ticket.exchRate);
+    resolvePositiveNumberOverride(ticket.ExchRate ?? ticket.exchRate ?? existingLine?.exchRate);
 
   return {
     description,

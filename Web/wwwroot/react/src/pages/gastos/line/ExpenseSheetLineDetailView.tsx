@@ -1,6 +1,7 @@
 import React from "react";
 import type { RefObject, ReactNode } from "react";
 import ConfirmModal from "../../../components/commons/ConfirmModal.tsx";
+import PageBottomFixedContent from "../../../components/commons/PageBottomFixedContent.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import ExpenseTicketPreviewModal from "../tickets/detail/ExpenseTicketPreviewModal.tsx";
 import ExpenseTicketStickyPreview from "../tickets/detail/ExpenseTicketStickyPreview.tsx";
@@ -51,6 +52,8 @@ type ExpenseSheetLineDetailViewProps = {
 
 // Renders the line detail shell while the page container keeps ownership of orchestration and mutations.
 const ExpenseSheetLineDetailView = ({ modal, preview, content }: ExpenseSheetLineDetailViewProps) => {
+  const showLineNavigator = Boolean(content.detailBody && content.lineNavigator);
+
   return (
     <div className="space-y-2">
       <ConfirmModal
@@ -96,8 +99,6 @@ const ExpenseSheetLineDetailView = ({ modal, preview, content }: ExpenseSheetLin
 
       {content.errorMessage ? <div className="text-danger">{content.errorMessage}</div> : null}
 
-      {content.detailBody && content.lineNavigator ? content.lineNavigator : null}
-
       {content.detailBody ? (
         preview.showStickyPreview ? (
           <div className="space-y-2 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4 lg:space-y-0">
@@ -117,6 +118,8 @@ const ExpenseSheetLineDetailView = ({ modal, preview, content }: ExpenseSheetLin
           content.detailBody
         )
       ) : null}
+
+      {showLineNavigator ? <PageBottomFixedContent variant="compact">{content.lineNavigator}</PageBottomFixedContent> : null}
     </div>
   );
 };
