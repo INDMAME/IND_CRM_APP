@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useCallback, useMemo } from "react";
 import VisitasPageProviders from "../../../../components/commons/VisitasPageProviders.tsx";
 import ConfirmModal from "../../../../components/commons/ConfirmModal.tsx";
 import { useAuthContext } from "../../../../context/AuthContext.tsx";
@@ -13,6 +13,7 @@ import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { clearExpenseNavigationGuard, reloadExpensePage, navigateToExpenseUrl, setExpenseNavigationGuard } from "../../utils/expenseNavigation.ts";
 import { readExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
+import { resolveTicketLineAmount } from "../../utils/expenseTicketLineAmount.ts";
 import {
   appendExpenseTicketReturnQuery,
   normalizeExpenseTicketReturnContext,
@@ -58,7 +59,67 @@ const resolveLinkedTicketBlockedMessage = (isPaid: boolean): string => {
   return indT("ExpenseSheets_Detail_ReadOnlyByStatus", "No se puede editar esta hoja de gastos en el estado actual.");
 };
 
-const ExpenseTicketLineDetailContent = () => {
+type ExpenseTicketLineDetailModalProps = {
+  modal: {
+    open: boolean;
+    title: string;
+    message: string;
+    showCancel: boolean;
+    showConfirm: boolean;
+  };
+  confirmText: string;
+  cancelText: string;
+  loadingText: string;
+  busy: boolean;
+  error: string;
+  status: string;
+  onConfirm: () => void;
+  onCancel: () => void;
+};
+
+// Keeps the confirmation modal markup out of the page orchestration component.
+const ExpenseTicketLineDetailModal = ({
+  modal,
+  confirmText,
+  cancelText,
+  loadingText,
+  busy,
+  error,
+  status,
+  onConfirm,
+  onCancel,
+}: ExpenseTicketLineDetailModalProps) => (
+  <ConfirmModal
+    open={modal.open}
+    title={modal.title}
+    message={modal.message}
+    confirmText={confirmText}
+    cancelText={cancelText}
+    loadingText={loadingText}
+    showCancel={modal.showCancel}
+    showConfirm={modal.showConfirm}
+    busy={busy}
+    error={error}
+    status={status}
+    onConfirm={onConfirm}
+    onCancel={onCancel}
+  />
+);
+
+// Renders the shared loader state for ticket line detail.
+const ExpenseTicketLineDetailLoader = ({ isLoading }: { isLoading: boolean }) => (
+  <div
+    className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-zinc-700"
+    style={{ display: isLoading ? "flex" : "none" }}
+  >
+    <svg className="ind-spinner size-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
+      <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
+    </svg>
+    {indT("Common_Loading", "Loading")}
+  </div>
+);
+
+const useExpenseTicketLineDetailViewModel = () => {
   const {
     allowSelfManagement,
     canManageOtherUsers,
@@ -94,21 +155,14 @@ const ExpenseTicketLineDetailContent = () => {
   );
   const detailOrigin = ticketReturnContext?.origin || routeOrigin;
   const autoEditAttemptedRef = React.useRef(false);
-  const [sheetSyncBlocked, setSheetSyncBlocked] = useState(() => !!readExpenseTicketSheetSyncState(fileId));
-  const [sheetSyncBlockedMessage, setSheetSyncBlockedMessage] = useState(() =>
-    safeText(readExpenseTicketSheetSyncState(fileId)?.message)
-  );
+  const sheetSyncState = readExpenseTicketSheetSyncState(fileId);
+  const sheetSyncBlocked = !!sheetSyncState;
+  const sheetSyncBlockedMessage = safeText(sheetSyncState?.message);
 
   React.useEffect(() => {
     if (!explicitReturnContext) return;
     saveExpenseTicketReturnContext(explicitReturnContext);
   }, [explicitReturnContext]);
-
-  React.useEffect(() => {
-    const syncState = readExpenseTicketSheetSyncState(fileId);
-    setSheetSyncBlocked(!!syncState);
-    setSheetSyncBlockedMessage(safeText(syncState?.message));
-  }, [fileId]);
 
   React.useEffect(() => {
     if (!startInEditMode) {
@@ -125,7 +179,6 @@ const ExpenseTicketLineDetailContent = () => {
   const canCreateTicketLine = canEditTicketByModule && !isManagingOtherUser;
   const canEditTicket = canEditTicketByModule && !isManagingOtherUser;
   const canDeleteTicket = canDeleteTicketByModule && !isManagingOtherUser;
-
   const {
     header,
     line,
@@ -155,7 +208,6 @@ const ExpenseTicketLineDetailContent = () => {
     lineRecId,
     onForbidden: showPermissionModal,
   });
-
   const linkedExpenseSheetId = useMemo(
     () => safeText(ticketReturnContext?.sheetId || header?.hojaGastosIdDisplay || routeSheetId),
     [header?.hojaGastosIdDisplay, routeSheetId, ticketReturnContext]
@@ -208,7 +260,6 @@ const ExpenseTicketLineDetailContent = () => {
     setModalError,
     setStatus,
   ]);
-
   React.useEffect(() => {
     if (!shouldBlockWorkflowExit) {
       clearExpenseNavigationGuard();
@@ -224,7 +275,6 @@ const ExpenseTicketLineDetailContent = () => {
       clearExpenseNavigationGuard();
     };
   }, [busy, isEditing, shouldBlockWorkflowExit, workflowBlockedMessage]);
-
   React.useEffect(() => {
     if (!startInEditMode || autoEditAttemptedRef.current) {
       return;
@@ -236,14 +286,12 @@ const ExpenseTicketLineDetailContent = () => {
     autoEditAttemptedRef.current = true;
     handleEnableEditInContext();
   }, [handleEnableEditInContext, header, isLoading, line, linkSheetCheckBusy, startInEditMode]);
-
   const draftQtyValue = parseDecimalInput(draftQty);
   const draftPriceValue = parseDecimalInput(draftPrice);
   const calculatedAmountPreview =
-    isEditing && draftQtyValue != null && draftQtyValue > 0 && draftPriceValue != null && draftPriceValue > 0
-      ? draftQtyValue * draftPriceValue
+    isEditing && draftQtyValue != null && draftPriceValue != null && draftPriceValue !== 0
+      ? resolveTicketLineAmount({ qty: draftQtyValue, price: draftPriceValue })
       : line?.totalAmount ?? null;
-
   const amountText = useMemo(
     () => formatAmountWithCurrency(calculatedAmountPreview, safeText(header?.currencyCode)),
     [calculatedAmountPreview, header?.currencyCode]
@@ -311,7 +359,6 @@ const ExpenseTicketLineDetailContent = () => {
     defaultConfirmText: indT("Confirm_Yes", "OK"),
     defaultCancelText: indT("Confirm_No", "Cancel"),
   });
-
   const handleModalConfirm = useCallback(async () => {
     setModalError("");
     await handleConfirm({
@@ -322,7 +369,6 @@ const ExpenseTicketLineDetailContent = () => {
       },
     });
   }, [busy, handleConfirm, setModalError, setStatus]);
-
   const modalLoadingText = indT("Common_Loading", "Loading");
   const modalCancelText = modal.cancelText || indT("Confirm_No", "Cancel");
   const modalConfirmText = busy
@@ -330,7 +376,6 @@ const ExpenseTicketLineDetailContent = () => {
     : !busy && modalError
       ? indT("Common_OK", "OK")
       : modal.confirmText || indT("Confirm_Yes", "OK");
-
   React.useEffect(() => {
     if (!shouldBlockWorkflowExit || busy) return;
     if (!workflowBlockedMessage || status === workflowBlockedMessage) return;
@@ -344,7 +389,6 @@ const ExpenseTicketLineDetailContent = () => {
     }
     void handleModalConfirm();
   }, [busy, closeConfirm, handleModalConfirm, modalError]);
-
   const handleCancelEditInContext = useCallback(() => {
     if (!isCreateMode) {
       handleCancelEdit();
@@ -360,7 +404,6 @@ const ExpenseTicketLineDetailContent = () => {
       bypassGuardOnce: shouldBlockWorkflowExit,
     });
   }, [handleCancelEdit, isCreateMode, preferredTicketDetailUrl, shouldBlockWorkflowExit]);
-
   const { handleUpdate, handleDelete } = useExpenseTicketLineDetailMutations({
     busy,
     isEditing,
@@ -381,20 +424,13 @@ const ExpenseTicketLineDetailContent = () => {
     selectedManagedUserId,
     skipLinkedSheetSyncOnCreate: pendingFirstLink,
     onLinkedSheetSyncFailure: (message) => {
-      setSheetSyncBlocked(true);
-      setSheetSyncBlockedMessage(message);
       setStatus(message);
-    },
-    onLinkedSheetSyncSuccess: () => {
-      setSheetSyncBlocked(false);
-      setSheetSyncBlockedMessage("");
     },
     setModalError,
     setBusy,
     setStatus,
     setIsEditing,
   });
-
   useExpenseTicketLineDetailTopbarActions({
     busy,
     modalOpen: modal.open,
@@ -435,50 +471,67 @@ const ExpenseTicketLineDetailContent = () => {
     closeConfirm,
   });
 
+  return {
+    modal,
+    modalConfirmText,
+    modalCancelText,
+    modalLoadingText,
+    busy,
+    modalError,
+    status,
+    handleModalButtonConfirm,
+    closeConfirm,
+    isLoading,
+    errorMessage,
+    header,
+    line,
+    isCreateMode,
+    isEditing,
+    draftDescription,
+    draftQty,
+    draftPrice,
+    priceText,
+    amountText,
+    setDraftDescription,
+    setDraftQty,
+    setDraftPrice,
+  };
+};
+
+const ExpenseTicketLineDetailContent = () => {
+  const view = useExpenseTicketLineDetailViewModel();
+
   return (
     <div className="space-y-2">
-      <ConfirmModal
-        open={modal.open}
-        title={modal.title}
-        message={modal.message}
-        confirmText={modalConfirmText}
-        cancelText={modalCancelText}
-        loadingText={modalLoadingText}
-        showCancel={modal.showCancel}
-        showConfirm={modal.showConfirm}
-        busy={busy}
-        error={modalError}
-        status={status}
-        onConfirm={handleModalButtonConfirm}
-        onCancel={closeConfirm}
+      <ExpenseTicketLineDetailModal
+        modal={view.modal}
+        confirmText={view.modalConfirmText}
+        cancelText={view.modalCancelText}
+        loadingText={view.modalLoadingText}
+        busy={view.busy}
+        error={view.modalError}
+        status={view.status}
+        onConfirm={view.handleModalButtonConfirm}
+        onCancel={view.closeConfirm}
       />
 
-      <div
-        className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
-        style={{ display: isLoading ? "flex" : "none" }}
-      >
-        <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
-          <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
-        </svg>
-        {indT("Common_Loading", "Loading")}
-      </div>
+      <ExpenseTicketLineDetailLoader isLoading={view.isLoading} />
 
-      {errorMessage ? <div className="text-danger">{errorMessage}</div> : null}
+      {view.errorMessage ? <div className="text-danger">{view.errorMessage}</div> : null}
 
-      {!isLoading && !errorMessage && header && (line || isCreateMode) ? (
+      {!view.isLoading && !view.errorMessage && view.header && (view.line || view.isCreateMode) ? (
         <ExpenseTicketLineDetailForm
-          header={header}
-          line={line}
-          status={status}
-          isEditing={isEditing}
-          draftDescription={draftDescription}
-          draftQty={draftQty}
-          draftPrice={draftPrice}
-          priceText={priceText}
-          amountText={amountText}
-          onDraftDescriptionChange={setDraftDescription}
-          onDraftQtyChange={setDraftQty}
-          onDraftPriceChange={setDraftPrice}
+          header={view.header}
+          line={view.line}
+          isEditing={view.isEditing}
+          draftDescription={view.draftDescription}
+          draftQty={view.draftQty}
+          draftPrice={view.draftPrice}
+          priceText={view.priceText}
+          amountText={view.amountText}
+          onDraftDescriptionChange={view.setDraftDescription}
+          onDraftQtyChange={view.setDraftQty}
+          onDraftPriceChange={view.setDraftPrice}
         />
       ) : null}
     </div>

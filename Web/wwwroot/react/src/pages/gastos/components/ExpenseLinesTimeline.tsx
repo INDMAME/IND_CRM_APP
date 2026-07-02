@@ -50,8 +50,10 @@ const ExpenseLinesTimeline = ({
           {visibleLines.map((line, index) => {
             const lineId = safeText(line.lineRecId);
             const description = safeText(line.description);
-            const amountText = formatAmountWithCurrency(line.amount ?? null, currencyCode);
+            const lineCurrencyCode = safeText(line.currencyCode) || currencyCode;
+            const amountText = formatAmountWithCurrency(line.amount ?? null, lineCurrencyCode);
             const linkedTicketFileId = safeText(line.fileId);
+            const projectId = safeText(line.projId);
             const dateParts = formatExpenseDateParts(safeText(line.transDate), document?.documentElement?.lang || "es-ES");
             const ticketStatusIcon = linkedTicketFileId ? (
               <svg
@@ -60,7 +62,7 @@ const ExpenseLinesTimeline = ({
                 viewBox="0 0 24 24"
                 strokeWidth={1.5}
                 stroke="currentColor"
-                className="h-4 w-4"
+                className="size-4"
                 aria-hidden="true"
               >
                 <path
@@ -72,13 +74,14 @@ const ExpenseLinesTimeline = ({
             ) : null;
 
             return (
-              <div key={`${lineId}-${index}`} className="timeline-item">
+              <div key={lineId || `${safeText(line.transDate)}-${description}-${amountText}-${projectId}`} className="timeline-item">
                 <ExpenseTimelineCard
                   dateParts={dateParts}
                   title={description || lineId || "-"}
                   amountText={amountText}
                   onOpen={() => onOpenLine(lineId)}
                   titleClassName="timeline-name expense-line-card__title"
+                  subtitleClassName="expense-sheet-card__subtitle expense-line-card__meta"
                   statusIcon={ticketStatusIcon}
                   statusIconClassName="expense-line-card__ticket-icon"
                   statusLabel={linkedTicketFileId || undefined}

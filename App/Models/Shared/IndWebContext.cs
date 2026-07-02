@@ -1,5 +1,7 @@
 using System.Collections.Generic;
 using System;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 namespace IND_CRM_APP.Models.Shared
 {
@@ -47,6 +49,13 @@ namespace IND_CRM_APP.Models.Shared
         public string Description { get; set; } = string.Empty;
         public bool IsActive { get; set; }
         public int AccessRightsInt { get; set; }
+        public string DataVisibilityMode { get; set; } = string.Empty;
+        public int? DataVisibilityModeInt { get; set; }
+        public string HierarchyDepth { get; set; } = string.Empty;
+        public int? HierarchyDepthInt { get; set; }
+        public string MutationPolicy { get; set; } = string.Empty;
+        public int? MutationPolicyInt { get; set; }
+        public string MutationPolicyLabel { get; set; } = string.Empty;
     }
 
     // Raw context models for /api/auth/entra/context parsing.
@@ -113,5 +122,22 @@ namespace IND_CRM_APP.Models.Shared
         public object? IsActive { get; set; }
         public object? AccessRightsInt { get; set; }
         public object? AccessRights { get; set; }
+        public object? DataVisibilityMode { get; set; }
+        public object? DataVisibilityModeInt { get; set; }
+        public object? DataVisibilityModeLabel { get; set; }
+        public object? VisibilityMode { get; set; }
+        public object? VisibilityModeInt { get; set; }
+        public object? HierarchyDepth { get; set; }
+        public object? HierarchyDepthInt { get; set; }
+        public object? HierarchyDepthLabel { get; set; }
+        public object? MutationPolicy { get; set; }
+        public object? MutationPolicyInt { get; set; }
+        public object? MutationPolicyLabel { get; set; }
+        public object? ModificationPolicy { get; set; }
+        public object? ModificationPolicyInt { get; set; }
+        public object? ModificationPolicyLabel { get; set; }
+
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement>? ExtensionData { get; set; }
     }
 }

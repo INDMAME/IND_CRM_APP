@@ -1,0 +1,889 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDAxEnumAppCatalogTable unloaded at Martes 30/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #INDAxEnumAppCatalogTable
+    PROPERTIES
+      Name                #INDAxEnumAppCatalogTable
+      Label               #Catálogo de enums por aplicativo
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #No
+      ModifiedTime        #No
+      ModifiedBy          #No
+      ModifiedTransactionId #No
+      CreatedDate         #No
+      CreatedTime         #No
+      CreatedBy           #No
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #AppCode
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AppCode
+          Label               #Aplicativo
+          HelpText            #Código del aplicativo que consume el catálogo. Ejemplo: CRM.
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDAxEnumAppCatalogTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #35
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #AxEnumsTableRefRecId
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #AxEnumsTableRefRecId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDAxEnumAppCatalogTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #RefRecId
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #SortOrder
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #SortOrder
+          Label               #Orden
+          HelpText            #Orden de presentación en la aplicación. Si está vacío, se usa el índice del enum AX.
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDAxEnumAppCatalogTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #LabelOverride
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #LabelOverride
+          Label               #Etiqueta personalizada
+          HelpText            #Texto mostrado en la aplicación. Si está vacío, se usa la descripción del enum AX.
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDAxEnumAppCatalogTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #45
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #DescriptionOverride
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #DescriptionOverride
+          Label               #Descripción personalizada
+          HelpText            #Descripción funcional opcional. Si está vacía, se usa la descripción del enum AX.
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDAxEnumAppCatalogTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Active
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Active
+          Label               #Activo
+          HelpText            #Indica si este valor de enum está disponible para el aplicativo en esta empresa.
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDAxEnumAppCatalogTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #AppEnumRefIdx
+      PROPERTIES
+        Name                #AppEnumRefIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #AppCode
+        #AxEnumsTableRefRecId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #INDAxEnumsTable
+        PROPERTIES
+          Name                #INDAxEnumsTable
+          Table               #INDAxEnumsTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDAxEnumAppCatalogTable
+            Field               #AxEnumsTableRefRecId
+            Table               #INDAxEnumsTable
+            RelatedField        #RecId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #INDWebApp
+        PROPERTIES
+          Name                #INDWebApp
+          Table               #INDWebApp
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDAxEnumAppCatalogTable
+            Field               #AppCode
+            Table               #INDWebApp
+            RelatedField        #AppCode
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+      #INDAxEnumsTable
+      PROPERTIES
+        Table               #INDAxEnumsTable
+        DeleteAction        #Cascade
+      ENDPROPERTIES
+      
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #axEnumDescription
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Muestra la descripcion tecnica original del valor AX.
+        #display str axEnumDescription()
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    return axEnum.Description;
+        #}
+      ENDSOURCE
+      SOURCE #axEnumId
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Muestra el id tecnico del enum AX relacionado.
+        #display int axEnumId()
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    return axEnum.AxEnumId;
+        #}
+      ENDSOURCE
+      SOURCE #axEnumName
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Muestra el nombre tecnico del enum AX relacionado.
+        #display str axEnumName()
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    return axEnum.AxEnumName;
+        #}
+      ENDSOURCE
+      SOURCE #checkSortOrderUnique
+        #//MMS - Ajustes CRM - 2026.06.19
+        #boolean checkSortOrderUnique()
+        #{
+        #    INDAxEnumAppCatalogTable catalogTable;
+        #    INDAxEnumsTable          currentEnum;
+        #    INDAxEnumsTable          otherEnum;
+        #    ;
+        #
+        #    if (this.Active != NoYes::Yes)
+        #    {
+        #        return true;
+        #    }
+        #
+        #    if (!this.AppCode || !this.AxEnumsTableRefRecId)
+        #    {
+        #        return true;
+        #    }
+        #
+        #    select firstonly currentEnum
+        #        where currentEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    if (!currentEnum.RecId)
+        #    {
+        #        return true;
+        #    }
+        #
+        #    select firstonly catalogTable
+        #        where catalogTable.AppCode         == this.AppCode
+        #           && catalogTable.Active          == NoYes::Yes
+        #           && catalogTable.SortOrder       == this.SortOrder
+        #           && catalogTable.AxEnumsTableRefRecId  != this.AxEnumsTableRefRecId
+        #           && catalogTable.RecId           != this.RecId
+        #        join otherEnum
+        #            where otherEnum.RecId      == catalogTable.AxEnumsTableRefRecId
+        #               && otherEnum.AxEnumName == currentEnum.AxEnumName
+        #               && otherEnum.AxEnumId   == currentEnum.AxEnumId;
+        #
+        #    if (catalogTable.RecId)
+        #    {
+        #        return checkFailed(strFmt(
+        #            "El orden %1 ya esta asignado al valor '%2' del enum %3 para el aplicativo %4.",
+        #            this.SortOrder,
+        #            otherEnum.Description,
+        #            currentEnum.AxEnumName,
+        #            this.AppCode));
+        #    }
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #effectiveDescription
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Devuelve la descripcion efectiva.
+        #public str effectiveDescription()
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    if (strLRTrim(this.DescriptionOverride))
+        #        return this.DescriptionOverride;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    return axEnum.Description;
+        #}
+      ENDSOURCE
+      SOURCE #effectiveDescriptionDisplay
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Muestra la descripcion funcional efectiva.
+        #display str effectiveDescriptionDisplay()
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    if (strLRTrim(this.DescriptionOverride))
+        #        return this.DescriptionOverride;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    return axEnum.Description;
+        #}
+      ENDSOURCE
+      SOURCE #effectiveLabel
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Devuelve el label efectivo.
+        #public str effectiveLabel()
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    if (strLRTrim(this.LabelOverride))
+        #        return this.LabelOverride;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    return axEnum.Description;
+        #}
+      ENDSOURCE
+      SOURCE #effectiveLabelDisplay
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Muestra la etiqueta que vera el usuario final.
+        #display str effectiveLabelDisplay()
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    if (strLRTrim(this.LabelOverride))
+        #        return this.LabelOverride;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    return axEnum.Description;
+        #}
+      ENDSOURCE
+      SOURCE #effectiveSortOrder
+        #//MMS - Ajustes CRM - 2026.06.19
+        #// Devuelve el orden configurado. El valor 0 es valido.
+        #display int effectiveSortOrder()
+        #{
+        #    ;
+        #
+        #        return this.SortOrder;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #enumIndex
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Muestra el indice tecnico del valor dentro del enum AX.
+        #display int enumIndex()
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    return axEnum.EnumIndex;
+        #}
+      ENDSOURCE
+      SOURCE #enumValue
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Muestra el EnumValue tecnico de AX; los endpoints CRM deben usar enumIndex.
+        #display int enumValue()
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    select firstonly axEnum
+        #        where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    return axEnum.EnumValue;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #initFromINDAxEnumsTable
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Inicializa el catalogo desde el enum AX seleccionado en el formulario.
+        #void initFromINDAxEnumsTable(INDAxEnumsTable _axEnum)
+        #{
+        #    ;
+        #
+        #    if (!_axEnum || !_axEnum.RecId)
+        #    {
+        #        return;
+        #    }
+        #
+        #    this.AxEnumsTableRefRecId = _axEnum.RecId;
+        #    this.initSortOrderFromContext();
+        #}
+      ENDSOURCE
+      SOURCE #initSortOrderFromContext
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Sugiere el siguiente orden activo para AppCode + enum tecnico.
+        #void initSortOrderFromContext()
+        #{
+        #    ;
+        #
+        #    if (this.RecId || this.SortOrder || !this.AppCode || !this.AxEnumsTableRefRecId)
+        #    {
+        #        return;
+        #    }
+        #
+        #    this.SortOrder = this.nextSortOrderForContext();
+        #}
+      ENDSOURCE
+      SOURCE #initValue
+        #//MMS - Ajustes CRM - 2026.06.29
+        #public void initValue()
+        #{
+        #    super();
+        #
+        #    this.Active = true;
+        #    this.initSortOrderFromContext();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #modifiedField
+        #//MMS - Ajustes CRM - 2026.06.29
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    ;
+        #
+        #    super(_fieldId);
+        #
+        #    switch (_fieldId)
+        #    {
+        #        case fieldNum(INDAxEnumAppCatalogTable, AppCode):
+        #        case fieldNum(INDAxEnumAppCatalogTable, AxEnumsTableRefRecId):
+        #            this.initSortOrderFromContext();
+        #            break;
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #nextSortOrderForContext
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Calcula max(SortOrder) + 1 dentro del aplicativo y enum AX actual.
+        #int nextSortOrderForContext()
+        #{
+        #    INDAxEnumAppCatalogTable catalogTable;
+        #    INDAxEnumsTable          currentEnum;
+        #    INDAxEnumsTable          otherEnum;
+        #    boolean                  foundSortOrder;
+        #    int                      nextSortOrder;
+        #    ;
+        #
+        #    if (!this.AppCode || !this.AxEnumsTableRefRecId)
+        #    {
+        #        return this.SortOrder;
+        #    }
+        #
+        #    select firstonly currentEnum
+        #        where currentEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #    if (!currentEnum.RecId)
+        #    {
+        #        return this.SortOrder;
+        #    }
+        #
+        #    while select catalogTable
+        #        where catalogTable.AppCode == this.AppCode
+        #           && catalogTable.Active  == NoYes::Yes
+        #           && catalogTable.RecId   != this.RecId
+        #        join otherEnum
+        #            where otherEnum.RecId      == catalogTable.AxEnumsTableRefRecId
+        #               && otherEnum.AxEnumName == currentEnum.AxEnumName
+        #               && otherEnum.AxEnumId   == currentEnum.AxEnumId
+        #    {
+        #        if (!foundSortOrder || catalogTable.SortOrder >= nextSortOrder)
+        #        {
+        #            nextSortOrder  = catalogTable.SortOrder + 1;
+        #            foundSortOrder = true;
+        #        }
+        #    }
+        #
+        #    return foundSortOrder ? nextSortOrder : 0;
+        #}
+      ENDSOURCE
+      SOURCE #validateDelete
+        #public boolean validateDelete()
+        #{
+        #    boolean ret;
+        #
+        #    ret = super();
+        #
+        #    if (ret)
+        #        ret = this.warnEnumCatalogHistoricalImpact(true);
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateField
+        #//MMS - Ajustes CRM - 2026.06.19
+        #public boolean validateField(fieldId _fieldIdToCheck)
+        #{
+        #    boolean ret;
+        #    ;
+        #
+        #    ret = super(_fieldIdToCheck);
+        #
+        #    if (ret)
+        #    {
+        #        switch (_fieldIdToCheck)
+        #        {
+        #            case fieldNum(INDAxEnumAppCatalogTable, SortOrder):
+        #                ret = this.checkSortOrderUnique();
+        #                break;
+        #        }
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateWrite
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Valida obligatorios, relacion y duplicados activos por DataAreaId.
+        #public boolean validateWrite()
+        #{
+        #    boolean                  ret = super();
+        #    INDAxEnumAppCatalogTable duplicateCatalog;
+        #    INDAxEnumsTable          axEnum;
+        #    ;
+        #
+        #    if (!strLRTrim(this.AppCode))
+        #        ret = checkFailed("AppCode es obligatorio.");
+        #
+        #    if (!this.AxEnumsTableRefRecId)
+        #        ret = checkFailed("AxEnumRefRecId es obligatorio.");
+        #
+        #    if (this.AxEnumsTableRefRecId)
+        #    {
+        #        select firstonly axEnum
+        #            where axEnum.RecId == this.AxEnumsTableRefRecId;
+        #
+        #        if (!axEnum.RecId)
+        #            ret = checkFailed("AxEnumRefRecId no existe en INDAxEnumsTable.");
+        #    }
+        #
+        #    if (this.Active == NoYes::Yes)
+        #    {
+        #        select firstonly duplicateCatalog
+        #            where duplicateCatalog.AppCode              == this.AppCode
+        #               && duplicateCatalog.AxEnumsTableRefRecId == this.AxEnumsTableRefRecId
+        #               && duplicateCatalog.Active               == NoYes::Yes
+        #               && duplicateCatalog.RecId                != this.RecId;
+        #
+        #        if (duplicateCatalog.RecId)
+        #            ret = checkFailed("Ya existe una configuracion activa para AppCode + AxEnumRefRecId en esta company.");
+        #    }
+        #
+        #    if (ret)
+        #        ret = this.warnEnumCatalogHistoricalImpact(false);
+        #
+        #    if (ret)
+        #        ret = this.checkSortOrderUnique();
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #warnEnumCatalogHistoricalImpact
+        #private boolean warnEnumCatalogHistoricalImpact(boolean _isDelete = false)
+        #{
+        #    boolean shouldWarn;
+        #
+        #    shouldWarn = _isDelete;
+        #
+        #    if (!_isDelete)
+        #    {
+        #        shouldWarn =
+        #            this.orig().RecId &&
+        #            this.orig().Active == NoYes::Yes &&
+        #            this.Active == NoYes::No;
+        #    }
+        #
+        #    if (shouldWarn)
+        #    {
+        #        warning(strFmt(
+        #            "Este valor de enum puede estar usado por registros existentes. "
+        #          + "Si lo desactiva o elimina, esos registros podrían mostrar el campo vacío "
+        #          + "o perder la etiqueta visible en la aplicación. "
+        #          + "La acción no actualiza registros históricos. Enum: %1, valor: %2.",
+        #            this.axEnumName(),
+        #            this.axEnumDescription()
+        #        ));
+        #    }
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #copyCompanyAppConfig
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Copia configuracion de una company a otra usando DataAreaId estandar.
+        #static container copyCompanyAppConfig(
+        #    DataAreaId _sourceCompany,
+        #    DataAreaId _targetCompany,
+        #    str   35     _appCode,
+        #    str        _axEnumName = "",
+        #    boolean    _overwrite = false)
+        #{
+        #    INDAxEnumAppCatalogTable sourceCatalog, targetCatalog, newCatalog;
+        #    INDAxEnumsTable          axEnum;
+        #    RecId                    axEnumRefRecId;
+        #    NoYes                    active;
+        #    int                      sortOrder;
+        #    str                      labelOverride, descriptionOverride;
+        #    int                      insertedCount, updatedCount, skippedCount;
+        #    ;
+        #
+        #    if (!_sourceCompany || !_targetCompany || !strLRTrim(_appCode))
+        #        return [false, "Source company, target company y appCode son obligatorios.", 0, 0, 0];
+        #
+        #    if (_sourceCompany == _targetCompany)
+        #        return [false, "La company origen y destino no pueden ser iguales.", 0, 0, 0];
+        #
+        #
+        #    changecompany (_sourceCompany)
+        #    {
+        #        while select sourceCatalog
+        #            where sourceCatalog.AppCode == _appCode
+        #        {
+        #            select firstonly axEnum
+        #                where axEnum.RecId == sourceCatalog.AxEnumsTableRefRecId;
+        #
+        #            if (strLRTrim(_axEnumName) && axEnum.AxEnumName != _axEnumName)
+        #                continue;
+        #
+        #            axEnumRefRecId      = sourceCatalog.AxEnumsTableRefRecId;
+        #            sortOrder           = sourceCatalog.SortOrder;
+        #            labelOverride       = sourceCatalog.LabelOverride;
+        #            descriptionOverride = sourceCatalog.DescriptionOverride;
+        #            active              = sourceCatalog.Active;
+        #
+        #            changecompany (_targetCompany)
+        #            {
+        #                targetCatalog.clear();
+        #
+        #                select firstonly forupdate targetCatalog
+        #                    where targetCatalog.AppCode              == _appCode
+        #                       && targetCatalog.AxEnumsTableRefRecId == axEnumRefRecId
+        #                       && targetCatalog.Active               == NoYes::Yes;
+        #
+        #                if (targetCatalog.RecId)
+        #                {
+        #                    if (!_overwrite)
+        #                    {
+        #                        skippedCount++;
+        #                    }
+        #                    else
+        #                    {
+        #                        ttsbegin;
+        #                        targetCatalog = INDAxEnumAppCatalogTable::find(targetCatalog.AppCode,targetCatalog.AxEnumsTableRefRecId,true);
+        #                        targetCatalog.SortOrder           = sortOrder;
+        #                        targetCatalog.LabelOverride       = labelOverride;
+        #                        targetCatalog.DescriptionOverride = descriptionOverride;
+        #                        targetCatalog.Active              = active;
+        #                        targetCatalog.update();
+        #                        ttscommit;
+        #
+        #                        updatedCount++;
+        #                    }
+        #                }
+        #                else
+        #                {
+        #                    ttsbegin;
+        #                    newCatalog.clear();
+        #                    newCatalog.AppCode              = _appCode;
+        #                    newCatalog.AxEnumsTableRefRecId = axEnumRefRecId;
+        #                    newCatalog.SortOrder            = sortOrder;
+        #                    newCatalog.LabelOverride        = labelOverride;
+        #                    newCatalog.DescriptionOverride  = descriptionOverride;
+        #                    newCatalog.Active               = active;
+        #                    newCatalog.insert();
+        #                    ttscommit;
+        #
+        #                    insertedCount++;
+        #                }
+        #            }
+        #        }
+        #    }
+        #
+        #    return [true, "Configuracion copiada.", insertedCount, updatedCount, skippedCount];
+        #}
+      ENDSOURCE
+      SOURCE #enumExistsById
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Comprueba si existe un enum tecnico por id.
+        #static boolean enumExistsById(int _axEnumId)
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    select firstonly RecId from axEnum
+        #        where axEnum.AxEnumId == _axEnumId;
+        #
+        #    return axEnum.RecId != 0;
+        #}
+      ENDSOURCE
+      SOURCE #enumExistsByName
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Comprueba si existe un enum tecnico por nombre.
+        #static boolean enumExistsByName(Description _axEnumName)
+        #{
+        #    INDAxEnumsTable axEnum;
+        #    ;
+        #
+        #    select firstonly RecId from axEnum
+        #        where axEnum.AxEnumName == _axEnumName;
+        #
+        #    return axEnum.RecId != 0;
+        #}
+      ENDSOURCE
+      SOURCE #find
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Devuelve la configuracion activa exacta dentro de la company actual.
+        #static INDAxEnumAppCatalogTable find(str 35 _appCode, int _axEnumRefRecId, boolean _forUpdate = false)
+        #{
+        #    INDAxEnumAppCatalogTable catalog;
+        #    ;
+        #
+        #    if (_forUpdate)
+        #    {
+        #        select firstonly forupdate catalog
+        #            where catalog.AppCode              == _appCode
+        #               && catalog.AxEnumsTableRefRecId == _axEnumRefRecId
+        #               && catalog.Active               == NoYes::Yes;
+        #    }
+        #    else
+        #    {
+        #        select firstonly catalog
+        #            where catalog.AppCode              == _appCode
+        #               && catalog.AxEnumsTableRefRecId == _axEnumRefRecId
+        #               && catalog.Active               == NoYes::Yes;
+        #    }
+        #
+        #    return catalog;
+        #}
+      ENDSOURCE
+      SOURCE #findByAxEnumId
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Devuelve RecIds activos por id de enum dentro de la company actual.
+        #static container findByAxEnumId(str 35 _appCode, int _axEnumId)
+        #{
+        #    INDAxEnumAppCatalogTable catalog;
+        #    INDAxEnumsTable          axEnum;
+        #    container                result = conNull();
+        #    ;
+        #
+        #    while select catalog
+        #        where catalog.AppCode == _appCode
+        #           && catalog.Active  == NoYes::Yes
+        #        join axEnum
+        #            where axEnum.RecId    == catalog.AxEnumsTableRefRecId
+        #               && axEnum.AxEnumId == _axEnumId
+        #    {
+        #        result += [catalog.RecId];
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+      SOURCE #findByAxEnumName
+        #//MMS - Ajustes CRM - 2026.06.18
+        #// Devuelve RecIds activos por nombre de enum dentro de la company actual.
+        #static container findByAxEnumName(str 35 _appCode, Description _axEnumName)
+        #{
+        #    INDAxEnumAppCatalogTable catalog;
+        #    INDAxEnumsTable          axEnum;
+        #    container                result = conNull();
+        #    ;
+        #
+        #    while select catalog
+        #        where catalog.AppCode == _appCode
+        #           && catalog.Active  == NoYes::Yes
+        #        join axEnum
+        #            where axEnum.RecId      == catalog.AxEnumsTableRefRecId
+        #               && axEnum.AxEnumName == _axEnumName
+        #    {
+        #        result += [catalog.RecId];
+        #    }
+        #
+        #    return result;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

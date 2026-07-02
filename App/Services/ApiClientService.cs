@@ -11,6 +11,7 @@ using System.Net;
 using System.Net.Http.Headers;
 using System.Globalization;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Linq;
 using System.Threading;
 
@@ -26,11 +27,11 @@ namespace IND_CRM_APP.Services
     {
         private readonly HttpClient _client;
         private readonly string _baseUrl;
+        private readonly string _configuredEnvironmentName;
         private readonly ITokenSessionService _tokenSession;
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ILogger<ApiClientService> _logger;
         private readonly int _accountsTimeoutSeconds;
-        private static readonly HashSet<int> AllowedGastoTypeCodes = new() { 0, 1, 2, 3, 4, 5, 6, 7, 8, 14 };
         private const int MinSupportedExpenseYear = 1900;
         private const int MaxSupportedExpenseYear = 2100;
         private const int TwoDigitExpenseYearPivot = 50;
@@ -38,6 +39,7 @@ namespace IND_CRM_APP.Services
         private static readonly JsonSerializerOptions JsonOptions = new()
         {
             PropertyNameCaseInsensitive = true,
+            NumberHandling = JsonNumberHandling.AllowReadingFromString,
             Converters =
             {
                 new ActivityDtoArrayConverter(),
@@ -62,6 +64,12 @@ namespace IND_CRM_APP.Services
             public string? HojaGastosId { get; init; }
                 = null;
             public string CompletedStage { get; init; } = string.Empty;
+            public string FailedStage { get; init; } = string.Empty;
+            public bool? RollbackAttempted { get; init; }
+                = null;
+            public bool? RollbackSucceeded { get; init; }
+                = null;
+            public string RollbackMessage { get; init; } = string.Empty;
             public QuickCreateStepTraceIds StepTraceIds { get; init; } = new();
         }
 
@@ -90,6 +98,7 @@ namespace IND_CRM_APP.Services
             _httpContextAccessor = httpContextAccessor;
             _logger = logger;
             _baseUrl = ResolveBaseUrl(config, logger);
+            _configuredEnvironmentName = ResolveConfiguredEnvironmentName(config, logger);
 
             // Defensive config check to avoid empty or insecure API base URL.
             if (string.IsNullOrWhiteSpace(_baseUrl))
@@ -141,6 +150,39 @@ namespace IND_CRM_APP.Services
             }
 
             return string.Empty;
+        }
+
+        // Resolves the web environment name from the machine-level IND_ENV key.
+        private static string ResolveConfiguredEnvironmentName(IConfiguration config, ILogger<ApiClientService> logger)
+        {
+            var configuredEnvironment = NormalizeConfigValue(config["IND_ENV"]);
+            var normalizedEnvironment = NormalizeEnvironmentName(configuredEnvironment);
+            if (!string.IsNullOrWhiteSpace(normalizedEnvironment))
+            {
+                logger.LogInformation("CRM environment name resolved from IND_ENV.");
+                return normalizedEnvironment;
+            }
+
+            if (!string.IsNullOrWhiteSpace(configuredEnvironment))
+            {
+                logger.LogWarning(
+                    "IND_ENV must be DEV or PROD to replace API environment lookup. Current value will use API fallback.");
+            }
+
+            return string.Empty;
+        }
+
+        // Normalizes supported web environment names to the display contract.
+        private static string NormalizeEnvironmentName(string? value)
+        {
+            var normalized = NormalizeConfigValue(value);
+            if (string.IsNullOrWhiteSpace(normalized))
+                return string.Empty;
+
+            return normalized.Equals("DEV", StringComparison.OrdinalIgnoreCase)
+                   || normalized.Equals("PROD", StringComparison.OrdinalIgnoreCase)
+                ? normalized.ToUpperInvariant()
+                : string.Empty;
         }
 
         private static string NormalizeConfigValue(string? value)
@@ -537,10 +579,10 @@ namespace IND_CRM_APP.Services
             return normalized;
         }
 
-        // Normalizes optional gasto type values against the fixed enum set.
+        // Normalizes optional AX enum values while leaving catalog validation to the API.
         private static int? NormalizeTicketGastoType(int? gastoType)
         {
-            return gastoType.HasValue && AllowedGastoTypeCodes.Contains(gastoType.Value)
+            return gastoType.HasValue && gastoType.Value >= 0
                 ? gastoType
                 : null;
         }
@@ -733,6 +775,9 @@ namespace IND_CRM_APP.Services
         // ======================================================
         public async Task<string> GetEnvironmentAsync(string token)
         {
+            if (!string.IsNullOrWhiteSpace(_configuredEnvironmentName))
+                return _configuredEnvironmentName;
+
             PrepareRequestHeaders(token, "GetEnvironment", requireCompany: true);
 
             var result = await SendGetAsync(ApiRoutes.SystemEnvironment);
@@ -855,6 +900,27 @@ namespace IND_CRM_APP.Services
             return BuildApiResponse<object>(result, "GetHealthPing");
         }
 
+        // Gets configured AX enum options by enum name for the active company.
+        public async Task<PagedApiResponse<CrmEnumCatalogDto>> GetEnumCatalogByNameAsync(
+            string token,
+            string? appCode,
+            IEnumerable<string>? axEnumNames)
+        {
+            PrepareRequestHeaders(token, "GetEnumCatalogByName", requireCompany: true);
+
+            var safeAppCode = EscapeQueryValue(string.IsNullOrWhiteSpace(appCode) ? "CRM" : appCode.Trim());
+            var names = axEnumNames == null
+                ? string.Empty
+                : string.Join(",", axEnumNames
+                    .Select(name => (name ?? string.Empty).Trim())
+                    .Where(name => !string.IsNullOrWhiteSpace(name))
+                    .Distinct(StringComparer.OrdinalIgnoreCase));
+            var safeNames = EscapeQueryValue(names);
+
+            var result = await SendGetAsync(ApiRoutes.CrmEnumsByNameByQuery(safeAppCode, safeNames));
+            return BuildPagedResponse<CrmEnumCatalogDto>(result, "GetEnumCatalogByName");
+        }
+
         // ======================================================
         // Accounts
         // ======================================================
@@ -915,6 +981,24 @@ namespace IND_CRM_APP.Services
 
             var result = await SendPostJsonAsync(ApiRoutes.ActivitiesList, filter);
             return BuildPagedResponse<ActivityDto>(result, "GetActivities");
+        }
+
+        // Requests visible CRM users for the selected module and company context.
+        public async Task<PagedApiResponse<DataVisibilityVisibleUserDto>> GetVisibleUsersAsync(
+            string token,
+            string appCode,
+            string moduleCode,
+            bool includeCrmUserId = true)
+        {
+            PrepareRequestHeaders(token, "GetVisibleUsers", requireCompany: true);
+
+            var route = ApiRoutes.DataVisibilityVisibleUsersByQuery(
+                EscapeQueryValue(appCode),
+                EscapeQueryValue(moduleCode),
+                includeCrmUserId);
+
+            var result = await SendGetAsync(route);
+            return BuildPagedResponse<DataVisibilityVisibleUserDto>(result, "GetVisibleUsers");
         }
 
         public async Task<ApiResponse<ActivityDto>> GetActivityByCodeAsync(string token, string actividadId)
@@ -1062,6 +1146,30 @@ namespace IND_CRM_APP.Services
             PrepareRequestHeaders(token, "GetActivityByRecId", requireCompany: true);
 
             var result = await SendGetAsync(ApiRoutes.ActivityByRecId(recId));
+            ApplyRefreshedToken(result.Headers, null);
+
+            try
+            {
+                var pagedEnvelope = JsonSerializer.Deserialize<PagedApiResponse<ActivityDto>>(result.Raw, JsonOptions);
+                var firstItem = pagedEnvelope?.GetAnyItems().FirstOrDefault();
+                if (firstItem != null && !ApiPayloadParser.IsActivityEmpty(firstItem))
+                {
+                    return new ApiResponse<ActivityDto>
+                    {
+                        Success = pagedEnvelope!.Success,
+                        Message = pagedEnvelope.Message,
+                        ErrorCode = pagedEnvelope.ErrorCode,
+                        Errors = pagedEnvelope.Errors ?? new List<IndValidationError>(),
+                        Data = firstItem,
+                        TraceId = pagedEnvelope.TraceId ?? TryGetTraceId(result.Headers)
+                    };
+                }
+            }
+            catch
+            {
+                // Fall through to the standard response parser.
+            }
+
             return BuildApiResponse<ActivityDto>(result, "GetActivityByRecId");
         }
 
@@ -1196,7 +1304,8 @@ namespace IND_CRM_APP.Services
             string token,
             string hojaGastosId,
             ExpenseSheetUpdateRequest req,
-            string? axUserIdOverride = null)
+            string? axUserIdOverride = null,
+            string? actorAxUserIdOverride = null)
         {
             PrepareRequestHeaders(
                 token,
@@ -1205,11 +1314,12 @@ namespace IND_CRM_APP.Services
                 includeCompanyHeader: true,
                 includeAxUserHeader: true,
                 axUserIdOverride: axUserIdOverride);
+            ApplyOptionalHeader("X-IND-ActorAxUserId", actorAxUserIdOverride);
 
             var safeId = EscapePathSegment(hojaGastosId);
             req ??= new ExpenseSheetUpdateRequest();
             _logger.LogInformation(
-                "UpdateExpenseSheetHeader request. HojaGastosId: {HojaGastosId}. CurrencyCode: {CurrencyCode}. ExchRate: {ExchRate}. ProjId: {ProjId}. ExpenseSheetStatus: {ExpenseSheetStatus}. ExchangeRateMode: {ExchangeRateMode}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}.",
+                "UpdateExpenseSheetHeader request. HojaGastosId: {HojaGastosId}. CurrencyCode: {CurrencyCode}. ExchRate: {ExchRate}. ProjId: {ProjId}. ExpenseSheetStatus: {ExpenseSheetStatus}. ExchangeRateMode: {ExchangeRateMode}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. ActorAxUserIdOverride: {ActorAxUserIdOverride}.",
                 hojaGastosId,
                 NormalizeCurrencyCodeForTrace(req.CurrencyCode),
                 req.ExchRate,
@@ -1217,7 +1327,8 @@ namespace IND_CRM_APP.Services
                 req.ExpenseSheetStatus.HasValue ? req.ExpenseSheetStatus.Value.ToString(CultureInfo.InvariantCulture) : "null",
                 req.ExchangeRateMode.HasValue ? req.ExchangeRateMode.Value.ToString(CultureInfo.InvariantCulture) : "null",
                 GetSelectedCompanyId() ?? "<empty>",
-                NormalizeOptionalText(axUserIdOverride) ?? "<session>");
+                NormalizeOptionalText(axUserIdOverride) ?? "<session>",
+                NormalizeOptionalText(actorAxUserIdOverride) ?? "<none>");
             var result = await SendPutJsonAsync(ApiRoutes.ExpenseSheetById(safeId), req);
             var response = BuildApiResponse<object>(result, "UpdateExpenseSheetHeader");
             _logger.LogInformation(
@@ -1295,7 +1406,8 @@ namespace IND_CRM_APP.Services
             var normalizedPage = req.Page < 1 ? 1 : req.Page;
             var normalizedPageSize = req.PageSize <= 0 ? 50 : req.PageSize;
             var normalizedBilledMode = req.BilledMode is >= 0 and <= 2 ? req.BilledMode.Value : 2;
-            var normalizedExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 and <= 4 ? req.ExpenseSheetStatus : null;
+            var normalizedExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null;
+            var normalizedReimbursableExpense = req.ReimbursableExpense is >= 0 ? req.ReimbursableExpense : null;
             var normalizedFilter = NormalizeOptionalText(req.Filter) ?? string.Empty;
             var normalizedCreatedDateFrom = NormalizeAxListDate(req.CreatedDateFrom) ?? string.Empty;
             var normalizedCreatedDateTo = NormalizeAxListDate(req.CreatedDateTo) ?? string.Empty;
@@ -1312,6 +1424,7 @@ namespace IND_CRM_APP.Services
                 ["projId"] = normalizedProjId,
                 ["currencyCode"] = normalizedCurrencyCode,
                 ["expenseSheetStatus"] = normalizedExpenseSheetStatus,
+                ["reimbursableExpense"] = normalizedReimbursableExpense,
                 ["includeSubordinates"] = normalizedIncludeSubordinates,
                 ["page"] = normalizedPage,
                 ["pageSize"] = normalizedPageSize
@@ -1481,9 +1594,7 @@ namespace IND_CRM_APP.Services
                     Description = (x.Description ?? string.Empty).Trim(),
                     Qty = x.Qty,
                     Price = x.Price,
-                    TotalAmount = x.TotalAmount.HasValue && x.TotalAmount.Value > 0
-                        ? x.TotalAmount.Value
-                        : null
+                    TotalAmount = x.TotalAmount
                 })
                 .ToList();
 
@@ -1496,8 +1607,12 @@ namespace IND_CRM_APP.Services
                 TotalAmount = req.TotalAmount,
                 Status = req.Status,
                 TransDate = NormalizeOptionalText(req.TransDate),
+                TicketDate = NormalizeOptionalText(req.TicketDate),
+                TicketTime = NormalizeOptionalText(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
+                OcrJson = NormalizeOptionalText(req.OcrJson),
+                NormalizedJson = NormalizeOptionalText(req.NormalizedJson),
                 FileName = NormalizeOptionalText(req.FileName),
                 FileExtension = NormalizeOptionalText(req.FileExtension),
                 ProcessedByAI = req.ProcessedByAI,
@@ -1554,6 +1669,7 @@ namespace IND_CRM_APP.Services
                 Description = NormalizeOptionalText(req.Description),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 ExistingHojaGastosId = NormalizeOptionalText(req.ExistingHojaGastosId),
+                ProjId = NormalizeOptionalText(req.ProjId) ?? NormalizeOptionalText(req.ProjectId),
                 ProjectId = NormalizeOptionalText(req.ProjectId)
             };
 
@@ -1563,13 +1679,13 @@ namespace IND_CRM_APP.Services
             var streamLength = canReportLength ? ticketImageStream.Length : -1;
 
             _logger.LogInformation(
-                "QuickCreateExpenseSheetTicket request. FileName: {FileName}. ContentType: {ContentType}. StreamLength: {StreamLength}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjectId: {ProjectId}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. DescriptionLength: {DescriptionLength}. ComentarioLength: {ComentarioLength}.",
+                "QuickCreateExpenseSheetTicket request. FileName: {FileName}. ContentType: {ContentType}. StreamLength: {StreamLength}. CurrencyCode: {CurrencyCode}. ExistingHojaGastosId: {ExistingHojaGastosId}. ProjId: {ProjId}. SelectedCompany: {SelectedCompany}. AxUserIdOverride: {AxUserIdOverride}. DescriptionLength: {DescriptionLength}. ComentarioLength: {ComentarioLength}.",
                 safeFileName,
                 mime,
                 streamLength,
                 payload.CurrencyCode ?? "<empty>",
                 payload.ExistingHojaGastosId ?? "<empty>",
-                payload.ProjectId ?? "<empty>",
+                payload.ProjId ?? "<empty>",
                 GetSelectedCompanyId() ?? "<empty>",
                 NormalizeOptionalText(axUserIdOverride) ?? "<session>",
                 payload.Description?.Length ?? 0,
@@ -1611,11 +1727,11 @@ namespace IND_CRM_APP.Services
             if (!string.IsNullOrWhiteSpace(payload.ExistingHojaGastosId))
                 form.Add(new StringContent(payload.ExistingHojaGastosId), "existingHojaGastosId");
 
-            if (!string.IsNullOrWhiteSpace(payload.ProjectId))
-                form.Add(new StringContent(payload.ProjectId), "projectId");
+            if (!string.IsNullOrWhiteSpace(payload.ProjId))
+                form.Add(new StringContent(payload.ProjId), "projId");
 
             _logger.LogInformation(
-                "QuickCreateExpenseSheetTicket multipart envelope. FileName: {FileName}. Mime: {Mime}. StreamCanSeek: {StreamCanSeek}. StreamLength: {StreamLength}. HasCurrencyCode: {HasCurrencyCode}. HasDescription: {HasDescription}. HasComentario: {HasComentario}. HasExistingHojaGastosId: {HasExistingHojaGastosId}. HasProjectId: {HasProjectId}.",
+                "QuickCreateExpenseSheetTicket multipart envelope. FileName: {FileName}. Mime: {Mime}. StreamCanSeek: {StreamCanSeek}. StreamLength: {StreamLength}. HasCurrencyCode: {HasCurrencyCode}. HasDescription: {HasDescription}. HasComentario: {HasComentario}. HasExistingHojaGastosId: {HasExistingHojaGastosId}. HasProjId: {HasProjId}.",
                 safeFileName,
                 mime,
                 ticketImageStream.CanSeek,
@@ -1624,7 +1740,7 @@ namespace IND_CRM_APP.Services
                 !string.IsNullOrWhiteSpace(payload.Description),
                 !string.IsNullOrWhiteSpace(payload.Comentario),
                 !string.IsNullOrWhiteSpace(payload.ExistingHojaGastosId),
-                !string.IsNullOrWhiteSpace(payload.ProjectId));
+                !string.IsNullOrWhiteSpace(payload.ProjId));
 
             var result = await SendPostMultipartAsync(
                 ApiRoutes.ExpenseSheetTicketsQuickCreate,
@@ -1634,7 +1750,7 @@ namespace IND_CRM_APP.Services
             var response = BuildApiResponse<object>(result, "QuickCreateExpenseSheetTicket");
             var hasPartialState = TryReadQuickCreatePartialState(response.Data, out var partialState);
             _logger.LogInformation(
-                "QuickCreateExpenseSheetTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. DurationMs: {DurationMs}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. CompletedStage: {CompletedStage}. LinkedToSheet: {LinkedToSheet}. RetryAfter: {RetryAfter}. Message: {Message}. Raw: {Raw}",
+                "QuickCreateExpenseSheetTicket upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. DurationMs: {DurationMs}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. CompletedStage: {CompletedStage}. FailedStage: {FailedStage}. LinkedToSheet: {LinkedToSheet}. RollbackAttempted: {RollbackAttempted}. RollbackSucceeded: {RollbackSucceeded}. RollbackMessage: {RollbackMessage}. RetryAfter: {RetryAfter}. Message: {Message}. Raw: {Raw}",
                 result.IsSuccessStatusCode,
                 (int)result.StatusCode,
                 result.DurationMs,
@@ -1643,7 +1759,11 @@ namespace IND_CRM_APP.Services
                 response.TraceId ?? "<null>",
                 hasPartialState ? partialState!.FileId : "<null>",
                 hasPartialState ? partialState!.CompletedStage : "<null>",
+                hasPartialState ? partialState!.FailedStage : "<null>",
                 hasPartialState ? partialState!.LinkedToSheet.ToString() : "<null>",
+                hasPartialState ? (partialState!.RollbackAttempted?.ToString() ?? "<null>") : "<null>",
+                hasPartialState ? (partialState!.RollbackSucceeded?.ToString() ?? "<null>") : "<null>",
+                hasPartialState ? partialState!.RollbackMessage : "<null>",
                 TryGetHeaderValue(result.Headers, "Retry-After") ?? "<null>",
                 response.Message ?? "<null>",
                 SafeLogPayload(result.Raw));
@@ -1694,6 +1814,10 @@ namespace IND_CRM_APP.Services
                 LinkedToSheet = TryReadBoolProperty(root, "LinkedToSheet", "linkedToSheet") ?? false,
                 HojaGastosId = NormalizeOptionalText(ReadStringLikeProperty(root, "HojaGastosId", "hojaGastosId")),
                 CompletedStage = NormalizeOptionalText(ReadStringLikeProperty(root, "CompletedStage", "completedStage")) ?? string.Empty,
+                FailedStage = NormalizeOptionalText(ReadStringLikeProperty(root, "FailedStage", "failedStage")) ?? string.Empty,
+                RollbackAttempted = TryReadBoolProperty(root, "RollbackAttempted", "rollbackAttempted"),
+                RollbackSucceeded = TryReadBoolProperty(root, "RollbackSucceeded", "rollbackSucceeded"),
+                RollbackMessage = NormalizeOptionalText(ReadStringLikeProperty(root, "RollbackMessage", "rollbackMessage")) ?? string.Empty,
                 StepTraceIds = stepTraceIds
             };
 
@@ -2053,10 +2177,16 @@ namespace IND_CRM_APP.Services
                 Description = NormalizeOptionalText(req.Description),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                 TotalAmount = req.TotalAmount,
+                AmountMST = req.AmountMST,
+                ExchRate = req.ExchRate,
                 Status = req.Status,
                 TransDate = NormalizeOptionalText(req.TransDate),
+                TicketDate = NormalizeOptionalText(req.TicketDate),
+                TicketTime = NormalizeOptionalText(req.TicketTime),
                 Comentario = NormalizeOptionalText(req.Comentario),
                 UrlFile = NormalizeOptionalText(req.UrlFile),
+                OcrJson = NormalizeOptionalText(req.OcrJson),
+                NormalizedJson = NormalizeOptionalText(req.NormalizedJson),
                 FileName = NormalizeOptionalText(req.FileName),
                 ProcessedByAI = req.ProcessedByAI,
                 FileExtension = NormalizeOptionalText(req.FileExtension),
@@ -2065,10 +2195,12 @@ namespace IND_CRM_APP.Services
 
             var safeFileId = EscapePathSegment(fileId);
             _logger.LogInformation(
-                "UpdateExpenseSheetTicket request. FileId: {FileId}. CurrencyCode: {CurrencyCode}. TotalAmount: {TotalAmount}. TransDate: {TransDate}. GastoType: {GastoType}. ProcessedByAI: {ProcessedByAI}. SelectedCompany: {SelectedCompany}.",
+                "UpdateExpenseSheetTicket request. FileId: {FileId}. CurrencyCode: {CurrencyCode}. TotalAmount: {TotalAmount}. AmountMST: {AmountMST}. ExchRate: {ExchRate}. TransDate: {TransDate}. GastoType: {GastoType}. ProcessedByAI: {ProcessedByAI}. SelectedCompany: {SelectedCompany}.",
                 fileId,
                 NormalizeCurrencyCodeForTrace(payload.CurrencyCode),
                 payload.TotalAmount,
+                payload.AmountMST,
+                payload.ExchRate,
                 payload.TransDate ?? "<empty>",
                 payload.GastoType.HasValue ? payload.GastoType.Value.ToString(CultureInfo.InvariantCulture) : "null",
                 payload.ProcessedByAI.HasValue ? payload.ProcessedByAI.Value.ToString(CultureInfo.InvariantCulture) : "null",
@@ -2084,6 +2216,39 @@ namespace IND_CRM_APP.Services
                 response.TraceId ?? "<null>",
                 fileId,
                 NormalizeCurrencyCodeForTrace(payload.CurrencyCode));
+            return response;
+        }
+
+        public async Task<ApiResponse<ExpenseSheetTicketTotalAdjustmentResultDto>> AdjustExpenseSheetTicketTotalAmountAsync(
+            string token,
+            string fileId,
+            ExpenseSheetTicketTotalAdjustmentRequest req)
+        {
+            PrepareRequestHeaders(token, "AdjustExpenseSheetTicketTotalAmount", requireCompany: true);
+
+            req ??= new ExpenseSheetTicketTotalAdjustmentRequest();
+            var payload = new ExpenseSheetTicketTotalAdjustmentRequest
+            {
+                TotalAmount = req.TotalAmount
+            };
+
+            var safeFileId = EscapePathSegment(fileId);
+            _logger.LogInformation(
+                "AdjustExpenseSheetTicketTotalAmount request. FileId: {FileId}. TotalAmount: {TotalAmount}. SelectedCompany: {SelectedCompany}.",
+                fileId,
+                payload.TotalAmount,
+                GetSelectedCompanyId() ?? "<empty>");
+            var result = await SendPostJsonAsync(ApiRoutes.ExpenseSheetTicketTotalAdjustment(safeFileId), payload);
+            var response = BuildApiResponse<ExpenseSheetTicketTotalAdjustmentResultDto>(result, "AdjustExpenseSheetTicketTotalAmount");
+            _logger.LogInformation(
+                "AdjustExpenseSheetTicketTotalAmount upstream result. HttpSuccess: {HttpSuccess}. StatusCode: {StatusCode}. Success: {Success}. ErrorCode: {ErrorCode}. TraceId: {TraceId}. FileId: {FileId}. AdjustmentLineCreated: {AdjustmentLineCreated}.",
+                result.IsSuccessStatusCode,
+                (int)result.StatusCode,
+                response.Success,
+                response.ErrorCode ?? "<null>",
+                response.TraceId ?? "<null>",
+                fileId,
+                response.Data?.AdjustmentLineCreated);
             return response;
         }
 
@@ -2154,9 +2319,7 @@ namespace IND_CRM_APP.Services
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
-                    ? req.TotalAmount.Value
-                    : null
+                TotalAmount = req.TotalAmount
             };
 
             var safeFileId = EscapePathSegment(fileId);
@@ -2178,9 +2341,7 @@ namespace IND_CRM_APP.Services
                 Description = (req.Description ?? string.Empty).Trim(),
                 Qty = req.Qty,
                 Price = req.Price,
-                TotalAmount = req.TotalAmount.HasValue && req.TotalAmount.Value > 0
-                    ? req.TotalAmount.Value
-                    : null
+                TotalAmount = req.TotalAmount
             };
 
             var safeFileId = EscapePathSegment(fileId);
@@ -2444,7 +2605,8 @@ namespace IND_CRM_APP.Services
                 CreatedDateTo = NormalizeAxListDate(request.CreatedDateTo),
                 ProjId = NormalizeOptionalText(request.ProjId),
                 CurrencyCode = NormalizeOptionalText(request.CurrencyCode)?.ToUpperInvariant(),
-                ExpenseSheetStatus = request.ExpenseSheetStatus is >= 0 and <= 4 ? request.ExpenseSheetStatus : null,
+                ExpenseSheetStatus = request.ExpenseSheetStatus is >= 0 ? request.ExpenseSheetStatus : null,
+                ReimbursableExpense = request.ReimbursableExpense is >= 0 ? request.ReimbursableExpense : null,
                 IncludeSubordinates = request.IncludeSubordinates,
                 Page = request.Page < 1 ? 1 : request.Page,
                 PageSize = request.PageSize <= 0 ? 50 : request.PageSize
@@ -3172,6 +3334,7 @@ namespace IND_CRM_APP.Services
             {
                 _client.DefaultRequestHeaders.Remove("X-IND-AxUserId");
             }
+            _client.DefaultRequestHeaders.Remove("X-IND-ActorAxUserId");
 
             if (includeContextHeaders)
             {
@@ -3206,6 +3369,18 @@ namespace IND_CRM_APP.Services
                 return;
 
             _client.DefaultRequestHeaders.Add("X-IND-AxUserId", axUserId);
+        }
+
+        // Applies an optional forwarding header and clears stale values when absent.
+        private void ApplyOptionalHeader(string headerName, string? value)
+        {
+            _client.DefaultRequestHeaders.Remove(headerName);
+
+            var normalizedValue = NormalizeOptionalText(value);
+            if (string.IsNullOrWhiteSpace(normalizedValue))
+                return;
+
+            _client.DefaultRequestHeaders.Add(headerName, normalizedValue);
         }
 
         private void ApplyContextHeaders()

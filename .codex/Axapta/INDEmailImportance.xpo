@@ -1,0 +1,50 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBE
+
+; Navision Axapta Enumtype : INDEmailImportance unloaded at Lunes 01/06/2026
+; --------------------------------------------------------------------------------
+  ENUMTYPEVERSION 1
+  
+  ENUMTYPE #INDEmailImportance
+    PROPERTIES
+      Name                #INDEmailImportance
+      Label               #Importancia Email
+      Help                #
+      DisplayLength       #Auto
+      Style               #Combo box
+      ConfigurationKey    #
+      UseEnumValue        #Yes
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+      #low
+      PROPERTIES
+        Name                #low
+        Label               #Bajo
+        ConfigurationKey    #
+        EnumValue           #0
+      ENDPROPERTIES
+      
+      #normal
+      PROPERTIES
+        Name                #normal
+        Label               #Normal
+        ConfigurationKey    #
+        EnumValue           #1
+      ENDPROPERTIES
+      
+      #high
+      PROPERTIES
+        Name                #high
+        Label               #Alto
+        ConfigurationKey    #
+        EnumValue           #2
+      ENDPROPERTIES
+      
+    ENDTYPEELEMENTS
+  ENDENUMTYPE
+  
+
+***Element: END

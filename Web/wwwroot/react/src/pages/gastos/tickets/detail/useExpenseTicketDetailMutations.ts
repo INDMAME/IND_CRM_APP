@@ -3,7 +3,8 @@ import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../../utils/permissions.ts";
 import type { ExpenseSheetTicketUpdateRequest } from "../../expenseTypes.ts";
-import { executeExpenseMutation } from "../../hooks/expenseMutationUtils.ts";
+import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
+import { executeExpenseMutation, parseDecimalInput } from "../../hooks/expenseMutationUtils.ts";
 import {
   deleteExpenseSheetLine,
   deleteExpenseSheetTicket,
@@ -13,6 +14,11 @@ import {
 } from "../../utils/expenseApi.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../../utils/expenseApiDateUtils.ts";
 import { syncExpenseLinkedTicketSheetLine } from "../../utils/expenseLinkedTicketSheetSync.ts";
+import {
+  isExpenseLineForeignCurrency,
+  resolveExpenseLineAmountMSTForCurrencyPayload,
+  resolveExpenseLineExchangeRateForCurrency,
+} from "../../utils/expenseLineCurrency.ts";
 import { resolveExpenseSheetEditAccess } from "../../utils/expenseSheetEditAccess.ts";
 import { clearExpenseTicketSheetSyncState, saveExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
@@ -31,11 +37,21 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftDescription: string;
   draftGastoType: string;
   draftCurrencyCode: string;
+  draftTotalAmount: string;
+  draftAmountMST: string;
+  draftExchangeRate: string;
+  localCurrencyCode: string;
   draftTransDate: string;
+  draftTicketTime: string;
   draftComentario: string;
   draftUrlFile: string;
   draftFileName: string;
   linkedExpenseSheetId?: string;
+  linkedExpenseLineRecId?: string;
+  linkedExpenseLineProjectId?: string;
+  linkedExpenseLineProjectIdChanged?: boolean;
+  linkedExpenseLineReimbursableExpense?: number | null;
+  linkedExpenseLineReimbursableExpenseChanged?: boolean;
   deleteLinkedExpenseLineContext?: DeleteLinkedExpenseLineContext | null;
   allowSelfManagement: boolean;
   canManageOtherUsers: boolean;
@@ -48,15 +64,6 @@ type UseExpenseTicketDetailMutationsArgs = {
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
-};
-
-const REQUIRED_GASTO_TYPES = new Set<number>([1, 2, 3, 4, 5, 6, 7, 8, 14]);
-
-const parseOptionalInteger = (raw: string): number | undefined => {
-  const value = String(raw || "").trim();
-  if (!value) return undefined;
-  const parsed = Number.parseInt(value, 10);
-  return Number.isInteger(parsed) ? parsed : undefined;
 };
 
 // Tries to infer a safe extension for update payload from file name or URL.
@@ -93,11 +100,21 @@ export const useExpenseTicketDetailMutations = ({
   draftDescription,
   draftGastoType,
   draftCurrencyCode,
+  draftTotalAmount,
+  draftAmountMST,
+  draftExchangeRate,
+  localCurrencyCode,
   draftTransDate,
+  draftTicketTime,
   draftComentario,
   draftUrlFile,
   draftFileName,
   linkedExpenseSheetId,
+  linkedExpenseLineRecId,
+  linkedExpenseLineProjectId,
+  linkedExpenseLineProjectIdChanged = false,
+  linkedExpenseLineReimbursableExpense,
+  linkedExpenseLineReimbursableExpenseChanged = false,
   deleteLinkedExpenseLineContext,
   allowSelfManagement,
   canManageOtherUsers,
@@ -171,8 +188,34 @@ export const useExpenseTicketDetailMutations = ({
         return false;
       }
 
-      const parsedGastoType = parseOptionalInteger(draftGastoType);
-      if (parsedGastoType === undefined || !REQUIRED_GASTO_TYPES.has(parsedGastoType)) {
+      const parsedTotalAmount = parseDecimalInput(draftTotalAmount);
+      if (parsedTotalAmount == null || parsedTotalAmount < 0) {
+        const message = indT("Tickets_Validation_TotalAmountRequired", "Total amount must be greater than or equal to 0.");
+        setModalError(message);
+        setStatus(message);
+        return false;
+      }
+
+      const parsedAmountMST = parseDecimalInput(draftAmountMST);
+      const parsedExchangeRate = parseDecimalInput(draftExchangeRate);
+      const normalizedLocalCurrency = safeText(localCurrencyCode).toUpperCase();
+      const requiresForeignCurrencySettlement = isExpenseLineForeignCurrency(normalizedCurrency, normalizedLocalCurrency);
+      const hasForeignCurrencySettlement =
+        !requiresForeignCurrencySettlement ||
+        (parsedExchangeRate != null && parsedExchangeRate > 0) ||
+        (parsedAmountMST != null && parsedAmountMST > 0);
+      if (!hasForeignCurrencySettlement) {
+        const message = indT(
+          "ExpenseSheets_Line_Validation_ForeignCurrencySettlement",
+          "Foreign currency lines require an exchange rate greater than 0 or a reimbursement amount."
+        );
+        setModalError(message);
+        setStatus(message);
+        return false;
+      }
+
+      const parsedGastoType = toExpenseGastoTypeCode(draftGastoType, { allowNone: false });
+      if (parsedGastoType === null) {
         const message = indT("Tickets_Validation_CategoryRequired", "Category is required.");
         setModalError(message);
         setStatus(message);
@@ -192,15 +235,31 @@ export const useExpenseTicketDetailMutations = ({
         return false;
       }
 
+      const payloadAmountMST = resolveExpenseLineAmountMSTForCurrencyPayload(
+        parsedTotalAmount,
+        parsedAmountMST,
+        normalizedCurrency,
+        normalizedLocalCurrency
+      );
+      const payloadExchangeRate = resolveExpenseLineExchangeRateForCurrency(
+        normalizedCurrency,
+        normalizedLocalCurrency,
+        parsedExchangeRate
+      );
       const payload: ExpenseSheetTicketUpdateRequest = {
         description: normalizedDescription,
         currencyCode: normalizedCurrency,
+        totalAmount: Number(parsedTotalAmount),
+        amountMST: payloadAmountMST ?? undefined,
+        exchRate: payloadExchangeRate ?? undefined,
         transDate: normalizedTransDate || undefined,
+        ticketDate: normalizedTransDate || undefined,
+        ticketTime: safeText(draftTicketTime) || undefined,
         comentario: String(draftComentario || "").trim() || undefined,
         urlFile: String(draftUrlFile || "").trim() || undefined,
         fileName: String(draftFileName || "").trim() || undefined,
         fileExtension: resolveTicketFileExtension(draftFileName, draftUrlFile),
-        gastoType: parsedGastoType as ExpenseSheetTicketUpdateRequest["gastoType"],
+        gastoType: parsedGastoType,
       };
 
       const result = await executeExpenseMutation({
@@ -212,15 +271,26 @@ export const useExpenseTicketDetailMutations = ({
         action: async () => {
           const response = await updateExpenseSheetTicket(fileId, payload);
           if (!response.Success) {
-            throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+              throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
           }
 
           if (syncSheetLine && validatedSheetId) {
             try {
-              await syncExpenseLinkedTicketSheetLine({
+              const syncPayload = {
                 fileId,
                 sheetId: validatedSheetId,
-              });
+                lineRecId: safeText(linkedExpenseLineRecId) || undefined,
+                currencyCodeOverride: normalizedCurrency,
+                amountMSTOverride: payloadAmountMST,
+                exchangeRateOverride: payloadExchangeRate ?? undefined,
+                ...(linkedExpenseLineProjectIdChanged
+                  ? { projectIdOverride: safeText(linkedExpenseLineProjectId) }
+                  : {}),
+                ...(linkedExpenseLineReimbursableExpenseChanged
+                  ? { reimbursableExpenseOverride: linkedExpenseLineReimbursableExpense }
+                  : {}),
+              };
+              await syncExpenseLinkedTicketSheetLine(syncPayload);
               clearExpenseTicketSheetSyncState();
               onLinkedSheetSyncSuccess?.();
             } catch (error) {
@@ -257,10 +327,20 @@ export const useExpenseTicketDetailMutations = ({
       draftDescription,
       draftFileName,
       draftGastoType,
+      draftAmountMST,
+      draftExchangeRate,
+      draftTotalAmount,
+      draftTicketTime,
       draftTransDate,
       draftUrlFile,
       fileId,
       isEditing,
+      localCurrencyCode,
+      linkedExpenseLineProjectId,
+      linkedExpenseLineProjectIdChanged,
+      linkedExpenseLineReimbursableExpense,
+      linkedExpenseLineReimbursableExpenseChanged,
+      linkedExpenseLineRecId,
       onLinkedSheetSyncFailure,
       onLinkedSheetSyncSuccess,
       setBusy,
@@ -279,9 +359,17 @@ export const useExpenseTicketDetailMutations = ({
 
   const handlePersistHeaderDraft = useCallback(async () => {
     return runHeaderUpdate({
-      syncSheetLine: false,
+      syncSheetLine:
+        linkedExpenseLineProjectIdChanged ||
+        linkedExpenseLineReimbursableExpenseChanged ||
+        !!safeText(linkedExpenseSheetId),
     });
-  }, [runHeaderUpdate]);
+  }, [
+    linkedExpenseLineProjectIdChanged,
+    linkedExpenseLineReimbursableExpenseChanged,
+    linkedExpenseSheetId,
+    runHeaderUpdate,
+  ]);
 
   const resolveLinkedExpenseLineContext = useCallback(async (): Promise<DeleteLinkedExpenseLineContext | null> => {
     if (deleteLinkedExpenseLineContext) {

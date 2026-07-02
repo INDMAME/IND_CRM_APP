@@ -1,12 +1,14 @@
 ﻿import { ApiFetchError } from "../../../services/apiService.ts";
 import type { ExpenseGastoTypeCode, ExpenseSheetTicketListRequest } from "../expenseTypes.ts";
 import {
+  formatExpenseGastoTypeAllowedMessage,
+  toExpenseGastoTypeCode,
+} from "../constants/expenseGastoTypeCatalog.ts";
+import {
   EXPENSE_API_DATE_FORMAT_MESSAGE,
   isExpenseApiDdMmYyyy,
   toExpenseApiDdMmYyyy,
 } from "./expenseApiDateUtils.ts";
-
-const ALLOWED_GASTO_TYPE_CODES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 // Converts unknown values to trimmed text.
 export const safeText = (value: unknown): string => {
@@ -33,12 +35,12 @@ export const isPositiveNumber = (value: unknown): boolean => {
 
 const isValidListExpenseSheetStatus = (value: unknown): boolean => {
   const parsed = toNullableNumber(value);
-  return parsed !== null && Number.isInteger(parsed) && parsed >= 0 && parsed <= 4;
+  return parsed !== null && Number.isInteger(parsed) && parsed >= 0;
 };
 
-export const toNullableTicketStatusCode = (value: unknown): 0 | 1 | null => {
+export const toNullableTicketStatusCode = (value: unknown): number | null => {
   const parsed = toNullableNumber(value);
-  if (parsed === 0 || parsed === 1) {
+  if (parsed !== null && Number.isInteger(parsed) && parsed >= 0) {
     return parsed;
   }
 
@@ -46,12 +48,7 @@ export const toNullableTicketStatusCode = (value: unknown): 0 | 1 | null => {
 };
 
 export const toNullableGastoTypeCode = (value: unknown): ExpenseGastoTypeCode | null => {
-  const parsed = toNullableNumber(value);
-  if (parsed === null || !Number.isInteger(parsed) || !ALLOWED_GASTO_TYPE_CODES.has(parsed)) {
-    return null;
-  }
-
-  return parsed as ExpenseGastoTypeCode;
+  return toExpenseGastoTypeCode(value);
 };
 
 export const normalizeOptionalTicketGastoType = (value: unknown): ExpenseGastoTypeCode | undefined => {
@@ -61,7 +58,7 @@ export const normalizeOptionalTicketGastoType = (value: unknown): ExpenseGastoTy
 
   const parsed = toNullableGastoTypeCode(value);
   if (parsed === null) {
-    throw new ApiFetchError("gastoType must be one of: 0,1,2,3,4,5,6,7,8,14.");
+    throw new ApiFetchError(formatExpenseGastoTypeAllowedMessage());
   }
 
   return parsed;
@@ -75,7 +72,7 @@ export const normalizeTicketListGastoType = (value: unknown): ExpenseSheetTicket
   return toNullableGastoTypeCode(value);
 };
 
-export const normalizeOptionalTicketStatus = (value: unknown): 0 | 1 | null => {
+export const normalizeOptionalTicketStatus = (value: unknown): number | null => {
   if (value === null || value === undefined || safeText(value) === "") {
     return null;
   }

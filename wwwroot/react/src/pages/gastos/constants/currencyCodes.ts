@@ -1,5 +1,6 @@
-﻿// Fixed ISO-like currency code list for Expense Sheets filters.
-// Source: https://www.iban.com/currency-codes (retrieved 2026-02-10).
+// Fixed ISO-like currency code list for Expense Sheets filters.
+// Source: SIX ISO 4217 List One XML, official ISO maintenance agency.
+// Retrieved 2026-05-19 from https://www.six-group.com/dam/download/financial-information/data-center/iso-currrency/lists/list-one.xml.
 export const expenseCurrencyCodes: string[] = [
   "AED",
   "AFN",
@@ -150,23 +151,37 @@ export const expenseCurrencyCodes: string[] = [
   "USN",
   "UYI",
   "UYU",
+  "UYW",
   "UZS",
   "VED",
   "VEF",
+  "VES",
   "VND",
   "VUV",
   "WST",
+  "XAD",
   "XAF",
+  "XAG",
+  "XAU",
+  "XBA",
+  "XBB",
+  "XBC",
+  "XBD",
   "XCD",
   "XCG",
   "XDR",
   "XOF",
+  "XPD",
   "XPF",
+  "XPT",
   "XSU",
+  "XTS",
   "XUA",
+  "XXX",
   "YER",
   "ZAR",
   "ZMW",
+  "ZWG",
   "ZWL",
 ];
 

@@ -33,6 +33,10 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public int? ExpenseSheetStatus { get; set; }
 
+        [JsonPropertyName("reimbursableExpense")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? ReimbursableExpense { get; set; }
+
         [JsonPropertyName("includeSubordinates")]
         public bool IncludeSubordinates { get; set; }
 

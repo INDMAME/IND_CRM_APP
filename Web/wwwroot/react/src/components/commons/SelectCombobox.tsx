@@ -24,6 +24,18 @@ type NormalizedOption = {
 
 const EMPTY_OPTION: NormalizedOption = { value: "", text: "" };
 
+const normalizeOption = (o: RawOption): NormalizedOption => {
+  if (Array.isArray(o)) {
+    return { value: o[0] ?? "", text: o[1] ?? "" };
+  }
+
+  return {
+    value: o?.value ?? o?.Value ?? "",
+    text: o?.text ?? o?.Text ?? "",
+    icon: o?.icon ?? o?.Icon,
+  };
+};
+
 const normalizeLookupText = (value: string | number | null | undefined): string => {
   return String(value ?? "").trim().toLowerCase();
 };
@@ -31,6 +43,7 @@ const normalizeLookupText = (value: string | number | null | undefined): string 
 type SelectComboboxProps = {
   label: string;
   options: RawOption[];
+  selectedOption?: RawOption;
   value: string | number;
   onChange: (value: string) => void;
   inputRef?: React.Ref<HTMLInputElement>;
@@ -39,10 +52,11 @@ type SelectComboboxProps = {
   disabled?: boolean;
   readOnly?: boolean;
   usePortal?: boolean;
-  emitOnValueChange?: boolean;
   idBase?: string;
   portalClassName?: string;
   panelClassName?: string;
+  containerClassName?: string;
+  labelClassName?: string;
   showSearchButton?: boolean;
   allowTextInput?: boolean;
   showLabel?: boolean;
@@ -50,6 +64,7 @@ type SelectComboboxProps = {
   dropdownExpandPx?: number;
   dropdownMinWidthPx?: number;
   dropdownMaxHeightClass?: string;
+  dropdownPlacement?: "bottom" | "top";
   selectedIconClassName?: string;
   optionIconClassName?: string;
   allowOptionHorizontalScroll?: boolean;
@@ -69,6 +84,7 @@ type SelectComboboxProps = {
 const SelectCombobox = ({
   label,
   options,
+  selectedOption,
   value,
   onChange,
   inputRef,
@@ -77,10 +93,11 @@ const SelectCombobox = ({
   disabled = false,
   readOnly = false,
   usePortal = true,
-  emitOnValueChange = false,
   idBase,
   portalClassName,
   panelClassName,
+  containerClassName = "space-y-2",
+  labelClassName = "form-label font-semibold",
   showSearchButton = false,
   allowTextInput = true,
   showLabel = true,
@@ -88,6 +105,7 @@ const SelectCombobox = ({
   dropdownExpandPx = 0,
   dropdownMinWidthPx = 0,
   dropdownMaxHeightClass = "max-h-72",
+  dropdownPlacement = "bottom",
   selectedIconClassName = "h-4 w-4",
   optionIconClassName = "h-4 w-4",
   allowOptionHorizontalScroll = false,
@@ -97,7 +115,7 @@ const SelectCombobox = ({
   optionTextClassName = "",
   optionDefaultClassName = "text-slate-900",
   optionActiveClassName = "bg-primary text-white",
-  optionSelectedClassName = "bg-primary text-white",
+  optionSelectedClassName = "text-primary",
   selectedInputPaddingClassName = "pl-9",
   panelStyle,
   clearOnEmptyInput = false,
@@ -114,24 +132,28 @@ const SelectCombobox = ({
   };
 
   const readOnlyMode = readOnly || disabled;
+  const inlineDropdownPlacementClass = dropdownPlacement === "top" ? "bottom-full mb-1" : "mt-1";
   const valueColor = readOnlyMode ? "#64748b" : "#00296be0";
   const data = useMemo(() => {
-    return (options || []).map<NormalizedOption>((o) => {
-      if (Array.isArray(o)) {
-        return { value: o[0] ?? "", text: o[1] ?? "" };
-      }
-      return {
-        value: o?.value ?? o?.Value ?? "",
-        text: o?.text ?? o?.Text ?? "",
-        icon: o?.icon ?? o?.Icon,
-      };
-    });
+    return (options || []).map<NormalizedOption>(normalizeOption);
   }, [options]);
+  const selectedDataOption = useMemo(() => {
+    if (!selectedOption) return null;
+    return normalizeOption(selectedOption);
+  }, [selectedOption]);
+  const selected = useMemo<NormalizedOption>(() => {
+    const optionValue = value;
+    const normalizedValue = String(optionValue ?? "");
+    if (!normalizedValue.trim()) return EMPTY_OPTION;
+
+    return (
+      data.find((d) => String(d.value) === normalizedValue) ||
+      (selectedDataOption && String(selectedDataOption.value) === normalizedValue ? selectedDataOption : EMPTY_OPTION)
+    );
+  }, [value, data, selectedDataOption]);
+  const selectedValue = String(selected?.value ?? "").trim();
 
   const [query, setQuery] = useState<string | null>(null);
-  const [selected, setSelected] = useState(
-    data.find((d) => String(d.value) === String(value)) || EMPTY_OPTION
-  );
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showNotFoundState, setShowNotFoundState] = useState(false);
@@ -141,14 +163,11 @@ const SelectCombobox = ({
   const initialDropdownWidthRef = useRef<number | null>(null);
 
   const clearManualValue = (nextOpen: boolean, showNotFound: boolean) => {
-    setSelected(EMPTY_OPTION);
     setQuery("");
     setActiveIndex(0);
     setShowNotFoundState(showNotFound);
     setOpen(nextOpen);
-    if (!emitOnValueChange) {
-      onChange("");
-    }
+    onChange("");
   };
 
   useOutsideClick([containerRef, listRef], () => {
@@ -162,19 +181,11 @@ const SelectCombobox = ({
   });
 
   useEffect(() => {
-    const nextSelected = data.find((d) => String(d.value) === String(value)) || EMPTY_OPTION;
-    setSelected(nextSelected);
-
     if (String(value ?? "").trim()) {
       setQuery(null);
       setShowNotFoundState(false);
     }
-  }, [value, data]);
-
-  useEffect(() => {
-    if (!emitOnValueChange) return;
-    onChange(selected?.value ? String(selected.value) : "");
-  }, [emitOnValueChange, onChange, selected]);
+  }, [value]);
 
   const filtered = useMemo(() => {
     if (!query || !query.trim()) return data;
@@ -185,30 +196,42 @@ const SelectCombobox = ({
       return optionText.includes(normalizedQuery) || optionValue.includes(normalizedQuery);
     });
   }, [data, query]);
+  const selectedIndex = filtered.findIndex((option) => String(option.value) === selectedValue);
+  const preferredActiveIndex = selectedIndex >= 0 ? selectedIndex : 0;
   const resolvedActiveIndex =
     filtered.length > 0 ? Math.min(Math.max(activeIndex, 0), filtered.length - 1) : 0;
 
+  const openListAtCurrentSelection = () => {
+    setActiveIndex(preferredActiveIndex);
+    setShowNotFoundState(false);
+    setOpen(true);
+  };
+
   const selectOption = (opt: NormalizedOption) => {
-    setSelected(opt);
+    const nextValue = String(opt?.value ?? "");
     setQuery(null);
     setShowNotFoundState(false);
     setOpen(false);
-    if (!emitOnValueChange) {
-      onChange(opt?.value ? String(opt.value) : "");
-    }
+    onChange(nextValue);
   };
 
   const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
     if (disabled) return;
     if (ev.key === "ArrowDown") {
       ev.preventDefault();
-      setOpen(true);
+      if (!open) {
+        openListAtCurrentSelection();
+        return;
+      }
       if (filtered.length) setActiveIndex((idx) => (idx + 1) % filtered.length);
       return;
     }
     if (ev.key === "ArrowUp") {
       ev.preventDefault();
-      setOpen(true);
+      if (!open) {
+        openListAtCurrentSelection();
+        return;
+      }
       if (filtered.length) setActiveIndex((idx) => (idx - 1 + filtered.length) % filtered.length);
       return;
     }
@@ -224,8 +247,7 @@ const SelectCombobox = ({
       } else if (query !== null && query.trim()) {
         clearManualValue(true, true);
       } else {
-        setShowNotFoundState(false);
-        setOpen(true);
+        openListAtCurrentSelection();
       }
     }
     if (ev.key === "Escape") {
@@ -244,7 +266,6 @@ const SelectCombobox = ({
   const activeId =
     open && filtered[resolvedActiveIndex] ? `select-opt-${safeId}-${filtered[resolvedActiveIndex].value}` : undefined;
   const listOpen = open && !disabled;
-  const selectedValue = String(selected?.value ?? "").trim();
   const selectedDisplayText = selectedTextMode === "value" ? selectedValue : selected?.text || "";
   const displayValue = query !== null ? query : (selectedValue ? selectedDisplayText : "");
   const showSelectedIcon = query === null && !!selectedValue && !!selected?.icon;
@@ -297,7 +318,7 @@ const SelectCombobox = ({
       {filtered.map((opt, idx) => {
         const sel = selected?.value === opt.value;
         const isActive = idx === resolvedActiveIndex;
-        const optionStateClassName = sel ? optionSelectedClassName : isActive ? optionActiveClassName : optionDefaultClassName;
+        const optionStateClassName = isActive ? optionActiveClassName : sel ? optionSelectedClassName : optionDefaultClassName;
         return (
           <button
             type="button"
@@ -360,10 +381,10 @@ const SelectCombobox = ({
 
   return (
     <div
-      className={classNames("space-y-2", disabled ? "pointer-events-none select-none" : "")}
+      className={classNames(containerClassName, disabled ? "pointer-events-none select-none" : "")}
       ref={containerRef}
     >
-      {showLabel ? <label className={classNames("form-label font-semibold", invalid ? "text-rose-700" : "")}>{label}</label> : null}
+      {showLabel ? <label className={classNames(labelClassName, invalid ? "text-rose-700" : "")}>{label}</label> : null}
       <div className="relative">
         <div
           ref={boxRef}
@@ -401,7 +422,7 @@ const SelectCombobox = ({
             }}
             onKeyDown={handleKeyDown}
             onFocus={() => {
-              if (!disabled) setOpen(true);
+              if (!disabled) openListAtCurrentSelection();
             }}
             placeholder={placeholder}
             readOnly={readOnlyMode || !allowTextInput}
@@ -427,7 +448,7 @@ const SelectCombobox = ({
                     clearManualValue(true, true);
                     return;
                   }
-                  setOpen(true);
+                  openListAtCurrentSelection();
                 }}
                 aria-label={indT("Common_Search", "Search")}
                 disabled={disabled}
@@ -446,7 +467,11 @@ const SelectCombobox = ({
                   clearManualValue(false, false);
                   return;
                 }
-                setOpen((prev) => !prev);
+                if (open) {
+                  setOpen(false);
+                  return;
+                }
+                openListAtCurrentSelection();
               }}
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
               disabled={disabled}
@@ -473,7 +498,12 @@ const SelectCombobox = ({
         ) : (
           listOpen && (
             <div
-              className={`absolute z-360000 mt-1 w-full rounded-[var(--radius-xl)] bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden ${dropdownMaxHeightClass} overflow-auto ${panelClassName || ""}`}
+              className={classNames(
+                "absolute z-360000 w-full rounded-[var(--radius-xl)] bg-white shadow-lg ring-1 ring-black/5 focus:outline-hidden overflow-auto",
+                inlineDropdownPlacementClass,
+                dropdownMaxHeightClass,
+                panelClassName || ""
+              )}
               style={{ ...inlineDropdownStyle, ...(panelStyle || {}) }}
             >
               {listBody}

@@ -1,7 +1,6 @@
 ﻿import React, { useCallback } from "react";
 import { fetchJson } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
-import { showPermissionModal } from "../../../utils/permissions.ts";
 import { flashActionMark } from "../../../utils/visitasHistory.ts";
 
 type OptionLike = {
@@ -25,6 +24,12 @@ const isCommandSuccess = (response: VisitCommandResponse): boolean => {
 const getCommandMessage = (response: VisitCommandResponse): string => {
   const raw = response.message ?? response.Message;
   return typeof raw === "string" ? raw.trim() : "";
+};
+
+// Converts select values to numeric enum payload values.
+const toNullableEnumNumber = (value: string): number | null => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
 };
 
 // Keep recId as a normalized signed integer string to avoid long precision loss in JS numbers.
@@ -60,19 +65,23 @@ type UseDetailMutationsArgs = {
   accountNum: string;
   transDate: string;
   visitType: string;
+  contactMethod: string;
   asistenteTipo: string;
   description: string;
   comentarios: string;
   antecedentes: string;
   conclusiones: string;
   visitTypes: OptionLike[];
+  contactMethods: OptionLike[];
   asistenteTipos: OptionLike[];
   defaultVisitType: string;
   rawInitialVisitType: string;
+  rawInitialContactMethod: string;
   rawInitialAsistente: string;
   matchOptionValue: (options: OptionLike[], raw: unknown) => string;
   clearDraft: () => void;
   syncEditModeFlag: (enabled: boolean) => void;
+  onPermissionBlocked?: (operation: "update" | "delete") => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
@@ -89,19 +98,23 @@ export const useDetailMutations = ({
   accountNum,
   transDate,
   visitType,
+  contactMethod,
   asistenteTipo,
   description,
   comentarios,
   antecedentes,
   conclusiones,
   visitTypes,
+  contactMethods,
   asistenteTipos,
   defaultVisitType,
   rawInitialVisitType,
+  rawInitialContactMethod,
   rawInitialAsistente,
   matchOptionValue,
   clearDraft,
   syncEditModeFlag,
+  onPermissionBlocked,
   setModalError,
   setBusy,
   setStatus,
@@ -110,7 +123,7 @@ export const useDetailMutations = ({
   const handleUpdate = useCallback(async () => {
     if (busy || !isEditing) return false;
     if (!canEditHistory) {
-      showPermissionModal();
+      onPermissionBlocked?.("update");
       return false;
     }
 
@@ -136,11 +149,15 @@ export const useDetailMutations = ({
         matchOptionValue(asistenteTipos, asistenteTipo) ||
         matchOptionValue(asistenteTipos, rawInitialAsistente) ||
         rawInitialAsistente;
+      const normalizedContactMethod =
+        matchOptionValue(contactMethods, contactMethod) ||
+        matchOptionValue(contactMethods, rawInitialContactMethod);
 
       const payload = {
         accountNum,
-        visitType: normalizedVisitType,
-        asistenteTipo: normalizedAsistenteTipo,
+        visitType: toNullableEnumNumber(normalizedVisitType),
+        contactMethod: toNullableEnumNumber(normalizedContactMethod),
+        asistenteTipo: toNullableEnumNumber(normalizedAsistenteTipo),
         description,
         transDate,
         comentarios,
@@ -186,11 +203,15 @@ export const useDetailMutations = ({
     clearDraft,
     comentarios,
     conclusiones,
+    contactMethod,
+    contactMethods,
     defaultVisitType,
     description,
     isEditing,
     matchOptionValue,
+    onPermissionBlocked,
     rawInitialAsistente,
+    rawInitialContactMethod,
     rawInitialVisitType,
     recId,
     setBusy,
@@ -206,7 +227,7 @@ export const useDetailMutations = ({
   const handleDelete = useCallback(async () => {
     if (busy) return false;
     if (!canDeleteHistory) {
-      showPermissionModal();
+      onPermissionBlocked?.("delete");
       return false;
     }
 
@@ -244,7 +265,7 @@ export const useDetailMutations = ({
     } finally {
       setBusy(false);
     }
-  }, [busy, canDeleteHistory, recId, setBusy, setModalError, setStatus]);
+  }, [busy, canDeleteHistory, onPermissionBlocked, recId, setBusy, setModalError, setStatus]);
 
   return {
     handleUpdate,

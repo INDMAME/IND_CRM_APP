@@ -13,9 +13,17 @@ import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog
 import { safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { consumeExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
+import { setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 
 const DETAIL_FAB_BOTTOM_WITH_ACTION_BAR = 176;
 const EXPENSE_SHEETS_LIST_URL = "/Gastos/ExpenseSheets";
+
+// Applies the server-resolved acting user for email deep links before detail API calls run.
+const bootstrapExpenseLinkActingUser = () => {
+  const actingUserId = safeText(window.__EXPENSE_ACTING_USER_ID__);
+  if (!actingUserId) return;
+  setExpenseActingUserOverride(actingUserId);
+};
 
 const ExpenseSheetDetailPageContent = () => {
   const controller = useExpenseSheetDetailPageController();
@@ -175,7 +183,6 @@ const ExpenseSheetDetailPageContent = () => {
         onRetryPendingUpload={() => {
           void controller.quickTicketFlow.retryPendingUpload();
         }}
-        onOpenCreatedTicket={controller.quickTicketFlow.openCreatedTicket}
         onClearQuickTicketError={controller.quickTicketFlow.clearError}
       />
 
@@ -183,7 +190,7 @@ const ExpenseSheetDetailPageContent = () => {
         className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
         style={{ display: controller.isLoading || controller.isRedirectingAfterCreate ? "flex" : "none" }}
       >
-        <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
+        <svg className="ind-spinner size-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
           <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
         </svg>
         {indT("Common_Loading", "Loading")}
@@ -193,18 +200,23 @@ const ExpenseSheetDetailPageContent = () => {
 
       {!controller.isLoading && !controller.isRedirectingAfterCreate && !controller.errorMessage && controller.header ? (
         <ExpenseSheetHeaderForm
-          isCreateMode={controller.isCreateMode}
-          isEditing={controller.isEditing}
-          canEditHeaderFields={controller.canEditHeaderFieldsCurrent}
-          statusCommentMode={controller.statusCommentMode}
+          mode={{
+            isCreateMode: controller.isCreateMode,
+            isEditing: controller.isEditing,
+            canEditHeaderFields: controller.canEditHeaderFieldsCurrent,
+            statusCommentMode: controller.statusCommentMode,
+          }}
+          currencyLocks={{
+            isCurrencyLockedByLines: controller.isCurrencyLockedByLines,
+            isExchangeRateLockedByLines: controller.isExchangeRateLockedByLines,
+            showExchangeRate: controller.showExchangeRate,
+          }}
           header={controller.header}
+          ownerDisplay={controller.ownerDisplay}
           projectValue={controller.projectValue}
-          isCurrencyLockedByLines={controller.isCurrencyLockedByLines}
-          isExchangeRateLockedByLines={controller.isExchangeRateLockedByLines}
           normalizedDraftCurrency={controller.normalizedDraftCurrency}
           exchangeRateBaseCurrency={controller.exchangeRateBaseCurrency}
           exchangeRateReferenceAmount={controller.exchangeRateReferenceAmount}
-          showExchangeRate={controller.showExchangeRate}
           exchangeRateValue={controller.exchangeRateValue}
           exchangeRateValidationMessage={controller.exchangeRateValidationMessage}
           totalAmountText={controller.totalAmountText}
@@ -212,13 +224,16 @@ const ExpenseSheetDetailPageContent = () => {
           draftProjectId={controller.draftProjectId}
           draftCurrencyCode={controller.draftCurrencyCode}
           draftExchangeRate={controller.draftExchangeRate}
+          draftReimbursableExpense={controller.draftReimbursableExpense}
           officialExchangeRateRawValue={controller.officialExchangeRateRawValue}
           officialExchangeRateDate={controller.officialExchangeRateDate}
           officialExchangeRateSource={controller.officialExchangeRateSource}
           onDraftDescriptionChange={controller.setDraftDescription}
           onDraftProjectIdChange={controller.setDraftProjectId}
+          onDraftProjectIdCommit={controller.commitDraftProjectId}
           onDraftCurrencyCodeChange={controller.setDraftCurrencyCode}
           onDraftExchangeRateChange={controller.setDraftExchangeRate}
+          onDraftReimbursableExpenseChange={controller.setDraftReimbursableExpense}
         />
       ) : null}
 
@@ -271,6 +286,7 @@ const ExpenseSheetDetailPage = () => {
 
 const mount = () => {
   bootstrapExpenseApiAuth();
+  bootstrapExpenseLinkActingUser();
   const rootEl = document.getElementById("expense-sheet-detail-root");
   if (!rootEl) return;
   mountReactIsland(rootEl, <ExpenseSheetDetailPage />);

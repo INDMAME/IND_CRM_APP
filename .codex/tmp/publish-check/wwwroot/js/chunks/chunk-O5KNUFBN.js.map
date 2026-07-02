@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../react/src/utils/classNames.ts"],
-  "sourcesContent": ["export const classNames = (...classes: Array<string | false | null | undefined>) =>\n  classes.filter(Boolean).join(\" \");\n"],
-  "mappings": "AAAO,IAAMA,EAAa,IAAIC,IAC5BA,EAAQ,OAAO,OAAO,EAAE,KAAK,GAAG",
-  "names": ["classNames", "classes"]
-}

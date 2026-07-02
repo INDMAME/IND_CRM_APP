@@ -16,7 +16,6 @@ type ExpenseTicketPreviewModalProps = {
   onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
   onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
   onPointerEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
-  onWheel: (event: React.WheelEvent<HTMLDivElement>) => void;
 };
 
 // Renders the ticket image preview overlay with zoom and pan gestures.
@@ -33,7 +32,6 @@ const ExpenseTicketPreviewModal = ({
   onPointerDown,
   onPointerMove,
   onPointerEnd,
-  onWheel,
 }: ExpenseTicketPreviewModalProps) => {
   if (!open) return null;
 
@@ -82,7 +80,6 @@ const ExpenseTicketPreviewModal = ({
             onPointerMove={onPointerMove}
             onPointerUp={onPointerEnd}
             onPointerCancel={onPointerEnd}
-            onWheel={onWheel}
           >
             <img
               src={imageUrl}

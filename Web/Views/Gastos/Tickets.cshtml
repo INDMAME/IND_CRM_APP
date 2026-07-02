@@ -17,6 +17,7 @@
 @section Scripts {
     <script nonce="@cspNonce">
         window.__EXPENSE_GASTO_TYPES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.GastoTypeOptions ?? new object[0]));
+        window.__EXPENSE_TICKET_STATUSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.TicketStatusOptions ?? new object[0]));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Loading = SR["Common_Loading"].Value,
             Common_NoData = SR["Common_NoData"].Value,
@@ -95,7 +96,19 @@
             Enum_GastoType_Cena = SR["Enum_GastoType_Cena"].Value,
             Enum_GastoType_Hotel = SR["Enum_GastoType_Hotel"].Value,
             Enum_GastoType_Varios = SR["Enum_GastoType_Varios"].Value,
+            Enum_GastoType_MontajeNacional = SR["Enum_GastoType_MontajeNacional"].Value,
+            Enum_GastoType_MontajeNacionalFestivo = SR["Enum_GastoType_MontajeNacionalFestivo"].Value,
+            Enum_GastoType_MontajeInternacional = SR["Enum_GastoType_MontajeInternacional"].Value,
+            Enum_GastoType_MontajeInternacionalFestivo = SR["Enum_GastoType_MontajeInternacionalFestivo"].Value,
+            Enum_GastoType_DiaViajeNacional = SR["Enum_GastoType_DiaViajeNacional"].Value,
             Enum_GastoType_Taxi = SR["Enum_GastoType_Taxi"].Value,
+            Enum_GastoType_DiaViajeFestivoNacional = SR["Enum_GastoType_DiaViajeFestivoNacional"].Value,
+            Enum_GastoType_DiaViajeInternacional = SR["Enum_GastoType_DiaViajeInternacional"].Value,
+            Enum_GastoType_DiaViajeFestivoInternacional = SR["Enum_GastoType_DiaViajeFestivoInternacional"].Value,
+            Enum_GastoType_Horas = SR["Enum_GastoType_Horas"].Value,
+            Enum_GastoType_Propinas = SR["Enum_GastoType_Propinas"].Value,
+            Enum_GastoType_Gasolina = SR["Enum_GastoType_Gasolina"].Value,
+            Enum_GastoType_AdjustmentAmount = SR["Enum_GastoType_AdjustmentAmount"].Value,
             ExpenseSheets_Fab_Actions = SR["ExpenseSheets_Fab_Actions"].Value,
             ExpenseSheets_Fab_NewTicket = SR["ExpenseSheets_Fab_NewTicket"].Value,
             ExpenseSheets_Fab_LinkTicket = SR["ExpenseSheets_Fab_LinkTicket"].Value,

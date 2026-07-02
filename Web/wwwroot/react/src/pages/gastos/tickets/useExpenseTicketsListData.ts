@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { fetchExpenseSheetTicketLinkList, fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
 import { isExpenseAbortLikeError, runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
 import {
@@ -22,7 +23,6 @@ type UseExpenseTicketsListDataArgs = {
   onForbidden: () => void;
 };
 
-const ALLOWED_GASTO_TYPE_CODES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const EXPENSE_TICKETS_LIST_LOG_PREFIX = "[expense-tickets:list]";
 
 const logExpenseTicketsListInfo = (...args: unknown[]) => {
@@ -69,18 +69,13 @@ const toNullableBool = (value: unknown): boolean | null => {
   return null;
 };
 
-const toNullableTicketStatus = (value: unknown): 0 | 1 | null => {
+const toNullableTicketStatus = (value: unknown): number | null => {
   const parsed = Number(value);
-  return parsed === 0 || parsed === 1 ? parsed : null;
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
 };
 
 const toNullableTicketGastoType = (value: unknown): ExpenseGastoTypeCode | null => {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || !ALLOWED_GASTO_TYPE_CODES.has(parsed)) {
-    return null;
-  }
-
-  return parsed as ExpenseGastoTypeCode;
+  return toExpenseGastoTypeCode(value);
 };
 
 const mapTicketItemToCard = (item: Record<string, unknown>): ExpenseTicketCard => {

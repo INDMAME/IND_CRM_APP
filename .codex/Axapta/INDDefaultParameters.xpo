@@ -1,0 +1,281 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDDefaultParameters unloaded at Martes 30/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #INDDefaultParameters
+    PROPERTIES
+      Name                #INDDefaultParameters
+      Label               #Parámetos Insertec
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Default data
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #No
+      TableGroup          #Parameter
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #No
+      ModifiedBy          #Yes
+      ModifiedTransactionId #No
+      CreatedDate         #Yes
+      CreatedTime         #No
+      CreatedBy           #Yes
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #APIUserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #APIUserId
+          Label               #Usuario Id.
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDDefaultParameters
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #InternalAPIUrlService
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #InternalAPIUrlService
+          Label               #URL API
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDDefaultParameters
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #100
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #InternalApiClientId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #InternalApiClientId
+          Label               #Client Id
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDDefaultParameters
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #100
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #InternalApiClientSecret
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #InternalApiClientSecret
+          Label               #Secret Key
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDDefaultParameters
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #100
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #CRMAppUrl
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CRMAppUrl
+          Label               #URL WEB
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDDefaultParameters
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #100
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #FilePathEmails
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #FilePathEmails
+          Label               #Carpeta archivos temporales
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDDefaultParameters
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Description
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+    ENDINDICES
+    REFERENCES
+      REFERENCE #INDAPIIntServiceUser
+        PROPERTIES
+          Name                #INDAPIIntServiceUser
+          Table               #INDAPIIntServiceUser
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE EXTERNFIXED
+          PROPERTIES
+            Value               #1
+            Table               #INDAPIIntServiceUser
+            RelatedField        #Active
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDDefaultParameters
+            Field               #APIUserId
+            Table               #INDAPIIntServiceUser
+            RelatedField        #UserId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #INDAPIIntServiceUser
+        #INDAPIIntServiceUser INDAPIIntServiceUser(boolean _forupdate = false)
+        #{
+        #    INDAPIIntServiceUser table;
+        #
+        #
+        #    table.selectForUpdate(_forupdate);
+        #
+        #    select firstonly table
+        #    where table.UserId == this.APIUserId;
+        #
+        #
+        #    return table;
+        #}
+      ENDSOURCE
+      SOURCE #find
+        #static INDDefaultParameters find(boolean _forupdate = false)
+        #{
+        #    INDDefaultParameters parameter;
+        #
+        #
+        #    parameter.selectForUpdate(_forupdate);
+        #
+        #    select firstonly parameter;
+        #
+        #    return parameter;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

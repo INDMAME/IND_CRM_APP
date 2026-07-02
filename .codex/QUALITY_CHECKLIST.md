@@ -39,6 +39,13 @@
 - Verify no new secrets, passwords, tokens, connection strings, base URLs, or other environment-specific values were hardcoded in touched files.
 - Run a short clean-code review on touched backend files and confirm responsibilities still follow module ownership and focused object boundaries
 
+## Record-level security
+- For pages that show or mutate records owned by another AX user, confirm the list/detail response exposes `OwnerAxUserId` or documents a temporary compatibility fallback.
+- Confirm the visible-users endpoint returns the owner AX user list and, when mutation gating is required, `CanMutate` plus mutation policy fields.
+- Confirm UI actions are gated by both module permission and record mutation permission when the backend contract provides them.
+- Confirm backend/API/AX remains the source of truth and rejects unauthorized direct mutation requests where testable.
+- Confirm filters, cache keys, and preload data are scoped by company, AX user, app code, module code, `includeCrmUserId`, and permissions revision.
+
 ## Regression checks
 - Date range selection works (from/to focus and payload format)
 - Permission modal still triggers on 403
@@ -55,19 +62,21 @@
 - Confirm no extra local skills exist under `.codex/skills`; shared skills must be in `C:\Users\marco.meza\.codex\skills`
 - Update `Last updated` date in every touched doc
 
-## DEV to PROD release validation
-- For `genera una release a PROD`, `publica DEV en PROD`, or equivalent DEV to PROD release requests, confirm the active branch is `DEV`
+## DEV to PROD merge validation
+- Run this workflow only when the user explicitly says `merge a prod` or `merge DEV a PROD`; generic publish wording means local IIS publish with `publish.ps1`
+- For explicit `merge a prod` requests, confirm the active branch is `DEV`
 - Run `git status` and stop if release changes are not fully committed or if unrelated local files are present
+- Confirm no local work, commit, merge, fast-forward, or push is being performed directly on `PROD`, `main`, or any production branch
 - Determine the latest safe `Release <N>` from merged release PRs, release PR titles, tags, or merge commits before calculating the next number
 - Push `DEV` to `origin/DEV` before creating the release PR
 - Create the `DEV` -> `PROD` PR with canonical title `Release <N>`
-- Attempt PR approval and auto-merge when GitHub permissions allow it, and explicitly report self-approval or auto-merge limitations
-- If direct merge fallback is required, refresh local `PROD` from `origin/PROD`, verify no production commits would be lost, merge with commit message `Release <N>`, and push `origin/PROD`
-- Verify the PR ended merged or `origin/PROD` points to the expected release commit, then return local checkout to `DEV`
-- Final report must include release name, published `DEV` commit, PR URL and status, completion mode, and GitHub limitations
+- Attempt PR approval when GitHub permissions allow it, enable auto-merge, and explicitly report self-approval or auto-merge limitations
+- Stop and report the blocker if auto-merge cannot be enabled, checks fail, branch protection blocks the PR, or permissions prevent the PR workflow
+- Verify the PR is queued for auto-merge or was merged by the protected PR workflow, then confirm local checkout remains on `DEV`
+- Final report must include release name, published `DEV` commit, PR URL and status, auto-merge/check status, and GitHub limitations
 
 ## Local IIS publish validation
-- For `publica en iis`, treat the request as a local web publish only, not as a DEV to PROD release
+- For `publica`, `publica la web`, `republica`, `publica en iis`, or any web publish/deploy request that does not say `merge a prod`, treat the request as a local web publish only, not as a DEV to PROD release
 - Run the required build and validation steps before publishing
 - Execute `publish.ps1` to copy the site to IIS
 - Run `iisreset` or confirm the publish flow restarted IIS as expected
@@ -78,4 +87,4 @@
 - For release tasks, run `iisreset` after publish
 
 ## Last updated
-- 2026-03-27
+- 2026-06-10

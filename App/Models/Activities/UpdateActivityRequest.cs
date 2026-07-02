@@ -10,18 +10,22 @@ namespace IND_CRM_APP.Models.Activities
         [JsonPropertyName("accountNum")]
         public string AccountNum { get; set; } = string.Empty;
 
+        // AX visit type enum numeric value used by activity endpoints.
         [JsonPropertyName("visitType")]
-        public string VisitType { get; set; } = string.Empty;
+        public int? VisitType { get; set; }
 
-        // Assistant type for the first assistant entry (optional).
+        // Assistant type AX enum numeric value for the first assistant entry.
         [JsonPropertyName("asistenteTipo")]
-        public string AsistenteTipo { get; set; } = string.Empty;
+        public int? AsistenteTipo { get; set; }
 
         [JsonPropertyName("description")]
         public string Description { get; set; } = string.Empty;
 
         [JsonPropertyName("transDate")]
         public string TransDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("contactMethod")]
+        public int? ContactMethod { get; set; }
 
         [JsonPropertyName("comentarios")]
         public string Comentarios { get; set; } = string.Empty;

@@ -1,0 +1,2525 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : CRMUsuarioTable unloaded at Martes 02/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #CRMUsuarioTable
+    PROPERTIES
+      Name                #CRMUsuarioTable
+      Label               #Usuarios CRM
+      FormRef             #
+      TitleField1         #UserId
+      TitleField2         #Name
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #IND_CRM_Resto
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #Yes
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #Index1
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #Yes
+      ModifiedBy          #Yes
+      ModifiedTransactionId #Yes
+      CreatedDate         #Yes
+      CreatedTime         #Yes
+      CreatedBy           #Yes
+      CreatedTransactionId #Yes
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #UserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #Name
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Name
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Name
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Division
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Division
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMDivision
+        ENDPROPERTIES
+        
+      FIELD #AxaptaUserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #AxaptaUserId
+          Label               #User (Axapta)
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #userId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Dietas
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Dietas
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #CocheEmpresa
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #CocheEmpresa
+          Label               #Coche de Empresa
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #VisaEmpresa
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #VisaEmpresa
+          Label               #Visa de Empresa
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #DepartamentoId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #DepartamentoId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMDepartamentoId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #CategoriaId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CategoriaId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserCategoriaId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #Bloqueado
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #Bloqueado
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Blocked
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #CostHourAmount
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #CostHourAmount
+          Label               #Coste Horario
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CostAmount
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #Email
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #Email
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Email
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #UserIdVacaciones
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserIdVacaciones
+          Label               #Pedir Vacaciones a ...
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CRMUserId
+              #
+            ENDARRAY
+          StringSize          #15
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #GrupoTecnicoHornos
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #GrupoTecnicoHornos
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMOfertaGrupoTecnicoHornos
+        ENDPROPERTIES
+        
+      FIELD #AluminioTratamiento
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #AluminioTratamiento
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMAllAluminioTratamiento
+        ENDPROPERTIES
+        
+      FIELD #CalendarioLaboral
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #CalendarioLaboral
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMCalendarioLaboral
+        ENDPROPERTIES
+        
+      FIELD #HorasLaborable
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #HorasLaborable
+          Label               #Horas Laborable
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #HorasViernes
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #HorasViernes
+          Label               #Horas Viernes
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #EmplId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #EmplId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #EmplId
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #OfertaTipoHornosPredeterminada
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #OfertaTipoHornosPredeterminada
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMOfertaTipoHornos
+        ENDPROPERTIES
+        
+      FIELD #CustVendAccountNum
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CustVendAccountNum
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #AccountNum
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Right
+        ENDPROPERTIES
+        
+      FIELD #CustVend
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #CustVend
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #CRMCliente_ClientePotencial_Proveedor
+        ENDPROPERTIES
+        
+      FIELD #PhoneNumber
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #PhoneNumber
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Phone
+              #
+            ENDARRAY
+          StringSize          #20
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #PermitirVacacionesSinSerIST
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #PermitirVacacionesSinSerIST
+          Label               #Permitir Vacaciones sin ser Empleado IST
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+      FIELD #PriceKm_MEX
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #PriceKm_MEX
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #Price
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #NoContabilizarGasolina
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #NoContabilizarGasolina
+          Label               #No Pagar Km
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #Configuracion
+        PROPERTIES
+          Name                #Configuracion
+          OldName             #
+          Label               #Configuración
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+          #Division
+          #AxaptaUserId
+          #Dietas
+          #CocheEmpresa
+          #DepartamentoId
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #Index1
+      PROPERTIES
+        Name                #Index1
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #UserId
+      ENDINDEXFIELDS
+      
+      #Index2
+      PROPERTIES
+        Name                #Index2
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #AxaptaUserId
+      ENDINDEXFIELDS
+      
+      #Index3
+      PROPERTIES
+        Name                #Index3
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #EmplId
+      ENDINDEXFIELDS
+      
+      #RecIdIdx
+      PROPERTIES
+        Name                #RecIdIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #RecId
+      ENDINDEXFIELDS
+      
+      #RelationIdx
+      PROPERTIES
+        Name                #RelationIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #EmplId
+        #UserId
+        #AxaptaUserId
+      ENDINDEXFIELDS
+      
+      #NameIdx
+      PROPERTIES
+        Name                #NameIdx
+        AllowDuplicates     #Yes
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #Name
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #CRMClientPotencialTable
+        PROPERTIES
+          Name                #CRMClientPotencialTable
+          Table               #CRMClientePotencialTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMUsuarioTable
+            Field               #CustVend
+            Value               #2
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMUsuarioTable
+            Field               #CustVendAccountNum
+            Table               #CRMClientePotencialTable
+            RelatedField        #ClientePotencialId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CRMProveedorPotencialTable
+        PROPERTIES
+          Name                #CRMProveedorPotencialTable
+          Table               #CRMProveedorPotencialTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMUsuarioTable
+            Field               #CustVend
+            Value               #4
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMUsuarioTable
+            Field               #CustVendAccountNum
+            Table               #CRMProveedorPotencialTable
+            RelatedField        #ProveedorPotencialId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #CustTable
+        PROPERTIES
+          Name                #CustTable
+          Table               #CustTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMUsuarioTable
+            Field               #CustVend
+            Value               #1
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMUsuarioTable
+            Field               #CustVendAccountNum
+            Table               #CustTable
+            RelatedField        #AccountNum
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #INDPersonaTable
+        PROPERTIES
+          Name                #INDPersonaTable
+          Table               #INDPersonaTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMUsuarioTable
+            Field               #RecId
+            Table               #INDPersonaTable
+            RelatedField        #RefRecIdCRM
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #VendTable
+        PROPERTIES
+          Name                #VendTable
+          Table               #VendTable
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE THISFIXED
+          PROPERTIES
+            Table               #CRMUsuarioTable
+            Field               #CustVend
+            Value               #3
+          ENDPROPERTIES
+          
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #CRMUsuarioTable
+            Field               #CustVendAccountNum
+            Table               #VendTable
+            RelatedField        #AccountNum
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+      #CRMUserViajeTable
+      PROPERTIES
+        Table               #CRMUserViajeTable
+        DeleteAction        #Restricted
+      ENDPROPERTIES
+      
+      #CRMHojaGastosTable
+      PROPERTIES
+        Table               #CRMHojaGastosTable
+        DeleteAction        #Restricted
+      ENDPROPERTIES
+      
+      #CRMUserNochesFueraTable
+      PROPERTIES
+        Table               #CRMUserNochesFueraTable
+        DeleteAction        #Restricted
+      ENDPROPERTIES
+      
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #AmountGastos
+        #Amount AmountGastos(FromDate _fromDate, ToDate _toDate, CRMGastoType _type)
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Amount              amount;
+        #    ExchRate            exchRate;
+        #    boolean             primer  = true;
+        #    CRMUserViajeLine    userViajeLine;
+        #    ;
+        #
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.Type       == _type        &&
+        #          hojaGastosLine.TransDate  >= _fromDate    &&
+        #          hojaGastosLine.TransDate  <= _toDate      &&
+        #          hojaGastosLine.UserId     == this.UserId
+        #    {
+        #        //exchRate    = hojaGastosLine.HojaGastosTable().ExchRate;// * 100;//MMS - Divisa desde línea - 2026.05.22
+        #        exchRate      = hojaGastosLine.ExchRate ? hojaGastosLine.ExchRate :  hojaGastosLine.HojaGastosTable().ExchRate;  //MMS - Divisa desde línea - 2026.05.22
+        #        amount        += Currency::amountCur2MST(hojaGastosLine.Amount, hojaGastosLine.Currency, exchRate);
+        #    }
+        #
+        #    select sum(Amount) from userViajeLine
+        #    where userViajeLine.UserId      == this.UserId  &&
+        #          userViajeLine.TransDate   >= _fromDate    &&
+        #          userViajeLine.TransDate   <= _toDate      &&
+        #          userViajeLine.GastoType   == _type;
+        #
+        #    return amount + userViajeLine.Amount;
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosAvion
+        #Container AmountGastosAvion(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    CRMUserViajeVueloTable  vueloTable;
+        #    CRMViajeAeropuertoTable aeropuertoTable;
+        #    Amount                  amountNacional, amountExtranjero;
+        #    CRMUserViajeTable       userViajeTable;
+        #    ;
+        #
+        #    while select userViajeTable
+        #    where userViajeTable.UserId     == this.UserId &&
+        #          userViajeTable.FromDate   >= _fromDate    &&
+        #          userViajeTable.FromDate   <= _toDate {
+        #
+        #        if(userViajeTable.Internacional){
+        #            amountExtranjero    += userViajeTable.AmountVueloTotal();//vueloTable.AmountTotal();
+        #        }
+        #        else {
+        #            amountNacional      += userViajeTable.AmountVueloTotal();//vueloTable.AmountTotal();
+        #        }
+        #
+        #    }
+        #
+        #/*
+        #    while select vueloTable
+        #    where vueloTable.UserId     == this.UserId  &&
+        #          vueloTable.TransDate  >= _fromDate    &&
+        #          vueloTable.TransDate  <= _toDate {
+        #
+        #        userViajeTable  = CRMUserViajeTable::Find(vueloTable.UserId, vueloTable.UserViajeId);
+        #        if(userViajeTable.Internacional){
+        #            amountExtranjero    += vueloTable.AmountTotal();
+        #        }
+        #        else {
+        #            amountNacional      += vueloTable.AmountTotal();
+        #        }
+        #
+        #/*
+        #        aeropuertoTable = CRMViajeAeropuertoTable::Find(vueloTable.ToAeropuertoId);
+        #        if (aeropuertoTable.Extranjero)
+        #            amountExtranjero    += vueloTable.AmountTotal();
+        #        else
+        #            amountNacional      += vueloTable.AmountTotal();
+        #*/
+        #    }
+        #*/
+        #    return [amountNacional, amountExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosAvionProj
+        #Amount AmountGastosAvionProj(FromDate _fromDate, ToDate _toDate, ProjId _projId)
+        #{
+        #    CRMUserViajeVueloProjTable  vueloProjTable;
+        #    Amount                      amount
+        #    ;
+        #
+        #    while select vueloProjTable
+        #    where vueloProjTable.UserId == this.UserId  &&
+        #          vueloProjTable.TransDate  >= _fromDate    &&
+        #          vueloProjTable.TransDate  <= _toDate      &&
+        #          vueloProjTable.ProjId     == _projId {
+        #
+        #        amount  += vueloProjTable.Amount();
+        #    }
+        #
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosCocheAlquiler
+        #Container AmountGastosCocheAlquiler(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    Amount                  amountNacional, amountExtranjero;
+        #    CRMUserViajeTable       userViajeTable;
+        #
+        #    CRMUserViajeCocheTable  CRMUserViajeCocheTable;
+        #    ;
+        #
+        #    while select CRMUserViajeCocheTable
+        #    where CRMUserViajeCocheTable.UserId     == this.UserId  &&
+        #          CRMUserViajeCocheTable.FromDate   >= _fromDate    &&
+        #          CRMUserViajeCocheTable.FromDate   <= _toDate {
+        #
+        #        if (CRMUserViajeTable::FindRecId(CRMUserViajeCocheTable.RefRecId).Internacional)
+        #            amountExtranjero    += CRMUserViajeCocheTable.AmountMST();
+        #        else
+        #            amountNacional  += CRMUserViajeCocheTable.AmountMST();
+        #    }
+        #
+        #    return [amountNacional, amountExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosCocheProj
+        #Amount AmountGastosCocheProj(FromDate _fromDate, ToDate _toDate, ProjId _projId)
+        #{
+        #    CRMUserViajeCocheProjTable  cocheProjTable;
+        #    Amount                      amount
+        #    ;
+        #
+        #    while select cocheProjTable
+        #    where cocheProjTable.UserId == this.UserId  &&
+        #          cocheProjTable.TransDate  >= _fromDate    &&
+        #          cocheProjTable.TransDate  <= _toDate      &&
+        #          cocheProjTable.ProjId     == _projId {
+        #
+        #        amount  += cocheProjTable.Amount();
+        #    }
+        #
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosConDieta
+        #Amount AmountGastosConDieta(FromDate _fromDate, ToDate _toDate, CRMGastoType _type)
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Amount              amount;
+        #    ExchRate            exchRate;
+        #    boolean             primer  = true;
+        #    ;
+        #
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.Type       == _type        &&
+        #          hojaGastosLine.TransDate  >= _fromDate    &&
+        #          hojaGastosLine.TransDate  <= _toDate      &&
+        #          hojaGastosLine.Dieta      == NoYes::Yes   &&
+        #          hojaGastosLine.UserId     == this.UserId
+        #    {
+        #        //exchRate    = hojaGastosLine.HojaGastosTable().ExchRate;// * 100;//MMS - Divisa desde línea - 2026.05.22
+        #        exchRate      = hojaGastosLine.ExchRate ? hojaGastosLine.ExchRate :  hojaGastosLine.HojaGastosTable().ExchRate;  //MMS - Divisa desde línea - 2026.05.22
+        #        amount        += Currency::amountCur2MST(hojaGastosLine.Amount, hojaGastosLine.Currency, exchRate);
+        #    }
+        #
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosDietaProj
+        #Amount AmountGastosDietaProj(FromDate _fromDate, ToDate _toDate, ProjId _projId)
+        #{
+        #    CRMUserViajeLine  viajeLine;
+        #    Amount            amount
+        #    ;
+        #
+        #    while select viajeLine
+        #    where viajeLine.UserId == this.UserId  &&
+        #          viajeLine.TransDate  >= _fromDate    &&
+        #          viajeLine.TransDate  <= _toDate      &&
+        #          viajeLine.ProjId     == _projId {
+        #
+        #        amount  += viajeLine.Amount;
+        #    }
+        #
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosHotel
+        #Container AmountGastosHotel(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    CRMUserViajeHotelProjTable  hotelProjTable;
+        #    Amount                      amountNacional, amountExtranjero;
+        #    CRMUserViajeHotelTable      hotelTable;
+        #    ;
+        #
+        #    while select hotelProjTable
+        #    where hotelProjTable.UserId == this.UserId  &&
+        #          hotelProjTable.TransDate  >= _fromDate    &&
+        #          hotelProjTable.TransDate  <= _toDate {
+        #
+        #        hotelTable  = CRMUserViajeHotelTable::FindRecId(hotelProjTable.RefRecId);
+        #
+        #        if (CRMUserViajeTable::FindRecId(hotelTable.RefRecId).Internacional)
+        #            amountExtranjero    += hotelProjTable.Amount();
+        #        else
+        #            amountNacional      += hotelProjTable.Amount();
+        #    }
+        #
+        #    return [amountNacional, amountExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosHotelProj
+        #Amount AmountGastosHotelProj(FromDate _fromDate, ToDate _toDate, ProjId _projId)
+        #{
+        #    CRMUserViajeHotelProjTable  hotelProjTable;
+        #    Amount                      amount
+        #    ;
+        #
+        #    while select hotelProjTable
+        #    where hotelProjTable.UserId == this.UserId  &&
+        #          hotelProjTable.TransDate  >= _fromDate    &&
+        #          hotelProjTable.TransDate  <= _toDate      &&
+        #          hotelProjTable.ProjId     == _projId {
+        #
+        #        amount  += hotelProjTable.Amount();
+        #    }
+        #
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosPeajeGasolina
+        #Container AmountGastosPeajeGasolina(Yr _yr, MonthsOfYear _month)
+        #{
+        #    Amount                  amountNacional, amountExtranjero;
+        #    CRMUserGastoCocheTable  CRMUserGastoCocheTable;
+        #    ;
+        #
+        #    while select CRMUserGastoCocheTable
+        #    where CRMUserGastoCocheTable.UserId == this.UserId  &&
+        #          CRMUserGastoCocheTable.Yr     == _yr          &&
+        #          CRMUserGastoCocheTable.Month  == _month {
+        #
+        #        amountNacional  += CRMUserGastoCocheTable.AmountPeaje + CRMUserGastoCocheTable.AmountGasolina;
+        #    }
+        #
+        #    return [amountNacional, amountExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosPersonalesProj
+        #Amount AmountGastosPersonalesProj(FromDate _fromDate, ToDate _toDate, ProjId _projId)
+        #{
+        #    CRMHojaGastosLineCust  CRMHojaGastosLineCust;
+        #    Amount            amount
+        #    ;
+        #
+        #    while select CRMHojaGastosLineCust
+        #    where CRMHojaGastosLineCust.UserId          == this.UserId  &&
+        #          CRMHojaGastosLineCust.TransDate       >= _fromDate    &&
+        #          CRMHojaGastosLineCust.TransDate       <= _toDate      &&
+        #          CRMHojaGastosLineCust.CustAccount     == _projId {
+        #
+        #        amount  += CRMHojaGastosLineCust.Amount();
+        #    }
+        #
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosTelefono
+        #Container AmountGastosTelefono(Yr _yr, MonthsOfYear _month)
+        #{
+        #    Amount                  amountNacional, amountExtranjero;
+        #    CRMTelefonoMovilGastoTable  CRMTelefonoMovilGastoTable;
+        #    ;
+        #
+        #    while select CRMTelefonoMovilGastoTable
+        #    where CRMTelefonoMovilGastoTable.UserId == this.UserId  &&
+        #          CRMTelefonoMovilGastoTable.Yr     == _yr          &&
+        #          CRMTelefonoMovilGastoTable.Month  == _month {
+        #
+        #        amountNacional  += CRMTelefonoMovilGastoTable.Amount + CRMTelefonoMovilGastoTable.AmountDatos;
+        #    }
+        #
+        #    return [amountNacional, amountExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosTipo
+        #Container AmountGastosTipo(FromDate _fromDate, ToDate _toDate, CRMGastoType _tipo)
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Amount              amountNacional, amountExtranjero;
+        #    ExchRate            exchRate;
+        #    boolean             primer  = true;
+        #    CRMUserViajeLine    userViajeLine;
+        #    ;
+        #
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.TransDate  >= _fromDate    &&
+        #          hojaGastosLine.TransDate  <= _toDate      &&
+        #          hojaGastosLine.UserId     == this.UserId  &&
+        #          hojaGastosLine.Type       == _tipo
+        #    {
+        #        //exchRate  = hojaGastosLine.HojaGastosTable().ExchRate; //MMS - Divisa desde línea - 2026.05.22
+        #        exchRate    = hojaGastosLine.ExchRate ? hojaGastosLine.ExchRate :  hojaGastosLine.HojaGastosTable().ExchRate;  //MMS - Divisa desde línea - 2026.05.22
+        #
+        #        if (hojaGastosLine.Internacional)
+        #            amountExtranjero    += Currency::amountCur2MST(hojaGastosLine.Amount, hojaGastosLine.Currency, exchRate);
+        #        else
+        #            amountNacional      += Currency::amountCur2MST(hojaGastosLine.Amount, hojaGastosLine.Currency, exchRate);
+        #
+        #    }
+        #
+        #/*
+        #    select sum(Amount) from userViajeLine
+        #    where userViajeLine.UserId      == this.UserId  &&
+        #          userViajeLine.TransDate   >= _fromDate    &&
+        #          userViajeLine.TransDate   <= _toDate;
+        #*/
+        #    return [amountNacional, amountExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #AmountGastosTotal
+        #Container AmountGastosTotal(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Amount              amountNacional, amountExtranjero;
+        #    ExchRate            exchRate;
+        #    boolean             primer  = true;
+        #    CRMUserViajeLine    userViajeLine;
+        #    ;
+        #
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.TransDate  >= _fromDate    &&
+        #          hojaGastosLine.TransDate  <= _toDate      &&
+        #          hojaGastosLine.UserId     == this.UserId  {
+        #
+        #        //exchRate    = hojaGastosLine.HojaGastosTable().ExchRate;
+        #        exchRate      = hojaGastosLine.ExchRate ? hojaGastosLine.ExchRate :  hojaGastosLine.HojaGastosTable().ExchRate;  //MMS - Divisa desde línea - 2026.05.22
+        #        if (hojaGastosLine.Internacional)
+        #            amountExtranjero    += Currency::amountCur2MST(hojaGastosLine.Amount, hojaGastosLine.Currency, exchRate);
+        #        else
+        #            amountNacional      += Currency::amountCur2MST(hojaGastosLine.Amount, hojaGastosLine.Currency, exchRate);
+        #
+        #    }
+        #
+        #/*
+        #    select sum(Amount) from userViajeLine
+        #    where userViajeLine.UserId      == this.UserId  &&
+        #          userViajeLine.TransDate   >= _fromDate    &&
+        #          userViajeLine.TransDate   <= _toDate;
+        #*/
+        #    return [amountNacional, amountExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #AmountPrimasExtranjero
+        #Amount AmountPrimasExtranjero(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    Amount              amount;
+        #    ExchRate            exchRate;
+        #    boolean             primer  = true;
+        #    CRMUserViajeLine    userViajeLine;
+        #    ;
+        #
+        #    select sum(Amount) from userViajeLine
+        #    where userViajeLine.UserId      == this.UserId  &&
+        #          userViajeLine.TransDate   >= _fromDate    &&
+        #          userViajeLine.TransDate   <= _toDate;
+        #
+        #    return userViajeLine.Amount;
+        #}
+      ENDSOURCE
+      SOURCE #amountPRimasNacionales
+        #Amount amountPrimasNacionales(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Amount              amount;
+        #    ExchRate            exchRate;
+        #    boolean             primer  = true;
+        #    CRMUserViajeLine    userViajeLine;
+        #    ;
+        #
+        #    while select hojaGastosLine
+        #    where (hojaGastosLine.Type       == CRMGastoType::DiaViaje  ||
+        #           hojaGastosLine.Type       == CRMGastoType::DiaViajeFestivo  ||
+        #           hojaGastosLine.Type       == CRMGastoType::MontajeNacional   ||
+        #           hojaGastosLine.Type       == CRMGastoType::MontajeNacionalFestivo) &&
+        #          hojaGastosLine.TransDate  >= _fromDate    &&
+        #          hojaGastosLine.TransDate  <= _toDate      &&
+        #          hojaGastosLine.UserId     == this.UserId  {
+        #
+        #        //exchRate    = hojaGastosLine.HojaGastosTable().ExchRate;// * 100;
+        #        exchRate    = hojaGastosLine.ExchRate ? hojaGastosLine.ExchRate :  hojaGastosLine.HojaGastosTable().ExchRate;  //MMS - Divisa desde línea - 2026.05.22
+        #        amount      += Currency::amountCur2MST(hojaGastosLine.Amount, hojaGastosLine.Currency, exchRate);
+        #    }
+        #
+        #    return amount;
+        #}
+      ENDSOURCE
+      SOURCE #CodigoHoraIndirectaLibreDisposicion
+        #AccountNum CodigoHoraIndirectaLibreDisposicion()
+        #{
+        #    return "N31";//this.DepartamentoId == "LAB" ? "N152" : "N00";
+        #}
+      ENDSOURCE
+      SOURCE #CodigoHoraIndirectaVacaciones
+        #AccountNum CodigoHoraIndirectaVacaciones()
+        #{
+        #    ;
+        #    if (curExt() == "RIS" || curExt() == "ISM"){
+        #        return "000"; //Es una forma de que puedan registrar las vacaciones en el parte horario.
+        #    }
+        #    return this.DepartamentoId == "LAB" ? "N152" : "N00";
+        #}
+      ENDSOURCE
+      SOURCE #CreaLineasDisciplina
+        #void CreaLineasDisciplina(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    CRMUserDisciplinaCompetenciaTable   CRMUserDisciplinaCompetenciaTable;
+        #    CRMUserDisciplinaTable              disciplinaTable;
+        #    CRMUserCategoriaId                  CRMUserCategoriaId;
+        #    ;
+        #
+        #    while select disciplinaTable {
+        #
+        #        //Localizamos la cateroría vigente y la añadimos al nuevo periodo.
+        #        CRMUserCategoriaId   = CRMUserDisciplinaCompetenciaTable::CategoriaId(this.UserId, disciplinaTable.DisciplinaId, _fromDate - 1);
+        #
+        #        /*
+        #        select firstonly CRMUserDisciplinaCompetenciaTable
+        #        where CRMUserDisciplinaCompetenciaTable.UserId          == this.UserId   &&
+        #              CRMUserDisciplinaCompetenciaTable.DisciplinaId    == disciplinaTable.DisciplinaId &&
+        #              CRMUserDisciplinaCompetenciaTable.FromDate        == PrevYr(_fromDate);
+        #        */
+        #
+        #        CRMUserDisciplinaCompetenciaTable.clear();
+        #        CRMUserDisciplinaCompetenciaTable.UserId        = this.UserId;
+        #        CRMUserDisciplinaCompetenciaTable.DisciplinaId  = disciplinaTable.DisciplinaId;
+        #        CRMUserDisciplinaCompetenciaTable.FromDate      = _fromDate;
+        #        CRMUserDisciplinaCompetenciaTable.ToDate        = _toDate;
+        #        CRMUserDisciplinaCompetenciaTable.CategoriaId   = CRMUserCategoriaId;
+        #        CRMUserDisciplinaCompetenciaTable.insert();
+        #
+        #
+        #        /*
+        #        if (CRMUserDisciplinaCompetenciaTable){
+        #            CRMUserDisciplinaCompetenciaTable.FromDate  = _fromDate;
+        #            CRMUserDisciplinaCompetenciaTable.ToDate    = _toDate;
+        #            CRMUserDisciplinaCompetenciaTable.doInsert();
+        #        }
+        #        else {
+        #            CRMUserDisciplinaCompetenciaTable.clear();
+        #            CRMUserDisciplinaCompetenciaTable.UserId        = this.UserId;
+        #            CRMUserDisciplinaCompetenciaTable.DisciplinaId  = disciplinaTable.DisciplinaId;
+        #            CRMUserDisciplinaCompetenciaTable.FromDate      = _fromDate;
+        #            CRMUserDisciplinaCompetenciaTable.ToDate        = _toDate;
+        #            CRMUserDisciplinaCompetenciaTable.insert();
+        #        }
+        #        */
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #delete
+        #//IND_MMS_MaestroEmpleados - 08.04.2025
+        #public void delete()
+        #{
+        #    RecId   recIdDel = this.RecId;
+        #    EmplId  emplId   = this.UserId;
+        #
+        #    super();
+        #
+        #    INDPersonaTable::updateRefRecIds(INDPersonaTable::Find(emplId).RecId, 0, 0, recIdDel, null, true);
+        #}
+      ENDSOURCE
+      SOURCE #DetalleDiasViaje
+        #Map DetalleDiasViaje(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    CRMUserViajeLine    viajeLine;
+        #    Map                 map = new Map(Types::String, Types::Real);
+        #    ;
+        #
+        #    while select viajeLine
+        #    where viajeLine.UserId      == this.UserId      &&
+        #          viajeLine.TransDate   >= _fromDate        &&
+        #          viajeLine.TransDate   <= _toDate {
+        #
+        #        if (map.exists(viajeLine.TypeId)){
+        #            map.insert(viajeLine.TypeId, map.lookup(viajeLine.TypeId) + (viajeLine.MediaDieta ? 0.5 : 1));
+        #        }
+        #        else {
+        #            map.insert(viajeLine.TypeId, (viajeLine.MediaDieta ? 0.5 : 1));
+        #        }
+        #    }
+        #
+        #    return map;
+        #}
+      ENDSOURCE
+      SOURCE #DiasTrabajados
+        #Qty DiasTrabajados(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    INDEmplTable                emplTable;
+        #    INDEmplTipoContratoTable    tipoContratoTable;
+        #    Qty                         qty;
+        #    ;
+        #
+        #    while select emplTable
+        #    where emplTable.CRMUserId == this.UserId {
+        #
+        #        while select tipoContratoTable
+        #        where tipoContratoTable.EmplId == emplTable.EmplId {
+        #
+        #            qty += tipoContratoTable.DiasTrabajados(_fromDate, _toDate);
+        #        }
+        #    }
+        #
+        #    return qty;
+        #    //emplTable   = EmplTable::userId2EmplId(
+        #}
+      ENDSOURCE
+      SOURCE #EsDiaFestivo
+        #boolean EsDiaFestivo(TransDate _transDate)
+        #{
+        #    CRMVAcacionesParametersLine vacacionesParameterLine;
+        #    ;
+        #
+        #    //Día Festivo
+        #    vacacionesParameterLine = CRMVacacionesParametersLine::Find(Year(_transDate), _transDate, this.CalendarioLaboral);
+        #
+        #    return vacacionesParameterLine ? true : false;
+        #}
+      ENDSOURCE
+      SOURCE #EsFestivo
+        #boolean EsFestivo(TransDate _transDate)
+        #{
+        #    CRMVAcacionesParametersLine vacacionesParameterLine;
+        #    ;
+        #
+        #    //Día Festivo
+        #    vacacionesParameterLine = CRMVacacionesParametersLine::Find(Year(_transDate), _transDate, this.CalendarioLaboral);
+        #
+        #    return vacacionesParameterLine ? true : false;
+        #}
+      ENDSOURCE
+      SOURCE #EsFestivoCalendario
+        #boolean EsFestivoCalendario(TransDate _transDate)
+        #{
+        #    CRMVAcacionesParametersLine vacacionesParameterLine;
+        #    ;
+        #
+        #    //Día Festivo
+        #    vacacionesParameterLine = CRMVacacionesParametersLine::Find(Year(_transDate), _transDate, this.CalendarioLaboral);
+        #
+        #    return vacacionesParameterLine ? true : false;
+        #}
+      ENDSOURCE
+      SOURCE #EsSubordinado
+        #boolean EsSubordinado()
+        #{
+        #    CRMUsuarioSubordinadoTable  subordinadoTable;
+        #    ;
+        #
+        #    select firstonly firstfast subordinadoTable
+        #    index hint index2
+        #    where subordinadoTable.UserIdSubordinado == this.UserId;
+        #
+        #    return subordinadoTable ? true : false;
+        #}
+      ENDSOURCE
+      SOURCE #EstaDeBaja
+        #boolean EstaDeBaja(TransDate _transDate)
+        #{
+        #    CRMUserBajaLaboralTable           CRMUserBajaLaboralTable;
+        #    ;
+        #
+        #    select firstonly CRMUserBajaLaboralTable
+        #    where CRMUserBajaLaboralTable.UserId     == this.UserId  &&
+        #          CRMUserBajaLaboralTable.FromDate   <= _transDate   &&
+        #          (CRMUserBajaLaboralTable.ToDate    == datenull() ||
+        #           CRMUserBajaLaboralTable.ToDate    >= _transDate);
+        #
+        #
+        #    return CRMUserBajaLaboralTable ? true : false;
+        #}
+      ENDSOURCE
+      SOURCE #EstaDeLibreDisposicion
+        #boolean EstaDeLibreDisposicion(TransDate _transDate)
+        #{
+        #    CRMVacacionesLine           vacacionesLine;
+        #    CRMVAcacionesParametersLine vacacionesParameterLine;
+        #    ;
+        #
+        #    //Día de vacaciones
+        #    select firstonly vacacionesLine
+        #    where vacacionesLine.UserId     == this.UserId  &&
+        #          vacacionesLine.FromDate   <= _transDate   &&
+        #          vacacionesLine.ToDate     >= _transDate;
+        #
+        #    //Día Festivo
+        #    vacacionesParameterLine = CRMVacacionesParametersLine::Find(Year(_transDate), _transDate, this.CalendarioLaboral);
+        #
+        #    return ((vacacionesLine && vacacionesLine.VacacionesTipoLine == INDVacacionesTipoLine::LibreDisposicion) || vacacionesParameterLine) ? true : false;
+        #}
+      ENDSOURCE
+      SOURCE #EstaDeVacaciones
+        #boolean EstaDeVacaciones(TransDate _transDate)
+        #{
+        #    CRMVacacionesLine           vacacionesLine;
+        #    CRMVAcacionesParametersLine vacacionesParameterLine;
+        #    ;
+        #
+        #    //Día de vacaciones
+        #    select firstonly vacacionesLine
+        #    where vacacionesLine.UserId     == this.UserId  &&
+        #          vacacionesLine.FromDate   <= _transDate   &&
+        #          vacacionesLine.ToDate     >= _transDate;
+        #
+        #    //Día Festivo
+        #    //vacacionesParameterLine = CRMVacacionesParametersLine::Find(Year(_transDate), _transDate, this.CalendarioLaboral);
+        #
+        #    return ((vacacionesLine && vacacionesLine.VacacionesTipoLine == INDVacacionesTipoLine::Vacaciones) || vacacionesParameterLine) ? true : false;
+        #}
+      ENDSOURCE
+      SOURCE #HorasTrabajoDia
+        #int HorasTrabajoDia(TransDate _transDate)
+        #{
+        #    CRMVacacionesLine   vacacionesLine;
+        #    ;
+        #    vacacionesLine.clear();
+        #    vacacionesLine.UserId   = this.UserId;
+        #    vacacionesLine.FromDate = _transDate;
+        #    vacacionesLine.ToDate   = _transDate;
+        #    vacacionesLine.Year     = Year(_transDate);
+        #
+        #    return vacacionesLine.HorasVacaciones();
+        #}
+      ENDSOURCE
+      SOURCE #HorasVacacionesAnualesOficial
+        #Qty HorasVacacionesAnualesOficial(Yr _yr)
+        #{
+        #    CRMVacacionesTable  CRMVacacionesTable  = CRMVacacionesTable::Find(_yr, this.UserId);
+        #    ;
+        #    return CRMVacacionesTable.HorasTrabajadas(_yr) - CRMVacacionesTable.HorasConvenio(_yr);
+        #}
+      ENDSOURCE
+      SOURCE #HorasVacacionesMes
+        #Qty HorasVacacionesMes(Yr _yr, MonthsOfYear _month)
+        #{
+        #    CRMVacacionesLine   vacacionesLine;
+        #    FromDate            fromDate    = mkdate(01, _month, _yr);
+        #    ToDate              toDate      = endMth(fromdate);
+        #    Qty                 totalHoras;
+        #    ;
+        #
+        #    while select vacacionesLine
+        #    where vacacionesLine.UserId == this.UserId  &&
+        #          ((vacacionesLine.FromDate >= fromDate &&
+        #           vacacionesLine.FromDate <= toDate) ||
+        #          (vacacionesLine.ToDate >= fromDate &&
+        #           vacacionesLine.ToDate <= toDate))
+        #    {
+        #        //CASO 1
+        #        /*
+        #        El rango de fechas de las vacaciones está dentro del mes
+        #        */
+        #        if (vacacionesLine.FromDate >= fromDate &&
+        #            vacacionesLine.FromDate <= toDate &&
+        #            vacacionesLine.ToDate   >= fromDate &&
+        #            vacacionesLine.ToDate   <= toDate)
+        #        {
+        #            totalHoras += vacacionesLine.HorasVacaciones();
+        #        }
+        #        else {
+        #            //CASO 2
+        #            /*
+        #            El inicio de las vacaciones está dentro del mes solicitado pero el final de las vacaciones está en el mes siguiente
+        #            */
+        #            if (vacacionesLine.FromDate >= fromDate &&
+        #                vacacionesLine.FromDate <= toDate)
+        #            {
+        #                totalHoras += vacacionesLine.HorasVacaciones(vacacionesLine.FromDate, toDate);
+        #            }
+        #            else {
+        #
+        #                //CASO 3
+        #                /*
+        #                El final de las vacaciones está dentro del mes solicitado pero el inicio está en el mes anterior.
+        #                */
+        #                if (vacacionesLine.ToDate >= fromDate &&
+        #                    vacacionesLine.ToDate <= toDate)
+        #                {
+        #                    totalHoras += vacacionesLine.HorasVacaciones(fromDate, vacacionesLine.ToDate);
+        #                }
+        #            }
+        #       }
+        #    }
+        #
+        #    return totalHoras;
+        #}
+      ENDSOURCE
+      SOURCE #insert
+        #//IND_MMS_MaestroEmpleados - 08.04.2025
+        #public void insert()
+        #{
+        #
+        #    super();
+        #
+        #    INDPersonaTable::updateRefRecIds(INDPersonaTable::Find(this.UserId).RecId,0,0,this.RecId,this);
+        #}
+      ENDSOURCE
+      SOURCE #KmRealizados
+        #Container KmRealizados(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    Qty                 qtyNacional, qtyExtranjero;
+        #    Amount              amountNacional, amountExtranjero;
+        #    ;
+        #
+        #    select sum(Qty), sum(Amount) from hojaGastosLine
+        #    where hojaGastosLine.UserId         == this.UserId  &&
+        #          hojaGastosLine.TransDate      >= _fromDate    &&
+        #          hojaGastosLine.TransDate      <= _toDate      &&
+        #          hojaGastosLine.Type           == CRMGastoType::Km &&
+        #          hojaGastosLine.Internacional  == NoYes::No;
+        #
+        #    qtyNacional     = hojaGastosLine.Qty;
+        #    amountNacional  = hojaGastosLine.Amount;
+        #
+        #    select sum(Qty), sum(Amount) from hojaGastosLine
+        #    where hojaGastosLine.UserId         == this.UserId  &&
+        #          hojaGastosLine.TransDate      >= _fromDate    &&
+        #          hojaGastosLine.TransDate      <= _toDate      &&
+        #          hojaGastosLine.Type           == CRMGastoType::Km &&
+        #          hojaGastosLine.Internacional  == NoYes::Yes;
+        #
+        #    qtyExtranjero       = hojaGastosLine.Qty;
+        #    amountExtranjero    = hojaGastosLine.Amount;
+        #
+        #    return [qtyNacional, qtyExtranjero, amountNacional, amountExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #ListaSubordinados
+        #str ListaSubordinados()
+        #{
+        #    Set         set = this.SetSubordinados();
+        #    SetIterator si;
+        #    str         lista;
+        #    ;
+        #    if (this.UserId == "LG"){ //|| this.UserId == "NG"){
+        #        set = new Set(Types::String);
+        #        set.add("LG");
+        #        set.add("JPD");
+        #        set.add("KMG");
+        #        set.add("LMO");
+        #        set.add("LRP");
+        #        set.add("MGP");
+        #        set.add("TBP");
+        #        set.add("MAI");
+        #        set.add("BMS");
+        #        set.add("SMG");
+        #        set.add("SUBCONHOR");
+        #        set.add("UUG");
+        #
+        #        set.add("AOU");
+        #//        set.add("DBJ");
+        #        set.add("JUB");
+        #        set.add("JA"); //APODACA
+        #        set.add("IER");
+        #        set.add("JISZ");
+        #
+        #        set.add("JMI");
+        #        set.add("IGC");
+        #
+        #        set.add("EPG");
+        #
+        #        set.add("AVC");
+        #
+        #        set.add("JFF");
+        #
+        #        set.add("MGN");
+        #        set.add("IML");
+        #
+        #        set.add("RS");
+        #
+        #        set.add("JLP");
+        #
+        #        set.add("IG");
+        #        set.add("GD");
+        #
+        #        set.add("RNS");
+        #        set.add("CLF");
+        #
+        #        set.add("ALA");
+        #        set.add("GDM");
+        #        set.add("LOU");
+        #    }
+        #
+        #    //REFRALIA. Begoña Bricio ve el usuario de Guillermo Garcés
+        #    if (this.UserId == "BBC"){
+        #        set = new Set(Types::String);
+        #        set.add("BBC");
+        #        set.add("GGP");
+        #    }
+        #
+        #    si  = new SetIterator(set);
+        #    while (si.more()){
+        #        if (! lista){
+        #            lista    = si.value();
+        #        }
+        #        else {
+        #            lista    = strfmt("%1, %2", lista, si.value());
+        #        }
+        #        si.next();
+        #    }
+        #
+        #    return lista;
+        #}
+      ENDSOURCE
+      SOURCE #ListaSubordinadosByPerTable
+        #//IND_MMS_MaestroEmpleados - 12.06.2025
+        #str ListaSubordinadosByPerTable()
+        #{
+        #    Set         set = this.SetSubordinadosByPerTable();
+        #    SetIterator si;
+        #    str         lista;
+        #    ;
+        #    if (this.UserId == "LG"){ //|| this.UserId == "NG"){
+        #        set = new Set(Types::String);
+        #        set.add("LG");
+        #        set.add("JPD");
+        #        set.add("KMG");
+        #        set.add("LMO");
+        #        set.add("LRP");
+        #        set.add("MGP");
+        #        set.add("TBP");
+        #        set.add("MAI");
+        #        set.add("BMS");
+        #        set.add("SMG");
+        #        set.add("SUBCONHOR");
+        #        set.add("UUG");
+        #
+        #        set.add("AOU");
+        #//        set.add("DBJ");
+        #        set.add("JUB");
+        #        set.add("JA"); //APODACA
+        #        set.add("IER");
+        #        set.add("JISZ");
+        #
+        #        set.add("JMI");
+        #        set.add("IGC");
+        #
+        #        set.add("EPG");
+        #
+        #        set.add("AVC");
+        #
+        #        set.add("JFF");
+        #
+        #        set.add("MGN");
+        #        set.add("IML");
+        #
+        #        set.add("RS");
+        #
+        #        set.add("JLP");
+        #
+        #        set.add("IG");
+        #        set.add("GD");
+        #
+        #        set.add("RNS");
+        #        set.add("CLF");
+        #
+        #        set.add("ALA");
+        #        set.add("GDM");
+        #        set.add("LOU");
+        #    }
+        #
+        #    //REFRALIA. Begoña Bricio ve el usuario de Guillermo Garcés
+        #    if (this.UserId == "BBC"){
+        #        set = new Set(Types::String);
+        #        set.add("BBC");
+        #        set.add("GGP");
+        #    }
+        #
+        #    si  = new SetIterator(set);
+        #    while (si.more()){
+        #        if (! lista){
+        #            lista    = si.value();
+        #        }
+        #        else {
+        #            lista    = strfmt("%1, %2", lista, si.value());
+        #        }
+        #        si.next();
+        #    }
+        #
+        #    return lista;
+        #}
+      ENDSOURCE
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    super(_fieldId);
+        #}
+      ENDSOURCE
+      SOURCE #NochesFuera
+        #Container NochesFuera(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    CRMHojaGastosLine       hojaGastosLine;
+        #    Qty                     qtyNacional, qtyExtranjero;
+        #    CRMUserNochesFueraTable nochesFueraTable;
+        #    ;
+        #
+        #/*
+        #    select sum(NochesHotel) from hojaGastosLine
+        #    where hojaGastosLine.UserId         == this.UserId  &&
+        #          hojaGastosLine.TransDate      >= _fromDate    &&
+        #          hojaGastosLine.TransDate      <= _toDate      &&
+        #          hojaGastosLine.Type           == CRMGastoType::Hotel &&
+        #          hojaGastosLine.Internacional  == NoYes::No;
+        #
+        #    qtyNacional  = hojaGastosLine.NochesHotel;
+        #
+        #    select sum(NochesHotel) from hojaGastosLine
+        #    where hojaGastosLine.UserId         == this.UserId  &&
+        #          hojaGastosLine.TransDate      >= _fromDate    &&
+        #          hojaGastosLine.TransDate      <= _toDate      &&
+        #          hojaGastosLine.Type           == CRMGastoType::Hotel &&
+        #          hojaGastosLine.Internacional  == NoYes::Yes;
+        #
+        #    qtyExtranjero    = hojaGastosLine.NochesHotel;
+        #*/
+        #
+        #    while select nochesFueraTable
+        #    index hint index1
+        #    where //nochesFueraTable.FromDate >= _fromDate    &&
+        #          //nochesFueraTable.FromDate <= _toDate      &&
+        #          nochesFueraTable.RefRecId == this.RecId {
+        #
+        #        if (nochesFueraTable.Internacional){
+        #            qtyExtranjero   += nochesFueraTable.NochesFuera(_fromDate, _toDate);
+        #        }
+        #        else {
+        #            qtyNacional     += nochesFueraTable.NochesFuera(_fromDate, _toDate);
+        #        }
+        #    }
+        #
+        #    return [qtyNacional, qtyExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #NochesFuera_DesdeViajes
+        #Qty NochesFuera_DesdeViajes(FromDate _fromDate, ToDate _toDate, boolean _internacional)
+        #{
+        #    CRMUserViajeTable   viajeTable;
+        #    Qty                 nochesFuera;
+        #    ;
+        #
+        #    //Tomo los viajes del usuario cuya fecha de inicio esté en el rango indicado.
+        #    while select viajeTable
+        #    where viajeTable.UserId     == this.UserId  &&
+        #          viajeTable.FromDate   >= _fromDate    &&
+        #          viajeTable.FromDate   <= _toDate      &&
+        #          viajeTable.Internacional  == _internacional {
+        #
+        #        nochesFuera += viajeTable.NumDias();
+        #    }
+        #
+        #    return nochesFuera;
+        #}
+      ENDSOURCE
+      SOURCE #NochesFueraPais
+        #Container NochesFueraPais(FromDate _fromDate, ToDate _toDate, CountryId _countryId)
+        #{
+        #    CRMHojaGastosLine       hojaGastosLine;
+        #    Qty                     qtyNacional, qtyExtranjero;
+        #    CRMUserNochesFueraTable nochesFueraTable;
+        #    ;
+        #
+        #    while select nochesFueraTable
+        #    index hint index1
+        #    where //nochesFueraTable.FromDate >= _fromDate    &&
+        #          //nochesFueraTable.FromDate <= _toDate      &&
+        #          nochesFueraTable.RefRecId     == this.RecId   &&
+        #          nochesFueraTable.CountryId    == _countryId {
+        #
+        #        if (nochesFueraTable.Internacional){
+        #            qtyExtranjero   += nochesFueraTable.NochesFuera(_fromDate, _toDate);
+        #        }
+        #        else {
+        #            qtyNacional     += nochesFueraTable.NochesFuera(_fromDate, _toDate);
+        #        }
+        #    }
+        #
+        #    return [qtyNacional, qtyExtranjero];
+        #}
+      ENDSOURCE
+      SOURCE #NumClientes
+        #Int NumClientes(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    CRMHojaGastosLine       hojaGastosLine;
+        #    CRMHojaGastosLineCust   hojaGastosLineCust;
+        #    Set                     set = new Set(Types::String);
+        #    ;
+        #
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.TransDate  >= _fromDate    &&
+        #          hojaGastosLine.TransDate  <= _toDate      &&
+        #          hojaGastosLine.UserId     == this.UserId {
+        #
+        #
+        #        while select hojaGastosLineCust
+        #        where hojaGastosLineCust.RefRecId   == hojaGastosLine.RecId &&
+        #              (hojaGastosLineCust.Origen     == CRMConsultaOrigen::Cliente ||
+        #               hojaGastosLineCust.Origen     == CRMConsultaOrigen::ClientePotencial){
+        #
+        #            set.add(hojaGastosLineCust.CustAccount);
+        #        }
+        #    }
+        #
+        #    return set.elements();
+        #}
+      ENDSOURCE
+      SOURCE #NumeroResumenes
+        #display int NumeroResumenes()
+        #{
+        #    INDPublicacionLine  INDPublicacionLine;
+        #    ;
+        #
+        #    select count(RecId) from INDPublicacionLine
+        #    where INDPublicacionLine.UserId == this.UserId;
+        #
+        #    return INDPublicacionLine.RecId;
+        #}
+      ENDSOURCE
+      SOURCE #NumSubordinados
+        #int NumSubordinados()
+        #{
+        #    int     i   = this.SetSubordinados().elements();
+        #    return i == 1 ? 0 : i - 1;
+        #}
+      ENDSOURCE
+      SOURCE #NumVisitas
+        #Int NumVisitas(FromDate _fromDate, ToDate _toDate, AccountNum _accountNum, CRMConsultaOrigen _origen)
+        #{
+        #    CRMHojaGastosLine       hojaGastosLine;
+        #    CRMHojaGastosLineCust   hojaGastosLineCust;
+        #    int                     i;
+        #    ;
+        #
+        #    i = CRMCustListaVisitasTable::NumVisitas(_origen, _accountNum, this.UserId, _fromDate, _toDate);
+        #
+        #/*
+        #    while select hojaGastosLine
+        #    where hojaGastosLine.TransDate  >= _fromDate    &&
+        #          hojaGastosLine.TransDate  <= _toDate      &&
+        #          hojaGastosLine.UserId     == this.UserId {
+        #
+        #
+        #        while select hojaGastosLineCust
+        #        where hojaGastosLineCust.RefRecId   == hojaGastosLine.RecId &&
+        #              hojaGastosLineCust.Origen     == CRMConsultaOrigen::Cliente {
+        #
+        #            i++;
+        #        }
+        #    }
+        #*/
+        #
+        #    return i;
+        #}
+      ENDSOURCE
+      SOURCE #NumVisitasRealizadas
+        #Container NumVisitasRealizadas(FromDate _fromDate, ToDate _toDate, AccountNum _accountNum = "")
+        #{
+        #    int                     clientes, clientesPotenciales, proveedores;
+        #    ;
+        #    [clientes, clientesPotenciales, proveedores] = CRMCustListaVisitasTable::NumVisitasUsuarioPeriodo(this.UserId, _fromDate, _toDate);
+        #
+        #
+        #/*
+        #    CRMHojaGastosLine       hojaGastosLine, hojaGastosLineGroup;
+        #    CRMHojaGastosLineCust   hojaGastosLineCust;
+        #    int                     clientes, clientesPotenciales, proveedores;
+        #    int                     numClientes, numClientesPotenciales, numProveedores;
+        #
+        #    Map                     mapVisitasClientes  = new Map(Types::String, Types::Date);
+        #    Map                     mapVisitasClientesPotenciales  = new Map(Types::String, Types::Date);
+        #    Map                     mapVisitasProveedores  = new Map(Types::String, Types::Date);
+        #    Set                     setClientes, setClientesPotenciales, setProveedores;
+        #    Set                     setNumClientes, setNumClientesPotenciales, setNumProveedores;
+        #    ;
+        #    //Si no hay valor en la variable _accountNum sa obtiene la información de todos los clientes.
+        #    //Si se indica un valor en _accountNum se devolverá el número de visitas realizadas a esa cuenta en el periodo indicado.
+        #
+        #
+        #    if (_accountNum){
+        #
+        #        select * from hojaGastosLineCust
+        #        where hojaGastosLineCust.CustAccount    == _accountNum  &&
+        #              hojaGastosLineCust.TransDate      >= _fromDate    &&
+        #              hojaGastosLineCust.TransDate      <= _toDate      &&
+        #              hojaGastosLineCust.UserId         == this.UserId;
+        #
+        #    }
+        #    else {
+        #        select * from hojaGastosLineCust
+        #        where hojaGastosLineCust.TransDate      >= _fromDate    &&
+        #              hojaGastosLineCust.TransDate      <= _toDate      &&
+        #              hojaGastosLineCust.UserId         == this.UserId;
+        #    }
+        #
+        #
+        #
+        #    setClientes             = New Set(Types::Date);
+        #    setClientesPotenciales  = New Set(Types::Date);
+        #    setProveedores          = New Set(Types::Date);
+        #
+        #    setNumClientes              = new Set(Types::String);
+        #    setNumClientesPotenciales   = new Set(Types::String);
+        #    setNumProveedores           = new Set(Types::String);
+        #
+        #    while (hojaGastosLineCust){
+        #
+        #            switch (hojaGastosLineCust.Origen){
+        #                case CRMConsultaOrigen::Cliente, CRMConsultaOrigen::Evento:
+        #
+        #                    mapVisitasClientes.insert(hojaGastosLineCust.CustAccount, hojaGastosLineCust.TransDate);
+        #                    setClientes.add(hojaGastosLineCust.TransDate);
+        #                    setNumClientes.add(hojaGastosLineCust.CustAccount);
+        #                    break;
+        #                case CRMConsultaOrigen::ClientePotencial:
+        #                    mapVisitasClientesPotenciales.insert(hojaGastosLineCust.CustAccount, hojaGastosLineCust.TransDate);
+        #                    setClientesPotenciales.add(hojaGastosLineCust.TransDate);
+        #                    setNumClientespotenciales.add(hojaGastosLineCust.CustAccount);
+        #                    break;
+        #                case CRMConsultaOrigen::Proveedor:
+        #                    mapVisitasProveedores.insert(hojaGastosLineCust.CustAccount, hojaGastosLineCust.TransDate);
+        #                    setProveedores.add(hojaGastosLineCust.TransDate);
+        #                    setNumProveedores.add(hojaGastosLineCust.CustAccount);
+        #                    break;
+        #            }
+        #
+        #        next hojaGastosLineCust;
+        #    }
+        #    //Número de visitas realizadas. A usar cuando se pase un _accountNum como parámetro
+        #    clientes            = mapVisitasClientes.elements();//setClientes.elements();
+        #    clientesPotenciales = mapVisitasClientesPotenciales.elements();//setClientesPotenciales.elements();
+        #    proveedores         = mapVisitasProveedores.elements();//setProveedores.elements();
+        #
+        #    //Número de clientes visitados. A usar cuando no haya un _accountNum como parámetro.
+        #    numClientes             = setNumClientes.elements();
+        #    numClientesPotenciales  = setNumClientesPotenciales.elements();
+        #    numProveedores          = setNumProveedores.elements();
+        #
+        #    //if (_accountNum)
+        #        return [clientes, clientesPotenciales, proveedores];
+        #    //else
+        #    //    return [numClientes, numClientesPotenciales, numProveedores];
+        #*/
+        #/*
+        #        while select hojaGastosLineGroup
+        #        group by TransDate
+        #        where hojaGastosLineGroup.TransDate  >= _fromDate    &&
+        #              hojaGastosLineGroup.TransDate  <= _toDate      &&
+        #              hojaGastosLineGroup.UserId     == this.UserId {
+        #
+        #            setClientes             = New Set(Types::String);
+        #            setClientesPotenciales  = New Set(Types::String);
+        #            setProveedores          = New Set(Types::String);
+        #
+        #            while select hojaGastosLine
+        #            where hojaGastosLine.TransDate  == hojaGastosLineGroup.TransDate   &&
+        #                  hojaGastosLine.UserId     == this.UserId {
+        #
+        #                while select hojaGastosLineCust
+        #                where hojaGastosLineCust.RefRecId   == hojaGastosLine.RecId &&
+        #                      (hojaGastosLineCust.Origen     == CRMConsultaOrigen::Cliente ||
+        #                       hojaGastosLineCust.Origen     == CRMConsultaOrigen::ClientePotencial ||
+        #                       hojaGastosLineCust.Origen     == CRMConsultaOrigen::Evento){
+        #
+        #                    //if (_accountNum && hojaGastosLineCust.CustAccount != _accountNum)
+        #                    //    continue;
+        #
+        #                    switch (hojaGastosLineCust.Origen){
+        #                        case CRMConsultaOrigen::Cliente, CRMConsultaOrigen::Evento:
+        #                            setClientes.add(hojaGastosLineCust.CustAccount);
+        #                            break;
+        #                        case CRMConsultaOrigen::ClientePotencial:
+        #                            setClientesPotenciales.add(hojaGastosLineCust.CustAccount);
+        #                            break;
+        #                        case CRMConsultaOrigen::Proveedor:
+        #                            setProveedores.add(hojaGastosLineCust.CustAccount);
+        #                            break;
+        #                    }
+        #                }
+        #            }
+        #            clientes            += setClientes.elements();
+        #            clientesPotenciales += setClientesPotenciales.elements();
+        #            proveedores         += setProveedores.elements();
+        #        }
+        #*/
+        #
+        #    return [clientes, clientesPotenciales, proveedores];
+        #
+        #}
+      ENDSOURCE
+      SOURCE #OfertasCreadasPeriodo
+        #container OfertasCreadasPeriodo(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    int             numOfertas;
+        #    Amount          amountOfertas;
+        #    CRMOfertaTable  ofertaTable;
+        #    ;
+        #
+        #    while select ofertaTable
+        #    where ofertaTable.TransDate >= _fromDate    &&
+        #          ofertaTable.TransDate <= _toDate      &&
+        #          ofertaTable.UserId    == this.UserId {
+        #
+        #        numOfertas ++;
+        #        amountOFertas   += ofertaTable.LastRevisionNumPrice();
+        #    }
+        #
+        #    return [numOfertas, amountOfertas];
+        #}
+      ENDSOURCE
+      SOURCE #OfertasLogradasPeriodo
+        #container OfertasLogradasPeriodo(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    int             numOfertas;
+        #    Amount          amountOfertas;
+        #    CRMOfertaTable  ofertaTable;
+        #    ;
+        #
+        #    while select ofertaTable
+        #    where ofertaTable.CloseDate >= _fromDate    &&
+        #          ofertaTable.CloseDate <= _toDate      &&
+        #          ofertaTable.Status    == CRMOfertaStatus::Logrado &&
+        #          ofertaTable.UserId    == this.UserId {
+        #
+        #        numOfertas ++;
+        #        amountOFertas   += ofertaTable.LastRevisionNumPrice();
+        #    }
+        #
+        #    return [numOfertas, amountOfertas];
+        #}
+      ENDSOURCE
+      SOURCE #priceKmAFecha
+        #Price priceKmAFecha(TransDate _transDate)
+        #{
+        #    ;
+        #    return CRMHojaGastosUserPriceKmFechaTable::FindActive(this.UserId, _transDate).PriceKm;
+        #}
+      ENDSOURCE
+      SOURCE #QtyGastos
+        #Amount QtyGastos(FromDate _fromDate, ToDate _toDate, CRMGastoType _type)
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    CRMUserViajeLine    userViajeLine;
+        #    Qty                 qty;
+        #    ;
+        #
+        #    select sum(Qty) from hojaGastosLine
+        #    where hojaGastosLine.Type       == _type        &&
+        #          hojaGastosLine.TransDate  >= _fromDate    &&
+        #          hojaGastosLine.TransDate  <= _toDate      &&
+        #          hojaGastosLine.UserId     == this.UserId;
+        #
+        #    while select userViajeLine
+        #    where userViajeLine.UserId      == this.UserId  &&
+        #          userViajeLine.TransDate   >= _fromDate    &&
+        #          userViajeLine.TransDate   <= _toDate      &&
+        #          userViajeLine.GastoType   == _type {
+        #
+        #        qty += (userViajeLine.MediaDieta ? 0.5 : 1);
+        #    }
+        #
+        #    return hojaGastosLine.Qty + qty;//userViajeLine.RecId;
+        #}
+      ENDSOURCE
+      SOURCE #QtyGastosConDieta
+        #int QtyGastosConDieta(FromDate _fromDate, ToDate _toDate, CRMGastoType _type)
+        #{
+        #    CRMHojaGastosLine   hojaGastosLine;
+        #    int                 i;
+        #    ;
+        #
+        #    select count(RecId) from hojaGastosLine
+        #    where hojaGastosLine.Type       == _type        &&
+        #          hojaGastosLine.TransDate  >= _fromDate    &&
+        #          hojaGastosLine.TransDate  <= _toDate      &&
+        #          hojaGastosLine.Dieta      == NoYes::Yes   &&
+        #          hojaGastosLine.UserId     == this.UserId;
+        #
+        #    return hojaGastosLine.RecId;
+        #}
+      ENDSOURCE
+      SOURCE #QtyHorasAsignadoASubvencion
+        #Qty QtyHorasAsignadoASubvencion(FromDate _fromDate, ToDate _toDate)
+        #{
+        #    INDSubvencionPartidaHorasUsuarioTable   INDSubvencionPartidaHorasUsuarioTable;
+        #    FromDate                                fromDate;
+        #    ToDate                                  toDate;
+        #    Qty                                     qty;
+        #    ;
+        #
+        #    while select INDSubvencionPartidaHorasUsuarioTable
+        #    where INDSubvencionPartidaHorasUsuarioTable.UserId == this.UserId {
+        #
+        #        fromDate    = INDSubvencionPartidaHorasUsuarioTable.FromDate();
+        #        toDate      = INDSubvencionPartidaHorasUsuarioTable.ToDate();
+        #
+        #        if (fromDate == _fromDate && toDate == _toDate){
+        #            qty += INDSubvencionPartidaHorasUsuarioTable.Hours;
+        #        }
+        #    }
+        #
+        #    return qty;
+        #}
+      ENDSOURCE
+      SOURCE #SetEmplSubordinados
+        #set SetEmplSubordinados()
+        #{
+        #    CRMUserId                   _userId     = this.UserId;//CRMUsuarioTable::Find_AxaptaUserId(curUserId()).UserId;
+        #    Set                         setUserIdSubordinados, setEmplSubordinados;
+        #    SetIterator                 si;
+        #    CRMUsuarioSubordinadoTable  subordinadoTable;
+        #    CRMUsuarioTable             usuarioTable;
+        #    EmplId                      emplId;
+        #    ;
+        #
+        #    //En el SET se añaden el usuario actual y todos los subordinados.
+        #
+        #    setUserIdSubordinados     = new Set(Types::String);
+        #    setEmplSubordinados  = new Set(Types::String);
+        #
+        #    setUserIdSubordinados   = this.SetSubordinados();
+        #    si                      = new SetIterator(setUserIdSubordinados);
+        #
+        #    while (si.more()){
+        #
+        #        emplId  = CRMUsuarioTable::Find(si.value()).EmplId;
+        #
+        #        if (emplId)
+        #            setEmplSubordinados.add(emplId);
+        #
+        #        si.next();
+        #    }
+        #
+        #    return setEmplSubordinados;
+        #}
+      ENDSOURCE
+      SOURCE #SetSubordinados
+        #set SetSubordinados()
+        #{
+        #    CRMUserId                   _userId     = this.UserId;//CRMUsuarioTable::Find_AxaptaUserId(curUserId()).UserId;
+        #    Set                         set, setGen;
+        #    SetIterator                 si;
+        #    CRMUsuarioSubordinadoTable  subordinadoTable;
+        #    CRMUsuarioTable             usuarioTable;
+        #    INDPersonaTable             personaTable;
+        #    ;
+        #
+        #    //En el SET se añaden el usuario actual y todos los subordinados.
+        #
+        #    set     = new Set(Types::String);
+        #    setGen  = new Set(Types::String);
+        #    setGen.add(_userId);
+        #
+        #    while select subordinadoTable
+        #    where subordinadoTable.UserIdJefe == _userId {
+        #
+        #        usuarioTable    = CRMUsuarioTable::Find(subordinadoTable.UserIdSubordinado);
+        #
+        #        //IJL.03/11/25. Si una persona está bloqueada no debemos tenerla en cuenta en la lista de subordinados.
+        #        personaTable    = INDPersonaTable::findByCRM(usuarioTable.RecId);
+        #        if (personaTable && personaTable.bloqueado()){
+        #            continue;
+        #        }
+        #
+        #        set = usuarioTable.SetSubordinados();
+        #
+        #        si  = new SetIterator(set);
+        #
+        #        while (si.more()){
+        #
+        #            setGen.add(si.value());
+        #            si.next();
+        #        }
+        #
+        #        setGen.add(subordinadoTable.UserIdSubordinado);
+        #    }
+        #
+        #    return setGen;
+        #}
+      ENDSOURCE
+      SOURCE #SetSubordinadosByPerTable
+        #//IND_MMS_MaestroEmpleados - 12.06.2025
+        #set SetSubordinadosByPerTable()
+        #{
+        #    CRMUserId                   _userId     = this.UserId;//CRMUsuarioTable::Find_AxaptaUserId(curUserId()).UserId;
+        #    Set                         set, setGen;
+        #    SetIterator                 si;
+        #    CRMUsuarioSubordinadoTable  subordinadoTable;
+        #    CRMUsuarioTable             usuarioTable;
+        #    INDPersonaTable             personaTable, personaTableSub;
+        #    ;
+        #
+        #    //En el SET se añaden el usuario actual y todos los subordinados.
+        #    personaTable = INDPersonaTable::findByCRM(CRMUsuarioTable::Find(_userId).RecId);
+        #    set     = new Set(Types::String);
+        #    setGen  = new Set(Types::String);
+        #
+        #    if(personaTable)
+        #        setGen.add(personaTable.Alias);
+        #
+        #    while select subordinadoTable
+        #        where subordinadoTable.UserIdJefe == _userId
+        #    {
+        #        usuarioTable    = CRMUsuarioTable::Find(subordinadoTable.UserIdSubordinado);
+        #        /*set = usuarioTable.SetSubordinadosByPerTable(); //IND_MMS_MaestroEmpleados - 10.04.2026 - BUG DE BUCLE
+        #        si  = new SetIterator(set);
+        #
+        #        while (si.more())
+        #        {
+        #
+        #            setGen.add(si.value());
+        #            si.next();
+        #        }  */
+        #        personaTableSub = INDPersonaTable::findByCRM(CRMUsuarioTable::Find(subordinadoTable.UserIdSubordinado).RecId);
+        #        setGen.add(personaTableSub.Alias);
+        #    }
+        #
+        #
+        #    return setGen;
+        #}
+      ENDSOURCE
+      SOURCE #validateDelete
+        #public boolean validateDelete()
+        #{
+        #    boolean ret;
+        #    ;
+        #    ret = super();
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateField
+        #public boolean validateField(fieldId _fieldIdToCheck)
+        #{
+        #    boolean ret;
+        #
+        #    ret = super(_fieldIdToCheck);
+        #
+        #    switch (_fieldIdToCheck){
+        #        case FieldNum(CRMUsuarioTable, Bloqueado):
+        #            //EL campo bloqueado solo lo permito modificar a aquellos usuarios autorizados a crear usuarios nuevos.
+        #            if (! CRMPermisosTable::Find(curUserId()).CrearUsuarios){
+        #                ret = checkFailed("@IST261"); //NO tiene spermisos para modificar este campo.
+        #            }
+        #            break;
+        #
+        #        case FieldNum(CRMUsuarioTable, CalendarioLaboral):
+        #            //No permitir seleccionar el valor ERROR ni el común. Se debe seleccionar un calendario laboral válido.
+        #            if (this.CalendarioLaboral == CRMCalendarioLaboral::None || this.CalendarioLaboral == CRMCalendarioLaboral::Comun)
+        #                ret = checkFailed("El valor seleccionado en el campo 'Calendario Laboral' es incorrecto.");
+        #            break;
+        #
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #Find
+        #static CRMUsuarioTable Find(CRMUserId   _id,
+        #                            boolean     _forupdate = false)
+        #{
+        #    CRMUsuarioTable CRMUsuarioTable;
+        #    ;
+        #
+        #    CRMUsuarioTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMUsuarioTable
+        #    index hint index1
+        #    where CRMUsuarioTable.UserId == _id;
+        #
+        #    return CRMUsuarioTable;
+        #}
+      ENDSOURCE
+      SOURCE #Find_AxaptaUserId
+        #static CRMUsuarioTable Find_AxaptaUserId(UserId     _id,
+        #                                         boolean    _forupdate = false)
+        #{
+        #    CRMUsuarioTable CRMUsuarioTable;
+        #    ;
+        #
+        #    CRMUsuarioTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMUsuarioTable
+        #    index hint index2
+        #    where CRMUsuarioTable.AxaptaUserId == _id;
+        #
+        #    return CRMUsuarioTable;
+        #}
+      ENDSOURCE
+      SOURCE #Find_EmplId
+        #//IND_MMS_MaestroEmpleados - 07.04.2025
+        #static CRMUsuarioTable Find_EmplId(EmplId   _id,
+        #                                   boolean  _forupdate = false)
+        #{
+        #    CRMUsuarioTable CRMUsuarioTable;
+        #    ;
+        #
+        #    CRMUsuarioTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMUsuarioTable
+        #    index hint index3
+        #    where CRMUsuarioTable.EmplId == _id;
+        #
+        #    return CRMUsuarioTable;
+        #}
+      ENDSOURCE
+      SOURCE #FindRecId
+        #static CRMUsuarioTable FindRecId(RecId      _id,
+        #                                 boolean    _forupdate = false)
+        #{
+        #    CRMUsuarioTable CRMUsuarioTable;
+        #    ;
+        #
+        #    CRMUsuarioTable.selectForUpdate(_forupdate);
+        #
+        #    select firstonly CRMUsuarioTable
+        #    //index hint index1
+        #    where CRMUsuarioTable.RecId == _id;
+        #
+        #    return CRMUsuarioTable;
+        #}
+      ENDSOURCE
+      SOURCE #LookUpUserId
+        #static void LookUpUserId(FormControl _formControl, CompanyId _companyId = curExt())
+        #{
+        #    SysTableLookup          sysTableLookup;// = SysTableLookup::newParameters(tableNum(CRMUsuarioTable),_formControl);
+        #    Query                   query;
+        #    QueryBuildDataSource    queryBuildDataSource;
+        #    ;
+        #
+        #    changeCompany(_companyId){
+        #        sysTableLookup = SysTableLookup::newParameters(tableNum(CRMUsuarioTable),_formControl);
+        #        sysTableLookup.addLookupfield(fieldNum(CRMUsuarioTable, UserID));
+        #        sysTableLookup.addLookupfield(fieldNum(CRMUsuarioTable, Name));
+        #
+        #        query = new Query();
+        #        queryBuildDataSource = query.addDataSource(TableNum(CRMUsuarioTable));
+        #        queryBuildDataSource.addRange(fieldNum(CRMUsuarioTable, Bloqueado)).value(Enum2str(NoYes::No));
+        #
+        #        sysTableLookup.parmQuery(query);
+        #        sysTableLookup.performFormLookup();
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #PuedeEditar
+        #static boolean PuedeEditar(UserId _userId, CRMDivision _division = CRMDivision::Comun)
+        #{
+        #    //La división que se pasa como parámetro se compara con la división del usuario.
+        #    ;
+        #
+        #    return true; //IJL.27/11/24. Es una validación que ya no tiene sentido.
+        #
+        #    if (CRMUsuarioTable::Find_AxaptaUserId(_userId).Division == _division)
+        #        return true;
+        #
+        #    return false;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

@@ -4,6 +4,7 @@ import { setTopbarActionGroupReady } from "../../../utils/topbarActionVisibility
 import type { FilterLoadRequest, LoadOverride } from "./useHistoryFiltersState.ts";
 
 type UseHistoryPageListenersArgs = {
+  readyToLoad: boolean;
   isOpen: boolean;
   activatorRef: React.RefObject<HTMLDivElement | null>;
   popoverRef: React.RefObject<HTMLDivElement | null>;
@@ -14,6 +15,7 @@ type UseHistoryPageListenersArgs = {
   consumeReturnFlag: () => boolean;
   readCachedFilter: () => HistoryCachedFilter | null;
   applyCachedFilter: (filter: HistoryCachedFilter | null) => FilterLoadRequest | null;
+  resolveOwnerAxUserIdForLoad: (ownerAxUserId?: string) => string;
   loadActivities: (page: number, override?: LoadOverride) => void;
   setIsOpen: React.Dispatch<React.SetStateAction<boolean>>;
   setHoverDate: React.Dispatch<React.SetStateAction<Date | null>>;
@@ -23,6 +25,7 @@ type UseHistoryPageListenersArgs = {
 
 // Handles global listeners used by the history page filters and calendar UI.
 export const useHistoryPageListeners = ({
+  readyToLoad,
   isOpen,
   activatorRef,
   popoverRef,
@@ -33,6 +36,7 @@ export const useHistoryPageListeners = ({
   consumeReturnFlag,
   readCachedFilter,
   applyCachedFilter,
+  resolveOwnerAxUserIdForLoad,
   loadActivities,
   setIsOpen,
   setHoverDate,
@@ -64,13 +68,21 @@ export const useHistoryPageListeners = ({
   // Re-apply filters after browser back/forward navigation returns to the page.
   useEffect(() => {
     const onPageShow = () => {
+      if (!readyToLoad) return;
       if (hasRestoredFilterRef.current) return;
       if (consumeReturnFlag()) {
         const cached = readCachedFilter();
         const cachedRequest = applyCachedFilter(cached);
         if (cachedRequest) {
+          const resolvedRequest = {
+            ...cachedRequest,
+            override: {
+              ...cachedRequest.override,
+              ownerAxUserId: resolveOwnerAxUserIdForLoad(cachedRequest.override.ownerAxUserId),
+            },
+          };
           retryOnNetworkErrorRef.current = true;
-          loadActivities(cachedRequest.page, cachedRequest.override);
+          loadActivities(resolvedRequest.page, resolvedRequest.override);
           setShowFilters(false);
           setIsOpen(false);
           hasRestoredFilterRef.current = true;
@@ -86,7 +98,9 @@ export const useHistoryPageListeners = ({
     hasRestoredFilterRef,
     loadActivities,
     readCachedFilter,
+    readyToLoad,
     retryOnNetworkErrorRef,
+    resolveOwnerAxUserIdForLoad,
     setIsOpen,
     setShowFilters,
   ]);
@@ -106,6 +120,7 @@ export const useHistoryPageListeners = ({
     };
 
     const onRefresh = () => {
+      if (!readyToLoad) return;
       applyFilters({ page: currentPage, force: true, closePanel: true });
     };
 
@@ -116,5 +131,5 @@ export const useHistoryPageListeners = ({
       window.removeEventListener("history-toggle-filter", onToggleFilters);
       window.removeEventListener("history-refresh", onRefresh);
     };
-  }, [applyFilters, currentPage, setIsOpen, setShowFilters]);
+  }, [applyFilters, currentPage, readyToLoad, setIsOpen, setShowFilters]);
 };

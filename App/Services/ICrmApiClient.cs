@@ -42,6 +42,13 @@ namespace IND_CRM_APP.Services
         Task<ApiResponse<object>> GetHealthAsync(string token);
         Task<ApiResponse<object>> GetHealthPingAsync(string token);
 
+        // CRM enum catalog.
+        Task<PagedApiResponse<CrmEnumCatalogDto>> GetEnumCatalogByNameAsync(
+            string token,
+            string? appCode,
+            IEnumerable<string>? axEnumNames
+        );
+
         // CRM accounts.
         Task<PagedApiResponse<AccountDto>> GetAccountsAsync(
             string token,
@@ -62,6 +69,14 @@ namespace IND_CRM_APP.Services
         Task<PagedApiResponse<ActivityDto>> GetActivitiesAsync(
             string token,
             ActivitiesFilter filter
+        );
+
+        // Requests visible CRM users for a module through the backend visibility contract.
+        Task<PagedApiResponse<DataVisibilityVisibleUserDto>> GetVisibleUsersAsync(
+            string token,
+            string appCode,
+            string moduleCode,
+            bool includeCrmUserId = true
         );
 
         Task<ApiResponse<object>> CreateActivityAsync(
@@ -140,7 +155,8 @@ namespace IND_CRM_APP.Services
             string token,
             string hojaGastosId,
             ExpenseSheetUpdateRequest req,
-            string? axUserIdOverride = null
+            string? axUserIdOverride = null,
+            string? actorAxUserIdOverride = null
         );
 
         Task<ApiResponse<object>> UpdateExpenseSheetLineAsync(
@@ -231,6 +247,12 @@ namespace IND_CRM_APP.Services
             string token,
             string fileId,
             ExpenseSheetTicketUpdateRequest req
+        );
+
+        Task<ApiResponse<ExpenseSheetTicketTotalAdjustmentResultDto>> AdjustExpenseSheetTicketTotalAmountAsync(
+            string token,
+            string fileId,
+            ExpenseSheetTicketTotalAdjustmentRequest req
         );
 
         Task<ApiResponse<object>> DeleteExpenseSheetTicketAsync(

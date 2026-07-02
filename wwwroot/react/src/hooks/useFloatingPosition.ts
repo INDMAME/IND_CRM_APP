@@ -25,6 +25,16 @@ const clamp = (value: number, min: number, max: number): number => {
   return Math.min(Math.max(value, min), max);
 };
 
+const areFloatingStylesEqual = (left: FloatingPositionStyle, right: FloatingPositionStyle): boolean => {
+  return (
+    left.top === right.top &&
+    left.left === right.left &&
+    left.width === right.width &&
+    left.maxHeight === right.maxHeight &&
+    left.placement === right.placement
+  );
+};
+
 // Resolves a fixed floating position and optionally keeps the overlay inside the viewport.
 export const useFloatingPosition = (
   targetRef: React.RefObject<HTMLElement>,
@@ -53,28 +63,37 @@ export const useFloatingPosition = (
 
       const viewportWidth = window.innerWidth || document.documentElement.clientWidth || 0;
       const viewportHeight = window.innerHeight || document.documentElement.clientHeight || 0;
-      const overlayHeight = overlayRef?.current?.getBoundingClientRect().height || 0;
+      const overlayElement = overlayRef?.current;
+      const overlayRect = overlayElement?.getBoundingClientRect();
+      const overlayHeight = Math.max(overlayRect?.height || 0, overlayElement?.scrollHeight || 0);
       const nextWidth = Math.min(rect.width, Math.max(0, viewportWidth - viewportPadding * 2));
       const nextLeft = clamp(rect.left, viewportPadding, viewportWidth - nextWidth - viewportPadding);
 
       if (!autoFitViewport) {
-        setStyle({
+        const nextStyle: FloatingPositionStyle = {
           top: rect.bottom + offset,
           left: nextLeft,
           width: nextWidth,
           maxHeight: undefined,
           placement: "bottom",
-        });
+        };
+        setStyle((previous) => (areFloatingStylesEqual(previous, nextStyle) ? previous : nextStyle));
         return;
       }
 
       const availableBelow = Math.max(0, viewportHeight - rect.bottom - offset - viewportPadding);
       const availableAbove = Math.max(0, rect.top - offset - viewportPadding);
+      const fallbackHeight = Math.max(availableBelow, availableAbove, 0);
+      const preferredHeight = overlayHeight > 0 ? overlayHeight : fallbackHeight;
       const preferredPlacement: FloatingPlacement =
-        overlayHeight > availableBelow && availableAbove > availableBelow ? "top" : "bottom";
+        preferredHeight > availableBelow && availableAbove > availableBelow ? "top" : "bottom";
       const availableHeight = preferredPlacement === "top" ? availableAbove : availableBelow;
-      const constrainedHeight =
-        availableHeight > 0 ? Math.min(overlayHeight || availableHeight, availableHeight) : Math.max(0, viewportHeight - viewportPadding * 2);
+      const constrainedHeight = Math.max(
+        0,
+        availableHeight > 0
+          ? Math.min(preferredHeight || availableHeight, availableHeight)
+          : viewportHeight - viewportPadding * 2
+      );
       const nextTop =
         preferredPlacement === "top"
           ? Math.max(viewportPadding, rect.top - offset - constrainedHeight)
@@ -83,24 +102,66 @@ export const useFloatingPosition = (
               Math.max(viewportPadding, viewportHeight - constrainedHeight - viewportPadding)
             );
 
-      setStyle({
+      const nextStyle: FloatingPositionStyle = {
         top: nextTop,
         left: nextLeft,
         width: nextWidth,
-        maxHeight: Math.max(0, preferredPlacement === "top" ? nextTop + constrainedHeight - viewportPadding : availableHeight),
+        maxHeight: constrainedHeight,
         placement: preferredPlacement,
-      });
+      };
+      setStyle((previous) => (areFloatingStylesEqual(previous, nextStyle) ? previous : nextStyle));
     };
 
     update();
-    const onScroll = () => open && update();
-    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
-    window.addEventListener("resize", update);
-    return () => {
-      window.removeEventListener("scroll", onScroll, true);
-      window.removeEventListener("resize", update);
+    let animationFrame = 0;
+    const scheduleUpdate = () => {
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+      animationFrame = window.requestAnimationFrame(() => {
+        animationFrame = 0;
+        update();
+      });
     };
-  }, [open, targetRef]);
+
+    const resizeObserver =
+      typeof ResizeObserver === "undefined"
+        ? null
+        : new ResizeObserver(() => {
+            scheduleUpdate();
+          });
+    if (resizeObserver) {
+      resizeObserver.observe(targetRef.current);
+      if (overlayRef?.current) {
+        resizeObserver.observe(overlayRef.current);
+      }
+    }
+
+    const mutationObserver =
+      typeof MutationObserver === "undefined" || !overlayRef?.current
+        ? null
+        : new MutationObserver(() => {
+            scheduleUpdate();
+          });
+    mutationObserver?.observe(overlayRef.current, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+    });
+
+    const onScroll = () => open && scheduleUpdate();
+    window.addEventListener("scroll", onScroll, { capture: true, passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+    return () => {
+      if (animationFrame) {
+        window.cancelAnimationFrame(animationFrame);
+      }
+      resizeObserver?.disconnect();
+      mutationObserver?.disconnect();
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [autoFitViewport, offset, open, overlayRef, targetRef, viewportPadding]);
 
   return style;
 };

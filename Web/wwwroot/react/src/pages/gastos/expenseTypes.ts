@@ -1,8 +1,8 @@
-export type ExpenseStatusCode = 0 | 1 | 2 | 3 | 4;
-export type ExpenseStatusFilterCode = ExpenseStatusCode | 5;
-export type ExpenseExchangeRateModeCode = 0 | 1;
+export type ExpenseStatusCode = number;
+export type ExpenseStatusFilterCode = number;
+export type ExpenseExchangeRateModeCode = number;
 export type ExpenseSheetCreateMode = 0 | 1 | 2;
-export type ExpenseGastoTypeCode = 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 14;
+export type ExpenseGastoTypeCode = number;
 // Backend date contract for gastos/tickets:
 // request accepts DDMMYYYY or DD.MM.YYYY, response returns DD.MM.YYYY.
 export type ExpenseApiDate = string;
@@ -121,6 +121,7 @@ export type ExpenseSheetListApiRequest = {
   projId?: string;
   currencyCode?: string;
   expenseSheetStatus?: number | null;
+  reimbursableExpense?: number | null;
   includeSubordinates?: boolean;
 };
 
@@ -138,7 +139,13 @@ export type ExpenseSheetListItemDto = {
   TotalAmount: number | null;
   ExchRate: number | null;
   ExchangeRateMode: number | null;
+  ReimbursableExpense?: number | null;
+  reimbursableExpense?: number | null;
   CreatedDate: ExpenseApiDate | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
 };
 
 export type ExpenseSheetListResponseEnvelope = IndPagedResponse<ExpenseSheetListItemDto>;
@@ -171,36 +178,80 @@ export type ExpenseSheetsAskResult = IndApiResponse<ExpenseSheetsAskResponseData
 
 // /api/crm/expensesheets/{hojaGastosId} line contract.
 export type ExpenseSheetLineDto = {
-  RecId: string;
+  RecId?: string;
+  recId?: string;
   LineRecId?: string;
-  TransDate: ExpenseApiDate;
-  TypeValue: number | null;
-  Description: string;
-  Internacional: boolean | null;
-  FileId: string;
-  Ticket: boolean | null;
-  Price: number | null;
-  Qty: number | null;
-  Amount: number | null;
-  ProjId: string;
-  IndAttachFiles: string;
+  lineRecId?: string;
+  TransDate?: ExpenseApiDate;
+  transDate?: ExpenseApiDate;
+  TypeValue?: number | null;
+  typeValue?: number | null;
+  TypeValueCode?: string | number | null;
+  typeValueCode?: string | number | null;
+  Description?: string;
+  description?: string;
+  Internacional?: boolean | null;
+  internacional?: boolean | null;
+  FileId?: string;
+  fileId?: string;
+  Ticket?: boolean | null;
+  ticket?: boolean | null;
+  Price?: number | null;
+  price?: number | null;
+  Qty?: number | null;
+  qty?: number | null;
+  Amount?: number | null;
+  amount?: number | null;
+  ProjId?: string;
+  projId?: string;
+  IndAttachFiles?: string;
+  indAttachFiles?: string;
+  ReimbursableExpense?: number | null;
+  reimbursableExpense?: number | null;
+  CurrencyCode?: string;
+  currencyCode?: string;
+  AmountMST?: number | null;
+  amountMST?: number | null;
+  ExchRate?: number | null;
+  exchRate?: number | null;
 };
 
 // /api/crm/expensesheets/{hojaGastosId} detail contract.
 export type ExpenseSheetDetailDto = {
-  HojaGastosId: string;
-  UserId: string;
-  Description: string;
-  ExpenseSheetStatus: number | null;
-  EstadoComentarios: string | null;
-  CurrencyCode: string;
-  TotalAmount: number | null;
-  ExchRate: number | null;
-  ExchangeRateMode: number | null;
-  ProjId: string;
-  Voucher: string;
-  CreatedDate: ExpenseApiDate | null;
-  Lines: ExpenseSheetLineDto[];
+  HojaGastosId?: string;
+  hojaGastosId?: string;
+  UserId?: string;
+  userId?: string;
+  UserName?: string | null;
+  userName?: string | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
+  Description?: string;
+  description?: string;
+  ExpenseSheetStatus?: number | null;
+  expenseSheetStatus?: number | null;
+  EstadoComentarios?: string | null;
+  estadoComentarios?: string | null;
+  CurrencyCode?: string;
+  currencyCode?: string;
+  TotalAmount?: number | null;
+  totalAmount?: number | null;
+  ExchRate?: number | null;
+  exchRate?: number | null;
+  ExchangeRateMode?: number | null;
+  exchangeRateMode?: number | null;
+  ReimbursableExpense?: number | null;
+  reimbursableExpense?: number | null;
+  ProjId?: string;
+  projId?: string;
+  Voucher?: string;
+  voucher?: string;
+  CreatedDate?: ExpenseApiDate | null;
+  createdDate?: ExpenseApiDate | null;
+  Lines?: ExpenseSheetLineDto[];
+  lines?: ExpenseSheetLineDto[];
 };
 
 export type ExpenseSheetCreateLineRequest = {
@@ -213,6 +264,10 @@ export type ExpenseSheetCreateLineRequest = {
   qty: number;
   price: number;
   projId?: string;
+  reimbursableExpense?: number | null;
+  currencyCode?: string;
+  amountMST?: number | null;
+  exchRate?: number | null;
   indAttachFiles?: string;
 };
 
@@ -227,6 +282,7 @@ export type ExpenseSheetCreateRequest = {
   projId?: string;
   expenseSheetStatus?: number;
   exchangeRateMode?: number;
+  reimbursableExpense?: number | null;
   lines?: ExpenseSheetCreateLineRequest[] | null;
 };
 
@@ -241,6 +297,7 @@ export type ExpenseSheetTicketQuickCreateRequest = {
   description?: string;
   comentario?: string;
   existingHojaGastosId?: string;
+  projId?: string;
   projectId?: string;
 };
 
@@ -300,12 +357,13 @@ export type ExpenseSheetDraftTicketCreationResult = {
 // /api/crm/expensesheets/{hojaGastosId} update header request contract.
 export type ExpenseSheetHeaderUpdateRequest = {
   description: string;
-  currencyCode: string;
-  exchRate: number;
+  currencyCode?: string;
+  exchRate?: number | null;
   projId?: string;
   expenseSheetStatus?: number;
   exchangeRateMode?: number;
   estadoComentarios?: string;
+  reimbursableExpense?: number | null;
 };
 
 // /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId} update line request contract.
@@ -319,6 +377,10 @@ export type ExpenseSheetLineUpdateRequest = {
   qty: number;
   price: number;
   projId?: string;
+  reimbursableExpense?: number | null;
+  currencyCode?: string;
+  amountMST?: number | null;
+  exchRate?: number | null;
   indAttachFiles?: string;
 };
 
@@ -339,6 +401,7 @@ export type ExpenseSheetListFilters = {
   hojaGastosId: string;
   currencyCode: string;
   managedUserId: string;
+  reimbursableExpense?: number | null;
   includeSubordinates: boolean;
 };
 
@@ -350,12 +413,15 @@ export type ExpenseSheetCard = {
   estadoComentarios?: string | null;
   userId?: string;
   userName?: string | null;
+  ownerAxUserId?: string | null;
+  ownerName?: string | null;
   voucher?: string;
   projId?: string;
   currencyCode?: string;
   totalAmount?: number | null;
   exchRate?: number | null;
   exchangeRateMode?: number | null;
+  reimbursableExpense?: number | null;
   createdDate?: string;
 };
 
@@ -364,12 +430,16 @@ export type ExpenseSheetHeader = {
   hojaGastosId: string;
   description?: string;
   userId?: string;
+  userName?: string | null;
+  ownerAxUserId?: string | null;
+  ownerName?: string | null;
   expenseSheetStatus?: number | null;
   estadoComentarios?: string | null;
   currencyCode?: string;
   totalAmount?: number | null;
   exchRate?: string;
   exchangeRateMode?: number | null;
+  reimbursableExpense?: number | null;
   projId?: string;
   voucher?: string;
   createdDate?: string;
@@ -389,6 +459,10 @@ export type ExpenseSheetLine = {
   qty?: number | null;
   amount?: number | null;
   projId?: string;
+  reimbursableExpense?: number | null;
+  currencyCode?: string;
+  amountMST?: number | null;
+  exchRate?: number | null;
   indAttachFiles?: string;
 };
 
@@ -399,7 +473,7 @@ export type ExpenseSheetTicketListRequest = {
   createdDateTo?: ExpenseApiDate;
   searchKey?: string;
   filter?: string;
-  status?: 0 | 1 | null;
+  status?: number | null;
   currencyCode?: string;
   gastoType?: ExpenseGastoTypeCode | null;
   processedByAI?: boolean | null;
@@ -432,8 +506,12 @@ export type ExpenseSheetTicketCreateRequest = {
   totalAmount?: number;
   status?: number;
   transDate?: ExpenseApiDate;
+  ticketDate?: ExpenseApiDate;
+  ticketTime?: string;
   comentario?: string;
   urlFile?: string;
+  ocrJson?: string;
+  normalizedJson?: string;
   fileName?: string;
   fileExtension?: string;
   processedByAI?: boolean;
@@ -445,14 +523,35 @@ export type ExpenseSheetTicketUpdateRequest = {
   description?: string;
   currencyCode?: string;
   totalAmount?: number;
+  amountMST?: number;
+  exchRate?: number;
   status?: number;
   transDate?: string;
+  ticketDate?: string;
+  ticketTime?: string;
   comentario?: string;
   urlFile?: string;
+  ocrJson?: string;
+  normalizedJson?: string;
   fileName?: string;
   processedByAI?: boolean;
   fileExtension?: string;
   gastoType?: ExpenseGastoTypeCode;
+};
+
+export type ExpenseSheetTicketTotalAdjustmentRequest = {
+  totalAmount: number;
+};
+
+export type ExpenseSheetTicketTotalAdjustmentResultDto = {
+  FileId?: string;
+  PreviousTotalAmount?: number | null;
+  NewTotalAmount?: number | null;
+  DifferenceAmount?: number | null;
+  AdjustmentLineRecId?: string;
+  AdjustmentLineCreated?: boolean | null;
+  AdjustmentDescription?: string;
+  AdjustmentAmount?: boolean | null;
 };
 
 export type ExpenseSheetTicketIaRequest = {
@@ -468,6 +567,7 @@ export type ExpenseSheetTicketLineDto = {
   TotalAmount: number | null;
   RefRecIdTable: string;
   CreatedByUserId: string;
+  AdjustmentAmount?: boolean | null;
 };
 
 export type ExpenseSheetTicketListItemDto = {
@@ -478,8 +578,14 @@ export type ExpenseSheetTicketListItemDto = {
   CurrencyCode: string;
   TotalAmount: number | null;
   TransDate: ExpenseApiDate;
+  TicketDate: ExpenseApiDate;
+  TicketTime: string;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
 };
 
 export type ExpenseSheetTicketLinkListItemDto = {
@@ -489,8 +595,14 @@ export type ExpenseSheetTicketLinkListItemDto = {
   CurrencyCode: string;
   TotalAmount: number | null;
   TransDate: ExpenseApiDate;
+  TicketDate: ExpenseApiDate;
+  TicketTime: string;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
 };
 
 export type ExpenseSheetTicketDetailDto = {
@@ -501,12 +613,26 @@ export type ExpenseSheetTicketDetailDto = {
   ProcessedByAI: boolean | null;
   CurrencyCode: string;
   TotalAmount: number | null;
+  AmountMST?: number | null;
+  amountMST?: number | null;
+  ExchRate?: number | null;
+  exchRate?: number | null;
   CreatedByUserId: string;
   TransDate: ExpenseApiDate;
+  TicketDate: ExpenseApiDate;
+  TicketTime: string;
   Comentario: string;
   UrlFile: string;
+  OcrJson?: string | null;
+  ocrJson?: string | null;
+  NormalizedJson?: string | null;
+  normalizedJson?: string | null;
   FileName: string;
   GastoType: ExpenseGastoTypeCode | null;
+  OwnerAxUserId?: string | null;
+  ownerAxUserId?: string | null;
+  OwnerName?: string | null;
+  ownerName?: string | null;
   Lines: ExpenseSheetTicketLineDto[];
 };
 
@@ -553,6 +679,9 @@ export type ExpenseSheetCreateLineDraft = {
   ticket: boolean;
   qty: string;
   price: string;
+  currencyCode: string;
+  amountMST: string;
+  exchRate: string;
   projId: string;
   indAttachFiles: string;
 };

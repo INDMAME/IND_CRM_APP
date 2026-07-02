@@ -4,6 +4,7 @@
 @{
     Layout = null;
     var forceEntra = ViewBag.ForceEntra == true;
+    var returnUrl = ViewBag.ReturnUrl as string;
     var systemVersion = "1.0";
     var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
@@ -65,6 +66,7 @@
                 <a asp-controller="Auth"
                    asp-action="EntraLogin"
                    asp-route-force="@(forceEntra ? "true" : null)"
+                   asp-route-returnUrl="@(string.IsNullOrWhiteSpace(returnUrl) ? null : returnUrl)"
                    class="w-full max-w-[260px] mx-auto inline-flex items-center justify-center gap-3 rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-white shadow-md hover:bg-primary/90 transition mt-10">
                     <span class="inline-flex h-6 w-6 items-center justify-center rounded-md">
                         <svg viewBox="0 0 48 48" class="h-4 w-4" aria-hidden="true">

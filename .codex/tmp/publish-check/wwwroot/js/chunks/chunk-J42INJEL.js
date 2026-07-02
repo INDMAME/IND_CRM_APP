@@ -1,2 +1,0 @@
-var c=(e,i,m)=>{if(e==null||Number.isNaN(Number(e)))return"-";let t=m||(typeof document<"u"&&document.documentElement.lang?document.documentElement.lang:"es-ES"),n=String(i||"").trim().toUpperCase();if(n)try{return new Intl.NumberFormat(t,{style:"currency",currency:n,minimumFractionDigits:2,maximumFractionDigits:2}).format(e)}catch{}let r=new Intl.NumberFormat(t,{minimumFractionDigits:2,maximumFractionDigits:2}).format(e);return n?`${r} ${n}`:r};export{c as a};
-//# sourceMappingURL=chunk-J42INJEL.js.map

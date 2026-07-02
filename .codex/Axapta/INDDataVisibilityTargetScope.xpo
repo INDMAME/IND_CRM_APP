@@ -1,0 +1,42 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBE
+
+; Navision Axapta Enumtype : INDDataVisibilityTargetScope unloaded at Jueves 04/06/2026
+; --------------------------------------------------------------------------------
+  ENUMTYPEVERSION 1
+  
+  ENUMTYPE #INDDataVisibilityTargetScope
+    PROPERTIES
+      Name                #INDDataVisibilityTargetScope
+      Label               #Alcance de visibilidad manual
+      Help                #
+      DisplayLength       #Auto
+      Style               #Combo box
+      ConfigurationKey    #
+      UseEnumValue        #Yes
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+      #TargetOnly
+      PROPERTIES
+        Name                #TargetOnly
+        Label               #Solo persona
+        ConfigurationKey    #
+        EnumValue           #0
+      ENDPROPERTIES
+      
+      #TargetAndHierarchy
+      PROPERTIES
+        Name                #TargetAndHierarchy
+        Label               #Persona + jerarquía
+        ConfigurationKey    #
+        EnumValue           #1
+      ENDPROPERTIES
+      
+    ENDTYPEELEMENTS
+  ENDENUMTYPE
+  
+
+***Element: END

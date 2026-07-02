@@ -11,6 +11,12 @@
 - Primary color: #00296b (use via Tailwind primary tokens).
 - All user facing text must come from i18n resources.
 - Forms: use `form-label`, `form-control`, and `form-select` utilities for consistent base sizes.
+- Numeric value alignment:
+  - Right-align values for comparable numeric business fields: amounts, reimbursement amounts, prices, quantities, exchange rates, totals, and subtotals.
+  - Keep field labels left-aligned; only the value inside the input or read-only field is right-aligned.
+  - Use tabular numerals for these values when possible.
+  - Do not apply numeric alignment to identifiers or alphanumeric fields such as ticket ids, expense sheet ids, project ids, sheet codes, dates, times, currencies, statuses, or enum labels.
+  - Apply the alignment through explicit component props or field-level classes, not through a global `form-control` override.
 - Global rounding standard: 5px for inputs, buttons, and containers (use `rounded-md` or `rounded-[5px]`).
 - Avoid `rounded-full` unless a component explicitly requires a circle.
 
@@ -140,4 +146,4 @@
 - Transcription uses `/Visitas/TranscribeSpeech` and replaces textarea text.
 
 ## Last updated
-- 2026-04-09
+- 2026-07-01

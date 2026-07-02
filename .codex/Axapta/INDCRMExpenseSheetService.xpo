@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 22/04/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 01/07/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -24,18 +24,232 @@ Formatversion: 1
         #
         #}
       ENDSOURCE
+      SOURCE #adjustExpenseSheetTicketTotalAmount
+        #// Method: adjustExpenseSheetTicketTotalAmount
+        #// Purpose: Updates ticket header total and creates a differential adjustment line.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #//  - _data[3] = fileId
+        #//  - _data[4] = newTotalAmount
+        #static server container adjustExpenseSheetTicketTotalAmount(container _data)
+        #{
+        #    DataAreaId         companyId;
+        #    str 20             axUserId;
+        #    CRMUserId          crmUserId;
+        #    INDFileId          fileId;
+        #    Amount             newTotalAmount;
+        #
+        #    INDTicketInfoTable ticketHeader;
+        #    container          adjustResult;
+        #    boolean            lineCreated;
+        #    Amount             previousTotalAmount;
+        #    Amount             savedTotalAmount;
+        #    Amount             differenceAmount;
+        #    RecId              adjustmentLineRecId;
+        #    boolean            adjustmentLineExists;
+        #    int                startLine;
+        #    str                msg;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    if (conLen(_data) < 4)
+        #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan 4 campos.', conNull());
+        #
+        #    axUserId       = conPeek(_data, 2);
+        #    fileId         = conPeek(_data, 3);
+        #    newTotalAmount = conPeek(_data, 4);
+        #
+        #    if (!axUserId)
+        #        return INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull());
+        #
+        #    if (!fileId)
+        #        return INDCRMUtilityService::buildHeader(false, 'FileId es obligatorio.', conNull());
+        #
+        #    if (newTotalAmount < 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'TotalAmount no puede ser negativo.', conNull());
+        #
+        #    startLine = infolog.line();
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId);
+        #
+        #            if (!crmUserId)
+        #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
+        #
+        #            select firstonly ticketHeader
+        #                where ticketHeader.FileId          == fileId
+        #                   && ticketHeader.CreatedByUserId == axUserId;
+        #
+        #            if (!ticketHeader.RecId)
+        #                return INDCRMUtilityService::buildHeader(false, 'Ticket no encontrado.', conNull());
+        #
+        #            adjustResult = ticketHeader.adjustTotalAmount(newTotalAmount, axUserId);
+        #
+        #            lineCreated         = conPeek(adjustResult, 1);
+        #            previousTotalAmount = conPeek(adjustResult, 2);
+        #            savedTotalAmount    = conPeek(adjustResult, 3);
+        #            differenceAmount    = conPeek(adjustResult, 4);
+        #            adjustmentLineRecId = conPeek(adjustResult, 5);
+        #            adjustmentLineExists = conPeek(adjustResult, 7);
+        #
+        #            return INDCRMUtilityService::buildHeader(true, 'Importe total ajustado correctamente.',
+        #                                                     [ticketHeader.FileId,
+        #                                                      strFmt('%1', previousTotalAmount),
+        #                                                      strFmt('%1', savedTotalAmount),
+        #                                                      strFmt('%1', differenceAmount),
+        #                                                      strFmt('%1', adjustmentLineRecId),
+        #                                                      lineCreated ? '1' : '0',
+        #                                                      'AJUSTE DE IMPORTE TOTAL',
+        #                                                      adjustmentLineExists ? '1' : '0']);
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildEmailLogoSrc
+        #// Devuelve el valor src del logo usando el Base64 guardado en la plantilla.
+        #static server str buildEmailLogoSrc(str _logoBase64)
+        #{
+        #    str logo;
+        #    str logoSrc;
+        #    ;
+        #
+        #    logo = strLRTrim(strFmt('%1', _logoBase64));
+        #    logo = strReplace(logo, '\n', '');
+        #    logo = strReplace(logo, '\r', '');
+        #    logo = strReplace(logo, ' ', '');
+        #
+        #    if (!logo)
+        #        return '';
+        #
+        #    if (subStr(strLwr(logo), 1, 5) == 'data:')
+        #        logoSrc = logo;
+        #    else
+        #        logoSrc = 'data:image/png;base64,' + logo;
+        #
+        #    return logoSrc;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetAmountText
+        #// Devuelve el importe total de la hoja con la divisa para usarlo en plantillas.
+        #static server str buildExpenseSheetAmountText(CRMHojaGastosTable _expenseSheet)
+        #{
+        #    Amount       amount;
+        #    CurrencyCode currencyCode;
+        #    str          currencyText;
+        #    ;
+        #
+        #    amount       = _expenseSheet.TotalAmount();
+        #    currencyCode = _expenseSheet.CurrencyCode;
+        #    currencyText = Currency::find(currencyCode).CurrencyCodeISO;
+        #    if (!currencyText)
+        #        currencyText = currencyCode;
+        #
+        #    return strFmt('%1 %2', amount, currencyText);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetEventDisplayText
+        #// Devuelve un texto corto del evento para rellenar plantillas de email.
+        #static server str buildExpenseSheetEventDisplayText(str _eventType)
+        #{
+        #    if (_eventType == 'ExpenseSheetApprovalRequested')
+        #        return 'Aprobacion solicitada';
+        #
+        #    if (_eventType == 'ExpenseSheetApproved')
+        #        return 'Aprobada';
+        #
+        #    if (_eventType == 'ExpenseSheetRejected')
+        #        return 'Rechazada';
+        #
+        #    if (_eventType == 'ExpenseSheetRejectionCancelled')
+        #        return 'Rechazo cancelado';
+        #
+        #    if (_eventType == 'ExpenseSheetPaid')
+        #        return 'Pagada';
+        #
+        #    return _eventType;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetFallbackTextBody
+        #// Monta un texto plano minimo cuando no hay plantilla vigente disponible.
+        #static server str buildExpenseSheetFallbackTextBody(str                 _message,
+        #                                                    CRMHojaGastosTable _expenseSheet,
+        #                                                    str                 _eventType,
+        #                                                    str                 _link)
+        #{
+        #    date sheetDate;
+        #    ;
+        #
+        #    sheetDate = _expenseSheet.CreatedDate ? _expenseSheet.CreatedDate : today();
+        #
+        #    return strFmt('%1\nHoja: %2\nEstado: %3\nImporte: %4\nFecha: %5\nDescripcion: %6\nLink: %7',
+        #                  _message,
+        #                  _expenseSheet.HojaGastosId,
+        #                  INDCRMExpenseSheetService::buildExpenseSheetEventDisplayText(_eventType),
+        #                  INDCRMExpenseSheetService::buildExpenseSheetAmountText(_expenseSheet),
+        #                  date2Str(sheetDate, 123, 2, 2, 2, 2, 4),
+        #                  _expenseSheet.Description,
+        #                  _link);
+        #}
+        #
+      ENDSOURCE
       SOURCE #buildExpenseSheetListRow
         #// Purpose: Builds one expense sheet list row with stable output columns.
         #static server container buildExpenseSheetListRow(CRMHojaGastosTable _hoja)
         #{
-        #    int       expenseSheetStatus, exchangeRateMode;
+        #    int       expenseSheetStatus, exchangeRateMode, reimbursableExpense;
         #    Amount    monto;
+        #    str       ownerAxUserId;
+        #    str       ownerName;
         #    container conItem;
         #    ;
         #
         #    monto               = _hoja.TotalAmount();
-        #    exchangeRateMode    = _hoja.ExchangeRateMode;
-        #    expenseSheetStatus  = _hoja.ExpenseSheetStatus;
+        #    exchangeRateMode    = any2int(_hoja.ExchangeRateMode);
+        #    expenseSheetStatus  = any2int(_hoja.ExpenseSheetStatus);
+        #    reimbursableExpense = any2int(_hoja.ReimbursableExpense);
+        #    ownerAxUserId       = _hoja.INDCreatedByUserId;
+        #    if (!ownerAxUserId)
+        #        ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_hoja.UserId);
+        #    ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ownerAxUserId ? ownerAxUserId : _hoja.UserId);
         #
         #    conItem = [[
         #                 strFmt("%1", _hoja.HojaGastosId),
@@ -50,10 +264,100 @@ Formatversion: 1
         #                 strFmt("%1", exchangeRateMode),
         #                 strFmt("%1", _hoja.ProjId),
         #                 strFmt("%1", _hoja.Voucher),
-        #                 strFmt("%1", date2Str(_hoja.CreatedDate, 123, 2,2,2,2,4))
+        #                 strFmt("%1", date2Str(_hoja.CreatedDate, 123, 2,2,2,2,4)),
+        #                 strFmt("%1", reimbursableExpense),
+        #                 strFmt("%1", ownerAxUserId),
+        #                 strFmt("%1", ownerName)
         #              ]];
         #
         #    return conItem;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetMonthAbbrev
+        #// Devuelve el mes abreviado en castellano para plantillas de email.
+        #static server str buildExpenseSheetMonthAbbrev(date _date)
+        #{
+        #    int monthNo;
+        #    ;
+        #
+        #    monthNo = mthOfYr(_date);
+        #
+        #    switch (monthNo)
+        #    {
+        #        case 1:
+        #            return 'ENE';
+        #        case 2:
+        #            return 'FEB';
+        #        case 3:
+        #            return 'MAR';
+        #        case 4:
+        #            return 'ABR';
+        #        case 5:
+        #            return 'MAY';
+        #        case 6:
+        #            return 'JUN';
+        #        case 7:
+        #            return 'JUL';
+        #        case 8:
+        #            return 'AGO';
+        #        case 9:
+        #            return 'SEP';
+        #        case 10:
+        #            return 'OCT';
+        #        case 11:
+        #            return 'NOV';
+        #        case 12:
+        #            return 'DIC';
+        #    }
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetNotificationMessage
+        #// Devuelve el texto base del email segun el evento de la hoja de gastos.
+        #static server str buildExpenseSheetNotificationMessage(str _eventType, CRMHojaGastosId _hojaId)
+        #{
+        #    if (_eventType == 'ExpenseSheetApprovalRequested')
+        #        return strFmt('La hoja de gastos %1 esta lista para revision.', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetApproved')
+        #        return strFmt('La hoja de gastos %1 ha sido aprobada.', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetRejected')
+        #        return strFmt('La hoja de gastos %1 ha sido rechazada.', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetRejectionCancelled')
+        #        return strFmt('Se ha cancelado el rechazo de la hoja de gastos %1.', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetPaid')
+        #        return strFmt('La hoja de gastos %1 ha sido pagada.', _hojaId);
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetNotificationSubject
+        #// Devuelve el asunto del email segun el evento de la hoja de gastos.
+        #static server str buildExpenseSheetNotificationSubject(str _eventType, CRMHojaGastosId _hojaId)
+        #{
+        #    if (_eventType == 'ExpenseSheetApprovalRequested')
+        #        return strFmt('Hoja de gastos %1 pendiente de aprobacion', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetApproved')
+        #        return strFmt('Hoja de gastos %1 aprobada', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetRejected')
+        #        return strFmt('Hoja de gastos %1 rechazada', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetRejectionCancelled')
+        #        return strFmt('Hoja de gastos %1 con rechazo cancelado', _hojaId);
+        #
+        #    if (_eventType == 'ExpenseSheetPaid')
+        #        return strFmt('Hoja de gastos %1 pagada', _hojaId);
+        #
+        #    return '';
         #}
         #
       ENDSOURCE
@@ -66,8 +370,8 @@ Formatversion: 1
         #    int gastoTypeInt;
         #    ;
         #
-        #    processedByAIInt = _ticketHeader.ProcessedByAI;
-        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #    processedByAIInt = any2int(_ticketHeader.ProcessedByAI);
+        #    gastoTypeInt     = any2int(_ticketHeader.GastoType);
         #
         #    return [
         #            strFmt('%1', _ticketHeader.FileId),
@@ -77,7 +381,11 @@ Formatversion: 1
         #            strFmt('%1', date2Str(_docuRef.INDTransDate, 123, 2,2,2,2,4)),
         #            strFmt('%1', _docuRef.INDFilename),
         #            strFmt('%1', processedByAIInt),
-        #            strFmt('%1', gastoTypeInt)
+        #            strFmt('%1', gastoTypeInt),
+        #            strFmt('%1', date2Str(_ticketHeader.TicketDate, 123, 2,2,2,2,4)),
+        #            strFmt('%1', _ticketHeader.TicketTime),
+        #            strFmt('%1', _ticketHeader.CreatedByUserId),
+        #            strFmt('%1', INDCRMExpenseSheetService::getPersonaNameByUserId(_ticketHeader.CreatedByUserId))
         #           ];
         #}
         #
@@ -92,9 +400,9 @@ Formatversion: 1
         #    int gastoTypeInt;
         #    ;
         #
-        #    ticketStatusInt  = _ticketHeader.Status;
-        #    processedByAIInt = _ticketHeader.ProcessedByAI;
-        #    gastoTypeInt     = _ticketHeader.GastoType;
+        #    ticketStatusInt  = any2int(_ticketHeader.Status);
+        #    processedByAIInt = any2int(_ticketHeader.ProcessedByAI);
+        #    gastoTypeInt     = any2int(_ticketHeader.GastoType);
         #
         #    return [
         #            strFmt('%1', _ticketHeader.FileId),
@@ -105,8 +413,35 @@ Formatversion: 1
         #            strFmt('%1', _ticketHeader.TotalAmount),
         #            strFmt('%1', date2Str(_docuRef.INDTransDate, 123, 2,2,2,2,4)),
         #            strFmt('%1', _docuRef.INDFilename),
-        #            strFmt('%1', gastoTypeInt)
+        #            strFmt('%1', gastoTypeInt),
+        #            strFmt('%1', date2Str(_ticketHeader.TicketDate, 123, 2,2,2,2,4)),
+        #            strFmt('%1', _ticketHeader.TicketTime),
+        #            strFmt('%1', _ticketHeader.CreatedByUserId),
+        #            strFmt('%1', INDCRMExpenseSheetService::getPersonaNameByUserId(_ticketHeader.CreatedByUserId))
         #           ];
+        #}
+        #
+      ENDSOURCE
+      SOURCE #buildExpenseSheetWebLink
+        #// Construye el link del resolver web CRM para una hoja de gastos.
+        #static server str buildExpenseSheetWebLink(str _companyId, str _hojaGastosId, str _source = 'axapta')
+        #{
+        #    str webBaseUrl;
+        #    ;
+        #
+        #    webBaseUrl = INDDefaultParameters::find().CRMAppUrl;//APIURLInternalService;
+        #    webBaseUrl = strLRTrim(webBaseUrl);
+        #
+        #    while (strLen(webBaseUrl) > 0 && subStr(webBaseUrl, strLen(webBaseUrl), 1) == '/')
+        #        webBaseUrl = subStr(webBaseUrl, 1, strLen(webBaseUrl) - 1);
+        #
+        #    if (!webBaseUrl || !_companyId || !_hojaGastosId)
+        #        return '';
+        #
+        #    return webBaseUrl +
+        #           '/Gastos/ExpenseSheetLink?hojaGastosId=' + INDCRMExpenseSheetService::urlEncode(_hojaGastosId) +
+        #           '&targetCompanyId=' + INDCRMExpenseSheetService::urlEncode(_companyId) +
+        #           '&source=' + INDCRMExpenseSheetService::urlEncode(_source);
         #}
         #
       ENDSOURCE
@@ -130,6 +465,63 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #canExpenseSheetActorManageOwner
+        #// Valida que el actor recibido desde la web pueda gestionar al propietario de la hoja.
+        #static server boolean canExpenseSheetActorManageOwner(str 20 _actorUserId,
+        #                                                      CRMUserId _ownerCrmUserId)
+        #{
+        #    CRMUserId                  actorCrmUserId;
+        #    CRMUsuarioTable            actorUser;
+        #    CRMUsuarioTable            subordinateCrmUser;
+        #    INDPersonaTable            subordinatePersona;
+        #    str                        subordinateList;
+        #    container                  subordinateUsersCon;
+        #    str                        subordinateUserId;
+        #    int                        i;
+        #    ;
+        #
+        #    if (!_actorUserId || !_ownerCrmUserId)
+        #        return false;
+        #
+        #    actorCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(_actorUserId);
+        #    if (!actorCrmUserId || actorCrmUserId == _ownerCrmUserId)
+        #        return false;
+        #
+        #    actorUser = CRMUsuarioTable::Find(actorCrmUserId);
+        #    if (!actorUser.RecId)
+        #        return false;
+        #
+        #    subordinateList = actorUser.ListaSubordinadosByPerTable();
+        #    if (!subordinateList)
+        #        return false;
+        #
+        #    subordinateUsersCon = Global::str2ConKeepStrings(subordinateList, ',');
+        #    for (i = 1; i <= conLen(subordinateUsersCon); i++)
+        #    {
+        #        subordinateUserId = strLRTrim(strFmt('%1', conPeek(subordinateUsersCon, i)));
+        #        if (!subordinateUserId)
+        #            continue;
+        #
+        #        if (subordinateUserId == _ownerCrmUserId)
+        #            return true;
+        #
+        #        subordinateCrmUser = CRMUsuarioTable::Find(subordinateUserId);
+        #        if (subordinateCrmUser.UserId == _ownerCrmUserId)
+        #            return true;
+        #
+        #        subordinatePersona = INDPersonaTable::Find(subordinateUserId);
+        #        if (subordinatePersona.RecId)
+        #        {
+        #            subordinateCrmUser = subordinatePersona.getCRMUsuarioTable();
+        #            if (subordinateCrmUser.UserId == _ownerCrmUserId)
+        #                return true;
+        #        }
+        #    }
+        #
+        #    return false;
+        #}
+        #
+      ENDSOURCE
       SOURCE #createExpenseSheet
         #/*
         #    Method: indExpenseSheetCreate (createExpenseSheet)
@@ -140,10 +532,10 @@ Formatversion: 1
         #    Input _data (container):
         #      1) companyId (handled by INDCRMUtilityService::getCompany)
         #      2) headerIn (container)
-        #         - Mode 0/1: [axUserId, descr, currencyCode, exchRate, projId, expenseSheetStatus, exchangeRateMode]
+        #         - Mode 0/1: [axUserId, descr, currencyCode, exchRate, projId, expenseSheetStatus, exchangeRateMode, reimbursableExpense]
         #         - Mode 2  : at least [axUserId] (other fields ignored)
         #      3) linesIn (container of line containers)
-        #         - Each line: [transDateStr, typeValue, lineDescr, internacional, fileId, qty, price, lineProjId]
+        #         - Each line: [transDateStr, typeValue, lineDescr, internacional, fileId, qty, price, lineProjId, reimbursableExpense, currencyCode, amountMST, exchRate]
         #         - amount se calcula internamente como qty * price
         #      4) optionsIn (optional container): [mode, existingHojaGastosId]
         #         - mode: 0|1|2
@@ -167,7 +559,7 @@ Formatversion: 1
         #    CRMHojaGastosLine  line;
         #
         #    CRMUserId crmUserId;
-        #    UserId    axUserId;
+        #    str 20    axUserId;
         #
         #    str  descr;
         #    str  currencyCode;
@@ -175,8 +567,13 @@ Formatversion: 1
         #    str  projId;
         #    INDExpenseSheetStatus expenseSheetStatus;
         #    INDExchangeRateMode   exchangeRateMode;
+        #    INDReimbursableExpense reimbursableExpense;
+        #    str 16 expenseSheetStatusRaw;
+        #    str 16 exchangeRateModeRaw;
+        #    str 16 reimbursableExpenseRaw;
         #    boolean hasExpenseSheetStatus;
         #    boolean hasExchangeRateMode;
+        #    boolean hasReimbursableExpense;
         #
         #    // Line fields
         #    container lineIn;
@@ -189,6 +586,17 @@ Formatversion: 1
         #    real      qty;
         #    real      price;
         #    str       lineProjId;
+        #    INDReimbursableExpenseLines lineReimbursableExpense;
+        #    boolean   hasLineReimbursableExpense;
+        #    str 16    lineReimbursableExpenseRaw;
+        #    CurrencyCode lineCurrencyCode;
+        #    real      lineAmountMST;
+        #    boolean   hasLineAmountMST;
+        #    boolean hasEstadoComentarios;
+        #    str 32    lineAmountMSTRaw;
+        #    real      lineExchRate;
+        #    boolean   hasLineExchRate;
+        #    str 32    lineExchRateRaw;
         #
         #    CRMHojaGastosLine  existingFileLine;
         #    INDTicketInfoTable ticketHeader;
@@ -223,8 +631,10 @@ Formatversion: 1
         #    // Defaults
         #    mode                = #ModeCreateHeaderAndLines;
         #    existingHojaGastosId = '';
-        #    hasExpenseSheetStatus = false;
-        #    hasExchangeRateMode   = false;
+        #    hasExpenseSheetStatus  = false;
+        #    hasExchangeRateMode    = false;
+        #    hasReimbursableExpense = false;
+        #    hasEstadoComentarios   = false;
         #
         #    if (conLen(optionsIn) >= 1)
         #        mode = conPeek(optionsIn, 1);
@@ -269,28 +679,43 @@ Formatversion: 1
         #
         #        if (conLen(headerIn) >= 6)
         #        {
-        #            expenseSheetStatus   = conPeek(headerIn, 6);
-        #            hasExpenseSheetStatus = true;
+        #            expenseSheetStatusRaw = strLwr(strLRTrim(strFmt('%1', conPeek(headerIn, 6))));
+        #            if (expenseSheetStatusRaw == '0' || str2Int(expenseSheetStatusRaw) != 0)
+        #            {
+        #                expenseSheetStatus   = str2Int(expenseSheetStatusRaw);
+        #                hasExpenseSheetStatus = true;
+        #            }
         #        }
         #
         #        if (conLen(headerIn) >= 7)
         #        {
-        #            exchangeRateMode   = conPeek(headerIn, 7);
-        #            hasExchangeRateMode = true;
+        #            exchangeRateModeRaw = strLwr(strLRTrim(strFmt('%1', conPeek(headerIn, 7))));
+        #            if (exchangeRateModeRaw == '0' || str2Int(exchangeRateModeRaw) != 0)
+        #            {
+        #                exchangeRateMode   = str2Int(exchangeRateModeRaw);
+        #                hasExchangeRateMode = true;
+        #            }
+        #        }
+        #
+        #        if (conLen(headerIn) >= 8)
+        #        {
+        #            reimbursableExpenseRaw = strLwr(strLRTrim(strFmt('%1', conPeek(headerIn, 8))));
+        #            if (reimbursableExpenseRaw == '0' || str2Int(reimbursableExpenseRaw) != 0)
+        #            {
+        #                reimbursableExpense = str2Int(reimbursableExpenseRaw);
+        #                if (INDCRMExpenseSheetService::isValidReimbursableExpense(reimbursableExpense))
+        #                    hasReimbursableExpense = true;
+        #                else
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense invalido: %1.', reimbursableExpense), conNull()), conNull()];
+        #            }
         #        }
         #
         #        if (!descr)
         #            return [INDCRMUtilityService::buildHeader(false, 'Description es obligatorio.', conNull()), conNull()];
         #
-        #        if (!currencyCode)
-        #            return [INDCRMUtilityService::buildHeader(false, 'CurrencyCode es obligatorio.', conNull()), conNull()];
-        #
-        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
-        #
-        #        if (currencyCode == 'EUR')
-        #            exchRate = 100.0;
-        #        else if (exchRate <= 0)
-        #            return [INDCRMUtilityService::buildHeader(false, 'ExchRate debe ser mayor que 0 cuando CurrencyCode no es EUR.', conNull()), conNull()];
+        #        //MMS - Ajustes CRM - 2026.06.26
+        #        // CurrencyCode de entrada queda como compatibilidad para la divisa por defecto de lineas.
+        #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #        // Strict: header-only should not receive lines
         #        if (mode == #ModeCreateHeaderOnly && conLen(linesIn) > 0)
@@ -305,7 +730,8 @@ Formatversion: 1
         #        changecompany(companyId)
         #        {
         #            // Convert AX user -> CRM user
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #
         #            if (!crmUserId)
         #                return [INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
@@ -341,6 +767,19 @@ Formatversion: 1
         #            }
         #            else
         #            {
+        #                if (currencyCode)
+        #                {
+        #                currencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
+        #                if (!currencyCode)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, 'CurrencyCode no existe.', conNull()), conNull()];
+        #                }
+        #
+        #                if (currencyCode == CompanyInfo::standardCurrency())
+        #                    exchRate = 100.0;
+        #                }
+        #
         #                header.clear();
         #                header.initValue();
         #
@@ -351,8 +790,7 @@ Formatversion: 1
         #                header.initFromUsuarioTable();
         #
         #                header.Description  = descr;
-        #                header.CurrencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
-        #                header.ExchRate     = exchRate;
+        #                header.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
         #                header.ProjId       = projId;
         #
         #                header.DestinoId    = "GENERALES";
@@ -364,11 +802,24 @@ Formatversion: 1
         #                if (hasExchangeRateMode)
         #                    header.ExchangeRateMode = exchangeRateMode;
         #
+        #                if (hasReimbursableExpense)
+        #                    header.ReimbursableExpense = reimbursableExpense;
+        #
         #                // Must be open sheet
         #                header.Voucher      = '';
         #
         #                // Audit
         #                header.INDCreatedByUserId = axUserId;
+        #
+        #                msg = INDCRMExpenseSheetService::validateExpenseSheetHeaderForApi(header); //MMS - Ajustes CRM - 2026.06.29
+        #                if (msg)
+        #                {
+        #                    ttsabort;
+        #                    if (numberSeq)
+        #                        numberSeq.abort();
+        #
+        #                    return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #                }
         #
         #                header.insert();
         #            }
@@ -389,7 +840,7 @@ Formatversion: 1
         #                        if (numberSeq)
         #                            numberSeq.abort();
         #
-        #                        return [INDCRMUtilityService::buildHeader(false, 'Linea invalida. Se esperan 8 campos por linea.', conNull()), conNull()];
+        #                        return [INDCRMUtilityService::buildHeader(false, 'Linea invalida. Se esperan al menos 8 campos por linea.', conNull()), conNull()];
         #                    }
         #
         #                    transDateStr  = conPeek(lineIn, 1);
@@ -400,6 +851,60 @@ Formatversion: 1
         #                    qty           = conPeek(lineIn, 6);
         #                    price         = conPeek(lineIn, 7);
         #                    lineProjId    = conPeek(lineIn, 8);
+        #                    hasLineReimbursableExpense = false;
+        #                    lineCurrencyCode = '';
+        #                    hasLineAmountMST = false;
+        #                    hasLineExchRate  = false;
+        #
+        #                    if (conLen(lineIn) >= 9)
+        #                    {
+        #                        lineReimbursableExpenseRaw = strLwr(strLRTrim(strFmt("%1", conPeek(lineIn, 9))));
+        #                        if (lineReimbursableExpenseRaw == '0' || str2Int(lineReimbursableExpenseRaw) != 0)
+        #                        {
+        #                            lineReimbursableExpense = str2Int(lineReimbursableExpenseRaw);
+        #                            if (!INDCRMExpenseSheetService::isValidLineReimbursableExpense(lineReimbursableExpense))
+        #                            {
+        #                                if (appl.ttsLevel() > 0)
+        #                                    ttsabort;
+        #                                if (numberSeq)
+        #                                    numberSeq.abort();
+        #
+        #                                return [INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense de linea invalido: %1.', lineReimbursableExpense), conNull()), conNull()];
+        #                            }
+        #
+        #                            hasLineReimbursableExpense = true;
+        #                        }
+        #                    }
+        #
+        #                    if (conLen(lineIn) >= 10)
+        #                    {
+        #                        lineCurrencyCode = conPeek(lineIn, 10);
+        #                        if (lineCurrencyCode)
+        #                        {
+        #                            lineCurrencyCode = strUpr(strLRTrim(lineCurrencyCode));
+        #                            lineCurrencyCode = INDCRMUtilityService::resolveCurrencyCode(lineCurrencyCode);
+        #                        }
+        #                    }
+        #
+        #                    if (conLen(lineIn) >= 11)
+        #                    {
+        #                        lineAmountMSTRaw = strLwr(strLRTrim(strFmt("%1", conPeek(lineIn, 11))));
+        #                        if (lineAmountMSTRaw && lineAmountMSTRaw != 'null')
+        #                        {
+        #                            lineAmountMST = conPeek(lineIn, 11);
+        #                            hasLineAmountMST = true;
+        #                        }
+        #                    }
+        #
+        #                    if (conLen(lineIn) >= 12)
+        #                    {
+        #                        lineExchRateRaw = strLwr(strLRTrim(strFmt("%1", conPeek(lineIn, 12))));
+        #                        if (lineExchRateRaw && lineExchRateRaw != 'null')
+        #                        {
+        #                            lineExchRate = conPeek(lineIn, 12);
+        #                            hasLineExchRate = true;
+        #                        }
+        #                    }
         #
         #                    if (!INDCRMExpenseSheetService::isValidGastoType(typeValue))
         #                    {
@@ -492,15 +997,49 @@ Formatversion: 1
         #                    line.Price         = price;
         #                    line.Qty           = qty;
         #                    line.Amount        = line.CalcAmount();
+        #                    line.Currency      = lineCurrencyCode ? lineCurrencyCode : (currencyCode ? currencyCode : header.CurrencyCode);
+        #
+        #                    if (hasLineExchRate)
+        #                        line.ExchRate = lineExchRate;
+        #                    else if (line.Currency == CompanyInfo::standardCurrency())
+        #                        line.ExchRate = 100;
+        #                    else if (currencyCode && line.Currency == currencyCode && exchRate > 0)
+        #                        line.ExchRate = exchRate;
+        #                    else if (line.Currency == header.CurrencyCode)
+        #                        line.ExchRate = header.ExchRate;
+        #                    else
+        #                        line.ExchRate = 0;
+        #                    if (hasLineAmountMST)
+        #                        line.AmountMST = lineAmountMST;
+        #                    line.normalizeCurrencyAmounts(hasLineAmountMST);
+        #
+        #                    if (hasLineReimbursableExpense)
+        #                        line.ReimbursableExpense = any2int(lineReimbursableExpense);
         #
         #                    // Prefer line project else header project
         #                    if (lineProjId)
-        #                        line.ProjId = lineProjId;
-        #                    else
-        #                        line.ProjId = header.ProjId;
+        #                    {
+        #                        line.ProjId       = lineProjId;
+        #                        line.ProjIdHornos = lineProjId;
+        #                    }
+        #                    else if (!header.isVariousProjectDefault())
+        #                    {
+        #                        line.ProjId       = header.ProjId;
+        #                        line.ProjIdHornos = header.ProjId;
+        #                    }
         #
         #                    // Audit
         #                    line.INDCreatedByUserId = axUserId;
+        #
+        #                    msg = INDCRMExpenseSheetService::validateExpenseSheetLineForApi(line); //MMS - Ajustes CRM - 2026.06.29
+        #                    if (msg)
+        #                    {
+        #                        ttsabort;
+        #                        if (numberSeq)
+        #                            numberSeq.abort();
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: %2', i, msg), conNull()), conNull()];
+        #                    }
         #
         #                    line.insert();
         #
@@ -584,7 +1123,7 @@ Formatversion: 1
         #    Input _data (container):
         #      1) companyId
         #      2) headerIn
-        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional)]
+        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional), ticketDate(optional), ticketTime(optional)]
         #         - Mode 2  : at least [axUserId]
         #      3) linesIn (container of line containers)
         #         - Each line: [lineDescr, qty, price, lineTotal(optional)]
@@ -607,7 +1146,7 @@ Formatversion: 1
         #    int                lineCount;
         #    int                startLine;
         #
-        #    UserId             axUserId;
+        #    str 20             axUserId;
         #    CRMUserId          crmUserId;
         #    INDFileId          existingFileId;
         #
@@ -619,6 +1158,9 @@ Formatversion: 1
         #    str                comentario;
         #    str                urlFile;
         #    str                fileName;
+        #    str                ticketDateStr;
+        #    date               ticketDate;
+        #    int                ticketTime;
         #
         #    str                ocrJson;
         #    str                normalizedJson;
@@ -627,6 +1169,7 @@ Formatversion: 1
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
+        #    boolean            hasLineTotal;
         #    int                processedByAI;
         #    int                gastoType;
         #    boolean            hasHeaderTotalAmount;
@@ -634,6 +1177,8 @@ Formatversion: 1
         #    boolean            hasGastoType;
         #    boolean            hasOcrJson;
         #    boolean            hasNormalizedJson;
+        #    boolean            hasTicketDate;
+        #    boolean            hasTicketTime;
         #
         #    INDTicketInfoTable ticketHeader;
         #    INDTicketInfoLine  ticketLine;
@@ -668,6 +1213,8 @@ Formatversion: 1
         #    hasGastoType        = false;
         #    hasOcrJson          = false;
         #    hasNormalizedJson   = false;
+        #    hasTicketDate       = false;
+        #    hasTicketTime       = false;
         #
         #    if (conLen(optionsIn) >= 1)
         #        mode = conPeek(optionsIn, 1);
@@ -740,6 +1287,25 @@ Formatversion: 1
         #            hasNormalizedJson = true;
         #        }
         #
+        #        if (conLen(headerIn) >= 12)
+        #        {
+        #            ticketDateStr = conPeek(headerIn, 12);
+        #            hasTicketDate = true;
+        #
+        #            if (ticketDateStr)
+        #            {
+        #                ticketDate = INDCRMUtilityService::parseYmdDate(ticketDateStr);
+        #                if (!ticketDate)
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('TicketDate invalida (yyyymmdd): %1', ticketDateStr), conNull()), conNull()];
+        #            }
+        #        }
+        #
+        #        if (conLen(headerIn) >= 13)
+        #        {
+        #            ticketTime = conPeek(headerIn, 13);
+        #            hasTicketTime = true;
+        #        }
+        #
         #        hasHeaderTotalAmount = true;
         #
         #        if (!descr)
@@ -767,6 +1333,13 @@ Formatversion: 1
         #            return [INDCRMUtilityService::buildHeader(false, 'Modo CreateHeaderOnly: no se deben enviar lineas.', conNull()), conNull()];
         #    }
         #
+        #    if (hasTicketTime &&
+        #        (ticketTime < 0
+        #      || ticketTime > 86399))
+        #    {
+        #        return [INDCRMUtilityService::buildHeader(false, strFmt('TicketTime invalido: %1 (segundos 0..86399).', ticketTime), conNull()), conNull()];
+        #    }
+        #
         #    if (!axUserId)
         #        return [INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull()), conNull()];
         #
@@ -777,7 +1350,9 @@ Formatversion: 1
         #        changecompany(companyId)
         #        {
         #            ttsbegin;
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #
         #            if (!crmUserId)
         #                return [INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
         #
@@ -826,7 +1401,22 @@ Formatversion: 1
         #                ticketHeader.TotalAmount     = totalAmount;
         #                ticketHeader.GastoType       = hasGastoType ? gastoType : 0;
         #                ticketHeader.ProcessedByAI   = processedByAI;
+        #
+        #                if (hasTicketDate && ticketDate)
+        #                    ticketHeader.TicketDate = ticketDate;
+        #
+        #                if (hasTicketTime)
+        #                    ticketHeader.TicketTime = ticketTime;
+        #
         #                ticketHeader.CreatedByUserId = axUserId;
+        #
+        #                msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #                if (msg)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #                }
+        #
         #                ticketHeader.insert();
         #
         #                //Actualizo referencia en DocuRef
@@ -860,8 +1450,12 @@ Formatversion: 1
         #                    price     = conPeek(lineIn, 3);
         #
         #                    lineTotal = qty * price;
+        #                    hasLineTotal = false;
         #                    if (conLen(lineIn) >= 4)
+        #                    {
         #                        lineTotal = conPeek(lineIn, 4);
+        #                        hasLineTotal = true;
+        #                    }
         #
         #                    if (!lineDescr)
         #                    {
@@ -869,19 +1463,33 @@ Formatversion: 1
         #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Description es obligatorio en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (qty <= 0)
+        #                    if (qty < 0)
         #                    {
         #                        ttsabort;
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty debe ser mayor que 0 en linea %1.', i), conNull()), conNull()];
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty no puede ser negativo en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (price <= 0)
+        #                    if (price == 0)
         #                    {
         #                        ttsabort;
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price debe ser mayor que 0 en linea %1.', i), conNull()), conNull()];
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price no puede ser 0 en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if(lineTotal <= 0)
+        #                    if (!hasLineTotal)
+        #                    {
+        #                        if (qty == 0 && price < 0)
+        #                            lineTotal = price;
+        #                        else
+        #                            lineTotal = qty * price;
+        #                    }
+        #
+        #                    if (qty == 0 && lineTotal >= 0)
+        #                    {
+        #                        ttsabort;
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty cero solo se permite en descuentos con total negativo en linea %1.', i), conNull()), conNull()];
+        #                    }
+        #
+        #                    if(lineTotal == 0 && qty > 0)
         #                        lineTotal = qty * price;
         #
         #                    ticketLine.clear();
@@ -901,13 +1509,20 @@ Formatversion: 1
         #            }
         #
         #            ticketHeader = INDTicketInfoTable::findByFileId(ticketHeader.FileId,true);
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
         #
         #            if (hasProcessedByAI)
         #                ticketHeader.ProcessedByAI = processedByAI;
         #
         #            if (mode == #ModeCreateHeaderOnly && hasHeaderTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #            }
         #
         #            ticketHeader.update();
         #
@@ -989,7 +1604,7 @@ Formatversion: 1
         #    int                lineCount;
         #    int                startLine;
         #
-        #    UserId             axUserId;
+        #    str 20             axUserId;
         #    CRMUserId          crmUserId;
         #    INDFileId          existingFileId;
         #
@@ -1006,6 +1621,7 @@ Formatversion: 1
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
+        #    boolean            hasLineTotal;
         #    int                gastoType;
         #    boolean            hasHeaderTotalAmount;
         #    boolean            hasGastoType;
@@ -1104,7 +1720,7 @@ Formatversion: 1
         #        if (!transDate)
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
         #
-        #        currencyCode = strUpr(strLTrim(strRTrim(currencyCode)));
+        #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
         #        if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
         #            return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
@@ -1122,7 +1738,8 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #            if (!crmUserId)
         #                return [INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
         #
@@ -1168,6 +1785,14 @@ Formatversion: 1
         #                ticketHeader.TotalAmount     = totalAmount;
         #                ticketHeader.GastoType       = hasGastoType ? gastoType : 0;
         #                ticketHeader.CreatedByUserId = axUserId;
+        #
+        #                msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #                if (msg)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #                }
+        #
         #                ticketHeader.insert();
         #                ttscommit;
         #
@@ -1206,8 +1831,12 @@ Formatversion: 1
         #                    price     = conPeek(lineIn, 3);
         #
         #                    lineTotal = qty * price;
+        #                    hasLineTotal = false;
         #                    if (conLen(lineIn) >= 4)
+        #                    {
         #                        lineTotal = conPeek(lineIn, 4);
+        #                        hasLineTotal = true;
+        #                    }
         #
         #                    if (!lineDescr)
         #                    {
@@ -1215,19 +1844,33 @@ Formatversion: 1
         #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Description es obligatorio en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (qty <= 0)
+        #                    if (qty < 0)
         #                    {
         #
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty debe ser mayor que 0 en linea %1.', i), conNull()), conNull()];
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty no puede ser negativo en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if (price <= 0)
+        #                    if (price == 0)
         #                    {
         #
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price debe ser mayor que 0 en linea %1.', i), conNull()), conNull()];
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price no puede ser 0 en linea %1.', i), conNull()), conNull()];
         #                    }
         #
-        #                    if(lineTotal <= 0)
+        #                    if (!hasLineTotal)
+        #                    {
+        #                        if (qty == 0 && price < 0)
+        #                            lineTotal = price;
+        #                        else
+        #                            lineTotal = qty * price;
+        #                    }
+        #
+        #                    if (qty == 0 && lineTotal >= 0)
+        #                    {
+        #
+        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty cero solo se permite en descuentos con total negativo en linea %1.', i), conNull()), conNull()];
+        #                    }
+        #
+        #                    if(lineTotal == 0 && qty > 0)
         #                        lineTotal = qty * price;
         #
         #                    ticketLine.clear();
@@ -1249,10 +1892,17 @@ Formatversion: 1
         #
         #            ttsbegin;
         #            ticketHeader = INDTicketInfoTable::findByFileId(ticketHeader.FileId,true);
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
         #
         #            if (mode == #ModeCreateHeaderOnly && hasHeaderTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #            }
         #
         #            ticketHeader.update();
         #
@@ -1319,13 +1969,14 @@ Formatversion: 1
         #static server container createExpenseSheetTicketLine(container _data)
         #{
         #    DataAreaId         companyId;
-        #    UserId             axUserId;
+        #    str 20             axUserId;
         #    CRMUserId          crmUserId;
         #    INDFileId          fileId;
         #    str                lineDescr;
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
+        #    boolean            hasLineTotal;
         #    int                startLine;
         #    str                msg;
         #
@@ -1347,9 +1998,13 @@ Formatversion: 1
         #    qty       = conPeek(_data, 5);
         #    price     = conPeek(_data, 6);
         #    lineTotal = qty * price;
+        #    hasLineTotal = false;
         #
         #    if (conLen(_data) >= 7)
+        #    {
         #        lineTotal = conPeek(_data, 7);
+        #        hasLineTotal = true;
+        #    }
         #
         #    if (!axUserId)
         #        return INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull());
@@ -1360,13 +2015,24 @@ Formatversion: 1
         #    if (!lineDescr)
         #        return INDCRMUtilityService::buildHeader(false, 'Description es obligatorio.', conNull());
         #
-        #    if (qty <= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Qty debe ser mayor que 0.', conNull());
+        #    if (qty < 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty no puede ser negativo.', conNull());
         #
-        #    if (price <= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Price debe ser mayor que 0.', conNull());
+        #    if (price == 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Price no puede ser 0.', conNull());
         #
-        #    if (lineTotal <= 0)
+        #    if (!hasLineTotal)
+        #    {
+        #        if (qty == 0 && price < 0)
+        #            lineTotal = price;
+        #        else
+        #            lineTotal = qty * price;
+        #    }
+        #
+        #    if (qty == 0 && lineTotal >= 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty cero solo se permite en descuentos con total negativo.', conNull());
+        #
+        #    if (lineTotal == 0 && qty > 0)
         #        lineTotal = qty * price;
         #
         #    startLine = infolog.line();
@@ -1375,7 +2041,8 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #            if (!crmUserId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
         #
@@ -1402,7 +2069,15 @@ Formatversion: 1
         #            ticketLine.CreatedByUserId = axUserId;
         #            ticketLine.insert();
         #
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #            }
+        #
         #            ticketHeader.update();
         #
         #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
@@ -1457,7 +2132,7 @@ Formatversion: 1
         #    DataAreaId       companyId;
         #
         #    CRMUserId        crmUserId;
-        #    UserId           axUserId;
+        #    str 20           axUserId;
         #    CRMHojaGastosId  hojaId;
         #    RecId            lineRecId;
         #    int              deleteWholeSheet;
@@ -1497,7 +2172,8 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #            crmUserId    = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                           //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #            if (!crmUserId)
         #                return [INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
         #
@@ -1605,7 +2281,7 @@ Formatversion: 1
         #static server container deleteExpenseSheetTicket(container _data)
         #{
         #    DataAreaId          companyId;
-        #    UserId              axUserId;
+        #    str 20              axUserId;
         #    CRMUserId           crmUserId;
         #    INDFileId           fileId;
         #    RecId               lineRecId;
@@ -1642,7 +2318,8 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #            if (!crmUserId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
         #
@@ -1674,7 +2351,15 @@ Formatversion: 1
         #
         #                ticketLine.delete();
         #
-        #                ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #                ticketHeader.calcTotalAmount();
+        #
+        #                msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #                if (msg)
+        #                {
+        #                    ttsabort;
+        #                    return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #                }
+        #
         #                ticketHeader.update();
         #
         #                INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
@@ -1756,7 +2441,7 @@ Formatversion: 1
         #static server container deleteExpenseSheetTicketLine(container _data)
         #{
         #    DataAreaId          companyId;
-        #    UserId              axUserId;
+        #    str 20              axUserId;
         #    CRMUserId           crmUserId;
         #    INDFileId           fileId;
         #    RecId               lineRecId;
@@ -1791,7 +2476,8 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #            if (!crmUserId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
         #
@@ -1821,7 +2507,15 @@ Formatversion: 1
         #
         #            ticketLine.delete();
         #
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #            }
+        #
         #            ticketHeader.update();
         #
         #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
@@ -1904,18 +2598,26 @@ Formatversion: 1
         #{
         #    DataAreaId          companyId;
         #    CRMUserId           crmUserId;
-        #    UserId              axUserId;
+        #    str 20              axUserId;
         #    CRMHojaGastosId     hojaId;
         #
         #    CRMHojaGastosTable  header;
+        #    CRMHojaGastosTable  debugHeader;
+        #    CRMUsuarioTable     ownerUser;
+        #    str                 ownerAxUserId;
+        #    str                 ownerName;
         #    CRMHojaGastosLine   line;
         #    Amount              monto;
         #    Price               price;
         #    container           headerOut;
         #    container           linesOut = conNull();
         #    container           lineRow;
-        #    int                 startLine,gastoTypeInt,expenseSheetStatus,exchangeRateMode;
+        #    int                 startLine,gastoTypeInt,expenseSheetStatus,exchangeRateMode,reimbursableExpense,lineReimbursableExpense;
         #    str                 msg;
+        #    str                 debugSheetExists;
+        #    str                 debugSheetUserId;
+        #    str                 debugSheetCreatedByUserId;
+        #    str                 debugSheetStatus;
         #    ;
         #
         #    companyId = INDCRMUtilityService::getCompany(_data);
@@ -1932,24 +2634,70 @@ Formatversion: 1
         #    changecompany(companyId)
         #    {
         #
-        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #        crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #
-        #        if(!crmUserId)
-        #            crmUserId = CRMUsuarioTable::Find(axUserId).UserId;
+        #        //if(!crmUserId)
+        #            //crmUserId = CRMUsuarioTable::Find(axUserId).UserId;
         #
         #        if (!crmUserId || !hojaId)
-        #            return [INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull()), conNull()];
+        #            return [INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.',
+        #                                                   [
+        #                                                    'stage=missing-required',
+        #                                                    strFmt('companyId=%1', companyId),
+        #                                                    strFmt('axUserId=%1', axUserId),
+        #                                                    strFmt('crmUserId=%1', crmUserId),
+        #                                                    strFmt('hojaGastosId=%1', hojaId)
+        #                                                   ]), conNull()];
+        #
+        #        debugSheetExists = '0';
+        #        debugSheetUserId = '';
+        #        debugSheetCreatedByUserId = '';
+        #        debugSheetStatus = '';
+        #
+        #        // Diagnostic lookup: detects whether the sheet exists but belongs to another CRM user.
+        #        select firstonly debugHeader
+        #            where debugHeader.HojaGastosId == hojaId;
+        #
+        #        if (debugHeader.RecId)
+        #        {
+        #            debugSheetExists = '1';
+        #            debugSheetUserId = debugHeader.UserId;
+        #            debugSheetCreatedByUserId = debugHeader.INDCreatedByUserId;
+        #            debugSheetStatus = strFmt('%1', any2int(debugHeader.ExpenseSheetStatus));
+        #        }
         #
         #        select firstonly header
         #            where header.UserId       == crmUserId
         #               && header.HojaGastosId == hojaId;
         #
         #        if (!header.RecId)
-        #            return [INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull()), conNull()];
+        #            return [INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.',
+        #                                                   [
+        #                                                    'stage=detail-access',
+        #                                                    'rule=header.UserId==crmUserId&&header.HojaGastosId==hojaId',
+        #                                                    strFmt('companyId=%1', companyId),
+        #                                                    strFmt('axUserId=%1', axUserId),
+        #                                                    strFmt('crmUserId=%1', crmUserId),
+        #                                                    strFmt('hojaGastosId=%1', hojaId),
+        #                                                    strFmt('sheetExists=%1', debugSheetExists),
+        #                                                    strFmt('sheetUserId=%1', debugSheetUserId),
+        #                                                    strFmt('sheetCreatedBy=%1', debugSheetCreatedByUserId),
+        #                                                    strFmt('sheetStatus=%1', debugSheetStatus)
+        #                                                   ]), conNull()];
         #
         #        monto               = header.TotalAmount();
-        #        exchangeRateMode    = header.ExchangeRateMode;
-        #        expenseSheetStatus  = header.ExpenseSheetStatus;
+        #        exchangeRateMode    = any2int(header.ExchangeRateMode);
+        #        expenseSheetStatus  = any2int(header.ExpenseSheetStatus);
+        #        reimbursableExpense = any2int(header.ReimbursableExpense);
+        #        // Resuelve el propietario para exponerlo al detalle web sin cambiar indices anteriores.
+        #        ownerUser           = CRMUsuarioTable::Find(header.UserId);
+        #        ownerAxUserId       = header.INDCreatedByUserId;
+        #        if (!ownerAxUserId)
+        #            ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(header.UserId);
+        #        ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ownerAxUserId ? ownerAxUserId : header.UserId);
+        #        if (!ownerName)
+        #            ownerName = ownerUser.Name;
         #
         #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK',
         #                                                     [
@@ -1964,28 +2712,38 @@ Formatversion: 1
         #                                                      strFmt("%1", exchangeRateMode),
         #                                                      strFmt("%1", header.ProjId),
         #                                                      strFmt("%1", header.Voucher),
-        #                                                      strFmt("%1", date2Str(header.CreatedDate, 123, 2,2,2,2,4))
+        #                                                      strFmt("%1", date2Str(header.CreatedDate, 123, 2,2,2,2,4)),
+        #                                                      strFmt("%1", reimbursableExpense),
+        #                                                      strFmt("%1", ownerUser.Name),
+        #                                                      strFmt("%1", ownerAxUserId),
+        #                                                      strFmt("%1", ownerName)
         #                                                     ]);
         #
         #        while select line
+        #        order by createdDate DESC
         #            where line.UserId       == crmUserId
         #               && line.HojaGastosId == hojaId
         #        {
-        #             gastoTypeInt = line.Type;
+        #             gastoTypeInt = any2int(line.Type);
         #             price        = line.Price;
         #             monto        = line.Amount;
+        #             lineReimbursableExpense = any2int(line.ReimbursableExpense);
         #
         #             lineRow = [
         #                         strFmt("%1", line.RecId),
         #                         strFmt("%1", date2Str(line.TransDate, 123, 2,2,2,2,4)),
         #                         strFmt("%1", gastoTypeInt),
         #                         strFmt("%1", line.Description ? line.Description : enum2str(line.Type)),
-        #                         strFmt("%1", line.Internacional),
+        #                         strFmt("%1", any2int(line.Internacional)),
         #                         strFmt("%1", line.FileId),
         #                         strFmt("%1", line.Price),
         #                         strFmt("%1", line.Qty),
         #                         strFmt("%1", monto),
-        #                         strFmt("%1", line.ProjId)
+        #                         strFmt("%1", line.ProjIdHornos),
+        #                         strFmt("%1", lineReimbursableExpense),
+        #                         strFmt("%1", Currency::find(line.Currency ? line.Currency : header.CurrencyCode).CurrencyCodeISO),
+        #                         strFmt("%1", line.AmountMST),
+        #                         strFmt("%1", line.ExchRate)
         #                       ];
         #
         #            linesOut = conIns(linesOut, conLen(linesOut) + 1, lineRow);
@@ -1999,21 +2757,145 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #getExpenseSheetNotificationRecipients
+        #// Resuelve los destinatarios para los eventos de email de hojas de gastos.
+        #// Entrada: [CompanyId, HojaGastosId, EventType, ActorAxUserId].
+        #static server container getExpenseSheetNotificationRecipients(container _data)
+        #{
+        #    DataAreaId         companyId;
+        #    CRMHojaGastosId    hojaId;
+        #    str                eventType;
+        #    str 20             actorAxUserId;
+        #    CRMUserId          actorCrmUserId;
+        #    CRMUserId          ownerCrmUserId;
+        #    CRMUserId          recipientCrmUserId;
+        #    CRMUserId          managerCrmUserId;
+        #    container          managerCrmUserIds = conNull();
+        #    CRMHojaGastosTable header;
+        #    container          recipientsCon = conNull();
+        #    container          recipientRow;
+        #    str                recipientEmail;
+        #    str                recipientName;
+        #    str                recipientRole;
+        #    int                i;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #    if (!companyId)
+        #        return [INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull()), conNull()];
+        #
+        #    if (conLen(_data) < 4)
+        #        return [INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan CompanyId, HojaGastosId, EventType y ActorAxUserId.', conNull()), conNull()];
+        #
+        #    hojaId        = conPeek(_data, 2);
+        #    eventType     = conPeek(_data, 3);
+        #    actorAxUserId = conPeek(_data, 4);
+        #
+        #    changecompany(companyId)
+        #    {
+        #        header = CRMHojaGastosTable::Find(hojaId);
+        #        if (!header.RecId)
+        #            return [INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull()), conNull()];
+        #
+        #        ownerCrmUserId = header.UserId;
+        #        if (!ownerCrmUserId)
+        #            return [INDCRMUtilityService::buildHeader(false, 'Usuario CRM propietario de la hoja no encontrado.', conNull()), conNull()];
+        #
+        #        if (actorAxUserId)
+        #            actorCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(actorAxUserId);
+        #
+        #        if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType))
+        #        {
+        #            // Solicitud de aprobacion: reciben todas las jefaturas directas del propietario.
+        #            // Tambien cubre deshacer rechazo/aprobacion cuando la hoja vuelve a InReview.
+        #            managerCrmUserIds = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserIds(ownerCrmUserId);
+        #            if (conLen(managerCrmUserIds) == 0)
+        #                return [INDCRMUtilityService::buildHeader(false, 'No se encontro jefatura para el propietario de la hoja.', conNull()), conNull()];
+        #
+        #            recipientRole      = 'Approver';
+        #            for (i = 1; i <= conLen(managerCrmUserIds); i++)
+        #            {
+        #                managerCrmUserId  = conPeek(managerCrmUserIds, i);
+        #                recipientCrmUserId = managerCrmUserId;
+        #
+        #                if (!recipientCrmUserId)
+        #                    continue;
+        #
+        #                if (actorCrmUserId && actorCrmUserId == recipientCrmUserId)
+        #                    continue;
+        #
+        #                recipientEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(recipientCrmUserId);
+        #                recipientName  = INDCRMExpenseSheetService::getPersonaNameByUserId(recipientCrmUserId);
+        #
+        #                if (recipientEmail)
+        #                {
+        #                    recipientRow = [recipientEmail, recipientName, recipientRole, strFmt('%1', recipientCrmUserId)];
+        #                    recipientsCon = conIns(recipientsCon, conLen(recipientsCon) + 1, recipientRow);
+        #                }
+        #            }
+        #        }
+        #        else
+        #        {
+        #            if (!actorCrmUserId)
+        #                return [INDCRMUtilityService::buildHeader(false, 'Usuario CRM actor no encontrado.', conNull()), conNull()];
+        #
+        #            if (eventType == 'ExpenseSheetApproved' ||
+        #                eventType == 'ExpenseSheetRejected' ||
+        #                eventType == 'ExpenseSheetPaid')
+        #            {
+        #                // Cambio final de estado: recibe el propietario o creador de la hoja segun el evento.
+        #                if (eventType == 'ExpenseSheetPaid' && header.INDCreatedByUserId)
+        #                    recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(header.INDCreatedByUserId);
+        #                else
+        #                    recipientCrmUserId = ownerCrmUserId;
+        #
+        #                recipientRole = 'Owner';
+        #            }
+        #            else
+        #            {
+        #                return [INDCRMUtilityService::buildHeader(false, 'EventType no soportado.', conNull()), conNull()];
+        #            }
+        #
+        #        if (!recipientCrmUserId)
+        #            return [INDCRMUtilityService::buildHeader(false, 'Usuario CRM destinatario no encontrado.', conNull()), conNull()];
+        #
+        #        if (actorCrmUserId && actorCrmUserId == recipientCrmUserId)
+        #            return [INDCRMUtilityService::buildHeader(false, 'No se requiere email para hojas autogestionadas.', conNull()), conNull()];
+        #
+        #        recipientEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(recipientCrmUserId);
+        #        recipientName  = INDCRMExpenseSheetService::getPersonaNameByUserId(recipientCrmUserId);
+        #
+        #        if (recipientEmail)
+        #        {
+        #            recipientRow = [recipientEmail, recipientName, recipientRole, strFmt('%1', recipientCrmUserId)];
+        #            recipientsCon = conIns(recipientsCon, conLen(recipientsCon) + 1, recipientRow);
+        #        }
+        #    }
+        #    }
+        #
+        #    if (conLen(recipientsCon) == 0)
+        #        return [INDCRMUtilityService::buildHeader(false, 'Sin destinatarios con email.', conNull()), conNull()];
+        #
+        #    return [INDCRMUtilityService::buildHeader(true, 'OK', conNull()), recipientsCon];
+        #}
+        #
+      ENDSOURCE
       SOURCE #getExpenseSheetsList
         #static server container getExpenseSheetsList(container _data)
         #{
         #    DataAreaId           _company;
         #
-        #    UserId               axUserId;
+        #    str 20               axUserId;
         #    CRMUserId            crmUserId;
         #
         #    str 1000             filterTxt;
         #    str 1000             likePattern;
         #    str 20               expenseSheetStatusFilterRaw;
+        #    str 20               reimbursableExpenseFilterRaw;
         #    str 20               includeSubordinatesRaw;
         #
-        #    int                  billedMode,expenseSheetStatusFilter;
-        #    boolean              hasExpenseSheetStatusFilter, includeSubordinates;
+        #    int                  billedMode,expenseSheetStatusFilter,reimbursableExpenseFilter;
+        #    boolean              hasExpenseSheetStatusFilter,hasReimbursableExpenseFilter,includeSubordinates;
         #    // Filtros nuevos
         #    date                 createdDateFrom;
         #    date                 createdDateTo;
@@ -2053,7 +2935,7 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 9)
         #    {
-        #        expenseSheetStatusFilterRaw = strLwr(strLTrim(strRTrim(strFmt("%1", conPeek(_data, 9)))));
+        #        expenseSheetStatusFilterRaw = strLwr(strLRTrim(strFmt("%1", conPeek(_data, 9))));
         #
         #        if (expenseSheetStatusFilterRaw == '0'
         #         || expenseSheetStatusFilterRaw == '1'
@@ -2066,9 +2948,26 @@ Formatversion: 1
         #        }
         #    }
         #
-        #    if (conLen(_data) >= 10)
+        #    if (conLen(_data) == 10)
         #    {
-        #        includeSubordinatesRaw = strLwr(strLTrim(strRTrim(strFmt("%1", conPeek(_data, 10)))));
+        #        includeSubordinatesRaw = strLwr(strLRTrim(strFmt("%1", conPeek(_data, 10))));
+        #        includeSubordinates = includeSubordinatesRaw == '1'
+        #                           || includeSubordinatesRaw == 'true'
+        #                           || includeSubordinatesRaw == 'yes';
+        #    }
+        #
+        #    if (conLen(_data) >= 11)
+        #    {
+        #        reimbursableExpenseFilterRaw = strLwr(strLRTrim(strFmt("%1", conPeek(_data, 10))));
+        #        if (reimbursableExpenseFilterRaw == '0'
+        #         || reimbursableExpenseFilterRaw == '1'
+        #         || reimbursableExpenseFilterRaw == '2')
+        #        {
+        #            reimbursableExpenseFilter = str2int(reimbursableExpenseFilterRaw);
+        #            hasReimbursableExpenseFilter = true;
+        #        }
+        #
+        #        includeSubordinatesRaw = strLwr(strLRTrim(strFmt("%1", conPeek(_data, 11))));
         #        includeSubordinates = includeSubordinatesRaw == '1'
         #                           || includeSubordinatesRaw == 'true'
         #                           || includeSubordinatesRaw == 'yes';
@@ -2085,12 +2984,20 @@ Formatversion: 1
         #        hasExpenseSheetStatusFilter = false;
         #    }
         #
+        #    // INDReimbursableExpense permitido: 0=No, 1=Yes, 2=Both
+        #    if (hasReimbursableExpenseFilter
+        #        && !INDCRMExpenseSheetService::isValidReimbursableExpense(reimbursableExpenseFilter))
+        #    {
+        #        hasReimbursableExpenseFilter = false;
+        #    }
+        #
         #    if (filterTxt)
         #        likePattern = strFmt("*%1*", filterTxt);
         #
         #    changecompany (_company)
         #    {
-        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #        crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #        if (!crmUserId)
         #            return conResult;
         #
@@ -2132,6 +3039,9 @@ Formatversion: 1
         #
         #                   // Estado opcional
         #                   && ( !hasExpenseSheetStatusFilter || hoja.ExpenseSheetStatus == expenseSheetStatusFilter )
+        #
+        #                   // Reembolsable opcional
+        #                   && ( !hasReimbursableExpenseFilter || hoja.ReimbursableExpense == reimbursableExpenseFilter )
         #            {
         #                conResult += INDCRMExpenseSheetService::buildExpenseSheetListRow(hoja);
         #            }
@@ -2171,6 +3081,9 @@ Formatversion: 1
         #
         #                       // Estado opcional
         #                   && ( !hasExpenseSheetStatusFilter || hoja.ExpenseSheetStatus == expenseSheetStatusFilter )
+        #
+        #                       // Reembolsable opcional
+        #                   && ( !hasReimbursableExpenseFilter || hoja.ReimbursableExpense == reimbursableExpenseFilter )
         #             exists join subordinadoTable
         #                where subordinadoTable.UserIdJefe == crmUserId
         #                   && subordinadoTable.UserIdSubordinado == hoja.UserId
@@ -2194,7 +3107,7 @@ Formatversion: 1
         #static server container getExpenseSheetTicket(container _data)
         #{
         #    DataAreaId         companyId;
-        #    UserId             axUserId;
+        #    str 20             axUserId;
         #    CRMUserId          crmUserId;
         #    INDFileId          fileId;
         #
@@ -2208,6 +3121,7 @@ Formatversion: 1
         #    int                ticketStatusInt;
         #    int                processedByAIInt;
         #    int                gastoTypeInt;
+        #    str                ownerName;
         #    ;
         #
         #    companyId = INDCRMUtilityService::getCompany(_data);
@@ -2226,7 +3140,8 @@ Formatversion: 1
         #
         #    changecompany(companyId)
         #    {
-        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #        crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #        if (!crmUserId)
         #            return [INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
         #
@@ -2242,9 +3157,10 @@ Formatversion: 1
         #               && docuRef.RefRecId   == ticketHeader.RecId
         #               && docuRef.INDFileId  == ticketHeader.FileId;
         #
-        #        ticketStatusInt = ticketHeader.Status;
-        #        processedByAIInt = ticketHeader.ProcessedByAI;
-        #        gastoTypeInt = ticketHeader.GastoType;
+        #        ticketStatusInt = any2int(ticketHeader.Status);
+        #        processedByAIInt = any2int(ticketHeader.ProcessedByAI);
+        #        gastoTypeInt = any2int(ticketHeader.GastoType);
+        #        ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ticketHeader.CreatedByUserId);
         #
         #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK',
         #                                                     [
@@ -2262,10 +3178,17 @@ Formatversion: 1
         #                                                      strFmt('%1', gastoTypeInt),
         #                                                      strFmt('%1', ticketHeader.hojaGastosIdDisplay()),
         #                                                      strFmt('%1', docuRef.INDOCRJson),
-        #                                                      strFmt('%1', docuRef.INDNormalizedJson)
+        #                                                      strFmt('%1', docuRef.INDNormalizedJson),
+        #                                                      strFmt('%1', date2Str(ticketHeader.TicketDate, 123, 2,2,2,2,4)),
+        #                                                      strFmt('%1', ticketHeader.TicketTime),
+        #                                                      strFmt('%1', ticketHeader.CreatedByUserId),
+        #                                                      strFmt('%1', ownerName),
+        #                                                      strFmt('%1', ticketHeader.AmountMST),
+        #                                                      strFmt('%1', ticketHeader.ExchRate)
         #                                                     ]);
         #
         #        while select ticketLine
+        #          order by createdDate DESC
         #            where ticketLine.FileId        == ticketHeader.FileId
         #               && ticketLine.RefRecIdTable == ticketHeader.RecId
         #        {
@@ -2276,7 +3199,8 @@ Formatversion: 1
         #                        strFmt('%1', ticketLine.Price),
         #                        strFmt('%1', ticketLine.TotalAmount),
         #                        strFmt('%1', ticketLine.RefRecIdTable),
-        #                        strFmt('%1', ticketLine.CreatedByUserId)
+        #                        strFmt('%1', ticketLine.CreatedByUserId),
+        #                        strFmt('%1', any2int(ticketLine.Adjustment))
         #                      ];
         #
         #            linesOut = conIns(linesOut, conLen(linesOut) + 1, lineRow);
@@ -2309,7 +3233,7 @@ Formatversion: 1
         #static server container getExpenseSheetTicketsLinkList(container _data)
         #{
         #    DataAreaId         companyId;
-        #    UserId             axUserId;
+        #    str 20             axUserId;
         #    CRMUserId          crmUserId;
         #    str 1000           filterTxt;
         #    str 1000           likePattern;
@@ -2364,7 +3288,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 8)
         #    {
         #        processedByAIRaw = strFmt('%1', conPeek(_data, 8));
-        #        processedByAIRaw = strLwr(strLTrim(strRTrim(processedByAIRaw)));
+        #        processedByAIRaw = strLwr(strLRTrim(processedByAIRaw));
         #        if (processedByAIRaw == '0' || processedByAIRaw == '1')
         #        {
         #            processedByAIFilter = str2Int(processedByAIRaw);
@@ -2388,12 +3312,13 @@ Formatversion: 1
         #
         #    changecompany(companyId)
         #    {
-        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #        crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #        if (!crmUserId)
         #            return conResult;
         #
         #        while select ticketHeader
-        #            order by RecId desc
+        #            order by createdDate DESC
         #            where ticketHeader.CreatedByUserId == axUserId
         #               && ticketHeader.Status          == pendingStatus
         #               && ticketHeader.TotalAmount     != 0
@@ -2442,7 +3367,7 @@ Formatversion: 1
         #static server container getExpenseSheetTicketsList(container _data)
         #{
         #    DataAreaId         companyId;
-        #    UserId             axUserId;
+        #    str 20             axUserId;
         #    CRMUserId          crmUserId;
         #    str 1000           filterTxt;
         #    str 1000           likePattern;
@@ -2479,7 +3404,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 4)
         #    {
         #        statusFilterRaw = strFmt('%1', conPeek(_data, 4));
-        #        statusFilterRaw = strLwr(strLTrim(strRTrim(statusFilterRaw)));
+        #        statusFilterRaw = strLwr(strLRTrim(statusFilterRaw));
         #        if (statusFilterRaw == '0' || statusFilterRaw == '1')
         #        {
         #            statusFilter = str2Int(statusFilterRaw);
@@ -2508,7 +3433,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 9)
         #    {
         #        processedByAIRaw = strFmt('%1', conPeek(_data, 9));
-        #        processedByAIRaw = strLwr(strLTrim(strRTrim(processedByAIRaw)));
+        #        processedByAIRaw = strLwr(strLRTrim(processedByAIRaw));
         #        if (processedByAIRaw == '0' || processedByAIRaw == '1')
         #        {
         #            processedByAIFilter = str2Int(processedByAIRaw);
@@ -2539,12 +3464,13 @@ Formatversion: 1
         #
         #    changecompany(companyId)
         #    {
-        #        crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #        crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #        if (!crmUserId)
         #            return conResult;
         #
         #        while select ticketHeader
-        #            order by RecId desc
+        #            order by createdDate DESC
         #            where ticketHeader.CreatedByUserId == axUserId
         #               && (!hasStatusFilter       || ticketHeader.Status == statusFilter)
         #               && (!filterTxt             || ticketHeader.SearchKey like likePattern )
@@ -2589,7 +3515,7 @@ Formatversion: 1
         #static server container getFuelPriceKm(container _data)
         #{
         #    DataAreaId companyId;
-        #    UserId     axUserId;
+        #    str 20     axUserId;
         #    CRMUserId  crmUserId;
         #    str        transDateStr;
         #    date       transDate;
@@ -2597,7 +3523,8 @@ Formatversion: 1
         #    str        source;
         #
         #    CRMHojaGastosUserPriceKmFechaTable userPriceKmFechaTable;
-        #    CRMParameters                      crmParameters;
+        #    CRMParameters               crmParameters;
+        #    CRMUsuarioTable             usuarioTable;
         #    int        startLine;
         #    str        msg;
         #    ;
@@ -2623,11 +3550,13 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #            if (!crmUserId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
         #
         #            userPriceKmFechaTable = CRMHojaGastosUserPriceKmFechaTable::FindActive(crmUserId, transDate);
+        #
         #            if (userPriceKmFechaTable.RecId)
         #            {
         #                priceKm = userPriceKmFechaTable.PriceKm;
@@ -2635,9 +3564,21 @@ Formatversion: 1
         #            }
         #            else
         #            {
+        #                usuarioTable  = CRMUsuarioTable::Find(crmUserId);
         #                crmParameters = CRMParameters::find();
-        #                priceKm = crmParameters.PriceKm;
+        #
         #                source  = 'CRMParameters';
+        #                priceKm = usuarioTable.priceKmAFecha(transDate);
+        #
+        #                if (priceKm)
+        #                    priceKm = priceKm;
+        #                else
+        #                {
+        #                    if (usuarioTable.CocheEmpresa)
+        #                        priceKm  = crmParameters.PriceKmEmpresa;
+        #                    else
+        #                        priceKm  = crmParameters.PriceKm;
+        #                }
         #            }
         #
         #            return INDCRMUtilityService::buildHeader(true, 'OK', [strFmt("%1", priceKm), source]);
@@ -2669,6 +3610,116 @@ Formatversion: 1
         #    }
         #
         #    return INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getPersonaEmailByUserId
+        #// Resuelve INDPersonaTable.Email desde un identificador de usuario AX o CRM.
+        #static server str getPersonaEmailByUserId(str 20 _userId)
+        #{
+        #    INDPersonaTable personaTable;
+        #    CRMUsuarioTable crmUsuarioTable;
+        #    ;
+        #
+        #    if (!_userId)
+        #        return '';
+        #
+        #    personaTable = INDPersonaTable::findByAxUserId(_userId);
+        #    if (personaTable.RecId && personaTable.Email)
+        #        return personaTable.Email;
+        #
+        #    crmUsuarioTable = CRMUsuarioTable::Find_AxaptaUserId(_userId);
+        #    if (crmUsuarioTable.RecId)
+        #    {
+        #        personaTable = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
+        #        if (personaTable.RecId && personaTable.Email)
+        #            return personaTable.Email;
+        #    }
+        #
+        #    crmUsuarioTable = CRMUsuarioTable::Find(_userId);
+        #    if (crmUsuarioTable.RecId)
+        #    {
+        #        personaTable = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
+        #        if (personaTable.RecId && personaTable.Email)
+        #            return personaTable.Email;
+        #    }
+        #
+        #    personaTable = INDPersonaTable::Find(_userId);
+        #    if (personaTable.RecId && personaTable.Email)
+        #        return personaTable.Email;
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getPersonaEmailByUserIdForApi
+        #// Envoltorio API para resolver email. Extras de salida: [email, displayName].
+        #static server container getPersonaEmailByUserIdForApi(container _data)
+        #{
+        #    DataAreaId companyId;
+        #    str 20     userId;
+        #    str        email;
+        #    str        displayName;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #    if (!companyId)
+        #        return INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    if (conLen(_data) < 2)
+        #        return INDCRMUtilityService::buildHeader(false, 'UserId es obligatorio.', conNull());
+        #
+        #    userId = conPeek(_data, 2);
+        #
+        #    changecompany(companyId)
+        #    {
+        #        email       = INDCRMExpenseSheetService::getPersonaEmailByUserId(userId);
+        #        displayName = INDCRMExpenseSheetService::getPersonaNameByUserId(userId);
+        #    }
+        #
+        #    if (!email)
+        #        return INDCRMUtilityService::buildHeader(false, 'Email no encontrado.', conNull());
+        #
+        #    return INDCRMUtilityService::buildHeader(true, 'OK', [email, displayName]);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #getPersonaNameByUserId
+        #// Resuelve el nombre visible desde un identificador de usuario AX o CRM.
+        #static server str getPersonaNameByUserId(str 20 _userId)
+        #{
+        #    INDPersonaTable personaTable;
+        #    CRMUsuarioTable crmUsuarioTable;
+        #    ;
+        #
+        #    if (!_userId)
+        #        return '';
+        #
+        #    personaTable = INDPersonaTable::findByAxUserId(_userId);
+        #    if (personaTable.RecId && personaTable.Name)
+        #        return personaTable.Name;
+        #
+        #    crmUsuarioTable = CRMUsuarioTable::Find_AxaptaUserId(_userId);
+        #    if (crmUsuarioTable.RecId)
+        #    {
+        #        personaTable = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
+        #        if (personaTable.RecId && personaTable.Name)
+        #            return personaTable.Name;
+        #    }
+        #
+        #    crmUsuarioTable = CRMUsuarioTable::Find(_userId);
+        #    if (crmUsuarioTable.RecId)
+        #    {
+        #        personaTable = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
+        #        if (personaTable.RecId && personaTable.Name)
+        #            return personaTable.Name;
+        #    }
+        #
+        #    personaTable = INDPersonaTable::Find(_userId);
+        #    if (personaTable.RecId && personaTable.Name)
+        #        return personaTable.Name;
+        #
+        #    return '';
         #}
         #
       ENDSOURCE
@@ -2734,7 +3785,7 @@ Formatversion: 1
         #static server container getSubordinatesByUser(container _data)
         #{
         #    DataAreaId                 companyId;
-        #    UserId                     axUserId;
+        #    str 20                     axUserId;
         #    CRMUserId                  crmUserId;
         #    CRMUsuarioTable            crmUsuarioTable,crmUsuarioTableSub;
         #    CRMUsuarioSubordinadoTable subordinadoTable;
@@ -2756,10 +3807,12 @@ Formatversion: 1
         #
         #    changecompany(companyId)
         #    {
-        #        crmUsuarioTable = SysUserInfo::getCRMUsuarioTable(axUserId);
-        #        crmUserId = crmUsuarioTable.UserId;
+        #        crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                          //SysUserInfo::getCRMUsuarioTable(axUserId);
         #        if (!crmUserId)
         #            return resultCon;
+        #
+        #        crmUsuarioTable = CRMUsuarioTable::Find(crmUserId);
         #
         #        subordinadoTable.clear();
         #        subordinadoTable.UserIdJefe = crmUserId;
@@ -2768,12 +3821,11 @@ Formatversion: 1
         #        if (!subordinateList)
         #            return resultCon;
         #
-        #        subordinateUsersCon = str2con(subordinateList, ',');
+        #        subordinateUsersCon = Global::str2ConKeepStrings(subordinateList, ',');
         #
         #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
         #        {
-        #            //subordinateUserId = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
-        #            subordinateUserId   = strLTrim(strRTrim(strFmt("%1",conPeek(subordinateUsersCon, i))));
+        #            subordinateUserId   = strLRTrim(strFmt("%1",conPeek(subordinateUsersCon, i)));
         #            crmUsuarioTableSub  = CRMUsuarioTable::Find(subordinateUserId);
         #            if(!crmUsuarioTableSub)
         #            {
@@ -2812,7 +3864,7 @@ Formatversion: 1
         #static server container getSubordinatesByUser_backup(container _data)
         #{
         #    DataAreaId                 companyId;
-        #    UserId                     axUserId;
+        #    str 20                     axUserId;
         #    CRMUserId                  crmUserId;
         #    CRMUsuarioTable            crmUsuarioTable;
         #    CRMUsuarioSubordinadoTable subordinadoTable;
@@ -2833,10 +3885,12 @@ Formatversion: 1
         #
         #    changecompany(companyId)
         #    {
-        #        crmUsuarioTable = SysUserInfo::getCRMUsuarioTable(axUserId);
-        #        crmUserId = crmUsuarioTable.UserId;
+        #        crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                          //SysUserInfo::getCRMUsuarioTable(axUserId);
         #        if (!crmUserId)
         #            return resultCon;
+        #
+        #        crmUsuarioTable = CRMUsuarioTable::Find(crmUserId);
         #
         #        subordinadoTable.clear();
         #        subordinadoTable.UserIdJefe = crmUserId;
@@ -2849,7 +3903,7 @@ Formatversion: 1
         #
         #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
         #        {
-        #            subordinateUserId = strLTrim(strRTrim(conPeek(subordinateUsersCon, i)));
+        #            subordinateUserId = strLRTrim(conPeek(subordinateUsersCon, i));
         #            if (!subordinateUserId)
         #                continue;
         #
@@ -2862,6 +3916,33 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #htmlEncodeText
+        #// Escapa valores de negocio antes de insertarlos en HTML de plantilla.
+        #static server str htmlEncodeText(str _value)
+        #{
+        #    str value;
+        #    ;
+        #
+        #    value = strFmt('%1', _value);
+        #    value = strReplace(value, '&', '&amp;');
+        #    value = strReplace(value, '<', '&lt;');
+        #    value = strReplace(value, '>', '&gt;');
+        #    value = strReplace(value, '"', '&quot;');
+        #
+        #    return value;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #isExpenseSheetApprovalRequestEvent
+        #// Indica si el evento debe tratarse como una solicitud pendiente para la jefatura.
+        #// Se incluye ExpenseSheetRejectionCancelled por compatibilidad con llamadas antiguas.
+        #static server boolean isExpenseSheetApprovalRequestEvent(str _eventType)
+        #{
+        #    return _eventType == 'ExpenseSheetApprovalRequested' ||
+        #           _eventType == 'ExpenseSheetRejectionCancelled';
+        #}
+        #
+      ENDSOURCE
       SOURCE #isValidGastoType
         #// Method: isValidGastoType
         #// Purpose: Validate allowed CRMGastoType int values (hardcoded)
@@ -2870,15 +3951,26 @@ Formatversion: 1
         #    switch (_typeValue)
         #    {
         #        case 0:  // None
-        #        case 1:  // Peaje
+        #        case 1:  // Peajes
         #        case 2:  // Parking
         #        case 3:  // Km
         #        case 4:  // Desayuno
         #        case 5:  // Comida
         #        case 6:  // Cena
         #        case 7:  // Hotel
-        #        case 8:  // Varios (per requirement)
-        #        case 14: // Taxi (per requirement)
+        #        case 8:  // Varios
+        #        case 9:  // Montaje Nacional
+        #        case 10: // Montaje Nacional Festivo
+        #        case 11: // Montaje Internacional
+        #        case 12: // Montaje Internacional Festivo
+        #        case 13: // Dia de Viaje Nacional
+        #        case 14: // Taxi
+        #        case 15: // Dia Viaje Festivo Nacional
+        #        case 16: // Dia Viaje Internacional
+        #        case 17: // Dia Viaje Festivo Internacional
+        #        case 18: // Horas
+        #        case 19: // Propinas
+        #        case 20: // Gasolina
         #            return true;
         #
         #        default:
@@ -2887,14 +3979,311 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #isValidLineReimbursableExpense
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Method: isValidLineReimbursableExpense
+        #// Purpose: Validate allowed INDReimbursableExpenseLines int values.
+        #static server boolean isValidLineReimbursableExpense(int _value)
+        #{
+        #    return _value == 0 || _value == 1;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #isValidReimbursableExpense
+        #// Method: isValidReimbursableExpense
+        #// Purpose: Validate allowed INDReimbursableExpense int values.
+        #static server boolean isValidReimbursableExpense(int _value)
+        #{
+        #    return _value == 0 || _value == 1 || _value == 2;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #propagateExpenseSheetCurrencyDefaults
+        #// Method: propagateExpenseSheetCurrencyDefaults
+        #// Purpose: Legacy no-op. Header currency is always local; line currencies must not be overwritten.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #//  - _data[3] = HojaGastosId
+        #//  - _data[4] = recalculateAmountMST (optional, kept for response compatibility)
+        #//  - _data[5] = force (optional, ignored)
+        #static server container propagateExpenseSheetCurrencyDefaults(container _data)
+        #{
+        #    DataAreaId          companyId;
+        #    CRMUserId           crmUserId;
+        #    str 20              axUserId;
+        #    CRMHojaGastosId     hojaId;
+        #    CRMHojaGastosTable  header;
+        #    boolean             recalculateAmountMST;
+        #    str 16              recalculateRaw;
+        #    int                 startLine;
+        #    str                 msg;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    if (conLen(_data) < 3)
+        #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan al menos 3 campos.', conNull());
+        #
+        #    axUserId             = conPeek(_data, 2);
+        #    hojaId               = conPeek(_data, 3);
+        #    recalculateAmountMST = true;
+        #
+        #    if (conLen(_data) >= 4)
+        #    {
+        #        recalculateRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 4))));
+        #        recalculateAmountMST = !(recalculateRaw == '0' || recalculateRaw == 'false' || recalculateRaw == 'no');
+        #    }
+        #
+        #    startLine = infolog.line();
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId);
+        #
+        #            if (!crmUserId || !hojaId)
+        #                return INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull());
+        #
+        #            header = INDCRMUtilityService::findHeaderForUpdate(crmUserId, hojaId);
+        #
+        #            if (!header.RecId)
+        #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull());
+        #
+        #            if (INDCRMUtilityService::isHeaderLocked(header))
+        #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
+        #
+        #            //MMS - Ajustes CRM - 2026.06.26
+        #            // La propagacion de divisa queda obsoleta para no sobrescribir divisas reales de linea.
+        #            return INDCRMUtilityService::buildHeader(true, 'Propagacion de divisa obsoleta; no se modificaron lineas.',
+        #                                                     [header.HojaGastosId, '0', recalculateAmountMST ? '1' : '0']);
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
+      SOURCE #propagateExpenseSheetProjectDefault
+        #// Method: propagateExpenseSheetProjectDefault
+        #// Purpose: Applies header project to all expense sheet lines after external confirmation.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #//  - _data[3] = HojaGastosId
+        #static server container propagateExpenseSheetProjectDefault(container _data)
+        #{
+        #    DataAreaId          companyId;
+        #    CRMUserId           crmUserId;
+        #    str 20              axUserId;
+        #    CRMHojaGastosId     hojaId;
+        #    CRMHojaGastosTable  header;
+        #    int                 updated;
+        #    int                 startLine;
+        #    str                 msg;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    if (conLen(_data) < 3)
+        #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan 3 campos.', conNull());
+        #
+        #    axUserId = conPeek(_data, 2);
+        #    hojaId   = conPeek(_data, 3);
+        #
+        #    startLine = infolog.line();
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                          //SysUserInfo::getCRMUsuarioTable(axUserId);
+        #
+        #            if (!crmUserId || !hojaId)
+        #                return INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull());
+        #
+        #            header = INDCRMUtilityService::findHeaderForUpdate(crmUserId, hojaId);
+        #
+        #            if (!header.RecId)
+        #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull());
+        #
+        #            if (INDCRMUtilityService::isHeaderLocked(header))
+        #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
+        #
+        #            if (header.isVariousProjectDefault())
+        #                return INDCRMUtilityService::buildHeader(false, 'ProjId de cabecera es el valor varios; indique un proyecto real antes de propagar.', conNull());
+        #
+        #            if (!header.ProjId)
+        #                return INDCRMUtilityService::buildHeader(false, 'ProjId de cabecera es obligatorio para propagar proyecto.', conNull());
+        #
+        #            updated = header.updateProjectDefaultInLines();
+        #
+        #            return INDCRMUtilityService::buildHeader(true, 'Proyecto de cabecera propagado correctamente.',
+        #                                                     [header.HojaGastosId, strFmt('%1', updated), '0']);
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
+      SOURCE #propagateExpenseSheetReimbursableExpense
+        #// Method: propagateExpenseSheetReimbursableExpense
+        #// Purpose: Applies header reimbursable expense value to all expense sheet lines after external confirmation.
+        #// Input:
+        #//  - _data[1] = CompanyId
+        #//  - _data[2] = axUserId
+        #//  - _data[3] = HojaGastosId
+        #static server container propagateExpenseSheetReimbursableExpense(container _data)
+        #{
+        #    DataAreaId          companyId;
+        #    CRMUserId           crmUserId;
+        #    str 20              axUserId;
+        #    CRMHojaGastosId     hojaId;
+        #    CRMHojaGastosTable  header;
+        #    int                 updated;
+        #    int                 startLine;
+        #    str                 msg;
+        #    ;
+        #
+        #    companyId = INDCRMUtilityService::getCompany(_data);
+        #
+        #    if (!companyId)
+        #        return INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
+        #
+        #    if (conLen(_data) < 3)
+        #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan 3 campos.', conNull());
+        #
+        #    axUserId = conPeek(_data, 2);
+        #    hojaId   = conPeek(_data, 3);
+        #
+        #    startLine = infolog.line();
+        #
+        #    try
+        #    {
+        #        changecompany(companyId)
+        #        {
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                          //SysUserInfo::getCRMUsuarioTable(axUserId);
+        #
+        #            if (!crmUserId || !hojaId)
+        #                return INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull());
+        #
+        #            header = INDCRMUtilityService::findHeaderForUpdate(crmUserId, hojaId);
+        #
+        #            if (!header.RecId)
+        #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos no encontrada.', conNull());
+        #
+        #            if (INDCRMUtilityService::isHeaderLocked(header))
+        #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
+        #
+        #            if (header.isVariousReimbursableExpenseDefault())
+        #                return INDCRMUtilityService::buildHeader(false, 'ReimbursableExpense de cabecera es Both; indique No o Yes antes de propagar.', conNull());
+        #
+        #            updated = header.updateReimbursableExpenseInLines();
+        #
+        #            return INDCRMUtilityService::buildHeader(true, 'Gasto reembolsable propagado correctamente.',
+        #                                                     [header.HojaGastosId, strFmt('%1', updated), '0']);
+        #        }
+        #    }
+        #    catch (Exception::Deadlock)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull());
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull());
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        ttsabort;
+        #        return INDCRMUtilityService::buildHeader(false, 'Error interno del sistema.', conNull());
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        ttsabort;
+        #
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        if (!msg)
+        #            msg = 'Error en el proceso. Revisar infolog.';
+        #
+        #        return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #    }
+        #
+        #    return INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
       SOURCE #refreshTicketStatusByFileId
         #// Method: refreshTicketStatusByFileId
         #// Purpose: Keeps INDTicketInfoTable.Status in sync with expense-sheet line assignment.
-        #static server void refreshTicketStatusByFileId(UserId _axUserId, INDFileId _fileId)
+        #static server void refreshTicketStatusByFileId(str 20 _axUserId, INDFileId _fileId)
         #{
         #    CRMHojaGastosLine  assignedLine;
         #    INDTicketInfoTable ticketHeader;
         #    boolean            hasAssignedLine;
+        #    int                startLine;
+        #    str                msg;
         #    ;
         #
         #    if (!_fileId)
@@ -2916,21 +4305,619 @@ Formatversion: 1
         #
         #    if (hasAssignedLine && ticketHeader.Status != INDTicketStatus::Assigned)
         #    {
+        #        startLine = infolog.line();
         #        ticketHeader.Status = INDTicketStatus::Assigned;
+        #        msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #        if (msg)
+        #            throw error(msg);
+        #
         #        ticketHeader.update();
         #    }
         #    else if (!hasAssignedLine && ticketHeader.Status != INDTicketStatus::Pending)
         #    {
+        #        startLine = infolog.line();
         #        ticketHeader.Status = INDTicketStatus::Pending;
+        #        msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #        if (msg)
+        #            throw error(msg);
+        #
         #        ticketHeader.update();
         #    }
         #}
         #
       ENDSOURCE
+      SOURCE #renderExpenseSheetTemplate
+        #// Aplica los valores fijos de hoja de gastos sobre el asunto o HTML de una plantilla.
+        #// Orden strFmt: %1 hoja, %2 estado, %3 importe, %4 fecha, %5 descripcion, %6 link, %7 boton, %8 anio, %9 mes, %10 dia, %11 comentarios, %12 logo src.
+        #static server str renderExpenseSheetTemplate(str                 _template,
+        #                                             CRMHojaGastosTable _expenseSheet,
+        #                                             str                 _eventType,
+        #                                             str                 _link,
+        #                                             str                 _logoSrc,
+        #                                             boolean             _isHtml)
+        #{
+        #    str hojaId;
+        #    str eventText;
+        #    str amountText;
+        #    str dateText;
+        #    str description;
+        #    str link;
+        #    str buttonText;
+        #    str yearText;
+        #    str monthText;
+        #    str dayText;
+        #    str comments;
+        #    str logoSrc;
+        #    date sheetDate;
+        #    ;
+        #
+        #    if (!_template)
+        #        return '';
+        #
+        #    sheetDate   = _expenseSheet.CreatedDate ? _expenseSheet.CreatedDate : today();
+        #    hojaId      = strFmt('%1', _expenseSheet.HojaGastosId);
+        #    eventText   = INDCRMExpenseSheetService::buildExpenseSheetEventDisplayText(_eventType);
+        #    amountText  = INDCRMExpenseSheetService::buildExpenseSheetAmountText(_expenseSheet);
+        #    dateText    = date2Str(sheetDate, 123, 2, 2, 2, 2, 4);
+        #    description = strFmt('%1', _expenseSheet.Description);
+        #    link        = strFmt('%1', _link);
+        #    buttonText  = 'Abrir hoja de gastos';
+        #    yearText    = strFmt('%1', year(sheetDate));
+        #    monthText   = INDCRMExpenseSheetService::buildExpenseSheetMonthAbbrev(sheetDate);
+        #    dayText     = strFmt('%1', dayOfMth(sheetDate));
+        #    if (strLen(dayText) == 1)
+        #        dayText = '0' + dayText;
+        #    comments    = strFmt('%1', _expenseSheet.EstadoComentarios);
+        #    logoSrc     = _isHtml ? _logoSrc : '';
+        #
+        #    if (_isHtml)
+        #    {
+        #        hojaId      = INDCRMExpenseSheetService::htmlEncodeText(hojaId);
+        #        eventText   = INDCRMExpenseSheetService::htmlEncodeText(eventText);
+        #        amountText  = INDCRMExpenseSheetService::htmlEncodeText(amountText);
+        #        dateText    = INDCRMExpenseSheetService::htmlEncodeText(dateText);
+        #        description = INDCRMExpenseSheetService::htmlEncodeText(description);
+        #        link        = strReplace(link, '&', '&amp;');
+        #        buttonText  = INDCRMExpenseSheetService::htmlEncodeText(buttonText);
+        #        yearText    = INDCRMExpenseSheetService::htmlEncodeText(yearText);
+        #        monthText   = INDCRMExpenseSheetService::htmlEncodeText(monthText);
+        #        dayText     = INDCRMExpenseSheetService::htmlEncodeText(dayText);
+        #        comments    = INDCRMExpenseSheetService::htmlEncodeText(comments);
+        #    }
+        #
+        #    return strFmt(_template,
+        #                  hojaId,
+        #                  eventText,
+        #                  amountText,
+        #                  dateText,
+        #                  description,
+        #                  link,
+        #                  buttonText,
+        #                  yearText,
+        #                  monthText,
+        #                  dayText,
+        #                  comments,
+        #                  logoSrc);
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveAxUserIdFromCrmUserId
+        #// Resuelve el usuario AX asociado a un usuario CRM para consultar datos de sistema como idioma.
+        #static server str resolveAxUserIdFromCrmUserId(CRMUserId _crmUserId)
+        #{
+        #    CRMUsuarioTable crmUsuarioTable;
+        #    INDPersonaTable personaTable;
+        #    SysUserInfo     sysUserInfo;
+        #    ;
+        #
+        #    if (!_crmUserId)
+        #        return '';
+        #
+        #    crmUsuarioTable = CRMUsuarioTable::Find(_crmUserId);
+        #    if (crmUsuarioTable.RecId)
+        #    {
+        #        personaTable = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
+        #        if (personaTable.RecId && personaTable.UserId)
+        #            return personaTable.UserId;
+        #    }
+        #
+        #    select firstonly sysUserInfo
+        #        where sysUserInfo.Id == _crmUserId;
+        #    if (sysUserInfo.Id)
+        #        return sysUserInfo.Id;
+        #
+        #    while select sysUserInfo
+        #    {
+        #        crmUsuarioTable = SysUserInfo::getCRMUsuarioTable(sysUserInfo.Id);
+        #        if (crmUsuarioTable.UserId == _crmUserId)
+        #            return sysUserInfo.Id;
+        #    }
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveCrmUserIdFromAny
+        #// Convierte un usuario AX o CRM al UserId CRM para comparar emisor y destinatario.
+        #static server CRMUserId resolveCrmUserIdFromAny(str 20 _userId)
+        #{
+        #    CRMUsuarioTable crmUsuarioTable;
+        #    ;
+        #
+        #    if (!_userId)
+        #        return '';
+        #
+        #    crmUsuarioTable = SysUserInfo::getCRMUsuarioTable(_userId);
+        #    if (crmUsuarioTable.UserId)
+        #        return crmUsuarioTable.UserId;
+        #
+        #    crmUsuarioTable = CRMUsuarioTable::Find_AxaptaUserId(_userId);
+        #    if (crmUsuarioTable.UserId)
+        #        return crmUsuarioTable.UserId;
+        #
+        #    crmUsuarioTable = CRMUsuarioTable::Find(_userId);
+        #    if (crmUsuarioTable.UserId)
+        #        return crmUsuarioTable.UserId;
+        #
+        #    // Ultimo recurso: el llamador ya pudo haber enviado un UserId CRM.
+        #    return _userId;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveExpenseSheetManagerCrmUserId
+        #// Conserva el contrato legacy devolviendo la primera jefatura directa encontrada.
+        #static server CRMUserId resolveExpenseSheetManagerCrmUserId(CRMUserId _ownerCrmUserId)
+        #{
+        #    container managerCrmUserIds;
+        #    ;
+        #
+        #    managerCrmUserIds = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserIds(_ownerCrmUserId);
+        #
+        #    return conLen(managerCrmUserIds) ? conPeek(managerCrmUserIds, 1) : '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveExpenseSheetManagerCrmUserIds
+        #// Devuelve todas las jefaturas directas del propietario de la hoja, sin duplicados.
+        #static server container resolveExpenseSheetManagerCrmUserIds(CRMUserId _ownerCrmUserId)
+        #{
+        #    CRMUsuarioSubordinadoTable subordinadoTable;
+        #    container                  managerCrmUserIds = conNull();
+        #    CRMUserId                  managerCrmUserId;
+        #    boolean                    alreadyAdded;
+        #    int                        i;
+        #    ;
+        #
+        #    if (!_ownerCrmUserId)
+        #        return managerCrmUserIds;
+        #
+        #    while select subordinadoTable
+        #        where subordinadoTable.UserIdSubordinado == _ownerCrmUserId
+        #    {
+        #        managerCrmUserId = subordinadoTable.UserIdJefe;
+        #        if (!managerCrmUserId || managerCrmUserId == _ownerCrmUserId)
+        #            continue;
+        #
+        #        alreadyAdded = false;
+        #        for (i = 1; i <= conLen(managerCrmUserIds); i++)
+        #        {
+        #            if (conPeek(managerCrmUserIds, i) == managerCrmUserId)
+        #            {
+        #                alreadyAdded = true;
+        #                break;
+        #            }
+        #        }
+        #
+        #        if (!alreadyAdded)
+        #            managerCrmUserIds = conIns(managerCrmUserIds, conLen(managerCrmUserIds) + 1, managerCrmUserId);
+        #    }
+        #
+        #    return managerCrmUserIds;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveExpenseSheetNotificationEvent
+        #// Resuelve el evento de email permitido para una transicion de estado.
+        #// Cualquier retorno a InReview abre una nueva aprobacion pendiente para la jefatura.
+        #static server str resolveExpenseSheetNotificationEvent(INDExpenseSheetStatus _fromStatus,
+        #                                                       INDExpenseSheetStatus _toStatus)
+        #{
+        #    if (_toStatus == INDExpenseSheetStatus::Paid)
+        #        return 'ExpenseSheetPaid';
+        #
+        #    if ((_fromStatus == INDExpenseSheetStatus::Draft ||
+        #         _fromStatus == INDExpenseSheetStatus::Rejected ||
+        #         _fromStatus == INDExpenseSheetStatus::Approved) &&
+        #        _toStatus   == INDExpenseSheetStatus::InReview)
+        #        return 'ExpenseSheetApprovalRequested';
+        #
+        #    if (_fromStatus == INDExpenseSheetStatus::InReview &&
+        #        _toStatus   == INDExpenseSheetStatus::Approved)
+        #        return 'ExpenseSheetApproved';
+        #
+        #    if (_fromStatus == INDExpenseSheetStatus::InReview &&
+        #        _toStatus   == INDExpenseSheetStatus::Rejected)
+        #        return 'ExpenseSheetRejected';
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveExpenseSheetTemplateTargetModule
+        #// Convierte el evento de hoja de gastos al modulo destino usado por las plantillas.
+        #static server INDEmailTemplateTargetModule resolveExpenseSheetTemplateTargetModule(str _eventType,
+        #                                                                                  INDExpenseSheetStatus _toStatus)
+        #{
+        #    if (_eventType == 'ExpenseSheetPaid' || _toStatus == INDExpenseSheetStatus::Paid)
+        #        return INDEmailTemplateTargetModule::CRMPaid;
+        #
+        #    if (_toStatus == INDExpenseSheetStatus::InReview)
+        #        return INDEmailTemplateTargetModule::CRMInReview;
+        #
+        #    if (_toStatus == INDExpenseSheetStatus::Approved)
+        #        return INDEmailTemplateTargetModule::CRMApproved;
+        #
+        #    if (_toStatus == INDExpenseSheetStatus::Rejected)
+        #        return INDEmailTemplateTargetModule::CRMRejected;
+        #
+        #    return INDEmailTemplateTargetModule::Empty;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveLanguageIdFromCrmUserId
+        #// Lee SysUserInfo.Language del usuario AX vinculado al usuario CRM indicado.
+        #static server LanguageId resolveLanguageIdFromCrmUserId(CRMUserId _crmUserId)
+        #{
+        #    SysUserInfo sysUserInfo;
+        #    str 20      axUserId;
+        #    ;
+        #
+        #    axUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_crmUserId);
+        #    if (!axUserId)
+        #        return '';
+        #
+        #    select firstonly sysUserInfo
+        #        where sysUserInfo.Id == axUserId;
+        #
+        #    return sysUserInfo.Id ? sysUserInfo.Language : '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #sendExpenseSheetNotificationToRecipient
+        #// Envia el email de hoja de gastos para un destinatario concreto y resuelve su idioma de plantilla.
+        #static server boolean sendExpenseSheetNotificationToRecipient(CRMHojaGastosTable    _expenseSheet,
+        #                                                              str                   _eventType,
+        #                                                              INDExpenseSheetStatus _fromStatus,
+        #                                                              INDExpenseSheetStatus _toStatus,
+        #                                                              str 20                _senderUserId,
+        #                                                              CRMUserId             _senderCrmUserId,
+        #                                                              str 20                _recipientUserId,
+        #                                                              CRMUserId             _recipientCrmUserId,
+        #                                                              DataAreaId            _companyId,
+        #                                                              str                   _source,
+        #                                                              str                   _correlationId,
+        #                                                              boolean               _scopeIdempotencyByRecipient = false)
+        #{
+        #    str                           fromEmail;
+        #    str                           toEmail;
+        #    str                           link;
+        #    str                           subject;
+        #    str                           message;
+        #    str                           htmlBody;
+        #    str                           textBody;
+        #    str                           idempotencyKey;
+        #    INDEmailTemplateTargetModule  targetModule;
+        #    INDEmailTemplates             emailTemplate;
+        #    LanguageId                    languageId;
+        #    str                           logoSrc;
+        #    boolean                       sentOk;
+        #    ;
+        #
+        #    if (!_senderCrmUserId || !_recipientCrmUserId)
+        #    {
+        #        warning(strFmt('No se envio email %1 para hoja %2: no se pudieron resolver usuarios CRM.', _eventType, _expenseSheet.HojaGastosId));
+        #        return false;
+        #    }
+        #
+        #    if (_senderCrmUserId == _recipientCrmUserId)
+        #    {
+        #        info(strFmt('No se envio email %1 para hoja %2: emisor y destinatario son el mismo usuario CRM.', _eventType, _expenseSheet.HojaGastosId));
+        #        return false;
+        #    }
+        #
+        #    fromEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(_senderUserId);
+        #    if (!fromEmail && _senderCrmUserId != _senderUserId)
+        #        fromEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(_senderCrmUserId);
+        #
+        #    toEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(_recipientUserId);
+        #    if (!toEmail && _recipientCrmUserId != _recipientUserId)
+        #        toEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(_recipientCrmUserId);
+        #
+        #    link = INDCRMExpenseSheetService::buildExpenseSheetWebLink(_companyId, _expenseSheet.HojaGastosId, _source);
+        #
+        #    if (!fromEmail || !toEmail || !link)
+        #    {
+        #        warning(strFmt('No se envio email %1 para hoja %2: faltan From, To o link. recipientCrmUserId=%3.',
+        #                       _eventType, _expenseSheet.HojaGastosId, _recipientCrmUserId));
+        #        return false;
+        #    }
+        #
+        #    subject = INDCRMExpenseSheetService::buildExpenseSheetNotificationSubject(_eventType, _expenseSheet.HojaGastosId);
+        #    message = INDCRMExpenseSheetService::buildExpenseSheetNotificationMessage(_eventType, _expenseSheet.HojaGastosId);
+        #    textBody = INDCRMExpenseSheetService::buildExpenseSheetFallbackTextBody(message, _expenseSheet, _eventType, link);
+        #    htmlBody = '';
+        #
+        #    targetModule = INDCRMExpenseSheetService::resolveExpenseSheetTemplateTargetModule(_eventType, _toStatus);
+        #    languageId   = INDCRMExpenseSheetService::resolveLanguageIdFromCrmUserId(_recipientCrmUserId);
+        #
+        #    if (targetModule != INDEmailTemplateTargetModule::Empty && languageId)
+        #    {
+        #        emailTemplate = INDEmailTemplates::findValid(targetModule, languageId, today());
+        #    }
+        #
+        #    if (emailTemplate.RecId)
+        #    {
+        #        logoSrc = INDCRMExpenseSheetService::buildEmailLogoSrc(emailTemplate.Logo);
+        #
+        #        subject = INDCRMExpenseSheetService::renderExpenseSheetTemplate(emailTemplate.SubjectTemplate,
+        #                                                                       _expenseSheet,
+        #                                                                       _eventType,
+        #                                                                       link,
+        #                                                                       '',
+        #                                                                       false);
+        #        if (!subject)
+        #            subject = INDCRMExpenseSheetService::buildExpenseSheetNotificationSubject(_eventType, _expenseSheet.HojaGastosId);
+        #
+        #        htmlBody = INDCRMExpenseSheetService::renderExpenseSheetTemplate(emailTemplate.HtmlTemplate,
+        #                                                                       _expenseSheet,
+        #                                                                       _eventType,
+        #                                                                       link,
+        #                                                                       logoSrc,
+        #                                                                       true);
+        #    }
+        #    else
+        #    {
+        #        warning(strFmt('No hay plantilla vigente para email %1, idioma %2 y hoja %3. Se enviara texto plano.',
+        #                       _eventType, languageId, _expenseSheet.HojaGastosId));
+        #    }
+        #
+        #    if (!_correlationId)
+        #        _correlationId = strFmt('%1-%2-%3', _expenseSheet.HojaGastosId, today(), timeNow());
+        #
+        #    if (_scopeIdempotencyByRecipient)
+        #    {
+        #        idempotencyKey = strFmt('%1:%2:%3:%4:%5:%6:%7',
+        #                                 _eventType,
+        #                                 _companyId,
+        #                                 _expenseSheet.HojaGastosId,
+        #                                 _fromStatus,
+        #                                 _toStatus,
+        #                                 _recipientCrmUserId,
+        #                                 _correlationId);
+        #    }
+        #    else
+        #    {
+        #        idempotencyKey = strFmt('%1:%2:%3:%4:%5:%6',
+        #                                 _eventType,
+        #                                 _companyId,
+        #                                 _expenseSheet.HojaGastosId,
+        #                                 _fromStatus,
+        #                                 _toStatus,
+        #                                 _correlationId);
+        #    }
+        #
+        #    try
+        #    {
+        #        info(strFmt('Email hoja gastos: intento eventType=%1 company=%2 hoja=%3 fromStatus=%4 toStatus=%5 source=%6 correlationId=%7 templateRecId=%8 htmlLength=%9 textLength=%10 recipientCrmUserId=%11.',
+        #                    _eventType,
+        #                    _companyId,
+        #                    _expenseSheet.HojaGastosId,
+        #                    _fromStatus,
+        #                    _toStatus,
+        #                    _source,
+        #                    _correlationId,
+        #                    emailTemplate.RecId,
+        #                    strLen(htmlBody),
+        #                    strLen(textBody),
+        #                    _recipientCrmUserId));
+        #
+        #        // Usa el envio extendido para marcar la notificacion con importancia alta en Outlook.
+        #        sentOk = INDCRMUtilityService::sendInternalApiMailEx(
+        #                                                            _companyId,
+        #                                                            fromEmail,
+        #                                                            '',
+        #                                                            toEmail,
+        #                                                            '',
+        #                                                            '',
+        #                                                            '',
+        #                                                            subject,
+        #                                                            htmlBody,
+        #                                                            textBody,
+        #                                                            '',
+        #                                                            false,
+        #                                                            INDInternalApiClientServer::normalizeInternalApiMailImportance(strFmt("%1", INDEmailImportance::high)),
+        #                                                            'AxaptaExpenseSheetStatus',
+        #                                                            _eventType,
+        #                                                            'ExpenseSheet',
+        #                                                            _expenseSheet.HojaGastosId,
+        #                                                            idempotencyKey,
+        #                                                            _correlationId);
+        #
+        #        if (!sentOk)
+        #            warning(strFmt('Email hoja gastos no aceptado por transporte: eventType=%1 hoja=%2 company=%3 correlationId=%4 idempotencyKey=%5 recipientCrmUserId=%6.',
+        #                           _eventType, _expenseSheet.HojaGastosId, _companyId, _correlationId, idempotencyKey, _recipientCrmUserId));
+        #        else
+        #            info(strFmt('Email hoja gastos aceptado por transporte: eventType=%1 hoja=%2 company=%3 correlationId=%4 idempotencyKey=%5 recipientCrmUserId=%6.',
+        #                        _eventType, _expenseSheet.HojaGastosId, _companyId, _correlationId, idempotencyKey, _recipientCrmUserId));
+        #
+        #        return sentOk;
+        #    }
+        #    catch (Exception::DDEerror)
+        #    {
+        #        warning(strFmt('Fallo DDE/COM de mejor esfuerzo enviando email %1 para hoja %2. company=%3 correlationId=%4 idempotencyKey=%5 recipientCrmUserId=%6.',
+        #                       _eventType, _expenseSheet.HojaGastosId, _companyId, _correlationId, idempotencyKey, _recipientCrmUserId));
+        #        return false;
+        #    }
+        #    catch (Exception::Error)
+        #    {
+        #        warning(strFmt('Fallo de mejor esfuerzo enviando email %1 para hoja %2. company=%3 correlationId=%4 idempotencyKey=%5 recipientCrmUserId=%6.',
+        #                       _eventType, _expenseSheet.HojaGastosId, _companyId, _correlationId, idempotencyKey, _recipientCrmUserId));
+        #        return false;
+        #    }
+        #    catch (Exception::Internal)
+        #    {
+        #        warning(strFmt('Fallo interno de mejor esfuerzo enviando email %1 para hoja %2. company=%3 correlationId=%4 idempotencyKey=%5 recipientCrmUserId=%6.',
+        #                       _eventType, _expenseSheet.HojaGastosId, _companyId, _correlationId, idempotencyKey, _recipientCrmUserId));
+        #        return false;
+        #    }
+        #}
+        #
+      ENDSOURCE
+      SOURCE #sendExpenseSheetPaidNotification
+        #// Envia la notificacion de pago reutilizando el metodo global de estados.
+        #static server boolean sendExpenseSheetPaidNotification(CRMHojaGastosTable _expenseSheet,
+        #                                                       str 20             _userPagador = '')
+        #{
+        #    return INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
+        #        _expenseSheet,
+        #        INDExpenseSheetStatus::Approved,
+        #        INDExpenseSheetStatus::Paid,
+        #        _userPagador ? _userPagador : curUserId(),
+        #        _userPagador,
+        #        'axapta',
+        #        strFmt('paid-%1-%2', _expenseSheet.HojaGastosId, timeNow()));
+        #}
+        #
+      ENDSOURCE
+      SOURCE #sendExpenseSheetStatusNotification
+        #// Envia el email de hoja de gastos para las transiciones soportadas. No bloquea el proceso si falla.
+        #static server boolean sendExpenseSheetStatusNotification(CRMHojaGastosTable    _expenseSheet,
+        #                                                         INDExpenseSheetStatus _fromStatus,
+        #                                                         INDExpenseSheetStatus _toStatus,
+        #                                                         str 20                _actorUserId = '',
+        #                                                         str 20                _userPagador = '',
+        #                                                         str                   _source = 'axapta',
+        #                                                         str                   _correlationId = '')
+        #{
+        #    DataAreaId                    companyId;
+        #    CRMHojaGastosTable            expenseSheet;
+        #    str                           eventType;
+        #    str 20                        senderUserId;
+        #    str 20                        recipientUserId;
+        #    CRMUserId                     senderCrmUserId;
+        #    CRMUserId                     recipientCrmUserId;
+        #    CRMUserId                     managerCrmUserId;
+        #    container                     managerCrmUserIds = conNull();
+        #    boolean                       sentOk;
+        #    boolean                       anySentOk;
+        #    int                           i;
+        #    ;
+        #
+        #    if (!_expenseSheet.RecId)
+        #    {
+        #        warning('No se envio email de hoja de gastos: falta el registro de cabecera.');
+        #        return false;
+        #    }
+        #
+        #    if (_fromStatus == _toStatus)
+        #        return false;
+        #
+        #    eventType = INDCRMExpenseSheetService::resolveExpenseSheetNotificationEvent(_fromStatus, _toStatus);
+        #    if (!eventType)
+        #        return false;
+        #
+        #    companyId = curext();
+        #    expenseSheet = CRMHojaGastosTable::FindRecId(_expenseSheet.RecId);
+        #    if (!expenseSheet.RecId)
+        #        expenseSheet = _expenseSheet;
+        #
+        #    if (!_actorUserId)
+        #        _actorUserId = curUserId();
+        #
+        #    if (!_correlationId)
+        #        _correlationId = strFmt('%1-%2-%3', expenseSheet.HojaGastosId, today(), timeNow());
+        #
+        #    if (INDCRMExpenseSheetService::isExpenseSheetApprovalRequestEvent(eventType))
+        #    {
+        #        // Solicitud de aprobacion: emite el propietario y reciben todas sus jefaturas directas.
+        #        // Tambien cubre deshacer rechazo/aprobacion cuando la hoja vuelve a InReview.
+        #        senderUserId     = expenseSheet.UserId;
+        #        senderCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(senderUserId);
+        #        if (!senderCrmUserId)
+        #        {
+        #            warning(strFmt('No se envio email %1 para hoja %2: no se pudo resolver usuario CRM emisor.', eventType, expenseSheet.HojaGastosId));
+        #            return false;
+        #        }
+        #
+        #        managerCrmUserIds = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserIds(expenseSheet.UserId);
+        #        if (conLen(managerCrmUserIds) == 0)
+        #        {
+        #            warning(strFmt('No se envio email %1 para hoja %2: no se encontro jefatura para el propietario.', eventType, expenseSheet.HojaGastosId));
+        #            return false;
+        #        }
+        #
+        #        for (i = 1; i <= conLen(managerCrmUserIds); i++)
+        #        {
+        #            managerCrmUserId  = conPeek(managerCrmUserIds, i);
+        #        recipientUserId  = managerCrmUserId;
+        #            recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(recipientUserId);
+        #
+        #            sentOk = INDCRMExpenseSheetService::sendExpenseSheetNotificationToRecipient(
+        #                expenseSheet,
+        #                eventType,
+        #                _fromStatus,
+        #                _toStatus,
+        #                senderUserId,
+        #                senderCrmUserId,
+        #                recipientUserId,
+        #                recipientCrmUserId,
+        #                companyId,
+        #                _source,
+        #                _correlationId,
+        #                true);
+        #
+        #            if (sentOk)
+        #                anySentOk = true;
+        #    }
+        #
+        #        return anySentOk;
+        #    }
+        #
+        #    if (eventType == 'ExpenseSheetPaid')
+        #    {
+        #        // Pago: permite informar un usuario pagador mientras se cierra el punto exacto de remesas.
+        #        senderUserId    = _userPagador ? _userPagador : _actorUserId;
+        #        recipientUserId = expenseSheet.INDCreatedByUserId ? expenseSheet.INDCreatedByUserId : expenseSheet.UserId;
+        #    }
+        #    else
+        #    {
+        #        // Aprobacion o rechazo final: emite el actor y recibe el propietario.
+        #        senderUserId    = _actorUserId;
+        #        recipientUserId = expenseSheet.UserId;
+        #    }
+        #
+        #    senderCrmUserId    = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(senderUserId);
+        #    recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(recipientUserId);
+        #
+        #    return INDCRMExpenseSheetService::sendExpenseSheetNotificationToRecipient(  expenseSheet,
+        #                                                                                eventType,
+        #                                                                                _fromStatus,
+        #                                                                                _toStatus,
+        #                                                                                senderUserId,
+        #                                                                                senderCrmUserId,
+        #                                                                                recipientUserId,
+        #                                                                                recipientCrmUserId,
+        #                                                                                companyId,
+        #                                                                                _source,
+        #                                                                                _correlationId,
+        #                                                                                false);
+        #    }
+        #
+      ENDSOURCE
       SOURCE #updateExpenseSheetHeader
-        #// Method: indExpenseSheetUpdateHeader
-        #// Purpose: Update header fields. Block if Voucher is set.
-        #// Input:
+        #// Metodo: indExpenseSheetUpdateHeader
+        #// Actualiza campos de cabecera y bloquea cambios si existe Voucher.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = HojaGastosId
@@ -2941,11 +4928,15 @@ Formatversion: 1
         #//  - _data[8] = ExpenseSheetStatus (opcional, entero >= 0; otros valores = sin cambio)
         #//  - _data[9] = ExchangeRateMode (opcional, entero >= 0; otros valores = sin cambio)
         #//  - _data[10] = estadoComentarios (opcional)
+        #//  - _data[11] = ReimbursableExpense (opcional: 0 No, 1 Yes, 2 Both)
+        #//  - _data[12] = actorAxUserId (opcional, solo para notificacion web de jefes)
         #static server container updateExpenseSheetHeader(container _data)
         #{
         #    DataAreaId            companyId;
         #    CRMUserId             crmUserId;
-        #    UserId                axUserId;
+        #    str 20                axUserId;
+        #    str 20                actorAxUserId;
+        #    str 20                notificationActorUserId;
         #    CRMHojaGastosId       hojaId;
         #    str                   descr;
         #    str                   currencyCode;
@@ -2955,12 +4946,23 @@ Formatversion: 1
         #    str                   msg;
         #    boolean               hasExpenseSheetStatus;
         #    boolean               hasExchangeRateMode;
+        #    boolean               hasReimbursableExpense;
+        #    boolean               hasEstadoComentarios;
         #    CRMComentarios        estadoComentarios;
         #    INDExpenseSheetStatus expenseSheetStatus;
         #    INDExchangeRateMode   exchangeRateMode;
+        #    INDReimbursableExpense reimbursableExpense;
         #    CRMHojaGastosTable    header;
+        #    INDExpenseSheetStatus oldExpenseSheetStatus;
+        #    INDExpenseSheetStatus newExpenseSheetStatus;
+        #    boolean               sendStatusNotification;
+        #    boolean               notificationSent;
         #    str 16                expenseSheetStatusRaw;
         #    str 16                exchangeRateModeRaw;
+        #    str 16                estadoComentariosRaw;
+        #    str 16                reimbursableExpenseRaw;
+        #    str 20                actorAxUserIdRaw;
+        #    str                   notificationCorrelationId;
         #    ;
         #    companyId = INDCRMUtilityService::getCompany(_data);
         #
@@ -2977,13 +4979,15 @@ Formatversion: 1
         #    exchRate     = conPeek(_data, 6);
         #    projId       = conPeek(_data, 7);
         #
-        #    hasExpenseSheetStatus = false;
-        #    hasExchangeRateMode   = false;
+        #    hasExpenseSheetStatus  = false;
+        #    hasExchangeRateMode    = false;
+        #    hasReimbursableExpense = false;
+        #    hasEstadoComentarios   = false;
         #
         #    if (conLen(_data) >= 8)
         #    {
         #        expenseSheetStatusRaw = strFmt('%1', conPeek(_data, 8));
-        #        expenseSheetStatusRaw = strLwr(strLTrim(strRTrim(expenseSheetStatusRaw)));
+        #        expenseSheetStatusRaw = strLwr(strLRTrim(expenseSheetStatusRaw));
         #        if (expenseSheetStatusRaw == '0' || str2Int(expenseSheetStatusRaw) != 0)
         #        {
         #            expenseSheetStatus = str2Int(expenseSheetStatusRaw);
@@ -2995,7 +4999,7 @@ Formatversion: 1
         #    if (conLen(_data) >= 9)
         #    {
         #        exchangeRateModeRaw = strFmt('%1', conPeek(_data, 9));
-        #        exchangeRateModeRaw = strLwr(strLTrim(strRTrim(exchangeRateModeRaw)));
+        #        exchangeRateModeRaw = strLwr(strLRTrim(exchangeRateModeRaw));
         #        if (exchangeRateModeRaw == '0' || str2Int(exchangeRateModeRaw) != 0)
         #        {
         #            exchangeRateMode = str2Int(exchangeRateModeRaw);
@@ -3006,16 +5010,44 @@ Formatversion: 1
         #
         #    if (conLen(_data) >= 10)
         #    {
-        #        estadoComentarios   = conPeek(_data, 10);
+        #        estadoComentariosRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 10))));
+        #        if (estadoComentariosRaw != 'null')
+        #        {
+        #            estadoComentarios = conPeek(_data, 10);
+        #            hasEstadoComentarios = true;
+        #        }
+        #    }
         #
+        #    if (conLen(_data) >= 11)
+        #    {
+        #        reimbursableExpenseRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 11))));
+        #        if (reimbursableExpenseRaw == '0' || str2Int(reimbursableExpenseRaw) != 0)
+        #        {
+        #            reimbursableExpense = str2Int(reimbursableExpenseRaw);
+        #            if (!INDCRMExpenseSheetService::isValidReimbursableExpense(reimbursableExpense))
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense invalido: %1.', reimbursableExpense), conNull());
+        #
+        #            hasReimbursableExpense = true;
+        #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 12)
+        #    {
+        #        actorAxUserIdRaw = strLRTrim(strFmt('%1', conPeek(_data, 12)));
+        #        if (strLwr(actorAxUserIdRaw) != 'null')
+        #            actorAxUserId = actorAxUserIdRaw;
         #    }
         #
         #
+        #    startLine = infolog.line(); //MMS - Ajustes CRM - 2026.06.29
+        #    sendStatusNotification = false;
         #    try
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                        //SysUserInfo::getCRMUsuarioTable(axUserId);
+        #
         #            if (!crmUserId || !hojaId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull());
         #
@@ -3035,20 +5067,13 @@ Formatversion: 1
         #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
         #            }
         #
-        #            if (currencyCode)
+        #            oldExpenseSheetStatus = header.ExpenseSheetStatus;
+        #
+        #            if (currencyCode || exchRate != 0)
         #            {
-        #                currencyCode = strUpr(strLRTrim(currencyCode));
+        #                //MMS - Ajustes CRM - 2026.06.26
+        #                // Compatibilidad: se aceptan campos legacy, pero la cabecera siempre queda en divisa local.
         #
-        #                if (currencyCode == 'EUR')
-        #                    exchRate = 100.0;
-        #                else if (exchRate <= 0)
-        #                {
-        #                    ttsabort;
-        #                    return INDCRMUtilityService::buildHeader(false, 'ExchRate debe ser mayor que 0 cuando CurrencyCode no es EUR.', conNull());
-        #                }
-        #
-        #                header.CurrencyCode = INDCRMUtilityService::resolveCurrencyCode(currencyCode);
-        #                header.ExchRate     = exchRate;
         #            }
         #
         #            if (descr)
@@ -3062,11 +5087,78 @@ Formatversion: 1
         #            if (hasExchangeRateMode)
         #                header.ExchangeRateMode = exchangeRateMode;
         #
-        #            header.EstadoComentarios = estadoComentarios;
+        #            if (hasReimbursableExpense)
+        #                header.ReimbursableExpense = reimbursableExpense;
+        #
+        #            if (hasEstadoComentarios)
+        #                header.EstadoComentarios = estadoComentarios;
+        #
+        #            header.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
+        #            msg = INDCRMExpenseSheetService::validateExpenseSheetHeaderForApi(header); //MMS - Ajustes CRM - 2026.06.29
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #            }
         #
         #            header.update();
         #
+        #            newExpenseSheetStatus = header.ExpenseSheetStatus;
+        #            sendStatusNotification = hasExpenseSheetStatus && oldExpenseSheetStatus != newExpenseSheetStatus;
+        #
         #            ttscommit;
+        #
+        #            if (sendStatusNotification)
+        #            {
+        #                // Para emails de jefatura, el actor real solo se usa si fue validado contra los subordinados.
+        #                notificationActorUserId = axUserId;
+        #                if (actorAxUserId &&
+        #                    newExpenseSheetStatus != INDExpenseSheetStatus::Paid &&
+        #                    INDCRMExpenseSheetService::canExpenseSheetActorManageOwner(actorAxUserId, header.UserId))
+        #                {
+        #                    notificationActorUserId = actorAxUserId;
+        #                }
+        #                else if (actorAxUserId)
+        #                {
+        #                    warning(strFmt('Actor web %1 ignorado para email de hoja %2: no pertenece al ambito de jefatura.', actorAxUserId, header.HojaGastosId));
+        #                }
+        #
+        #                notificationCorrelationId = strFmt('crm-api-%1-%2', hojaId, timeNow());
+        #
+        #                try
+        #                {
+        #                    info(strFmt('Email hoja gastos: disparo best-effort tras commit company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #
+        #                    notificationSent = INDCRMExpenseSheetService::sendExpenseSheetStatusNotification(
+        #                    header,
+        #                    oldExpenseSheetStatus,
+        #                    newExpenseSheetStatus,
+        #                    notificationActorUserId,
+        #                    '',
+        #                    'crm-api',
+        #                        notificationCorrelationId);
+        #
+        #                    if (!notificationSent)
+        #                        warning(strFmt('Email hoja gastos: best-effort sin envio company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                       companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #                }
+        #                catch (Exception::DDEerror)
+        #                {
+        #                    warning(strFmt('Email hoja gastos: fallo DDE/COM best-effort no bloqueante company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                   companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #                }
+        #                catch (Exception::Error)
+        #                {
+        #                    warning(strFmt('Email hoja gastos: fallo best-effort no bloqueante company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                   companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #                }
+        #                catch (Exception::Internal)
+        #                {
+        #                    warning(strFmt('Email hoja gastos: fallo interno best-effort no bloqueante company=%1 hoja=%2 oldStatus=%3 newStatus=%4 actor=%5 correlationId=%6.',
+        #                                   companyId, header.HojaGastosId, oldExpenseSheetStatus, newExpenseSheetStatus, notificationActorUserId, notificationCorrelationId));
+        #                }
+        #            }
         #
         #            return INDCRMUtilityService::buildHeader(true, 'Hoja de gastos actualizada correctamente.', conNull());
         #        }
@@ -3079,7 +5171,6 @@ Formatversion: 1
         #    catch (Exception::DDEerror)
         #    {
         #        ttsabort;
-        #        startLine = infolog.line();
         #        // Mensaje desde infolog desde el inicio del try
         #        return INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull());
         #    }
@@ -3112,7 +5203,7 @@ Formatversion: 1
         #    DataAreaId companyId;
         #
         #    CRMUserId         crmUserId;
-        #    UserId            axUserId;
+        #    str 20            axUserId;
         #    CRMHojaGastosId   hojaId;
         #    RecId             lineRecId;
         #
@@ -3125,6 +5216,16 @@ Formatversion: 1
         #    real  qty;
         #    real  price;
         #    str   projId;
+        #    INDReimbursableExpenseLines lineReimbursableExpense;
+        #    boolean hasLineReimbursableExpense;
+        #    str 16  lineReimbursableExpenseRaw;
+        #    CurrencyCode lineCurrencyCode;
+        #    real  lineAmountMST;
+        #    boolean hasLineAmountMST;
+        #    str 32  lineAmountMSTRaw;
+        #    real  lineExchRate;
+        #    boolean hasLineExchRate;
+        #    str 32  lineExchRateRaw;
         #    int   startLine;
         #    str   msg;
         #
@@ -3153,6 +5254,45 @@ Formatversion: 1
         #    qty           = conPeek(_data, 10);
         #    price         = conPeek(_data, 11);
         #    projId        = conPeek(_data, 12);
+        #    hasLineReimbursableExpense = false;
+        #    hasLineAmountMST = false;
+        #    hasLineExchRate  = false;
+        #
+        #    if (conLen(_data) >= 13)
+        #    {
+        #        lineReimbursableExpenseRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 13))));
+        #        if (lineReimbursableExpenseRaw == '0' || str2Int(lineReimbursableExpenseRaw) != 0)
+        #        {
+        #            lineReimbursableExpense = str2Int(lineReimbursableExpenseRaw);
+        #            if (!INDCRMExpenseSheetService::isValidLineReimbursableExpense(lineReimbursableExpense))
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense de linea invalido: %1.', lineReimbursableExpense), conNull());
+        #
+        #            hasLineReimbursableExpense = true;
+        #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 14)
+        #        lineCurrencyCode = conPeek(_data, 14);
+        #
+        #    if (conLen(_data) >= 15)
+        #    {
+        #        lineAmountMSTRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 15))));
+        #        if (lineAmountMSTRaw && lineAmountMSTRaw != 'null')
+        #        {
+        #            lineAmountMST = conPeek(_data, 15);
+        #            hasLineAmountMST = true;
+        #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 16)
+        #    {
+        #        lineExchRateRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 16))));
+        #        if (lineExchRateRaw && lineExchRateRaw != 'null')
+        #        {
+        #            lineExchRate = conPeek(_data, 16);
+        #            hasLineExchRate = true;
+        #        }
+        #    }
         #
         #    if (!lineRecId)
         #        return INDCRMUtilityService::buildHeader(false, 'LineRecId es obligatorio.', conNull());
@@ -3173,7 +5313,9 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId    = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;//Lo convierto al usuario de System al de CRM
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                          //SysUserInfo::getCRMUsuarioTable(axUserId);
+        #
         #            if (!crmUserId || !hojaId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId y HojaGastosId son obligatorios.', conNull());
         #
@@ -3238,8 +5380,48 @@ Formatversion: 1
         #            line.Price         = price;
         #            line.Amount        = line.CalcAmount();
         #
+        #            if (lineCurrencyCode)
+        #            {
+        #                lineCurrencyCode = strUpr(strLRTrim(lineCurrencyCode));
+        #                line.Currency = INDCRMUtilityService::resolveCurrencyCode(lineCurrencyCode);
+        #            }
+        #            else if (!line.Currency)
+        #                line.Currency = header.CurrencyCode;
+        #
+        #            if (hasLineExchRate)
+        #                line.ExchRate = lineExchRate;
+        #            else if (line.Currency == CompanyInfo::standardCurrency())
+        #                line.ExchRate = 100;
+        #            else if (line.Currency == header.CurrencyCode && !line.ExchRate)
+        #                line.ExchRate = header.ExchRate;
+        #            else if (lineCurrencyCode && line.Currency != header.CurrencyCode)
+        #                line.ExchRate = 0;
+        #
+        #            if (hasLineAmountMST)
+        #                line.AmountMST = lineAmountMST;
+        #            line.normalizeCurrencyAmounts(hasLineAmountMST);
+        #
+        #            if (hasLineReimbursableExpense)
+        #                line.ReimbursableExpense = any2int(lineReimbursableExpense);
+        #
+        #            // Keep line project explicit and fall back to the header project when omitted.
         #            if (projId)
-        #                line.ProjId = projId;
+        #            {
+        #                line.ProjId       = projId;
+        #                line.ProjIdHornos = projId;
+        #            }
+        #            else if (!header.isVariousProjectDefault())
+        #            {
+        #                line.ProjId       = header.ProjId;
+        #                line.ProjIdHornos = header.ProjId;
+        #            }
+        #
+        #            msg = INDCRMExpenseSheetService::validateExpenseSheetLineForApi(line); //MMS - Ajustes CRM - 2026.06.29
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #            }
         #
         #            line.update();
         #
@@ -3305,10 +5487,15 @@ Formatversion: 1
         #//  - _data[13] = gastoType (optional)
         #//  - _data[14] = ocrJson (optional)
         #//  - _data[15] = normalizedJson (optional)
+        #//  - _data[16] = ticketDate (optional, yyyymmdd)
+        #//  - _data[17] = ticketTime (optional, seconds since midnight)
+        #//  - _data[18] = amountMST (optional)
+        #//  - _data[19] = exchRate (optional)
+        #//  - _data[20] = manualTotalAdjustment (optional: 0|1)
         #static server container updateExpenseSheetTicket(container _data)
         #{
         #    DataAreaId         companyId;
-        #    UserId             axUserId;
+        #    str 20             axUserId;
         #    CRMUserId          crmUserId;
         #    INDFileId          fileId;
         #
@@ -3325,6 +5512,14 @@ Formatversion: 1
         #    int                gastoType;
         #    str                ocrJson;
         #    str                normalizedJson;
+        #    str                ticketDateStr;
+        #    date               ticketDate;
+        #    int                ticketTime;
+        #    real               amountMST;
+        #    real               exchRate;
+        #    str 32             amountMSTRaw;
+        #    str 32             exchRateRaw;
+        #    int                manualTotalAdjustment;
         #
         #    boolean            hasTotalAmount;
         #    boolean            hasStatus;
@@ -3336,6 +5531,11 @@ Formatversion: 1
         #    boolean            hasGastoType;
         #    boolean            hasOcrJson;
         #    boolean            hasNormalizedJson;
+        #    boolean            hasTicketDate;
+        #    boolean            hasTicketTime;
+        #    boolean            hasAmountMST;
+        #    boolean            hasExchRate;
+        #    boolean            hasManualTotalAdjustment;
         #
         #    int                startLine;
         #    str                msg;
@@ -3433,6 +5633,51 @@ Formatversion: 1
         #        hasNormalizedJson = true;
         #    }
         #
+        #    if (conLen(_data) >= 16)
+        #    {
+        #        ticketDateStr = conPeek(_data, 16);
+        #        hasTicketDate = true;
+        #
+        #        if (ticketDateStr)
+        #        {
+        #            ticketDate = INDCRMUtilityService::parseYmdDate(ticketDateStr);
+        #            if (!ticketDate)
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('TicketDate invalida (yyyymmdd): %1', ticketDateStr), conNull());
+        #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 17)
+        #    {
+        #        ticketTime = conPeek(_data, 17);
+        #        hasTicketTime = true;
+        #    }
+        #
+        #    if (conLen(_data) >= 18)
+        #    {
+        #        amountMSTRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 18))));
+        #        if (amountMSTRaw && amountMSTRaw != 'null')
+        #        {
+        #            amountMST = conPeek(_data, 18);
+        #            hasAmountMST = true;
+        #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 19)
+        #    {
+        #        exchRateRaw = strLwr(strLRTrim(strFmt('%1', conPeek(_data, 19))));
+        #        if (exchRateRaw && exchRateRaw != 'null')
+        #        {
+        #            exchRate = conPeek(_data, 19);
+        #            hasExchRate = true;
+        #        }
+        #    }
+        #
+        #    if (conLen(_data) >= 20)
+        #    {
+        #        manualTotalAdjustment = conPeek(_data, 20);
+        #        hasManualTotalAdjustment = manualTotalAdjustment ? true : false;
+        #    }
+        #
         #    if (currencyCode)
         #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
@@ -3453,13 +5698,31 @@ Formatversion: 1
         #    if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
         #        return INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull());
         #
+        #    if (hasTicketTime &&
+        #        (ticketTime < 0
+        #      || ticketTime > 86399))
+        #    {
+        #        return INDCRMUtilityService::buildHeader(false, strFmt('TicketTime invalido: %1 (segundos 0..86399).', ticketTime), conNull());
+        #    }
+        #
+        #    if (hasAmountMST && amountMST < 0)
+        #        return INDCRMUtilityService::buildHeader(false, strFmt('AmountMST invalido: %1.', amountMST), conNull());
+        #
+        #    if (hasExchRate && exchRate < 0)
+        #        return INDCRMUtilityService::buildHeader(false, strFmt('ExchRate invalido: %1.', exchRate), conNull());
+        #
+        #    if (manualTotalAdjustment < 0 || manualTotalAdjustment > 1)
+        #        return INDCRMUtilityService::buildHeader(false, strFmt('manualTotalAdjustment invalido: %1 (valores: 0|1).', manualTotalAdjustment), conNull());
+        #
         #    startLine = infolog.line();
         #
         #    try
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                          //SysUserInfo::getCRMUsuarioTable(axUserId);
+        #
         #            if (!crmUserId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
         #
@@ -3484,6 +5747,21 @@ Formatversion: 1
         #            if (hasTotalAmount)
         #                ticketHeader.TotalAmount = totalAmount;
         #
+        #            if (hasManualTotalAdjustment && hasTotalAmount)
+        #            {
+        #                ticketHeader.syncAdjustmentLineToTotal(axUserId, true);
+        #
+        #                // Keep AmountMST intent clear; update() recalculates it unless the caller supplied it.
+        #                if (!hasAmountMST)
+        #                    ticketHeader.AmountMST = ticketHeader.orig().AmountMST;
+        #            }
+        #
+        #            if (hasAmountMST)
+        #                ticketHeader.AmountMST = amountMST;
+        #
+        #            if (hasExchRate)
+        #                ticketHeader.ExchRate = exchRate;
+        #
         #            if (hasStatus)
         #                ticketHeader.Status = status;
         #
@@ -3492,6 +5770,19 @@ Formatversion: 1
         #
         #            if (hasGastoType)
         #                ticketHeader.GastoType = gastoType;
+        #
+        #            if (hasTicketDate && ticketDate)
+        #                ticketHeader.TicketDate = ticketDate;
+        #
+        #            if (hasTicketTime)
+        #                ticketHeader.TicketTime = ticketTime;
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #            }
         #
         #            ticketHeader.update();
         #
@@ -3549,12 +5840,16 @@ Formatversion: 1
         #            else
         #                docuRef.update();
         #
-        #            outputProcessedByAI = ticketHeader.ProcessedByAI;
+        #            outputProcessedByAI = any2int(ticketHeader.ProcessedByAI);
         #
         #            ttscommit;
         #
         #            return INDCRMUtilityService::buildHeader(true, 'Ticket actualizado correctamente.',
-        #                                                     [ticketHeader.FileId, strFmt('%1', outputProcessedByAI)]);
+        #                                                     [ticketHeader.FileId,
+        #                                                      strFmt('%1', outputProcessedByAI),
+        #                                                      strFmt('%1', ticketHeader.TotalAmount),
+        #                                                      strFmt('%1', ticketHeader.AmountMST),
+        #                                                      strFmt('%1', ticketHeader.ExchRate)]);
         #        }
         #    }
         #    catch (Exception::Deadlock)
@@ -3596,7 +5891,7 @@ Formatversion: 1
         #//  - Marks ticket as ProcessedByAI = 1.
         #// Input:
         #//  - _data[1] = CompanyId
-        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional)]
+        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional), ticketDate(optional), ticketTime(optional)]
         #//  - _data[3] = linesIn  = container of lines [lineDescr, qty, price, lineTotal(optional)]
         #// Output:
         #//  - [header, linesOutRecIds]
@@ -3607,7 +5902,7 @@ Formatversion: 1
         #    container          linesIn;
         #    container          lineIn;
         #
-        #    UserId             axUserId;
+        #    str 20             axUserId;
         #    CRMUserId          crmUserId;
         #    INDFileId          fileId;
         #
@@ -3622,16 +5917,22 @@ Formatversion: 1
         #    int                gastoType;
         #    str                ocrJson;
         #    str                normalizedJson;
+        #    str                ticketDateStr;
+        #    date               ticketDate;
+        #    int                ticketTime;
         #
         #    str                lineDescr;
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
         #    real               linesTotalAmount;
+        #    boolean            hasLineTotal;
         #    boolean            hasTotalAmount;
         #    boolean            hasGastoType;
         #    boolean            hasOcrJson;
         #    boolean            hasNormalizedJson;
+        #    boolean            hasTicketDate;
+        #    boolean            hasTicketTime;
         #
         #    int                i;
         #    int                lineCount;
@@ -3689,6 +5990,25 @@ Formatversion: 1
         #        hasNormalizedJson = true;
         #    }
         #
+        #    if (conLen(headerIn) >= 13)
+        #    {
+        #        ticketDateStr = conPeek(headerIn, 13);
+        #        hasTicketDate = true;
+        #
+        #        if (ticketDateStr)
+        #        {
+        #            ticketDate = INDCRMUtilityService::parseYmdDate(ticketDateStr);
+        #            if (!ticketDate)
+        #                return [INDCRMUtilityService::buildHeader(false, strFmt('TicketDate invalida (yyyymmdd): %1', ticketDateStr), conNull()), conNull()];
+        #        }
+        #    }
+        #
+        #    if (conLen(headerIn) >= 14)
+        #    {
+        #        ticketTime = conPeek(headerIn, 14);
+        #        hasTicketTime = true;
+        #    }
+        #
         #    hasTotalAmount = true;
         #
         #    if (!axUserId)
@@ -3721,6 +6041,13 @@ Formatversion: 1
         #    if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
         #        return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
         #
+        #    if (hasTicketTime &&
+        #        (ticketTime < 0
+        #      || ticketTime > 86399))
+        #    {
+        #        return [INDCRMUtilityService::buildHeader(false, strFmt('TicketTime invalido: %1 (segundos 0..86399).', ticketTime), conNull()), conNull()];
+        #    }
+        #
         #    lineCount = conLen(linesIn);
         #    if (lineCount <= 0)
         #        return [INDCRMUtilityService::buildHeader(false, 'Se espera al menos 1 linea para procesamiento IA.', conNull()), conNull()];
@@ -3731,7 +6058,9 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                          //SysUserInfo::getCRMUsuarioTable(axUserId);
+        #
         #            if (!crmUserId)
         #                return [INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
         #
@@ -3753,6 +6082,12 @@ Formatversion: 1
         #
         #            if (hasGastoType)
         #                ticketHeader.GastoType = gastoType;
+        #
+        #            if (hasTicketDate && ticketDate)
+        #                ticketHeader.TicketDate = ticketDate;
+        #
+        #            if (hasTicketTime)
+        #                ticketHeader.TicketTime = ticketTime;
         #
         #            select firstonly forupdate docuRef
         #                where docuRef.RefTableId == tableNum(INDTicketInfoTable)
@@ -3816,8 +6151,12 @@ Formatversion: 1
         #                qty       = conPeek(lineIn, 2);
         #                price     = conPeek(lineIn, 3);
         #
+        #                hasLineTotal = false;
         #                if (conLen(lineIn) >= 4)
+        #                {
         #                    lineTotal = conPeek(lineIn, 4);
+        #                    hasLineTotal = true;
+        #                }
         #                else
         #                    lineTotal = 0;
         #
@@ -3827,19 +6166,33 @@ Formatversion: 1
         #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Description es obligatorio.', i), conNull()), conNull()];
         #                }
         #
-        #                if (qty <= 0)
+        #                if (qty < 0)
         #                {
         #                    ttsabort;
-        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Qty debe ser mayor que 0.', i), conNull()), conNull()];
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Qty no puede ser negativo.', i), conNull()), conNull()];
         #                }
         #
-        #                if (price <= 0)
+        #                if (price == 0)
         #                {
         #                    ttsabort;
-        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Price debe ser mayor que 0.', i), conNull()), conNull()];
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Price no puede ser 0.', i), conNull()), conNull()];
         #                }
         #
-        #                if (lineTotal <= 0)
+        #                if (!hasLineTotal)
+        #                {
+        #                    if (qty == 0 && price < 0)
+        #                        lineTotal = price;
+        #                    else
+        #                        lineTotal = qty * price;
+        #                }
+        #
+        #                if (qty == 0 && lineTotal >= 0)
+        #                {
+        #                    ttsabort;
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('Linea %1: Qty cero solo se permite en descuentos con total negativo.', i), conNull()), conNull()];
+        #                }
+        #
+        #                if (lineTotal == 0 && qty > 0)
         #                    lineTotal = qty * price;
         #
         #                ticketLine.clear();
@@ -3862,11 +6215,18 @@ Formatversion: 1
         #            else
         #                ticketHeader.TotalAmount = linesTotalAmount;
         #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
+        #            }
+        #
         #            ticketHeader.update();
         #
         #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
         #
-        #            outputProcessedByAI = ticketHeader.ProcessedByAI;
+        #            outputProcessedByAI = any2int(ticketHeader.ProcessedByAI);
         #
         #            ttscommit;
         #
@@ -3923,7 +6283,7 @@ Formatversion: 1
         #static server container updateExpenseSheetTicketLine(container _data)
         #{
         #    DataAreaId         companyId;
-        #    UserId             axUserId;
+        #    str 20             axUserId;
         #    CRMUserId          crmUserId;
         #    INDFileId          fileId;
         #    RecId              lineRecId;
@@ -3931,6 +6291,7 @@ Formatversion: 1
         #    real               qty;
         #    real               price;
         #    real               lineTotal;
+        #    boolean            hasLineTotal;
         #    int                startLine;
         #    str                msg;
         #
@@ -3953,9 +6314,13 @@ Formatversion: 1
         #    qty        = conPeek(_data, 6);
         #    price      = conPeek(_data, 7);
         #    lineTotal  = qty * price;
+        #    hasLineTotal = false;
         #
         #    if (conLen(_data) >= 8)
+        #    {
         #        lineTotal = conPeek(_data, 8);
+        #        hasLineTotal = true;
+        #    }
         #
         #    if (!axUserId)
         #        return INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull());
@@ -3969,13 +6334,24 @@ Formatversion: 1
         #    if (!lineDescr)
         #        return INDCRMUtilityService::buildHeader(false, 'Description es obligatorio.', conNull());
         #
-        #    if (qty <= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Qty debe ser mayor que 0.', conNull());
+        #    if (qty < 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty no puede ser negativo.', conNull());
         #
-        #    if (price <= 0)
-        #        return INDCRMUtilityService::buildHeader(false, 'Price debe ser mayor que 0.', conNull());
+        #    if (price == 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Price no puede ser 0.', conNull());
         #
-        #    if (lineTotal <= 0)
+        #    if (!hasLineTotal)
+        #    {
+        #        if (qty == 0 && price < 0)
+        #            lineTotal = price;
+        #        else
+        #            lineTotal = qty * price;
+        #    }
+        #
+        #    if (qty == 0 && lineTotal >= 0)
+        #        return INDCRMUtilityService::buildHeader(false, 'Qty cero solo se permite en descuentos con total negativo.', conNull());
+        #
+        #    if (lineTotal == 0 && qty > 0)
         #        lineTotal = qty * price;
         #
         #    startLine = infolog.line();
@@ -3984,7 +6360,9 @@ Formatversion: 1
         #    {
         #        changecompany(companyId)
         #        {
-        #            crmUserId = SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
+        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
+        #                          //SysUserInfo::getCRMUsuarioTable(axUserId);
+        #
         #            if (!crmUserId)
         #                return INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull());
         #
@@ -4016,9 +6394,18 @@ Formatversion: 1
         #            ticketLine.Qty         = qty;
         #            ticketLine.Price       = price;
         #            ticketLine.TotalAmount = lineTotal;
+        #
         #            ticketLine.update();
         #
-        #            ticketHeader.TotalAmount = INDCRMExpenseSheetService::calculateTicketTotalAmount(ticketHeader.FileId, ticketHeader.RecId);
+        #            ticketHeader.calcTotalAmount();
+        #
+        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
+        #            if (msg)
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, msg, conNull());
+        #            }
+        #
         #            ticketHeader.update();
         #
         #            INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, ticketHeader.FileId);
@@ -4056,6 +6443,110 @@ Formatversion: 1
         #    }
         #
         #    return INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull());
+        #}
+        #
+      ENDSOURCE
+      SOURCE #urlEncode
+        #// Purpose: Minimal query-string encoder for expense sheet web links.
+        #static server str urlEncode(str _value)
+        #{
+        #    str encoded = strFmt("%1", _value);
+        #    ;
+        #
+        #    encoded = strReplace(encoded, '%', '%25');
+        #    encoded = strReplace(encoded, ' ', '%20');
+        #    encoded = strReplace(encoded, '&', '%26');
+        #    encoded = strReplace(encoded, '?', '%3F');
+        #    encoded = strReplace(encoded, '=', '%3D');
+        #    encoded = strReplace(encoded, '#', '%23');
+        #    encoded = strReplace(encoded, '+', '%2B');
+        #    encoded = strReplace(encoded, '/', '%2F');
+        #
+        #    return encoded;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateExpenseSheetHeaderForApi
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Ejecuta validaciones de cabecera antes de guardar desde API y devuelve el motivo funcional.
+        #static server str validateExpenseSheetHeaderForApi(CRMHojaGastosTable _header)
+        #{
+        #    int startLine;
+        #    str msg;
+        #    ;
+        #
+        #    if (!_header.RecId)
+        #    {
+        #        startLine = infolog.line();
+        #        if (!_header.validateField(FieldNum(CRMHojaGastosTable, ProjId)))
+        #        {
+        #            msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #            return msg ? msg : 'Validacion de proyecto de cabecera no superada.';
+        #        }
+        #    }
+        #
+        #    // No llama validateField(ProjId) en actualizacion porque ese metodo abre dialogo cliente.
+        #    startLine = infolog.line();
+        #    if (!_header.validateWrite())
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de cabecera de hoja de gastos no superada.';
+        #    }
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateExpenseSheetLineForApi
+        #//MMS - Ajustes CRM - 2026.06.29
+        #// Ejecuta validateField de linea antes de insert/update para devolver mensajes de negocio claros.
+        #static server str validateExpenseSheetLineForApi(CRMHojaGastosLine _line)
+        #{
+        #    int startLine;
+        #    str msg;
+        #    ;
+        #
+        #    startLine = infolog.line();
+        #    if (!_line.validateField(FieldNum(CRMHojaGastosLine, Type)))
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de tipo de gasto no superada.';
+        #    }
+        #
+        #    startLine = infolog.line();
+        #    if (!_line.validateField(FieldNum(CRMHojaGastosLine, ProjIdHornos)))
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de proyecto de linea no superada.';
+        #    }
+        #
+        #    startLine = infolog.line();
+        #    if (!_line.validateWrite())
+        #    {
+        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
+        #        return msg ? msg : 'Validacion de linea de hoja de gastos no superada.';
+        #    }
+        #
+        #    return '';
+        #}
+        #
+      ENDSOURCE
+      SOURCE #validateTicketDateTimeForApi
+        #// Method: validateTicketDateTimeForApi
+        #// Purpose: Runs INDTicketInfoTable date/time uniqueness validation before API writes.
+        #static server str validateTicketDateTimeForApi(INDTicketInfoTable _ticketHeader, int _startLine)
+        #{
+        #    str msg;
+        #    ;
+        #
+        #    if (_ticketHeader.validateUniqueTicketDateTime())
+        #        return '';
+        #
+        #    msg = INDCRMUtilityService::getInfologMessagesSince(_startLine);
+        #    if (!msg)
+        #        msg = 'Ya existe otro ticket con la misma fecha y hora.';
+        #
+        #    return msg;
         #}
         #
       ENDSOURCE

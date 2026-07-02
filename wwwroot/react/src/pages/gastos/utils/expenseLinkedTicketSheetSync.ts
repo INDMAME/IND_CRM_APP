@@ -6,6 +6,11 @@ import type {
   ExpenseSheetTicketDetailDto,
 } from "../expenseTypes.ts";
 import {
+  getDefaultExpenseGastoTypeCode,
+  toExpenseGastoTypeCode,
+} from "../constants/expenseGastoTypeCatalog.ts";
+import { normalizeExpenseLineReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import {
   createExpenseSheet,
   fetchExpenseSheetDetail,
   fetchExpenseSheetTicket,
@@ -14,13 +19,24 @@ import {
   updateExpenseSheetLine,
 } from "./expenseApi.ts";
 import { toExpenseApiDdMmYyyy } from "./expenseApiDateUtils.ts";
+import {
+  calculateExpenseLineAmountMSTForCurrency,
+  isExpenseLineSameReimbursementCurrency,
+  resolveExpenseLineExchangeRateForCurrency,
+} from "./expenseLineCurrency.ts";
 import { safeText } from "./expenseUiUtils.ts";
 
-const DEFAULT_TICKET_GASTO_TYPE = 8;
+const PREFERRED_TICKET_GASTO_TYPE = 8;
 
 type SyncExpenseLinkedTicketSheetLineArgs = {
   fileId: string;
   sheetId: string;
+  lineRecId?: string;
+  projectIdOverride?: string | null;
+  reimbursableExpenseOverride?: number | null;
+  currencyCodeOverride?: string | null;
+  amountMSTOverride?: number | null;
+  exchangeRateOverride?: number | null;
 };
 
 type SyncedTicketSnapshot = {
@@ -28,6 +44,9 @@ type SyncedTicketSnapshot = {
   transDate: string;
   totalAmount: number;
   gastoType: number;
+  currencyCode: string;
+  amountMST: number | null;
+  exchRate: number | null;
 };
 
 const selectSheet = (items: unknown[], sheetId: string): ExpenseSheetDetailDto | null => {
@@ -63,40 +82,101 @@ const selectTicket = (items: unknown[], fileId: string): ExpenseSheetTicketDetai
   return selected as ExpenseSheetTicketDetailDto;
 };
 
-const resolveLinkedLine = (sheet: ExpenseSheetDetailDto, fileId: string): ExpenseSheetLine | null => {
+const resolveLinkedLine = (sheet: ExpenseSheetDetailDto, fileId: string, lineRecId?: string): ExpenseSheetLine | null => {
   const safeFileId = safeText(fileId).toUpperCase();
-  const lines = Array.isArray(sheet.Lines) ? sheet.Lines : [];
+  const safeLineRecId = safeText(lineRecId).toUpperCase();
+  const sourceLines = sheet.Lines ?? sheet.lines ?? [];
+  const lines = Array.isArray(sourceLines) ? sourceLines : [];
   const mappedLines = lines.map((entry) => mapExpenseSheetLine(entry));
+  if (safeLineRecId) {
+    return mappedLines.find((entry) => safeText(entry.lineRecId).toUpperCase() === safeLineRecId) || null;
+  }
+
   return mappedLines.find((entry) => safeText(entry.fileId).toUpperCase() === safeFileId) || null;
 };
 
-const resolveTicketSnapshot = (ticket: ExpenseSheetTicketDetailDto, existingLine: ExpenseSheetLine | null): SyncedTicketSnapshot => {
+const toFiniteNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const resolvePositiveNumberOverride = (value: number | null | undefined): number | null => {
+  const parsed = toFiniteNumber(value);
+  return parsed != null && parsed > 0 ? parsed : null;
+};
+
+const resolveNonNegativeNumberOverride = (value: number | null | undefined): number | null => {
+  const parsed = toFiniteNumber(value);
+  return parsed != null && parsed >= 0 ? parsed : null;
+};
+
+const resolveTicketSnapshot = (
+  ticket: ExpenseSheetTicketDetailDto,
+  existingLine: ExpenseSheetLine | null,
+  reimbursementCurrencyCode: string,
+  overrides: {
+    currencyCodeOverride?: string | null;
+    amountMSTOverride?: number | null;
+    exchangeRateOverride?: number | null;
+  }
+): SyncedTicketSnapshot => {
   const description = safeText(ticket.Description) || safeText(existingLine?.description) || "Ticket";
   const transDate =
     toExpenseApiDdMmYyyy(ticket.TransDate) || safeText(existingLine?.transDate) || toExpenseApiDdMmYyyy(new Date());
   const headerTotal = Number(ticket.TotalAmount || 0);
-  const lineTotal = Array.isArray(ticket.Lines)
+  const hasTicketLines = Array.isArray(ticket.Lines) && ticket.Lines.length > 0;
+  const lineTotal = hasTicketLines
     ? ticket.Lines.reduce((sum, entry) => {
-        const value = Number((entry as { TotalAmount?: unknown })?.TotalAmount || 0);
-        return value > 0 ? sum + value : sum;
+        const line = entry as { Price?: unknown; Qty?: unknown; TotalAmount?: unknown };
+        const explicitTotal =
+          line.TotalAmount === null || line.TotalAmount === undefined ? null : Number(line.TotalAmount);
+        const qty = Number(line.Qty);
+        const price = Number(line.Price);
+        const value = explicitTotal !== null && Number.isFinite(explicitTotal)
+          ? explicitTotal
+          : Number.isFinite(qty) && Number.isFinite(price)
+            ? qty * price
+            : 0;
+        return Number.isFinite(value) ? sum + value : sum;
       }, 0)
     : 0;
   const fallbackExistingAmount = Number(existingLine?.amount || existingLine?.price || 0);
-  const totalAmount = lineTotal > 0 ? lineTotal : headerTotal > 0 ? headerTotal : fallbackExistingAmount;
-  const parsedGastoType = Number(ticket.GastoType);
-  const existingTypeValue = Number(existingLine?.typeValueCode);
+  const totalAmount = headerTotal !== 0 ? headerTotal : hasTicketLines ? lineTotal : fallbackExistingAmount;
+  const parsedGastoType = toExpenseGastoTypeCode(ticket.GastoType, { allowNone: false });
+  const existingTypeValue = toExpenseGastoTypeCode(existingLine?.typeValueCode, { allowNone: false });
+  const defaultGastoType = getDefaultExpenseGastoTypeCode(PREFERRED_TICKET_GASTO_TYPE);
   const gastoType =
-    Number.isInteger(parsedGastoType) && parsedGastoType > 0
+    parsedGastoType !== null
       ? parsedGastoType
-      : Number.isInteger(existingTypeValue) && existingTypeValue > 0
+      : existingTypeValue !== null
         ? existingTypeValue
-        : DEFAULT_TICKET_GASTO_TYPE;
+      : defaultGastoType;
+  const currencyCode =
+    safeText(overrides.currencyCodeOverride).toUpperCase() ||
+    safeText(ticket.CurrencyCode).toUpperCase() ||
+    safeText(existingLine?.currencyCode).toUpperCase();
+  const rawAmountMST =
+    resolveNonNegativeNumberOverride(overrides.amountMSTOverride) ??
+    toFiniteNumber(ticket.AmountMST ?? ticket.amountMST ?? existingLine?.amountMST);
+  const rawExchRate =
+    resolvePositiveNumberOverride(overrides.exchangeRateOverride) ??
+    resolvePositiveNumberOverride(ticket.ExchRate ?? ticket.exchRate ?? existingLine?.exchRate);
+  const sameReimbursementCurrency = isExpenseLineSameReimbursementCurrency(currencyCode, reimbursementCurrencyCode);
+  const exchRate = resolveExpenseLineExchangeRateForCurrency(currencyCode, reimbursementCurrencyCode, rawExchRate);
+  const amountMST =
+    rawAmountMST ??
+    (sameReimbursementCurrency
+      ? calculateExpenseLineAmountMSTForCurrency(totalAmount, exchRate, currencyCode, reimbursementCurrencyCode)
+      : null);
 
   return {
     description,
     transDate,
     totalAmount,
     gastoType,
+    currencyCode,
+    amountMST,
+    exchRate,
   };
 };
 
@@ -105,12 +185,27 @@ const buildLinePayload = ({
   sheetProjectId,
   existingLine,
   ticketSnapshot,
+  projectIdOverride,
+  hasProjectIdOverride,
+  reimbursableExpenseOverride,
+  hasReimbursableExpenseOverride,
 }: {
   fileId: string;
   sheetProjectId: string;
   existingLine: ExpenseSheetLine | null;
   ticketSnapshot: SyncedTicketSnapshot;
+  projectIdOverride?: string | null;
+  hasProjectIdOverride: boolean;
+  reimbursableExpenseOverride?: number | null;
+  hasReimbursableExpenseOverride: boolean;
 }): ExpenseSheetCreateLineRequest => {
+  const resolvedProjectId = hasProjectIdOverride
+    ? safeText(projectIdOverride)
+    : safeText(existingLine?.projId || sheetProjectId);
+  const resolvedReimbursableExpense = hasReimbursableExpenseOverride
+    ? normalizeExpenseLineReimbursableExpense(reimbursableExpenseOverride)
+    : normalizeExpenseLineReimbursableExpense(existingLine?.reimbursableExpense);
+
   return {
     transDate: ticketSnapshot.transDate,
     typeValue: ticketSnapshot.gastoType,
@@ -120,16 +215,29 @@ const buildLinePayload = ({
     ticket: true,
     qty: 1,
     price: ticketSnapshot.totalAmount,
-    projId: safeText(existingLine?.projId || sheetProjectId) || undefined,
+    projId: resolvedProjectId || undefined,
+    reimbursableExpense: resolvedReimbursableExpense,
+    currencyCode: ticketSnapshot.currencyCode || undefined,
+    amountMST: ticketSnapshot.amountMST,
+    exchRate: ticketSnapshot.exchRate,
     indAttachFiles: safeText(existingLine?.indAttachFiles) || undefined,
   };
 };
 
 // Synchronizes the expense-sheet snapshot line that is linked to one ticket file.
-export const syncExpenseLinkedTicketSheetLine = async ({
-  fileId,
-  sheetId,
-}: SyncExpenseLinkedTicketSheetLineArgs): Promise<void> => {
+export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTicketSheetLineArgs): Promise<void> => {
+  const {
+    fileId,
+    sheetId,
+    lineRecId,
+    projectIdOverride,
+    reimbursableExpenseOverride,
+    currencyCodeOverride,
+    amountMSTOverride,
+    exchangeRateOverride,
+  } = args;
+  const hasProjectIdOverride = Object.prototype.hasOwnProperty.call(args, "projectIdOverride");
+  const hasReimbursableExpenseOverride = Object.prototype.hasOwnProperty.call(args, "reimbursableExpenseOverride");
   const safeFileId = safeText(fileId);
   const safeSheetId = safeText(sheetId);
   if (!safeFileId || !safeSheetId) {
@@ -167,9 +275,22 @@ export const syncExpenseLinkedTicketSheetLine = async ({
     throw new Error(indT("Tickets_Detail_NotFound", "Ticket was not found."));
   }
 
-  const existingLine = resolveLinkedLine(selectedSheet, safeFileId);
+  const existingLine = resolveLinkedLine(selectedSheet, safeFileId, lineRecId);
+  if (safeText(lineRecId) && !existingLine) {
+    throw new Error(indT("ExpenseSheets_NotFound", "Expense sheet was not found."));
+  }
+
   const sheetHeader = mapExpenseSheetHeader(selectedSheet);
-  const ticketSnapshot = resolveTicketSnapshot(selectedTicket, existingLine);
+  const ticketSnapshot = resolveTicketSnapshot(
+    selectedTicket,
+    existingLine,
+    safeText(sheetHeader.currencyCode).toUpperCase(),
+    {
+      currencyCodeOverride,
+      amountMSTOverride,
+      exchangeRateOverride,
+    }
+  );
   if (!(ticketSnapshot.totalAmount > 0)) {
     throw new Error(
       indT("ExpenseTickets_SheetSync_InvalidTotal", "The ticket must keep a positive total amount to sync the expense line.")
@@ -181,6 +302,10 @@ export const syncExpenseLinkedTicketSheetLine = async ({
     sheetProjectId: safeText(sheetHeader.projId),
     existingLine,
     ticketSnapshot,
+    projectIdOverride,
+    hasProjectIdOverride,
+    reimbursableExpenseOverride,
+    hasReimbursableExpenseOverride,
   });
 
   if (existingLine?.lineRecId) {

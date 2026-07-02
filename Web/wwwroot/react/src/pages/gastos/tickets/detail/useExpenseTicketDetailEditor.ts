@@ -1,14 +1,28 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { indT } from "../../../../utils/indI18n.ts";
+import type { ExpenseSheetLine } from "../../expenseTypes.ts";
+import {
+  calculateExpenseLineAmountMSTForCurrency,
+  calculateExpenseLineExchangeRateForCurrency,
+  isExpenseLineForeignCurrency,
+  isExpenseLineSameReimbursementCurrency,
+  resolveExpenseLineExchangeRateForCurrency,
+} from "../../utils/expenseLineCurrency.ts";
+import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
 import { parseExpenseDate, safeText, toIsoDate } from "../../utils/expenseUiUtils.ts";
+import { formatExpenseInputNumber, parseExpenseNumericInput } from "../../utils/expenseNumberFormat.ts";
 import type { ExpenseTicketDetailHeader } from "./expenseTicketDetailTypes.ts";
 
 type DraftState = {
   description: string;
   gastoType: string;
   currencyCode: string;
+  totalAmount: string;
+  amountMST: string;
+  exchangeRate: string;
   transDate: string;
+  ticketTime: string;
   comentario: string;
   urlFile: string;
   fileName: string;
@@ -20,11 +34,14 @@ type EditorState = {
   isEditing: boolean;
   modalError: string;
   linePage: number;
+  amountMSTManuallyEdited: boolean;
   draft: DraftState;
 };
 
 type UseExpenseTicketDetailEditorArgs = {
   header: ExpenseTicketDetailHeader | null;
+  linkedExpenseLine?: ExpenseSheetLine | null;
+  localCurrencyCode?: string;
   lineCount: number;
   pageSize: number;
   canEditTicket: boolean;
@@ -35,18 +52,28 @@ type UseExpenseTicketDetailEditorArgs = {
 };
 
 type EditorAction =
-  | { type: "hydrate_from_header"; header: ExpenseTicketDetailHeader | null }
+  | {
+      type: "hydrate_from_header";
+      header: ExpenseTicketDetailHeader | null;
+      linkedExpenseLine?: ExpenseSheetLine | null;
+      localCurrencyCode?: string;
+    }
   | {
       type: "patch_state";
-      patch: Partial<Pick<EditorState, "busy" | "status" | "isEditing" | "modalError" | "linePage">>;
+      patch: Partial<Pick<EditorState, "busy" | "status" | "isEditing" | "modalError" | "linePage" | "amountMSTManuallyEdited">>;
     }
+  | { type: "patch_draft"; patch: Partial<DraftState>; amountMSTManuallyEdited?: boolean }
   | { type: "set_draft_field"; field: keyof DraftState; value: string };
 
 const createEmptyDraft = (): DraftState => ({
   description: "",
   gastoType: "",
   currencyCode: "",
+  totalAmount: "",
+  amountMST: "",
+  exchangeRate: "",
   transDate: "",
+  ticketTime: "",
   comentario: "",
   urlFile: "",
   fileName: "",
@@ -57,12 +84,182 @@ const toInputDate = (raw?: string): string => {
   return parsed ? toIsoDate(parsed) : "";
 };
 
-const createDraftFromHeader = (header: ExpenseTicketDetailHeader | null): DraftState => {
+const toInputTime = (raw?: string): string => {
+  const value = safeText(raw);
+  if (!value || value === "0") return "";
+
+  const secondsValue = Number(value);
+  if (Number.isInteger(secondsValue) && secondsValue >= 0 && secondsValue <= 86399) {
+    const hours = Math.floor(secondsValue / 3600);
+    const minutes = Math.floor((secondsValue % 3600) / 60);
+    const seconds = secondsValue % 60;
+    return [hours, minutes, seconds].map((entry) => String(entry).padStart(2, "0")).join(":");
+  }
+
+  const match = value.match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/);
+  if (!match) return "";
+
+  const hours = Number.parseInt(match[1] || "", 10);
+  if (!Number.isInteger(hours) || hours < 0 || hours > 23) return "";
+
+  return `${String(hours).padStart(2, "0")}:${match[2]}:${match[3] || "00"}`;
+};
+
+const normalizeCurrencyCode = (value: unknown): string => safeText(value).toUpperCase();
+
+const toFiniteNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const formatEditableMoney = (value: number | string | null | undefined): string => {
+  return formatExpenseInputNumber(value, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+    fallback: "",
+  });
+};
+
+const formatEditableExchangeRate = (value: number | string | null | undefined): string => {
+  return formatExpenseInputNumber(value, {
+    minimumFractionDigits: 7,
+    maximumFractionDigits: 7,
+    useGrouping: true,
+    fallback: "",
+  });
+};
+
+const buildAmountMSTPatchFromExchangeRate = (
+  totalAmount: string,
+  exchangeRate: string,
+  currencyCode: string,
+  reimbursementCurrencyCode: string,
+  amountMSTManuallyEdited: boolean
+): Partial<DraftState> => {
+  if (amountMSTManuallyEdited && isExpenseLineSameReimbursementCurrency(currencyCode, reimbursementCurrencyCode)) {
+    return {};
+  }
+
+  const parsedTotalAmount = parseExpenseNumericInput(totalAmount);
+  const parsedExchangeRate = resolveExpenseLineExchangeRateForCurrency(
+    currencyCode,
+    reimbursementCurrencyCode,
+    parseExpenseNumericInput(exchangeRate)
+  );
+  const nextAmountMST =
+    parsedTotalAmount != null
+      ? calculateExpenseLineAmountMSTForCurrency(
+          parsedTotalAmount,
+          parsedExchangeRate,
+          currencyCode,
+          reimbursementCurrencyCode
+        )
+      : null;
+
+  return nextAmountMST != null ? { amountMST: formatEditableMoney(nextAmountMST) } : {};
+};
+
+const buildExchangeRatePatchFromAmountMST = (
+  totalAmount: string,
+  amountMST: string,
+  currencyCode: string,
+  reimbursementCurrencyCode: string,
+  currentExchangeRate: string
+): Partial<DraftState> => {
+  const parsedTotalAmount = parseExpenseNumericInput(totalAmount);
+  const parsedAmountMST = parseExpenseNumericInput(amountMST);
+  const nextExchangeRate =
+    parsedTotalAmount != null && parsedAmountMST != null
+      ? calculateExpenseLineExchangeRateForCurrency(
+          parsedTotalAmount,
+          parsedAmountMST,
+          currencyCode,
+          reimbursementCurrencyCode,
+          currentExchangeRate
+        )
+      : isExpenseLineSameReimbursementCurrency(currencyCode, reimbursementCurrencyCode)
+        ? resolveExpenseLineExchangeRateForCurrency(currencyCode, reimbursementCurrencyCode, currentExchangeRate)
+      : null;
+
+  return nextExchangeRate != null ? { exchangeRate: formatEditableExchangeRate(nextExchangeRate) } : {};
+};
+
+const resolveExchangeRateForSettlement = (
+  currencyCode: string,
+  localCurrencyCode: string,
+  exchangeRate: string
+): string => {
+  if (!isExpenseLineForeignCurrency(currencyCode, localCurrencyCode)) {
+    return formatEditableExchangeRate(100);
+  }
+
+  const parsedExchangeRate = parseExpenseNumericInput(exchangeRate);
+  if (parsedExchangeRate != null && parsedExchangeRate > 0) {
+    return exchangeRate;
+  }
+
+  return exchangeRate;
+};
+
+const buildLocalCurrencySettlementPatch = (
+  currencyCode: string,
+  localCurrencyCode: string,
+  totalAmount: string,
+  exchangeRate: string,
+  amountMSTManuallyEdited: boolean
+): Partial<DraftState> => {
+  if (isExpenseLineForeignCurrency(currencyCode, localCurrencyCode)) {
+    return {};
+  }
+
+  const parsedTotalAmount = parseExpenseNumericInput(totalAmount);
+  return {
+    exchangeRate: formatEditableExchangeRate(
+      resolveExpenseLineExchangeRateForCurrency(currencyCode, localCurrencyCode, exchangeRate)
+    ),
+    ...(!amountMSTManuallyEdited && parsedTotalAmount != null ? { amountMST: formatEditableMoney(parsedTotalAmount) } : {}),
+  };
+};
+
+const createDraftFromHeader = (
+  header: ExpenseTicketDetailHeader | null,
+  linkedExpenseLine: ExpenseSheetLine | null | undefined,
+  localCurrencyCode: string | undefined
+): DraftState => {
+  const normalizedLocalCurrencyCode =
+    normalizeCurrencyCode(localCurrencyCode) || normalizeCurrencyCode(linkedExpenseLine?.currencyCode);
+  const normalizedCurrencyCode =
+    normalizeCurrencyCode(header?.currencyCode) || normalizeCurrencyCode(linkedExpenseLine?.currencyCode) || normalizedLocalCurrencyCode;
+  const totalAmount = toFiniteNumber(header?.totalAmount) ?? toFiniteNumber(linkedExpenseLine?.amount) ?? toFiniteNumber(linkedExpenseLine?.price);
+  const ticketExchangeRate = toFiniteNumber(header?.exchRate ?? linkedExpenseLine?.exchRate);
+  const ticketAmountMST = toFiniteNumber(header?.amountMST ?? linkedExpenseLine?.amountMST);
+  const sameCurrency = isExpenseLineSameReimbursementCurrency(normalizedCurrencyCode, normalizedLocalCurrencyCode);
+  const exchangeRate = sameCurrency
+    ? 100
+    : ticketExchangeRate != null && ticketExchangeRate > 0
+      ? ticketExchangeRate
+      : null;
+  const calculatedAmountMST =
+    totalAmount != null
+      ? calculateExpenseLineAmountMSTForCurrency(
+          totalAmount,
+          exchangeRate,
+          normalizedCurrencyCode,
+          normalizedLocalCurrencyCode
+        )
+      : null;
+  const amountMST = ticketAmountMST ?? calculatedAmountMST ?? (sameCurrency ? totalAmount : null);
+
   return {
     description: safeText(header?.description),
     gastoType: header?.gastoType === null || header?.gastoType === undefined ? "" : String(header.gastoType),
-    currencyCode: safeText(header?.currencyCode).toUpperCase(),
-    transDate: toInputDate(header?.transDate),
+    currencyCode: normalizedCurrencyCode,
+    totalAmount: formatEditableMoney(totalAmount),
+    amountMST: formatEditableMoney(amountMST),
+    exchangeRate: formatEditableExchangeRate(exchangeRate),
+    transDate: toInputDate(header?.ticketDate || header?.transDate),
+    ticketTime: toInputTime(header?.ticketTime),
     comentario: safeText(header?.comentario),
     urlFile: safeText(header?.urlFile),
     fileName: safeText(header?.fileName),
@@ -75,12 +272,12 @@ const createInitialState = (): EditorState => ({
   isEditing: false,
   modalError: "",
   linePage: 1,
+  amountMSTManuallyEdited: false,
   draft: createEmptyDraft(),
 });
 
 const isValidRequiredGastoType = (rawValue: string): boolean => {
-  const parsedValue = Number.parseInt(String(rawValue || "").trim(), 10);
-  return Number.isInteger(parsedValue) && parsedValue > 0;
+  return toExpenseGastoTypeCode(rawValue, { allowNone: false }) !== null;
 };
 
 const editorReducer = (state: EditorState, action: EditorAction): EditorState => {
@@ -88,7 +285,8 @@ const editorReducer = (state: EditorState, action: EditorAction): EditorState =>
     case "hydrate_from_header":
       return {
         ...state,
-        draft: createDraftFromHeader(action.header),
+        amountMSTManuallyEdited: false,
+        draft: createDraftFromHeader(action.header, action.linkedExpenseLine, action.localCurrencyCode),
       };
     case "patch_state":
       return {
@@ -103,6 +301,15 @@ const editorReducer = (state: EditorState, action: EditorAction): EditorState =>
           [action.field]: action.value,
         },
       };
+    case "patch_draft":
+      return {
+        ...state,
+        amountMSTManuallyEdited: action.amountMSTManuallyEdited ?? state.amountMSTManuallyEdited,
+        draft: {
+          ...state.draft,
+          ...action.patch,
+        },
+      };
     default:
       return state;
   }
@@ -115,6 +322,8 @@ const resolveSetStateValue = <T,>(value: SetStateAction<T>, current: T): T => {
 // Owns page-local edit, draft, and line paging state for ticket detail.
 export const useExpenseTicketDetailEditor = ({
   header,
+  linkedExpenseLine,
+  localCurrencyCode,
   lineCount,
   pageSize,
   canEditTicket,
@@ -127,14 +336,22 @@ export const useExpenseTicketDetailEditor = ({
   const [descriptionInvalid, setDescriptionInvalid] = useState(false);
   const [gastoTypeInvalid, setGastoTypeInvalid] = useState(false);
   const [currencyCodeInvalid, setCurrencyCodeInvalid] = useState(false);
+  const [totalAmountInvalid, setTotalAmountInvalid] = useState(false);
+  const [amountMSTInvalid, setAmountMSTInvalid] = useState(false);
+  const [exchangeRateInvalid, setExchangeRateInvalid] = useState(false);
   const descriptionInputRef = useRef<HTMLInputElement | null>(null);
   const gastoTypeInputRef = useRef<HTMLInputElement | null>(null);
   const currencyInputRef = useRef<HTMLInputElement | null>(null);
+  const totalAmountInputRef = useRef<HTMLInputElement | null>(null);
+  const amountMSTInputRef = useRef<HTMLInputElement | null>(null);
+  const exchangeRateInputRef = useRef<HTMLInputElement | null>(null);
+  const effectiveLocalCurrencyCode =
+    normalizeCurrencyCode(localCurrencyCode) || normalizeCurrencyCode(linkedExpenseLine?.currencyCode);
 
   useEffect(() => {
     if (state.isEditing) return;
-    dispatch({ type: "hydrate_from_header", header });
-  }, [header, state.isEditing]);
+    dispatch({ type: "hydrate_from_header", header, linkedExpenseLine, localCurrencyCode: effectiveLocalCurrencyCode });
+  }, [effectiveLocalCurrencyCode, header, linkedExpenseLine, state.isEditing]);
 
   useEffect(() => {
     const maxPage = Math.max(1, Math.ceil(lineCount / pageSize));
@@ -148,6 +365,9 @@ export const useExpenseTicketDetailEditor = ({
     setDescriptionInvalid(false);
     setGastoTypeInvalid(false);
     setCurrencyCodeInvalid(false);
+    setTotalAmountInvalid(false);
+    setAmountMSTInvalid(false);
+    setExchangeRateInvalid(false);
   }, [state.isEditing]);
 
   const setBusy = useCallback<Dispatch<SetStateAction<boolean>>>(
@@ -212,24 +432,142 @@ export const useExpenseTicketDetailEditor = ({
   const setDraftCurrencyCode = useCallback<Dispatch<SetStateAction<string>>>(
     (value) => {
       setCurrencyCodeInvalid(false);
+      setAmountMSTInvalid(false);
+      setExchangeRateInvalid(false);
+      const nextCurrencyCode = normalizeCurrencyCode(resolveSetStateValue(value, state.draft.currencyCode));
+      const nextPatch: Partial<DraftState> = {
+        currencyCode: nextCurrencyCode,
+        ...buildLocalCurrencySettlementPatch(
+          nextCurrencyCode,
+          effectiveLocalCurrencyCode,
+          state.draft.totalAmount,
+          state.draft.exchangeRate,
+          false
+        ),
+      };
+      if (!nextPatch.amountMST) {
+        Object.assign(
+          nextPatch,
+          buildAmountMSTPatchFromExchangeRate(
+            state.draft.totalAmount,
+            state.draft.exchangeRate,
+            nextCurrencyCode,
+            effectiveLocalCurrencyCode,
+            false
+          )
+        );
+      }
       dispatch({
-        type: "set_draft_field",
-        field: "currencyCode",
-        value: resolveSetStateValue(value, state.draft.currencyCode),
+        type: "patch_draft",
+        patch: nextPatch,
+        amountMSTManuallyEdited: false,
       });
     },
-    [state.draft.currencyCode]
+    [effectiveLocalCurrencyCode, state.draft.currencyCode, state.draft.exchangeRate, state.draft.totalAmount]
   );
 
-  const setDraftTransDate = useCallback<Dispatch<SetStateAction<string>>>(
+  const setDraftTotalAmount = useCallback<Dispatch<SetStateAction<string>>>(
     (value) => {
+      setTotalAmountInvalid(false);
+      setAmountMSTInvalid(false);
+      setExchangeRateInvalid(false);
+      const nextTotalAmount = resolveSetStateValue(value, state.draft.totalAmount);
+      const effectiveExchangeRate = resolveExchangeRateForSettlement(
+        state.draft.currencyCode,
+        effectiveLocalCurrencyCode,
+        state.draft.exchangeRate
+      );
+      const nextPatch: Partial<DraftState> = {
+        totalAmount: nextTotalAmount,
+        ...buildAmountMSTPatchFromExchangeRate(
+          nextTotalAmount,
+          effectiveExchangeRate,
+          state.draft.currencyCode,
+          effectiveLocalCurrencyCode,
+          state.amountMSTManuallyEdited
+        ),
+      };
       dispatch({
-        type: "set_draft_field",
-        field: "transDate",
-        value: resolveSetStateValue(value, state.draft.transDate),
+        type: "patch_draft",
+        patch: nextPatch,
       });
     },
-    [state.draft.transDate]
+    [
+      effectiveLocalCurrencyCode,
+      state.amountMSTManuallyEdited,
+      state.draft.currencyCode,
+      state.draft.exchangeRate,
+      state.draft.totalAmount,
+    ]
+  );
+
+  const setDraftAmountMST = useCallback<Dispatch<SetStateAction<string>>>(
+    (value) => {
+      setAmountMSTInvalid(false);
+      setExchangeRateInvalid(false);
+      const nextAmountMST = resolveSetStateValue(value, state.draft.amountMST);
+      dispatch({
+        type: "patch_draft",
+        patch: {
+          amountMST: nextAmountMST,
+          ...buildExchangeRatePatchFromAmountMST(
+            state.draft.totalAmount,
+            nextAmountMST,
+            state.draft.currencyCode,
+            effectiveLocalCurrencyCode,
+            state.draft.exchangeRate
+          ),
+        },
+        amountMSTManuallyEdited: true,
+      });
+    },
+    [effectiveLocalCurrencyCode, state.draft.amountMST, state.draft.currencyCode, state.draft.exchangeRate, state.draft.totalAmount]
+  );
+
+  const setDraftExchangeRate = useCallback<Dispatch<SetStateAction<string>>>(
+    (value) => {
+      setExchangeRateInvalid(false);
+      setAmountMSTInvalid(false);
+      const nextExchangeRate = resolveSetStateValue(value, state.draft.exchangeRate);
+      dispatch({
+        type: "patch_draft",
+        patch: {
+          exchangeRate: nextExchangeRate,
+        },
+      });
+    },
+    [state.draft.exchangeRate]
+  );
+
+  const commitDraftExchangeRate = useCallback(
+    (value: string, currencyCodeOverride?: string) => {
+      setExchangeRateInvalid(false);
+      setAmountMSTInvalid(false);
+      const effectiveCurrencyCode = currencyCodeOverride
+        ? normalizeCurrencyCode(currencyCodeOverride)
+        : state.draft.currencyCode;
+      const nextExchangeRate = formatEditableExchangeRate(
+        resolveExchangeRateForSettlement(
+          effectiveCurrencyCode,
+          effectiveLocalCurrencyCode,
+          value
+        )
+      );
+      dispatch({
+        type: "patch_draft",
+        patch: {
+          exchangeRate: nextExchangeRate,
+          ...buildAmountMSTPatchFromExchangeRate(
+            state.draft.totalAmount,
+            nextExchangeRate,
+            effectiveCurrencyCode,
+            effectiveLocalCurrencyCode,
+            state.amountMSTManuallyEdited
+          ),
+        },
+      });
+    },
+    [effectiveLocalCurrencyCode, state.amountMSTManuallyEdited, state.draft.currencyCode, state.draft.totalAmount]
   );
 
   const handleEnableEdit = useCallback(() => {
@@ -243,7 +581,10 @@ export const useExpenseTicketDetailEditor = ({
 
     setGastoTypeInvalid(false);
     setCurrencyCodeInvalid(false);
-    dispatch({ type: "hydrate_from_header", header });
+    setTotalAmountInvalid(false);
+    setAmountMSTInvalid(false);
+    setExchangeRateInvalid(false);
+    dispatch({ type: "hydrate_from_header", header, linkedExpenseLine, localCurrencyCode: effectiveLocalCurrencyCode });
     dispatch({
       type: "patch_state",
       patch: {
@@ -252,7 +593,16 @@ export const useExpenseTicketDetailEditor = ({
         status: indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"),
       },
     });
-  }, [allowAssignedDraftEdit, canEditTicket, header, isFromSheetLink, isLoading, onForbidden]);
+  }, [
+    allowAssignedDraftEdit,
+    canEditTicket,
+    effectiveLocalCurrencyCode,
+    header,
+    isFromSheetLink,
+    isLoading,
+    linkedExpenseLine,
+    onForbidden,
+  ]);
 
   const handleCancelEdit = useCallback(() => {
     if (!state.isEditing) return;
@@ -263,7 +613,10 @@ export const useExpenseTicketDetailEditor = ({
 
     setGastoTypeInvalid(false);
     setCurrencyCodeInvalid(false);
-    dispatch({ type: "hydrate_from_header", header });
+    setTotalAmountInvalid(false);
+    setAmountMSTInvalid(false);
+    setExchangeRateInvalid(false);
+    dispatch({ type: "hydrate_from_header", header, linkedExpenseLine, localCurrencyCode: effectiveLocalCurrencyCode });
     dispatch({
       type: "patch_state",
       patch: {
@@ -272,20 +625,32 @@ export const useExpenseTicketDetailEditor = ({
         status: indT("Common_Cancel", "Cancel"),
       },
     });
-  }, [header, state.isEditing]);
+  }, [effectiveLocalCurrencyCode, header, linkedExpenseLine, state.isEditing]);
 
   const canOpenSaveConfirm = useCallback(() => {
     const normalizedDescription = String(state.draft.description || "").trim();
     const normalizedCurrencyCode = String(state.draft.currencyCode || "").trim().toUpperCase();
+    const parsedTotalAmount = parseExpenseNumericInput(state.draft.totalAmount);
+    const parsedAmountMST = parseExpenseNumericInput(state.draft.amountMST);
+    const parsedExchangeRate = parseExpenseNumericInput(state.draft.exchangeRate);
     const descriptionIsValid = !!normalizedDescription;
     const gastoTypeIsValid = isValidRequiredGastoType(state.draft.gastoType);
     const currencyIsValid = !!normalizedCurrencyCode;
+    const totalAmountIsValid = parsedTotalAmount != null && parsedTotalAmount >= 0;
+    const requiresForeignCurrencySettlement = isExpenseLineForeignCurrency(normalizedCurrencyCode, effectiveLocalCurrencyCode);
+    const hasForeignCurrencySettlement =
+      !requiresForeignCurrencySettlement ||
+      (parsedExchangeRate != null && parsedExchangeRate > 0) ||
+      (parsedAmountMST != null && parsedAmountMST > 0);
 
     setDescriptionInvalid(!descriptionIsValid);
     setGastoTypeInvalid(!gastoTypeIsValid);
     setCurrencyCodeInvalid(!currencyIsValid);
+    setTotalAmountInvalid(!totalAmountIsValid);
+    setExchangeRateInvalid(!hasForeignCurrencySettlement);
+    setAmountMSTInvalid(!hasForeignCurrencySettlement);
 
-    if (descriptionIsValid && gastoTypeIsValid && currencyIsValid) {
+    if (descriptionIsValid && gastoTypeIsValid && currencyIsValid && totalAmountIsValid && hasForeignCurrencySettlement) {
       return true;
     }
 
@@ -293,7 +658,14 @@ export const useExpenseTicketDetailEditor = ({
       ? indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required.")
       : !gastoTypeIsValid
         ? indT("Tickets_Validation_CategoryRequired", "Category is required.")
-        : indT("ExpenseSheets_Validation_CurrencyRequired", "Currency is required.");
+        : !currencyIsValid
+          ? indT("ExpenseSheets_Validation_CurrencyRequired", "Currency is required.")
+          : !totalAmountIsValid
+            ? indT("Tickets_Validation_TotalAmountRequired", "Total amount must be greater than or equal to 0.")
+            : indT(
+                "ExpenseSheets_Line_Validation_ForeignCurrencySettlement",
+                "Foreign currency lines require an exchange rate greater than 0 or a reimbursement amount."
+              );
 
     dispatch({
       type: "patch_state",
@@ -314,11 +686,31 @@ export const useExpenseTicketDetailEditor = ({
         return;
       }
 
-      currencyInputRef.current?.focus();
+      if (!currencyIsValid) {
+        currencyInputRef.current?.focus();
+        return;
+      }
+
+      if (!totalAmountIsValid) {
+        totalAmountInputRef.current?.focus();
+        return;
+      }
+
+      if (!hasForeignCurrencySettlement) {
+        exchangeRateInputRef.current?.focus();
+      }
     });
 
     return false;
-  }, [state.draft.currencyCode, state.draft.gastoType]);
+  }, [
+    effectiveLocalCurrencyCode,
+    state.draft.amountMST,
+    state.draft.currencyCode,
+    state.draft.description,
+    state.draft.exchangeRate,
+    state.draft.gastoType,
+    state.draft.totalAmount,
+  ]);
 
   return {
     busy: state.busy,
@@ -335,7 +727,18 @@ export const useExpenseTicketDetailEditor = ({
     draftCurrencyCode: state.draft.currencyCode,
     currencyCodeInvalid,
     currencyInputRef,
+    draftTotalAmount: state.draft.totalAmount,
+    totalAmountInvalid,
+    totalAmountInputRef,
+    draftAmountMST: state.draft.amountMST,
+    amountMSTInvalid,
+    amountMSTInputRef,
+    draftExchangeRate: state.draft.exchangeRate,
+    exchangeRateInvalid,
+    exchangeRateInputRef,
+    localCurrencyCode: effectiveLocalCurrencyCode,
     draftTransDate: state.draft.transDate,
+    draftTicketTime: state.draft.ticketTime,
     draftComentario: state.draft.comentario,
     draftUrlFile: state.draft.urlFile,
     draftFileName: state.draft.fileName,
@@ -347,7 +750,10 @@ export const useExpenseTicketDetailEditor = ({
     setDraftDescription,
     setDraftGastoType,
     setDraftCurrencyCode,
-    setDraftTransDate,
+    setDraftTotalAmount,
+    setDraftAmountMST,
+    setDraftExchangeRate,
+    commitDraftExchangeRate,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,

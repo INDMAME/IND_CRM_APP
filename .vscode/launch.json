@@ -22,8 +22,8 @@
       }
     },
     {
-      "name": "Abrir Chrome (UI local HTTPS 5001)",
-      "type": "pwa-chrome",
+      "name": "Chrome (UI local HTTPS 5001)",
+      "type": "chrome",
       "request": "launch",
       "url": "https://localhost:5001",
       "webRoot": "${workspaceFolder}"
@@ -34,7 +34,7 @@
       "name": "Backend + Chrome (local)",
       "configurations": [
         "Backend (Kestrel, HTTPS, Debug)",
-        "Abrir Chrome (UI local HTTPS 5001)"
+        "Chrome (UI local HTTPS 5001)"
       ]
     }
   ]

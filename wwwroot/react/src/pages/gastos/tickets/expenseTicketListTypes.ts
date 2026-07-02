@@ -1,5 +1,5 @@
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
-import type { ExpenseTicketStatusFilterCode } from "../constants/expenseTicketStatusCatalog.ts";
+import type { ExpenseTicketStatusCode, ExpenseTicketStatusFilterCode } from "../constants/expenseTicketStatusCatalog.ts";
 import type { ExpenseQuickDateFilterId } from "../constants/expenseQuickDateFilterCatalog.ts";
 
 export type ExpenseTicketQuickFilterId = ExpenseQuickDateFilterId;
@@ -29,7 +29,7 @@ export type ExpenseTicketListCardBase = {
 
 export type ExpenseTicketCard = ExpenseTicketListCardBase & {
   kind: "general";
-  status: 0 | 1 | null;
+  status: ExpenseTicketStatusCode | null;
 };
 
 export type ExpenseTicketLinkCard = ExpenseTicketListCardBase & {

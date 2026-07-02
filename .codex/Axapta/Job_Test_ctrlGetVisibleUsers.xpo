@@ -1,0 +1,217 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_Test_ctrlGetVisibleUsers descargados en Martes 23/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job_Test_ctrlGetVisibleUsers
+    #static void Job_Test_ctrlGetVisibleUsers(Args _args)
+    #{
+    #   DataAreaId  companyId      = "TAZ";
+    #   UserId      viewerAxUserId = "MAME";
+    #   str         appCode        = "CRM";
+    #   str         moduleCode     = "VISITAS_GESTION";
+    #   str         asOfDate       = ""; // Empty means today in ctrlGetVisibleUsers.
+    #   str         includeCrmUser = "1";
+    #
+    #   container   data;
+    #   container   result;
+    #   container   headerWrap;
+    #   container   header;
+    #   container   lines;
+    #   container   line;
+    #   INDPersonaTable viewerPerson;
+    #   INDCiasPermitidas accessCiaPerm;
+    #   INDWebModuleAccessLevel moduleAccessLevel;
+    #   int         i;
+    #   str         rowAlias;
+    #   str         utilityBuild;
+    #   ;
+    #
+    #   data = [
+    #       companyId,
+    #       appCode,
+    #       moduleCode,
+    #       viewerAxUserId,
+    #       asOfDate,
+    #       includeCrmUser
+    #   ];
+    #
+    #   info("Job_Test_ctrlGetVisibleUsers build=2026.06.23-runtime-version-gate");
+    #
+    #   info(strFmt("Calling ctrlGetVisibleUsers build=2026.06.23-runtime-version-gate. Company=%1 Viewer=%2 App=%3 Module=%4",
+    #       companyId,
+    #       viewerAxUserId,
+    #       appCode,
+    #       moduleCode));
+    #
+    #   info(strFmt("FieldIds INDWebModuleAccessLevel AccessRights=%1 ModuleCode=%2 RefCia=%3 AppCode=%4 DataVisibilityMode=%5 MutationPolicy=%6 HierarchyDepth=%7",
+    #       fieldNum(INDWebModuleAccessLevel, AccessRights),
+    #       fieldNum(INDWebModuleAccessLevel, ModuleCode),
+    #       fieldNum(INDWebModuleAccessLevel, RefRecIdCiaPermitida),
+    #       fieldNum(INDWebModuleAccessLevel, AppCode),
+    #       fieldNum(INDWebModuleAccessLevel, DataVisibilityMode),
+    #       fieldNum(INDWebModuleAccessLevel, MutationPolicy),
+    #       fieldNum(INDWebModuleAccessLevel, HierarchyDepth)));
+    #
+    #   if (fieldNum(INDWebModuleAccessLevel, DataVisibilityMode) < fieldNum(INDWebModuleAccessLevel, AppCode))
+    #   {
+    #       warning("INDWebModuleAccessLevel parece usar el layout historico: DataVisibilityMode aparece antes de AppCode. No importes el XPO espejo junto al actual.");
+    #   }
+    #
+    #   if (fieldNum(INDWebModuleAccessLevel, MutationPolicy) < fieldNum(INDWebModuleAccessLevel, DataVisibilityMode))
+    #   {
+    #       warning("INDWebModuleAccessLevel tiene MutationPolicy antes de DataVisibilityMode. Revisa FieldIds antes de validar ABI.");
+    #   }
+    #
+    #   moduleAccessLevel = INDCRMUtilityService::ctrlFindModuleAccessLevel(
+    #       viewerAxUserId,
+    #       companyId,
+    #       appCode,
+    #       moduleCode);
+    #
+    #   changecompany (companyId)
+    #   {
+    #       viewerPerson = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(viewerAxUserId);
+    #
+    #       if (moduleAccessLevel.RecId)
+    #       {
+    #           select firstOnly accessCiaPerm
+    #               where accessCiaPerm.RecId == moduleAccessLevel.RefRecIdCiaPermitida;
+    #       }
+    #   }
+    #
+    #   info(strFmt("Viewer identity raw=%1 resolvedAlias=%2 canonicalAxUser=%3 personRecId=%4",
+    #       viewerAxUserId,
+    #       viewerPerson.Alias,
+    #       viewerPerson.UserId,
+    #       viewerPerson.RecId));
+    #
+    #   if (moduleAccessLevel.RecId)
+    #   {
+    #       info(strFmt("Effective access RecId=%1 DataVisibilityMode=%2/%3 HierarchyDepth=%4/%5 MutationPolicy=%6/%7",
+    #           moduleAccessLevel.RecId,
+    #           any2int(moduleAccessLevel.DataVisibilityMode),
+    #           enum2str(moduleAccessLevel.DataVisibilityMode),
+    #           any2int(moduleAccessLevel.HierarchyDepth),
+    #           enum2str(moduleAccessLevel.HierarchyDepth),
+    #           any2int(moduleAccessLevel.MutationPolicy),
+    #           enum2str(moduleAccessLevel.MutationPolicy)));
+    #
+    #       info(strFmt("Effective access rowUser=%1 rowCompany=%2 refCia=%3 access=%4/%5",
+    #           accessCiaPerm.UserId,
+    #           accessCiaPerm.CiaId,
+    #           moduleAccessLevel.RefRecIdCiaPermitida,
+    #           any2int(moduleAccessLevel.AccessRights),
+    #           moduleAccessLevel.AccessRights));
+    #   }
+    #   else
+    #   {
+    #       warning("No effective access row found before ctrlGetVisibleUsers.");
+    #   }
+    #
+    #   result = INDCRMUtilityService::ctrlGetVisibleUsers(data);
+    #
+    #   if (conLen(result) < 2)
+    #   {
+    #       error("Invalid response. Expected [header, lines].");
+    #       return;
+    #   }
+    #
+    #   headerWrap = conPeek(result, 1);
+    #   lines      = conPeek(result, 2);
+    #
+    #   if (conLen(headerWrap) >= 1)
+    #   {
+    #       header = conPeek(headerWrap, 1);
+    #   }
+    #   else
+    #   {
+    #       header = headerWrap;
+    #   }
+    #
+    #   utilityBuild = "<no utility build>";
+    #   if (conLen(header) >= 8)
+    #       utilityBuild = conPeek(header, 8);
+    #
+    #   info(strFmt("Header success=%1 message=%2 viewer=%3 viewerAlias=%4 company=%5 app=%6 module=%7 utilityBuild=%8",
+    #       conPeek(header, 1),
+    #       conPeek(header, 2),
+    #       conPeek(header, 3),
+    #       conPeek(header, 4),
+    #       conPeek(header, 5),
+    #       conPeek(header, 6),
+    #       conPeek(header, 7),
+    #       utilityBuild));
+    #
+    #   if (utilityBuild != "INDCRMUtilityService build=2026.06.22-ownonly-guard")
+    #   {
+    #       throw error(strFmt("La INDCRMUtilityService importada/compilada no tiene el marcador ownonly-guard. utilityBuild=%1.",
+    #           utilityBuild));
+    #   }
+    #
+    #   if (conLen(header) >= 20)
+    #   {
+    #       info(strFmt("Header effective access recId=%1 dataVis=%2/%3 depth=%4/%5 mutation=%6/%7",
+    #           conPeek(header, 9),
+    #           conPeek(header, 10),
+    #           conPeek(header, 11),
+    #           conPeek(header, 12),
+    #           conPeek(header, 13),
+    #           conPeek(header, 14),
+    #           conPeek(header, 15)));
+    #
+    #       info(strFmt("Header effective row refCia=%1 rowUser=%2 rowCompany=%3 access=%4/%5",
+    #           conPeek(header, 16),
+    #           conPeek(header, 17),
+    #           conPeek(header, 18),
+    #           conPeek(header, 19),
+    #           conPeek(header, 20)));
+    #   }
+    #   else
+    #   {
+    #       throw error("Header sin diagnostico efectivo extendido. Recompile INDCRMUtilityService para comparar la fila usada por ctrlGetVisibleUsers.");
+    #   }
+    #
+    #   info(strFmt("Visible users count=%1", conLen(lines)));
+    #
+    #   if (moduleAccessLevel.RecId
+    #    && moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnOnly
+    #    && conLen(lines) != 1)
+    #   {
+    #       error(strFmt("OwnOnly debe devolver solo 1 usuario. Devueltos=%1", conLen(lines)));
+    #   }
+    #
+    #   for (i = 1; i <= conLen(lines); i++)
+    #   {
+    #       line = conPeek(lines, i);
+    #       rowAlias = conPeek(line, 1);
+    #
+    #       info(strFmt(
+    #           "TEST line %1 alias=%2 axUser=%3 crmUser=%4 name=%5 source=%6 mutationPolicy=%7 mutationPolicyInt=%8 mutationPolicyLabel=%9",
+    #           i,
+    #           rowAlias,
+    #           conPeek(line, 2),
+    #           conPeek(line, 3),
+    #           conPeek(line, 4),
+    #           conPeek(line, 5),
+    #           conPeek(line, 6),
+    #           conPeek(line, 7),
+    #           conPeek(line, 8)));
+    #
+    #       info(strFmt("Line %1 | CanMutate=%2", i, conPeek(line, 9)));
+    #
+    #       if (moduleAccessLevel.RecId
+    #        && moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnOnly
+    #        && rowAlias != viewerPerson.Alias)
+    #       {
+    #           error(strFmt("OwnOnly devolvio un alias no propio. viewerAlias=%1 rowAlias=%2", viewerPerson.Alias, rowAlias));
+    #       }
+    #   }
+    #}
+  ENDSOURCE
+
+***Element: END

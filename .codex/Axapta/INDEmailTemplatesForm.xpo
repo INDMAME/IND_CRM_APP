@@ -1,0 +1,1957 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Navision Axapta Forms unloaded at Martes 30/06/2026
+; --------------------------------------------------------------------------------
+FRMVERSION 5
+
+FORM #INDEmailTemplates
+  PROPERTIES
+    Name                #INDEmailTemplates
+  ENDPROPERTIES
+  
+  METHODS
+    Version: 3
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #INDEmailTemplates
+          Table               #INDEmailTemplates
+          Index               #
+          Company             #
+          CounterField        #
+          AllowCheck          #Yes
+          AllowEdit           #Yes
+          AllowCreate         #Yes
+          AllowDelete         #Yes
+          StartPosition       #First
+          AutoSearch          #Yes
+          AutoNotify          #Yes
+          AutoQuery           #Yes
+          OnlyFetchActive     #No
+          JoinSource          #
+          LinkType            #Delayed
+          DelayActive         #Yes
+          InsertAtEnd         #Yes
+          InsertIfEmpty       #Yes
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #active
+          #public int active()
+          #{
+          #    int         ret;
+          #    date        asOfDate;
+          #    boolean     validPeriod;
+          #    FormControl sendTestEmailControl;
+          #    FormControl sendDirectEmailTestControl;
+          #    ;
+          #
+          #    ret = super();
+          #
+          #    //MMS - Ajustes CRM - 2026.06.01
+          #    // Habilita cada boton de prueba segun vigencia y tipo de modulo seleccionado.
+          #    asOfDate = today();
+          #
+          #    validPeriod = INDEmailTemplates.RecId
+          #               && INDEmailTemplates.FromDate
+          #               && INDEmailTemplates.FromDate <= asOfDate
+          #               && (!INDEmailTemplates.ToDate || INDEmailTemplates.ToDate >= asOfDate);
+          #
+          #    sendTestEmailControl = element.design().controlName("SendTestEmail");
+          #    if (sendTestEmailControl)
+          #    {
+          #        sendTestEmailControl.visible(INDEmailTemplates.TargetModule != INDEmailTemplateTargetModule::Empty &&
+          #                                     INDEmailTemplates.TargetModule != INDEmailTemplateTargetModule::EmailTest);
+          #        sendTestEmailControl.enabled(validPeriod &&
+          #                                     INDEmailTemplates.TargetModule != INDEmailTemplateTargetModule::Empty &&
+          #                                     INDEmailTemplates.TargetModule != INDEmailTemplateTargetModule::EmailTest);
+          #    }
+          #
+          #    sendDirectEmailTestControl = element.design().controlName("SendDirectInternalApiMailExTest");
+          #    if (sendDirectEmailTestControl)
+          #    {
+          #        sendDirectEmailTestControl.visible(INDEmailTemplates.TargetModule == INDEmailTemplateTargetModule::EmailTest);
+          #        sendDirectEmailTestControl.enabled(validPeriod && INDEmailTemplates.TargetModule == INDEmailTemplateTargetModule::EmailTest);
+          #    }
+          #
+          #    return ret;
+          #}
+          #
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  JOINS
+  ENDJOINS
+  
+  DESIGN
+    PROPERTIES
+      Left                #Auto (left)
+      Top                 #Auto
+      Width               #Auto
+      Height              #Auto
+      Visible             #Yes
+      Caption             #Plantillas de email
+      TitleDatasource     #
+      Frame               #Standard
+      WindowResize        #Auto
+      WindowType          #Standard
+      SaveSize            #No
+      AlwaysOnTop         #No
+      HideToolbar         #No
+      SetCompany          #Yes
+      ColorScheme         #Default
+      CssClass            #
+      ShowWebHelp         #Default
+      BackgroundColor     #Button face (3D)
+      ImageName           #
+      ImageResource       #0
+      Imagemode           #Normal (preserve pict. attributes)
+      Mode                #Watch
+      SubmitMethod        #Auto
+      SupportReload       #No
+      LocalWebMenu        #
+      AllowDocking        #No
+      Font                #
+      FontSize            #0
+      Italic              #No
+      Underline           #No
+      Bold                #Default
+      CharacterSet        #0
+      LabelFont           #
+      LabelFontSize       #0
+      LabelItalic         #No
+      LabelUnderline      #No
+      LabelBold           #Default
+      LabelCharacterSet   #0
+      DataSource          #
+      TopMargin           #Auto
+      BottomMargin        #Auto
+      LeftMargin          #Auto
+      RightMargin         #Auto
+      ArrangeWhen         #Default
+      ArrangeMethod       #Vertical
+      Columns             #2
+      Columnspace         #Auto
+      ArrangeGuide        
+        ARRAY INDEX Columns 
+          #0
+          #0
+        ENDARRAY
+      HideIfEmpty         #Yes
+      AlignChildren       #Yes
+      AlignChild          #Yes
+      AllowUserSetup      #Yes
+      NeededAccessLevel   #NoAccess
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL TAB
+        ;==== controlId:12290, containerId: 0, containerdata: 0   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #Tab
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #No
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          ColorScheme         #Default
+          BackgroundColor     #Button face (3D)
+          BackStyle           #Opaque
+          Tabs                #0
+          Tab                 #Auto
+          TabAppearance       #Normal
+          ShowTabs            #Yes
+          TabPlacement        #Top
+          TabLayout           #One line
+          SelectControl       #Yes
+          DataSource          #
+          TopMargin           #Auto
+          BottomMargin        #Auto
+          LeftMargin          #Auto
+          RightMargin         #Auto
+          ArrangeWhen         #Default
+          ArrangeMethod       #Vertical
+          Columns             #2
+          Columnspace         #Auto
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+          HideIfEmpty         #Yes
+          AlignChildren       #Yes
+          AlignChild          #No
+          AllowUserSetup      #Yes
+          NeededAccessLevel   #View
+          TabAutoChange       #Yes
+        ENDPROPERTIES
+        
+        CONTAINER
+          CONTROL TABPAGE
+            ;==== controlId:12291, containerId:12290, containerdata:12290   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #Overview
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Column width
+              Height              #Column height
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #No
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              ColorScheme         #Default
+              BackgroundColor     #Button face (3D)
+              BackStyle           #Opaque
+              TabAppearance       #Normal
+              Caption             #General
+              DataSource          #
+              TopMargin           #Auto
+              BottomMargin        #Auto
+              LeftMargin          #Auto
+              RightMargin         #Auto
+              ArrangeWhen         #Default
+              ArrangeMethod       #Vertical
+              Columns             #1
+              Columnspace         #Auto
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                ENDARRAY
+              HideIfEmpty         #Yes
+              AlignChildren       #Yes
+              AlignChild          #Yes
+              AllowUserSetup      #Yes
+              NeededAccessLevel   #View
+              TabAutoChange       #No
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL BUTTONGROUP
+                ;==== controlId:12292, containerId:12291, containerdata:12291   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #ButtonGroup
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Right edge
+                  Top                 #Auto
+                  Width               #Auto
+                  Height              #Auto
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #No
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  FrameType           #Auto
+                  FramePosition       #Outside
+                  Caption             #
+                  SizeWidth           #Yes
+                  SizeHeight          #Yes
+                  Font                #
+                  FontSize            #0
+                  Italic              #No
+                  Underline           #No
+                  Bold                #Default
+                  CharacterSet        #0
+                  BackStyle           #Opaque
+                  ColorScheme         #Default
+                  BackgroundColor     #Button face (3D)
+                  DataSource          #
+                  TopMargin           #Auto
+                  BottomMargin        #Auto
+                  LeftMargin          #Auto
+                  RightMargin         #Auto
+                  ArrangeWhen         #Default
+                  ArrangeMethod       #Vertical
+                  Columns             #1
+                  Columnspace         #Auto
+                  ArrangeGuide        
+                    ARRAY INDEX Columns 
+                      #0
+                    ENDARRAY
+                  HideIfEmpty         #Yes
+                  AlignChildren       #Yes
+                  AlignChild          #Yes
+                  AllowUserSetup      #Yes
+                  NeededAccessLevel   #View
+                ENDPROPERTIES
+                
+                CONTAINER
+                  CONTROL MENUBUTTON
+                    ;==== controlId:12293, containerId:12292, containerdata:12292   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #HTML
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #Gestión HTML
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      TopMargin           #0
+                      BottomMargin        #0
+                      RightMargin         #0
+                      LeftMargin          #0
+                    ENDPROPERTIES
+                    
+                    CONTAINER
+                      CONTROL BUTTON
+                        ;==== controlId:12294, containerId:12293, containerdata:12293   
+                        ;----------------------------------------------------------
+                        PROPERTIES
+                          Name                #Preview
+                          AutoDeclaration     #No
+                          Visible             #Yes
+                          AllowEdit           #Yes
+                          Left                #Auto (left)
+                          Top                 #Auto
+                          Width               #Auto
+                          Height              #Auto
+                          VerticalSpacing     #Auto
+                          Enabled             #Yes
+                          Skip                #Yes
+                          AlignControl        #No
+                          HelpText            #
+                          ConfigurationKey    #
+                          SecurityKey         #
+                          DragDrop            #None
+                          Text                #Previsualizar
+                          Value               #No
+                          ButtonDisplay       #Text only
+                          NormalImage         #
+                          NormalResource      #0
+                          DisabledImage       #
+                          DisabledResource    #0
+                          Font                #
+                          FontSize            #0
+                          Italic              #No
+                          Underline           #No
+                          Bold                #Default
+                          CharacterSet        #0
+                          Border              #Auto
+                          ShowShortCut        #Yes
+                          DefaultButton       #No
+                          SaveRecord          #Yes
+                          MultiSelect         #Auto
+                          ColorScheme         #Default
+                          BackStyle           #Opaque
+                          BackgroundColor     #Button face (3D)
+                          ForegroundColor     #Button text
+                          NeededAccessLevel   #View
+                        ENDPROPERTIES
+                        
+                        METHODS
+                          Version: 3
+                          SOURCE #clicked
+                            #void clicked()
+                            #{
+                            #    str      html;
+                            #    Filename fileName;
+                            #    boolean  ok;
+                            #
+                            #    super();
+                            #
+                            #    //MMS - Ajustes CRM - 2026.05.28
+                            #    // Abre una vista previa local con el HTML guardado en la plantilla.
+                            #    html = INDEmailTemplates.HtmlTemplate;
+                            #
+                            #    if (!html)
+                            #    {
+                            #        warning('La plantilla no tiene HTML.');
+                            #        return;
+                            #    }
+                            #
+                            #    fileName = WinAPI::getTempPath() + '\\INDEmailTemplatePreview.html';
+                            #
+                            #    ok = INDEmailTemplateFileHelper::writeTextFile(fileName, html);
+                            #
+                            #    if (!ok)
+                            #    {
+                            #        return;
+                            #    }
+                            #
+                            #    WinAPI::shellExecute(fileName);
+                            #}
+                            #
+                          ENDSOURCE
+                        ENDMETHODS
+                      ENDCONTROL 
+                      
+                      CONTROL BUTTON
+                        ;==== controlId:12295, containerId:12293, containerdata:12293   
+                        ;----------------------------------------------------------
+                        PROPERTIES
+                          Name                #Import
+                          AutoDeclaration     #No
+                          Visible             #Yes
+                          AllowEdit           #Yes
+                          Left                #Auto (left)
+                          Top                 #Auto
+                          Width               #Auto
+                          Height              #Auto
+                          VerticalSpacing     #Auto
+                          Enabled             #Yes
+                          Skip                #Yes
+                          AlignControl        #No
+                          HelpText            #
+                          ConfigurationKey    #
+                          SecurityKey         #
+                          DragDrop            #None
+                          Text                #Importar
+                          Value               #No
+                          ButtonDisplay       #Text only
+                          NormalImage         #
+                          NormalResource      #0
+                          DisabledImage       #
+                          DisabledResource    #0
+                          Font                #
+                          FontSize            #0
+                          Italic              #No
+                          Underline           #No
+                          Bold                #Default
+                          CharacterSet        #0
+                          Border              #Auto
+                          ShowShortCut        #Yes
+                          DefaultButton       #No
+                          SaveRecord          #Yes
+                          MultiSelect         #Auto
+                          ColorScheme         #Default
+                          BackStyle           #Opaque
+                          BackgroundColor     #Button face (3D)
+                          ForegroundColor     #Button text
+                          NeededAccessLevel   #View
+                        ENDPROPERTIES
+                        
+                        METHODS
+                          Version: 3
+                          SOURCE #clicked
+                            #void clicked()
+                            #{
+                            #    Filename fileName;
+                            #    str      html;
+                            #
+                            #    super();
+                            #
+                            #    //MMS - Ajustes CRM - 2026.05.28
+                            #    // Importa un archivo HTML externo al campo de plantilla.
+                            #    fileName = WinAPI::getOpenFileName(
+                            #        element.hWnd(),
+                            #        ['HTML files', '*.html'],
+                            #        '',
+                            #        'Seleccionar plantilla HTML',
+                            #        '',
+                            #        'html'
+                            #    );
+                            #
+                            #    if (!fileName)
+                            #    {
+                            #        return;
+                            #    }
+                            #
+                            #    html = INDEmailTemplateFileHelper::readTextFile(fileName);
+                            #
+                            #    if (!html)
+                            #    {
+                            #        warning('El archivo seleccionado está vacío o no se pudo leer.');
+                            #        return;
+                            #    }
+                            #
+                            #    INDEmailTemplates.HtmlTemplate = html;
+                            #
+                            #    INDEmailTemplates_ds.write();
+                            #    INDEmailTemplates_ds.refresh();
+                            #
+                            #    info('Plantilla HTML importada correctamente.');
+                            #}
+                            #
+                          ENDSOURCE
+                        ENDMETHODS
+                      ENDCONTROL 
+                      
+                      CONTROL BUTTON
+                        ;==== controlId:12296, containerId:12293, containerdata:12293   
+                        ;----------------------------------------------------------
+                        PROPERTIES
+                          Name                #Export
+                          AutoDeclaration     #No
+                          Visible             #Yes
+                          AllowEdit           #Yes
+                          Left                #Auto (left)
+                          Top                 #Auto
+                          Width               #Auto
+                          Height              #Auto
+                          VerticalSpacing     #Auto
+                          Enabled             #Yes
+                          Skip                #Yes
+                          AlignControl        #No
+                          HelpText            #
+                          ConfigurationKey    #
+                          SecurityKey         #
+                          DragDrop            #None
+                          Text                #Exportar
+                          Value               #No
+                          ButtonDisplay       #Text only
+                          NormalImage         #
+                          NormalResource      #0
+                          DisabledImage       #
+                          DisabledResource    #0
+                          Font                #
+                          FontSize            #0
+                          Italic              #No
+                          Underline           #No
+                          Bold                #Default
+                          CharacterSet        #0
+                          Border              #Auto
+                          ShowShortCut        #Yes
+                          DefaultButton       #No
+                          SaveRecord          #Yes
+                          MultiSelect         #Auto
+                          ColorScheme         #Default
+                          BackStyle           #Opaque
+                          BackgroundColor     #Button face (3D)
+                          ForegroundColor     #Button text
+                          NeededAccessLevel   #View
+                        ENDPROPERTIES
+                        
+                        METHODS
+                          Version: 3
+                          SOURCE #clicked
+                            #void clicked()
+                            #{
+                            #    str      html;
+                            #    Filename fileName;
+                            #    boolean  ok;
+                            #
+                            #    super();
+                            #
+                            #    //MMS - Ajustes CRM - 2026.05.28
+                            #    // Exporta el HTML de la plantilla para editarlo fuera de Axapta.
+                            #    html = INDEmailTemplates.HtmlTemplate;
+                            #
+                            #    if (!html)
+                            #    {
+                            #        warning('La plantilla no tiene HTML para exportar.');
+                            #        return;
+                            #    }
+                            #
+                            #    fileName = WinAPI::getSaveFileName(
+                            #        element.hWnd(),
+                            #        ['HTML files', '*.html'],
+                            #        '',
+                            #        'Guardar plantilla HTML',
+                            #        '',
+                            #        INDEmailTemplates.TemplateId//'html'
+                            #    );
+                            #
+                            #    if (!fileName)
+                            #    {
+                            #        return;
+                            #    }
+                            #
+                            #    ok = INDEmailTemplateFileHelper::writeTextFile(fileName, html);
+                            #
+                            #    if (ok)
+                            #    {
+                            #        info(strFmt('Plantilla exportada: %1', fileName));
+                            #    }
+                            #}
+                            #
+                          ENDSOURCE
+                        ENDMETHODS
+                      ENDCONTROL 
+                      
+                    ENDCONTAINER
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL BUTTON
+                    ;==== controlId:12298, containerId:12292, containerdata:12297   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #SendTestEmail
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #Send test
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #Enviar prueba CRM
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                    ENDPROPERTIES
+                    
+                    METHODS
+                      Version: 3
+                      SOURCE #clicked
+                        #void clicked()
+                        #{
+                        #    Dialog                      dialog;
+                        #    Dialog                      paidDialog;
+                        #    DialogField                 dfHojaGastosId;
+                        #    DialogField                 dfFromStatus;
+                        #    DialogField                 dfToStatus;
+                        #    DialogField                 dfActorUserId;
+                        #    DialogField                 dfUserPagador;
+                        #
+                        #    INDEmailTemplates           emailTemplate;
+                        #    CRMHojaGastosTable          expenseSheet;
+                        #    CRMHojaGastosId             hojaGastosId;
+                        #    INDExpenseSheetStatus       fromStatus;
+                        #    INDExpenseSheetStatus       toStatus;
+                        #    INDExpenseSheetStatus       defaultFromStatus;
+                        #    INDExpenseSheetStatus       defaultToStatus;
+                        #    INDEmailTemplateTargetModule expectedTargetModule;
+                        #
+                        #    str                         eventType;
+                        #    str 20                      actorUserId;
+                        #    str 20                      userPagador;
+                        #    str 20                      senderUserId;
+                        #    str 20                      recipientUserId;
+                        #    CRMUserId                   senderCrmUserId;
+                        #    CRMUserId                   recipientCrmUserId;
+                        #    CRMUserId                   managerCrmUserId;
+                        #
+                        #    str                         fromEmail;
+                        #    str                         toEmail;
+                        #    str                         link;
+                        #    str                         subject;
+                        #    str                         message;
+                        #    str                         htmlBody;
+                        #    str                         textBody;
+                        #    str                         logoSrc;
+                        #    str                         correlationId;
+                        #    str                         idempotencyKey;
+                        #    DataAreaId                  companyId;
+                        #    date                        asOfDate;
+                        #    boolean                     validPeriod;
+                        #    boolean                     sent;
+                        #    ;
+                        #
+                        #    super();
+                        #
+                        #    //MMS - Ajustes CRM - 2026.06.01
+                        #    // Envia una prueba usando la plantilla actual, la logica CRM real y el envio extendido con importancia alta.
+                        #    emailTemplate = INDEmailTemplates;
+                        #    asOfDate = today();
+                        #
+                        #    validPeriod = emailTemplate.RecId
+                        #               && emailTemplate.FromDate
+                        #               && emailTemplate.FromDate <= asOfDate
+                        #               && (!emailTemplate.ToDate || emailTemplate.ToDate >= asOfDate);
+                        #
+                        #    if (!validPeriod)
+                        #    {
+                        #        warning("La plantilla seleccionada no esta vigente hoy. No se puede enviar prueba.");
+                        #        return;
+                        #    }
+                        #
+                        #    if (!emailTemplate.SubjectTemplate || !emailTemplate.HtmlTemplate)
+                        #    {
+                        #        warning("La plantilla debe tener asunto y HTML informados.");
+                        #        return;
+                        #    }
+                        #
+                        #    if (emailTemplate.TargetModule == INDEmailTemplateTargetModule::Empty)
+                        #    {
+                        #        warning("La plantilla debe tener un modulo destino valido.");
+                        #        return;
+                        #    }
+                        #
+                        #    // Inicializa la transicion mas probable segun el modulo de la plantilla.
+                        #    switch (emailTemplate.TargetModule)
+                        #    {
+                        #        case INDEmailTemplateTargetModule::CRMInReview:
+                        #            defaultFromStatus = INDExpenseSheetStatus::Draft;
+                        #            defaultToStatus   = INDExpenseSheetStatus::InReview;
+                        #            break;
+                        #
+                        #        case INDEmailTemplateTargetModule::CRMApproved:
+                        #            defaultFromStatus = INDExpenseSheetStatus::InReview;
+                        #            defaultToStatus   = INDExpenseSheetStatus::Approved;
+                        #            break;
+                        #
+                        #        case INDEmailTemplateTargetModule::CRMRejected:
+                        #            defaultFromStatus = INDExpenseSheetStatus::InReview;
+                        #            defaultToStatus   = INDExpenseSheetStatus::Rejected;
+                        #            break;
+                        #
+                        #        case INDEmailTemplateTargetModule::CRMPaid:
+                        #            defaultFromStatus = INDExpenseSheetStatus::Approved;
+                        #            defaultToStatus   = INDExpenseSheetStatus::Paid;
+                        #            break;
+                        #
+                        #        default:
+                        #            defaultFromStatus = INDExpenseSheetStatus::Draft;
+                        #            defaultToStatus   = INDExpenseSheetStatus::InReview;
+                        #            break;
+                        #    }
+                        #
+                        #    dialog = new Dialog("Enviar prueba de plantilla de email");
+                        #    dfHojaGastosId = dialog.addField(typeid(CRMHojaGastosId), "Hoja de gastos");
+                        #    dfFromStatus   = dialog.addField(typeid(INDExpenseSheetStatus), "Estado anterior");
+                        #    dfToStatus     = dialog.addField(typeid(INDExpenseSheetStatus), "Estado nuevo");
+                        #    dfActorUserId  = dialog.addField(typeid(Name), "Remitente");
+                        #
+                        #    dfFromStatus.value(defaultFromStatus);
+                        #    dfToStatus.value(defaultToStatus);
+                        #    dfActorUserId.value(curUserId());
+                        #
+                        #    if (!dialog.run())
+                        #        return;
+                        #
+                        #    hojaGastosId = strLRTrim(strFmt("%1", dfHojaGastosId.value()));
+                        #    fromStatus   = dfFromStatus.value();
+                        #    toStatus     = dfToStatus.value();
+                        #    actorUserId  = strLRTrim(strFmt("%1", dfActorUserId.value()));
+                        #
+                        #    if (!hojaGastosId)
+                        #    {
+                        #        warning("Hoja de gastos es obligatoria.");
+                        #        return;
+                        #    }
+                        #
+                        #    if (!actorUserId)
+                        #        actorUserId = curUserId();
+                        #
+                        #    if (toStatus == INDExpenseSheetStatus::Paid)
+                        #    {
+                        #        paidDialog = new Dialog("Datos de pago");
+                        #        dfUserPagador = paidDialog.addField(typeid(Name), "Usuario pagador");
+                        #        dfUserPagador.value(actorUserId);
+                        #
+                        #        if (!paidDialog.run())
+                        #            return;
+                        #
+                        #        userPagador = strLRTrim(strFmt("%1", dfUserPagador.value()));
+                        #    }
+                        #
+                        #    expenseSheet = CRMHojaGastosTable::Find(hojaGastosId);
+                        #    if (!expenseSheet.RecId)
+                        #    {
+                        #        warning(strFmt("No existe la hoja de gastos %1 en la empresa %2.", hojaGastosId, curext()));
+                        #        return;
+                        #    }
+                        #
+                        #    if (emailTemplate.TargetModule == INDEmailTemplateTargetModule::EmailTest)
+                        #    {
+                        #        eventType = "EmailTest";
+                        #    }
+                        #    else
+                        #    {
+                        #        eventType = INDCRMExpenseSheetService::resolveExpenseSheetNotificationEvent(fromStatus, toStatus);
+                        #        if (!eventType)
+                        #        {
+                        #            warning("La transicion indicada no tiene evento de email configurado.");
+                        #            return;
+                        #        }
+                        #
+                        #        expectedTargetModule = INDCRMExpenseSheetService::resolveExpenseSheetTemplateTargetModule(eventType, toStatus);
+                        #        if (expectedTargetModule != emailTemplate.TargetModule)
+                        #        {
+                        #            warning(strFmt("La plantilla seleccionada no coincide con la transicion. Target esperado: %1.",
+                        #                           enum2str(expectedTargetModule)));
+                        #            return;
+                        #        }
+                        #    }
+                        #
+                        #    if (eventType == "ExpenseSheetApprovalRequested")
+                        #    {
+                        #        senderUserId     = expenseSheet.UserId;
+                        #        managerCrmUserId = INDCRMExpenseSheetService::resolveExpenseSheetManagerCrmUserId(expenseSheet.UserId);
+                        #        recipientUserId  = managerCrmUserId;
+                        #    }
+                        #    else if (eventType == "ExpenseSheetPaid")
+                        #    {
+                        #        senderUserId    = userPagador ? userPagador : actorUserId;
+                        #        recipientUserId = expenseSheet.INDCreatedByUserId ? expenseSheet.INDCreatedByUserId : expenseSheet.UserId;
+                        #    }
+                        #    else
+                        #    {
+                        #        senderUserId    = actorUserId;
+                        #        recipientUserId = expenseSheet.UserId;
+                        #    }
+                        #
+                        #    senderCrmUserId    = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(senderUserId);
+                        #    recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(recipientUserId);
+                        #
+                        #    if (!senderCrmUserId || !recipientCrmUserId)
+                        #    {
+                        #        warning("No se pudieron resolver los usuarios CRM de emisor y destinatario.");
+                        #        return;
+                        #    }
+                        #
+                        #    if (senderCrmUserId == recipientCrmUserId)
+                        #    {
+                        #        warning("No se envia prueba porque emisor y destinatario resuelven al mismo usuario CRM.");
+                        #        return;
+                        #    }
+                        #
+                        #    fromEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(senderUserId);
+                        #    if (!fromEmail && senderCrmUserId != senderUserId)
+                        #        fromEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(senderCrmUserId);
+                        #
+                        #    toEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(recipientUserId);
+                        #    if (!toEmail && recipientCrmUserId != recipientUserId)
+                        #        toEmail = INDCRMExpenseSheetService::getPersonaEmailByUserId(recipientCrmUserId);
+                        #
+                        #    companyId = curext();
+                        #
+                        #    link = INDCRMExpenseSheetService::buildExpenseSheetWebLink(
+                        #        companyId,
+                        #        expenseSheet.HojaGastosId,
+                        #        "axapta-template-form-test");
+                        #
+                        #    if (!fromEmail || !toEmail || !link)
+                        #    {
+                        #        warning("Faltan From, To o link CRM para enviar la prueba.");
+                        #        return;
+                        #    }
+                        #
+                        #    logoSrc = INDCRMExpenseSheetService::buildEmailLogoSrc(emailTemplate.Logo);
+                        #
+                        #    subject = INDCRMExpenseSheetService::renderExpenseSheetTemplate(
+                        #        emailTemplate.SubjectTemplate,
+                        #        expenseSheet,
+                        #        eventType,
+                        #        link,
+                        #        "",
+                        #        false);
+                        #
+                        #    htmlBody = INDCRMExpenseSheetService::renderExpenseSheetTemplate(
+                        #        emailTemplate.HtmlTemplate,
+                        #        expenseSheet,
+                        #        eventType,
+                        #        link,
+                        #        logoSrc,
+                        #        true);
+                        #
+                        #    if (!subject)
+                        #        subject = INDCRMExpenseSheetService::buildExpenseSheetNotificationSubject(eventType, expenseSheet.HojaGastosId);
+                        #
+                        #    if (!subject)
+                        #        subject = strFmt("Prueba plantilla email hoja %1", expenseSheet.HojaGastosId);
+                        #
+                        #    message = INDCRMExpenseSheetService::buildExpenseSheetNotificationMessage(eventType, expenseSheet.HojaGastosId);
+                        #    if (!message)
+                        #        message = strFmt("Prueba de plantilla de email para hoja de gastos %1.", expenseSheet.HojaGastosId);
+                        #
+                        #    textBody = INDCRMExpenseSheetService::buildExpenseSheetFallbackTextBody(
+                        #        message,
+                        #        expenseSheet,
+                        #        eventType,
+                        #        link);
+                        #
+                        #    correlationId = strFmt("email-template-test-%1-%2", today(), timeNow());
+                        #
+                        #    idempotencyKey = strFmt(
+                        #        "EmailTemplateFormTest:%1:%2:%3:%4",
+                        #        companyId,
+                        #        emailTemplate.RecId,
+                        #        expenseSheet.HojaGastosId,
+                        #        correlationId);
+                        #
+                        #    try
+                        #    {
+                        #        sent = INDCRMUtilityService::sendInternalApiMailEx(
+                        #            companyId,
+                        #            fromEmail,
+                        #            "",
+                        #            toEmail,
+                        #            "",
+                        #            "",
+                        #            "",
+                        #            subject,
+                        #            htmlBody,
+                        #            textBody,
+                        #            '',
+                        #            false,
+                        #            INDInternalApiClientServer::normalizeInternalApiMailImportance(strFmt("%1", INDEmailImportance::high)),
+                        #            "AxaptaEmailTemplateFormTest",
+                        #            eventType,
+                        #            "ExpenseSheet",
+                        #            expenseSheet.HojaGastosId,
+                        #            idempotencyKey,
+                        #            correlationId);
+                        #
+                        #        if (sent)
+                        #            info(strFmt("Email de prueba aceptado por IND_INTERNAL_API con importancia alta. correlationId=%1", correlationId));
+                        #        else
+                        #            warning(strFmt("Email de prueba no aceptado. Revisa usuarios, emails, plantilla y logs. correlationId=%1", correlationId));
+                        #    }
+                        #    catch (Exception::Error)
+                        #    {
+                        #        warning(strFmt("Error enviando email de prueba de plantilla. correlationId=%1", correlationId));
+                        #    }
+                        #}
+                        #
+                        #
+                      ENDSOURCE
+                    ENDMETHODS
+                  ENDCONTROL 
+                  
+                  CONTROL BUTTON
+                    ;==== controlId:12311, containerId:12292, containerdata:12292   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #SendDirectInternalApiMailExTest
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #Send test
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #Enviar prueba template
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                    ENDPROPERTIES
+                    
+                    METHODS
+                      Version: 3
+                      SOURCE #clicked
+                        #void clicked()
+                        #{
+                        #    Dialog              dialog;
+                        #    DialogField         dfFromEmail;
+                        #    DialogField         dfToEmails;
+                        #    DialogField         dfCcEmails;
+                        #    DialogField         dfBccEmails;
+                        #    DialogField         dfReplyToEmails;
+                        #    DialogField         dfLink;
+                        #    DialogField         dfImportance;
+                        #
+                        #    INDEmailTemplates   emailTemplate;
+                        #    SysUserInfo         sysUserInfo;
+                        #    DataAreaId          companyId;
+                        #    date                asOfDate;
+                        #    boolean             validPeriod;
+                        #    boolean             sent;
+                        #
+                        #    str                 fromEmail;
+                        #    str                 toEmails;
+                        #    str                 ccEmails;
+                        #    str                 bccEmails;
+                        #    str                 replyToEmails;
+                        #    str                 link;
+                        #    str                 importance;
+                        #    str                 subject;
+                        #    str                 htmlBody;
+                        #    str                 textBody;
+                        #    str                 logoSrc;
+                        #    str                 correlationId;
+                        #    str                 idempotencyKey;
+                        #    str                 dateText;
+                        #    str                 dayText;
+                        #    ;
+                        #
+                        #    super();
+                        #
+                        #    //MMS - Ajustes CRM - 2026.06.01
+                        #    // Envia la plantilla EMAIL TEST directamente por IND_INTERNAL_API sin resolver usuarios ni hojas CRM.
+                        #    emailTemplate = INDEmailTemplates;
+                        #    asOfDate      = today();
+                        #
+                        #    validPeriod = emailTemplate.RecId
+                        #               && emailTemplate.FromDate
+                        #               && emailTemplate.FromDate <= asOfDate
+                        #               && (!emailTemplate.ToDate || emailTemplate.ToDate >= asOfDate);
+                        #
+                        #    if (!validPeriod)
+                        #    {
+                        #        warning("La plantilla seleccionada no esta vigente hoy. No se puede enviar prueba directa.");
+                        #        return;
+                        #    }
+                        #
+                        #    if (emailTemplate.TargetModule != INDEmailTemplateTargetModule::EmailTest)
+                        #    {
+                        #        warning("Este boton solo debe usarse con plantillas de modulo EMAIL TEST.");
+                        #        return;
+                        #    }
+                        #
+                        #    if (!emailTemplate.SubjectTemplate || !emailTemplate.HtmlTemplate)
+                        #    {
+                        #        warning("La plantilla EMAIL TEST debe tener asunto y HTML informados.");
+                        #        return;
+                        #    }
+                        #
+                        #    sysUserInfo = SysUserInfo::find(curUserId());
+                        #
+                        #    dialog = new Dialog("Enviar EMAIL TEST directo");
+                        #    dfFromEmail     = dialog.addField(typeid(Name), "Desde email");
+                        #    dfToEmails      = dialog.addField(typeid(Name), "Para email(s)");
+                        #    dfCcEmails      = dialog.addField(typeid(Name), "CC email(s)");
+                        #    dfBccEmails     = dialog.addField(typeid(Name), "CCO email(s)");
+                        #    dfReplyToEmails = dialog.addField(typeid(Name), "Responder a (reply)");
+                        #    dfLink          = dialog.addField(typeid(Description), "Link de prueba (opcional)");
+                        #    dfImportance    = dialog.addField(typeid(INDEmailImportance), "Importancia");
+                        #
+                        #    dfFromEmail.value(sysUserInfo.Email);
+                        #    dfToEmails.value(sysUserInfo.Email);
+                        #    dfImportance.value(enum2value(INDEmailImportance::high));
+                        #
+                        #    if (!dialog.run())
+                        #        return;
+                        #
+                        #    fromEmail     = strLRTrim(strFmt("%1", dfFromEmail.value()));
+                        #    toEmails      = strLRTrim(strFmt("%1", dfToEmails.value()));
+                        #    ccEmails      = strLRTrim(strFmt("%1", dfCcEmails.value()));
+                        #    bccEmails     = strLRTrim(strFmt("%1", dfBccEmails.value()));
+                        #    replyToEmails = strLRTrim(strFmt("%1", dfReplyToEmails.value()));
+                        #    link          = strLRTrim(strFmt("%1", dfLink.value()));
+                        #    importance    = INDInternalApiClientServer::normalizeInternalApiMailImportance(strFmt("%1", dfImportance.value()));
+                        #
+                        #    if (!fromEmail || !toEmails)
+                        #    {
+                        #        warning("Desde email y Para email(s) son obligatorios.");
+                        #        return;
+                        #    }
+                        #
+                        #    if (!link)
+                        #        link = "#";
+                        #
+                        #
+                        #    logoSrc = strLRTrim(strFmt("%1", emailTemplate.Logo));
+                        #    if (logoSrc && subStr(strLwr(logoSrc), 1, 5) != "data:")
+                        #        logoSrc = strFmt("data:image/png;base64,%1", logoSrc);
+                        #
+                        #    dateText = date2Str(asOfDate, 123, 2, 2, 2, 2, 4);
+                        #    dayText  = strFmt("%1", dayOfMth(asOfDate));
+                        #    if (strLen(dayText) == 1)
+                        #        dayText = "0" + dayText;
+                        #
+                        #    subject = strFmt(emailTemplate.SubjectTemplate,
+                        #                     "EMAIL_TEST",
+                        #                     "EMAIL TEST",
+                        #                     "0,00 EUR",
+                        #                     dateText,
+                        #                     "Prueba directa EMAIL TEST",
+                        #                     link,
+                        #                     "Abrir hoja de gastos",
+                        #                     strFmt("%1", year(asOfDate)),
+                        #                     "TEST",
+                        #                     dayText,
+                        #                     "Prueba directa de envio extendido.",
+                        #                     "");
+                        #
+                        #    htmlBody = strFmt(emailTemplate.HtmlTemplate,
+                        #                      "EMAIL_TEST",
+                        #                      "EMAIL TEST",
+                        #                      "0,00 EUR",
+                        #                      dateText,
+                        #                      "Prueba directa EMAIL TEST",
+                        #                      link,
+                        #                      "Abrir hoja de gastos",
+                        #                      strFmt("%1", year(asOfDate)),
+                        #                      "TEST",
+                        #                      dayText,
+                        #                      "Prueba directa de envio extendido.",
+                        #                      logoSrc);
+                        #
+                        #    if (!subject)
+                        #        subject = "Prueba EMAIL TEST directa";
+                        #
+                        #    if (link == "#")
+                        #        textBody = "Prueba directa EMAIL TEST.";
+                        #    else
+                        #    textBody = strFmt("Prueba directa EMAIL TEST. Link: %1", link);
+                        #    companyId = curext();
+                        #    correlationId = strFmt("email-test-direct-%1-%2", today(), timeNow());
+                        #    idempotencyKey = strFmt("EmailTemplateDirectTest:%1:%2:%3", companyId, emailTemplate.RecId, correlationId);
+                        #
+                        #    try
+                        #    {
+                        #        sent = INDInternalApiClientServer::sendInternalApiMailEx(
+                        #            companyId,
+                        #            fromEmail,
+                        #            "",
+                        #            toEmails,
+                        #            ccEmails,
+                        #            bccEmails,
+                        #            replyToEmails,
+                        #            subject,
+                        #            htmlBody,
+                        #            textBody,
+                        #            '',
+                        #            false,
+                        #            importance,
+                        #            "AxaptaEmailTemplateDirectTest",
+                        #            "EmailTest",
+                        #            "EmailTemplate",
+                        #            emailTemplate.TemplateId,
+                        #            idempotencyKey,
+                        #            correlationId);
+                        #
+                        #        if (sent)
+                        #            info(strFmt("EMAIL TEST directo aceptado por IND_INTERNAL_API. importance=%1 correlationId=%2", importance, correlationId));
+                        #        else
+                        #            warning(strFmt("EMAIL TEST directo no aceptado por IND_INTERNAL_API. correlationId=%1", correlationId));
+                        #    }
+                        #    catch (Exception::Error)
+                        #    {
+                        #        warning(strFmt("Error enviando EMAIL TEST directo. correlationId=%1", correlationId));
+                        #    }
+                        #}
+                        #
+                      ENDSOURCE
+                    ENDMETHODS
+                  ENDCONTROL 
+                  
+                ENDCONTAINER
+                
+              ENDCONTROL 
+              
+              CONTROL GRID
+                ;==== controlId:12299, containerId:12291, containerdata:12291   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #Grid
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Auto (left)
+                  Top                 #Auto
+                  Width               #Column width
+                  Height              #Column height
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #No
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  ColorScheme         #Default
+                  BackgroundColor     #Window background
+                  TopMargin           #0
+                  BottomMargin        #0
+                  LeftMargin          #0
+                  RightMargin         #0
+                  MultiSelect         #Yes
+                  VisibleCols         #Auto
+                  VisibleRows         #Auto
+                  ShowColLabels       #Yes
+                  ShowRowLabels       #Yes
+                  HighlightActive     #Yes
+                  ActiveBackColor     #Highlight background
+                  ActiveForeColor     #Highlight text
+                  DataSource          #INDEmailTemplates
+                  DataGroup           #
+                  AutoDataGroup       #No
+                  GridLines           #Yes
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12300, containerId:12299, containerdata:12299   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #INDEmailTemplates_TemplateId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #INDEmailTemplates
+                        DataField           #TemplateId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12301, containerId:12299, containerdata:12299   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #INDEmailTemplates_Description
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #INDEmailTemplates
+                        DataField           #Description
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12302, containerId:12299, containerdata:12299   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #INDEmailTemplates_SubjectTemplate
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #INDEmailTemplates
+                        DataField           #SubjectTemplate
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12303, containerId:12299, containerdata:12299   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #INDEmailTemplates_TargetModule
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #INDEmailTemplates
+                        DataField           #TargetModule
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12304, containerId:12299, containerdata:12299   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #INDEmailTemplates_LanguageId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #100
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #INDEmailTemplates
+                        DataField           #LanguageId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL DATEEDIT
+                      ;==== controlId:12305, containerId:12299, containerdata:12299   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #INDEmailTemplates_FromDate
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        DateValue           #
+                        Alignment           #Auto
+                        DateFormat          #Auto
+                        DateSeparator       #Auto
+                        DateYear            #Auto
+                        DateMonth           #Auto
+                        DateDay             #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #INDEmailTemplates
+                        DataField           #FromDate
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL DATEEDIT
+                      ;==== controlId:12306, containerId:12299, containerdata:12299   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #INDEmailTemplates_ToDate
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        DateValue           #
+                        Alignment           #Auto
+                        DateFormat          #Auto
+                        DateSeparator       #Auto
+                        DateYear            #Auto
+                        DateMonth           #Auto
+                        DateDay             #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #INDEmailTemplates
+                        DataField           #ToDate
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+          CONTROL TABPAGE
+            ;==== controlId:12307, containerId:12290, containerdata:12290   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #Details
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Column width
+              Height              #Column height
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #No
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              ColorScheme         #Default
+              BackgroundColor     #Button face (3D)
+              BackStyle           #Opaque
+              TabAppearance       #Normal
+              Caption             #HTML
+              DataSource          #
+              TopMargin           #Auto
+              BottomMargin        #Auto
+              LeftMargin          #Auto
+              RightMargin         #Auto
+              ArrangeWhen         #Default
+              ArrangeMethod       #Vertical
+              Columns             #1
+              Columnspace         #Auto
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                ENDARRAY
+              HideIfEmpty         #Yes
+              AlignChildren       #Yes
+              AlignChild          #Yes
+              AllowUserSetup      #Yes
+              NeededAccessLevel   #View
+              TabAutoChange       #No
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL STRINGEDIT
+                ;==== controlId:12308, containerId:12307, containerdata:12307   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #INDEmailTemplates_HtmlTemplate
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Auto (left)
+                  Top                 #Auto
+                  Width               #Column width
+                  Height              #Column height
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #Yes
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  LookupButton        #Auto
+                  ReplaceOnLookup     #Yes
+                  LimitText           #Auto
+                  DisplayLength       #Auto
+                  DisplayHeight       #Auto
+                  Border              #Auto
+                  Text                #
+                  PasswordStyle       #No
+                  Alignment           #Auto
+                  ChangeCase          #Auto
+                  MultiLine           #Yes
+                  ColorScheme         #Default
+                  BackStyle           #Opaque
+                  BackgroundColor     #Window background
+                  ForegroundColor     #Window text
+                  Font                #Courier New
+                  FontSize            #10
+                  Italic              #No
+                  Underline           #No
+                  Bold                #Normal
+                  CharacterSet        #0
+                  LabelForegroundColor #Window text
+                  ShowLabel           #No
+                  Label               #
+                  LabelFont           #
+                  LabelFontSize       #0
+                  LabelItalic         #No
+                  LabelUnderline      #No
+                  LabelBold           #Default
+                  LabelCharacterSet   #0
+                  LabelWidth          #Auto
+                  LabelHeight         #Auto
+                  LabelPosition       #Left
+                  LabelAlignment      #Right
+                  DataSource          #INDEmailTemplates
+                  DataField           #HtmlTemplate
+                  Mandatory           #No
+                  ArrayIndex          #0
+                  SearchMode          #None
+                ENDPROPERTIES
+                
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+          CONTROL TABPAGE
+            ;==== controlId:12309, containerId:12290, containerdata:12290   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #Logo64
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Column width
+              Height              #Column height
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #No
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              ColorScheme         #Default
+              BackgroundColor     #Button face (3D)
+              BackStyle           #Opaque
+              TabAppearance       #Normal
+              Caption             #LOGO
+              DataSource          #
+              TopMargin           #Auto
+              BottomMargin        #Auto
+              LeftMargin          #Auto
+              RightMargin         #Auto
+              ArrangeWhen         #Default
+              ArrangeMethod       #Vertical
+              Columns             #1
+              Columnspace         #Auto
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                ENDARRAY
+              HideIfEmpty         #Yes
+              AlignChildren       #Yes
+              AlignChild          #Yes
+              AllowUserSetup      #Yes
+              NeededAccessLevel   #View
+              TabAutoChange       #No
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL STRINGEDIT
+                ;==== controlId:12310, containerId:12309, containerdata:12309   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #CopyOfINDEmailTemplates_HtmlTemplate
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Auto (left)
+                  Top                 #Auto
+                  Width               #Column width
+                  Height              #Column height
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #Yes
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  LookupButton        #Auto
+                  ReplaceOnLookup     #Yes
+                  LimitText           #Auto
+                  DisplayLength       #Auto
+                  DisplayHeight       #Auto
+                  Border              #Auto
+                  Text                #
+                  PasswordStyle       #No
+                  Alignment           #Auto
+                  ChangeCase          #Auto
+                  MultiLine           #Yes
+                  ColorScheme         #Default
+                  BackStyle           #Opaque
+                  BackgroundColor     #Window background
+                  ForegroundColor     #Window text
+                  Font                #Courier New
+                  FontSize            #10
+                  Italic              #No
+                  Underline           #No
+                  Bold                #Normal
+                  CharacterSet        #0
+                  LabelForegroundColor #Window text
+                  ShowLabel           #No
+                  Label               #
+                  LabelFont           #
+                  LabelFontSize       #0
+                  LabelItalic         #No
+                  LabelUnderline      #No
+                  LabelBold           #Default
+                  LabelCharacterSet   #0
+                  LabelWidth          #Auto
+                  LabelHeight         #Auto
+                  LabelPosition       #Left
+                  LabelAlignment      #Right
+                  DataSource          #INDEmailTemplates
+                  DataField           #Logo
+                  Mandatory           #No
+                  ArrayIndex          #0
+                  SearchMode          #None
+                ENDPROPERTIES
+                
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+        ENDCONTAINER
+        
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+ENDFORM
+
+
+***Element: END

@@ -1,12 +1,11 @@
 import React from "react";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
-import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import { hasExpenseTicketImagePreviewSource } from "../tickets/detail/expenseTicketPreviewUtils.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
-import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
+import ExpenseTicketCurrencySettlementFields from "./ExpenseTicketCurrencySettlementFields.tsx";
 
 const hasRealExpenseSheetValue = (value: string): boolean => {
   const normalized = safeText(value).toLowerCase();
@@ -22,6 +21,7 @@ type ExpenseTicketDetailHeaderFormProps = {
   gastoTypeLabel: string;
   totalAmountText: string;
   transDateText: string;
+  ticketTimeText: string;
   isEditing: boolean;
   gastoTypeOptions: Array<{ value: string; text: string }>;
   draftDescription: string;
@@ -33,16 +33,32 @@ type ExpenseTicketDetailHeaderFormProps = {
   draftCurrencyCode: string;
   currencyCodeInvalid: boolean;
   currencyInputRef: React.Ref<HTMLInputElement>;
+  draftTotalAmount: string;
+  totalAmountInvalid: boolean;
+  totalAmountInputRef: React.Ref<HTMLInputElement>;
+  draftExchangeRate: string;
+  exchangeRateInvalid: boolean;
+  exchangeRateInputRef: React.Ref<HTMLInputElement>;
+  exchangeRateInfoMessage: string;
+  draftAmountMST: string;
+  amountMSTInvalid: boolean;
+  amountMSTInputRef: React.Ref<HTMLInputElement>;
+  localCurrencyCode: string;
   draftTransDate: string;
+  draftTicketTime: string;
   draftUrlFile: string;
   draftFileName: string;
   onDraftDescriptionChange: (value: string) => void;
   onDraftGastoTypeChange: (value: string) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
-  onDraftTransDateChange: (value: string) => void;
+  onDraftTotalAmountChange: (value: string) => void;
+  onDraftExchangeRateChange: (value: string) => void;
+  onDraftExchangeRateCommit?: (value: string) => void;
+  onDraftAmountMSTChange: (value: string) => void;
   onOpenFile: () => void;
   onOpenExpenseSheet?: () => void;
   hideOpenFileAction?: boolean;
+  children?: React.ReactNode;
 };
 
 // Read-only and editable header form for ticket detail.
@@ -52,6 +68,7 @@ const ExpenseTicketDetailHeaderForm = ({
   gastoTypeLabel,
   totalAmountText,
   transDateText,
+  ticketTimeText,
   isEditing,
   gastoTypeOptions,
   draftDescription,
@@ -63,36 +80,86 @@ const ExpenseTicketDetailHeaderForm = ({
   draftCurrencyCode,
   currencyCodeInvalid,
   currencyInputRef,
+  draftTotalAmount,
+  totalAmountInvalid,
+  totalAmountInputRef,
+  draftExchangeRate,
+  exchangeRateInvalid,
+  exchangeRateInputRef,
+  exchangeRateInfoMessage,
+  draftAmountMST,
+  amountMSTInvalid,
+  amountMSTInputRef,
+  localCurrencyCode,
   draftTransDate,
+  draftTicketTime,
   draftUrlFile,
   draftFileName,
   onDraftDescriptionChange,
   onDraftGastoTypeChange,
   onDraftCurrencyCodeChange,
-  onDraftTransDateChange,
+  onDraftTotalAmountChange,
+  onDraftExchangeRateChange,
+  onDraftExchangeRateCommit,
+  onDraftAmountMSTChange,
   onOpenFile,
   onOpenExpenseSheet,
   hideOpenFileAction = false,
+  children,
 }: ExpenseTicketDetailHeaderFormProps) => {
   const previewUrl = safeText(isEditing ? draftUrlFile : header.urlFile);
   const canOpenFile = hasExpenseTicketImagePreviewSource(previewUrl);
   const showExpenseSheetField = hasRealExpenseSheetValue(header.hojaGastosIdDisplay);
+  const locale = document?.documentElement?.lang || "es-ES";
+  const displayDateText =
+    transDateText ||
+    formatExpenseDisplayDate(header.ticketDate || header.transDate, locale) ||
+    "-";
+  const lockedDraftDateText = formatExpenseDisplayDate(draftTransDate, locale) || displayDateText;
+  const categoryField = isEditing ? (
+    <SelectCombobox
+      label={indT("Tickets_Filter_Category", "Category")}
+      options={gastoTypeOptions}
+      value={draftGastoType}
+      onChange={onDraftGastoTypeChange}
+      placeholder={indT("Tickets_Filter_Category", "Category")}
+      inputRef={gastoTypeInputRef}
+      invalid={gastoTypeInvalid}
+      usePortal
+      allowTextInput={false}
+      showSearchButton={false}
+    />
+  ) : (
+    <ExpenseReadOnlyField
+      label={indT("Tickets_Filter_Category", "Category")}
+      value={gastoTypeLabel || "-"}
+    />
+  );
+  const statusField = (
+    <ExpenseReadOnlyField
+      label={indT("Tickets_Field_Status", "Status")}
+      value={statusLabel || "-"}
+    />
+  );
+  const ticketField = (
+    <ExpenseReadOnlyField
+      label={indT("Tickets_Field_FileId", "Ticket Id.")}
+      value={header.fileId || "-"}
+    />
+  );
+  const expenseSheetField = showExpenseSheetField ? (
+    <ExpenseReadOnlyField
+      label={indT("Tickets_Field_ExpenseSheetDisplay", "Expense sheet Id.")}
+      value={header.hojaGastosIdDisplay || "-"}
+      onClick={onOpenExpenseSheet}
+    />
+  ) : null;
 
   return (
-    <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-slate-200 rounded-[var(--radius-xl)]">
+    <section className="relative shadow-xs glass-panel p-4 space-y-4 border border-zinc-200 rounded-[var(--radius-xl)]">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <ExpenseReadOnlyField
-          label={indT("Tickets_Field_FileId", "Ticket")}
-          value={header.fileId || "-"}
-        />
-
-        <ExpenseReadOnlyField
-          label={indT("Tickets_Field_Status", "Status")}
-          value={statusLabel || "-"}
-        />
-
         {isEditing ? (
-          <div className="sm:col-span-2 space-y-1.5">
+          <div className="md:col-span-2 space-y-1.5">
             <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Description", "Description")}</label>
             <input
               ref={descriptionInputRef}
@@ -111,72 +178,56 @@ const ExpenseTicketDetailHeaderForm = ({
           />
         )}
 
-        {isEditing ? (
-          <SelectCombobox
-            label={indT("Tickets_Filter_Category", "Category")}
-            options={gastoTypeOptions}
-            value={draftGastoType}
-            onChange={onDraftGastoTypeChange}
-            placeholder={indT("Tickets_Filter_Category", "Category")}
-            inputRef={gastoTypeInputRef}
-            invalid={gastoTypeInvalid}
-            usePortal
-            allowTextInput={false}
-            showSearchButton={false}
-          />
-        ) : (
-          <ExpenseReadOnlyField
-            label={indT("Tickets_Filter_Category", "Category")}
-            value={gastoTypeLabel || "-"}
-          />
-        )}
-
-        {showExpenseSheetField ? (
-          <ExpenseReadOnlyField
-            label={indT("Tickets_Field_ExpenseSheetDisplay", "Expense sheet")}
-            value={header.hojaGastosIdDisplay || "-"}
-            onClick={onOpenExpenseSheet}
-          />
-        ) : null}
-
-        {isEditing ? (
-          <ExpenseCurrencyFilterSelect
-            label={indT("ExpenseSheets_Field_Currency", "Currency")}
-            placeholder={indT("ExpenseSheets_Field_Currency", "Currency")}
-            value={draftCurrencyCode}
-            onChange={onDraftCurrencyCodeChange}
-            invalid={currencyCodeInvalid}
-            inputRef={currencyInputRef}
-            idBase="expense-ticket-detail-currency"
-          />
-        ) : (
-          <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_Currency", "Currency")}
-            value={header.currencyCode || "-"}
-          />
-        )}
-
-        <ExpenseReadOnlyField
-          label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")}
-          value={totalAmountText || "-"}
+        <ExpenseTicketCurrencySettlementFields
+          isEditing={isEditing}
+          expenseCurrencyCode={isEditing ? draftCurrencyCode : safeText(header.currencyCode)}
+          expenseCurrencyInvalid={currencyCodeInvalid}
+          expenseCurrencyInputRef={currencyInputRef}
+          localCurrencyCode={localCurrencyCode}
+          exchangeRate={draftExchangeRate}
+          exchangeRateInvalid={exchangeRateInvalid}
+          exchangeRateInputRef={exchangeRateInputRef}
+          exchangeRateInfoMessage={exchangeRateInfoMessage}
+          amountCurrency={isEditing ? draftTotalAmount : totalAmountText || "-"}
+          amountCurrencyInvalid={totalAmountInvalid}
+          amountCurrencyInputRef={totalAmountInputRef}
+          reimbursementAmount={draftAmountMST}
+          reimbursementAmountInvalid={amountMSTInvalid}
+          reimbursementAmountInputRef={amountMSTInputRef}
+          onExpenseCurrencyChange={onDraftCurrencyCodeChange}
+          onExchangeRateChange={onDraftExchangeRateChange}
+          onExchangeRateCommit={onDraftExchangeRateCommit}
+          onAmountCurrencyChange={onDraftTotalAmountChange}
+          onReimbursementAmountChange={onDraftAmountMSTChange}
         />
 
-        {isEditing ? (
-          <div className="visita-field-text">
-            <SingleDatePicker
-              label={indT("ExpenseSheets_Field_CreatedDate", "Date")}
-              value={draftTransDate}
-              onChange={onDraftTransDateChange}
-              readOnly={!isEditing}
-              disabled={!isEditing}
-            />
+        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+          <ExpenseReadOnlyField
+            label={indT("Tickets_Field_TicketDate", "Date")}
+            value={isEditing ? lockedDraftDateText : displayDateText}
+          />
+
+          <ExpenseReadOnlyField
+            label={indT("Tickets_Field_TicketTime", "Time")}
+            value={isEditing ? draftTicketTime || ticketTimeText || "-" : ticketTimeText || "-"}
+          />
+        </div>
+
+        <div className="md:col-span-2 grid grid-cols-2 gap-4">
+          {categoryField}
+          {statusField}
+        </div>
+
+        {expenseSheetField ? (
+          <div className="md:col-span-2 grid grid-cols-2 gap-4">
+            {ticketField}
+            {expenseSheetField}
           </div>
         ) : (
-            <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_CreatedDate", "Date")}
-              value={transDateText || formatExpenseDisplayDate(header.transDate, document?.documentElement?.lang || "es-ES") || "-"}
-            />
-          )}
+          ticketField
+        )}
+
+        {children}
       </div>
 
       {canOpenFile && !hideOpenFileAction ? (

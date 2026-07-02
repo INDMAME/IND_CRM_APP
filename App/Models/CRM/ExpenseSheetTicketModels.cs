@@ -185,6 +185,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? TransDate { get; set; }
 
+        [JsonPropertyName("ticketDate")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? TicketDate { get; set; }
+
+        [JsonPropertyName("ticketTime")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? TicketTime { get; set; }
+
         [JsonPropertyName("comentario")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Comentario { get; set; }
@@ -192,6 +200,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("urlFile")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? UrlFile { get; set; }
+
+        [JsonPropertyName("ocrJson")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? OcrJson { get; set; }
+
+        [JsonPropertyName("normalizedJson")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? NormalizedJson { get; set; }
 
         [JsonPropertyName("fileName")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -229,6 +245,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public decimal? TotalAmount { get; set; }
 
+        [JsonPropertyName("amountMST")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? AmountMST { get; set; }
+
+        [JsonPropertyName("exchRate")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? ExchRate { get; set; }
+
         [JsonPropertyName("status")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public int? Status { get; set; }
@@ -237,6 +261,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? TransDate { get; set; }
 
+        [JsonPropertyName("ticketDate")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? TicketDate { get; set; }
+
+        [JsonPropertyName("ticketTime")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? TicketTime { get; set; }
+
         [JsonPropertyName("comentario")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? Comentario { get; set; }
@@ -244,6 +276,14 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("urlFile")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public string? UrlFile { get; set; }
+
+        [JsonPropertyName("ocrJson")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? OcrJson { get; set; }
+
+        [JsonPropertyName("normalizedJson")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? NormalizedJson { get; set; }
 
         [JsonPropertyName("fileName")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
@@ -260,6 +300,41 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("gastoType")]
         [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
         public int? GastoType { get; set; }
+    }
+
+    // Request payload for ticket total amount adjustment.
+    public class ExpenseSheetTicketTotalAdjustmentRequest
+    {
+        [JsonPropertyName("totalAmount")]
+        public decimal? TotalAmount { get; set; }
+    }
+
+    // Result payload returned after a ticket total amount adjustment.
+    public class ExpenseSheetTicketTotalAdjustmentResultDto
+    {
+        [JsonPropertyName("FileId")]
+        public string FileId { get; set; } = string.Empty;
+
+        [JsonPropertyName("PreviousTotalAmount")]
+        public decimal? PreviousTotalAmount { get; set; }
+
+        [JsonPropertyName("NewTotalAmount")]
+        public decimal? NewTotalAmount { get; set; }
+
+        [JsonPropertyName("DifferenceAmount")]
+        public decimal? DifferenceAmount { get; set; }
+
+        [JsonPropertyName("AdjustmentLineRecId")]
+        public string AdjustmentLineRecId { get; set; } = string.Empty;
+
+        [JsonPropertyName("AdjustmentLineCreated")]
+        public bool? AdjustmentLineCreated { get; set; }
+
+        [JsonPropertyName("AdjustmentDescription")]
+        public string AdjustmentDescription { get; set; } = string.Empty;
+
+        [JsonPropertyName("AdjustmentAmount")]
+        public bool? AdjustmentAmount { get; set; }
     }
 
     // Request payload for ticket file preview loading.
@@ -296,11 +371,23 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("TransDate")]
         public string TransDate { get; set; } = string.Empty;
 
+        [JsonPropertyName("TicketDate")]
+        public string TicketDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("TicketTime")]
+        public string TicketTime { get; set; } = string.Empty;
+
         [JsonPropertyName("FileName")]
         public string FileName { get; set; } = string.Empty;
 
         [JsonPropertyName("GastoType")]
         public int? GastoType { get; set; }
+
+        [JsonPropertyName("OwnerAxUserId")]
+        public string OwnerAxUserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("OwnerName")]
+        public string OwnerName { get; set; } = string.Empty;
     }
 
     // Ticket item returned by link-mode list endpoint.
@@ -324,11 +411,23 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("TransDate")]
         public string TransDate { get; set; } = string.Empty;
 
+        [JsonPropertyName("TicketDate")]
+        public string TicketDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("TicketTime")]
+        public string TicketTime { get; set; } = string.Empty;
+
         [JsonPropertyName("FileName")]
         public string FileName { get; set; } = string.Empty;
 
         [JsonPropertyName("GastoType")]
         public int? GastoType { get; set; }
+
+        [JsonPropertyName("OwnerAxUserId")]
+        public string OwnerAxUserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("OwnerName")]
+        public string OwnerName { get; set; } = string.Empty;
     }
 
     // Ticket line item returned by detail endpoint.
@@ -354,6 +453,9 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("CreatedByUserId")]
         public string CreatedByUserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("AdjustmentAmount")]
+        public bool? AdjustmentAmount { get; set; }
     }
 
     // Ticket detail with line collection.
@@ -380,11 +482,23 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("TotalAmount")]
         public decimal? TotalAmount { get; set; }
 
+        [JsonPropertyName("AmountMST")]
+        public decimal? AmountMST { get; set; }
+
+        [JsonPropertyName("ExchRate")]
+        public decimal? ExchRate { get; set; }
+
         [JsonPropertyName("CreatedByUserId")]
         public string CreatedByUserId { get; set; } = string.Empty;
 
         [JsonPropertyName("TransDate")]
         public string TransDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("TicketDate")]
+        public string TicketDate { get; set; } = string.Empty;
+
+        [JsonPropertyName("TicketTime")]
+        public string TicketTime { get; set; } = string.Empty;
 
         [JsonPropertyName("Comentario")]
         public string Comentario { get; set; } = string.Empty;
@@ -392,11 +506,23 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("UrlFile")]
         public string UrlFile { get; set; } = string.Empty;
 
+        [JsonPropertyName("OcrJson")]
+        public string OcrJson { get; set; } = string.Empty;
+
+        [JsonPropertyName("NormalizedJson")]
+        public string NormalizedJson { get; set; } = string.Empty;
+
         [JsonPropertyName("FileName")]
         public string FileName { get; set; } = string.Empty;
 
         [JsonPropertyName("GastoType")]
         public int? GastoType { get; set; }
+
+        [JsonPropertyName("OwnerAxUserId")]
+        public string OwnerAxUserId { get; set; } = string.Empty;
+
+        [JsonPropertyName("OwnerName")]
+        public string OwnerName { get; set; } = string.Empty;
 
         [JsonPropertyName("Lines")]
         public List<ExpenseSheetTicketLineDto> Lines { get; set; } = new();

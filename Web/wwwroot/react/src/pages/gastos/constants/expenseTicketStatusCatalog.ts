@@ -1,7 +1,7 @@
 import { indT } from "../../../utils/indI18n.ts";
-import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
+import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 
-export type ExpenseTicketStatusCode = 0 | 1;
+export type ExpenseTicketStatusCode = number;
 export type ExpenseTicketStatusFilterCode = "" | ExpenseTicketStatusCode;
 
 type ExpenseTicketStatusUiMeta = {
@@ -10,7 +10,7 @@ type ExpenseTicketStatusUiMeta = {
   badgeClassName: string;
 };
 
-const STATUS_META_BY_CODE: Record<ExpenseTicketStatusCode, ExpenseTicketStatusUiMeta> = {
+const STATUS_META_BY_CODE: Partial<Record<ExpenseTicketStatusCode, ExpenseTicketStatusUiMeta>> = {
   0: {
     labelKey: "Tickets_Filter_Status_Pending",
     fallback: "Pending",
@@ -23,6 +23,22 @@ const STATUS_META_BY_CODE: Record<ExpenseTicketStatusCode, ExpenseTicketStatusUi
   },
 };
 
+const getExpenseTicketStatusCatalogOptions = (): ExpenseSelectOption[] => {
+  const source = typeof window !== "undefined" && Array.isArray(window.__EXPENSE_TICKET_STATUSES__)
+    ? window.__EXPENSE_TICKET_STATUSES__
+    : [];
+
+  return mapWindowEnumOptions(source).filter((option) => {
+    const parsed = Number(option.value);
+    return Number.isInteger(parsed) && parsed >= 0;
+  });
+};
+
+const getExpenseTicketStatusCatalogLabel = (value: ExpenseTicketStatusCode): string => {
+  const match = getExpenseTicketStatusCatalogOptions().find((option) => Number(option.value) === value);
+  return match?.text || "";
+};
+
 const toNullableExpenseTicketStatusCode = (value: unknown): ExpenseTicketStatusCode | null => {
   if (value === null || value === undefined) {
     return null;
@@ -32,7 +48,7 @@ const toNullableExpenseTicketStatusCode = (value: unknown): ExpenseTicketStatusC
   }
 
   const parsed = Number(value);
-  if (parsed === 0 || parsed === 1) {
+  if (Number.isInteger(parsed) && parsed >= 0) {
     return parsed;
   }
 
@@ -53,6 +69,20 @@ export const normalizeExpenseTicketStatusFilterCode = (
 
 // Builds fixed status options for tickets list filters.
 export const getExpenseTicketStatusFilterOptions = (): ExpenseSelectOption[] => {
+  const catalogOptions = getExpenseTicketStatusCatalogOptions();
+  if (catalogOptions.length > 0) {
+    return [
+      {
+        value: "",
+        text: indT("Tickets_Filter_All", "All"),
+      },
+      ...catalogOptions,
+    ];
+  }
+
+  const pendingMeta = STATUS_META_BY_CODE[0];
+  const assignedMeta = STATUS_META_BY_CODE[1];
+
   return [
     {
       value: "",
@@ -60,11 +90,11 @@ export const getExpenseTicketStatusFilterOptions = (): ExpenseSelectOption[] => 
     },
     {
       value: "0",
-      text: indT(STATUS_META_BY_CODE[0].labelKey, STATUS_META_BY_CODE[0].fallback),
+      text: pendingMeta ? indT(pendingMeta.labelKey, pendingMeta.fallback) : "0",
     },
     {
       value: "1",
-      text: indT(STATUS_META_BY_CODE[1].labelKey, STATUS_META_BY_CODE[1].fallback),
+      text: assignedMeta ? indT(assignedMeta.labelKey, assignedMeta.fallback) : "1",
     },
   ];
 };
@@ -76,8 +106,11 @@ export const getExpenseTicketStatusLabel = (value: unknown): string => {
     return indT("Common_NotAvailable", "N/A");
   }
 
+  const catalogLabel = getExpenseTicketStatusCatalogLabel(normalized);
+  if (catalogLabel) return catalogLabel;
+
   const meta = STATUS_META_BY_CODE[normalized];
-  return indT(meta.labelKey, meta.fallback);
+  return meta ? indT(meta.labelKey, meta.fallback) : String(normalized);
 };
 
 // Returns status badge class used by ticket cards.
@@ -87,5 +120,5 @@ export const getExpenseTicketStatusBadgeClassName = (value: unknown): string => 
     return "expense-sheet-card__status expense-sheet-card__status--all";
   }
 
-  return STATUS_META_BY_CODE[normalized].badgeClassName;
+  return STATUS_META_BY_CODE[normalized]?.badgeClassName || "expense-sheet-card__status expense-sheet-card__status--all";
 };

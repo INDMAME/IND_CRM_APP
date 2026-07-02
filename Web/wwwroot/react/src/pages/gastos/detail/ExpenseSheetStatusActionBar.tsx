@@ -17,7 +17,7 @@ const ExpenseSheetStatusActionBar = ({ actions, busy, disabled = false, onAction
   }
 
   return (
-    <PageBottomActions ariaLabel={indT("ExpenseSheets_BottomActions_Toolbar", "Expense sheet status actions")}>
+    <PageBottomActions ariaLabel={indT("ExpenseSheets_BottomActions_Toolbar", "Acciones de estado de la hoja de gasto")}>
       {actions.map((action) => (
         <PageBottomActionButton
           key={action.id}

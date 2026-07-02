@@ -50,7 +50,7 @@ const TICKET_LINE_DATE_PANEL_ICON = (
     strokeWidth="1"
     strokeLinecap="round"
     strokeLinejoin="round"
-    className="h-10 w-10 text-slate-500"
+    className="size-10 text-[#00296be0]"
     aria-hidden="true"
   >
     <path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -84,12 +84,13 @@ const ExpenseTicketLinesList = ({
           {visibleLines.map((line) => {
             const amountText = formatAmountWithCurrency(line.totalAmount, currencyCode);
             const qtyText = formatQtyValue(line.qty);
-            const priceText = formatAmountWithCurrency(line.price, currencyCode);
             const title = line.description || line.recId || "-";
-            const subtitle = `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}   ${indT("ExpenseSheets_Field_Price", "Price")}: ${priceText}`;
+            const subtitle = `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}`;
             const lineKey =
               String(line.recId || "").trim() ||
-              [line.description, line.totalAmount, line.price, line.qty].map((value) => String(value || "").trim()).join("|");
+              [line.description, line.totalAmount, line.price, line.qty]
+                .map((value) => String(value || "").trim())
+                .join("|");
 
             return (
               <div key={lineKey} className="timeline-item">

@@ -89,6 +89,8 @@
     var moduleAccessJson = JsonSerializer.Serialize(moduleAccess);
     var allowSelfManagement = selectedCompany?.AllowSelfManagement == true;
     var permissionRedirectMessage = TempData?["IndPermissionRedirectMessage"] as string;
+    var redirectModalTitle = TempData?["IndRedirectModalTitle"] as string;
+    var redirectModalMessage = TempData?["IndRedirectModalMessage"] as string;
     var cspNonce = Context?.Items["CspNonce"]?.ToString() ?? string.Empty;
 }
 <body class="bg-slate-100 font-sans text-[#00296be0] overflow-x-hidden @chromeLayoutClass @bodyClass">
@@ -163,8 +165,6 @@
             const topbarLeft = document.querySelector(".topbar-left");
             const topbarRight = document.querySelector(".topbar-right");
             const topbarTitle = document.getElementById("topbarTitle");
-            const visitasToggle = document.getElementById("visitasToggle");
-            const gastosToggle = document.getElementById("gastosToggle");
             const sidebarCloseBtn = document.getElementById("sidebarCloseBtn");
             const userMenuToggle = document.getElementById("userMenuToggle");
             const langBtn = document.getElementById("indLangButton");
@@ -178,7 +178,7 @@
             let touchStartY = 0;
             let touchTracking = false;
 
-            sidebar?.setAttribute("aria-hidden", "true");
+            setSidebarHidden(true);
             overlay?.setAttribute("aria-hidden", "true");
 
             function updateTopbarTitleLayout() {
@@ -222,6 +222,44 @@
                 sidebar.style.setProperty("--sidebar-height", `${Math.round(targetHeight)}px`);
             }
 
+            // Keeps the hidden sidebar out of both the accessibility tree and tab order.
+            function setSidebarHidden(isHidden) {
+                if (!sidebar) return;
+                if (isHidden) {
+                    moveFocusOutOfSidebar();
+                    sidebar.setAttribute("inert", "");
+                    sidebar.setAttribute("aria-hidden", "true");
+                } else {
+                    sidebar.removeAttribute("inert");
+                    sidebar.setAttribute("aria-hidden", "false");
+                }
+            }
+
+            // Moves focus to the menu opener before the sidebar is hidden.
+            function moveFocusOutOfSidebar() {
+                if (!sidebar || !btnMenu) return;
+                const activeElement = document.activeElement;
+                if (activeElement instanceof HTMLElement && sidebar.contains(activeElement)) {
+                    btnMenu.focus({ preventScroll: true });
+                }
+            }
+
+            // Closes nested account menus so reopening the sidebar starts from a stable state.
+            function closeUserMenuPanels() {
+                const menu = document.getElementById("userMenu");
+                const chevron = document.getElementById("userMenuChevron");
+                const langSub = document.getElementById("indLangSubmenu");
+                const userChip = document.querySelector(".user-chip");
+
+                menu?.classList.remove("open");
+                chevron?.classList.remove("rotate-180");
+                langSub?.classList.add("hidden");
+                langBtn?.setAttribute("aria-expanded", "false");
+                companySub?.classList.add("hidden");
+                companyBtn?.setAttribute("aria-expanded", "false");
+                userChip?.setAttribute("aria-expanded", "false");
+            }
+
             const toggleSidebar = () => {
                 if (!sidebar || !overlay || !content || !btnMenu || !topbar) return;
 
@@ -231,7 +269,7 @@
                     sidebar.classList.add("open");
                     sidebar.classList.add("sidebar--dock-user");
                     overlay.classList.add("visible");
-                    sidebar.setAttribute("aria-hidden", "false");
+                    setSidebarHidden(false);
                     overlay.setAttribute("aria-hidden", "false");
                     btnMenu.style.opacity = "0";
                     btnMenu.style.pointerEvents = "none";
@@ -247,11 +285,13 @@
                     sidebar.classList.remove("open");
                     sidebar.classList.remove("sidebar--dock-user");
                     overlay.classList.remove("visible");
-                    sidebar.setAttribute("aria-hidden", "true");
-                    overlay.setAttribute("aria-hidden", "true");
                     btnMenu.style.opacity = "1";
                     btnMenu.style.pointerEvents = "auto";
                     btnMenu.setAttribute("aria-expanded", "false");
+                    moveFocusOutOfSidebar();
+                    closeUserMenuPanels();
+                    setSidebarHidden(true);
+                    overlay.setAttribute("aria-hidden", "true");
                     content.classList.remove("shifted");
                     topbar.classList.remove("shifted");
                     updateTopbarTitleLayout();
@@ -296,43 +336,19 @@
                 touchTracking = false;
             }
 
-            function toggleVisitas() {
-                const sub = document.getElementById("submenuVisitas");
-                const chevron = document.getElementById("visitasChevron");
-                if (!sub) return;
-                const isHidden = sub.classList.toggle("hidden");
-                const nowOpen = !isHidden;
-                visitasToggle?.setAttribute("aria-expanded", nowOpen.toString());
-                chevron?.classList.toggle("rotate-180", nowOpen);
-            }
-
-            function toggleGastos() {
-                const sub = document.getElementById("submenuGastos");
-                const chevron = document.getElementById("gastosChevron");
-                if (!sub) return;
-                const isHidden = sub.classList.toggle("hidden");
-                const nowOpen = !isHidden;
-                gastosToggle?.setAttribute("aria-expanded", nowOpen.toString());
-                chevron?.classList.toggle("rotate-180", nowOpen);
-            }
-
             function toggleUserMenu() {
                 const menu = document.getElementById("userMenu");
                 const chevron = document.getElementById("userMenuChevron");
-                const langSub = document.getElementById("indLangSubmenu");
-                const langBtn = document.getElementById("indLangButton");
+                if (!menu) return;
 
                 const isOpen = menu.classList.toggle("open");
                 if (chevron) {
                     chevron.classList.toggle("rotate-180", isOpen);
                 }
 
-                // Defensive: close language submenu when the user menu closes.
                 if (!isOpen) {
-                    langSub?.classList.add("hidden");
-                    langBtn?.setAttribute("aria-expanded", "false");
-                    companySub?.classList.add("hidden");
-                    companyBtn?.setAttribute("aria-expanded", "false");
+                    closeUserMenuPanels();
+                    return;
                 }
                 const userChip = document.querySelector(".user-chip");
                 if (userChip) {
@@ -441,8 +457,6 @@
 
             btnMenu?.addEventListener("click", toggleSidebar);
             sidebarCloseBtn?.addEventListener("click", toggleSidebar);
-            visitasToggle?.addEventListener("click", toggleVisitas);
-            gastosToggle?.addEventListener("click", toggleGastos);
             userMenuToggle?.addEventListener("click", toggleUserMenu);
             langBtn?.addEventListener("click", toggleIndLanguageMenu);
             companyBtn?.addEventListener("click", toggleIndCompanyMenu);
@@ -958,13 +972,14 @@
         })();
     </script>
 
-    @if (!string.IsNullOrWhiteSpace(permissionRedirectMessage))
+    @if (!string.IsNullOrWhiteSpace(permissionRedirectMessage) || !string.IsNullOrWhiteSpace(redirectModalMessage))
     {
         <script nonce="@cspNonce">
             (function () {
-                const message = @Html.Raw(JsonSerializer.Serialize(permissionRedirectMessage));
+                const title = @Html.Raw(JsonSerializer.Serialize(redirectModalTitle));
+                const message = @Html.Raw(JsonSerializer.Serialize(redirectModalMessage ?? permissionRedirectMessage));
                 if (window.IND && typeof window.IND.showPermissionModal === "function") {
-                    window.IND.showPermissionModal({ message: message });
+                    window.IND.showPermissionModal({ title: title, message: message });
                 }
             })();
         </script>

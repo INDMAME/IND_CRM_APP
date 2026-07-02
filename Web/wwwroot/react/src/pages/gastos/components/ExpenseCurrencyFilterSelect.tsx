@@ -17,6 +17,8 @@ type ExpenseCurrencyFilterSelectProps = {
   readOnly?: boolean;
   disabled?: boolean;
   showLabel?: boolean;
+  containerClassName?: string;
+  labelClassName?: string;
   idBase?: string;
   preferDefaultCurrencyFromContext?: boolean;
   dropdownExpandPx?: number;
@@ -37,7 +39,7 @@ const CURRENCY_DROPDOWN_PANEL_STYLE: React.CSSProperties = {
 };
 const CURRENCY_OPTION_DEFAULT_CLASS = "text-[#0F2945]";
 const CURRENCY_OPTION_ACTIVE_CLASS = "bg-[#C6D2E3] text-[#0F2945]";
-const CURRENCY_OPTION_SELECTED_CLASS = "bg-primary text-white";
+const CURRENCY_OPTION_SELECTED_CLASS = "text-primary";
 
 const readPreferredLocale = (): string => {
   if (typeof document !== "undefined") {
@@ -114,6 +116,8 @@ const ExpenseCurrencyFilterSelect = ({
   readOnly = false,
   disabled = false,
   showLabel = true,
+  containerClassName,
+  labelClassName,
   idBase = "expense-currency",
   preferDefaultCurrencyFromContext = false,
   dropdownExpandPx = 0,
@@ -232,6 +236,8 @@ const ExpenseCurrencyFilterSelect = ({
         allowTextInput
         showSearchButton={false}
         showLabel={showLabel}
+        containerClassName={containerClassName}
+        labelClassName={labelClassName}
         usePortal
         selectedTextMode="value"
         dropdownExpandPx={dropdownExpandPx}

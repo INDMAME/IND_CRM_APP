@@ -1,0 +1,84 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: INDJobMigrateVisitasGestionAccess descargados en Miercoles 20/05/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+
+  SOURCE #INDJobMigrateVisitasGestionAccess
+    #static void INDJobMigrateVisitasGestionAccess(Args _args)
+    #{
+    #    boolean                 execute = FALSE;
+    #    str         50            appCode = "CRM";
+    #    str         50            legacyCreateModule = "VISITAS_CREACION";
+    #    str         50            legacyHistoryModule = "VISITAS_HISTORIAL";
+    #    str         50            targetModule = "VISITAS_GESTION";
+    #
+    #    INDWebModuleAccessLevel moduleAccess;
+    #
+    #    str                     executeMode;
+    #    int                     recordsUpdated = 0;
+    #    int                     recordsDeleted = 0;
+    #    ;
+    #
+    #    // Keep execute false first to preview the affected rows.
+    #    if (execute)
+    #        executeMode = "true";
+    #    else
+    #        executeMode = "false";
+    #
+    #    info(strFmt("VISITAS_GESTION access rename started. Execute mode: %1", executeMode));
+    #
+    #    if (execute)
+    #    {
+    #        ttsbegin;
+    #
+    #        while select forUpdate moduleAccess
+    #            where moduleAccess.AppCode == appCode
+    #               && moduleAccess.ModuleCode == legacyCreateModule
+    #        {
+    #            moduleAccess.ModuleCode = targetModule;
+    #            moduleAccess.update();
+    #            recordsUpdated++;
+    #        }
+    #
+    #        info(strFmt("VISITAS_CREACION records updated to VISITAS_GESTION: %1", recordsUpdated));
+    #
+    #        while select forUpdate moduleAccess
+    #            where moduleAccess.AppCode == appCode
+    #               && moduleAccess.ModuleCode == legacyHistoryModule
+    #        {
+    #            moduleAccess.delete();
+    #            recordsDeleted++;
+    #        }
+    #
+    #        ttscommit;
+    #        info(strFmt("VISITAS_HISTORIAL records deleted: %1", recordsDeleted));
+    #    }
+    #    else
+    #    {
+    #        while select moduleAccess
+    #            where moduleAccess.AppCode == appCode
+    #               && moduleAccess.ModuleCode == legacyCreateModule
+    #        {
+    #            recordsUpdated++;
+    #        }
+    #
+    #        info(strFmt("VISITAS_CREACION records to update to VISITAS_GESTION: %1", recordsUpdated));
+    #
+    #        while select moduleAccess
+    #            where moduleAccess.AppCode == appCode
+    #               && moduleAccess.ModuleCode == legacyHistoryModule
+    #        {
+    #            recordsDeleted++;
+    #        }
+    #
+    #        info("Preview only. Change execute to true to rename VISITAS_CREACION and delete VISITAS_HISTORIAL.");
+    #        info(strFmt("VISITAS_HISTORIAL records to delete: %1", recordsDeleted));
+    #    }
+    #}
+  ENDSOURCE
+
+***Element: END

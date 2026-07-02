@@ -1,4 +1,4 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
+<?xml version="1.0" encoding="utf-8"?>
 <root>
   <resheader name="resmimetype">
     <value>text/microsoft-resx</value>
@@ -105,6 +105,24 @@
   <data name="ExpenseSheets_Detail_SaveChanges_Body" xml:space="preserve">
     <value>您想保存对费用表的更改吗？</value>
   </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Title" xml:space="preserve">
+    <value>更新行</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Body" xml:space="preserve">
+    <value>可报销字段的更改将传播到费用表的所有行。是否继续？</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingReimbursable" xml:space="preserve">
+    <value>正在更新费用表行...</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Title" xml:space="preserve">
+    <value>更新行</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Body" xml:space="preserve">
+    <value>所有行中的项目都将更新。是否继续？</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingProject" xml:space="preserve">
+    <value>正在更新行项目...</value>
+  </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>删除费用表</value>
   </data>
@@ -170,6 +188,9 @@
   </data>
   <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve">
     <value>数量和单价都必须大于 0。</value>
+  </data>
+  <data name="ExpenseTickets_Line_Validation_AmountQty" xml:space="preserve">
+    <value>数量不能为负，价格不能为 0，数量为 0 仅允许用于负折扣。</value>
   </data>
   <data name="ExpenseSheets_Filter_Project" xml:space="preserve">
     <value>项目</value>
@@ -243,8 +264,14 @@
   <data name="ExpenseSheets_Field_SheetId" xml:space="preserve">
     <value>费用表代码</value>
   </data>
+  <data name="ExpenseSheets_Detail_Field_Identifier" xml:space="preserve">
+    <value>标识符</value>
+  </data>
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve">
     <value>用户</value>
+  </data>
+  <data name="ExpenseSheets_Field_OwnerUser" xml:space="preserve">
+    <value>所有者用户</value>
   </data>
   <data name="ExpenseSheets_Field_Project" xml:space="preserve">
     <value>项目</value>
@@ -261,11 +288,26 @@
   <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve">
     <value>当地货币</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementCurrency" xml:space="preserve">
+    <value>报销币种</value>
+  </data>
   <data name="ExpenseSheets_Field_Status" xml:space="preserve">
     <value>状态</value>
   </data>
   <data name="ExpenseSheets_Field_StatusComment" xml:space="preserve">
     <value>状态备注</value>
+  </data>
+  <data name="ExpenseSheets_Field_ReimbursableExpense" xml:space="preserve">
+    <value>可报销</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
+    <value>两者</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Text" xml:space="preserve">
+    <value>该值可以在表头设置为默认值。若之后更改，将提供使用新值更新所有行的选项。若某一行更改继承的值，表头将显示"两者"。</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Aria" xml:space="preserve">
+    <value>显示可报销信息</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>总金额</value>
@@ -279,14 +321,23 @@
   <data name="ExpenseSheets_Field_ExchangeRate" xml:space="preserve">
     <value>汇率</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount" xml:space="preserve">
+    <value>报销金额</value>
+  </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
+    <value>报销额({0})</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>线路编号</value>
   </data>
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
-    <value>类型</value>
+    <value>类别</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>进口</value>
+  </data>
+  <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
+    <value>币种金额</value>
   </data>
   <data name="ExpenseSheets_Field_Price" xml:space="preserve">
     <value>单价</value>
@@ -308,6 +359,9 @@
   </data>
   <data name="ExpenseSheets_Validation_ExchangeRateRequired" xml:space="preserve">
     <value>欧元以外货币的强制汇率。</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
+    <value>外币行需要大于 0 的汇率或报销金额。</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>票</value>
@@ -456,6 +510,18 @@
   <data name="History_Filter_Client" xml:space="preserve">
     <value>账户</value>
   </data>
+  <data name="History_Filter_Owner" xml:space="preserve">
+    <value>负责人</value>
+  </data>
+  <data name="History_Filter_Owner_All" xml:space="preserve">
+    <value>我的所有下属</value>
+  </data>
+  <data name="History_Filter_Owner_None" xml:space="preserve">
+    <value>无可见用户</value>
+  </data>
+  <data name="History_Filter_Owner_Loading" xml:space="preserve">
+    <value>正在加载可见用户</value>
+  </data>
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>清除</value>
   </data>
@@ -548,6 +614,12 @@
   </data>
   <data name="History_Page_Last" xml:space="preserve">
     <value>末页</value>
+  </data>
+  <data name="RecordNavigator_AriaLabel" xml:space="preserve">
+    <value>记录导航</value>
+  </data>
+  <data name="RecordNavigator_Position" xml:space="preserve">
+    <value>{0} / {1}</value>
   </data>
   <data name="Common_OK" xml:space="preserve">
     <value>确定</value>
@@ -765,6 +837,9 @@
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
     <value>拜访信息</value>
   </data>
+  <data name="Visits_Detail_Owner_Label" xml:space="preserve">
+    <value>所有者</value>
+  </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>日期</value>
   </data>
@@ -773,6 +848,12 @@
   </data>
   <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve">
     <value>请选择类型</value>
+  </data>
+  <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
+    <value>联系方式</value>
+  </data>
+  <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
+    <value>请选择方式</value>
   </data>
   <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve">
     <value>保存更改</value>
@@ -864,6 +945,15 @@
   <data name="Enum_TipoVisita_Technical" xml:space="preserve">
     <value>技术</value>
   </data>
+  <data name="Enum_ContactMethod_InPerson" xml:space="preserve">
+    <value>现场</value>
+  </data>
+  <data name="Enum_ContactMethod_PhoneCall" xml:space="preserve">
+    <value>电话</value>
+  </data>
+  <data name="Enum_ContactMethod_OnlineMeeting" xml:space="preserve">
+    <value>在线会议</value>
+  </data>
   <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve">
     <value>咨询</value>
   </data>
@@ -930,8 +1020,44 @@
   <data name="Enum_GastoType_Varios" xml:space="preserve">
     <value>其他</value>
   </data>
+  <data name="Enum_GastoType_MontajeNacional" xml:space="preserve">
+    <value>国内安装</value>
+  </data>
+  <data name="Enum_GastoType_MontajeNacionalFestivo" xml:space="preserve">
+    <value>节假日国内安装</value>
+  </data>
+  <data name="Enum_GastoType_MontajeInternacional" xml:space="preserve">
+    <value>国际安装</value>
+  </data>
+  <data name="Enum_GastoType_MontajeInternacionalFestivo" xml:space="preserve">
+    <value>节假日国际安装</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeNacional" xml:space="preserve">
+    <value>国内出差日</value>
+  </data>
   <data name="Enum_GastoType_Taxi" xml:space="preserve">
     <value>出租车</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeFestivoNacional" xml:space="preserve">
+    <value>节假日国内出差日</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeInternacional" xml:space="preserve">
+    <value>国际出差日</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeFestivoInternacional" xml:space="preserve">
+    <value>节假日国际出差日</value>
+  </data>
+  <data name="Enum_GastoType_Horas" xml:space="preserve">
+    <value>小时</value>
+  </data>
+  <data name="Enum_GastoType_Propinas" xml:space="preserve">
+    <value>小费</value>
+  </data>
+  <data name="Enum_GastoType_Gasolina" xml:space="preserve">
+    <value>汽油</value>
+  </data>
+  <data name="Enum_GastoType_AdjustmentAmount" xml:space="preserve">
+    <value>调整金额</value>
   </data>
   <data name="Confirm_Delete_Title" xml:space="preserve">
     <value>删除</value>
@@ -1104,6 +1230,9 @@
   <data name="ExpenseSheets_Line" xml:space="preserve">
     <value>线</value>
   </data>
+  <data name="ExpenseSheets_Line_Expense" xml:space="preserve">
+    <value>费用行</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve">
     <value>检查汇率...</value>
   </data>
@@ -1147,13 +1276,16 @@
     <value>来自全局配置。</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Text" xml:space="preserve">
-    <value>已获取汇率 0.0000000</value>
+    <value>用于计算报销的汇率。</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Aria" xml:space="preserve">
     <value>显示汇率信息</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>已获取汇率 {0}\n日期: {1}\n来源: {2}</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
+    <value>100 {0} = {1} {2}\n汇率表示多少个费用币种单位等于 100 个报销币种单位。</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>汇率 {0} {1}</value>
@@ -1195,13 +1327,19 @@
     <value>否</value>
   </data>
   <data name="Tickets_Field_FileId" xml:space="preserve">
-    <value>票据</value>
+    <value>Ticket Id.</value>
   </data>
   <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
-    <value>报销单</value>
+    <value>报销单 ID</value>
   </data>
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>状态</value>
+  </data>
+  <data name="Tickets_Field_TicketDate" xml:space="preserve">
+    <value>日期</value>
+  </data>
+  <data name="Tickets_Field_TicketTime" xml:space="preserve">
+    <value>时间</value>
   </data>
   <data name="Tickets_Detail_Title" xml:space="preserve">
     <value>票据详情</value>
@@ -1508,5 +1646,29 @@
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>正在准备回复...</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_ChooseChartType_Question" xml:space="preserve">
+    <value>你想看哪种可视化？</value>
+  </data>
+  <data name="ExpenseSheetLink_InvalidLink" xml:space="preserve">
+    <value>费用单链接无效或不完整。</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanyAccessDenied" xml:space="preserve">
+    <value>你无权访问此费用单所需的公司。</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitchFailed" xml:space="preserve">
+    <value>无法切换公司上下文来打开此费用单。</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetAccessDenied" xml:space="preserve">
+    <value>你无权访问此费用单。</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetNotFound" xml:space="preserve">
+    <value>找不到该费用单。</value>
+  </data>
+  <data name="ExpenseSheetLink_ResolveFailed" xml:space="preserve">
+    <value>无法解析费用单链接。请重试或联系支持人员。</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
+    <value>已切换公司上下文，以便从邮件打开费用单。</value>
   </data>
 </root>

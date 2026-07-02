@@ -34,6 +34,11 @@ type CreateStepVisitDetailsProps = {
   onVisitTypeChange: (nextValue: string) => void;
   visitTypePlaceholder: string;
   visitTypeInvalid: boolean;
+  contactMethodLabel: string;
+  contactMethods: SelectOption[];
+  contactMethod: string;
+  onContactMethodChange: (nextValue: string) => void;
+  contactMethodPlaceholder: string;
   descriptionLabel: string;
   descriptionValue: string;
   descriptionClassName: string;
@@ -54,6 +59,11 @@ const CreateStepVisitDetails = ({
   onVisitTypeChange,
   visitTypePlaceholder,
   visitTypeInvalid,
+  contactMethodLabel,
+  contactMethods,
+  contactMethod,
+  onContactMethodChange,
+  contactMethodPlaceholder,
   descriptionLabel,
   descriptionValue,
   descriptionClassName,
@@ -66,7 +76,7 @@ const CreateStepVisitDetails = ({
       <div className="text-base font-semibold text-slate-900 border-b border-slate-200 pb-3">
         {title}
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="visita-field-text">
           <SingleDatePicker label={dateLabel} value={transDate} onChange={onTransDateChange} />
         </div>
@@ -77,7 +87,14 @@ const CreateStepVisitDetails = ({
           onChange={(nextValue) => onVisitTypeChange(String(nextValue ?? ""))}
           placeholder={visitTypePlaceholder}
           invalid={visitTypeInvalid}
-          emitOnValueChange
+          portalClassName="visitas-typography"
+        />
+        <SelectCombobox
+          label={contactMethodLabel}
+          options={contactMethods}
+          value={contactMethod}
+          onChange={(nextValue) => onContactMethodChange(String(nextValue ?? ""))}
+          placeholder={contactMethodPlaceholder}
           portalClassName="visitas-typography"
         />
       </div>

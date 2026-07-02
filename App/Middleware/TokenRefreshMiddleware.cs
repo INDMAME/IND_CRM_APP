@@ -1,6 +1,7 @@
 using System;
 using System.Text.Json;
 using System.Threading.Tasks;
+using IND_CRM_APP.Infrastructure.Security.Auth;
 using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Services;
 using Microsoft.AspNetCore.Http;
@@ -133,7 +134,7 @@ namespace IND_CRM_APP.Middleware
         {
             if (!IsApiRequest(context.Request))
             {
-                context.Response.Redirect("/Auth/Login");
+                context.Response.Redirect(LocalReturnUrlHelper.BuildLoginUrlWithReturnUrl(context.Request));
                 return Task.CompletedTask;
             }
 
@@ -148,6 +149,7 @@ namespace IND_CRM_APP.Middleware
                 Message = "Your session has expired.",
                 ErrorCode = "SESSION_EXPIRED",
                 ForceRelogin = true,
+                LoginUrl = LocalReturnUrlHelper.BuildLoginUrlWithReturnUrl(context.Request),
                 Errors = Array.Empty<object>()
             });
 

@@ -6,6 +6,7 @@ import { syncExpenseLinkedTicketSheetLine } from "../../utils/expenseLinkedTicke
 import { resolveExpenseSheetEditAccess } from "../../utils/expenseSheetEditAccess.ts";
 import { clearExpenseTicketSheetSyncState, saveExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
 import { createExpenseSheetTicketLine, deleteExpenseSheetTicketLine, updateExpenseSheetTicketLine } from "../../utils/expenseApi.ts";
+import { isValidTicketLineAmount, resolveTicketLineAmount } from "../../utils/expenseTicketLineAmount.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type UseExpenseTicketLineDetailMutationsArgs = {
@@ -109,9 +110,17 @@ export const useExpenseTicketLineDetailMutations = ({
     const normalizedDescription = String(draftDescription || "").trim();
     const parsedQty = parseDecimalInput(draftQty);
     const parsedPrice = parseDecimalInput(draftPrice);
+    const parsedLine = {
+      qty: parsedQty,
+      price: parsedPrice,
+    };
+    const lineAmount = resolveTicketLineAmount(parsedLine);
 
-    if (!normalizedDescription || parsedQty === null || parsedQty <= 0 || parsedPrice === null || parsedPrice <= 0) {
-      const message = indT("ExpenseSheets_Line_Validation_AmountQty", "Quantity and price must be greater than 0.");
+    if (!normalizedDescription || !isValidTicketLineAmount(parsedLine) || lineAmount === null) {
+      const message = indT(
+        "ExpenseTickets_Line_Validation_AmountQty",
+        "La cantidad no puede ser negativa, el precio no puede ser 0 y la cantidad 0 solo se permite en descuentos negativos."
+      );
       setModalError(message);
       setStatus(message);
       return false;
@@ -135,7 +144,7 @@ export const useExpenseTicketLineDetailMutations = ({
           description: normalizedDescription,
           qty: Number(parsedQty),
           price: Number(parsedPrice),
-          totalAmount: Number(parsedQty) * Number(parsedPrice),
+          totalAmount: Number(lineAmount),
         };
         const response = isCreateMode
           ? await createExpenseSheetTicketLine(fileId, payload)

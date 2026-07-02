@@ -16,10 +16,15 @@
 
 @section Scripts {
     <script nonce="@cspNonce">
+        window.__EXPENSE_SHEET_STATUSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ExpenseSheetStatusOptions ?? new object[0]));
+        window.__EXPENSE_EXCHANGE_RATE_MODES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ExchangeRateModeOptions ?? new object[0]));
+        window.__EXPENSE_REIMBURSABLE_EXPENSES__ = @Html.Raw(JsonSerializer.Serialize(ViewBag.ReimbursableExpenseOptions ?? new object[0]));
         window.__IND_I18N__ = @Html.Raw(JsonSerializer.Serialize(new {
             Common_Loading = SR["Common_Loading"].Value,
             Common_NoData = SR["Common_NoData"].Value,
             Common_NotFound = SR["Common_NotFound"].Value,
+            Common_Yes = SR["Common_Yes"].Value,
+            Common_No = SR["Common_No"].Value,
             Common_OK = SR["Common_OK"].Value,
             Common_Close = SR["Common_Close"].Value,
             Common_Create = SR["Common_Create"].Value,
@@ -72,6 +77,7 @@
             ExpenseSheets_Filter_Status_Unbilled = SR["ExpenseSheets_Filter_Status_Unbilled"].Value,
             ExpenseSheets_Filter_Status_Billed = SR["ExpenseSheets_Filter_Status_Billed"].Value,
             ExpenseSheets_Filter_Status_Both = SR["ExpenseSheets_Filter_Status_Both"].Value,
+            ExpenseSheets_Reimbursable_Both = SR["ExpenseSheets_Reimbursable_Both"].Value,
             ExpenseSheets_Filter_Status_Draft = SR["ExpenseSheets_Filter_Status_Draft"].Value,
             ExpenseSheets_Filter_Status_InReview = SR["ExpenseSheets_Filter_Status_InReview"].Value,
             ExpenseSheets_Filter_Status_Approved = SR["ExpenseSheets_Filter_Status_Approved"].Value,
@@ -80,7 +86,9 @@
             ExpenseSheets_Filter_Status_All = SR["ExpenseSheets_Filter_Status_All"].Value,
             ExpenseSheets_Field_Project = SR["ExpenseSheets_Field_Project"].Value,
             ExpenseSheets_Field_Currency = SR["ExpenseSheets_Field_Currency"].Value,
+            ExpenseSheets_Field_LocalCurrency = SR["ExpenseSheets_Field_LocalCurrency"].Value,
             ExpenseSheets_Field_Voucher = SR["ExpenseSheets_Field_Voucher"].Value,
+            ExpenseSheets_Field_ReimbursableExpense = SR["ExpenseSheets_Field_ReimbursableExpense"].Value,
             ExpenseSheets_Field_TotalAmount = SR["ExpenseSheets_Field_TotalAmount"].Value,
             ExpenseSheets_Field_Description = SR["ExpenseSheets_Field_Description"].Value,
             ExpenseSheets_Field_CreatedDate = SR["ExpenseSheets_Field_CreatedDate"].Value,
@@ -119,7 +127,8 @@
             ExpenseSheets_Assistant_Error_RateLimit = SR["ExpenseSheets_Assistant_Error_RateLimit"].Value,
             ExpenseSheets_Assistant_Error_RetryAfter = SR["ExpenseSheets_Assistant_Error_RetryAfter"].Value,
             ExpenseSheets_Assistant_Error_NoContext = SR["ExpenseSheets_Assistant_Error_NoContext"].Value,
-            ExpenseSheets_Assistant_Message_Loading = SR["ExpenseSheets_Assistant_Message_Loading"].Value
+            ExpenseSheets_Assistant_Message_Loading = SR["ExpenseSheets_Assistant_Message_Loading"].Value,
+            ExpenseSheets_Assistant_ChooseChartType_Question = SR["ExpenseSheets_Assistant_ChooseChartType_Question"].Value
         }));
     </script>
     <script nonce="@cspNonce" type="module" src="~/js/expense-sheets.js" asp-append-version="true"></script>

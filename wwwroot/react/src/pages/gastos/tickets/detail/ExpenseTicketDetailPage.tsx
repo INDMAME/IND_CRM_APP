@@ -6,13 +6,20 @@ import { useTimelineCardEffects } from "../../../../hooks/useTimelineCardEffects
 import { canAccess, showPermissionModal } from "../../../../utils/permissions.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../../utils/reactIsland.tsx";
-import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
+import { configureExpenseApiAuth, getExpenseSheetDefaultCurrencyCode } from "../../utils/expenseApi.ts";
 import { clearExpenseNavigationGuard, navigateToExpenseUrl, setExpenseNavigationGuard } from "../../utils/expenseNavigation.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
-import { mapWindowEnumOptions, type ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
+import { getExpenseGastoTypeOptions } from "../../constants/expenseGastoTypeCatalog.ts";
+import type { ExpenseSelectOption } from "../../utils/expenseSelectOptions.ts";
 import { buildExpenseSheetDetailUrl } from "../../utils/expenseTicketReturnContext.ts";
 import { readExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
+import { normalizeExpenseLineCurrencyCode } from "../../utils/expenseLineCurrency.ts";
+import {
+  buildExpenseExchangeRateInfoMessage,
+  fetchExpenseOfficialExchangeRate,
+  formatExpenseExchangeRateInputValue,
+} from "../../utils/expenseExchangeRate.ts";
 import { useExpenseTicketLinkSheetGate } from "../useExpenseTicketLinkSheetGate.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
 import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutations.ts";
@@ -23,28 +30,16 @@ import { useExpenseTicketDetailDisplay } from "./useExpenseTicketDetailDisplay.t
 import { useExpenseTicketDetailConfirmState } from "./useExpenseTicketDetailConfirmState.ts";
 import { useExpenseTicketDetailInteractions } from "./useExpenseTicketDetailInteractions.ts";
 import ExpenseTicketDetailView from "./ExpenseTicketDetailView.tsx";
+import { useExpenseTicketLinkedSheetLine } from "./useExpenseTicketLinkedSheetLine.ts";
 import { useExpenseTicketsFilterCache } from "../useExpenseTicketsFilterCache.ts";
 import { useExpenseTicketDetailBackNavigation } from "./useExpenseTicketDetailBackNavigation.ts";
 import { useExpenseTicketDetailPreviewPanel } from "./useExpenseTicketDetailPreviewPanel.ts";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "./expenseTicketDetailTypes.ts";
 
-const ALLOWED_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 const LINES_PAGE_SIZE = 6;
-const GASTO_TYPE_LABEL_KEYS: Record<number, { key: string; fallback: string }> = {
-  0: { key: "Enum_None", fallback: "None" },
-  1: { key: "Enum_GastoType_Peaje", fallback: "Peaje" },
-  2: { key: "Enum_GastoType_Parking", fallback: "Parking" },
-  3: { key: "Enum_GastoType_Km", fallback: "Km" },
-  4: { key: "Enum_GastoType_Desayuno", fallback: "Desayuno" },
-  5: { key: "Enum_GastoType_Comida", fallback: "Comida" },
-  6: { key: "Enum_GastoType_Cena", fallback: "Cena" },
-  7: { key: "Enum_GastoType_Hotel", fallback: "Hotel" },
-  8: { key: "Enum_GastoType_Varios", fallback: "Varios" },
-  14: { key: "Enum_GastoType_Taxi", fallback: "Taxi" },
-};
 
 const NewLineIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="h-5 w-5">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5} aria-hidden="true" className="size-5">
     <path strokeLinecap="round" strokeLinejoin="round" d="M3 19c3.333 -2 5 -4 5 -6c0 -3 -1 -3 -2 -3s-2.032 1.085 -2 3c.034 2.048 1.658 2.877 2.5 4c1.5 2 2.5 2.5 3.5 1c.667 -1 1.167 -1.833 1.5 -2.5c1 2.333 2.333 3.5 4 3.5h2.5" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2" />
     <path strokeLinecap="round" strokeLinejoin="round" d="M16 7h4" />
@@ -65,15 +60,6 @@ const bootstrapExpenseApiAuth = () => {
     entraOid: safeText(window.__IND_ENTRA_OID__),
     appCode: safeText(window.__IND_APP_CODE__),
   });
-};
-
-const buildFallbackGastoTypeOptions = (): ExpenseSelectOption[] => {
-  return Object.entries(GASTO_TYPE_LABEL_KEYS)
-    .map(([code, cfg]) => ({
-      value: String(code),
-      text: indT(cfg.key, cfg.fallback),
-    }))
-    .sort((left, right) => Number(left.value) - Number(right.value));
 };
 
 const resolveLinkedTicketBlockedMessage = (isPaid: boolean): string => {
@@ -139,7 +125,6 @@ const buildExpenseTicketDetailPreviewView = ({
   handlePreviewPointerDown,
   handlePreviewPointerMove,
   handlePreviewPointerEnd,
-  handlePreviewWheel,
 }: {
   previewOpen: boolean;
   previewBusy: boolean;
@@ -153,7 +138,6 @@ const buildExpenseTicketDetailPreviewView = ({
   handlePreviewPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
   handlePreviewPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
   handlePreviewPointerEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
-  handlePreviewWheel: (event: React.WheelEvent<HTMLDivElement>) => void;
 }) => ({
   open: previewOpen,
   busy: previewBusy,
@@ -167,8 +151,18 @@ const buildExpenseTicketDetailPreviewView = ({
   onPointerDown: handlePreviewPointerDown,
   onPointerMove: handlePreviewPointerMove,
   onPointerEnd: handlePreviewPointerEnd,
-  onWheel: handlePreviewWheel,
 });
+
+type ExpenseTicketLinkedSheetLineView = {
+  visible: boolean;
+  projectId: string;
+  reimbursableExpense: number;
+  isLoading: boolean;
+  errorMessage: string;
+  disabled: boolean;
+  onProjectIdChange: (value: string) => void;
+  onReimbursableExpenseChange: (value: number) => void;
+};
 
 const buildExpenseTicketDetailContentView = ({
   isLoading,
@@ -184,6 +178,7 @@ const buildExpenseTicketDetailContentView = ({
   gastoTypeLabel,
   totalAmountText,
   transDateText,
+  ticketTimeText,
   isEditing,
   gastoTypeOptions,
   draftDescription,
@@ -195,14 +190,30 @@ const buildExpenseTicketDetailContentView = ({
   draftCurrencyCode,
   currencyCodeInvalid,
   currencyInputRef,
+  draftTotalAmount,
+  totalAmountInvalid,
+  totalAmountInputRef,
+  draftAmountMST,
+  amountMSTInvalid,
+  amountMSTInputRef,
+  draftExchangeRate,
+  exchangeRateInvalid,
+  exchangeRateInputRef,
+  exchangeRateInfoMessage,
+  localCurrencyCode,
   draftTransDate,
+  draftTicketTime,
   draftUrlFile,
   draftFileName,
   setDraftDescription,
   setDraftGastoType,
   setDraftCurrencyCode,
-  setDraftTransDate,
+  setDraftTotalAmount,
+  setDraftAmountMST,
+  setDraftExchangeRate,
+  commitDraftExchangeRate,
   isFromSheetLink,
+  linkedLine,
   handleOpenExpenseSheet,
   visibleLines,
   totalLinePages,
@@ -212,7 +223,6 @@ const buildExpenseTicketDetailContentView = ({
   lineContainerRef,
   setLinePage,
   openLineDetail,
-  status,
 }: {
   isLoading: boolean;
   errorMessage: string;
@@ -227,6 +237,7 @@ const buildExpenseTicketDetailContentView = ({
   gastoTypeLabel: string;
   totalAmountText: string;
   transDateText: string;
+  ticketTimeText: string;
   isEditing: boolean;
   gastoTypeOptions: ExpenseSelectOption[];
   draftDescription: string;
@@ -238,14 +249,30 @@ const buildExpenseTicketDetailContentView = ({
   draftCurrencyCode: string;
   currencyCodeInvalid: boolean;
   currencyInputRef: React.RefObject<HTMLInputElement | null>;
+  draftTotalAmount: string;
+  totalAmountInvalid: boolean;
+  totalAmountInputRef: React.RefObject<HTMLInputElement | null>;
+  draftAmountMST: string;
+  amountMSTInvalid: boolean;
+  amountMSTInputRef: React.RefObject<HTMLInputElement | null>;
+  draftExchangeRate: string;
+  exchangeRateInvalid: boolean;
+  exchangeRateInputRef: React.RefObject<HTMLInputElement | null>;
+  exchangeRateInfoMessage: string;
+  localCurrencyCode: string;
   draftTransDate: string;
+  draftTicketTime: string;
   draftUrlFile: string;
   draftFileName: string;
   setDraftDescription: (value: string) => void;
   setDraftGastoType: (value: string) => void;
   setDraftCurrencyCode: (value: string) => void;
-  setDraftTransDate: (value: string) => void;
+  setDraftTotalAmount: (value: string) => void;
+  setDraftAmountMST: (value: string) => void;
+  setDraftExchangeRate: (value: string) => void;
+  commitDraftExchangeRate: (value: string) => void;
   isFromSheetLink: boolean;
+  linkedLine: ExpenseTicketLinkedSheetLineView;
   handleOpenExpenseSheet: () => void;
   visibleLines: ExpenseTicketDetailLine[];
   totalLinePages: number;
@@ -260,7 +287,6 @@ const buildExpenseTicketDetailContentView = ({
   lineContainerRef: React.RefObject<HTMLDivElement | null>;
   setLinePage: (page: number) => void;
   openLineDetail: (lineRecId: string) => void;
-  status: string;
 }) => ({
   isLoading,
   errorMessage,
@@ -276,6 +302,7 @@ const buildExpenseTicketDetailContentView = ({
   gastoTypeLabel,
   totalAmountText,
   transDateText,
+  ticketTimeText,
   isEditing,
   gastoTypeOptions,
   draftDescription,
@@ -287,15 +314,31 @@ const buildExpenseTicketDetailContentView = ({
   draftCurrencyCode,
   currencyCodeInvalid,
   currencyInputRef,
+  draftTotalAmount,
+  totalAmountInvalid,
+  totalAmountInputRef,
+  draftAmountMST,
+  amountMSTInvalid,
+  amountMSTInputRef,
+  draftExchangeRate,
+  exchangeRateInvalid,
+  exchangeRateInputRef,
+  exchangeRateInfoMessage,
+  localCurrencyCode,
   draftTransDate,
+  draftTicketTime,
   draftUrlFile,
   draftFileName,
   onDraftDescriptionChange: setDraftDescription,
   onDraftGastoTypeChange: setDraftGastoType,
   onDraftCurrencyCodeChange: setDraftCurrencyCode,
-  onDraftTransDateChange: setDraftTransDate,
+  onDraftTotalAmountChange: setDraftTotalAmount,
+  onDraftAmountMSTChange: setDraftAmountMST,
+  onDraftExchangeRateChange: setDraftExchangeRate,
+  onDraftExchangeRateCommit: commitDraftExchangeRate,
   onOpenFile: openFile,
   onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
+  linkedLine,
   visibleLines,
   totalLinePages,
   linePage,
@@ -304,7 +347,6 @@ const buildExpenseTicketDetailContentView = ({
   containerRef: lineContainerRef,
   onLinePageChange: setLinePage,
   onOpenLine: openLineDetail,
-  status,
 });
 
 type ExpenseTicketDetailModalViewArgs = Parameters<typeof buildExpenseTicketDetailModalView>[0];
@@ -442,19 +484,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     selectedManagedUserId,
     managementBootstrapReady,
   } = useExpenseTicketDetailPermissionState();
-  const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
-    const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
-    const mapped = mapWindowEnumOptions(source).filter((entry) => {
-      const parsed = Number(entry.value);
-      return Number.isInteger(parsed) && ALLOWED_GASTO_TYPES.has(parsed);
-    });
-
-    if (mapped.length > 0) {
-      return mapped.sort((left, right) => Number(left.value) - Number(right.value));
-    }
-
-    return buildFallbackGastoTypeOptions();
-  }, []);
+  const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => getExpenseGastoTypeOptions(), []);
   const gastoTypeLabelMap = useMemo(() => {
     const map = new Map<string, string>();
     for (const option of gastoTypeOptions) {
@@ -471,6 +501,12 @@ const useExpenseTicketDetailPageViewModel = () => {
     () => safeText(ticketReturnContext?.sheetId || contextSheetId || header?.hojaGastosIdDisplay),
     [contextSheetId, header?.hojaGastosIdDisplay, ticketReturnContext]
   );
+  const linkedSheetLine = useExpenseTicketLinkedSheetLine({
+    enabled: !!linkedExpenseSheetId,
+    sheetId: linkedExpenseSheetId,
+    lineRecId: contextLineRecId,
+    onForbidden: showPermissionModal,
+  });
   const {
     linkSheetLocked,
     linkSheetBlockedMessage,
@@ -490,6 +526,34 @@ const useExpenseTicketDetailPageViewModel = () => {
   const [sheetSyncBlockedMessage, setSheetSyncBlockedMessage] = useState(() =>
     safeText(readExpenseTicketSheetSyncState(fileId)?.message)
   );
+  const exchangeRateRequestIdRef = useRef(0);
+  const [exchangeRateInfoMessage, setExchangeRateInfoMessage] = useState("");
+  const [contextDefaultCurrencyCode, setContextDefaultCurrencyCode] = useState("");
+
+  useEffect(() => {
+    let isCancelled = false;
+    const controller = new AbortController();
+
+    const loadDefaultCurrencyCode = async () => {
+      const defaultCurrencyCode = normalizeExpenseLineCurrencyCode(
+        await getExpenseSheetDefaultCurrencyCode({
+          suppressPermissionModal: true,
+          signal: controller.signal,
+        })
+      );
+
+      if (!isCancelled) {
+        setContextDefaultCurrencyCode(defaultCurrencyCode);
+      }
+    };
+
+    void loadDefaultCurrencyCode();
+
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, []);
 
   useEffect(() => {
     const syncState = readExpenseTicketSheetSyncState(fileId);
@@ -506,42 +570,7 @@ const useExpenseTicketDetailPageViewModel = () => {
         "ExpenseTickets_SheetSync_RetryRequired",
         "Ticket data changed, but we could not sync the expense line. Save again before leaving."
       );
-  const shouldBlockWorkflowExit = pendingFirstLink || sheetSyncBlocked;
-
-  useEffect(() => {
-    if (!shouldBlockWorkflowExit) {
-      clearExpenseNavigationGuard();
-      return;
-    }
-
-    setExpenseNavigationGuard({
-      active: true,
-      message: sheetWorkflowBlockMessage,
-      block: true,
-    });
-    return () => {
-      clearExpenseNavigationGuard();
-    };
-  }, [sheetWorkflowBlockMessage, shouldBlockWorkflowExit]);
-
-  useEffect(() => {
-    const backButton = document.getElementById("globalBackBtn") as HTMLButtonElement | null;
-    if (!backButton) return;
-
-    const previousDisabled = backButton.disabled;
-    if (pendingFirstLink) {
-      backButton.disabled = true;
-      backButton.setAttribute("aria-disabled", "true");
-    } else if (!previousDisabled) {
-      backButton.disabled = false;
-      backButton.setAttribute("aria-disabled", "false");
-    }
-
-    return () => {
-      backButton.disabled = previousDisabled;
-      backButton.setAttribute("aria-disabled", previousDisabled ? "true" : "false");
-    };
-  }, [pendingFirstLink]);
+  const hasWorkflowExitGuard = pendingFirstLink || sheetSyncBlocked;
 
   const { markResetFiltersReturn, clearCachedState } = useExpenseTicketDetailNavigationState({
     fileId,
@@ -552,6 +581,10 @@ const useExpenseTicketDetailPageViewModel = () => {
   });
   const canEditLinkedTicket = !linkedExpenseSheetId || (!linkSheetCheckBusy && !linkSheetLocked);
   const allowAssignedDraftEdit = isFromExpenseSheetCreate || (!!linkedExpenseSheetId && canEditLinkedTicket);
+  const ticketLocalCurrencyCode = useMemo(
+    () => normalizeExpenseLineCurrencyCode(linkedSheetLine.localCurrencyCode || contextDefaultCurrencyCode),
+    [contextDefaultCurrencyCode, linkedSheetLine.localCurrencyCode]
+  );
   const {
     busy,
     status,
@@ -567,7 +600,18 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftCurrencyCode,
     currencyCodeInvalid,
     currencyInputRef,
+    draftTotalAmount,
+    totalAmountInvalid,
+    totalAmountInputRef,
+    draftAmountMST,
+    amountMSTInvalid,
+    amountMSTInputRef,
+    draftExchangeRate,
+    exchangeRateInvalid,
+    exchangeRateInputRef,
+    localCurrencyCode,
     draftTransDate,
+    draftTicketTime,
     draftComentario,
     draftUrlFile,
     draftFileName,
@@ -579,12 +623,17 @@ const useExpenseTicketDetailPageViewModel = () => {
     setDraftDescription,
     setDraftGastoType,
     setDraftCurrencyCode,
-    setDraftTransDate,
+    setDraftTotalAmount,
+    setDraftAmountMST,
+    setDraftExchangeRate,
+    commitDraftExchangeRate,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,
   } = useExpenseTicketDetailEditor({
     header,
+    linkedExpenseLine: linkedSheetLine.line,
+    localCurrencyCode: ticketLocalCurrencyCode,
     lineCount: lines.length,
     pageSize: LINES_PAGE_SIZE,
     canEditTicket: canEditTicket && canEditLinkedTicket,
@@ -593,6 +642,86 @@ const useExpenseTicketDetailPageViewModel = () => {
     isFromSheetLink,
     onForbidden: showPermissionModal,
   });
+  const handleTicketCurrencyCodeChange = useCallback(
+    (value: string) => {
+      const nextCurrencyCode = normalizeExpenseLineCurrencyCode(value);
+      setDraftCurrencyCode(nextCurrencyCode);
+      setExchangeRateInfoMessage("");
+
+      if (!nextCurrencyCode || !localCurrencyCode) {
+        return;
+      }
+
+      if (nextCurrencyCode === normalizeExpenseLineCurrencyCode(localCurrencyCode)) {
+        exchangeRateRequestIdRef.current += 1;
+        return;
+      }
+
+      const requestId = exchangeRateRequestIdRef.current + 1;
+      exchangeRateRequestIdRef.current = requestId;
+
+      void (async () => {
+        try {
+          const officialExchangeRate = await fetchExpenseOfficialExchangeRate({
+            localCurrencyCode,
+            expenseCurrencyCode: nextCurrencyCode,
+            date: draftTransDate || header?.ticketDate || header?.transDate,
+          });
+          if (requestId !== exchangeRateRequestIdRef.current || !officialExchangeRate) {
+            return;
+          }
+
+          commitDraftExchangeRate(formatExpenseExchangeRateInputValue(officialExchangeRate.exchangeRate), nextCurrencyCode);
+          setExchangeRateInfoMessage(
+            buildExpenseExchangeRateInfoMessage({
+              rawRate: officialExchangeRate.rawRate,
+              date: officialExchangeRate.date,
+              source: officialExchangeRate.source,
+            })
+          );
+        } catch (error) {
+          if (requestId !== exchangeRateRequestIdRef.current) {
+            return;
+          }
+
+          const message =
+            error instanceof Error && safeText(error.message)
+              ? safeText(error.message)
+              : indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio.");
+          setExchangeRateInfoMessage(message);
+        }
+      })();
+    },
+    [
+      commitDraftExchangeRate,
+      draftTransDate,
+      header?.ticketDate,
+      header?.transDate,
+      localCurrencyCode,
+      setDraftCurrencyCode,
+    ]
+  );
+  const handleTicketExchangeRateChange = useCallback(
+    (value: string) => {
+      setExchangeRateInfoMessage("");
+      setDraftExchangeRate(value);
+    },
+    [setDraftExchangeRate]
+  );
+  const handleTicketExchangeRateCommit = useCallback(
+    (value: string) => {
+      setExchangeRateInfoMessage("");
+      commitDraftExchangeRate(value);
+    },
+    [commitDraftExchangeRate]
+  );
+  const handleTicketAmountMSTChange = useCallback(
+    (value: string) => {
+      setExchangeRateInfoMessage("");
+      setDraftAmountMST(value);
+    },
+    [setDraftAmountMST]
+  );
   const handleEnableEditInContext = useCallback(() => {
     if (linkSheetCheckBusy) {
       return;
@@ -607,6 +736,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       return;
     }
 
+    setExchangeRateInfoMessage("");
     handleEnableEdit();
   }, [
     handleEnableEdit,
@@ -617,12 +747,20 @@ const useExpenseTicketDetailPageViewModel = () => {
     setModalError,
     setStatus,
   ]);
-  const { paginationLabels, previewAltText, statusLabel, gastoTypeLabel, totalAmountText, transDateText } =
+  const handleCancelEditInContext = useCallback(() => {
+    setExchangeRateInfoMessage("");
+    handleCancelEdit();
+    linkedSheetLine.resetDraftProjectId();
+    linkedSheetLine.resetDraftReimbursableExpense();
+  }, [handleCancelEdit, linkedSheetLine.resetDraftProjectId, linkedSheetLine.resetDraftReimbursableExpense]);
+  const { paginationLabels, previewAltText, statusLabel, gastoTypeLabel, totalAmountText, transDateText, ticketTimeText } =
     useExpenseTicketDetailDisplay({
       header,
       draftGastoType,
       draftCurrencyCode,
+      draftTotalAmount,
       draftTransDate,
+      draftTicketTime,
       draftFileName,
       isEditing,
       gastoTypeLabelMap,
@@ -641,7 +779,6 @@ const useExpenseTicketDetailPageViewModel = () => {
     handlePreviewPointerDown,
     handlePreviewPointerMove,
     handlePreviewPointerEnd,
-    handlePreviewWheel,
   } = useExpenseTicketDetailPreviewPanel({
     fileId,
     isEditing,
@@ -670,11 +807,21 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftDescription,
     draftGastoType,
     draftCurrencyCode,
+    draftTotalAmount,
+    draftAmountMST,
+    draftExchangeRate,
+    localCurrencyCode,
     draftTransDate,
+    draftTicketTime,
     draftComentario,
     draftUrlFile,
     draftFileName,
     linkedExpenseSheetId,
+    linkedExpenseLineRecId: isFromExpenseLine ? contextLineRecId : "",
+    linkedExpenseLineProjectId: linkedSheetLine.draftProjectId,
+    linkedExpenseLineProjectIdChanged: isFromExpenseLine && linkedSheetLine.projectIdChanged,
+    linkedExpenseLineReimbursableExpense: linkedSheetLine.draftReimbursableExpense,
+    linkedExpenseLineReimbursableExpenseChanged: isFromExpenseLine && linkedSheetLine.reimbursableExpenseChanged,
     deleteLinkedExpenseLineContext: isFromExpenseLine && linkedExpenseSheetId && contextLineRecId
       ? {
           sheetId: linkedExpenseSheetId,
@@ -694,6 +841,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     onLinkedSheetSyncSuccess: () => {
       setSheetSyncBlocked(false);
       setSheetSyncBlockedMessage("");
+      linkedSheetLine.acceptDraftProjectId();
+      linkedSheetLine.acceptDraftReimbursableExpense();
     },
     setModalError,
     setBusy,
@@ -721,9 +870,54 @@ const useExpenseTicketDetailPageViewModel = () => {
   const canEditTicketInContext = canEditTicket && canEditLinkedTicket && !isFromSheetLink;
   const canCreateTicketLineInContext = canEditTicketInContext && !isContextLocked && !sheetSyncBlocked;
   const canDeleteTicketInContext = canDeleteTicket && canEditLinkedTicket && !isFromSheetLink;
-  const ticketTopbarActionMode: "default" | "save_only" | "view_only" =
+  const canDeleteUnlinkedTicketAfterSyncError =
+    pendingFirstLink &&
+    sheetSyncBlocked &&
+    canDeleteTicketInContext &&
+    !!safeText(fileId) &&
+    !!header &&
+    !safeText(header.hojaGastosIdDisplay);
+  const shouldHardBlockWorkflowExit = pendingFirstLink && !canDeleteUnlinkedTicketAfterSyncError;
+
+  useEffect(() => {
+    if (!hasWorkflowExitGuard) {
+      clearExpenseNavigationGuard();
+      return;
+    }
+
+    setExpenseNavigationGuard({
+      active: true,
+      message: sheetWorkflowBlockMessage,
+      block: shouldHardBlockWorkflowExit,
+    });
+    return () => {
+      clearExpenseNavigationGuard();
+    };
+  }, [hasWorkflowExitGuard, sheetWorkflowBlockMessage, shouldHardBlockWorkflowExit]);
+
+  useEffect(() => {
+    const backButton = document.getElementById("globalBackBtn") as HTMLButtonElement | null;
+    if (!backButton) return;
+
+    const previousDisabled = backButton.disabled;
+    if (shouldHardBlockWorkflowExit) {
+      backButton.disabled = true;
+      backButton.setAttribute("aria-disabled", "true");
+    } else if (!previousDisabled) {
+      backButton.disabled = false;
+      backButton.setAttribute("aria-disabled", "false");
+    }
+
+    return () => {
+      backButton.disabled = previousDisabled;
+      backButton.setAttribute("aria-disabled", previousDisabled ? "true" : "false");
+    };
+  }, [shouldHardBlockWorkflowExit]);
+  const ticketTopbarActionMode: "default" | "save_only" | "save_delete" | "view_only" =
     pendingFirstLink && isEditing
-      ? "save_only"
+      ? canDeleteUnlinkedTicketAfterSyncError
+        ? "save_delete"
+        : "save_only"
       : !canEditTicketInContext && !canDeleteTicketInContext
         ? "view_only"
         : "default";
@@ -733,6 +927,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     modalOpen: modal.open,
     isEditing,
     isLocked: isContextLocked,
+    isDeleteLocked: canDeleteUnlinkedTicketAfterSyncError ? false : undefined,
     actionMode: ticketTopbarActionMode,
     permissionsReady: managementBootstrapReady,
     canEditTicket: canEditTicketInContext,
@@ -740,7 +935,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     fileId,
     setModalError,
     handleEnableEdit: handleEnableEditInContext,
-    handleCancelEdit,
+    handleCancelEdit: handleCancelEditInContext,
     canOpenSaveConfirm,
     handleUpdate,
     handleDelete,
@@ -783,7 +978,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     isEditing,
     canOpenSaveConfirm,
     handlePersistHeaderDraft,
-    bypassWorkflowGuard: shouldBlockWorkflowExit,
+    bypassWorkflowGuard: hasWorkflowExitGuard,
     lineContainerRef,
     openPreview,
     ticketReturnContext,
@@ -821,7 +1016,6 @@ const useExpenseTicketDetailPageViewModel = () => {
       handlePreviewPointerDown,
       handlePreviewPointerMove,
       handlePreviewPointerEnd,
-      handlePreviewWheel,
     },
     contentArgs: {
       isLoading,
@@ -837,6 +1031,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       gastoTypeLabel,
       totalAmountText,
       transDateText,
+      ticketTimeText,
       isEditing,
       gastoTypeOptions,
       draftDescription,
@@ -848,14 +1043,39 @@ const useExpenseTicketDetailPageViewModel = () => {
       draftCurrencyCode,
       currencyCodeInvalid,
       currencyInputRef,
+      draftTotalAmount,
+      totalAmountInvalid,
+      totalAmountInputRef,
+      draftAmountMST,
+      amountMSTInvalid,
+      amountMSTInputRef,
+      draftExchangeRate,
+      exchangeRateInvalid,
+      exchangeRateInputRef,
+      exchangeRateInfoMessage,
+      localCurrencyCode,
       draftTransDate,
+      draftTicketTime,
       draftUrlFile,
       draftFileName,
       setDraftDescription,
       setDraftGastoType,
-      setDraftCurrencyCode,
-      setDraftTransDate,
+      setDraftCurrencyCode: handleTicketCurrencyCodeChange,
+      setDraftTotalAmount,
+      setDraftAmountMST: handleTicketAmountMSTChange,
+      setDraftExchangeRate: handleTicketExchangeRateChange,
+      commitDraftExchangeRate: handleTicketExchangeRateCommit,
       isFromSheetLink,
+      linkedLine: {
+        visible: isFromExpenseLine,
+        projectId: linkedSheetLine.draftProjectId,
+        reimbursableExpense: linkedSheetLine.draftReimbursableExpense,
+        isLoading: linkedSheetLine.isLoading,
+        errorMessage: linkedSheetLine.errorMessage,
+        disabled: busy || isContextLocked || linkedSheetLine.isLoading,
+        onProjectIdChange: linkedSheetLine.setDraftProjectId,
+        onReimbursableExpenseChange: linkedSheetLine.setDraftReimbursableExpense,
+      },
       handleOpenExpenseSheet,
       visibleLines,
       totalLinePages,
@@ -865,7 +1085,6 @@ const useExpenseTicketDetailPageViewModel = () => {
       lineContainerRef,
       setLinePage,
       openLineDetail,
-      status,
     },
   });
 

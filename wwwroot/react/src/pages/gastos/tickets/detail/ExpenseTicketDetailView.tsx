@@ -3,6 +3,7 @@ import type { RefObject } from "react";
 import ConfirmModal from "../../../../components/commons/ConfirmModal.tsx";
 import { indT } from "../../../../utils/indI18n.ts";
 import ExpenseTicketDetailHeaderForm from "../../components/ExpenseTicketDetailHeaderForm.tsx";
+import ExpenseTicketLinkedSheetLineSection from "../../components/ExpenseTicketLinkedSheetLineSection.tsx";
 import ExpenseTicketLinesList from "../../components/ExpenseTicketLinesList.tsx";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "./expenseTicketDetailTypes.ts";
 import ExpenseTicketPreviewModal from "./ExpenseTicketPreviewModal.tsx";
@@ -45,7 +46,6 @@ type ExpenseTicketDetailViewProps = {
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
     onPointerEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
-    onWheel: (event: React.WheelEvent<HTMLDivElement>) => void;
   };
   content: {
     isLoading: boolean;
@@ -62,6 +62,7 @@ type ExpenseTicketDetailViewProps = {
     gastoTypeLabel: string;
     totalAmountText: string;
     transDateText: string;
+    ticketTimeText: string;
     isEditing: boolean;
     gastoTypeOptions: Array<{ value: string; text: string }>;
     draftDescription: string;
@@ -73,15 +74,40 @@ type ExpenseTicketDetailViewProps = {
     draftCurrencyCode: string;
     currencyCodeInvalid: boolean;
     currencyInputRef: RefObject<HTMLInputElement | null>;
+    draftTotalAmount: string;
+    totalAmountInvalid: boolean;
+    totalAmountInputRef: RefObject<HTMLInputElement | null>;
+    draftExchangeRate: string;
+    exchangeRateInvalid: boolean;
+    exchangeRateInputRef: RefObject<HTMLInputElement | null>;
+    exchangeRateInfoMessage: string;
+    draftAmountMST: string;
+    amountMSTInvalid: boolean;
+    amountMSTInputRef: RefObject<HTMLInputElement | null>;
+    localCurrencyCode: string;
     draftTransDate: string;
+    draftTicketTime: string;
     draftUrlFile: string;
     draftFileName: string;
     onDraftDescriptionChange: (value: string) => void;
     onDraftGastoTypeChange: (value: string) => void;
     onDraftCurrencyCodeChange: (value: string) => void;
-    onDraftTransDateChange: (value: string) => void;
+    onDraftTotalAmountChange: (value: string) => void;
+    onDraftExchangeRateChange: (value: string) => void;
+    onDraftExchangeRateCommit: (value: string) => void;
+    onDraftAmountMSTChange: (value: string) => void;
     onOpenFile: () => void;
     onOpenExpenseSheet?: () => void;
+    linkedLine: {
+      visible: boolean;
+      projectId: string;
+      reimbursableExpense: number;
+      isLoading: boolean;
+      errorMessage: string;
+      disabled: boolean;
+      onProjectIdChange: (value: string) => void;
+      onReimbursableExpenseChange: (value: number) => void;
+    };
     visibleLines: ExpenseTicketDetailLine[];
     totalLinePages: number;
     linePage: number;
@@ -90,7 +116,6 @@ type ExpenseTicketDetailViewProps = {
     containerRef: RefObject<HTMLDivElement | null>;
     onLinePageChange: (page: number) => void;
     onOpenLine: (lineRecId: string) => void;
-    status: string;
   };
 };
 
@@ -104,6 +129,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         gastoTypeLabel={content.gastoTypeLabel}
         totalAmountText={content.totalAmountText}
         transDateText={content.transDateText}
+        ticketTimeText={content.ticketTimeText}
         isEditing={content.isEditing}
         gastoTypeOptions={content.gastoTypeOptions}
         draftDescription={content.draftDescription}
@@ -115,17 +141,45 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         draftCurrencyCode={content.draftCurrencyCode}
         currencyCodeInvalid={content.currencyCodeInvalid}
         currencyInputRef={content.currencyInputRef}
+        draftTotalAmount={content.draftTotalAmount}
+        totalAmountInvalid={content.totalAmountInvalid}
+        totalAmountInputRef={content.totalAmountInputRef}
+        draftExchangeRate={content.draftExchangeRate}
+        exchangeRateInvalid={content.exchangeRateInvalid}
+        exchangeRateInputRef={content.exchangeRateInputRef}
+        exchangeRateInfoMessage={content.exchangeRateInfoMessage}
+        draftAmountMST={content.draftAmountMST}
+        amountMSTInvalid={content.amountMSTInvalid}
+        amountMSTInputRef={content.amountMSTInputRef}
+        localCurrencyCode={content.localCurrencyCode}
         draftTransDate={content.draftTransDate}
+        draftTicketTime={content.draftTicketTime}
         draftUrlFile={content.draftUrlFile}
         draftFileName={content.draftFileName}
         onDraftDescriptionChange={content.onDraftDescriptionChange}
         onDraftGastoTypeChange={content.onDraftGastoTypeChange}
         onDraftCurrencyCodeChange={content.onDraftCurrencyCodeChange}
-        onDraftTransDateChange={content.onDraftTransDateChange}
+        onDraftTotalAmountChange={content.onDraftTotalAmountChange}
+        onDraftExchangeRateChange={content.onDraftExchangeRateChange}
+        onDraftExchangeRateCommit={content.onDraftExchangeRateCommit}
+        onDraftAmountMSTChange={content.onDraftAmountMSTChange}
         onOpenFile={content.onOpenFile}
         onOpenExpenseSheet={content.onOpenExpenseSheet}
         hideOpenFileAction={content.showStickyPreview}
-      />
+      >
+        {content.linkedLine.visible ? (
+          <ExpenseTicketLinkedSheetLineSection
+            projectId={content.linkedLine.projectId}
+            reimbursableExpense={content.linkedLine.reimbursableExpense}
+            isEditing={content.isEditing}
+            isLoading={content.linkedLine.isLoading}
+            disabled={content.linkedLine.disabled}
+            errorMessage={content.linkedLine.errorMessage}
+            onProjectIdChange={content.linkedLine.onProjectIdChange}
+            onReimbursableExpenseChange={content.linkedLine.onReimbursableExpenseChange}
+          />
+        ) : null}
+      </ExpenseTicketDetailHeaderForm>
       <ExpenseTicketLinesList
         visibleLines={content.visibleLines}
         totalLinePages={content.totalLinePages}
@@ -136,7 +190,6 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onLinePageChange={content.onLinePageChange}
         onOpenLine={content.onOpenLine}
       />
-      <div className="text-sm text-slate-600">{content.status}</div>
     </>
   );
 
@@ -170,14 +223,13 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onPointerDown={preview.onPointerDown}
         onPointerMove={preview.onPointerMove}
         onPointerEnd={preview.onPointerEnd}
-        onWheel={preview.onWheel}
       />
 
       <div
-        className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-slate-700"
+        className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-zinc-700"
         style={{ display: content.isLoading ? "flex" : "none" }}
       >
-        <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
+        <svg className="ind-spinner size-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
           <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
         </svg>
         {indT("Common_Loading", "Loading")}
@@ -187,8 +239,8 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
 
       {!content.isLoading && !content.errorMessage && content.header ? (
         content.showStickyPreview ? (
-          <div className="space-y-2 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4 lg:space-y-0">
-            <div className="lg:col-start-2">
+          <div className="grid min-w-0 max-w-full grid-cols-1 gap-y-2 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4">
+            <div className="min-w-0 max-w-full lg:col-start-2">
               <ExpenseTicketStickyPreview
                 busy={content.previewBusy}
                 error={content.previewError}
@@ -198,7 +250,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
                 onOpen={content.onOpenPreview}
               />
             </div>
-            <div className="space-y-2 lg:col-start-1 lg:row-start-1">{detailBody}</div>
+            <div className="min-w-0 space-y-2 lg:col-start-1 lg:row-start-1">{detailBody}</div>
           </div>
         ) : (
           detailBody

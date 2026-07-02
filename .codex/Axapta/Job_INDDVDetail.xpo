@@ -1,0 +1,76 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDDVDetail descargados en Lunes 22/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job_INDDVDetail
+    #static void Job_INDDVDetail(Args _args)
+    #{
+    #    DataAreaId     companyId      = curext();
+    #    UserId         viewerAxUserId = curUserId();
+    #    str            appCode        = "CRM";
+    #    str            moduleCode     = "VISITAS_GESTION";
+    #    str            fromDateYmd    = "20200101";
+    #    str            toDateYmd      = "20991231";
+    #    RecId          activityRecId  = 0;
+    #    CRMActividadId activityId     = "";
+    #    container      listResult;
+    #    container      detailByRecId;
+    #    container      detailByCode;
+    #    container      row;
+    #    ;
+    #
+    #    if (!activityRecId && !activityId)
+    #    {
+    #        listResult = INDCRMVisitsService::getActivityContainer(
+    #            [companyId, viewerAxUserId, fromDateYmd, toDateYmd, "", appCode, moduleCode]);
+    #
+    #        if (conLen(listResult) < 1)
+    #        {
+    #            error("No hay visitas visibles para usar como detalle.");
+    #            return;
+    #        }
+    #
+    #        row = conPeek(listResult, 1);
+    #
+    #        if (conLen(row) < 2)
+    #        {
+    #            error("La primera fila no contiene ActivityId + RecId.");
+    #            return;
+    #        }
+    #
+    #        activityId    = conPeek(row, 1);
+    #        activityRecId = str2int(conPeek(row, 2));
+    #    }
+    #
+    #    if (activityRecId)
+    #    {
+    #        detailByRecId = INDCRMVisitsService::getActivityByRecIdContainer(
+    #            [companyId, strFmt("%1", activityRecId), viewerAxUserId, appCode, moduleCode]);
+    #
+    #        info(strFmt("Detalle por RecId filas=%1", conLen(detailByRecId)));
+    #
+    #        if (conLen(detailByRecId) >= 1)
+    #            info(strFmt("Primera fila RecId: %1", conPeek(conPeek(detailByRecId, 1), 1)));
+    #    }
+    #
+    #    if (activityId)
+    #    {
+    #        detailByCode = INDCRMVisitsService::getActivityByCode(
+    #            [companyId, activityId, viewerAxUserId, appCode, moduleCode]);
+    #
+    #        info(strFmt("Detalle por codigo filas=%1", conLen(detailByCode)));
+    #
+    #        if (conLen(detailByCode) >= 1)
+    #            info(strFmt("Primera fila codigo: %1", conPeek(conPeek(detailByCode, 1), 1)));
+    #    }
+    #
+    #    info("Fin detalle.");
+    #}
+  ENDSOURCE
+
+***Element: END

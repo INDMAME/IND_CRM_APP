@@ -1,0 +1,103 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDInternalApi_SendMailEx
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+
+  SOURCE #Job_INDInternalApi_SendMailEx
+    #static void Job_INDInternalApi_SendMailEx(Args _args)
+    #{
+    #    COM     clientt;
+    #    INDDefaultParameters defaultParameters = INDDefaultParameters::find();
+    #
+    #    str     baseUrl         = defaultParameters.InternalAPIUrlService;
+    #    str     apiUser         = defaultParameters.APIUserId;
+    #    str     apiPassword     = defaultParameters.INDAPIIntServiceUser().Password;
+    #
+    #    str     fromEmail       = "i.jauregi@insertec.biz";
+    #    str     fromName        = "Axapta Mail Test";
+    #    str     toEmails        = "marco.meza@insertec.biz";
+    #    str     ccEmails        = "";
+    #    str     bccEmails       = "";
+    #    str     replyToEmails   = "";
+    #    str     company         = "LAN";
+    #
+    #    // Staged absolute paths separated by semicolon. Empty means no attachments.
+    #    str     attachmentFilePaths = "";
+    #
+    #    str     correlationId;
+    #    str     aggregateId;
+    #    str     idempotencyKey;
+    #    str     htmlBody;
+    #    str     textBody;
+    #    str     healthJson;
+    #    boolean online;
+    #    boolean sent;
+    #    ;
+    #
+    #    correlationId  = strFmt("ax-mail-extended-%1-%2", today(), timeNow());
+    #    aggregateId    = strFmt("%1-%2", today(), timeNow());
+    #    idempotencyKey = strFmt("AX-MailExtendedSmokeTest:%1", aggregateId);
+    #
+    #    htmlBody = "<p>Prueba extendida de envio desde Axapta usando IND_INTERNAL_API.</p>" +
+    #               "<p>Este envio prueba CC, BCC, Reply-To, saveToSentItems, importance y attachmentFilePaths.</p>";
+    #    textBody = "Prueba extendida de envio desde Axapta usando IND_INTERNAL_API.";
+    #
+    #    try
+    #    {
+    #        clientt = new COM("IND.InternalApiClient");
+    #
+    #        healthJson = clientt.GetApiHealthStatusJson(baseUrl, correlationId);
+    #        info(strFmt("Health JSON: %1", healthJson));
+    #
+    #        online = clientt.IsApiOnline(baseUrl, correlationId);
+    #        if (!online)
+    #        {
+    #            error("IND_INTERNAL_API is not online from AOS.");
+    #            clientt = null;
+    #            return;
+    #        }
+    #
+    #        sent = clientt.SendMailEx(
+    #            baseUrl,
+    #            apiUser,
+    #            apiPassword,
+    #            fromEmail,
+    #            fromName,
+    #            toEmails,
+    #            ccEmails,
+    #            bccEmails,
+    #            replyToEmails,
+    #            "Prueba extendida mail IND_INTERNAL_API desde Axapta",
+    #            htmlBody,
+    #            textBody,
+    #            attachmentFilePaths,
+    #            false,
+    #            "high",
+    #            company,
+    #            "AXAPTA",
+    #            "ManualSmokeTest",
+    #            "MailExtendedSmokeTest",
+    #            "ManualTest",
+    #            aggregateId,
+    #            idempotencyKey,
+    #            correlationId);
+    #
+    #        if (sent)
+    #            info("SendMailEx OK. Microsoft Graph accepted the request.");
+    #        else
+    #            error("SendMailEx returned false. Review internal.mail.send, Graph settings and API logs.");
+    #    }
+    #    catch (Exception::Error)
+    #    {
+    #        error("Error executing COM IND.InternalApiClient SendMailEx smoke test.");
+    #    }
+    #
+    #    clientt = null;
+    #}
+  ENDSOURCE
+
+***Element: END

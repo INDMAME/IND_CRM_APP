@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { formatAmountWithCurrency } from "../../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../../constants/expenseTicketStatusCatalog.ts";
 import { formatExpenseDisplayDate, safeText } from "../../utils/expenseUiUtils.ts";
+import { parseExpenseNumericInput } from "../../utils/expenseNumberFormat.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "./expenseTicketDetailTypes.ts";
 
@@ -9,10 +10,33 @@ type UseExpenseTicketDetailDisplayArgs = {
   header: ExpenseTicketDetailHeader | null;
   draftGastoType: string;
   draftCurrencyCode: string;
+  draftTotalAmount: string;
   draftTransDate: string;
+  draftTicketTime: string;
   draftFileName: string;
   isEditing: boolean;
   gastoTypeLabelMap: Map<string, string>;
+};
+
+const formatExpenseDisplayTime = (raw?: string): string => {
+  const value = safeText(raw);
+  if (!value || value === "0") return "";
+
+  const secondsValue = Number(value);
+  if (Number.isInteger(secondsValue) && secondsValue >= 0 && secondsValue <= 86399) {
+    const hours = Math.floor(secondsValue / 3600);
+    const minutes = Math.floor((secondsValue % 3600) / 60);
+    const seconds = secondsValue % 60;
+    return [hours, minutes, seconds].map((entry) => String(entry).padStart(2, "0")).join(":");
+  }
+
+  const match = value.match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/);
+  if (!match) return value;
+
+  const hours = Number.parseInt(match[1] || "", 10);
+  if (!Number.isInteger(hours) || hours < 0 || hours > 23) return value;
+
+  return `${String(hours).padStart(2, "0")}:${match[2]}:${match[3] || "00"}`;
 };
 
 // Centralizes display-only values so the page container stays focused on flow wiring.
@@ -20,7 +44,9 @@ export const useExpenseTicketDetailDisplay = ({
   header,
   draftGastoType,
   draftCurrencyCode,
+  draftTotalAmount,
   draftTransDate,
+  draftTicketTime,
   draftFileName,
   isEditing,
   gastoTypeLabelMap,
@@ -51,13 +77,24 @@ export const useExpenseTicketDetailDisplay = ({
   }, [draftGastoType, gastoTypeLabelMap, header?.gastoType, isEditing]);
 
   const totalAmountText = useMemo(
-    () => formatAmountWithCurrency(header?.totalAmount ?? null, (isEditing ? draftCurrencyCode : header?.currencyCode) || header?.currencyCode),
-    [draftCurrencyCode, header?.currencyCode, header?.totalAmount, isEditing]
+    () => {
+      const editableTotalAmount = parseExpenseNumericInput(draftTotalAmount);
+      return formatAmountWithCurrency(
+        isEditing && editableTotalAmount != null ? editableTotalAmount : header?.totalAmount ?? null,
+        (isEditing ? draftCurrencyCode : header?.currencyCode) || header?.currencyCode
+      );
+    },
+    [draftCurrencyCode, draftTotalAmount, header?.currencyCode, header?.totalAmount, isEditing]
   );
 
   const transDateText = useMemo(
-    () => formatExpenseDisplayDate(isEditing ? draftTransDate : header?.transDate, document?.documentElement?.lang || "es-ES"),
-    [draftTransDate, header?.transDate, isEditing]
+    () => formatExpenseDisplayDate(isEditing ? draftTransDate : header?.ticketDate || header?.transDate, document?.documentElement?.lang || "es-ES"),
+    [draftTransDate, header?.ticketDate, header?.transDate, isEditing]
+  );
+
+  const ticketTimeText = useMemo(
+    () => formatExpenseDisplayTime(isEditing ? draftTicketTime : header?.ticketTime),
+    [draftTicketTime, header?.ticketTime, isEditing]
   );
 
   return {
@@ -67,5 +104,6 @@ export const useExpenseTicketDetailDisplay = ({
     gastoTypeLabel,
     totalAmountText,
     transDateText,
+    ticketTimeText,
   };
 };

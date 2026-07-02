@@ -14,9 +14,11 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public const string SystemExchangeRatePublicDirect = "api/system/exchange-rate/public-direct";
         public const string Health = "api/health/health";
         public const string HealthPing = "api/health/ping";
+        public const string CrmEnumsByName = "api/crm/enums/by-name";
         public const string AccountsList = "api/crm/accounts/listAccounts";
         public const string ContactsList = "api/crm/accounts/listContacts";
         public const string ActivitiesList = "api/crm/activities/list";
+        public const string DataVisibilityVisibleUsers = "api/crm/data-visibility/visible-users";
         public const string ActivitiesCreate = "api/crm/activities/create";
         public const string VisitsCreateAsistente = "api/crm/visits/createVisitaAsistente";
         public const string VisitsDeleteAsistente = "api/crm/visits/deleteVisitaAsistente";
@@ -38,6 +40,23 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public static string ActivityByRecId(long recId) =>
             $"api/crm/activities/{recId}";
 
+        // Builds the data visibility users route with query parameters.
+        public static string DataVisibilityVisibleUsersByQuery(
+            string safeAppCode,
+            string safeModuleCode,
+            bool includeCrmUserId) =>
+            $"{DataVisibilityVisibleUsers}?appCode={safeAppCode}&moduleCode={safeModuleCode}&includeCrmUserId={(includeCrmUserId ? "true" : "false")}";
+
+        // Builds the CRM enum catalog route by AX enum names.
+        public static string CrmEnumsByNameByQuery(string safeAppCode, string safeAxEnumNames)
+        {
+            var route = $"{CrmEnumsByName}?appCode={safeAppCode}";
+            if (!string.IsNullOrWhiteSpace(safeAxEnumNames))
+                route = $"{route}&axEnumNames={safeAxEnumNames}";
+
+            return route;
+        }
+
         // Builds the expense sheet by id route.
         public static string ExpenseSheetById(string safeId) =>
             $"api/crm/expensesheets/{safeId}";
@@ -53,6 +72,10 @@ namespace IND_CRM_APP.Services.ApiHelpers
         // Builds the expense sheet ticket IA apply route.
         public static string ExpenseSheetTicketIa(string safeFileId) =>
             $"api/crm/expensesheets/tickets/{safeFileId}/ia";
+
+        // Builds the expense sheet ticket total adjustment route.
+        public static string ExpenseSheetTicketTotalAdjustment(string safeFileId) =>
+            $"api/crm/expensesheets/tickets/{safeFileId}/total-adjustment";
 
         // Builds the expense sheet ticket file route with optional extension query.
         public static string ExpenseSheetTicketFile(string safeFileId, string? safeExtension = null)

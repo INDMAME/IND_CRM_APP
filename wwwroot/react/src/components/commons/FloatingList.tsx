@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef } from "react";
 import { createPortal } from "react-dom";
 import { useFloatingPosition } from "../../hooks/useFloatingPosition.ts";
 
@@ -13,6 +13,9 @@ type Props = {
   portalClassName?: string;
   panelClassName?: string;
   panelStyle?: React.CSSProperties;
+  autoFitViewport?: boolean;
+  offset?: number;
+  viewportPadding?: number;
   children: React.ReactNode;
 };
 
@@ -27,12 +30,22 @@ const FloatingList = ({
   portalClassName,
   panelClassName,
   panelStyle,
+  autoFitViewport = true,
+  offset,
+  viewportPadding,
   children,
 }: Props) => {
-  const style = useFloatingPosition(anchorRef, open);
+  const panelRef = useRef<HTMLDivElement | null>(null);
+  const style = useFloatingPosition(anchorRef, open, {
+    overlayRef: panelRef,
+    autoFitViewport,
+    offset,
+    viewportPadding,
+  });
   if (!open) return null;
   return createPortal(
     <div
+      data-floating-placement={style.placement}
       style={{
         position: "fixed",
         top: style.top,
@@ -43,9 +56,14 @@ const FloatingList = ({
       className={portalClassName}
     >
       <div
+        ref={panelRef}
         role={role}
         className={`w-full overflow-auto ${roundedClass} bg-white py-1 text-sm shadow-lg ring-1 ring-black/5 focus:outline-hidden ${maxHeightClass} ${panelClassName || ""}`}
-        style={panelStyle}
+        style={{
+          maxHeight: style.maxHeight,
+          overscrollBehavior: "contain",
+          ...panelStyle,
+        }}
       >
         {children}
       </div>

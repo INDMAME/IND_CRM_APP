@@ -1,0 +1,437 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Navision Axapta Forms unloaded at Martes 02/06/2026
+; --------------------------------------------------------------------------------
+FRMVERSION 5
+
+FORM #CRMUsuarioSubordinadoTable
+  PROPERTIES
+    Name                #CRMUsuarioSubordinadoTable
+  ENDPROPERTIES
+  
+  METHODS
+    Version: 3
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #//    CRMUserId       _userId     = CRMUsuarioTable::Find_AxaptaUserId(curUserId()).UserId;
+      #    CRMUsuarioTable usuarioTable;
+      #
+      #    CRMPermisosTable    permisosTable   = CRMPermisosTable::Find(curUserId());
+      #    QueryBuildRange range;
+      #    //Set             setUsersRefracta, setUsersIlimitado;
+      #    Set             setSubordinados;
+      #
+      #    CRMUsuarioSubordinadoTable  subordinadoTable;
+      #    str                         filtroUserId;
+      #    int                         i;
+      #    ;
+      #
+      #    usuarioTable        = element.args().record();//CRMUsuarioTable::Find(_userId);
+      #    if (! permisosTable.VerSubordinados){
+      #
+      #        throw error ("No tienes permisos para acceder a este módulo.");
+      #    }
+      #
+      #    super();
+      #
+      #
+      #    if (usuarioTable){
+      #        CRMUsuarioSubordinadoTable_ds.allowCreate(false);
+      #        CRMUsuarioSubordinadoTable_ds.allowEdit(false);
+      #        CRMUsuarioSubordinadoTable_ds.allowDelete(false);
+      #
+      #        CRMUsuarioSubordinadoTable_ds.object(FieldNum(CRMUsuarioSubordinadoTable, UserIdJefe)).allowEdit(false);
+      #    }
+      #
+      #
+      #    CRMUsuarioSubordinadoTable_ds.allowCreate(permisosTable.ConfigurarSubordinados);
+      #    CRMUsuarioSubordinadoTable_ds.allowEdit(permisosTable.ConfigurarSubordinados);
+      #    CRMUsuarioSubordinadoTable_ds.allowDelete(permisosTable.ConfigurarSubordinados);
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #CRMUsuarioSubordinadoTable
+          Table               #CRMUsuarioSubordinadoTable
+          Index               #Index1
+          Company             #
+          CounterField        #
+          AllowCheck          #Yes
+          AllowEdit           #Yes
+          AllowCreate         #Yes
+          AllowDelete         #Yes
+          StartPosition       #First
+          AutoSearch          #Yes
+          AutoNotify          #Yes
+          AutoQuery           #Yes
+          OnlyFetchActive     #No
+          JoinSource          #
+          LinkType            #Delayed
+          DelayActive         #Yes
+          InsertAtEnd         #Yes
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #executeQuery
+          #public void executeQuery()
+          #{
+          #/*
+          #    CRMUserId       _userId     = CRMUsuarioTable::Find_AxaptaUserId(curUserId()).UserId;
+          #    CRMUsuarioTable usuarioTable;
+          #
+          #    //CRMPermisosTable    permisosTable   = CRMPermisosTable::Find(/*curUserId()*/);
+          #    QueryBuildRange range;
+          #    //Set             setUsersRefracta, setUsersIlimitado;
+          #    Set             setSubordinados;
+          #
+          #    CRMUsuarioSubordinadoTable  subordinadoTable;
+          #    str                         filtroUserId;
+          #    int                         i;
+          #    ;
+          #
+          #    usuarioTable        = CRMUsuarioTable::Find(_userId);
+          #    setSubordinados     = usuarioTable.SetSubordinados();
+          #
+          #
+          #    i   = setSubordinados.elements();
+          #    if (i != 1){
+          #        range   = this.query().dataSourceTable(tableNum(CRMUsuarioSubordinadoTable)).findRange(fieldnum(CRMUsuarioSubordinadoTable, UserIdJefe));
+          #
+          #        if (! range)
+          #            range = this.query().dataSourceTable(tableNum(CRMUsuarioSubordinadoTable)).addRange(fieldnum(CRMUsuarioSubordinadoTable, UserIdJefe));
+          #
+          #        range.value(_userId);
+          #    }
+          #*/
+          #    super();
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  JOINS
+  ENDJOINS
+  
+  DESIGN
+    PROPERTIES
+      Left                #Auto (left)
+      Top                 #Auto
+      Width               #Auto
+      Height              #Auto
+      Visible             #Yes
+      Caption             #Subordinados
+      TitleDatasource     #
+      Frame               #Standard
+      WindowResize        #Auto
+      WindowType          #Standard
+      SaveSize            #No
+      AlwaysOnTop         #No
+      HideToolbar         #No
+      SetCompany          #Yes
+      ColorScheme         #Default
+      CssClass            #
+      ShowWebHelp         #Default
+      BackgroundColor     #Button face (3D)
+      ImageName           #
+      ImageResource       #0
+      Imagemode           #Normal (preserve pict. attributes)
+      Mode                #Watch
+      SubmitMethod        #Auto
+      SupportReload       #No
+      LocalWebMenu        #
+      AllowDocking        #No
+      Font                #
+      FontSize            #0
+      Italic              #No
+      Underline           #No
+      Bold                #Default
+      CharacterSet        #0
+      LabelFont           #
+      LabelFontSize       #0
+      LabelItalic         #No
+      LabelUnderline      #No
+      LabelBold           #Default
+      LabelCharacterSet   #0
+      DataSource          #
+      TopMargin           #Auto
+      BottomMargin        #Auto
+      LeftMargin          #Auto
+      RightMargin         #Auto
+      ArrangeWhen         #Default
+      ArrangeMethod       #Vertical
+      Columns             #2
+      Columnspace         #Auto
+      ArrangeGuide        
+        ARRAY INDEX Columns 
+          #0
+          #0
+        ENDARRAY
+      HideIfEmpty         #Yes
+      AlignChildren       #Yes
+      AlignChild          #Yes
+      AllowUserSetup      #Yes
+      NeededAccessLevel   #NoAccess
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL GRID
+        ;==== controlId:12290, containerId: 0, containerdata: 0   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #Grid
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #No
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          ColorScheme         #Default
+          BackgroundColor     #Window background
+          TopMargin           #0
+          BottomMargin        #0
+          LeftMargin          #0
+          RightMargin         #0
+          MultiSelect         #Yes
+          VisibleCols         #Auto
+          VisibleRows         #Auto
+          ShowColLabels       #Yes
+          ShowRowLabels       #Yes
+          HighlightActive     #Yes
+          ActiveBackColor     #Highlight background
+          ActiveForeColor     #Highlight text
+          DataSource          #CRMUsuarioSubordinadoTable
+          DataGroup           #
+          AutoDataGroup       #No
+          GridLines           #Yes
+        ENDPROPERTIES
+        
+          CONTAINER
+            CONTROL STRINGEDIT
+              ;==== controlId:12291, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #CRMUsuarioSubordinadoTable_UserIdJefe
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                LookupButton        #Auto
+                ReplaceOnLookup     #Yes
+                LimitText           #Auto
+                DisplayLength       #Auto
+                DisplayHeight       #Auto
+                Border              #Auto
+                Text                #
+                PasswordStyle       #No
+                Alignment           #Auto
+                ChangeCase          #Auto
+                MultiLine           #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #CRMUsuarioSubordinadoTable
+                DataField           #UserIdJefe
+                Mandatory           #No
+                ArrayIndex          #0
+                SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL STRINGEDIT
+              ;==== controlId:12292, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #CRMUsuarioSubordinadoTable_UserIdSubordinado
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                LookupButton        #Auto
+                ReplaceOnLookup     #Yes
+                LimitText           #Auto
+                DisplayLength       #Auto
+                DisplayHeight       #Auto
+                Border              #Auto
+                Text                #
+                PasswordStyle       #No
+                Alignment           #Auto
+                ChangeCase          #Auto
+                MultiLine           #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #CRMUsuarioSubordinadoTable
+                DataField           #UserIdSubordinado
+                Mandatory           #No
+                ArrayIndex          #0
+                SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL STRINGEDIT
+              ;==== controlId:12293, containerId:12290, containerdata: 0   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #UserIdSubordinadoName
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #No
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #Auto
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                LookupButton        #Auto
+                ReplaceOnLookup     #Yes
+                LimitText           #Auto
+                DisplayLength       #Auto
+                DisplayHeight       #Auto
+                Border              #Auto
+                Text                #
+                PasswordStyle       #No
+                Alignment           #Auto
+                ChangeCase          #Auto
+                MultiLine           #No
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                Font                #
+                FontSize            #0
+                Italic              #No
+                Underline           #No
+                Bold                #Default
+                CharacterSet        #0
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #CRMUsuarioSubordinadoTable
+                DataField           #
+                Mandatory           #No
+                ArrayIndex          #0
+                DataMethod          #UserIdSubordinadoName
+                SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+          ENDCONTAINER
+          
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+ENDFORM
+
+
+***Element: END

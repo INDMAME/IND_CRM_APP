@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Guía funcional - Permisos de módulo y jerarquía en visitas</title>
+  <style>
+  :root {
+    color-scheme: dark;
+    --text: #e5edf5;
+    --muted: #a8b3c2;
+    --line: #314154;
+    --soft: #182232;
+    --panel: #111a27;
+    --accent: #58c4ff;
+    --tech: #fb923c;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    background: #07111f;
+    color: var(--text);
+    font-family: "Segoe UI", Arial, sans-serif;
+    line-height: 1.55;
+  }
+
+  main {
+    max-width: 980px;
+    margin: 32px auto;
+    padding: 48px 56px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    box-shadow: 0 18px 45px rgba(0, 0, 0, 0.38);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: #f3f7fb;
+    line-height: 1.25;
+  }
+
+  h1 {
+    margin: 0 0 8px;
+    font-size: 30px;
+    letter-spacing: 0;
+  }
+
+  h2 {
+    margin: 36px 0 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid var(--line);
+    font-size: 22px;
+  }
+
+  h3 {
+    margin: 28px 0 12px;
+    font-size: 18px;
+  }
+
+  h4 {
+    margin: 22px 0 10px;
+    font-size: 15px;
+    color: var(--accent);
+    text-transform: uppercase;
+  }
+
+  p {
+    margin: 10px 0;
+  }
+
+  ul,
+  ol {
+    margin: 8px 0 16px 22px;
+    padding: 0;
+  }
+
+  li {
+    margin: 6px 0;
+  }
+
+  code {
+    padding: 1px 5px;
+    border-radius: 4px;
+    background: #241a12;
+    color: var(--tech);
+    font-family: Consolas, "Courier New", monospace;
+    font-size: 0.94em;
+    font-weight: 600;
+  }
+
+  pre {
+    overflow: auto;
+    margin: 12px 0 20px;
+    padding: 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #070d18;
+    color: #e5edf5;
+    font-size: 13px;
+    line-height: 1.45;
+  }
+
+  pre code {
+    padding: 0;
+    background: transparent;
+    color: var(--tech);
+    font-weight: 500;
+  }
+
+  .meta {
+    margin-bottom: 28px;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  .callout {
+    margin: 18px 0;
+    padding: 14px 16px;
+    border-left: 4px solid var(--accent);
+    background: #0d2537;
+  }
+
+  .inventory-item {
+    margin: 18px 0;
+    padding: 14px 16px;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    background: #0e1724;
+  }
+
+  .inventory-item h4 {
+    margin-top: 0;
+    text-transform: none;
+    color: #f3f7fb;
+    font-size: 16px;
+  }
+
+  @media print {
+    body {
+      background: #07111f;
+      print-color-adjust: exact;
+      -webkit-print-color-adjust: exact;
+    }
+
+    main {
+      max-width: none;
+      margin: 0;
+      padding: 24mm 18mm;
+      border: 0;
+      box-shadow: none;
+    }
+
+    h2,
+    h3 {
+      break-after: avoid;
+    }
+
+    .inventory-item {
+      break-inside: avoid;
+    }
+  }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Guía funcional - Permisos de módulo y jerarquía en visitas</h1>
+    <p class="meta">Fuente: Notion, página "Jerarquía de permisos a nivel registro". Exportado: 2026-06-18. Módulo: <code>CRM / VISITAS_GESTION</code>.</p>
+
+    <section>
+      <h2>Objetivo</h2>
+      <p>Esta guía explica, a nivel funcional, cómo se combinan los permisos de módulo configurados en Axapta con la visibilidad por jerarquía y la política de modificación para el módulo web de visitas.</p>
+      <p>El objetivo es que cualquier persona pueda interpretar la pantalla de configuración de Axapta y entender qué verá el usuario en la aplicación web: qué visitas puede consultar, cuáles quedan en solo lectura y cuándo aparecen los botones de editar o eliminar.</p>
+      <div class="callout">
+        <strong>Alcance:</strong> este flujo aplica a visitas. Las hojas de gastos mantienen su propio flujo funcional de aprobación, autogestión y estados, por lo que no deben reinterpretarse con estas reglas genéricas de visitas.
+      </div>
+    </section>
+
+    <section>
+      <h2>Resumen funcional</h2>
+      <ul>
+        <li>Ver una visita y modificar una visita son dos decisiones separadas.</li>
+        <li>La visibilidad indica qué propietarios o registros puede consultar el usuario.</li>
+        <li>La política de modificación indica si el usuario puede editar o eliminar registros visibles que no son suyos.</li>
+        <li>El comportamiento estándar de la web es restrictivo: si falta propietario, política, permisos del módulo o autorización de jerarquía, el registro se muestra en modo lectura.</li>
+        <li>El propietario funcional de una visita se compara por usuario AX, no por nombre visible ni por alias de CRM.</li>
+        <li>Aunque el módulo tenga <code>Control total</code>, la política de modificación puede impedir editar visitas ajenas.</li>
+        <li>El servidor vuelve a validar antes de guardar o eliminar. La visibilidad de botones en la web es una ayuda visual, no la única barrera de seguridad.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2>Pantalla de configuración en Axapta</h2>
+      <p>La configuración se gestiona desde <code>Maestro Personas &gt; Accesos Web</code>, dentro del bloque <code>Módulos web</code>.</p>
+      <p>Cada fila representa los permisos de una persona para una combinación de aplicación web, módulo, empresa, usuario CRM y usuario AX asociado.</p>
+
+      <section class="inventory-item">
+        <h4><code>Web App</code></h4>
+        <p>Identifica la aplicación web a la que aplica la regla. Para visitas debe ser <code>CRM</code>. Si una regla se define para otra Web App, no debe esperarse que afecte a visitas del CRM.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4><code>ModuleCode</code></h4>
+        <p>Identifica el módulo funcional. Para el flujo documentado aquí debe ser <code>VISITAS_GESTION</code>. La web no interpreta esta regla por el nombre visible del módulo, sino por el código técnico.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Acceso Módulo</h4>
+        <p>Define el permiso base dentro del módulo.</p>
+        <ul>
+          <li><code>Sin acceso</code>: el usuario no debería operar el módulo.</li>
+          <li><code>Lectura</code>: el usuario puede consultar si la visibilidad de datos también lo permite, pero no puede editar ni eliminar.</li>
+          <li><code>Edición</code>: permite que una modificación sea considerada, pero todavía debe pasar la política de modificación a nivel de registro.</li>
+          <li><code>Control total</code>: permite operaciones completas del módulo, incluida eliminación, pero todavía se somete a la política de modificación y a la jerarquía.</li>
+        </ul>
+        <div class="callout">
+          <strong>Punto clave:</strong> <code>Control total</code> no significa automáticamente poder modificar visitas ajenas. Solo significa que el permiso del módulo no bloquea la operación.
+        </div>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Modo de visibilidad de datos</h4>
+        <p>Define qué registros puede ver el usuario.</p>
+        <ul>
+          <li><code>Solo propios</code>: el usuario ve sus propias visitas.</li>
+          <li><code>Propios + jerarquía</code>: el usuario ve sus propias visitas y también las visitas de personas que le correspondan por la jerarquía configurada.</li>
+        </ul>
+        <p>La visibilidad sirve para listar y abrir registros. No concede por sí sola permiso para editar visitas ajenas.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Profundidad de jerarquía</h4>
+        <p>Define hasta dónde llega la visibilidad cuando el modo es <code>Propios + jerarquía</code>.</p>
+        <ul>
+          <li><code>Jerarquía directa</code>: el usuario ve sus propios registros y los de subordinados directos.</li>
+          <li><code>Jerarquía completa</code>: el usuario ve sus propios registros, los de subordinados directos y también los de subordinados indirectos.</li>
+        </ul>
+        <p>Ejemplo: si Marco tiene como subordinada a Amaya y Amaya tiene como subordinado a Alessandro, con <code>Jerarquía completa</code> Marco puede ver visitas de Amaya y también de Alessandro.</p>
+      </section>
+    </section>
+
+    <section>
+      <h2>Política de modificación</h2>
+      <p>La política de modificación define qué ocurre cuando el usuario abre una visita visible que pertenece a otra persona. Esta es la regla que evita que una jefatura pueda editar todo lo que ve cuando la configuración debe ser solo de consulta.</p>
+
+      <section class="inventory-item">
+        <h4><code>Solo propios</code></h4>
+        <p>El usuario solo puede modificar visitas cuyo propietario sea el mismo usuario AX logado.</p>
+        <ul>
+          <li>Las visitas propias pueden editarse si el permiso del módulo lo permite.</li>
+          <li>Las visitas de subordinados pueden verse si la visibilidad lo permite.</li>
+          <li>Las visitas de subordinados se abren en modo lectura.</li>
+          <li>En detalle de una visita ajena debe aparecer el campo <code>Propietario</code>.</li>
+          <li>Los botones de editar y eliminar deben estar ocultos para visitas ajenas.</li>
+          <li>Si se intenta guardar o eliminar por una llamada directa, el servidor debe bloquear la operación.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4><code>Igual que visibilidad</code></h4>
+        <p>El usuario puede modificar registros ajenos visibles siempre que la jerarquía devuelva ese propietario como modificable.</p>
+        <ul>
+          <li>Las visitas propias pueden modificarse si el permiso del módulo lo permite.</li>
+          <li>Las visitas de subordinados visibles pueden modificarse si el servicio de visibilidad devuelve autorización de modificación para ese propietario.</li>
+          <li>La web puede mostrar editar o eliminar cuando se cumplen permiso de módulo suficiente, propietario visible, política compatible y autorización de modificación activa.</li>
+          <li>Si el propietario no aparece como visible o no aparece como modificable, la visita se muestra en solo lectura.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4><del>Reglas del módulo</del></h4>
+        <p>Esta opción no debe utilizarse como configuración funcional estándar para visitas.</p>
+        <p>Motivo: genera ambigüedad porque mezcla el permiso general del módulo con la decisión de modificación a nivel de registro. En la práctica puede resultar confuso distinguir si el usuario modifica porque tiene <code>Control total</code>, porque ve el registro por jerarquía o porque existe una regla funcional específica.</p>
+        <ul>
+          <li>Mantenerla oculta o desaconsejada en Axapta para visitas.</li>
+          <li>No usarla en nuevas configuraciones operativas.</li>
+          <li>Para visitas, usar preferentemente <code>Solo propios</code> o <code>Igual que visibilidad</code>.</li>
+          <li>La aplicación puede reconocer el valor por compatibilidad técnica, pero la documentación funcional no lo considera una opción recomendada.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section>
+      <h2>Otros campos de la configuración</h2>
+
+      <section class="inventory-item">
+        <h4>Resumen de visibilidad</h4>
+        <p>Es un campo de ayuda para explicar la configuración en una sola frase, por ejemplo <code>Propios + jerarquía (Jerarquía completa)</code>.</p>
+        <p>La aplicación web no debe depender de este texto para decidir permisos. La web debe usar los campos estructurados de la configuración y la lista de usuarios visibles que entrega el backend.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Excepciones</h4>
+        <p>Indica si existen ajustes específicos sobre la visibilidad del módulo. Las excepciones pueden agregar o excluir usuarios respecto a la jerarquía normal.</p>
+        <ul>
+          <li>Un usuario agregado puede aparecer como visible aunque no venga por la jerarquía base.</li>
+          <li>Un usuario excluido no debe aparecer como visible aunque pertenezca a la jerarquía.</li>
+          <li>Si un registro pertenece a un usuario excluido y se abre por URL directa, debe tratarse como no modificable.</li>
+          <li>Una excepción de visibilidad no debe interpretarse automáticamente como permiso de edición si la política no lo permite.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Usuarios agregados y usuarios excluidos</h4>
+        <p>Estos contadores indican cuántos ajustes manuales tiene la regla del módulo.</p>
+        <ul>
+          <li>Usuarios agregados: amplían la lista de propietarios visibles.</li>
+          <li>Usuarios excluidos: reducen la lista de propietarios visibles.</li>
+        </ul>
+        <p>Estos campos afectan principalmente a la visibilidad. La modificación de registros ajenos requiere además una política que lo permita.</p>
+      </section>
+    </section>
+
+    <section>
+      <h2>Flujo funcional en la aplicación web</h2>
+
+      <section class="inventory-item">
+        <h4>1. Inicio de sesión y contexto</h4>
+        <p>Al entrar en la web, el sistema carga el usuario logado, usuario AX asociado, empresa activa, módulos disponibles, permisos por módulo, políticas de visibilidad y políticas de modificación.</p>
+        <p>Si el usuario no tiene usuario AX asociado o el propietario de la visita no puede resolverse como usuario AX, el sistema debe actuar de forma restrictiva.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>2. Listado e historial de visitas</h4>
+        <p>En el historial de visitas, la aplicación obtiene la lista de propietarios visibles para <code>CRM / VISITAS_GESTION</code>.</p>
+        <ul>
+          <li>Si el usuario solo puede verse a sí mismo, el historial se filtra por su usuario AX.</li>
+          <li>Si el usuario tiene jerarquía visible, puede aparecer un selector para consultar propietarios visibles.</li>
+          <li>Cuando se selecciona <code>Todos</code>, el backend debe devolver las visitas permitidas por la visibilidad, no todas las visitas de la empresa.</li>
+          <li>Si se selecciona un propietario concreto, se consulta por su usuario AX.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>3. Apertura del detalle de una visita</h4>
+        <p>Al abrir una visita, la web identifica el propietario del registro. La comparación se hace contra el usuario AX logado.</p>
+        <ul>
+          <li>Si el propietario es el usuario logado, la visita es propia.</li>
+          <li>Si el propietario es distinto, la visita es ajena.</li>
+          <li>Si el propietario no puede identificarse, la visita queda en modo lectura.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>4. Campo <code>Propietario</code> en detalle</h4>
+        <p>El campo <code>Propietario</code> aparece cuando se está viendo una visita de otra persona visible.</p>
+        <ul>
+          <li>Si no aparece <code>Propietario</code>, normalmente el registro se está viendo como propio.</li>
+          <li>Si aparece <code>Propietario</code>, el usuario está viendo una visita ajena por visibilidad o jerarquía.</li>
+          <li>La aparición del campo no significa permiso de edición. Solo explica la propiedad del registro.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>5. Botón editar</h4>
+        <p>El botón de editar debe mostrarse solo si el módulo permite edición, la visita tiene propietario identificable, el servidor confirma que puede modificarse, la política lo permite y, si la visita es ajena, el propietario aparece como visible y modificable.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>6. Botón eliminar</h4>
+        <p>El botón de eliminar es más restrictivo que editar. Debe mostrarse solo si el módulo tiene permiso equivalente a <code>Control total</code> o eliminación, la política permite actuar sobre el propietario y el servidor confirma que la visita puede modificarse.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>7. Guardado y eliminación</h4>
+        <p>Cuando el usuario guarda o elimina, el backend vuelve a validar permiso del módulo, propietario del registro, política de modificación, visibilidad del propietario y autorización de modificación del propietario visible.</p>
+        <p>Esto es obligatorio porque la interfaz puede estar desactualizada por caché, recarga parcial o cambios recientes en Axapta. La regla final siempre la impone el servidor.</p>
+      </section>
+    </section>
+
+    <section>
+      <h2>Combinaciones funcionales habituales</h2>
+
+      <section class="inventory-item">
+        <h4><code>Control total</code> + <code>Propios + jerarquía</code> + <code>Jerarquía completa</code> + <code>Solo propios</code></h4>
+        <p>Configuración recomendada cuando un jefe necesita consultar la actividad de su equipo, pero no modificarla.</p>
+        <ul>
+          <li>Ve sus visitas.</li>
+          <li>Ve visitas de subordinados directos e indirectos.</li>
+          <li>Edita sus propias visitas.</li>
+          <li>Elimina sus propias visitas si el módulo lo permite.</li>
+          <li>Abre visitas ajenas en modo lectura.</li>
+          <li>No ve botones de editar/eliminar en visitas ajenas.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4><code>Control total</code> + <code>Propios + jerarquía</code> + <code>Jerarquía completa</code> + <code>Igual que visibilidad</code></h4>
+        <p>Configuración para jefaturas que pueden gestionar registros visibles de su jerarquía.</p>
+        <ul>
+          <li>Ve sus visitas.</li>
+          <li>Ve visitas de subordinados directos e indirectos.</li>
+          <li>Edita sus propias visitas.</li>
+          <li>Puede editar visitas ajenas si el propietario llega como visible y modificable.</li>
+          <li>Puede eliminar visitas ajenas si además el módulo permite eliminación.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4><code>Control total</code> + <code>Propios + jerarquía</code> + <code>Solo propios</code>, con visita de subordinado directo</h4>
+        <ul>
+          <li>La visita aparece en listado si la visibilidad lo permite.</li>
+          <li>El detalle muestra <code>Propietario</code>.</li>
+          <li>El detalle queda en modo lectura.</li>
+          <li>No aparecen botones de editar ni eliminar.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4><code>Control total</code> + <code>Propios + jerarquía</code> + <code>Solo propios</code>, con visita de subordinado indirecto</h4>
+        <ul>
+          <li>Si la profundidad es <code>Jerarquía completa</code>, la visita puede verse.</li>
+          <li>Si la profundidad no incluye indirectos, no debería aparecer en listado.</li>
+          <li>Si se puede ver, sigue en modo lectura porque la política es <code>Solo propios</code>.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4><code>Control total</code> + <code>Propios + jerarquía</code> + <code>Igual que visibilidad</code>, con visita de subordinado indirecto</h4>
+        <ul>
+          <li>Si la profundidad incluye al subordinado indirecto, la visita puede verse.</li>
+          <li>Si el propietario viene marcado como modificable, pueden aparecer botones de editar/eliminar según permiso del módulo.</li>
+          <li>Si el propietario no viene marcado como modificable, queda en solo lectura.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4><code>Lectura</code> + cualquier visibilidad + cualquier política</h4>
+        <ul>
+          <li>El usuario puede consultar lo que la visibilidad permita.</li>
+          <li>No puede editar.</li>
+          <li>No puede eliminar.</li>
+          <li>La política de modificación no debe elevar un permiso de módulo que es solo lectura.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section>
+      <h2>Casos restrictivos</h2>
+
+      <section class="inventory-item">
+        <h4>Falta política de modificación</h4>
+        <ul>
+          <li>El sistema intenta refrescar el contexto de permisos.</li>
+          <li>Si tras refrescar sigue sin política fiable, la web debe actuar en modo restrictivo.</li>
+          <li>En detalle no deben mostrarse botones de modificación para registros ajenos.</li>
+          <li>El servidor debe bloquear operaciones no verificables.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Falta propietario de la visita</h4>
+        <ul>
+          <li>La visita se muestra en lectura.</li>
+          <li>No se habilita editar/eliminar por jerarquía.</li>
+          <li>Debe revisarse el dato de origen para asegurar que la visita informa correctamente su usuario AX propietario.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section>
+      <h2>Ejemplos prácticos</h2>
+
+      <section class="inventory-item">
+        <h4>Ejemplo 1: jefe con <code>Solo propios</code></h4>
+        <ul>
+          <li>Configuración: <code>CRM</code>, <code>VISITAS_GESTION</code>, <code>Control total</code>, <code>Propios + jerarquía</code>, <code>Jerarquía completa</code>, <code>Solo propios</code>.</li>
+          <li>El jefe ve sus visitas y las de la jerarquía.</li>
+          <li>Si abre una visita de Estibaliz, Alessandro u otro subordinado, el detalle muestra <code>Propietario</code>.</li>
+          <li>La visita ajena se ve en lectura.</li>
+          <li>No aparecen editar ni eliminar.</li>
+          <li>Si se fuerza una llamada de guardado, el servidor la rechaza.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Ejemplo 2: jefe con <code>Igual que visibilidad</code></h4>
+        <ul>
+          <li>Configuración: <code>CRM</code>, <code>VISITAS_GESTION</code>, <code>Control total</code>, <code>Propios + jerarquía</code>, <code>Jerarquía completa</code>, <code>Igual que visibilidad</code>.</li>
+          <li>El jefe ve sus visitas y las de la jerarquía.</li>
+          <li>Si abre una visita ajena visible y modificable, aparecen acciones de edición.</li>
+          <li>Si el propietario visible no viene autorizado para modificación, se muestra lectura.</li>
+          <li>Un subordinado indirecto puede ser editable solo si está dentro de la profundidad de jerarquía y llega como modificable.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Ejemplo 3: jefe con jerarquía completa, pero subordinado excluido</h4>
+        <ul>
+          <li>El subordinado excluido no debe aparecer como propietario visible.</li>
+          <li>Sus visitas no deben aparecer en la consulta normal.</li>
+          <li>Si una visita se abre por acceso directo, no debe poder modificarse.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Ejemplo 4: usuario sin jerarquía</h4>
+        <ul>
+          <li>Ve sus propias visitas.</li>
+          <li>No aparece selector funcional de otros propietarios.</li>
+          <li>Edita o elimina solo según su permiso de módulo y la política aplicable.</li>
+        </ul>
+      </section>
+    </section>
+
+    <section>
+      <h2>Cómo interpretar la pantalla de detalle</h2>
+
+      <section class="inventory-item">
+        <h4>Veo el campo <code>Propietario</code></h4>
+        <p>Significa que el registro pertenece a otra persona.</p>
+        <ul>
+          <li>Si la política es <code>Solo propios</code>, debe estar en lectura.</li>
+          <li>Si la política es <code>Igual que visibilidad</code>, puede ser editable solo si el propietario llega como modificable.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>No veo editar ni eliminar</h4>
+        <p>Puede ser correcto por cualquiera de estas razones:</p>
+        <ul>
+          <li>El módulo no tiene permiso de edición o control total.</li>
+          <li>La política es <code>Solo propios</code> y la visita es ajena.</li>
+          <li>El propietario no está dentro de la jerarquía visible.</li>
+          <li>El propietario está excluido por excepción.</li>
+          <li>El propietario visible no viene autorizado para modificación.</li>
+          <li>Falta el propietario AX del registro.</li>
+          <li>Falta o no se pudo cargar la política de modificación.</li>
+        </ul>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Veo editar o eliminar</h4>
+        <p>Solo debe ocurrir si se cumplen permiso de módulo, política de modificación y validación del servidor. Si una visita ajena muestra acciones con <code>Solo propios</code>, la configuración o el flujo de datos debe revisarse.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Sale error al guardar aunque vea el botón</h4>
+        <p>El servidor es la fuente final de verdad. Puede ocurrir si la configuración cambió después de renderizar la pantalla, el contexto estaba cacheado, el propietario se resolvió de forma distinta al guardar o la lista de visibles cambió entre la carga y la acción.</p>
+      </section>
+    </section>
+
+    <section>
+      <h2>Trazabilidad y caché</h2>
+      <p>Para diagnosticar problemas de permisos se deben revisar las trazas de carga de contexto web, módulos por empresa, usuarios visibles, política de modificación, propietario de la visita, validación de modificación y decisiones de interfaz enviadas por la web.</p>
+      <p>Mensajes o conceptos útiles a buscar:</p>
+      <ul>
+        <li><code>visible-users</code></li>
+        <li><code>VISITAS_GESTION</code></li>
+        <li><code>MutationPolicy</code></li>
+        <li><code>CanMutate</code></li>
+        <li><code>ownerAxUserId</code></li>
+        <li><code>Record mutation permission</code></li>
+        <li><code>Module permission client trace</code></li>
+      </ul>
+      <div class="callout">
+        <strong>Regla de caché:</strong> si faltan datos críticos de política, el backend debe intentar refrescar el contexto. Si después del refresco siguen faltando datos, la decisión debe ser restrictiva. La caché nunca debe convertir una visita ajena en editable si la política real no lo permite.
+      </div>
+    </section>
+
+    <section>
+      <h2>Reglas para nuevos módulos</h2>
+      <p>Este enfoque debe ser reutilizable para otros módulos, no exclusivo de visitas.</p>
+      <p>Para incorporar un nuevo módulo se debe definir:</p>
+      <ul>
+        <li>Código de Web App.</li>
+        <li>Código de módulo.</li>
+        <li>Campo propietario del registro expresado como usuario AX.</li>
+        <li>Permisos base del módulo.</li>
+        <li>Modo de visibilidad.</li>
+        <li>Profundidad de jerarquía.</li>
+        <li>Política de modificación.</li>
+        <li>Endpoint o servicio que devuelva propietarios visibles.</li>
+        <li>Indicador de si cada propietario visible es modificable.</li>
+        <li>Validación obligatoria en servidor antes de guardar o eliminar.</li>
+      </ul>
+      <div class="callout">
+        <strong>Reglas técnicas y funcionales:</strong> restrictivo por defecto, no confiar solo en la interfaz, no usar nombres visibles como clave de propiedad, no mezclar hojas de gastos con este flujo, no interpretar <code>Control total</code> como permiso automático sobre registros ajenos y documentar cada política antes de habilitarla.
+      </div>
+    </section>
+
+    <section>
+      <h2>Glosario</h2>
+      <section class="inventory-item">
+        <h4>Registro propio</h4>
+        <p>Visita cuyo propietario AX coincide con el usuario AX logado.</p>
+      </section>
+      <section class="inventory-item">
+        <h4>Registro ajeno</h4>
+        <p>Visita cuyo propietario AX es distinto al usuario AX logado.</p>
+      </section>
+      <section class="inventory-item">
+        <h4>Propietario visible</h4>
+        <p>Usuario propietario que aparece en la lista de visibilidad calculada para el usuario logado.</p>
+      </section>
+      <section class="inventory-item">
+        <h4>Propietario modificable</h4>
+        <p>Usuario propietario visible sobre el que la política de modificación permite actuar.</p>
+      </section>
+      <section class="inventory-item">
+        <h4>Política restrictiva</h4>
+        <p>Comportamiento por el que la web oculta acciones y el servidor bloquea mutaciones cuando falta información o no hay autorización completa.</p>
+      </section>
+      <section class="inventory-item">
+        <h4><code>Igual que visibilidad</code></h4>
+        <p>Política en la que la capacidad de modificar registros ajenos sigue la visibilidad y la autorización de modificación devuelta por jerarquía.</p>
+      </section>
+      <section class="inventory-item">
+        <h4><code>Solo propios</code></h4>
+        <p>Política en la que el usuario puede consultar registros ajenos si la visibilidad lo permite, pero solo puede modificar sus propios registros.</p>
+      </section>
+      <section class="inventory-item">
+        <h4><code>Control total</code></h4>
+        <p>Permiso base del módulo que habilita acciones completas del módulo, pero no anula la política de modificación a nivel de registro.</p>
+      </section>
+    </section>
+  </main>
+</body>
+</html>

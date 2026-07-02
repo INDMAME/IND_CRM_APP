@@ -1,0 +1,82 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDDVGuard descargados en Lunes 22/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job_INDDVGuard
+    #static void Job_INDDVGuard(Args _args)
+    #{
+    #    DataAreaId        companyId      = curext();
+    #    UserId            viewerAxUserId = "AZAAM";//curUserId();
+    #    str               appCode        = "CRM";
+    #    str               moduleCode     = "VISITAS_GESTION";
+    #    str               fromDateYmd    = "20200101";
+    #    str               toDateYmd      = "20991231";
+    #    RecId             activityRecId  = 0;
+    #    CRMActividadTable activity;
+    #    UserId            ownerAxUserId;
+    #    boolean           canView;
+    #    boolean           canMutate;
+    #    boolean           directCanMutate;
+    #    container         listResult;
+    #    container         row;
+    #    ;
+    #
+    #    if (!activityRecId)
+    #    {
+    #        listResult = INDCRMVisitsService::getActivityContainer(
+    #            [companyId, viewerAxUserId, fromDateYmd, toDateYmd, "", appCode, moduleCode]);
+    #
+    #        if (conLen(listResult) < 1)
+    #        {
+    #            error("No hay visitas visibles para comprobar permisos.");
+    #            return;
+    #        }
+    #
+    #        row = conPeek(listResult, 1);
+    #
+    #        if (conLen(row) < 2)
+    #        {
+    #            error("La primera fila no contiene RecId.");
+    #            return;
+    #        }
+    #
+    #        activityRecId = str2int(conPeek(row, 2));
+    #    }
+    #
+    #    changecompany (companyId)
+    #    {
+    #        select firstonly activity
+    #            where activity.RecId == activityRecId;
+    #    }
+    #
+    #    if (!activity.RecId)
+    #    {
+    #        error(strFmt("No existe actividad RecId=%1 en Company=%2.", activityRecId, companyId));
+    #        return;
+    #    }
+    #
+    #    ownerAxUserId = INDCRMVisitsService::getActivityOwnerAxUserId(activity);
+    #
+    #    canView = INDCRMVisitsService::canViewerAccessActivity(
+    #        companyId, viewerAxUserId, activity, appCode, moduleCode);
+    #
+    #    canMutate = INDCRMVisitsService::canViewerMutateActivity(
+    #        companyId, viewerAxUserId, activity, appCode, moduleCode);
+    #
+    #    directCanMutate = INDCRMUtilityService::ctrlCanMutateOwnerAxUserId(
+    #        viewerAxUserId, companyId, appCode, moduleCode, ownerAxUserId);
+    #
+    #    info(strFmt("Company=%1 Viewer=%2 RecId=%3 ActivityId=%4 Owner=%5 CanView=%6 CanMutate=%7 DirectCanMutate=%8",
+    #        companyId, viewerAxUserId, activityRecId, activity.ActividadId,
+    #        ownerAxUserId, canView, canMutate, directCanMutate));
+    #
+    #    info("Fin permisos. No se modificaron datos.");
+    #}
+  ENDSOURCE
+
+***Element: END

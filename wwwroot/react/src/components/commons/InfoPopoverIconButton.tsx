@@ -10,6 +10,15 @@ type InfoPopoverIconButtonProps = {
   panelClassName?: string;
 };
 
+// Converts escaped resource line breaks into visible popover line breaks.
+const normalizePopoverContent = (content: React.ReactNode): React.ReactNode => {
+  if (typeof content !== "string") {
+    return content;
+  }
+
+  return content.replace(/\\r\\n|\\n|\\r/g, "\n");
+};
+
 // Shared dumb popover trigger used to display short contextual info.
 const InfoPopoverIconButton = ({
   content,
@@ -91,6 +100,7 @@ const InfoPopoverIconButton = ({
   }, [isOpen, updatePanelPosition]);
 
   const portalTarget = typeof document === "undefined" ? null : document.body;
+  const normalizedContent = normalizePopoverContent(content);
 
   return (
     <div className={classNames("inline-flex", className)}>
@@ -134,7 +144,7 @@ const InfoPopoverIconButton = ({
                 panelClassName
               )}
             >
-              <p className="text-[12px] text-slate-700 whitespace-pre-line">{content}</p>
+              <p className="text-[12px] text-slate-700 whitespace-pre-line">{normalizedContent}</p>
             </div>,
             portalTarget
           )

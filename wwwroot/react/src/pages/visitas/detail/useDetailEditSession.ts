@@ -12,6 +12,7 @@ type UseDetailEditSessionArgs = {
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
   transDate: string;
   visitType: string;
+  contactMethod: string;
   asistenteTipo: string;
   description: string;
   comentarios: string;
@@ -19,6 +20,7 @@ type UseDetailEditSessionArgs = {
   conclusiones: string;
   setTransDate: React.Dispatch<React.SetStateAction<string>>;
   setVisitType: React.Dispatch<React.SetStateAction<string>>;
+  setContactMethod: React.Dispatch<React.SetStateAction<string>>;
   setAsistenteTipo: React.Dispatch<React.SetStateAction<string>>;
   setDescription: React.Dispatch<React.SetStateAction<string>>;
   setComentarios: React.Dispatch<React.SetStateAction<string>>;
@@ -29,6 +31,7 @@ type UseDetailEditSessionArgs = {
 type DetailDraftValues = {
   transDate: string;
   visitType: string;
+  contactMethod: string;
   asistenteTipo: string;
   description: string;
   comentarios: string;
@@ -45,6 +48,7 @@ export const useDetailEditSession = ({
   setIsEditing,
   transDate,
   visitType,
+  contactMethod,
   asistenteTipo,
   description,
   comentarios,
@@ -52,6 +56,7 @@ export const useDetailEditSession = ({
   conclusiones,
   setTransDate,
   setVisitType,
+  setContactMethod,
   setAsistenteTipo,
   setDescription,
   setComentarios,
@@ -151,6 +156,7 @@ export const useDetailEditSession = ({
 
       if (draft.transDate !== undefined) setTransDate(String(draft.transDate));
       if (draft.visitType !== undefined) setVisitType(String(draft.visitType));
+      if (draft.contactMethod !== undefined) setContactMethod(String(draft.contactMethod));
       if (draft.asistenteTipo !== undefined) setAsistenteTipo(String(draft.asistenteTipo));
       if (draft.description !== undefined) setDescription(String(draft.description));
       if (draft.comentarios !== undefined) setComentarios(String(draft.comentarios));
@@ -159,7 +165,7 @@ export const useDetailEditSession = ({
     } catch {
       /* ignore */
     }
-  }, [setAntecedentes, setAsistenteTipo, setComentarios, setConclusiones, setDescription, setTransDate, setVisitType]);
+  }, [setAntecedentes, setAsistenteTipo, setComentarios, setConclusiones, setContactMethod, setDescription, setTransDate, setVisitType]);
 
   useEffect(() => {
     if (!isEditing) {
@@ -179,6 +185,7 @@ export const useDetailEditSession = ({
       saveDraft({
         transDate,
         visitType,
+        contactMethod,
         asistenteTipo,
         description,
         comentarios,
@@ -193,7 +200,7 @@ export const useDetailEditSession = ({
         draftPersistTimerRef.current = null;
       }
     };
-  }, [antecedentes, asistenteTipo, comentarios, conclusiones, description, isEditing, saveDraft, transDate, visitType]);
+  }, [antecedentes, asistenteTipo, comentarios, conclusiones, contactMethod, description, isEditing, saveDraft, transDate, visitType]);
 
   return {
     editModeKeyRef,

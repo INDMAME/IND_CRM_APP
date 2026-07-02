@@ -20,21 +20,64 @@ import {
 } from "./expenseApiTransforms.ts";
 import { normalizeExpenseSheetSubordinates } from "./expenseSubordinateMapper.ts";
 
+const getPagedItems = <T,>(response: IndPagedResponse<T>): T[] => {
+  const raw = (response || {}) as { Items?: unknown; items?: unknown };
+  if (Array.isArray(raw.Items)) return raw.Items as T[];
+  if (Array.isArray(raw.items)) return raw.items as T[];
+  return [];
+};
+
 export const normalizeListPagedResponse = (
   response: IndPagedResponse<ExpenseSheetListItemDto>
 ): IndPagedResponse<ExpenseSheetListItemDto> => {
+  const items = getPagedItems(response);
+  const normalizedItems = items.map((item) => ({
+    ...item,
+    ReimbursableExpense: toNullableNumber(item?.ReimbursableExpense ?? item?.reimbursableExpense),
+    OwnerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId) || null,
+    OwnerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
+  }));
+
   return {
     ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
+    Items: normalizedItems,
   };
 };
 
 export const normalizeDetailPagedResponse = (
   response: IndPagedResponse<ExpenseSheetDetailDto>
 ): IndPagedResponse<ExpenseSheetDetailDto> => {
+  const items = getPagedItems(response);
+  const normalizedItems = items.map((item) => {
+    const rawLines = Array.isArray(item?.Lines)
+      ? item.Lines
+      : (Array.isArray(item?.lines) ? item.lines : []);
+
+    return {
+      ...item,
+      HojaGastosId: safeText(item?.HojaGastosId ?? item?.hojaGastosId),
+      UserId: safeText(item?.UserId ?? item?.userId),
+      UserName: safeText(item?.UserName ?? item?.userName) || null,
+      OwnerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId),
+      OwnerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
+      ReimbursableExpense: toNullableNumber(item?.ReimbursableExpense ?? item?.reimbursableExpense),
+      ProjId: safeText(item?.ProjId ?? item?.projId),
+      Lines: rawLines.map((line) => ({
+        ...line,
+        RecId: safeText(line?.RecId ?? line?.recId),
+        LineRecId: safeText(line?.LineRecId ?? line?.lineRecId),
+        ProjId: safeText(line?.ProjId ?? line?.projId),
+        ReimbursableExpense: toNullableNumber(line?.ReimbursableExpense ?? line?.reimbursableExpense),
+        CurrencyCode: safeText(line?.CurrencyCode ?? line?.currencyCode),
+        AmountMST: toNullableNumber(line?.AmountMST ?? line?.amountMST),
+        ExchRate: toNullableNumber(line?.ExchRate ?? line?.exchRate),
+      })),
+    };
+  });
+
   return {
     ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
+    Items: normalizedItems,
   };
 };
 
@@ -127,7 +170,7 @@ export const normalizeCurrencyPagedResponse = (
 ): IndPagedResponse<ExpenseSheetCurrencyDto> => {
   return {
     ...response,
-    Items: Array.isArray(response?.Items) ? response.Items : [],
+    Items: getPagedItems(response),
   };
 };
 
@@ -160,6 +203,14 @@ export const normalizeTicketListPagedResponse = (
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
     ),
+    OwnerAxUserId: safeText(
+      (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.OwnerAxUserId ??
+        (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.ownerAxUserId
+    ),
+    OwnerName: safeText(
+      (item as { OwnerName?: unknown; ownerName?: unknown })?.OwnerName ??
+        (item as { OwnerName?: unknown; ownerName?: unknown })?.ownerName
+    ) || null,
   }));
 
   return {
@@ -182,6 +233,14 @@ export const normalizeTicketLinkListPagedResponse = (
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
     ),
+    OwnerAxUserId: safeText(
+      (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.OwnerAxUserId ??
+        (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.ownerAxUserId
+    ),
+    OwnerName: safeText(
+      (item as { OwnerName?: unknown; ownerName?: unknown })?.OwnerName ??
+        (item as { OwnerName?: unknown; ownerName?: unknown })?.ownerName
+    ) || null,
   }));
 
   return {
@@ -212,6 +271,16 @@ export const normalizeTicketDetailPagedResponse = (
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
     ),
+    OwnerAxUserId: safeText(
+      (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.OwnerAxUserId ??
+        (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.ownerAxUserId
+    ),
+    OwnerName: safeText(
+      (item as { OwnerName?: unknown; ownerName?: unknown })?.OwnerName ??
+        (item as { OwnerName?: unknown; ownerName?: unknown })?.ownerName
+    ) || null,
+    OcrJson: safeText(item?.OcrJson ?? item?.ocrJson) || null,
+    NormalizedJson: safeText(item?.NormalizedJson ?? item?.normalizedJson) || null,
     Lines: Array.isArray(item?.Lines) ? item.Lines : [],
   }));
 

@@ -1,15 +1,25 @@
 import React, { useCallback } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../utils/permissions.ts";
-import type { ExpenseSheetCreateRequest, ExpenseSheetHeaderUpdateRequest } from "../expenseTypes.ts";
-import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
+import type {
+  ExpenseSheetCreateRequest,
+  ExpenseSheetHeaderUpdateRequest,
+  ExpenseSheetLine,
+  ExpenseSheetLineUpdateRequest,
+} from "../expenseTypes.ts";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
+import {
+  normalizeExpenseLineReimbursableExpense,
+  normalizeExpenseReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
+import { executeExpenseMutation } from "../hooks/expenseMutationUtils.ts";
 import {
   createExpenseSheet,
   deleteExpenseSheet,
+  updateExpenseSheetLine,
   updateExpenseSheetHeader,
 } from "../utils/expenseApi.ts";
-
-const SAME_CURRENCY_EXCHANGE_RATE = 100;
+import { safeText } from "../utils/expenseUiUtils.ts";
 
 type UseExpenseSheetDetailMutationsArgs = {
   busy: boolean;
@@ -30,12 +40,13 @@ type UseExpenseSheetDetailMutationsArgs = {
   draftDescription: string;
   draftCurrencyCode: string;
   draftExchangeRate: string;
+  draftReimbursableExpense: number | null;
   officialExchangeRateValue: string;
   draftProjectId: string;
   draftEstadoComentarios: string;
   exchangeRateBaseCurrency: string;
   currentExpenseSheetStatus?: number | null;
-  currentExchangeRateMode?: number | null;
+  currentLines: ExpenseSheetLine[];
   onCreateSuccess: (createdSheetId: string) => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
@@ -43,11 +54,135 @@ type UseExpenseSheetDetailMutationsArgs = {
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-const normalizeExchangeRate = (raw: string): number | null => parseDecimalInput(raw);
-// Compares rates with tolerance to avoid floating point mismatch on payload mode.
-const areRatesEquivalent = (left: number | null, right: number | null): boolean => {
-  if (left == null || right == null) return false;
-  return Math.abs(left - right) < 0.0000001;
+const toFiniteNumber = (value: unknown): number | null => {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : null;
+};
+
+const toPositiveNumber = (value: unknown): number | null => {
+  const parsed = toFiniteNumber(value);
+  return parsed != null && parsed > 0 ? parsed : null;
+};
+
+const buildLineUpdatePayload = (
+  line: ExpenseSheetLine,
+  projectId: string,
+  reimbursableExpense: number
+): ExpenseSheetLineUpdateRequest => {
+  const typeValue = toExpenseGastoTypeCode(line.typeValueCode || line.typeValue, { allowNone: false });
+  const rawQty = toPositiveNumber(line.qty);
+  const rawPrice = toPositiveNumber(line.price);
+  const rawAmount = toPositiveNumber(line.amount);
+  const qty = rawQty ?? (rawAmount != null ? 1 : 0);
+  const price = rawPrice ?? (rawAmount != null && qty > 0 ? rawAmount / qty : 0);
+  const transDate = safeText(line.transDate);
+
+  if (!transDate || typeValue === null || !(qty > 0) || !(price > 0)) {
+    throw new Error(indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+  }
+
+  return {
+    transDate,
+    typeValue,
+    description: safeText(line.description),
+    internacional: line.internacional === true,
+    fileId: safeText(line.fileId) || undefined,
+    ticket: line.ticket === true,
+    qty,
+    price,
+    projId: safeText(projectId) || undefined,
+    reimbursableExpense,
+    currencyCode: safeText(line.currencyCode).toUpperCase() || undefined,
+    amountMST: toFiniteNumber(line.amountMST),
+    exchRate: toFiniteNumber(line.exchRate),
+    indAttachFiles: safeText(line.indAttachFiles) || undefined,
+  };
+};
+
+const buildReimbursableLineUpdatePayload = (
+  line: ExpenseSheetLine,
+  reimbursableExpense: number
+): ExpenseSheetLineUpdateRequest => {
+  return buildLineUpdatePayload(line, safeText(line.projId), reimbursableExpense);
+};
+
+const buildProjectLineUpdatePayload = (
+  line: ExpenseSheetLine,
+  projectId: string
+): ExpenseSheetLineUpdateRequest => {
+  return buildLineUpdatePayload(
+    line,
+    projectId,
+    normalizeExpenseLineReimbursableExpense(line.reimbursableExpense)
+  );
+};
+
+const updateReimbursableExpenseOnLines = async (
+  sheetId: string,
+  lines: ExpenseSheetLine[],
+  reimbursableExpense: number
+): Promise<void> => {
+  const safeSheetId = safeText(sheetId);
+  if (!safeSheetId || lines.length < 1) return;
+
+  const nextLineReimbursableExpense = normalizeExpenseLineReimbursableExpense(reimbursableExpense);
+  const updates = lines.map((line) => {
+    const lineRecId = safeText(line.lineRecId);
+    if (!lineRecId) {
+      throw new Error(indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+    }
+
+    return {
+      lineRecId,
+      payload: buildReimbursableLineUpdatePayload(line, nextLineReimbursableExpense),
+    };
+  });
+
+  await Promise.all(
+    updates.map(async ({ lineRecId, payload }) => {
+      const response = await updateExpenseSheetLine(safeSheetId, lineRecId, payload, {
+        suppressPermissionModal: true,
+      });
+
+      if (!response.Success) {
+        throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+      }
+    })
+  );
+};
+
+const updateProjectIdOnLines = async (
+  sheetId: string,
+  lines: ExpenseSheetLine[],
+  projectId: string
+): Promise<void> => {
+  const safeSheetId = safeText(sheetId);
+  if (!safeSheetId || lines.length < 1) return;
+
+  const safeProjectId = safeText(projectId);
+  const updates = lines.map((line) => {
+    const lineRecId = safeText(line.lineRecId);
+    if (!lineRecId) {
+      throw new Error(indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+    }
+
+    return {
+      lineRecId,
+      payload: buildProjectLineUpdatePayload(line, safeProjectId),
+    };
+  });
+
+  await Promise.all(
+    updates.map(async ({ lineRecId, payload }) => {
+      const response = await updateExpenseSheetLine(safeSheetId, lineRecId, payload, {
+        suppressPermissionModal: true,
+      });
+
+      if (!response.Success) {
+        throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+      }
+    })
+  );
 };
 
 // Encapsulates update and delete mutations for expense sheet header detail.
@@ -70,12 +205,13 @@ export const useExpenseSheetDetailMutations = ({
   draftDescription,
   draftCurrencyCode,
   draftExchangeRate,
+  draftReimbursableExpense,
   officialExchangeRateValue,
   draftProjectId,
   draftEstadoComentarios,
   exchangeRateBaseCurrency,
   currentExpenseSheetStatus,
-  currentExchangeRateMode,
+  currentLines,
   onCreateSuccess,
   setModalError,
   setBusy,
@@ -88,84 +224,27 @@ export const useExpenseSheetDetailMutations = ({
       statusCommentOverride?: string | null
     ): { payload: ExpenseSheetHeaderUpdateRequest } | { error: string } => {
       const hasExplicitStatusCommentOverride = statusCommentOverride !== undefined;
-      const normalizedCurrency = String(
-        isCurrencyLockedByLines ? (lockedCurrencyCode || draftCurrencyCode || "") : (draftCurrencyCode || "")
-      )
-        .trim()
-        .toUpperCase();
       const normalizedDescription = String(draftDescription || "").trim();
       const normalizedProjectId = String(draftProjectId || "").trim();
       const normalizedEstadoComentarios = String(
         statusCommentOverride ?? draftEstadoComentarios ?? ""
       ).trim();
-      const normalizedExchangeRateRaw = String(
-        isExchangeRateLockedByLines ? (lockedExchangeRate || draftExchangeRate || "") : (draftExchangeRate || "")
-      );
-      const normalizedBaseCurrency = String(exchangeRateBaseCurrency || "EUR").trim().toUpperCase() || "EUR";
-      const requiresExchangeRate =
-        canEditHeaderFields && normalizedCurrency !== "" && normalizedCurrency !== normalizedBaseCurrency;
-      const usesSameCurrencyRate = canEditHeaderFields && normalizedCurrency !== "" && !requiresExchangeRate;
-      const parsedExchangeRate = normalizeExchangeRate(normalizedExchangeRateRaw);
-      const officialExchangeRate = normalizeExchangeRate(officialExchangeRateValue);
-      const originalExchangeRate = normalizeExchangeRate(lockedExchangeRate);
-      const parsedCurrentExchangeRateMode = Number(currentExchangeRateMode);
-      const hasCurrentExchangeRateMode = Number.isInteger(parsedCurrentExchangeRateMode) && parsedCurrentExchangeRateMode >= 0;
-      const hasValidRate = parsedExchangeRate != null && parsedExchangeRate > 0;
-      const hasManualRateEditOnUpdate =
-        canEditHeaderFields &&
-        !isCreateMode &&
-        hasValidRate &&
-        (originalExchangeRate == null || !areRatesEquivalent(parsedExchangeRate, originalExchangeRate));
-      // Only send exchangeRateMode when the user actually changed the rate manually.
-      const isManualExchangeRate = (() => {
-        if (!canEditHeaderFields) return false;
-        if (!requiresExchangeRate || !hasValidRate) return false;
-        if (isExchangeRateLockedByLines) return false;
-        if (!isCreateMode && !hasManualRateEditOnUpdate) return false;
-        if (officialExchangeRate == null) return true;
-        return !areRatesEquivalent(parsedExchangeRate, officialExchangeRate);
-      })();
-      const resolvedExchangeRateMode = canEditHeaderFields
-        ? (isManualExchangeRate ? 1 : (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : 0))
-        : (hasCurrentExchangeRateMode ? parsedCurrentExchangeRateMode : undefined);
+      const normalizedReimbursableExpense = normalizeExpenseReimbursableExpense(draftReimbursableExpense);
       const resolvedExpenseSheetStatus =
         nextStatus ?? (currentExpenseSheetStatus != null ? Number(currentExpenseSheetStatus) : undefined);
-      // Status/comment-only flows still submit the full header payload, so keep the stored rate untouched.
-      const resolvedExchangeRate = canEditHeaderFields
-        ? (usesSameCurrencyRate ? SAME_CURRENCY_EXCHANGE_RATE : (hasValidRate ? Number(parsedExchangeRate) : 1))
-        : (originalExchangeRate ?? parsedExchangeRate ?? 0);
 
-      if (isCreateMode) {
-        if (!normalizedDescription) {
-          return {
-            error: indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required."),
-          };
-        }
-
-        if (!normalizedCurrency) {
-          return {
-            error: indT("ExpenseSheets_Validation_CurrencyRequired", "Currency is required."),
-          };
-        }
-      }
-
-      if (requiresExchangeRate && !hasValidRate) {
+      if (!normalizedDescription) {
         return {
-          error: indT(
-            "ExpenseSheets_Validation_ExchangeRateRequired",
-            "Exchange rate is required when currency is different from base currency."
-          ),
+          error: indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required."),
         };
       }
 
       return {
         payload: {
           description: normalizedDescription,
-          currencyCode: normalizedCurrency,
-          exchRate: resolvedExchangeRate,
           projId: normalizedProjectId || undefined,
           expenseSheetStatus: resolvedExpenseSheetStatus,
-          exchangeRateMode: resolvedExchangeRateMode,
+          reimbursableExpense: normalizedReimbursableExpense,
           // Preserve explicit empty status comments so the backend can clear the stored value.
           estadoComentarios: hasExplicitStatusCommentOverride
             ? normalizedEstadoComentarios
@@ -175,20 +254,12 @@ export const useExpenseSheetDetailMutations = ({
     },
     [
       canEditHeaderFields,
-      currentExchangeRateMode,
       currentExpenseSheetStatus,
-      draftCurrencyCode,
       draftDescription,
       draftEstadoComentarios,
-      draftExchangeRate,
       draftProjectId,
-      exchangeRateBaseCurrency,
+      draftReimbursableExpense,
       isCreateMode,
-      isCurrencyLockedByLines,
-      isExchangeRateLockedByLines,
-      lockedCurrencyCode,
-      lockedExchangeRate,
-      officialExchangeRateValue,
     ]
   );
 
@@ -224,11 +295,9 @@ export const useExpenseSheetDetailMutations = ({
             mode: 1,
             existingHojaGastosId: undefined,
             description: createPayload.description,
-            currencyCode: createPayload.currencyCode,
-            exchRate: createPayload.exchRate,
             projId: createPayload.projId,
             expenseSheetStatus: 0,
-            exchangeRateMode: createPayload.exchangeRateMode,
+            reimbursableExpense: createPayload.reimbursableExpense,
             lines: [],
           };
 
@@ -278,6 +347,92 @@ export const useExpenseSheetDetailMutations = ({
     setStatus,
     sheetId,
   ]);
+
+  const handlePropagateReimbursableExpenseToLines = useCallback(
+    async (nextReimbursableExpense: number) => {
+      if (busy || isCreateMode || !isEditing) return false;
+      if (isEditLocked || !canEditExpense || !canEditHeaderFields) {
+        showPermissionModal();
+        return false;
+      }
+
+      const result = await executeExpenseMutation({
+        startStatus: indT("ExpenseSheets_Detail_PropagatingReimbursable", "Updating expense sheet lines..."),
+        fallbackErrorMessage: indT("ExpenseSheets_Detail_UpdateError", "Update error."),
+        setModalError,
+        setBusy,
+        setStatus,
+        action: async () => {
+          await updateReimbursableExpenseOnLines(
+            sheetId,
+            currentLines,
+            normalizeExpenseReimbursableExpense(nextReimbursableExpense)
+          );
+
+          setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
+          setIsEditing(true);
+          return true;
+        },
+      });
+
+      return result.ok;
+    },
+    [
+      busy,
+      canEditExpense,
+      canEditHeaderFields,
+      currentLines,
+      isCreateMode,
+      isEditLocked,
+      isEditing,
+      setBusy,
+      setIsEditing,
+      setModalError,
+      setStatus,
+      sheetId,
+    ]
+  );
+
+  const handlePropagateProjectIdToLines = useCallback(
+    async (nextProjectId: string) => {
+      if (busy || isCreateMode || !isEditing) return false;
+      if (isEditLocked || !canEditExpense || !canEditHeaderFields) {
+        showPermissionModal();
+        return false;
+      }
+
+      const result = await executeExpenseMutation({
+        startStatus: indT("ExpenseSheets_Detail_PropagatingProject", "Updating expense sheet lines..."),
+        fallbackErrorMessage: indT("ExpenseSheets_Detail_UpdateError", "Update error."),
+        setModalError,
+        setBusy,
+        setStatus,
+        action: async () => {
+          await updateProjectIdOnLines(sheetId, currentLines, nextProjectId);
+
+          setStatus(indT("ExpenseSheets_Detail_Updated", "Expense sheet updated"));
+          setIsEditing(true);
+          return true;
+        },
+      });
+
+      return result.ok;
+    },
+    [
+      busy,
+      canEditExpense,
+      canEditHeaderFields,
+      currentLines,
+      isCreateMode,
+      isEditLocked,
+      isEditing,
+      setBusy,
+      setIsEditing,
+      setModalError,
+      setStatus,
+      sheetId,
+    ]
+  );
 
   const handleStatusTransition = useCallback(
     async (nextStatus: number, startStatus: string, statusCommentOverride?: string | null) => {
@@ -359,6 +514,8 @@ export const useExpenseSheetDetailMutations = ({
 
   return {
     handleUpdate,
+    handlePropagateReimbursableExpenseToLines,
+    handlePropagateProjectIdToLines,
     handleStatusTransition,
     handleDelete,
   };

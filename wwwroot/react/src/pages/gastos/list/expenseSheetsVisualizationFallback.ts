@@ -2,6 +2,7 @@ import type { ChatMessage, ChartDatum, ChartPayload, TableColumn, TableRow, Visu
 import { createMarkdownMessage } from "../../../components/commons/chat/chatMessageFactories.ts";
 import { resolveRenderableChatMessage } from "../../../components/commons/chat/chatMessageValidation.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
+import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import type { ExpenseSheetListItemDto, ExpenseSheetListResponseEnvelope } from "../expenseTypes.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 
@@ -776,6 +777,13 @@ const resolveExpenseSheetChartCurrencyPlan = (
 };
 
 const buildCurrencyTotalsTableMessage = (rows: ChartDatum[], copy: CurrencyTotalsCopy): ChatMessage | null => {
+  const tableRows: TableRow[] = rows.map((row) => {
+    const currencyCode = safeText(row.label).toUpperCase();
+    return {
+      label: currencyCode || "-",
+      value: formatAmountWithCurrency(toFiniteNumber(row.value), currencyCode),
+    };
+  });
   const columns: TableColumn[] = [
     {
       key: "label",
@@ -795,7 +803,7 @@ const buildCurrencyTotalsTableMessage = (rows: ChartDatum[], copy: CurrencyTotal
       title: copy.title,
       subtitle: copy.subtitle,
       columns,
-      rows: rows as TableRow[],
+      rows: tableRows,
     },
   });
 
@@ -865,7 +873,7 @@ const buildExpenseSheetTotalsTableMessage = (
     sheetId: row.sheetId,
     description: row.description,
     currencyCode: row.currencyCode,
-    value: row.value,
+    value: formatAmountWithCurrency(row.value, row.currencyCode || ""),
   }));
 
   const renderableMessage = resolveRenderableChatMessage({

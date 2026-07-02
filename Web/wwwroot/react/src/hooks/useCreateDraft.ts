@@ -17,6 +17,7 @@ type DraftSnapshot = {
   selectedClient: any;
   selectedContacts: any[];
   visitType: string;
+  contactMethod: string;
   transDate: string;
   description: string;
   comentarios: string;
@@ -30,6 +31,7 @@ type UseCreateDraftArgs = {
   setSelectedClient: (value: any) => void;
   setSelectedContacts: (value: any[]) => void;
   setVisitType: (value: string) => void;
+  setContactMethod: (value: string) => void;
   setTransDate: (value: string) => void;
   setDescription: (value: string) => void;
   setComentarios: (value: string) => void;
@@ -44,6 +46,7 @@ export const useCreateDraft = ({
   setSelectedClient,
   setSelectedContacts,
   setVisitType,
+  setContactMethod,
   setTransDate,
   setDescription,
   setComentarios,
@@ -116,6 +119,7 @@ export const useCreateDraft = ({
       if (draft?.selectedClient?.value) setSelectedClient(draft.selectedClient);
       if (Array.isArray(draft?.selectedContacts)) setSelectedContacts(draft.selectedContacts);
       if (draft?.visitType !== undefined) setVisitType(draft.visitType);
+      if (draft?.contactMethod !== undefined) setContactMethod(draft.contactMethod);
       if (draft?.transDate) setTransDate(draft.transDate);
       if (draft?.description !== undefined) setDescription(draft.description);
       if (draft?.comentarios !== undefined) setComentarios(draft.comentarios);
@@ -138,6 +142,7 @@ export const useCreateDraft = ({
     setSelectedClient,
     setSelectedContacts,
     setStep,
+    setContactMethod,
     setTransDate,
     setVisitType,
   ]);

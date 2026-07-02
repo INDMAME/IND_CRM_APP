@@ -138,6 +138,14 @@
   - `labels` input must come from i18n keys (`first`, `prev`, `next`, `last`).
   - Page logic stays in page hook/container; component only emits page changes.
 
+### RecordNavigator
+- File: `Web/wwwroot/react/src/components/commons/RecordNavigator.tsx`
+- Purpose: dumb record-to-record navigator for detail pages that need first/previous/next/last controls.
+- Contract:
+  - `labels` input must come from i18n keys (`navigation`, `first`, `previous`, `next`, `last`, `position`).
+  - Current index, total count, disabled state, and navigation callbacks are owned by the page hook/container.
+  - The component must not fetch data, inspect route state, or manage page-specific navigation side effects.
+
 ## Shared section title component (React)
 ### ExpenseSectionDivider
 - File: `Web/wwwroot/react/src/pages/gastos/components/ExpenseSectionDivider.tsx`
@@ -275,4 +283,4 @@ export function DatePickerLike({ label, value, readOnly = false, disabled = fals
 ```
 
 ## Last updated
-- 2026-03-18
+- 2026-06-30

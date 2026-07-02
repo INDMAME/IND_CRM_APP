@@ -7,7 +7,8 @@ type UseExpenseTicketDetailTopbarActionsArgs = {
   modalOpen: boolean;
   isEditing: boolean;
   isLocked: boolean;
-  actionMode?: "default" | "delete_only" | "save_only" | "view_only";
+  isDeleteLocked?: boolean;
+  actionMode?: "default" | "delete_only" | "save_only" | "save_delete" | "view_only";
   permissionsReady?: boolean;
   canEditTicket: boolean;
   canDeleteTicket: boolean;
@@ -25,6 +26,7 @@ type UseExpenseTicketDetailTopbarActionsArgs = {
     message: string;
     confirmText?: string;
     onConfirm?: () => Promise<boolean | void> | boolean | void;
+    onCancel?: () => void;
   }) => void;
   closeConfirm: () => void;
 };
@@ -35,6 +37,7 @@ export const useExpenseTicketDetailTopbarActions = ({
   modalOpen,
   isEditing,
   isLocked,
+  isDeleteLocked,
   actionMode = "default",
   permissionsReady = true,
   canEditTicket,
@@ -69,6 +72,7 @@ export const useExpenseTicketDetailTopbarActions = ({
     isEditing,
     isCreateMode: false,
     isLocked,
+    isDeleteLocked,
     actionMode,
     permissionsReady,
     canCreate: false,

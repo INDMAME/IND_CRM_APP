@@ -1,0 +1,279 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDCiasPermitidas unloaded at Martes 30/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #INDCiasPermitidas
+    PROPERTIES
+      Name                #INDCiasPermitidas
+      Label               #Compañías Permitidas
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #No
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #Index1
+      ClusterIndex        #
+      ModifiedDate        #No
+      ModifiedTime        #No
+      ModifiedBy          #No
+      ModifiedTransactionId #No
+      CreatedDate         #No
+      CreatedTime         #No
+      CreatedBy           #No
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #UserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDCiasPermitidas
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #userId
+              #
+            ENDARRAY
+          StringSize          #5
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #CiaId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CiaId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDCiasPermitidas
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #dataAreaId
+              #
+            ENDARRAY
+          StringSize          #3
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #INDRecIdMex
+        INT
+        PROPERTIES
+          Type                #Integer
+          Name                #INDRecIdMex
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDCiasPermitidas
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #Index1
+      PROPERTIES
+        Name                #Index1
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #UserId
+        #CiaId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #INDPersonaTable
+        PROPERTIES
+          Name                #INDPersonaTable
+          Table               #INDPersonaTable
+          Validate            #No
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDCiasPermitidas
+            Field               #UserId
+            Table               #INDPersonaTable
+            RelatedField        #UserId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+      REFERENCE #SysUserInfo
+        PROPERTIES
+          Name                #SysUserInfo
+          Table               #SysUserInfo
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDCiasPermitidas
+            Field               #UserId
+            Table               #SysUserInfo
+            RelatedField        #Id
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #DataAreaName
+        #display Name DataAreaName()
+        #{
+        #    return (select firstonly dataArea where dataArea.id == this.CiaId).Name;
+        #}
+      ENDSOURCE
+      SOURCE #Find
+        #static INDCiasPermitidas Find(UserId        _userId,
+        #                              DataAreaId    _areaId,
+        #                              boolean       _forupdate = false)
+        #{
+        #    INDCiasPermitidas   INDCiasPermitidas;
+        #    ;
+        #
+        #    INDCiasPermitidas.selectForUpdate(_forupdate);
+        #
+        #    select firstonly INDCiasPermitidas
+        #    index hint index1
+        #    where INDCiasPermitidas.UserId == _userId   &&
+        #          INDCiasPermitidas.CiaId  == _areaId;
+        #
+        #    return INDCiasPermitidas;
+        #}
+      ENDSOURCE
+      SOURCE #ListaCias
+        #static str ListaCias(UserId _userId = curUserId())
+        #{
+        #    INDCiasPermitidas   INDCiasPermitidas;
+        #    str                 lista;
+        #    ;
+        #
+        #    while select INDCiasPermitidas
+        #    where INDCiasPermitidas.UserId == _userId {
+        #        if (! lista){
+        #            lista = INDCiasPermitidas.CiaId;
+        #        }
+        #        else {
+        #            lista = strfmt("%1,%2", lista, INDCiasPermitidas.CiaId);
+        #        }
+        #    }
+        #
+        #    return lista;
+        #}
+      ENDSOURCE
+      SOURCE #lookupCias
+        #static client void lookupCias(FormStringControl _ctrl, str _userId)
+        #{
+        #/*
+        #    SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(INDCiasPermitidas),_ctrl);
+        #    Query                   query = new Query();
+        #    QueryBuildDataSource    queryBuildDataSource = query.addDataSource(tableNum(INDCiasPermitidas));
+        #    QueryBuildRange         queryBuildRange      = queryBuildDataSource.addRange(fieldNum(INDCiasPermitidas, UserId));
+        #    ;
+        #
+        #    sysTableLookup.addLookupfield(fieldNum(INDCiasPermitidas, CiaId), true);
+        #
+        #    queryBuildRange.value(_userId);
+        #
+        #    sysTableLookup.parmQuery(query);
+        #    sysTableLookup.performFormLookup();
+        #*/
+        #    SysTableLookup          sysTableLookup = SysTableLookup::newParameters(tableNum(DataArea),_ctrl);
+        #    Query                   query = new Query();
+        #    QueryBuildDataSource    queryBuildDataSource = query.addDataSource(tableNum(DataArea));
+        #    QueryBuildRange         queryBuildRange      = queryBuildDataSource.addRange(fieldNum(DataArea, Id));
+        #    ;
+        #
+        #    sysTableLookup.addLookupfield(fieldNum(DataArea, Id), true);
+        #    sysTableLookup.addLookupfield(fieldNum(DataArea, Name));
+        #
+        #
+        #    queryBuildRange.value(INDCiasPermitidas::ListaCias(_userId));
+        #
+        #    sysTableLookup.parmQuery(query);
+        #    sysTableLookup.performFormLookup();
+        #
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

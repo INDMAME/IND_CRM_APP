@@ -39,6 +39,8 @@ import type {
   ExpenseSheetTicketListRequest,
   ExpenseSheetTicketIaRequest,
   ExpenseSheetTicketUpdateRequest,
+  ExpenseSheetTicketTotalAdjustmentRequest,
+  ExpenseSheetTicketTotalAdjustmentResultDto,
   ExpenseSheetSubordinateDto,
   IndApiResponse,
   IndPagedResponse,
@@ -80,13 +82,30 @@ import {
 } from "./expenseApiMappers.ts";
 import { sanitizeAssistantText } from "./expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "./expenseApiDateUtils.ts";
+import { isValidTicketLineAmount } from "./expenseTicketLineAmount.ts";
 import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
 import { indT } from "../../../utils/indI18n.ts";
 
+type ProjectDropdownOption = {
+  value?: string;
+  Value?: string;
+  text?: string;
+  Text?: string;
+  projId?: string;
+  ProjId?: string;
+  name?: string;
+  Name?: string;
+  description?: string;
+  Description?: string;
+};
+
 type ProjectDropdownResponse = {
   total?: number;
-  items?: Array<{ value?: string; text?: string }>;
+  Total?: number;
+  items?: ProjectDropdownOption[];
+  Items?: ProjectDropdownOption[];
 };
 
 type LegacyExpenseListItem = {
@@ -101,7 +120,10 @@ type LegacyExpenseListItem = {
   exchRate?: unknown;
   userId?: unknown;
   userName?: unknown;
+  ownerAxUserId?: unknown;
+  ownerName?: unknown;
   exchangeRateMode?: unknown;
+  reimbursableExpense?: unknown;
   expenseSheetStatus?: unknown;
   createdDate?: unknown;
 };
@@ -169,6 +191,38 @@ const safeText = safeTextTransform;
 const toNullableNumber = toNullableNumberTransform;
 const isNonNegativeNumber = isNonNegativeNumberTransform;
 const isPositiveNumber = isPositiveNumberTransform;
+
+type ExpenseLineCurrencyPayload = {
+  currencyCode?: string | null;
+  amountMST?: number | null;
+  exchRate?: number | null;
+  qty?: number | null;
+  price?: number | null;
+};
+
+const normalizeCurrencyCode = (value: unknown): string => safeText(value).trim().toUpperCase();
+
+// Validates the AX line-currency contract before sending a line payload.
+const hasMissingForeignLineSettlement = (line: ExpenseLineCurrencyPayload, localCurrencyCode: string): boolean => {
+  const lineCurrencyCode = normalizeCurrencyCode(line.currencyCode);
+  const normalizedLocalCurrencyCode = normalizeCurrencyCode(localCurrencyCode) || "EUR";
+  if (!lineCurrencyCode || lineCurrencyCode === normalizedLocalCurrencyCode) {
+    return false;
+  }
+
+  const amount = Number(line.qty ?? 0) * Number(line.price ?? 0);
+  const exchangeRate = toNullableNumber(line.exchRate);
+  const amountMST = toNullableNumber(line.amountMST);
+  return amount > 0 && !(exchangeRate != null && exchangeRate > 0) && !(amountMST != null && amountMST > 0);
+};
+
+const buildForeignLineSettlementError = (): ApiFetchError =>
+  new ApiFetchError(
+    indT(
+      "ExpenseSheets_Line_Validation_ForeignCurrencySettlement",
+      "Foreign currency lines require an exchange rate greater than 0 or a reimbursement amount."
+    )
+  );
 const toNullableTicketStatusCode = toNullableTicketStatusCodeTransform;
 const toNullableGastoTypeCode = toNullableGastoTypeCodeTransform;
 const normalizeOptionalTicketGastoType = normalizeOptionalTicketGastoTypeTransform;
@@ -181,6 +235,15 @@ const toNullableBool = toNullableBoolTransform;
 const normalizeOptionalTicketProcessedByAI = normalizeOptionalTicketProcessedByAITransform;
 const normalizeExpenseSheetListStatusFilter = normalizeExpenseSheetListStatusFilterTransform;
 const toFlagBool = toFlagBoolTransform;
+
+const normalizeExpenseSheetReimbursable = (value: unknown): number | null => {
+  const parsed = toNullableNumber(value);
+  if (parsed === null || !Number.isInteger(parsed) || parsed < 0) {
+    return null;
+  }
+
+  return parsed;
+};
 
 const readExpenseWindowRuntime = (): ExpenseWindowRuntime => {
   if (typeof window === "undefined") return {};
@@ -637,6 +700,7 @@ const toLegacyListRequestPayload = (payload: ExpenseSheetListApiRequest) => {
     projectId: safeText(payload.projId),
     currencyCode: safeText(payload.currencyCode),
     expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
+    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
     includeSubordinates: payload.includeSubordinates === true,
     page: Number.isFinite(payload.page) && payload.page > 0 ? payload.page : 1,
     pageSize: Number.isFinite(payload.pageSize) && payload.pageSize > 0 ? payload.pageSize : 50,
@@ -651,12 +715,15 @@ const mapLegacyListItemToApiListItem = (item: LegacyExpenseListItem): ExpenseShe
     EstadoComentarios: safeText(item.estadoComentarios) || null,
     UserId: safeText(item.userId) || null,
     UserName: safeText(item.userName) || null,
+    OwnerAxUserId: safeText(item.ownerAxUserId) || null,
+    OwnerName: safeText(item.ownerName) || null,
     Voucher: safeText(item.voucher),
     ProjId: safeText(item.projId),
     CurrencyCode: safeText(item.currencyCode),
     TotalAmount: toNullableNumber(item.totalAmount ?? item.totalAmountMST),
     ExchRate: toNullableNumber(item.exchRate),
     ExchangeRateMode: toNullableNumber(item.exchangeRateMode),
+    ReimbursableExpense: normalizeExpenseSheetReimbursable(item.reimbursableExpense),
     CreatedDate: safeText(item.createdDate) || null,
   };
 };
@@ -771,6 +838,7 @@ export const fetchExpenseSheetList = async (
     createdDateFrom,
     createdDateTo,
     expenseSheetStatus: normalizeExpenseSheetListStatusFilter(payload.expenseSheetStatus),
+    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
     includeSubordinates: payload.includeSubordinates === true,
   };
   const serializedPayload = cloneJsonCompatibleValue(safePayload);
@@ -1182,15 +1250,20 @@ export const createExpenseSheet = async (
   const context = await ensureExpenseApiContext(options);
   const mode = payload.mode ?? 0;
   const lines = Array.isArray(payload.lines) ? payload.lines : [];
+  const localCurrencyCode = normalizeCurrencyCode(context.defaultCurrencyCode) || "EUR";
   const normalizedLines = lines.map((line) => ({
     ...line,
     transDate: normalizeRequiredApiDate(line.transDate),
+    typeValue: toExpenseGastoTypeCode(line.typeValue, { allowNone: false }) ?? line.typeValue,
+    reimbursableExpense: normalizeExpenseSheetReimbursable(line.reimbursableExpense),
+    currencyCode: safeText(line.currencyCode).toUpperCase() || undefined,
+    amountMST: toNullableNumber(line.amountMST),
+    exchRate: toNullableNumber(line.exchRate),
   }));
   const hasInvalidLinePayload = normalizedLines.some((line) => {
     return (
       !safeText(line.transDate) ||
-      !Number.isInteger(Number(line.typeValue)) ||
-      Number(line.typeValue) <= 0 ||
+      toExpenseGastoTypeCode(line.typeValue, { allowNone: false }) === null ||
       !isPositiveNumber(line.qty) ||
       !isPositiveNumber(line.price)
     );
@@ -1212,14 +1285,18 @@ export const createExpenseSheet = async (
     throw new ApiFetchError("Each line requires transDate, typeValue, qty > 0 and price > 0.");
   }
 
+  if (normalizedLines.some((line) => hasMissingForeignLineSettlement(line, localCurrencyCode))) {
+    throw buildForeignLineSettlementError();
+  }
+
   if (mode === 0) {
-    if (!safeText(payload.description) || !safeText(payload.currencyCode) || lines.length < 1) {
+    if (!safeText(payload.description) || lines.length < 1) {
       throw new ApiFetchError("Invalid create payload for mode 0.");
     }
   }
 
   if (mode === 1) {
-    if (!safeText(payload.description) || !safeText(payload.currencyCode)) {
+    if (!safeText(payload.description)) {
       throw new ApiFetchError("Invalid create payload for mode 1.");
     }
 
@@ -1239,8 +1316,10 @@ export const createExpenseSheet = async (
     mode,
     existingHojaGastosId: safeText(payload.existingHojaGastosId) || undefined,
     description: safeText(payload.description) || undefined,
-    currencyCode: safeText(payload.currencyCode) || undefined,
+    currencyCode: normalizeCurrencyCode(payload.currencyCode) || undefined,
+    exchRate: toNullableNumber(payload.exchRate) ?? undefined,
     projId: safeText(payload.projId) || undefined,
+    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
     lines: mode === 1 ? [] : normalizedLines,
   };
   const includeAxUserOverride = mode === 2;
@@ -1273,11 +1352,18 @@ export const updateExpenseSheetHeader = async (
     throw new ApiFetchError("exchangeRateMode must be greater or equal to 0.");
   }
 
+  const safePayload: ExpenseSheetHeaderUpdateRequest = {
+    ...payload,
+    currencyCode: normalizeCurrencyCode(payload.currencyCode) || undefined,
+    exchRate: toNullableNumber(payload.exchRate) ?? undefined,
+    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
+  };
+
   const response = await fetchJson<IndApiResponse<{ HojaGastosId: string }>>(`/api/crm/expensesheets/${safeSheetId}`, {
     ...options,
     method: "PUT",
     headers: buildExpenseHeaders(context, options, true),
-    body: JSON.stringify(payload),
+    body: JSON.stringify(safePayload),
   });
 
   return normalizeApiResponse(response);
@@ -1310,16 +1396,30 @@ export const updateExpenseSheetLine = async (
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<ExpenseSheetLineUpdateResponseData>> => {
   const normalizedTransDate = normalizeRequiredApiDate(payload.transDate);
+  const context = await ensureExpenseApiContext(options);
+  const localCurrencyCode = normalizeCurrencyCode(context.defaultCurrencyCode) || "EUR";
+  const normalizedTypeValue = toExpenseGastoTypeCode(payload.typeValue, { allowNone: false });
+  const normalizedPayload: ExpenseSheetLineUpdateRequest = {
+    ...payload,
+    transDate: normalizedTransDate,
+    typeValue: normalizedTypeValue ?? payload.typeValue,
+    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
+    currencyCode: normalizeCurrencyCode(payload.currencyCode) || undefined,
+    amountMST: toNullableNumber(payload.amountMST),
+    exchRate: toNullableNumber(payload.exchRate),
+  };
   if (
-    !Number.isInteger(Number(payload.typeValue)) ||
-    Number(payload.typeValue) <= 0 ||
-    !isPositiveNumber(payload.qty) ||
-    !isPositiveNumber(payload.price)
+    normalizedTypeValue === null ||
+    !isPositiveNumber(normalizedPayload.qty) ||
+    !isPositiveNumber(normalizedPayload.price)
   ) {
     throw new ApiFetchError("transDate, typeValue, qty > 0 and price > 0 are required.");
   }
 
-  const context = await ensureExpenseApiContext(options);
+  if (hasMissingForeignLineSettlement(normalizedPayload, localCurrencyCode)) {
+    throw buildForeignLineSettlementError();
+  }
+
   const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
   const safeLineId = encodeURIComponent(String(lineRecId || "").trim());
 
@@ -1329,10 +1429,7 @@ export const updateExpenseSheetLine = async (
       ...options,
       method: "PUT",
       headers: buildExpenseHeaders(context, options, true),
-      body: JSON.stringify({
-        ...payload,
-        transDate: normalizedTransDate,
-      }),
+      body: JSON.stringify(normalizedPayload),
     }
   );
 
@@ -1550,7 +1647,7 @@ export const createExpenseSheetTicketQuick = async (
   const safeDescription = safeText(payload?.description);
   const safeComentario = safeText(payload?.comentario);
   const safeSheetId = safeText(payload?.existingHojaGastosId);
-  const safeProjectId = safeText(payload?.projectId);
+  const safeProjectId = safeText(payload?.projId || payload?.projectId);
   const ticketImage = payload.ticketImage;
 
   if (ticketImage instanceof File) {
@@ -1576,7 +1673,7 @@ export const createExpenseSheetTicketQuick = async (
   }
 
   if (safeSheetId && safeProjectId) {
-    form.append("projectId", safeProjectId);
+    form.append("projId", safeProjectId);
   }
 
   const csrfToken = getCsrfToken();
@@ -1634,9 +1731,14 @@ export const createExpenseSheetTicket = async (
   const context = await ensureExpenseApiContext(options);
   const mode = Number(payload?.mode);
   const rawTransDate = safeText(payload?.transDate);
+  const rawTicketDate = safeText(payload?.ticketDate);
   const normalizedTransDate = normalizeOptionalApiDate(rawTransDate);
+  const normalizedTicketDate = normalizeOptionalApiDate(rawTicketDate);
 
   if (rawTransDate && !normalizedTransDate) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+  if (rawTicketDate && !normalizedTicketDate) {
     throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
   }
 
@@ -1647,6 +1749,7 @@ export const createExpenseSheetTicket = async (
   const safePayload: ExpenseSheetTicketCreateRequest = {
     ...payload,
     transDate: normalizedTransDate || undefined,
+    ticketDate: normalizedTicketDate || undefined,
     gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
   };
   const response = await fetchJson<IndApiResponse<object>>("/api/crm/expensesheets/tickets", {
@@ -1892,15 +1995,21 @@ export const updateExpenseSheetTicket = async (
   const context = await ensureExpenseApiContext(options);
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
   const rawTransDate = safeText(payload?.transDate);
+  const rawTicketDate = safeText(payload?.ticketDate);
   const normalizedTransDate = normalizeOptionalApiDate(rawTransDate);
+  const normalizedTicketDate = normalizeOptionalApiDate(rawTicketDate);
 
   if (rawTransDate && !normalizedTransDate) {
+    throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+  }
+  if (rawTicketDate && !normalizedTicketDate) {
     throw new ApiFetchError(EXPENSE_API_DATE_FORMAT_MESSAGE);
   }
 
   const safePayload: ExpenseSheetTicketUpdateRequest = {
     ...payload,
     transDate: normalizedTransDate || undefined,
+    ticketDate: normalizedTicketDate || undefined,
     gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
   };
   const response = await fetchJson<IndApiResponse<object>>(`/api/crm/expensesheets/tickets/${safeFileId}`, {
@@ -1909,6 +2018,32 @@ export const updateExpenseSheetTicket = async (
     headers: buildExpenseHeaders(context, options, true),
     body: JSON.stringify(safePayload),
   });
+
+  return normalizeApiResponse(response);
+};
+
+// Adjusts a ticket header total using /api/crm/expensesheets/tickets/{fileId}/total-adjustment.
+export const adjustExpenseSheetTicketTotalAmount = async (
+  fileId: string,
+  payload: ExpenseSheetTicketTotalAdjustmentRequest,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<ExpenseSheetTicketTotalAdjustmentResultDto>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeFileId = encodeURIComponent(String(fileId || "").trim());
+  const totalAmount = toNullableNumber(payload?.totalAmount);
+  if (!safeFileId || totalAmount == null || totalAmount < 0) {
+    throw new ApiFetchError("Invalid ticket total adjustment payload.");
+  }
+
+  const response = await fetchJson<IndApiResponse<ExpenseSheetTicketTotalAdjustmentResultDto>>(
+    `/api/crm/expensesheets/tickets/${safeFileId}/total-adjustment`,
+    {
+      ...options,
+      method: "POST",
+      headers: buildExpenseHeaders(context, options, true),
+      body: JSON.stringify({ totalAmount }),
+    }
+  );
 
   return normalizeApiResponse(response);
 };
@@ -1980,8 +2115,8 @@ export const createExpenseSheetTicketLine = async (
   payload: ExpenseSheetTicketLineRequest,
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<object>> => {
-  if (!safeText(payload?.description) || !isPositiveNumber(payload?.qty) || !isPositiveNumber(payload?.price)) {
-    throw new ApiFetchError("description, qty > 0 and price > 0 are required.");
+  if (!safeText(payload?.description) || !isValidTicketLineAmount(payload)) {
+    throw new ApiFetchError("description and a valid signed ticket line amount are required.");
   }
 
   const context = await ensureExpenseApiContext(options);
@@ -2003,8 +2138,8 @@ export const updateExpenseSheetTicketLine = async (
   payload: ExpenseSheetTicketLineRequest,
   options?: ApiFetchOptions
 ): Promise<IndApiResponse<object>> => {
-  if (!safeText(payload?.description) || !isPositiveNumber(payload?.qty) || !isPositiveNumber(payload?.price)) {
-    throw new ApiFetchError("description, qty > 0 and price > 0 are required.");
+  if (!safeText(payload?.description) || !isValidTicketLineAmount(payload)) {
+    throw new ApiFetchError("description and a valid signed ticket line amount are required.");
   }
 
   const context = await ensureExpenseApiContext(options);
@@ -2105,10 +2240,10 @@ export const fetchExpenseProjects = async (
 ): Promise<ProjectDropdownResponse> => {
   const safeTerm = encodeURIComponent(String(term || ""));
   const safePage = Number.isFinite(page) && page > 0 ? Math.floor(page) : 1;
-  const safePageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 20;
+  const safePageSize = Number.isFinite(pageSize) && pageSize > 0 ? Math.floor(pageSize) : 50;
 
   return fetchJson<ProjectDropdownResponse>(
-    `/Gastos/GetProjectsForDropdown?term=${safeTerm}&page=${safePage}&pageSize=${safePageSize}`,
+    `/api/crm/projects/list?filter=${safeTerm}&page=${safePage}&pageSize=${safePageSize}`,
     {
       method: "GET",
       ...options,

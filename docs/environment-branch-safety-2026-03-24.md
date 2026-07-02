@@ -1,12 +1,22 @@
 # Environment And Branch Safety
 
-Date: 2026-04-30
+Date: 2026-05-04
 
 ## Goal
 
 - Keep the tracked files identical between `DEV` and `PROD`.
 - Resolve environment-specific values on each machine instead of in git.
 - Block accidental publish from the wrong branch to the wrong server.
+- Keep all local work and pushes on `DEV`; production branches receive changes only through numbered release PRs.
+
+## Git branch discipline
+
+- `DEV` is the only local working branch for day-to-day changes, commits, and pushes.
+- Push work changes only to `origin/DEV`.
+- Never push, merge, fast-forward, or commit directly on `PROD`, `main`, or any production branch.
+- Promote to production only with a GitHub PR from `DEV` to `PROD` (or the configured production branch if renamed to `main`).
+- Release PRs must use the canonical title `Release <N>`, where `N` is the next incremental release number.
+- Required checks and auto-merge are mandatory for production promotion. If auto-merge, checks, or permissions block the PR, stop and fix/report the blocker instead of bypassing the branch with a direct push.
 
 ## Shared environment contract
 
@@ -55,7 +65,7 @@ The public web endpoint keys are intentionally separate from the API endpoint ke
 2. `INDCRM_BASE_URL`
 3. `ApiSettings:BaseUrl` from `appsettings.json`
 
-The tracked `appsettings.json` now keeps `ApiSettings:BaseUrl` empty on purpose. This prevents a push to `DEV` or `PROD` from carrying a live API target in git.
+The tracked `appsettings.json` now keeps `ApiSettings:BaseUrl` empty on purpose. This prevents commits pushed to `DEV` or promoted through a release PR from carrying a live API target in git.
 
 ## Local development safety
 
@@ -87,7 +97,7 @@ The VS Code `kill-web-ports` task also reads `INDCRM_WEB_PUBLIC_PORT` and falls 
 - The effective web base URL uses `http://` or is not an absolute HTTPS URL.
 - The effective web base URL, host or port does not match the target environment (`DEV` -> `https://dev.insertec.biz:2053`, `PROD` -> `https://crm.insertec.biz:7702`).
 
-The script accepts `main` as `PROD` for compatibility, but the preferred branch naming remains `DEV` and `PROD`.
+The script accepts `main` as `PROD` for compatibility only. This does not authorize direct work, direct merge, or direct push on `main`/`PROD`; production promotion remains PR-only from `DEV`.
 
 Public `DEV` deliberately uses `IND_ENV=DEV` with `ASPNETCORE_ENVIRONMENT=Production`. This keeps DEV logically separated while avoiding development error pages and relaxed framework behavior on an Internet-facing site.
 

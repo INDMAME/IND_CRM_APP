@@ -5,8 +5,13 @@ import type {
   ExpenseSheetDraftResponse,
   ExpenseSheetTicketIaRequest,
 } from "../expenseTypes.ts";
+import {
+  getDefaultExpenseGastoTypeCode,
+  toExpenseGastoTypeCode,
+} from "../constants/expenseGastoTypeCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
+import { resolveTicketLineAmount } from "../utils/expenseTicketLineAmount.ts";
 
 const TICKET_IMAGE_CACHE_NAME = "ind-expense-ticket-image-v1";
 const TICKET_IMAGE_CACHE_PREFIX = "/__ind_cache__/ticket-image/";
@@ -24,8 +29,7 @@ const TICKET_MIME_TO_EXTENSION: Record<string, string> = {
   "image/png": "png",
   "image/webp": "webp",
 };
-const ALLOWED_TICKET_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
-const DEFAULT_TICKET_GASTO_TYPE = 8;
+const PREFERRED_TICKET_GASTO_TYPE = 8;
 export const DEFAULT_CREATE_MODE = "manual" as "ia" | "manual";
 
 export type TicketImageSource = "camera" | "gallery";
@@ -50,6 +54,8 @@ export type NormalizedDraft = {
   currencyCode: string;
   totalAmount: number;
   transDate: string;
+  ticketDate: string;
+  ticketTime: string;
   comentario: string;
   gastoType: number | null;
   lines: NormalizedDraftLine[];
@@ -127,16 +133,22 @@ const toDdMmYyyy = (value: unknown): string => {
   return toExpenseApiDdMmYyyy(value);
 };
 
+const toTicketTime = (value: unknown): string => {
+  const raw = safeText(value).replace(/\./g, ":");
+  if (!raw) return "";
+  const match = raw.match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/);
+  if (!match) return "";
+  const hours = Number(match[1]);
+  if (!Number.isInteger(hours) || hours < 0 || hours > 23) return "";
+  return `${String(hours).padStart(2, "0")}:${match[2]}:${match[3] || "00"}`;
+};
+
 export const getTodayDdMmYyyy = (): string => {
   return toDdMmYyyy(new Date());
 };
 
 const normalizeGastoType = (value: unknown): number | null => {
-  const parsed = toNumber(value);
-  if (parsed === null || !Number.isInteger(parsed) || !ALLOWED_TICKET_GASTO_TYPES.has(parsed)) {
-    return null;
-  }
-  return parsed;
+  return toExpenseGastoTypeCode(value);
 };
 
 const normalizeImageExtension = (value: string): string => {
@@ -200,8 +212,11 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
   const data = asRecord(rawData);
   const draftDescription = safeText(getFirstDefined(data, ["description", "Description"]));
   const draftCurrency = safeText(getFirstDefined(data, ["currencyCode", "CurrencyCode"])).toUpperCase();
-  const draftTotalAmount = toPositiveNumber(getFirstDefined(data, ["totalAmount", "TotalAmount"])) || 0;
+  const draftTotalAmount = toNumber(getFirstDefined(data, ["totalAmount", "TotalAmount"]));
   const draftTransDate = toDdMmYyyy(getFirstDefined(data, ["transDate", "TransDate"])) || getTodayDdMmYyyy();
+  const draftTicketDate =
+    toDdMmYyyy(getFirstDefined(data, ["ticketDate", "TicketDate"])) || draftTransDate;
+  const draftTicketTime = toTicketTime(getFirstDefined(data, ["ticketTime", "TicketTime"]));
   const draftComment = safeText(getFirstDefined(data, ["comentario", "Comentario"]));
   const draftGastoType = normalizeGastoType(getFirstDefined(data, ["gastoType", "GastoType"]));
 
@@ -211,15 +226,21 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
   const lines: NormalizedDraftLine[] = lineArray
     .map((entry) => {
       const lineRecord = asRecord(entry);
-      const qty = toPositiveNumber(getFirstDefined(lineRecord, ["qty", "Qty"])) || 1;
-      const price = toPositiveNumber(getFirstDefined(lineRecord, ["price", "Price"])) || 0;
-      const explicitTotal = toPositiveNumber(getFirstDefined(lineRecord, ["totalAmount", "TotalAmount"])) || 0;
-      const computedTotal = explicitTotal > 0 ? explicitTotal : qty * price;
-      if (!(computedTotal > 0)) return null;
+      const qtyCandidate = toNumber(getFirstDefined(lineRecord, ["qty", "Qty"]));
+      const qty = qtyCandidate !== null && qtyCandidate >= 0 ? qtyCandidate : 1;
+      const price = toNumber(getFirstDefined(lineRecord, ["price", "Price"]));
+      const explicitTotal = toNumber(getFirstDefined(lineRecord, ["totalAmount", "TotalAmount"]));
+      const computedTotal = resolveTicketLineAmount({ qty, price, totalAmount: explicitTotal });
+      if (computedTotal === null || !Number.isFinite(computedTotal) || computedTotal === 0) return null;
+
+      const effectivePrice = price !== null && price !== 0 ? price : qty > 0 ? computedTotal / qty : computedTotal;
+      if (effectivePrice === 0 || (qty === 0 && computedTotal >= 0)) return null;
 
       const candidateTypeValue = toPositiveNumber(getFirstDefined(lineRecord, ["typeValue", "TypeValue"]));
-      const safeTypeValue = Number.isInteger(candidateTypeValue) ? Number(candidateTypeValue) : null;
-      const typeValue = safeTypeValue && safeTypeValue > 0 ? safeTypeValue : draftGastoType || DEFAULT_TICKET_GASTO_TYPE;
+      const safeTypeValue = toExpenseGastoTypeCode(candidateTypeValue, { allowNone: false });
+      const safeDraftGastoType = toExpenseGastoTypeCode(draftGastoType, { allowNone: false });
+      const defaultGastoType = getDefaultExpenseGastoTypeCode(PREFERRED_TICKET_GASTO_TYPE);
+      const typeValue = safeTypeValue ?? safeDraftGastoType ?? defaultGastoType;
       const description = safeText(getFirstDefined(lineRecord, ["description", "Description"])) || draftDescription;
       const transDate = toDdMmYyyy(getFirstDefined(lineRecord, ["transDate", "TransDate"])) || draftTransDate;
 
@@ -228,7 +249,7 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
         typeValue,
         description: description || "Ticket",
         qty,
-        price: price > 0 ? price : computedTotal,
+        price: effectivePrice,
         totalAmount: computedTotal,
       };
     })
@@ -237,8 +258,10 @@ export const normalizeDraftFromIaResponse = (rawData: unknown): NormalizedDraft 
   return {
     description: draftDescription || "Ticket",
     currencyCode: draftCurrency || "EUR",
-    totalAmount: draftTotalAmount > 0 ? draftTotalAmount : lines.reduce((sum, line) => sum + line.totalAmount, 0),
+    totalAmount: draftTotalAmount !== null ? draftTotalAmount : lines.reduce((sum, line) => sum + line.totalAmount, 0),
     transDate: draftTransDate,
+    ticketDate: draftTicketDate,
+    ticketTime: draftTicketTime,
     comentario: draftComment,
     gastoType: draftGastoType,
     lines,
@@ -271,8 +294,10 @@ export const buildTicketIaPayload = (draft: NormalizedDraft, upload: UploadSyncR
   const payload: ExpenseSheetTicketIaRequest = {
     description: draft.description,
     currencyCode: draft.currencyCode,
-    totalAmount: draft.totalAmount > 0 ? draft.totalAmount : undefined,
+    totalAmount: draft.totalAmount !== 0 ? draft.totalAmount : undefined,
     transDate: draft.transDate,
+    ticketDate: draft.ticketDate || draft.transDate,
+    ticketTime: draft.ticketTime || undefined,
     comentario: draft.comentario || undefined,
     urlFile: upload.urlFile || undefined,
     fileName: upload.fileName || undefined,
@@ -298,9 +323,9 @@ export const buildSheetLinePayload = (
   const effectiveTotal = headerTotal > 0 ? headerTotal : fallbackTotal;
   if (!(effectiveTotal > 0)) return null;
 
-  const typeValueCandidate = draft.gastoType || lineFromDraft?.typeValue || DEFAULT_TICKET_GASTO_TYPE;
-  const safeTypeValue = Number(typeValueCandidate);
-  const typeValue = Number.isInteger(safeTypeValue) && safeTypeValue > 0 ? safeTypeValue : DEFAULT_TICKET_GASTO_TYPE;
+  const defaultGastoType = getDefaultExpenseGastoTypeCode(PREFERRED_TICKET_GASTO_TYPE);
+  const typeValueCandidate = draft.gastoType || lineFromDraft?.typeValue || defaultGastoType;
+  const typeValue = toExpenseGastoTypeCode(typeValueCandidate, { allowNone: false }) ?? defaultGastoType;
 
   return {
     transDate: draft.transDate || lineFromDraft?.transDate || getTodayDdMmYyyy(),

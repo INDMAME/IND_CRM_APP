@@ -34,6 +34,84 @@ const getLegacyResponseData = (response: LegacyCommandResponse): unknown => {
   return response.data ?? response.Data;
 };
 
+const isRecord = (value: unknown): value is Record<string, unknown> => {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+};
+
+const readStringLike = (value: unknown): string => {
+  if (typeof value === "string" || typeof value === "number") return String(value).trim();
+  return "";
+};
+
+const readFirstStringLikeProperty = (value: unknown, keys: string[]): { value: string; source: string } => {
+  if (!isRecord(value)) return { value: "", source: "" };
+  for (const key of keys) {
+    if (Object.prototype.hasOwnProperty.call(value, key)) {
+      const candidate = readStringLike(value[key]);
+      if (candidate) return { value: candidate, source: key };
+    }
+  }
+  return { value: "", source: "" };
+};
+
+const extractCreateActivityRecIdFromData = (data: unknown): string => {
+  if (typeof data === "string" || typeof data === "number") return indExtractSignedId(data);
+  const candidate = readFirstStringLikeProperty(data, [
+    "RecId",
+    "recId",
+    "RefRecId",
+    "refRecId",
+    "RefRecIdActividad",
+    "refRecIdActividad",
+    "ActividadRecId",
+    "actividadRecId",
+  ]);
+  return candidate.value ? indExtractSignedId(candidate.value) : "";
+};
+
+const resolveCreateActivityRecId = (response: LegacyCommandResponse): string => {
+  const data = getLegacyResponseData(response);
+  return (
+    extractCreateActivityRecIdFromData(data) ||
+    indExtractSignedId(getLegacyResponseMessage(response)) ||
+    indExtractSignedId(indExtractId(data) || indExtractId(getLegacyResponseMessage(response)))
+  );
+};
+
+const resolveCreateActivityOwnerForDiagnostics = (data: unknown): { value: string; source: string } => {
+  return readFirstStringLikeProperty(data, [
+    "OwnerAxUserId",
+    "ownerAxUserId",
+    "INDCreatedByUserId",
+    "indCreatedByUserId",
+    "CreatedByUserId",
+    "createdByUserId",
+    "UserId",
+    "userId",
+  ]);
+};
+
+const logCreateActivityDiagnostics = (response: LegacyCommandResponse, recId: string): void => {
+  const debugFlag =
+    typeof globalThis !== "undefined" &&
+    (((globalThis as { __IND_DEBUG_CREATE__?: unknown }).__IND_DEBUG_CREATE__ === true) ||
+      ((globalThis as { __IND_DEBUG_VISITAS__?: unknown }).__IND_DEBUG_VISITAS__ === true));
+  if (!debugFlag) return;
+
+  const owner = resolveCreateActivityOwnerForDiagnostics(getLegacyResponseData(response));
+  console.debug("[VisitsCreate]", "activity:create-response", {
+    recId,
+    ownerAxUserId: owner.value,
+    ownerSource: owner.source,
+  });
+};
+
+// Converts select values to numeric enum payload values.
+const toNullableEnumNumber = (value: string): number | null => {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
+};
+
 type UseCreateSubmitArgs = {
   busy: boolean;
   modalOpen: boolean;
@@ -42,6 +120,7 @@ type UseCreateSubmitArgs = {
   selectedClient: { value: string } | null;
   selectedContacts: ContactOption[];
   visitType: string;
+  contactMethod: string;
   defaultAsistenteTipo: string;
   description: string;
   transDate: string;
@@ -70,6 +149,7 @@ export const useCreateSubmit = ({
   selectedClient,
   selectedContacts,
   visitType,
+  contactMethod,
   defaultAsistenteTipo,
   description,
   transDate,
@@ -106,7 +186,8 @@ export const useCreateSubmit = ({
     try {
       const payloadActivity = {
         accountNum: selectedClient.value,
-        visitType,
+        visitType: toNullableEnumNumber(visitType),
+        contactMethod: toNullableEnumNumber(contactMethod || "0"),
         description,
         transDate,
         comentarios,
@@ -124,11 +205,9 @@ export const useCreateSubmit = ({
         throw new Error(getLegacyResponseMessage(resAct) || indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
       }
 
-      const recIdActividad =
-        indExtractSignedId(getLegacyResponseData(resAct)) ||
-        indExtractSignedId(getLegacyResponseMessage(resAct)) ||
-        indExtractSignedId(indExtractId(getLegacyResponseData(resAct)) || indExtractId(getLegacyResponseMessage(resAct)));
+      const recIdActividad = resolveCreateActivityRecId(resAct);
       if (!recIdActividad) throw new Error(indT("Visits_Create_CreateActivityFailed", "Failed to create activity."));
+      logCreateActivityDiagnostics(resAct, String(recIdActividad));
       createdRecId = String(recIdActividad);
 
       if (selectedContacts.length > 0) {
@@ -136,7 +215,7 @@ export const useCreateSubmit = ({
         const createAssistant = async (contact: ContactOption) => {
           const payloadVisita = {
             refRecIdActividad: recIdActividad,
-            asistenteTipo: defaultAsistenteTipo,
+            asistenteTipo: toNullableEnumNumber(defaultAsistenteTipo || "0"),
             asistenteId: contact.text,
             contactoRecId: contact.value,
           };
@@ -201,6 +280,7 @@ export const useCreateSubmit = ({
     closeConfirm,
     comentarios,
     conclusiones,
+    contactMethod,
     defaultAsistenteTipo,
     description,
     selectedClient,
@@ -231,8 +311,8 @@ export const useCreateSubmit = ({
     }
     setModalError("");
     openConfirm({
-      title: indT("Visits_Create_ConfirmCreate_Title", "Visits_Create_ConfirmCreate_Title"),
-      message: indT("Visits_Create_ConfirmCreate_Body", "Visits_Create_ConfirmCreate_Body"),
+      title: indT("Visits_Create_ConfirmCreate_Title", "Confirm create"),
+      message: indT("Visits_Create_ConfirmCreate_Body", "Do you want to create this visit?"),
       confirmText: indT("Confirm_Yes", "Confirm_Yes"),
       onConfirm: doCreate,
     });

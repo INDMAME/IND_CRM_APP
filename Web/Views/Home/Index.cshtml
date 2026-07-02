@@ -4,19 +4,38 @@
 @{
     ViewData["Title"] = SR["Home_Title"];
     ViewData["ContentClass"] = "content w-full max-w-5xl mx-auto px-4 md:px-6 flex flex-col";
+
+    var environmentName = ((ViewBag.Environment ?? SR["Common_Unknown"].Value).ToString() ?? string.Empty).Trim();
+    var companyName = ((ViewBag.Company ?? SR["Common_NotAvailable"].Value).ToString() ?? string.Empty).Trim();
+    var environmentLabel = SR["Home_Environment"].Value;
+    var isDevEnvironment =
+        environmentName.Equals("DEV", StringComparison.OrdinalIgnoreCase)
+        || environmentName.Equals("Development", StringComparison.OrdinalIgnoreCase)
+        || environmentName.StartsWith("DEV-", StringComparison.OrdinalIgnoreCase)
+        || environmentName.StartsWith("DEV_", StringComparison.OrdinalIgnoreCase);
 }
 
-<div class="flex-1 flex flex-col gap-8">
-    <div class="space-y-2 pt-2">
+<div class="relative isolate flex-1 flex flex-col gap-8">
+    @if (isDevEnvironment)
+    {
+        <div class="pointer-events-none absolute inset-0 z-0 flex items-center justify-center" role="status" aria-label="@($"{environmentLabel}: DEV")">
+            <span class="select-none text-[8.5rem] font-black uppercase leading-none tracking-normal text-slate-300 sm:text-[11rem] md:text-[15rem] lg:text-[18rem]" translate="no">DEV</span>
+        </div>
+    }
+
+    <div class="relative z-10 space-y-2 pt-2">
         <h2 class="text-2xl font-semibold text-slate-900">@SR["Home_Welcome"]</h2>
         <p class="text-slate-700">@SR["Home_SelectLeftMenu"]</p>
     </div>
 
-    <div class="w-full flex justify-center pb-6 mt-auto">
+    <div class="relative z-10 w-full flex justify-center pb-6 mt-auto">
         <div class="tech-info text-center space-y-1 leading-tight">
-            <div>@SR["Home_Environment"]: @((ViewBag.Environment ?? SR["Common_Unknown"].Value).ToString())</div>
+            @if (!isDevEnvironment)
+            {
+                <div>@environmentLabel: @environmentName</div>
+            }
             <div>Microsoft Navision Axapta 3.0</div>
-            <div><strong>@((ViewBag.Company ?? SR["Common_NotAvailable"].Value).ToString())</strong></div>
+            <div><strong>@companyName</strong></div>
         </div>
     </div>
 </div>

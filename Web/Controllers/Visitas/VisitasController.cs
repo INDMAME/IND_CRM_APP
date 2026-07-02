@@ -1,4 +1,5 @@
 ﻿using IND_CRM_APP.Models.Activities;
+using IND_CRM_APP.Models.CRM;
 using IND_CRM_APP.Services;
 using IND_CRM_APP.Services.Enums;
 using IND_CRM_APP.Extensions;
@@ -8,7 +9,10 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Localization;
 using System;
+using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
+using System.Text.Json;
 
 namespace IND_CRM_APP.Controllers
 {
@@ -18,7 +22,17 @@ namespace IND_CRM_APP.Controllers
         private readonly ILogger<VisitasController> _logger;
         private readonly IINDCrmEnumLocalizer _enumLocalizer;
         private readonly ICrmEnumCatalog _crmEnumCatalog;
+        private readonly IVisitMutationPermissionService _visitMutationPermissions;
         private readonly IStringLocalizer<INDSharedResource> _sr;
+        private const string CrmAppCode = "CRM";
+        private static readonly string[] VisitCatalogEnumNames =
+        {
+            "CRMActividadType",
+            "CRMTipoVisita",
+            "INDContactMethod",
+            "CRMActividadOrigen",
+            "CRMCustVendVisitaAsistente"
+        };
 
         public VisitasController(
             ICrmApiClient apiClient,
@@ -26,11 +40,13 @@ namespace IND_CRM_APP.Controllers
             ILogger<VisitasController> logger,
             IINDCrmEnumLocalizer enumLocalizer,
             ICrmEnumCatalog crmEnumCatalog,
+            IVisitMutationPermissionService visitMutationPermissions,
             IStringLocalizer<INDSharedResource> sr) : base(apiClient, tokenSession)
         {
             _logger = logger;
             _enumLocalizer = enumLocalizer;
             _crmEnumCatalog = crmEnumCatalog;
+            _visitMutationPermissions = visitMutationPermissions;
             _sr = sr;
         }
 
@@ -117,17 +133,14 @@ namespace IND_CRM_APP.Controllers
 
                 await LoadEnvironmentInfoAsync();
 
-                // Load enum lists for selects
-                ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
-                ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
-                ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
-                ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
+                await LoadVisitEnumViewBagsAsync(token);
 
                 return View();
             }
             catch
             {
                 // In case of error, still return view
+                LoadVisitEnumFallbackViewBags();
                 return View();
             }
         }
@@ -147,6 +160,10 @@ namespace IND_CRM_APP.Controllers
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var response = await _apiClient.CreateActivityAsync(token, req);
+                if (response.Success)
+                {
+                    LogCreatedActivityResponse(response.Data, response.Message);
+                }
 
                 return Json(new
                 {
@@ -180,6 +197,16 @@ namespace IND_CRM_APP.Controllers
 
                 if (req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
+
+                if (!TryResolveActivityRecId(req.RefRecIdActividad, out var assistantActivityRecId))
+                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
+
+                var assistantGuardResponse = ModuleRecordMutationActionResults.ToActionResult(
+                    this,
+                    await _visitMutationPermissions.ValidateAsync(token, assistantActivityRecId),
+                    _sr);
+                if (assistantGuardResponse != null)
+                    return assistantGuardResponse;
 
                 var response = await _apiClient.CreateVisitaAsistenteAsync(token, req);
 
@@ -320,6 +347,10 @@ namespace IND_CRM_APP.Controllers
                 return RedirectToAction("Login", "Auth");
 
             await LoadEnvironmentInfoAsync();
+            ViewBag.SelectedCompanyId = HttpContext.Session.GetString("INDCompanySelected") ?? string.Empty;
+            ViewBag.CurrentAxUserId = GetCurrentSessionAxUserId() ?? string.Empty;
+            ViewBag.PermissionsRevision = HttpContext.Session.GetString("INDPermissionsRevision") ?? string.Empty;
+            ViewBag.VisibleVisitUsers = await _visitMutationPermissions.GetVisibleVisitUsersForViewAsync(token);
 
             if (string.IsNullOrWhiteSpace(code))
                 return NotFound();
@@ -350,7 +381,7 @@ namespace IND_CRM_APP.Controllers
                     activity = new ActivityDto();
                 }
 
-                // Fallback to legacy recId lookup if needed or if by-code returned empty data.
+                // Fallback to recId lookup if by-code returns empty data or misses newer fields.
                 long? recIdFallback = null;
                 if (long.TryParse(code, out var recIdParsedFromCode))
                 {
@@ -361,27 +392,38 @@ namespace IND_CRM_APP.Controllers
                     recIdFallback = recIdParsedFromActivity;
                 }
 
-                if ((!byCodeSuccess || IsActivityEmpty(activity)) && recIdFallback.HasValue)
+                var shouldTryRecIdFallback = !byCodeSuccess ||
+                                             IsActivityEmpty(activity) ||
+                                             activity.ContactMethod == null;
+
+                if (shouldTryRecIdFallback && recIdFallback.HasValue)
                 {
                     try
                     {
                         var byRec = await _apiClient.GetActivityByRecIdAsync(token, recIdFallback.Value);
                         if (byRec.Data != null)
                         {
-                            var legacy = byRec.Data;
-                            activity.ActividadId = Pick(activity.ActividadId, legacy.ActividadId);
-                            activity.RecId = Pick(activity.RecId, legacy.RecId);
-                            activity.AccountNum = Pick(activity.AccountNum, legacy.AccountNum);
-                            activity.Name = Pick(activity.Name, legacy.Name);
-                            activity.TransDate = Pick(activity.TransDate, legacy.TransDate);
-                            activity.Country = Pick(activity.Country, legacy.Country);
-                            activity.ActividadType = Pick(activity.ActividadType, legacy.ActividadType);
-                            activity.TipoVisita = Pick(activity.TipoVisita, legacy.TipoVisita);
-                            activity.Description = Pick(activity.Description, legacy.Description);
-                            activity.Comentarios = Pick(activity.Comentarios, legacy.Comentarios);
-                            activity.Antecedentes = Pick(activity.Antecedentes, legacy.Antecedentes);
-                            activity.Conclusiones = Pick(activity.Conclusiones, legacy.Conclusiones);
-                            activity.Asistentes = activity.Asistentes ?? legacy.Asistentes;
+                            var recIdActivity = byRec.Data;
+                            activity.ActividadId = Pick(activity.ActividadId, recIdActivity.ActividadId);
+                            activity.RecId = Pick(activity.RecId, recIdActivity.RecId);
+                            activity.AccountNum = Pick(activity.AccountNum, recIdActivity.AccountNum);
+                            activity.Name = Pick(activity.Name, recIdActivity.Name);
+                            activity.TransDate = Pick(activity.TransDate, recIdActivity.TransDate);
+                            activity.Country = Pick(activity.Country, recIdActivity.Country);
+                            activity.ActividadType = Pick(activity.ActividadType, recIdActivity.ActividadType);
+                            activity.TipoVisita = Pick(activity.TipoVisita, recIdActivity.TipoVisita);
+                            activity.ContactMethod = activity.ContactMethod ?? recIdActivity.ContactMethod;
+                            activity.Description = Pick(activity.Description, recIdActivity.Description);
+                            activity.Comentarios = Pick(activity.Comentarios, recIdActivity.Comentarios);
+                            activity.Antecedentes = Pick(activity.Antecedentes, recIdActivity.Antecedentes);
+                            activity.Conclusiones = Pick(activity.Conclusiones, recIdActivity.Conclusiones);
+                            activity.OwnerAxUserId = Pick(activity.OwnerAxUserId, recIdActivity.OwnerAxUserId);
+                            activity.OwnerName = Pick(activity.OwnerName, recIdActivity.OwnerName);
+                            activity.OwnerAlias = Pick(activity.OwnerAlias, recIdActivity.OwnerAlias);
+                            activity.UserId = Pick(activity.UserId, recIdActivity.UserId);
+                            activity.CreatedByUserId = Pick(activity.CreatedByUserId, recIdActivity.CreatedByUserId);
+                            activity.INDCreatedByUserId = Pick(activity.INDCreatedByUserId, recIdActivity.INDCreatedByUserId);
+                            activity.Asistentes = activity.Asistentes ?? recIdActivity.Asistentes;
                         }
                     }
                     catch (ApiException ex)
@@ -410,9 +452,39 @@ namespace IND_CRM_APP.Controllers
                     return _crmEnumCatalog.NormalizeTipoVisitaValue(raw);
                 }
 
+                string NormalizeContactMethod(int? raw)
+                {
+                    return raw.HasValue
+                        ? _crmEnumCatalog.NormalizeContactMethodValue(raw.Value.ToString())
+                        : string.Empty;
+                }
+
                 var recIdValue = !string.IsNullOrWhiteSpace(activity.RecId) ? activity.RecId : null
                     ?? (recIdFallback.HasValue ? recIdFallback.Value.ToString() : null)
                     ?? (long.TryParse(code, out var recIdParsed) ? recIdParsed.ToString() : string.Empty);
+                var ownerAxUserId = Pick(
+                    activity.OwnerAxUserId,
+                    Pick(activity.INDCreatedByUserId, Pick(activity.CreatedByUserId, activity.UserId))) ?? string.Empty;
+                bool? canMutateVisit = null;
+                var mutationPermissionStatus = string.Empty;
+                if (long.TryParse(recIdValue, NumberStyles.Integer, CultureInfo.InvariantCulture, out var detailRecId) &&
+                    detailRecId != 0)
+                {
+                    var mutationPermission = await _visitMutationPermissions.ValidateActivityAsync(
+                        token,
+                        detailRecId,
+                        activity,
+                        "visit-detail-preload");
+                    canMutateVisit = mutationPermission.IsAllowed;
+                    mutationPermissionStatus = mutationPermission.Status.ToString();
+                    _logger.LogInformation(
+                        "Visit detail mutation permission preload. Code={Code}; RecId={RecId}; OwnerAxUserId={OwnerAxUserId}; CanMutate={CanMutate}; Status={Status}",
+                        code,
+                        detailRecId,
+                        ownerAxUserId,
+                        canMutateVisit,
+                        mutationPermissionStatus);
+                }
 
                 var detail = new
                 {
@@ -420,18 +492,24 @@ namespace IND_CRM_APP.Controllers
                     ActividadId = activity.ActividadId ?? code,
                     AccountNum = activity.AccountNum ?? string.Empty,
                     VisitType = NormalizeVisitType(activity.TipoVisita ?? activity.ActividadType),
+                    ContactMethod = NormalizeContactMethod(activity.ContactMethod),
                     Description = activity.Description ?? string.Empty,
                     TransDate = NormalizeDate(activity.TransDate),
                     Comentarios = activity.Comentarios ?? string.Empty,
                     Antecedentes = activity.Antecedentes ?? string.Empty,
                     Conclusiones = activity.Conclusiones ?? string.Empty,
-                    Cliente = activity.Name ?? string.Empty
+                    Cliente = activity.Name ?? string.Empty,
+                    OwnerAxUserId = ownerAxUserId,
+                    OwnerName = activity.OwnerName ?? string.Empty,
+                    OwnerAlias = activity.OwnerAlias ?? string.Empty,
+                    CreatedByUserId = activity.CreatedByUserId ?? string.Empty,
+                    UserId = activity.UserId ?? string.Empty,
+                    INDCreatedByUserId = activity.INDCreatedByUserId ?? string.Empty,
+                    CanMutateVisit = canMutateVisit,
+                    MutationPermissionStatus = mutationPermissionStatus
                 };
 
-                ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
-                ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
-                ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
-                ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
+                await LoadVisitEnumViewBagsAsync(token);
                 ViewData["IsVisitaDetail"] = true;
                 ViewBag.ActivityDetail = detail;
 
@@ -472,6 +550,13 @@ namespace IND_CRM_APP.Controllers
                 if (req == null)
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
+                var guardResponse = ModuleRecordMutationActionResults.ToActionResult(
+                    this,
+                    await _visitMutationPermissions.ValidateAsync(token, recId),
+                    _sr);
+                if (guardResponse != null)
+                    return guardResponse;
+
                 var response = await _apiClient.UpdateActivityAsync(token, recId, req);
 
                 if (IND_SetActionMark && response.Success)
@@ -506,8 +591,15 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
-                if (req == null || string.IsNullOrWhiteSpace(req.AsistenteTipo))
+                if (req == null || !req.AsistenteTipo.HasValue)
                     return BadRequest(new { success = false, message = _sr["Api_MissingAsistenteTipo"].Value });
+
+                var guardResponse = ModuleRecordMutationActionResults.ToActionResult(
+                    this,
+                    await _visitMutationPermissions.ValidateAsync(token, recId),
+                    _sr);
+                if (guardResponse != null)
+                    return guardResponse;
 
                 var activityResp = await _apiClient.GetActivityByRecIdAsync(token, recId);
                 var asistentes = activityResp.Data?.Asistentes ?? new List<ActivityAsistenteDto>();
@@ -524,7 +616,7 @@ namespace IND_CRM_APP.Controllers
                     var upsertReq = new CreateVisitaAsistenteRequest
                     {
                         RefRecIdActividad = recId.ToString(),
-                        AsistenteTipo = req.AsistenteTipo.Trim(),
+                        AsistenteTipo = req.AsistenteTipo,
                         AsistenteId = a.AsistenteId.Trim(),
                         ContactoRecId = string.Empty
                     };
@@ -563,6 +655,13 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrEmpty(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
+                var guardResponse = ModuleRecordMutationActionResults.ToActionResult(
+                    this,
+                    await _visitMutationPermissions.ValidateAsync(token, recId),
+                    _sr);
+                if (guardResponse != null)
+                    return guardResponse;
+
                 var response = await _apiClient.DeleteActivityAsync(token, recId);
 
                 if (IND_SetActionMark && response.Success)
@@ -583,5 +682,285 @@ namespace IND_CRM_APP.Controllers
                 return Json(new { success = false, message = _sr["Api_RequestFailed"].Value });
             }
         }
+
+        // Logs the owner metadata returned by the activity create command.
+        private void LogCreatedActivityResponse(object? responseData, string? responseMessage)
+        {
+            var recIdText = TryResolveActivityRecId(responseData, out var recId)
+                ? recId.ToString(CultureInfo.InvariantCulture)
+                : TryResolveActivityRecId(responseMessage, out recId)
+                    ? recId.ToString(CultureInfo.InvariantCulture)
+                    : string.Empty;
+            var ownerResolution = ResolveActivityOwnerFromResponseData(responseData);
+
+            _logger.LogInformation(
+                "Visit activity create response resolved. RecId={RecId}; OwnerAxUserId={OwnerAxUserId}; OwnerSource={OwnerSource}; CurrentAxUserId={CurrentAxUserId}; CompanyId={CompanyId}",
+                recIdText,
+                ownerResolution.OwnerAxUserId,
+                ownerResolution.Source,
+                GetCurrentSessionAxUserId() ?? string.Empty,
+                GetCurrentSessionCompanyId() ?? string.Empty);
+        }
+
+        // Reads the current AX user id from the session context.
+        private string? GetCurrentSessionAxUserId()
+        {
+            return NormalizeOptionalText(HttpContext?.Session.GetString("AxUser"));
+        }
+
+        // Reads the current selected company id from the session context.
+        private string? GetCurrentSessionCompanyId()
+        {
+            return NormalizeOptionalText(HttpContext?.Session.GetString("INDCompanySelected"));
+        }
+
+        // Trims optional text and preserves null for empty values.
+        private static string? NormalizeOptionalText(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        // Resolves owner fields from the create response Data payload for diagnostics only.
+        private static (string OwnerAxUserId, string Source) ResolveActivityOwnerFromResponseData(object? value)
+        {
+            if (!TryConvertResponseDataToJsonElement(value, out var element) ||
+                element.ValueKind != JsonValueKind.Object)
+            {
+                return (string.Empty, string.Empty);
+            }
+
+            return FirstJsonTextPropertyWithSource(
+                element,
+                ("OwnerAxUserId", nameof(ActivityDto.OwnerAxUserId)),
+                ("ownerAxUserId", nameof(ActivityDto.OwnerAxUserId)),
+                ("INDCreatedByUserId", nameof(ActivityDto.INDCreatedByUserId)),
+                ("indCreatedByUserId", nameof(ActivityDto.INDCreatedByUserId)),
+                ("CreatedByUserId", nameof(ActivityDto.CreatedByUserId)),
+                ("createdByUserId", nameof(ActivityDto.CreatedByUserId)),
+                ("UserId", nameof(ActivityDto.UserId)),
+                ("userId", nameof(ActivityDto.UserId)));
+        }
+
+        // Converts arbitrary response Data values to JsonElement for tolerant field reads.
+        private static bool TryConvertResponseDataToJsonElement(object? value, out JsonElement element)
+        {
+            if (value is JsonElement jsonElement)
+            {
+                element = jsonElement;
+                return true;
+            }
+
+            element = default;
+            if (value == null)
+                return false;
+
+            try
+            {
+                using var document = JsonDocument.Parse(JsonSerializer.Serialize(value));
+                element = document.RootElement.Clone();
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        // Reads the first non-empty string-like JSON property in priority order.
+        private static (string Value, string Source) FirstJsonTextPropertyWithSource(
+            JsonElement element,
+            params (string PropertyName, string Source)[] properties)
+        {
+            foreach (var (propertyName, source) in properties)
+            {
+                if (element.TryGetProperty(propertyName, out var property))
+                {
+                    var value = ReadJsonStringLikeValue(property);
+                    if (!string.IsNullOrWhiteSpace(value))
+                        return (value, source);
+                }
+            }
+
+            return (string.Empty, string.Empty);
+        }
+
+        // Reads a JSON primitive as trimmed text.
+        private static string ReadJsonStringLikeValue(JsonElement element)
+        {
+            return element.ValueKind switch
+            {
+                JsonValueKind.String => element.GetString()?.Trim() ?? string.Empty,
+                JsonValueKind.Number => element.GetRawText().Trim(),
+                JsonValueKind.True => bool.TrueString,
+                JsonValueKind.False => bool.FalseString,
+                _ => string.Empty
+            };
+        }
+
+        // Parses activity RecIds from API command response payloads.
+        private static bool TryResolveActivityRecId(object? value, out long recId)
+        {
+            recId = 0;
+            if (value == null)
+                return false;
+
+            if (value is JsonElement element)
+                return TryResolveActivityRecId(element, out recId);
+
+            var rawValue = Convert.ToString(value, CultureInfo.InvariantCulture);
+            if (TryResolveActivityRecId(rawValue, out recId))
+                return true;
+
+            return TryConvertResponseDataToJsonElement(value, out element) &&
+                   TryResolveActivityRecId(element, out recId);
+        }
+
+        // Parses activity RecIds from JSON response values.
+        private static bool TryResolveActivityRecId(JsonElement element, out long recId)
+        {
+            recId = 0;
+            if (element.ValueKind == JsonValueKind.Number)
+                return element.TryGetInt64(out recId) && recId != 0;
+
+            if (element.ValueKind == JsonValueKind.String)
+                return TryResolveActivityRecId(element.GetString(), out recId);
+
+            if (element.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in element.EnumerateArray())
+                {
+                    if (TryResolveActivityRecId(item, out recId))
+                        return true;
+                }
+
+                return false;
+            }
+
+            if (element.ValueKind != JsonValueKind.Object)
+                return false;
+
+            return TryResolveJsonPropertyRecId(element, "recId", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "RecId", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "refRecId", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "RefRecId", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "refRecIdActividad", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "RefRecIdActividad", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "data", out recId) ||
+                   TryResolveJsonPropertyRecId(element, "Data", out recId);
+        }
+
+        // Parses an activity RecId from one JSON object property.
+        private static bool TryResolveJsonPropertyRecId(JsonElement element, string propertyName, out long recId)
+        {
+            recId = 0;
+            return element.TryGetProperty(propertyName, out var property) &&
+                   TryResolveActivityRecId(property, out recId);
+        }
+
+        // Parses activity RecIds from assistant mutation payloads.
+        private static bool TryResolveActivityRecId(string? value, out long recId)
+        {
+            return long.TryParse(
+                    value?.Trim(),
+                    NumberStyles.Integer,
+                    CultureInfo.InvariantCulture,
+                    out recId)
+                && recId != 0;
+        }
+
+        // Loads visit select options from the AX enum catalog with local fallback.
+        private async Task LoadVisitEnumViewBagsAsync(string token)
+        {
+            LoadVisitEnumFallbackViewBags();
+
+            try
+            {
+                var result = await _apiClient.GetEnumCatalogByNameAsync(token, CrmAppCode, VisitCatalogEnumNames);
+                var catalog = result.GetAnyItems().ToList();
+                if (!result.Success && catalog.Count == 0)
+                {
+                    _logger.LogWarning("Visit enum catalog returned no usable data. Message={Message} TraceId={TraceId}", result.Message, result.TraceId);
+                    return;
+                }
+
+                ViewBag.CRMTipoVisitaEnum = LoadVisitOptionsFromCatalog(
+                    catalog,
+                    "CRMTipoVisita",
+                    _enumLocalizer.GetTipoVisitaItems(),
+                    result.TraceId);
+                ViewBag.CRMActividadTypeEnum = LoadVisitOptionsFromCatalog(
+                    catalog,
+                    "CRMActividadType",
+                    _enumLocalizer.GetActividadTypeItems(),
+                    result.TraceId);
+                ViewBag.ContactMethodEnum = LoadVisitOptionsFromCatalog(
+                    catalog,
+                    "INDContactMethod",
+                    _enumLocalizer.GetContactMethodItems(),
+                    result.TraceId);
+                ViewBag.CRMActividadOrigenEnum = LoadVisitOptionsFromCatalog(
+                    catalog,
+                    "CRMActividadOrigen",
+                    _enumLocalizer.GetActividadOrigenItems(),
+                    result.TraceId);
+                ViewBag.AsistenteTipoEnum = LoadVisitOptionsFromCatalog(
+                    catalog,
+                    "CRMCustVendVisitaAsistente",
+                    _enumLocalizer.GetAsistenteTipoItems(),
+                    result.TraceId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load visit enum catalog. Local fallback options will be used.");
+            }
+        }
+
+        // Resolves visit enum options and logs when the local fallback is used.
+        private List<dynamic> LoadVisitOptionsFromCatalog(
+            IEnumerable<CrmEnumCatalogDto> catalog,
+            string axEnumName,
+            IEnumerable<dynamic> fallback,
+            string? traceId)
+        {
+            var catalogList = catalog?.ToList() ?? new List<CrmEnumCatalogDto>();
+            var fallbackItems = fallback?.Cast<dynamic>().ToList() ?? new List<dynamic>();
+            var options = _crmEnumCatalog
+                .GetOptionsByAxEnumName(catalogList, axEnumName, fallbackItems)
+                .Cast<dynamic>()
+                .ToList();
+
+            if (!_crmEnumCatalog.HasUsableOptionsByAxEnumName(catalogList, axEnumName))
+            {
+                _logger.LogWarning(
+                    "Visit enum catalog fallback used. AppCode={AppCode}; Company={Company}; AxEnumName={AxEnumName}; FallbackCount={FallbackCount}; ReturnedOptionCount={ReturnedOptionCount}; TraceId={TraceId}",
+                    CrmAppCode,
+                    ResolveCatalogCompany(catalogList),
+                    axEnumName,
+                    fallbackItems.Count,
+                    options.Count,
+                    traceId);
+            }
+
+            return options;
+        }
+
+        // Resolves the company from returned enum catalog rows for fallback logging.
+        private static string ResolveCatalogCompany(IEnumerable<CrmEnumCatalogDto> catalog)
+        {
+            return catalog
+                .Select(item => item.Company)
+                .FirstOrDefault(company => !string.IsNullOrWhiteSpace(company)) ?? string.Empty;
+        }
+
+        // Loads stable local fallback select options for visit screens.
+        private void LoadVisitEnumFallbackViewBags()
+        {
+            ViewBag.CRMActividadTypeEnum = _enumLocalizer.GetActividadTypeItems();
+            ViewBag.CRMTipoVisitaEnum = _enumLocalizer.GetTipoVisitaItems();
+            ViewBag.ContactMethodEnum = _enumLocalizer.GetContactMethodItems();
+            ViewBag.CRMActividadOrigenEnum = _enumLocalizer.GetActividadOrigenItems();
+            ViewBag.AsistenteTipoEnum = _enumLocalizer.GetAsistenteTipoItems();
+        }
+
     }
 }

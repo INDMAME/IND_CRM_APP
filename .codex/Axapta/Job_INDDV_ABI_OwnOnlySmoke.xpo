@@ -1,0 +1,189 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: Job_INDDV_ABI_OwnOnlySmoke descargados en Lunes 22/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #Job_INDDV_ABI_OwnOnlySmoke
+    #static void Job_INDDV_ABI_OwnOnlySmoke(Args _args)
+    #{
+    #    DataAreaId              companyId      = curext();
+    #    UserId                  viewerAxUserId = curUserId();
+    #    str                     appCode        = "CRM";
+    #    str                     moduleCode     = "VISITAS_GESTION";
+    #    container               data;
+    #    container               result;
+    #    container               headerWrap;
+    #    container               header;
+    #    container               lines;
+    #    container               line;
+    #    INDPersonaTable         viewerPerson;
+    #    INDCiasPermitidas       accessCiaPerm;
+    #    INDWebModuleAccessLevel moduleAccessLevel;
+    #    str                     utilityBuild;
+    #    str                     rowAlias;
+    #    int                     i;
+    #    ;
+    #
+    #    info("ABI smoke build=2026.06.23-runtime-version-gate");
+    #    info(strFmt("ABI smoke input company=%1 viewer=%2 app=%3 module=%4",
+    #        companyId, viewerAxUserId, appCode, moduleCode));
+    #
+    #    info(strFmt("ABI smoke FieldIds AccessRights=%1 ModuleCode=%2 RefCia=%3 AppCode=%4 DataVisibilityMode=%5 MutationPolicy=%6 HierarchyDepth=%7",
+    #        fieldNum(INDWebModuleAccessLevel, AccessRights),
+    #        fieldNum(INDWebModuleAccessLevel, ModuleCode),
+    #        fieldNum(INDWebModuleAccessLevel, RefRecIdCiaPermitida),
+    #        fieldNum(INDWebModuleAccessLevel, AppCode),
+    #        fieldNum(INDWebModuleAccessLevel, DataVisibilityMode),
+    #        fieldNum(INDWebModuleAccessLevel, MutationPolicy),
+    #        fieldNum(INDWebModuleAccessLevel, HierarchyDepth)));
+    #
+    #    moduleAccessLevel = INDCRMUtilityService::ctrlFindModuleAccessLevel(
+    #        viewerAxUserId,
+    #        companyId,
+    #        appCode,
+    #        moduleCode);
+    #
+    #    changecompany (companyId)
+    #    {
+    #        viewerPerson = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(viewerAxUserId);
+    #
+    #        if (moduleAccessLevel.RecId)
+    #        {
+    #            select firstOnly accessCiaPerm
+    #                where accessCiaPerm.RecId == moduleAccessLevel.RefRecIdCiaPermitida;
+    #        }
+    #    }
+    #
+    #    if (!viewerPerson.RecId)
+    #    {
+    #        error(strFmt("ABI smoke: no existe persona activa para el usuario AX %1.", viewerAxUserId));
+    #        return;
+    #    }
+    #
+    #    if (!moduleAccessLevel.RecId)
+    #    {
+    #        error(strFmt("ABI smoke: no existe permiso efectivo para %1/%2/%3/%4.",
+    #            companyId, viewerAxUserId, appCode, moduleCode));
+    #        return;
+    #    }
+    #
+    #    info(strFmt("ABI smoke viewer alias=%1 name=%2 recId=%3",
+    #        viewerPerson.Alias,
+    #        viewerPerson.Name,
+    #        viewerPerson.RecId));
+    #
+    #    info(strFmt("ABI smoke effective recId=%1 refCia=%2 rowUser=%3 rowCompany=%4 access=%5/%6",
+    #        moduleAccessLevel.RecId,
+    #        moduleAccessLevel.RefRecIdCiaPermitida,
+    #        accessCiaPerm.UserId,
+    #        accessCiaPerm.CiaId,
+    #        any2int(moduleAccessLevel.AccessRights),
+    #        moduleAccessLevel.AccessRights));
+    #
+    #    info(strFmt("ABI smoke effective enums dataVis=%1/%2 depth=%3/%4 mutation=%5/%6",
+    #        any2int(moduleAccessLevel.DataVisibilityMode),
+    #        enum2str(moduleAccessLevel.DataVisibilityMode),
+    #        any2int(moduleAccessLevel.HierarchyDepth),
+    #        enum2str(moduleAccessLevel.HierarchyDepth),
+    #        any2int(moduleAccessLevel.MutationPolicy),
+    #        enum2str(moduleAccessLevel.MutationPolicy)));
+    #
+    #    data = [companyId, appCode, moduleCode, viewerAxUserId, "", "1"];
+    #    result = INDCRMUtilityService::ctrlGetVisibleUsers(data);
+    #
+    #    if (conLen(result) < 2)
+    #    {
+    #        error("ABI smoke: ctrlGetVisibleUsers no devolvio Header + Lines.");
+    #        return;
+    #    }
+    #
+    #    headerWrap = conPeek(result, 1);
+    #    lines      = conPeek(result, 2);
+    #
+    #    if (conLen(headerWrap) >= 1)
+    #        header = conPeek(headerWrap, 1);
+    #    else
+    #        header = headerWrap;
+    #
+    #    utilityBuild = "<sin utilityBuild>";
+    #    if (conLen(header) >= 8)
+    #        utilityBuild = conPeek(header, 8);
+    #
+    #    info(strFmt("ABI smoke header success=%1 message=%2 viewer=%3 alias=%4 company=%5 app=%6 module=%7 utilityBuild=%8",
+    #        conPeek(header, 1),
+    #        conPeek(header, 2),
+    #        conPeek(header, 3),
+    #        conPeek(header, 4),
+    #        conPeek(header, 5),
+    #        conPeek(header, 6),
+    #        conPeek(header, 7),
+    #        utilityBuild));
+    #
+    #    if (utilityBuild != "INDCRMUtilityService build=2026.06.22-ownonly-guard")
+    #    {
+    #        throw error(strFmt("ABI smoke: INDCRMUtilityService compilada no es la version ownonly-guard. utilityBuild=%1. Reimporte y compile la clase antes de validar ABI.",
+    #            utilityBuild));
+    #    }
+    #
+    #    if (conLen(header) >= 20)
+    #    {
+    #        info(strFmt("ABI smoke header effective recId=%1 dataVis=%2/%3 depth=%4/%5 mutation=%6/%7",
+    #            conPeek(header, 9),
+    #            conPeek(header, 10),
+    #            conPeek(header, 11),
+    #            conPeek(header, 12),
+    #            conPeek(header, 13),
+    #            conPeek(header, 14),
+    #            conPeek(header, 15)));
+    #
+    #        info(strFmt("ABI smoke header effective row refCia=%1 rowUser=%2 rowCompany=%3 access=%4/%5",
+    #            conPeek(header, 16),
+    #            conPeek(header, 17),
+    #            conPeek(header, 18),
+    #            conPeek(header, 19),
+    #            conPeek(header, 20)));
+    #    }
+    #    else
+    #    {
+    #        throw error("ABI smoke: el header no trae diagnostico efectivo. La clase INDCRMUtilityService no esta actualizada.");
+    #    }
+    #
+    #    info(strFmt("ABI smoke visible lineCount=%1", conLen(lines)));
+    #
+    #    if (moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnOnly
+    #     && conLen(lines) != 1)
+    #    {
+    #        error(strFmt("ABI smoke: OwnOnly debe devolver una linea. Devueltas=%1", conLen(lines)));
+    #    }
+    #
+    #    for (i = 1; i <= conLen(lines); i++)
+    #    {
+    #        line = conPeek(lines, i);
+    #        rowAlias = conPeek(line, 1);
+    #
+    #        info(strFmt("ABI smoke line %1 alias=%2 axUser=%3 crmUser=%4 name=%5 mutation=%6/%7 canMutate=%8",
+    #            i,
+    #            rowAlias,
+    #            conPeek(line, 2),
+    #            conPeek(line, 3),
+    #            conPeek(line, 4),
+    #            conPeek(line, 6),
+    #            conPeek(line, 7),
+    #            conPeek(line, 9)));
+    #
+    #        if (moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnOnly
+    #         && rowAlias != viewerPerson.Alias)
+    #        {
+    #            error(strFmt("ABI smoke: OwnOnly devolvio alias no propio. viewerAlias=%1 rowAlias=%2",
+    #                viewerPerson.Alias,
+    #                rowAlias));
+    #        }
+    #    }
+    #}
+  ENDSOURCE
+
+***Element: END

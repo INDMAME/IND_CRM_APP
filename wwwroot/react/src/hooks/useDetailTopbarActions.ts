@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { wait } from "../utils/wait.ts";
 import { indT } from "../utils/indI18n.ts";
-import { showPermissionModal } from "../utils/permissions.ts";
 import { setHistoryFilterForDate, flashActionMark } from "../utils/visitasHistory.ts";
 import { setTopbarActionGroupReady } from "../utils/topbarActionVisibility.ts";
 
@@ -17,6 +16,7 @@ type UseDetailTopbarActionsArgs = {
   handleCancelEdit: () => void;
   handleUpdate: () => Promise<boolean>;
   handleDelete: () => Promise<boolean>;
+  onPermissionBlocked?: (operation: "edit" | "delete") => void;
   actionGroupId?: string;
   permissionsReady?: boolean;
   openConfirm: (opts: {
@@ -41,6 +41,7 @@ export const useDetailTopbarActions = ({
   handleCancelEdit,
   handleUpdate,
   handleDelete,
+  onPermissionBlocked,
   actionGroupId = "visit-detail-actions",
   permissionsReady = true,
   openConfirm,
@@ -55,28 +56,28 @@ export const useDetailTopbarActions = ({
     const cancelBtn = document.getElementById("visitCancelBtn");
     const editBtn = editIcon?.closest("button") ?? null;
     if (isEditing) {
-      if (editBtn) editBtn.classList.remove("topbar-hidden");
+      if (editBtn) editBtn.classList.toggle("topbar-hidden", !canEditHistory);
       if (editIcon) editIcon.classList.add("hidden");
       if (saveIcon) saveIcon.classList.remove("hidden");
       if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
       if (cancelBtn) cancelBtn.classList.remove("topbar-hidden");
     } else {
-      if (editBtn) editBtn.classList.remove("topbar-hidden");
+      if (editBtn) editBtn.classList.toggle("topbar-hidden", !canEditHistory);
       if (editIcon) editIcon.classList.remove("hidden");
       if (saveIcon) saveIcon.classList.add("hidden");
-      if (deleteBtn) deleteBtn.classList.remove("topbar-hidden");
+      if (deleteBtn) deleteBtn.classList.toggle("topbar-hidden", !canDeleteHistory);
       if (cancelBtn) cancelBtn.classList.add("topbar-hidden");
     }
 
     setTopbarActionGroupReady(actionGroupId);
-  }, [actionGroupId, isEditing, permissionsReady]);
+  }, [actionGroupId, canDeleteHistory, canEditHistory, isEditing, permissionsReady]);
 
   useEffect(() => {
     if (!permissionsReady) return;
 
     const onEdit = () => {
       if (!canEditHistory) {
-        showPermissionModal();
+        onPermissionBlocked?.("edit");
         return;
       }
       if (isEditing) {
@@ -107,7 +108,7 @@ export const useDetailTopbarActions = ({
 
     const onDelete = () => {
       if (!canDeleteHistory) {
-        showPermissionModal();
+        onPermissionBlocked?.("delete");
         return;
       }
       if (busy || modalOpen) return;
@@ -154,6 +155,7 @@ export const useDetailTopbarActions = ({
     handleDelete,
     handleEnableEdit,
     handleUpdate,
+    onPermissionBlocked,
     isEditing,
     modalOpen,
     openConfirm,

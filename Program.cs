@@ -42,6 +42,8 @@ static bool HasExpectedStaticAssets(string path)
 
 static string ResolveWebRoot()
 {
+    string? fallbackWebRoot = null;
+
     var startPaths = new[]
     {
         AppContext.BaseDirectory,
@@ -56,30 +58,25 @@ static string ResolveWebRoot()
             var webRoot = Path.Combine(current, "Web", "wwwroot");
             var root = Path.Combine(current, "wwwroot");
 
-            // In publish output both folders may exist, but only one contains full static assets.
-            if (HasExpectedStaticAssets(root))
-                return root;
-
+            // Prefer the canonical Web/wwwroot path when it contains the full static asset set.
             if (HasExpectedStaticAssets(webRoot))
                 return webRoot;
 
-            if (Directory.Exists(webRoot) && Directory.EnumerateFileSystemEntries(webRoot).Any())
-                return webRoot;
-
-            if (Directory.Exists(root) && Directory.EnumerateFileSystemEntries(root).Any())
+            // In publish output wwwroot may be the only complete static asset folder.
+            if (HasExpectedStaticAssets(root))
                 return root;
 
-            if (Directory.Exists(webRoot))
-                return webRoot;
-
-            if (Directory.Exists(root))
-                return root;
+            fallbackWebRoot ??= Directory.Exists(webRoot)
+                ? webRoot
+                : Directory.Exists(root)
+                    ? root
+                    : null;
 
             current = Directory.GetParent(current)?.FullName;
         }
     }
 
-    return "wwwroot";
+    return fallbackWebRoot ?? "wwwroot";
 }
 
 var resolvedWebRoot = ResolveWebRoot();
@@ -259,6 +256,20 @@ builder.Services.AddAuthentication(options =>
             }
 
             return Task.CompletedTask;
+        },
+        OnRemoteFailure = context =>
+        {
+            var failureMessage = context.Failure?.Message ?? string.Empty;
+            if (!failureMessage.Contains("Correlation failed", StringComparison.OrdinalIgnoreCase))
+                return Task.CompletedTask;
+
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            // Keep stale or duplicate OIDC callbacks from leaking framework error pages.
+            logger.LogWarning("OIDC remote failure handled as stale login callback. Failure: {FailureMessage}", failureMessage);
+
+            context.HandleResponse();
+            context.Response.Redirect("/Auth/Login?loggedOut=true");
+            return Task.CompletedTask;
         }
     };
     // OIDC callback is a cross-site POST, so correlation/nonce must be SameSite=None.
@@ -299,6 +310,8 @@ builder.Services.AddScoped<ITokenSessionService, TokenSessionService>();
 builder.Services.AddScoped<IIndAuthContextService, IndAuthContextService>();
 builder.Services.AddScoped<IINDCrmEnumLocalizer, INDCrmEnumLocalizer>();
 builder.Services.AddScoped<ICrmEnumCatalog, CrmEnumCatalog>();
+builder.Services.AddScoped<IModuleRecordMutationPermissionService, ModuleRecordMutationPermissionService>();
+builder.Services.AddScoped<IVisitMutationPermissionService, VisitMutationPermissionService>();
 builder.Services.AddScoped<INDModuleAuthorizeFilter>();
 builder.Logging.AddFilter("System.Net.Http.HttpClient", LogLevel.Information);
 
@@ -414,6 +427,27 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-crm-data-visibility-visible-users",
+    pattern: "api/crm/data-visibility/visible-users",
+    defaults: new { controller = "Historial", action = "ApiVisibleVisitUsers" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-crm-enums-by-name",
+    pattern: "api/crm/enums/by-name",
+    defaults: new { controller = "CrmEnums", action = "ApiCrmEnumsByName" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
+    name: "api-crm-projects-list",
+    pattern: "api/crm/projects/list",
+    defaults: new { controller = "Gastos", action = "ApiProjectsList" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
+);
+
+app.MapControllerRoute(
     name: "api-system-exchange-rate",
     pattern: "api/system/exchange-rate",
     defaults: new { controller = "Gastos", action = "ApiSystemExchangeRate" },
@@ -519,6 +553,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-expense-sheet-ticket-total-adjustment",
+    pattern: "api/crm/expensesheets/tickets/{fileId}/total-adjustment",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketTotalAdjustment" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
     name: "api-expense-sheet-ticket-apply-ia",
     pattern: "api/crm/expensesheets/tickets/{fileId}/ia",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetTicketApplyIa" },
@@ -586,6 +627,13 @@ app.MapControllerRoute(
     pattern: "api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetLineDelete" },
     constraints: new { httpMethod = new HttpMethodRouteConstraint("DELETE") }
+);
+
+app.MapControllerRoute(
+    name: "expense-sheet-email-link",
+    pattern: "Gastos/ExpenseSheetLink",
+    defaults: new { controller = "ExpenseSheetLink", action = "Index" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("GET") }
 );
 
 app.MapControllerRoute(

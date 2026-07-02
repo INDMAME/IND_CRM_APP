@@ -1,17 +1,24 @@
 import type { ExpenseGastoTypeCode, ExpenseSheetTicketLineDto } from "../../expenseTypes.ts";
+import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 import type { ExpenseSheetTicketDetailDto } from "../../expenseTypes.ts";
 
 export type ExpenseTicketDetailHeader = {
   fileId: string;
   description: string;
-  status: 0 | 1 | null;
+  status: number | null;
   hojaGastosIdDisplay: string;
   processedByAI: boolean | null;
   currencyCode: string;
   totalAmount: number | null;
+  amountMST: number | null;
+  exchRate: number | null;
   createdByUserId: string;
+  ownerAxUserId: string;
+  ownerName: string | null;
   transDate: string;
+  ticketDate: string;
+  ticketTime: string;
   comentario: string;
   urlFile: string;
   fileName: string;
@@ -26,6 +33,7 @@ export type ExpenseTicketDetailLine = {
   totalAmount: number | null;
   refRecIdTable: string;
   createdByUserId: string;
+  adjustmentAmount: boolean | null;
 };
 
 export const toNullableNumber = (value: unknown): number | null => {
@@ -45,16 +53,12 @@ export const toNullableBool = (value: unknown): boolean | null => {
 };
 
 const toNullableGastoType = (value: unknown): ExpenseGastoTypeCode | null => {
-  const parsed = Number(value);
-  if (parsed === 0 || parsed === 1 || parsed === 2 || parsed === 3 || parsed === 4 || parsed === 5 || parsed === 6 || parsed === 7 || parsed === 8 || parsed === 14) {
-    return parsed;
-  }
-  return null;
+  return toExpenseGastoTypeCode(value);
 };
 
-const toNullableTicketStatus = (value: unknown): 0 | 1 | null => {
+const toNullableTicketStatus = (value: unknown): number | null => {
   const parsed = Number(value);
-  if (parsed === 0 || parsed === 1) {
+  if (Number.isInteger(parsed) && parsed >= 0) {
     return parsed;
   }
   return null;
@@ -70,8 +74,14 @@ export const mapExpenseTicketDetailHeader = (item: ExpenseSheetTicketDetailDto):
     processedByAI: toNullableBool(item?.ProcessedByAI),
     currencyCode: safeText(item?.CurrencyCode),
     totalAmount: toNullableNumber(item?.TotalAmount),
+    amountMST: toNullableNumber(item?.AmountMST ?? item?.amountMST),
+    exchRate: toNullableNumber(item?.ExchRate ?? item?.exchRate),
     createdByUserId: safeText(item?.CreatedByUserId),
+    ownerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId),
+    ownerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
     transDate: safeText(item?.TransDate),
+    ticketDate: safeText(item?.TicketDate),
+    ticketTime: safeText(item?.TicketTime),
     comentario: safeText(item?.Comentario),
     urlFile: safeText(item?.UrlFile),
     fileName: safeText(item?.FileName),
@@ -89,5 +99,6 @@ export const mapExpenseTicketDetailLine = (line: ExpenseSheetTicketLineDto): Exp
     totalAmount: typeof line?.TotalAmount === "number" ? line.TotalAmount : null,
     refRecIdTable: String(line?.RefRecIdTable || "").trim(),
     createdByUserId: String(line?.CreatedByUserId || "").trim(),
+    adjustmentAmount: toNullableBool(line?.AdjustmentAmount ?? (line as { adjustmentAmount?: unknown })?.adjustmentAmount),
   };
 };

@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using IND_CRM_APP.Extensions;
 using IND_CRM_APP.Infrastructure.Localization;
+using IND_CRM_APP.Infrastructure.Security.Auth;
 using IND_CRM_APP.Infrastructure.Security.Modules;
 using IND_CRM_APP.Infrastructure.Security.Permissions;
 using IND_CRM_APP.Models.Shared;
@@ -59,6 +60,12 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             if (!ctxResult.Success || ctxResult.Context == null)
             {
                 await HandleContextFailureAsync(context, ctxResult.Message, ctxResult.ErrorCode);
+                return;
+            }
+
+            if (IsExpenseSheetLinkAction(context))
+            {
+                await next();
                 return;
             }
 
@@ -130,6 +137,19 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                    string.Equals(action, "Login", StringComparison.OrdinalIgnoreCase);
         }
 
+        // Lets the email link resolver validate and switch target company itself.
+        private static bool IsExpenseSheetLinkAction(ActionExecutingContext context)
+        {
+            if (context?.ActionDescriptor?.RouteValues == null)
+                return false;
+
+            context.ActionDescriptor.RouteValues.TryGetValue("controller", out var controller);
+            context.ActionDescriptor.RouteValues.TryGetValue("action", out var action);
+
+            return string.Equals(controller, "ExpenseSheetLink", StringComparison.OrdinalIgnoreCase) &&
+                   string.Equals(action, "Index", StringComparison.OrdinalIgnoreCase);
+        }
+
         // Resolves module candidates only from explicit route mapping or fixed safe fallbacks.
         private static string[] ResolveModuleCandidates(string path, IndWebCompany company)
         {
@@ -166,7 +186,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 .Where(m => m.AccessRightsInt >= IndAccessRights.View && !string.IsNullOrWhiteSpace(m.ModuleCode))
                 .Select(m => INDModuleRegistry.TryGetCanonicalModuleCode(m.ModuleCode, out var canonical)
                     ? canonical
-                    : m.ModuleCode)
+                    : string.Empty)
                 .Where(code => !string.IsNullOrWhiteSpace(code))
                 .Distinct(StringComparer.OrdinalIgnoreCase)
                 .ToArray();
@@ -451,7 +471,8 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
             var tempData = _tempDataFactory.GetTempData(http);
             tempData.INDSetActionMarkError();
 
-            var loginUrl = "/Auth/Login?loggedOut=true";
+            var returnUrl = LocalReturnUrlHelper.BuildCurrentLocalUrl(http.Request);
+            var loginUrl = "/Auth/Login?loggedOut=true&returnUrl=" + Uri.EscapeDataString(returnUrl);
             var publicMessage = _sr["Api_SessionExpired"].Value;
 
             if (IsJsonRequest(http))
@@ -470,7 +491,7 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                 return;
             }
 
-            context.Result = new RedirectToActionResult("Login", "Auth", new { loggedOut = true });
+            context.Result = new RedirectToActionResult("Login", "Auth", new { loggedOut = true, returnUrl });
         }
 
         private void Deny(ActionExecutingContext context, string message)
@@ -505,7 +526,10 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
 
             var tempData = _tempDataFactory.GetTempData(http);
             tempData["AuthError"] = message;
-            context.Result = new RedirectToActionResult("Login", "Auth", null);
+            context.Result = new RedirectToActionResult(
+                "Login",
+                "Auth",
+                new { returnUrl = LocalReturnUrlHelper.BuildCurrentLocalUrl(http.Request) });
         }
 
         private string AccessDeniedMessage(string reason)

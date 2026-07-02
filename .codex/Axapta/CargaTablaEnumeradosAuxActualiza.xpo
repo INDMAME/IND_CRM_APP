@@ -1,0 +1,184 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: CargaTablaEnumeradosAuxActualiza descargados en Martes 30/06/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #CargaTablaEnumeradosAuxActualiza
+    #public static void CargaTablaEnumeradosAuxActualiza(Args _args)
+    #{
+    #    DictEnum        de;
+    #    int             i;
+    #    int             j;
+    #    int             enumIndex;
+    #    int             enumValue;
+    #    int             enumId;
+    #    int             enumCount;
+    #    int             valueCount;
+    #    int             insertedCount;
+    #    int             updatedCount;
+    #    int             unchangedCount;
+    #    int             deletedCount;
+    #    int             skippedDeleteCount;
+    #    boolean         catalogInUse;
+    #    INDAxEnumsTable axEnum;
+    #    INDAxEnumsTable axEnumDelete;
+    #    INDAxEnumAppCatalogTable catalogTable;
+    #    DataArea        dataArea;
+    #    DataAreaId      catalogCompany;
+    #    RecId           catalogRecId;
+    #    Description     enumName;
+    #    str             enumDescription;
+    #    str             enumKey;
+    #    Set             currentEnumKeys = new Set(Types::String);
+    #    ;
+    #
+    #    //MMS - CRM enum table refresh with safe cleanup - 2026.06.30
+    #    // Refreshes INDAxEnumsTable and only removes obsolete rows without catalog usage.
+    #    for (j = 1; j <= 63000; j++)
+    #    {
+    #        de = new DictEnum(j);
+    #
+    #        if (de)
+    #        {
+    #            enumCount++;
+    #
+    #            for (i = 0; i < de.values(); i++)
+    #            {
+    #                enumName        = de.name();
+    #                enumIndex       = de.index2Value(i);
+    #                enumValue       = i;
+    #                enumId          = de.id();
+    #                enumDescription = de.value2Label(enumIndex);
+    #                enumKey         = strFmt("%1|%2", enumName, enumIndex);
+    #
+    #                currentEnumKeys.add(enumKey);
+    #
+    #                axEnum = INDAxEnumsTable::Find(enumName, enumIndex);
+    #
+    #                if (axEnum.RecId)
+    #                {
+    #                    if (axEnum.Description != enumDescription
+    #                     || axEnum.EnumValue   != enumValue
+    #                     || axEnum.AxEnumId    != enumId)
+    #                    {
+    #                        ttsbegin;
+    #
+    #                        axEnum = INDAxEnumsTable::Find(enumName, enumIndex, true);
+    #                        axEnum.Description = enumDescription;
+    #                        axEnum.EnumValue   = enumValue;
+    #                        axEnum.AxEnumId    = enumId;
+    #                        axEnum.update();
+    #
+    #                        ttscommit;
+    #
+    #                        updatedCount++;
+    #                    }
+    #                    else
+    #                    {
+    #                        unchangedCount++;
+    #                    }
+    #                }
+    #                else
+    #                {
+    #                    ttsbegin;
+    #
+    #                    axEnum.clear();
+    #                    axEnum.AxEnumName  = enumName;
+    #                    axEnum.EnumIndex   = enumIndex;
+    #                    axEnum.EnumValue   = enumValue;
+    #                    axEnum.Description = enumDescription;
+    #                    axEnum.AxEnumId    = enumId;
+    #                    axEnum.insert();
+    #
+    #                    ttscommit;
+    #
+    #                    insertedCount++;
+    #                }
+    #
+    #                valueCount++;
+    #            }
+    #        }
+    #    }
+    #
+    #    while select axEnum
+    #    {
+    #        enumKey = strFmt("%1|%2", axEnum.AxEnumName, axEnum.EnumIndex);
+    #
+    #        if (!currentEnumKeys.in(enumKey))
+    #        {
+    #            catalogInUse   = false;
+    #            catalogCompany = "";
+    #            catalogRecId   = 0;
+    #
+    #            while select dataArea
+    #            {
+    #                changecompany (dataArea.Id)
+    #                {
+    #                    catalogTable.clear();
+    #
+    #                    select firstonly RecId from catalogTable
+    #                        where catalogTable.AxEnumsTableRefRecId == axEnum.RecId;
+    #
+    #                    if (catalogTable.RecId)
+    #                    {
+    #                        catalogInUse   = true;
+    #                        catalogCompany = dataArea.Id;
+    #                        catalogRecId   = catalogTable.RecId;
+    #                    }
+    #                }
+    #
+    #                if (catalogInUse)
+    #                {
+    #                    break;
+    #                }
+    #            }
+    #
+    #            if (catalogInUse)
+    #            {
+    #                skippedDeleteCount++;
+    #
+    #                warning(strFmt(
+    #                    "No se borra INDAxEnumsTable RecId=%1 Enum=%2 Valor=%3 porque tiene configuracion relacionada RecId=%4 Empresa=%5.",
+    #                    axEnum.RecId,
+    #                    axEnum.AxEnumName,
+    #                    axEnum.EnumIndex,
+    #                    catalogRecId,
+    #                    catalogCompany));
+    #            }
+    #            else
+    #            {
+    #                ttsbegin;
+    #
+    #                axEnumDelete.clear();
+    #
+    #                select firstonly forupdate axEnumDelete
+    #                    where axEnumDelete.RecId == axEnum.RecId;
+    #
+    #                if (axEnumDelete.RecId)
+    #                {
+    #                    axEnumDelete.delete();
+    #                    deletedCount++;
+    #                }
+    #
+    #                ttscommit;
+    #            }
+    #        }
+    #    }
+    #
+    #    info(strFmt(
+    #        "Fin CargaTablaEnumeradosAuxActualiza. Enums=%1 Valores=%2 Insertados=%3 Actualizados=%4 SinCambios=%5 Borrados=%6 BorradoOmitidoPorConfiguracion=%7.",
+    #        enumCount,
+    #        valueCount,
+    #        insertedCount,
+    #        updatedCount,
+    #        unchangedCount,
+    #        deletedCount,
+    #        skippedDeleteCount));
+    #}
+  ENDSOURCE
+
+***Element: END

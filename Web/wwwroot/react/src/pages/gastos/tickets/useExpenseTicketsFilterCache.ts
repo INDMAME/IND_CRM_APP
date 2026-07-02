@@ -1,4 +1,5 @@
 import { useCallback } from "react";
+import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { normalizeExpenseTicketFilterSnapshot } from "./expenseTicketFilterSnapshot.ts";
 import type {
   ExpenseTicketAppliedFilterSnapshot,
@@ -20,7 +21,6 @@ const EXPENSE_TICKETS_FILTER_KEY_PREFIX = "expense_tickets_filter_v1";
 const EXPENSE_TICKETS_RETURN_FLAG_KEY_PREFIX = "expense_tickets_return_v1";
 const EXPENSE_TICKETS_RETURN_MODE_KEY_PREFIX = "expense_tickets_return_mode_v1";
 const EXPENSE_TICKETS_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
-const ALLOWED_TICKET_GASTO_TYPES = new Set<number>([0, 1, 2, 3, 4, 5, 6, 7, 8, 14]);
 
 export type ExpenseTicketsReturnMode = "restore" | "reset_filters";
 
@@ -65,16 +65,12 @@ const normalizeProcessedByAi = (value: unknown): boolean | null => {
 };
 
 const normalizeTicketGastoType = (value: unknown): ExpenseTicketCard["gastoType"] => {
-  const parsed = Number(value);
-  if (!Number.isInteger(parsed) || !ALLOWED_TICKET_GASTO_TYPES.has(parsed)) {
-    return null;
-  }
-  return parsed as ExpenseTicketCard["gastoType"];
+  return toExpenseGastoTypeCode(value) as ExpenseTicketCard["gastoType"];
 };
 
-const normalizeStatus = (value: unknown): 0 | 1 | null => {
+const normalizeStatus = (value: unknown): number | null => {
   const parsed = Number(value);
-  if (parsed === 0 || parsed === 1) return parsed;
+  if (Number.isInteger(parsed) && parsed >= 0) return parsed;
   return null;
 };
 

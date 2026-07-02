@@ -86,6 +86,28 @@
 - Subordinates bootstrap rule: after Entra context is resolved on login, load `/api/crm/expensesheets/subordinates` for the selected company and cache it in the same `entraOid + companyId` scope.
 - If cached subordinates data is missing when needed, trigger one automatic fallback fetch before rendering subordinate-dependent filters/actions.
 
+## Record-level security and module data visibility
+
+- Applies to any page or feature that filters by visible users, shows records owned by another AX user, or gates create/edit/delete by record ownership.
+- Use the shared module data visibility layer instead of creating page-specific clones:
+  - `Web/wwwroot/react/src/hooks/useModuleDataVisibility.ts`
+  - `Web/wwwroot/react/src/services/moduleDataVisibilityService.ts`
+  - `Web/wwwroot/react/src/utils/moduleDataVisibility.ts`
+- Server and AX authorization remain the source of truth. The frontend only hides or disables controls for a better and safer UX.
+- Record ownership must be evaluated with the functional AX owner id. The preferred detail/list contract field is `OwnerAxUserId`.
+- Strict UI mutation gating requires both:
+  - the record detail or list row returns the owner AX user id, preferably `OwnerAxUserId`;
+  - the visible-users endpoint returns mutation policy fields, including `CanMutate`.
+- If ownership cannot be resolved, do not invent ownership. Preserve an existing compatibility fallback only when the current behavior depends on it and the backend still enforces mutation permissions.
+- Before implementing record-level security on a new page or feature, ask the user these targeted questions:
+  1. What `appCode` and `moduleCode` apply?
+  2. Which API/AX field identifies the record owner AX user, and is `OwnerAxUserId` guaranteed in list and detail responses?
+  3. Which operations are gated: view/filter, create, edit, delete, or all mutations?
+  4. What should the UI do when mutation is not allowed: hide actions, disable actions, show read-only fields, or show a message?
+  5. Which mutation policy is expected: `OwnOnly`, `SameAsVisibility`, or module-specific business rules, and does the endpoint return `CanMutate` plus policy fields?
+  6. Should `includeCrmUserId` be enabled, or is AX ownership enough for this module?
+  7. How should preload/cache scope include company, AX user, and permissions revision?
+
 ## UI, design system and frontend architecture
 
 - Allowed UI architecture:
@@ -306,13 +328,18 @@ Codex must apply this rule for any change that touches views, scripts or filter 
 
 ## DEV to PROD release command policy
 
-- If the user says `genera una release a PROD`, `publica DEV en PROD`, or clearly requests a DEV to PROD release, interpret that as a git and GitHub release workflow, not as the generic IIS `publish.ps1` deploy command.
+- Only if the user explicitly says `merge a prod` or `merge DEV a PROD`, interpret the request as a git and GitHub production promotion workflow.
+- Do not infer production promotion from `publica`, `publica la web`, `republica`, `publica en iis`, `genera una release`, or `publica DEV en PROD` unless the phrase `merge a prod` is present. Without `merge a prod`, publishing means local IIS deployment with `publish.ps1`.
 - Keep this flow conservative. If branch state, local changes, release numbering, or production divergence are ambiguous, stop and ask before publishing.
-- Do not publish uncommitted changes.
+- Local development, commits, release preparation, and release completion must happen from branch `DEV`. Inspect production history through remote metadata or PRs; do not switch the local checkout to `PROD`, `main`, or any production branch for release work.
+- Only push work changes to `origin/DEV`. Never push directly to `origin/PROD`, `origin/main`, or any production branch.
+- Production promotion must happen only through a numbered GitHub PR from `DEV` to `PROD` (or the configured production branch if it is renamed to `main`). The PR title must be `Release <N>` where `N` is incremental.
+- Auto-merge with required checks is mandatory for production promotion. If auto-merge, checks, branch protection, or PR permissions block the release, stop and report the blocker instead of doing a direct merge or direct push.
+- Do not promote uncommitted changes.
 - Do not include unrelated files in the release scope.
 - Do not assume the release number if it cannot be inferred safely.
 
-Required DEV to PROD release workflow:
+Required `merge a prod` workflow:
 1. Confirm the active branch is `DEV`.
 2. Run `git status` and verify the release scope is fully committed.
 3. If there are unexpected local changes, unrelated files, conflicts, or ambiguous scope, stop and ask before continuing.
@@ -321,29 +348,27 @@ Required DEV to PROD release workflow:
 6. Find the latest `Release <N>` identifier in repository release history. Safe sources include merged PRs, release PR titles, tags, or merge commits. If the last release cannot be determined safely, stop and ask.
 7. Use `Release <N>` as the canonical release name.
 8. Create a PR from `DEV` to `PROD` with title `Release <N>`.
-9. Try to approve the PR and enable auto-merge when GitHub and repository permissions allow it.
+9. Ensure the PR has required checks enabled and attempt to approve the PR when GitHub and repository permissions allow it.
 10. If GitHub blocks self-approval of the same PR, report that limitation explicitly.
-11. If auto-merge is unavailable or self-approval fails, but the user explicitly asked to generate the PROD release, treat that request as authorization for a controlled direct merge fallback.
-12. Before any direct merge, update local `PROD` from `origin/PROD` and verify that no production commits would be lost.
-13. If direct merge is required, use `Release <N>` as the merge commit message.
-14. Push `PROD` to `origin/PROD`.
-15. Verify that the PR ended merged or that `origin/PROD` points to the expected release commit.
-16. Return the local working copy to `DEV` before finishing.
-17. Final report must include:
+11. Enable auto-merge on the PR. Do not merge, fast-forward, or push directly to `PROD` or `main`.
+12. If auto-merge cannot be enabled, required checks fail, or repository permissions prevent the PR workflow, stop and report the blocker. Do not use a controlled direct merge fallback.
+13. Verify that the PR is queued for auto-merge or was merged by the protected PR workflow.
+14. Confirm the local working copy remains on `DEV` before finishing.
+15. Final report must include:
    - `Release <N>`
    - published commit on `DEV`
    - PR URL and status
-   - whether completion happened by merged PR or controlled direct merge
-   - any GitHub limitation encountered
+   - auto-merge/check status
+   - any GitHub limitation or branch-protection blocker encountered
 
 ## Local IIS publish command policy
 
-- If the user says `publica en iis`, interpret that as a local web publish command, not as a DEV to PROD release.
-- For `publica en iis`, run the local web publish workflow:
+- If the user says `publica`, `publica la web`, `republica`, `publica en iis`, or asks to publish/deploy the web without saying `merge a prod`, interpret that as a local web publish command, not as a DEV to PROD release.
+- For local IIS publish requests, run the local web publish workflow:
   1. Run full required validation/build steps first.
   2. Execute `publish.ps1`.
   3. Confirm IIS restart and local site health before finishing.
-- Do not treat generic `publica` as enough to trigger a local IIS publish. If the user does not clearly ask for `publica en iis` and does not clearly ask for a DEV to PROD release, stop and clarify.
+- Never perform a DEV to PROD PR, merge, fast-forward, production branch checkout, or production push unless the user explicitly says `merge a prod`.
 
 ## Quick design prompt (visitas/historial)
 - Tailwind only; Bootstrap removed (no `spinner-border`, `page-item`, `page-link`, etc.).
@@ -353,4 +378,4 @@ Required DEV to PROD release workflow:
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-03-27
+- 2026-06-10

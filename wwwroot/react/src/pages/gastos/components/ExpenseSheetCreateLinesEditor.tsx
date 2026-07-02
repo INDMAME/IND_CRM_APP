@@ -1,8 +1,10 @@
 import React, { useMemo } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetCreateLineDraft } from "../expenseTypes.ts";
-import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
+import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
+import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
+import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 
 type ExpenseSheetCreateLinesEditorProps = {
   lines: ExpenseSheetCreateLineDraft[];
@@ -28,8 +30,7 @@ const ExpenseSheetCreateLinesEditor = ({
   onLineChange,
 }: ExpenseSheetCreateLinesEditorProps) => {
   const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
-    const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
-    return mapWindowEnumOptions(source);
+    return getExpenseGastoTypeOptions();
   }, []);
 
   const internationalOptions = useMemo<ExpenseSelectOption[]>(() => getInternationalOptions(), []);
@@ -78,13 +79,13 @@ const ExpenseSheetCreateLinesEditor = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Type", "Type")}</label>
+              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Type", "Category")}</label>
               <select
                 className="form-control"
                 value={line.typeValueCode}
                 onChange={(event) => onLineChange(line.localId, { typeValueCode: event.target.value || "" })}
               >
-                <option value="">{indT("ExpenseSheets_Field_Type", "Type")}</option>
+                <option value="">{indT("ExpenseSheets_Field_Type", "Category")}</option>
                 {gastoTypeOptions.map((option) => (
                   <option key={option.value} value={option.value}>
                     {option.text}
@@ -105,7 +106,7 @@ const ExpenseSheetCreateLinesEditor = ({
             <div className="space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Price", "Price")}</label>
               <input
-                className="form-control"
+                className="form-control text-right tabular-nums"
                 type="text"
                 inputMode="decimal"
                 value={line.price}
@@ -126,7 +127,7 @@ const ExpenseSheetCreateLinesEditor = ({
             <div className="space-y-1.5">
               <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>
               <input
-                className="form-control"
+                className="form-control text-right tabular-nums"
                 type="text"
                 inputMode="decimal"
                 value={line.qty}
@@ -145,11 +146,11 @@ const ExpenseSheetCreateLinesEditor = ({
             </div>
 
             <div className="space-y-1.5">
-              <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Project", "Project")}</label>
-              <input
-                className="form-control"
+              <ExpenseProjectFilterInput
+                label={indT("ExpenseSheets_Field_Project", "Project")}
+                placeholder={indT("ExpenseSheets_Filter_Project_Placeholder", "Project id")}
                 value={line.projId}
-                onChange={(event) => onLineChange(line.localId, { projId: event.target.value || "" })}
+                onChange={(value) => onLineChange(line.localId, { projId: value || "" })}
               />
             </div>
 

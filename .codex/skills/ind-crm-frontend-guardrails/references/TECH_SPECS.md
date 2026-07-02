@@ -63,14 +63,36 @@
 - `subordinates` must be loaded as part of the Entra context bootstrap right after login context resolution for the selected company.
 - If `subordinates` is missing at runtime, run one automatic recovery call to `/api/crm/expensesheets/subordinates` and persist the result in the same `entraOid + companyId` scope.
 
+## Module data visibility and record-level security
+- Standard endpoint: `/api/crm/data-visibility/visible-users?appCode={appCode}&moduleCode={moduleCode}&includeCrmUserId={true|false}`.
+- Standard frontend objects:
+  - Hook: `Web/wwwroot/react/src/hooks/useModuleDataVisibility.ts`
+  - Service: `Web/wwwroot/react/src/services/moduleDataVisibilityService.ts`
+  - Utilities: `Web/wwwroot/react/src/utils/moduleDataVisibility.ts`
+- Standard usage:
+  - preload visible users on the Razor/MVC page when available, then pass them as `preloadedUsers`;
+  - call `useModuleDataVisibility({ enabled, companyId, axUserId, permissionsRevision, appCode, moduleCode, preloadedUsers })`;
+  - resolve record ownership with `getVisibleUserForOwner(...)`;
+  - gate mutation with `hasMutationPolicy(owner)` plus `canMutateOwner(...)`;
+  - format owner labels with `formatModuleVisibleUserLabel(...)`.
+- Cache scope must include company, AX user, permissions revision, app code, module code, and `includeCrmUserId`.
+- New modules must not create `useVisibleXUsers` clones. Extend the shared hook/service/utils only when the behavior is truly generic.
+- Strict record-level UI gating requires the record contract to expose the owner AX user id, preferably as `OwnerAxUserId`.
+- The frontend must not treat missing owner metadata as proof of ownership. Use a documented compatibility fallback only for existing flows while server/AX authorization remains authoritative.
+
 ## Localization
 - UI localization only. Use `App/Resources/Infrastructure/Localization/INDSharedResource.*.resx`.
 - Razor: `IStringLocalizer<INDSharedResource>`.
 - React: `window.__IND_I18N__` + `indT`.
 
-## Enum lists
-- Add enum-like lists in `App/Services/Enums` and update all resource files.
-- Keep numeric string values and do not renumber.
+## AX enum catalogs
+- For AX-backed enum/select values, use the enum catalog instead of hardcoded lists.
+- Server-side consumers should call `ICrmApiClient.GetEnumCatalogByNameAsync(token, appCode, axEnumNames)` and map options by exact `AxEnumName`.
+- React/client consumers can use the local MVC proxy `/api/crm/enums/by-name?appCode=CRM&axEnumNames=Name1,Name2` through `Web/wwwroot/react/src/services/crmEnumCatalogService.ts`.
+- Before implementing a new enum field, identify the exact AX enum name. If the user did not provide it and it cannot be inferred safely from current code or API contracts, ask the user in chat for the enum name before coding.
+- Add the enum name to the owning page/module catalog request, expose the resulting options through Razor `window.__...` bootstrap data or fetch them via `fetchCrmEnumCatalogByName`, and preserve API catalog labels/descriptions as business data.
+- Use local fallback options only as defensive fallbacks, and keep fallback numeric semantics identical to AX. Never renumber numeric enum values.
+- If the same business concept uses different AX enums in different contexts (for example header versus line), treat them as separate catalogs and do not reuse one catalog or numeric mapping for the other.
 
 ## React island composition standards
 - Keep page entry files thin (`CreatePage.tsx`, `DetailPage.tsx`, `HistoryPage.tsx`, system pages):
@@ -146,4 +168,4 @@
 - Legacy JS must be migrated into `Web/wwwroot/react/src/legacy` as TS and compiled.
 
 ## Last updated
-- 2026-03-27
+- 2026-06-30

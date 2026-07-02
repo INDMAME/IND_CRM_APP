@@ -19,6 +19,10 @@ import {
 } from "../utils/expenseNavigation.ts";
 import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.ts";
 import { getExpenseExchangeRateModeLabel } from "../constants/exchangeRateEntryModeCatalog.ts";
+import {
+  DEFAULT_REIMBURSABLE_EXPENSE,
+  normalizeExpenseReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { formatExpenseDisplayDate, hasAssignedVoucher, parseExpenseDate, safeText, toIsoDate } from "../utils/expenseUiUtils.ts";
 import { formatExpenseInputNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
 import { resolveExpenseSheetDetailPolicy } from "./expenseSheetDetailPolicy.ts";
@@ -51,6 +55,7 @@ const buildCreateHeaderDraft = (): ExpenseSheetHeader => {
     totalAmount: null,
     expenseSheetStatus: 0,
     exchangeRateMode: 0,
+    reimbursableExpense: DEFAULT_REIMBURSABLE_EXPENSE,
     createdDate: "",
     exchRate: String(EXCHANGE_RATE_REFERENCE_AMOUNT),
   };
@@ -102,6 +107,7 @@ export const useExpenseSheetDetailState = ({
   const [draftProjectId, setDraftProjectId] = useState("");
   const [draftCurrencyCode, setDraftCurrencyCode] = useState("");
   const [draftExchangeRate, setDraftExchangeRate] = useState("");
+  const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(DEFAULT_REIMBURSABLE_EXPENSE);
   const [draftEstadoComentarios, setDraftEstadoComentarios] = useState("");
   const [defaultCurrencyCode, setDefaultCurrencyCode] = useState("");
   const [isExchangeRateLoading, setIsExchangeRateLoading] = useState(false);
@@ -116,6 +122,7 @@ export const useExpenseSheetDetailState = ({
     setDraftDescription(safeText(nextHeader?.description));
     setDraftProjectId(safeText(nextHeader?.projId));
     setDraftCurrencyCode(safeText(nextHeader?.currencyCode));
+    setDraftReimbursableExpense(normalizeExpenseReimbursableExpense(nextHeader?.reimbursableExpense));
     setDraftExchangeRate(
       formatExpenseInputNumber(nextHeader?.exchRate, {
         minimumFractionDigits: EXCHANGE_RATE_DECIMAL_DIGITS,
@@ -303,18 +310,11 @@ export const useExpenseSheetDetailState = ({
     if (parsedDate) return toIsoDate(parsedDate);
     return toIsoDate(new Date());
   }, [header?.createdDate]);
-  const exchangeRateRequired =
-    isEditing && canEditHeaderFieldsCurrent && normalizedDraftCurrency !== "" && normalizedDraftCurrency !== exchangeRateBaseCurrency;
-  const exchangeRateValidationMessage =
-    exchangeRateRequired && !draftExchangeRate.trim()
-      ? indT(
-          "ExpenseSheets_Validation_ExchangeRateRequired",
-          "Exchange rate is required when currency is different from base currency."
-        )
-      : "";
-  // Currency type can be edited whenever the sheet itself is editable (not approved/paid).
+  const shouldLoadHeaderExchangeRate = false;
+  const exchangeRateValidationMessage = "";
+  // Header currency is legacy/read-only; editable currency now belongs to each line.
   const isCurrencyLockedByLines = false;
-  const isExchangeRateLockedByLines = isEditing && canEditHeaderFieldsCurrent && hasLines && showExchangeRate;
+  const isExchangeRateLockedByLines = false;
 
   useEffect(() => {
     let isCancelled = false;
@@ -332,7 +332,7 @@ export const useExpenseSheetDetailState = ({
       }
     };
 
-    if (!isEditing || !canEditHeaderFieldsCurrent || isExchangeRateLockedByLines) {
+    if (!shouldLoadHeaderExchangeRate || !isEditing || !canEditHeaderFieldsCurrent || isExchangeRateLockedByLines) {
       setIsExchangeRateLoading(false);
       setExchangeRateMessage("");
       setExchangeRateMessageIsError(false);
@@ -487,6 +487,7 @@ export const useExpenseSheetDetailState = ({
     isEditing,
     isExchangeRateLockedByLines,
     normalizedDraftCurrency,
+    shouldLoadHeaderExchangeRate,
     uiLocale,
     setDraftExchangeRate,
   ]);
@@ -632,6 +633,7 @@ export const useExpenseSheetDetailState = ({
     draftProjectId,
     draftCurrencyCode,
     draftExchangeRate,
+    draftReimbursableExpense,
     draftEstadoComentarios,
     officialExchangeRateValue,
     officialExchangeRateRawValue,
@@ -668,6 +670,7 @@ export const useExpenseSheetDetailState = ({
     setDraftProjectId,
     setDraftCurrencyCode,
     setDraftExchangeRate,
+    setDraftReimbursableExpense,
     setDraftEstadoComentarios,
     handleEnableEdit,
     handleCancelEdit,

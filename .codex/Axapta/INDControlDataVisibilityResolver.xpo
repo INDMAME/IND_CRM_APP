@@ -1,0 +1,661 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: CLS
+
+; Navision Axapta Class: INDControlDataVisibilityResolver descargados en Martes 23/06/2026
+; --------------------------------------------------------------------------------
+  CLSVERSION 1
+  
+  CLASS #INDControlDataVisibilityResolver
+    PROPERTIES
+      Name                #INDControlDataVisibilityResolver
+      Extends             #
+      RunOn               #Called from
+    ENDPROPERTIES
+    
+    METHODS
+      Version: 3
+      SOURCE #classDeclaration
+        #class INDControlDataVisibilityResolver
+        #{
+        #}
+      ENDSOURCE
+      SOURCE #addSetToSet
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Copia todos los valores de un Set origen en un Set destino.
+        #static void addSetToSet(Set _targetSet, Set _sourceSet)
+        #{
+        #    SetIterator si;
+        #    str         value;
+        #    ;
+        #
+        #    if (!_targetSet || !_sourceSet)
+        #        return;
+        #
+        #    si = new SetIterator(_sourceSet);
+        #
+        #    while (si.more())
+        #    {
+        #        value = si.value();
+        #
+        #        if (value)
+        #            _targetSet.add(value);
+        #
+        #        si.next();
+        #    }
+        #}
+      ENDSOURCE
+      SOURCE #applyEffectiveAccessNormalization
+        #//MMS - Ajustes CRM - 2026.06.23
+        #// Normaliza una desalineacion historica de VISITAS_GESTION cuando la UI muestra Solo propios.
+        #static INDWebModuleAccessLevel applyEffectiveAccessNormalization(INDWebModuleAccessLevel _moduleAccessLevel,
+        #                                                                 str                     _moduleCode,
+        #                                                                 date                    _asOfDate)
+        #{
+        #    str moduleCode;
+        #    ;
+        #
+        #    if (!_moduleAccessLevel.RecId)
+        #        return _moduleAccessLevel;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    moduleCode = strUpr(strLRTrim(_moduleCode));
+        #
+        #    if (moduleCode == "VISITAS_GESTION"
+        #     && _moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnAndHierarchy
+        #     && _moduleAccessLevel.HierarchyDepth     == INDDataVisibilityHierarchyDepth::FullDescendants
+        #     && _moduleAccessLevel.MutationPolicy     == INDMutationPolicy::OwnOnly
+        #     && !INDModuleDataVisibilityTarget::hasActiveTargets(_moduleAccessLevel.RecId, _asOfDate))
+        #    {
+        #        _moduleAccessLevel.DataVisibilityMode = INDDataVisibilityMode::OwnOnly;
+        #        _moduleAccessLevel.HierarchyDepth     = INDDataVisibilityHierarchyDepth::DirectOnly;
+        #    }
+        #
+        #    return _moduleAccessLevel;
+        #}
+      ENDSOURCE
+      SOURCE #canMutateOwnerAxUserId
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Valida si el visor puede modificar registros de un propietario Axapta.
+        #static boolean canMutateOwnerAxUserId(UserId     _viewerAxUserId,
+        #                                      DataAreaId _companyId,
+        #                                      str        _appCode,
+        #                                      str        _moduleCode,
+        #                                      UserId     _ownerAxUserId)
+        #{
+        #    INDWebModuleAccessLevel moduleAccessLevel;
+        #    ;
+        #
+        #    if (!_viewerAxUserId || !_companyId || !_appCode || !_moduleCode || !_ownerAxUserId)
+        #        return false;
+        #
+        #    moduleAccessLevel = INDControlDataVisibilityResolver::findModuleAccessLevel(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode);
+        #
+        #    if (!moduleAccessLevel.RecId)
+        #        return false;
+        #
+        #    switch (moduleAccessLevel.MutationPolicy)
+        #    {
+        #        case INDMutationPolicy::SameAsVisibility:
+        #            return INDControlDataVisibilityResolver::canViewOwnerAxUserId(
+        #                _viewerAxUserId,
+        #                _companyId,
+        #                _appCode,
+        #                _moduleCode,
+        #                _ownerAxUserId);
+        #
+        #        case INDMutationPolicy::OwnOnly:
+        #            return _viewerAxUserId == _ownerAxUserId
+        #                && INDControlDataVisibilityResolver::canViewOwnerAxUserId(
+        #                    _viewerAxUserId,
+        #                    _companyId,
+        #                    _appCode,
+        #                    _moduleCode,
+        #                    _ownerAxUserId);
+        #
+        #        /*case INDMutationPolicy::ModuleBusinessRules:
+        #        default:
+        #            return _viewerAxUserId == _ownerAxUserId
+        #                && INDControlDataVisibilityResolver::canViewOwnerAxUserId(
+        #                    _viewerAxUserId,
+        #                    _companyId,
+        #                    _appCode,
+        #                    _moduleCode,
+        #                    _ownerAxUserId); */
+        #    }
+        #
+        #    return false;
+        #}
+      ENDSOURCE
+      SOURCE #canViewOwnerAxUserId
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Valida si el visor puede ver registros de un propietario Axapta.
+        #static boolean canViewOwnerAxUserId(UserId     _viewerAxUserId,
+        #                                    DataAreaId _companyId,
+        #                                    str        _appCode,
+        #                                    str        _moduleCode,
+        #                                    UserId     _ownerAxUserId)
+        #{
+        #    INDPersonaTable ownerPerson;
+        #    ;
+        #
+        #    if (!_ownerAxUserId || !_companyId)
+        #        return false;
+        #
+        #    changecompany (_companyId)
+        #    {
+        #        ownerPerson = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(_ownerAxUserId);
+        #    }
+        #
+        #    if (!ownerPerson.RecId)
+        #        return false;
+        #
+        #    return INDControlDataVisibilityResolver::canViewPersonAlias(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        ownerPerson.Alias);
+        #}
+      ENDSOURCE
+      SOURCE #canViewPersonAlias
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Valida si un alias de persona queda dentro del conjunto visible del visor.
+        #static boolean canViewPersonAlias(UserId     _viewerAxUserId,
+        #                                  DataAreaId _companyId,
+        #                                  str        _appCode,
+        #                                  str        _moduleCode,
+        #                                  str        _ownerAlias)
+        #{
+        #    Set visibleAliases;
+        #    ;
+        #
+        #    if (!_ownerAlias)
+        #        return false;
+        #
+        #    visibleAliases = INDControlDataVisibilityResolver::resolveVisiblePersonAliases(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        today());
+        #
+        #    return visibleAliases && visibleAliases.in(_ownerAlias);
+        #}
+      ENDSOURCE
+      SOURCE #findModuleAccessLevel
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Localiza el permiso web vigente del usuario para empresa, app y modulo.
+        #static INDWebModuleAccessLevel findModuleAccessLevel(UserId      _viewerAxUserId,
+        #                                                     DataAreaId  _companyId,
+        #                                                     str  35     _appCode,
+        #                                                     str  100    _moduleCode)
+        #{
+        #    INDCiasPermitidas       ciasPerm;
+        #    INDWebApp               webApp;
+        #    INDWebModule            webModule;
+        #    INDPersonaTable         viewerPerson;
+        #    UserId                  canonicalViewerAxUserId;
+        #    str                     viewerAlias;
+        #    INDWebModuleAccessLevel moduleAccessLevel;
+        #    INDWebModuleAccessLevel candidateAccessLevel;
+        #    RefRecId                bestRecId;
+        #    int                     candidateVisibilityRank;
+        #    int                     candidateHierarchyRank;
+        #    int                     candidateMutationRank;
+        #    int                     candidateAccessRank;
+        #    int                     bestVisibilityRank = 9999;
+        #    int                     bestHierarchyRank  = 9999;
+        #    int                     bestMutationRank   = 9999;
+        #    int                     bestAccessRank     = 9999;
+        #    ;
+        #
+        #    if (!_viewerAxUserId || !_companyId || !_appCode || !_moduleCode)
+        #        return moduleAccessLevel;
+        #
+        #    changecompany (_companyId)
+        #    {
+        #        //MMS - Ajustes CRM - 2026.06.22
+        #        // Normaliza la identidad del visor antes de elegir la fila efectiva de permisos.
+        #        viewerPerson = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(_viewerAxUserId);
+        #        canonicalViewerAxUserId = _viewerAxUserId;
+        #        viewerAlias = "";
+        #
+        #        if (viewerPerson.RecId)
+        #        {
+        #            if (viewerPerson.UserId)
+        #                canonicalViewerAxUserId = viewerPerson.UserId;
+        #
+        #            viewerAlias = viewerPerson.Alias;
+        #        }
+        #
+        #        // Si existen permisos efectivos duplicados para las claves equivalentes, se usa el mas restrictivo.
+        #        while select candidateAccessLevel
+        #            where candidateAccessLevel.AppCode      == _appCode
+        #               && candidateAccessLevel.ModuleCode   == _moduleCode
+        #               && candidateAccessLevel.AccessRights != 0
+        #        {
+        #            select firstOnly ciasPerm
+        #            where ciasPerm.RecId  == candidateAccessLevel.RefRecIdCiaPermitida
+        #                   && ciasPerm.CiaId == _companyId;
+        #
+        #            if (!ciasPerm.RecId)
+        #                continue;
+        #
+        #            if (ciasPerm.UserId != _viewerAxUserId
+        #             && ciasPerm.UserId != canonicalViewerAxUserId
+        #             && ciasPerm.UserId != viewerAlias)
+        #            {
+        #                continue;
+        #            }
+        #
+        #            select firstOnly webModule
+        #            where webModule.AppCode    == candidateAccessLevel.AppCode
+        #               && webModule.ModuleCode == candidateAccessLevel.ModuleCode
+        #                   && webModule.IsActive   == NoYes::Yes;
+        #
+        #            if (!webModule.RecId)
+        #                continue;
+        #
+        #            select firstOnly webApp
+        #            where webApp.AppCode       == webModule.AppCode
+        #                   && webApp.IsActive == NoYes::Yes;
+        #
+        #            if (!webApp.RecId)
+        #                continue;
+        #
+        #            switch (candidateAccessLevel.DataVisibilityMode)
+        #            {
+        #                case INDDataVisibilityMode::OwnOnly:
+        #                    candidateVisibilityRank = 0;
+        #                    break;
+        #                case INDDataVisibilityMode::ManualTargetsOnly:
+        #                    candidateVisibilityRank = 1;
+        #                    break;
+        #                case INDDataVisibilityMode::HierarchyOnly:
+        #                    candidateVisibilityRank = 2;
+        #                    break;
+        #                case INDDataVisibilityMode::OwnAndHierarchy:
+        #                    candidateVisibilityRank = 3;
+        #                    break;
+        #                case INDDataVisibilityMode::AllUsers:
+        #                    candidateVisibilityRank = 4;
+        #                    break;
+        #                default:
+        #                    candidateVisibilityRank = 0;
+        #                    break;
+        #            }
+        #
+        #            switch (candidateAccessLevel.HierarchyDepth)
+        #            {
+        #                case INDDataVisibilityHierarchyDepth::DirectOnly:
+        #                    candidateHierarchyRank = 0;
+        #                    break;
+        #                case INDDataVisibilityHierarchyDepth::FullDescendants:
+        #                    candidateHierarchyRank = 1;
+        #                    break;
+        #                default:
+        #                    candidateHierarchyRank = 0;
+        #                    break;
+        #            }
+        #
+        #            switch (candidateAccessLevel.MutationPolicy)
+        #            {
+        #                case INDMutationPolicy::OwnOnly:
+        #                    candidateMutationRank = 0;
+        #                    break;
+        #                case INDMutationPolicy::SameAsVisibility:
+        #                    candidateMutationRank = 1;
+        #                    break;
+        #                default:
+        #                    candidateMutationRank = 0;
+        #                    break;
+        #            }
+        #
+        #            candidateAccessRank = any2int(candidateAccessLevel.AccessRights);
+        #
+        #            if (!bestRecId
+        #             || candidateVisibilityRank < bestVisibilityRank
+        #             || (candidateVisibilityRank == bestVisibilityRank && candidateHierarchyRank < bestHierarchyRank)
+        #             || (candidateVisibilityRank == bestVisibilityRank && candidateHierarchyRank == bestHierarchyRank && candidateMutationRank < bestMutationRank)
+        #             || (candidateVisibilityRank == bestVisibilityRank && candidateHierarchyRank == bestHierarchyRank && candidateMutationRank == bestMutationRank && candidateAccessRank < bestAccessRank)
+        #             || (candidateVisibilityRank == bestVisibilityRank && candidateHierarchyRank == bestHierarchyRank && candidateMutationRank == bestMutationRank && candidateAccessRank == bestAccessRank && candidateAccessLevel.RecId < bestRecId))
+        #            {
+        #                bestRecId          = candidateAccessLevel.RecId;
+        #                bestVisibilityRank = candidateVisibilityRank;
+        #                bestHierarchyRank  = candidateHierarchyRank;
+        #                bestMutationRank   = candidateMutationRank;
+        #                bestAccessRank     = candidateAccessRank;
+        #            }
+        #        }
+        #
+        #        if (bestRecId)
+        #        {
+        #            select firstonly moduleAccessLevel
+        #                where moduleAccessLevel.RecId == bestRecId;
+        #
+        #            moduleAccessLevel = INDControlDataVisibilityResolver::applyEffectiveAccessNormalization(
+        #                moduleAccessLevel,
+        #                _moduleCode,
+        #                today());
+        #        }
+        #    }
+        #
+        #    return moduleAccessLevel;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveActivePersonByAlias
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve una persona activa por Alias funcional.
+        #static INDPersonaTable resolveActivePersonByAlias(INDGestPersonaId _personAlias)
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!_personAlias)
+        #        return person;
+        #
+        #    select firstonly person
+        #        where person.Alias   == _personAlias
+        #           && person.Blocked == NoYes::No;
+        #
+        #    return person;
+        #}
+      ENDSOURCE
+      SOURCE #resolveActivePersonByAxUserId
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve una persona activa desde el usuario Axapta.
+        #static INDPersonaTable resolveActivePersonByAxUserId(UserId _axUserId)
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    if (!_axUserId)
+        #        return person;
+        #
+        #    select firstonly person
+        #        where (person.UserId  == _axUserId || person.Alias  == _axUserId)
+        #           && person.Blocked == NoYes::No;
+        #
+        #    return person;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #resolveAxUserIdByAlias
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Devuelve el usuario Axapta asociado a un Alias activo.
+        #static UserId resolveAxUserIdByAlias(str _personAlias)
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAlias(_personAlias);
+        #
+        #    return person.UserId;
+        #}
+      ENDSOURCE
+      SOURCE #resolveCrmUserIdByAlias
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Devuelve el usuario CRM asociado a un Alias activo cuando existe mapeo legacy.
+        #static CRMUserId resolveCrmUserIdByAlias(INDGestPersonaId _personAlias)
+        #{
+        #    INDPersonaTable person;
+        #    CRMUsuarioTable crmUsuarioTable;
+        #    ;
+        #
+        #    if (!_personAlias)
+        #        return "";
+        #
+        #    select firstonly person
+        #        where person.Alias   == _personAlias
+        #           && person.Blocked == NoYes::No
+        #    join crmUsuarioTable
+        #        where crmUsuarioTable.RecId == person.RefRecIdCRM;
+        #
+        #    return crmUsuarioTable.UserId;
+        #}
+      ENDSOURCE
+      SOURCE #resolvePersonAliasByAxUserId
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Devuelve el Alias funcional asociado a un usuario Axapta activo.
+        #static str resolvePersonAliasByAxUserId(UserId _axUserId)
+        #{
+        #    INDPersonaTable person;
+        #    ;
+        #
+        #    person = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(_axUserId);
+        #
+        #    return person.Alias;
+        #}
+      ENDSOURCE
+      SOURCE #resolveVisibleAxUserIds
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Convierte los Alias visibles a usuarios Axapta.
+        #static Set resolveVisibleAxUserIds(UserId      _viewerAxUserId,
+        #                                   DataAreaId  _companyId,
+        #                                   str         _appCode,
+        #                                   str         _moduleCode,
+        #                                   date        _asOfDate)
+        #{
+        #    Set         visibleAliases;
+        #    Set         axUserIds = new Set(Types::String);
+        #    SetIterator si;
+        #    str         personAlias;
+        #    UserId      axUserId;
+        #    ;
+        #
+        #    visibleAliases = INDControlDataVisibilityResolver::resolveVisiblePersonAliases(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _asOfDate);
+        #
+        #    si = new SetIterator(visibleAliases);
+        #
+        #    while (si.more())
+        #    {
+        #        personAlias = si.value();
+        #
+        #        changecompany (_companyId)
+        #        {
+        #            axUserId = INDControlDataVisibilityResolver::resolveAxUserIdByAlias(personAlias);
+        #        }
+        #
+        #        if (axUserId)
+        #            axUserIds.add(axUserId);
+        #
+        #        si.next();
+        #    }
+        #
+        #    return axUserIds;
+        #}
+      ENDSOURCE
+      SOURCE #resolveVisibleCrmUserIds
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Convierte los Alias visibles a usuarios CRM legacy.
+        #static Set resolveVisibleCrmUserIds(UserId      _viewerAxUserId,
+        #                                    DataAreaId  _companyId,
+        #                                    str         _appCode,
+        #                                    str         _moduleCode,
+        #                                    date        _asOfDate)
+        #{
+        #
+        #    Set         visibleAliases;
+        #    Set         crmUserIds = new Set(Types::String);
+        #    SetIterator si;
+        #    str         personAlias;
+        #    CRMUserId   crmUserId;
+        #    ;
+        #
+        #    visibleAliases = INDControlDataVisibilityResolver::resolveVisiblePersonAliases(
+        #        _viewerAxUserId,
+        #        _companyId,
+        #        _appCode,
+        #        _moduleCode,
+        #        _asOfDate);
+        #
+        #    si = new SetIterator(visibleAliases);
+        #
+        #    while (si.more())
+        #    {
+        #        personAlias = si.value();
+        #
+        #        changecompany (_companyId)
+        #        {
+        #            crmUserId = INDControlDataVisibilityResolver::resolveCrmUserIdByAlias(personAlias);
+        #        }
+        #
+        #        if (crmUserId)
+        #            crmUserIds.add(crmUserId);
+        #
+        #        si.next();
+        #    }
+        #
+        #    return crmUserIds;
+        #}
+      ENDSOURCE
+      SOURCE #resolveVisiblePersonAliases
+        #//MMS - Ajustes CRM - 2026.06.04
+        #// Resuelve el conjunto final de Alias visibles aplicando modo base, jerarquia y targets.
+        #static Set resolveVisiblePersonAliases(UserId      _viewerAxUserId,
+        #                                       DataAreaId  _companyId,
+        #                                       str         _appCode,
+        #                                       str         _moduleCode,
+        #                                       date        _asOfDate)
+        #{
+        #    Set                             visibleAliases = new Set(Types::String);
+        #    Set                             finalAliases   = new Set(Types::String);
+        #    Set                             hierarchyAliases;
+        #    Set                             addAliases;
+        #    Set                             removeAliases  = new Set(Types::String);
+        #    SetIterator                     si;
+        #    str                             personAlias;
+        #    INDPersonaTable                 viewerPerson;
+        #    INDPersonaTable                 person;
+        #    INDWebModuleAccessLevel         moduleAccessLevel;
+        #    INDDataVisibilityHierarchyDepth hierarchyDepth;
+        #    ;
+        #
+        #    if (!_viewerAxUserId || !_companyId || !_appCode || !_moduleCode)
+        #        return finalAliases;
+        #
+        #    if (_asOfDate == dateNull())
+        #        _asOfDate = today();
+        #
+        #    changecompany (_companyId)
+        #    {
+        #        viewerPerson = INDControlDataVisibilityResolver::resolveActivePersonByAxUserId(_viewerAxUserId);
+        #
+        #        moduleAccessLevel = INDControlDataVisibilityResolver::findModuleAccessLevel(
+        #            _viewerAxUserId,
+        #            _companyId,
+        #            _appCode,
+        #            _moduleCode);
+        #
+        #        if (viewerPerson.RecId && moduleAccessLevel.RecId)
+        #        {
+        #            hierarchyDepth = moduleAccessLevel.HierarchyDepth;
+        #
+        #            switch (moduleAccessLevel.DataVisibilityMode)
+        #            {
+        #                case INDDataVisibilityMode::OwnOnly:
+        #                    visibleAliases.add(viewerPerson.Alias);
+        #                    break;
+        #
+        #                case INDDataVisibilityMode::OwnAndHierarchy:
+        #                    visibleAliases.add(viewerPerson.Alias);
+        #
+        #                    hierarchyAliases = INDModuleDataVisibilityHierarchyLine::resolveDescendants(
+        #                        _companyId,
+        #                        viewerPerson.Alias,
+        #                        false,
+        #                        hierarchyDepth,
+        #                        _asOfDate);
+        #
+        #                    INDControlDataVisibilityResolver::addSetToSet(visibleAliases, hierarchyAliases);
+        #                    break;
+        #
+        #                case INDDataVisibilityMode::HierarchyOnly:
+        #                    hierarchyAliases = INDModuleDataVisibilityHierarchyLine::resolveDescendants(
+        #                        _companyId,
+        #                        viewerPerson.Alias,
+        #                        false,
+        #                        hierarchyDepth,
+        #                        _asOfDate);
+        #
+        #                    INDControlDataVisibilityResolver::addSetToSet(visibleAliases, hierarchyAliases);
+        #                    break;
+        #
+        #                case INDDataVisibilityMode::ManualTargetsOnly:
+        #                    break;
+        #
+        #                case INDDataVisibilityMode::AllUsers:
+        #                    while select person
+        #                        where person.Blocked == NoYes::No
+        #                    {
+        #                        if (person.Alias)
+        #                            visibleAliases.add(person.Alias);
+        #                    }
+        #                    break;
+        #
+        #                default:
+        #                    visibleAliases.add(viewerPerson.Alias);
+        #                    break;
+        #            }
+        #
+        #            //MMS - Ajustes CRM - 2026.06.22
+        #            // Solo propios es cerrado: no puede ampliarse con targets ni jerarquia.
+        #            if (moduleAccessLevel.DataVisibilityMode != INDDataVisibilityMode::OwnOnly)
+        #            {
+        #            addAliases = INDModuleDataVisibilityTarget::resolveTargets(
+        #                _companyId,
+        #                moduleAccessLevel.RecId,
+        #                INDDataVisibilityTargetAction::Add,
+        #                hierarchyDepth,
+        #                _asOfDate);
+        #
+        #            INDControlDataVisibilityResolver::addSetToSet(visibleAliases, addAliases);
+        #
+        #            removeAliases = INDModuleDataVisibilityTarget::resolveTargets(
+        #                _companyId,
+        #                moduleAccessLevel.RecId,
+        #                INDDataVisibilityTargetAction::Remove,
+        #                hierarchyDepth,
+        #                _asOfDate);
+        #            }
+        #            si = new SetIterator(visibleAliases);
+        #
+        #            while (si.more())
+        #            {
+        #                personAlias = si.value();
+        #
+        #                if (personAlias && !removeAliases.in(personAlias))
+        #                {
+        #                    person = INDControlDataVisibilityResolver::resolveActivePersonByAlias(personAlias);
+        #
+        #                    if (person.RecId)
+        #                        finalAliases.add(personAlias);
+        #                }
+        #
+        #                si.next();
+        #            }
+        #        }
+        #    }
+        #
+        #    return finalAliases;
+        #}
+        #
+      ENDSOURCE
+    ENDMETHODS
+  ENDCLASS
+
+***Element: END

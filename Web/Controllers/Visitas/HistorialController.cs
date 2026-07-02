@@ -1,5 +1,7 @@
 ﻿using IND_CRM_APP.Models.Activities;
 using IND_CRM_APP.Services;
+using IND_CRM_APP.Models.CRM;
+using IND_CRM_APP.Models.Shared;
 using IND_CRM_APP.Infrastructure.Localization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
@@ -12,15 +14,20 @@ namespace IND_CRM_APP.Controllers
     // Controller for activity history
     public class HistorialController : BaseMvcController
     {
+        private readonly IIndAuthContextService _authContext;
         private readonly ILogger<HistorialController> _logger;
         private readonly IStringLocalizer<INDSharedResource> _sr;
+        private const string DataVisibilityAppCode = "CRM";
+        private const string DataVisibilityVisitsModuleCode = "VISITAS_GESTION";
 
         public HistorialController(
             ICrmApiClient apiClient,
             ITokenSessionService tokenSession,
+            IIndAuthContextService authContext,
             ILogger<HistorialController> logger,
             IStringLocalizer<INDSharedResource> sr) : base(apiClient, tokenSession)
         {
+            _authContext = authContext;
             _logger = logger;
             _sr = sr;
         }
@@ -33,9 +40,8 @@ namespace IND_CRM_APP.Controllers
             if (string.IsNullOrEmpty(token))
                 return RedirectToAction("Login", "Auth");
 
-            // Load environment and company using API client
-            var environment = await _apiClient.GetEnvironmentAsync(token);
-            var company = await _apiClient.GetCompanyNameAsync(token);
+            var environment = await LoadEnvironmentNameOrDefaultAsync(token);
+            var company = await LoadCompanyNameOrDefaultAsync(token);
 
             ViewBag.Environment = string.IsNullOrWhiteSpace(environment) ? "Unknown" : environment;
             ViewBag.Company = string.IsNullOrWhiteSpace(company) ? "N/A" : company;
@@ -45,8 +51,95 @@ namespace IND_CRM_APP.Controllers
             var fromDate = today.AddDays(-89);
             ViewBag.DefaultFromDate = fromDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
             ViewBag.DefaultToDate = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+            ViewBag.SelectedCompanyId = HttpContext.Session.GetString("INDCompanySelected") ?? string.Empty;
+            ViewBag.CurrentAxUserId = GetCurrentSessionAxUserId() ?? string.Empty;
+            ViewBag.PermissionsRevision = HttpContext.Session.GetString("INDPermissionsRevision") ?? string.Empty;
+            ViewBag.VisibleVisitUsers = await LoadVisibleVisitUsersForViewAsync(token);
 
             return View("~/Web/Views/Visitas/History.cshtml");
+        }
+
+        // API route used by React clients for /api/crm/data-visibility/visible-users.
+        [HttpGet]
+        public async Task<IActionResult> ApiVisibleVisitUsers(
+            string? appCode = DataVisibilityAppCode,
+            string? moduleCode = DataVisibilityVisitsModuleCode,
+            bool includeCrmUserId = true)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiPagedError(StatusCodes.Status401Unauthorized, _sr["Api_SessionExpired"].Value);
+
+            var normalizedAppCode = NormalizeOptionalText(appCode) ?? DataVisibilityAppCode;
+            var normalizedModuleCode = NormalizeOptionalText(moduleCode) ?? DataVisibilityVisitsModuleCode;
+            if (!string.Equals(normalizedAppCode, DataVisibilityAppCode, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(normalizedModuleCode, DataVisibilityVisitsModuleCode, StringComparison.OrdinalIgnoreCase))
+            {
+                return CreateApiPagedError(StatusCodes.Status400BadRequest, _sr["Api_RequestFailed"].Value);
+            }
+
+            try
+            {
+                var currentAxUserId = GetCurrentSessionAxUserId();
+                var selectedCompanyId = HttpContext.Session.GetString("INDCompanySelected") ?? string.Empty;
+                var permissionsRevision = HttpContext.Session.GetString("INDPermissionsRevision") ?? string.Empty;
+
+                _logger.LogInformation(
+                    "ApiVisibleVisitUsers request trace. SessionAxUser={SessionAxUser}; SelectedCompany={SelectedCompany}; PermissionsRevision={PermissionsRevision}; AppCode={AppCode}; ModuleCode={ModuleCode}",
+                    currentAxUserId ?? string.Empty,
+                    selectedCompanyId,
+                    permissionsRevision,
+                    normalizedAppCode,
+                    normalizedModuleCode);
+
+                var result = await GetVisibleUsersWithRecoveryAsync(
+                    token,
+                    normalizedAppCode,
+                    normalizedModuleCode,
+                    includeCrmUserId);
+
+                var items = result.GetAnyItems()
+                    .Select(NormalizeVisibleUser)
+                    .Where(x => !string.IsNullOrWhiteSpace(x.AxUserId))
+                    .GroupBy(x => x.AxUserId, StringComparer.OrdinalIgnoreCase)
+                    .Select(x => x.First())
+                    .OrderBy(x => string.IsNullOrWhiteSpace(x.Name) ? x.AxUserId : x.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                var responsePage = result.Page > 0 ? result.Page : 1;
+                var responsePageSize = result.PageSize > 0 ? result.PageSize : items.Count;
+
+                _logger.LogInformation(
+                    "ApiVisibleVisitUsers response trace. Success={Success}; Message={Message}; TraceId={TraceId}; ItemCount={ItemCount}; Total={Total}; Page={Page}; PageSize={PageSize}",
+                    result.Success,
+                    result.Message ?? string.Empty,
+                    result.TraceId ?? string.Empty,
+                    items.Count,
+                    result.Total,
+                    responsePage,
+                    responsePageSize);
+
+                return CreateApiPagedResponse(new
+                {
+                    Success = result.Success || items.Count > 0,
+                    Message = result.Message ?? string.Empty,
+                    Total = items.Count,
+                    Page = responsePage,
+                    PageSize = responsePageSize,
+                    Items = items,
+                    TraceId = result.TraceId
+                });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiVisibleVisitUsers");
+                return CreateApiPagedError(StatusCodes.Status502BadGateway, _sr["Api_RequestFailed"].Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in ApiVisibleVisitUsers");
+                return CreateApiPagedError(StatusCodes.Status500InternalServerError, _sr["Api_RequestFailed"].Value);
+            }
         }
 
         // Returns activity list as json with simple paging
@@ -68,11 +161,12 @@ namespace IND_CRM_APP.Controllers
             filter.fromDate = SanitizeDate(filter.fromDate);
             filter.toDate = SanitizeDate(filter.toDate);
             filter.accountNum = SanitizeValue(filter.accountNum);
+            filter.ownerAxUserId = SanitizeValue(filter.ownerAxUserId);
 
             try
             {
                 // Call API client (maps to api/crm/activities/list)
-                var result = await _apiClient.GetActivitiesAsync(token, filter);
+                var result = await GetActivitiesWithRecoveryAsync(token, filter);
 
                 if (result == null)
                     return Json(new { total = 0, items = Array.Empty<object>() });
@@ -80,10 +174,11 @@ namespace IND_CRM_APP.Controllers
                 var itemsList = result.GetAnyItems()?.ToList() ?? new List<ActivityDto>();
 
                 _logger.LogInformation(
-                    "GetActivities filter: from={From} to={To} accountNum={Account} items={Count}",
+                    "GetActivities filter: from={From} to={To} accountNum={Account} ownerAxUserId={OwnerAxUserId} items={Count}",
                     filter.fromDate,
                     filter.toDate,
                     filter.accountNum,
+                    filter.ownerAxUserId,
                     itemsList.Count);
 
                 if (!string.IsNullOrWhiteSpace(filter.accountNum))
@@ -137,6 +232,205 @@ namespace IND_CRM_APP.Controllers
         private static string SanitizeValue(string? value)
         {
             return string.IsNullOrWhiteSpace(value) ? string.Empty : value.Trim();
+        }
+
+        // Reads the current AX user id from the session context.
+        private string? GetCurrentSessionAxUserId()
+        {
+            return NormalizeOptionalText(HttpContext?.Session.GetString("AxUser"));
+        }
+
+        // Loads environment name without letting a non-critical header lookup break the page.
+        private async Task<string> LoadEnvironmentNameOrDefaultAsync(string token)
+        {
+            try
+            {
+                return await _apiClient.GetEnvironmentAsync(token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load environment name for history view.");
+                return "Unknown";
+            }
+        }
+
+        // Loads company display name from cache first, then API, with selected company id as last fallback.
+        private async Task<string> LoadCompanyNameOrDefaultAsync(string token)
+        {
+            var cachedCompanyName = GetCachedCompanyName();
+            if (!string.IsNullOrWhiteSpace(cachedCompanyName))
+                return cachedCompanyName;
+
+            try
+            {
+                return await _apiClient.GetCompanyNameAsync(token);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load company name for history view.");
+                return HttpContext.Session.GetString("INDCompanySelected") ?? "N/A";
+            }
+        }
+
+        // Trims optional text and preserves null for empty values.
+        private static string? NormalizeOptionalText(string? value)
+        {
+            return string.IsNullOrWhiteSpace(value) ? null : value.Trim();
+        }
+
+        // Sanitizes visible-user fields before returning them to React.
+        private static DataVisibilityVisibleUserDto NormalizeVisibleUser(DataVisibilityVisibleUserDto item)
+        {
+            return new DataVisibilityVisibleUserDto
+            {
+                Alias = SanitizeValue(item.Alias),
+                AxUserId = SanitizeValue(item.AxUserId),
+                CrmUserId = SanitizeValue(item.CrmUserId),
+                Name = SanitizeValue(item.Name),
+                Source = SanitizeValue(item.Source),
+                MutationPolicy = SanitizeValue(item.MutationPolicy),
+                MutationPolicyInt = item.MutationPolicyInt,
+                MutationPolicyLabel = SanitizeValue(item.MutationPolicyLabel),
+                CanMutate = item.CanMutate
+            };
+        }
+
+        // Preloads visible visit owners so React can render the filter in the correct state.
+        private async Task<List<DataVisibilityVisibleUserDto>> LoadVisibleVisitUsersForViewAsync(string token)
+        {
+            try
+            {
+                var result = await GetVisibleUsersWithRecoveryAsync(
+                    token,
+                    DataVisibilityAppCode,
+                    DataVisibilityVisitsModuleCode,
+                    includeCrmUserId: true);
+
+                return result.GetAnyItems()
+                    .Select(NormalizeVisibleUser)
+                    .Where(x => !string.IsNullOrWhiteSpace(x.AxUserId))
+                    .GroupBy(x => x.AxUserId, StringComparer.OrdinalIgnoreCase)
+                    .Select(x => x.First())
+                    .OrderBy(x => string.IsNullOrWhiteSpace(x.Name) ? x.AxUserId : x.Name, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not preload visible visit users for history view.");
+                return new List<DataVisibilityVisibleUserDto>();
+            }
+        }
+
+        // Reads visible users and retries once after reseeding the internal AX session.
+        private async Task<PagedApiResponse<DataVisibilityVisibleUserDto>> GetVisibleUsersWithRecoveryAsync(
+            string token,
+            string appCode,
+            string moduleCode,
+            bool includeCrmUserId)
+        {
+            var result = await _apiClient.GetVisibleUsersAsync(token, appCode, moduleCode, includeCrmUserId);
+            if (!ShouldRetryAfterAxSessionFailure(result))
+                return result;
+
+            var retryToken = await RecoverInternalApiSessionAsync("GetVisibleUsers");
+            if (string.IsNullOrWhiteSpace(retryToken))
+                return result;
+
+            return await _apiClient.GetVisibleUsersAsync(retryToken, appCode, moduleCode, includeCrmUserId);
+        }
+
+        // Reads activities and retries once after reseeding the internal AX session.
+        private async Task<PagedApiResponse<ActivityDto>> GetActivitiesWithRecoveryAsync(string token, ActivitiesFilter filter)
+        {
+            var result = await _apiClient.GetActivitiesAsync(token, filter);
+            if (!ShouldRetryAfterAxSessionFailure(result))
+                return result;
+
+            var retryToken = await RecoverInternalApiSessionAsync("GetActivities");
+            if (string.IsNullOrWhiteSpace(retryToken))
+                return result;
+
+            return await _apiClient.GetActivitiesAsync(retryToken, filter);
+        }
+
+        // Forces context refresh so the API login endpoint caches the service AX password again.
+        private async Task<string?> RecoverInternalApiSessionAsync(string operation)
+        {
+            try
+            {
+                var refreshResult = await _authContext.EnsureContextAsync(forceRefresh: true);
+                if (!refreshResult.Success)
+                {
+                    _logger.LogWarning(
+                        "Could not recover internal API session before retrying {Operation}. ErrorCode={ErrorCode}; Message={Message}",
+                        operation,
+                        refreshResult.ErrorCode ?? string.Empty,
+                        refreshResult.Message ?? string.Empty);
+                    return null;
+                }
+
+                var retryToken = GetToken();
+                _logger.LogInformation("Recovered internal API session before retrying {Operation}.", operation);
+                return retryToken;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Internal API session recovery failed before retrying {Operation}.", operation);
+                return null;
+            }
+        }
+
+        // Detects backend AX session-cache failures that are recoverable by a service login.
+        private static bool ShouldRetryAfterAxSessionFailure<T>(PagedApiResponse<T>? response)
+        {
+            if (response == null || response.Success || response.GetAnyItems().Any())
+                return false;
+
+            var errorCode = (response.ErrorCode ?? string.Empty).Trim();
+            if (string.Equals(errorCode, "AX_SESSION_ERROR", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "AX_COM_ERROR", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "INTERNAL_ERROR", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(errorCode, "UPSTREAM_ERROR", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+
+            var message = (response.Message ?? string.Empty).Trim();
+            return message.Contains("No hay credenciales disponibles", StringComparison.OrdinalIgnoreCase) ||
+                   message.Contains("Error interno", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Creates JSON responses with upstream casing preserved.
+        private static JsonResult CreateApiPagedResponse(object payload, int? statusCode = null)
+        {
+            var result = new JsonResult(
+                payload,
+                new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = null,
+                    DictionaryKeyPolicy = null
+                });
+
+            if (statusCode.HasValue)
+                result.StatusCode = statusCode;
+
+            return result;
+        }
+
+        // Creates a paged API error response for React callers.
+        private static JsonResult CreateApiPagedError(int statusCode, string message)
+        {
+            return CreateApiPagedResponse(
+                new
+                {
+                    Success = false,
+                    Message = message,
+                    Total = 0,
+                    Page = 1,
+                    PageSize = 0,
+                    Items = Array.Empty<object>()
+                },
+                statusCode);
         }
 
         private static long TryParseRecId(string? raw)

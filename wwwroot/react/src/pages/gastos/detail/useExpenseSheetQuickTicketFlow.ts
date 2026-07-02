@@ -172,7 +172,6 @@ export const useExpenseSheetQuickTicketFlow = ({
   const [traceList, setTraceList] = useState<TicketTraceEntry[]>([]);
   const [partialTicketFailure, setPartialTicketFailure] = useState<QuickCreatePartialTicketState | null>(null);
   const latestFileRef = useRef<{ cacheKey: string; file: File } | null>(null);
-  const latestCreatedTicketRef = useRef<QuickCreatePartialTicketState | null>(null);
   const progressStartedAtRef = useRef<number | null>(null);
 
   const progressMessage = useMemo(() => {
@@ -345,7 +344,6 @@ export const useExpenseSheetQuickTicketFlow = ({
   }, []);
 
   const clearFlowState = useCallback(() => {
-    latestCreatedTicketRef.current = null;
     setErrorMessage("");
     setPartialTicketFailure(null);
     setTraceList([]);
@@ -461,7 +459,6 @@ export const useExpenseSheetQuickTicketFlow = ({
       setDisplayProgressKey("done");
       await removeCachedImageFile(cacheKey);
       setAttemptId("");
-      latestCreatedTicketRef.current = null;
       setPartialTicketFailure(null);
       flashActionMark("okProcess", 1200);
       setBusy(false);
@@ -499,7 +496,7 @@ export const useExpenseSheetQuickTicketFlow = ({
             ticketImage: file,
             currencyCode: safeText(currencyCode).toUpperCase() || undefined,
             existingHojaGastosId: linkToSheet ? safeText(sheetId) || undefined : undefined,
-            projectId: linkToSheet ? safeText(projectId) || undefined : undefined,
+            projId: linkToSheet ? safeText(projectId) || undefined : undefined,
           },
           buildApiOptions()
         );
@@ -521,10 +518,6 @@ export const useExpenseSheetQuickTicketFlow = ({
                 processedByAI: response.Data?.ProcessedByAI ?? null,
               }
             : null;
-
-        if (partialState) {
-          latestCreatedTicketRef.current = partialState;
-        }
 
         if (response.Success === true) {
           if (!fileId) {
@@ -757,18 +750,6 @@ export const useExpenseSheetQuickTicketFlow = ({
     return;
   }, []);
 
-  const openCreatedTicket = useCallback(() => {
-    const createdTicket = partialTicketFailure || latestCreatedTicketRef.current;
-    const fileId = safeText(createdTicket?.fileId);
-    if (!fileId) return;
-
-    clearCachedCurrentImage();
-    setAttemptId("");
-    setErrorMessage("");
-    setPartialTicketFailure(null);
-    onCompleted?.({ fileId, linkedToSheet: createdTicket?.linkedToSheet === true });
-  }, [clearCachedCurrentImage, onCompleted, partialTicketFailure]);
-
   const openSourcePicker = useCallback(() => {
     if (!ensureQuickCreatePermission()) return;
     setErrorMessage("");
@@ -798,7 +779,6 @@ export const useExpenseSheetQuickTicketFlow = ({
 
   const clearError = useCallback(() => {
     clearCachedCurrentImage();
-    latestCreatedTicketRef.current = null;
     setAttemptId("");
     setErrorMessage("");
     setPartialTicketFailure(null);
@@ -825,7 +805,6 @@ export const useExpenseSheetQuickTicketFlow = ({
     selectFromGallery,
     handleSelectedFile,
     retryPendingUpload,
-    openCreatedTicket,
     clearError,
   };
 };

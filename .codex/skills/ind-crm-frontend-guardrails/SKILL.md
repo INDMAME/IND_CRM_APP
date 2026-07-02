@@ -1,6 +1,6 @@
 ---
 name: ind-crm-frontend-guardrails
-description: Use when working on IND_CRM_APP frontend scope (Razor views, React islands, Tailwind UI, frontend i18n, UI API consumption, DEV to PROD release commands such as "genera una release a PROD" and "publica DEV en PROD", or local IIS publish commands such as "publica en iis") and changes must follow .codex guardrails.
+description: Use when working on IND_CRM_APP frontend scope (Razor views, React islands, Tailwind UI, frontend i18n, UI API consumption, record-level security/data visibility, explicit DEV to PROD commands such as "merge a prod", or local IIS publish commands such as "publica") and changes must follow .codex guardrails.
 ---
 
 # IND CRM Frontend Guardrails
@@ -15,9 +15,10 @@ Use this skill when a task touches one or more of:
 - Razor or React islands UI, forms, dropdowns, filters, calendars, or event handlers.
 - Frontend hooks, components, UI services, page bootstrap, or API integration from the UI layer.
 - Frontend auth/token usage, localization resources, payload formats, or release validation.
+- Record-level security, module data visibility, visible users, subordinates, owner-based filters, or CRUD gated by record ownership.
 - Frontend publish validation steps (`C:\inetpub\wwwroot\IND_CRM_APP`, `iisreset`) when release scope requires it.
-- Explicit DEV to PROD release requests such as `genera una release a PROD`, `publica DEV en PROD`, or equivalent wording.
-- Explicit local web publish requests such as `publica en iis`.
+- Explicit DEV to PROD requests such as `merge a prod`.
+- Local web publish requests such as `publica`, `publica la web`, `republica`, or `publica en iis`.
 - `.codex` guardrail documentation or skill maintenance.
 
 ## When NOT to Use
@@ -64,6 +65,7 @@ Conflict precedence:
 | Numeric format baseline | Currency/price/qty/amount/exchange-rate fields must render as `#,##0.00` (comma thousands, dot decimals, always 2 decimal digits). Use shared formatter/parser utilities and normalize editable values on blur. |
 | Security baseline | Permission-gate edit/delete/create controls, gate self-management flows with AuthContext `allowSelfManagement`, keep server as source of truth, and use integrated confirm/unsaved-change modals. |
 | Self-management permission | Read `allowSelfManagement` from `useAuthContext()` only (selected company source) and gate both editable UI states and protected mutation payload fields. |
+| Record-level security | Use `useModuleDataVisibility`, require `OwnerAxUserId` from list/detail contracts when possible, and keep API/AX as the authorization source of truth. |
 | Performance baseline | Avoid client waterfalls, deduplicate global listeners, and keep effect dependencies stable and primitive when possible. |
 | Composition baseline | Avoid boolean prop proliferation; prefer explicit variants/composition and keep shared components dumb. |
 | Module boundary | Keep orchestration state in module page hooks; promote to shared only when two modules reuse same contract. |
@@ -74,9 +76,10 @@ Conflict precedence:
 | Public validation default | For visual or E2E validation, publish first and run the check against the public URL/IP using the authenticated public session. Treat localhost validation as diagnostic only unless the user explicitly asks for local-only testing. |
 | React Doctor gate | Before final response, run `npm run check:react-doctor`, fix diagnostics in changed frontend files, and rerun before closing the task. |
 | Clean-code gate | Before final response, review touched code for low-risk refactors that improve clean code and preserve module boundaries; apply them when safe. |
-| DEV to PROD release keywords | If the user says `genera una release a PROD`, `publica DEV en PROD`, or equivalent DEV to PROD release wording, execute the conservative release workflow from `references/AGENTS.md` and `references/QUALITY_CHECKLIST.md`. |
-| Local IIS publish keyword | If the user says `publica en iis`, treat that as the explicit local web publish command: run the required validation/build steps, execute `publish.ps1`, and confirm IIS restart and site health before closing. |
-| Publish ambiguity rule | Do not treat generic `publica` as enough to choose between release and local IIS publish. If intent is not explicit, stop and clarify. |
+| Branch safety | Always work locally on `DEV` and push only to `origin/DEV`; never push, merge, fast-forward, or switch local release work to `PROD`/`main`. Production promotion requires a numbered `DEV` -> `PROD` PR with required checks and auto-merge. |
+| DEV to PROD release keyword | Only if the user explicitly says `merge a prod` or `merge DEV a PROD`, execute the conservative release workflow from `references/AGENTS.md` and `references/QUALITY_CHECKLIST.md`. |
+| Local IIS publish default | If the user says `publica`, `publica la web`, `republica`, `publica en iis`, or asks to publish/deploy the web without saying `merge a prod`, run the required validation/build steps, execute `publish.ps1`, and confirm IIS restart and site health before closing. |
+| Production safety rule | Never perform a DEV to PROD PR, merge, fast-forward, production branch checkout, or production push unless the user explicitly says `merge a prod`. |
 | Test execution default | IMPORTANT: when user asks to create or run a frontend test, default to public URL E2E (`baseURL`) using real pages. Use local fixtures or mocked fetch only when the user explicitly requests fixture-based testing. |
 | Documentation sync | Edit root `.codex/*.md` files or `.codex/config.toml` and run `npm run sync:skill:local:references` when references are changed. |
 | Completion checks | Run `references/QUALITY_CHECKLIST.md`; publish plus `iisreset` when frontend release tasks require it. |
@@ -112,6 +115,14 @@ Required triggers:
    - Define page decomposition (container, dumb components, hooks, utilities/services, and target paths).
    - If decomposition is unclear, ask clarifying questions before coding.
    - Confirm input type for every new input-like field (`remote-search-dropdown`, `fixed-enum-instant-search`, `fixed-enum-select`).
+   - For record-level security or module data visibility, ask:
+     - Which `appCode` and `moduleCode` apply?
+     - Which API/AX field identifies the owner AX user, and is `OwnerAxUserId` guaranteed in list and detail responses?
+     - Which operations are gated: view/filter, create, edit, delete, or all mutations?
+     - What should the UI do when mutation is not allowed?
+     - Which mutation policy applies, and does the endpoint return `CanMutate` plus policy fields?
+     - Should `includeCrmUserId` be enabled?
+     - How should preload/cache scope include company, AX user, and permissions revision?
    - IMPORTANT: run monolith prevention gate for every new functionality:
      - Identify current large objects likely to absorb new logic.
      - Propose focused split (page container, dumb components, hooks, service adapters, mappers, utilities).
@@ -142,9 +153,9 @@ Required triggers:
    - Run `npm run check:react-doctor` before the final response. The repo-level `react-doctor.config.json` ignores mirror/generated paths, so diagnostics in changed frontend files are blocking and must be fixed or explicitly justified if unrelated legacy findings remain.
    - Run a final clean-code pass on touched frontend files before closing the task. Check for mixed concerns, duplicated logic, oversized objects, and misplaced responsibilities across page, hook, service, mapper, utility, and component boundaries.
    - If a low-risk refactor would materially improve modularity or clarity, apply it in the same task before closing. If not, explicitly confirm the touched code already fits the modular architecture.
-   - If the user explicitly requests a DEV to PROD release (`genera una release a PROD`, `publica DEV en PROD`, or equivalent), follow the authoritative workflow in `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
-   - If the user explicitly says `publica en iis`, run the local IIS publish workflow from `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
-   - If the user only says generic `publica`, do not guess between release and local IIS publish. Stop and clarify.
+   - If the user explicitly requests `merge a prod`, follow the authoritative DEV to PROD workflow in `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
+   - Never use direct merge, fast-forward, or direct push to `PROD`/`main` as a release fallback. If the protected PR auto-merge flow is blocked, report the blocker and stop.
+   - If the user says `publica`, `publica la web`, `republica`, `publica en iis`, or asks to publish/deploy the web without saying `merge a prod`, run the local IIS publish workflow from `references/AGENTS.md` and validate it with `references/QUALITY_CHECKLIST.md`.
    - For publish scope, deploy with `publish.ps1` and verify the app is serving current artifacts before accepting results.
 8. If guardrail docs changed, sync root `.codex/*.md` and `.codex/config.toml` to `references/` with `npm run sync:skill:local:references`.
 
@@ -188,4 +199,4 @@ This addendum stays in force together with the original frontend guardrails abov
 - Debugging or validating behavior against stale runtime/build output.
 
 ## Last updated
-- 2026-03-27
+- 2026-06-10

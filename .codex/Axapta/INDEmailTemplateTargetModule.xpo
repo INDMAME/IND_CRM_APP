@@ -1,0 +1,74 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBE
+
+; Navision Axapta Enumtype : INDEmailTemplateTargetModule unloaded at Jueves 28/05/2026
+; --------------------------------------------------------------------------------
+  ENUMTYPEVERSION 1
+  
+  ENUMTYPE #INDEmailTemplateTargetModule
+    PROPERTIES
+      Name                #INDEmailTemplateTargetModule
+      Label               #Módulo destino
+      Help                #
+      DisplayLength       #Auto
+      Style               #Combo box
+      ConfigurationKey    #
+      UseEnumValue        #Yes
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+      #Empty
+      PROPERTIES
+        Name                #Empty
+        Label               #Vacio
+        ConfigurationKey    #
+        EnumValue           #0
+      ENDPROPERTIES
+      
+      #CRMInReview
+      PROPERTIES
+        Name                #CRMInReview
+        Label               #CRM - Aprobación solicitada
+        ConfigurationKey    #
+        EnumValue           #1
+      ENDPROPERTIES
+      
+      #CRMApproved
+      PROPERTIES
+        Name                #CRMApproved
+        Label               #CRM - Aprobado
+        ConfigurationKey    #
+        EnumValue           #2
+      ENDPROPERTIES
+      
+      #CRMRejected
+      PROPERTIES
+        Name                #CRMRejected
+        Label               #CRM - Rechazado
+        ConfigurationKey    #
+        EnumValue           #3
+      ENDPROPERTIES
+      
+      #CRMPaid
+      PROPERTIES
+        Name                #CRMPaid
+        Label               #CRM - Pagado
+        ConfigurationKey    #
+        EnumValue           #4
+      ENDPROPERTIES
+      
+      #EmailTest
+      PROPERTIES
+        Name                #EmailTest
+        Label               #Email TEST
+        ConfigurationKey    #
+        EnumValue           #6
+      ENDPROPERTIES
+      
+    ENDTYPEELEMENTS
+  ENDENUMTYPE
+  
+
+***Element: END

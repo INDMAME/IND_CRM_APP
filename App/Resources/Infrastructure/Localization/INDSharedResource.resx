@@ -109,13 +109,19 @@
     <value>No</value>
   </data>
   <data name="Tickets_Field_FileId" xml:space="preserve">
-    <value>Ticket</value>
+    <value>Ticket Id.</value>
   </data>
   <data name="Tickets_Field_ExpenseSheetDisplay" xml:space="preserve">
-    <value>Hoja de gastos</value>
+    <value>Hoja de gasto Id.</value>
   </data>
   <data name="Tickets_Field_Status" xml:space="preserve">
     <value>Estado</value>
+  </data>
+  <data name="Tickets_Field_TicketDate" xml:space="preserve">
+    <value>Fecha</value>
+  </data>
+  <data name="Tickets_Field_TicketTime" xml:space="preserve">
+    <value>Hora</value>
   </data>
   <data name="Tickets_Detail_Title" xml:space="preserve">
     <value>Detalle ticket</value>
@@ -173,6 +179,24 @@
   </data>
   <data name="ExpenseSheets_Detail_SaveChanges_Body" xml:space="preserve">
     <value>¿Deseas guardar los cambios de la hoja de gastos?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Title" xml:space="preserve">
+    <value>Actualizar líneas</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateReimbursable_Body" xml:space="preserve">
+    <value>El cambio de reembolsable se propagará a todas las líneas de la hoja de gastos. ¿Quieres continuar?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingReimbursable" xml:space="preserve">
+    <value>Actualizando líneas de la hoja de gastos...</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Title" xml:space="preserve">
+    <value>Actualizar líneas</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagateProject_Body" xml:space="preserve">
+    <value>Se van a actualizar los proyectos en todas las líneas, ¿deseas continuar?</value>
+  </data>
+  <data name="ExpenseSheets_Detail_PropagatingProject" xml:space="preserve">
+    <value>Actualizando proyectos de las líneas...</value>
   </data>
   <data name="ExpenseSheets_Detail_DeleteSheet_Title" xml:space="preserve">
     <value>Eliminar hoja de gastos</value>
@@ -252,6 +276,9 @@
   <data name="ExpenseSheets_Line_Validation_AmountQty" xml:space="preserve">
     <value>La cantidad y el precio deben ser mayores que 0.</value>
   </data>
+  <data name="ExpenseTickets_Line_Validation_AmountQty" xml:space="preserve">
+    <value>La cantidad no puede ser negativa, el precio no puede ser 0 y la cantidad 0 solo se permite en descuentos negativos.</value>
+  </data>
   <data name="ExpenseSheets_Filter_Project" xml:space="preserve">
     <value>Proyecto</value>
   </data>
@@ -324,8 +351,14 @@
   <data name="ExpenseSheets_Field_SheetId" xml:space="preserve">
     <value>Código hoja de gasto</value>
   </data>
+  <data name="ExpenseSheets_Detail_Field_Identifier" xml:space="preserve">
+    <value>Identificador</value>
+  </data>
   <data name="ExpenseSheets_Field_UserId" xml:space="preserve">
     <value>Usuario</value>
+  </data>
+  <data name="ExpenseSheets_Field_OwnerUser" xml:space="preserve">
+    <value>Usuario propietario</value>
   </data>
   <data name="ExpenseSheets_Field_Project" xml:space="preserve">
     <value>Proyecto</value>
@@ -342,11 +375,26 @@
   <data name="ExpenseSheets_Field_LocalCurrency" xml:space="preserve">
     <value>Divisa local</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementCurrency" xml:space="preserve">
+    <value>Divisa Reembolso</value>
+  </data>
   <data name="ExpenseSheets_Field_Status" xml:space="preserve">
     <value>Estado</value>
   </data>
   <data name="ExpenseSheets_Field_StatusComment" xml:space="preserve">
     <value>Comentario estado</value>
+  </data>
+  <data name="ExpenseSheets_Field_ReimbursableExpense" xml:space="preserve">
+    <value>Reembolsable</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
+    <value>Ambos</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Text" xml:space="preserve">
+    <value>Este valor puede definirse por defecto en la cabecera. Si se cambia m&#225;s adelante, se ofrecer&#225; la opci&#243;n de actualizar todas las l&#237;neas con el nuevo valor. Si una l&#237;nea modifica el valor heredado, la cabecera pasar&#225; a mostrar "Ambos".</value>
+  </data>
+  <data name="ExpenseSheets_Reimbursable_InfoPopover_Aria" xml:space="preserve">
+    <value>Mostrar informaci&#243;n de reembolsable</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Importe total</value>
@@ -360,14 +408,23 @@
   <data name="ExpenseSheets_Field_ExchangeRate" xml:space="preserve">
     <value>Tipo cambio</value>
   </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount" xml:space="preserve">
+    <value>Importe reembolso</value>
+  </data>
+  <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
+    <value>Imp. reemb. ({0})</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>Id línea</value>
   </data>
   <data name="ExpenseSheets_Field_Type" xml:space="preserve">
-    <value>Tipo</value>
+    <value>Categoría</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
     <value>Importe</value>
+  </data>
+  <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
+    <value>Imp. divisa</value>
   </data>
   <data name="ExpenseSheets_Field_Price" xml:space="preserve">
     <value>Precio</value>
@@ -389,6 +446,9 @@
   </data>
   <data name="ExpenseSheets_Validation_ExchangeRateRequired" xml:space="preserve">
     <value>Tipo de cambio obligatorio para divisa distinta de EUR.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
+    <value>Las lineas en divisa extranjera requieren un tipo de cambio mayor que 0 o un importe de reembolso.</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>Ticket</value>
@@ -537,6 +597,18 @@
   <data name="History_Filter_Client" xml:space="preserve">
     <value>Cuenta</value>
   </data>
+  <data name="History_Filter_Owner" xml:space="preserve">
+    <value>Propietario</value>
+  </data>
+  <data name="History_Filter_Owner_All" xml:space="preserve">
+    <value>Todos mis subordinados</value>
+  </data>
+  <data name="History_Filter_Owner_None" xml:space="preserve">
+    <value>Sin usuarios visibles</value>
+  </data>
+  <data name="History_Filter_Owner_Loading" xml:space="preserve">
+    <value>Cargando usuarios visibles</value>
+  </data>
   <data name="History_Filter_Clear" xml:space="preserve">
     <value>Borrar</value>
   </data>
@@ -629,6 +701,12 @@
   </data>
   <data name="History_Page_Last" xml:space="preserve">
     <value>Última</value>
+  </data>
+  <data name="RecordNavigator_AriaLabel" xml:space="preserve">
+    <value>Navegación de registros</value>
+  </data>
+  <data name="RecordNavigator_Position" xml:space="preserve">
+    <value>{0} de {1}</value>
   </data>
   <data name="Common_OK" xml:space="preserve">
     <value>Aceptar</value>
@@ -846,6 +924,9 @@
   <data name="Visits_Detail_VisitData_Title" xml:space="preserve">
     <value>Datos de la visita</value>
   </data>
+  <data name="Visits_Detail_Owner_Label" xml:space="preserve">
+    <value>Propietario</value>
+  </data>
   <data name="Visits_Detail_Date_Label" xml:space="preserve">
     <value>Fecha</value>
   </data>
@@ -854,6 +935,12 @@
   </data>
   <data name="Visits_Detail_VisitType_Placeholder" xml:space="preserve">
     <value>Selecciona tipo</value>
+  </data>
+  <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
+    <value>Método de contacto</value>
+  </data>
+  <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
+    <value>Selecciona método</value>
   </data>
   <data name="Visits_Detail_SaveChanges_Title" xml:space="preserve">
     <value>Guardar cambios</value>
@@ -945,6 +1032,15 @@
   <data name="Enum_TipoVisita_Technical" xml:space="preserve">
     <value>Técnica</value>
   </data>
+  <data name="Enum_ContactMethod_InPerson" xml:space="preserve">
+    <value>Presencial</value>
+  </data>
+  <data name="Enum_ContactMethod_PhoneCall" xml:space="preserve">
+    <value>Llamada telefónica</value>
+  </data>
+  <data name="Enum_ContactMethod_OnlineMeeting" xml:space="preserve">
+    <value>Reunión online</value>
+  </data>
   <data name="Enum_ActividadOrigen_Consulta" xml:space="preserve">
     <value>Consulta</value>
   </data>
@@ -988,7 +1084,7 @@
     <value>Comercial</value>
   </data>
   <data name="Enum_GastoType_Peaje" xml:space="preserve">
-    <value>Peaje</value>
+    <value>Peajes</value>
   </data>
   <data name="Enum_GastoType_Parking" xml:space="preserve">
     <value>Aparcamiento</value>
@@ -1011,8 +1107,44 @@
   <data name="Enum_GastoType_Varios" xml:space="preserve">
     <value>Varios</value>
   </data>
+  <data name="Enum_GastoType_MontajeNacional" xml:space="preserve">
+    <value>Montaje Nacional</value>
+  </data>
+  <data name="Enum_GastoType_MontajeNacionalFestivo" xml:space="preserve">
+    <value>Montaje Nacional Festivo</value>
+  </data>
+  <data name="Enum_GastoType_MontajeInternacional" xml:space="preserve">
+    <value>Montaje Internacional</value>
+  </data>
+  <data name="Enum_GastoType_MontajeInternacionalFestivo" xml:space="preserve">
+    <value>Montaje Internacional Festivo</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeNacional" xml:space="preserve">
+    <value>Dia de Viaje Nacional</value>
+  </data>
   <data name="Enum_GastoType_Taxi" xml:space="preserve">
     <value>Taxi</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeFestivoNacional" xml:space="preserve">
+    <value>Dia Viaje Festivo Nacional</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeInternacional" xml:space="preserve">
+    <value>Dia Viaje Internacional</value>
+  </data>
+  <data name="Enum_GastoType_DiaViajeFestivoInternacional" xml:space="preserve">
+    <value>Dia Viaje Festivo Internacional</value>
+  </data>
+  <data name="Enum_GastoType_Horas" xml:space="preserve">
+    <value>Horas</value>
+  </data>
+  <data name="Enum_GastoType_Propinas" xml:space="preserve">
+    <value>Propinas</value>
+  </data>
+  <data name="Enum_GastoType_Gasolina" xml:space="preserve">
+    <value>Gasolina</value>
+  </data>
+  <data name="Enum_GastoType_AdjustmentAmount" xml:space="preserve">
+    <value>Ajuste de importe</value>
   </data>
   <data name="Confirm_Delete_Title" xml:space="preserve">
     <value>Eliminar</value>
@@ -1185,6 +1317,9 @@
   <data name="ExpenseSheets_Line" xml:space="preserve">
     <value>Línea</value>
   </data>
+  <data name="ExpenseSheets_Line_Expense" xml:space="preserve">
+    <value>Línea gasto</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_Loading" xml:space="preserve">
     <value>Consultando tipo de cambio...</value>
   </data>
@@ -1243,13 +1378,16 @@
     <value>Obtenido por configuración global.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Text" xml:space="preserve">
-    <value>Tipo de cambio obtenido 0.0000000</value>
+    <value>Tipo de cambio aplicado para calcular el reembolso.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Aria" xml:space="preserve">
     <value>Mostrar información del tipo de cambio</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>Tipo de cambio obtenido {0}\nFecha: {1}\nOrigen: {2}</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nEl tipo de cambio indica cuántas unidades de la divisa del gasto equivalen a 100 unidades de la divisa de reembolso.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Tipo de cambio {0} {1}</value>
@@ -1508,5 +1646,29 @@
   </data>
   <data name="ExpenseSheets_Assistant_Message_Loading" xml:space="preserve">
     <value>Estoy preparando la respuesta...</value>
+  </data>
+  <data name="ExpenseSheets_Assistant_ChooseChartType_Question" xml:space="preserve">
+    <value>¿Qué tipo de visualización quieres ver?</value>
+  </data>
+  <data name="ExpenseSheetLink_InvalidLink" xml:space="preserve">
+    <value>El enlace de la hoja de gastos no es válido o está incompleto.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanyAccessDenied" xml:space="preserve">
+    <value>No tienes acceso a la empresa requerida por esta hoja de gastos.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitchFailed" xml:space="preserve">
+    <value>No se pudo cambiar el contexto de empresa para abrir esta hoja de gastos.</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetAccessDenied" xml:space="preserve">
+    <value>No tienes acceso a esta hoja de gastos.</value>
+  </data>
+  <data name="ExpenseSheetLink_SheetNotFound" xml:space="preserve">
+    <value>No se pudo encontrar la hoja de gastos.</value>
+  </data>
+  <data name="ExpenseSheetLink_ResolveFailed" xml:space="preserve">
+    <value>No se pudo resolver el enlace de la hoja de gastos. Inténtalo de nuevo o contacta con soporte.</value>
+  </data>
+  <data name="ExpenseSheetLink_CompanySwitched" xml:space="preserve">
+    <value>Se cambió el contexto de empresa para abrir la hoja de gastos desde el correo.</value>
   </data>
 </root>

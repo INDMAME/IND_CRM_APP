@@ -1,19 +1,36 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import VisitasPageProviders from "../../../components/commons/VisitasPageProviders.tsx";
+import RecordNavigator from "../../../components/commons/RecordNavigator.tsx";
 import { useAuthContext } from "../../../context/AuthContext.tsx";
+import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
+import { indFormat, indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import ExpenseSheetLineForm from "../components/ExpenseSheetLineForm.tsx";
+import ExpenseTicketLinesList from "../components/ExpenseTicketLinesList.tsx";
 import { getExpenseInternationalLabel, getExpenseInternationalOptions } from "../constants/internationalOptions.ts";
 import { parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
-import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
+import { appendExpenseTicketReturnQuery, saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
+import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
+import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
+import {
+  calculateExpenseLineAmountMSTForCurrency,
+  calculateExpenseLineExchangeRateForCurrency,
+  isExpenseLineSameReimbursementCurrency,
+  normalizeExpenseLineCurrencyCode,
+  resolveExpenseLineExchangeRateForCurrency,
+} from "../utils/expenseLineCurrency.ts";
+import {
+  buildExpenseExchangeRateInfoMessage,
+  fetchExpenseOfficialExchangeRate,
+  formatExpenseExchangeRateInputValue,
+} from "../utils/expenseExchangeRate.ts";
 import {
   mapBooleanEnumOptions,
-  mapWindowEnumOptions,
   type ExpenseSelectOption,
 } from "../utils/expenseSelectOptions.ts";
 import { useExpenseSheetLineDetailMutations } from "./useExpenseSheetLineDetailMutations.ts";
@@ -23,6 +40,16 @@ import { useExpenseSheetLineDetailState } from "./useExpenseSheetLineDetailState
 import { useExpenseSheetLineTicketPreview } from "./useExpenseSheetLineTicketPreview.ts";
 import ExpenseSheetLineDetailView from "./ExpenseSheetLineDetailView.tsx";
 import { useExpenseSheetLineTypeValidation } from "./useExpenseSheetLineTypeValidation.ts";
+import { useExpenseTicketDetailState } from "../tickets/detail/useExpenseTicketDetailState.ts";
+
+const LINKED_TICKET_LINES_PAGE_SIZE = 6;
+
+const pagedSlice = <T,>(items: T[], page: number, pageSize: number): T[] => {
+  if (!items.length) return [];
+  const safePage = Math.max(1, page);
+  const start = (safePage - 1) * pageSize;
+  return items.slice(start, start + pageSize);
+};
 
 // Initializes auth seed for expense API calls before island effects run.
 const bootstrapExpenseApiAuth = () => {
@@ -59,12 +86,19 @@ const ExpenseSheetLineDetailContent = () => {
     managementBootstrapReady,
   } = useAuthContext();
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
+  const canViewLinkedTicketLines = canAccess("GASTOS_TICKETS", "View");
   const sheetId = safeText(window.__EXPENSE_SHEET_ID__);
   const lineId = safeText(window.__EXPENSE_LINE_ID__);
   const lineMode = safeText(window.__EXPENSE_LINE_MODE__).toLowerCase();
   const isCreateMode = lineMode === "create";
   const startInEditMode = lineMode === "edit";
   const [isRedirectingAfterCreate, setIsRedirectingAfterCreate] = useState(false);
+  const [linkedTicketLinePaging, setLinkedTicketLinePaging] = useState({ fileId: "", page: 1 });
+  const exchangeRateRequestIdRef = useRef(0);
+  const amountCurrencyManualEditRef = useRef(false);
+  const amountMSTManualEditRef = useRef(false);
+  const linkedTicketLineContainerRef = useRef<HTMLDivElement | null>(null);
+  const [exchangeRateInfoMessage, setExchangeRateInfoMessage] = useState("");
 
   useEffect(() => {
     if (!startInEditMode) {
@@ -79,6 +113,7 @@ const ExpenseSheetLineDetailContent = () => {
     line,
     isLoading,
     errorMessage,
+    lineNavigation,
     busy,
     status,
     isEditing,
@@ -90,6 +125,10 @@ const ExpenseSheetLineDetailContent = () => {
     draftQty,
     draftProjectId,
     draftInternational,
+    draftReimbursableExpense,
+    draftCurrencyCode,
+    draftAmountMST,
+    draftExchangeRate,
     isKmType,
     isFuelPriceLoading,
     fuelPriceMessage,
@@ -113,9 +152,14 @@ const ExpenseSheetLineDetailContent = () => {
     setDraftQty,
     setDraftProjectId,
     setDraftInternational,
+    setDraftReimbursableExpense,
+    setDraftCurrencyCode,
+    setDraftAmountMST,
+    setDraftExchangeRate,
     handleEnableEdit,
     handleCancelEdit,
     navigateToSheetDetail,
+    navigateToLineDetail,
   } = useExpenseSheetLineDetailState({
     hasAccess,
     allowSelfManagement,
@@ -152,23 +196,140 @@ const ExpenseSheetLineDetailContent = () => {
     setDraftQty,
   });
 
+  const formatLineMoneyInput = useCallback((value: number | string | null | undefined): string => {
+    return formatExpenseInputNumber(value, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+      useGrouping: true,
+      fallback: "",
+    });
+  }, []);
+
+  const formatLineExchangeRateInput = useCallback((value: number | string | null | undefined): string => {
+    return formatExpenseInputNumber(value, {
+      minimumFractionDigits: 7,
+      maximumFractionDigits: 7,
+      useGrouping: true,
+      fallback: "",
+    });
+  }, []);
+
+  const localCurrencyCode = normalizeExpenseLineCurrencyCode(header?.currencyCode) || "EUR";
+  const effectiveLineCurrencyCode = normalizeExpenseLineCurrencyCode(isEditing ? draftCurrencyCode : line?.currencyCode) || localCurrencyCode;
   const draftPriceValue = parseDecimalInput(draftPrice);
   const draftQtyValue = parseDecimalInput(draftQty);
   const calculatedAmountPreview =
     isEditing && draftPriceValue != null && draftPriceValue > 0 && draftQtyValue != null && draftQtyValue > 0
       ? draftPriceValue * draftQtyValue
       : line?.amount ?? null;
+  const [draftAmountCurrency, setDraftAmountCurrency] = useState("");
   const priceText = useMemo(
-    () => formatAmountWithCurrency(line?.price ?? null, safeText(header?.currencyCode)),
-    [header?.currencyCode, line?.price]
+    () => formatAmountWithCurrency(line?.price ?? null, effectiveLineCurrencyCode),
+    [effectiveLineCurrencyCode, line?.price]
   );
   const amountText = useMemo(
-    () => formatAmountWithCurrency(calculatedAmountPreview, safeText(header?.currencyCode)),
-    [calculatedAmountPreview, header?.currencyCode]
+    () => formatAmountWithCurrency(calculatedAmountPreview, effectiveLineCurrencyCode),
+    [calculatedAmountPreview, effectiveLineCurrencyCode]
+  );
+  const displayAmountMST = isExpenseLineSameReimbursementCurrency(effectiveLineCurrencyCode, localCurrencyCode)
+    ? line?.amountMST ?? line?.amount ?? null
+    : line?.amountMST ?? null;
+  const amountMSTText = useMemo(
+    () => formatAmountWithCurrency(displayAmountMST, localCurrencyCode),
+    [displayAmountMST, localCurrencyCode]
   );
   const projectValue = safeText(line?.projId || header?.projId);
   const sheetDescription = safeText(header?.description) || "-";
   const internacionalLabel = getExpenseInternationalLabel(line?.internacional);
+  const linkedTicketFileIdValue = safeText(linkedTicketFileId);
+  const showLinkedTicketLines = hasLinkedTicket && !!linkedTicketFileIdValue && canViewLinkedTicketLines;
+
+  useEffect(() => {
+    if (!isEditing) {
+      amountCurrencyManualEditRef.current = false;
+      amountMSTManualEditRef.current = false;
+      setDraftAmountCurrency("");
+      return;
+    }
+
+    if (amountCurrencyManualEditRef.current) {
+      return;
+    }
+
+    setDraftAmountCurrency(formatLineMoneyInput(calculatedAmountPreview));
+  }, [calculatedAmountPreview, formatLineMoneyInput, isEditing, line?.lineRecId]);
+
+  useEffect(() => {
+    amountMSTManualEditRef.current = false;
+  }, [isEditing, line?.lineRecId]);
+  const linkedTicketDetail = useExpenseTicketDetailState({
+    enabled: showLinkedTicketLines,
+    hasAccess: canViewLinkedTicketLines,
+    fileId: linkedTicketFileIdValue,
+    onForbidden: showPermissionModal,
+  });
+  const totalLinkedTicketLinePages = Math.ceil((linkedTicketDetail.lines.length || 0) / LINKED_TICKET_LINES_PAGE_SIZE);
+  const requestedLinkedTicketLinePage =
+    linkedTicketLinePaging.fileId === linkedTicketFileIdValue
+      ? linkedTicketLinePaging.page
+      : 1;
+  const linkedTicketLinePage =
+    totalLinkedTicketLinePages > 0
+      ? Math.min(Math.max(1, requestedLinkedTicketLinePage), totalLinkedTicketLinePages)
+      : 1;
+  const visibleLinkedTicketLines = useMemo(
+    () => pagedSlice(linkedTicketDetail.lines, linkedTicketLinePage, LINKED_TICKET_LINES_PAGE_SIZE),
+    [linkedTicketDetail.lines, linkedTicketLinePage]
+  );
+  const linkedTicketLinePaginationLabels = useMemo(
+    () => ({
+      first: indT("History_Page_First", "First"),
+      prev: indT("History_Page_Prev", "Previous"),
+      next: indT("History_Page_Next", "Next"),
+      last: indT("History_Page_Last", "Last"),
+    }),
+    []
+  );
+  const handleLinkedTicketLinePageChange = useCallback(
+    (page: number) => {
+      setLinkedTicketLinePaging({
+        fileId: linkedTicketFileIdValue,
+        page,
+      });
+    },
+    [linkedTicketFileIdValue]
+  );
+  const linkedTicketReturnContext = useMemo(() => {
+    const safeFileId = linkedTicketFileIdValue;
+    const safeSheetId = safeText(sheetId);
+    const safeLineId = safeText(lineId || line?.lineRecId);
+    if (!safeFileId || !safeSheetId || !safeLineId) return null;
+
+    return {
+      fileId: safeFileId,
+      origin: "expense-line" as const,
+      sheetId: safeSheetId,
+      sheetLineRecId: safeLineId,
+    };
+  }, [line?.lineRecId, lineId, linkedTicketFileIdValue, sheetId]);
+  const resolveLinkedTicketLineCard = useCallback(
+    (target: EventTarget | null) => {
+      const node = target as HTMLElement | null;
+      if (!node || typeof node.closest !== "function") return null;
+      const card = node.closest<HTMLElement>(".timeline-card--clickable");
+      if (!card) return null;
+      if (!linkedTicketLineContainerRef.current?.contains(card)) return null;
+      return card;
+    },
+    []
+  );
+
+  useTimelineCardEffects({
+    containerRef: linkedTicketLineContainerRef,
+    errorMessage: linkedTicketDetail.errorMessage,
+    items: visibleLinkedTicketLines,
+    resolveClickableCard: resolveLinkedTicketLineCard,
+  });
   const {
     showStickyPreview,
     previewOpen,
@@ -185,15 +346,13 @@ const ExpenseSheetLineDetailContent = () => {
     handlePreviewPointerDown,
     handlePreviewPointerMove,
     handlePreviewPointerEnd,
-    handlePreviewWheel,
   } = useExpenseSheetLineTicketPreview({
     linkedTicketFileId,
     hasLinkedTicket,
   });
 
   const gastoTypeOptions = useMemo<ExpenseSelectOption[]>(() => {
-    const source = Array.isArray(window.__EXPENSE_GASTO_TYPES__) ? window.__EXPENSE_GASTO_TYPES__ : [];
-    const mapped = mapWindowEnumOptions(source);
+    const mapped = getExpenseGastoTypeOptions();
 
     const currentTypeCode = safeText(line?.typeValueCode);
     const currentTypeLabel = safeText(line?.typeValue);
@@ -210,6 +369,304 @@ const ExpenseSheetLineDetailContent = () => {
   const internationalOptions = useMemo<ExpenseSelectOption[]>(
     () => mapBooleanEnumOptions(getExpenseInternationalOptions()),
     []
+  );
+
+  const localExchangeRateInput = useMemo(() => formatLineExchangeRateInput(100), [formatLineExchangeRateInput]);
+  const isDraftCurrencyLocal = useMemo(() => {
+    const normalizedDraftCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
+    return isExpenseLineSameReimbursementCurrency(normalizedDraftCurrencyCode, localCurrencyCode);
+  }, [draftCurrencyCode, localCurrencyCode]);
+
+  const resolveExchangeRateForLineCalculation = useCallback(
+    (exchangeRateRaw: string): string => {
+      if (isDraftCurrencyLocal) {
+        if (exchangeRateRaw !== localExchangeRateInput) {
+          setDraftExchangeRate(localExchangeRateInput);
+        }
+        return localExchangeRateInput;
+      }
+
+      return exchangeRateRaw;
+    },
+    [isDraftCurrencyLocal, localExchangeRateInput, setDraftExchangeRate]
+  );
+
+  const resolveDraftLineAmount = useCallback(
+    (priceRaw: string, qtyRaw: string): number | null => {
+      const nextPrice = parseDecimalInput(priceRaw);
+      const nextQty = parseDecimalInput(qtyRaw);
+      if (nextPrice == null || nextPrice <= 0 || nextQty == null || nextQty <= 0) {
+        return null;
+      }
+
+      return nextPrice * nextQty;
+    },
+    []
+  );
+
+  const recalculateAmountMSTFromRate = useCallback(
+    (priceRaw: string, qtyRaw: string, exchangeRateRaw: string, currencyCodeOverride?: string) => {
+      const amount = resolveDraftLineAmount(priceRaw, qtyRaw);
+      const normalizedCurrencyCode = currencyCodeOverride
+        ? normalizeExpenseLineCurrencyCode(currencyCodeOverride)
+        : normalizeExpenseLineCurrencyCode(draftCurrencyCode);
+      if (
+        amountMSTManualEditRef.current &&
+        isExpenseLineSameReimbursementCurrency(normalizedCurrencyCode, localCurrencyCode)
+      ) {
+        return;
+      }
+
+      const exchangeRate = resolveExpenseLineExchangeRateForCurrency(
+        normalizedCurrencyCode,
+        localCurrencyCode,
+        parseDecimalInput(exchangeRateRaw)
+      );
+      const nextAmountMST =
+        amount != null
+          ? calculateExpenseLineAmountMSTForCurrency(amount, exchangeRate, normalizedCurrencyCode, localCurrencyCode)
+          : null;
+      if (nextAmountMST != null) {
+        setDraftAmountMST(formatLineMoneyInput(nextAmountMST));
+      }
+    },
+    [draftCurrencyCode, formatLineMoneyInput, localCurrencyCode, resolveDraftLineAmount, setDraftAmountMST]
+  );
+
+  const loadOfficialLineExchangeRate = useCallback(
+    async (currencyCode: string, transDate: string) => {
+      const nextCurrencyCode = normalizeExpenseLineCurrencyCode(currencyCode);
+      if (!nextCurrencyCode || !localCurrencyCode) {
+        setExchangeRateInfoMessage("");
+        return;
+      }
+
+      const requestId = exchangeRateRequestIdRef.current + 1;
+      exchangeRateRequestIdRef.current = requestId;
+
+      try {
+        const officialExchangeRate = await fetchExpenseOfficialExchangeRate({
+          localCurrencyCode,
+          expenseCurrencyCode: nextCurrencyCode,
+          date: transDate,
+        });
+        if (requestId !== exchangeRateRequestIdRef.current || !officialExchangeRate) {
+          return;
+        }
+
+        const nextExchangeRate = formatExpenseExchangeRateInputValue(officialExchangeRate.exchangeRate);
+        setDraftExchangeRate(nextExchangeRate);
+        recalculateAmountMSTFromRate(draftPrice, draftQty, nextExchangeRate);
+        setExchangeRateInfoMessage(
+          buildExpenseExchangeRateInfoMessage({
+            rawRate: officialExchangeRate.rawRate,
+            date: officialExchangeRate.date,
+            source: officialExchangeRate.source,
+          })
+        );
+      } catch (error) {
+        if (requestId !== exchangeRateRequestIdRef.current) {
+          return;
+        }
+
+        const message =
+          error instanceof Error && safeText(error.message)
+            ? safeText(error.message)
+            : indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio.");
+        setExchangeRateInfoMessage(message);
+      }
+    },
+    [draftPrice, draftQty, localCurrencyCode, recalculateAmountMSTFromRate, setDraftExchangeRate]
+  );
+
+  const handleLinePriceChange = useCallback(
+    (value: string) => {
+      amountCurrencyManualEditRef.current = false;
+      handleDraftPriceChange(value);
+      const nextAmount = resolveDraftLineAmount(value, draftQty);
+      setDraftAmountCurrency(nextAmount != null ? formatLineMoneyInput(nextAmount) : "");
+      const effectiveExchangeRate = resolveExchangeRateForLineCalculation(draftExchangeRate);
+      recalculateAmountMSTFromRate(value, draftQty, effectiveExchangeRate);
+    },
+    [
+      draftExchangeRate,
+      draftQty,
+      formatLineMoneyInput,
+      handleDraftPriceChange,
+      recalculateAmountMSTFromRate,
+      resolveDraftLineAmount,
+      resolveExchangeRateForLineCalculation,
+    ]
+  );
+
+  const handleLineQtyChange = useCallback(
+    (value: string) => {
+      amountCurrencyManualEditRef.current = false;
+      handleDraftQtyChange(value);
+      const nextAmount = resolveDraftLineAmount(draftPrice, value);
+      setDraftAmountCurrency(nextAmount != null ? formatLineMoneyInput(nextAmount) : "");
+      const effectiveExchangeRate = resolveExchangeRateForLineCalculation(draftExchangeRate);
+      recalculateAmountMSTFromRate(draftPrice, value, effectiveExchangeRate);
+    },
+    [
+      draftExchangeRate,
+      draftPrice,
+      formatLineMoneyInput,
+      handleDraftQtyChange,
+      recalculateAmountMSTFromRate,
+      resolveDraftLineAmount,
+      resolveExchangeRateForLineCalculation,
+    ]
+  );
+
+  const handleLineAmountCurrencyChange = useCallback(
+    (value: string) => {
+      amountCurrencyManualEditRef.current = true;
+      setDraftAmountCurrency(value);
+
+      const amount = parseDecimalInput(value);
+      const qty = parseDecimalInput(draftQty);
+      if (amount == null || amount <= 0 || qty == null || qty <= 0) {
+        return;
+      }
+
+      handleDraftPriceChange(formatLineMoneyInput(amount / qty));
+      const effectiveExchangeRate = resolveExchangeRateForLineCalculation(draftExchangeRate);
+      const exchangeRate = resolveExpenseLineExchangeRateForCurrency(
+        draftCurrencyCode,
+        localCurrencyCode,
+        parseDecimalInput(effectiveExchangeRate)
+      );
+      const sameReimbursementCurrency = isExpenseLineSameReimbursementCurrency(draftCurrencyCode, localCurrencyCode);
+      if (sameReimbursementCurrency && amountMSTManualEditRef.current) {
+        return;
+      }
+
+      const nextAmountMST = calculateExpenseLineAmountMSTForCurrency(
+        amount,
+        exchangeRate,
+        draftCurrencyCode,
+        localCurrencyCode
+      );
+      if (nextAmountMST != null) {
+        setDraftAmountMST(formatLineMoneyInput(nextAmountMST));
+      }
+    },
+    [
+      draftExchangeRate,
+      draftCurrencyCode,
+      draftQty,
+      formatLineMoneyInput,
+      handleDraftPriceChange,
+      localCurrencyCode,
+      resolveExchangeRateForLineCalculation,
+      setDraftAmountMST,
+    ]
+  );
+
+  const handleLineCurrencyChange = useCallback(
+    (value: string) => {
+      const nextCurrencyCode = normalizeExpenseLineCurrencyCode(value);
+      amountMSTManualEditRef.current = false;
+      setDraftCurrencyCode(nextCurrencyCode);
+      setExchangeRateInfoMessage("");
+      if (nextCurrencyCode && nextCurrencyCode === localCurrencyCode) {
+        exchangeRateRequestIdRef.current += 1;
+        const nextExchangeRate = formatLineExchangeRateInput(
+          resolveExpenseLineExchangeRateForCurrency(nextCurrencyCode, localCurrencyCode, draftExchangeRate)
+        );
+        setDraftExchangeRate(nextExchangeRate);
+        recalculateAmountMSTFromRate(draftPrice, draftQty, nextExchangeRate, nextCurrencyCode);
+        return;
+      }
+
+      void loadOfficialLineExchangeRate(nextCurrencyCode, draftTransDate);
+    },
+    [
+      draftPrice,
+      draftQty,
+      draftTransDate,
+      loadOfficialLineExchangeRate,
+      localCurrencyCode,
+      draftExchangeRate,
+      formatLineExchangeRateInput,
+      recalculateAmountMSTFromRate,
+      setDraftCurrencyCode,
+      setDraftExchangeRate,
+    ]
+  );
+
+  const handleLineTransDateChange = useCallback(
+    (value: string) => {
+      setDraftTransDate(value);
+      const currentCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
+      if (currentCurrencyCode && currentCurrencyCode !== localCurrencyCode) {
+        void loadOfficialLineExchangeRate(currentCurrencyCode, value);
+      }
+    },
+    [draftCurrencyCode, loadOfficialLineExchangeRate, localCurrencyCode, setDraftTransDate]
+  );
+
+  const handleLineExchangeRateChange = useCallback(
+    (value: string) => {
+      setExchangeRateInfoMessage("");
+      setDraftExchangeRate(value);
+    },
+    [setDraftExchangeRate]
+  );
+
+  const handleLineExchangeRateCommit = useCallback(
+    (value: string) => {
+      setExchangeRateInfoMessage("");
+      const effectiveExchangeRate = resolveExchangeRateForLineCalculation(value);
+      setDraftExchangeRate(formatLineExchangeRateInput(effectiveExchangeRate));
+      recalculateAmountMSTFromRate(draftPrice, draftQty, effectiveExchangeRate);
+    },
+    [
+      draftPrice,
+      draftQty,
+      formatLineExchangeRateInput,
+      recalculateAmountMSTFromRate,
+      resolveExchangeRateForLineCalculation,
+      setDraftExchangeRate,
+    ]
+  );
+
+  const handleLineAmountMSTChange = useCallback(
+    (value: string) => {
+      amountMSTManualEditRef.current = true;
+      setExchangeRateInfoMessage("");
+      setDraftAmountMST(value);
+
+      const amount = resolveDraftLineAmount(draftPrice, draftQty);
+      const amountMST = parseDecimalInput(value);
+      const nextExchangeRate =
+        amount != null && amountMST != null
+          ? calculateExpenseLineExchangeRateForCurrency(
+              amount,
+              amountMST,
+              draftCurrencyCode,
+              localCurrencyCode,
+              draftExchangeRate
+            )
+          : isExpenseLineSameReimbursementCurrency(draftCurrencyCode, localCurrencyCode)
+            ? resolveExpenseLineExchangeRateForCurrency(draftCurrencyCode, localCurrencyCode, draftExchangeRate)
+            : null;
+      if (nextExchangeRate != null) {
+        setDraftExchangeRate(formatLineExchangeRateInput(nextExchangeRate));
+      }
+    },
+    [
+      draftCurrencyCode,
+      draftExchangeRate,
+      draftPrice,
+      draftQty,
+      formatLineExchangeRateInput,
+      localCurrencyCode,
+      resolveDraftLineAmount,
+      setDraftAmountMST,
+      setDraftExchangeRate,
+    ]
   );
 
   const {
@@ -247,6 +704,11 @@ const ExpenseSheetLineDetailContent = () => {
     draftQty,
     draftProjectId,
     draftInternational,
+    draftReimbursableExpense,
+    draftCurrencyCode,
+    draftAmountMST,
+    draftExchangeRate,
+    localCurrencyCode,
     setModalError,
     setBusy,
     setStatus,
@@ -261,29 +723,24 @@ const ExpenseSheetLineDetailContent = () => {
       ? "view_only"
       : "default";
 
+  const handleCancelLineEdit = useCallback(() => {
+    setExchangeRateInfoMessage("");
+    handleCancelEdit();
+  }, [handleCancelEdit]);
+
   const handleEditLinkedTicket = useCallback(() => {
-    const safeFileId = safeText(linkedTicketFileId);
-    const safeSheetId = safeText(sheetId);
-    const safeLineId = safeText(lineId || line?.lineRecId);
-    if (!safeFileId || !safeSheetId || !safeLineId) return;
+    if (!linkedTicketReturnContext) return;
 
     const query = new URLSearchParams({
-      fileId: safeFileId,
-      origin: "expense-line",
-      sheetId: safeSheetId,
-      sheetLineRecId: safeLineId,
+      fileId: linkedTicketReturnContext.fileId,
       mode: "edit",
     });
-    saveExpenseTicketReturnContext({
-      fileId: safeFileId,
-      origin: "expense-line",
-      sheetId: safeSheetId,
-      sheetLineRecId: safeLineId,
-    });
+    appendExpenseTicketReturnQuery(query, linkedTicketReturnContext);
+    saveExpenseTicketReturnContext(linkedTicketReturnContext);
     navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
       askConfirmation: isEditing,
     });
-  }, [isEditing, line?.lineRecId, lineId, linkedTicketFileId, sheetId]);
+  }, [isEditing, linkedTicketReturnContext]);
 
   useExpenseSheetLineDetailTopbarActions({
     busy: busy || isRedirectingAfterCreate,
@@ -299,7 +756,7 @@ const ExpenseSheetLineDetailContent = () => {
     sheetId,
     setModalError,
     handleEnableEdit: hasLinkedTicket ? handleEditLinkedTicket : handleEnableEdit,
-    handleCancelEdit,
+    handleCancelEdit: handleCancelLineEdit,
     canOpenSaveConfirm,
     handleUpdate,
     handleDelete,
@@ -317,70 +774,171 @@ const ExpenseSheetLineDetailContent = () => {
   });
 
   const handleOpenLinkedTicket = useCallback(() => {
-    const safeFileId = safeText(linkedTicketFileId);
-    const safeSheetId = safeText(sheetId);
-    const safeLineId = safeText(lineId || line?.lineRecId);
-    if (!safeFileId || !safeSheetId || !safeLineId) return;
+    if (!linkedTicketReturnContext) return;
 
     const query = new URLSearchParams({
-      fileId: safeFileId,
-      origin: "expense-line",
-      sheetId: safeSheetId,
-      sheetLineRecId: safeLineId,
+      fileId: linkedTicketReturnContext.fileId,
     });
-    saveExpenseTicketReturnContext({
-      fileId: safeFileId,
-      origin: "expense-line",
-      sheetId: safeSheetId,
-      sheetLineRecId: safeLineId,
-    });
+    appendExpenseTicketReturnQuery(query, linkedTicketReturnContext);
+    saveExpenseTicketReturnContext(linkedTicketReturnContext);
     navigateToExpenseUrl(`/Gastos/TicketDetail?${query.toString()}`, {
       askConfirmation: isEditing,
     });
-  }, [isEditing, line?.lineRecId, lineId, linkedTicketFileId, sheetId]);
+  }, [isEditing, linkedTicketReturnContext]);
+
+  const handleOpenLinkedTicketLine = useCallback(
+    (ticketLineRecId: string) => {
+      if (!linkedTicketReturnContext) return;
+      const safeTicketLineRecId = safeText(ticketLineRecId);
+      if (!safeTicketLineRecId) return;
+
+      const query = new URLSearchParams({
+        fileId: linkedTicketReturnContext.fileId,
+        lineRecId: safeTicketLineRecId,
+      });
+      if (isEditing) {
+        query.set("mode", "edit");
+      }
+      appendExpenseTicketReturnQuery(query, linkedTicketReturnContext);
+      saveExpenseTicketReturnContext(linkedTicketReturnContext);
+      navigateToExpenseUrl(`/Gastos/TicketLineDetail?${query.toString()}`, {
+        askConfirmation: isEditing,
+      });
+    },
+    [isEditing, linkedTicketReturnContext]
+  );
+
+  const lineNavigatorLabels = useMemo(
+    () => ({
+      navigation: indT("RecordNavigator_AriaLabel", "Record navigation"),
+      first: indT("History_Page_First", "First"),
+      previous: indT("History_Page_Prev", "Previous"),
+      next: indT("History_Page_Next", "Next"),
+      last: indT("History_Page_Last", "Last"),
+      position: indFormat(
+        "RecordNavigator_Position",
+        "{0} of {1}",
+        lineNavigation.currentIndex,
+        lineNavigation.totalLines
+      ),
+    }),
+    [lineNavigation.currentIndex, lineNavigation.totalLines]
+  );
+
+  const handleNavigateFirstLine = useCallback(() => {
+    navigateToLineDetail(lineNavigation.firstLineId);
+  }, [lineNavigation.firstLineId, navigateToLineDetail]);
+
+  const handleNavigatePreviousLine = useCallback(() => {
+    navigateToLineDetail(lineNavigation.previousLineId);
+  }, [lineNavigation.previousLineId, navigateToLineDetail]);
+
+  const handleNavigateNextLine = useCallback(() => {
+    navigateToLineDetail(lineNavigation.nextLineId);
+  }, [lineNavigation.nextLineId, navigateToLineDetail]);
+
+  const handleNavigateLastLine = useCallback(() => {
+    navigateToLineDetail(lineNavigation.lastLineId);
+  }, [lineNavigation.lastLineId, navigateToLineDetail]);
+
+  const lineNavigator =
+    !isCreateMode && line && lineNavigation.totalLines > 1 ? (
+      <RecordNavigator
+        currentIndex={lineNavigation.currentIndex}
+        totalItems={lineNavigation.totalLines}
+        labels={lineNavigatorLabels}
+        disabled={isLoading || busy || isRedirectingAfterCreate}
+        variant="compact"
+        onFirst={handleNavigateFirstLine}
+        onPrevious={handleNavigatePreviousLine}
+        onNext={handleNavigateNextLine}
+        onLast={handleNavigateLastLine}
+      />
+    ) : null;
+
+  const linkedTicketLinesSection =
+    showLinkedTicketLines ? (
+      linkedTicketDetail.isLoading ? (
+        <div className="loader-box glass-panel shadow-card flex items-center gap-2 text-sm text-zinc-700">
+          <svg className="ind-spinner size-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
+            <circle className="ind-spinner__circle" cx="10" cy="10" r="8" strokeWidth="2" />
+          </svg>
+          {indT("Common_Loading", "Loading")}
+        </div>
+      ) : linkedTicketDetail.errorMessage ? (
+        <div className="text-danger">{linkedTicketDetail.errorMessage}</div>
+      ) : (
+        <ExpenseTicketLinesList
+          visibleLines={visibleLinkedTicketLines}
+          totalLinePages={totalLinkedTicketLinePages}
+          linePage={linkedTicketLinePage}
+          currencyCode={safeText(linkedTicketDetail.header?.currencyCode) || effectiveLineCurrencyCode}
+          paginationLabels={linkedTicketLinePaginationLabels}
+          containerRef={linkedTicketLineContainerRef}
+          onLinePageChange={handleLinkedTicketLinePageChange}
+          onOpenLine={handleOpenLinkedTicketLine}
+        />
+      )
+    ) : null;
 
   const detailBody =
     !isLoading && !isRedirectingAfterCreate && !errorMessage && line ? (
-      <ExpenseSheetLineForm
-        line={line}
-        fallbackDate={safeText(header?.createdDate)}
-        sheetDescription={sheetDescription}
-        projectValue={projectValue}
-        priceText={priceText}
-        amountText={amountText}
-        internacionalLabel={internacionalLabel}
-        isKmType={isKmType}
-        isFuelPriceLoading={isFuelPriceLoading}
-        fuelPriceMessage={fuelPriceMessage}
-        fuelPriceMessageIsError={fuelPriceMessageIsError}
-        status={status}
-        isEditing={isEditing}
-        gastoTypeOptions={gastoTypeOptions}
-        internationalOptions={internationalOptions}
-        draftDescription={draftDescription}
-        draftTransDate={draftTransDate}
-        draftTypeValueCode={draftTypeValueCode}
-        draftPrice={draftPrice}
-        draftQty={draftQty}
-        draftProjectId={draftProjectId}
-        draftInternational={draftInternational}
-        typeInputRef={typeInputRef}
-        priceInputRef={priceInputRef}
-        qtyInputRef={qtyInputRef}
-        typeInvalid={typeInvalid}
-        priceInvalid={priceInvalid}
-        qtyInvalid={qtyInvalid}
-        onDraftDescriptionChange={setDraftDescription}
-        onDraftTransDateChange={setDraftTransDate}
-        onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
-        onDraftPriceChange={handleDraftPriceChange}
-        onDraftQtyChange={handleDraftQtyChange}
-        onDraftProjectIdChange={setDraftProjectId}
-        onDraftInternationalChange={setDraftInternational}
-        linkedTicketFileId={linkedTicketFileId}
-        showLinkedTicketField={hasLinkedTicket}
-        onOpenLinkedTicket={handleOpenLinkedTicket}
-      />
+      <>
+        <ExpenseSheetLineForm
+          line={line}
+          fallbackDate={safeText(header?.createdDate)}
+          sheetDescription={sheetDescription}
+          projectValue={projectValue}
+          priceText={priceText}
+          amountText={amountText}
+          draftAmountCurrency={draftAmountCurrency}
+          amountMSTText={amountMSTText}
+          internacionalLabel={internacionalLabel}
+          isKmType={isKmType}
+          isFuelPriceLoading={isFuelPriceLoading}
+          fuelPriceMessage={fuelPriceMessage}
+          fuelPriceMessageIsError={fuelPriceMessageIsError}
+          isEditing={isEditing}
+          gastoTypeOptions={gastoTypeOptions}
+          internationalOptions={internationalOptions}
+          draftDescription={draftDescription}
+          draftTransDate={draftTransDate}
+          draftTypeValueCode={draftTypeValueCode}
+          draftPrice={draftPrice}
+          draftQty={draftQty}
+          draftProjectId={draftProjectId}
+          draftInternational={draftInternational}
+          draftReimbursableExpense={draftReimbursableExpense}
+          draftCurrencyCode={draftCurrencyCode}
+          draftAmountMST={draftAmountMST}
+          draftExchangeRate={draftExchangeRate}
+          localCurrencyCode={localCurrencyCode}
+          exchangeRateInfoMessage={exchangeRateInfoMessage}
+          typeInputRef={typeInputRef}
+          priceInputRef={priceInputRef}
+          qtyInputRef={qtyInputRef}
+          typeInvalid={typeInvalid}
+          priceInvalid={priceInvalid}
+          qtyInvalid={qtyInvalid}
+          onDraftDescriptionChange={setDraftDescription}
+          onDraftTransDateChange={handleLineTransDateChange}
+          onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
+          onDraftPriceChange={handleLinePriceChange}
+          onDraftQtyChange={handleLineQtyChange}
+          onDraftAmountCurrencyChange={handleLineAmountCurrencyChange}
+          onDraftProjectIdChange={setDraftProjectId}
+          onDraftInternationalChange={setDraftInternational}
+          onDraftReimbursableExpenseChange={setDraftReimbursableExpense}
+          onDraftCurrencyCodeChange={handleLineCurrencyChange}
+          onDraftAmountMSTChange={handleLineAmountMSTChange}
+          onDraftExchangeRateChange={handleLineExchangeRateChange}
+          onDraftExchangeRateCommit={handleLineExchangeRateCommit}
+          linkedTicketFileId={linkedTicketFileId}
+          showLinkedTicketField={hasLinkedTicket}
+          onOpenLinkedTicket={handleOpenLinkedTicket}
+        />
+        {linkedTicketLinesSection}
+      </>
     ) : null;
 
   return (
@@ -416,12 +974,12 @@ const ExpenseSheetLineDetailContent = () => {
         onPointerDown: handlePreviewPointerDown,
         onPointerMove: handlePreviewPointerMove,
         onPointerEnd: handlePreviewPointerEnd,
-        onWheel: handlePreviewWheel,
       }}
       content={{
         isLoading,
         isRedirectingAfterCreate,
         errorMessage,
+        lineNavigator,
         detailBody,
       }}
     />

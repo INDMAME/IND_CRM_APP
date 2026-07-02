@@ -1,0 +1,220 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: DBT
+
+; Navision Axapta Table : INDAPIIntServAccessCompany unloaded at Martes 30/06/2026
+; --------------------------------------------------------------------------------
+  TABLEVERSION 1
+  
+  TABLE #INDAPIIntServAccessCompany
+    PROPERTIES
+      Name                #INDAPIIntServAccessCompany
+      Label               #Compañías asignadas
+      FormRef             #
+      TitleField1         #
+      TitleField2         #
+      Temporary           #No
+      TableContents       #Not specified
+      Systemtable         #No
+      ConfigurationKey    #
+      SecurityKey         #
+      MaxAccessMode       #Delete
+      CacheLookup         #None
+      CreateRecIdIndex    #No
+      SaveDataPerCompany  #No
+      TableGroup          #Miscellaneous
+      PrimaryIndex        #
+      ClusterIndex        #
+      ModifiedDate        #Yes
+      ModifiedTime        #No
+      ModifiedBy          #Yes
+      ModifiedTransactionId #No
+      CreatedDate         #Yes
+      CreatedTime         #No
+      CreatedBy           #Yes
+      CreatedTransactionId #No
+    ENDPROPERTIES
+    
+    FIELDS
+      FIELD #CompanyId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CompanyId
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDAPIIntServAccessCompany
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #dataAreaId
+              #
+            ENDARRAY
+          StringSize          #3
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #CompanyName
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #CompanyName
+          Label               #
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDAPIIntServAccessCompany
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #CompanyName
+              #
+            ENDARRAY
+          StringSize          #80
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+      FIELD #UserId
+        STRING
+        PROPERTIES
+          Type                #String
+          Name                #UserId
+          Label               #Usuario Id.
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #Yes
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #INDAPIIntServAccessCompany
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          StringSize          #10
+          Adjustment          #Left
+        ENDPROPERTIES
+        
+    ENDFIELDS
+    GROUPS
+      GROUP #AutoReport
+        PROPERTIES
+          Name                #AutoReport
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+      GROUP #AutoLookup
+        PROPERTIES
+          Name                #AutoLookup
+          OldName             #
+          Label               #
+        ENDPROPERTIES
+        
+        GROUPFIELDS
+        ENDGROUPFIELDS
+      ENDGROUP
+    ENDGROUPS
+    
+    INDICES
+      #CompanyIdIdx
+      PROPERTIES
+        Name                #CompanyIdIdx
+        AllowDuplicates     #No
+        Enabled             #Yes
+        ConfigurationKey    #
+      ENDPROPERTIES
+      
+      INDEXFIELDS
+        #UserId
+        #CompanyId
+      ENDINDEXFIELDS
+      
+    ENDINDICES
+    REFERENCES
+      REFERENCE #INDApiIntServiceUser
+        PROPERTIES
+          Name                #INDApiIntServiceUser
+          Table               #INDAPIIntServiceUser
+          Validate            #Yes
+        ENDPROPERTIES
+        
+        FIELDREFERENCES
+          REFERENCETYPE NORMAL
+          PROPERTIES
+            Table               #INDAPIIntServAccessCompany
+            Field               #UserId
+            Table               #INDAPIIntServiceUser
+            RelatedField        #UserId
+          ENDPROPERTIES
+          
+        ENDFIELDREFERENCES
+      ENDREFERENCE
+    ENDREFERENCES
+    
+    DELETEACTIONS
+    ENDDELETEACTIONS
+    
+    METHODS
+      Version: 3
+      SOURCE #modifiedField
+        #public void modifiedField(fieldId _fieldId)
+        #{
+        #    DataArea    dataArea;
+        #    ;
+        #
+        #    super(_fieldId);
+        #
+        #    switch (_fieldId)
+        #    {
+        #        case FieldNum(INDApiIntServAccessCompany, CompanyId):
+        #
+        #            select firstOnly dataArea where dataArea.id == this.CompanyId;
+        #
+        #            this.CompanyName = dataArea.Name;
+        #        break;
+        #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #find
+        #static INDApiIntServAccessCompany find(str 10 _userID, dataAreaId _company, boolean _forupdate = false)
+        #{
+        #    INDApiIntServAccessCompany  table;
+        #    ;
+        #
+        #    table.selectForUpdate(_forupdate);
+        #
+        #    select firstonly table
+        #      index hint CompanyIdIdx
+        #        where table.UserId    == _userID
+        #           && table.CompanyId == _company;
+        #
+        #    return table;
+        #}
+      ENDSOURCE
+    ENDMETHODS
+  ENDTABLE
+  
+
+***Element: END

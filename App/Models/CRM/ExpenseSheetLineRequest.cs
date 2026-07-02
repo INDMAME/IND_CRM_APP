@@ -33,6 +33,22 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("projId")]
         public string? ProjId { get; set; }
 
+        [JsonPropertyName("reimbursableExpense")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public int? ReimbursableExpense { get; set; }
+
+        [JsonPropertyName("currencyCode")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public string? CurrencyCode { get; set; }
+
+        [JsonPropertyName("amountMST")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? AmountMST { get; set; }
+
+        [JsonPropertyName("exchRate")]
+        [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+        public decimal? ExchRate { get; set; }
+
         [JsonPropertyName("indAttachFiles")]
         public string IndAttachFiles { get; set; } = string.Empty;
     }

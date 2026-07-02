@@ -54,7 +54,8 @@ function Get-ExpectedAspNetCoreEnvironment {
     )
 
     switch ($TargetEnvironmentName.Trim().ToUpperInvariant()) {
-        "DEV" { return "Production" }
+        # DEV publishes against the development ASP.NET Core environment.
+        "DEV" { return "Development" }
         "PROD" { return "Production" }
         default { throw "Unsupported target environment '$TargetEnvironmentName'." }
     }
@@ -167,6 +168,122 @@ function Get-EffectiveApiBaseUrl {
 
 function Get-EffectiveWebBaseUrl {
     return Get-EnvironmentValue -Name "INDCRM_WEB_BASE_URL"
+}
+
+function Sync-WebWwwrootMirror {
+    # Keeps the compatibility wwwroot mirror aligned before dotnet publish packages static assets.
+    $repoRoot = [System.IO.Path]::GetFullPath($PSScriptRoot).TrimEnd("\")
+    $sourcePath = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "Web\wwwroot")).TrimEnd("\")
+    $targetPath = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "wwwroot")).TrimEnd("\")
+
+    if (-not (Test-Path -LiteralPath $sourcePath -PathType Container)) {
+        throw "Canonical web root '$sourcePath' does not exist."
+    }
+
+    $expectedTargetPath = [System.IO.Path]::GetFullPath((Join-Path $repoRoot "wwwroot")).TrimEnd("\")
+    if (-not [System.StringComparer]::OrdinalIgnoreCase.Equals($targetPath, $expectedTargetPath)) {
+        throw "Refusing to sync unexpected wwwroot mirror path '$targetPath'."
+    }
+
+    if (-not $sourcePath.StartsWith($repoRoot + "\", [System.StringComparison]::OrdinalIgnoreCase) -or
+        -not $targetPath.StartsWith($repoRoot + "\", [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to sync web roots outside repository '$repoRoot'."
+    }
+
+    Write-Host ("Syncing static assets: {0} -> {1}" -f $sourcePath, $targetPath)
+    robocopy $sourcePath $targetPath /MIR /NFL /NDL /NJH /NJS /NP /R:1 /W:1
+    $rc = $LASTEXITCODE
+    # Robocopy codes 0-7 are success, 8+ are failures.
+    if ($rc -ge 8) {
+        throw "Static asset sync failed with robocopy exit code $rc."
+    }
+}
+
+function Invoke-CleanIisDeploy {
+    # Mirrors the publish output into IIS and removes stale deployed files.
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$SourcePath,
+        [Parameter(Mandatory = $true)]
+        [string]$TargetPath,
+        [Parameter(Mandatory = $true)]
+        [string]$CanonicalTargetPath
+    )
+
+    $resolvedSourcePath = [System.IO.Path]::GetFullPath($SourcePath).TrimEnd("\")
+    $resolvedTargetPath = [System.IO.Path]::GetFullPath($TargetPath).TrimEnd("\")
+    $resolvedCanonicalTargetPath = [System.IO.Path]::GetFullPath($CanonicalTargetPath).TrimEnd("\")
+
+    if (-not (Test-Path -LiteralPath $resolvedSourcePath -PathType Container)) {
+        throw "Publish output '$resolvedSourcePath' does not exist."
+    }
+
+    if (-not [System.StringComparer]::OrdinalIgnoreCase.Equals($resolvedTargetPath, $resolvedCanonicalTargetPath)) {
+        throw "Refusing clean IIS deploy to unexpected path '$resolvedTargetPath'."
+    }
+
+    foreach ($requiredFile in @("IND_CRM_APP.dll", "IND_CRM_APP.runtimeconfig.json", "web.config")) {
+        $requiredPath = Join-Path $resolvedSourcePath $requiredFile
+        if (-not (Test-Path -LiteralPath $requiredPath -PathType Leaf)) {
+            throw "Publish output is missing required file '$requiredFile'. Clean IIS deploy is blocked."
+        }
+    }
+
+    if (-not (Test-Path -LiteralPath $resolvedTargetPath -PathType Container)) {
+        New-Item -Path $resolvedTargetPath -ItemType Directory -Force | Out-Null
+    }
+
+    $logsPath = Join-Path $resolvedTargetPath "Logs"
+    Write-Host ("Clean deploying published files: {0} -> {1}" -f $resolvedSourcePath, $resolvedTargetPath)
+    Write-Host ("Preserving runtime logs: {0}" -f $logsPath)
+    robocopy $resolvedSourcePath $resolvedTargetPath /MIR /XD $logsPath /NFL /NDL /NJH /NJS /NP /R:1 /W:1
+    $rc = $LASTEXITCODE
+    # Robocopy codes 0-7 are success, 8+ are failures.
+    if ($rc -ge 8) {
+        throw "Clean IIS deploy failed with robocopy exit code $rc."
+    }
+}
+
+function Resolve-PublishOutputPath {
+    # Resolves and validates the local publish output path before cleanup.
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$OutputPath,
+        [Parameter(Mandatory = $true)]
+        [string]$RepositoryRoot
+    )
+
+    $resolvedRepositoryRoot = [System.IO.Path]::GetFullPath($RepositoryRoot).TrimEnd("\")
+    $candidateOutputPath = if ([System.IO.Path]::IsPathRooted($OutputPath)) {
+        $OutputPath
+    }
+    else {
+        Join-Path $resolvedRepositoryRoot $OutputPath
+    }
+    $resolvedOutputPath = [System.IO.Path]::GetFullPath($candidateOutputPath).TrimEnd("\")
+
+    if ([System.StringComparer]::OrdinalIgnoreCase.Equals($resolvedOutputPath, $resolvedRepositoryRoot)) {
+        throw "Refusing to clean publish output because it resolves to the repository root."
+    }
+
+    if (-not $resolvedOutputPath.StartsWith($resolvedRepositoryRoot + "\", [System.StringComparison]::OrdinalIgnoreCase)) {
+        throw "Refusing to clean publish output outside repository '$resolvedRepositoryRoot'."
+    }
+
+    return $resolvedOutputPath
+}
+
+function Clear-PublishOutput {
+    # Removes stale local publish files before creating a fresh deploy package.
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ResolvedOutputPath
+    )
+
+    if (Test-Path -LiteralPath $resolvedOutputPath) {
+        Write-Host ("Cleaning local publish output: {0}" -f $resolvedOutputPath)
+        Remove-Item -LiteralPath $resolvedOutputPath -Recurse -Force
+    }
 }
 
 # Enforce the canonical IIS deployment directory for this project.
@@ -288,8 +405,12 @@ if ($LASTEXITCODE -ne 0) {
     throw "CSS build failed with exit code $LASTEXITCODE."
 }
 
+Sync-WebWwwrootMirror
+
 # Publish the project directly to avoid solution-level output warnings.
-dotnet publish $ProjectPath -c $Configuration -o $OutputPath
+$ResolvedOutputPath = Resolve-PublishOutputPath -OutputPath $OutputPath -RepositoryRoot $PSScriptRoot
+Clear-PublishOutput -ResolvedOutputPath $ResolvedOutputPath
+dotnet publish $ProjectPath -c $Configuration -o $ResolvedOutputPath
 if ($LASTEXITCODE -ne 0) {
     throw "Publish failed with exit code $LASTEXITCODE."
 }
@@ -302,12 +423,7 @@ if ($RestartIis) {
 }
 
 try {
-    robocopy $OutputPath $IisPath /E /NFL /NDL /NJH /NJS /NP /R:1 /W:1
-    $rc = $LASTEXITCODE
-    # Robocopy codes 0-7 are success, 8+ are failures.
-    if ($rc -ge 8) {
-        throw "Robocopy failed with exit code $rc."
-    }
+    Invoke-CleanIisDeploy -SourcePath $ResolvedOutputPath -TargetPath $IisPath -CanonicalTargetPath $CanonicalIisPath
 }
 finally {
     if ($RestartIis) {
