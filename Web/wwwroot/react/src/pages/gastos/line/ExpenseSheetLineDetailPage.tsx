@@ -379,8 +379,7 @@ const ExpenseSheetLineDetailContent = () => {
 
   const resolveExchangeRateForLineCalculation = useCallback(
     (exchangeRateRaw: string): string => {
-      const parsedExchangeRate = parseDecimalInput(exchangeRateRaw);
-      if (isDraftCurrencyLocal && (parsedExchangeRate == null || parsedExchangeRate <= 0)) {
+      if (isDraftCurrencyLocal) {
         if (exchangeRateRaw !== localExchangeRateInput) {
           setDraftExchangeRate(localExchangeRateInput);
         }

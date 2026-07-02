@@ -239,8 +239,8 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
 
       {!content.isLoading && !content.errorMessage && content.header ? (
         content.showStickyPreview ? (
-          <div className="grid gap-y-2 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4">
-            <div className="lg:col-start-2">
+          <div className="grid min-w-0 max-w-full grid-cols-1 gap-y-2 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4">
+            <div className="min-w-0 max-w-full lg:col-start-2">
               <ExpenseTicketStickyPreview
                 busy={content.previewBusy}
                 error={content.previewError}
@@ -250,7 +250,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
                 onOpen={content.onOpenPreview}
               />
             </div>
-            <div className="space-y-2 lg:col-start-1 lg:row-start-1">{detailBody}</div>
+            <div className="min-w-0 space-y-2 lg:col-start-1 lg:row-start-1">{detailBody}</div>
           </div>
         ) : (
           detailBody

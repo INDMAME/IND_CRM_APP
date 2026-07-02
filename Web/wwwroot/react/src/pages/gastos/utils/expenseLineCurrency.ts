@@ -41,17 +41,17 @@ export const isExpenseLineForeignCurrency = (currencyCode: unknown, reimbursemen
   );
 };
 
-// Keeps the current rate for same-currency lines, defaulting to AX reference 100 when it is empty.
+// Forces AX reference 100 when expense currency matches the sheet reimbursement currency.
 export const resolveExpenseLineExchangeRateForCurrency = (
   currencyCode: unknown,
   reimbursementCurrencyCode: unknown,
   exchangeRate: unknown
 ): number | null => {
-  const parsedExchangeRate = toPositiveExpenseLineNumber(exchangeRate);
   if (isExpenseLineSameReimbursementCurrency(currencyCode, reimbursementCurrencyCode)) {
-    return parsedExchangeRate ?? EXPENSE_LINE_DEFAULT_SAME_CURRENCY_EXCHANGE_RATE;
+    return EXPENSE_LINE_DEFAULT_SAME_CURRENCY_EXCHANGE_RATE;
   }
 
+  const parsedExchangeRate = toPositiveExpenseLineNumber(exchangeRate);
   return parsedExchangeRate;
 };
 
@@ -91,16 +91,16 @@ export const calculateExpenseLineExchangeRate = (amount: number, amountMST: numb
   return (amount * EXPENSE_LINE_EXCHANGE_RATE_REFERENCE_AMOUNT) / amountMST;
 };
 
-// Calculates the inverse rate only for foreign currencies; same-currency lines keep their current rate.
+// Calculates the inverse rate only for foreign currencies; same-currency lines always use AX reference 100.
 export const calculateExpenseLineExchangeRateForCurrency = (
   amount: number,
   amountMST: number,
   currencyCode: unknown,
   reimbursementCurrencyCode: unknown,
-  currentExchangeRate: unknown
+  _currentExchangeRate: unknown
 ): number | null => {
   if (isExpenseLineSameReimbursementCurrency(currencyCode, reimbursementCurrencyCode)) {
-    return resolveExpenseLineExchangeRateForCurrency(currencyCode, reimbursementCurrencyCode, currentExchangeRate);
+    return EXPENSE_LINE_DEFAULT_SAME_CURRENCY_EXCHANGE_RATE;
   }
 
   return calculateExpenseLineExchangeRate(amount, amountMST);

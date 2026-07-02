@@ -194,16 +194,16 @@
     </section>
 
     <div class="callout">
-      <strong>Misma divisa de reembolso:</strong> si <code>CurrencyCode</code> coincide con la divisa de reembolso de la hoja, no hay conversion. El <code>AmountMST</code> automatico debe igualar <code>Amount</code> o <code>TotalAmount</code>; si el usuario edita manualmente <code>AmountMST</code>, se conserva el <code>ExchRate</code> actual y, si esta vacio, se usa <code>100</code>.
+      <strong>Misma divisa de reembolso:</strong> si <code>CurrencyCode</code> coincide con la divisa de reembolso de la hoja, no hay conversion. El <code>AmountMST</code> automatico debe igualar <code>Amount</code> o <code>TotalAmount</code>; el <code>ExchRate</code> debe quedar en <code>100</code> y el campo de tipo de cambio debe mostrarse bloqueado.
     </div>
 
     <h2>Fuente de verdad por operacion</h2>
     <ul>
-      <li>Si se modifica una linea de ticket sin ajuste manual, la cabecera del ticket se recalcula desde la suma de sus lineas.</li>
-      <li>Si ya existe ajuste manual, AX conserva la cabecera y recalcula o elimina la linea de ajuste segun la nueva diferencia.</li>
+      <li>Si se modifica una linea normal de ticket (alta, baja, cantidad o precio), AX recalcula la cabecera desde el desglose persistido del ticket.</li>
+      <li>La linea de ajuste no se crea ni se recalcula por la mera modificacion de una linea normal. Solo se gestiona cuando el usuario edita manualmente el <code>Importe divisa</code> de la cabecera, o cuando una linea de hoja vinculada actualiza el total de un ticket multilinea.</li>
       <li>Si se modifica directamente el <code>Importe divisa</code> de la cabecera del ticket, se considera un ajuste manual de total y se crea o recalcula una unica linea <code>AJUSTE DE IMPORTE TOTAL</code>.</li>
-      <li>Si ya existe una linea de ajuste, se reutiliza. No deben generarse lineas de ajuste duplicadas.</li>
-      <li>La linea de ajuste siempre debe hacer que <code>suma de lineas del ticket = Importe divisa de cabecera</code>.</li>
+      <li>Cuando se gestiona el ajuste manual, si ya existe una linea de ajuste se reutiliza. No deben generarse lineas de ajuste duplicadas.</li>
+      <li>En el flujo de ajuste manual, la linea de ajuste debe hacer que <code>suma de lineas del ticket = Importe divisa de cabecera</code>.</li>
       <li>El espejo contra la linea de hoja de gasto usa la cabecera del ticket como fuente principal tras guardar.</li>
       <li>En tickets multilinea, editar la linea de hoja de gasto vinculada equivale a editar manualmente la cabecera del ticket y por tanto puede recalcular la linea de ajuste.</li>
     </ul>
@@ -222,7 +222,7 @@
       <ul>
         <li>Al cambiar <code>Tipo de cambio</code>, se mantiene <code>Importe divisa</code> y se recalcula <code>Importe reembolso (EUR)</code>.</li>
         <li>Al cambiar <code>Importe reembolso (EUR)</code> con divisa distinta a la de reembolso, se mantiene <code>Importe divisa</code> y se recalcula <code>Tipo de cambio</code>.</li>
-        <li>Al cambiar <code>Importe reembolso (EUR)</code> con la misma divisa de reembolso, se mantiene <code>Importe divisa</code> y no se recalcula <code>Tipo de cambio</code>.</li>
+        <li>Al cambiar <code>Importe reembolso (EUR)</code> con la misma divisa de reembolso, se mantiene <code>Importe divisa</code> y <code>Tipo de cambio</code> queda en <code>100</code>.</li>
       </ul>
     </section>
 
@@ -232,7 +232,7 @@
         <li>La comparacion se hace contra la divisa de reembolso de la hoja de gasto.</li>
         <li>Si la divisa coincide con la divisa de reembolso y no hay tipo de cambio informado, <code>Tipo de cambio = 100</code>.</li>
         <li>En misma divisa no hay conversion: el <code>Importe reembolso (EUR)</code> automatico coincide con el importe de la linea o del ticket.</li>
-        <li>El <code>Importe reembolso (EUR)</code> sigue siendo editable para reflejar comisiones, intereses o cargos reales de tarjeta, pero en misma divisa esa edicion no recalcula <code>Tipo de cambio</code>.</li>
+        <li>El <code>Importe reembolso (EUR)</code> sigue siendo editable para reflejar comisiones, intereses o cargos reales de tarjeta, pero en misma divisa esa edicion no cambia <code>Tipo de cambio</code>; queda en <code>100</code>.</li>
         <li>Para divisa extranjera, debe existir un <code>Tipo de cambio &gt; 0</code> o un <code>Importe reembolso (EUR) &gt; 0</code> para poder guardar.</li>
       </ul>
     </section>
@@ -242,7 +242,7 @@
       <ul>
         <li>En tickets vinculados, la divisa de referencia es la divisa de reembolso de la hoja asociada.</li>
         <li>La moneda estandar de empresa solo se usa como fallback si el ticket no tiene linea vinculada o el vinculo no es unico.</li>
-        <li>Al sincronizar el ticket con la linea de hoja asociada, la linea aplica la misma regla y no recalcula la tasa si ambas divisas coinciden.</li>
+        <li>Al sincronizar el ticket con la linea de hoja asociada, la linea aplica la misma regla y fuerza <code>ExchRate = 100</code> si ambas divisas coinciden.</li>
       </ul>
     </section>
 
@@ -272,8 +272,8 @@
         <li>Si la suma de lineas normales es <code>100.00</code> y la cabecera se edita a <code>95.00</code>, el ajuste debe ser <code>-5.00</code>.</li>
         <li>Si se vuelve a editar la cabecera y ya existe ajuste, se recalcula la misma linea.</li>
         <li>Si el ajuste queda en <code>0.00</code>, no debe crearse una linea nueva; si existe una linea de ajuste previa, AX debe eliminarla.</li>
-        <li>Si luego se modifica una linea normal del ticket y ya existe una linea de ajuste, AX conserva el total manual de cabecera y recalcula la linea de ajuste.</li>
-        <li>Si la diferencia queda en <code>0.00</code> tras modificar una linea normal, AX elimina la linea de ajuste.</li>
+        <li>La creacion, recalculo o eliminacion de la linea de ajuste se valida cuando cambia manualmente el total de cabecera.</li>
+        <li>Si luego se modifica una linea normal del ticket, AX recalcula la cabecera desde el desglose persistido; no se espera que conserve automaticamente el total manual anterior.</li>
       </ul>
     </section>
 
@@ -297,7 +297,7 @@
         <li>Cambiar <code>Cantidad</code> a <code>3</code>: esperado <code>Importe divisa = 210.00</code> e <code>Importe reembolso (EUR) = 227.03</code>.</li>
         <li>Cambiar <code>Tipo de cambio</code> a <code>100.0000</code>: esperado <code>Importe divisa = 210.00</code> e <code>Importe reembolso (EUR) = 210.00</code>.</li>
         <li>Cambiar <code>Importe reembolso (EUR)</code> a <code>200.00</code> en divisa distinta: esperado <code>Importe divisa = 210.00</code> y <code>Tipo de cambio = 105.0000</code>.</li>
-        <li>Cambiar <code>Importe reembolso (EUR)</code> en misma divisa de reembolso: esperado que <code>Importe divisa</code> y <code>Tipo de cambio</code> se mantengan.</li>
+        <li>Cambiar <code>Importe reembolso (EUR)</code> en misma divisa de reembolso: esperado que <code>Importe divisa</code> se mantenga y <code>Tipo de cambio = 100.0000</code>.</li>
       </ul>
     </section>
 
@@ -347,14 +347,13 @@
     </section>
 
     <section class="inventory-item">
-      <h4>Modificar una linea normal tras tener ajuste</h4>
+      <h4>Modificar una linea normal tras un ajuste manual</h4>
       <ul>
         <li>Estado inicial: lineas normales <code>95.00</code>, ajuste <code>5.00</code>, cabecera <code>100.00</code>.</li>
-        <li>Usuario cambia una linea normal y la suma de lineas normales pasa a <code>100.00</code>.</li>
-        <li>Esperado: cabecera <code>Importe divisa = 100.00</code>.</li>
-        <li>Esperado: AX elimina la linea <code>AJUSTE DE IMPORTE TOTAL</code> porque la diferencia queda en <code>0.00</code>.</li>
-        <li>Esperado: linea de gasto espejo <code>Importe divisa = 100.00</code>.</li>
-        <li>Variante: si la suma de lineas normales pasa a <code>98.00</code>, AX conserva la cabecera en <code>100.00</code> y recalcula una unica linea de ajuste por <code>2.00</code>.</li>
+        <li>Usuario cambia una linea normal y la suma de lineas normales pasa a <code>98.00</code>.</li>
+        <li>Comportamiento actual validado en AX: la cabecera se recalcula desde el desglose persistido. Si el ajuste de <code>5.00</code> sigue existiendo, el total de cabecera pasa a <code>103.00</code>.</li>
+        <li>No esperado: conservar cabecera en <code>100.00</code> ni crear o recalcular una linea de ajuste por <code>2.00</code> solo por editar la linea normal.</li>
+        <li>Para dejar la cabecera en <code>100.00</code>, el usuario debe editar manualmente el total de cabecera a <code>100.00</code>; en ese flujo el ajuste se recalcula a <code>2.00</code>.</li>
       </ul>
     </section>
 
@@ -362,8 +361,8 @@
     <section class="inventory-item">
       <h4><code>AmountMST</code> y tipo de cambio</h4>
       <ul>
-        <li>Si la divisa de la linea coincide con la divisa de reembolso de la hoja, editar <code>Importe reembolso</code> / <code>AmountMST</code> conserva <code>Tipo de cambio</code> / <code>ExchRate</code>.</li>
-        <li>Si falta tasa en misma divisa, AX o la web deben inicializar <code>ExchRate = 100</code>.</li>
+        <li>Si la divisa de la linea coincide con la divisa de reembolso de la hoja, editar <code>Importe reembolso</code> / <code>AmountMST</code> no recalcula una tasa inversa; <code>Tipo de cambio</code> / <code>ExchRate</code> queda en <code>100</code>.</li>
+        <li>En misma divisa, AX o la web deben inicializar y mantener <code>ExchRate = 100</code>.</li>
         <li>Si la divisa de la linea o del ticket es distinta a la divisa de reembolso, se mantiene el calculo inverso: <code>ExchRate = Amount * 100 / AmountMST</code> en linea y <code>ExchRate = TotalAmount * 100 / AmountMST</code> en ticket.</li>
         <li>Al modificar cantidad, precio o importe en misma divisa, el <code>AmountMST</code> automatico vuelve a igualarse al importe si el usuario no esta editando manualmente <code>AmountMST</code>.</li>
       </ul>
@@ -373,16 +372,18 @@
       <h4>Aclaracion para tickets vinculados</h4>
       <ul>
         <li>La comparacion de divisa se hace contra la divisa de reembolso de la hoja asociada.</li>
-        <li>Si <code>CurrencyCode</code> del ticket coincide con la divisa de reembolso de la hoja, editar <code>AmountMST</code> conserva <code>ExchRate</code>.</li>
+        <li>Si <code>CurrencyCode</code> del ticket coincide con la divisa de reembolso de la hoja, editar <code>AmountMST</code> mantiene <code>ExchRate = 100</code>.</li>
         <li>Si <code>CurrencyCode</code> del ticket difiere de la divisa de reembolso, editar <code>AmountMST</code> mantiene el calculo inverso: <code>ExchRate = TotalAmount * 100 / AmountMST</code>.</li>
       </ul>
     </section>
 
     <section class="inventory-item">
-      <h4>Eliminacion de ajuste total a cero</h4>
+      <h4>Comportamiento actual del ajuste total</h4>
       <ul>
-        <li>La linea <code>AJUSTE DE IMPORTE TOTAL</code> solo debe existir cuando la diferencia entre la cabecera del ticket y la suma de lineas normales es distinta de <code>0.00</code>.</li>
-        <li>Mientras la diferencia sea distinta de <code>0.00</code>, AX reutiliza una unica linea <code>Adjustment = Yes</code>; no debe crear duplicados.</li>
+        <li>La linea <code>AJUSTE DE IMPORTE TOTAL</code> se crea, recalcula o elimina cuando el usuario edita manualmente el total de cabecera.</li>
+        <li>Si el ajuste manual queda en <code>0.00</code>, no debe crearse una linea nueva; si existe una linea de ajuste previa, AX debe eliminarla en ese flujo manual.</li>
+        <li>Editar una linea normal no conserva automaticamente el total manual anterior. AX recalcula la cabecera desde el desglose persistido del ticket.</li>
+        <li>Mientras exista ajuste manual distinto de <code>0.00</code>, AX reutiliza una unica linea <code>Adjustment = Yes</code>; no debe crear duplicados.</li>
         <li>El frontend no calcula esta linea. La regla pertenece a AX y se refleja despues de guardar y recargar el ticket.</li>
       </ul>
     </section>
@@ -391,13 +392,13 @@
     <ul>
       <li>Guardar una linea de hoja de gasto en <code>USD</code> con <code>Cantidad</code>, <code>Precio</code>, <code>Divisa</code>, <code>Tipo de cambio</code> y validar que <code>AmountMST</code> persiste al cerrar y reabrir.</li>
       <li>Guardar una linea en divisa distinta cambiando manualmente <code>AmountMST</code> y validar que persiste el <code>ExchRate</code> recalculado.</li>
-      <li>Guardar una linea en misma divisa de reembolso cambiando manualmente <code>AmountMST</code> y validar que <code>ExchRate</code> se conserva o queda en <code>100</code> si estaba vacio.</li>
+      <li>Guardar una linea en misma divisa de reembolso cambiando manualmente <code>AmountMST</code> y validar que <code>ExchRate</code> queda en <code>100</code>.</li>
       <li>Guardar un ticket en <code>EUR</code> con varias lineas y validar que cabecera, suma de lineas y linea de gasto espejo coinciden.</li>
       <li>Guardar un ticket en <code>USD</code> cambiando <code>Tipo de cambio</code> y validar que <code>AmountMST</code> se recalcula con <code>Amount * 100 / ExchRate</code>.</li>
       <li>Guardar un ticket en divisa distinta cambiando manualmente <code>AmountMST</code> y validar que <code>ExchRate</code> se recalcula con <code>TotalAmount * 100 / AmountMST</code>.</li>
-      <li>Guardar un ticket en misma divisa de reembolso cambiando manualmente <code>AmountMST</code> y validar que <code>ExchRate</code> no se recalcula artificialmente.</li>
+      <li>Guardar un ticket en misma divisa de reembolso cambiando manualmente <code>AmountMST</code> y validar que <code>ExchRate</code> queda en <code>100</code> y el campo esta bloqueado.</li>
       <li>Editar manualmente el <code>Importe divisa</code> de cabecera del ticket y validar que existe una unica linea de ajuste.</li>
-      <li>Editar una linea normal de un ticket con ajuste y validar que AX recalcula una unica linea de ajuste; si la diferencia queda en <code>0.00</code>, la linea de ajuste se elimina.</li>
+      <li>Editar una linea normal de un ticket con ajuste y validar que AX recalcula la cabecera desde el desglose persistido; no debe esperarse que conserve el total manual anterior ni que genere un nuevo ajuste diferencial.</li>
       <li>Validar que la linea de hoja de gasto vinculada queda sincronizada tras cada guardado.</li>
       <li>Cerrar y reabrir el ticket y la hoja de gasto para confirmar persistencia en AX.</li>
     </ul>

@@ -190,12 +190,16 @@ const resolveExchangeRateForSettlement = (
   localCurrencyCode: string,
   exchangeRate: string
 ): string => {
+  if (!isExpenseLineForeignCurrency(currencyCode, localCurrencyCode)) {
+    return formatEditableExchangeRate(100);
+  }
+
   const parsedExchangeRate = parseExpenseNumericInput(exchangeRate);
   if (parsedExchangeRate != null && parsedExchangeRate > 0) {
     return exchangeRate;
   }
 
-  return isExpenseLineForeignCurrency(currencyCode, localCurrencyCode) ? exchangeRate : formatEditableExchangeRate(100);
+  return exchangeRate;
 };
 
 const buildLocalCurrencySettlementPatch = (
@@ -231,10 +235,10 @@ const createDraftFromHeader = (
   const ticketExchangeRate = toFiniteNumber(header?.exchRate ?? linkedExpenseLine?.exchRate);
   const ticketAmountMST = toFiniteNumber(header?.amountMST ?? linkedExpenseLine?.amountMST);
   const sameCurrency = isExpenseLineSameReimbursementCurrency(normalizedCurrencyCode, normalizedLocalCurrencyCode);
-  const exchangeRate = ticketExchangeRate != null && ticketExchangeRate > 0
-    ? ticketExchangeRate
-    : sameCurrency
-      ? 100
+  const exchangeRate = sameCurrency
+    ? 100
+    : ticketExchangeRate != null && ticketExchangeRate > 0
+      ? ticketExchangeRate
       : null;
   const calculatedAmountMST =
     totalAmount != null

@@ -25,10 +25,10 @@ const ExpenseTicketStickyPreview = ({
   const safeFileName = safeText(fileName) || safeText(imageAlt) || ticketLabel;
 
   return (
-    <div className="sticky top-[72px] z-[1800] lg:top-20">
+    <div className="sticky top-[72px] z-[1400] min-w-0 max-w-full lg:top-20">
       <button
         type="button"
-        className="group block w-full touch-manipulation text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2"
+        className="group block min-w-0 w-full max-w-full touch-manipulation text-left focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/35 focus-visible:ring-offset-2"
         aria-label={`${previewLabel}: ${safeFileName}`}
         onClick={onOpen}
       >
@@ -43,7 +43,7 @@ const ExpenseTicketStickyPreview = ({
                 className="h-full w-full rounded-[var(--radius-xl)] object-cover object-center transition-transform duration-300 group-hover:scale-[1.015] lg:object-contain lg:object-center lg:p-3"
               />
             ) : (
-              <div className="flex h-full items-center justify-center px-4">
+              <div className="flex h-full min-w-0 items-center justify-center px-4">
                 {busy ? (
                   <div className="flex items-center gap-2 text-sm text-slate-700">
                     <svg className="ind-spinner h-5 w-5" viewBox="0 0 20 20" role="status" aria-label={indT("Common_Loading", "Loading")}>
@@ -52,7 +52,7 @@ const ExpenseTicketStickyPreview = ({
                     {indT("Common_Loading", "Loading")}
                   </div>
                 ) : (
-                  <div className="flex min-w-0 items-center gap-3 text-slate-700">
+                  <div className="flex min-w-0 w-full max-w-full items-center gap-3 text-slate-700">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[var(--radius-xl)] bg-primary/8 text-primary">
                       <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                         <path
@@ -71,7 +71,7 @@ const ExpenseTicketStickyPreview = ({
                         />
                       </svg>
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-semibold text-slate-900">{safeFileName}</p>
                       <p className="line-clamp-2 text-xs text-slate-500">{error || previewLabel}</p>
                     </div>

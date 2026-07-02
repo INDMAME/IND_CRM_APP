@@ -99,8 +99,8 @@ const ExpenseSheetLineDetailView = ({ modal, preview, content }: ExpenseSheetLin
 
       {content.detailBody ? (
         preview.showStickyPreview ? (
-          <div className="space-y-2 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4 lg:space-y-0">
-            <div className="lg:col-start-2">
+          <div className="min-w-0 max-w-full space-y-2 lg:grid lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-4 lg:space-y-0">
+            <div className="min-w-0 max-w-full lg:col-start-2">
               <ExpenseTicketStickyPreview
                 busy={preview.busy}
                 error={preview.error}
@@ -110,7 +110,7 @@ const ExpenseSheetLineDetailView = ({ modal, preview, content }: ExpenseSheetLin
                 onOpen={preview.onOpen}
               />
             </div>
-            <div className="space-y-2 lg:col-start-1 lg:row-start-1">{content.detailBody}</div>
+            <div className="min-w-0 space-y-2 lg:col-start-1 lg:row-start-1">{content.detailBody}</div>
           </div>
         ) : (
           content.detailBody

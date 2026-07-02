@@ -233,11 +233,9 @@ export const useExpenseSheetLineDetailState = ({
     const lineAmountMST =
       nextLine?.amountMST ??
       (isExpenseLineSameReimbursementCurrency(lineCurrencyCode, localCurrencyCode) ? nextLine?.amount : null);
-    const lineExchangeRate = nextLine?.exchRate && nextLine.exchRate > 0
-      ? nextLine.exchRate
-      : lineCurrencyCode === localCurrencyCode
-        ? 100
-        : nextLine?.exchRate;
+    const lineExchangeRate = lineCurrencyCode === localCurrencyCode
+      ? 100
+      : nextLine?.exchRate;
     setDraftCurrencyCode(lineCurrencyCode);
     setDraftAmountMST(formatEditableNumber(lineAmountMST));
     setDraftExchangeRate(formatEditableExchangeRate(lineExchangeRate));
