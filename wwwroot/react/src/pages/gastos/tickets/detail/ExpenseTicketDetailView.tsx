@@ -46,7 +46,6 @@ type ExpenseTicketDetailViewProps = {
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
     onPointerEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
-    onWheel: (event: React.WheelEvent<HTMLDivElement>) => void;
   };
   content: {
     isLoading: boolean;
@@ -95,6 +94,7 @@ type ExpenseTicketDetailViewProps = {
     onDraftCurrencyCodeChange: (value: string) => void;
     onDraftTotalAmountChange: (value: string) => void;
     onDraftExchangeRateChange: (value: string) => void;
+    onDraftExchangeRateCommit: (value: string) => void;
     onDraftAmountMSTChange: (value: string) => void;
     onOpenFile: () => void;
     onOpenExpenseSheet?: () => void;
@@ -161,6 +161,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onDraftCurrencyCodeChange={content.onDraftCurrencyCodeChange}
         onDraftTotalAmountChange={content.onDraftTotalAmountChange}
         onDraftExchangeRateChange={content.onDraftExchangeRateChange}
+        onDraftExchangeRateCommit={content.onDraftExchangeRateCommit}
         onDraftAmountMSTChange={content.onDraftAmountMSTChange}
         onOpenFile={content.onOpenFile}
         onOpenExpenseSheet={content.onOpenExpenseSheet}
@@ -222,7 +223,6 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onPointerDown={preview.onPointerDown}
         onPointerMove={preview.onPointerMove}
         onPointerEnd={preview.onPointerEnd}
-        onWheel={preview.onWheel}
       />
 
       <div

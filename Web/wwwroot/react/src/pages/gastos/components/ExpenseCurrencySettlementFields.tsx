@@ -24,6 +24,7 @@ type ExpenseCurrencySettlementFieldsProps = {
   reimbursementAmountInputRef?: React.Ref<HTMLInputElement>;
   onExpenseCurrencyChange: (value: string) => void;
   onExchangeRateChange: (value: string) => void;
+  onExchangeRateCommit?: (value: string) => void;
   onAmountCurrencyChange?: (value: string) => void;
   onReimbursementAmountChange: (value: string) => void;
 };
@@ -80,6 +81,7 @@ const ExpenseCurrencySettlementFields = ({
   reimbursementAmountInputRef,
   onExpenseCurrencyChange,
   onExchangeRateChange,
+  onExchangeRateCommit,
   onAmountCurrencyChange,
   onReimbursementAmountChange,
 }: ExpenseCurrencySettlementFieldsProps) => {
@@ -90,7 +92,8 @@ const ExpenseCurrencySettlementFields = ({
     !!normalizedLocalCurrencyCode &&
     normalizedExpenseCurrencyCode === normalizedLocalCurrencyCode;
   const exchangeRateReadOnly = !isEditing;
-  const effectiveExchangeRate = safeText(exchangeRate) || (sameCurrencySettlement ? formatExchangeRateInput("100") : "");
+  const effectiveExchangeRate =
+    safeText(exchangeRate) || (!isEditing && sameCurrencySettlement ? formatExchangeRateInput("100") : "");
   const effectiveExchangeRateInvalid = exchangeRateInvalid;
   const reimbursementCurrencyLabel = normalizedLocalCurrencyCode || indT("Common_NotAvailable", "N/A");
   const reimbursementLabel = indFormat(
@@ -178,7 +181,14 @@ const ExpenseCurrencySettlementFields = ({
           inputMode="decimal"
           value={effectiveExchangeRate}
           onChange={!exchangeRateReadOnly ? (event) => onExchangeRateChange(event.target.value || "") : undefined}
-          onBlur={!exchangeRateReadOnly ? (event) => onExchangeRateChange(formatExchangeRateInput(event.target.value)) : undefined}
+          onBlur={
+            !exchangeRateReadOnly
+              ? (event) => {
+                  const nextValue = formatExchangeRateInput(event.target.value);
+                  (onExchangeRateCommit || onExchangeRateChange)(nextValue);
+                }
+              : undefined
+          }
           readOnly={exchangeRateReadOnly}
           aria-readonly={exchangeRateReadOnly ? "true" : "false"}
           aria-invalid={effectiveExchangeRateInvalid ? "true" : "false"}

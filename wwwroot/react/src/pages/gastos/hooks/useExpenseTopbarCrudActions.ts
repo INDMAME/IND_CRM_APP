@@ -28,7 +28,7 @@ type UseExpenseTopbarCrudActionsArgs = {
   isLocked: boolean;
   isEditLocked?: boolean;
   isDeleteLocked?: boolean;
-  actionMode?: "default" | "delete_only" | "save_only" | "view_only";
+  actionMode?: "default" | "delete_only" | "save_only" | "save_delete" | "view_only";
   allowCreateModeActionsWhenLocked?: boolean;
   permissionsReady?: boolean;
   canCreate: boolean;
@@ -157,19 +157,31 @@ export const useExpenseTopbarCrudActions = ({
       return;
     }
 
-    if (actionMode === "save_only") {
+    if (actionMode === "save_only" || actionMode === "save_delete") {
       if (editBtn) editBtn.classList.remove("topbar-hidden");
       if (editBtn instanceof HTMLButtonElement) {
         editBtn.disabled = false;
         editBtn.setAttribute("aria-disabled", "false");
       }
       if (editIcon) editIcon.classList.add("hidden");
-      if (deleteBtn) deleteBtn.classList.add("topbar-hidden");
+      if (deleteBtn) {
+        if (actionMode === "save_delete" && canDelete && !resolvedDeleteLock) {
+          deleteBtn.classList.remove("topbar-hidden");
+        } else {
+          deleteBtn.classList.add("topbar-hidden");
+        }
+      }
       if (deleteBtn instanceof HTMLButtonElement) {
         deleteBtn.disabled = false;
         deleteBtn.setAttribute("aria-disabled", "false");
       }
-      if (cancelBtn) cancelBtn.classList.remove("topbar-hidden");
+      if (cancelBtn) {
+        if (actionMode === "save_delete") {
+          cancelBtn.classList.add("topbar-hidden");
+        } else {
+          cancelBtn.classList.remove("topbar-hidden");
+        }
+      }
       if (cancelBtn instanceof HTMLButtonElement) {
         cancelBtn.disabled = true;
         cancelBtn.setAttribute("aria-disabled", "true");
@@ -318,7 +330,7 @@ export const useExpenseTopbarCrudActions = ({
     };
 
     const onCancel = () => {
-      if (actionMode === "save_only") return;
+      if (actionMode === "save_only" || actionMode === "save_delete") return;
       if (busy || modalOpen) return;
       handleCancelEdit();
     };

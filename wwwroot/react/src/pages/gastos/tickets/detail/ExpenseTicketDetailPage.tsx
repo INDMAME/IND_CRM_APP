@@ -125,7 +125,6 @@ const buildExpenseTicketDetailPreviewView = ({
   handlePreviewPointerDown,
   handlePreviewPointerMove,
   handlePreviewPointerEnd,
-  handlePreviewWheel,
 }: {
   previewOpen: boolean;
   previewBusy: boolean;
@@ -139,7 +138,6 @@ const buildExpenseTicketDetailPreviewView = ({
   handlePreviewPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
   handlePreviewPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
   handlePreviewPointerEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
-  handlePreviewWheel: (event: React.WheelEvent<HTMLDivElement>) => void;
 }) => ({
   open: previewOpen,
   busy: previewBusy,
@@ -153,7 +151,6 @@ const buildExpenseTicketDetailPreviewView = ({
   onPointerDown: handlePreviewPointerDown,
   onPointerMove: handlePreviewPointerMove,
   onPointerEnd: handlePreviewPointerEnd,
-  onWheel: handlePreviewWheel,
 });
 
 type ExpenseTicketLinkedSheetLineView = {
@@ -214,6 +211,7 @@ const buildExpenseTicketDetailContentView = ({
   setDraftTotalAmount,
   setDraftAmountMST,
   setDraftExchangeRate,
+  commitDraftExchangeRate,
   isFromSheetLink,
   linkedLine,
   handleOpenExpenseSheet,
@@ -272,6 +270,7 @@ const buildExpenseTicketDetailContentView = ({
   setDraftTotalAmount: (value: string) => void;
   setDraftAmountMST: (value: string) => void;
   setDraftExchangeRate: (value: string) => void;
+  commitDraftExchangeRate: (value: string) => void;
   isFromSheetLink: boolean;
   linkedLine: ExpenseTicketLinkedSheetLineView;
   handleOpenExpenseSheet: () => void;
@@ -336,6 +335,7 @@ const buildExpenseTicketDetailContentView = ({
   onDraftTotalAmountChange: setDraftTotalAmount,
   onDraftAmountMSTChange: setDraftAmountMST,
   onDraftExchangeRateChange: setDraftExchangeRate,
+  onDraftExchangeRateCommit: commitDraftExchangeRate,
   onOpenFile: openFile,
   onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
   linkedLine,
@@ -570,42 +570,7 @@ const useExpenseTicketDetailPageViewModel = () => {
         "ExpenseTickets_SheetSync_RetryRequired",
         "Ticket data changed, but we could not sync the expense line. Save again before leaving."
       );
-  const shouldBlockWorkflowExit = pendingFirstLink || sheetSyncBlocked;
-
-  useEffect(() => {
-    if (!shouldBlockWorkflowExit) {
-      clearExpenseNavigationGuard();
-      return;
-    }
-
-    setExpenseNavigationGuard({
-      active: true,
-      message: sheetWorkflowBlockMessage,
-      block: true,
-    });
-    return () => {
-      clearExpenseNavigationGuard();
-    };
-  }, [sheetWorkflowBlockMessage, shouldBlockWorkflowExit]);
-
-  useEffect(() => {
-    const backButton = document.getElementById("globalBackBtn") as HTMLButtonElement | null;
-    if (!backButton) return;
-
-    const previousDisabled = backButton.disabled;
-    if (pendingFirstLink) {
-      backButton.disabled = true;
-      backButton.setAttribute("aria-disabled", "true");
-    } else if (!previousDisabled) {
-      backButton.disabled = false;
-      backButton.setAttribute("aria-disabled", "false");
-    }
-
-    return () => {
-      backButton.disabled = previousDisabled;
-      backButton.setAttribute("aria-disabled", previousDisabled ? "true" : "false");
-    };
-  }, [pendingFirstLink]);
+  const hasWorkflowExitGuard = pendingFirstLink || sheetSyncBlocked;
 
   const { markResetFiltersReturn, clearCachedState } = useExpenseTicketDetailNavigationState({
     fileId,
@@ -661,6 +626,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     setDraftTotalAmount,
     setDraftAmountMST,
     setDraftExchangeRate,
+    commitDraftExchangeRate,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,
@@ -705,7 +671,7 @@ const useExpenseTicketDetailPageViewModel = () => {
             return;
           }
 
-          setDraftExchangeRate(formatExpenseExchangeRateInputValue(officialExchangeRate.exchangeRate));
+          commitDraftExchangeRate(formatExpenseExchangeRateInputValue(officialExchangeRate.exchangeRate), nextCurrencyCode);
           setExchangeRateInfoMessage(
             buildExpenseExchangeRateInfoMessage({
               rawRate: officialExchangeRate.rawRate,
@@ -726,7 +692,14 @@ const useExpenseTicketDetailPageViewModel = () => {
         }
       })();
     },
-    [draftTransDate, header?.ticketDate, header?.transDate, localCurrencyCode, setDraftCurrencyCode, setDraftExchangeRate]
+    [
+      commitDraftExchangeRate,
+      draftTransDate,
+      header?.ticketDate,
+      header?.transDate,
+      localCurrencyCode,
+      setDraftCurrencyCode,
+    ]
   );
   const handleTicketExchangeRateChange = useCallback(
     (value: string) => {
@@ -734,6 +707,13 @@ const useExpenseTicketDetailPageViewModel = () => {
       setDraftExchangeRate(value);
     },
     [setDraftExchangeRate]
+  );
+  const handleTicketExchangeRateCommit = useCallback(
+    (value: string) => {
+      setExchangeRateInfoMessage("");
+      commitDraftExchangeRate(value);
+    },
+    [commitDraftExchangeRate]
   );
   const handleTicketAmountMSTChange = useCallback(
     (value: string) => {
@@ -799,7 +779,6 @@ const useExpenseTicketDetailPageViewModel = () => {
     handlePreviewPointerDown,
     handlePreviewPointerMove,
     handlePreviewPointerEnd,
-    handlePreviewWheel,
   } = useExpenseTicketDetailPreviewPanel({
     fileId,
     isEditing,
@@ -891,9 +870,54 @@ const useExpenseTicketDetailPageViewModel = () => {
   const canEditTicketInContext = canEditTicket && canEditLinkedTicket && !isFromSheetLink;
   const canCreateTicketLineInContext = canEditTicketInContext && !isContextLocked && !sheetSyncBlocked;
   const canDeleteTicketInContext = canDeleteTicket && canEditLinkedTicket && !isFromSheetLink;
-  const ticketTopbarActionMode: "default" | "save_only" | "view_only" =
+  const canDeleteUnlinkedTicketAfterSyncError =
+    pendingFirstLink &&
+    sheetSyncBlocked &&
+    canDeleteTicketInContext &&
+    !!safeText(fileId) &&
+    !!header &&
+    !safeText(header.hojaGastosIdDisplay);
+  const shouldHardBlockWorkflowExit = pendingFirstLink && !canDeleteUnlinkedTicketAfterSyncError;
+
+  useEffect(() => {
+    if (!hasWorkflowExitGuard) {
+      clearExpenseNavigationGuard();
+      return;
+    }
+
+    setExpenseNavigationGuard({
+      active: true,
+      message: sheetWorkflowBlockMessage,
+      block: shouldHardBlockWorkflowExit,
+    });
+    return () => {
+      clearExpenseNavigationGuard();
+    };
+  }, [hasWorkflowExitGuard, sheetWorkflowBlockMessage, shouldHardBlockWorkflowExit]);
+
+  useEffect(() => {
+    const backButton = document.getElementById("globalBackBtn") as HTMLButtonElement | null;
+    if (!backButton) return;
+
+    const previousDisabled = backButton.disabled;
+    if (shouldHardBlockWorkflowExit) {
+      backButton.disabled = true;
+      backButton.setAttribute("aria-disabled", "true");
+    } else if (!previousDisabled) {
+      backButton.disabled = false;
+      backButton.setAttribute("aria-disabled", "false");
+    }
+
+    return () => {
+      backButton.disabled = previousDisabled;
+      backButton.setAttribute("aria-disabled", previousDisabled ? "true" : "false");
+    };
+  }, [shouldHardBlockWorkflowExit]);
+  const ticketTopbarActionMode: "default" | "save_only" | "save_delete" | "view_only" =
     pendingFirstLink && isEditing
-      ? "save_only"
+      ? canDeleteUnlinkedTicketAfterSyncError
+        ? "save_delete"
+        : "save_only"
       : !canEditTicketInContext && !canDeleteTicketInContext
         ? "view_only"
         : "default";
@@ -903,6 +927,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     modalOpen: modal.open,
     isEditing,
     isLocked: isContextLocked,
+    isDeleteLocked: canDeleteUnlinkedTicketAfterSyncError ? false : undefined,
     actionMode: ticketTopbarActionMode,
     permissionsReady: managementBootstrapReady,
     canEditTicket: canEditTicketInContext,
@@ -953,7 +978,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     isEditing,
     canOpenSaveConfirm,
     handlePersistHeaderDraft,
-    bypassWorkflowGuard: shouldBlockWorkflowExit,
+    bypassWorkflowGuard: hasWorkflowExitGuard,
     lineContainerRef,
     openPreview,
     ticketReturnContext,
@@ -991,7 +1016,6 @@ const useExpenseTicketDetailPageViewModel = () => {
       handlePreviewPointerDown,
       handlePreviewPointerMove,
       handlePreviewPointerEnd,
-      handlePreviewWheel,
     },
     contentArgs: {
       isLoading,
@@ -1040,6 +1064,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       setDraftTotalAmount,
       setDraftAmountMST: handleTicketAmountMSTChange,
       setDraftExchangeRate: handleTicketExchangeRateChange,
+      commitDraftExchangeRate: handleTicketExchangeRateCommit,
       isFromSheetLink,
       linkedLine: {
         visible: isFromExpenseLine,

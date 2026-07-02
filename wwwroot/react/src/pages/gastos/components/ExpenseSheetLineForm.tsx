@@ -22,6 +22,7 @@ type ExpenseSheetLineFormProps = {
   projectValue: string;
   priceText: string;
   amountText: string;
+  draftAmountCurrency: string;
   amountMSTText: string;
   internacionalLabel: string;
   isKmType: boolean;
@@ -57,12 +58,14 @@ type ExpenseSheetLineFormProps = {
   onDraftTypeValueCodeChange: (value: string) => void;
   onDraftPriceChange: (value: string) => void;
   onDraftQtyChange: (value: string) => void;
+  onDraftAmountCurrencyChange: (value: string) => void;
   onDraftProjectIdChange: (value: string) => void;
   onDraftInternationalChange: (value: string) => void;
   onDraftReimbursableExpenseChange: (value: number) => void;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftAmountMSTChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
+  onDraftExchangeRateCommit?: (value: string) => void;
   onOpenLinkedTicket: () => void;
 };
 
@@ -78,6 +81,7 @@ const formatQtyValue = (value: number | null | undefined): string => {
 type ExpenseSheetLineCurrencyFieldsProps = {
   line: ExpenseSheetLine;
   amountText: string;
+  draftAmountCurrency: string;
   amountMSTText: string;
   isEditing: boolean;
   draftCurrencyCode: string;
@@ -86,14 +90,17 @@ type ExpenseSheetLineCurrencyFieldsProps = {
   localCurrencyCode: string;
   exchangeRateInfoMessage: string;
   onDraftCurrencyCodeChange: (value: string) => void;
+  onDraftAmountCurrencyChange: (value: string) => void;
   onDraftAmountMSTChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
+  onDraftExchangeRateCommit?: (value: string) => void;
 };
 
 // Renders per-line currency and reimbursement controls.
 const ExpenseSheetLineCurrencyFields = ({
   line,
   amountText,
+  draftAmountCurrency,
   amountMSTText,
   isEditing,
   draftCurrencyCode,
@@ -102,8 +109,10 @@ const ExpenseSheetLineCurrencyFields = ({
   localCurrencyCode,
   exchangeRateInfoMessage,
   onDraftCurrencyCodeChange,
+  onDraftAmountCurrencyChange,
   onDraftAmountMSTChange,
   onDraftExchangeRateChange,
+  onDraftExchangeRateCommit,
 }: ExpenseSheetLineCurrencyFieldsProps) => {
   const normalizedExpenseCurrencyCode = safeText(isEditing ? draftCurrencyCode : line.currencyCode).toUpperCase();
   const exchangeRateValue = isEditing
@@ -115,6 +124,8 @@ const ExpenseSheetLineCurrencyFields = ({
         fallback: "-",
       });
   const reimbursementAmountValue = isEditing ? draftAmountMST : amountMSTText || "-";
+  const amountCurrencyEditable = isEditing && line.ticket !== true;
+  const amountCurrencyValue = amountCurrencyEditable ? draftAmountCurrency : amountText || "-";
 
   return (
     <ExpenseCurrencySettlementFields
@@ -123,11 +134,13 @@ const ExpenseSheetLineCurrencyFields = ({
       localCurrencyCode={localCurrencyCode}
       exchangeRate={exchangeRateValue}
       exchangeRateInfoMessage={exchangeRateInfoMessage}
-      amountCurrency={amountText || "-"}
-      amountCurrencyMode="readonly"
+      amountCurrency={amountCurrencyValue}
+      amountCurrencyMode={amountCurrencyEditable ? "editable" : "readonly"}
       reimbursementAmount={reimbursementAmountValue}
       onExpenseCurrencyChange={onDraftCurrencyCodeChange}
+      onAmountCurrencyChange={onDraftAmountCurrencyChange}
       onExchangeRateChange={onDraftExchangeRateChange}
+      onExchangeRateCommit={onDraftExchangeRateCommit}
       onReimbursementAmountChange={onDraftAmountMSTChange}
     />
   );
@@ -141,6 +154,7 @@ const ExpenseSheetLineForm = ({
   projectValue,
   priceText,
   amountText,
+  draftAmountCurrency,
   amountMSTText,
   internacionalLabel,
   isKmType,
@@ -176,12 +190,14 @@ const ExpenseSheetLineForm = ({
   onDraftTypeValueCodeChange,
   onDraftPriceChange,
   onDraftQtyChange,
+  onDraftAmountCurrencyChange,
   onDraftProjectIdChange,
   onDraftInternationalChange,
   onDraftReimbursableExpenseChange,
   onDraftCurrencyCodeChange,
   onDraftAmountMSTChange,
   onDraftExchangeRateChange,
+  onDraftExchangeRateCommit,
   onOpenLinkedTicket,
 }: ExpenseSheetLineFormProps) => {
   const reimbursableExpenseOptions = React.useMemo(() => getExpenseLineReimbursableExpenseOptions(), []);
@@ -405,6 +421,7 @@ const ExpenseSheetLineForm = ({
           <ExpenseSheetLineCurrencyFields
             line={line}
             amountText={amountText}
+            draftAmountCurrency={draftAmountCurrency}
             amountMSTText={amountMSTText}
             isEditing={isEditing}
             draftCurrencyCode={draftCurrencyCode}
@@ -413,8 +430,10 @@ const ExpenseSheetLineForm = ({
             localCurrencyCode={localCurrencyCode}
             exchangeRateInfoMessage={exchangeRateInfoMessage}
             onDraftCurrencyCodeChange={onDraftCurrencyCodeChange}
+            onDraftAmountCurrencyChange={onDraftAmountCurrencyChange}
             onDraftAmountMSTChange={onDraftAmountMSTChange}
             onDraftExchangeRateChange={onDraftExchangeRateChange}
+            onDraftExchangeRateCommit={onDraftExchangeRateCommit}
           />
 
           {dateTypeFields}

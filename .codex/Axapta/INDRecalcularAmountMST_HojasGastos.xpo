@@ -1,0 +1,62 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: INDRecalcularAmountMST_HojasGastos descargados en Jueves 02/07/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #INDRecalcularAmountMST_HojasGastos
+    #static void INDRecalcularAmountMST_HojasGastos(Args _args)
+    #{
+    #    CRMHojaGastosLine  hojaGastosLine;
+    #    CRMHojaGastosLine  hojaGastosLineUpdate;
+    #    CRMHojaGastosTable hojaGastosTable;
+    #    Amount             newAmountMST;
+    #    int                scanned;
+    #    int                updated;
+    #    int                skippedNoCalculation;
+    #    ;
+    #
+    #    while select hojaGastosLine
+    #        where hojaGastosLine.AmountMST == 0
+    #        join hojaGastosTable
+    #            where hojaGastosTable.HojaGastosId == hojaGastosLine.HojaGastosId
+    #    {
+    #        scanned++;
+    #        ttsbegin;
+    #
+    #        select firstonly forupdate hojaGastosLineUpdate
+    #            where hojaGastosLineUpdate.RecId     == hojaGastosLine.RecId &&
+    #                  hojaGastosLineUpdate.AmountMST == 0;
+    #
+    #        if (hojaGastosLineUpdate.RecId)
+    #        {
+    #            newAmountMST = hojaGastosLineUpdate.LineAmountMST();
+    #
+    #            if (newAmountMST == 0)
+    #            {
+    #                skippedNoCalculation++;
+    #                ttscommit;
+    #                continue;
+    #            }
+    #
+    #            // Backfill historico: solo se rellena AmountMST. No tocar divisa, tasa, estados ni totales.
+    #            hojaGastosLineUpdate.AmountMST = newAmountMST;
+    #            hojaGastosLineUpdate.doUpdate();
+    #
+    #            updated++;
+    #        }
+    #
+    #        ttscommit;
+    #    }
+    #
+    #    info(strfmt("Lineas revisadas: %1. Lineas actualizadas: %2. Lineas omitidas sin calculo: %3",
+    #                scanned,
+    #                updated,
+    #                skippedNoCalculation));
+    #}
+  ENDSOURCE
+
+***Element: END

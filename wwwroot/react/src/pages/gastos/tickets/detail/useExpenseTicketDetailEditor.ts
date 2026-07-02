@@ -454,11 +454,32 @@ export const useExpenseTicketDetailEditor = ({
         type: "patch_draft",
         patch: {
           exchangeRate: nextExchangeRate,
+        },
+      });
+    },
+    [state.draft.exchangeRate]
+  );
+
+  const commitDraftExchangeRate = useCallback(
+    (value: string, currencyCodeOverride?: string) => {
+      setExchangeRateInvalid(false);
+      setAmountMSTInvalid(false);
+      const nextExchangeRate = formatEditableExchangeRate(
+        resolveExchangeRateForSettlement(
+          currencyCodeOverride ? normalizeCurrencyCode(currencyCodeOverride) : state.draft.currencyCode,
+          effectiveLocalCurrencyCode,
+          value
+        )
+      );
+      dispatch({
+        type: "patch_draft",
+        patch: {
+          exchangeRate: nextExchangeRate,
           ...buildAmountMSTPatchFromExchangeRate(state.draft.totalAmount, nextExchangeRate),
         },
       });
     },
-    [state.draft.exchangeRate, state.draft.totalAmount]
+    [effectiveLocalCurrencyCode, state.draft.currencyCode, state.draft.totalAmount]
   );
 
   const handleEnableEdit = useCallback(() => {
@@ -644,6 +665,7 @@ export const useExpenseTicketDetailEditor = ({
     setDraftTotalAmount,
     setDraftAmountMST,
     setDraftExchangeRate,
+    commitDraftExchangeRate,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,

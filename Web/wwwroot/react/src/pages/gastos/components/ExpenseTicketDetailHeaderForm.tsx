@@ -53,6 +53,7 @@ type ExpenseTicketDetailHeaderFormProps = {
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftTotalAmountChange: (value: string) => void;
   onDraftExchangeRateChange: (value: string) => void;
+  onDraftExchangeRateCommit?: (value: string) => void;
   onDraftAmountMSTChange: (value: string) => void;
   onOpenFile: () => void;
   onOpenExpenseSheet?: () => void;
@@ -99,6 +100,7 @@ const ExpenseTicketDetailHeaderForm = ({
   onDraftCurrencyCodeChange,
   onDraftTotalAmountChange,
   onDraftExchangeRateChange,
+  onDraftExchangeRateCommit,
   onDraftAmountMSTChange,
   onOpenFile,
   onOpenExpenseSheet,
@@ -194,6 +196,7 @@ const ExpenseTicketDetailHeaderForm = ({
           reimbursementAmountInputRef={amountMSTInputRef}
           onExpenseCurrencyChange={onDraftCurrencyCodeChange}
           onExchangeRateChange={onDraftExchangeRateChange}
+          onExchangeRateCommit={onDraftExchangeRateCommit}
           onAmountCurrencyChange={onDraftTotalAmountChange}
           onReimbursementAmountChange={onDraftAmountMSTChange}
         />

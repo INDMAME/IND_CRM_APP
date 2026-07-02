@@ -39,7 +39,6 @@ type ExpenseSheetLineDetailViewProps = {
     onPointerDown: (event: React.PointerEvent<HTMLDivElement>) => void;
     onPointerMove: (event: React.PointerEvent<HTMLDivElement>) => void;
     onPointerEnd: (event: React.PointerEvent<HTMLDivElement>) => void;
-    onWheel: (event: React.WheelEvent<HTMLDivElement>) => void;
   };
   content: {
     isLoading: boolean;
@@ -84,7 +83,6 @@ const ExpenseSheetLineDetailView = ({ modal, preview, content }: ExpenseSheetLin
         onPointerDown={preview.onPointerDown}
         onPointerMove={preview.onPointerMove}
         onPointerEnd={preview.onPointerEnd}
-        onWheel={preview.onWheel}
       />
 
       <div

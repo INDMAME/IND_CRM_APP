@@ -220,26 +220,29 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl, enabled = true
       }
     };
 
-    const preventCtrlWheelViewportZoom = (event: WheelEvent) => {
-      if (event.ctrlKey) {
-        event.preventDefault();
-      }
+    const handleNativeWheelZoom = (event: WheelEvent) => {
+      if (!previewImageUrlRef.current || previewBusy) return;
+      event.preventDefault();
+
+      const direction = event.deltaY < 0 ? 1 : -1;
+      const nextScale = clampPreviewScale(previewScaleRef.current + direction * PREVIEW_SCALE_STEP);
+      applyPreviewTransform(nextScale, previewTranslateRef.current);
     };
 
     surface.addEventListener("gesturestart", preventGestureDefault, { passive: false });
     surface.addEventListener("gesturechange", preventGestureDefault, { passive: false });
     surface.addEventListener("gestureend", preventGestureDefault, { passive: false });
     surface.addEventListener("touchmove", preventTouchViewportZoom, { passive: false });
-    surface.addEventListener("wheel", preventCtrlWheelViewportZoom, { passive: false });
+    surface.addEventListener("wheel", handleNativeWheelZoom, { passive: false });
 
     return () => {
       surface.removeEventListener("gesturestart", preventGestureDefault);
       surface.removeEventListener("gesturechange", preventGestureDefault);
       surface.removeEventListener("gestureend", preventGestureDefault);
       surface.removeEventListener("touchmove", preventTouchViewportZoom);
-      surface.removeEventListener("wheel", preventCtrlWheelViewportZoom);
+      surface.removeEventListener("wheel", handleNativeWheelZoom);
     };
-  }, [previewOpen]);
+  }, [applyPreviewTransform, previewBusy, previewOpen]);
 
   const handlePreviewPointerDown = useCallback(
     (event: React.PointerEvent<HTMLDivElement>) => {
@@ -272,7 +275,6 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl, enabled = true
     (event: React.PointerEvent<HTMLDivElement>) => {
       if (!previewPointersRef.current.has(event.pointerId)) return;
 
-      event.preventDefault();
       const point: TicketPreviewPoint = { x: event.clientX, y: event.clientY };
       previewPointersRef.current.set(event.pointerId, point);
 
@@ -354,18 +356,6 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl, enabled = true
     [applyPreviewTransform, rebuildPinchSnapshot]
   );
 
-  const handlePreviewWheel = useCallback(
-    (event: React.WheelEvent<HTMLDivElement>) => {
-      if (!previewImageUrl || previewBusy) return;
-      event.preventDefault();
-
-      const direction = event.deltaY < 0 ? 1 : -1;
-      const nextScale = clampPreviewScale(previewScaleRef.current + direction * PREVIEW_SCALE_STEP);
-      applyPreviewTransform(nextScale, previewTranslateRef.current);
-    },
-    [applyPreviewTransform, previewBusy, previewImageUrl]
-  );
-
   const openPreview = useCallback(async () => {
     const currentFileId = safeText(fileId);
     const currentUrl = safeText(sourceUrl);
@@ -391,6 +381,5 @@ export const useExpenseTicketImagePreview = ({ fileId, sourceUrl, enabled = true
     handlePreviewPointerDown,
     handlePreviewPointerMove,
     handlePreviewPointerEnd,
-    handlePreviewWheel,
   };
 };

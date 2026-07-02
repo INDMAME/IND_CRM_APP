@@ -19,6 +19,7 @@ type ExpenseTicketCurrencySettlementFieldsProps = {
   reimbursementAmountInputRef: React.Ref<HTMLInputElement>;
   onExpenseCurrencyChange: (value: string) => void;
   onExchangeRateChange: (value: string) => void;
+  onExchangeRateCommit?: (value: string) => void;
   onAmountCurrencyChange: (value: string) => void;
   onReimbursementAmountChange: (value: string) => void;
 };
@@ -42,6 +43,7 @@ const ExpenseTicketCurrencySettlementFields = ({
   reimbursementAmountInputRef,
   onExpenseCurrencyChange,
   onExchangeRateChange,
+  onExchangeRateCommit,
   onAmountCurrencyChange,
   onReimbursementAmountChange,
 }: ExpenseTicketCurrencySettlementFieldsProps) => {
@@ -65,6 +67,7 @@ const ExpenseTicketCurrencySettlementFields = ({
       reimbursementAmountInputRef={reimbursementAmountInputRef}
       onExpenseCurrencyChange={onExpenseCurrencyChange}
       onExchangeRateChange={onExchangeRateChange}
+      onExchangeRateCommit={onExchangeRateCommit}
       onAmountCurrencyChange={onAmountCurrencyChange}
       onReimbursementAmountChange={onReimbursementAmountChange}
     />
