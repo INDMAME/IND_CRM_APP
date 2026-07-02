@@ -19,6 +19,11 @@ import {
   updateExpenseSheetLine,
 } from "./expenseApi.ts";
 import { toExpenseApiDdMmYyyy } from "./expenseApiDateUtils.ts";
+import {
+  calculateExpenseLineAmountMSTForCurrency,
+  isExpenseLineSameReimbursementCurrency,
+  resolveExpenseLineExchangeRateForCurrency,
+} from "./expenseLineCurrency.ts";
 import { safeText } from "./expenseUiUtils.ts";
 
 const PREFERRED_TICKET_GASTO_TYPE = 8;
@@ -100,9 +105,15 @@ const resolvePositiveNumberOverride = (value: number | null | undefined): number
   return parsed != null && parsed > 0 ? parsed : null;
 };
 
+const resolveNonNegativeNumberOverride = (value: number | null | undefined): number | null => {
+  const parsed = toFiniteNumber(value);
+  return parsed != null && parsed >= 0 ? parsed : null;
+};
+
 const resolveTicketSnapshot = (
   ticket: ExpenseSheetTicketDetailDto,
   existingLine: ExpenseSheetLine | null,
+  reimbursementCurrencyCode: string,
   overrides: {
     currencyCodeOverride?: string | null;
     amountMSTOverride?: number | null;
@@ -144,12 +155,19 @@ const resolveTicketSnapshot = (
     safeText(overrides.currencyCodeOverride).toUpperCase() ||
     safeText(ticket.CurrencyCode).toUpperCase() ||
     safeText(existingLine?.currencyCode).toUpperCase();
-  const amountMST =
-    resolvePositiveNumberOverride(overrides.amountMSTOverride) ??
+  const rawAmountMST =
+    resolveNonNegativeNumberOverride(overrides.amountMSTOverride) ??
     toFiniteNumber(ticket.AmountMST ?? ticket.amountMST ?? existingLine?.amountMST);
-  const exchRate =
+  const rawExchRate =
     resolvePositiveNumberOverride(overrides.exchangeRateOverride) ??
     resolvePositiveNumberOverride(ticket.ExchRate ?? ticket.exchRate ?? existingLine?.exchRate);
+  const sameReimbursementCurrency = isExpenseLineSameReimbursementCurrency(currencyCode, reimbursementCurrencyCode);
+  const exchRate = resolveExpenseLineExchangeRateForCurrency(currencyCode, reimbursementCurrencyCode, rawExchRate);
+  const amountMST =
+    rawAmountMST ??
+    (sameReimbursementCurrency
+      ? calculateExpenseLineAmountMSTForCurrency(totalAmount, exchRate, currencyCode, reimbursementCurrencyCode)
+      : null);
 
   return {
     description,
@@ -263,11 +281,16 @@ export const syncExpenseLinkedTicketSheetLine = async (args: SyncExpenseLinkedTi
   }
 
   const sheetHeader = mapExpenseSheetHeader(selectedSheet);
-  const ticketSnapshot = resolveTicketSnapshot(selectedTicket, existingLine, {
-    currencyCodeOverride,
-    amountMSTOverride,
-    exchangeRateOverride,
-  });
+  const ticketSnapshot = resolveTicketSnapshot(
+    selectedTicket,
+    existingLine,
+    safeText(sheetHeader.currencyCode).toUpperCase(),
+    {
+      currencyCodeOverride,
+      amountMSTOverride,
+      exchangeRateOverride,
+    }
+  );
   if (!(ticketSnapshot.totalAmount > 0)) {
     throw new Error(
       indT("ExpenseTickets_SheetSync_InvalidTotal", "The ticket must keep a positive total amount to sync the expense line.")

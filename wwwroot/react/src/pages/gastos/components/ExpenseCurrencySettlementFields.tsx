@@ -101,12 +101,23 @@ const ExpenseCurrencySettlementFields = ({
     "Imp. reemb. ({0})",
     reimbursementCurrencyLabel
   );
-  const fallbackExchangeRateInfoMessage = indFormat(
-    "ExpenseSheets_ExchangeRate_InfoPopover_Stored",
-    "Tipo de cambio {0} {1}",
-    "manual",
-    safeText(effectiveExchangeRate) || "-"
+  const expenseCurrencyLabel = normalizedExpenseCurrencyCode || indT("Common_NotAvailable", "N/A");
+  const exchangeRateReferenceValue = formatExpenseInputNumber(effectiveExchangeRate, {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+    useGrouping: true,
+    fallback: "-",
+  });
+  const exchangeRateReferenceMessage = indFormat(
+    "ExpenseSheets_ExchangeRate_InfoPopover_Reference",
+    "100 {0} = {1} {2}\nEl tipo de cambio indica cuántas unidades de la divisa del gasto equivalen a 100 unidades de la divisa de reembolso.",
+    reimbursementCurrencyLabel,
+    exchangeRateReferenceValue,
+    expenseCurrencyLabel
   );
+  const exchangeRateInfoPopoverContent = safeText(exchangeRateInfoMessage)
+    ? `${exchangeRateReferenceMessage}\n\n${safeText(exchangeRateInfoMessage)}`
+    : exchangeRateReferenceMessage;
   const amountCurrencyReadOnly = !isEditing || amountCurrencyMode === "readonly";
 
   return (
@@ -169,7 +180,7 @@ const ExpenseCurrencySettlementFields = ({
         <div className="flex min-h-6 items-center justify-between gap-2">
           <label className={fieldLabelClassName}>{indT("ExpenseSheets_Field_ExchangeRate", "Tipo cambio")}</label>
           <InfoPopoverIconButton
-            content={safeText(exchangeRateInfoMessage) || fallbackExchangeRateInfoMessage}
+            content={exchangeRateInfoPopoverContent}
             ariaLabel={indT("ExpenseSheets_ExchangeRate_InfoPopover_Aria", "Exchange rate information")}
             className="shrink-0"
           />

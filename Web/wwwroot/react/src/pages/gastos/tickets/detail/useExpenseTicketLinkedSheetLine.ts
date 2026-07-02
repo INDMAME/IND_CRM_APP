@@ -56,7 +56,7 @@ export const useExpenseTicketLinkedSheetLine = ({
   const reloadLine = useCallback(async () => {
     const safeSheetId = safeText(sheetId);
     const safeLineRecId = safeText(lineRecId);
-    if (!enabled || !safeSheetId || !safeLineRecId) {
+    if (!enabled || !safeSheetId) {
       setLine(null);
       setOriginalProjectId("");
       setDraftProjectId("");
@@ -89,7 +89,18 @@ export const useExpenseTicketLinkedSheetLine = ({
 
       const sheet = selectSheet(response?.Items || [], safeSheetId);
       const sheetLocalCurrencyCode = safeText(sheet?.CurrencyCode ?? sheet?.currencyCode).toUpperCase();
-      const selectedLine = sheet ? selectLine(sheet, safeLineRecId) : null;
+      const selectedLine = sheet && safeLineRecId ? selectLine(sheet, safeLineRecId) : null;
+      if (!safeLineRecId) {
+        setLine(null);
+        setOriginalProjectId("");
+        setDraftProjectId("");
+        setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+        setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+        setLocalCurrencyCode(sheetLocalCurrencyCode);
+        setErrorMessage("");
+        return;
+      }
+
       if (!selectedLine) {
         setLine(null);
         setOriginalProjectId("");

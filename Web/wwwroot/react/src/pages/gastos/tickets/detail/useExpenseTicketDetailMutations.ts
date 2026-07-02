@@ -14,6 +14,11 @@ import {
 } from "../../utils/expenseApi.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../../utils/expenseApiDateUtils.ts";
 import { syncExpenseLinkedTicketSheetLine } from "../../utils/expenseLinkedTicketSheetSync.ts";
+import {
+  isExpenseLineForeignCurrency,
+  resolveExpenseLineAmountMSTForCurrencyPayload,
+  resolveExpenseLineExchangeRateForCurrency,
+} from "../../utils/expenseLineCurrency.ts";
 import { resolveExpenseSheetEditAccess } from "../../utils/expenseSheetEditAccess.ts";
 import { clearExpenseTicketSheetSyncState, saveExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
@@ -194,8 +199,7 @@ export const useExpenseTicketDetailMutations = ({
       const parsedAmountMST = parseDecimalInput(draftAmountMST);
       const parsedExchangeRate = parseDecimalInput(draftExchangeRate);
       const normalizedLocalCurrency = safeText(localCurrencyCode).toUpperCase();
-      const requiresForeignCurrencySettlement =
-        !!normalizedLocalCurrency && normalizedCurrency !== normalizedLocalCurrency;
+      const requiresForeignCurrencySettlement = isExpenseLineForeignCurrency(normalizedCurrency, normalizedLocalCurrency);
       const hasForeignCurrencySettlement =
         !requiresForeignCurrencySettlement ||
         (parsedExchangeRate != null && parsedExchangeRate > 0) ||
@@ -231,12 +235,23 @@ export const useExpenseTicketDetailMutations = ({
         return false;
       }
 
+      const payloadAmountMST = resolveExpenseLineAmountMSTForCurrencyPayload(
+        parsedTotalAmount,
+        parsedAmountMST,
+        normalizedCurrency,
+        normalizedLocalCurrency
+      );
+      const payloadExchangeRate = resolveExpenseLineExchangeRateForCurrency(
+        normalizedCurrency,
+        normalizedLocalCurrency,
+        parsedExchangeRate
+      );
       const payload: ExpenseSheetTicketUpdateRequest = {
         description: normalizedDescription,
         currencyCode: normalizedCurrency,
         totalAmount: Number(parsedTotalAmount),
-        amountMST: parsedAmountMST ?? undefined,
-        exchRate: parsedExchangeRate != null && parsedExchangeRate > 0 ? parsedExchangeRate : undefined,
+        amountMST: payloadAmountMST ?? undefined,
+        exchRate: payloadExchangeRate ?? undefined,
         transDate: normalizedTransDate || undefined,
         ticketDate: normalizedTransDate || undefined,
         ticketTime: safeText(draftTicketTime) || undefined,
@@ -266,8 +281,8 @@ export const useExpenseTicketDetailMutations = ({
                 sheetId: validatedSheetId,
                 lineRecId: safeText(linkedExpenseLineRecId) || undefined,
                 currencyCodeOverride: normalizedCurrency,
-                amountMSTOverride: parsedAmountMST,
-                exchangeRateOverride: parsedExchangeRate != null && parsedExchangeRate > 0 ? parsedExchangeRate : undefined,
+                amountMSTOverride: payloadAmountMST,
+                exchangeRateOverride: payloadExchangeRate ?? undefined,
                 ...(linkedExpenseLineProjectIdChanged
                   ? { projectIdOverride: safeText(linkedExpenseLineProjectId) }
                   : {}),

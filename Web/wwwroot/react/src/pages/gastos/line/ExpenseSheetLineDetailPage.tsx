@@ -18,9 +18,11 @@ import { appendExpenseTicketReturnQuery, saveExpenseTicketReturnContext } from "
 import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import {
-  calculateExpenseLineAmountMST,
-  calculateExpenseLineExchangeRate,
+  calculateExpenseLineAmountMSTForCurrency,
+  calculateExpenseLineExchangeRateForCurrency,
+  isExpenseLineSameReimbursementCurrency,
   normalizeExpenseLineCurrencyCode,
+  resolveExpenseLineExchangeRateForCurrency,
 } from "../utils/expenseLineCurrency.ts";
 import {
   buildExpenseExchangeRateInfoMessage,
@@ -94,6 +96,7 @@ const ExpenseSheetLineDetailContent = () => {
   const [linkedTicketLinePaging, setLinkedTicketLinePaging] = useState({ fileId: "", page: 1 });
   const exchangeRateRequestIdRef = useRef(0);
   const amountCurrencyManualEditRef = useRef(false);
+  const amountMSTManualEditRef = useRef(false);
   const linkedTicketLineContainerRef = useRef<HTMLDivElement | null>(null);
   const [exchangeRateInfoMessage, setExchangeRateInfoMessage] = useState("");
 
@@ -228,9 +231,12 @@ const ExpenseSheetLineDetailContent = () => {
     () => formatAmountWithCurrency(calculatedAmountPreview, effectiveLineCurrencyCode),
     [calculatedAmountPreview, effectiveLineCurrencyCode]
   );
+  const displayAmountMST = isExpenseLineSameReimbursementCurrency(effectiveLineCurrencyCode, localCurrencyCode)
+    ? line?.amountMST ?? line?.amount ?? null
+    : line?.amountMST ?? null;
   const amountMSTText = useMemo(
-    () => formatAmountWithCurrency(line?.amountMST ?? null, localCurrencyCode),
-    [line?.amountMST, localCurrencyCode]
+    () => formatAmountWithCurrency(displayAmountMST, localCurrencyCode),
+    [displayAmountMST, localCurrencyCode]
   );
   const projectValue = safeText(line?.projId || header?.projId);
   const sheetDescription = safeText(header?.description) || "-";
@@ -241,6 +247,7 @@ const ExpenseSheetLineDetailContent = () => {
   useEffect(() => {
     if (!isEditing) {
       amountCurrencyManualEditRef.current = false;
+      amountMSTManualEditRef.current = false;
       setDraftAmountCurrency("");
       return;
     }
@@ -251,6 +258,10 @@ const ExpenseSheetLineDetailContent = () => {
 
     setDraftAmountCurrency(formatLineMoneyInput(calculatedAmountPreview));
   }, [calculatedAmountPreview, formatLineMoneyInput, isEditing, line?.lineRecId]);
+
+  useEffect(() => {
+    amountMSTManualEditRef.current = false;
+  }, [isEditing, line?.lineRecId]);
   const linkedTicketDetail = useExpenseTicketDetailState({
     enabled: showLinkedTicketLines,
     hasAccess: canViewLinkedTicketLines,
@@ -363,7 +374,7 @@ const ExpenseSheetLineDetailContent = () => {
   const localExchangeRateInput = useMemo(() => formatLineExchangeRateInput(100), [formatLineExchangeRateInput]);
   const isDraftCurrencyLocal = useMemo(() => {
     const normalizedDraftCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
-    return !!normalizedDraftCurrencyCode && !!localCurrencyCode && normalizedDraftCurrencyCode === localCurrencyCode;
+    return isExpenseLineSameReimbursementCurrency(normalizedDraftCurrencyCode, localCurrencyCode);
   }, [draftCurrencyCode, localCurrencyCode]);
 
   const resolveExchangeRateForLineCalculation = useCallback(
@@ -395,17 +406,32 @@ const ExpenseSheetLineDetailContent = () => {
   );
 
   const recalculateAmountMSTFromRate = useCallback(
-    (priceRaw: string, qtyRaw: string, exchangeRateRaw: string) => {
+    (priceRaw: string, qtyRaw: string, exchangeRateRaw: string, currencyCodeOverride?: string) => {
       const amount = resolveDraftLineAmount(priceRaw, qtyRaw);
-      const exchangeRate = parseDecimalInput(exchangeRateRaw);
-      const nextAmountMST = amount != null && exchangeRate != null
-        ? calculateExpenseLineAmountMST(amount, exchangeRate)
-        : null;
+      const normalizedCurrencyCode = currencyCodeOverride
+        ? normalizeExpenseLineCurrencyCode(currencyCodeOverride)
+        : normalizeExpenseLineCurrencyCode(draftCurrencyCode);
+      if (
+        amountMSTManualEditRef.current &&
+        isExpenseLineSameReimbursementCurrency(normalizedCurrencyCode, localCurrencyCode)
+      ) {
+        return;
+      }
+
+      const exchangeRate = resolveExpenseLineExchangeRateForCurrency(
+        normalizedCurrencyCode,
+        localCurrencyCode,
+        parseDecimalInput(exchangeRateRaw)
+      );
+      const nextAmountMST =
+        amount != null
+          ? calculateExpenseLineAmountMSTForCurrency(amount, exchangeRate, normalizedCurrencyCode, localCurrencyCode)
+          : null;
       if (nextAmountMST != null) {
         setDraftAmountMST(formatLineMoneyInput(nextAmountMST));
       }
     },
-    [formatLineMoneyInput, resolveDraftLineAmount, setDraftAmountMST]
+    [draftCurrencyCode, formatLineMoneyInput, localCurrencyCode, resolveDraftLineAmount, setDraftAmountMST]
   );
 
   const loadOfficialLineExchangeRate = useCallback(
@@ -507,19 +533,33 @@ const ExpenseSheetLineDetailContent = () => {
 
       handleDraftPriceChange(formatLineMoneyInput(amount / qty));
       const effectiveExchangeRate = resolveExchangeRateForLineCalculation(draftExchangeRate);
-      const exchangeRate = parseDecimalInput(effectiveExchangeRate);
-      const nextAmountMST = exchangeRate != null && exchangeRate > 0
-        ? calculateExpenseLineAmountMST(amount, exchangeRate)
-        : null;
+      const exchangeRate = resolveExpenseLineExchangeRateForCurrency(
+        draftCurrencyCode,
+        localCurrencyCode,
+        parseDecimalInput(effectiveExchangeRate)
+      );
+      const sameReimbursementCurrency = isExpenseLineSameReimbursementCurrency(draftCurrencyCode, localCurrencyCode);
+      if (sameReimbursementCurrency && amountMSTManualEditRef.current) {
+        return;
+      }
+
+      const nextAmountMST = calculateExpenseLineAmountMSTForCurrency(
+        amount,
+        exchangeRate,
+        draftCurrencyCode,
+        localCurrencyCode
+      );
       if (nextAmountMST != null) {
         setDraftAmountMST(formatLineMoneyInput(nextAmountMST));
       }
     },
     [
       draftExchangeRate,
+      draftCurrencyCode,
       draftQty,
       formatLineMoneyInput,
       handleDraftPriceChange,
+      localCurrencyCode,
       resolveExchangeRateForLineCalculation,
       setDraftAmountMST,
     ]
@@ -528,12 +568,16 @@ const ExpenseSheetLineDetailContent = () => {
   const handleLineCurrencyChange = useCallback(
     (value: string) => {
       const nextCurrencyCode = normalizeExpenseLineCurrencyCode(value);
+      amountMSTManualEditRef.current = false;
       setDraftCurrencyCode(nextCurrencyCode);
       setExchangeRateInfoMessage("");
       if (nextCurrencyCode && nextCurrencyCode === localCurrencyCode) {
         exchangeRateRequestIdRef.current += 1;
-        setDraftExchangeRate(localExchangeRateInput);
-        recalculateAmountMSTFromRate(draftPrice, draftQty, localExchangeRateInput);
+        const nextExchangeRate = formatLineExchangeRateInput(
+          resolveExpenseLineExchangeRateForCurrency(nextCurrencyCode, localCurrencyCode, draftExchangeRate)
+        );
+        setDraftExchangeRate(nextExchangeRate);
+        recalculateAmountMSTFromRate(draftPrice, draftQty, nextExchangeRate, nextCurrencyCode);
         return;
       }
 
@@ -545,7 +589,8 @@ const ExpenseSheetLineDetailContent = () => {
       draftTransDate,
       loadOfficialLineExchangeRate,
       localCurrencyCode,
-      localExchangeRateInput,
+      draftExchangeRate,
+      formatLineExchangeRateInput,
       recalculateAmountMSTFromRate,
       setDraftCurrencyCode,
       setDraftExchangeRate,
@@ -590,22 +635,35 @@ const ExpenseSheetLineDetailContent = () => {
 
   const handleLineAmountMSTChange = useCallback(
     (value: string) => {
+      amountMSTManualEditRef.current = true;
       setExchangeRateInfoMessage("");
       setDraftAmountMST(value);
 
       const amount = resolveDraftLineAmount(draftPrice, draftQty);
       const amountMST = parseDecimalInput(value);
-      const nextExchangeRate = amount != null && amountMST != null
-        ? calculateExpenseLineExchangeRate(amount, amountMST)
-        : null;
+      const nextExchangeRate =
+        amount != null && amountMST != null
+          ? calculateExpenseLineExchangeRateForCurrency(
+              amount,
+              amountMST,
+              draftCurrencyCode,
+              localCurrencyCode,
+              draftExchangeRate
+            )
+          : isExpenseLineSameReimbursementCurrency(draftCurrencyCode, localCurrencyCode)
+            ? resolveExpenseLineExchangeRateForCurrency(draftCurrencyCode, localCurrencyCode, draftExchangeRate)
+            : null;
       if (nextExchangeRate != null) {
         setDraftExchangeRate(formatLineExchangeRateInput(nextExchangeRate));
       }
     },
     [
+      draftCurrencyCode,
+      draftExchangeRate,
       draftPrice,
       draftQty,
       formatLineExchangeRateInput,
+      localCurrencyCode,
       resolveDraftLineAmount,
       setDraftAmountMST,
       setDraftExchangeRate,

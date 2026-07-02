@@ -1386,6 +1386,9 @@
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>Tipo de cambio obtenido {0}\nFecha: {1}\nOrigen: {2}</value>
   </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nEl tipo de cambio indica cuántas unidades de la divisa del gasto equivalen a 100 unidades de la divisa de reembolso.</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Tipo de cambio {0} {1}</value>
   </data>

@@ -512,19 +512,26 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.26
         #ExchRate calcExchRateFromAmountMST()
         #{
+        #    CurrencyCode reimbursementCurrency;
         #    ;
         #
-        #    // Calcula el tipo de cambio AX en base 100 desde el importe y el reembolso.
+        #    //MMS - Ajustes CRM - 2026.07.02
+        #    // Solo deriva el tipo desde el reembolso cuando el ticket esta en divisa distinta al reembolso.
         #    if (!this.CurrencyCode)
         #        return this.ExchRate;
         #
-        #    if (!this.TotalAmount || !this.AmountMST)
+        #    reimbursementCurrency = this.reimbursementCurrencyCode();
+        #
+        #    if (this.CurrencyCode == reimbursementCurrency)
         #    {
-        #        if (this.CurrencyCode == CompanyInfo::standardCurrency() && !this.ExchRate)
+        #        if (!this.ExchRate)
         #            return 100;
         #
         #        return this.ExchRate;
         #    }
+        #
+        #    if (!this.TotalAmount || !this.AmountMST)
+        #        return this.ExchRate;
         #
         #    return (this.TotalAmount * 100) / this.AmountMST;
         #}
@@ -534,12 +541,13 @@ Formatversion: 1
         #Amount calcTotalAmount(boolean _amountMSTChanged = false,
         #                       boolean _preserveWhenNoLines = false)
         #{
-        #    Amount  amount;
+        #    Amount            amount;
         #    INDTicketInfoLine ticketInfoLine;
+        #    container         adjustmentResult;
         #    ;
         #
-        #    //MMS - Recalculo ticket desde lineas - 2026.07.01
-        #    // Los cambios de lineas actualizan la cabecera; el ajuste solo se recalcula en ediciones manuales de cabecera.
+        #    //MMS - Ajustes CRM - 2026.07.02
+        #    // Si hay ajuste manual, conserva la cabecera y recalcula o elimina la linea de ajuste.
         #    select firstOnly RecId from ticketInfoLine
         #        where ticketInfoLine.FileId == this.FileId;
         #
@@ -547,6 +555,20 @@ Formatversion: 1
         #    {
         #        this.normalizeCurrencyAmounts(_amountMSTChanged);
         #        return this.TotalAmount;
+        #    }
+        #
+        #    ticketInfoLine.clear();
+        #
+        #    select firstOnly RecId from ticketInfoLine
+        #        where ticketInfoLine.FileId     == this.FileId
+        #           && ticketInfoLine.Adjustment == NoYes::Yes;
+        #
+        #    if (ticketInfoLine.RecId)
+        #    {
+        #        adjustmentResult = this.syncAdjustmentLineToTotal('', false);
+        #        amount = conPeek(adjustmentResult, 2);
+        #
+        #        return amount;
         #    }
         #
         #    ticketInfoLine.clear();
@@ -625,6 +647,31 @@ Formatversion: 1
         #           && docuRef.INDFileAllocationType == INDFileAllocationType::ExpenseSheet;
         #
         #    return docuRef;
+        #}
+      ENDSOURCE
+      SOURCE #reimbursementCurrencyCode
+        #//MMS - Ajustes CRM - 2026.07.02
+        #CurrencyCode reimbursementCurrencyCode()
+        #{
+        #    CRMHojaGastosLine  gastosLine;
+        #    CRMHojaGastosTable hojaGastosTable;
+        #    ;
+        #
+        #    // Resuelve la divisa de reembolso desde la linea de gasto vinculada; fallback a divisa estandar de empresa.
+        #    if (this.FileId)
+        #    {
+        #        gastosLine = CRMHojaGastosLine::FindByFileId(this.FileId);
+        #
+        #        if (gastosLine && gastosLine.HojaGastosId)
+        #        {
+        #            hojaGastosTable = gastosLine.HojaGastosTable();
+        #
+        #            if (hojaGastosTable && hojaGastosTable.CurrencyCode)
+        #                return hojaGastosTable.CurrencyCode;
+        #        }
+        #    }
+        #
+        #    return CompanyInfo::standardCurrency();
         #}
       ENDSOURCE
       SOURCE #existHojaGastosId
@@ -707,11 +754,14 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.26
         #void normalizeCurrencyAmounts(boolean _amountMSTChanged = false)
         #{
+        #    CurrencyCode reimbursementCurrency;
         #    ;
         #
         #    // Normaliza divisa, tipo de cambio e importe de reembolso antes de guardar o tras editar.
         #    if (!this.CurrencyCode)
         #        this.CurrencyCode = CompanyInfo::standardCurrency();
+        #
+        #    reimbursementCurrency = this.reimbursementCurrencyCode();
         #
         #    if (_amountMSTChanged)
         #    {
@@ -719,7 +769,7 @@ Formatversion: 1
         #        return;
         #    }
         #
-        #    if (this.CurrencyCode == CompanyInfo::standardCurrency() && !this.ExchRate)
+        #    if (this.CurrencyCode == reimbursementCurrency && !this.ExchRate)
         #        this.ExchRate = 100;
         #
         #    this.AmountMST = this.ticketAmountMST();
@@ -781,16 +831,32 @@ Formatversion: 1
         #    regularLinesTotal = regularLine.TotalAmount;
         #    adjustmentAmount  = targetTotalAmount - regularLinesTotal;
         #
-        #    if (!adjustmentLine.RecId)
+        #    if (adjustmentAmount == 0)
         #    {
-        #        if (adjustmentAmount == 0)
+        #        //MMS - Ajustes CRM - 2026.07.02
+        #        // Cuando la suma de lineas ya cuadra con la cabecera, elimina el ajuste manual.
+        #        if (adjustmentLine.RecId)
         #        {
-        #            this.TotalAmount = targetTotalAmount;
-        #            this.normalizeCurrencyAmounts(false);
-        #
-        #            return [false, this.TotalAmount, adjustmentAmount, 0, false];
+        #            adjustmentLineRecId = adjustmentLine.RecId;
+        #            adjustmentLine.doDelete();
         #        }
         #
+        #        while select forupdate duplicateAdjustmentLine
+        #            where duplicateAdjustmentLine.FileId     == this.FileId
+        #               && duplicateAdjustmentLine.Adjustment == NoYes::Yes
+        #               && duplicateAdjustmentLine.RecId      != adjustmentLineRecId
+        #        {
+        #            duplicateAdjustmentLine.doDelete();
+        #        }
+        #
+        #        this.TotalAmount = targetTotalAmount;
+        #        this.normalizeCurrencyAmounts(false);
+        #
+        #        return [false, this.TotalAmount, adjustmentAmount, 0, false];
+        #    }
+        #
+        #    if (!adjustmentLine.RecId)
+        #    {
         #        adjustmentLine.clear();
         #        adjustmentLine.initValue();
         #        adjustmentLine.FileId          = this.FileId;
@@ -901,22 +967,26 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.26
         #Amount ticketAmountMST()
         #{
-        #    ExchRate exchRate;
+        #    CurrencyCode reimbursementCurrency;
+        #    ExchRate     exchRate;
         #    ;
         #
-        #    // Convierte el importe del ticket a divisa local usando el tipo de cambio AX en base 100.
+        #    //MMS - Ajustes CRM - 2026.07.02
+        #    // Si el ticket ya esta en la divisa de reembolso, no aplica conversion por tipo de cambio.
         #    if (!this.CurrencyCode)
         #        return 0;
         #
-        #    exchRate = this.ExchRate;
+        #    reimbursementCurrency = this.reimbursementCurrencyCode();
         #
-        #    if (this.CurrencyCode == CompanyInfo::standardCurrency() && !exchRate)
-        #        exchRate = 100;
+        #    if (this.CurrencyCode == reimbursementCurrency)
+        #        return Currency::amount(this.TotalAmount, reimbursementCurrency);
+        #
+        #    exchRate = this.ExchRate;
         #
         #    if (!exchRate)
         #        return 0;
         #
-        #    return Currency::amount(this.TotalAmount * 100 / exchRate, CompanyInfo::standardCurrency());
+        #    return Currency::amount(this.TotalAmount * 100 / exchRate, reimbursementCurrency);
         #}
         #
       ENDSOURCE
@@ -960,15 +1030,18 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.26
         #boolean validateCurrencyAmounts()
         #{
-        #    boolean ret = true;
+        #    boolean      ret = true;
+        #    CurrencyCode reimbursementCurrency;
         #    ;
         #
         #    // Valida los datos minimos para mantener fiable el importe de reembolso.
         #    if (!this.CurrencyCode)
         #        ret = checkFailed("Debe indicar la divisa del ticket.");
         #
-        #    if (this.CurrencyCode && this.CurrencyCode != CompanyInfo::standardCurrency() && !this.ExchRate && this.AmountMST <= 0)
-        #        ret = checkFailed(strFmt("Para tickets en divisa distinta a %1 hay que indicar el tipo de cambio.", CompanyInfo::standardCurrency()));
+        #    reimbursementCurrency = this.reimbursementCurrencyCode();
+        #
+        #    if (this.CurrencyCode && this.CurrencyCode != reimbursementCurrency && !this.ExchRate && this.AmountMST <= 0)
+        #        ret = checkFailed(strFmt("Para tickets en divisa distinta a %1 hay que indicar el tipo de cambio o el importe de reembolso.", reimbursementCurrency));
         #
         #    return ret;
         #}

@@ -502,7 +502,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     [contextSheetId, header?.hojaGastosIdDisplay, ticketReturnContext]
   );
   const linkedSheetLine = useExpenseTicketLinkedSheetLine({
-    enabled: isFromExpenseLine,
+    enabled: !!linkedExpenseSheetId,
     sheetId: linkedExpenseSheetId,
     lineRecId: contextLineRecId,
     onForbidden: showPermissionModal,
@@ -582,7 +582,7 @@ const useExpenseTicketDetailPageViewModel = () => {
   const canEditLinkedTicket = !linkedExpenseSheetId || (!linkSheetCheckBusy && !linkSheetLocked);
   const allowAssignedDraftEdit = isFromExpenseSheetCreate || (!!linkedExpenseSheetId && canEditLinkedTicket);
   const ticketLocalCurrencyCode = useMemo(
-    () => normalizeExpenseLineCurrencyCode(contextDefaultCurrencyCode || linkedSheetLine.localCurrencyCode),
+    () => normalizeExpenseLineCurrencyCode(linkedSheetLine.localCurrencyCode || contextDefaultCurrencyCode),
     [contextDefaultCurrencyCode, linkedSheetLine.localCurrencyCode]
   );
   const {

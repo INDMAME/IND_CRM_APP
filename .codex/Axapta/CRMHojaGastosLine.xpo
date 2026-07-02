@@ -1381,11 +1381,17 @@ Formatversion: 1
         #ExchRate calcExchRateFromAmountMST()
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
-        #    CurrencyCode currencyCode;
+        #    CurrencyCode       currencyCode;
+        #    CurrencyCode       reimbursementCurrencyCode;
         #    ;
         #
-        #    // Calcula el tipo AX en base 100 desde el importe en divisa y el reembolso local.
+        #    //MMS - Ajustes CRM - 2026.07.02
+        #    // Solo deriva el tipo desde AmountMST cuando la linea esta en divisa distinta al reembolso.
         #    currencyCode = this.Currency;
+        #    reimbursementCurrencyCode = CompanyInfo::standardCurrency();
+        #
+        #    if (hojaGastosTable && hojaGastosTable.CurrencyCode)
+        #        reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
         #
         #    if (!currencyCode && hojaGastosTable)
         #        currencyCode = hojaGastosTable.CurrencyCode;
@@ -1393,13 +1399,16 @@ Formatversion: 1
         #    if (!currencyCode)
         #        return this.ExchRate;
         #
-        #    if (!this.Amount || !this.AmountMST)
+        #    if (currencyCode == reimbursementCurrencyCode)
         #    {
-        #        if (currencyCode == CompanyInfo::standardCurrency() && !this.ExchRate)
+        #        if (!this.ExchRate)
         #            return 100;
         #
         #        return this.ExchRate;
         #    }
+        #
+        #    if (!this.Amount || !this.AmountMST)
+        #        return this.ExchRate;
         #
         #    return (this.Amount * 100) / this.AmountMST;
         #}
@@ -1910,25 +1919,28 @@ Formatversion: 1
         #display Amount LineAmountMST()
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
-        #    CurrencyCode currencyCode;
-        #    ExchRate     exchRate;
+        #    CurrencyCode       currencyCode;
+        #    CurrencyCode       reimbursementCurrencyCode;
+        #    ExchRate           exchRate;
         #    ;
         #
-        #    // Convierte el importe real de linea a la divisa local de reembolso.
+        #    //MMS - Ajustes CRM - 2026.07.02
+        #    // Convierte solo cuando la divisa de la linea difiere de la divisa de reembolso.
         #    currencyCode = this.Currency;
         #    exchRate     = this.ExchRate;
+        #    reimbursementCurrencyCode = CompanyInfo::standardCurrency();
+        #
+        #    if (hojaGastosTable && hojaGastosTable.CurrencyCode)
+        #        reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
         #
         #    if (!currencyCode && hojaGastosTable)
         #        currencyCode = hojaGastosTable.CurrencyCode;
         #
-        #    if (!exchRate && hojaGastosTable && currencyCode == hojaGastosTable.CurrencyCode)
-        #        exchRate = hojaGastosTable.ExchRate;
-        #
         #    if (!currencyCode)
         #        return 0;
         #
-        #    if (currencyCode == CompanyInfo::standardCurrency() && !exchRate)
-        #        exchRate = 100;
+        #    if (currencyCode == reimbursementCurrencyCode)
+        #        return Currency::amount(this.Amount, reimbursementCurrencyCode);
         #
         #    if (!exchRate)
         #        return 0;
@@ -2172,22 +2184,30 @@ Formatversion: 1
         #void normalizeCurrencyAmounts(boolean _amountMSTChanged = false)
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
+        #    CurrencyCode       reimbursementCurrencyCode;
         #    ;
         #
-        #    // Normaliza divisa de linea, tipo de cambio e importe de reembolso antes de guardar o tras editar.
+        #    //MMS - Ajustes CRM - 2026.07.02
+        #    // Si linea y reembolso usan la misma divisa, AmountMST manual no altera ExchRate.
         #    if (!this.Currency && hojaGastosTable)
         #        this.Currency = hojaGastosTable.CurrencyCode;
         #
-        #    if (!this.ExchRate && hojaGastosTable && this.Currency == hojaGastosTable.CurrencyCode)
-        #        this.ExchRate = hojaGastosTable.ExchRate;
+        #    reimbursementCurrencyCode = CompanyInfo::standardCurrency();
+        #    if (hojaGastosTable && hojaGastosTable.CurrencyCode)
+        #        reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
+        #
+        #    if (!this.ExchRate && this.Currency == reimbursementCurrencyCode)
+        #        this.ExchRate = 100;
         #
         #    if (_amountMSTChanged)
         #    {
-        #        this.ExchRate = this.calcExchRateFromAmountMST();
+        #        if (this.Currency != reimbursementCurrencyCode)
+        #            this.ExchRate = this.calcExchRateFromAmountMST();
+        #
         #        return;
         #    }
         #
-        #    if (this.Currency == CompanyInfo::standardCurrency() && !this.ExchRate)
+        #    if (this.Currency == reimbursementCurrencyCode && !this.ExchRate)
         #        this.ExchRate = 100;
         #
         #    this.AmountMST = this.LineAmountMST();
@@ -2409,26 +2429,29 @@ Formatversion: 1
         #{
         #    boolean      ret = true;
         #    CurrencyCode currencyCode;
+        #    CurrencyCode reimbursementCurrencyCode;
         #    ExchRate     exchRate;
         #    CRMHojaGastosTable  hojaGastosTable;
         #    ;
         #
-        #    // Valida los datos minimos para mantener fiable el importe de reembolso.
+        #    //MMS - Ajustes CRM - 2026.07.02
+        #    // Solo exige tipo o importe de reembolso cuando hay conversion real de divisa.
         #    hojaGastosTable = this.HojaGastosTable();
         #    currencyCode    = this.Currency;
         #    exchRate        = this.ExchRate;
+        #    reimbursementCurrencyCode = CompanyInfo::standardCurrency();
+        #
+        #    if (hojaGastosTable && hojaGastosTable.CurrencyCode)
+        #        reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
         #
         #    if (!currencyCode && hojaGastosTable)
         #        currencyCode = hojaGastosTable.CurrencyCode;
         #
-        #    if (!exchRate && hojaGastosTable && currencyCode == hojaGastosTable.CurrencyCode)
-        #        exchRate = hojaGastosTable.ExchRate;
-        #
         #    if (!currencyCode)
         #        ret = checkFailed("Debe indicar la divisa de la linea de hoja de gastos.");
         #
-        #    if (currencyCode && currencyCode != CompanyInfo::standardCurrency() && exchRate <= 0 && this.AmountMST <= 0)
-        #        ret = checkFailed(strfmt("Para lineas en divisa distinta a %1 hay que indicar un tipo de cambio mayor que cero.", CompanyInfo::standardCurrency()));
+        #    if (currencyCode && currencyCode != reimbursementCurrencyCode && exchRate <= 0 && this.AmountMST <= 0)
+        #        ret = checkFailed(strfmt("Para lineas en divisa distinta a %1 hay que indicar un tipo de cambio mayor que cero o un importe de reembolso.", reimbursementCurrencyCode));
         #
         #    return ret;
         #}

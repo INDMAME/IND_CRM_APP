@@ -1386,6 +1386,9 @@
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>Truke tasa lortua {0}\nData: {1}\nJatorria: {2}</value>
   </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nTruke tasak adierazten du gastuaren dibisako zenbat unitate diren itzulketa dibisako 100 unitateren baliokide.</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Truke tasa {0} {1}</value>
   </data>

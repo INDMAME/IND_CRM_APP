@@ -17,6 +17,7 @@ import {
   DEFAULT_LINE_REIMBURSABLE_EXPENSE,
   normalizeExpenseLineReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import { isExpenseLineSameReimbursementCurrency } from "../utils/expenseLineCurrency.ts";
 
 const KM_GASTO_TYPE_CODE = "3";
 const FUEL_PRICE_DEBOUNCE_MS = 300;
@@ -229,13 +230,16 @@ export const useExpenseSheetLineDetailState = ({
     setDraftReimbursableExpense(normalizeExpenseLineReimbursableExpense(nextLine?.reimbursableExpense));
     const localCurrencyCode = safeText(nextHeader?.currencyCode).toUpperCase() || "EUR";
     const lineCurrencyCode = safeText(nextLine?.currencyCode).toUpperCase() || localCurrencyCode;
+    const lineAmountMST =
+      nextLine?.amountMST ??
+      (isExpenseLineSameReimbursementCurrency(lineCurrencyCode, localCurrencyCode) ? nextLine?.amount : null);
     const lineExchangeRate = nextLine?.exchRate && nextLine.exchRate > 0
       ? nextLine.exchRate
       : lineCurrencyCode === localCurrencyCode
         ? 100
         : nextLine?.exchRate;
     setDraftCurrencyCode(lineCurrencyCode);
-    setDraftAmountMST(formatEditableNumber(nextLine?.amountMST));
+    setDraftAmountMST(formatEditableNumber(lineAmountMST));
     setDraftExchangeRate(formatEditableExchangeRate(lineExchangeRate));
   }, []);
 

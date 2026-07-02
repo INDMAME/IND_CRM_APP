@@ -3,8 +3,11 @@ import type { Dispatch, SetStateAction } from "react";
 import { indT } from "../../../../utils/indI18n.ts";
 import type { ExpenseSheetLine } from "../../expenseTypes.ts";
 import {
-  calculateExpenseLineAmountMST,
-  calculateExpenseLineExchangeRate,
+  calculateExpenseLineAmountMSTForCurrency,
+  calculateExpenseLineExchangeRateForCurrency,
+  isExpenseLineForeignCurrency,
+  isExpenseLineSameReimbursementCurrency,
+  resolveExpenseLineExchangeRateForCurrency,
 } from "../../utils/expenseLineCurrency.ts";
 import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
 import { parseExpenseDate, safeText, toIsoDate } from "../../utils/expenseUiUtils.ts";
@@ -31,6 +34,7 @@ type EditorState = {
   isEditing: boolean;
   modalError: string;
   linePage: number;
+  amountMSTManuallyEdited: boolean;
   draft: DraftState;
 };
 
@@ -56,9 +60,9 @@ type EditorAction =
     }
   | {
       type: "patch_state";
-      patch: Partial<Pick<EditorState, "busy" | "status" | "isEditing" | "modalError" | "linePage">>;
+      patch: Partial<Pick<EditorState, "busy" | "status" | "isEditing" | "modalError" | "linePage" | "amountMSTManuallyEdited">>;
     }
-  | { type: "patch_draft"; patch: Partial<DraftState> }
+  | { type: "patch_draft"; patch: Partial<DraftState>; amountMSTManuallyEdited?: boolean }
   | { type: "set_draft_field"; field: keyof DraftState; value: string };
 
 const createEmptyDraft = (): DraftState => ({
@@ -126,29 +130,56 @@ const formatEditableExchangeRate = (value: number | string | null | undefined): 
   });
 };
 
-const isForeignCurrency = (currencyCode: string, localCurrencyCode: string): boolean => {
-  const normalizedCurrencyCode = normalizeCurrencyCode(currencyCode);
-  const normalizedLocalCurrencyCode = normalizeCurrencyCode(localCurrencyCode);
-  return !!normalizedCurrencyCode && !!normalizedLocalCurrencyCode && normalizedCurrencyCode !== normalizedLocalCurrencyCode;
-};
+const buildAmountMSTPatchFromExchangeRate = (
+  totalAmount: string,
+  exchangeRate: string,
+  currencyCode: string,
+  reimbursementCurrencyCode: string,
+  amountMSTManuallyEdited: boolean
+): Partial<DraftState> => {
+  if (amountMSTManuallyEdited && isExpenseLineSameReimbursementCurrency(currencyCode, reimbursementCurrencyCode)) {
+    return {};
+  }
 
-const buildAmountMSTPatchFromExchangeRate = (totalAmount: string, exchangeRate: string): Partial<DraftState> => {
   const parsedTotalAmount = parseExpenseNumericInput(totalAmount);
-  const parsedExchangeRate = parseExpenseNumericInput(exchangeRate);
+  const parsedExchangeRate = resolveExpenseLineExchangeRateForCurrency(
+    currencyCode,
+    reimbursementCurrencyCode,
+    parseExpenseNumericInput(exchangeRate)
+  );
   const nextAmountMST =
-    parsedTotalAmount != null && parsedExchangeRate != null
-      ? calculateExpenseLineAmountMST(parsedTotalAmount, parsedExchangeRate)
+    parsedTotalAmount != null
+      ? calculateExpenseLineAmountMSTForCurrency(
+          parsedTotalAmount,
+          parsedExchangeRate,
+          currencyCode,
+          reimbursementCurrencyCode
+        )
       : null;
 
   return nextAmountMST != null ? { amountMST: formatEditableMoney(nextAmountMST) } : {};
 };
 
-const buildExchangeRatePatchFromAmountMST = (totalAmount: string, amountMST: string): Partial<DraftState> => {
+const buildExchangeRatePatchFromAmountMST = (
+  totalAmount: string,
+  amountMST: string,
+  currencyCode: string,
+  reimbursementCurrencyCode: string,
+  currentExchangeRate: string
+): Partial<DraftState> => {
   const parsedTotalAmount = parseExpenseNumericInput(totalAmount);
   const parsedAmountMST = parseExpenseNumericInput(amountMST);
   const nextExchangeRate =
     parsedTotalAmount != null && parsedAmountMST != null
-      ? calculateExpenseLineExchangeRate(parsedTotalAmount, parsedAmountMST)
+      ? calculateExpenseLineExchangeRateForCurrency(
+          parsedTotalAmount,
+          parsedAmountMST,
+          currencyCode,
+          reimbursementCurrencyCode,
+          currentExchangeRate
+        )
+      : isExpenseLineSameReimbursementCurrency(currencyCode, reimbursementCurrencyCode)
+        ? resolveExpenseLineExchangeRateForCurrency(currencyCode, reimbursementCurrencyCode, currentExchangeRate)
       : null;
 
   return nextExchangeRate != null ? { exchangeRate: formatEditableExchangeRate(nextExchangeRate) } : {};
@@ -164,22 +195,26 @@ const resolveExchangeRateForSettlement = (
     return exchangeRate;
   }
 
-  return isForeignCurrency(currencyCode, localCurrencyCode) ? exchangeRate : formatEditableExchangeRate(100);
+  return isExpenseLineForeignCurrency(currencyCode, localCurrencyCode) ? exchangeRate : formatEditableExchangeRate(100);
 };
 
 const buildLocalCurrencySettlementPatch = (
   currencyCode: string,
   localCurrencyCode: string,
-  totalAmount: string
+  totalAmount: string,
+  exchangeRate: string,
+  amountMSTManuallyEdited: boolean
 ): Partial<DraftState> => {
-  if (isForeignCurrency(currencyCode, localCurrencyCode)) {
+  if (isExpenseLineForeignCurrency(currencyCode, localCurrencyCode)) {
     return {};
   }
 
   const parsedTotalAmount = parseExpenseNumericInput(totalAmount);
   return {
-    exchangeRate: formatEditableExchangeRate(100),
-    ...(parsedTotalAmount != null ? { amountMST: formatEditableMoney(parsedTotalAmount) } : {}),
+    exchangeRate: formatEditableExchangeRate(
+      resolveExpenseLineExchangeRateForCurrency(currencyCode, localCurrencyCode, exchangeRate)
+    ),
+    ...(!amountMSTManuallyEdited && parsedTotalAmount != null ? { amountMST: formatEditableMoney(parsedTotalAmount) } : {}),
   };
 };
 
@@ -195,18 +230,20 @@ const createDraftFromHeader = (
   const totalAmount = toFiniteNumber(header?.totalAmount) ?? toFiniteNumber(linkedExpenseLine?.amount) ?? toFiniteNumber(linkedExpenseLine?.price);
   const ticketExchangeRate = toFiniteNumber(header?.exchRate ?? linkedExpenseLine?.exchRate);
   const ticketAmountMST = toFiniteNumber(header?.amountMST ?? linkedExpenseLine?.amountMST);
-  const sameCurrency =
-    !!normalizedCurrencyCode &&
-    !!normalizedLocalCurrencyCode &&
-    normalizedCurrencyCode === normalizedLocalCurrencyCode;
+  const sameCurrency = isExpenseLineSameReimbursementCurrency(normalizedCurrencyCode, normalizedLocalCurrencyCode);
   const exchangeRate = ticketExchangeRate != null && ticketExchangeRate > 0
     ? ticketExchangeRate
     : sameCurrency
       ? 100
       : null;
   const calculatedAmountMST =
-    totalAmount != null && exchangeRate != null
-      ? calculateExpenseLineAmountMST(totalAmount, exchangeRate)
+    totalAmount != null
+      ? calculateExpenseLineAmountMSTForCurrency(
+          totalAmount,
+          exchangeRate,
+          normalizedCurrencyCode,
+          normalizedLocalCurrencyCode
+        )
       : null;
   const amountMST = ticketAmountMST ?? calculatedAmountMST ?? (sameCurrency ? totalAmount : null);
 
@@ -231,6 +268,7 @@ const createInitialState = (): EditorState => ({
   isEditing: false,
   modalError: "",
   linePage: 1,
+  amountMSTManuallyEdited: false,
   draft: createEmptyDraft(),
 });
 
@@ -243,6 +281,7 @@ const editorReducer = (state: EditorState, action: EditorAction): EditorState =>
     case "hydrate_from_header":
       return {
         ...state,
+        amountMSTManuallyEdited: false,
         draft: createDraftFromHeader(action.header, action.linkedExpenseLine, action.localCurrencyCode),
       };
     case "patch_state":
@@ -261,6 +300,7 @@ const editorReducer = (state: EditorState, action: EditorAction): EditorState =>
     case "patch_draft":
       return {
         ...state,
+        amountMSTManuallyEdited: action.amountMSTManuallyEdited ?? state.amountMSTManuallyEdited,
         draft: {
           ...state.draft,
           ...action.patch,
@@ -393,14 +433,30 @@ export const useExpenseTicketDetailEditor = ({
       const nextCurrencyCode = normalizeCurrencyCode(resolveSetStateValue(value, state.draft.currencyCode));
       const nextPatch: Partial<DraftState> = {
         currencyCode: nextCurrencyCode,
-        ...buildLocalCurrencySettlementPatch(nextCurrencyCode, effectiveLocalCurrencyCode, state.draft.totalAmount),
+        ...buildLocalCurrencySettlementPatch(
+          nextCurrencyCode,
+          effectiveLocalCurrencyCode,
+          state.draft.totalAmount,
+          state.draft.exchangeRate,
+          false
+        ),
       };
       if (!nextPatch.amountMST) {
-        Object.assign(nextPatch, buildAmountMSTPatchFromExchangeRate(state.draft.totalAmount, state.draft.exchangeRate));
+        Object.assign(
+          nextPatch,
+          buildAmountMSTPatchFromExchangeRate(
+            state.draft.totalAmount,
+            state.draft.exchangeRate,
+            nextCurrencyCode,
+            effectiveLocalCurrencyCode,
+            false
+          )
+        );
       }
       dispatch({
         type: "patch_draft",
         patch: nextPatch,
+        amountMSTManuallyEdited: false,
       });
     },
     [effectiveLocalCurrencyCode, state.draft.currencyCode, state.draft.exchangeRate, state.draft.totalAmount]
@@ -419,14 +475,26 @@ export const useExpenseTicketDetailEditor = ({
       );
       const nextPatch: Partial<DraftState> = {
         totalAmount: nextTotalAmount,
-        ...buildAmountMSTPatchFromExchangeRate(nextTotalAmount, effectiveExchangeRate),
+        ...buildAmountMSTPatchFromExchangeRate(
+          nextTotalAmount,
+          effectiveExchangeRate,
+          state.draft.currencyCode,
+          effectiveLocalCurrencyCode,
+          state.amountMSTManuallyEdited
+        ),
       };
       dispatch({
         type: "patch_draft",
         patch: nextPatch,
       });
     },
-    [effectiveLocalCurrencyCode, state.draft.currencyCode, state.draft.exchangeRate, state.draft.totalAmount]
+    [
+      effectiveLocalCurrencyCode,
+      state.amountMSTManuallyEdited,
+      state.draft.currencyCode,
+      state.draft.exchangeRate,
+      state.draft.totalAmount,
+    ]
   );
 
   const setDraftAmountMST = useCallback<Dispatch<SetStateAction<string>>>(
@@ -438,11 +506,18 @@ export const useExpenseTicketDetailEditor = ({
         type: "patch_draft",
         patch: {
           amountMST: nextAmountMST,
-          ...buildExchangeRatePatchFromAmountMST(state.draft.totalAmount, nextAmountMST),
+          ...buildExchangeRatePatchFromAmountMST(
+            state.draft.totalAmount,
+            nextAmountMST,
+            state.draft.currencyCode,
+            effectiveLocalCurrencyCode,
+            state.draft.exchangeRate
+          ),
         },
+        amountMSTManuallyEdited: true,
       });
     },
-    [state.draft.amountMST, state.draft.totalAmount]
+    [effectiveLocalCurrencyCode, state.draft.amountMST, state.draft.currencyCode, state.draft.exchangeRate, state.draft.totalAmount]
   );
 
   const setDraftExchangeRate = useCallback<Dispatch<SetStateAction<string>>>(
@@ -464,9 +539,12 @@ export const useExpenseTicketDetailEditor = ({
     (value: string, currencyCodeOverride?: string) => {
       setExchangeRateInvalid(false);
       setAmountMSTInvalid(false);
+      const effectiveCurrencyCode = currencyCodeOverride
+        ? normalizeCurrencyCode(currencyCodeOverride)
+        : state.draft.currencyCode;
       const nextExchangeRate = formatEditableExchangeRate(
         resolveExchangeRateForSettlement(
-          currencyCodeOverride ? normalizeCurrencyCode(currencyCodeOverride) : state.draft.currencyCode,
+          effectiveCurrencyCode,
           effectiveLocalCurrencyCode,
           value
         )
@@ -475,11 +553,17 @@ export const useExpenseTicketDetailEditor = ({
         type: "patch_draft",
         patch: {
           exchangeRate: nextExchangeRate,
-          ...buildAmountMSTPatchFromExchangeRate(state.draft.totalAmount, nextExchangeRate),
+          ...buildAmountMSTPatchFromExchangeRate(
+            state.draft.totalAmount,
+            nextExchangeRate,
+            effectiveCurrencyCode,
+            effectiveLocalCurrencyCode,
+            state.amountMSTManuallyEdited
+          ),
         },
       });
     },
-    [effectiveLocalCurrencyCode, state.draft.currencyCode, state.draft.totalAmount]
+    [effectiveLocalCurrencyCode, state.amountMSTManuallyEdited, state.draft.currencyCode, state.draft.totalAmount]
   );
 
   const handleEnableEdit = useCallback(() => {
@@ -549,7 +633,7 @@ export const useExpenseTicketDetailEditor = ({
     const gastoTypeIsValid = isValidRequiredGastoType(state.draft.gastoType);
     const currencyIsValid = !!normalizedCurrencyCode;
     const totalAmountIsValid = parsedTotalAmount != null && parsedTotalAmount >= 0;
-    const requiresForeignCurrencySettlement = isForeignCurrency(normalizedCurrencyCode, effectiveLocalCurrencyCode);
+    const requiresForeignCurrencySettlement = isExpenseLineForeignCurrency(normalizedCurrencyCode, effectiveLocalCurrencyCode);
     const hasForeignCurrencySettlement =
       !requiresForeignCurrencySettlement ||
       (parsedExchangeRate != null && parsedExchangeRate > 0) ||

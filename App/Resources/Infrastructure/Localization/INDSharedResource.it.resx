@@ -1386,6 +1386,9 @@
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>Tasso di cambio ottenuto {0}\nData: {1}\nFonte: {2}</value>
   </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nIl tasso di cambio indica quante unità della valuta della spesa equivalgono a 100 unità della valuta di rimborso.</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Tasso di cambio {0} {1}</value>
   </data>

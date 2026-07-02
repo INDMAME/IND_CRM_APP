@@ -1359,6 +1359,9 @@
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>Taxa de cambio obtida {0}\nData: {1}\nOrigem: {2}</value>
   </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nA taxa de câmbio indica quantas unidades da moeda da despesa equivalem a 100 unidades da moeda de reembolso.</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Taxa de cambio {0} {1}</value>
   </data>

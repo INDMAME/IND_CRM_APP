@@ -1284,6 +1284,9 @@
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Detail" xml:space="preserve">
     <value>已获取汇率 {0}\n日期: {1}\n来源: {2}</value>
   </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
+    <value>100 {0} = {1} {2}\n汇率表示多少个费用币种单位等于 100 个报销币种单位。</value>
+  </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>汇率 {0} {1}</value>
   </data>

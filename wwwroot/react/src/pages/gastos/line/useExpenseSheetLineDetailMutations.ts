@@ -13,7 +13,12 @@ import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts"
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../hooks/expenseMutationUtils.ts";
-import { normalizeExpenseLineCurrencyCode } from "../utils/expenseLineCurrency.ts";
+import {
+  isExpenseLineForeignCurrency,
+  normalizeExpenseLineCurrencyCode,
+  resolveExpenseLineAmountMSTForCurrencyPayload,
+  resolveExpenseLineExchangeRateForCurrency,
+} from "../utils/expenseLineCurrency.ts";
 import {
   createExpenseSheet,
   deleteExpenseSheetLine,
@@ -156,7 +161,7 @@ export const useExpenseSheetLineDetailMutations = ({
       return false;
     }
 
-    const isForeignCurrency = !!normalizedCurrencyCode && normalizedCurrencyCode !== normalizedLocalCurrencyCode;
+    const isForeignCurrency = isExpenseLineForeignCurrency(normalizedCurrencyCode, normalizedLocalCurrencyCode);
     const hasForeignCurrencySettlement =
       (parsedExchangeRate != null && parsedExchangeRate > 0) ||
       (parsedAmountMST != null && parsedAmountMST > 0);
@@ -179,6 +184,18 @@ export const useExpenseSheetLineDetailMutations = ({
       setBusy,
       setStatus,
       action: async () => {
+        const lineAmount = Number(parsedQty) * Number(parsedPrice);
+        const payloadAmountMST = resolveExpenseLineAmountMSTForCurrencyPayload(
+          lineAmount,
+          parsedAmountMST,
+          normalizedCurrencyCode,
+          normalizedLocalCurrencyCode
+        );
+        const payloadExchangeRate = resolveExpenseLineExchangeRateForCurrency(
+          normalizedCurrencyCode,
+          normalizedLocalCurrencyCode,
+          parsedExchangeRate
+        );
         const commonLinePayload = {
           transDate: normalizedDate,
           typeValue: parsedTypeValue,
@@ -190,8 +207,8 @@ export const useExpenseSheetLineDetailMutations = ({
           projId: String(draftProjectId || "").trim() || undefined,
           reimbursableExpense: normalizedReimbursableExpense,
           currencyCode: normalizedCurrencyCode || undefined,
-          amountMST: parsedAmountMST,
-          exchRate: parsedExchangeRate != null && parsedExchangeRate > 0 ? parsedExchangeRate : null,
+          amountMST: payloadAmountMST,
+          exchRate: payloadExchangeRate,
           indAttachFiles: safeText(line?.indAttachFiles),
         };
 
