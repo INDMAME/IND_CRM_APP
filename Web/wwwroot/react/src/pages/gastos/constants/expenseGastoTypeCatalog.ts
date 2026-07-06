@@ -8,9 +8,11 @@ type GastoTypeFallbackOption = {
   fallback: string;
 };
 
-export const FALLBACK_EXPENSE_GASTO_TYPE_CODES: ExpenseGastoTypeCode[] = [
-  0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
-];
+const VISIBLE_EXPENSE_GASTO_TYPE_CODES: ExpenseGastoTypeCode[] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 14, 19, 20];
+
+export const FALLBACK_EXPENSE_GASTO_TYPE_CODES: ExpenseGastoTypeCode[] = [...VISIBLE_EXPENSE_GASTO_TYPE_CODES];
+
+const VISIBLE_EXPENSE_GASTO_TYPE_CODE_SET = new Set<ExpenseGastoTypeCode>(VISIBLE_EXPENSE_GASTO_TYPE_CODES);
 
 const FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS: GastoTypeFallbackOption[] = [
   { value: 0, labelKey: "Enum_None", fallback: "None" },
@@ -44,6 +46,9 @@ const toIntegerGastoTypeCode = (value: unknown): ExpenseGastoTypeCode | null => 
   return Number.isInteger(parsed) && parsed >= 0 ? parsed : null;
 };
 
+// Keeps expense type selectors aligned with the visible CRMGastoType business set.
+const isVisibleGastoTypeCode = (code: ExpenseGastoTypeCode): boolean => VISIBLE_EXPENSE_GASTO_TYPE_CODE_SET.has(code);
+
 const getCatalogSource = () => {
   if (typeof window === "undefined" || !Array.isArray(window.__EXPENSE_GASTO_TYPES__)) {
     return [];
@@ -60,6 +65,7 @@ const getCatalogOptions = (): ExpenseSelectOption[] => {
   for (const option of sourceOptions) {
     const code = toIntegerGastoTypeCode(option.value);
     if (code === null) continue;
+    if (!isVisibleGastoTypeCode(code)) continue;
 
     const key = String(code);
     if (seen.has(key)) continue;
@@ -74,10 +80,12 @@ const getCatalogOptions = (): ExpenseSelectOption[] => {
 };
 
 const getFallbackOptions = (): ExpenseSelectOption[] => {
-  return FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS.map((option) => ({
-    value: String(option.value),
-    text: indT(option.labelKey, option.fallback),
-  }));
+  return FALLBACK_EXPENSE_GASTO_TYPE_OPTIONS
+    .filter((option) => isVisibleGastoTypeCode(option.value))
+    .map((option) => ({
+      value: String(option.value),
+      text: indT(option.labelKey, option.fallback),
+    }));
 };
 
 // Returns catalog options in backend SortOrder order, falling back only when the catalog is unavailable.
