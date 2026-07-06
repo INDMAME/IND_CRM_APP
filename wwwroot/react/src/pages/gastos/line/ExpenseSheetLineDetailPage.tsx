@@ -456,7 +456,7 @@ const ExpenseSheetLineDetailContent = () => {
 
         const nextExchangeRate = formatExpenseExchangeRateInputValue(officialExchangeRate.exchangeRate);
         setDraftExchangeRate(nextExchangeRate);
-        recalculateAmountMSTFromRate(draftPrice, draftQty, nextExchangeRate);
+        recalculateAmountMSTFromRate(draftPrice, draftQty, nextExchangeRate, nextCurrencyCode);
         setExchangeRateInfoMessage(
           buildExpenseExchangeRateInfoMessage({
             rawRate: officialExchangeRate.rawRate,
