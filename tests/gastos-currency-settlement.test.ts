@@ -20,6 +20,7 @@ assert.equal(resolveExpenseLineAmountMSTForCurrencyPayload(210, null, "USD", "US
 assert.equal(resolveExpenseLineAmountMSTForCurrencyPayload(210, 200, "USD", "USD"), 200);
 
 assert.equal(calculateExpenseLineAmountMSTForCurrency(210, 92.5, "USD", "EUR"), 227.03);
+assert.equal(calculateExpenseLineAmountMSTForCurrency(11, 114.4640999, "USD", "EUR"), 9.61);
 assert.equal(calculateExpenseLineExchangeRateForCurrency(210, 200, "USD", "EUR", 92.5), 105);
 assert.equal(resolveExpenseLineExchangeRateForCurrency("USD", "EUR", null), null);
 
