@@ -68,6 +68,20 @@ export const parseExpenseNumericInput = (raw: string | number | null | undefined
   return Number.isFinite(parsed) ? parsed : null;
 };
 
+// Compares editable numeric strings by value so blur formatting is not treated as a data edit.
+export const areExpenseNumericInputsEquivalent = (
+  left: string | number | null | undefined,
+  right: string | number | null | undefined
+): boolean => {
+  const leftParsed = parseExpenseNumericInput(left);
+  const rightParsed = parseExpenseNumericInput(right);
+  if (leftParsed !== null || rightParsed !== null) {
+    return leftParsed === rightParsed;
+  }
+
+  return String(left ?? "").trim() === String(right ?? "").trim();
+};
+
 // Formats numeric values with the fixed expense visual contract: #,##0.00
 export const formatExpenseNumber = (
   value: number | null | undefined,
