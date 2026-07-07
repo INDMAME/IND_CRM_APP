@@ -47,32 +47,13 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #applyEffectiveAccessNormalization
-        #//MMS - Ajustes CRM - 2026.06.23
-        #// Normaliza una desalineacion historica de VISITAS_GESTION cuando la UI muestra Solo propios.
+        #//MMS - Ajustes CRM - 2026.07.07
+        #// Keep read visibility independent from mutation policy.
         #static INDWebModuleAccessLevel applyEffectiveAccessNormalization(INDWebModuleAccessLevel _moduleAccessLevel,
         #                                                                 str                     _moduleCode,
         #                                                                 date                    _asOfDate)
         #{
-        #    str moduleCode;
         #    ;
-        #
-        #    if (!_moduleAccessLevel.RecId)
-        #        return _moduleAccessLevel;
-        #
-        #    if (_asOfDate == dateNull())
-        #        _asOfDate = today();
-        #
-        #    moduleCode = strUpr(strLRTrim(_moduleCode));
-        #
-        #    if (moduleCode == "VISITAS_GESTION"
-        #     && _moduleAccessLevel.DataVisibilityMode == INDDataVisibilityMode::OwnAndHierarchy
-        #     && _moduleAccessLevel.HierarchyDepth     == INDDataVisibilityHierarchyDepth::FullDescendants
-        #     && _moduleAccessLevel.MutationPolicy     == INDMutationPolicy::OwnOnly
-        #     && !INDModuleDataVisibilityTarget::hasActiveTargets(_moduleAccessLevel.RecId, _asOfDate))
-        #    {
-        #        _moduleAccessLevel.DataVisibilityMode = INDDataVisibilityMode::OwnOnly;
-        #        _moduleAccessLevel.HierarchyDepth     = INDDataVisibilityHierarchyDepth::DirectOnly;
-        #    }
         #
         #    return _moduleAccessLevel;
         #}
