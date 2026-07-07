@@ -8,6 +8,7 @@
 } from "../expenseTypes.ts";
 import { safeText, toNullableBool, toNullableNumber } from "./expenseApiTransforms.ts";
 import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
+import { getVisibleReimbursableTotal } from "./expenseVisibleTotals.ts";
 
 const resolveTypeLabel = (typeValueCode: string): string => {
   if (!typeValueCode) {
@@ -33,7 +34,11 @@ export const mapExpenseSheetListItemToCard = (item: ExpenseSheetListItemDto): Ex
     voucher: safeText(item.Voucher),
     projId: safeText(item.ProjId),
     currencyCode: safeText(item.CurrencyCode),
-    totalAmount: toNullableNumber(item.TotalAmount),
+    totalAmount: getVisibleReimbursableTotal({
+      TotalAmountMST: toNullableNumber(item.TotalAmountMST),
+      TotalAmountCurrency: toNullableNumber(item.TotalAmountCurrency),
+      TotalAmount: toNullableNumber(item.TotalAmount),
+    }),
     exchRate: toNullableNumber(item.ExchRate),
     exchangeRateMode: toNullableNumber(item.ExchangeRateMode),
     reimbursableExpense: toNullableNumber(item.ReimbursableExpense ?? item.reimbursableExpense),
@@ -53,7 +58,11 @@ export const mapExpenseSheetHeader = (sheet: ExpenseSheetDetailDto): ExpenseShee
     expenseSheetStatus: toNullableNumber(sheet.ExpenseSheetStatus ?? sheet.expenseSheetStatus),
     estadoComentarios: safeText(sheet.EstadoComentarios ?? sheet.estadoComentarios) || null,
     currencyCode: safeText(sheet.CurrencyCode ?? sheet.currencyCode),
-    totalAmount: toNullableNumber(sheet.TotalAmount ?? sheet.totalAmount),
+    totalAmount: getVisibleReimbursableTotal({
+      TotalAmountMST: toNullableNumber(sheet.TotalAmountMST ?? sheet.totalAmountMST),
+      TotalAmountCurrency: toNullableNumber(sheet.TotalAmountCurrency ?? sheet.totalAmountCurrency),
+      TotalAmount: toNullableNumber(sheet.TotalAmount ?? sheet.totalAmount),
+    }),
     exchRate: safeText(sheet.ExchRate ?? sheet.exchRate),
     exchangeRateMode: toNullableNumber(sheet.ExchangeRateMode ?? sheet.exchangeRateMode),
     reimbursableExpense: toNullableNumber(sheet.ReimbursableExpense ?? sheet.reimbursableExpense),
@@ -81,6 +90,12 @@ export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine
     price: toNullableNumber(line.Price ?? line.price),
     qty: toNullableNumber(line.Qty ?? line.qty),
     amount: toNullableNumber(line.Amount ?? line.amount),
+    visibleReimbursableTotal: getVisibleReimbursableTotal({
+      TotalAmountMST: toNullableNumber(line.TotalAmountMST ?? line.totalAmountMST),
+      AmountMST: toNullableNumber(line.AmountMST ?? line.amountMST),
+      TotalAmountCurrency: toNullableNumber(line.TotalAmountCurrency ?? line.totalAmountCurrency),
+      Amount: toNullableNumber(line.Amount ?? line.amount),
+    }),
     projId: safeText(line.ProjId ?? line.projId),
     reimbursableExpense: toNullableNumber(line.ReimbursableExpense ?? line.reimbursableExpense),
     currencyCode: safeText(line.CurrencyCode ?? line.currencyCode),

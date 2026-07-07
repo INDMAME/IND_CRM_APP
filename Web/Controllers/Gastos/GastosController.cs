@@ -5472,6 +5472,52 @@ namespace IND_CRM_APP.Controllers
                 || normalized.Contains("not found");
         }
 
+        // Resolves the document-currency total for expense sheet headers.
+        private static decimal? ResolveExpenseSheetTotalAmountCurrency(ExpenseSheetDetailDto sheet)
+        {
+            return ReadTypedOrExtraDecimal(
+                sheet.TotalAmountCurrency ?? sheet.TotalAmount,
+                sheet.Extra,
+                "TotalAmountCurrency",
+                "totalAmountCurrency",
+                "totalAmount",
+                "TotalAmount");
+        }
+
+        // Resolves the MST reimbursable total for expense sheet headers.
+        private static decimal? ResolveExpenseSheetTotalAmountMST(ExpenseSheetDetailDto sheet)
+        {
+            return ReadTypedOrExtraDecimal(
+                sheet.TotalAmountMST,
+                sheet.Extra,
+                "TotalAmountMST",
+                "totalAmountMST",
+                "totalamountmst");
+        }
+
+        // Resolves the document-currency total for expense sheet lines.
+        private static decimal? ResolveExpenseSheetLineTotalAmountCurrency(ExpenseSheetLineDto line)
+        {
+            return ReadTypedOrExtraDecimal(
+                line.TotalAmountCurrency ?? line.Amount,
+                line.Extra,
+                "TotalAmountCurrency",
+                "totalAmountCurrency",
+                "amount",
+                "Amount");
+        }
+
+        // Resolves the MST reimbursable total for expense sheet lines.
+        private static decimal? ResolveExpenseSheetLineTotalAmountMST(ExpenseSheetLineDto line)
+        {
+            return ReadTypedOrExtraDecimal(
+                line.TotalAmountMST,
+                line.Extra,
+                "TotalAmountMST",
+                "totalAmountMST",
+                "totalamountmst");
+        }
+
         // Maps a list item to a card payload for the list screen.
         private static object ToExpenseSheetCard(ExpenseSheetDetailDto sheet)
         {
@@ -5479,6 +5525,8 @@ namespace IND_CRM_APP.Controllers
             var normalizedExchangeRate = NormalizeExpenseSheetExchangeRateForRead(
                 currencyCode,
                 ReadTypedOrExtraDecimal(sheet.ExchRate, sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
+            var totalAmountCurrency = ResolveExpenseSheetTotalAmountCurrency(sheet);
+            var totalAmountMST = ResolveExpenseSheetTotalAmountMST(sheet);
 
             return new
             {
@@ -5493,8 +5541,9 @@ namespace IND_CRM_APP.Controllers
                 voucher = ReadTypedOrExtraString(sheet.Voucher, sheet.Extra, "voucher"),
                 projId = ReadTypedOrExtraString(sheet.ProjId, sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 currencyCode = currencyCode,
-                totalAmount = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
-                totalAmountMST = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmountMST", "totalamountmst"),
+                totalAmount = totalAmountCurrency,
+                totalAmountCurrency = totalAmountCurrency,
+                totalAmountMST = totalAmountMST,
                 exchRate = normalizedExchangeRate,
                 exchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 reimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
@@ -5509,6 +5558,8 @@ namespace IND_CRM_APP.Controllers
             var normalizedExchangeRate = NormalizeExpenseSheetExchangeRateForRead(
                 currencyCode,
                 ReadTypedOrExtraDecimal(sheet.ExchRate, sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
+            var totalAmountCurrency = ResolveExpenseSheetTotalAmountCurrency(sheet);
+            var totalAmountMST = ResolveExpenseSheetTotalAmountMST(sheet);
 
             return new
             {
@@ -5523,7 +5574,9 @@ namespace IND_CRM_APP.Controllers
                 Voucher = ReadTypedOrExtraString(sheet.Voucher, sheet.Extra, "voucher"),
                 ProjId = ReadTypedOrExtraString(sheet.ProjId, sheet.Extra, "projId", "projectId", "proyectoId", "project"),
                 CurrencyCode = currencyCode,
-                TotalAmount = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
+                TotalAmount = totalAmountCurrency,
+                TotalAmountCurrency = totalAmountCurrency,
+                TotalAmountMST = totalAmountMST,
                 ExchRate = normalizedExchangeRate,
                 ExchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 ReimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
@@ -5535,6 +5588,8 @@ namespace IND_CRM_APP.Controllers
         private static object ToExpenseSheetApiDetailItem(ExpenseSheetDetailDto sheet)
         {
             var currencyCode = ReadTypedOrExtraString(sheet.CurrencyCode, sheet.Extra, "currencyCode", "currency", "divisa");
+            var totalAmountCurrency = ResolveExpenseSheetTotalAmountCurrency(sheet);
+            var totalAmountMST = ResolveExpenseSheetTotalAmountMST(sheet);
 
             return new
             {
@@ -5547,7 +5602,9 @@ namespace IND_CRM_APP.Controllers
                 ExpenseSheetStatus = ReadTypedOrExtraInt(sheet.ExpenseSheetStatus, sheet.Extra, "expenseSheetStatus", "status", "estado"),
                 EstadoComentarios = ReadTypedOrExtraString(sheet.EstadoComentarios, sheet.Extra, "estadoComentarios"),
                 CurrencyCode = currencyCode,
-                TotalAmount = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmount", "totalAmountMST", "totalamountmst"),
+                TotalAmount = totalAmountCurrency,
+                TotalAmountCurrency = totalAmountCurrency,
+                TotalAmountMST = totalAmountMST,
                 ExchRate = NormalizeExpenseSheetExchangeRateText(
                     currencyCode,
                     ReadTypedOrExtraString(sheet.ExchRate?.ToString(CultureInfo.InvariantCulture), sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
@@ -5570,6 +5627,8 @@ namespace IND_CRM_APP.Controllers
                 : GetExtraString(line.Extra, "typeValue", "tipo", "gastoType");
             var fileId = NormalizeOptionalText(line.FileId)
                          ?? NormalizeOptionalText(GetExtraString(line.Extra, "fileId", "FileId"));
+            var totalAmountCurrency = ResolveExpenseSheetLineTotalAmountCurrency(line);
+            var totalAmountMST = ResolveExpenseSheetLineTotalAmountMST(line);
 
             return new
             {
@@ -5588,6 +5647,8 @@ namespace IND_CRM_APP.Controllers
                 ReimbursableExpense = line.ReimbursableExpense ?? GetExtraInt(line.Extra, "reimbursableExpense", "ReimbursableExpense"),
                 CurrencyCode = ReadTypedOrExtraString(line.CurrencyCode, line.Extra, "currencyCode", "CurrencyCode"),
                 AmountMST = line.AmountMST ?? GetExtraDecimal(line.Extra, "amountMST", "AmountMST", "amountMst"),
+                TotalAmountCurrency = totalAmountCurrency,
+                TotalAmountMST = totalAmountMST,
                 ExchRate = line.ExchRate ?? GetExtraDecimal(line.Extra, "exchRate", "ExchRate", "exchangeRate")
             };
         }
@@ -5608,6 +5669,8 @@ namespace IND_CRM_APP.Controllers
         // Maps one ticket list item to API contract fields expected by /api/crm/expensesheets/tickets/list.
         private static object ToExpenseSheetTicketApiListItem(ExpenseSheetTicketListItemDto item)
         {
+            var totalAmountCurrency = item.TotalAmountCurrency ?? item.TotalAmount;
+
             return new
             {
                 FileId = item.FileId ?? string.Empty,
@@ -5615,7 +5678,9 @@ namespace IND_CRM_APP.Controllers
                 Status = item.Status,
                 ProcessedByAI = item.ProcessedByAI,
                 CurrencyCode = item.CurrencyCode ?? string.Empty,
-                TotalAmount = item.TotalAmount,
+                TotalAmount = totalAmountCurrency,
+                TotalAmountCurrency = totalAmountCurrency,
+                TotalAmountMST = item.TotalAmountMST,
                 TransDate = NormalizeDate(item.TransDate),
                 TicketDate = NormalizeDate(item.TicketDate),
                 TicketTime = NormalizeTicketTime(item.TicketTime) ?? string.Empty,
@@ -5629,13 +5694,17 @@ namespace IND_CRM_APP.Controllers
         // Maps one link-mode ticket list item to API contract fields expected by /api/crm/expensesheets/tickets/link/list.
         private static object ToExpenseSheetTicketLinkApiListItem(ExpenseSheetTicketLinkListItemDto item)
         {
+            var totalAmountCurrency = item.TotalAmountCurrency ?? item.TotalAmount;
+
             return new
             {
                 FileId = item.FileId ?? string.Empty,
                 Description = item.Description ?? string.Empty,
                 ProcessedByAI = item.ProcessedByAI,
                 CurrencyCode = item.CurrencyCode ?? string.Empty,
-                TotalAmount = item.TotalAmount,
+                TotalAmount = totalAmountCurrency,
+                TotalAmountCurrency = totalAmountCurrency,
+                TotalAmountMST = item.TotalAmountMST,
                 TransDate = NormalizeDate(item.TransDate),
                 TicketDate = NormalizeDate(item.TicketDate),
                 TicketTime = NormalizeTicketTime(item.TicketTime) ?? string.Empty,
@@ -5649,6 +5718,8 @@ namespace IND_CRM_APP.Controllers
         // Maps one ticket detail item to API contract fields expected by /api/crm/expensesheets/tickets/{fileId}.
         private static object ToExpenseSheetTicketApiDetailItem(ExpenseSheetTicketDetailDto item)
         {
+            var totalAmountCurrency = item.TotalAmountCurrency ?? item.TotalAmount;
+
             return new
             {
                 FileId = item.FileId ?? string.Empty,
@@ -5657,7 +5728,9 @@ namespace IND_CRM_APP.Controllers
                 HojaGastosIdDisplay = item.HojaGastosIdDisplay ?? string.Empty,
                 ProcessedByAI = item.ProcessedByAI,
                 CurrencyCode = item.CurrencyCode ?? string.Empty,
-                TotalAmount = item.TotalAmount,
+                TotalAmount = totalAmountCurrency,
+                TotalAmountCurrency = totalAmountCurrency,
+                TotalAmountMST = item.TotalAmountMST,
                 AmountMST = item.AmountMST,
                 ExchRate = item.ExchRate,
                 CreatedByUserId = item.CreatedByUserId ?? string.Empty,
@@ -5754,6 +5827,8 @@ namespace IND_CRM_APP.Controllers
         private static object ToExpenseSheetHeader(ExpenseSheetDetailDto sheet)
         {
             var currencyCode = ReadTypedOrExtraString(sheet.CurrencyCode, sheet.Extra, "currencyCode", "currency", "divisa");
+            var totalAmountCurrency = ResolveExpenseSheetTotalAmountCurrency(sheet);
+            var totalAmountMST = ResolveExpenseSheetTotalAmountMST(sheet);
 
             return new
             {
@@ -5766,7 +5841,9 @@ namespace IND_CRM_APP.Controllers
                 expenseSheetStatus = ReadTypedOrExtraInt(sheet.ExpenseSheetStatus, sheet.Extra, "expenseSheetStatus", "status", "estado"),
                 estadoComentarios = ReadTypedOrExtraString(sheet.EstadoComentarios, sheet.Extra, "estadoComentarios"),
                 currencyCode = currencyCode,
-                totalAmountMST = ReadTypedOrExtraDecimal(sheet.TotalAmount, sheet.Extra, "totalAmountMST", "totalamountmst"),
+                totalAmount = totalAmountCurrency,
+                totalAmountCurrency = totalAmountCurrency,
+                totalAmountMST = totalAmountMST,
                 exchRate = NormalizeExpenseSheetExchangeRateText(
                     currencyCode,
                     ReadTypedOrExtraString(sheet.ExchRate?.ToString(CultureInfo.InvariantCulture), sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
@@ -5788,6 +5865,8 @@ namespace IND_CRM_APP.Controllers
             var typeValueLabel = _crmEnumCatalog.GetGastoTypeLabel(typeValueCode);
             var fileId = NormalizeOptionalText(line.FileId)
                          ?? NormalizeOptionalText(GetExtraString(line.Extra, "fileId", "FileId"));
+            var totalAmountCurrency = ResolveExpenseSheetLineTotalAmountCurrency(line);
+            var totalAmountMST = ResolveExpenseSheetLineTotalAmountMST(line);
 
             return new
             {
@@ -5807,6 +5886,8 @@ namespace IND_CRM_APP.Controllers
                 reimbursableExpense = line.ReimbursableExpense ?? GetExtraInt(line.Extra, "reimbursableExpense", "ReimbursableExpense"),
                 currencyCode = ReadTypedOrExtraString(line.CurrencyCode, line.Extra, "currencyCode", "CurrencyCode"),
                 amountMST = line.AmountMST ?? GetExtraDecimal(line.Extra, "amountMST", "AmountMST", "amountMst"),
+                totalAmountCurrency = totalAmountCurrency,
+                totalAmountMST = totalAmountMST,
                 exchRate = line.ExchRate ?? GetExtraDecimal(line.Extra, "exchRate", "ExchRate", "exchangeRate")
             };
         }

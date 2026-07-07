@@ -2,6 +2,7 @@ import type { ExpenseGastoTypeCode, ExpenseSheetTicketLineDto } from "../../expe
 import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 import type { ExpenseSheetTicketDetailDto } from "../../expenseTypes.ts";
+import { getVisibleReimbursableTotal } from "../../utils/expenseVisibleTotals.ts";
 
 export type ExpenseTicketDetailHeader = {
   fileId: string;
@@ -11,6 +12,8 @@ export type ExpenseTicketDetailHeader = {
   processedByAI: boolean | null;
   currencyCode: string;
   totalAmount: number | null;
+  totalAmountCurrency: number | null;
+  visibleReimbursableTotal: number | null;
   amountMST: number | null;
   exchRate: number | null;
   createdByUserId: string;
@@ -74,7 +77,14 @@ export const mapExpenseTicketDetailHeader = (item: ExpenseSheetTicketDetailDto):
     processedByAI: toNullableBool(item?.ProcessedByAI),
     currencyCode: safeText(item?.CurrencyCode),
     totalAmount: toNullableNumber(item?.TotalAmount),
-    amountMST: toNullableNumber(item?.AmountMST ?? item?.amountMST),
+    totalAmountCurrency: toNullableNumber(item?.TotalAmountCurrency ?? item?.TotalAmount),
+    visibleReimbursableTotal: getVisibleReimbursableTotal({
+      TotalAmountMST: toNullableNumber(item?.TotalAmountMST),
+      AmountMST: toNullableNumber(item?.AmountMST ?? item?.amountMST),
+      TotalAmountCurrency: toNullableNumber(item?.TotalAmountCurrency),
+      TotalAmount: toNullableNumber(item?.TotalAmount),
+    }),
+    amountMST: toNullableNumber(item?.TotalAmountMST ?? item?.AmountMST ?? item?.amountMST),
     exchRate: toNullableNumber(item?.ExchRate ?? item?.exchRate),
     createdByUserId: safeText(item?.CreatedByUserId),
     ownerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId),

@@ -235,9 +235,12 @@ const createDraftFromHeader = (
     normalizeCurrencyCode(localCurrencyCode) || normalizeCurrencyCode(linkedExpenseLine?.currencyCode);
   const normalizedCurrencyCode =
     normalizeCurrencyCode(header?.currencyCode) || normalizeCurrencyCode(linkedExpenseLine?.currencyCode) || normalizedLocalCurrencyCode;
-  const totalAmount = toFiniteNumber(header?.totalAmount) ?? toFiniteNumber(linkedExpenseLine?.amount) ?? toFiniteNumber(linkedExpenseLine?.price);
+  const totalAmount =
+    toFiniteNumber(header?.totalAmountCurrency ?? header?.totalAmount) ??
+    toFiniteNumber(linkedExpenseLine?.amount) ??
+    toFiniteNumber(linkedExpenseLine?.price);
   const ticketExchangeRate = toFiniteNumber(header?.exchRate ?? linkedExpenseLine?.exchRate);
-  const ticketAmountMST = toFiniteNumber(header?.amountMST ?? linkedExpenseLine?.amountMST);
+  const ticketAmountMST = toFiniteNumber(header?.visibleReimbursableTotal ?? header?.amountMST ?? linkedExpenseLine?.amountMST);
   const sameCurrency = isExpenseLineSameReimbursementCurrency(normalizedCurrencyCode, normalizedLocalCurrencyCode);
   const exchangeRate = sameCurrency
     ? 100

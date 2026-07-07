@@ -116,6 +116,7 @@ type LegacyExpenseListItem = {
   projId?: unknown;
   currencyCode?: unknown;
   totalAmount?: unknown;
+  totalAmountCurrency?: unknown;
   totalAmountMST?: unknown;
   exchRate?: unknown;
   userId?: unknown;
@@ -720,7 +721,9 @@ const mapLegacyListItemToApiListItem = (item: LegacyExpenseListItem): ExpenseShe
     Voucher: safeText(item.voucher),
     ProjId: safeText(item.projId),
     CurrencyCode: safeText(item.currencyCode),
-    TotalAmount: toNullableNumber(item.totalAmount ?? item.totalAmountMST),
+    TotalAmount: toNullableNumber(item.totalAmountCurrency ?? item.totalAmount),
+    TotalAmountCurrency: toNullableNumber(item.totalAmountCurrency ?? item.totalAmount),
+    TotalAmountMST: toNullableNumber(item.totalAmountMST),
     ExchRate: toNullableNumber(item.exchRate),
     ExchangeRateMode: toNullableNumber(item.exchangeRateMode),
     ReimbursableExpense: normalizeExpenseSheetReimbursable(item.reimbursableExpense),

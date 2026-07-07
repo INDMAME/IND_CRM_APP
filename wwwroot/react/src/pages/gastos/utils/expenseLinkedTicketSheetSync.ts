@@ -123,7 +123,7 @@ const resolveTicketSnapshot = (
   const description = safeText(ticket.Description) || safeText(existingLine?.description) || "Ticket";
   const transDate =
     toExpenseApiDdMmYyyy(ticket.TransDate) || safeText(existingLine?.transDate) || toExpenseApiDdMmYyyy(new Date());
-  const headerTotal = Number(ticket.TotalAmount || 0);
+  const headerTotal = Number(ticket.TotalAmountCurrency ?? ticket.TotalAmount ?? 0);
   const hasTicketLines = Array.isArray(ticket.Lines) && ticket.Lines.length > 0;
   const lineTotal = hasTicketLines
     ? ticket.Lines.reduce((sum, entry) => {
@@ -157,7 +157,7 @@ const resolveTicketSnapshot = (
     safeText(existingLine?.currencyCode).toUpperCase();
   const rawAmountMST =
     resolveNonNegativeNumberOverride(overrides.amountMSTOverride) ??
-    toFiniteNumber(ticket.AmountMST ?? ticket.amountMST ?? existingLine?.amountMST);
+    toFiniteNumber(ticket.TotalAmountMST ?? ticket.AmountMST ?? ticket.amountMST ?? existingLine?.amountMST);
   const rawExchRate =
     resolvePositiveNumberOverride(overrides.exchangeRateOverride) ??
     resolvePositiveNumberOverride(ticket.ExchRate ?? ticket.exchRate ?? existingLine?.exchRate);

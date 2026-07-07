@@ -33,6 +33,14 @@ export const normalizeListPagedResponse = (
   const items = getPagedItems(response);
   const normalizedItems = items.map((item) => ({
     ...item,
+    TotalAmountCurrency: toNullableNumber(
+      (item as { TotalAmountCurrency?: unknown; totalAmountCurrency?: unknown })?.TotalAmountCurrency ??
+        (item as { totalAmountCurrency?: unknown })?.totalAmountCurrency
+    ),
+    TotalAmountMST: toNullableNumber(
+      (item as { TotalAmountMST?: unknown; totalAmountMST?: unknown })?.TotalAmountMST ??
+        (item as { totalAmountMST?: unknown })?.totalAmountMST
+    ),
     ReimbursableExpense: toNullableNumber(item?.ReimbursableExpense ?? item?.reimbursableExpense),
     OwnerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId) || null,
     OwnerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
@@ -60,6 +68,8 @@ export const normalizeDetailPagedResponse = (
       UserName: safeText(item?.UserName ?? item?.userName) || null,
       OwnerAxUserId: safeText(item?.OwnerAxUserId ?? item?.ownerAxUserId),
       OwnerName: safeText(item?.OwnerName ?? item?.ownerName) || null,
+      TotalAmountCurrency: toNullableNumber(item?.TotalAmountCurrency ?? item?.totalAmountCurrency),
+      TotalAmountMST: toNullableNumber(item?.TotalAmountMST ?? item?.totalAmountMST),
       ReimbursableExpense: toNullableNumber(item?.ReimbursableExpense ?? item?.reimbursableExpense),
       ProjId: safeText(item?.ProjId ?? item?.projId),
       Lines: rawLines.map((line) => ({
@@ -70,6 +80,8 @@ export const normalizeDetailPagedResponse = (
         ReimbursableExpense: toNullableNumber(line?.ReimbursableExpense ?? line?.reimbursableExpense),
         CurrencyCode: safeText(line?.CurrencyCode ?? line?.currencyCode),
         AmountMST: toNullableNumber(line?.AmountMST ?? line?.amountMST),
+        TotalAmountCurrency: toNullableNumber(line?.TotalAmountCurrency ?? line?.totalAmountCurrency),
+        TotalAmountMST: toNullableNumber(line?.TotalAmountMST ?? line?.totalAmountMST),
         ExchRate: toNullableNumber(line?.ExchRate ?? line?.exchRate),
       })),
     };
@@ -199,6 +211,14 @@ export const normalizeTicketListPagedResponse = (
       (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.ProcessedByAI ??
         (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.processedByAI
     ),
+    TotalAmountCurrency: toNullableNumber(
+      (item as { TotalAmountCurrency?: unknown; totalAmountCurrency?: unknown })?.TotalAmountCurrency ??
+        (item as { totalAmountCurrency?: unknown })?.totalAmountCurrency
+    ),
+    TotalAmountMST: toNullableNumber(
+      (item as { TotalAmountMST?: unknown; totalAmountMST?: unknown })?.TotalAmountMST ??
+        (item as { totalAmountMST?: unknown })?.totalAmountMST
+    ),
     GastoType: toNullableGastoTypeCode(
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
@@ -228,6 +248,14 @@ export const normalizeTicketLinkListPagedResponse = (
     ProcessedByAI: toNullableBool(
       (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.ProcessedByAI ??
         (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.processedByAI
+    ),
+    TotalAmountCurrency: toNullableNumber(
+      (item as { TotalAmountCurrency?: unknown; totalAmountCurrency?: unknown })?.TotalAmountCurrency ??
+        (item as { totalAmountCurrency?: unknown })?.totalAmountCurrency
+    ),
+    TotalAmountMST: toNullableNumber(
+      (item as { TotalAmountMST?: unknown; totalAmountMST?: unknown })?.TotalAmountMST ??
+        (item as { totalAmountMST?: unknown })?.totalAmountMST
     ),
     GastoType: toNullableGastoTypeCode(
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
@@ -267,6 +295,15 @@ export const normalizeTicketDetailPagedResponse = (
       (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.HojaGastosIdDisplay ??
         (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.hojaGastosIdDisplay
     ),
+    TotalAmountCurrency: toNullableNumber(
+      (item as { TotalAmountCurrency?: unknown; totalAmountCurrency?: unknown })?.TotalAmountCurrency ??
+        (item as { totalAmountCurrency?: unknown })?.totalAmountCurrency
+    ),
+    TotalAmountMST: toNullableNumber(
+      (item as { TotalAmountMST?: unknown; totalAmountMST?: unknown })?.TotalAmountMST ??
+        (item as { totalAmountMST?: unknown })?.totalAmountMST
+    ),
+    AmountMST: toNullableNumber(item?.TotalAmountMST ?? item?.AmountMST ?? item?.amountMST),
     GastoType: toNullableGastoTypeCode(
       (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
         (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType

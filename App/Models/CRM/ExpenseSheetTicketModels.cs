@@ -324,6 +324,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("DifferenceAmount")]
         public decimal? DifferenceAmount { get; set; }
 
+        [JsonPropertyName("TotalAmountCurrency")]
+        public decimal? TotalAmountCurrency { get; set; }
+
+        [JsonPropertyName("TotalAmountMST")]
+        public decimal? TotalAmountMST { get; set; }
+
         [JsonPropertyName("AdjustmentLineRecId")]
         public string AdjustmentLineRecId { get; set; } = string.Empty;
 
@@ -368,6 +374,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("TotalAmount")]
         public decimal? TotalAmount { get; set; }
 
+        [JsonPropertyName("TotalAmountCurrency")]
+        public decimal? TotalAmountCurrency { get; set; }
+
+        [JsonPropertyName("TotalAmountMST")]
+        public decimal? TotalAmountMST { get; set; }
+
         [JsonPropertyName("TransDate")]
         public string TransDate { get; set; } = string.Empty;
 
@@ -407,6 +419,12 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("TotalAmount")]
         public decimal? TotalAmount { get; set; }
+
+        [JsonPropertyName("TotalAmountCurrency")]
+        public decimal? TotalAmountCurrency { get; set; }
+
+        [JsonPropertyName("TotalAmountMST")]
+        public decimal? TotalAmountMST { get; set; }
 
         [JsonPropertyName("TransDate")]
         public string TransDate { get; set; } = string.Empty;
@@ -481,6 +499,12 @@ namespace IND_CRM_APP.Models.CRM
 
         [JsonPropertyName("TotalAmount")]
         public decimal? TotalAmount { get; set; }
+
+        [JsonPropertyName("TotalAmountCurrency")]
+        public decimal? TotalAmountCurrency { get; set; }
+
+        [JsonPropertyName("TotalAmountMST")]
+        public decimal? TotalAmountMST { get; set; }
 
         [JsonPropertyName("AmountMST")]
         public decimal? AmountMST { get; set; }
