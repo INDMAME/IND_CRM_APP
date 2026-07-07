@@ -920,7 +920,7 @@ const ExpenseTicketsPageContent = () => {
       title: indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
       message: isFilteredSelectionActive
         ? `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}`
-        : `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}\n${indT("ExpenseSheets_Field_TotalAmount", "Total amount")}: ${selectedTotalAmountText}`,
+        : `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}\n${indT("ExpenseSheets_Field_TotalAmount", "Reimbursement amount")}: ${selectedTotalAmountText}`,
       confirmText: indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
       cancelText: indT("Confirm_No", "Cancel"),
       onConfirm: async () => {

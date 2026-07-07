@@ -310,7 +310,7 @@
     <value>显示可报销信息</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
-    <value>总金额</value>
+    <value>报销金额</value>
   </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>描述</value>

@@ -385,7 +385,7 @@
     <value>Mostrar informa&#231;&#227;o de reembols&#225;vel</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
-    <value>Montante total</value>
+    <value>Valor de reembolso</value>
   </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>Descrição</value>
