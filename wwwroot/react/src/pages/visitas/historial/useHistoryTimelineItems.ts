@@ -12,6 +12,16 @@ type UseHistoryTimelineItemsArgs = {
   formatDateParts: (value: string, locale: string) => { year: string; month: string; day: string };
 };
 
+const EMPTY_DESCRIPTION_LABELS = new Set(["sin datos", "no data"]);
+
+const hasRealDescription = (value: string, noDataText: string): boolean => {
+  const normalizedValue = value.trim().toLocaleLowerCase();
+  if (!normalizedValue) return false;
+
+  const normalizedNoDataText = noDataText.trim().toLocaleLowerCase();
+  return normalizedValue !== normalizedNoDataText && !EMPTY_DESCRIPTION_LABELS.has(normalizedValue);
+};
+
 // Maps raw history payload items into timeline cards used by HistoryTable.
 export const useHistoryTimelineItems = ({
   items,
@@ -40,9 +50,10 @@ export const useHistoryTimelineItems = ({
       const fullName = toTitleCase(rawName, locale);
       const fecha = (entry.transDate ?? entry.TransDate ?? "").toString();
       const rawDesc = (entry.description ?? entry.Description ?? "").toString().trim();
-      const fullDesc = rawDesc;
+      const hasDescription = hasRealDescription(rawDesc, noDataText);
+      const fullDesc = hasDescription ? rawDesc : "";
 
-      const isNoDataCard = !rawName && !rawDesc;
+      const isNoDataCard = !rawName && !hasDescription;
       if (isNoDataCard) {
         linkId = "";
       }
@@ -52,9 +63,10 @@ export const useHistoryTimelineItems = ({
         actividadId,
         recId,
         name: fullName,
-        description: fullDesc || noDataText,
+        description: hasDescription ? fullDesc : isNoDataCard ? noDataText : "",
         fullName,
         fullDesc,
+        hasDescription,
         dateParts: formatDateParts(fecha, locale),
         isNoData: isNoDataCard,
       };
