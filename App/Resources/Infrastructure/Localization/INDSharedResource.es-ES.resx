@@ -937,7 +937,7 @@
     <value>Selecciona tipo</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
-    <value>Método de contacto</value>
+    <value>Medio de contacto</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
     <value>Selecciona método</value>

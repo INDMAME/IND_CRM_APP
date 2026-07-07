@@ -63,6 +63,7 @@ type SelectComboboxProps = {
   selectedTextMode?: "text" | "value";
   dropdownExpandPx?: number;
   dropdownMinWidthPx?: number;
+  dropdownUseAvailableWidth?: boolean;
   dropdownMaxHeightClass?: string;
   dropdownPlacement?: "bottom" | "top";
   selectedIconClassName?: string;
@@ -104,6 +105,7 @@ const SelectCombobox = ({
   selectedTextMode = "text",
   dropdownExpandPx = 0,
   dropdownMinWidthPx = 0,
+  dropdownUseAvailableWidth = false,
   dropdownMaxHeightClass = "max-h-72",
   dropdownPlacement = "bottom",
   selectedIconClassName = "h-4 w-4",
@@ -157,10 +159,20 @@ const SelectCombobox = ({
   const [open, setOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [showNotFoundState, setShowNotFoundState] = useState(false);
+  const [previousReadOnlyMode, setPreviousReadOnlyMode] = useState(readOnlyMode);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const boxRef = useRef<HTMLDivElement | null>(null);
   const listRef = useRef<HTMLDivElement | null>(null);
   const initialDropdownWidthRef = useRef<number | null>(null);
+
+  if (previousReadOnlyMode !== readOnlyMode) {
+    setPreviousReadOnlyMode(readOnlyMode);
+    if (readOnlyMode) {
+      if (query !== null) setQuery(null);
+      if (showNotFoundState) setShowNotFoundState(false);
+      if (open) setOpen(false);
+    }
+  }
 
   const clearManualValue = (nextOpen: boolean, showNotFound: boolean) => {
     setQuery("");
@@ -171,6 +183,13 @@ const SelectCombobox = ({
   };
 
   useOutsideClick([containerRef, listRef], () => {
+    if (readOnlyMode) {
+      setQuery(null);
+      setShowNotFoundState(false);
+      setOpen(false);
+      return;
+    }
+
     if (query !== null) {
       clearManualValue(false, false);
       return;
@@ -202,12 +221,14 @@ const SelectCombobox = ({
     filtered.length > 0 ? Math.min(Math.max(activeIndex, 0), filtered.length - 1) : 0;
 
   const openListAtCurrentSelection = () => {
+    if (readOnlyMode) return;
     setActiveIndex(preferredActiveIndex);
     setShowNotFoundState(false);
     setOpen(true);
   };
 
   const selectOption = (opt: NormalizedOption) => {
+    if (readOnlyMode) return;
     const nextValue = String(opt?.value ?? "");
     setQuery(null);
     setShowNotFoundState(false);
@@ -216,7 +237,7 @@ const SelectCombobox = ({
   };
 
   const handleKeyDown = (ev: React.KeyboardEvent<HTMLInputElement>) => {
-    if (disabled) return;
+    if (readOnlyMode) return;
     if (ev.key === "ArrowDown") {
       ev.preventDefault();
       if (!open) {
@@ -265,7 +286,7 @@ const SelectCombobox = ({
   const listId = `select-options-${safeId}`;
   const activeId =
     open && filtered[resolvedActiveIndex] ? `select-opt-${safeId}-${filtered[resolvedActiveIndex].value}` : undefined;
-  const listOpen = open && !disabled;
+  const listOpen = open && !readOnlyMode;
   const selectedDisplayText = selectedTextMode === "value" ? selectedValue : selected?.text || "";
   const displayValue = query !== null ? query : (selectedValue ? selectedDisplayText : "");
   const showSelectedIcon = query === null && !!selectedValue && !!selected?.icon;
@@ -409,7 +430,7 @@ const SelectCombobox = ({
             value={displayValue}
             disabled={disabled}
             onChange={(event) => {
-              if (!allowTextInput) return;
+              if (readOnlyMode || !allowTextInput) return;
               const val = event.target.value;
               setActiveIndex(0);
               setShowNotFoundState(false);
@@ -422,7 +443,7 @@ const SelectCombobox = ({
             }}
             onKeyDown={handleKeyDown}
             onFocus={() => {
-              if (!disabled) openListAtCurrentSelection();
+              if (!readOnlyMode) openListAtCurrentSelection();
             }}
             placeholder={placeholder}
             readOnly={readOnlyMode || !allowTextInput}
@@ -443,7 +464,7 @@ const SelectCombobox = ({
                 type="button"
                 className="flex items-center p-1.5 text-slate-400 hover:text-slate-500"
                 onClick={() => {
-                  if (disabled) return;
+                  if (readOnlyMode) return;
                   if (query !== null && query.trim() && filtered.length === 0) {
                     clearManualValue(true, true);
                     return;
@@ -451,7 +472,7 @@ const SelectCombobox = ({
                   openListAtCurrentSelection();
                 }}
                 aria-label={indT("Common_Search", "Search")}
-                disabled={disabled}
+                disabled={readOnlyMode}
               >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="m15.75 15.75-2.489-2.489m0 0a3.375 3.375 0 1 0-4.773-4.773 3.375 3.375 0 0 0 4.774 4.774ZM21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -462,7 +483,7 @@ const SelectCombobox = ({
               type="button"
               className="flex items-center p-1.5 text-slate-500 hover:text-slate-600"
               onClick={() => {
-                if (disabled) return;
+                if (readOnlyMode) return;
                 if (open && query !== null && query.trim()) {
                   clearManualValue(false, false);
                   return;
@@ -474,7 +495,7 @@ const SelectCombobox = ({
                 openListAtCurrentSelection();
               }}
               aria-label={open ? indT("Dropdown_HideOptions", "Hide options") : indT("Dropdown_ShowOptions", "Show options")}
-              disabled={disabled}
+              disabled={readOnlyMode}
             >
               {open ? <ChevronUpSvg className="h-5 w-5" /> : <ChevronDownSvg className="h-5 w-5" />}
             </button>
@@ -485,13 +506,14 @@ const SelectCombobox = ({
             anchorRef={boxRef}
             open={listOpen}
             zIndex={360000}
-            fixedWidthPx={resolvedDropdownWidthPx ?? undefined}
+            fixedWidthPx={dropdownUseAvailableWidth ? undefined : resolvedDropdownWidthPx ?? undefined}
             panelStyle={panelStyle}
             maxHeightClass={dropdownMaxHeightClass}
             role="listbox"
             roundedClass="rounded-[var(--radius-xl)]"
             portalClassName={portalClassName}
             panelClassName={panelClassName}
+            matchAvailableWidth={dropdownUseAvailableWidth}
           >
             {listBody}
           </FloatingList>

@@ -850,7 +850,7 @@
     <value>请选择类型</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
-    <value>联系方式</value>
+    <value>联系渠道</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
     <value>请选择方式</value>

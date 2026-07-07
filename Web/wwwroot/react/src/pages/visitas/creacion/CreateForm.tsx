@@ -352,7 +352,7 @@ function VisitasApp() {
           onVisitTypeChange={setVisitType}
           visitTypePlaceholder={indT("Visits_Detail_VisitType_Placeholder", "Select type")}
           visitTypeInvalid={visitTypeInvalid}
-          contactMethodLabel={indT("Visits_Detail_ContactMethod_Label", "Contact method")}
+          contactMethodLabel={indT("Visits_Detail_ContactMethod_Label", "Contact channel")}
           contactMethods={contactMethods}
           contactMethod={contactMethod}
           onContactMethodChange={setContactMethod}

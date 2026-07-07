@@ -14,6 +14,7 @@ type Props = {
   panelClassName?: string;
   panelStyle?: React.CSSProperties;
   autoFitViewport?: boolean;
+  matchAvailableWidth?: boolean;
   offset?: number;
   viewportPadding?: number;
   children: React.ReactNode;
@@ -31,6 +32,7 @@ const FloatingList = ({
   panelClassName,
   panelStyle,
   autoFitViewport = true,
+  matchAvailableWidth = false,
   offset,
   viewportPadding,
   children,
@@ -39,6 +41,7 @@ const FloatingList = ({
   const style = useFloatingPosition(anchorRef, open, {
     overlayRef: panelRef,
     autoFitViewport,
+    matchAvailableWidth,
     offset,
     viewportPadding,
   });
@@ -50,7 +53,7 @@ const FloatingList = ({
         position: "fixed",
         top: style.top,
         left: style.left,
-        width: typeof fixedWidthPx === "number" && Number.isFinite(fixedWidthPx) ? fixedWidthPx : style.width,
+        width: !matchAvailableWidth && typeof fixedWidthPx === "number" && Number.isFinite(fixedWidthPx) ? fixedWidthPx : style.width,
         zIndex,
       }}
       className={portalClassName}

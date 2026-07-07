@@ -1,9 +1,15 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
+import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetCurrencyDto } from "../expenseTypes.ts";
 import { getExpenseSheetCurrencies, getExpenseSheetDefaultCurrencyCode } from "../utils/expenseApi.ts";
+import {
+  orderExpenseCurrencyOptionsByRecency,
+  readRecentExpenseCurrencyCodes,
+  rememberRecentExpenseCurrencyCode,
+} from "../utils/expenseCurrencyRecents.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import ExpenseCurrencyFlagIcon from "./ExpenseCurrencyFlagIcon.tsx";
 
@@ -23,6 +29,7 @@ type ExpenseCurrencyFilterSelectProps = {
   preferDefaultCurrencyFromContext?: boolean;
   dropdownExpandPx?: number;
   dropdownMinWidthPx?: number;
+  dropdownUseAvailableWidth?: boolean;
   showLoadingStateText?: boolean;
 };
 
@@ -122,10 +129,20 @@ const ExpenseCurrencyFilterSelect = ({
   preferDefaultCurrencyFromContext = false,
   dropdownExpandPx = 0,
   dropdownMinWidthPx = 320,
+  dropdownUseAvailableWidth = true,
   showLoadingStateText = true,
 }: ExpenseCurrencyFilterSelectProps) => {
   const locale = useMemo(() => readPreferredLocale(), []);
+  const { currentAxUserId, currentCrmUserId } = useAuthContext();
+  const recentCurrencyUserScope = [currentAxUserId, currentCrmUserId]
+    .map((item) => String(item || "").trim())
+    .filter(Boolean)
+    .join("|");
   const [options, setOptions] = useState<ExpenseSelectOption[]>([]);
+  const [recentCurrencyCache, setRecentCurrencyCache] = useState(() => ({
+    userScope: recentCurrencyUserScope,
+    codes: readRecentExpenseCurrencyCodes(recentCurrencyUserScope),
+  }));
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
   const [loadErrorMessage, setLoadErrorMessage] = useState("");
   const [emptyMessage, setEmptyMessage] = useState("");
@@ -140,6 +157,13 @@ const ExpenseCurrencyFilterSelect = ({
   useEffect(() => {
     valueRef.current = normalizeCurrencyCode(value);
   }, [value]);
+
+  if (recentCurrencyCache.userScope !== recentCurrencyUserScope) {
+    setRecentCurrencyCache({
+      userScope: recentCurrencyUserScope,
+      codes: readRecentExpenseCurrencyCodes(recentCurrencyUserScope),
+    });
+  }
 
   useEffect(() => {
     let isCancelled = false;
@@ -217,6 +241,33 @@ const ExpenseCurrencyFilterSelect = ({
   }, [locale, preferDefaultCurrencyFromContext]);
 
   const normalizedValue = useMemo(() => normalizeCurrencyCode(value), [value]);
+  const orderedOptions = useMemo(
+    () => orderExpenseCurrencyOptionsByRecency(options, recentCurrencyCache.codes, locale),
+    [locale, options, recentCurrencyCache.codes]
+  );
+  const validCurrencyCodes = useMemo(
+    () =>
+      new Set(
+        options.flatMap((option) => {
+          const code = normalizeCurrencyCode(option.value);
+          return code ? [code] : [];
+        })
+      ),
+    [options]
+  );
+  const handleCurrencyChange = useCallback(
+    (nextValue: string) => {
+      const normalizedNextValue = normalizeCurrencyCode(nextValue);
+      if (normalizedNextValue && validCurrencyCodes.has(normalizedNextValue)) {
+        setRecentCurrencyCache({
+          userScope: recentCurrencyUserScope,
+          codes: rememberRecentExpenseCurrencyCode(normalizedNextValue, recentCurrencyUserScope),
+        });
+      }
+      onChange(normalizedNextValue);
+    },
+    [onChange, recentCurrencyUserScope, validCurrencyCodes]
+  );
   const disableBecauseNoData = !isLoadingOptions && !loadErrorMessage && options.length === 0;
   const effectiveDisabled = disabled || disableBecauseNoData;
   const loadingMessage = indT("Common_Loading", "Loading");
@@ -226,9 +277,9 @@ const ExpenseCurrencyFilterSelect = ({
       <SelectCombobox
         label={label}
         placeholder={placeholder}
-        options={options}
+        options={orderedOptions}
         value={normalizedValue}
-        onChange={(nextValue) => onChange(normalizeCurrencyCode(nextValue))}
+        onChange={handleCurrencyChange}
         inputRef={inputRef}
         invalid={invalid}
         readOnly={readOnly}
@@ -242,6 +293,7 @@ const ExpenseCurrencyFilterSelect = ({
         selectedTextMode="value"
         dropdownExpandPx={dropdownExpandPx}
         dropdownMinWidthPx={dropdownMinWidthPx}
+        dropdownUseAvailableWidth={dropdownUseAvailableWidth}
         dropdownMaxHeightClass="max-h-96"
         selectedIconClassName={CURRENCY_FLAG_SIZE_CLASS}
         selectedInputPaddingClassName="pl-12"

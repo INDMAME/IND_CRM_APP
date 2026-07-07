@@ -937,7 +937,7 @@
     <value>Select type</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
-    <value>Contact method</value>
+    <value>Contact channel</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
     <value>Select method</value>
