@@ -398,6 +398,41 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #hasActiveHierarchyChildren
+        #boolean hasActiveHierarchyChildren()
+        #{
+        #    // Checks whether the configured user can act as a hierarchy parent.
+        #    DataAreaId       companyId   = this.hierarchyCompanyId();
+        #    INDGestPersonaId parentAlias = this.hierarchyParentAlias();
+        #    container        children;
+        #    ;
+        #
+        #    if (!companyId || !parentAlias)
+        #        return false;
+        #
+        #    children = INDModuleDataVisibilityHierarchyLine::findActiveChildren(
+        #        companyId,
+        #        parentAlias,
+        #        today());
+        #
+        #    return conLen(children) > 0;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #hierarchyCompanyId
+        #DataAreaId hierarchyCompanyId()
+        #{
+        #    // Uses the permission company as the hierarchy company scope.
+        #    INDCiasPermitidas ciasPerm = this.INDCiasPermitidas();
+        #    DataAreaId        companyId;
+        #    ;
+        #
+        #    companyId = ciasPerm.CiaId;
+        #
+        #    return companyId;
+        #}
+        #
+      ENDSOURCE
       SOURCE #hierarchyDepthLabel
         #display str hierarchyDepthLabel()
         #{
@@ -411,6 +446,41 @@ Formatversion: 1
         #
         #    return enum2str(this.HierarchyDepth);
         #}
+      ENDSOURCE
+      SOURCE #hierarchyParentAlias
+        #INDGestPersonaId hierarchyParentAlias()
+        #{
+        #    // Resolves the AX user to the CRM person alias used by hierarchy lines.
+        #    INDCiasPermitidas ciasPerm = this.INDCiasPermitidas();
+        #    INDPersonaTable   person;
+        #    DataAreaId        companyId;
+        #    UserId            userId;
+        #    INDGestPersonaId  ret;
+        #    ;
+        #
+        #    userId = ciasPerm.UserId;
+        #
+        #    if (!userId)
+        #        return ret;
+        #
+        #    companyId = this.hierarchyCompanyId();
+        #
+        #    if (!companyId)
+        #        return ret;
+        #
+        #    changecompany (companyId)
+        #    {
+        #        select firstOnly Alias from person
+        #            where (person.UserId == userId
+        #                || person.Alias  == userId)
+        #               && person.Blocked == NoYes::No;
+        #
+        #        ret = person.Alias;
+        #    }
+        #
+        #    return ret;
+        #}
+        #
       ENDSOURCE
       SOURCE #INDCiasPermitidas
         #INDCiasPermitidas INDCiasPermitidas()
@@ -466,6 +536,14 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #usesHierarchyVisibility
+        #boolean usesHierarchyVisibility(INDDataVisibilityMode _mode)
+        #{
+        #    // Matches the visibility modes that depend on hierarchy lines.
+        #    return _mode == INDDataVisibilityMode::OwnAndHierarchy
+        #        || _mode == INDDataVisibilityMode::HierarchyOnly;
+        #}
+      ENDSOURCE
       SOURCE #targetSummary
         #display str targetSummary()
         #{
@@ -480,6 +558,52 @@ Formatversion: 1
         #
         #    return strFmt("%1 agregados / %2 quitados", addCount, removeCount);
         #}
+      ENDSOURCE
+      SOURCE #validateField
+        #public boolean validateField(fieldId _fieldIdToCheck)
+        #{
+        #    // Blocks invalid hierarchy configuration during field validation.
+        #    boolean ret;
+        #    ;
+        #
+        #    ret = super(_fieldIdToCheck);
+        #
+        #    if (ret)
+        #    {
+        #        switch (_fieldIdToCheck)
+        #        {
+        #            case fieldNum(INDWebModuleAccessLevel, DataVisibilityMode):
+        #            case fieldNum(INDWebModuleAccessLevel, HierarchyDepth):
+        #            case fieldNum(INDWebModuleAccessLevel, RefRecIdCiaPermitida):
+        #                ret = this.validateHierarchySelection();
+        #                break;
+        #        }
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
+      SOURCE #validateHierarchySelection
+        #boolean validateHierarchySelection()
+        #{
+        #    // Keeps hierarchy visibility unavailable without active child records.
+        #    INDCiasPermitidas ciasPerm = this.INDCiasPermitidas();
+        #    DataAreaId        companyId = this.hierarchyCompanyId();
+        #    INDGestPersonaId  parentAlias = this.hierarchyParentAlias();
+        #    ;
+        #
+        #    if (!this.usesHierarchyVisibility(this.DataVisibilityMode))
+        #        return true;
+        #
+        #    if (parentAlias && this.hasActiveHierarchyChildren())
+        #        return true;
+        #
+        #    return checkFailed(strFmt(
+        #        "El usuario %1 no tiene subordinados activos como responsable en la empresa %2. No puede usar opciones de jerarquia para este modulo.",
+        #        ciasPerm.UserId,
+        #        companyId));
+        #}
+        #
       ENDSOURCE
       SOURCE #validateWrite
         #public boolean validateWrite()
@@ -536,6 +660,9 @@ Formatversion: 1
         #            }
         #        }
         #    }
+        #
+        #    if (ret)
+        #        ret = this.validateHierarchySelection();
         #
         #    return ret;
         #}

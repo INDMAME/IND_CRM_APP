@@ -16,6 +16,7 @@ export type TimelineItem = {
   description: string;
   fullName: string;
   fullDesc: string;
+  hasDescription: boolean;
   dateParts: TimelineDateParts;
   isNoData: boolean;
 };
@@ -131,6 +132,7 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
     items.map((item, index) => {
       const key = item.id || item.recId?.toString() || `timeline-${index}`;
       const isClickable = !item.isNoData && !!item.id;
+      const showDescription = item.hasDescription || item.isNoData;
       return (
         <div key={key} className="timeline-item">
           <div
@@ -161,7 +163,11 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
             </div>
             <div className="timeline-card__content flex-1 py-3 px-4">
               <div className="timeline-name" data-fulltext={item.fullName || item.name}>{item.name}</div>
-              <p className="timeline-desc-text" data-fulltext={item.fullDesc || item.description}>{item.description || noDataText}</p>
+              {showDescription ? (
+                <p className="timeline-desc-text" data-fulltext={item.fullDesc || item.description}>
+                  {item.description || noDataText}
+                </p>
+              ) : null}
             </div>
           </div>
         </div>

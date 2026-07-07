@@ -258,12 +258,10 @@ const ExpenseSheetLineForm = ({
       fullWidth
     />
   );
-  const hasProjectField = isEditing || Boolean(projectValue);
   const linkedTicketField = showLinkedTicketField ? (
     <ExpenseReadOnlyField
       label={indT("Tickets_Field_FileId", "Ticket Id.")}
       value={linkedTicketFileId}
-      fullWidth={!hasProjectField}
       onClick={onOpenLinkedTicket}
     />
   ) : null;
@@ -384,9 +382,9 @@ const ExpenseSheetLineForm = ({
       disabled={!isEditing}
       readOnly={!isEditing}
     />
-  ) : projectValue ? (
+  ) : (
     <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
-  ) : null;
+  );
   const quantityPriceFields = (
     <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
       {quantityField}
@@ -399,16 +397,13 @@ const ExpenseSheetLineForm = ({
       {typeField}
     </div>
   );
-  const projectTicketFields = showLinkedTicketField && projectField && linkedTicketField ? (
+  const projectTicketFields = linkedTicketField ? (
     <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
       {projectField}
       {linkedTicketField}
     </div>
   ) : (
-    <>
-      {projectField}
-      {linkedTicketField}
-    </>
+    projectField
   );
 
   return (

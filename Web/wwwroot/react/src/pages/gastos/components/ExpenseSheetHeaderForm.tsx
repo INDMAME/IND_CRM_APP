@@ -256,7 +256,7 @@ const ExpenseSheetHeaderForm = ({
         containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
         labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
       />
-    ) : !isCreateMode && projectValue ? (
+    ) : !isCreateMode ? (
       <ExpenseReadOnlyField
         label={indT("ExpenseSheets_Field_Project", "Project")}
         value={projectValue}
@@ -295,13 +295,13 @@ const ExpenseSheetHeaderForm = ({
             disabled={!isEditing || !canEditHeaderFields}
             readOnly={!isEditing || !canEditHeaderFields}
           />
-        ) : isCreateMode && projectValue ? (
+        ) : isCreateMode ? (
           <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Project", "Project")} value={projectValue} />
         ) : null}
         {!isCreateMode ? (
           <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
             <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_TotalAmount", "Total amount")}
+              label={indT("ExpenseSheets_Field_TotalAmount", "Reimbursement amount")}
               value={totalAmountText}
               valueAlign="right"
               containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
@@ -326,14 +326,10 @@ const ExpenseSheetHeaderForm = ({
           </div>
         ) : null}
         {!isCreateMode ? (
-          projectField ? (
-            <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
-              {reimbursableExpenseField}
-              {projectField}
-            </div>
-          ) : (
-            <div className="md:col-span-2">{reimbursableExpenseField}</div>
-          )
+          <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
+            {reimbursableExpenseField}
+            {projectField}
+          </div>
         ) : null}
         {ownerDisplay ? (
           <ExpenseReadOnlyField

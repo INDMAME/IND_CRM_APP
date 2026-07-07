@@ -5,6 +5,7 @@ import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import type { ExpenseSheetListItemDto, ExpenseSheetListResponseEnvelope } from "../expenseTypes.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
+import { getVisibleReimbursableTotal } from "../utils/expenseVisibleTotals.ts";
 
 type ExpenseSheetsVisualizationFallbackArgs = {
   question: string;
@@ -500,8 +501,14 @@ const buildCurrencyTotalsRows = (items: ExpenseSheetListItemDto[]): ChartDatum[]
   const totalsByCurrency = new Map<string, number>();
 
   items.forEach((item) => {
-    const currencyCode = safeText(item?.CurrencyCode).toUpperCase();
-    const totalAmount = toFiniteNumber(item?.TotalAmount);
+    const currencyCode = toFiniteNumber(item?.TotalAmountMST) !== null
+      ? "MST"
+      : safeText(item?.CurrencyCode).toUpperCase();
+    const totalAmount = getVisibleReimbursableTotal({
+      TotalAmountMST: toFiniteNumber(item?.TotalAmountMST),
+      TotalAmountCurrency: toFiniteNumber(item?.TotalAmountCurrency),
+      TotalAmount: toFiniteNumber(item?.TotalAmount),
+    });
     if (!currencyCode || totalAmount === null) {
       return;
     }
@@ -541,14 +548,20 @@ const buildExpenseSheetChartLabel = (sheetId: string, currencyCode: string): str
 const buildExpenseSheetTotalsRows = (items: ExpenseSheetListItemDto[]): ExpenseSheetTotalsRow[] => {
   return items
     .map((item) => {
-      const value = toFiniteNumber(item?.TotalAmount);
+      const value = getVisibleReimbursableTotal({
+        TotalAmountMST: toFiniteNumber(item?.TotalAmountMST),
+        TotalAmountCurrency: toFiniteNumber(item?.TotalAmountCurrency),
+        TotalAmount: toFiniteNumber(item?.TotalAmount),
+      });
       if (value === null) {
         return null;
       }
 
       const sheetId = safeText(item?.HojaGastosId);
       const description = safeText(item?.Description);
-      const currencyCode = safeText(item?.CurrencyCode).toUpperCase();
+      const currencyCode = toFiniteNumber(item?.TotalAmountMST) !== null
+        ? "MST"
+        : safeText(item?.CurrencyCode).toUpperCase();
 
       return {
         label: buildExpenseSheetChartLabel(sheetId, currencyCode),

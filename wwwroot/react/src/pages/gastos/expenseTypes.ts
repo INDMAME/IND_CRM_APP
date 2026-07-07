@@ -137,6 +137,8 @@ export type ExpenseSheetListItemDto = {
   ProjId: string;
   CurrencyCode: string;
   TotalAmount: number | null;
+  TotalAmountCurrency?: number | null;
+  TotalAmountMST?: number | null;
   ExchRate: number | null;
   ExchangeRateMode: number | null;
   ReimbursableExpense?: number | null;
@@ -212,6 +214,10 @@ export type ExpenseSheetLineDto = {
   currencyCode?: string;
   AmountMST?: number | null;
   amountMST?: number | null;
+  TotalAmountCurrency?: number | null;
+  totalAmountCurrency?: number | null;
+  TotalAmountMST?: number | null;
+  totalAmountMST?: number | null;
   ExchRate?: number | null;
   exchRate?: number | null;
 };
@@ -238,6 +244,10 @@ export type ExpenseSheetDetailDto = {
   currencyCode?: string;
   TotalAmount?: number | null;
   totalAmount?: number | null;
+  TotalAmountCurrency?: number | null;
+  totalAmountCurrency?: number | null;
+  TotalAmountMST?: number | null;
+  totalAmountMST?: number | null;
   ExchRate?: number | null;
   exchRate?: number | null;
   ExchangeRateMode?: number | null;
@@ -458,6 +468,7 @@ export type ExpenseSheetLine = {
   price?: number | null;
   qty?: number | null;
   amount?: number | null;
+  visibleReimbursableTotal?: number | null;
   projId?: string;
   reimbursableExpense?: number | null;
   currencyCode?: string;
@@ -548,6 +559,8 @@ export type ExpenseSheetTicketTotalAdjustmentResultDto = {
   PreviousTotalAmount?: number | null;
   NewTotalAmount?: number | null;
   DifferenceAmount?: number | null;
+  TotalAmountCurrency?: number | null;
+  TotalAmountMST?: number | null;
   AdjustmentLineRecId?: string;
   AdjustmentLineCreated?: boolean | null;
   AdjustmentDescription?: string;
@@ -577,6 +590,8 @@ export type ExpenseSheetTicketListItemDto = {
   ProcessedByAI: boolean | null;
   CurrencyCode: string;
   TotalAmount: number | null;
+  TotalAmountCurrency?: number | null;
+  TotalAmountMST?: number | null;
   TransDate: ExpenseApiDate;
   TicketDate: ExpenseApiDate;
   TicketTime: string;
@@ -594,6 +609,8 @@ export type ExpenseSheetTicketLinkListItemDto = {
   ProcessedByAI: boolean | null;
   CurrencyCode: string;
   TotalAmount: number | null;
+  TotalAmountCurrency?: number | null;
+  TotalAmountMST?: number | null;
   TransDate: ExpenseApiDate;
   TicketDate: ExpenseApiDate;
   TicketTime: string;
@@ -613,6 +630,8 @@ export type ExpenseSheetTicketDetailDto = {
   ProcessedByAI: boolean | null;
   CurrencyCode: string;
   TotalAmount: number | null;
+  TotalAmountCurrency?: number | null;
+  TotalAmountMST?: number | null;
   AmountMST?: number | null;
   amountMST?: number | null;
   ExchRate?: number | null;

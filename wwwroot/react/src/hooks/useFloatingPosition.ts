@@ -7,6 +7,7 @@ type FloatingPositionOptions = {
   offset?: number;
   viewportPadding?: number;
   autoFitViewport?: boolean;
+  matchAvailableWidth?: boolean;
 };
 
 type FloatingPositionStyle = {
@@ -44,6 +45,7 @@ export const useFloatingPosition = (
     offset = DEFAULT_OFFSET_PX,
     viewportPadding = DEFAULT_VIEWPORT_PADDING_PX,
     autoFitViewport = false,
+    matchAvailableWidth = false,
   }: FloatingPositionOptions = {}
 ) => {
   const [style, setStyle] = useState<FloatingPositionStyle>({
@@ -66,8 +68,9 @@ export const useFloatingPosition = (
       const overlayElement = overlayRef?.current;
       const overlayRect = overlayElement?.getBoundingClientRect();
       const overlayHeight = Math.max(overlayRect?.height || 0, overlayElement?.scrollHeight || 0);
-      const nextWidth = Math.min(rect.width, Math.max(0, viewportWidth - viewportPadding * 2));
-      const nextLeft = clamp(rect.left, viewportPadding, viewportWidth - nextWidth - viewportPadding);
+      const availableWidth = Math.max(0, viewportWidth - viewportPadding * 2);
+      const nextWidth = matchAvailableWidth ? availableWidth : Math.min(rect.width, availableWidth);
+      const nextLeft = matchAvailableWidth ? viewportPadding : clamp(rect.left, viewportPadding, viewportWidth - nextWidth - viewportPadding);
 
       if (!autoFitViewport) {
         const nextStyle: FloatingPositionStyle = {
@@ -161,7 +164,7 @@ export const useFloatingPosition = (
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", scheduleUpdate);
     };
-  }, [autoFitViewport, offset, open, overlayRef, targetRef, viewportPadding]);
+  }, [autoFitViewport, matchAvailableWidth, offset, open, overlayRef, targetRef, viewportPadding]);
 
   return style;
 };

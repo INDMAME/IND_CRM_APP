@@ -385,7 +385,7 @@
     <value>Mostrar informa&#231;&#227;o de reembols&#225;vel</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
-    <value>Montante total</value>
+    <value>Valor de reembolso</value>
   </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>Descrição</value>
@@ -925,7 +925,7 @@
     <value>Selecione tipo</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
-    <value>Método de contacto</value>
+    <value>Meio de contacto</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
     <value>Selecione método</value>

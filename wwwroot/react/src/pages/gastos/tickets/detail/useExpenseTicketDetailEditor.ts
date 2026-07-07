@@ -11,7 +11,11 @@ import {
 } from "../../utils/expenseLineCurrency.ts";
 import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
 import { parseExpenseDate, safeText, toIsoDate } from "../../utils/expenseUiUtils.ts";
-import { formatExpenseInputNumber, parseExpenseNumericInput } from "../../utils/expenseNumberFormat.ts";
+import {
+  areExpenseNumericInputsEquivalent,
+  formatExpenseInputNumber,
+  parseExpenseNumericInput,
+} from "../../utils/expenseNumberFormat.ts";
 import type { ExpenseTicketDetailHeader } from "./expenseTicketDetailTypes.ts";
 
 type DraftState = {
@@ -231,9 +235,12 @@ const createDraftFromHeader = (
     normalizeCurrencyCode(localCurrencyCode) || normalizeCurrencyCode(linkedExpenseLine?.currencyCode);
   const normalizedCurrencyCode =
     normalizeCurrencyCode(header?.currencyCode) || normalizeCurrencyCode(linkedExpenseLine?.currencyCode) || normalizedLocalCurrencyCode;
-  const totalAmount = toFiniteNumber(header?.totalAmount) ?? toFiniteNumber(linkedExpenseLine?.amount) ?? toFiniteNumber(linkedExpenseLine?.price);
+  const totalAmount =
+    toFiniteNumber(header?.totalAmountCurrency ?? header?.totalAmount) ??
+    toFiniteNumber(linkedExpenseLine?.amount) ??
+    toFiniteNumber(linkedExpenseLine?.price);
   const ticketExchangeRate = toFiniteNumber(header?.exchRate ?? linkedExpenseLine?.exchRate);
-  const ticketAmountMST = toFiniteNumber(header?.amountMST ?? linkedExpenseLine?.amountMST);
+  const ticketAmountMST = toFiniteNumber(header?.visibleReimbursableTotal ?? header?.amountMST ?? linkedExpenseLine?.amountMST);
   const sameCurrency = isExpenseLineSameReimbursementCurrency(normalizedCurrencyCode, normalizedLocalCurrencyCode);
   const exchangeRate = sameCurrency
     ? 100
@@ -506,6 +513,18 @@ export const useExpenseTicketDetailEditor = ({
       setAmountMSTInvalid(false);
       setExchangeRateInvalid(false);
       const nextAmountMST = resolveSetStateValue(value, state.draft.amountMST);
+      if (areExpenseNumericInputsEquivalent(nextAmountMST, state.draft.amountMST)) {
+        if (nextAmountMST !== state.draft.amountMST) {
+          dispatch({
+            type: "patch_draft",
+            patch: {
+              amountMST: nextAmountMST,
+            },
+          });
+        }
+        return;
+      }
+
       dispatch({
         type: "patch_draft",
         patch: {

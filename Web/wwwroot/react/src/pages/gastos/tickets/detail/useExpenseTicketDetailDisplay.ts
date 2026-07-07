@@ -80,11 +80,13 @@ export const useExpenseTicketDetailDisplay = ({
     () => {
       const editableTotalAmount = parseExpenseNumericInput(draftTotalAmount);
       return formatAmountWithCurrency(
-        isEditing && editableTotalAmount != null ? editableTotalAmount : header?.totalAmount ?? null,
+        isEditing && editableTotalAmount != null
+          ? editableTotalAmount
+          : header?.totalAmountCurrency ?? header?.totalAmount ?? null,
         (isEditing ? draftCurrencyCode : header?.currencyCode) || header?.currencyCode
       );
     },
-    [draftCurrencyCode, draftTotalAmount, header?.currencyCode, header?.totalAmount, isEditing]
+    [draftCurrencyCode, draftTotalAmount, header?.currencyCode, header?.totalAmount, header?.totalAmountCurrency, isEditing]
   );
 
   const transDateText = useMemo(

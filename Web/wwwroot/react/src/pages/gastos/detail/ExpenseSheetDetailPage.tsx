@@ -240,7 +240,7 @@ const ExpenseSheetDetailPageContent = () => {
       {!controller.isCreateMode && !controller.isLoading && !controller.isRedirectingAfterCreate && !controller.errorMessage ? (
         <ExpenseLinesTimeline
           visibleLines={controller.visibleLines}
-          currencyCode={safeText(controller.header?.currencyCode)}
+          reimbursementCurrencyCode={safeText(controller.exchangeRateBaseCurrency || controller.header?.currencyCode)}
           totalLinePages={controller.totalLinePages}
           linePage={controller.linePage}
           linesLabel={indT("ExpenseSheets_Lines", "Lines")}

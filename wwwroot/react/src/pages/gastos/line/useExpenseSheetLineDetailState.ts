@@ -231,6 +231,7 @@ export const useExpenseSheetLineDetailState = ({
     const localCurrencyCode = safeText(nextHeader?.currencyCode).toUpperCase() || "EUR";
     const lineCurrencyCode = safeText(nextLine?.currencyCode).toUpperCase() || localCurrencyCode;
     const lineAmountMST =
+      nextLine?.visibleReimbursableTotal ??
       nextLine?.amountMST ??
       (isExpenseLineSameReimbursementCurrency(lineCurrencyCode, localCurrencyCode) ? nextLine?.amount : null);
     const lineExchangeRate = lineCurrencyCode === localCurrencyCode

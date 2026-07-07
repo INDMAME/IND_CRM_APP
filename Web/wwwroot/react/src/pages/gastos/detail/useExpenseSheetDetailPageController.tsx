@@ -219,8 +219,8 @@ export const useExpenseSheetDetailPageController = () => {
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
   const totalAmountText = useMemo(
-    () => formatAmountWithCurrency(header?.totalAmount ?? null, safeText(header?.currencyCode)),
-    [header?.currencyCode, header?.totalAmount]
+    () => formatAmountWithCurrency(header?.totalAmount ?? null, safeText(exchangeRateBaseCurrency || header?.currencyCode)),
+    [exchangeRateBaseCurrency, header?.currencyCode, header?.totalAmount]
   );
   const hasStatusActionContent = lines.length > 0 || hasPositiveTotalAmount(header?.totalAmount);
   const areStatusActionsDisabled = !hasStatusActionContent;

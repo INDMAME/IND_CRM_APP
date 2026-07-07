@@ -22,7 +22,7 @@ import { useExpenseSheetsFilterCache } from "./useExpenseSheetsFilterCache.ts";
 import ExpenseSheetsAssistant from "./ExpenseSheetsAssistant.tsx";
 import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
-import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
+import { configureExpenseApiAuth, getExpenseSheetDefaultCurrencyCode } from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 import { hasExpenseReturnReferrer, isExpenseHistoryBackForwardNavigation } from "../utils/expenseHistoryNavigation.ts";
 import { setTopbarActionGroupReady } from "../../../utils/topbarActionVisibility.ts";
@@ -53,6 +53,7 @@ const ExpenseSheetsPageContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
+  const [reimbursementCurrencyCode, setReimbursementCurrencyCode] = useState("EUR");
   const { currentAxUserId, manageableSubordinates, canManageOtherUsers, managementBootstrapReady } = useAuthContext();
   const managedUsers = useMemo(
     () => ensureCurrentExpenseManagedUserInList(Array.isArray(manageableSubordinates) ? manageableSubordinates : [], currentAxUserId),
@@ -228,6 +229,26 @@ const ExpenseSheetsPageContent = () => {
         window.clearTimeout(pendingAutomaticLoadTimerRef.current);
         pendingAutomaticLoadTimerRef.current = null;
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    getExpenseSheetDefaultCurrencyCode()
+      .then((currency) => {
+        if (cancelled) return;
+        const normalizedCurrency = safeText(currency).toUpperCase();
+        if (normalizedCurrency) {
+          setReimbursementCurrencyCode(normalizedCurrency);
+        }
+      })
+      .catch(() => {
+        // Keep the default MST label if the user context endpoint is unavailable.
+      });
+
+    return () => {
+      cancelled = true;
     };
   }, []);
 
@@ -675,7 +696,7 @@ const ExpenseSheetsPageContent = () => {
               document?.documentElement?.lang || "es-ES",
               { preferMonthFirstOnSlash: true }
             );
-            const currency = safeText(item.currencyCode);
+            const currency = safeText(reimbursementCurrencyCode || item.currencyCode);
             const description = safeText(item.description);
             const voucher = safeText(item.voucher);
             const totalAmountText = formatAmountWithCurrency(item.totalAmount ?? null, currency);

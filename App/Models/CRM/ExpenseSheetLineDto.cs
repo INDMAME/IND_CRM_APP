@@ -55,6 +55,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("AmountMST")]
         public decimal? AmountMST { get; set; }
 
+        [JsonPropertyName("TotalAmountCurrency")]
+        public decimal? TotalAmountCurrency { get; set; }
+
+        [JsonPropertyName("TotalAmountMST")]
+        public decimal? TotalAmountMST { get; set; }
+
         [JsonPropertyName("ExchRate")]
         public decimal? ExchRate { get; set; }
 

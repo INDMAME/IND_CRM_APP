@@ -310,7 +310,7 @@
     <value>显示可报销信息</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
-    <value>总金额</value>
+    <value>报销金额</value>
   </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>描述</value>
@@ -850,7 +850,7 @@
     <value>请选择类型</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
-    <value>联系方式</value>
+    <value>联系渠道</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
     <value>请选择方式</value>

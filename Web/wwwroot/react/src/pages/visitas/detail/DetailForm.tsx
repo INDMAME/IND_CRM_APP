@@ -736,7 +736,7 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
             usePortal={false}
           />
           <SelectCombobox
-            label={indT("Visits_Detail_ContactMethod_Label", "Contact method")}
+            label={indT("Visits_Detail_ContactMethod_Label", "Contact channel")}
             options={contactMethods}
             value={contactMethod}
             onChange={setContactMethod}

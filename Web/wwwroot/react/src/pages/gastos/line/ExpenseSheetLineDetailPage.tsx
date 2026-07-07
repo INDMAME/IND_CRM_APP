@@ -232,8 +232,8 @@ const ExpenseSheetLineDetailContent = () => {
     [calculatedAmountPreview, effectiveLineCurrencyCode]
   );
   const displayAmountMST = isExpenseLineSameReimbursementCurrency(effectiveLineCurrencyCode, localCurrencyCode)
-    ? line?.amountMST ?? line?.amount ?? null
-    : line?.amountMST ?? null;
+    ? line?.visibleReimbursableTotal ?? line?.amountMST ?? line?.amount ?? null
+    : line?.visibleReimbursableTotal ?? line?.amountMST ?? null;
   const amountMSTText = useMemo(
     () => formatAmountWithCurrency(displayAmountMST, localCurrencyCode),
     [displayAmountMST, localCurrencyCode]

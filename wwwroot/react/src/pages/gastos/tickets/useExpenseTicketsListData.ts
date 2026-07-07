@@ -4,6 +4,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { fetchExpenseSheetTicketLinkList, fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
+import { getVisibleReimbursableTotal } from "../utils/expenseVisibleTotals.ts";
 import { isExpenseAbortLikeError, runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
 import {
   buildExpenseTicketLinkListPayload,
@@ -86,7 +87,11 @@ const mapTicketItemToCard = (item: Record<string, unknown>): ExpenseTicketCard =
     status: toNullableTicketStatus(item?.Status),
     processedByAI: toNullableBool(item?.ProcessedByAI),
     currencyCode: String(item?.CurrencyCode || "").trim(),
-    totalAmount: toNullableNumber(item?.TotalAmount),
+    totalAmount: getVisibleReimbursableTotal({
+      TotalAmountMST: toNullableNumber(item?.TotalAmountMST),
+      TotalAmountCurrency: toNullableNumber(item?.TotalAmountCurrency),
+      TotalAmount: toNullableNumber(item?.TotalAmount),
+    }),
     transDate: String(item?.TransDate || "").trim(),
     fileName: String(item?.FileName || "").trim(),
     gastoType: toNullableTicketGastoType(item?.GastoType ?? item?.gastoType),
@@ -100,7 +105,11 @@ const mapTicketLinkItemToCard = (item: Record<string, unknown>): ExpenseTicketLi
     description: String(item?.Description || "").trim(),
     processedByAI: toNullableBool(item?.ProcessedByAI),
     currencyCode: String(item?.CurrencyCode || "").trim(),
-    totalAmount: toNullableNumber(item?.TotalAmount),
+    totalAmount: getVisibleReimbursableTotal({
+      TotalAmountMST: toNullableNumber(item?.TotalAmountMST),
+      TotalAmountCurrency: toNullableNumber(item?.TotalAmountCurrency),
+      TotalAmount: toNullableNumber(item?.TotalAmount),
+    }),
     transDate: String(item?.TransDate || "").trim(),
     fileName: String(item?.FileName || "").trim(),
     gastoType: toNullableTicketGastoType(item?.GastoType ?? item?.gastoType),

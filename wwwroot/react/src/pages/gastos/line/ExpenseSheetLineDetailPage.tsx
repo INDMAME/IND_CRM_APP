@@ -16,7 +16,7 @@ import { configureExpenseApiAuth } from "../utils/expenseApi.ts";
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
 import { appendExpenseTicketReturnQuery, saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
-import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
+import { areExpenseNumericInputsEquivalent, formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import {
   calculateExpenseLineAmountMSTForCurrency,
   calculateExpenseLineExchangeRateForCurrency,
@@ -232,8 +232,8 @@ const ExpenseSheetLineDetailContent = () => {
     [calculatedAmountPreview, effectiveLineCurrencyCode]
   );
   const displayAmountMST = isExpenseLineSameReimbursementCurrency(effectiveLineCurrencyCode, localCurrencyCode)
-    ? line?.amountMST ?? line?.amount ?? null
-    : line?.amountMST ?? null;
+    ? line?.visibleReimbursableTotal ?? line?.amountMST ?? line?.amount ?? null
+    : line?.visibleReimbursableTotal ?? line?.amountMST ?? null;
   const amountMSTText = useMemo(
     () => formatAmountWithCurrency(displayAmountMST, localCurrencyCode),
     [displayAmountMST, localCurrencyCode]
@@ -634,6 +634,13 @@ const ExpenseSheetLineDetailContent = () => {
 
   const handleLineAmountMSTChange = useCallback(
     (value: string) => {
+      if (areExpenseNumericInputsEquivalent(value, draftAmountMST)) {
+        if (value !== draftAmountMST) {
+          setDraftAmountMST(value);
+        }
+        return;
+      }
+
       amountMSTManualEditRef.current = true;
       setExchangeRateInfoMessage("");
       setDraftAmountMST(value);
@@ -657,6 +664,7 @@ const ExpenseSheetLineDetailContent = () => {
       }
     },
     [
+      draftAmountMST,
       draftCurrencyCode,
       draftExchangeRate,
       draftPrice,

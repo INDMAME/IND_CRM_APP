@@ -397,7 +397,7 @@
     <value>Show reimbursable information</value>
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
-    <value>Total amount</value>
+    <value>Reimbursement amount</value>
   </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>Description</value>
@@ -937,7 +937,7 @@
     <value>Select type</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Label" xml:space="preserve">
-    <value>Contact method</value>
+    <value>Contact channel</value>
   </data>
   <data name="Visits_Detail_ContactMethod_Placeholder" xml:space="preserve">
     <value>Select method</value>

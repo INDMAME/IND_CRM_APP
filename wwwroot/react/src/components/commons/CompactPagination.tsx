@@ -27,6 +27,28 @@ type PaginationLockWindow = Window & {
   __indPaginationPrevTouchAction?: string;
 };
 
+// Forces document-level pagination changes to start from the top of the page.
+const scrollPageToTop = () => {
+  if (typeof window === "undefined" || typeof document === "undefined") return;
+
+  const applyScroll = () => {
+    const scrollingElement = document.scrollingElement;
+    if (scrollingElement) {
+      scrollingElement.scrollTop = 0;
+      scrollingElement.scrollLeft = 0;
+    }
+
+    document.documentElement.scrollTop = 0;
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollTop = 0;
+    document.body.scrollLeft = 0;
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  };
+
+  applyScroll();
+  window.requestAnimationFrame(applyScroll);
+};
+
 // Compact pagination with 6-page window and edge controls.
 const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
   ({ totalPages, currentPage, pageWindow = DEFAULT_WINDOW, onPageChange, labels, className, loading }, ref) => {
@@ -55,6 +77,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
       if (!hasLoadingSignal || !isPageTransitionPending) return;
       if (isLoading) return;
       setIsPageTransitionPending(false);
+      scrollPageToTop();
     }, [hasLoadingSignal, isLoading, isPageTransitionPending]);
 
     useEffect(() => {
@@ -90,6 +113,7 @@ const CompactPagination = forwardRef<HTMLDivElement, CompactPaginationProps>(
       if (hasLoadingSignal) {
         setIsPageTransitionPending(true);
       }
+      scrollPageToTop();
       onPageChange(page);
     };
 

@@ -15,7 +15,7 @@ type PaginationLabels = {
 
 type ExpenseLinesTimelineProps = {
   visibleLines: ExpenseSheetLine[];
-  currencyCode: string;
+  reimbursementCurrencyCode: string;
   totalLinePages: number;
   linePage: number;
   linesLabel: string;
@@ -29,7 +29,7 @@ type ExpenseLinesTimelineProps = {
 // Dumb timeline for expense sheet lines with standard card and pagination layout.
 const ExpenseLinesTimeline = ({
   visibleLines,
-  currencyCode,
+  reimbursementCurrencyCode,
   totalLinePages,
   linePage,
   linesLabel,
@@ -47,11 +47,13 @@ const ExpenseLinesTimeline = ({
         <div className="timeline-box timeline-empty" data-empty-text={emptyText} />
       ) : (
         <div ref={containerRef} className="timeline-box">
-          {visibleLines.map((line, index) => {
+          {visibleLines.map((line) => {
             const lineId = safeText(line.lineRecId);
             const description = safeText(line.description);
-            const lineCurrencyCode = safeText(line.currencyCode) || currencyCode;
-            const amountText = formatAmountWithCurrency(line.amount ?? null, lineCurrencyCode);
+            const amountText = formatAmountWithCurrency(
+              line.visibleReimbursableTotal ?? line.amount ?? null,
+              reimbursementCurrencyCode
+            );
             const linkedTicketFileId = safeText(line.fileId);
             const projectId = safeText(line.projId);
             const dateParts = formatExpenseDateParts(safeText(line.transDate), document?.documentElement?.lang || "es-ES");

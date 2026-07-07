@@ -21,6 +21,7 @@ import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { getExpenseTicketStatusLabel } from "../constants/expenseTicketStatusCatalog.ts";
 import {
   configureExpenseApiAuth,
+  getExpenseSheetDefaultCurrencyCode,
   linkExpenseSheetTicketsBulk,
 } from "../utils/expenseApi.ts";
 import { clearExpenseActingUserOverride, setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
@@ -163,6 +164,7 @@ const ExpenseTicketsPageContent = () => {
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
   const canCreateTicket = canAccess("GASTOS_TICKETS", "Add");
   const canLinkSheetLines = canAccess("GASTOS_HOJA_GASTO", "Add");
+  const [reimbursementCurrencyCode, setReimbursementCurrencyCode] = useState("EUR");
   const {
     currentAxUserId,
     currentCrmUserId,
@@ -510,25 +512,35 @@ const ExpenseTicketsPageContent = () => {
 
   const selectedTicketCount = resolveSelectedCount(total);
   const selectedTotalAmountText = useMemo(() => {
-    const totalsByCurrency = new Map<string, number>();
+    let totalAmount = 0;
 
     selectedTickets.forEach((item) => {
-      const currencyCode = safeText(item.currencyCode).toUpperCase();
       const amount = Number(item.totalAmount ?? 0);
       if (!Number.isFinite(amount)) return;
-      totalsByCurrency.set(currencyCode, (totalsByCurrency.get(currencyCode) ?? 0) + amount);
+      totalAmount += amount;
     });
 
-    const groupedTotals = Array.from(totalsByCurrency.entries()).sort((left, right) =>
-      left[0].localeCompare(right[0])
-    );
+    return formatAmountWithCurrency(totalAmount, reimbursementCurrencyCode);
+  }, [reimbursementCurrencyCode, selectedTickets]);
+  useEffect(() => {
+    let cancelled = false;
 
-    if (groupedTotals.length < 1) {
-      return formatAmountWithCurrency(0, "");
-    }
+    getExpenseSheetDefaultCurrencyCode()
+      .then((currency) => {
+        if (cancelled) return;
+        const normalizedCurrency = safeText(currency).toUpperCase();
+        if (normalizedCurrency) {
+          setReimbursementCurrencyCode(normalizedCurrency);
+        }
+      })
+      .catch(() => {
+        // Keep the default MST label if the user context endpoint is unavailable.
+      });
 
-    return groupedTotals.map(([currencyCode, amount]) => formatAmountWithCurrency(amount, currencyCode)).join("; ");
-  }, [selectedTickets]);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   useLayoutEffect(() => {
     revealTopbarActionGroup("expense-tickets-list-actions");
   }, []);
@@ -908,7 +920,7 @@ const ExpenseTicketsPageContent = () => {
       title: indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
       message: isFilteredSelectionActive
         ? `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}`
-        : `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}\n${indT("ExpenseSheets_Field_TotalAmount", "Total amount")}: ${selectedTotalAmountText}`,
+        : `${indT("Nav_ExpenseTickets", "Tickets")}: ${selectedTicketCount}\n${indT("ExpenseSheets_Field_TotalAmount", "Reimbursement amount")}: ${selectedTotalAmountText}`,
       confirmText: indT("ExpenseTickets_LinkMode_LinkButton", "Vincular ticket(s)"),
       cancelText: indT("Confirm_No", "Cancel"),
       onConfirm: async () => {
@@ -1652,7 +1664,7 @@ const ExpenseTicketsPageContent = () => {
             const fileId = safeText(item.fileId);
             const dateParts = formatExpenseDateParts(item.transDate, document?.documentElement?.lang || "es-ES");
             const title = safeText(item.description) || safeText(item.fileName) || fileId || "-";
-            const amountText = formatAmountWithCurrency(item.totalAmount ?? null, safeText(item.currencyCode));
+            const amountText = formatAmountWithCurrency(item.totalAmount ?? null, reimbursementCurrencyCode);
             const statusCode = item.kind === "general" ? item.status : null;
             const statusLabel = statusCode === null ? undefined : getExpenseTicketStatusLabel(statusCode);
             const isAssignedToExpenseSheet = statusCode === 1;

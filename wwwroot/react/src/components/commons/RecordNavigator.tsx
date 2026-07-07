@@ -44,7 +44,7 @@ const RecordNavigatorButton = ({ label, disabled, icon: Icon, onClick }: RecordN
     <button
       type="button"
       className={classNames(
-        "inline-flex h-8 w-8 items-center justify-center rounded-[5px] border-0 bg-transparent text-primary/80 transition",
+        "inline-flex h-11 w-11 shrink-0 touch-manipulation items-center justify-center rounded-[5px] border-0 bg-transparent text-primary/80 transition",
         "focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-primary/30 focus-visible:ring-offset-0",
         disabled ? "cursor-not-allowed text-primary/25" : "hover:bg-primary/8 hover:text-primary active:bg-primary/10"
       )}
@@ -57,7 +57,7 @@ const RecordNavigatorButton = ({ label, disabled, icon: Icon, onClick }: RecordN
         onClick();
       }}
     >
-      <Icon className="h-4 w-4" aria-hidden="true" />
+      <Icon className="h-6 w-6" strokeWidth={1.8} aria-hidden="true" />
     </button>
   );
 };
@@ -85,7 +85,7 @@ const RecordNavigator = ({
   const disablePrevious = disabled || atFirst;
   const disableNext = disabled || atLast;
   const disableLast = disabled || atLast;
-  const spacingClassName = variant === "compact" ? "min-h-10 px-3 py-0.5" : "min-h-12 px-3 py-1.5";
+  const spacingClassName = variant === "compact" ? "h-[64px] px-3 py-0" : "min-h-12 px-3 py-1.5";
 
   return (
     <nav
@@ -101,7 +101,7 @@ const RecordNavigator = ({
         <RecordNavigatorButton label={labels.previous} disabled={disablePrevious} icon={ChevronLeftIcon} onClick={onPrevious} />
       </div>
 
-      <div className="min-w-[6.5rem] text-center text-sm font-semibold leading-none text-primary" aria-live="polite">
+      <div className="min-w-[7rem] text-center text-base font-bold leading-none text-primary" aria-live="polite">
         {labels.position}
       </div>
 
