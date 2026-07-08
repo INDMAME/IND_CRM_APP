@@ -1656,6 +1656,9 @@
   <data name="ExpenseSheetLink_CompanyAccessDenied" xml:space="preserve">
     <value>你无权访问此费用单所需的公司。</value>
   </data>
+  <data name="ExpenseSheetLink_CompanyAccessDeniedDetail" xml:space="preserve">
+    <value>&#x8BBF;&#x95EE;&#x88AB;&#x62D2;&#x7EDD;&#x3002;&#x516C;&#x53F8; {0} &#x672A;&#x4E3A;&#x4F60;&#x7684; Axapta &#x7528;&#x6237;&#x542F;&#x7528;&#x3002;&#x8BF7;&#x7533;&#x8BF7;&#x8BE5;&#x516C;&#x53F8;&#x7684;&#x8BBF;&#x95EE;&#x6743;&#x9650;&#xFF0C;&#x7136;&#x540E;&#x91CD;&#x65B0;&#x6253;&#x5F00;&#x94FE;&#x63A5;&#x3002;</value>
+  </data>
   <data name="ExpenseSheetLink_CompanySwitchFailed" xml:space="preserve">
     <value>无法切换公司上下文来打开此费用单。</value>
   </data>

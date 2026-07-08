@@ -75,7 +75,7 @@ namespace IND_CRM_APP.Controllers
                     new { returnUrl = LocalReturnUrlHelper.BuildCurrentLocalUrl(Request) });
             }
 
-            var contextResult = await _authContext.EnsureContextAsync();
+            var contextResult = await _authContext.EnsureContextAsync(forceRefresh: true);
             if (!contextResult.Success || contextResult.Context == null)
             {
                 _logger.LogWarning(
@@ -88,7 +88,7 @@ namespace IND_CRM_APP.Controllers
             var activeContext = contextResult.Context;
             var selectedCompanyId = _authContext.GetSelectedCompanyId(activeContext);
             _logger.LogInformation(
-                "Expense sheet email link context resolved. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; DefaultCompany={DefaultCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; CompanyCount={CompanyCount}; AvailableCompanies={AvailableCompanies}",
+                "Expense sheet email link context force refreshed. HojaGastosId={HojaGastosId}; TargetCompanyId={TargetCompanyId}; SelectedCompany={SelectedCompany}; DefaultCompany={DefaultCompany}; SessionAxUserId={SessionAxUserId}; ContextAxUserId={ContextAxUserId}; CompanyCount={CompanyCount}; AvailableCompanies={AvailableCompanies}",
                 safeSheetId,
                 safeTargetCompanyId,
                 selectedCompanyId ?? string.Empty,
@@ -109,7 +109,7 @@ namespace IND_CRM_APP.Controllers
                     GetSessionAxUserId() ?? string.Empty,
                     NormalizeOptionalText(activeContext.Header.AxUserId) ?? string.Empty,
                     BuildCompanySample(activeContext.Companies));
-                return RedirectWithMessage("ExpenseSheetLink_CompanyAccessDenied", "Auth_PermissionDenied_Title", warning: false);
+                return RedirectCompanyAccessDenied(safeTargetCompanyId);
             }
 
             if (!HasExpenseSheetViewAccess(targetCompany))
@@ -135,7 +135,7 @@ namespace IND_CRM_APP.Controllers
 
                 targetCompany = FindCompany(refreshResult.Context, targetCompany.CompanyId);
                 if (targetCompany == null)
-                    return RedirectWithMessage("ExpenseSheetLink_CompanyAccessDenied", "Auth_PermissionDenied_Title", warning: false);
+                    return RedirectCompanyAccessDenied(safeTargetCompanyId);
 
                 if (!HasExpenseSheetViewAccess(targetCompany))
                     return RedirectWithMessage("ExpenseSheetLink_SheetAccessDenied", "Auth_PermissionDenied_Title", warning: false);
@@ -342,6 +342,16 @@ namespace IND_CRM_APP.Controllers
                 TempData.INDSetActionMarkWarning(2000);
             else
                 TempData.INDSetActionMarkError(2000);
+
+            return RedirectToAction("Index", "Home");
+        }
+
+        // Redirects with a specific hint when Axapta does not authorize the target company.
+        private IActionResult RedirectCompanyAccessDenied(string companyId)
+        {
+            TempData[RedirectModalTitleKey] = _sr["Auth_PermissionDenied_Title"].Value;
+            TempData[RedirectModalMessageKey] = _sr["ExpenseSheetLink_CompanyAccessDeniedDetail", companyId].Value;
+            TempData.INDSetActionMarkError(2000);
 
             return RedirectToAction("Index", "Home");
         }

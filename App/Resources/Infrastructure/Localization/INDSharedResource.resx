@@ -1656,6 +1656,9 @@
   <data name="ExpenseSheetLink_CompanyAccessDenied" xml:space="preserve">
     <value>No tienes acceso a la empresa requerida por esta hoja de gastos.</value>
   </data>
+  <data name="ExpenseSheetLink_CompanyAccessDeniedDetail" xml:space="preserve">
+    <value>Acceso denegado. La empresa {0} no esta habilitada para tu usuario en Axapta. Solicita que te den acceso a esa empresa y vuelve a abrir el enlace.</value>
+  </data>
   <data name="ExpenseSheetLink_CompanySwitchFailed" xml:space="preserve">
     <value>No se pudo cambiar el contexto de empresa para abrir esta hoja de gastos.</value>
   </data>
