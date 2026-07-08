@@ -2,12 +2,14 @@ using System;
 using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using IND_CRM_APP.Infrastructure.Security.Auth;
 using IND_CRM_APP.Infrastructure.Security.Permissions;
 using IND_CRM_APP.Models.Shared;
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
@@ -33,21 +35,26 @@ namespace IND_CRM_APP.Services
         private const string ContextExpiresUtcKey = "INDContextExpiresUtc";
         private const string ContextLastActivityUtcKey = "INDContextLastActivityUtc";
         private const string ContextTenantIdKey = "INDContextTenantId";
+        private const string CompanyPreferenceCookieName = "IND_CRM_APP.SelectedCompany";
+        private const int CompanyPreferenceMaxLength = 64;
         private const string ErrorCodeSessionExpired = "SESSION_EXPIRED";
         private const string ErrorCodeUpstream = "UPSTREAM_ERROR";
         private const string ErrorCodeContextDenied = "CONTEXT_DENIED";
+        private static readonly TimeSpan CompanyPreferenceCookieLifetime = TimeSpan.FromDays(30);
 
         private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly ICrmApiClient _apiClient;
         private readonly ITokenSessionService _tokenSession;
         private readonly ILogger<IndAuthContextService> _logger;
         private readonly ContextSessionSettings _contextSettings;
+        private readonly CookieSecurePolicy _companyPreferenceSecurePolicy;
 
         public IndAuthContextService(
             IHttpContextAccessor httpContextAccessor,
             ICrmApiClient apiClient,
             ITokenSessionService tokenSession,
             IOptions<ContextSessionSettings> contextOptions,
+            IOptions<CookiePolicyOptions> cookiePolicyOptions,
             ILogger<IndAuthContextService> logger)
         {
             _httpContextAccessor = httpContextAccessor;
@@ -55,6 +62,7 @@ namespace IND_CRM_APP.Services
             _tokenSession = tokenSession;
             _logger = logger;
             _contextSettings = contextOptions?.Value ?? new ContextSessionSettings();
+            _companyPreferenceSecurePolicy = cookiePolicyOptions?.Value?.Secure ?? CookieSecurePolicy.SameAsRequest;
             if (_contextSettings.IdleRefreshMinutes <= 0)
                 _contextSettings.IdleRefreshMinutes = 20;
             if (_contextSettings.RefreshBeforeExpiryMinutes <= 0)
@@ -85,6 +93,26 @@ namespace IND_CRM_APP.Services
             }
 
             return resolution.CompanyId;
+        }
+
+        // Persists a user-selected company so context refreshes can restore it safely.
+        public void RememberSelectedCompanyPreference(string companyId)
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            if (ctx == null)
+                return;
+
+            WriteCompanyPreferenceCookie(ctx, companyId);
+        }
+
+        // Removes the remembered user-selected company from the current browser.
+        public void ClearSelectedCompanyPreference()
+        {
+            var ctx = _httpContextAccessor.HttpContext;
+            if (ctx == null)
+                return;
+
+            DeleteCompanyPreferenceCookie(ctx);
         }
 
         // Clears cached context (optionally preserving the selected company).
@@ -978,6 +1006,9 @@ namespace IND_CRM_APP.Services
             }
 
             var isUserSelection = string.Equals(selectionSource, CompanySelectionSourceUser, StringComparison.OrdinalIgnoreCase);
+            if (!isUserSelection && TryRestoreCompanyPreference(ctx, context))
+                return;
+
             if (!string.IsNullOrWhiteSpace(selected))
             {
                 var selectedCompany = FindCompany(context, selected);
@@ -985,6 +1016,9 @@ namespace IND_CRM_APP.Services
                 {
                     ctx.Session.SetString(CompanyKey, selectedCompany.CompanyId);
                     CacheSelectedCompanyName(ctx, context, selectedCompany.CompanyId);
+                    if (isUserSelection)
+                        WriteCompanyPreferenceCookie(ctx, selectedCompany.CompanyId);
+
                     LogContextSnapshot(
                         ctx,
                         "EnsureCompanySelection kept existing",
@@ -1004,6 +1038,9 @@ namespace IND_CRM_APP.Services
                         "User-selected company is not available in current context. Applying fallback.");
                 }
             }
+
+            if (isUserSelection && TryRestoreCompanyPreference(ctx, context))
+                return;
 
             var fallback = FindCompany(context, context.Header.DefaultCompany)?.CompanyId
                 ?? context.Companies.FirstOrDefault(c => !string.IsNullOrWhiteSpace(c.CompanyId))?.CompanyId;
@@ -1027,6 +1064,7 @@ namespace IND_CRM_APP.Services
             ctx.Session.Remove(CompanyKey);
             ctx.Session.Remove(CompanySelectionSourceKey);
             ctx.Session.Remove(CompanyNameKey);
+            DeleteCompanyPreferenceCookie(ctx);
             LogContextSnapshot(
                 ctx,
                 "EnsureCompanySelection cleared selection",
@@ -1109,6 +1147,7 @@ namespace IND_CRM_APP.Services
             {
                 ctx.Session.Remove(CompanyKey);
                 ctx.Session.Remove(CompanySelectionSourceKey);
+                DeleteCompanyPreferenceCookie(ctx);
             }
 
             LogContextSnapshot(
@@ -1131,6 +1170,154 @@ namespace IND_CRM_APP.Services
                       ?? user.FindFirst("http://schemas.microsoft.com/identity/claims/objectidentifier")?.Value;
 
             return string.IsNullOrWhiteSpace(oid) ? null : oid;
+        }
+
+        // Restores a remembered company only after confirming it is allowed in the current context.
+        private bool TryRestoreCompanyPreference(HttpContext ctx, IndWebContext context)
+        {
+            var rememberedCompanyId = TryReadCompanyPreferenceCookie(ctx);
+            if (string.IsNullOrWhiteSpace(rememberedCompanyId))
+                return false;
+
+            var rememberedCompany = FindCompany(context, rememberedCompanyId);
+            if (rememberedCompany == null)
+            {
+                DeleteCompanyPreferenceCookie(ctx);
+                LogContextSnapshot(
+                    ctx,
+                    "EnsureCompanySelection invalid remembered preference",
+                    context,
+                    null,
+                    "Remembered company is not available in current context. Applying fallback.");
+                return false;
+            }
+
+            ctx.Session.SetString(CompanyKey, rememberedCompany.CompanyId);
+            ctx.Session.SetString(CompanySelectionSourceKey, CompanySelectionSourceUser);
+            CacheSelectedCompanyName(ctx, context, rememberedCompany.CompanyId);
+            WriteCompanyPreferenceCookie(ctx, rememberedCompany.CompanyId);
+            LogContextSnapshot(
+                ctx,
+                "EnsureCompanySelection restored remembered preference",
+                context,
+                rememberedCompany.CompanyId,
+                "Remembered user-selected company restored after context refresh.");
+            return true;
+        }
+
+        // Writes the selected company in a non-sensitive, OID-bound browser cookie.
+        private void WriteCompanyPreferenceCookie(HttpContext ctx, string? companyId)
+        {
+            var normalizedCompanyId = NormalizeCompanyPreference(companyId);
+            var entraOid = ResolveCurrentEntraOid(ctx);
+            if (string.IsNullOrWhiteSpace(normalizedCompanyId) || string.IsNullOrWhiteSpace(entraOid))
+                return;
+
+            var payload = new CompanyPreferenceCookiePayload
+            {
+                OwnerKey = BuildCompanyPreferenceOwnerKey(entraOid),
+                CompanyId = normalizedCompanyId
+            };
+            var json = JsonSerializer.Serialize(payload);
+            var encoded = Convert.ToBase64String(Encoding.UTF8.GetBytes(json));
+
+            ctx.Response.Cookies.Append(
+                CompanyPreferenceCookieName,
+                encoded,
+                new CookieOptions
+                {
+                    HttpOnly = true,
+                    IsEssential = true,
+                    SameSite = SameSiteMode.Lax,
+                    Secure = ShouldSecureCompanyPreferenceCookie(ctx),
+                    Expires = DateTimeOffset.UtcNow.Add(CompanyPreferenceCookieLifetime)
+                });
+        }
+
+        // Reads the remembered company only when it belongs to the current Entra OID.
+        private string? TryReadCompanyPreferenceCookie(HttpContext ctx)
+        {
+            if (!ctx.Request.Cookies.TryGetValue(CompanyPreferenceCookieName, out var raw) ||
+                string.IsNullOrWhiteSpace(raw))
+            {
+                return null;
+            }
+
+            var currentOid = ResolveCurrentEntraOid(ctx);
+            if (string.IsNullOrWhiteSpace(currentOid))
+                return null;
+
+            try
+            {
+                var json = Encoding.UTF8.GetString(Convert.FromBase64String(raw.Trim()));
+                var payload = JsonSerializer.Deserialize<CompanyPreferenceCookiePayload>(json);
+                var cookieOwnerKey = (payload?.OwnerKey ?? string.Empty).Trim();
+                var currentOwnerKey = BuildCompanyPreferenceOwnerKey(currentOid);
+                var companyId = NormalizeCompanyPreference(payload?.CompanyId);
+
+                if (string.IsNullOrWhiteSpace(cookieOwnerKey) ||
+                    string.IsNullOrWhiteSpace(companyId) ||
+                    !string.Equals(cookieOwnerKey, currentOwnerKey, StringComparison.OrdinalIgnoreCase))
+                {
+                    DeleteCompanyPreferenceCookie(ctx);
+                    return null;
+                }
+
+                return companyId;
+            }
+            catch (Exception ex) when (ex is FormatException ||
+                                       ex is JsonException ||
+                                       ex is ArgumentException ||
+                                       ex is NotSupportedException)
+            {
+                _logger.LogDebug(ex, "Ignoring invalid selected company preference cookie.");
+                DeleteCompanyPreferenceCookie(ctx);
+                return null;
+            }
+        }
+
+        // Deletes the remembered company cookie using the same default path used when writing it.
+        private static void DeleteCompanyPreferenceCookie(HttpContext ctx)
+        {
+            ctx.Response.Cookies.Delete(CompanyPreferenceCookieName);
+        }
+
+        // Applies the app-wide secure cookie policy to the selected-company cookie.
+        private bool ShouldSecureCompanyPreferenceCookie(HttpContext ctx)
+        {
+            return _companyPreferenceSecurePolicy switch
+            {
+                CookieSecurePolicy.Always => true,
+                CookieSecurePolicy.None => false,
+                _ => ctx.Request.IsHttps
+            };
+        }
+
+        // Resolves the Entra OID that owns the current session and cookie preference.
+        private static string? ResolveCurrentEntraOid(HttpContext ctx)
+        {
+            var sessionOid = ctx.Session.GetString(EntraOidKey);
+            if (!string.IsNullOrWhiteSpace(sessionOid))
+                return sessionOid.Trim();
+
+            return TryGetEntraOidFromClaims(ctx.User)?.Trim();
+        }
+
+        // Builds a stable owner key without storing the raw Entra OID in the cookie.
+        private static string BuildCompanyPreferenceOwnerKey(string entraOid)
+        {
+            var normalized = entraOid.Trim().ToUpperInvariant();
+            var hash = SHA256.HashData(Encoding.UTF8.GetBytes(normalized));
+            return Convert.ToHexString(hash);
+        }
+
+        // Keeps the cookie value compact and leaves actual authorization to context validation.
+        private static string? NormalizeCompanyPreference(string? companyId)
+        {
+            var trimmed = (companyId ?? string.Empty).Trim();
+            return string.IsNullOrWhiteSpace(trimmed) || trimmed.Length > CompanyPreferenceMaxLength
+                ? null
+                : trimmed;
         }
 
         private IndWebContext? TryReadCachedContext(HttpContext ctx, bool logDiagnostics)
@@ -1243,6 +1430,13 @@ namespace IND_CRM_APP.Services
         {
             var trimmed = (value ?? string.Empty).Trim();
             return string.IsNullOrWhiteSpace(trimmed) ? "(empty)" : trimmed;
+        }
+
+        // Serialized into the user-bound selected-company preference cookie.
+        private sealed class CompanyPreferenceCookiePayload
+        {
+            public string? OwnerKey { get; set; }
+            public string? CompanyId { get; set; }
         }
     }
 }

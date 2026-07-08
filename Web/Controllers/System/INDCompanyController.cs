@@ -47,6 +47,7 @@ namespace IND_CRM_APP.Controllers
             {
                 HttpContext.Session.SetString("INDCompanySelected", trimmed);
                 HttpContext.Session.SetString("INDCompanySelectionSource", "user");
+                _authContext.RememberSelectedCompanyPreference(trimmed);
             }
 
             if (changed)

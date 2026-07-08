@@ -1656,6 +1656,9 @@
   <data name="ExpenseSheetLink_CompanyAccessDenied" xml:space="preserve">
     <value>Ez duzu gastu-orri honek behar duen enpresarako sarbiderik.</value>
   </data>
+  <data name="ExpenseSheetLink_CompanyAccessDeniedDetail" xml:space="preserve">
+    <value>Sarbidea ukatuta. {0} enpresa ez dago gaituta zure Axapta erabiltzailearentzat. Eskatu enpresa horretarako sarbidea eta ireki berriro esteka.</value>
+  </data>
   <data name="ExpenseSheetLink_CompanySwitchFailed" xml:space="preserve">
     <value>Ezin izan da enpresaren testuingurua aldatu gastu-orri hau irekitzeko.</value>
   </data>

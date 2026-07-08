@@ -397,6 +397,7 @@ namespace IND_CRM_APP.Controllers
         // Clears both session values and auth cookie.
         private async Task ClearAuthSessionAsync()
         {
+            _authContext.ClearSelectedCompanyPreference();
             HttpContext.Session.Clear();
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         }
