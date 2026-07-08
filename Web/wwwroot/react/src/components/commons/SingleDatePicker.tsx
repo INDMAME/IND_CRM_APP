@@ -8,6 +8,7 @@ import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.tsx";
 
 const IND_I18N = globalThis.__IND_I18N__ || {};
 const indT = (key, fallback) => (IND_I18N && typeof IND_I18N[key] === "string" && IND_I18N[key]) || fallback || key;
+const MIN_POPOVER_WIDTH_PX = 360;
 
 const pad = (n) => String(n).padStart(2, "0");
 const toISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
@@ -101,6 +102,7 @@ export default function SingleDatePicker({ label, value, onChange, disabled = fa
   const floatingStyle = useFloatingPosition(anchorRef, isPopoverOpen, {
     overlayRef: popoverRef,
     autoFitViewport: true,
+    minWidth: MIN_POPOVER_WIDTH_PX,
   });
 
   useEffect(() => {

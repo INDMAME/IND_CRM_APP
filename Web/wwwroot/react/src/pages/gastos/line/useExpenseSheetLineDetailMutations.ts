@@ -56,6 +56,7 @@ type UseExpenseSheetLineDetailMutationsArgs = {
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
   setIsEditing: React.Dispatch<React.SetStateAction<boolean>>;
+  onInvalidDescription?: () => void;
   onInvalidType?: () => void;
   onInvalidAmountQty?: () => void;
   onCreateSuccess: () => void;
@@ -97,6 +98,7 @@ export const useExpenseSheetLineDetailMutations = ({
   setBusy,
   setStatus,
   setIsEditing,
+  onInvalidDescription,
   onInvalidType,
   onInvalidAmountQty,
   onCreateSuccess,
@@ -137,6 +139,15 @@ export const useExpenseSheetLineDetailMutations = ({
     const parsedExchangeRate = parseNumber(draftExchangeRate);
     const normalizedCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
     const normalizedLocalCurrencyCode = normalizeExpenseLineCurrencyCode(localCurrencyCode) || "EUR";
+    const normalizedDescription = String(draftDescription || "").trim();
+
+    if (!normalizedDescription) {
+      onInvalidDescription?.();
+      const validationMessage = indT("ExpenseSheets_Validation_DescriptionRequired", "Description is required.");
+      setModalError(validationMessage);
+      setStatus(validationMessage);
+      return false;
+    }
 
     const hasValidQtyPrice = parsedQty != null && parsedQty > 0 && parsedPrice != null && parsedPrice > 0;
     if (!hasValidQtyPrice) {
@@ -199,7 +210,7 @@ export const useExpenseSheetLineDetailMutations = ({
         const commonLinePayload = {
           transDate: normalizedDate,
           typeValue: parsedTypeValue,
-          description: String(draftDescription || "").trim(),
+          description: normalizedDescription,
           internacional: parsedInternational ?? line?.internacional ?? false,
           ticket: line?.ticket === true,
           qty: Number(parsedQty),
@@ -261,6 +272,7 @@ export const useExpenseSheetLineDetailMutations = ({
     lineId,
     localCurrencyCode,
     onCreateSuccess,
+    onInvalidDescription,
     onInvalidAmountQty,
     onInvalidType,
     setBusy,

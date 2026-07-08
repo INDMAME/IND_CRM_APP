@@ -58,8 +58,6 @@ const ExpenseTicketLinkedSheetLineSection = ({
       placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
       disabled={disabled}
       readOnly={disabled}
-      usePortal={false}
-      dropdownPlacement="top"
       allowTextInput={false}
       showSearchButton={false}
     />

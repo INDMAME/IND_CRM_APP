@@ -8,6 +8,7 @@ type FloatingPositionOptions = {
   viewportPadding?: number;
   autoFitViewport?: boolean;
   matchAvailableWidth?: boolean;
+  minWidth?: number;
 };
 
 type FloatingPositionStyle = {
@@ -24,6 +25,12 @@ const DEFAULT_VIEWPORT_PADDING_PX = 12;
 const clamp = (value: number, min: number, max: number): number => {
   if (max < min) return min;
   return Math.min(Math.max(value, min), max);
+};
+
+// Normalizes optional width constraints before viewport clamping.
+const resolvePositiveNumber = (value: number | undefined | null): number => {
+  const numericValue = typeof value === "number" ? value : 0;
+  return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : 0;
 };
 
 const areFloatingStylesEqual = (left: FloatingPositionStyle, right: FloatingPositionStyle): boolean => {
@@ -46,6 +53,7 @@ export const useFloatingPosition = (
     viewportPadding = DEFAULT_VIEWPORT_PADDING_PX,
     autoFitViewport = false,
     matchAvailableWidth = false,
+    minWidth = 0,
   }: FloatingPositionOptions = {}
 ) => {
   const [style, setStyle] = useState<FloatingPositionStyle>({
@@ -68,8 +76,10 @@ export const useFloatingPosition = (
       const overlayElement = overlayRef?.current;
       const overlayRect = overlayElement?.getBoundingClientRect();
       const overlayHeight = Math.max(overlayRect?.height || 0, overlayElement?.scrollHeight || 0);
+      const overlayWidth = Math.max(overlayRect?.width || 0, overlayElement?.scrollWidth || 0);
       const availableWidth = Math.max(0, viewportWidth - viewportPadding * 2);
-      const nextWidth = matchAvailableWidth ? availableWidth : Math.min(rect.width, availableWidth);
+      const preferredWidth = Math.max(rect.width, overlayWidth, resolvePositiveNumber(minWidth));
+      const nextWidth = matchAvailableWidth ? availableWidth : Math.min(preferredWidth, availableWidth);
       const nextLeft = matchAvailableWidth ? viewportPadding : clamp(rect.left, viewportPadding, viewportWidth - nextWidth - viewportPadding);
 
       if (!autoFitViewport) {
@@ -164,7 +174,7 @@ export const useFloatingPosition = (
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", scheduleUpdate);
     };
-  }, [autoFitViewport, matchAvailableWidth, offset, open, overlayRef, targetRef, viewportPadding]);
+  }, [autoFitViewport, matchAvailableWidth, minWidth, offset, open, overlayRef, targetRef, viewportPadding]);
 
   return style;
 };

@@ -175,22 +175,28 @@ const ExpenseSheetLineDetailContent = () => {
   });
 
   const {
+    descriptionInvalid,
     typeInvalid,
     priceInvalid,
     qtyInvalid,
+    descriptionInputRef,
     typeInputRef,
     priceInputRef,
     qtyInputRef,
+    focusDescriptionField,
     focusTypeField,
     focusAmountFields,
+    handleDraftDescriptionChange,
     handleDraftTypeValueCodeChange,
     handleDraftPriceChange,
     handleDraftQtyChange,
     canOpenSaveConfirm,
   } = useExpenseSheetLineTypeValidation({
+    draftDescription,
     draftTypeValueCode,
     draftPrice,
     draftQty,
+    setDraftDescription,
     setDraftTypeValueCode,
     setDraftPrice,
     setDraftQty,
@@ -721,6 +727,7 @@ const ExpenseSheetLineDetailContent = () => {
     setBusy,
     setStatus,
     setIsEditing,
+    onInvalidDescription: focusDescriptionField,
     onInvalidType: focusTypeField,
     onInvalidAmountQty: focusAmountFields,
     onCreateSuccess: () => {},
@@ -922,13 +929,15 @@ const ExpenseSheetLineDetailContent = () => {
           draftExchangeRate={draftExchangeRate}
           localCurrencyCode={localCurrencyCode}
           exchangeRateInfoMessage={exchangeRateInfoMessage}
+          descriptionInputRef={descriptionInputRef}
           typeInputRef={typeInputRef}
           priceInputRef={priceInputRef}
           qtyInputRef={qtyInputRef}
+          descriptionInvalid={descriptionInvalid}
           typeInvalid={typeInvalid}
           priceInvalid={priceInvalid}
           qtyInvalid={qtyInvalid}
-          onDraftDescriptionChange={setDraftDescription}
+          onDraftDescriptionChange={handleDraftDescriptionChange}
           onDraftTransDateChange={handleLineTransDateChange}
           onDraftTypeValueCodeChange={handleDraftTypeValueCodeChange}
           onDraftPriceChange={handleLinePriceChange}
