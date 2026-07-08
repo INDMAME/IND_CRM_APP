@@ -7,6 +7,7 @@ type Props = {
   open: boolean;
   zIndex?: number;
   fixedWidthPx?: number;
+  minWidthPx?: number;
   maxHeightClass?: string;
   roundedClass?: string;
   role?: string;
@@ -25,6 +26,7 @@ const FloatingList = ({
   open,
   zIndex = 300000,
   fixedWidthPx,
+  minWidthPx,
   maxHeightClass = "max-h-72",
   roundedClass = "rounded-[var(--radius-xl)]",
   role,
@@ -32,7 +34,7 @@ const FloatingList = ({
   panelClassName,
   panelStyle,
   autoFitViewport = true,
-  matchAvailableWidth = false,
+  matchAvailableWidth = true,
   offset,
   viewportPadding,
   children,
@@ -42,6 +44,7 @@ const FloatingList = ({
     overlayRef: panelRef,
     autoFitViewport,
     matchAvailableWidth,
+    minWidth: minWidthPx,
     offset,
     viewportPadding,
   });

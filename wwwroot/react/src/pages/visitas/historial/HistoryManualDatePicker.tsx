@@ -1,5 +1,7 @@
 ﻿import React from "react";
 import { classNames } from "../../../utils/classNames.ts";
+import { createPortal } from "react-dom";
+import { useFloatingPosition } from "../../../hooks/useFloatingPosition.ts";
 
 export type HistoryManualDayCell = {
   key: string;
@@ -43,6 +45,8 @@ type HistoryManualDatePickerProps = {
   onDayHover: (day: HistoryManualDayCell) => void;
 };
 
+const MIN_POPOVER_WIDTH_PX = 360;
+
 // Presentational date range picker used by the history quick filter.
 const HistoryManualDatePicker = ({
   activatorRef,
@@ -75,6 +79,94 @@ const HistoryManualDatePicker = ({
   onDayClick,
   onDayHover,
 }: HistoryManualDatePickerProps) => {
+  const floatingStyle = useFloatingPosition(activatorRef, isOpen, {
+    overlayRef: popoverRef,
+    autoFitViewport: true,
+    minWidth: MIN_POPOVER_WIDTH_PX,
+  });
+  const popover =
+    isOpen && typeof document !== "undefined"
+      ? createPortal(
+          <div
+            id="drpPopover"
+            ref={popoverRef}
+            className="drp-popover"
+            role="group"
+            aria-label={filterTitle}
+            data-floating-placement={floatingStyle.placement}
+            style={{
+              position: "fixed",
+              top: floatingStyle.top,
+              left: floatingStyle.left,
+              width: floatingStyle.width,
+              maxHeight: floatingStyle.maxHeight,
+              overflowY: "auto",
+              overscrollBehavior: "contain",
+              zIndex: 360000,
+            }}
+          >
+            <div className="drp-head">
+              <button
+                type="button"
+                className="drp-nav"
+                data-dir="prev"
+                aria-label={prevMonthLabel}
+                onClick={onPrevMonth}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              <div id="drpMonthLabel" className="drp-month">{monthLabel}</div>
+              <button
+                type="button"
+                className="drp-nav"
+                data-dir="next"
+                aria-label={nextMonthLabel}
+                onClick={onNextMonth}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="drp-weekdays">
+              {weekDayLabels.map((weekDayLabel) => (
+                <span key={weekDayLabel}>{weekDayLabel}</span>
+              ))}
+            </div>
+
+            <div id="drpGrid" className="drp-grid" onMouseLeave={onGridMouseLeave}>
+              {dayCells.map((cell) => {
+                if (cell.isEmpty) {
+                  return <span key={cell.key} className="drp-day empty block" aria-hidden="true" />;
+                }
+
+                return (
+                  <button
+                    key={cell.key}
+                    type="button"
+                    className={cell.dayClass}
+                    data-date={cell.iso}
+                    disabled={cell.disabled}
+                    onClick={() => onDayClick(cell)}
+                    onMouseEnter={() => onDayHover(cell)}
+                  >
+                    {cell.dayLabel}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div id="drpStatus" className="drp-status">
+              {statusText}
+            </div>
+          </div>,
+          document.body
+        )
+      : null;
+
   return (
     <div className="relative">
       <div
@@ -85,7 +177,7 @@ const HistoryManualDatePicker = ({
         role="button"
         tabIndex={0}
         aria-label={filterTitle}
-        aria-haspopup="dialog"
+        aria-haspopup="grid"
         aria-expanded={isOpen}
         onKeyDown={onActivatorKeyDown}
       >
@@ -152,65 +244,7 @@ const HistoryManualDatePicker = ({
         </button>
       </div>
 
-      <div id="drpPopover" ref={popoverRef} className="drp-popover" hidden={!isOpen}>
-        <div className="drp-head">
-          <button
-            type="button"
-            className="drp-nav"
-            data-dir="prev"
-            aria-label={prevMonthLabel}
-            onClick={onPrevMonth}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
-            </svg>
-          </button>
-          <div id="drpMonthLabel" className="drp-month">{monthLabel}</div>
-          <button
-            type="button"
-            className="drp-nav"
-            data-dir="next"
-            aria-label={nextMonthLabel}
-            onClick={onNextMonth}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 30 30" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="drp-weekdays">
-          {weekDayLabels.map((label, index) => (
-            <span key={`${label}-${index}`}>{label}</span>
-          ))}
-        </div>
-
-        <div id="drpGrid" className="drp-grid" onMouseLeave={onGridMouseLeave}>
-          {dayCells.map((cell) => {
-            if (cell.isEmpty) {
-              return <button key={cell.key} className="drp-day empty" disabled />;
-            }
-
-            return (
-              <button
-                key={cell.key}
-                type="button"
-                className={cell.dayClass}
-                data-date={cell.iso}
-                disabled={cell.disabled}
-                onClick={() => onDayClick(cell)}
-                onMouseEnter={() => onDayHover(cell)}
-              >
-                {cell.dayLabel}
-              </button>
-            );
-          })}
-        </div>
-
-        <div id="drpStatus" className="drp-status">
-          {statusText}
-        </div>
-      </div>
+      {popover}
     </div>
   );
 };

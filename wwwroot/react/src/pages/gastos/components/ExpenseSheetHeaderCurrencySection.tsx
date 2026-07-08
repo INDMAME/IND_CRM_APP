@@ -61,7 +61,6 @@ const ExpenseSheetHeaderCurrencySection = ({
       allowTextInput={false}
       showSearchButton={false}
       showLabel
-      usePortal={false}
       selectedTextMode="value"
       dropdownMaxHeightClass="max-h-96"
       selectedIconClassName="h-6 w-6"

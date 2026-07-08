@@ -47,9 +47,11 @@ type ExpenseSheetLineFormProps = {
   exchangeRateInfoMessage: string;
   linkedTicketFileId: string;
   showLinkedTicketField: boolean;
+  descriptionInputRef?: React.Ref<HTMLInputElement>;
   typeInputRef?: React.Ref<HTMLInputElement>;
   priceInputRef?: React.Ref<HTMLInputElement>;
   qtyInputRef?: React.Ref<HTMLInputElement>;
+  descriptionInvalid?: boolean;
   typeInvalid?: boolean;
   priceInvalid?: boolean;
   qtyInvalid?: boolean;
@@ -179,9 +181,11 @@ const ExpenseSheetLineForm = ({
   exchangeRateInfoMessage,
   linkedTicketFileId,
   showLinkedTicketField,
+  descriptionInputRef,
   typeInputRef,
   priceInputRef,
   qtyInputRef,
+  descriptionInvalid = false,
   typeInvalid = false,
   priceInvalid = false,
   qtyInvalid = false,
@@ -212,8 +216,6 @@ const ExpenseSheetLineForm = ({
       value={draftInternational || ""}
       onChange={onDraftInternationalChange}
       placeholder={indT("ExpenseSheets_Field_International", "International")}
-      usePortal={false}
-      dropdownPlacement="top"
       allowTextInput={false}
       showSearchButton={false}
     />
@@ -230,8 +232,6 @@ const ExpenseSheetLineForm = ({
       value={String(reimbursableExpenseValue)}
       onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseLineReimbursableExpense(value))}
       placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
-      usePortal={false}
-      dropdownPlacement="top"
       allowTextInput={false}
       showSearchButton={false}
     />
@@ -245,9 +245,13 @@ const ExpenseSheetLineForm = ({
     <div className="sm:col-span-2 space-y-1.5">
       <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Description", "Description")}</label>
       <input
-        className="form-control"
+        ref={descriptionInputRef}
+        className={`form-control${
+          descriptionInvalid ? " border-rose-400 bg-rose-50 focus:ring-rose-200 focus:border-rose-400" : ""
+        }`}
         value={draftDescription}
         onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+        aria-invalid={descriptionInvalid ? "true" : "false"}
         aria-label={indT("ExpenseSheets_Field_Description", "Description")}
       />
     </div>
@@ -366,7 +370,6 @@ const ExpenseSheetLineForm = ({
       inputRef={typeInputRef}
       placeholder={indT("ExpenseSheets_Field_Type", "Category")}
       invalid={typeInvalid}
-      usePortal={false}
       allowTextInput={false}
       showSearchButton={false}
     />

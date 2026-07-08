@@ -733,7 +733,6 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
             placeholder={indT("Visits_Detail_VisitType_Placeholder", "Select type")}
             disabled={!isVisitEditable}
             readOnly={!isVisitEditable}
-            usePortal={false}
           />
           <SelectCombobox
             label={indT("Visits_Detail_ContactMethod_Label", "Contact channel")}
@@ -743,7 +742,6 @@ const DetailApp = ({ companyId = "", axUserId = "", permissionsRevision = "" }: 
             placeholder={indT("Visits_Detail_ContactMethod_Placeholder", "Select method")}
             disabled={!isVisitEditable}
             readOnly={!isVisitEditable}
-            usePortal={false}
           />
         </div>
 
