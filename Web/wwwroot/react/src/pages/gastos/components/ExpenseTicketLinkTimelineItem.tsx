@@ -17,7 +17,7 @@ type ExpenseTicketLinkTimelineItemProps = {
   onToggleSelect: () => void;
 };
 
-// Link-mode ticket card: center opens the read-only detail and the right rail toggles selection.
+// Link-mode ticket card: center opens detail and the right rail toggles selection.
 const ExpenseTicketLinkTimelineItem = ({
   fileId,
   dateParts,

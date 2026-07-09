@@ -403,14 +403,14 @@ const useExpenseTicketDetailNavigationState = ({
 // Runs the one-shot auto edit transition for linked contexts after detail data is ready.
 const useExpenseTicketDetailAutoEdit = ({
   autoEditMode,
-  isFromSheetLink,
+  canAutoEditInContext,
   isLoading,
   header,
   handleEnableEdit,
   canAttemptAutoEdit,
 }: {
   autoEditMode: boolean;
-  isFromSheetLink: boolean;
+  canAutoEditInContext: boolean;
   isLoading: boolean;
   header: ExpenseTicketDetailHeader | null;
   handleEnableEdit: () => void;
@@ -419,12 +419,12 @@ const useExpenseTicketDetailAutoEdit = ({
   const autoEditAttemptedRef = useRef(false);
 
   useEffect(() => {
-    if (!autoEditMode || isFromSheetLink || autoEditAttemptedRef.current) return;
+    if (!autoEditMode || !canAutoEditInContext || autoEditAttemptedRef.current) return;
     if (isLoading || !header || !canAttemptAutoEdit) return;
 
     autoEditAttemptedRef.current = true;
     handleEnableEdit();
-  }, [autoEditMode, canAttemptAutoEdit, handleEnableEdit, header, isFromSheetLink, isLoading]);
+  }, [autoEditMode, canAttemptAutoEdit, canAutoEditInContext, handleEnableEdit, header, isLoading]);
 };
 
 // Resolves permission and acting-user state so the page container stays focused on orchestration.
@@ -474,6 +474,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     isFromSheetLink,
     ticketReturnContext,
   } = useExpenseTicketDetailRouteContext();
+  const canEditFromSheetLinkFailure = isFromSheetLink && autoEditMode;
   const {
     hasAccess,
     canEditTicket,
@@ -639,7 +640,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     canEditTicket: canEditTicket && canEditLinkedTicket,
     isLoading,
     allowAssignedDraftEdit,
-    isFromSheetLink,
+    isSheetLinkReadOnly: isFromSheetLink && !canEditFromSheetLinkFailure,
     onForbidden: showPermissionModal,
   });
   const handleTicketCurrencyCodeChange = useCallback(
@@ -791,7 +792,7 @@ const useExpenseTicketDetailPageViewModel = () => {
 
   useExpenseTicketDetailAutoEdit({
     autoEditMode,
-    isFromSheetLink,
+    canAutoEditInContext: !isFromSheetLink || canEditFromSheetLinkFailure,
     isLoading,
     header,
     handleEnableEdit: handleEnableEditInContext,
@@ -867,8 +868,8 @@ const useExpenseTicketDetailPageViewModel = () => {
 
   const isAssignedTicket = header?.status === 1;
   const isContextLocked = (isAssignedTicket && !allowAssignedDraftEdit) || (!!linkedExpenseSheetId && linkSheetLocked);
-  const canEditTicketInContext = canEditTicket && canEditLinkedTicket && !isFromSheetLink;
-  const canCreateTicketLineInContext = canEditTicketInContext && !isContextLocked && !sheetSyncBlocked;
+  const canEditTicketInContext = canEditTicket && canEditLinkedTicket && (!isFromSheetLink || canEditFromSheetLinkFailure);
+  const canCreateTicketLineInContext = canEditTicketInContext && !isFromSheetLink && !isContextLocked && !sheetSyncBlocked;
   const canDeleteTicketInContext = canDeleteTicket && canEditLinkedTicket && !isFromSheetLink;
   const canDeleteUnlinkedTicketAfterSyncError =
     pendingFirstLink &&

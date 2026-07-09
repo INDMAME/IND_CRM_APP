@@ -51,7 +51,7 @@ type UseExpenseTicketDetailEditorArgs = {
   canEditTicket: boolean;
   isLoading: boolean;
   allowAssignedDraftEdit: boolean;
-  isFromSheetLink: boolean;
+  isSheetLinkReadOnly: boolean;
   onForbidden: () => void;
 };
 
@@ -336,7 +336,7 @@ export const useExpenseTicketDetailEditor = ({
   canEditTicket,
   isLoading,
   allowAssignedDraftEdit,
-  isFromSheetLink,
+  isSheetLinkReadOnly,
   onForbidden,
 }: UseExpenseTicketDetailEditorArgs) => {
   const [state, dispatch] = useReducer(editorReducer, undefined, createInitialState);
@@ -591,7 +591,7 @@ export const useExpenseTicketDetailEditor = ({
 
   const handleEnableEdit = useCallback(() => {
     if (!header || isLoading) return;
-    if (isFromSheetLink) return;
+    if (isSheetLinkReadOnly) return;
     if (header.status === 1 && !allowAssignedDraftEdit) return;
     if (!canEditTicket) {
       onForbidden();
@@ -617,7 +617,7 @@ export const useExpenseTicketDetailEditor = ({
     canEditTicket,
     effectiveLocalCurrencyCode,
     header,
-    isFromSheetLink,
+    isSheetLinkReadOnly,
     isLoading,
     linkedExpenseLine,
     onForbidden,
