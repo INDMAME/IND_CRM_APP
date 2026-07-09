@@ -253,6 +253,15 @@ const ExpenseTicketsPageContent = () => {
   const [selectAllBusy, setSelectAllBusy] = useState(false);
   const [selectAllError, setSelectAllError] = useState("");
   const [linkBulkResult, setLinkBulkResult] = useState<ExpenseSheetTicketLinkBulkResultDto | null>(null);
+  const failedLinkTicketIds = useMemo(() => {
+    const failedItems = Array.isArray(linkBulkResult?.failed) ? linkBulkResult.failed : [];
+    return new Set(
+      failedItems.flatMap((item) => {
+        const ticketId = safeText(item?.ticketId).toUpperCase();
+        return ticketId ? [ticketId] : [];
+      })
+    );
+  }, [linkBulkResult]);
 
   const paginationLabels = useMemo(
     () => ({
@@ -1005,6 +1014,7 @@ const ExpenseTicketsPageContent = () => {
       };
 
       if (isLinkMode) {
+        const shouldOpenFailedTicketInEditMode = failedLinkTicketIds.has(fileId.toUpperCase());
         saveCachedState(currentState);
         saveExpenseTicketLinkReturnState({
           sheetId: linkSheetId,
@@ -1021,6 +1031,9 @@ const ExpenseTicketsPageContent = () => {
         const query = new URLSearchParams({
           fileId,
         });
+        if (shouldOpenFailedTicketInEditMode) {
+          query.set("mode", "edit");
+        }
         if (hasSheetCallerContext && sheetCallerOrigin) {
           saveExpenseTicketReturnContext({
             fileId,
@@ -1073,6 +1086,7 @@ const ExpenseTicketsPageContent = () => {
       filteredTotalCount,
       filteredSnapshot,
       excludedIds,
+      failedLinkTicketIds,
       sheetCallerOrigin,
       saveCachedState,
       saveExpenseTicketLinkReturnState,
