@@ -34,6 +34,7 @@ import { useExpenseTicketLinkedSheetLine } from "./useExpenseTicketLinkedSheetLi
 import { useExpenseTicketsFilterCache } from "../useExpenseTicketsFilterCache.ts";
 import { useExpenseTicketDetailBackNavigation } from "./useExpenseTicketDetailBackNavigation.ts";
 import { useExpenseTicketDetailPreviewPanel } from "./useExpenseTicketDetailPreviewPanel.ts";
+import { useExpenseTicketTopbarBackLock } from "./useExpenseTicketTopbarBackLock.ts";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "./expenseTicketDetailTypes.ts";
 
 const LINES_PAGE_SIZE = 6;
@@ -877,7 +878,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     !!safeText(fileId) &&
     !!header &&
     !safeText(header.hojaGastosIdDisplay);
-  const shouldHardBlockWorkflowExit = pendingFirstLink && !canDeleteUnlinkedTicketAfterSyncError;
+  // Only linked-ticket flows set pendingFirstLink or sheetSyncBlocked, so standalone ticket-menu creates can still leave.
+  const shouldHardBlockWorkflowExit = pendingFirstLink || sheetSyncBlocked;
 
   useEffect(() => {
     if (!hasWorkflowExitGuard) {
@@ -895,24 +897,10 @@ const useExpenseTicketDetailPageViewModel = () => {
     };
   }, [hasWorkflowExitGuard, sheetWorkflowBlockMessage, shouldHardBlockWorkflowExit]);
 
-  useEffect(() => {
-    const backButton = document.getElementById("globalBackBtn") as HTMLButtonElement | null;
-    if (!backButton) return;
-
-    const previousDisabled = backButton.disabled;
-    if (shouldHardBlockWorkflowExit) {
-      backButton.disabled = true;
-      backButton.setAttribute("aria-disabled", "true");
-    } else if (!previousDisabled) {
-      backButton.disabled = false;
-      backButton.setAttribute("aria-disabled", "false");
-    }
-
-    return () => {
-      backButton.disabled = previousDisabled;
-      backButton.setAttribute("aria-disabled", previousDisabled ? "true" : "false");
-    };
-  }, [shouldHardBlockWorkflowExit]);
+  useExpenseTicketTopbarBackLock({
+    locked: shouldHardBlockWorkflowExit,
+    message: sheetWorkflowBlockMessage,
+  });
   const ticketTopbarActionMode: "default" | "save_only" | "save_delete" | "view_only" =
     pendingFirstLink && isEditing
       ? canDeleteUnlinkedTicketAfterSyncError
