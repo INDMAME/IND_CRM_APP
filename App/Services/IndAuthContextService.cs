@@ -645,6 +645,7 @@ namespace IND_CRM_APP.Services
                 Success = ToBool(header.Success),
                 Message = header.Message ?? string.Empty,
                 AxUserId = header.AxUserId ?? string.Empty,
+                UserName = header.UserName ?? string.Empty,
                 UserActive = ToBool(header.UserActive),
                 AppActive = ToBool(header.AppActive),
                 DefaultCompany = header.DefaultCompany ?? string.Empty,

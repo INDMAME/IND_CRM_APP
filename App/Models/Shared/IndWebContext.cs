@@ -24,6 +24,7 @@ namespace IND_CRM_APP.Models.Shared
         public bool Success { get; set; }
         public string Message { get; set; } = string.Empty;
         public string AxUserId { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
         public bool UserActive { get; set; }
         public bool AppActive { get; set; }
         public string DefaultCompany { get; set; } = string.Empty;
@@ -92,6 +93,7 @@ namespace IND_CRM_APP.Models.Shared
         public object? Success { get; set; }
         public string? Message { get; set; }
         public string? AxUserId { get; set; }
+        public string? UserName { get; set; }
         public object? UserActive { get; set; }
         public object? AppActive { get; set; }
         public string? DefaultCompany { get; set; }

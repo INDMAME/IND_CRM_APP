@@ -5,6 +5,7 @@ import type { ExpenseSheetCard, ExpenseSheetListFilters } from "../expenseTypes.
 import { buildExpenseListPayload } from "../utils/expensePayloadBuilders.ts";
 import { fetchExpenseSheetList, mapExpenseSheetListItemToCard } from "../utils/expenseApi.ts";
 import { isExpenseAbortLikeError, runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
+import { resolveExpenseListAxUserIdOverride } from "../utils/expenseManagedUserScope.ts";
 import type { ExpenseSheetsAssistantContextSnapshot } from "./expenseSheetsAssistantTypes.ts";
 
 type UseExpenseSheetsListDataArgs = {
@@ -80,7 +81,10 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
       setIsLoading(true);
       setErrorMessage("");
       const payload = buildExpenseListPayload(filters, page, pageSize);
-      const selectedManagedUserId = String(filters?.managedUserId || "").trim();
+      const listAxUserIdOverride = resolveExpenseListAxUserIdOverride({
+        selectedManagedUserId: filters?.managedUserId,
+        includeSubordinates: filters?.includeSubordinates,
+      });
       const handleCapturedResponse = (capture: {
         request: NonNullable<ExpenseSheetsAssistantContextSnapshot["lastExpenseSheetsListRequest"]>;
         response: NonNullable<ExpenseSheetsAssistantContextSnapshot["lastExpenseSheetsListResponse"]>;
@@ -104,7 +108,7 @@ export const useExpenseSheetsListData = ({ hasAccess, pageSize, onForbidden }: U
             fetchExpenseSheetList(payload, {
               suppressPermissionModal: true,
               signal: controller.signal,
-              axUserIdOverride: selectedManagedUserId || undefined,
+              axUserIdOverride: listAxUserIdOverride || undefined,
               onCapture: handleCapturedResponse,
             }),
           {

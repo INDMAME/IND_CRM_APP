@@ -281,6 +281,7 @@ namespace IND_CRM_APP.Controllers
                     context.Header.Success,
                     context.Header.Message,
                     context.Header.AxUserId,
+                    context.Header.UserName,
                     context.Header.UserActive,
                     context.Header.AppActive,
                     context.Header.DefaultCompany,
