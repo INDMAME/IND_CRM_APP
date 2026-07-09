@@ -12,6 +12,7 @@ import { isManagingOtherExpenseRecord } from "../utils/expenseManagedUserScope.t
 import { navigateToExpenseUrl, reloadExpensePage } from "../utils/expenseNavigation.ts";
 import { saveExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
+import { clearExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import { normalizeExpenseReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
@@ -472,6 +473,7 @@ export const useExpenseSheetDetailPageController = () => {
       saveExpenseSheetCreatedReturnContext({
         sheetId: createdSheetId,
       });
+      clearExpenseActingUserOverride();
       setIsRedirectingAfterCreate(true);
       navigateToCreatedSheet(createdSheetId);
       return;
