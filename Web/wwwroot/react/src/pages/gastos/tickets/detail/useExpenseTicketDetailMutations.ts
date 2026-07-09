@@ -165,7 +165,13 @@ export const useExpenseTicketDetailMutations = ({
   ]);
 
   const runHeaderUpdate = useCallback(
-    async ({ syncSheetLine }: { syncSheetLine: boolean }): Promise<boolean> => {
+    async ({
+      syncSheetLine,
+      continueOnSheetSyncFailure = false,
+    }: {
+      syncSheetLine: boolean;
+      continueOnSheetSyncFailure?: boolean;
+    }): Promise<boolean> => {
       if (busy || !isEditing) return false;
       if (!canEditTicket) {
         showPermissionModal();
@@ -275,6 +281,7 @@ export const useExpenseTicketDetailMutations = ({
           }
 
           if (syncSheetLine && validatedSheetId) {
+            let sheetSyncFailureMessage = "";
             try {
               const syncPayload = {
                 fileId,
@@ -307,7 +314,15 @@ export const useExpenseTicketDetailMutations = ({
                 message,
               });
               onLinkedSheetSyncFailure?.(message);
-              throw new Error(message);
+              if (!continueOnSheetSyncFailure) {
+                throw new Error(message);
+              }
+              sheetSyncFailureMessage = message;
+            }
+            if (sheetSyncFailureMessage) {
+              setStatus(sheetSyncFailureMessage);
+              setIsEditing(false);
+              return true;
             }
           }
 
@@ -358,11 +373,14 @@ export const useExpenseTicketDetailMutations = ({
   }, [runHeaderUpdate]);
 
   const handlePersistHeaderDraft = useCallback(async () => {
+    // Opening a ticket line should persist all possible linked-sheet changes, but
+    // sheet validation failures must not prevent the user from fixing that line.
     return runHeaderUpdate({
       syncSheetLine:
         linkedExpenseLineProjectIdChanged ||
         linkedExpenseLineReimbursableExpenseChanged ||
         !!safeText(linkedExpenseSheetId),
+      continueOnSheetSyncFailure: true,
     });
   }, [
     linkedExpenseLineProjectIdChanged,
