@@ -31,8 +31,11 @@ assert.equal(resolveExpenseLineExchangeRateForCurrency("USD", "EUR", null), null
 assert.equal(areExpenseNumericInputsEquivalent("7.86", "7.86"), true);
 assert.equal(areExpenseNumericInputsEquivalent("7,86", "7.86"), true);
 assert.equal(areExpenseNumericInputsEquivalent("7.87", "7.86"), false);
-assert.equal(formatUserNameWithId("Marco Meza Sanchez", "MAME"), "Marco Meza Sanchez (MAME)");
+assert.equal(formatUserNameWithId("Marco Meza Sanchez", "MAME"), "MARCO MEZA SANCHEZ (MAME)");
+assert.equal(formatUserNameWithId("MARCO MEZA", "MAME"), "MARCO MEZA (MAME)");
+assert.equal(formatUserNameWithId("AITOR BILBAO GURRUTXAGA", "ABG"), "AITOR BILBAO GURRUTXAGA (ABG)");
 assert.equal(formatUserNameWithId("", "MAME"), "MAME");
+assert.equal(formatUserNameWithId("MAME", "MAME"), "MAME");
 
 const allUsersExpensePayload = buildExpenseListPayload(
   {
