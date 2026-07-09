@@ -15,7 +15,7 @@ import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache
 import { createInitialExpenseSheetsFilterSnapshot } from "../list/expenseFilterSnapshot.ts";
 import { setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 
-const DETAIL_FAB_BOTTOM_WITH_ACTION_BAR = 176;
+const DETAIL_FAB_BASELINE_BOTTOM_PX = 24;
 const EXPENSE_SHEETS_LIST_URL = "/Gastos/ExpenseSheets";
 
 // Applies the server-resolved acting user for email deep links before detail API calls run.
@@ -251,7 +251,7 @@ const ExpenseSheetDetailPageContent = () => {
           ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rápidas")}
           size={76}
           right={16}
-          bottom={controller.showStatusActionBar ? DETAIL_FAB_BOTTOM_WITH_ACTION_BAR : 24}
+          bottom={DETAIL_FAB_BASELINE_BOTTOM_PX}
           menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rápidas")}
           menuItems={controller.fabMenuItems}
         />

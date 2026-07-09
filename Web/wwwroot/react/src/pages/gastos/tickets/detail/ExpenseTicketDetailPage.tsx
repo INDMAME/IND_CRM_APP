@@ -571,7 +571,6 @@ const useExpenseTicketDetailPageViewModel = () => {
         "ExpenseTickets_SheetSync_RetryRequired",
         "Ticket data changed, but we could not sync the expense line. Save again before leaving."
       );
-  const hasWorkflowExitGuard = pendingFirstLink || sheetSyncBlocked;
 
   const { markResetFiltersReturn, clearCachedState } = useExpenseTicketDetailNavigationState({
     fileId,
@@ -878,24 +877,26 @@ const useExpenseTicketDetailPageViewModel = () => {
     !!safeText(fileId) &&
     !!header &&
     !safeText(header.hojaGastosIdDisplay);
-  // Only linked-ticket flows set pendingFirstLink or sheetSyncBlocked, so standalone ticket-menu creates can still leave.
-  const shouldHardBlockWorkflowExit = pendingFirstLink || sheetSyncBlocked;
+  // Hard blocking is limited to edit or newly created recovery flows; read-only sync errors must stay navigable.
+  const shouldHardBlockWorkflowExit = pendingFirstLink || (sheetSyncBlocked && isEditing);
+  const hasNavigationGuard = busy || isEditing || shouldHardBlockWorkflowExit;
+  const navigationGuardMessage = shouldHardBlockWorkflowExit ? sheetWorkflowBlockMessage : undefined;
 
   useEffect(() => {
-    if (!hasWorkflowExitGuard) {
+    if (!hasNavigationGuard) {
       clearExpenseNavigationGuard();
       return;
     }
 
     setExpenseNavigationGuard({
       active: true,
-      message: sheetWorkflowBlockMessage,
+      message: navigationGuardMessage,
       block: shouldHardBlockWorkflowExit,
     });
     return () => {
       clearExpenseNavigationGuard();
     };
-  }, [hasWorkflowExitGuard, sheetWorkflowBlockMessage, shouldHardBlockWorkflowExit]);
+  }, [hasNavigationGuard, navigationGuardMessage, shouldHardBlockWorkflowExit]);
 
   useExpenseTicketTopbarBackLock({
     locked: shouldHardBlockWorkflowExit,
@@ -966,7 +967,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     isEditing,
     canOpenSaveConfirm,
     handlePersistHeaderDraft,
-    bypassWorkflowGuard: hasWorkflowExitGuard,
+    bypassWorkflowGuard: shouldHardBlockWorkflowExit,
     lineContainerRef,
     openPreview,
     ticketReturnContext,
