@@ -8,6 +8,8 @@ type RawExpenseSubordinate = {
   AxUserId?: unknown;
   userId?: unknown;
   UserId?: unknown;
+  userName?: unknown;
+  UserName?: unknown;
   name?: unknown;
   Name?: unknown;
 };
@@ -23,7 +25,7 @@ const resolveSubordinateObject = (item: RawExpenseSubordinate): ExpenseSheetSubo
     return null;
   }
 
-  const name = safeText(item.name ?? item.Name) || resolvedAxUserId;
+  const name = safeText(item.name ?? item.Name ?? item.userName ?? item.UserName) || resolvedAxUserId;
   return {
     crmUserId: resolvedCrmUserId,
     axUserId: resolvedAxUserId,

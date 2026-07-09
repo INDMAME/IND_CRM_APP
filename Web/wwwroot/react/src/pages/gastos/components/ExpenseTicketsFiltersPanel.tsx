@@ -51,6 +51,8 @@ type ExpenseTicketsFiltersPanelProps = {
   currencyCode: string;
   managedUserId: string;
   managedUsers: AuthManagedUser[];
+  currentAxUserId: string;
+  currentUserName: string;
   showManagedUserFilter: boolean;
   statusFilter: ExpenseTicketStatusFilterCode;
   gastoTypeFilter: "" | ExpenseGastoTypeCode;
@@ -85,6 +87,8 @@ const ExpenseTicketsFiltersPanel = ({
   currencyCode,
   managedUserId,
   managedUsers,
+  currentAxUserId,
+  currentUserName,
   showManagedUserFilter,
   statusFilter,
   gastoTypeFilter,
@@ -178,6 +182,8 @@ const ExpenseTicketsFiltersPanel = ({
               placeholder={indT("Common_User", "User")}
               value={managedUserId}
               users={managedUsers}
+              currentAxUserId={currentAxUserId}
+              currentUserName={currentUserName}
               onChange={onManagedUserIdChange}
               showLabel={false}
             />

@@ -1,3 +1,5 @@
+import { formatUserNameWithId } from "./userLabels.ts";
+
 // Shared row returned by /api/crm/data-visibility/visible-users for owner visibility and mutation checks.
 export type ModuleDataVisibilityVisibleUser = {
   alias: string;
@@ -323,11 +325,5 @@ export const canMutateOwner = (
 
 // Formats one visible user for compact select options.
 export const formatModuleVisibleUserLabel = (user: ModuleDataVisibilityVisibleUser): string => {
-  const name = safeText(user.name);
-  const axUserId = safeText(user.axUserId);
-  if (name && axUserId && name.toUpperCase() !== axUserId.toUpperCase()) {
-    return `${name} (${axUserId})`;
-  }
-
-  return name || axUserId;
+  return formatUserNameWithId(user.name, user.axUserId);
 };

@@ -4,6 +4,7 @@ import { ApiFetchError } from "../../../services/apiService.ts";
 import type { ExpenseSheetListItemDto } from "../expenseTypes.ts";
 import { buildExpenseSheetSuggestPayload } from "../utils/expensePayloadBuilders.ts";
 import { fetchExpenseSheetList } from "../utils/expenseApi.ts";
+import { resolveExpenseListAxUserIdOverride } from "../utils/expenseManagedUserScope.ts";
 
 type ExpenseSheetFilterInputProps = {
   label: string;
@@ -54,13 +55,16 @@ const ExpenseSheetFilterInput = ({
   showLabel = true,
 }: ExpenseSheetFilterInputProps) => {
   const readOnlyMode = readOnly || disabled;
-  const normalizedManagedUserId = String(managedUserId || "").trim();
+  const listAxUserIdOverride = resolveExpenseListAxUserIdOverride({
+    selectedManagedUserId: managedUserId,
+    includeSubordinates,
+  });
 
   const loadOptions = useCallback(async (term: string, signal: AbortSignal): Promise<RemoteSearchOption[]> => {
     const payload = buildExpenseSheetSuggestPayload(term, SEARCH_PAGE_SIZE, 1, includeSubordinates);
     const response = await fetchExpenseSheetList(payload, {
       suppressPermissionModal: true,
-      axUserIdOverride: normalizedManagedUserId || undefined,
+      axUserIdOverride: listAxUserIdOverride || undefined,
       signal,
     });
 
@@ -69,13 +73,13 @@ const ExpenseSheetFilterInput = ({
     }
 
     return mapSheetOptions(response?.Items);
-  }, [includeSubordinates, normalizedManagedUserId]);
+  }, [includeSubordinates, listAxUserIdOverride]);
 
   const loadOptionsPage = useCallback(async (term: string, page: number, pageSize: number, signal: AbortSignal) => {
     const payload = buildExpenseSheetSuggestPayload(term, pageSize, page, includeSubordinates);
     const response = await fetchExpenseSheetList(payload, {
       suppressPermissionModal: true,
-      axUserIdOverride: normalizedManagedUserId || undefined,
+      axUserIdOverride: listAxUserIdOverride || undefined,
       signal,
     });
 
@@ -90,7 +94,7 @@ const ExpenseSheetFilterInput = ({
       items: mapSheetOptions(response?.Items),
       total: Number(response?.Total || 0),
     };
-  }, [includeSubordinates, normalizedManagedUserId]);
+  }, [includeSubordinates, listAxUserIdOverride]);
 
   if (!enableRemoteSuggestions || readOnlyMode) {
     return (

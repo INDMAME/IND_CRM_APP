@@ -9,10 +9,10 @@ import ExpenseSheetDetailOverlays from "./ExpenseSheetDetailOverlays.tsx";
 import { bootstrapExpenseApiAuth, useExpenseSheetDetailPageController } from "./useExpenseSheetDetailPageController.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
-import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog.ts";
-import { safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { safeText } from "../utils/expenseUiUtils.ts";
 import { consumeExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
+import { createInitialExpenseSheetsFilterSnapshot } from "../list/expenseFilterSnapshot.ts";
 import { setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 
 const DETAIL_FAB_BOTTOM_WITH_ACTION_BAR = 176;
@@ -40,23 +40,8 @@ const ExpenseSheetDetailPageContent = () => {
     const createdSheetId = safeText(createdSheetReturnIdRef.current);
     if (!createdSheetId) return false;
 
-    const today = startOfDay(new Date());
-    const fromDate = new Date(today);
-    fromDate.setDate(today.getDate() - 89);
-
     saveCachedState({
-      filters: {
-        fromDate: toIsoDate(fromDate),
-        toDate: toIsoDate(today),
-        projectId: "",
-        hojaGastosId: createdSheetId,
-        currencyCode: "",
-        managedUserId: safeText(currentAxUserId),
-        includeSubordinates: false,
-        statusFilter: DEFAULT_EXPENSE_STATUS_FILTER,
-        exchangeRateMode: null,
-        filter: createdSheetId,
-      },
+      filters: createInitialExpenseSheetsFilterSnapshot(currentAxUserId),
       page: 1,
       scrollY: 0,
       items: [],

@@ -142,6 +142,7 @@ type ExpenseApiContext = {
   token: string;
   companyId: string;
   axUserId: string;
+  userName: string;
   crmUserId: string;
   defaultCurrencyCode: string;
   allowSelfManagement: boolean;
@@ -150,6 +151,7 @@ type ExpenseApiContext = {
 export type ExpenseApiContextSnapshot = {
   companyId: string;
   axUserId: string;
+  userName: string;
   crmUserId: string;
   allowSelfManagement: boolean;
 };
@@ -494,6 +496,8 @@ type NormalizedEntraContextCompany = {
 type RawEntraContextHeader = {
   AxUserId?: unknown;
   axUserId?: unknown;
+  UserName?: unknown;
+  userName?: unknown;
   DefaultCompany?: unknown;
   defaultCompany?: unknown;
   DefaultCurrencyCode?: unknown;
@@ -548,6 +552,7 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
   }
 
   const axUserId = safeText(header.AxUserId ?? header.axUserId);
+  const userName = safeText(header.UserName ?? header.userName);
   const defaultCompany = safeText(header.DefaultCompany ?? header.defaultCompany);
   const defaultCurrencyCode = safeText(header.DefaultCurrencyCode ?? header.defaultCurrencyCode);
   const companiesRaw = Array.isArray(first.Companies)
@@ -587,6 +592,7 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
     token: "",
     companyId,
     axUserId,
+    userName,
     crmUserId,
     defaultCurrencyCode,
     allowSelfManagement,
@@ -651,6 +657,7 @@ export const getExpenseApiContextSnapshot = async (options?: ApiFetchOptions): P
   return {
     companyId: safeText(context.companyId).toUpperCase(),
     axUserId: safeText(context.axUserId),
+    userName: safeText(context.userName),
     crmUserId: safeText(context.crmUserId),
     allowSelfManagement: context.allowSelfManagement === true,
   };

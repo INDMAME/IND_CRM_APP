@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMUtilityService descargados en Martes 07/07/2026
+; Navision Axapta Class: INDCRMUtilityService descargados en Jueves 09/07/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -869,7 +869,7 @@ Formatversion: 1
       SOURCE #getEnvironmentName
         #static container getEnvironmentName()
         #{
-        #    return [["APAXTA DEV SP2"]];
+        #    return [["PROD"]];
         #}
         #
       ENDSOURCE
@@ -934,9 +934,9 @@ Formatversion: 1
         #//  - _data[2] = AppCode  (codigo de web app, por ejemplo "CRM")
         #//
         #// Salida: [ Header, Companies ]
-        #// Header = [[ success, message, axUserId, userActive, appActive, defaultCompany, defaultCurrencyCode ]]
+        #// Header = [[ success, message, axUserId, userActive, appActive, defaultCompany, defaultCurrencyCode, userName ]]
         #// Companies = lista de CompanyItem
-        #// CompanyItem = [ companyId, isDefault, companyName, currencyCode, allowSelfManagement, modulesCon ]
+        #// CompanyItem = [ companyId, isDefault, companyName, currencyCode, allowSelfManagement, crmUserId, modulesCon ]
         #// modulesCon = lista de ModuleItem
         #// ModuleItem = [ moduleCode, description, isActive, accessRightsInt ]
         #//
@@ -983,9 +983,12 @@ Formatversion: 1
         #    str                         companyName;
         #    str                         companyCurrencyCode;
         #    str                         defaultCompanyCurrencyCode;
+        #    str                         userName;
         #    int                         accessInt;
         #    CRMUserId                   companyCrmUserId;
         #    CRMUsuarioTable             crmUsuarioTable;
+        #    CRMUsuarioTable             defaultCrmUsuarioTable;
+        #    INDPersonaTable             defaultPersonaTable;
         #    boolean                     allowSelfManagement;
         #
         #    int                         i;
@@ -1170,8 +1173,9 @@ Formatversion: 1
         #
         #    companiesCon = companiesConFixed;
         #
-        #    // 8) Obtener CurrencyCode de la compania por defecto final
+        #    // 8) Obtener datos de usuario y moneda de la compania por defecto final
         #    defaultCompanyCurrencyCode = "";
+        #    userName = "";
         #    if (defaultCompany)
         #    {
         #        try
@@ -1179,11 +1183,22 @@ Formatversion: 1
         #            changecompany (defaultCompany)
         #            {
         #                defaultCompanyCurrencyCode = Currency::find(CompanyInfo::find().CurrencyCode).CurrencyCodeISO;
+        #
+        #                defaultCrmUsuarioTable = SysUserInfo::getCRMUsuarioTable(sysUserInfo.Id);
+        #                if (!defaultCrmUsuarioTable.UserId)
+        #                    defaultCrmUsuarioTable = CRMUsuarioTable::Find(sysUserInfo.Id);
+        #
+        #                if (defaultCrmUsuarioTable.RecId)
+        #                {
+        #                    defaultPersonaTable = INDPersonaTable::findByCRM(defaultCrmUsuarioTable.RecId);
+        #                    userName = defaultPersonaTable.Name;
+        #                }
         #            }
         #        }
         #        catch
         #        {
         #            defaultCompanyCurrencyCode = "";
+        #            userName = "";
         #        }
         #    }
         #
@@ -1198,7 +1213,8 @@ Formatversion: 1
         #        "1", // userActive
         #        "1", // appActive
         #        strFmt("%1", defaultCompany),
-        #        strFmt("%1", defaultCompanyCurrencyCode)
+        #        strFmt("%1", defaultCompanyCurrencyCode),
+        #        strFmt("%1", userName)
         #    ]];
         #
         #    return [ header, companiesCon ];
