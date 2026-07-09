@@ -1,7 +1,0 @@
-{
-  "version": 3,
-  "sources": ["../../react/src/utils/userLabels.ts"],
-  "sourcesContent": ["const safeText = (value: unknown): string => String(value ?? \"\").trim();\n\n// Builds a compact display label for a person when both name and AX id are available.\nexport const formatUserNameWithId = (name: unknown, axUserId: unknown): string => {\n  const normalizedName = safeText(name);\n  const normalizedAxUserId = safeText(axUserId);\n  if (\n    normalizedName &&\n    normalizedAxUserId &&\n    normalizedName.toUpperCase() !== normalizedAxUserId.toUpperCase()\n  ) {\n    return `${normalizedName} (${normalizedAxUserId})`;\n  }\n\n  return normalizedName || normalizedAxUserId;\n};\n"],
-  "mappings": "AAAA,IAAMA,EAAYC,GAA2B,OAAOA,GAAS,EAAE,EAAE,KAAK,EAGzDC,EAAuB,CAACC,EAAeC,IAA8B,CAChF,IAAMC,EAAiBL,EAASG,CAAI,EAC9BG,EAAqBN,EAASI,CAAQ,EAC5C,OACEC,GACAC,GACAD,EAAe,YAAY,IAAMC,EAAmB,YAAY,EAEzD,GAAGD,CAAc,KAAKC,CAAkB,IAG1CD,GAAkBC,CAC3B",
-  "names": ["safeText", "value", "formatUserNameWithId", "name", "axUserId", "normalizedName", "normalizedAxUserId"]
-}

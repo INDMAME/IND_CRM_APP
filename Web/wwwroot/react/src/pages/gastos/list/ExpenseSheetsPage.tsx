@@ -6,6 +6,7 @@ import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
+import { formatUserNameWithId } from "../../../utils/userLabels.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import {
   DEFAULT_EXPENSE_STATUS_FILTER,
@@ -87,8 +88,7 @@ const ExpenseSheetsPageContent = () => {
     managedUsers.forEach((entry) => {
       const id = safeText(entry.axUserId);
       if (!id) return;
-      const name = safeText(entry.name);
-      map.set(id.toUpperCase(), name || id);
+      map.set(id.toUpperCase(), formatUserNameWithId(entry.name, id));
     });
     return map;
   }, [managedUsers]);

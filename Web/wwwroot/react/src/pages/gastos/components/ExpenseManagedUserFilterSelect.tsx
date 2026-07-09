@@ -36,10 +36,7 @@ const toOptionText = (user: AuthManagedUser, currentAxUserId = "", currentUserNa
     return formatUserNameWithId(contextUserName, axUserId);
   }
 
-  if (!name || name.toUpperCase() === axUserId.toUpperCase()) {
-    return axUserId;
-  }
-  return `${axUserId} - ${name}`;
+  return formatUserNameWithId(name, axUserId);
 };
 
 // Fixed local user selector used to filter expense sheets by managed Ax user.
@@ -72,11 +69,6 @@ const ExpenseManagedUserFilterSelect = ({
     return allOption ? [allOption, ...userOptions] : userOptions;
   }, [allOption, currentAxUserId, currentUserName, users]);
 
-  const selectedTextMode =
-    (allOption && value === allOption.value) || (!!currentUserName && isSameUser(value, currentAxUserId))
-      ? "text"
-      : "value";
-
   return (
     <SelectCombobox
       label={label}
@@ -90,7 +82,7 @@ const ExpenseManagedUserFilterSelect = ({
       portalClassName="visitas-typography"
       panelClassName="visitas-typography"
       allowTextInput
-      selectedTextMode={selectedTextMode}
+      selectedTextMode="text"
       showLabel={showLabel}
       clearOnEmptyInput={clearOnEmptyInput}
     />
