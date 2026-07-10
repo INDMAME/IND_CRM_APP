@@ -31,6 +31,7 @@ import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import {
   buildExpenseSheetDetailUrl,
   clearExpenseTicketReturnContext,
+  EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT,
   saveExpenseTicketReturnContext,
 } from "../utils/expenseTicketReturnContext.ts";
 import { hasExpenseReturnReferrer, isExpenseHistoryBackForwardNavigation } from "../utils/expenseHistoryNavigation.ts";
@@ -1033,6 +1034,7 @@ const ExpenseTicketsPageContent = () => {
         });
         if (shouldOpenFailedTicketInEditMode) {
           query.set("mode", "edit");
+          query.set("intent", EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT);
         }
         if (hasSheetCallerContext && sheetCallerOrigin) {
           saveExpenseTicketReturnContext({

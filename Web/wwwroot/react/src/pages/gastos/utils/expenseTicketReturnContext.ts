@@ -9,6 +9,9 @@ import { getExpenseScopeToken } from "./expenseScope.ts";
 const EXPENSE_TICKET_RETURN_CONTEXT_KEY_PREFIX = "expense_ticket_return_context_v1";
 const EXPENSE_TICKET_RETURN_CONTEXT_TTL_MS = 12 * 60 * 60 * 1000;
 
+// Marks the one flow that edits a failed link candidate without linking it on save.
+export const EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT = "link-failure-repair";
+
 export type ExpenseTicketSheetOrigin = "sheet-create" | "expense-line" | "sheet-link";
 
 export type ExpenseTicketReturnContext = {

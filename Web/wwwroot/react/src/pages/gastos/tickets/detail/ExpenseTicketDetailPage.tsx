@@ -22,7 +22,10 @@ import {
 } from "../../utils/expenseExchangeRate.ts";
 import { useExpenseTicketLinkSheetGate } from "../useExpenseTicketLinkSheetGate.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
-import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutations.ts";
+import {
+  useExpenseTicketDetailMutations,
+  type ExpenseTicketSaveStrategy,
+} from "./useExpenseTicketDetailMutations.ts";
 import { useExpenseTicketDetailTopbarActions } from "./useExpenseTicketDetailTopbarActions.ts";
 import { useExpenseTicketDetailEditor } from "./useExpenseTicketDetailEditor.ts";
 import { useExpenseTicketDetailRouteContext } from "./useExpenseTicketDetailRouteContext.ts";
@@ -472,9 +475,11 @@ const useExpenseTicketDetailPageViewModel = () => {
     isFromExpenseSheetCreate,
     isFromExpenseLine,
     isFromSheetLink,
+    isLinkFailureRepair,
     ticketReturnContext,
   } = useExpenseTicketDetailRouteContext();
-  const canEditFromSheetLinkFailure = isFromSheetLink && autoEditMode;
+  const canEditFromSheetLinkFailure = isLinkFailureRepair;
+  const saveStrategy: ExpenseTicketSaveStrategy = isLinkFailureRepair ? "ticket-only" : "ticket-and-sheet-line";
   const {
     hasAccess,
     canEditTicket,
@@ -817,6 +822,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftComentario,
     draftUrlFile,
     draftFileName,
+    saveStrategy,
     linkedExpenseSheetId,
     linkedExpenseLineRecId: isFromExpenseLine ? contextLineRecId : "",
     linkedExpenseLineProjectId: linkedSheetLine.draftProjectId,
