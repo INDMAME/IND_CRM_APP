@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from "react";
 import {
+  EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT,
   normalizeExpenseTicketReturnContext,
   resolveExpenseTicketReturnContext,
   saveExpenseTicketReturnContext,
@@ -11,6 +12,7 @@ export const useExpenseTicketDetailRouteContext = () => {
   const routeParams = useMemo(() => new URLSearchParams(window.location.search), []);
   const fileId = useMemo(() => safeText(window.__EXPENSE_TICKET_FILE_ID__), []);
   const autoEditMode = useMemo(() => safeText(routeParams.get("mode")).toLowerCase() === "edit", [routeParams]);
+  const routeIntent = useMemo(() => safeText(routeParams.get("intent")).toLowerCase(), [routeParams]);
   const routeOrigin = useMemo(() => safeText(routeParams.get("origin")).toLowerCase(), [routeParams]);
   const routeSheetId = useMemo(() => safeText(routeParams.get("sheetId")), [routeParams]);
   const routeSheetLineRecId = useMemo(
@@ -41,6 +43,8 @@ export const useExpenseTicketDetailRouteContext = () => {
     const isFromExpenseSheetCreate = detailOrigin === "sheet-create";
     const isFromExpenseLine = detailOrigin === "expense-line" && !!contextSheetId && !!contextLineRecId;
     const isFromSheetLink = detailOrigin === "sheet-link" && !!contextSheetId;
+    const isLinkFailureRepair =
+      isFromSheetLink && autoEditMode && routeIntent === EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT;
 
     return {
       autoEditMode,
@@ -50,7 +54,8 @@ export const useExpenseTicketDetailRouteContext = () => {
       isFromExpenseSheetCreate,
       isFromExpenseLine,
       isFromSheetLink,
+      isLinkFailureRepair,
       ticketReturnContext,
     };
-  }, [autoEditMode, explicitReturnContext, fileId, routeOrigin, routeSheetId, routeSheetLineRecId]);
+  }, [autoEditMode, explicitReturnContext, fileId, routeIntent, routeOrigin, routeSheetId, routeSheetLineRecId]);
 };
