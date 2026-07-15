@@ -1,6 +1,7 @@
 # Expense Sheet Email Link Resolver
 
 Date: 2026-05-27
+Last verified against the application: 2026-07-13
 Iteration source: `C:\INDProjects\IND_INTERNAL_API\docs\*_iteracion1.md`
 
 ## Ownership
@@ -45,7 +46,10 @@ Axapta must build the absolute email URL with the CRM web base URL, not with the
 - The resolver validates that the authenticated user can access `targetCompanyId`.
 - The resolver validates view access to `GASTOS_HOJA_GASTO` in the target company.
 - If the selected company differs from `targetCompanyId`, the resolver updates the existing session company selection and refreshes the auth context.
-- The resolver validates the specific expense sheet through the existing detail API call.
+- The resolver first validates the specific expense sheet with the signed-in user's AX scope.
+- If that direct lookup cannot retrieve the sheet, the resolver loads the user's authorized Gastos subordinates and probes the same detail endpoint only with those AX user ids.
+- A successful subordinate probe stores the effective acting AX user temporarily so the destination detail page opens in the same authorized scope.
+- The subordinate fallback does not grant new access. It is limited to the users returned by the existing authorized subordinates endpoint.
 - On success, it redirects to `/Gastos/ExpenseSheetDetail?hojaGastosId={id}`.
 
 ## Failure Behavior
@@ -57,8 +61,9 @@ Company switch failures use `ExpenseSheetLink_CompanySwitchFailed`. Successful c
 ## Diagnostic Notes
 
 - A browser 404 on `https://dev.service.insertec.eu:2087/Gastos/ExpenseSheetLink?...` means the generated email URL used the internal API host instead of the CRM web host.
-- A resolved CRM web URL that redirects to `Home/Index` with `ExpenseSheetLink_SheetNotFound` means the route was detected but the current authenticated user/company could not retrieve that sheet through the normal detail API.
-- For `HG000056` tested on 2026-05-27, CRM web logs showed `SelectedCompany=ISE`, session AX user `MAME`, and upstream error `CRM_EXPENSESHEET_NOT_FOUND`. The AX row showed owner `UserId=IJI`; that must be opened by the owner or an allowed acting/subordinate user. The email URL itself must not grant extra access.
+- A resolved CRM web URL that redirects to `Home/Index` with `ExpenseSheetLink_SheetNotFound` means the resolver could not resolve the sheet through the direct scope or the subordinate candidates available at that moment. A failed subordinate-list request may leave no candidates to probe.
+- The `HG000056` investigation from 2026-05-27 is historical evidence from before the subordinate fallback existed. Its direct lookup failed because the session and sheet owners differed. It must not be treated as the complete current resolution rule.
+- The email URL itself never grants owner or subordinate access. It only reuses the permissions already returned by the authenticated context and Gastos endpoints.
 
 ## Permission Diagnostics Logs
 
@@ -67,10 +72,12 @@ The resolver logs the evaluated values at each authorization gate without changi
 Web CRM log messages to search:
 
 ```text
-Expense sheet email link context resolved
+Expense sheet email link requested
+Expense sheet email link context force refreshed
 Expense sheet email link company validation denied
 Expense sheet email link module validation denied
 Expense sheet email link detail validation started
+Expense sheet email link subordinate detail probe started
 Expense sheet email link detail validation denied
 Expense sheet email link detail validation allowed
 ```
@@ -96,7 +103,7 @@ sheetCreatedBy={CRMHojaGastosTable.INDCreatedByUserId}
 sheetStatus={CRMHojaGastosTable.ExpenseSheetStatus}
 ```
 
-For the known `HG000056` case, the expected denial evidence is `crmUserId=MAME` and `sheetUserId=IJI` under the exact AX rule above. If `sheetCreatedBy=MAME` must grant access, that is a new explicit AX/API permission rule; it should not be inferred from the email URL.
+The AX diagnostic block applies to each detail probe. A direct denial can still be followed by a successful subordinate probe. Use the web log fields `ActingAxUserId`, `UsedSubordinateScope`, and `ProbedSubordinates` to determine the final resolver decision.
 
 ## Implementation Notes
 
@@ -104,13 +111,16 @@ For the known `HG000056` case, the expected denial evidence is `crmUserId=MAME` 
 - Auth preservation: unauthenticated requests keep the full local path and query through `LocalReturnUrlHelper`.
 - Module filter: `INDModuleAuthorizeFilter` lets only `ExpenseSheetLink.Index` perform target-company validation itself after auth context bootstrap.
 - Company switch: the resolver writes `INDCompanySelected` and `INDCompanySelectionSource`, clears cached context while preserving the selection, then refreshes context before validating sheet detail.
-- Detail validation: the resolver calls the existing expense sheet detail API path with the selected company header before redirecting to the final detail page.
+- Detail validation: the resolver calls the existing expense sheet detail API first as the signed-in AX user and, only if needed, as each authorized subordinate candidate.
+- Acting scope: a successful subordinate probe carries `ExpenseSheetLinkActingUserId` through temporary server data into the destination page. The frontend then stores that scoped override in `sessionStorage` for up to 12 hours or until the Gastos flow clears or replaces it. It never changes the authenticated identity, and every request remains subject to server authorization.
 
 ## Manual Checks
 
 - Logged-out user opens the resolver, signs in, and returns to the same resolver URL.
 - Logged-in user in the target company redirects to detail.
 - Logged-in user in another allowed company switches context and redirects to detail.
+- Manager opens a link for an authorized subordinate sheet and reaches detail in subordinate read-only/action scope.
+- User opens a link for a sheet outside both direct and subordinate scope and is denied safely.
 - Missing `hojaGastosId` or `targetCompanyId` fails safely.
 - User without target company or sheet access is denied safely.
 - Final success URL is `/Gastos/ExpenseSheetDetail?hojaGastosId={id}`.

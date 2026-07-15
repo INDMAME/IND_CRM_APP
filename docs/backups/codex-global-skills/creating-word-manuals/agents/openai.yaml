@@ -1,0 +1,5 @@
+interface:
+  display_name: "Creating Word Manuals"
+  short_description: "Create and safely format professional Word manuals"
+  brand_color: "#00296B"
+  default_prompt: "Use $creating-word-manuals to create or safely reformat a professional Microsoft Word manual."

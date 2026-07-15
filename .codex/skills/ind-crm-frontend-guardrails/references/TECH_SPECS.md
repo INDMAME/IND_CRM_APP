@@ -60,8 +60,8 @@
 - `AllowSelfManagement` is company-scoped and must come from the selected company in Entra context.
 - `_Layout.cshtml` injects this value into `window.__IND_ALLOW_SELF_MANAGEMENT__`, and React must consume it through `AuthProvider` -> `useAuthContext().allowSelfManagement`.
 - For Gastos context and React/session cache keys, use a composite scope `entraOid + companyId` (same user in different companies must never share cache entries).
-- `subordinates` must be loaded as part of the Entra context bootstrap right after login context resolution for the selected company.
-- If `subordinates` is missing at runtime, run one automatic recovery call to `/api/crm/expensesheets/subordinates` and persist the result in the same `entraOid + companyId` scope.
+- `subordinates` is loaded during the Gastos management bootstrap after authenticated context is available for the selected company, not as an unconditional login-side call.
+- A valid `entraOid + companyId` cache may hydrate the UI first. The bootstrap still refreshes `/api/crm/expensesheets/subordinates`; if the refresh fails, it keeps the cached list.
 
 ## Module data visibility and record-level security
 - Standard endpoint: `/api/crm/data-visibility/visible-users?appCode={appCode}&moduleCode={moduleCode}&includeCrmUserId={true|false}`.
@@ -168,4 +168,4 @@
 - Legacy JS must be migrated into `Web/wwwroot/react/src/legacy` as TS and compiled.
 
 ## Last updated
-- 2026-06-30
+- 2026-07-13

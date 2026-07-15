@@ -1,5 +1,7 @@
 # Expense Ticket Quick Create Prompts
 
+> Historical implementation prompts. The composite quick-create endpoint is implemented and is the active flow. The current web supports partial ticket state returned by that endpoint and does not automatically fall back to the former client-side multi-call flow.
+
 ## Prompt 1: upstream API project
 
 ```text

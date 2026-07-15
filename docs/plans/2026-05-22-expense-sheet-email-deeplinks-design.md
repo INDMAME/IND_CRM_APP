@@ -1,5 +1,7 @@
 # Expense Sheet Email Deep Links and Notifications
 
+> Historical design document. It is not the current implementation source of truth. Use `docs/expense-sheet-email-link-resolver-2026-05-25.md` for the as-built resolver, including authorized subordinate resolution.
+
 Date: 2026-05-27
 Scope: `IND_CRM_APP` web resolver alignment with iteration 1 documents.
 Iteration source: `C:\INDProjects\IND_INTERNAL_API\docs\*_iteracion1.md`

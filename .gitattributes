@@ -64,3 +64,6 @@
 
 # Keep git hooks with LF line endings so shell execution is stable.
 .githooks/* text eol=lf
+
+# Preserve archived skill files byte-for-byte, including upstream Markdown hard breaks.
+docs/backups/codex-global-skills/** -whitespace

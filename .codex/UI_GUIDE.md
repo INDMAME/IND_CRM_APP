@@ -102,7 +102,7 @@
 - Before create/update/delete: show one confirm modal.
 - Confirm modal: use dumb `components/commons/ConfirmModal.tsx` and show spinner inside modal while request runs.
 - On success: close modal, then show IND action mark only, then optional redirect.
-- On error: show inline error message, no action mark.
+- On error: keep the confirmation flow visible, show the inline error message, and flash the `errorProcess` action mark.
 - Action mark API:
   - `window.IND.flashActionMark({ type: 'okProcess'|'okDelProcess'|'errorProcess'|'warningProcess', durationMs })`
 - Delete success uses `okDelProcess` (same check icon and green color as `okProcess`).
@@ -146,4 +146,4 @@
 - Transcription uses `/Visitas/TranscribeSpeech` and replaces textarea text.
 
 ## Last updated
-- 2026-07-01
+- 2026-07-13

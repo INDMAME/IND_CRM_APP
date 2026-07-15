@@ -1,5 +1,7 @@
 # Prompt for Codex: Global Graph Mail Transport in IND_INTERNAL_API
 
+> Historical implementation prompt. It is not a current functional or technical source of truth. Verify the current repositories and deployed mail transport before reuse.
+
 Use this prompt in project `C:\INDProjects\IND_INTERNAL_API`.
 
 Date: 2026-05-26

@@ -1,6 +1,8 @@
 # Prompt for Codex: Expense Sheet Email Deep-Link Resolver in IND_CRM_APP
 
-Local consolidated copy for IND_CRM_APP. Use this `_local.md` file as the local source of truth when comparing future prompt versions copied from other projects.
+> Historical implementation prompt. It is not a current functional or technical source of truth. Use `docs/expense-sheet-email-link-resolver-2026-05-25.md` for the as-built web resolver.
+
+Local consolidated copy for IND_CRM_APP. Use this `_local.md` file only when comparing historical prompt versions copied from other projects.
 
 Use this prompt in project `C:\INDProjects\IND_CRM_APP`.
 

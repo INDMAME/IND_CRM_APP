@@ -1,0 +1,211 @@
+{
+  "$schemaVersion": 1,
+  "title": "Manual de usuario de la aplicaci\u00f3n web CRM",
+  "author": "INSERTEC",
+  "language": "es-ES",
+  "fontFamily": "Aptos",
+  "toc": true,
+  "tocTitle": "Contenido",
+  "tocPlaceholder": "Abra este documento en Microsoft Word y actualice el campo para generar el \u00edndice.",
+  "pageNumbers": true,
+  "palette": {
+    "primary": "00296B",
+    "deep": "001F4D",
+    "secondary": "244C82",
+    "body": "1F437D",
+    "surface": "F8FAFC",
+    "readonlySurface": "F1F5F9",
+    "pageBackground": "F5F6F7",
+    "border": "E2E8F0",
+    "strongDivider": "CBD5E1",
+    "muted": "64748B",
+    "draft": "94A3B8",
+    "requested": "F59E0B",
+    "approved": "22C55E",
+    "rejected": "EF4444",
+    "paid": "00296B",
+    "white": "FFFFFF"
+  },
+  "cover": {
+    "organization": "INSERTEC",
+    "product": "Aplicaci\u00f3n web CRM",
+    "label": "MANUAL DE USUARIO",
+    "title": "Gesti\u00f3n de hojas de gastos",
+    "subtitle": "Gu\u00eda paso a paso para usuarios",
+    "version": "Versi\u00f3n 01",
+    "owner": "Responsable: Departamento de Sistemas",
+    "date": "15 de julio de 2026"
+  },
+  "content": [
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "1. Introducci\u00f3n"
+    },
+    {
+      "type": "paragraph",
+      "runs": [
+        {
+          "text": "Este manual explica c\u00f3mo crear y enviar una "
+        },
+        {
+          "text": "Hoja de gastos",
+          "bold": true,
+          "color": "primary"
+        },
+        {
+          "text": " desde el navegador. No se necesitan conocimientos t\u00e9cnicos previos."
+        }
+      ]
+    },
+    {
+      "type": "callout",
+      "kind": "info",
+      "title": "ALCANCE DEL MANUAL",
+      "text": "Las opciones disponibles pueden variar seg\u00fan el perfil y los permisos del usuario."
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "1.1 Antes de comenzar"
+    },
+    {
+      "type": "bulletList",
+      "items": [
+        "Compruebe que dispone de conexi\u00f3n a Internet.",
+        {
+          "runs": [
+            {
+              "text": "Tenga preparado su "
+            },
+            {
+              "text": "usuario y contrase\u00f1a",
+              "bold": true
+            },
+            {
+              "text": "."
+            }
+          ]
+        },
+        {
+          "text": "Pida ayuda a su responsable si no puede iniciar sesi\u00f3n.",
+          "level": 1
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "2. Crear una hoja de gastos"
+    },
+    {
+      "type": "heading",
+      "level": 2,
+      "text": "2.1 Abrir la pantalla"
+    },
+    {
+      "type": "numberedList",
+      "items": [
+        {
+          "runs": [
+            {
+              "text": "Abra el "
+            },
+            {
+              "text": "navegador",
+              "bold": true,
+              "color": "primary"
+            },
+            {
+              "text": "."
+            }
+          ]
+        },
+        {
+          "runs": [
+            {
+              "text": "Seleccione el men\u00fa "
+            },
+            {
+              "text": "Gastos",
+              "bold": true,
+              "color": "primary"
+            },
+            {
+              "text": "."
+            }
+          ]
+        },
+        {
+          "runs": [
+            {
+              "text": "Pulse el bot\u00f3n "
+            },
+            {
+              "text": "Nueva hoja de gastos",
+              "bold": true,
+              "color": "primary"
+            },
+            {
+              "text": "."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "screenshotPlaceholder",
+      "id": "IMG-01",
+      "label": "CAPTURA PENDIENTE",
+      "description": "Insertar una captura de la pantalla de Gastos con el bot\u00f3n Nueva hoja de gastos visible.",
+      "purpose": "Mostrar d\u00f3nde debe pulsar el usuario.",
+      "screenState": "Lista de hojas de gastos abierta y sin men\u00fas superpuestos.",
+      "safeDataRule": "Ocultar nombres, importes y cualquier dato personal o financiero real.",
+      "caption": "Figura 1. Bot\u00f3n para crear una hoja de gastos.",
+      "altText": "Pantalla de Gastos con el bot\u00f3n Nueva hoja de gastos resaltado.",
+      "heightTwips": 2400
+    },
+    {
+      "type": "callout",
+      "kind": "warning",
+      "title": "CAMBIOS SIN GUARDAR",
+      "runs": [
+        {
+          "text": "No cierre la pesta\u00f1a antes de pulsar "
+        },
+        {
+          "text": "Guardar",
+          "bold": true
+        },
+        {
+          "text": ". Si la cierra, puede perder la informaci\u00f3n introducida."
+        }
+      ]
+    },
+    {
+      "type": "heading",
+      "level": 3,
+      "text": "2.1.1 Resultado esperado"
+    },
+    {
+      "type": "callout",
+      "kind": "success",
+      "title": "RESULTADO ESPERADO",
+      "text": "La aplicaci\u00f3n muestra la nueva hoja en estado Borrador."
+    },
+    {
+      "type": "pageBreak"
+    },
+    {
+      "type": "heading",
+      "level": 1,
+      "text": "3. Resoluci\u00f3n de problemas"
+    },
+    {
+      "type": "callout",
+      "kind": "security",
+      "title": "SEGURIDAD",
+      "text": "No comparta su contrase\u00f1a. Si sospecha que otra persona la conoce, comun\u00edquelo al equipo de soporte."
+    }
+  ]
+}

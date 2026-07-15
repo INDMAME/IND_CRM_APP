@@ -25,6 +25,8 @@
 |   |-- Resources/                      // Localization resources (.resx)
 |   `-- Services/                       // API clients and business services
 |-- docs/                               // Project documentation (external)
+|   `-- backups/                        // Version-controlled tool snapshots
+|       `-- codex-global-skills/        // Backup only; not an active project-local skill path
 |-- Logs/                               // Runtime logs (local/IIS)
 |-- Properties/                         // ASP.NET Core properties (launchSettings)
 |-- scripts/                            // Build scripts (esbuild entry map, codex sync)
@@ -60,6 +62,9 @@
 |               |   |   |-- hooks/      // Gastos cross-page hooks
 |               |   |   |-- line/       // Expense line detail page and hooks
 |               |   |   |-- list/       // Expense sheets list page and hooks
+|               |   |   |-- tickets/    // Expense ticket list, detail, and ticket-line pages
+|               |   |   |   |-- detail/ // Expense ticket detail page and hooks
+|               |   |   |   `-- line/   // Expense ticket line detail page and hooks
 |               |   |   `-- utils/      // Gastos helpers, adapters, payload builders
 |               |   |-- system/         // System tools (TextEditor, AudioRecorder)
 |               |   `-- visitas/        // Visitas module pages
@@ -106,4 +111,4 @@
 17) Promote a module component to shared only when at least two modules reuse the same contract and style behavior.
 
 ## Last updated
-- 2026-03-18
+- 2026-07-15

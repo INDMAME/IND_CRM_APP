@@ -83,8 +83,8 @@
     - Add Authorization: Bearer {token} header to HTTP calls to IND_CRM_API.
 - Controllers must not manipulate the token directly, they just call the authenticated services.
 - For Gastos frontend/session caches, scope keys must always include both `entraOid` and selected `companyId`.
-- Subordinates bootstrap rule: after Entra context is resolved on login, load `/api/crm/expensesheets/subordinates` for the selected company and cache it in the same `entraOid + companyId` scope.
-- If cached subordinates data is missing when needed, trigger one automatic fallback fetch before rendering subordinate-dependent filters/actions.
+- Subordinates bootstrap rule: when a Gastos management `AuthProvider` mounts after authenticated context is available, load the expense context and refresh `/api/crm/expensesheets/subordinates` for the selected company in the same `entraOid + companyId` scope.
+- A valid scoped cache may render first, but the provider always attempts an API refresh. If that refresh fails, keep the cached subordinate list instead of clearing it.
 
 ## Record-level security and module data visibility
 
@@ -378,4 +378,4 @@ Required `merge a prod` workflow:
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-06-10
+- 2026-07-13
