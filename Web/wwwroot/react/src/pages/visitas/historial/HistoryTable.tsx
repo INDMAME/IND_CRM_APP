@@ -174,7 +174,7 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
                 </p>
               ) : null}
               {showDescription ? (
-                <p className="timeline-desc-text" data-fulltext={item.fullDesc || item.description}>
+                <p className="timeline-desc-text ellipsis" data-fulltext={item.fullDesc || item.description}>
                   {item.description || noDataText}
                 </p>
               ) : null}
