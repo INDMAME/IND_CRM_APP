@@ -16,6 +16,7 @@ export type TimelineItem = {
   description: string;
   fullName: string;
   fullDesc: string;
+  ownerText: string;
   hasDescription: boolean;
   dateParts: TimelineDateParts;
   isNoData: boolean;
@@ -133,6 +134,7 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
       const key = item.id || item.recId?.toString() || `timeline-${index}`;
       const isClickable = !item.isNoData && !!item.id;
       const showDescription = item.hasDescription || item.isNoData;
+      const accessibleName = [item.fullName || item.name || noDataText, item.ownerText].filter(Boolean).join(", ");
       return (
         <div key={key} className="timeline-item">
           <div
@@ -146,7 +148,7 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
             data-link-id={isClickable ? item.id : ""}
             role={isClickable ? "button" : undefined}
             tabIndex={isClickable ? 0 : undefined}
-            aria-label={isClickable ? (item.fullName || item.name || noDataText) : undefined}
+            aria-label={isClickable ? accessibleName : undefined}
             onKeyDown={isClickable
               ? (event) => {
                 if (event.key === "Enter" || event.key === " ") {
@@ -163,6 +165,14 @@ const HistoryTable = ({ items, noDataText, errorMessage, onNavigate }: Props) =>
             </div>
             <div className="timeline-card__content flex-1 py-3 px-4">
               <div className="timeline-name" data-fulltext={item.fullName || item.name}>{item.name}</div>
+              {item.ownerText ? (
+                <p
+                  className="visit-card__owner m-0 text-left text-[11px] leading-[1.2] text-[#00296bb8] normal-case tracking-normal whitespace-normal break-words"
+                  data-owner-text={item.ownerText}
+                >
+                  {item.ownerText}
+                </p>
+              ) : null}
               {showDescription ? (
                 <p className="timeline-desc-text" data-fulltext={item.fullDesc || item.description}>
                   {item.description || noDataText}
