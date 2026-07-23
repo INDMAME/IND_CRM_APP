@@ -70,6 +70,7 @@ export type EntraContextHeaderDto = {
   Success: boolean;
   Message: string;
   AxUserId: string;
+  UserName?: string;
   UserActive: boolean;
   AppActive: boolean;
   DefaultCompany: string;
@@ -122,6 +123,7 @@ export type ExpenseSheetListApiRequest = {
   currencyCode?: string;
   expenseSheetStatus?: number | null;
   reimbursableExpense?: number | null;
+  // True means sheets for the X-IND-AxUserId user plus direct subordinates.
   includeSubordinates?: boolean;
 };
 

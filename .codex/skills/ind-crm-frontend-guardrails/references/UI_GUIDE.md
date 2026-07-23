@@ -20,6 +20,20 @@
 - Global rounding standard: 5px for inputs, buttons, and containers (use `rounded-md` or `rounded-[5px]`).
 - Avoid `rounded-full` unless a component explicitly requires a circle.
 
+## Responsive mobile and desktop contract
+- Treat mobile as the regression baseline. Preserve base classes, DOM and tab order, spacing, widths, navigation, touch behavior, and interactions unless the request explicitly includes a mobile change.
+- Apply desktop presentation from `lg` (1024px) with breakpoint-scoped classes or responsive component props. Do not duplicate controls to obtain a different desktop layout.
+- Keep one logical reading order. Desktop grids may reposition visual groups, but must not change mobile reading or keyboard navigation order.
+- Reuse the centered content contract. When no page-specific rule exists, start forms and filter stacks with `w-full max-w-3xl mx-auto`; widen lists or tables only when their content requires it.
+- Preserve established full-width behavior on mobile. On desktop:
+  - Anchor dropdown and combobox overlays to their control and cap their default width at 480px through the responsive `FloatingList` strategy.
+  - Keep date and calendar overlays viewport-safe with a default maximum width of 640px.
+  - Use `PageBottomActions` with `layoutVariant="centered-form"` for form actions; keep a single desktop action centered and capped at 480px.
+  - Center standard button groups inside their owning content column instead of spanning the viewport.
+- When an assistant launcher coexists with a primary right-side FAB, use `AssistantChatShell` with `desktopPlacement="viewport-start"` so the assistant stays on the desktop left and the primary FAB stays on the right. Preserve current mobile placement and safe-area behavior.
+- Do not change viewport metadata or the current `user-scalable=no` policy unless explicitly requested.
+- Treat visual acceptance of this responsive contract as manual. Do not create or run automated screenshots, pixel diffs, visual regression, or browser automation solely to judge appearance unless explicitly requested.
+
 ## Shared UI rules
 - Overflow preview: show centered preview tooltip only if text overflows.
 - Read-only guard: add `ind-readonly-surface` and block copy/paste/select/contextmenu.
@@ -146,4 +160,4 @@
 - Transcription uses `/Visitas/TranscribeSpeech` and replaces textarea text.
 
 ## Last updated
-- 2026-07-13
+- 2026-07-23

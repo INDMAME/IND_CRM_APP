@@ -183,6 +183,13 @@
 
 - See `.codex/UI_GUIDE.md` for overflow preview, read-only guard, dropdowns, and action mark rules.
 
+## Manual visual design validation policy
+
+- Treat appearance-only acceptance as manual validation by the user.
+- Do not create or run automated screenshot, pixel-diff, visual-regression, computer-vision, or browser-automation checks solely to judge spacing, centering, colors, sizing, or responsive presentation unless the user explicitly requests them.
+- Keep automated validation focused on code, compilation, types, static analysis, logic, contracts, permissions, navigation, events, and functional behavior.
+- When a design review is needed, provide a concise manual checklist instead of executing an automated visual test.
+
 ## How Codex should work
 
 - Refactoring:
@@ -378,4 +385,4 @@ Required `merge a prod` workflow:
 - Paginacion (historial): botones Tailwind (`rounded-lg border`, activo bg primary; contenedor `flex gap-2`).
 
 ## Last updated
-- 2026-07-13
+- 2026-07-23

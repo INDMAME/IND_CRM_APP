@@ -6,6 +6,7 @@ export const useTopbar = (
   canGoNext: boolean,
   onNext: () => void,
   onPrev: () => void,
+  onCancel: () => void,
   busy = false,
   canSubmitStep2 = true,
   canAccess = true
@@ -13,6 +14,7 @@ export const useTopbar = (
   useEffect(() => {
     const forward = document.getElementById("globalForwardBtn") as HTMLButtonElement | null;
     const back = document.getElementById("globalBackBtn") as HTMLButtonElement | null;
+    const cancel = document.getElementById("visitCreateCancelBtn") as HTMLButtonElement | null;
     const forwardIcon = document.getElementById("globalForwardIcon");
     const createIcon = document.getElementById("globalCreateIcon");
 
@@ -46,5 +48,17 @@ export const useTopbar = (
       back.disabled = !showBack || busy;
       back.onclick = showBack ? () => onPrev() : null;
     }
-  }, [step, canGoNext, onNext, onPrev, busy, canSubmitStep2, canAccess]);
+    if (cancel) {
+      const showCancel = canAccess;
+      cancel.style.visibility = showCancel ? "visible" : "hidden";
+      cancel.disabled = !showCancel || busy;
+      cancel.onclick = showCancel && !busy ? () => onCancel() : null;
+    }
+
+    return () => {
+      if (forward) forward.onclick = null;
+      if (back) back.onclick = null;
+      if (cancel) cancel.onclick = null;
+    };
+  }, [step, canGoNext, onNext, onPrev, onCancel, busy, canSubmitStep2, canAccess]);
 };

@@ -50,6 +50,8 @@ type ExpenseFiltersPanelProps = {
   sheetLookupManagedUserId: string;
   includeSubordinates: boolean;
   managedUsers: AuthManagedUser[];
+  currentAxUserId: string;
+  currentUserName: string;
   showManagedUserFilter: boolean;
   managedUserFilterDisabled: boolean;
   managedUserAllOption?: ExpenseSelectOption | null;
@@ -82,6 +84,8 @@ const ExpenseFiltersPanel = ({
   sheetLookupManagedUserId,
   includeSubordinates,
   managedUsers,
+  currentAxUserId,
+  currentUserName,
   showManagedUserFilter,
   managedUserFilterDisabled,
   managedUserAllOption = null,
@@ -129,13 +133,15 @@ const ExpenseFiltersPanel = ({
           />
         ) : null}
 
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${showManagedUserFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-2`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${showManagedUserFilter ? "lg:grid-cols-3" : "lg:grid-cols-2"} gap-2`}>
           {showManagedUserFilter ? (
             <ExpenseManagedUserFilterSelect
               label={indT("ExpenseSheets_Filter_User", "User")}
               placeholder={indT("ExpenseSheets_Filter_User", "User")}
               value={managedUserId}
               users={managedUsers}
+              currentAxUserId={currentAxUserId}
+              currentUserName={currentUserName}
               allOption={managedUserAllOption}
               onChange={onManagedUserIdChange}
               disabled={managedUserFilterDisabled}

@@ -91,6 +91,7 @@ const ExpenseSheetsAssistant = ({ context, isListLoading }: ExpenseSheetsAssista
       noContextTitle={assistantCopy.noContextTitle}
       noContextBody={assistantCopy.noContextBody}
       noContextMessage={assistantCopy.noContextMessage}
+      desktopPlacement="viewport-start"
       bottomInset={FLOATING_BOTTOM_INSET}
       botImageSrc={BOT_IMAGE_SRC}
       contextNotice={contextNotice}

@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "./FloatingList.tsx";
 import { ChevronDownSvg, ChevronUpSvg } from "./chevrons.tsx";
 import { useOutsideClick } from "../../hooks/useOutsideClick.ts";
 import { classNames } from "../../utils/classNames.ts";
 import { indT } from "../../utils/indI18n.ts";
+import type { FloatingWidthStrategy } from "../../hooks/useFloatingPosition.ts";
 
 type RawOption =
   | {
@@ -23,6 +24,7 @@ type NormalizedOption = {
 };
 
 const EMPTY_OPTION: NormalizedOption = { value: "", text: "" };
+const DESKTOP_DROPDOWN_MAX_WIDTH_PX = 480;
 
 const normalizeOption = (o: RawOption): NormalizedOption => {
   if (Array.isArray(o)) {
@@ -63,6 +65,8 @@ type SelectComboboxProps = {
   selectedTextMode?: "text" | "value";
   dropdownExpandPx?: number;
   dropdownMinWidthPx?: number;
+  dropdownWidthStrategy?: FloatingWidthStrategy;
+  /** @deprecated Use dropdownWidthStrategy for explicit responsive behavior. */
   dropdownUseAvailableWidth?: boolean;
   dropdownMaxHeightClass?: string;
   dropdownPlacement?: "bottom" | "top";
@@ -79,6 +83,8 @@ type SelectComboboxProps = {
   selectedInputPaddingClassName?: string;
   panelStyle?: React.CSSProperties;
   clearOnEmptyInput?: boolean;
+  /** Selects the complete editable value whenever the input receives focus or is clicked. */
+  selectTextOnFocus?: boolean;
 };
 
 // Reusable select combobox with optional portal rendering for the list.
@@ -105,7 +111,8 @@ const SelectCombobox = ({
   selectedTextMode = "text",
   dropdownExpandPx = 0,
   dropdownMinWidthPx = 0,
-  dropdownUseAvailableWidth = true,
+  dropdownWidthStrategy,
+  dropdownUseAvailableWidth,
   dropdownMaxHeightClass = "max-h-72",
   dropdownPlacement = "bottom",
   selectedIconClassName = "h-4 w-4",
@@ -121,6 +128,7 @@ const SelectCombobox = ({
   selectedInputPaddingClassName = "pl-9",
   panelStyle,
   clearOnEmptyInput = false,
+  selectTextOnFocus = false,
 }: SelectComboboxProps) => {
   const assignInputRef = (node: HTMLInputElement | null) => {
     if (!inputRef) return;
@@ -174,15 +182,18 @@ const SelectCombobox = ({
     }
   }
 
-  const clearManualValue = (nextOpen: boolean, showNotFound: boolean) => {
-    setQuery("");
-    setActiveIndex(0);
-    setShowNotFoundState(showNotFound);
-    setOpen(nextOpen);
-    onChange("");
-  };
-
-  useOutsideClick([containerRef, listRef], () => {
+  const clearManualValue = useCallback(
+    (nextOpen: boolean, showNotFound: boolean) => {
+      setQuery("");
+      setActiveIndex(0);
+      setShowNotFoundState(showNotFound);
+      setOpen(nextOpen);
+      onChange("");
+    },
+    [onChange]
+  );
+  const outsideClickRefs = useMemo(() => [containerRef, listRef], []);
+  const handleOutsideClick = useCallback(() => {
     if (readOnlyMode) {
       setQuery(null);
       setShowNotFoundState(false);
@@ -197,7 +208,8 @@ const SelectCombobox = ({
 
     setShowNotFoundState(false);
     setOpen(false);
-  });
+  }, [clearManualValue, query, readOnlyMode]);
+  useOutsideClick(outsideClickRefs, handleOutsideClick);
 
   useEffect(() => {
     if (String(value ?? "").trim()) {
@@ -293,6 +305,8 @@ const SelectCombobox = ({
   const showNotFoundRow = showNotFoundState || (!!query && !!query.trim() && filtered.length === 0);
   const normalizedDropdownExpandPx = Number.isFinite(dropdownExpandPx) ? Math.max(0, dropdownExpandPx) : 0;
   const normalizedDropdownMinWidthPx = Number.isFinite(dropdownMinWidthPx) ? Math.max(0, dropdownMinWidthPx) : 0;
+  const resolvedDropdownWidthStrategy =
+    dropdownWidthStrategy ?? (dropdownUseAvailableWidth === false ? "anchor" : "responsive");
 
   useEffect(() => {
     if (!lockDropdownWidthOnFirstOpen) return;
@@ -442,8 +456,16 @@ const SelectCombobox = ({
               setOpen(true);
             }}
             onKeyDown={handleKeyDown}
-            onFocus={() => {
+            onFocus={(event) => {
               if (!readOnlyMode) openListAtCurrentSelection();
+              if (selectTextOnFocus && !readOnlyMode && allowTextInput) {
+                event.currentTarget.select();
+              }
+            }}
+            onClick={(event) => {
+              if (selectTextOnFocus && !readOnlyMode && allowTextInput) {
+                event.currentTarget.select();
+              }
             }}
             placeholder={placeholder}
             readOnly={readOnlyMode || !allowTextInput}
@@ -506,14 +528,18 @@ const SelectCombobox = ({
             anchorRef={boxRef}
             open={listOpen}
             zIndex={360000}
-            fixedWidthPx={dropdownUseAvailableWidth ? undefined : resolvedDropdownWidthPx ?? undefined}
+            fixedWidthPx={resolvedDropdownWidthPx ?? undefined}
+            minWidthPx={normalizedDropdownMinWidthPx}
             panelStyle={panelStyle}
             maxHeightClass={dropdownMaxHeightClass}
             role="listbox"
             roundedClass="rounded-[var(--radius-xl)]"
             portalClassName={portalClassName}
             panelClassName={panelClassName}
-            matchAvailableWidth={dropdownUseAvailableWidth}
+            widthStrategy={resolvedDropdownWidthStrategy}
+            desktopMaxWidthPx={
+              resolvedDropdownWidthStrategy === "viewport" ? undefined : DESKTOP_DROPDOWN_MAX_WIDTH_PX
+            }
           >
             {listBody}
           </FloatingList>

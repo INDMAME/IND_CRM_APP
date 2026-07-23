@@ -9,13 +9,14 @@ import ExpenseSheetDetailOverlays from "./ExpenseSheetDetailOverlays.tsx";
 import { bootstrapExpenseApiAuth, useExpenseSheetDetailPageController } from "./useExpenseSheetDetailPageController.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
-import { DEFAULT_EXPENSE_STATUS_FILTER } from "../constants/expenseStatusCatalog.ts";
-import { safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { safeText } from "../utils/expenseUiUtils.ts";
 import { consumeExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreatedReturnContext.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
+import { createInitialExpenseSheetsFilterSnapshot } from "../list/expenseFilterSnapshot.ts";
 import { setExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 
-const DETAIL_FAB_BOTTOM_WITH_ACTION_BAR = 176;
+const DETAIL_FAB_BASELINE_BOTTOM_PX = 24;
+const DETAIL_FAB_WITH_STATUS_ACTION_BAR_BOTTOM_PX = 110;
 const EXPENSE_SHEETS_LIST_URL = "/Gastos/ExpenseSheets";
 
 // Applies the server-resolved acting user for email deep links before detail API calls run.
@@ -30,6 +31,9 @@ const ExpenseSheetDetailPageContent = () => {
   const { currentAxUserId } = useAuthContext();
   const { readCachedState, saveCachedState } = useExpenseSheetsFilterCache();
   const createdSheetReturnIdRef = React.useRef("");
+  const detailFabBottom = controller.showStatusActionBar
+    ? DETAIL_FAB_WITH_STATUS_ACTION_BAR_BOTTOM_PX
+    : DETAIL_FAB_BASELINE_BOTTOM_PX;
 
   React.useEffect(() => {
     const createdContext = consumeExpenseSheetCreatedReturnContext(controller.sheetId);
@@ -40,23 +44,8 @@ const ExpenseSheetDetailPageContent = () => {
     const createdSheetId = safeText(createdSheetReturnIdRef.current);
     if (!createdSheetId) return false;
 
-    const today = startOfDay(new Date());
-    const fromDate = new Date(today);
-    fromDate.setDate(today.getDate() - 89);
-
     saveCachedState({
-      filters: {
-        fromDate: toIsoDate(fromDate),
-        toDate: toIsoDate(today),
-        projectId: "",
-        hojaGastosId: createdSheetId,
-        currencyCode: "",
-        managedUserId: safeText(currentAxUserId),
-        includeSubordinates: false,
-        statusFilter: DEFAULT_EXPENSE_STATUS_FILTER,
-        exchangeRateMode: null,
-        filter: createdSheetId,
-      },
+      filters: createInitialExpenseSheetsFilterSnapshot(currentAxUserId),
       page: 1,
       scrollY: 0,
       items: [],
@@ -266,7 +255,7 @@ const ExpenseSheetDetailPageContent = () => {
           ariaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rápidas")}
           size={76}
           right={16}
-          bottom={controller.showStatusActionBar ? DETAIL_FAB_BOTTOM_WITH_ACTION_BAR : 24}
+          bottom={detailFabBottom}
           menuAriaLabel={indT("ExpenseSheets_Fab_Actions", "Acciones rápidas")}
           menuItems={controller.fabMenuItems}
         />

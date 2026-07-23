@@ -16,6 +16,18 @@
     overflow: visible;
 }
 
+@media (min-width: 1024px) {
+    .visitas-body #content.content.shifted {
+        margin-left: 260px !important;
+    }
+
+    .visita-page {
+        max-width: 48rem;
+        margin-right: auto;
+        margin-left: auto;
+    }
+}
+
 /* ================================
    Date Picker (shared DRP style)
    Matches Historial date range picker.

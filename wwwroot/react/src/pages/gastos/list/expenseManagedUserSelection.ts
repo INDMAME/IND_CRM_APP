@@ -14,20 +14,33 @@ export const isSameExpenseManagedUser = (left: unknown, right: unknown): boolean
 // Ensures the current user remains selectable together with direct subordinates.
 export const ensureCurrentExpenseManagedUserInList = (
   users: AuthManagedUser[],
-  currentAxUserId: unknown
+  currentAxUserId: unknown,
+  currentUserName: unknown = ""
 ): AuthManagedUser[] => {
   const normalizedCurrent = normalizeUserId(currentAxUserId);
+  const normalizedCurrentName = normalizeUserId(currentUserName);
   const normalizedUsers = Array.isArray(users) ? users : [];
   if (!normalizedCurrent) return normalizedUsers;
   if (normalizedUsers.some((entry) => isSameExpenseManagedUser(entry.axUserId, normalizedCurrent))) {
-    return normalizedUsers;
+    return normalizedUsers.map((entry) => {
+      if (!isSameExpenseManagedUser(entry.axUserId, normalizedCurrent)) {
+        return entry;
+      }
+
+      return {
+        ...entry,
+        name: normalizedCurrentName || normalizeUserId(entry.name) || normalizedCurrent,
+        userName: normalizedCurrentName || entry.userName,
+      };
+    });
   }
 
   return [
     {
       crmUserId: normalizedCurrent,
       axUserId: normalizedCurrent,
-      name: normalizedCurrent,
+      name: normalizedCurrentName || normalizedCurrent,
+      userName: normalizedCurrentName || undefined,
     },
     ...normalizedUsers,
   ];

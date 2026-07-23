@@ -424,6 +424,16 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
                     </svg>
                 </button>
+                @if (isCreate && canCreateVisit)
+                {
+                    <button id="visitCreateCancelBtn" type="button" class="topbar-btn pointer-events-auto"
+                            aria-label="@SR["Common_Cancel"]"
+                            style="padding:0;">
+                        <svg id="visitCreateCancelIcon" xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                }
             }
         </div>
 

@@ -482,18 +482,11 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #canExpenseSheetActorManageOwner
-        #// Valida que el actor recibido desde la web pueda gestionar al propietario de la hoja.
+        #// Validates the exact manager-owner relationship used for expense approval.
         #static server boolean canExpenseSheetActorManageOwner(str 20 _actorUserId,
         #                                                      CRMUserId _ownerCrmUserId)
         #{
-        #    CRMUserId                  actorCrmUserId;
-        #    CRMUsuarioTable            actorUser;
-        #    CRMUsuarioTable            subordinateCrmUser;
-        #    INDPersonaTable            subordinatePersona;
-        #    str                        subordinateList;
-        #    container                  subordinateUsersCon;
-        #    str                        subordinateUserId;
-        #    int                        i;
+        #    CRMUserId actorCrmUserId;
         #    ;
         #
         #    if (!_actorUserId || !_ownerCrmUserId)
@@ -503,38 +496,7 @@ Formatversion: 1
         #    if (!actorCrmUserId || actorCrmUserId == _ownerCrmUserId)
         #        return false;
         #
-        #    actorUser = CRMUsuarioTable::Find(actorCrmUserId);
-        #    if (!actorUser.RecId)
-        #        return false;
-        #
-        #    subordinateList = actorUser.ListaSubordinadosByPerTable();
-        #    if (!subordinateList)
-        #        return false;
-        #
-        #    subordinateUsersCon = Global::str2ConKeepStrings(subordinateList, ',');
-        #    for (i = 1; i <= conLen(subordinateUsersCon); i++)
-        #    {
-        #        subordinateUserId = strLRTrim(strFmt('%1', conPeek(subordinateUsersCon, i)));
-        #        if (!subordinateUserId)
-        #            continue;
-        #
-        #        if (subordinateUserId == _ownerCrmUserId)
-        #            return true;
-        #
-        #        subordinateCrmUser = CRMUsuarioTable::Find(subordinateUserId);
-        #        if (subordinateCrmUser.UserId == _ownerCrmUserId)
-        #            return true;
-        #
-        #        subordinatePersona = INDPersonaTable::Find(subordinateUserId);
-        #        if (subordinatePersona.RecId)
-        #        {
-        #            subordinateCrmUser = subordinatePersona.getCRMUsuarioTable();
-        #            if (subordinateCrmUser.UserId == _ownerCrmUserId)
-        #                return true;
-        #        }
-        #    }
-        #
-        #    return false;
+        #    return CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(actorCrmUserId, _ownerCrmUserId);
         #}
         #
       ENDSOURCE
@@ -2880,6 +2842,13 @@ Formatversion: 1
         #        if (!recipientCrmUserId)
         #            return [INDCRMUtilityService::buildHeader(false, 'Usuario CRM destinatario no encontrado.', conNull()), conNull()];
         #
+        #        if ((eventType == 'ExpenseSheetApproved' || eventType == 'ExpenseSheetRejected')
+        #            && actorCrmUserId != ownerCrmUserId
+        #            && !CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(actorCrmUserId, ownerCrmUserId))
+        #        {
+        #            return [INDCRMUtilityService::buildHeader(false, 'El actor no es un aprobador habilitado para la hoja de gastos.', conNull()), conNull()];
+        #        }
+        #
         #        if (actorCrmUserId && actorCrmUserId == recipientCrmUserId)
         #            return [INDCRMUtilityService::buildHeader(false, 'No se requiere email para hojas autogestionadas.', conNull()), conNull()];
         #
@@ -3073,7 +3042,8 @@ Formatversion: 1
         #            visibleUserIds = [crmUserId];
         #
         #            while select subordinadoTable
-        #                where subordinadoTable.UserIdJefe == crmUserId
+        #                where subordinadoTable.UserIdJefe                    == crmUserId
+        #                   && subordinadoTable.ExcluirAprobacionHojaGastos   == NoYes::No
         #            {
         #                if (subordinadoTable.UserIdSubordinado
         #                    && subordinadoTable.UserIdSubordinado != crmUserId
@@ -3870,7 +3840,10 @@ Formatversion: 1
         #            else
         #                personaTable        = INDPersonaTable::findByCRM(crmUsuarioTableSub.RecId);
         #
-        #            if (!subordinateUserId || !personaTable.UserId || crmUsuarioTable.UserId == crmUsuarioTableSub.UserId)
+        #            if (!subordinateUserId
+        #                || !personaTable.UserId
+        #                || crmUsuarioTable.UserId == crmUsuarioTableSub.UserId
+        #                || !CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(crmUserId, crmUsuarioTableSub.UserId))
         #                continue;
         #
         #            itemCon = [[
@@ -3901,6 +3874,7 @@ Formatversion: 1
         #    DataAreaId                 companyId;
         #    str 20                     axUserId;
         #    CRMUserId                  crmUserId;
+        #    CRMUserId                  subordinateCrmUserId;
         #    CRMUsuarioTable            crmUsuarioTable;
         #    CRMUsuarioSubordinadoTable subordinadoTable;
         #    container                  resultCon, itemCon, subordinateUsersCon;
@@ -3940,6 +3914,10 @@ Formatversion: 1
         #        {
         #            subordinateUserId = strLRTrim(conPeek(subordinateUsersCon, i));
         #            if (!subordinateUserId)
+        #                continue;
+        #
+        #            subordinateCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(subordinateUserId);
+        #            if (!CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(crmUserId, subordinateCrmUserId))
         #                continue;
         #
         #            itemCon = [[strFmt("%1", subordinateUserId), strFmt("%1",CRMUsuarioTable::Find(subordinateUserId).Name)]];
@@ -4513,7 +4491,7 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #resolveExpenseSheetManagerCrmUserIds
-        #// Devuelve todas las jefaturas directas del propietario de la hoja, sin duplicados.
+        #// Returns all eligible direct managers for expense approval, without duplicates.
         #static server container resolveExpenseSheetManagerCrmUserIds(CRMUserId _ownerCrmUserId)
         #{
         #    CRMUsuarioSubordinadoTable subordinadoTable;
@@ -4527,7 +4505,8 @@ Formatversion: 1
         #        return managerCrmUserIds;
         #
         #    while select subordinadoTable
-        #        where subordinadoTable.UserIdSubordinado == _ownerCrmUserId
+        #        where subordinadoTable.UserIdSubordinado             == _ownerCrmUserId
+        #           && subordinadoTable.ExcluirAprobacionHojaGastos   == NoYes::No
         #    {
         #        managerCrmUserId = subordinadoTable.UserIdJefe;
         #        if (!managerCrmUserId || managerCrmUserId == _ownerCrmUserId)
@@ -4933,6 +4912,14 @@ Formatversion: 1
         #
         #    senderCrmUserId    = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(senderUserId);
         #    recipientCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(recipientUserId);
+        #
+        #    if ((eventType == 'ExpenseSheetApproved' || eventType == 'ExpenseSheetRejected')
+        #        && senderCrmUserId != recipientCrmUserId
+        #        && !CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(senderCrmUserId, expenseSheet.UserId))
+        #    {
+        #        warning(strFmt('No se envió email %1 para hoja %2: el actor %3 no es un aprobador habilitado.', eventType, expenseSheet.HojaGastosId, senderCrmUserId));
+        #        return false;
+        #    }
         #
         #    return INDCRMExpenseSheetService::sendExpenseSheetNotificationToRecipient(  expenseSheet,
         #                                                                                eventType,
@@ -5926,7 +5913,7 @@ Formatversion: 1
         #//  - Marks ticket as ProcessedByAI = 1.
         #// Input:
         #//  - _data[1] = CompanyId
-        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional), ticketDate(optional), ticketTime(optional)]
+        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional), ticketDate(optional), ticketTime(optional), amountMST(optional), exchRate(optional)]
         #//  - _data[3] = linesIn  = container of lines [lineDescr, qty, price, lineTotal(optional)]
         #// Output:
         #//  - [header, linesOutRecIds]
@@ -5955,6 +5942,10 @@ Formatversion: 1
         #    str                ticketDateStr;
         #    date               ticketDate;
         #    int                ticketTime;
+        #    real               amountMST;
+        #    real               exchRate;
+        #    str 32             amountMSTRaw;
+        #    str 32             exchRateRaw;
         #
         #    str                lineDescr;
         #    real               qty;
@@ -5968,6 +5959,8 @@ Formatversion: 1
         #    boolean            hasNormalizedJson;
         #    boolean            hasTicketDate;
         #    boolean            hasTicketTime;
+        #    boolean            hasAmountMST;
+        #    boolean            hasExchRate;
         #
         #    int                i;
         #    int                lineCount;
@@ -6044,6 +6037,26 @@ Formatversion: 1
         #        hasTicketTime = true;
         #    }
         #
+        #    if (conLen(headerIn) >= 15)
+        #    {
+        #        amountMSTRaw = strLwr(strLRTrim(strFmt('%1', conPeek(headerIn, 15))));
+        #        if (amountMSTRaw && amountMSTRaw != 'null')
+        #        {
+        #            amountMST = conPeek(headerIn, 15);
+        #            hasAmountMST = true;
+        #        }
+        #    }
+        #
+        #    if (conLen(headerIn) >= 16)
+        #    {
+        #        exchRateRaw = strLwr(strLRTrim(strFmt('%1', conPeek(headerIn, 16))));
+        #        if (exchRateRaw && exchRateRaw != 'null')
+        #        {
+        #            exchRate = conPeek(headerIn, 16);
+        #            hasExchRate = true;
+        #        }
+        #    }
+        #
         #    hasTotalAmount = true;
         #
         #    if (!axUserId)
@@ -6082,6 +6095,12 @@ Formatversion: 1
         #    {
         #        return [INDCRMUtilityService::buildHeader(false, strFmt('TicketTime invalido: %1 (segundos 0..86399).', ticketTime), conNull()), conNull()];
         #    }
+        #
+        #    if (hasAmountMST && amountMST < 0)
+        #        return [INDCRMUtilityService::buildHeader(false, strFmt('AmountMST invalido: %1.', amountMST), conNull()), conNull()];
+        #
+        #    if (hasExchRate && exchRate < 0)
+        #        return [INDCRMUtilityService::buildHeader(false, strFmt('ExchRate invalido: %1.', exchRate), conNull()), conNull()];
         #
         #    lineCount = conLen(linesIn);
         #    if (lineCount <= 0)
@@ -6249,6 +6268,14 @@ Formatversion: 1
         #                ticketHeader.TotalAmount = totalAmount;
         #            else
         #                ticketHeader.TotalAmount = linesTotalAmount;
+        #
+        #            if (hasAmountMST)
+        #                ticketHeader.AmountMST = amountMST;
+        #
+        #            if (hasExchRate)
+        #                ticketHeader.ExchRate = exchRate;
+        #            else if (hasAmountMST)
+        #                ticketHeader.ExchRate = ticketHeader.calcExchRateFromAmountMST();
         #
         #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
         #            if (msg)

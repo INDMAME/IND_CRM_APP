@@ -123,9 +123,9 @@ const ExpenseTicketsFiltersPanel = ({
   const locale = document?.documentElement?.lang || "es-ES";
   const showInlineDateSummary = !showManualDateFilter && !!fromDate && !!toDate;
   const showStatusFilter = mode === "general";
-  const desktopColumnsClassName = showManagedUserFilter
-    ? (showStatusFilter ? "lg:grid-cols-6" : "lg:grid-cols-5")
-    : (showStatusFilter ? "lg:grid-cols-5" : "lg:grid-cols-4");
+  const desktopColumnsClassName = showManagedUserFilter || showStatusFilter
+    ? "lg:grid-cols-3"
+    : "lg:grid-cols-2";
 
   return (
     <div className="filter-card filter-card--expanded p-2 sm:p-2.5 relative">

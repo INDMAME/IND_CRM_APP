@@ -7,6 +7,19 @@ export const isSameExpenseUser = (left: unknown, right: unknown): boolean => {
   return !!normalizedLeft && normalizedLeft === normalizedRight;
 };
 
+// Resolves the optional AxUser header override for expense sheet list calls.
+// All-users mode relies on the current context header so AX returns own plus direct-subordinate sheets.
+export const resolveExpenseListAxUserIdOverride = ({
+  selectedManagedUserId,
+  includeSubordinates,
+}: {
+  selectedManagedUserId: unknown;
+  includeSubordinates: unknown;
+}): string => {
+  if (includeSubordinates === true) return "";
+  return normalizeUserId(selectedManagedUserId);
+};
+
 // Matches one expense owner id against the current user ids exposed by auth context.
 const matchesCurrentExpenseIdentity = ({
   currentAxUserId,

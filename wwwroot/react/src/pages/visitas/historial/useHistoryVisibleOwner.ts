@@ -97,6 +97,7 @@ export const useHistoryVisibleOwner = ({
     ownerFilterDisabled: !visibleUsersReady || visibleUsersLoading || !canManageVisibleOwners,
     canManageVisibleOwners,
     selectedOwnerText: selectedOwner ? formatModuleVisibleUserLabel(selectedOwner) : "",
+    visibleVisitUserByOwnerAxUserId,
     effectiveSelectedOwnerAxUserId,
     resolveEffectiveOwnerAxUserId,
   };

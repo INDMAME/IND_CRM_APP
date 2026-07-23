@@ -9,6 +9,7 @@ export type AuthManagedUser = {
   crmUserId: string;
   axUserId: string;
   name: string;
+  userName?: string;
 };
 
 const ACCESS_RIGHTS: Record<AccessLevel, number> = {
@@ -23,6 +24,7 @@ const EXPENSE_MANAGEMENT_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 type ExpenseManagementCacheEntry = {
   currentAxUserId: string;
+  currentUserName?: string;
   currentCrmUserId?: string;
   allowSelfManagement: boolean;
   selectedManagedUserId: string;
@@ -61,17 +63,41 @@ const normalizeSubordinates = (source: unknown): AuthManagedUser[] => {
     });
 };
 
-const ensureCurrentUserInSubordinates = (source: AuthManagedUser[], currentAxUserId: string): AuthManagedUser[] => {
+const ensureCurrentUserInSubordinates = (
+  source: AuthManagedUser[],
+  currentAxUserId: string,
+  currentUserName = ""
+): AuthManagedUser[] => {
   const normalizedCurrent = normalizeText(currentAxUserId);
   if (!normalizedCurrent) return source;
-  if (source.some((entry) => isSameUser(entry.axUserId, normalizedCurrent))) {
-    return source;
+  const normalizedCurrentName = normalizeText(currentUserName);
+  let foundCurrent = false;
+  const merged = source.map((entry) => {
+    if (!isSameUser(entry.axUserId, normalizedCurrent)) {
+      return entry;
+    }
+
+    foundCurrent = true;
+    const resolvedName = normalizedCurrentName || normalizeText(entry.name) || normalizedCurrent;
+    return {
+      ...entry,
+      crmUserId: normalizeText(entry.crmUserId) || normalizedCurrent,
+      axUserId: normalizeText(entry.axUserId) || normalizedCurrent,
+      name: resolvedName,
+      userName: normalizedCurrentName || entry.userName,
+    };
+  });
+
+  if (foundCurrent) {
+    return merged;
   }
+
   return [
     {
       crmUserId: normalizedCurrent,
       axUserId: normalizedCurrent,
-      name: normalizedCurrent,
+      name: normalizedCurrentName || normalizedCurrent,
+      userName: normalizedCurrentName || undefined,
     },
     ...source,
   ];
@@ -105,12 +131,14 @@ const readExpenseManagementCache = (): ExpenseManagementCacheEntry | null => {
   if (!raw || typeof raw !== "object") return null;
 
   const currentAxUserId = normalizeText(raw.currentAxUserId);
+  const currentUserName = normalizeText(raw.currentUserName);
   const currentCrmUserId = normalizeText(raw.currentCrmUserId);
   const subordinates = normalizeSubordinates(raw.subordinates);
   const selectedManagedUserId = resolveManagedUserSelection(raw.selectedManagedUserId, currentAxUserId, subordinates);
 
   return {
     currentAxUserId,
+    currentUserName,
     currentCrmUserId,
     allowSelfManagement: raw.allowSelfManagement === true,
     selectedManagedUserId,
@@ -127,6 +155,7 @@ type AuthValue = {
   moduleAccess: Record<string, number>;
   selectedCompany: string;
   currentAxUserId: string;
+  currentUserName: string;
   currentCrmUserId: string;
   subordinates: AuthManagedUser[];
   manageableSubordinates: AuthManagedUser[];
@@ -143,6 +172,7 @@ const defaultValue: AuthValue = {
   moduleAccess: {},
   selectedCompany: "",
   currentAxUserId: "",
+  currentUserName: "",
   currentCrmUserId: "",
   subordinates: [],
   manageableSubordinates: [],
@@ -179,13 +209,22 @@ export const AuthProvider = ({
   const selfManagementFromLayout = allowSelfManagement ?? globalThis.__IND_ALLOW_SELF_MANAGEMENT__ === true;
   const cachedEntry = useMemo(() => readExpenseManagementCache(), [company]);
   const [currentAxUserId, setCurrentAxUserId] = useState(() => normalizeText(cachedEntry?.currentAxUserId));
+  const [currentUserName, setCurrentUserName] = useState(() => normalizeText(cachedEntry?.currentUserName));
   const [currentCrmUserId, setCurrentCrmUserId] = useState(() => normalizeText(cachedEntry?.currentCrmUserId));
   const [subordinates, setSubordinates] = useState<AuthManagedUser[]>(() =>
-    ensureCurrentUserInSubordinates(cachedEntry?.subordinates || [], cachedEntry?.currentAxUserId || "")
+    ensureCurrentUserInSubordinates(
+      cachedEntry?.subordinates || [],
+      cachedEntry?.currentAxUserId || "",
+      cachedEntry?.currentUserName || ""
+    )
   );
   const [selectedManagedUserId, setSelectedManagedUserIdState] = useState(() => {
     const cachedCurrent = normalizeText(cachedEntry?.currentAxUserId);
-    const cachedUsers = ensureCurrentUserInSubordinates(cachedEntry?.subordinates || [], cachedCurrent);
+    const cachedUsers = ensureCurrentUserInSubordinates(
+      cachedEntry?.subordinates || [],
+      cachedCurrent,
+      cachedEntry?.currentUserName || ""
+    );
     const fallbackSelection = resolveManagedUserSelection(cachedEntry?.selectedManagedUserId || "", cachedCurrent, cachedUsers);
     return fallbackSelection;
   });
@@ -195,6 +234,7 @@ export const AuthProvider = ({
   useEffect(() => {
     if (enableExpenseManagement) return;
     setCurrentAxUserId("");
+    setCurrentUserName("");
     setCurrentCrmUserId("");
     setSubordinates([]);
     setSelectedManagedUserIdState("");
@@ -211,9 +251,10 @@ export const AuthProvider = ({
     let cancelled = false;
     const cached = readExpenseManagementCache();
     if (cached) {
-      const cachedUsers = ensureCurrentUserInSubordinates(cached.subordinates, cached.currentAxUserId);
+      const cachedUsers = ensureCurrentUserInSubordinates(cached.subordinates, cached.currentAxUserId, cached.currentUserName);
       const cachedSelection = resolveManagedUserSelection(cached.selectedManagedUserId, cached.currentAxUserId, cachedUsers);
       setCurrentAxUserId(cached.currentAxUserId);
+      setCurrentUserName(cached.currentUserName);
       setCurrentCrmUserId(normalizeText(cached.currentCrmUserId));
       setSubordinates(cachedUsers);
       setSelectedManagedUserIdState(cachedSelection);
@@ -230,8 +271,13 @@ export const AuthProvider = ({
           suppressPermissionModal: true,
         });
         const resolvedCurrentUser = normalizeText(contextSnapshot.axUserId);
+        const resolvedCurrentUserName = normalizeText(contextSnapshot.userName);
         const resolvedCurrentCrmUser = normalizeText(contextSnapshot.crmUserId);
-        let nextSubordinates = ensureCurrentUserInSubordinates(cached?.subordinates || [], resolvedCurrentUser);
+        let nextSubordinates = ensureCurrentUserInSubordinates(
+          cached?.subordinates || [],
+          resolvedCurrentUser,
+          resolvedCurrentUserName
+        );
 
         // Always refresh subordinates from API to avoid stale legacy id mappings.
         try {
@@ -240,7 +286,8 @@ export const AuthProvider = ({
           });
           nextSubordinates = ensureCurrentUserInSubordinates(
             normalizeSubordinates(subordinatesResponse?.Items),
-            resolvedCurrentUser
+            resolvedCurrentUser,
+            resolvedCurrentUserName
           );
         } catch {
           // Keep cached subordinates when refresh fails.
@@ -255,6 +302,7 @@ export const AuthProvider = ({
         if (cancelled) return;
 
         setCurrentAxUserId(resolvedCurrentUser);
+        setCurrentUserName(resolvedCurrentUserName);
         setCurrentCrmUserId(resolvedCurrentCrmUser);
         setSubordinates(nextSubordinates);
         setSelectedManagedUserIdState(nextSelection);
@@ -264,6 +312,7 @@ export const AuthProvider = ({
 
         if (!cached) {
           setCurrentAxUserId("");
+          setCurrentUserName("");
           setCurrentCrmUserId("");
           setSubordinates([]);
           setSelectedManagedUserIdState("");
@@ -289,13 +338,15 @@ export const AuthProvider = ({
 
     writeExpenseManagementCache({
       currentAxUserId: normalizeText(currentAxUserId),
+      currentUserName: normalizeText(currentUserName),
       currentCrmUserId: normalizeText(currentCrmUserId),
       allowSelfManagement: selfManagement === true,
       selectedManagedUserId: normalizeText(selectedManagedUserId),
-      subordinates: ensureCurrentUserInSubordinates(subordinates, currentAxUserId),
+      subordinates: ensureCurrentUserInSubordinates(subordinates, currentAxUserId, currentUserName),
     });
   }, [
     currentAxUserId,
+    currentUserName,
     currentCrmUserId,
     enableExpenseManagement,
     managementBootstrapReady,
@@ -312,19 +363,19 @@ export const AuthProvider = ({
   const setSelectedManagedUserId = useCallback(
     (userId: string) => {
       const normalizedCurrent = normalizeText(currentAxUserId);
-      const normalizedUsers = ensureCurrentUserInSubordinates(subordinates, normalizedCurrent);
+      const normalizedUsers = ensureCurrentUserInSubordinates(subordinates, normalizedCurrent, currentUserName);
       const nextSelection = resolveManagedUserSelection(userId, normalizedCurrent, normalizedUsers);
       setSelectedManagedUserIdState(nextSelection);
     },
-    [currentAxUserId, subordinates]
+    [currentAxUserId, currentUserName, subordinates]
   );
 
   const resetSelectedManagedUserId = useCallback(() => {
     const normalizedCurrent = normalizeText(currentAxUserId);
-    const normalizedUsers = ensureCurrentUserInSubordinates(subordinates, normalizedCurrent);
+    const normalizedUsers = ensureCurrentUserInSubordinates(subordinates, normalizedCurrent, currentUserName);
     const nextSelection = resolveManagedUserSelection(normalizedCurrent, normalizedCurrent, normalizedUsers);
     setSelectedManagedUserIdState(nextSelection);
-  }, [currentAxUserId, subordinates]);
+  }, [currentAxUserId, currentUserName, subordinates]);
 
   const value = useMemo<AuthValue>(() => {
     const canAccess = (code: string, level: AccessLevel = "View") => {
@@ -335,6 +386,7 @@ export const AuthProvider = ({
       moduleAccess: access,
       selectedCompany: company,
       currentAxUserId,
+      currentUserName,
       currentCrmUserId,
       subordinates,
       manageableSubordinates,
@@ -350,6 +402,7 @@ export const AuthProvider = ({
     access,
     company,
     currentAxUserId,
+    currentUserName,
     currentCrmUserId,
     manageableSubordinates,
     managementBootstrapReady,

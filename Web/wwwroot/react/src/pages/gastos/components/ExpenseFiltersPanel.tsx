@@ -133,7 +133,7 @@ const ExpenseFiltersPanel = ({
           />
         ) : null}
 
-        <div className={`grid grid-cols-1 sm:grid-cols-2 ${showManagedUserFilter ? "lg:grid-cols-5" : "lg:grid-cols-4"} gap-2`}>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 ${showManagedUserFilter ? "lg:grid-cols-3" : "lg:grid-cols-2"} gap-2`}>
           {showManagedUserFilter ? (
             <ExpenseManagedUserFilterSelect
               label={indT("ExpenseSheets_Filter_User", "User")}

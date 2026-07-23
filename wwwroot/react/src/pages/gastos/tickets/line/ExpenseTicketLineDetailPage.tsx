@@ -235,7 +235,9 @@ const useExpenseTicketLineDetailViewModel = () => {
         "ExpenseTickets_SheetSync_RetryRequired",
         "Ticket data changed, but we could not sync the expense line. Save again before leaving."
       );
-  const shouldBlockWorkflowExit = pendingFirstLink || sheetSyncBlocked;
+  const shouldBlockWorkflowExit = pendingFirstLink || (sheetSyncBlocked && (isEditing || isCreateMode));
+  const hasNavigationGuard = busy || isEditing || shouldBlockWorkflowExit;
+  const navigationGuardMessage = shouldBlockWorkflowExit ? workflowBlockedMessage : undefined;
   const handleEnableEditInContext = useCallback(() => {
     if (linkSheetCheckBusy) {
       return;
@@ -261,20 +263,20 @@ const useExpenseTicketLineDetailViewModel = () => {
     setStatus,
   ]);
   React.useEffect(() => {
-    if (!shouldBlockWorkflowExit) {
+    if (!hasNavigationGuard) {
       clearExpenseNavigationGuard();
       return;
     }
 
     setExpenseNavigationGuard({
       active: true,
-      message: workflowBlockedMessage,
-      block: true,
+      message: navigationGuardMessage,
+      block: shouldBlockWorkflowExit,
     });
     return () => {
       clearExpenseNavigationGuard();
     };
-  }, [busy, isEditing, shouldBlockWorkflowExit, workflowBlockedMessage]);
+  }, [hasNavigationGuard, navigationGuardMessage, shouldBlockWorkflowExit]);
   React.useEffect(() => {
     if (!startInEditMode || autoEditAttemptedRef.current) {
       return;

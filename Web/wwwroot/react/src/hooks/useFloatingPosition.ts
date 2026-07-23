@@ -2,13 +2,19 @@ import { useLayoutEffect, useState, type RefObject } from "react";
 
 type FloatingPlacement = "bottom" | "top";
 
+export type FloatingWidthStrategy = "anchor" | "viewport" | "responsive";
+
 type FloatingPositionOptions = {
   overlayRef?: RefObject<HTMLElement | null>;
   offset?: number;
   viewportPadding?: number;
   autoFitViewport?: boolean;
   matchAvailableWidth?: boolean;
+  widthStrategy?: FloatingWidthStrategy;
+  preferredWidth?: number;
   minWidth?: number;
+  desktopMaxWidth?: number;
+  desktopBreakpoint?: number;
 };
 
 type FloatingPositionStyle = {
@@ -21,6 +27,7 @@ type FloatingPositionStyle = {
 
 const DEFAULT_OFFSET_PX = 6;
 const DEFAULT_VIEWPORT_PADDING_PX = 12;
+const DEFAULT_DESKTOP_BREAKPOINT_PX = 1024;
 
 const clamp = (value: number, min: number, max: number): number => {
   if (max < min) return min;
@@ -31,6 +38,15 @@ const clamp = (value: number, min: number, max: number): number => {
 const resolvePositiveNumber = (value: number | undefined | null): number => {
   const numericValue = typeof value === "number" ? value : 0;
   return Number.isFinite(numericValue) && numericValue > 0 ? numericValue : 0;
+};
+
+// Keeps the legacy width flag compatible while explicit strategies become the primary API.
+const resolveWidthStrategy = (
+  widthStrategy: FloatingWidthStrategy | undefined,
+  matchAvailableWidth: boolean | undefined
+): FloatingWidthStrategy => {
+  if (widthStrategy) return widthStrategy;
+  return matchAvailableWidth ? "viewport" : "anchor";
 };
 
 const areFloatingStylesEqual = (left: FloatingPositionStyle, right: FloatingPositionStyle): boolean => {
@@ -52,8 +68,12 @@ export const useFloatingPosition = (
     offset = DEFAULT_OFFSET_PX,
     viewportPadding = DEFAULT_VIEWPORT_PADDING_PX,
     autoFitViewport = false,
-    matchAvailableWidth = false,
+    matchAvailableWidth,
+    widthStrategy,
+    preferredWidth = 0,
     minWidth = 0,
+    desktopMaxWidth = 0,
+    desktopBreakpoint = DEFAULT_DESKTOP_BREAKPOINT_PX,
   }: FloatingPositionOptions = {}
 ) => {
   const [style, setStyle] = useState<FloatingPositionStyle>({
@@ -78,9 +98,26 @@ export const useFloatingPosition = (
       const overlayHeight = Math.max(overlayRect?.height || 0, overlayElement?.scrollHeight || 0);
       const overlayWidth = Math.max(overlayRect?.width || 0, overlayElement?.scrollWidth || 0);
       const availableWidth = Math.max(0, viewportWidth - viewportPadding * 2);
-      const preferredWidth = Math.max(rect.width, overlayWidth, resolvePositiveNumber(minWidth));
-      const nextWidth = matchAvailableWidth ? availableWidth : Math.min(preferredWidth, availableWidth);
-      const nextLeft = matchAvailableWidth ? viewportPadding : clamp(rect.left, viewportPadding, viewportWidth - nextWidth - viewportPadding);
+      const normalizedPreferredWidth = resolvePositiveNumber(preferredWidth);
+      const measuredPreferredWidth = Math.max(
+        rect.width,
+        normalizedPreferredWidth > 0 ? normalizedPreferredWidth : overlayWidth,
+        resolvePositiveNumber(minWidth)
+      );
+      const normalizedDesktopBreakpoint =
+        resolvePositiveNumber(desktopBreakpoint) || DEFAULT_DESKTOP_BREAKPOINT_PX;
+      const resolvedWidthStrategy = resolveWidthStrategy(widthStrategy, matchAvailableWidth);
+      const useViewportWidth =
+        resolvedWidthStrategy === "viewport" ||
+        (resolvedWidthStrategy === "responsive" && viewportWidth < normalizedDesktopBreakpoint);
+      const normalizedDesktopMaxWidth =
+        viewportWidth >= normalizedDesktopBreakpoint ? resolvePositiveNumber(desktopMaxWidth) : 0;
+      const anchoredMaxWidth =
+        normalizedDesktopMaxWidth > 0 ? Math.min(availableWidth, normalizedDesktopMaxWidth) : availableWidth;
+      const nextWidth = useViewportWidth ? availableWidth : Math.min(measuredPreferredWidth, anchoredMaxWidth);
+      const nextLeft = useViewportWidth
+        ? viewportPadding
+        : clamp(rect.left, viewportPadding, viewportWidth - nextWidth - viewportPadding);
 
       if (!autoFitViewport) {
         const nextStyle: FloatingPositionStyle = {
@@ -174,7 +211,20 @@ export const useFloatingPosition = (
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", scheduleUpdate);
     };
-  }, [autoFitViewport, matchAvailableWidth, minWidth, offset, open, overlayRef, targetRef, viewportPadding]);
+  }, [
+    autoFitViewport,
+    desktopBreakpoint,
+    desktopMaxWidth,
+    matchAvailableWidth,
+    minWidth,
+    offset,
+    open,
+    overlayRef,
+    preferredWidth,
+    targetRef,
+    viewportPadding,
+    widthStrategy,
+  ]);
 
   return style;
 };

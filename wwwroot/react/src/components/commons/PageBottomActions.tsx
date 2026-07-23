@@ -7,6 +7,8 @@ const MAX_PAGE_BOTTOM_ACTIONS = 4;
 const PAGE_BOTTOM_ACTIONS_TOP_PADDING_PX = 12;
 const PAGE_BOTTOM_ACTIONS_SIDE_PADDING_PX = 8;
 
+type PageBottomActionsLayoutVariant = "timeline-aligned" | "centered-form";
+
 type PageBottomActionButtonProps = {
   label: string;
   disabled?: boolean;
@@ -22,6 +24,7 @@ type PageBottomActionsProps = {
   children: React.ReactNode;
   ariaLabel: string;
   className?: string;
+  layoutVariant?: PageBottomActionsLayoutVariant;
 };
 
 // Dumb button used by the shared bottom action bar.
@@ -58,7 +61,12 @@ export const PageBottomActionButton = ({
 PageBottomActionButton.displayName = "PageBottomActionButton";
 
 // Fixed bottom action bar that stays visible while the page scrolls.
-const PageBottomActions = ({ children, ariaLabel, className }: PageBottomActionsProps) => {
+const PageBottomActions = ({
+  children,
+  ariaLabel,
+  className,
+  layoutVariant = "timeline-aligned",
+}: PageBottomActionsProps) => {
   const actionButtons = Children.toArray(children)
     .filter(
       (child): child is React.ReactElement<PageBottomActionButtonProps> =>
@@ -69,6 +77,7 @@ const PageBottomActions = ({ children, ariaLabel, className }: PageBottomActions
   const actionCount = actionButtons.length;
   const { reservedHeight, wrapperRef, contentInsets } = usePageBottomActionsVisibility();
   const portalTarget = typeof document === "undefined" ? null : document.body;
+  const usesCenteredFormLayout = layoutVariant === "centered-form";
 
   if (actionCount < 1) {
     return null;
@@ -80,20 +89,34 @@ const PageBottomActions = ({ children, ariaLabel, className }: PageBottomActions
       className="fixed inset-x-0 bottom-0 z-1900 border-t border-slate-200/90 bg-white shadow-[0_-10px_28px_rgba(15,23,42,0.12)]"
     >
       <div
-        className="w-full"
+        className={classNames(
+          "w-full [padding-left:var(--page-bottom-actions-left-inset)] [padding-right:var(--page-bottom-actions-right-inset)]",
+          usesCenteredFormLayout ? "lg:px-4" : ""
+        )}
         style={{
+          ["--page-bottom-actions-left-inset" as "--page-bottom-actions-left-inset"]:
+            `${contentInsets?.left ?? PAGE_BOTTOM_ACTIONS_SIDE_PADDING_PX}px`,
+          ["--page-bottom-actions-right-inset" as "--page-bottom-actions-right-inset"]:
+            `${contentInsets?.right ?? PAGE_BOTTOM_ACTIONS_SIDE_PADDING_PX}px`,
           paddingTop: `${PAGE_BOTTOM_ACTIONS_TOP_PADDING_PX}px`,
-          paddingLeft: `${contentInsets?.left ?? PAGE_BOTTOM_ACTIONS_SIDE_PADDING_PX}px`,
-          paddingRight: `${contentInsets?.right ?? PAGE_BOTTOM_ACTIONS_SIDE_PADDING_PX}px`,
           paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom, 0px))",
-        }}
+        } as React.CSSProperties}
       >
         <div
           role="toolbar"
           aria-label={ariaLabel}
-          className={classNames("pointer-events-auto w-full", className || "")}
+          className={classNames(
+            "pointer-events-auto w-full",
+            usesCenteredFormLayout ? "lg:mx-auto lg:max-w-3xl" : "",
+            className || ""
+          )}
         >
-          <div className="grid grid-cols-2 gap-1.5">
+          <div
+            className={classNames(
+              "grid grid-cols-2 gap-1.5",
+              usesCenteredFormLayout && actionCount === 1 ? "lg:mx-auto lg:max-w-[480px]" : ""
+            )}
+          >
             {actionButtons.map((child, index) => {
               const shouldUseFullWidth = actionCount === 1 || (actionCount % 2 === 1 && index === actionCount - 1);
               return cloneElement(child, {

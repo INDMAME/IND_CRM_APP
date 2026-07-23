@@ -11,6 +11,8 @@ import { classNames } from "../../../utils/classNames.ts";
 import ChatMessageContent from "./ChatMessageContent.tsx";
 import type { AssistantChatMessage, AssistantChatQuickAction, VisualizationType } from "./assistantChatTypes.ts";
 
+type AssistantChatDesktopPlacement = "content-frame" | "viewport-start";
+
 type AssistantChatShellProps<TActionId extends string = string> = {
   isOpen: boolean;
   showLauncher: boolean;
@@ -29,6 +31,7 @@ type AssistantChatShellProps<TActionId extends string = string> = {
   noContextTitle: string;
   noContextBody: string;
   noContextMessage: string;
+  desktopPlacement?: AssistantChatDesktopPlacement;
   bottomInset?: string;
   botImageSrc: string;
   contextNotice: string;
@@ -57,6 +60,22 @@ const EXPANDED_PANEL_HEIGHT_CLASS =
 const LARGE_CARTESIAN_VISUAL_THRESHOLD = 8;
 const LARGE_PIE_VISUAL_THRESHOLD = 6;
 const LARGE_TABLE_VISUAL_THRESHOLD = 8;
+
+const DESKTOP_PLACEMENT_CLASS_NAMES: Record<
+  AssistantChatDesktopPlacement,
+  { launcher: string; panel: string; closedPanel: string }
+> = {
+  "content-frame": {
+    launcher: "",
+    panel: "lg:left-auto lg:right-[var(--assistant-page-inset)]",
+    closedPanel: "lg:translate-x-[110%]",
+  },
+  "viewport-start": {
+    launcher: "lg:left-4",
+    panel: "lg:left-4 lg:right-auto",
+    closedPanel: "lg:-translate-x-[110%]",
+  },
+};
 
 const toText = (value: unknown): string => {
   return String(value ?? "").trim();
@@ -309,6 +328,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
   noContextTitle,
   noContextBody,
   noContextMessage,
+  desktopPlacement = "content-frame",
   bottomInset = ASSISTANT_BOTTOM_INSET,
   botImageSrc,
   contextNotice,
@@ -331,6 +351,7 @@ const AssistantChatShell = <TActionId extends string = string,>({
   const shouldExpandForVisuals = messages.some(
     (message) => message.role === "assistant" && message.state !== "loading" && shouldUseExpandedVisualLayout(message.message)
   );
+  const desktopPlacementClassNames = DESKTOP_PLACEMENT_CLASS_NAMES[desktopPlacement];
   const assistantFloatingStyle = {
     ["--assistant-page-inset" as "--assistant-page-inset"]: ASSISTANT_PAGE_INSET,
     ["--assistant-bottom-inset" as "--assistant-bottom-inset"]: bottomInset,
@@ -344,7 +365,10 @@ const AssistantChatShell = <TActionId extends string = string,>({
           aria-label={launcherAriaLabel}
           title={launcherAriaLabel}
           data-ind-assistant-launcher="true"
-          className="fixed z-[1850] flex items-center rounded-[var(--radius-xl)] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus:ring-4 focus:ring-primary/20 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)]"
+          className={classNames(
+            "fixed z-[1850] flex items-center rounded-[var(--radius-xl)] bg-transparent p-0 text-left shadow-none transition duration-200 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] focus:outline-hidden focus:ring-4 focus:ring-primary/20 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)]",
+            desktopPlacementClassNames.launcher
+          )}
           style={assistantFloatingStyle}
           onClick={onToggle}
         >
@@ -378,9 +402,12 @@ const AssistantChatShell = <TActionId extends string = string,>({
           aria-modal="false"
           aria-label={title}
           className={classNames(
-            "absolute flex flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:left-auto lg:right-[var(--assistant-page-inset)] lg:w-[368px]",
+            "absolute flex flex-col overflow-hidden rounded-[var(--radius-xl)] border border-slate-200 bg-white/96 text-[12px] shadow-[0_28px_60px_rgba(15,23,42,0.22)] backdrop-blur-xl transition-transform duration-300 [bottom:var(--assistant-bottom-inset)] [left:var(--assistant-page-inset)] [right:var(--assistant-page-inset)] lg:w-[368px]",
+            desktopPlacementClassNames.panel,
             shouldExpandForVisuals ? EXPANDED_PANEL_HEIGHT_CLASS : DEFAULT_PANEL_HEIGHT_CLASS,
-            isOpen ? "translate-y-0 lg:translate-x-0" : "translate-y-full lg:translate-y-0 lg:translate-x-[110%]"
+            isOpen
+              ? "translate-y-0 lg:translate-x-0"
+              : classNames("translate-y-full lg:translate-y-0", desktopPlacementClassNames.closedPanel)
           )}
         >
           <header className="border-b border-slate-200 bg-linear-to-r from-slate-50 via-white to-sky-50/70 px-3 py-1.5">

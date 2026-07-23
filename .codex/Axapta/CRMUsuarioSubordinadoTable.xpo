@@ -111,6 +111,30 @@ Formatversion: 1
           FieldUpdate         #Absolute
         ENDPROPERTIES
         
+      FIELD #ExcluirAprobacionHojaGastos
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ExcluirAprobacionHojaGastos
+          Label               #Excluir aprobacion hoja gastos
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioSubordinadoTable
+          AliasFor            #
+          ExtendedDataType
+            ARRAY
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+
     ENDFIELDS
     GROUPS
       GROUP #AutoReport
@@ -176,19 +200,50 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #FindJefe
-        #static CRMUserId FindJefe(CRMUserId _userId)
+        #//MMS - Ajustes CRM - 2026.07.21
+        #// Keeps the legacy manager lookup unless expense approval filtering is requested.
+        #static CRMUserId FindJefe(CRMUserId _userId,
+        #                            boolean   _soloAprobadoresHojaGastos = false)
         #{
         #    CRMUsuarioSubordinadoTable  CRMUsuarioSubordinadoTable;
         #    ;
         #
-        #    if (_userId == "ANA"){
-        #        return "NY";
+        #    if (!_soloAprobadoresHojaGastos)
+        #    {
+        #        if (_userId == "ANA")
+        #            return "NY";
+        #
+        #        select firstonly CRMUsuarioSubordinadoTable
+        #            where CRMUsuarioSubordinadoTable.UserIdSubordinado == _userId;
+        #    }
+        #    else
+        #    {
+        #        select firstonly CRMUsuarioSubordinadoTable
+        #            where CRMUsuarioSubordinadoTable.UserIdSubordinado          == _userId
+        #               && CRMUsuarioSubordinadoTable.ExcluirAprobacionHojaGastos == NoYes::No;
         #    }
         #
-        #    select firstonly CRMUsuarioSubordinadoTable
-        #    where CRMUsuarioSubordinadoTable.UserIdSubordinado == _userID;
-        #
         #    return CRMUsuarioSubordinadoTable.UserIdJefe;
+        #}
+      ENDSOURCE
+      SOURCE #EsAprobadorHojaGastos
+        #//MMS - Ajustes CRM - 2026.07.21
+        #// Validates an eligible manager-owner relationship for expense approval.
+        #static boolean EsAprobadorHojaGastos(CRMUserId _userIdJefe,
+        #                                      CRMUserId _userIdSubordinado)
+        #{
+        #    CRMUsuarioSubordinadoTable subordinadoTable;
+        #    ;
+        #
+        #    if (!_userIdJefe || !_userIdSubordinado || _userIdJefe == _userIdSubordinado)
+        #        return false;
+        #
+        #    select firstonly RecId from subordinadoTable
+        #        where subordinadoTable.UserIdJefe                    == _userIdJefe
+        #           && subordinadoTable.UserIdSubordinado             == _userIdSubordinado
+        #           && subordinadoTable.ExcluirAprobacionHojaGastos   == NoYes::No;
+        #
+        #    return subordinadoTable.RecId != 0;
         #}
       ENDSOURCE
     ENDMETHODS

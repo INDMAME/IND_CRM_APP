@@ -100,7 +100,7 @@ function VisitasApp() {
     [selectedClient, selectedContacts, visitType, contactMethod, transDate, description, comentarios, antecedentes, conclusiones, step]
   );
 
-  const { persistDraftNow } = useCreateDraft({
+  const { persistDraftNow, discardDraftNow, resetDraftForClientChange } = useCreateDraft({
     draftSnapshot,
     setSelectedClient,
     setSelectedContacts,
@@ -179,39 +179,45 @@ function VisitasApp() {
 
   useTextEditorFields(textEditorBindings);
 
-  // Clear contacts only when the client changes (avoid clearing on restore/step 2 return).
-  const prevClientRef = useRef(null);
+  const lastClientValueRef = useRef("");
+
+  // Keeps restored drafts from looking like a new account selection.
   useEffect(() => {
-    const current = selectedClient?.value;
-    if (prevClientRef.current && prevClientRef.current !== current) {
-      setSelectedContacts([]);
+    const currentValue = String(selectedClient?.value || "").trim();
+    if (currentValue) {
+      lastClientValueRef.current = currentValue;
     }
-    prevClientRef.current = current;
   }, [selectedClient?.value]);
 
-  const lastClientRef = useRef(null);
+  // Applies account-change resets directly from the selection event.
+  const handleClientSelected = React.useCallback(
+    (nextClient: CreateSelectedClient) => {
+      const previousValue = lastClientValueRef.current;
+      const nextValue = String(nextClient?.value || "").trim();
 
-  // If the client changes after selecting contacts, reset the entire form.
-  useEffect(() => {
-    const current = selectedClient?.value;
-    if (!current) return;
+      if (previousValue && previousValue !== nextValue) {
+        if (!nextValue) {
+          setSelectedContacts([]);
+          setSelectedClient(nextClient);
+          return;
+        }
 
-    if (lastClientRef.current && lastClientRef.current !== current) {
-      setStep(1);
-      setSelectedContacts([]);
-      setVisitType(defaultVisitType);
-      setContactMethod(defaultContactMethod);
-      setTransDate(todayString());
-      setDescription("");
-      setComentarios("");
-      setAntecedentes("");
-      setConclusiones("");
-      setStatus("");
-      setBusy(false);
-    }
-    lastClientRef.current = current;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedClient?.value]);
+        resetDraftForClientChange({
+          visitType: defaultVisitType,
+          contactMethod: defaultContactMethod,
+          transDate: todayString(),
+        });
+        setStatus("");
+        setBusy(false);
+      }
+
+      if (nextValue) {
+        lastClientValueRef.current = nextValue;
+      }
+      setSelectedClient(nextClient);
+    },
+    [defaultContactMethod, defaultVisitType, resetDraftForClientChange]
+  );
 
   const canGoNext = !!selectedClient;
   const canCreate =
@@ -278,7 +284,36 @@ function VisitasApp() {
     setStep(1);
   }, []);
 
-  useTopbar(step, canGoNext, handleTopbarPrimary, handleTopbarBack, busy, canCreate, canCreateVisit);
+  const handleCancelCreation = React.useCallback(() => {
+    if (busy || modal.open) return;
+
+    setModalError("");
+    openConfirm({
+      title: indT("Common_Cancel", "Cancel"),
+      message: indT(
+        "Navigation_ActiveProcess_ConfirmLeave",
+        "Your active process will be canceled and unsaved changes will be lost. Do you want to continue?"
+      ),
+      confirmText: indT("Confirm_Yes", "Yes"),
+      onConfirm: () => {
+        discardDraftNow();
+        window.__indBypassNavigationGuardOnce?.();
+        window.location.href = "/Historial/History";
+        return true;
+      },
+    });
+  }, [busy, discardDraftNow, modal.open, openConfirm]);
+
+  useTopbar(
+    step,
+    canGoNext,
+    handleTopbarPrimary,
+    handleTopbarBack,
+    handleCancelCreation,
+    busy || modal.open,
+    canCreate,
+    canCreateVisit
+  );
 
   useEffect(() => {
     if (step === 1) {
@@ -328,7 +363,7 @@ function VisitasApp() {
         <CreateStepClientSelection
           selectedClient={selectedClient}
           selectedContacts={selectedContacts}
-          onClientSelected={setSelectedClient}
+          onClientSelected={handleClientSelected}
           onContactsChange={setSelectedContacts}
           clientLabel={indT("History_Filter_Client", "Account")}
           clientPlaceholder={indFormat("Visits_Create_ClientPlaceholder", "Type at least {0} characters...", 4)}

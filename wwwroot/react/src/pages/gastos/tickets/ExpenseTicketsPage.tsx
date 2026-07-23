@@ -31,6 +31,7 @@ import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import {
   buildExpenseSheetDetailUrl,
   clearExpenseTicketReturnContext,
+  EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT,
   saveExpenseTicketReturnContext,
 } from "../utils/expenseTicketReturnContext.ts";
 import { hasExpenseReturnReferrer, isExpenseHistoryBackForwardNavigation } from "../utils/expenseHistoryNavigation.ts";
@@ -67,15 +68,30 @@ const isSameUser = (left: string, right: string): boolean => {
   return !!normalizedLeft && normalizedLeft === normalizedRight;
 };
 
-const ensureCurrentUserInList = (users: AuthManagedUser[], currentAxUserId: string): AuthManagedUser[] => {
+const ensureCurrentUserInList = (
+  users: AuthManagedUser[],
+  currentAxUserId: string,
+  currentUserName = ""
+): AuthManagedUser[] => {
   const normalizedCurrent = normalizeUserId(currentAxUserId);
+  const normalizedCurrentName = normalizeUserId(currentUserName);
   if (!normalizedCurrent) return users;
-  if (users.some((entry) => isSameUser(entry.axUserId, normalizedCurrent))) return users;
+  if (users.some((entry) => isSameUser(entry.axUserId, normalizedCurrent))) {
+    return users.map((entry) => {
+      if (!isSameUser(entry.axUserId, normalizedCurrent)) return entry;
+      return {
+        ...entry,
+        name: normalizedCurrentName || normalizeUserId(entry.name) || normalizedCurrent,
+        userName: normalizedCurrentName || entry.userName,
+      };
+    });
+  }
   return [
     {
       crmUserId: normalizedCurrent,
       axUserId: normalizedCurrent,
-      name: normalizedCurrent,
+      name: normalizedCurrentName || normalizedCurrent,
+      userName: normalizedCurrentName || undefined,
     },
     ...users,
   ];
@@ -167,6 +183,7 @@ const ExpenseTicketsPageContent = () => {
   const [reimbursementCurrencyCode, setReimbursementCurrencyCode] = useState("EUR");
   const {
     currentAxUserId,
+    currentUserName,
     currentCrmUserId,
     subordinates,
     canManageOtherUsers,
@@ -201,8 +218,8 @@ const ExpenseTicketsPageContent = () => {
   const fixedStatusFilter = linkModeContext.fixedStatusFilter;
   const canProcessLinkMode = !isLinkMode || canLinkSheetLines;
   const managedUsers = useMemo(
-    () => ensureCurrentUserInList(Array.isArray(subordinates) ? subordinates : [], currentAxUserId),
-    [currentAxUserId, subordinates]
+    () => ensureCurrentUserInList(Array.isArray(subordinates) ? subordinates : [], currentAxUserId, currentUserName),
+    [currentAxUserId, currentUserName, subordinates]
   );
   const defaultManagedUserId = useMemo(
     () => resolveManagedUserSelection(currentAxUserId, currentAxUserId, managedUsers),
@@ -237,6 +254,15 @@ const ExpenseTicketsPageContent = () => {
   const [selectAllBusy, setSelectAllBusy] = useState(false);
   const [selectAllError, setSelectAllError] = useState("");
   const [linkBulkResult, setLinkBulkResult] = useState<ExpenseSheetTicketLinkBulkResultDto | null>(null);
+  const failedLinkTicketIds = useMemo(() => {
+    const failedItems = Array.isArray(linkBulkResult?.failed) ? linkBulkResult.failed : [];
+    return new Set(
+      failedItems.flatMap((item) => {
+        const ticketId = safeText(item?.ticketId).toUpperCase();
+        return ticketId ? [ticketId] : [];
+      })
+    );
+  }, [linkBulkResult]);
 
   const paginationLabels = useMemo(
     () => ({
@@ -989,6 +1015,7 @@ const ExpenseTicketsPageContent = () => {
       };
 
       if (isLinkMode) {
+        const shouldOpenFailedTicketInEditMode = failedLinkTicketIds.has(fileId.toUpperCase());
         saveCachedState(currentState);
         saveExpenseTicketLinkReturnState({
           sheetId: linkSheetId,
@@ -1005,6 +1032,10 @@ const ExpenseTicketsPageContent = () => {
         const query = new URLSearchParams({
           fileId,
         });
+        if (shouldOpenFailedTicketInEditMode) {
+          query.set("mode", "edit");
+          query.set("intent", EXPENSE_TICKET_LINK_FAILURE_REPAIR_INTENT);
+        }
         if (hasSheetCallerContext && sheetCallerOrigin) {
           saveExpenseTicketReturnContext({
             fileId,
@@ -1057,6 +1088,7 @@ const ExpenseTicketsPageContent = () => {
       filteredTotalCount,
       filteredSnapshot,
       excludedIds,
+      failedLinkTicketIds,
       sheetCallerOrigin,
       saveCachedState,
       saveExpenseTicketLinkReturnState,
@@ -1560,6 +1592,8 @@ const ExpenseTicketsPageContent = () => {
         currencyCode={currencyCode}
         managedUserId={managedUserId}
         managedUsers={managedUsers}
+        currentAxUserId={currentAxUserId}
+        currentUserName={currentUserName}
         showManagedUserFilter={showManagedUserFilter}
         statusFilter={statusFilter}
         gastoTypeFilter={gastoTypeFilter}

@@ -22,7 +22,10 @@ import {
 } from "../../utils/expenseExchangeRate.ts";
 import { useExpenseTicketLinkSheetGate } from "../useExpenseTicketLinkSheetGate.ts";
 import { useExpenseTicketDetailState } from "./useExpenseTicketDetailState.ts";
-import { useExpenseTicketDetailMutations } from "./useExpenseTicketDetailMutations.ts";
+import {
+  useExpenseTicketDetailMutations,
+  type ExpenseTicketSaveStrategy,
+} from "./useExpenseTicketDetailMutations.ts";
 import { useExpenseTicketDetailTopbarActions } from "./useExpenseTicketDetailTopbarActions.ts";
 import { useExpenseTicketDetailEditor } from "./useExpenseTicketDetailEditor.ts";
 import { useExpenseTicketDetailRouteContext } from "./useExpenseTicketDetailRouteContext.ts";
@@ -34,6 +37,7 @@ import { useExpenseTicketLinkedSheetLine } from "./useExpenseTicketLinkedSheetLi
 import { useExpenseTicketsFilterCache } from "../useExpenseTicketsFilterCache.ts";
 import { useExpenseTicketDetailBackNavigation } from "./useExpenseTicketDetailBackNavigation.ts";
 import { useExpenseTicketDetailPreviewPanel } from "./useExpenseTicketDetailPreviewPanel.ts";
+import { useExpenseTicketTopbarBackLock } from "./useExpenseTicketTopbarBackLock.ts";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "./expenseTicketDetailTypes.ts";
 
 const LINES_PAGE_SIZE = 6;
@@ -402,14 +406,14 @@ const useExpenseTicketDetailNavigationState = ({
 // Runs the one-shot auto edit transition for linked contexts after detail data is ready.
 const useExpenseTicketDetailAutoEdit = ({
   autoEditMode,
-  isFromSheetLink,
+  canAutoEditInContext,
   isLoading,
   header,
   handleEnableEdit,
   canAttemptAutoEdit,
 }: {
   autoEditMode: boolean;
-  isFromSheetLink: boolean;
+  canAutoEditInContext: boolean;
   isLoading: boolean;
   header: ExpenseTicketDetailHeader | null;
   handleEnableEdit: () => void;
@@ -418,12 +422,12 @@ const useExpenseTicketDetailAutoEdit = ({
   const autoEditAttemptedRef = useRef(false);
 
   useEffect(() => {
-    if (!autoEditMode || isFromSheetLink || autoEditAttemptedRef.current) return;
+    if (!autoEditMode || !canAutoEditInContext || autoEditAttemptedRef.current) return;
     if (isLoading || !header || !canAttemptAutoEdit) return;
 
     autoEditAttemptedRef.current = true;
     handleEnableEdit();
-  }, [autoEditMode, canAttemptAutoEdit, handleEnableEdit, header, isFromSheetLink, isLoading]);
+  }, [autoEditMode, canAttemptAutoEdit, canAutoEditInContext, handleEnableEdit, header, isLoading]);
 };
 
 // Resolves permission and acting-user state so the page container stays focused on orchestration.
@@ -471,8 +475,11 @@ const useExpenseTicketDetailPageViewModel = () => {
     isFromExpenseSheetCreate,
     isFromExpenseLine,
     isFromSheetLink,
+    isLinkFailureRepair,
     ticketReturnContext,
   } = useExpenseTicketDetailRouteContext();
+  const canEditFromSheetLinkFailure = isLinkFailureRepair;
+  const saveStrategy: ExpenseTicketSaveStrategy = isLinkFailureRepair ? "ticket-only" : "ticket-and-sheet-line";
   const {
     hasAccess,
     canEditTicket,
@@ -570,7 +577,6 @@ const useExpenseTicketDetailPageViewModel = () => {
         "ExpenseTickets_SheetSync_RetryRequired",
         "Ticket data changed, but we could not sync the expense line. Save again before leaving."
       );
-  const hasWorkflowExitGuard = pendingFirstLink || sheetSyncBlocked;
 
   const { markResetFiltersReturn, clearCachedState } = useExpenseTicketDetailNavigationState({
     fileId,
@@ -639,7 +645,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     canEditTicket: canEditTicket && canEditLinkedTicket,
     isLoading,
     allowAssignedDraftEdit,
-    isFromSheetLink,
+    isSheetLinkReadOnly: isFromSheetLink && !canEditFromSheetLinkFailure,
     onForbidden: showPermissionModal,
   });
   const handleTicketCurrencyCodeChange = useCallback(
@@ -791,7 +797,7 @@ const useExpenseTicketDetailPageViewModel = () => {
 
   useExpenseTicketDetailAutoEdit({
     autoEditMode,
-    isFromSheetLink,
+    canAutoEditInContext: !isFromSheetLink || canEditFromSheetLinkFailure,
     isLoading,
     header,
     handleEnableEdit: handleEnableEditInContext,
@@ -816,6 +822,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     draftComentario,
     draftUrlFile,
     draftFileName,
+    saveStrategy,
     linkedExpenseSheetId,
     linkedExpenseLineRecId: isFromExpenseLine ? contextLineRecId : "",
     linkedExpenseLineProjectId: linkedSheetLine.draftProjectId,
@@ -867,8 +874,8 @@ const useExpenseTicketDetailPageViewModel = () => {
 
   const isAssignedTicket = header?.status === 1;
   const isContextLocked = (isAssignedTicket && !allowAssignedDraftEdit) || (!!linkedExpenseSheetId && linkSheetLocked);
-  const canEditTicketInContext = canEditTicket && canEditLinkedTicket && !isFromSheetLink;
-  const canCreateTicketLineInContext = canEditTicketInContext && !isContextLocked && !sheetSyncBlocked;
+  const canEditTicketInContext = canEditTicket && canEditLinkedTicket && (!isFromSheetLink || canEditFromSheetLinkFailure);
+  const canCreateTicketLineInContext = canEditTicketInContext && !isFromSheetLink && !isContextLocked && !sheetSyncBlocked;
   const canDeleteTicketInContext = canDeleteTicket && canEditLinkedTicket && !isFromSheetLink;
   const canDeleteUnlinkedTicketAfterSyncError =
     pendingFirstLink &&
@@ -877,42 +884,31 @@ const useExpenseTicketDetailPageViewModel = () => {
     !!safeText(fileId) &&
     !!header &&
     !safeText(header.hojaGastosIdDisplay);
-  const shouldHardBlockWorkflowExit = pendingFirstLink && !canDeleteUnlinkedTicketAfterSyncError;
+  // Hard blocking is limited to edit or newly created recovery flows; read-only sync errors must stay navigable.
+  const shouldHardBlockWorkflowExit = pendingFirstLink || (sheetSyncBlocked && isEditing);
+  const hasNavigationGuard = busy || isEditing || shouldHardBlockWorkflowExit;
+  const navigationGuardMessage = shouldHardBlockWorkflowExit ? sheetWorkflowBlockMessage : undefined;
 
   useEffect(() => {
-    if (!hasWorkflowExitGuard) {
+    if (!hasNavigationGuard) {
       clearExpenseNavigationGuard();
       return;
     }
 
     setExpenseNavigationGuard({
       active: true,
-      message: sheetWorkflowBlockMessage,
+      message: navigationGuardMessage,
       block: shouldHardBlockWorkflowExit,
     });
     return () => {
       clearExpenseNavigationGuard();
     };
-  }, [hasWorkflowExitGuard, sheetWorkflowBlockMessage, shouldHardBlockWorkflowExit]);
+  }, [hasNavigationGuard, navigationGuardMessage, shouldHardBlockWorkflowExit]);
 
-  useEffect(() => {
-    const backButton = document.getElementById("globalBackBtn") as HTMLButtonElement | null;
-    if (!backButton) return;
-
-    const previousDisabled = backButton.disabled;
-    if (shouldHardBlockWorkflowExit) {
-      backButton.disabled = true;
-      backButton.setAttribute("aria-disabled", "true");
-    } else if (!previousDisabled) {
-      backButton.disabled = false;
-      backButton.setAttribute("aria-disabled", "false");
-    }
-
-    return () => {
-      backButton.disabled = previousDisabled;
-      backButton.setAttribute("aria-disabled", previousDisabled ? "true" : "false");
-    };
-  }, [shouldHardBlockWorkflowExit]);
+  useExpenseTicketTopbarBackLock({
+    locked: shouldHardBlockWorkflowExit,
+    message: sheetWorkflowBlockMessage,
+  });
   const ticketTopbarActionMode: "default" | "save_only" | "save_delete" | "view_only" =
     pendingFirstLink && isEditing
       ? canDeleteUnlinkedTicketAfterSyncError
@@ -978,7 +974,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     isEditing,
     canOpenSaveConfirm,
     handlePersistHeaderDraft,
-    bypassWorkflowGuard: hasWorkflowExitGuard,
+    bypassWorkflowGuard: shouldHardBlockWorkflowExit,
     lineContainerRef,
     openPreview,
     ticketReturnContext,
