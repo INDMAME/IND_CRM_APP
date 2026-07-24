@@ -10,6 +10,11 @@ import {
 import { buildExpenseListPayload } from "../Web/wwwroot/react/src/pages/gastos/utils/expensePayloadBuilders.ts";
 import { resolveExpenseListAxUserIdOverride } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseManagedUserScope.ts";
 import { areExpenseNumericInputsEquivalent } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseNumberFormat.ts";
+import {
+  ensureCurrentExpenseManagedUserInList,
+  resolveExpenseSheetOwnerAxUserId,
+} from "../Web/wwwroot/react/src/pages/gastos/list/expenseManagedUserSelection.ts";
+import { normalizeExpenseSheetsCachedItems } from "../Web/wwwroot/react/src/pages/gastos/list/useExpenseSheetsFilterCache.ts";
 import { formatUserNameWithId } from "../Web/wwwroot/react/src/utils/userLabels.ts";
 
 assert.equal(isExpenseLineSameReimbursementCurrency("usd", "USD"), true);
@@ -71,4 +76,57 @@ assert.equal(
   "ABC"
 );
 
-console.log("[ok] Gastos currency settlement rules passed.");
+const managedExpenseUsers = [
+  { crmUserId: "MB", axUserId: "ITAMB", name: "MARCO BONOMELLI" },
+  { crmUserId: "GTL", axUserId: "ITGTL", name: "TIBERIU GHITULESCU" },
+  { crmUserId: "FISA", axUserId: "FISA", name: "FIORENZO SANTORINI" },
+];
+const currentAndManagedExpenseUsers = ensureCurrentExpenseManagedUserInList(
+  managedExpenseUsers,
+  "MAME",
+  "MARCO MEZA",
+  "P00009"
+);
+
+const resolveOwnerAxUserId = (ownerCrmUserId: string, ownerAxUserId: string) =>
+  resolveExpenseSheetOwnerAxUserId({
+    ownerCrmUserId,
+    ownerAxUserId,
+    currentCrmUserId: "P00009",
+    currentAxUserId: "MAME",
+    users: currentAndManagedExpenseUsers,
+  });
+
+assert.equal(resolveOwnerAxUserId("MB", "MB"), "ITAMB");
+assert.equal(resolveOwnerAxUserId("GTL", "GTL"), "ITGTL");
+assert.equal(resolveOwnerAxUserId("FISA", "FISA"), "FISA");
+assert.equal(resolveOwnerAxUserId("P00009", "P00009"), "MAME");
+assert.equal(resolveOwnerAxUserId("", "ITAMB"), "ITAMB");
+assert.equal(resolveOwnerAxUserId("UNKNOWN", "UNKNOWN"), "");
+assert.equal(resolveOwnerAxUserId("MB", "FISA"), "");
+assert.equal(resolveOwnerAxUserId(" mb ", " itamb "), "ITAMB");
+assert.equal(
+  resolveExpenseSheetOwnerAxUserId({
+    ownerCrmUserId: "MB",
+    ownerAxUserId: "ITAMB",
+    currentCrmUserId: "P00009",
+    currentAxUserId: "MAME",
+    users: [{ crmUserId: "ITAMB", axUserId: "ITAMB", name: "MARCO BONOMELLI" }],
+  }),
+  "ITAMB"
+);
+
+const [cachedExpenseSheet] = normalizeExpenseSheetsCachedItems([
+  {
+    hojaGastosId: " 000653 ",
+    userId: " MB ",
+    ownerAxUserId: " ITAMB ",
+    ownerName: " MARCO BONOMELLI ",
+  },
+]);
+assert.equal(cachedExpenseSheet.hojaGastosId, "000653");
+assert.equal(cachedExpenseSheet.userId, "MB");
+assert.equal(cachedExpenseSheet.ownerAxUserId, "ITAMB");
+assert.equal(cachedExpenseSheet.ownerName, "MARCO BONOMELLI");
+
+console.log("[ok] Gastos regression rules passed.");

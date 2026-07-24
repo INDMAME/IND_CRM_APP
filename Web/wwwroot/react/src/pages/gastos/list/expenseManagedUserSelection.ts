@@ -15,10 +15,12 @@ export const isSameExpenseManagedUser = (left: unknown, right: unknown): boolean
 export const ensureCurrentExpenseManagedUserInList = (
   users: AuthManagedUser[],
   currentAxUserId: unknown,
-  currentUserName: unknown = ""
+  currentUserName: unknown = "",
+  currentCrmUserId: unknown = ""
 ): AuthManagedUser[] => {
   const normalizedCurrent = normalizeUserId(currentAxUserId);
   const normalizedCurrentName = normalizeUserId(currentUserName);
+  const normalizedCurrentCrm = normalizeUserId(currentCrmUserId);
   const normalizedUsers = Array.isArray(users) ? users : [];
   if (!normalizedCurrent) return normalizedUsers;
   if (normalizedUsers.some((entry) => isSameExpenseManagedUser(entry.axUserId, normalizedCurrent))) {
@@ -29,6 +31,7 @@ export const ensureCurrentExpenseManagedUserInList = (
 
       return {
         ...entry,
+        crmUserId: normalizedCurrentCrm || normalizeUserId(entry.crmUserId) || normalizedCurrent,
         name: normalizedCurrentName || normalizeUserId(entry.name) || normalizedCurrent,
         userName: normalizedCurrentName || entry.userName,
       };
@@ -37,13 +40,99 @@ export const ensureCurrentExpenseManagedUserInList = (
 
   return [
     {
-      crmUserId: normalizedCurrent,
+      crmUserId: normalizedCurrentCrm || normalizedCurrent,
       axUserId: normalizedCurrent,
       name: normalizedCurrentName || normalizedCurrent,
       userName: normalizedCurrentName || undefined,
     },
     ...normalizedUsers,
   ];
+};
+
+type ResolveExpenseSheetOwnerAxUserIdArgs = {
+  ownerCrmUserId: unknown;
+  ownerAxUserId: unknown;
+  currentCrmUserId: unknown;
+  currentAxUserId: unknown;
+  users: AuthManagedUser[];
+};
+
+const addCanonicalManagedUserId = (index: Map<string, string>, identity: unknown, axUserId: string): void => {
+  const normalizedIdentity = normalizeUserId(identity).toUpperCase();
+  if (!normalizedIdentity || !axUserId) return;
+
+  if (!index.has(normalizedIdentity)) {
+    index.set(normalizedIdentity, axUserId);
+    return;
+  }
+
+  if (!isSameExpenseManagedUser(index.get(normalizedIdentity), axUserId)) {
+    index.set(normalizedIdentity, "");
+  }
+};
+
+const resolveCanonicalManagedUserId = (
+  identity: string,
+  primaryIndex: Map<string, string>,
+  secondaryIndex: Map<string, string>
+): { matched: boolean; axUserId: string } => {
+  if (primaryIndex.has(identity)) {
+    return { matched: true, axUserId: primaryIndex.get(identity) || "" };
+  }
+  if (secondaryIndex.has(identity)) {
+    return { matched: true, axUserId: secondaryIndex.get(identity) || "" };
+  }
+  return { matched: false, axUserId: "" };
+};
+
+// Resolves an expense owner only through the authorized CRM-to-AX identities.
+export const resolveExpenseSheetOwnerAxUserId = ({
+  ownerCrmUserId,
+  ownerAxUserId,
+  currentCrmUserId,
+  currentAxUserId,
+  users,
+}: ResolveExpenseSheetOwnerAxUserIdArgs): string => {
+  const authorizedUsers = ensureCurrentExpenseManagedUserInList(
+    Array.isArray(users) ? users : [],
+    currentAxUserId,
+    "",
+    currentCrmUserId
+  );
+  const axUserIdByCrm = new Map<string, string>();
+  const axUserIdByAx = new Map<string, string>();
+
+  authorizedUsers.forEach((entry) => {
+    const normalizedAxUserId = normalizeUserId(entry.axUserId);
+    if (!normalizedAxUserId) return;
+    addCanonicalManagedUserId(axUserIdByCrm, entry.crmUserId, normalizedAxUserId);
+    addCanonicalManagedUserId(axUserIdByAx, normalizedAxUserId, normalizedAxUserId);
+  });
+
+  const resolvedAxUserIds = new Map<string, string>();
+  const addResolvedAxUserId = ({ matched, axUserId }: { matched: boolean; axUserId: string }): boolean => {
+    if (matched && !axUserId) return false;
+    if (axUserId) resolvedAxUserIds.set(axUserId.toUpperCase(), axUserId);
+    return true;
+  };
+
+  const normalizedOwnerCrmUserId = normalizeUserId(ownerCrmUserId).toUpperCase();
+  if (normalizedOwnerCrmUserId) {
+    const resolvedFromCrm = resolveCanonicalManagedUserId(
+      normalizedOwnerCrmUserId,
+      axUserIdByCrm,
+      axUserIdByAx
+    );
+    if (!addResolvedAxUserId(resolvedFromCrm)) return "";
+  }
+
+  const normalizedOwnerAxUserId = normalizeUserId(ownerAxUserId).toUpperCase();
+  if (normalizedOwnerAxUserId) {
+    const resolvedFromAx = resolveCanonicalManagedUserId(normalizedOwnerAxUserId, axUserIdByAx, axUserIdByCrm);
+    if (!addResolvedAxUserId(resolvedFromAx)) return "";
+  }
+
+  return resolvedAxUserIds.size === 1 ? Array.from(resolvedAxUserIds.values())[0] : "";
 };
 
 // Resolves a valid user selection from the available user list and current context.

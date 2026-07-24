@@ -11,8 +11,8 @@ import {
 } from "../../../utils/sessionExpiry.ts";
 import { getExpenseScopeToken } from "../utils/expenseScope.ts";
 
-const EXPENSE_SHEETS_FILTER_KEY_PREFIX = "expense_sheets_filter_v1";
-const EXPENSE_SHEETS_RETURN_FLAG_KEY_PREFIX = "expense_sheets_return_v1";
+const EXPENSE_SHEETS_FILTER_KEY_PREFIX = "expense_sheets_filter_v2";
+const EXPENSE_SHEETS_RETURN_FLAG_KEY_PREFIX = "expense_sheets_return_v2";
 const EXPENSE_SHEETS_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
 
 export type ExpenseSheetsCachedState = {
@@ -40,7 +40,8 @@ const toNullableNumber = (value: unknown): number | null => {
   return Number.isFinite(parsed) ? parsed : null;
 };
 
-const normalizeItems = (raw: unknown): ExpenseSheetCard[] => {
+// Restores only the list-card fields needed after returning from expense detail.
+export const normalizeExpenseSheetsCachedItems = (raw: unknown): ExpenseSheetCard[] => {
   if (!Array.isArray(raw)) return [];
 
   return raw.map((entry) => {
@@ -52,6 +53,8 @@ const normalizeItems = (raw: unknown): ExpenseSheetCard[] => {
       estadoComentarios: typeof item.estadoComentarios === "string" ? item.estadoComentarios.trim() : null,
       userId: typeof item.userId === "string" ? item.userId.trim() : undefined,
       userName: typeof item.userName === "string" ? item.userName.trim() : null,
+      ownerAxUserId: typeof item.ownerAxUserId === "string" ? item.ownerAxUserId.trim() : undefined,
+      ownerName: typeof item.ownerName === "string" ? item.ownerName.trim() : null,
       voucher: typeof item.voucher === "string" ? item.voucher.trim() : undefined,
       projId: typeof item.projId === "string" ? item.projId.trim() : undefined,
       currencyCode: typeof item.currencyCode === "string" ? item.currencyCode.trim() : undefined,
@@ -71,7 +74,7 @@ const normalizeState = (raw: ExpenseSheetsCachedState | null): ExpenseSheetsCach
 
   const scrollRaw = Number(raw.scrollY);
   const scrollY = Number.isFinite(scrollRaw) && scrollRaw >= 0 ? Math.floor(scrollRaw) : 0;
-  const items = normalizeItems((raw as { items?: unknown }).items);
+  const items = normalizeExpenseSheetsCachedItems((raw as { items?: unknown }).items);
   const totalRaw = Number((raw as { total?: unknown }).total);
   const total = Number.isFinite(totalRaw) && totalRaw >= 0 ? totalRaw : items.length;
 

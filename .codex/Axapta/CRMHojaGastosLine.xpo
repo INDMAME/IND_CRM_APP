@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosLine unloaded at Miércoles 01/07/2026
+; Navision Axapta Table : CRMHojaGastosLine unloaded at Viernes 24/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -1381,7 +1381,7 @@ Formatversion: 1
         #ExchRate calcExchRateFromAmountMST()
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
-        #    CurrencyCode       currencyCode;
+        #    CurrencyCode currencyCode;
         #    CurrencyCode       reimbursementCurrencyCode;
         #    ;
         #
@@ -1897,6 +1897,9 @@ Formatversion: 1
         #    if (!this.validateCurrencyAmounts())
         #        throw error("Datos de divisa de la linea invalidos.");
         #
+        #    if(!this.Currency)
+        #        this.Currency = this.HojaGastosTable().CurrencyCode;
+        #
         #    super();
         #
         #    //INDMMS_ExternalCRM - 2026.03.25
@@ -1919,19 +1922,20 @@ Formatversion: 1
         #display Amount LineAmountMST()
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
-        #    CurrencyCode       currencyCode;
+        #    CurrencyCode currencyCode;
         #    CurrencyCode       reimbursementCurrencyCode;
-        #    ExchRate           exchRate;
+        #    ExchRate     exchRate;
         #    ;
         #
         #    //MMS - Ajustes CRM - 2026.07.02
         #    // Convierte solo cuando la divisa de la linea difiere de la divisa de reembolso.
-        #    currencyCode = this.Currency;
-        #    exchRate     = this.ExchRate;
-        #    reimbursementCurrencyCode = CompanyInfo::standardCurrency();
+        #    currencyCode                = this.Currency;
+        #    exchRate                    = this.ExchRate;
+        #    reimbursementCurrencyCode   = CompanyInfo::standardCurrency();
         #
-        #    if (hojaGastosTable && hojaGastosTable.CurrencyCode)
-        #        reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
+        #        //IJL.15/07/26. La divisa de reembolso es la divisa de la compañía en todos los casos
+        #    //if (hojaGastosTable && hojaGastosTable.CurrencyCode)
+        #    //    reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
         #
         #    if (!currencyCode && hojaGastosTable)
         #        currencyCode = hojaGastosTable.CurrencyCode;
@@ -1942,10 +1946,13 @@ Formatversion: 1
         #    if (currencyCode == reimbursementCurrencyCode)
         #        return Currency::amount(this.Amount, reimbursementCurrencyCode);
         #
-        #    if (!exchRate)
-        #        return 0;
+        #    //IJL.09/07/26. Si no hay exchRate calculamos el importe de todas formas.
+        #    //if (!exchRate)
+        #    //    return 0;
         #
-        #    return Currency::amount(this.Amount * 100 / exchRate, CompanyInfo::standardCurrency());
+        #    return Currency::amountCur2MST(this.Amount, CompanyInfo::standardCurrency(), exchRate, this.TransDate); //IJL.02/07/26
+        #
+        #    //return Currency::amount(this.Amount * 100 / exchRate, CompanyInfo::standardCurrency());
         #}
         #/*display Amount LineAmountMST()
         #{
@@ -2164,10 +2171,21 @@ Formatversion: 1
         #            this.InitFromGastoType();
         #            break;
         #
-        #        //MMS - Divisa desde línea - 2026.05.22
+        #        //MMS - Divisa desde linea - 2026.05.22
         #        case FieldNum(CRMHojaGastosLine, Amount),
-        #             FieldNum(CRMHojaGastosLine, Currency),
         #             FieldNum(CRMHojaGastosLine, ExchRate):
+        #            this.normalizeCurrencyAmounts(false);
+        #            break;
+        #
+        #        case FieldNum(CRMHojaGastosLine, Currency):
+        #            //MMS - Ajustes CRM - 2026.07.06
+        #            // Al cambiar divisa, evita derivar el tipo desde un AmountMST calculado con la divisa anterior.
+        #            if (this.Currency != this.orig().Currency)
+        #            {
+        #                this.ExchRate  = this.Currency == CompanyInfo::standardCurrency() ? 100 : 0;
+        #                this.AmountMST = 0;
+        #            }
+        #
         #            this.normalizeCurrencyAmounts(false);
         #            break;
         #
@@ -2193,8 +2211,9 @@ Formatversion: 1
         #        this.Currency = hojaGastosTable.CurrencyCode;
         #
         #    reimbursementCurrencyCode = CompanyInfo::standardCurrency();
-        #    if (hojaGastosTable && hojaGastosTable.CurrencyCode)
-        #        reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
+        #    //IJL.15/07/26. La divisa de reembolso es la divisa de la compañía en todos los casos
+        #    //if (hojaGastosTable && hojaGastosTable.CurrencyCode)
+        #    //    reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
         #
         #    if (!this.ExchRate && this.Currency == reimbursementCurrencyCode)
         #        this.ExchRate = 100;
@@ -2225,6 +2244,187 @@ Formatversion: 1
         #          CRMHojaGastosLineCust.Origen   == CRMConsultaOrigen::Proyecto;
         #
         #    return CRMHojaGastosLineCust.RecId;
+        #}
+      ENDSOURCE
+      SOURCE #PostInvoice
+        #void PostInvoice(TransDate      _transDate,
+        #                 VendAccount    _vendAccount,
+        #                 InvoiceId      _invoiceId,
+        #                 TaxGroup       _taxGroup,
+        #                 TaxItemGroup   _taxItemGroup)
+        #{
+        #    LedgerJournalTrans      journalTrans;
+        #    LedgerJournalTable      journalTable;
+        #    Voucher                 voucher;
+        #//    TransDate               transDate;
+        #//    LedgerAccount           ledgerAccount;
+        #    Amount                  amountIVA;
+        #    Dimension               dimension;
+        #    LedgerAccount           accountGasto, accountIVA, accountTemporal;
+        #    LedgerJournalEngine     ledgerJournalEngine;
+        #    Amount                  amountInvoiceBrutoMST;
+        #
+        #
+        #    LedgerJournalTrans CrearLinea(Voucher             _voucher,
+        #                                  TransDate           _transDateLocal,
+        #                                  LedgerJournalACType _journalACType,
+        #                                  AccountNum          _accountNum,
+        #                                  Amount              _amountDebit,
+        #                                  Amount              _amountCredit,
+        #                                  CurrencyCode        _currency,
+        #                                  Dimension           _dimension,
+        #                                  Description         _txt,
+        #                                  InvoiceId           _invoiceIdLocal,
+        #                                  TaxGroup            _taxGroupLocal,
+        #                                  TaxItemGroup        _taxItemGroupLocal,
+        #                                  RefRecId            _refRecId,
+        #                                  RefTableId          _refTableId)
+        #    {
+        #        LedgerJournalTrans      journalTransLocal;
+        #        ;
+        #        journalTransLocal.clear();
+        #        journalTransLocal.JournalNum         = journalTable.JournalNum;
+        #        journalTransLocal.Voucher            = _voucher;
+        #        journalTransLocal.TransDate          = _transDateLocal;
+        #
+        #        journalTransLocal.AccountType        = _journalACType;
+        #        journalTransLocal.AccountNum         = _accountNum;
+        #        journalTransLocal.Dimension          = _dimension;
+        #
+        #        journalTransLocal.OffsetAccountType  = LedgerJournalACType::DEL_Company;
+        #        journalTransLocal.OffsetAccount      = "";
+        #        journalTransLocal.Txt                = _txt;
+        #        journalTransLocal.Invoice            = _invoiceIdLocal;
+        #
+        #        journalTransLocal.CurrencyCode       = _currency;
+        #
+        #        journalTransLocal.AmountCurCredit    = _amountCredit;
+        #        journalTransLocal.AmountCurDebit     = _amountDebit;
+        #        journalTransLocal.INDRemesaLineRecId = 0;
+        #        journalTransLocal.INDRefRecId        = _refRecId;
+        #        journalTransLocal.INDRefTableId      = _refTableId;
+        #        journalTransLocal.ExchRateSecond     = 100;
+        #        journalTransLocal.ExchRate           = 100;
+        #
+        #        journalTransLocal.TaxGroup              = _taxGroupLocal;
+        #        journalTransLocal.TaxItemGroup          = _taxItemGroupLocal;
+        #        journalTransLocal.insert();
+        #
+        #        return journalTransLocal;
+        #    }
+        #    ;
+        #
+        #    /*
+        #    El asiento es:
+        #    //Asiento 01
+        #    Cuenta Temporal (Neto Factura)          -       Proveedor (Bruto Factura)
+        #    IVA             (Importe de IVA)
+        #
+        #    //Asiento 02
+        #    Proveedor   (Bruto Factura)             -       Cuenta Temporal (Neto Factura)
+        #                                            -       Gastos Empleado (Importe de IVA)
+        #
+        #    */
+        #
+        #    if (!this.Factura)
+        #        return;
+        #
+        #    if (! this.Amount){
+        #        return;
+        #    }
+        #
+        #    journalTable    = LedgerJournalTable::CreaCabeceraDiario(LedgerParameters::find().INDJouralNameIdOrdenPago, "");
+        #    voucher         = NumberSeq::newGetNumFromCode(journalTable.VoucherSeries).num();
+        #
+        #    accountGasto    = INDPersonaTable::findByCRM(CRMUsuarioTable::Find(this.UserId).RecId).getINDEmplTable().LedgerAccountGastos;
+        #    accountIVA      = "";
+        #    accountTemporal = "";
+        #
+        #    amountInvoiceBrutoMST   = this.LineAmountMST();
+        #
+        #    //Asiento 01 - Línea del proveedor
+        #    journalTrans    = CrearLinea(voucher,
+        #                                 _transDate,
+        #                                 LedgerJournalACType::Vend,
+        #                                 _vendAccount,
+        #                                 0,
+        #                                 amountInvoiceBrutoMST,
+        #                                 this.Currency,
+        #                                 dimension,
+        #                                 strfmt("%1 - %2 - %3", _invoiceId, this.Type, this.Description),
+        #                                 _invoiceId,
+        #                                 "", //_taxGroup,
+        #                                 "", //_taxItemGroup,
+        #                                 this.RecId,
+        #                                 this.TableId);
+        #
+        #    //Línea del Gasto + IVA
+        #    journalTrans    = CrearLinea(voucher,
+        #                                 _transDate,
+        #                                 LedgerJournalACType::Ledger,
+        #                                 accountTemporal,
+        #                                 amountInvoiceBrutoMST,
+        #                                 0,
+        #                                 CompanyInfo::standardCurrency(),
+        #                                 dimension,
+        #                                 strfmt("%1 - %2 - %3", _invoiceId, this.Type, this.Description),
+        #                                 "",
+        #                                 _taxGroup,
+        #                                 _taxItemGroup,
+        #                                 this.RecId,
+        #                                 this.TableId);
+        #    ledgerJournalEngine = LedgerJournalEngine::newBatch(journalTrans);
+        #    amountIVA           = ledgerJournalEngine.taxAmountJournal(journalTrans);
+        #
+        #    //Asiento 02
+        #    voucher         = NumberSeq::newGetNumFromCode(journalTable.VoucherSeries).num();
+        #    journalTrans    = CrearLinea(voucher,
+        #                                 _transDate,
+        #                                 LedgerJournalACType::Vend,
+        #                                 _vendAccount,
+        #                                 amountInvoiceBrutoMST,
+        #                                 0,
+        #                                 CompanyInfo::standardCurrency(),
+        #                                 dimension,
+        #                                 strfmt("%1 - %2 - %3", _invoiceId, this.Type, this.Description),
+        #                                 _invoiceId,
+        #                                 "", //_taxGroup,
+        #                                 "", //_taxItemGroup,
+        #                                 this.RecId,
+        #                                 this.TableId);
+        #
+        #    journalTrans    = CrearLinea(voucher,
+        #                                 _transDate,
+        #                                 LedgerJournalACType::Ledger,
+        #                                 accountTemporal,
+        #                                 0,
+        #                                 amountInvoiceBrutoMST - amountIVA,
+        #                                 CompanyInfo::standardCurrency(),
+        #                                 dimension,
+        #                                 strfmt("%1 - %2 - %3", _invoiceId, this.Type, this.Description),
+        #                                 "",
+        #                                 _taxGroup,
+        #                                 _taxItemGroup,
+        #                                 this.RecId,
+        #                                 this.TableId);
+        #
+        #    journalTrans    = CrearLinea(voucher,
+        #                                 _transDate,
+        #                                 LedgerJournalACType::Ledger,
+        #                                 accountGasto,
+        #                                 0,
+        #                                 amountIVA,
+        #                                 CompanyInfo::standardCurrency(),
+        #                                 dimension,
+        #                                 strfmt("%1 - %2 - %3", _invoiceId, this.Type, this.Description),
+        #                                 "",
+        #                                 _taxGroup,
+        #                                 _taxItemGroup,
+        #                                 this.RecId,
+        #                                 this.TableId);
+        #
+        #    if (journalTable)
+        #        journalTable.ContabilizaDiario();
         #}
       ENDSOURCE
       SOURCE #ProyectosImputados
@@ -2401,8 +2601,11 @@ Formatversion: 1
         #
         #    if (this.Currency != this.orig().Currency && this.ExchRate == this.orig().ExchRate)
         #    {
-        #        this.ExchRate = 0;
-        #        amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST;
+        #        //MMS - Ajustes CRM - 2026.07.06
+        #        // El cambio de divisa no debe interpretar el AmountMST recalculado como importe manual.
+        #        this.ExchRate  = this.Currency == CompanyInfo::standardCurrency() ? 100 : 0;
+        #        this.AmountMST = 0;
+        #        amountMSTChanged = false;
         #    }
         #
         #    this.normalizeCurrencyAmounts(amountMSTChanged);  //INDMMS_ExternalCRM - 2026.05.21
@@ -2529,7 +2732,7 @@ Formatversion: 1
         #            if (curExt() == "ISI" && this.Type == CRMGastoType::Km){
         #                priceKm = usuarioTable.priceKmAFecha(this.TransDate);
         #                if (! priceKm){
-        #                    ret = checkFailed("Este usuario en esta fecha no tiene configurado un precio por Km y po tanto no s epueden registrar líneas de Hojas de Gasto de este tipo. ");
+        #                    ret = checkFailed("Este usuario en esta fecha no tiene configurado un precio por Km y por tanto no se pueden registrar líneas de Hojas de Gasto de este tipo. ");
         #                }
         #            }
         #            break;

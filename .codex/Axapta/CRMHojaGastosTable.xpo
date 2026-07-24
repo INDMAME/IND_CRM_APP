@@ -3,10 +3,10 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosTable unloaded at Lunes 06/07/2026
+; Navision Axapta Table : CRMHojaGastosTable unloaded at Viernes 24/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
-
+  
   TABLE #CRMHojaGastosTable
     PROPERTIES
       Name                #CRMHojaGastosTable
@@ -35,7 +35,7 @@ Formatversion: 1
       CreatedBy           #Yes
       CreatedTransactionId #No
     ENDPROPERTIES
-
+    
     FIELDS
       FIELD #HojaGastosId
         STRING
@@ -53,15 +53,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #CRMHojaGastosId
               #
             ENDARRAY
           StringSize          #10
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #UserId
         STRING
         PROPERTIES
@@ -78,15 +78,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #CRMUserId
               #
             ENDARRAY
           StringSize          #15
           Adjustment          #Right
         ENDPROPERTIES
-
+        
       FIELD #Division
         ENUM
         PROPERTIES
@@ -103,14 +103,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #
               #
             ENDARRAY
           EnumType            #CRMDivision
         ENDPROPERTIES
-
+        
       FIELD #FromDate
         DATE
         PROPERTIES
@@ -127,13 +127,13 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #FromDate
               #
             ENDARRAY
         ENDPROPERTIES
-
+        
       FIELD #ToDate
         DATE
         PROPERTIES
@@ -150,13 +150,13 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #ToDate
               #
             ENDARRAY
         ENDPROPERTIES
-
+        
       FIELD #Comentarios
         STRING
         PROPERTIES
@@ -173,15 +173,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #CRMComentarios
               #
             ENDARRAY
           StringSize          #(Memo)
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #Description
         STRING
         PROPERTIES
@@ -198,15 +198,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #Description
               #
             ENDARRAY
           StringSize          #80
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #CurrencyCode
         STRING
         PROPERTIES
@@ -223,15 +223,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #CurrencyCode
               #
             ENDARRAY
           StringSize          #3
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #Aprobado
         ENUM
         PROPERTIES
@@ -248,18 +248,18 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #
               #
             ENDARRAY
           EnumType            #NoYes
         ENDPROPERTIES
-
+        
       FIELD #ExchRate
         REAL
         PROPERTIES
-          Type                #Real
+          Type                #Real 
           Name                #ExchRate
           Label               #
           HelpText            #Indicar el coste en divisa extranjera de 100 EUR
@@ -272,18 +272,18 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #ExchRate
               #
             ENDARRAY
           FieldUpdate         #Absolute
         ENDPROPERTIES
-
+        
       FIELD #AmountAnticipo
         REAL
         PROPERTIES
-          Type                #Real
+          Type                #Real 
           Name                #AmountAnticipo
           Label               #Anticipo
           HelpText            #
@@ -296,14 +296,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #Amount
               #
             ENDARRAY
           FieldUpdate         #Absolute
         ENDPROPERTIES
-
+        
       FIELD #DestinoId
         STRING
         PROPERTIES
@@ -320,15 +320,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #CRMHojaGastosDestinoId
               #
             ENDARRAY
           StringSize          #15
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #Year
         INT
         PROPERTIES
@@ -345,14 +345,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #Yr
               #
             ENDARRAY
           FieldUpdate         #Absolute
         ENDPROPERTIES
-
+        
       FIELD #ViajeId
         STRING
         PROPERTIES
@@ -369,15 +369,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #CRMUserViajeId
               #
             ENDARRAY
           StringSize          #10
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #ProjId
         STRING
         PROPERTIES
@@ -394,15 +394,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #ProjId
               #
             ENDARRAY
           StringSize          #20
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #InformeVisitaId
         STRING
         PROPERTIES
@@ -419,15 +419,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #CRMActividadId
               #
             ENDARRAY
           StringSize          #15
           Adjustment          #Right
         ENDPROPERTIES
-
+        
       FIELD #CategoriaId
         STRING
         PROPERTIES
@@ -444,15 +444,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #CRMUserCategoriaId
               #
             ENDARRAY
           StringSize          #10
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #Voucher
         STRING
         PROPERTIES
@@ -469,19 +469,19 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #Voucher
               #
             ENDARRAY
           StringSize          #30
           Adjustment          #Right
         ENDPROPERTIES
-
+        
       FIELD #PriceKm
         REAL
         PROPERTIES
-          Type                #Real
+          Type                #Real 
           Name                #PriceKm
           Label               #€ / Km
           HelpText            #
@@ -494,14 +494,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #Price
               #
             ENDARRAY
           FieldUpdate         #Absolute
         ENDPROPERTIES
-
+        
       FIELD #Month
         ENUM
         PROPERTIES
@@ -518,14 +518,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #
               #
             ENDARRAY
           EnumType            #MonthsOfYear
         ENDPROPERTIES
-
+        
       FIELD #TransDateRegistro_Mex
         DATE
         PROPERTIES
@@ -542,13 +542,13 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #TransDate
               #
             ENDARRAY
         ENDPROPERTIES
-
+        
       FIELD #UserIdRegistro_Mex
         STRING
         PROPERTIES
@@ -565,15 +565,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #userId
               #
             ENDARRAY
           StringSize          #5
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #INDRecIdMex
         INT
         PROPERTIES
@@ -590,14 +590,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #
               #
             ENDARRAY
           FieldUpdate         #Absolute
         ENDPROPERTIES
-
+        
       FIELD #INDCreatedByUserId
         STRING
         PROPERTIES
@@ -614,15 +614,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #INDCreatedByUserId
               #
             ENDARRAY
           StringSize          #5
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #INDSearchKey
         STRING
         PROPERTIES
@@ -639,15 +639,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #INDSearchKey
               #
             ENDARRAY
           StringSize          #130
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #ExpenseSheetStatus
         ENUM
         PROPERTIES
@@ -664,14 +664,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #
               #
             ENDARRAY
           EnumType            #INDExpenseSheetStatus
         ENDPROPERTIES
-
+        
       FIELD #ExchangeRateMode
         ENUM
         PROPERTIES
@@ -688,14 +688,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #
               #
             ENDARRAY
           EnumType            #INDExchangeRateMode
         ENDPROPERTIES
-
+        
       FIELD #EstadoComentarios
         STRING
         PROPERTIES
@@ -712,15 +712,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #CRMComentarios
               #
             ENDARRAY
           StringSize          #(Memo)
           Adjustment          #Left
         ENDPROPERTIES
-
+        
       FIELD #VoucherPhysical
         STRING
         PROPERTIES
@@ -737,15 +737,15 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #Voucher
               #
             ENDARRAY
           StringSize          #30
           Adjustment          #Right
         ENDPROPERTIES
-
+        
       FIELD #DatePhysical
         DATE
         PROPERTIES
@@ -762,13 +762,13 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #DatePhysical
               #
             ENDARRAY
         ENDPROPERTIES
-
+        
       FIELD #DateFinancial
         DATE
         PROPERTIES
@@ -785,13 +785,13 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #DateFinancial
               #
             ENDARRAY
         ENDPROPERTIES
-
+        
       FIELD #TransDateAprobacion
         DATE
         PROPERTIES
@@ -808,13 +808,13 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #TransDate
               #
             ENDARRAY
         ENDPROPERTIES
-
+        
       FIELD #NoContabilizarGasolina
         ENUM
         PROPERTIES
@@ -831,14 +831,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #NoYesId
               #
             ENDARRAY
           EnumType            #NoYes
         ENDPROPERTIES
-
+        
       FIELD #NecesariaHGImpresa
         ENUM
         PROPERTIES
@@ -855,38 +855,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #NoYesId
               #
             ENDARRAY
           EnumType            #NoYes
         ENDPROPERTIES
-
-      FIELD #MostrarParaPago
-        ENUM
-        PROPERTIES
-          Type                #Enum
-          Name                #MostrarParaPago
-          Label               #Mostrar para pago
-          HelpText            #
-          GroupPrompt         #
-          SaveContents        #Yes
-          Mandatory           #No
-          AllowEditOnCreate   #Yes
-          AllowEdit           #Yes
-          Visible             #Yes
-          ConfigurationKey    #
-          Table               #CRMHojaGastosTable
-          AliasFor            #
-          ExtendedDataType
-            ARRAY
-              #
-              #
-            ENDARRAY
-          EnumType            #NoYes
-        ENDPROPERTIES
-
+        
       FIELD #ReimbursableExpense
         ENUM
         PROPERTIES
@@ -903,14 +879,38 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosTable
           AliasFor            #
-          ExtendedDataType
-            ARRAY
+          ExtendedDataType    
+            ARRAY 
               #
               #
             ENDARRAY
           EnumType            #INDReimbursableExpense
         ENDPROPERTIES
-
+        
+      FIELD #MostrarParaPago
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #MostrarParaPago
+          Label               #Mostrar para pago
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
     ENDFIELDS
     GROUPS
       GROUP #AutoReport
@@ -919,7 +919,7 @@ Formatversion: 1
           OldName             #
           Label               #
         ENDPROPERTIES
-
+        
         GROUPFIELDS
         ENDGROUPFIELDS
       ENDGROUP
@@ -929,7 +929,7 @@ Formatversion: 1
           OldName             #
           Label               #
         ENDPROPERTIES
-
+        
         GROUPFIELDS
         ENDGROUPFIELDS
       ENDGROUP
@@ -939,7 +939,7 @@ Formatversion: 1
           OldName             #
           Label               #Notas
         ENDPROPERTIES
-
+        
         GROUPFIELDS
           #Comentarios
         ENDGROUPFIELDS
@@ -950,7 +950,7 @@ Formatversion: 1
           OldName             #
           Label               #Estado
         ENDPROPERTIES
-
+        
         GROUPFIELDS
           #ExpenseSheetStatus
           #EstadoComentarios
@@ -962,7 +962,7 @@ Formatversion: 1
           OldName             #
           Label               #Hoja de Gastos
         ENDPROPERTIES
-
+        
         GROUPFIELDS
           #HojaGastosId
           #UserId
@@ -980,7 +980,7 @@ Formatversion: 1
           OldName             #
           Label               #Price / Km
         ENDPROPERTIES
-
+        
         GROUPFIELDS
           #PriceKm
         ENDGROUPFIELDS
@@ -991,14 +991,14 @@ Formatversion: 1
           OldName             #
           Label               #Tipo de Cambio
         ENDPROPERTIES
-
+        
         GROUPFIELDS
           #ExchRate
           #ExchangeRateMode
         ENDGROUPFIELDS
       ENDGROUP
     ENDGROUPS
-
+    
     INDICES
       #Index1
       PROPERTIES
@@ -1007,11 +1007,11 @@ Formatversion: 1
         Enabled             #Yes
         ConfigurationKey    #
       ENDPROPERTIES
-
+      
       INDEXFIELDS
         #HojaGastosId
       ENDINDEXFIELDS
-
+      
       #Index2
       PROPERTIES
         Name                #Index2
@@ -1019,11 +1019,11 @@ Formatversion: 1
         Enabled             #Yes
         ConfigurationKey    #
       ENDPROPERTIES
-
+      
       INDEXFIELDS
         #ViajeId
       ENDINDEXFIELDS
-
+      
       #INDSearchKeyIdx
       PROPERTIES
         Name                #INDSearchKeyIdx
@@ -1031,11 +1031,11 @@ Formatversion: 1
         Enabled             #Yes
         ConfigurationKey    #
       ENDPROPERTIES
-
+      
       INDEXFIELDS
         #INDSearchKey
       ENDINDEXFIELDS
-
+      
     ENDINDICES
     REFERENCES
       REFERENCE #CRMUsuarioTable
@@ -1044,7 +1044,7 @@ Formatversion: 1
           Table               #CRMUsuarioTable
           Validate            #Yes
         ENDPROPERTIES
-
+        
         FIELDREFERENCES
           REFERENCETYPE NORMAL
           PROPERTIES
@@ -1053,20 +1053,20 @@ Formatversion: 1
             Table               #CRMUsuarioTable
             RelatedField        #UserId
           ENDPROPERTIES
-
+          
         ENDFIELDREFERENCES
       ENDREFERENCE
     ENDREFERENCES
-
+    
     DELETEACTIONS
       #CRMHojaGastosLine
       PROPERTIES
         Table               #CRMHojaGastosLine
         DeleteAction        #Cascade
       ENDPROPERTIES
-
+      
     ENDDELETEACTIONS
-
+    
     METHODS
       Version: 3
       SOURCE #ActualizarClientesEnGastoLineCust
@@ -2581,7 +2581,7 @@ Formatversion: 1
         #        this.NecesariaHGImpresa = NoYes::No;
         #    }
         #*/
-        #    //this.NecesariaHGImpresa = this.NecesitaHGFisica();//this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
+        #    this.NecesariaHGImpresa = this.NecesitaHGFisica();//this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
         #    this.MostrarParaPago    = this.MostrarParaPago(); //IJL.29/05/26
         #
         #    super();
@@ -3581,7 +3581,7 @@ Formatversion: 1
         #    this.updateSearchKey();//IND_MMS - API PROJECT - 2025.11.10
         #    this.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
         #
-        #    //this.NecesariaHGImpresa = this.NecesitaHGFisica();//this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
+        #    this.NecesariaHGImpresa = this.NecesitaHGFisica();//this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
         #    this.MostrarParaPago    = this.MostrarParaPago(); //IJL.29/05/26
         #
         #    super();
@@ -4177,14 +4177,15 @@ Formatversion: 1
         #                                   FormButtonControl   _buttonCancelarRechazo,
         #                                   FormButtonControl   _buttonVolverABorrador)
         #{
-        #    //MMS - Ajustes CRM - 2026.07.21
-        #    // Resolves approval eligibility from the exact manager-owner relationship.
+        #    CRMUsuarioTable     crmUsuarioTable = CRMUsuarioTable::Find(_hojaGastosTable.UserId);
+        #    INDPersonaTable     personaTable    = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
+        #
         #    boolean             enableSolicitarAprobacion, enableCancelarSolicitarAprobacion, enableAprobar, enableDesAprobar, enableRechazar, enableAnularRechazo, enableVolverBorrador;
+        #    Set                 setSubordinados             = crmUsuarioTable.SetSubordinados();
         #    INDPersonaTable     personaTableAxaptaUser      = INDPersonaTable::findByAxUserId(curUserId());
         #    CRMUsuarioTable     CRMUsuarioTableAxaptaUser   = CRMUsuarioTable::Find_AxaptaUserId(curUserId());
         #    boolean             allowSelfManagement         = personaTableAxaptaUser.AllowSelfManagement;
-        #    boolean             hojaGastosEsMia;
-        #    boolean             esAprobadorHojaGastos;
+        #    boolean             hojaGastosEsMia             = _hojaGastosTable.UserId == CRMUsuarioTableAxaptaUser.UserId;
         #    ;
         #
         #    if (!_hojaGastosTable){
@@ -4198,9 +4199,6 @@ Formatversion: 1
         #        return;
         #    }
         #
-        #    hojaGastosEsMia       = _hojaGastosTable.UserId == CRMUsuarioTableAxaptaUser.UserId;
-        #    esAprobadorHojaGastos = CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(CRMUsuarioTableAxaptaUser.UserId, _hojaGastosTable.UserId);
-        #
         #    //Solamente se puede solicitar aprobación si la HG está en un estado que permita la edición
         #    //enableSolicitarAprobacion           = CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(_hojaGastosTable.ExpenseSheetStatus) && !allowSelfManagement;
         #    enableSolicitarAprobacion           = CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(_hojaGastosTable.ExpenseSheetStatus) && hojaGastosEsMia && !allowSelfManagement;
@@ -4211,8 +4209,9 @@ Formatversion: 1
         #    //IJL.30/06/26
         #    enableVolverBorrador                = _hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Rejected && hojaGastosEsMia && !allowSelfManagement;
         #
-        #    // An eligible manager can approve an expense sheet that is in review.
-        #    if (   (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::InReview && esAprobadorHojaGastos && !hojaGastosEsMia)
+        #    //Puede Aprobar aquella persona que tenga más un elemento en el set de subordinados. Como mínimo ese set contiene al propio usuario.
+        #    //Se puede Aprobar una Hoja de Gastos en estado "Solicitud Aprobada"
+        #    if (   (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::InReview && setSubordinados.elements() > 0 && setSubordinados.in(_hojaGastosTable.UserId) && !hojaGastosEsMia)
         #        || (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Draft    && (allowSelfManagement && hojaGastosEsMia))){
         #
         #        enableAprobar = true;
@@ -4223,7 +4222,7 @@ Formatversion: 1
         #    }
         #
         #
-        #    if (   (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Approved && esAprobadorHojaGastos && !hojaGastosEsMia)
+        #    if (   (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Approved && setSubordinados.elements() > 0 && setSubordinados.in(_hojaGastosTable.UserId) && !hojaGastosEsMia)
         #        || (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Approved && (allowSelfManagement && hojaGastosEsMia))){
         #
         #        enableDesAprobar    = true;
@@ -4235,8 +4234,9 @@ Formatversion: 1
         #    //Solamente se puede Desaprobar una HG que está en estado APROBADA y el usuario tenga potestad para aprobar.
         #//    enableDesAprobar    = CRMHojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Approved && setSubordinados.elements() > 1;
         #
-        #    // An eligible manager can reject an expense sheet that is in review.
-        #    if (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::InReview && esAprobadorHojaGastos && !hojaGastosEsMia){
+        #    //Puede Rechazar aquella persona que tenga más un elemento en el set de subordinados. Como mínimo ese set contiene al propio usuario.
+        #    //Se puede Rechazar una Hoja de Gastos en estado "Solicitud Aprobada"
+        #    if (_hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::InReview && setSubordinados.elements() > 0 && setSubordinados.in(_hojaGastosTable.UserId) && !hojaGastosEsMia){
         #        enableRechazar = true;
         #    }
         #    else
@@ -4245,7 +4245,7 @@ Formatversion: 1
         #    }
         #
         #    //Solamente se puede Anular el rechazo de una HG que está en estado RECHAZADA y el usuario tenga potestad para rechazar.
-        #    enableAnularRechazo = _hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Rejected && esAprobadorHojaGastos && !hojaGastosEsMia;
+        #    enableAnularRechazo = _hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Rejected && setSubordinados.elements() > 0 && setSubordinados.in(_hojaGastosTable.UserId) && !hojaGastosEsMia;
         #
         #    _buttonSolicitarAprobacion.enabled(enableSolicitarAprobacion);
         #    _buttonCancelarSolicitarAprobacion.enabled(enableCancelarSolicitarAprobacion);
@@ -4480,6 +4480,6 @@ Formatversion: 1
       ENDSOURCE
     ENDMETHODS
   ENDTABLE
-
+  
 
 ***Element: END

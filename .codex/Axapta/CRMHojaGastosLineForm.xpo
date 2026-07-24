@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Martes 30/06/2026
+; Navision Axapta Forms unloaded at Viernes 24/07/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -36,9 +36,9 @@ FORM #CRMHojaGastosLine
       #void RereadLine()
       #{
       #    ;
-      #    CRMHojaGastosLine_ds.reread();
       #    CRMHojaGastosLine_ds.refresh();
       #}
+      #
     ENDSOURCE
     SOURCE #EnableFields
       #void EnableFields()
@@ -140,7 +140,10 @@ FORM #CRMHojaGastosLine
       #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, Price)).enabled(false);
       #            break;
       #    }
+      #
+      #    element.refreshExchangeRateEditState();
       #}
+      #
     ENDSOURCE
     SOURCE #EnableNochesHotel
       #void EnableNochesHotel()
@@ -150,6 +153,27 @@ FORM #CRMHojaGastosLine
       #    if (CRMHojaGastosLine.Type  == CRMGastoType::Hotel)
       #        CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, NochesHotel)).enabled(true);
       #}
+    ENDSOURCE
+    SOURCE #refreshExchangeRateEditState
+      #//MMS - Ajustes CRM - 2026.07.06
+      #void refreshExchangeRateEditState(boolean _setCompanyRate = false)
+      #{
+      #    CurrencyCode companyCurrency;
+      #    boolean      isCompanyCurrency;
+      #    ;
+      #
+      #    companyCurrency   = CompanyInfo::standardCurrency();
+      #    isCompanyCurrency = CRMHojaGastosLine.Currency != "" && CRMHojaGastosLine.Currency == companyCurrency;
+      #
+      #    if (isCompanyCurrency && _setCompanyRate)
+      #        CRMHojaGastosLine.ExchRate = 100;
+      #
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, ExchRate)).enabled(!isCompanyCurrency);
+      #
+      #    CRMHojaGastosLine_ds.refresh();
+      #
+      #}
+      #
     ENDSOURCE
     SOURCE #init
       #public void init()
@@ -219,14 +243,14 @@ FORM #CRMHojaGastosLine
       #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, ModalidadPago)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
       #
       #    //IJL.13/04/26
-      #    if (INDDataAreaParameterTable::Find().ActivarAprobacionHojasDeGastos){
+      #    //if (INDDataAreaParameterTable::Find().ActivarAprobacionHojasDeGastos){
       #
-      #        /*
+      #
       #        CRMHojaGastosLine_ds.allowEdit(  CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus) && !hojaGastosTable.Voucher);
       #        CRMHojaGastosLine_ds.allowCreate(CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus) && !hojaGastosTable.Voucher);
       #        CRMHojaGastosLine_ds.allowDelete(CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(hojaGastosTable.ExpenseSheetStatus) && !hojaGastosTable.Voucher);
-      #        */
-      #    }
+      #
+      #    //}
       #
       #    //IJL.16/04/26
       #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, TaxPercent)).visible(!INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
@@ -335,10 +359,63 @@ FORM #CRMHojaGastosLine
             ENDMETHODS
           ENDDATAFIELD
           
+          DATAFIELD Qty
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    CRMHojaGastosLine_ds.refresh();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD Currency
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    element.refreshExchangeRateEditState(true);
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
         ENDFIELDLIST
       ENDOBJECTPOOL
       METHODS
         Version: 3
+        SOURCE #write
+          #public void write()
+          #{
+          #    super();
+          #    this.reread();
+          #}
+        ENDSOURCE
         SOURCE #validateWrite
           #public boolean validateWrite()
           #{
@@ -346,10 +423,9 @@ FORM #CRMHojaGastosLine
           #
           #    ret = super();
           #
-          #    this.refresh();
-          #
           #    return ret;
           #}
+          #
         ENDSOURCE
         SOURCE #active
           #public int active()
@@ -408,6 +484,7 @@ FORM #CRMHojaGastosLine
           #    super();
           #
           #    CRMHojaGastosLine.InitFromHojaGastosTable();
+          #    element.refreshExchangeRateEditState(true);
           #
           #    if (projTable){
           #        CRMHojaGastosLine.HojaGastosId  = projTable.ProjId;
@@ -415,6 +492,7 @@ FORM #CRMHojaGastosLine
           #        CRMHojaGastosLine.NoCobrar      = NoYes::Yes;
           #    }
           #}
+          #
         ENDSOURCE
       ENDMETHODS
     ENDDATASOURCE
@@ -486,7 +564,7 @@ FORM #CRMHojaGastosLine
     
     CONTAINER
       CONTROL TAB
-        ;==== controlId:12290, containerId: 0, containerdata: 2   
+        ;==== controlId:12290, containerId: 0, containerdata: 0   
         ;----------------------------------------------------------
         PROPERTIES
           Name                #Tab
@@ -1599,7 +1677,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12381, containerId:12292, containerdata: 0   
+                      ;==== controlId:12310, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_Qty
@@ -1669,7 +1747,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12382, containerId:12292, containerdata: 0   
+                      ;==== controlId:12311, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_Price
@@ -1739,7 +1817,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12383, containerId:12292, containerdata: 0   
+                      ;==== controlId:12312, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_Currency
@@ -1802,7 +1880,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12345, containerId:12292, containerdata: 0   
+                      ;==== controlId:12313, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_ExchRate
@@ -1872,7 +1950,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12380, containerId:12292, containerdata: 0   
+                      ;==== controlId:12314, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_Amount
@@ -1942,7 +2020,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL REALEDIT
-                      ;==== controlId:12344, containerId:12292, containerdata: 0   
+                      ;==== controlId:12315, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_AmountMST
@@ -2012,7 +2090,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL COMBOBOX
-                      ;==== controlId:12346, containerId:12292, containerdata: 0   
+                      ;==== controlId:12316, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_ReimbursableExpense
@@ -2068,7 +2146,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL INTEDIT
-                      ;==== controlId:12314, containerId:12292, containerdata:12292   
+                      ;==== controlId:12317, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_NochesHotel
@@ -2133,7 +2211,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12315, containerId:12292, containerdata:12292   
+                      ;==== controlId:12318, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_InformeVisitaId
@@ -2196,7 +2274,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12316, containerId:12292, containerdata:12292   
+                      ;==== controlId:12319, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_ProjId
@@ -2259,7 +2337,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12317, containerId:12292, containerdata:12292   
+                      ;==== controlId:12320, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_ProjIdHornos
@@ -2322,7 +2400,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12318, containerId:12292, containerdata:12292   
+                      ;==== controlId:12321, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_DisciplinaId
@@ -2385,7 +2463,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12319, containerId:12292, containerdata:12292   
+                      ;==== controlId:12322, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CategoriaId
@@ -2449,7 +2527,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12320, containerId:12292, containerdata:12292   
+                      ;==== controlId:12323, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #ProyectosImputados
@@ -2513,7 +2591,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12321, containerId:12292, containerdata:12292   
+                      ;==== controlId:12324, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_ViajeId
@@ -2576,7 +2654,7 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL STRINGEDIT
-                      ;==== controlId:12322, containerId:12292, containerdata:12292   
+                      ;==== controlId:12325, containerId:12292, containerdata:12292   
                       ;----------------------------------------------------------
                       PROPERTIES
                         Name                #CRMHojaGastosLine_FileId
@@ -2647,7 +2725,7 @@ FORM #CRMHojaGastosLine
           ENDCONTROL 
           
           CONTROL TABPAGE
-            ;==== controlId:12323, containerId:12290, containerdata:12290   
+            ;==== controlId:12326, containerId:12290, containerdata:12290   
             ;----------------------------------------------------------
             PROPERTIES
               Name                #TabGeneral
@@ -2694,7 +2772,7 @@ FORM #CRMHojaGastosLine
             
             CONTAINER
               CONTROL GROUP
-                ;==== controlId:12324, containerId:12323, containerdata:12323   
+                ;==== controlId:12327, containerId:12326, containerdata:12326   
                 ;----------------------------------------------------------
                 PROPERTIES
                   Name                #Gastos
@@ -2770,7 +2848,7 @@ FORM #CRMHojaGastosLine
       ENDCONTROL 
       
       CONTROL BUTTONGROUP
-        ;==== controlId:12325, containerId: 0, containerdata:5296   
+        ;==== controlId:12328, containerId: 0, containerdata:5296   
         ;----------------------------------------------------------
         PROPERTIES
           Name                #ButtonGroup
@@ -2825,7 +2903,7 @@ FORM #CRMHojaGastosLine
         
         CONTAINER
           CONTROL BUTTON
-            ;==== controlId:12326, containerId:12325, containerdata:12325   
+            ;==== controlId:12329, containerId:12328, containerdata:12328   
             ;----------------------------------------------------------
             PROPERTIES
               Name                #Imprimir
@@ -2914,7 +2992,7 @@ FORM #CRMHojaGastosLine
           ENDCONTROL 
           
           CONTROL MENUITEMBUTTON
-            ;==== controlId:12327, containerId:12325, containerdata:12325   
+            ;==== controlId:12330, containerId:12328, containerdata:12328   
             ;----------------------------------------------------------
             PROPERTIES
               Name                #CRMHojaGastosLineCust
@@ -2964,7 +3042,7 @@ FORM #CRMHojaGastosLine
           ENDCONTROL 
           
           CONTROL MENUITEMBUTTON
-            ;==== controlId:12328, containerId:12325, containerdata:12325   
+            ;==== controlId:12331, containerId:12328, containerdata:12328   
             ;----------------------------------------------------------
             PROPERTIES
               Name                #CRMHojaGastosLineCust_Proj
@@ -3014,7 +3092,7 @@ FORM #CRMHojaGastosLine
           ENDCONTROL 
           
           CONTROL MENUITEMBUTTON
-            ;==== controlId:12329, containerId:12325, containerdata:12325   
+            ;==== controlId:12332, containerId:12328, containerdata:12328   
             ;----------------------------------------------------------
             PROPERTIES
               Name                #CRMHojaGastosLineCust_NoConf
@@ -3064,7 +3142,7 @@ FORM #CRMHojaGastosLine
           ENDCONTROL 
           
           CONTROL MENUITEMBUTTON
-            ;==== controlId:12330, containerId:12325, containerdata:12325   
+            ;==== controlId:12333, containerId:12328, containerdata:12328   
             ;----------------------------------------------------------
             PROPERTIES
               Name                #CRMHojaGastosLineCust_Subv
@@ -3114,7 +3192,7 @@ FORM #CRMHojaGastosLine
           ENDCONTROL 
           
           CONTROL MENUITEMBUTTON
-            ;==== controlId:12331, containerId:12325, containerdata:12325   
+            ;==== controlId:12334, containerId:12328, containerdata:12328   
             ;----------------------------------------------------------
             PROPERTIES
               Name                #CRMHojaGastosLineCust_Evento
@@ -3164,7 +3242,7 @@ FORM #CRMHojaGastosLine
           ENDCONTROL 
           
           CONTROL MENUITEMBUTTON
-            ;==== controlId:12332, containerId:12325, containerdata:12325   
+            ;==== controlId:12335, containerId:12328, containerdata:12328   
             ;----------------------------------------------------------
             PROPERTIES
               Name                #INDTicketInfoTable

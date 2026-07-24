@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 09/07/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Viernes 24/07/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -177,7 +177,7 @@ Formatversion: 1
         #    str          currencyText;
         #    ;
         #
-        #    amount       = _expenseSheet.TotalAmount();
+        #    amount       = _expenseSheet.TotalAmountMST();//TotalAmount();  MMS - 2026.07.22
         #    currencyCode = _expenseSheet.CurrencyCode;
         #    currencyText = Currency::find(currencyCode).CurrencyCodeISO;
         #    if (!currencyText)
@@ -250,9 +250,10 @@ Formatversion: 1
         #    exchangeRateMode    = any2int(_hoja.ExchangeRateMode);
         #    expenseSheetStatus  = any2int(_hoja.ExpenseSheetStatus);
         #    reimbursableExpense = any2int(_hoja.ReimbursableExpense);
-        #    ownerAxUserId       = _hoja.INDCreatedByUserId;
+        #    //MMS - Prioriza el usuario AX actual y conserva el creador historico como respaldo - 2026.07.24
+        #    ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_hoja.UserId);
         #    if (!ownerAxUserId)
-        #        ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_hoja.UserId);
+        #        ownerAxUserId = _hoja.INDCreatedByUserId;
         #    ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ownerAxUserId ? ownerAxUserId : _hoja.UserId);
         #
         #    conItem = [[
@@ -482,11 +483,18 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #canExpenseSheetActorManageOwner
-        #// Validates the exact manager-owner relationship used for expense approval.
+        #// Valida que el actor recibido desde la web pueda gestionar al propietario de la hoja.
         #static server boolean canExpenseSheetActorManageOwner(str 20 _actorUserId,
         #                                                      CRMUserId _ownerCrmUserId)
         #{
-        #    CRMUserId actorCrmUserId;
+        #    CRMUserId                  actorCrmUserId;
+        #    CRMUsuarioTable            actorUser;
+        #    CRMUsuarioTable            subordinateCrmUser;
+        #    INDPersonaTable            subordinatePersona;
+        #    str                        subordinateList;
+        #    container                  subordinateUsersCon;
+        #    str                        subordinateUserId;
+        #    int                        i;
         #    ;
         #
         #    if (!_actorUserId || !_ownerCrmUserId)
@@ -496,7 +504,42 @@ Formatversion: 1
         #    if (!actorCrmUserId || actorCrmUserId == _ownerCrmUserId)
         #        return false;
         #
-        #    return CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(actorCrmUserId, _ownerCrmUserId);
+        #    // Require an active expense approval relation in addition to the existing scope checks.
+        #    if (!CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(actorCrmUserId, _ownerCrmUserId))
+        #        return false;
+        #
+        #    actorUser = CRMUsuarioTable::Find(actorCrmUserId);
+        #    if (!actorUser.RecId)
+        #        return false;
+        #
+        #    subordinateList = actorUser.ListaSubordinadosByPerTable();
+        #    if (!subordinateList)
+        #        return false;
+        #
+        #    subordinateUsersCon = Global::str2ConKeepStrings(subordinateList, ',');
+        #    for (i = 1; i <= conLen(subordinateUsersCon); i++)
+        #    {
+        #        subordinateUserId = strLRTrim(strFmt('%1', conPeek(subordinateUsersCon, i)));
+        #        if (!subordinateUserId)
+        #            continue;
+        #
+        #        if (subordinateUserId == _ownerCrmUserId)
+        #            return true;
+        #
+        #        subordinateCrmUser = CRMUsuarioTable::Find(subordinateUserId);
+        #        if (subordinateCrmUser.UserId == _ownerCrmUserId)
+        #            return true;
+        #
+        #        subordinatePersona = INDPersonaTable::Find(subordinateUserId);
+        #        if (subordinatePersona.RecId)
+        #        {
+        #            subordinateCrmUser = subordinatePersona.getCRMUsuarioTable();
+        #            if (subordinateCrmUser.UserId == _ownerCrmUserId)
+        #                return true;
+        #        }
+        #    }
+        #
+        #    return false;
         #}
         #
       ENDSOURCE
@@ -2673,9 +2716,10 @@ Formatversion: 1
         #        reimbursableExpense = any2int(header.ReimbursableExpense);
         #        // Resuelve el propietario para exponerlo al detalle web sin cambiar indices anteriores.
         #        ownerUser           = CRMUsuarioTable::Find(header.UserId);
-        #        ownerAxUserId       = header.INDCreatedByUserId;
+        #        //MMS - Prioriza el usuario AX actual y conserva el creador historico como respaldo - 2026.07.24
+        #        ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(header.UserId);
         #        if (!ownerAxUserId)
-        #            ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(header.UserId);
+        #            ownerAxUserId = header.INDCreatedByUserId;
         #        ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ownerAxUserId ? ownerAxUserId : header.UserId);
         #        if (!ownerName)
         #            ownerName = ownerUser.Name;
@@ -3042,7 +3086,7 @@ Formatversion: 1
         #            visibleUserIds = [crmUserId];
         #
         #            while select subordinadoTable
-        #                where subordinadoTable.UserIdJefe                    == crmUserId
+        #                where subordinadoTable.UserIdJefe == crmUserId
         #                   && subordinadoTable.ExcluirAprobacionHojaGastos   == NoYes::No
         #            {
         #                if (subordinadoTable.UserIdSubordinado
@@ -3786,7 +3830,7 @@ Formatversion: 1
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #// Output rows:
-        #//  - [[subordinateUserId, subordinateName], ...]
+        #//  - [[crmUserId, axUserId, subordinateName], ...]
         #static server container getSubordinatesByUser(container _data)
         #{
         #    DataAreaId                 companyId;
@@ -3841,13 +3885,15 @@ Formatversion: 1
         #                personaTable        = INDPersonaTable::findByCRM(crmUsuarioTableSub.RecId);
         #
         #            if (!subordinateUserId
+        #                || !crmUsuarioTableSub.UserId
         #                || !personaTable.UserId
         #                || crmUsuarioTable.UserId == crmUsuarioTableSub.UserId
         #                || !CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(crmUserId, crmUsuarioTableSub.UserId))
         #                continue;
         #
+        #            //MMS - Separa los identificadores CRM y AX para evitar cruces de identidad - 2026.07.24
         #            itemCon = [[
-        #                        strFmt("%1", subordinateUserId),
+        #                        strFmt("%1", crmUsuarioTableSub.UserId),
         #                        strFmt("%1", personaTable.UserId),
         #                        strFmt("%1", personaTable.Name)// crmUsuarioTableSub.Name)
         #                      ]];
@@ -4491,7 +4537,7 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #resolveExpenseSheetManagerCrmUserIds
-        #// Returns all eligible direct managers for expense approval, without duplicates.
+        #// Devuelve todas las jefaturas directas del propietario de la hoja, sin duplicados.
         #static server container resolveExpenseSheetManagerCrmUserIds(CRMUserId _ownerCrmUserId)
         #{
         #    CRMUsuarioSubordinadoTable subordinadoTable;
@@ -4505,7 +4551,7 @@ Formatversion: 1
         #        return managerCrmUserIds;
         #
         #    while select subordinadoTable
-        #        where subordinadoTable.UserIdSubordinado             == _ownerCrmUserId
+        #        where subordinadoTable.UserIdSubordinado == _ownerCrmUserId
         #           && subordinadoTable.ExcluirAprobacionHojaGastos   == NoYes::No
         #    {
         #        managerCrmUserId = subordinadoTable.UserIdJefe;
