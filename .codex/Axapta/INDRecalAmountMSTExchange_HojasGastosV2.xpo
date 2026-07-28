@@ -1,0 +1,128 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: INDRecalAmountMSTExchange_HojasGastosV2 descargado en Martes 21/07/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+
+  SOURCE #INDRecalAmountMSTExchange_HojasGastosV2
+    #static void INDRecalAmountMSTExchange_HojasGastosV2(Args _args)
+    #{
+    #    Set                 setCia = new Set(Types::String);
+    #    SetIterator         si;
+    #    DataAreaId          id;
+    #
+    #    void updateLines()
+    #    {
+    #        CRMHojaGastosLine   hojaGastosLine;
+    #        CRMHojaGastosLine   hojaGastosLineUpdate;
+    #        CRMHojaGastosTable  hojaGastosTable;
+    #        Amount              newAmountMST;
+    #        ExchRate            targetExchRate;
+    #        int                 scanned;
+    #        int                 updated;
+    #        int                 skippedCurrencyMismatch;
+    #        int                 skippedInvalidHeaderRate;
+    #        int                 skippedNoCalculation;
+    #        ;
+    #
+    #        while select hojaGastosLine
+    #            where hojaGastosLine.AmountMST == 0
+    #            join hojaGastosTable
+    #                where hojaGastosTable.HojaGastosId == hojaGastosLine.HojaGastosId
+    #        {
+    #            scanned++;
+    #            ttsbegin;
+    #
+    #            select firstonly forupdate hojaGastosLineUpdate
+    #                where hojaGastosLineUpdate.RecId     == hojaGastosLine.RecId &&
+    #                      hojaGastosLineUpdate.AmountMST == 0;
+    #
+    #            if (!hojaGastosLineUpdate.RecId)
+    #            {
+    #                ttscommit;
+    #                continue;
+    #            }
+    #
+    #            select firstonly hojaGastosTable
+    #                where hojaGastosTable.HojaGastosId == hojaGastosLineUpdate.HojaGastosId;
+    #
+    #            //MMS - Sincroniza la tasa antes de recalcular el importe historico - 2026.07.21
+    #            if (!hojaGastosTable.RecId ||
+    #                hojaGastosLineUpdate.Currency != hojaGastosTable.CurrencyCode)
+    #            {
+    #                skippedCurrencyMismatch++;
+    #                ttscommit;
+    #                continue;
+    #            }
+    #
+    #            targetExchRate = hojaGastosTable.CurrencyCode == "EUR" ? 100 : hojaGastosTable.ExchRate;
+    #
+    #            if (targetExchRate <= 0)
+    #            {
+    #                skippedInvalidHeaderRate++;
+    #                ttscommit;
+    #                continue;
+    #            }
+    #
+    #            hojaGastosLineUpdate.ExchRate = targetExchRate;
+    #            newAmountMST = hojaGastosLineUpdate.LineAmountMST();
+    #
+    #            if (newAmountMST == 0)
+    #            {
+    #                skippedNoCalculation++;
+    #                ttscommit;
+    #                continue;
+    #            }
+    #
+    #            hojaGastosLineUpdate.AmountMST = newAmountMST;
+    #            hojaGastosLineUpdate.doUpdate();
+    #            updated++;
+    #
+    #            ttscommit;
+    #        }
+    #
+    #        info(strfmt("%6: Revisadas: %1. Actualizadas: %2. Divisa distinta: %3. Tasa de cabecera no valida: %4. Sin calculo: %5",
+    #                    scanned,
+    #                    updated,
+    #                    skippedCurrencyMismatch,
+    #                    skippedInvalidHeaderRate,
+    #                    skippedNoCalculation,
+    #                    curext()));
+    #    }
+    #    ;
+    #
+    #    /*
+    #    setCia.add("LAN");
+    #    setCia.add("IHI");
+    #    setCia.add("RSI");
+    #    setCia.add("SET");
+    #    setCia.add("REF");
+    #    setCia.add("TAZ");
+    #    setCia.add("ISI");
+    #    setCia.add("ISM");
+    #    setCia.add("AZM");
+    #    setCia.add("CUM");
+    #    setCia.add("IST");
+    #    */
+    #    setCia.add("ITA");
+    #
+    #    si = new SetIterator(setCia);
+    #
+    #    while (si.more())
+    #    {
+    #        id = si.value();
+    #
+    #        changeCompany(id)
+    #        {
+    #            updateLines();
+    #        }
+    #
+    #        si.next();
+    #    }
+    #}
+  ENDSOURCE
+
+***Element: END

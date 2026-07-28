@@ -1,5 +1,6 @@
 import type { AppliedFilterSnapshot } from "./expenseListTypes.ts";
 import { DEFAULT_EXPENSE_STATUS_FILTER, normalizeExpenseStatusFilterCode } from "../constants/expenseStatusCatalog.ts";
+import { startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
 
 // Normalizes an expense filter snapshot so cache and UI use one canonical shape.
 export const normalizeExpenseFilterSnapshot = (
@@ -30,4 +31,24 @@ export const normalizeExpenseFilterSnapshot = (
     exchangeRateMode: null,
     filter: String(value?.filter || hojaGastosId || "").trim(),
   };
+};
+
+// Builds the default expense sheet list filters used for first load and created-sheet returns.
+export const createInitialExpenseSheetsFilterSnapshot = (managedUserId: unknown): AppliedFilterSnapshot => {
+  const today = startOfDay(new Date());
+  const fromDate = new Date(today);
+  fromDate.setDate(today.getDate() - 89);
+
+  return normalizeExpenseFilterSnapshot({
+    fromDate: toIsoDate(fromDate),
+    toDate: toIsoDate(today),
+    projectId: "",
+    hojaGastosId: "",
+    currencyCode: "",
+    managedUserId: String(managedUserId || "").trim(),
+    includeSubordinates: false,
+    statusFilter: DEFAULT_EXPENSE_STATUS_FILTER,
+    exchangeRateMode: null,
+    filter: "",
+  });
 };

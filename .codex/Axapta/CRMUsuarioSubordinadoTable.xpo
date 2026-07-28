@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMUsuarioSubordinadoTable unloaded at Martes 02/06/2026
+; Navision Axapta Table : CRMUsuarioSubordinadoTable unloaded at Viernes 24/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -111,6 +111,30 @@ Formatversion: 1
           FieldUpdate         #Absolute
         ENDPROPERTIES
         
+      FIELD #ExcluirAprobacionHojaGastos
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #ExcluirAprobacionHojaGastos
+          Label               #Descartado para aprobación hojas de gastos
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMUsuarioSubordinadoTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #NoYesId
+              #
+            ENDARRAY
+          EnumType            #NoYes
+        ENDPROPERTIES
+        
     ENDFIELDS
     GROUPS
       GROUP #AutoReport
@@ -169,26 +193,184 @@ Formatversion: 1
     
     METHODS
       Version: 3
+      SOURCE #insert
+        #public void insert()
+        #{
+        #    if (!this.validateWrite())//MMS - Integridad de datos - 2026.07.23
+        #    {
+        #        throw Exception::Error;
+        #    }
+        #
+        #    super();
+        #}
+      ENDSOURCE
+      SOURCE #update
+        #public void update()
+        #{
+        #    if (!this.validateWrite()) //MMS - Integridad de datos - 2026.07.23
+        #    {
+        #        throw Exception::Error;
+        #    }
+        #
+        #    super();
+        #}
+      ENDSOURCE
       SOURCE #UserIdSubordinadoName
         #display Name UserIdSubordinadoName()
         #{
         #    return CRMUsuarioTable::Find(this.UserIdSubordinado).Name;
         #}
       ENDSOURCE
+      SOURCE #validateWrite
+        #//MMS - Integridad de datos - 2026.07.23
+        #public boolean validateWrite()
+        #{
+        #    boolean                       ret;
+        #    CRMUsuarioSubordinadoTable    existingRelation;
+        #    Set                           visitedUsers;
+        #
+        #    ret = super();
+        #
+        #    if (!ret)
+        #    {
+        #        return false;
+        #    }
+        #
+        #    // Evitar una relación consigo mismo.
+        #    if (this.UserIdJefe == this.UserIdSubordinado)
+        #    {
+        #        return checkFailed(strFmt(
+        #            "El usuario %1 no puede ser jefe de sí mismo.",
+        #            this.UserIdJefe));
+        #    }
+        #
+        #    // Validar duplicidad dentro de la compañía actual.
+        #    // En insert RecId será 0; en update se excluye el registro actual.
+        #    select firstOnly RecId
+        #        from existingRelation
+        #        where existingRelation.UserIdJefe        == this.UserIdJefe
+        #           && existingRelation.UserIdSubordinado == this.UserIdSubordinado
+        #           && existingRelation.RecId             != this.RecId;
+        #
+        #    if (existingRelation.RecId)
+        #    {
+        #        return checkFailed(strFmt(
+        #            "La relación entre el jefe %1 y el subordinado %2 ya existe.",
+        #            this.UserIdJefe,
+        #            this.UserIdSubordinado));
+        #    }
+        #
+        #    // Las relaciones excluidas no participan en el recorrido de aprobación.
+        #    if (this.ExcluirAprobacionHojaGastos == NoYes::No)
+        #    {
+        #        visitedUsers = new Set(Types::String);
+        #
+        #        if (CRMUsuarioSubordinadoTable::hasActivePath(
+        #                this.UserIdSubordinado,
+        #                this.UserIdJefe,
+        #                this.RecId,
+        #                visitedUsers))
+        #        {
+        #            return checkFailed(strFmt(
+        #                "No se puede guardar la relación %1 -> %2 porque "
+        #                + "generaría una relación circular.",
+        #                this.UserIdJefe,
+        #                this.UserIdSubordinado));
+        #        }
+        #    }
+        #
+        #    return true;
+        #}
+      ENDSOURCE
+      SOURCE #EsAprobadorHojaGastos
+        #//MMS - Ajustes CRM - 2026.07.21
+        #// Validates an eligible manager-owner relationship for expense approval.
+        #static boolean EsAprobadorHojaGastos(CRMUserId _userIdJefe,
+        #                                      CRMUserId _userIdSubordinado)
+        #{
+        #    CRMUsuarioSubordinadoTable subordinadoTable;
+        #    ;
+        #
+        #    if (!_userIdJefe || !_userIdSubordinado || _userIdJefe == _userIdSubordinado)
+        #        return false;
+        #
+        #    select firstonly RecId from subordinadoTable
+        #        where subordinadoTable.UserIdJefe                    == _userIdJefe
+        #           && subordinadoTable.UserIdSubordinado             == _userIdSubordinado
+        #           && subordinadoTable.ExcluirAprobacionHojaGastos   == NoYes::No;
+        #
+        #    return subordinadoTable.RecId != 0;
+        #}
+      ENDSOURCE
       SOURCE #FindJefe
-        #static CRMUserId FindJefe(CRMUserId _userId)
+        #//MMS - Ajustes CRM - 2026.07.21
+        #// Keeps the legacy manager lookup unless expense approval filtering is requested.
+        #static CRMUserId FindJefe(CRMUserId _userId,
+        #                            boolean   _soloAprobadoresHojaGastos = false)
         #{
         #    CRMUsuarioSubordinadoTable  CRMUsuarioSubordinadoTable;
         #    ;
         #
-        #    if (_userId == "ANA"){
+        #    if (!_soloAprobadoresHojaGastos)
+        #    {
+        #        if (_userId == "ANA")
         #        return "NY";
-        #    }
         #
         #    select firstonly CRMUsuarioSubordinadoTable
         #    where CRMUsuarioSubordinadoTable.UserIdSubordinado == _userID;
+        #    }
+        #    else
+        #    {
+        #        select firstonly CRMUsuarioSubordinadoTable
+        #            where CRMUsuarioSubordinadoTable.UserIdSubordinado          == _userId
+        #               && CRMUsuarioSubordinadoTable.ExcluirAprobacionHojaGastos == NoYes::No;
+        #    }
         #
         #    return CRMUsuarioSubordinadoTable.UserIdJefe;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #hasActivePath
+        #//MMS - Integridad de datos - 2026.07.23
+        #private static boolean hasActivePath(
+        #    UserId _startUserId,
+        #    UserId _targetUserId,
+        #    RecId  _ignoredRecId,
+        #    Set    _visitedUsers)
+        #{
+        #    CRMUsuarioSubordinadoTable childRelation;
+        #
+        #    if (_startUserId == _targetUserId)
+        #    {
+        #        return true;
+        #    }
+        #
+        #    // Impide que la propia validación entre en bucle
+        #    // si ya existen datos circulares antiguos.
+        #    if (_visitedUsers.in(_startUserId))
+        #    {
+        #        return false;
+        #    }
+        #
+        #    _visitedUsers.add(_startUserId);
+        #
+        #    while select UserIdSubordinado
+        #        from childRelation
+        #        where childRelation.UserIdJefe == _startUserId
+        #           && childRelation.ExcluirAprobacionHojaGastos == NoYes::No
+        #           && childRelation.RecId != _ignoredRecId
+        #    {
+        #        if (CRMUsuarioSubordinadoTable::hasActivePath(
+        #                childRelation.UserIdSubordinado,
+        #                _targetUserId,
+        #                _ignoredRecId,
+        #                _visitedUsers))
+        #        {
+        #            return true;
+        #        }
+        #    }
+        #
+        #    return false;
         #}
       ENDSOURCE
     ENDMETHODS

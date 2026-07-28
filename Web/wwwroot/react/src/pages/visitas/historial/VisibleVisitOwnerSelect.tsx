@@ -69,6 +69,7 @@ const VisibleVisitOwnerSelect = ({
         idBase="history-visible-owner"
         portalClassName="visitas-typography"
         panelClassName="visitas-typography"
+        dropdownMinWidthPx={360}
         allowTextInput
         selectedTextMode="text"
         showLabel={false}

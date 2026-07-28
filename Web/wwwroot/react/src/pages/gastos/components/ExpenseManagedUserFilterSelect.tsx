@@ -81,6 +81,7 @@ const ExpenseManagedUserFilterSelect = ({
       idBase="expense-managed-user-filter"
       portalClassName="visitas-typography"
       panelClassName="visitas-typography"
+      dropdownMinWidthPx={360}
       allowTextInput
       selectedTextMode="text"
       showLabel={showLabel}

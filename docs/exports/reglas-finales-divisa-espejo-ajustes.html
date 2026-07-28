@@ -170,10 +170,18 @@
 <body>
   <main>
     <h1>Reglas finales de divisa, espejo y ajustes</h1>
-    <p class="meta">Fuente: pagina de Notion <a href="https://app.notion.com/p/366d344f5188804eb448dfd4802f17cc">Divisas en linea para Hoja de gastos</a>, incluyendo la seccion "Actualizacion 2026-07-01 - reglas finales de divisa, espejo y ajustes" y las aclaraciones del 2026-07-02. Exportado: 2026-07-02.</p>
+    <p class="meta">Fuente inicial: pagina de Notion <a href="https://app.notion.com/p/366d344f5188804eb448dfd4802f17cc">Divisas en linea para Hoja de gastos</a>. Exportado: 2026-07-02. Revisado contra la web y los XPO versionados: 2026-07-13.</p>
 
     <div class="callout">
-      <strong>Decision operativa:</strong> AX mantiene la logica de calculo y ajuste. El frontend no debe duplicar la creacion de lineas de ajuste ni enviar un <code>ExchRate</code> recalculado artificialmente cuando la divisa coincide con la divisa de reembolso.
+      <strong>Decision operativa:</strong> AX mantiene la logica de calculo y ajuste. La web no crea lineas de ajuste y, cuando la divisa coincide con la divisa de reembolso, muestra y envia <code>ExchRate = 100</code> con el campo bloqueado.
+    </div>
+
+    <div class="callout">
+      <strong>Alcance de esta revision:</strong> las reglas siguientes separan el comportamiento web confirmado del contrato de los XPO versionados. Antes de afirmar que un entorno concreto ya aplica la logica XPO, debe comprobarse que esos objetos estan importados y compilados en su AOT.
+    </div>
+
+    <div class="callout">
+      <strong>Divergencia pendiente de entorno:</strong> una validacion registrada el 2026-07-02 observo que, tras editar una linea normal, AX recalculaba la cabecera incluyendo el ajuste anterior. El XPO versionado actual conserva la cabecera y recalcula el ajuste. Este documento describe ese contrato versionado, pero el caso debe repetirse en el AOT instalado antes de trasladarlo al manual de usuario como comportamiento confirmado.
     </div>
 
     <h2>Objetivo</h2>
@@ -186,7 +194,7 @@
     </ul>
 
     <section class="inventory-item">
-      <h4>Formula AX vigente para divisa distinta</h4>
+      <h4>Formula del contrato AX para divisa distinta</h4>
       <pre><code>AmountMST = Amount * 100 / ExchRate</code></pre>
       <p>Cuando se modifica manualmente <code>AmountMST</code> y la divisa del gasto es distinta de la divisa de reembolso, el calculo inverso es:</p>
       <pre><code>ExchRate = Amount * 100 / AmountMST</code></pre>
@@ -194,16 +202,17 @@
     </section>
 
     <div class="callout">
-      <strong>Misma divisa de reembolso:</strong> si <code>CurrencyCode</code> coincide con la divisa de reembolso de la hoja, no hay conversion. El <code>AmountMST</code> automatico debe igualar <code>Amount</code> o <code>TotalAmount</code>; el <code>ExchRate</code> debe quedar en <code>100</code> y el campo de tipo de cambio debe mostrarse bloqueado.
+      <strong>Misma divisa de reembolso en la web:</strong> si <code>CurrencyCode</code> coincide con la divisa de reembolso de la hoja, no hay conversion. El <code>AmountMST</code> automatico debe igualar <code>Amount</code> o <code>TotalAmount</code>; la web fuerza <code>ExchRate = 100</code> y muestra el campo de tipo de cambio bloqueado.
     </div>
 
-    <h2>Fuente de verdad por operacion</h2>
+    <h2>Contrato versionado por operacion</h2>
     <ul>
-      <li>Si se modifica una linea normal de ticket (alta, baja, cantidad o precio), AX recalcula la cabecera desde el desglose persistido del ticket.</li>
-      <li>La linea de ajuste no se crea ni se recalcula por la mera modificacion de una linea normal. Solo se gestiona cuando el usuario edita manualmente el <code>Importe divisa</code> de la cabecera, o cuando una linea de hoja vinculada actualiza el total de un ticket multilinea.</li>
+      <li>Si se modifica una linea normal de un ticket que no tiene ajuste, el XPO versionado recalcula la cabecera desde la suma de sus lineas.</li>
+      <li>Si el ticket ya tiene una linea de ajuste, el XPO versionado conserva el total manual de cabecera y recalcula o elimina ese ajuste para absorber la nueva diferencia.</li>
+      <li>Modificar una linea normal no crea una linea de ajuste nueva cuando el ticket no tenia una previamente.</li>
       <li>Si se modifica directamente el <code>Importe divisa</code> de la cabecera del ticket, se considera un ajuste manual de total y se crea o recalcula una unica linea <code>AJUSTE DE IMPORTE TOTAL</code>.</li>
-      <li>Cuando se gestiona el ajuste manual, si ya existe una linea de ajuste se reutiliza. No deben generarse lineas de ajuste duplicadas.</li>
-      <li>En el flujo de ajuste manual, la linea de ajuste debe hacer que <code>suma de lineas del ticket = Importe divisa de cabecera</code>.</li>
+      <li>Si ya existe una linea de ajuste se reutiliza. No deben generarse lineas de ajuste duplicadas.</li>
+      <li>La linea de ajuste debe hacer que <code>suma de lineas del ticket = Importe divisa de cabecera</code>.</li>
       <li>El espejo contra la linea de hoja de gasto usa la cabecera del ticket como fuente principal tras guardar.</li>
       <li>En tickets multilinea, editar la linea de hoja de gasto vinculada equivale a editar manualmente la cabecera del ticket y por tanto puede recalcular la linea de ajuste.</li>
     </ul>
@@ -242,7 +251,7 @@
       <ul>
         <li>En tickets vinculados, la divisa de referencia es la divisa de reembolso de la hoja asociada.</li>
         <li>La moneda estandar de empresa solo se usa como fallback si el ticket no tiene linea vinculada o el vinculo no es unico.</li>
-        <li>Al sincronizar el ticket con la linea de hoja asociada, la linea aplica la misma regla y fuerza <code>ExchRate = 100</code> si ambas divisas coinciden.</li>
+        <li>Al sincronizar desde la web el ticket con la linea de hoja asociada, la linea aplica la misma regla web y envia <code>ExchRate = 100</code> si ambas divisas coinciden.</li>
       </ul>
     </section>
 
@@ -266,14 +275,14 @@
     <pre><code>Ajuste = Importe divisa cabecera - suma de lineas normales</code></pre>
 
     <section class="inventory-item">
-      <h4>Casos de ajuste</h4>
+      <h4>Casos de ajuste esperados segun el XPO versionado</h4>
       <ul>
         <li>Si la suma de lineas normales es <code>95.00</code> y la cabecera se edita a <code>100.00</code>, el ajuste debe ser <code>5.00</code>.</li>
         <li>Si la suma de lineas normales es <code>100.00</code> y la cabecera se edita a <code>95.00</code>, el ajuste debe ser <code>-5.00</code>.</li>
         <li>Si se vuelve a editar la cabecera y ya existe ajuste, se recalcula la misma linea.</li>
-        <li>Si el ajuste queda en <code>0.00</code>, no debe crearse una linea nueva; si existe una linea de ajuste previa, AX debe eliminarla.</li>
-        <li>La creacion, recalculo o eliminacion de la linea de ajuste se valida cuando cambia manualmente el total de cabecera.</li>
-        <li>Si luego se modifica una linea normal del ticket, AX recalcula la cabecera desde el desglose persistido; no se espera que conserve automaticamente el total manual anterior.</li>
+        <li>Si el ajuste queda en <code>0.00</code>, el XPO versionado no crea una linea nueva y elimina cualquier ajuste previo.</li>
+        <li>Si luego se modifica una linea normal y ya existe ajuste, el XPO versionado conserva el total manual de cabecera y recalcula la diferencia.</li>
+        <li>Si la nueva diferencia queda en <code>0.00</code>, el XPO versionado elimina la linea de ajuste existente.</li>
       </ul>
     </section>
 
@@ -351,9 +360,9 @@
       <ul>
         <li>Estado inicial: lineas normales <code>95.00</code>, ajuste <code>5.00</code>, cabecera <code>100.00</code>.</li>
         <li>Usuario cambia una linea normal y la suma de lineas normales pasa a <code>98.00</code>.</li>
-        <li>Comportamiento actual validado en AX: la cabecera se recalcula desde el desglose persistido. Si el ajuste de <code>5.00</code> sigue existiendo, el total de cabecera pasa a <code>103.00</code>.</li>
-        <li>No esperado: conservar cabecera en <code>100.00</code> ni crear o recalcular una linea de ajuste por <code>2.00</code> solo por editar la linea normal.</li>
-        <li>Para dejar la cabecera en <code>100.00</code>, el usuario debe editar manualmente el total de cabecera a <code>100.00</code>; en ese flujo el ajuste se recalcula a <code>2.00</code>.</li>
+        <li>Esperado segun el XPO versionado: la cabecera se conserva en <code>100.00</code> y la misma linea de ajuste pasa a <code>2.00</code>.</li>
+        <li>Si las lineas normales pasan a <code>100.00</code>, el contrato versionado deja el ajuste en <code>0.00</code> y elimina esa linea.</li>
+        <li>No esperado: crear una segunda linea de ajuste o cambiar la cabecera a <code>103.00</code>.</li>
       </ul>
     </section>
 
@@ -361,8 +370,8 @@
     <section class="inventory-item">
       <h4><code>AmountMST</code> y tipo de cambio</h4>
       <ul>
-        <li>Si la divisa de la linea coincide con la divisa de reembolso de la hoja, editar <code>Importe reembolso</code> / <code>AmountMST</code> no recalcula una tasa inversa; <code>Tipo de cambio</code> / <code>ExchRate</code> queda en <code>100</code>.</li>
-        <li>En misma divisa, AX o la web deben inicializar y mantener <code>ExchRate = 100</code>.</li>
+        <li>En la web, si la divisa de la linea coincide con la divisa de reembolso de la hoja, editar <code>Importe reembolso</code> / <code>AmountMST</code> no recalcula una tasa inversa; <code>Tipo de cambio</code> / <code>ExchRate</code> queda en <code>100</code>.</li>
+        <li>La web inicializa y mantiene <code>ExchRate = 100</code> en misma divisa. El XPO directo solo usa <code>100</code> cuando la tasa esta vacia y puede conservar una tasa previa distinta de cero; ese flujo directo debe validarse por separado.</li>
         <li>Si la divisa de la linea o del ticket es distinta a la divisa de reembolso, se mantiene el calculo inverso: <code>ExchRate = Amount * 100 / AmountMST</code> en linea y <code>ExchRate = TotalAmount * 100 / AmountMST</code> en ticket.</li>
         <li>Al modificar cantidad, precio o importe en misma divisa, el <code>AmountMST</code> automatico vuelve a igualarse al importe si el usuario no esta editando manualmente <code>AmountMST</code>.</li>
       </ul>
@@ -372,18 +381,19 @@
       <h4>Aclaracion para tickets vinculados</h4>
       <ul>
         <li>La comparacion de divisa se hace contra la divisa de reembolso de la hoja asociada.</li>
-        <li>Si <code>CurrencyCode</code> del ticket coincide con la divisa de reembolso de la hoja, editar <code>AmountMST</code> mantiene <code>ExchRate = 100</code>.</li>
+        <li>En la web, si <code>CurrencyCode</code> del ticket coincide con la divisa de reembolso de la hoja, editar <code>AmountMST</code> mantiene <code>ExchRate = 100</code>.</li>
         <li>Si <code>CurrencyCode</code> del ticket difiere de la divisa de reembolso, editar <code>AmountMST</code> mantiene el calculo inverso: <code>ExchRate = TotalAmount * 100 / AmountMST</code>.</li>
       </ul>
     </section>
 
     <section class="inventory-item">
-      <h4>Comportamiento actual del ajuste total</h4>
+      <h4>Comportamiento esperado del ajuste total segun el XPO versionado</h4>
       <ul>
         <li>La linea <code>AJUSTE DE IMPORTE TOTAL</code> se crea, recalcula o elimina cuando el usuario edita manualmente el total de cabecera.</li>
-        <li>Si el ajuste manual queda en <code>0.00</code>, no debe crearse una linea nueva; si existe una linea de ajuste previa, AX debe eliminarla en ese flujo manual.</li>
-        <li>Editar una linea normal no conserva automaticamente el total manual anterior. AX recalcula la cabecera desde el desglose persistido del ticket.</li>
-        <li>Mientras exista ajuste manual distinto de <code>0.00</code>, AX reutiliza una unica linea <code>Adjustment = Yes</code>; no debe crear duplicados.</li>
+        <li>Si el ticket no tenia ajuste, editar una linea normal recalcula la cabecera y no crea un ajuste nuevo.</li>
+        <li>Si ya habia ajuste, editar una linea normal conserva el total manual de cabecera y recalcula la unica linea de ajuste.</li>
+        <li>Si la nueva diferencia queda en <code>0.00</code>, el XPO versionado elimina la linea de ajuste existente.</li>
+        <li>Mientras exista ajuste manual distinto de <code>0.00</code>, el XPO versionado reutiliza una unica linea <code>Adjustment = Yes</code>; no debe crear duplicados.</li>
         <li>El frontend no calcula esta linea. La regla pertenece a AX y se refleja despues de guardar y recargar el ticket.</li>
       </ul>
     </section>
@@ -398,7 +408,7 @@
       <li>Guardar un ticket en divisa distinta cambiando manualmente <code>AmountMST</code> y validar que <code>ExchRate</code> se recalcula con <code>TotalAmount * 100 / AmountMST</code>.</li>
       <li>Guardar un ticket en misma divisa de reembolso cambiando manualmente <code>AmountMST</code> y validar que <code>ExchRate</code> queda en <code>100</code> y el campo esta bloqueado.</li>
       <li>Editar manualmente el <code>Importe divisa</code> de cabecera del ticket y validar que existe una unica linea de ajuste.</li>
-      <li>Editar una linea normal de un ticket con ajuste y validar que AX recalcula la cabecera desde el desglose persistido; no debe esperarse que conserve el total manual anterior ni que genere un nuevo ajuste diferencial.</li>
+      <li>Editar una linea normal de un ticket con ajuste y comprobar en el AOT instalado si coincide con el XPO versionado: conservar la cabecera, recalcular una unica linea de ajuste y eliminarla si la diferencia queda en <code>0.00</code>.</li>
       <li>Validar que la linea de hoja de gasto vinculada queda sincronizada tras cada guardado.</li>
       <li>Cerrar y reabrir el ticket y la hoja de gasto para confirmar persistencia en AX.</li>
     </ul>

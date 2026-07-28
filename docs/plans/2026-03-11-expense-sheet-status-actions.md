@@ -1,53 +1,33 @@
 # Expense Sheet Detail Status Actions
 
-Date: 2026-03-11
-Scope: `Gastos/ExpenseSheetDetail`
+Original date: 2026-03-11
+Last verified against the application: 2026-07-13
+Status: Implemented as built
 
-## Goal
+## Purpose and source of truth
 
-Define one explicit policy for:
+This document describes the current expense sheet detail status flow. It replaces the original interaction matrix that was stored in this file.
 
-- editability of the expense sheet detail page
-- visible bottom status actions
-- FAB visibility
-- ownership and subordinate behavior
-- backend validation rules for status transitions
+The implementation remains the final source of truth:
 
-This document is the implementation source of truth for the expense sheet detail status flow.
+- frontend policy: `Web/wwwroot/react/src/pages/gastos/detail/expenseSheetDetailPolicy.ts`
+- status dialog and minimum-content gate: `Web/wwwroot/react/src/pages/gastos/detail/useExpenseSheetDetailPageController.tsx`
+- server-side transition enforcement: `Web/Controllers/Gastos/GastosController.cs`
 
-## Global Rules
+## Global rules
 
 - The `Status` field is always read-only.
-- Status changes are only allowed through `PageBottomActions`.
-- Existing sheets can resolve to one of these interaction modes:
-  - `full_edit`
-  - `comment_only_edit`
-  - `read_only`
-- `full_edit` means:
-  - header fields can be edited
-  - lines can be edited
-  - FAB is visible
-  - topbar edit/save/cancel remains available
-- `comment_only_edit` means:
-  - only `Status comment` can be edited
-  - all other header fields are read-only
-  - lines are read-only
-  - FAB is hidden
-  - topbar edit/save/cancel remains available
-- `read_only` means:
-  - all fields are read-only
-  - lines are read-only
-  - FAB is hidden
-  - no bottom status actions are shown
-  - topbar edit/save/cancel is hidden
-- `Paid` is always `read_only`.
-- Subordinate sheets can never enter `full_edit`.
-- Subordinate sheets can never show the FAB.
-- Subordinate sheets can never be deleted from this flow.
-- Sheet delete is allowed only for own sheets in `full_edit`.
-- If an unknown status is received, the page must fall back to `read_only`.
+- Status changes are available only through the bottom status actions.
+- The current functional interaction modes are `full_edit` and `read_only`. The legacy `comment_only_edit` type is not returned by the current policy.
+- A status action may be visible while the sheet content remains read-only.
+- The status comment is entered in the confirmation dialog for the selected transition. It is not edited directly through a partial-edit mode on the form.
+- `Paid` sheets are always read-only.
+- A sheet is also treated as paid and locked when it has an assigned voucher, even if the numeric status is not `Paid`.
+- Subordinate sheets are always read-only. A manager may receive status actions, but cannot edit header fields, lines, or delete the sheet.
+- Deletion is allowed only for an own sheet while the policy resolves to `full_edit`.
+- Unknown or unsupported statuses fall back to `read_only` with no status actions.
 
-## Status Codes
+## Status codes
 
 - `0` = `Draft`
 - `1` = `Approval requested`
@@ -55,126 +35,73 @@ This document is the implementation source of truth for the expense sheet detail
 - `3` = `Rejected`
 - `4` = `Paid`
 
-## Interaction Matrix
+## Current interaction matrix
 
-### Own Sheet + Self Management TRUE
+### Own sheet with self-management enabled
 
-| Status | Interaction mode | FAB | Bottom actions |
-|---|---|---|---|
-| Draft | `full_edit` | Yes | `Approve` -> `Approved` |
-| Approval requested | `comment_only_edit` | No | `Approve` -> `Approved` |
-| Approved | `comment_only_edit` | No | `Undo approval` -> `Approval requested` |
-| Rejected | `comment_only_edit` | No | `Undo rejection` -> `Approval requested` |
-| Paid | `read_only` | No | None |
+| Status | Sheet content | FAB | Delete | Bottom actions |
+|---|---|---|---|---|
+| Draft | `full_edit` | Yes | Yes | `Approve` -> `Approved` |
+| Approval requested | `read_only` | No | No | None |
+| Approved | `read_only` | No | No | `Undo approval` -> `Draft` |
+| Rejected | `read_only` | No | No | None |
+| Paid | `read_only` | No | No | None |
 
-Notes:
+Self-management allows the owner to approve a draft directly. Undoing that approval returns the sheet to `Draft`, not to `Approval requested`.
 
-- `Rejected` should not normally happen for own sheets in this branch, but the UI and backend must support it defensively.
+### Own sheet with self-management disabled
 
-### Own Sheet + Self Management FALSE
+| Status | Sheet content | FAB | Delete | Bottom actions |
+|---|---|---|---|---|
+| Draft | `full_edit` | Yes | Yes | `Request approval` -> `Approval requested` |
+| Approval requested | `read_only` | No | No | `Undo request` -> `Draft` |
+| Approved | `read_only` | No | No | None |
+| Rejected | `read_only` | No | No | `Move to Draft` -> `Draft` |
+| Paid | `read_only` | No | No | None |
 
-| Status | Interaction mode | FAB | Bottom actions |
-|---|---|---|---|
-| Draft | `full_edit` | Yes | `Request approval` -> `Approval requested` |
-| Approval requested | `comment_only_edit` | No | `Undo request` -> `Draft` |
-| Approved | `read_only` | No | None |
-| Rejected | `full_edit` | Yes | `Request approval` -> `Approval requested` |
-| Paid | `read_only` | No | None |
+A rejected sheet must first return to `Draft`. The user can edit it and request approval again only after that transition succeeds.
 
-### Subordinate Sheet + Self Management TRUE or FALSE
+### Subordinate sheet
 
-| Status | Interaction mode | FAB | Bottom actions |
-|---|---|---|---|
-| Draft | `read_only` | No | None |
-| Approval requested | `comment_only_edit` | No | `Approve` -> `Approved`, `Reject` -> `Rejected` |
-| Approved | `comment_only_edit` | No | `Undo approval` -> `Approval requested` |
-| Rejected | `comment_only_edit` | No | `Undo rejection` -> `Approval requested` |
-| Paid | `read_only` | No | None |
+| Status | Sheet content | FAB | Delete | Bottom actions |
+|---|---|---|---|---|
+| Draft | `read_only` | No | No | None |
+| Approval requested | `read_only` | No | No | `Approve` -> `Approved`, `Reject` -> `Rejected` |
+| Approved | `read_only` | No | No | `Undo approval` -> `Approval requested` |
+| Rejected | `read_only` | No | No | `Undo rejection` -> `Approval requested` |
+| Paid | `read_only` | No | No | None |
 
-Notes:
+Subordinate behavior is independent of the manager's self-management setting. The manager can act only within the subordinate scope authorized by the server.
 
-- Subordinate behavior is independent from the manager's self-management flag.
-- If the logged user has subordinate management power, they can manage subordinate sheet statuses.
-- This power does not include deleting subordinate sheets.
+## Status dialog
 
-## Edit Behavior Rules
+Selecting a status action opens a confirmation dialog that shows:
 
-### Full edit
+- the current status;
+- the target status;
+- the action label;
+- the current status comment, which the user may update for this transition.
 
-Allowed only for own sheets in these cases:
+After a successful transition, the application invalidates the cached list, closes the dialog, and reloads the detail. If the request fails, the sheet is not treated as updated.
 
-- self management TRUE + `Draft`
-- self management FALSE + `Draft`
-- self management FALSE + `Rejected`
+## Minimum-content gate
 
-During `full_edit`:
+Status action buttons are disabled only when the sheet has no lines and does not have a positive total. A sheet with at least one line or a positive total can continue through the policy matrix.
 
-- header fields remain editable
-- lines remain editable
-- FAB remains visible
-- `Status comment` is not the only editable field
+This is a user-interface guard. The server still validates the requested transition and the current authorization context.
 
-### Comment-only edit
+## Backend enforcement
 
-Allowed only when the matrix resolves to `comment_only_edit`.
+The backend mirrors the same matrix so a direct HTTP request cannot bypass the web interface. It resolves:
 
-During `comment_only_edit`:
+- current sheet owner;
+- own versus subordinate scope;
+- the selected company's self-management flag;
+- current status and paid/voucher lock;
+- allowed target statuses for the resolved matrix row.
 
-- `Status comment` is the only editable field
-- `Status` remains read-only
-- all other header fields remain read-only
-- lines remain read-only
-- FAB is hidden
+For status-only actions, the backend preserves the stored business fields and applies only the permitted status/comment transition. Unsupported transitions, subordinate content mutations, unauthorized deletes, and paid-sheet mutations are rejected.
 
-### Read-only
+## Axapta visibility
 
-Use `read_only` when:
-
-- the sheet is `Paid`
-- the matrix does not allow actions for the current ownership and self-management context
-- the sheet is a subordinate sheet in `Draft`
-- the sheet is an own sheet in `Approved` with self management FALSE
-- the status is unknown
-
-## Bottom Action Rules
-
-- Bottom actions are rendered only for the current matrix row.
-- If no action applies, the bottom action bar is not rendered.
-- Buttons not listed for a case are treated as not applicable.
-- Each bottom action must update the target status and persist the current `Status comment`.
-- The action flow must ask for confirmation before sending the mutation.
-- After a successful action:
-  - refresh sheet detail
-  - refresh list cache
-  - keep backend as source of truth
-
-## FAB Rules
-
-- FAB is visible only in `full_edit`.
-- FAB is hidden in `comment_only_edit`.
-- FAB is hidden in `read_only`.
-- For subordinate sheets, FAB is always hidden.
-
-## Backend Validation Rules
-
-The backend must enforce the same matrix as the frontend.
-
-Required checks:
-
-- resolve current sheet owner
-- resolve whether the current request is acting on own or subordinate data
-- resolve selected company self-management flag
-- read current sheet status before update
-- block unsupported transitions
-- block subordinate header edits and line edits
-- block subordinate delete
-- allow subordinate status transitions only through the approved matrix
-- allow own status transitions only through the approved matrix
-- preserve `Paid` as immutable
-
-## Implementation Notes
-
-- Keep bottom action policy in one focused frontend object, not spread across the page.
-- Keep status transition validation in one focused backend object or helper, not inline boolean chains.
-- Reuse the same status constants in policy resolution and UI rendering.
-- Do not allow the status combobox to return.
+The expense sheet created or updated in CRM is also stored and can be consulted in Axapta. CRM and Axapta represent the same business sheet and status. Internal accounting, posting, remittance, and payment work may continue in Axapta, but those back-office steps are outside this user-flow document. Once the sheet is paid or has a voucher, CRM presents it as locked.

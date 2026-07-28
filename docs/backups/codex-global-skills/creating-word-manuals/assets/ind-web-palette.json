@@ -1,0 +1,126 @@
+{
+  "name": "IND Web",
+  "colors": {
+    "primary": "00296B",
+    "deep": "001F4D",
+    "secondary": "244C82",
+    "body": "1F437D",
+    "surface": "F8FAFC",
+    "readonlySurface": "F1F5F9",
+    "border": "E2E8F0",
+    "muted": "64748B",
+    "draft": "94A3B8",
+    "requested": "F59E0B",
+    "approved": "22C55E",
+    "rejected": "EF4444",
+    "paid": "00296B",
+    "white": "FFFFFF"
+  },
+  "headingColors": {
+    "0": "primary",
+    "1": "secondary",
+    "2": "muted"
+  },
+  "coverRules": [
+    {
+      "mode": "exact",
+      "text": "INSERTEC",
+      "color": "primary"
+    },
+    {
+      "mode": "exact",
+      "text": "▪ MANUAL ▪",
+      "color": "secondary"
+    },
+    {
+      "mode": "exact",
+      "text": "Aplicación web CRM",
+      "color": "primary"
+    }
+  ],
+  "callouts": {
+    "fill": "surface",
+    "defaultBorder": "primary",
+    "legacyBorderByFill": {
+      "DDEBF7": "primary",
+      "FFF2CC": "requested",
+      "E2F0D9": "approved"
+    },
+    "prefixBorderRules": [
+      {
+        "prefix": "SEGURIDAD",
+        "color": "rejected"
+      },
+      {
+        "prefix": "ERRORES",
+        "color": "rejected"
+      },
+      {
+        "prefix": "BLOQUEO CONTABLE",
+        "color": "rejected"
+      },
+      {
+        "prefix": "RECOMENDACIÓN",
+        "color": "approved"
+      },
+      {
+        "prefix": "NAVEGACIÓN",
+        "color": "approved"
+      },
+      {
+        "prefix": "ORDEN CORRECTO",
+        "color": "approved"
+      },
+      {
+        "prefix": "IMPORTANTE",
+        "color": "requested"
+      },
+      {
+        "prefix": "CAMBIOS SIN GUARDAR",
+        "color": "requested"
+      },
+      {
+        "prefix": "CAMBIO DE CUENTA",
+        "color": "requested"
+      },
+      {
+        "prefix": "USO RESPONSABLE DE LA IA",
+        "color": "requested"
+      },
+      {
+        "prefix": "NO ABANDONAR",
+        "color": "requested"
+      },
+      {
+        "prefix": "REVISIÓN OBLIGATORIA",
+        "color": "requested"
+      },
+      {
+        "prefix": "ACCIÓN DESHABILITADA",
+        "color": "requested"
+      }
+    ]
+  },
+  "statuses": [
+    {
+      "label": "Borrador",
+      "color": "draft"
+    },
+    {
+      "label": "Aprobación solicitada",
+      "color": "requested"
+    },
+    {
+      "label": "Aprobado",
+      "color": "approved"
+    },
+    {
+      "label": "Rechazado",
+      "color": "rejected"
+    },
+    {
+      "label": "Pagado",
+      "color": "paid"
+    }
+  ]
+}

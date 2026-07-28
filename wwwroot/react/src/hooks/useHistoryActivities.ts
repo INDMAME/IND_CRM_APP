@@ -13,6 +13,18 @@ export type HistoryActivityItem = {
   TransDate?: string;
   description?: string;
   Description?: string;
+  ownerAxUserId?: string;
+  OwnerAxUserId?: string;
+  ownerName?: string;
+  OwnerName?: string;
+  ownerAlias?: string;
+  OwnerAlias?: string;
+  userId?: string;
+  UserId?: string;
+  createdByUserId?: string;
+  CreatedByUserId?: string;
+  indCreatedByUserId?: string;
+  INDCreatedByUserId?: string;
 };
 
 type HistoryResponse = {
@@ -56,6 +68,8 @@ export const useHistoryActivities = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  // Tracks the owner filter that produced the current rows, independently from draft filter edits.
+  const [loadedOwnerAxUserId, setLoadedOwnerAxUserId] = useState<string | null>(null);
 
   const retryOnNetworkErrorRef = useRef(false);
   const activeAbortRef = useRef<AbortController | null>(null);
@@ -87,6 +101,7 @@ export const useHistoryActivities = ({
     setTotal(0);
     setErrorMessage("");
     setIsLoading(false);
+    setLoadedOwnerAxUserId(null);
   }, [abortActiveRequest, clearRetryTimer]);
 
   const loadActivities = useCallback(
@@ -101,6 +116,7 @@ export const useHistoryActivities = ({
         setItems([]);
         setTotal(0);
         setErrorMessage("");
+        setLoadedOwnerAxUserId(null);
         return;
       }
 
@@ -122,6 +138,7 @@ export const useHistoryActivities = ({
       setItems([]);
       setTotal(0);
       setErrorMessage("");
+      setLoadedOwnerAxUserId(null);
 
       const payload: {
         fromDate: string;
@@ -195,6 +212,7 @@ export const useHistoryActivities = ({
       setIsLoading(false);
       setItems(data.items || []);
       setTotal(data.total || (data.items || []).length);
+      setLoadedOwnerAxUserId(normalizedOwnerAxUserId);
       activeAbortRef.current = null;
     },
     [
@@ -225,6 +243,7 @@ export const useHistoryActivities = ({
     currentPage,
     isLoading,
     errorMessage,
+    loadedOwnerAxUserId,
     loadActivities,
     resetActivities,
     retryOnNetworkErrorRef,

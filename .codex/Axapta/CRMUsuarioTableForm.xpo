@@ -1,0 +1,3053 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: FRM
+
+; Navision Axapta Forms unloaded at Viernes 24/07/2026
+; --------------------------------------------------------------------------------
+FRMVERSION 5
+
+FORM #CRMUsuarioTable
+  PROPERTIES
+    Name                #CRMUsuarioTable
+  ENDPROPERTIES
+  
+  METHODS
+    Version: 3
+    SOURCE #classDeclaration
+      #public class FormRun extends ObjectRun
+      #{
+      #}
+    ENDSOURCE
+    SOURCE #refreshCallerDS
+      #//IND_MMS_MaestroEmpleados - 07.04.2025
+      #public void refreshCallerDS()
+      #{
+      #    FormRun formRun;
+      #    INDPersonaTable personaTable;
+      #     ;
+      #    // Get an instance of the calling form.
+      #    formRun = element.args().caller();
+      #
+      #    // If the caller is a form, find and refresh the specified root data source.
+      #    if(formRun && element.args().dataset() == tableNum(INDPersonaTable))
+      #    {
+      #        personaTable = element.args().record();
+      #        formRun.dataSource().refresh();
+      #        formRun.dataSource().reread();
+      #        formRun.dataSource().findRecord(personaTable);
+      #    }
+      #}
+    ENDSOURCE
+    SOURCE #ExecuteQuery_DataSources
+      #void ExecuteQuery_DataSources()
+      #{
+      #    ;
+      #}
+    ENDSOURCE
+    SOURCE #init
+      #public void init()
+      #{
+      #    CRMPermisosTable    permisosTable   = CRMPermisosTable::Find(curUserId());
+      #    ;
+      #
+      #    super();
+      #
+      #    CRMUsuarioTable_ds.allowCreate(permisosTable.CrearUsuarios);
+      #    CRMUsuarioTable_ds.allowDelete(permisosTable.CrearUsuarios);
+      #    CRMUsuarioSubordinadoTable.visible(permisosTable.VerSubordinados);
+      #    CRMUsuarioTable_ds.object(FieldNum(CRMUsuarioTable, UserIdVacaciones)).visible(permisosTable.CrearUsuarios);
+      #
+      #    CRMUsuarioTable_ds.object(FieldNum(CRMUsuarioTable, CostHourAmount)).visible(false);
+      #    if (permisosTable.VerCosteHoraUsuario){
+      #
+      #        CRMUsuarioTable_ds.object(FieldNum(CRMUsuarioTable, CostHourAmount)).visible(true);
+      #    }
+      #
+      #    //Gastos de Coche en ITALIA
+      #    CRMUserGastoCocheTable.visible(false);
+      #    if (curExt() == "ITA" || curExt() == "FIL")
+      #        CRMUserGastoCocheTable.visible(true);
+      #
+      #//    CRMUsuarioTable_ds.object(FieldNum(CRMUsuarioTable, PrimasExtranjero)).visible(permisosTable.CrearUsuarios);
+      #
+      #    CRMUserDisciplinaCompetenciaTable.visible(permisosTable.ModificarNivelCompetencia);
+      #
+      #    VerSoloActivos.value(1);
+      #
+      #    CRMUsuarioParteHorasInternoTrans.visible(curExt() == "LAN"? true : false);
+      #
+      #    //IJL.25/05/23
+      #    CRMUsuarioTable_ds.object(FieldNum(CRMUsuarioTable, CustVendAccountNum)).visible(curExt() == "IHI");
+      #    CRMUsuarioTable_ds.object(FieldNum(CRMUsuarioTable, CustVend)).visible(curExt() == "IHI");
+      #
+      #    //IJL.08/08/25. Migración Desarrollos México
+      #    CRMHojaGastosUserPriceKmFechaTable.visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico || curExt() == "REF" || curext() == "ITA");
+      #    CRMUsuarioTable_ds.object(FieldNum(CRMUsuarioTable, NoContabilizarGasolina)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);  //IJL:16/04/26
+      #}
+    ENDSOURCE
+    SOURCE #close
+      #//IND_MMS_MaestroEmpleados - 07.04.2025
+      #public void close()
+      #{
+      #    super();
+      #
+      #    this.refreshCallerDS();
+      #
+      #}
+    ENDSOURCE
+  ENDMETHODS
+  OBJECTBANK
+    DATASOURCE
+      OBJECTPOOL
+        PROPERTIES
+          Name                #CRMUsuarioTable
+          Table               #CRMUsuarioTable
+          Index               #Index1
+          Company             #
+          CounterField        #
+          AllowCheck          #Yes
+          AllowEdit           #Yes
+          AllowCreate         #Yes
+          AllowDelete         #Yes
+          StartPosition       #First
+          AutoSearch          #Yes
+          AutoNotify          #Yes
+          AutoQuery           #Yes
+          OnlyFetchActive     #No
+          JoinSource          #
+          LinkType            #Delayed
+          DelayActive         #Yes
+          InsertAtEnd         #Yes
+          InsertIfEmpty       #No
+        ENDPROPERTIES
+        
+        FIELDLIST
+          DATAFIELD Dietas
+            PROPERTIES
+              AllowEdit           #No
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+          ENDDATAFIELD
+          
+        ENDFIELDLIST
+      ENDOBJECTPOOL
+      METHODS
+        Version: 3
+        SOURCE #executeQuery
+          #public void executeQuery()
+          #{
+          #    CRMUserId       _userId     = CRMUsuarioTable::Find_AxaptaUserId(curUserId()).UserId;
+          #    CRMUsuarioTable usuarioTable;
+          #
+          #    CRMPermisosTable    permisosTable   = CRMPermisosTable::Find(curUserId());
+          #    QueryBuildRange range;
+          #    //Set             setUsersRefracta, setUsersIlimitado;
+          #    Set             setUsersIlimitado;
+          #    INDPersonaTable     personaTable; //IND_MMS_MaestroEmpleados - 07.04.2025
+          #    QueryBuildRange     qbr;//IND_MMS_MaestroEmpleados - 07.04.2025
+          #    CRMUsuarioSubordinadoTable  subordinadoTable;
+          #    SetIterator                 si;
+          #    str                         filtroUserId;
+          #    ;
+          #
+          #    usuarioTable        = CRMUsuarioTable::Find(_userId);
+          #
+          #    setUsersIlimitado   = new Set(Types::String);
+          #    setUsersIlimitado.add("IJL");
+          #    setUsersIlimitado.add("KAZ");
+          #    setUsersIlimitado.add("JAA");
+          #    setUsersIlimitado.add("MD");
+          #
+          #//    if (setUsersIlimitado.in(curUserId())){
+          #    if (permisosTable.UsuarioVerTodos){
+          #        //No filtrar nada
+          #    }
+          #    else {
+          #
+          #        range   = this.query().dataSourceTable(tableNum(CRMUsuarioTable)).findRange(fieldnum(CRMUsuarioTable, UserId));
+          #        if (! range)
+          #            range = this.query().dataSourceTable(tableNum(CRMUsuarioTable)).addRange(fieldnum(CRMUsuarioTable, UserId));
+          #
+          #        if (! usuarioTable){
+          #            range.value("____");
+          #        }
+          #        else {
+          #            filtroUserId    = usuarioTable.ListaSubordinados();
+          #            range.value(filtroUserId);
+          #            //range.value(_userId);
+          #            CRMUsuarioTable_ds.object(FieldNum(CRMUsuarioTable, AxaptaUserId)).enabled(false);
+          #        }
+          #    }
+          #
+          #    //Solo muestro los usuarios Activos
+          #    range   = this.query().dataSourceTable(tableNum(CRMUsuarioTable)).findRange(fieldnum(CRMUsuarioTable, Bloqueado));
+          #    if (! range)
+          #        range = this.query().dataSourceTable(tableNum(CRMUsuarioTable)).addRange(fieldnum(CRMUsuarioTable, Bloqueado));
+          #
+          #    if (VerSoloActivos.value())
+          #        range.value(QueryValue(0));
+          #    else
+          #        range.value("");
+          #
+          #
+          #    //IND_MMS_MaestroEmpleados - 07.04.2025 - INIT
+          #    //TODO: DESCOMENTAR EN FASE 2
+          #    /*
+          #    CRMUsuarioTable_ds.object(fieldNum(CRMUsuarioTable, AxaptaUserId)).enabled(false);
+          #    CRMUsuarioTable_ds.object(fieldNum(CRMUsuarioTable, EmplId)).enabled(false);   */
+          #    if(element.args().caller() && element.args().dataset() == tableNum(INDPersonaTable))
+          #    {
+          #        personaTable = element .args().record();
+          #
+          #        CRMUsuarioTable_ds.object(fieldNum(CRMUsuarioTable, UserId)).enabled(false);
+          #        CRMUsuarioTable_ds.object(fieldNum(CRMUsuarioTable, Name)).enabled(false);
+          #
+          #
+          #        if(!personaTable.RefRecIdCRM && element.args().parmEnum() == NoYes::Yes)
+          #        {
+          #            CRMUsuarioTable_ds.allowCreate(true);
+          #            CRMUsuarioTable_ds.allowDelete(false);
+          #
+          #            CRMUsuarioTable_ds.create(true);
+          #            CRMUsuarioTable.UserId     = personaTable.Alias;
+          #            CRMUsuarioTable.Name       = personaTable.Name;
+          #            CRMUsuarioTable_ds.write();
+          #
+          #            if(personaTable.Alias)
+          #            {
+          #                this.query().dataSourceTable(TableNum(CRMUsuarioTable)).clearRange(FieldNum(CRMUsuarioTable, UserId));
+          #                this.query().dataSourceTable(TableNum(CRMUsuarioTable)).clearRange(FieldNum(CRMUsuarioTable, RecId));
+          #
+          #                qbr = Global::CreateRange(CRMUsuarioTable_ds, TableNum(CRMUsuarioTable), FieldNum(CRMUsuarioTable, UserId));
+          #                qbr.value(Global::queryValue(personaTable.Alias));
+          #            }
+          #            element.refreshCallerDS();
+          #        }
+          #        else if(personaTable.RefRecIdCRM && element.args().parmEnum() == NoYes::No)
+          #        {
+          #            CRMUsuarioTable_ds.allowCreate(false);
+          #            CRMUsuarioTable_ds.allowDelete(false);
+          #
+          #            this.query().dataSourceTable(TableNum(CRMUsuarioTable)).clearRange(FieldNum(CRMUsuarioTable, UserId));
+          #            this.query().dataSourceTable(TableNum(CRMUsuarioTable)).clearRange(FieldNum(CRMUsuarioTable, RecId));
+          #
+          #            qbr = Global::CreateRange(CRMUsuarioTable_ds, TableNum(CRMUsuarioTable), FieldNum(CRMUsuarioTable, RecId));
+          #            qbr.value(Global::queryValue(personaTable.RefRecIdCRM));
+          #        }
+          #    }
+          #    //info(this.query().dataSourceTable(TableNum(CRMUsuarioTable)).toString());
+          #    //IND_MMS_MaestroEmpleados - 07.04.2025 - END
+          #
+          #    super();
+          #}
+        ENDSOURCE
+      ENDMETHODS
+    ENDDATASOURCE
+  ENDOBJECTBANK
+  
+  JOINS
+  ENDJOINS
+  
+  DESIGN
+    PROPERTIES
+      Left                #Auto (left)
+      Top                 #Auto
+      Width               #Auto
+      Height              #Auto
+      Visible             #Yes
+      Caption             #Usuarios CRM
+      TitleDatasource     #
+      Frame               #Standard
+      WindowResize        #Auto
+      WindowType          #Standard
+      SaveSize            #No
+      AlwaysOnTop         #No
+      HideToolbar         #No
+      SetCompany          #Yes
+      ColorScheme         #Default
+      CssClass            #
+      ShowWebHelp         #Default
+      BackgroundColor     #Button face (3D)
+      ImageName           #
+      ImageResource       #0
+      Imagemode           #Normal (preserve pict. attributes)
+      Mode                #Watch
+      SubmitMethod        #Auto
+      SupportReload       #No
+      LocalWebMenu        #
+      AllowDocking        #No
+      Font                #
+      FontSize            #0
+      Italic              #No
+      Underline           #No
+      Bold                #Default
+      CharacterSet        #0
+      LabelFont           #
+      LabelFontSize       #0
+      LabelItalic         #No
+      LabelUnderline      #No
+      LabelBold           #Default
+      LabelCharacterSet   #0
+      DataSource          #
+      TopMargin           #Auto
+      BottomMargin        #Auto
+      LeftMargin          #Auto
+      RightMargin         #Auto
+      ArrangeWhen         #Default
+      ArrangeMethod       #Vertical
+      Columns             #2
+      Columnspace         #Auto
+      ArrangeGuide        
+        ARRAY INDEX Columns 
+          #0
+          #0
+        ENDARRAY
+      HideIfEmpty         #Yes
+      AlignChildren       #Yes
+      AlignChild          #Yes
+      AllowUserSetup      #Yes
+      NeededAccessLevel   #NoAccess
+    ENDPROPERTIES
+    
+    CONTAINER
+      CONTROL TAB
+        ;==== controlId:12290, containerId: 0, containerdata: 2   
+        ;----------------------------------------------------------
+        PROPERTIES
+          Name                #Tab
+          AutoDeclaration     #No
+          Visible             #Yes
+          AllowEdit           #Yes
+          Left                #Auto (left)
+          Top                 #Auto
+          Width               #Column width
+          Height              #Column height
+          VerticalSpacing     #Auto
+          Enabled             #Yes
+          Skip                #No
+          AlignControl        #No
+          HelpText            #
+          ConfigurationKey    #
+          SecurityKey         #
+          DragDrop            #None
+          ColorScheme         #Default
+          BackgroundColor     #Button face (3D)
+          BackStyle           #Opaque
+          Tabs                #0
+          Tab                 #Auto
+          TabAppearance       #Normal
+          ShowTabs            #Yes
+          TabPlacement        #Top
+          TabLayout           #One line
+          SelectControl       #Yes
+          DataSource          #
+          TopMargin           #Auto
+          BottomMargin        #Auto
+          LeftMargin          #Auto
+          RightMargin         #Auto
+          ArrangeWhen         #Default
+          ArrangeMethod       #Vertical
+          Columns             #2
+          Columnspace         #Auto
+          ArrangeGuide        
+            ARRAY INDEX Columns 
+              #0
+              #0
+            ENDARRAY
+          HideIfEmpty         #Yes
+          AlignChildren       #Yes
+          AlignChild          #No
+          AllowUserSetup      #Yes
+          NeededAccessLevel   #View
+          TabAutoChange       #Yes
+        ENDPROPERTIES
+        
+        CONTAINER
+          CONTROL TABPAGE
+            ;==== controlId:12291, containerId:12290, containerdata:12290   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #TabOverview
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #No
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              ColorScheme         #Default
+              BackgroundColor     #Button face (3D)
+              BackStyle           #Opaque
+              TabAppearance       #Normal
+              Caption             #@SYS50012
+              DataSource          #
+              TopMargin           #Auto
+              BottomMargin        #Auto
+              LeftMargin          #Auto
+              RightMargin         #Auto
+              ArrangeWhen         #Default
+              ArrangeMethod       #Vertical
+              Columns             #1
+              Columnspace         #Auto
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                ENDARRAY
+              HideIfEmpty         #Yes
+              AlignChildren       #Yes
+              AlignChild          #Yes
+              AllowUserSetup      #Yes
+              NeededAccessLevel   #View
+              TabAutoChange       #No
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GROUP
+                ;==== controlId:12292, containerId:12291, containerdata:12291   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #GroupFiltros
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Auto (left)
+                  Top                 #Auto
+                  Width               #Auto
+                  Height              #Auto
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #No
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  FrameType           #Auto
+                  FramePosition       #Outside
+                  Caption             #Filtros
+                  FrameOptionButton   #None
+                  OptionValue         #1
+                  ColorScheme         #Default
+                  BackStyle           #Opaque
+                  BackgroundColor     #Button face (3D)
+                  Font                #
+                  FontSize            #0
+                  Italic              #No
+                  Underline           #No
+                  Bold                #Default
+                  CharacterSet        #0
+                  LabelFont           #
+                  LabelFontSize       #0
+                  LabelItalic         #No
+                  LabelUnderline      #No
+                  LabelBold           #Default
+                  LabelCharacterSet   #0
+                  DataSource          #
+                  TopMargin           #Auto
+                  BottomMargin        #Auto
+                  LeftMargin          #Auto
+                  RightMargin         #Auto
+                  ArrangeWhen         #Default
+                  ArrangeMethod       #Vertical
+                  Columns             #1
+                  Columnspace         #Auto
+                  ArrangeGuide        
+                    ARRAY INDEX Columns 
+                      #0
+                    ENDARRAY
+                  HideIfEmpty         #Yes
+                  AlignChildren       #Yes
+                  AlignChild          #Yes
+                  AllowUserSetup      #Yes
+                  NeededAccessLevel   #View
+                  DataGroup           #
+                  AutoDataGroup       #No
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL CHECKBOX
+                      ;==== controlId:12293, containerId:12292, containerdata:12292   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #VerSoloActivos
+                        AutoDeclaration     #Yes
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Button face (3D)
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #Ver SOLO los Usuarios Activos
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #
+                        DataField           #
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                      METHODS
+                        Version: 3
+                        SOURCE #modified
+                          #public boolean modified()
+                          #{
+                          #    boolean ret;
+                          #    ;
+                          #    ret = super();
+                          #
+                          #    CRMUsuarioTable_ds.executeQuery();
+                          #
+                          #    return ret;
+                          #}
+                        ENDSOURCE
+                      ENDMETHODS
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+              CONTROL GRID
+                ;==== controlId:12294, containerId:12291, containerdata:12291   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #Grid
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Auto (left)
+                  Top                 #Auto
+                  Width               #Column width
+                  Height              #Column height
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #No
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  ColorScheme         #Default
+                  BackgroundColor     #Window background
+                  TopMargin           #0
+                  BottomMargin        #0
+                  LeftMargin          #0
+                  RightMargin         #0
+                  MultiSelect         #Yes
+                  VisibleCols         #Auto
+                  VisibleRows         #Auto
+                  ShowColLabels       #Yes
+                  ShowRowLabels       #Yes
+                  HighlightActive     #Yes
+                  ActiveBackColor     #Highlight background
+                  ActiveForeColor     #Highlight text
+                  DataSource          #CRMUsuarioTable
+                  DataGroup           #
+                  AutoDataGroup       #No
+                  GridLines           #Yes
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12295, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_UserId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #UserId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12296, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_Name
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #Name
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12297, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_Division
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #Division
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12298, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_CalendarioLaboral
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #CalendarioLaboral
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12299, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_DepartamentoId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #DepartamentoId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12300, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_Dietas
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #Dietas
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12301, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_CocheEmpresa
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #CocheEmpresa
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12302, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_VisaEmpresa
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #VisaEmpresa
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12303, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_CategoriaId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #CategoriaId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12304, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_Bloqueado
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #Bloqueado
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12305, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_Email
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #Email
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12306, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_PhoneNumber
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #PhoneNumber
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12307, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_UserIdVacaciones
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #UserIdVacaciones
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12308, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_CostHourAmount
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #CostHourAmount
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12309, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_GrupoTecnicoHornos
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #GrupoTecnicoHornos
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12310, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_AluminioTratamiento
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #AluminioTratamiento
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12311, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_OfertaTipoHornosPredeterminada
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #OfertaTipoHornosPredeterminada
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL COMBOBOX
+                      ;==== controlId:12312, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_CustVend
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Selection           #0
+                        DisplayLength       #Auto
+                        HideFirstEntry      #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #CustVend
+                        ArrayIndex          #0
+                        Border              #Auto
+                        ComboType           #Standard
+                        AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12313, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_CustVendAccountNum
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #CustVendAccountNum
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12314, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_PermitirVacacionesSinSerIST
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #PermitirVacacionesSinSerIST
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL CHECKBOX
+                      ;==== controlId:12315, containerId:12294, containerdata:12294   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMUsuarioTable_NoContabilizarGasolina
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        Value               #0
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #NoContabilizarGasolina
+                        DataMethod          #
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+              CONTROL BUTTONGROUP
+                ;==== controlId:12316, containerId:12291, containerdata:12291   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #ButtonGroup
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Right edge
+                  Top                 #Auto
+                  Width               #Auto
+                  Height              #Auto
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #No
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  FrameType           #Auto
+                  FramePosition       #Outside
+                  Caption             #
+                  SizeWidth           #Yes
+                  SizeHeight          #Yes
+                  Font                #
+                  FontSize            #0
+                  Italic              #No
+                  Underline           #No
+                  Bold                #Default
+                  CharacterSet        #0
+                  BackStyle           #Opaque
+                  ColorScheme         #Default
+                  BackgroundColor     #Button face (3D)
+                  DataSource          #
+                  TopMargin           #Auto
+                  BottomMargin        #Auto
+                  LeftMargin          #Auto
+                  RightMargin         #Auto
+                  ArrangeWhen         #Default
+                  ArrangeMethod       #Vertical
+                  Columns             #1
+                  Columnspace         #Auto
+                  ArrangeGuide        
+                    ARRAY INDEX Columns 
+                      #0
+                    ENDARRAY
+                  HideIfEmpty         #Yes
+                  AlignChildren       #Yes
+                  AlignChild          #Yes
+                  AllowUserSetup      #Yes
+                  NeededAccessLevel   #View
+                ENDPROPERTIES
+                
+                CONTAINER
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12317, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMActividadTable
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMActividadTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                    METHODS
+                      Version: 3
+                      SOURCE #clicked
+                        #void clicked()
+                        #{
+                        #    ;
+                        #    if (curUSerId() == "TL" && CRMUsuarioTable.UserId != "TL")
+                        #        throw error("No tienes permisos para acceder a este módulo.");
+                        #    super();
+                        #}
+                      ENDSOURCE
+                    ENDMETHODS
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12318, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMVacacionesTable
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #@SYS127
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMVacacionesTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                    METHODS
+                      Version: 3
+                      SOURCE #clicked
+                        #void clicked()
+                        #{
+                        #    ;
+                        #    if (curUserId() == "TL" && CRMUsuarioTable.UserId != "TLG")
+                        #        throw error("No tienes permisos para acceder a este módulo.");
+                        #    super();
+                        #}
+                      ENDSOURCE
+                    ENDMETHODS
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12319, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMHojaGastosTable
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #@IST264
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #crmhojaGastostable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12320, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMCustListaVisitasTable
+                      AutoDeclaration     #No
+                      Visible             #No
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMCustListaVisitasTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12321, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMCustVisitasTable
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMCustVisitasTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12322, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMUserViajeTable_Form
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #@IST265
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMUserViajeTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                    METHODS
+                      Version: 3
+                      SOURCE #clicked
+                        #void clicked()
+                        #{
+                        #    ;
+                        #    if (curUSerId() == "TL" && CRMUsuarioTable.UserId != "TL")
+                        #        throw error("No tienes permisos para acceder a este módulo.");
+                        #    super();
+                        #}
+                      ENDSOURCE
+                    ENDMETHODS
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12323, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMUserViajeDietas_Report
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Output
+                      MenuItemName        #CRMUserViajeDietas_Report
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                    METHODS
+                      Version: 3
+                      SOURCE #clicked
+                        #void clicked()
+                        #{
+                        #    ;
+                        #    if (curUSerId() == "TL" && CRMUsuarioTable.UserId != "TL")
+                        #        throw error("No tienes permisos para acceder a este módulo.");
+                        #    super();
+                        #}
+                      ENDSOURCE
+                    ENDMETHODS
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12324, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMUsuarioSubordinadoTable
+                      AutoDeclaration     #Yes
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMUsuarioSubordinadoTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                    METHODS
+                      Version: 3
+                      SOURCE #clicked
+                        #void clicked()
+                        #{
+                        #    ;
+                        #    if (curUSerId() == "TL" && CRMUsuarioTable.UserId != "TL")
+                        #        throw error("No tienes permisos para acceder a este módulo.");
+                        #    super();
+                        #}
+                      ENDSOURCE
+                    ENDMETHODS
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12325, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMUserNochesFueraTable
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMUserNochesFueraTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12326, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMTelefonoMovilTable
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMTelefonoMovilTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12327, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMUserGastoCocheTable
+                      AutoDeclaration     #Yes
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMUserGastoCocheTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12328, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMUsuarioAgendaTable
+                      AutoDeclaration     #Yes
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMUsuarioAgendaTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12329, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMUserDisciplinaCompetenciaTable
+                      AutoDeclaration     #Yes
+                      Visible             #No
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMUserDisciplinaCompetenciaTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12330, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMUsuarioParteHorasInternoTrans
+                      AutoDeclaration     #Yes
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMUsuarioParteHorasInternoTrans
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12331, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMUsuarioVacacionesParmTable
+                      AutoDeclaration     #No
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMUsuarioVacacionesParmTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                  CONTROL MENUITEMBUTTON
+                    ;==== controlId:12332, containerId:12316, containerdata:12316   
+                    ;----------------------------------------------------------
+                    PROPERTIES
+                      Name                #CRMHojaGastosUserPriceKmFechaTable
+                      AutoDeclaration     #Yes
+                      Visible             #Yes
+                      AllowEdit           #Yes
+                      Left                #Auto (left)
+                      Top                 #Auto
+                      Width               #Auto
+                      Height              #Auto
+                      VerticalSpacing     #Auto
+                      Enabled             #Yes
+                      Skip                #Yes
+                      AlignControl        #No
+                      HelpText            #
+                      ConfigurationKey    #
+                      SecurityKey         #
+                      DragDrop            #None
+                      Text                #
+                      Value               #No
+                      ButtonDisplay       #Text only
+                      NormalImage         #
+                      NormalResource      #0
+                      DisabledImage       #
+                      DisabledResource    #0
+                      Font                #
+                      FontSize            #0
+                      Italic              #No
+                      Underline           #No
+                      Bold                #Default
+                      CharacterSet        #0
+                      Border              #Auto
+                      ShowShortCut        #Yes
+                      DefaultButton       #No
+                      SaveRecord          #Yes
+                      MultiSelect         #Auto
+                      ColorScheme         #Default
+                      BackStyle           #Opaque
+                      BackgroundColor     #Button face (3D)
+                      ForegroundColor     #Button text
+                      NeededAccessLevel   #View
+                      MenuItemType        #Display
+                      MenuItemName        #CRMHojaGastosUserPriceKmFechaTable
+                      DataSource          #
+                    ENDPROPERTIES
+                    
+                  ENDCONTROL 
+                  
+                ENDCONTAINER
+                
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+          CONTROL TABPAGE
+            ;==== controlId:12333, containerId:12290, containerdata:12290   
+            ;----------------------------------------------------------
+            PROPERTIES
+              Name                #Relations
+              AutoDeclaration     #No
+              Visible             #Yes
+              AllowEdit           #Yes
+              Left                #Auto (left)
+              Top                 #Auto
+              Width               #Auto
+              Height              #Auto
+              VerticalSpacing     #Auto
+              Enabled             #Yes
+              Skip                #No
+              AlignControl        #No
+              HelpText            #
+              ConfigurationKey    #
+              SecurityKey         #
+              DragDrop            #None
+              ColorScheme         #Default
+              BackgroundColor     #Button face (3D)
+              BackStyle           #Opaque
+              TabAppearance       #Normal
+              Caption             #Relaciones
+              DataSource          #
+              TopMargin           #Auto
+              BottomMargin        #Auto
+              LeftMargin          #Auto
+              RightMargin         #Auto
+              ArrangeWhen         #Default
+              ArrangeMethod       #Vertical
+              Columns             #1
+              Columnspace         #Auto
+              ArrangeGuide        
+                ARRAY INDEX Columns 
+                  #0
+                ENDARRAY
+              HideIfEmpty         #Yes
+              AlignChildren       #Yes
+              AlignChild          #Yes
+              AllowUserSetup      #Yes
+              NeededAccessLevel   #View
+              TabAutoChange       #No
+            ENDPROPERTIES
+            
+            CONTAINER
+              CONTROL GRID
+                ;==== controlId:12334, containerId:12333, containerdata:12333   
+                ;----------------------------------------------------------
+                PROPERTIES
+                  Name                #CopyOfGrid
+                  AutoDeclaration     #No
+                  Visible             #Yes
+                  AllowEdit           #Yes
+                  Left                #Auto (left)
+                  Top                 #Auto
+                  Width               #Column width
+                  Height              #Column height
+                  VerticalSpacing     #Auto
+                  Enabled             #Yes
+                  Skip                #No
+                  AlignControl        #No
+                  HelpText            #
+                  ConfigurationKey    #
+                  SecurityKey         #
+                  DragDrop            #None
+                  ColorScheme         #Default
+                  BackgroundColor     #Window background
+                  TopMargin           #0
+                  BottomMargin        #0
+                  LeftMargin          #0
+                  RightMargin         #0
+                  MultiSelect         #Yes
+                  VisibleCols         #Auto
+                  VisibleRows         #Auto
+                  ShowColLabels       #Yes
+                  ShowRowLabels       #Yes
+                  HighlightActive     #Yes
+                  ActiveBackColor     #Highlight background
+                  ActiveForeColor     #Highlight text
+                  DataSource          #CRMUsuarioTable
+                  DataGroup           #
+                  AutoDataGroup       #No
+                  GridLines           #Yes
+                ENDPROPERTIES
+                
+                  CONTAINER
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12335, containerId:12334, containerdata:12334   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CopyOfCRMUsuarioTable_UserId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #UserId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12336, containerId:12334, containerdata:12334   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CopyOfCRMUsuarioTable_Name
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #Name
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12337, containerId:12334, containerdata:12334   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CopyOfCRMUsuarioTable_EmplId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #EmplId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL STRINGEDIT
+                      ;==== controlId:12338, containerId:12334, containerdata:12334   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CopyOfCRMUsuarioTable_AxaptaUserId
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #Yes
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #Auto
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        Text                #
+                        PasswordStyle       #No
+                        Alignment           #Auto
+                        ChangeCase          #Auto
+                        MultiLine           #No
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMUsuarioTable
+                        DataField           #AxaptaUserId
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                  ENDCONTAINER
+                  
+              ENDCONTROL 
+              
+            ENDCONTAINER
+            
+          ENDCONTROL 
+          
+        ENDCONTAINER
+        
+      ENDCONTROL 
+      
+    ENDCONTAINER
+    
+  ENDDESIGN
+  
+ENDFORM
+
+
+***Element: END

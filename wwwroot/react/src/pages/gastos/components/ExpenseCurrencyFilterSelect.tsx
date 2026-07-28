@@ -291,6 +291,7 @@ const ExpenseCurrencyFilterSelect = ({
         labelClassName={labelClassName}
         usePortal
         selectedTextMode="value"
+        selectTextOnFocus
         dropdownExpandPx={dropdownExpandPx}
         dropdownMinWidthPx={dropdownMinWidthPx}
         dropdownUseAvailableWidth={dropdownUseAvailableWidth}

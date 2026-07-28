@@ -55,9 +55,6 @@ const VisibleVisitOwnerSelect = ({
   const selectedExists = options.some((entry) => entry.value.toUpperCase() === selectedOwnerAxUserId.toUpperCase());
   const value = hasOptions && selectedExists ? selectedOwnerAxUserId : "";
   const statusText = loading ? loadingLabel : errorMessage;
-  const selectedTextMode =
-    allOption && value === HISTORY_VISIBLE_OWNER_ALL_VALUE ? "text" : "value";
-
   return (
     <div className="space-y-1">
       <SelectCombobox
@@ -72,8 +69,9 @@ const VisibleVisitOwnerSelect = ({
         idBase="history-visible-owner"
         portalClassName="visitas-typography"
         panelClassName="visitas-typography"
+        dropdownMinWidthPx={360}
         allowTextInput
-        selectedTextMode={selectedTextMode}
+        selectedTextMode="text"
         showLabel={false}
       />
       {statusText && (

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosTable unloaded at Miércoles 01/07/2026
+; Navision Axapta Table : CRMHojaGastosTable unloaded at Viernes 24/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -885,6 +885,30 @@ Formatversion: 1
               #
             ENDARRAY
           EnumType            #INDReimbursableExpense
+        ENDPROPERTIES
+        
+      FIELD #MostrarParaPago
+        ENUM
+        PROPERTIES
+          Type                #Enum
+          Name                #MostrarParaPago
+          Label               #Mostrar para pago
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #Yes
+          AllowEdit           #Yes
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosTable
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #
+              #
+            ENDARRAY
+          EnumType            #NoYes
         ENDPROPERTIES
         
     ENDFIELDS
@@ -2557,8 +2581,8 @@ Formatversion: 1
         #        this.NecesariaHGImpresa = NoYes::No;
         #    }
         #*/
-        #    this.NecesariaHGImpresa = this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
-        #
+        #    this.NecesariaHGImpresa = this.NecesitaHGFisica();//this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
+        #    this.MostrarParaPago    = this.MostrarParaPago(); //IJL.29/05/26
         #
         #    super();
         #
@@ -2881,6 +2905,38 @@ Formatversion: 1
         #
         #}
       ENDSOURCE
+      SOURCE #MostrarParaPago
+        #boolean MostrarParaPago()
+        #{
+        #    ;
+        #
+        #    if (this.NecesariaHGImpresa)
+        #        return true;
+        #
+        #    //NO necesita hoja impresa, entonoces la HG debe estar aprobada.
+        #    if (this.ExpenseSheetStatus == INDExpenseSheetStatus::Approved)
+        #        return true;
+        #
+        #
+        #    return false;
+        #
+        #}
+      ENDSOURCE
+      SOURCE #NecesitaHGFisica
+        #boolean NecesitaHGFisica()
+        #{
+        #    INDCias_WebAccess   INDCias_WebAccess;
+        #    CRMUsuarioTable     usuarioTable    = CRMUsuarioTable::Find(this.UserId);
+        #    ;
+        #
+        #    select firstonly INDCias_WebAccess
+        #    where    INDCias_WebAccess.UserId           == usuarioTable.AxaptaUserId
+        #          && INDCias_WebAccess.ModuleCode       == "GASTOS_HOJA_GASTO"
+        #          && INDCias_WebAccess.AccessRights     == SysAccessRights::FullAccess;
+        #
+        #    return INDCias_WebAccess.UserId ? NoYes::No : NoYes::Yes;
+        #}
+      ENDSOURCE
       SOURCE #normalizeReimbursementCurrencyDefaults
         #//MMS - Ajustes CRM - 2026.06.26
         #void normalizeReimbursementCurrencyDefaults()
@@ -3050,7 +3106,8 @@ Formatversion: 1
         #{
         #    return (select sum(Amount) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #            CRMHojaGastosLine.Ticket             == NoYes::Yes).Amount;
+        #            CRMHojaGastosLine.Ticket             == NoYes::Yes
+        #            && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
         #}
       ENDSOURCE
       SOURCE #TotalAmount_ConVisa
@@ -3060,7 +3117,8 @@ Formatversion: 1
         #    ;
         #    amount = (select sum(Amount) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No).Amount;
+        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
         #
         #    //IJL.08/08/25. Migración Desarrollos México
         #    amount -=  (select sum(Amount) from CRMHojaGastosLine
@@ -3068,7 +3126,8 @@ Formatversion: 1
         #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
         #//                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No            &&
         #                     CRMHojaGastosLine.Type         == CRMGastoType::Km      &&
-        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina).Amount;
+        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina
+        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
         #
         #    return amount;
         #}
@@ -3079,7 +3138,8 @@ Formatversion: 1
         #    return (select sum(Amount) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
         #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
-        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::Yes).Amount;
+        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::Yes
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
         #}
       ENDSOURCE
       SOURCE #TotalAmountFactura
@@ -3087,7 +3147,8 @@ Formatversion: 1
         #{
         #    return (select sum(Amount) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.Factura      == NoYes::Yes).Amount;
+        #                  CRMHojaGastosLine.Factura      == NoYes::Yes
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
         #}
       ENDSOURCE
       SOURCE #TotalAmountMST
@@ -3101,7 +3162,8 @@ Formatversion: 1
         #    amount =  (select sum(AmountMST) from CRMHojaGastosLine
         #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
         #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
-        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No
+        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
         #
         #    //IJL.08/08/25. Migración desarrollos México
         #    amount -=  (select sum(AmountMST) from CRMHojaGastosLine
@@ -3109,7 +3171,8 @@ Formatversion: 1
         #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
         #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No            &&
         #                     CRMHojaGastosLine.Type         == CRMGastoType::Km      &&
-        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina
+        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
         #
         #    amount  -= this.TotalEfectivo_GasolinaMST(); //IJL.17/04/26
         #
@@ -3126,7 +3189,8 @@ Formatversion: 1
         #    amount =  (select sum(AmountMST) from CRMHojaGastosLine
         #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
         #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
-        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No
+        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
         #
         #    amount  = amount - this.AmountAnticipo; //Obsoleto - MMS
         #
@@ -3146,7 +3210,8 @@ Formatversion: 1
         #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
         #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
         #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No
-        #                     && CRMHojaGastosLine.Type      == _gastoType).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #                     && CRMHojaGastosLine.Type      == _gastoType
+        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
         #
         #
         #    return amount; //INDMMS_ExternalCRM - 2026.05.21
@@ -3159,7 +3224,8 @@ Formatversion: 1
         #    return (select sum(Amount) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
         #                  CRMHojaGastosLine.Ticket       == NoYes::No &&
-        #                  CRMHojaGastosLine.Factura      == NoYes::No).Amount;
+        #                  CRMHojaGastosLine.Factura      == NoYes::No
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
         #}
       ENDSOURCE
       SOURCE #TotalAmountPrimasMontaje
@@ -3174,7 +3240,8 @@ Formatversion: 1
         #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No           &&
         #                  CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional   &&
         #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo &&
-        #                  CRMHojaGastosLine.Type         != CRMGastoType::Taxi {
+        #                  CRMHojaGastosLine.Type         != CRMGastoType::Taxi
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes {
         #
         #
         #        amount  += CRMHojaGastosLine.Amount;
@@ -3187,7 +3254,8 @@ Formatversion: 1
         #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
         #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No           &&
         #                  CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional   &&
-        #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo).Amount;
+        #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
         #}
       ENDSOURCE
       SOURCE #TotalAmountPrimasMontajeMST
@@ -3204,6 +3272,7 @@ Formatversion: 1
         #                  CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional   &&
         #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo &&
         #                  CRMHojaGastosLine.Type         != CRMGastoType::Taxi
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #    {
         #
         #
@@ -3218,7 +3287,8 @@ Formatversion: 1
         #{
         #    return (select sum(Amount) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.Ticket       == NoYes::Yes).Amount;
+        #                  CRMHojaGastosLine.Ticket       == NoYes::Yes
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
         #}
       ENDSOURCE
       SOURCE #TotalEfectivo
@@ -3237,7 +3307,8 @@ Formatversion: 1
         #    return (select sum(AmountMST) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId  == this.HojaGastosId
         #               && CRMHojaGastosLine.Type          == CRMGastoType::Gasolina
-        #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo).AmountMST;
+        #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo
+        #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST;
         #}
         #/*
         #display Amount TotalEfectivo_Gasolina()
@@ -3272,7 +3343,8 @@ Formatversion: 1
         #    return (select sum(AmountMST) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId  == this.HojaGastosId
         #               && CRMHojaGastosLine.Type          == CRMGastoType::Gasolina
-        #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo).AmountMST;
+        #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo
+        #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST;
         #}
       ENDSOURCE
       SOURCE #TotalModalidadPago
@@ -3311,6 +3383,7 @@ Formatversion: 1
         #
         #    while select hojaGastosLine
         #    where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #          && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #          /*
         #          &&
         #          hojaGastosLine.Ticket         == NoYes::Yes         &&
@@ -3343,6 +3416,7 @@ Formatversion: 1
         #    while select hojaGastosLine
         #    index hint index1
         #        where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #              && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #    {
         #        amount = hojaGastosLine.AmountMST;
         #
@@ -3420,7 +3494,9 @@ Formatversion: 1
         #//           hojaGastosLine.Factura       == NoYes::Yes)          &&
         #          hojaGastosLine.NoCobrar       == NoYes::No            &&
         #          hojaGastosLine.Internacional  == NoYes::No            &&
-        #          hojaGastosLine.VisaEmpresa    == Noyes::No {
+        #          hojaGastosLine.VisaEmpresa    == Noyes::No
+        #          && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #    {
         #
         #        taxParameters   = CRMTaxParameters::Find(hojaGastosLine.Type, hojaGastosLine.TransDate);
         #
@@ -3472,6 +3548,7 @@ Formatversion: 1
         #           && hojaGastosLine.NoCobrar       == NoYes::No
         #           && hojaGastosLine.Internacional  == NoYes::No
         #           && hojaGastosLine.VisaEmpresa    == NoYes::No
+        #           && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #    {
         #        taxParameters = CRMTaxParameters::Find(hojaGastosLine.Type, hojaGastosLine.TransDate);
         #        taxPercent    = hojaGastosLine.TaxPercent ? hojaGastosLine.TaxPercent : taxParameters.TaxPercent;
@@ -3503,6 +3580,9 @@ Formatversion: 1
         #
         #    this.updateSearchKey();//IND_MMS - API PROJECT - 2025.11.10
         #    this.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
+        #
+        #    this.NecesariaHGImpresa = this.NecesitaHGFisica();//this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
+        #    this.MostrarParaPago    = this.MostrarParaPago(); //IJL.29/05/26
         #
         #    super();
         #
@@ -3824,10 +3904,10 @@ Formatversion: 1
         #    */
         #
         #    if (_hojaGastosTable.ExpenseSheetStatus != INDExpenseSheetStatus::Rejected)
-        #        throw error("El Estado de la Hoja de Gastos no permite Cancelar su Rechazo. El estado debe ser 'Rechazada' ");
+        #        throw error("El Estado de la Hoja de Gastos no permite Deshacer el Rechazo. El estado debe ser 'Rechazada' ");
         #
         #
-        #    if (BOX::yesNo("Se va a Rechazar la Hoja de Gastos. ¿Deseas Continuar?", DialogButton::No) == DialogButton::Yes){
+        #    if (BOX::yesNo("Se va a Deshacer el Rechazo de la Hoja de Gastos. ¿Deseas Continuar?", DialogButton::No) == DialogButton::Yes){
         #
         #        _hojaGastosTable.UpdateStatus(INDExpenseSheetStatus::InReview);
         #        if (_formDataSource){
@@ -4094,12 +4174,13 @@ Formatversion: 1
         #                                   FormButtonControl   _buttonAprobar,
         #                                   FormButtonControl   _buttonCancelarAprobacion,
         #                                   FormButtonControl   _buttonRechazar,
-        #                                   FormButtonControl   _buttonCancelarRechazo)
+        #                                   FormButtonControl   _buttonCancelarRechazo,
+        #                                   FormButtonControl   _buttonVolverABorrador)
         #{
         #    CRMUsuarioTable     crmUsuarioTable = CRMUsuarioTable::Find(_hojaGastosTable.UserId);
         #    INDPersonaTable     personaTable    = INDPersonaTable::findByCRM(crmUsuarioTable.RecId);
         #
-        #    boolean             enableSolicitarAprobacion, enableCancelarSolicitarAprobacion, enableAprobar, enableDesAprobar, enableRechazar, enableAnularRechazo;
+        #    boolean             enableSolicitarAprobacion, enableCancelarSolicitarAprobacion, enableAprobar, enableDesAprobar, enableRechazar, enableAnularRechazo, enableVolverBorrador;
         #    Set                 setSubordinados             = crmUsuarioTable.SetSubordinados();
         #    INDPersonaTable     personaTableAxaptaUser      = INDPersonaTable::findByAxUserId(curUserId());
         #    CRMUsuarioTable     CRMUsuarioTableAxaptaUser   = CRMUsuarioTable::Find_AxaptaUserId(curUserId());
@@ -4107,12 +4188,26 @@ Formatversion: 1
         #    boolean             hojaGastosEsMia             = _hojaGastosTable.UserId == CRMUsuarioTableAxaptaUser.UserId;
         #    ;
         #
+        #    if (!_hojaGastosTable){
+        #        _buttonSolicitarAprobacion.enabled(false);
+        #        _buttonCancelarSolicitarAprobacion.enabled(false);
+        #        _buttonAprobar.enabled(false);
+        #        _buttonCancelarAprobacion.enabled(false);
+        #        _ButtonRechazar.enabled(false);
+        #        _buttonCancelarRechazo.enabled(false);
+        #        _buttonVolverABorrador.enabled(false);
+        #        return;
+        #    }
+        #
         #    //Solamente se puede solicitar aprobación si la HG está en un estado que permita la edición
         #    //enableSolicitarAprobacion           = CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(_hojaGastosTable.ExpenseSheetStatus) && !allowSelfManagement;
         #    enableSolicitarAprobacion           = CRMHojaGastosTable::SetStatusPermitenEdicionHG().in(_hojaGastosTable.ExpenseSheetStatus) && hojaGastosEsMia && !allowSelfManagement;
         #
         #    //Solamente s epuede cancelar la solicitud de aprobación si el estado es "Solicitud Aprobada"
         #    enableCancelarSolicitarAprobacion   = _hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::InReview && hojaGastosEsMia && !allowSelfManagement;
+        #
+        #    //IJL.30/06/26
+        #    enableVolverBorrador                = _hojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Rejected && hojaGastosEsMia && !allowSelfManagement;
         #
         #    //Puede Aprobar aquella persona que tenga más un elemento en el set de subordinados. Como mínimo ese set contiene al propio usuario.
         #    //Se puede Aprobar una Hoja de Gastos en estado "Solicitud Aprobada"
@@ -4158,6 +4253,7 @@ Formatversion: 1
         #    _buttonCancelarAprobacion.enabled(enableDesAprobar);
         #    _ButtonRechazar.enabled(enableRechazar);
         #    _buttonCancelarRechazo.enabled(enableAnularRechazo);
+        #    _buttonVolverABorrador.enabled(enableVolverBorrador);
         #
         #    //LedgerTransVoucher.enabled(CRMHojaGastosTable.Voucher || CRMHojaGastosTable.VoucherPhysical);
         #}
@@ -4279,7 +4375,7 @@ Formatversion: 1
         #    ;
         #
         #    set.add(INDExpenseSheetStatus::Draft);
-        #    set.add(INDExpenseSheetStatus::Rejected);
+        #    //set.add(INDExpenseSheetStatus::Rejected); //IJL.30/06/26. Este estado ya no permite ser editado. La HG deberá pasarse a BORRADOR para poder ser editada.
         #
         #    return set;
         #}
@@ -4324,6 +4420,61 @@ Formatversion: 1
         #            callerObject.EnableButtonsFunciones();
         #        //info("Estado Actualizado");
         #    }
+        #
+        #}
+      ENDSOURCE
+      SOURCE #VolverABorradorHojaDeGastosFromForm
+        #static void VolverABorradorHojaDeGastosFromForm(CRMHojaGastosTable  _hojaGastosTable,
+        #
+        #                                                 FormDataSource      _formDataSource,
+        #
+        #                                                 FormRun             _formRun,
+        #
+        #                                                 TransDate           _transDate = today())
+        #
+        #{
+        #
+        #    Object  callerObject    = _formRun;
+        #
+        #    ;
+        #
+        #    /*
+        #
+        #    Al usar esta opción la Hoja de Gastos pasa a Estado "Solicitada Aprobación".
+        #
+        #    .- Si la Hoja de Gastos es de un empleado con la casilla marcada de permitir AutoGestión en la tabla de personas la Hoja de Gastos se Aprueba automáticamente.
+        #
+        #    */
+        #
+        #
+        #    if (_hojaGastosTable.ExpenseSheetStatus != INDExpenseSheetStatus::Rejected)
+        #
+        #        throw error("El Estado de la Hoja de Gastos no permite Volver a Borrador. El estado debe ser 'Rechazada' ");
+        #
+        #
+        #
+        #    if (BOX::yesNo("Se va a Volver a Estado Borrador la Hoja de Gastos. ¿Deseas Continuar?", DialogButton::No) == DialogButton::Yes){
+        #
+        #
+        #        _hojaGastosTable.UpdateStatus(INDExpenseSheetStatus::Draft);
+        #
+        #        if (_formDataSource){
+        #
+        #            _formDataSource.reread();
+        #
+        #            _formDataSource.refresh();
+        #
+        #        }
+        #
+        #
+        #        if (callerObject)
+        #
+        #            callerObject.EnableButtonsFunciones();
+        #
+        #        //info("Estado Actualizado");
+        #
+        #    }
+        #
         #
         #}
       ENDSOURCE

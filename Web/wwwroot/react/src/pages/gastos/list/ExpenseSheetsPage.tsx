@@ -36,6 +36,7 @@ import {
   normalizeExpenseManagedUserFilterState,
   resolveExpenseManagedUserSelectValue,
   resolveExpenseManagedUserSelection,
+  resolveExpenseSheetOwnerAxUserId,
   shouldShowExpenseManagedUserSummary,
 } from "./expenseManagedUserSelection.ts";
 
@@ -56,15 +57,23 @@ const ExpenseSheetsPageContent = () => {
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
   const [reimbursementCurrencyCode, setReimbursementCurrencyCode] = useState("EUR");
-  const { currentAxUserId, currentUserName, manageableSubordinates, canManageOtherUsers, managementBootstrapReady } = useAuthContext();
+  const {
+    currentAxUserId,
+    currentCrmUserId,
+    currentUserName,
+    manageableSubordinates,
+    canManageOtherUsers,
+    managementBootstrapReady,
+  } = useAuthContext();
   const managedUsers = useMemo(
     () =>
       ensureCurrentExpenseManagedUserInList(
         Array.isArray(manageableSubordinates) ? manageableSubordinates : [],
         currentAxUserId,
-        currentUserName
+        currentUserName,
+        currentCrmUserId
       ),
-    [currentAxUserId, currentUserName, manageableSubordinates]
+    [currentAxUserId, currentCrmUserId, currentUserName, manageableSubordinates]
   );
   const defaultManagedUserId = useMemo(
     () => resolveExpenseManagedUserSelection(currentAxUserId, currentAxUserId, managedUsers),
@@ -329,8 +338,13 @@ const ExpenseSheetsPageContent = () => {
       if (!sheetId) return;
 
       const normalizedSnapshot = normalizeManagedUserSnapshotForLoad(appliedFilters || currentFilters);
+      if (normalizedSnapshot.includeSubordinates && !safeText(ownerUserId)) {
+        clearExpenseActingUserOverride();
+        showPermissionModal();
+        return;
+      }
       const detailOwnerUserId = normalizedSnapshot.includeSubordinates
-        ? (safeText(ownerUserId) || normalizedSnapshot.managedUserId)
+        ? safeText(ownerUserId)
         : normalizedSnapshot.managedUserId;
       if (detailOwnerUserId) {
         setExpenseActingUserOverride(detailOwnerUserId);
@@ -701,6 +715,13 @@ const ExpenseSheetsPageContent = () => {
             const statusClass = getExpenseStatusBadgeClassName(statusCode);
             const ownerId = safeText(item.userId);
             const ownerName = safeText(item.userName);
+            const ownerAxUserId = resolveExpenseSheetOwnerAxUserId({
+              ownerCrmUserId: ownerId,
+              ownerAxUserId: item.ownerAxUserId,
+              currentCrmUserId,
+              currentAxUserId,
+              users: managedUsers,
+            });
             const showOwnerSubtitle = activeListFilters.includeSubordinates === true;
             const ownerSubtitle = showOwnerSubtitle && ownerId
               ? (ownerName ? `${ownerName} (${ownerId})` : ownerId)
@@ -713,7 +734,7 @@ const ExpenseSheetsPageContent = () => {
                   title={description || "-"}
                   subtitle={ownerSubtitle}
                   amountText={totalAmountText}
-                  onOpen={() => goToDetail(id, ownerId)}
+                  onOpen={() => goToDetail(id, ownerAxUserId)}
                   titleClassName="expense-sheet-card__title timeline-name"
                   statusClassName={statusClass}
                   statusLabel={statusLabel}

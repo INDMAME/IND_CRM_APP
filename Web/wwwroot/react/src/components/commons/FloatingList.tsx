@@ -1,6 +1,9 @@
 import React, { useRef } from "react";
 import { createPortal } from "react-dom";
-import { useFloatingPosition } from "../../hooks/useFloatingPosition.ts";
+import {
+  useFloatingPosition,
+  type FloatingWidthStrategy,
+} from "../../hooks/useFloatingPosition.ts";
 
 type Props = {
   anchorRef: React.RefObject<HTMLElement>;
@@ -16,10 +19,16 @@ type Props = {
   panelStyle?: React.CSSProperties;
   autoFitViewport?: boolean;
   matchAvailableWidth?: boolean;
+  widthStrategy?: FloatingWidthStrategy;
+  desktopMaxWidthPx?: number;
+  desktopBreakpointPx?: number;
   offset?: number;
   viewportPadding?: number;
   children: React.ReactNode;
 };
+
+const DEFAULT_DESKTOP_MIN_WIDTH_PX = 360;
+const DEFAULT_DESKTOP_MAX_WIDTH_PX = 480;
 
 const FloatingList = ({
   anchorRef,
@@ -34,17 +43,30 @@ const FloatingList = ({
   panelClassName,
   panelStyle,
   autoFitViewport = true,
-  matchAvailableWidth = true,
+  matchAvailableWidth,
+  widthStrategy,
+  desktopMaxWidthPx,
+  desktopBreakpointPx,
   offset,
   viewportPadding,
   children,
 }: Props) => {
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const resolvedWidthStrategy =
+    widthStrategy ??
+    (matchAvailableWidth === true ? "viewport" : matchAvailableWidth === false ? "anchor" : "responsive");
+  const resolvedMinWidthPx =
+    minWidthPx ?? (resolvedWidthStrategy === "responsive" ? DEFAULT_DESKTOP_MIN_WIDTH_PX : undefined);
+  const resolvedDesktopMaxWidthPx =
+    desktopMaxWidthPx ?? (resolvedWidthStrategy === "responsive" ? DEFAULT_DESKTOP_MAX_WIDTH_PX : undefined);
   const style = useFloatingPosition(anchorRef, open, {
     overlayRef: panelRef,
     autoFitViewport,
-    matchAvailableWidth,
-    minWidth: minWidthPx,
+    widthStrategy: resolvedWidthStrategy,
+    preferredWidth: fixedWidthPx,
+    minWidth: resolvedMinWidthPx,
+    desktopMaxWidth: resolvedDesktopMaxWidthPx,
+    desktopBreakpoint: desktopBreakpointPx,
     offset,
     viewportPadding,
   });
@@ -56,7 +78,7 @@ const FloatingList = ({
         position: "fixed",
         top: style.top,
         left: style.left,
-        width: !matchAvailableWidth && typeof fixedWidthPx === "number" && Number.isFinite(fixedWidthPx) ? fixedWidthPx : style.width,
+        width: style.width,
         zIndex,
       }}
       className={portalClassName}

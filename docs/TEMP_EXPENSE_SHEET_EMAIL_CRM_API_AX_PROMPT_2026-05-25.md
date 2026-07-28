@@ -1,5 +1,7 @@
 # Prompt for Codex: Expense Sheet Email Notifications in IND_CRM_API and Axapta
 
+> Historical implementation prompt. It is not a current functional or technical source of truth. Verify the current repositories and deployed Axapta runtime before reuse.
+
 Use this prompt in project `C:\INDProjects\IND_CRM_API`.
 
 Date: 2026-05-26

@@ -40,6 +40,12 @@ type UseCreateDraftArgs = {
   setStep: (value: number) => void;
 };
 
+type CreateDraftDefaults = {
+  visitType: string;
+  contactMethod: string;
+  transDate: string;
+};
+
 // Handles visit-create draft save/restore lifecycle.
 export const useCreateDraft = ({
   draftSnapshot,
@@ -64,6 +70,42 @@ export const useCreateDraft = ({
   const persistDraftNow = useCallback(() => {
     persistDraftSnapshot(draftSnapshot);
   }, [draftSnapshot, persistDraftSnapshot]);
+
+  // Stops pending persistence and removes all state owned by visit creation.
+  const discardDraftNow = useCallback(() => {
+    if (draftPersistTimerRef.current) {
+      clearTimeout(draftPersistTimerRef.current);
+      draftPersistTimerRef.current = null;
+    }
+    draftRestoredRef.current = false;
+    clearCreateSelectionCache();
+  }, []);
+
+  // Resets draft-owned values when the selected account changes.
+  const resetDraftForClientChange = useCallback(
+    (defaults: CreateDraftDefaults) => {
+      setStep(1);
+      setSelectedContacts([]);
+      setVisitType(defaults.visitType);
+      setContactMethod(defaults.contactMethod);
+      setTransDate(defaults.transDate);
+      setDescription("");
+      setComentarios("");
+      setAntecedentes("");
+      setConclusiones("");
+    },
+    [
+      setAntecedentes,
+      setComentarios,
+      setConclusiones,
+      setContactMethod,
+      setDescription,
+      setSelectedContacts,
+      setStep,
+      setTransDate,
+      setVisitType,
+    ]
+  );
 
   useEffect(() => {
     if (!draftRestoredRef.current) return;
@@ -149,5 +191,7 @@ export const useCreateDraft = ({
 
   return {
     persistDraftNow,
+    discardDraftNow,
+    resetDraftForClientChange,
   };
 };

@@ -11,7 +11,7 @@ type ExpenseQuickDateFiltersProps = {
 // Shared quick date filters used by expense sheets and tickets panels.
 const ExpenseQuickDateFilters = ({ activeQuickFilter, onQuickFilterChange }: ExpenseQuickDateFiltersProps) => {
   return (
-    <div className="grid grid-cols-2 gap-2 history-quick-filters" aria-label={indT("History_Filter_Date", "Date")}>
+    <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 history-quick-filters" aria-label={indT("History_Filter_Date", "Date")}>
       <FilterButton
         label={indT("History_Quick_Custom", "Date")}
         active={activeQuickFilter === "custom"}

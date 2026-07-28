@@ -6,6 +6,7 @@ import { useAuthContext } from "../../../context/AuthContext.tsx";
 import { canAccess, showPermissionModal } from "../../../utils/permissions.ts";
 import { indT } from "../../../utils/indI18n.ts";
 import { mountReactIsland, mountWhenDocumentReady } from "../../../utils/reactIsland.tsx";
+import { formatUserNameWithId } from "../../../utils/userLabels.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import {
   DEFAULT_EXPENSE_STATUS_FILTER,
@@ -15,10 +16,11 @@ import {
 } from "../constants/expenseStatusCatalog.ts";
 import ExpenseFiltersPanel from "../components/ExpenseFiltersPanel.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
-import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText } from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetsListData } from "./useExpenseSheetsListData.ts";
 import { useExpenseSheetsFiltersState } from "./useExpenseSheetsFiltersState.ts";
 import { useExpenseSheetsFilterCache } from "./useExpenseSheetsFilterCache.ts";
+import { createInitialExpenseSheetsFilterSnapshot } from "./expenseFilterSnapshot.ts";
 import ExpenseSheetsAssistant from "./ExpenseSheetsAssistant.tsx";
 import ExpenseTimelineCard from "../components/ExpenseTimelineCard.tsx";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
@@ -34,6 +36,7 @@ import {
   normalizeExpenseManagedUserFilterState,
   resolveExpenseManagedUserSelectValue,
   resolveExpenseManagedUserSelection,
+  resolveExpenseSheetOwnerAxUserId,
   shouldShowExpenseManagedUserSummary,
 } from "./expenseManagedUserSelection.ts";
 
@@ -54,10 +57,23 @@ const ExpenseSheetsPageContent = () => {
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
   const [reimbursementCurrencyCode, setReimbursementCurrencyCode] = useState("EUR");
-  const { currentAxUserId, manageableSubordinates, canManageOtherUsers, managementBootstrapReady } = useAuthContext();
+  const {
+    currentAxUserId,
+    currentCrmUserId,
+    currentUserName,
+    manageableSubordinates,
+    canManageOtherUsers,
+    managementBootstrapReady,
+  } = useAuthContext();
   const managedUsers = useMemo(
-    () => ensureCurrentExpenseManagedUserInList(Array.isArray(manageableSubordinates) ? manageableSubordinates : [], currentAxUserId),
-    [currentAxUserId, manageableSubordinates]
+    () =>
+      ensureCurrentExpenseManagedUserInList(
+        Array.isArray(manageableSubordinates) ? manageableSubordinates : [],
+        currentAxUserId,
+        currentUserName,
+        currentCrmUserId
+      ),
+    [currentAxUserId, currentCrmUserId, currentUserName, manageableSubordinates]
   );
   const defaultManagedUserId = useMemo(
     () => resolveExpenseManagedUserSelection(currentAxUserId, currentAxUserId, managedUsers),
@@ -81,8 +97,7 @@ const ExpenseSheetsPageContent = () => {
     managedUsers.forEach((entry) => {
       const id = safeText(entry.axUserId);
       if (!id) return;
-      const name = safeText(entry.name);
-      map.set(id.toUpperCase(), name || id);
+      map.set(id.toUpperCase(), formatUserNameWithId(entry.name, id));
     });
     return map;
   }, [managedUsers]);
@@ -323,8 +338,13 @@ const ExpenseSheetsPageContent = () => {
       if (!sheetId) return;
 
       const normalizedSnapshot = normalizeManagedUserSnapshotForLoad(appliedFilters || currentFilters);
+      if (normalizedSnapshot.includeSubordinates && !safeText(ownerUserId)) {
+        clearExpenseActingUserOverride();
+        showPermissionModal();
+        return;
+      }
       const detailOwnerUserId = normalizedSnapshot.includeSubordinates
-        ? (safeText(ownerUserId) || normalizedSnapshot.managedUserId)
+        ? safeText(ownerUserId)
         : normalizedSnapshot.managedUserId;
       if (detailOwnerUserId) {
         setExpenseActingUserOverride(detailOwnerUserId);
@@ -458,22 +478,9 @@ const ExpenseSheetsPageContent = () => {
 
   // Applies the first-entry list defaults without affecting return-from-detail flows.
   const restoreInitialExpenseSheetsState = useCallback(() => {
-    const today = startOfDay(new Date());
-    const fromDate = new Date(today);
-    fromDate.setDate(today.getDate() - 89);
-
-    const initialFilters = normalizeManagedUserSnapshotForLoad({
-      fromDate: toIsoDate(fromDate),
-      toDate: toIsoDate(today),
-      projectId: "",
-      hojaGastosId: "",
-      currencyCode: "",
-      managedUserId: defaultManagedUserId,
-      includeSubordinates: false,
-      statusFilter: DEFAULT_EXPENSE_STATUS_FILTER,
-      exchangeRateMode: null,
-      filter: "",
-    });
+    const initialFilters = normalizeManagedUserSnapshotForLoad(
+      createInitialExpenseSheetsFilterSnapshot(defaultManagedUserId)
+    );
 
     pendingScrollRestoreRef.current = null;
     if (initialFilters.managedUserId) {
@@ -654,6 +661,8 @@ const ExpenseSheetsPageContent = () => {
         sheetLookupManagedUserId={normalizedCurrentManagedUserFilters.managedUserId}
         includeSubordinates={includeSubordinates}
         managedUsers={managedUsers}
+        currentAxUserId={currentAxUserId}
+        currentUserName={currentUserName}
         showManagedUserFilter={showManagedUserFilter}
         managedUserFilterDisabled={managedUserFilterDisabled}
         managedUserAllOption={managedUserAllOption}
@@ -706,6 +715,13 @@ const ExpenseSheetsPageContent = () => {
             const statusClass = getExpenseStatusBadgeClassName(statusCode);
             const ownerId = safeText(item.userId);
             const ownerName = safeText(item.userName);
+            const ownerAxUserId = resolveExpenseSheetOwnerAxUserId({
+              ownerCrmUserId: ownerId,
+              ownerAxUserId: item.ownerAxUserId,
+              currentCrmUserId,
+              currentAxUserId,
+              users: managedUsers,
+            });
             const showOwnerSubtitle = activeListFilters.includeSubordinates === true;
             const ownerSubtitle = showOwnerSubtitle && ownerId
               ? (ownerName ? `${ownerName} (${ownerId})` : ownerId)
@@ -718,7 +734,7 @@ const ExpenseSheetsPageContent = () => {
                   title={description || "-"}
                   subtitle={ownerSubtitle}
                   amountText={totalAmountText}
-                  onOpen={() => goToDetail(id, ownerId)}
+                  onOpen={() => goToDetail(id, ownerAxUserId)}
                   titleClassName="expense-sheet-card__title timeline-name"
                   statusClassName={statusClass}
                   statusLabel={statusLabel}

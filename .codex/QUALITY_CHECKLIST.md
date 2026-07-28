@@ -29,6 +29,14 @@
 - Run a short clean-code review on touched files and confirm no obvious low-risk modular refactor was left behind
 - If a low-risk modular refactor is still needed, apply it before closure or call out why it was deferred
 
+## Manual visual design review
+- Appearance, spacing, centering, dimensions, colors, responsive composition, and overlap acceptance are manual checks.
+- Do not create or run screenshot, pixel-diff, visual-regression, computer-vision, or browser-automation tests whose sole purpose is design validation unless the user explicitly requests them.
+- When responsive presentation changed, give the user a concise manual checklist for a narrow mobile viewport around 390x844 and a desktop viewport of at least 1440x900.
+- The manual checklist should cover mobile order and widths, desktop content bounds, overlays, scrolling, keyboard order, assistants, FABs, modals, footers, and preservation of `user-scalable=no`.
+- Keep automated validation for code, builds, types, static analysis, logic, API contracts, permissions, navigation, events, and functional behavior.
+- Functional Playwright or E2E checks remain allowed when they validate behavior or logic; they must not be introduced solely to judge appearance.
+
 ## Backend (.NET)
 - `dotnet build`
 - `dotnet test -v minimal`
@@ -52,7 +60,7 @@
 - SessionStorage keys preserved
 - Read-only fields match color contract (label #00296be0, value #64748b)
 - Text editor return flow works for create and detail pages
-- If E2E uses Playwright, ensure auth flow is valid for current login mode (Entra/SSO or local form login)
+- If a functional E2E uses Playwright, ensure auth flow is valid for current login mode (Entra/SSO or local form login)
 
 ## Guardrail documentation checks
 - If `.codex/*.md` or `.codex/config.toml` changed, run `npm run sync:skill:local:references`
@@ -87,4 +95,4 @@
 - For release tasks, run `iisreset` after publish
 
 ## Last updated
-- 2026-06-10
+- 2026-07-23

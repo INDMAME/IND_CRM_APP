@@ -1,0 +1,36 @@
+{
+  "name": "@anthropic/tailwindcss-v4-skill",
+  "version": "0.1.0",
+  "description": "Tailwind CSS v4 skill for AI coding agents",
+  "type": "module",
+  "main": "AGENTS.md",
+  "scripts": {
+    "build": "bun run src/build.ts",
+    "validate": "bun run src/validate.ts",
+    "test:llm": "bun run src/test-llm.ts"
+  },
+  "files": [
+    "AGENTS.md",
+    "rules/",
+    "test-cases.json",
+    "metadata.json"
+  ],
+  "keywords": [
+    "tailwindcss",
+    "v4",
+    "ai",
+    "agent",
+    "skill",
+    "claude",
+    "copilot"
+  ],
+  "author": "Anthropic",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anthropics/agent-skills"
+  },
+  "devDependencies": {
+    "bun-types": "latest"
+  }
+}

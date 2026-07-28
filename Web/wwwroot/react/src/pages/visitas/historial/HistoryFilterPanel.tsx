@@ -143,7 +143,7 @@ const HistoryFilterPanel = ({
   return (
     <div className="filter-card filter-card--expanded p-2 sm:p-2.5 relative">
       <div className="gap-y-1.5 history-filter-stack flex flex-col">
-        <div className="grid grid-cols-2 gap-2 history-quick-filters" aria-label={filterTitle}>
+        <div className="grid grid-cols-2 gap-2 lg:grid-cols-4 history-quick-filters" aria-label={filterTitle}>
           {quickFilters.map((item) => {
             const isActive = activeQuickFilter === item.id;
             return (
@@ -231,7 +231,7 @@ const HistoryFilterPanel = ({
         />
 
         {showFilterActions && (
-          <div className="mt-1 grid grid-cols-2 gap-2 history-filter-actions">
+          <div className="mt-1 grid grid-cols-2 gap-2 history-filter-actions lg:mx-auto lg:w-full lg:max-w-lg">
             <ActionButton label={clearLabel} className="w-full" onClick={onResetFilters} />
             <ActionButton label={applyLabel} className="w-full" onClick={onApplyFilters} />
           </div>

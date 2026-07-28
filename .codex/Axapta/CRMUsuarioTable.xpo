@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMUsuarioTable unloaded at Martes 02/06/2026
+; Navision Axapta Table : CRMUsuarioTable unloaded at Viernes 24/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -1350,7 +1350,11 @@ Formatversion: 1
       SOURCE #CodigoHoraIndirectaLibreDisposicion
         #AccountNum CodigoHoraIndirectaLibreDisposicion()
         #{
-        #    return "N31";//this.DepartamentoId == "LAB" ? "N152" : "N00";
+        #    ;
+        #    if(curExt() == "REF")
+        #        return "N31";//this.DepartamentoId == "LAB" ? "N152" : "N00";
+        #
+        #    return "XXX";
         #}
       ENDSOURCE
       SOURCE #CodigoHoraIndirectaVacaciones
@@ -2317,6 +2321,10 @@ Formatversion: 1
         #
         #        usuarioTable    = CRMUsuarioTable::Find(subordinadoTable.UserIdSubordinado);
         #
+        #        if (! usuarioTable)
+        #            continue;
+        #
+        #
         #        //IJL.03/11/25. Si una persona está bloqueada no debemos tenerla en cuenta en la lista de subordinados.
         #        personaTable    = INDPersonaTable::findByCRM(usuarioTable.RecId);
         #        if (personaTable && personaTable.bloqueado()){
@@ -2436,8 +2444,13 @@ Formatversion: 1
         #static CRMUsuarioTable Find_AxaptaUserId(UserId     _id,
         #                                         boolean    _forupdate = false)
         #{
-        #    CRMUsuarioTable CRMUsuarioTable;
+        #    CRMUsuarioTable     CRMUsuarioTable;
+        #    INDPersonaTable     personaTable    = INDPersonaTable::findByUserAx(_id);   //IJL.22/06/26
         #    ;
+        #    CRMUsuarioTable = personaTable.getCRMUsuarioTable(_forupdate);
+        #
+        #    if (CRMUsuarioTable)
+        #        return CRMUsuarioTable;
         #
         #    CRMUsuarioTable.selectForUpdate(_forupdate);
         #
@@ -2452,15 +2465,24 @@ Formatversion: 1
         #//IND_MMS_MaestroEmpleados - 07.04.2025
         #static CRMUsuarioTable Find_EmplId(EmplId   _id,
         #                                   boolean  _forupdate = false)
+        #
         #{
-        #    CRMUsuarioTable CRMUsuarioTable;
+        #
+        #    CRMUsuarioTable     CRMUsuarioTable;
+        #    EmplTable           emplTable       = EmplTable::find(_id);
+        #    INDPersonaTable     personaTable    = INDPersonaTable::findByHora(emplTable.RecId);     //IJL.22/06/26
         #    ;
+        #    CRMUsuarioTable = personaTable.getCRMUsuarioTable(_forupdate);
+        #
+        #    if (CRMUsuarioTable)
+        #        return CRMUsuarioTable;
         #
         #    CRMUsuarioTable.selectForUpdate(_forupdate);
         #
+        #
         #    select firstonly CRMUsuarioTable
-        #    index hint index3
-        #    where CRMUsuarioTable.EmplId == _id;
+        #      index hint index3
+        #        where CRMUsuarioTable.EmplId == _id;
         #
         #    return CRMUsuarioTable;
         #}

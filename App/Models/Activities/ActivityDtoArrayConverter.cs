@@ -157,7 +157,7 @@ namespace IND_CRM_APP.Models.Activities
             if (!LooksLikeActivityArray(values))
                 return false;
 
-            return IsArrayAt(values, 13) || IsArrayAt(values, 12);
+            return IsAssistantSlotAt(values, 13) || IsAssistantSlotAt(values, 12);
         }
 
         private static bool LooksLikeExpandedListArray(List<JsonElement> values)
@@ -165,7 +165,7 @@ namespace IND_CRM_APP.Models.Activities
             if (!LooksLikeActivityArray(values))
                 return false;
 
-            return IsArrayAt(values, 10) || IsArrayAt(values, 9);
+            return IsAssistantSlotAt(values, 10) || IsAssistantSlotAt(values, 9);
         }
 
         private static bool LooksLikeCompactListArray(List<JsonElement> values)
@@ -185,15 +185,29 @@ namespace IND_CRM_APP.Models.Activities
         private static bool HasFullDetailContactMethod(List<JsonElement> values)
         {
             // ContactMethod can be blank per row; the assistant position tells us whether the slot exists.
-            return values.Count >= 14 &&
-                   IsArrayAt(values, 13);
+            return IsAssistantSlotAt(values, 13);
         }
 
         private static bool HasExpandedListContactMethod(List<JsonElement> values)
         {
             // ContactMethod can be blank per row; the assistant position tells us whether the slot exists.
-            return values.Count >= 11 &&
-                   IsArrayAt(values, 10);
+            return IsAssistantSlotAt(values, 10);
+        }
+
+        // Accepts AX empty assistant containers serialized as null only when both trailing owner slots exist.
+        private static bool IsAssistantSlotAt(List<JsonElement> values, int index)
+        {
+            return IsArrayAt(values, index) ||
+                   IsNullAssistantWithTrailingOwner(values, index);
+        }
+
+        // Uses the two owner fields after the null value to avoid mistaking unrelated nulls for assistants.
+        private static bool IsNullAssistantWithTrailingOwner(List<JsonElement> values, int index)
+        {
+            return index >= 0 &&
+                   index < values.Count &&
+                   values[index].ValueKind == JsonValueKind.Null &&
+                   values.Count >= index + 3;
         }
 
         private static bool IsArrayAt(List<JsonElement> values, int index)

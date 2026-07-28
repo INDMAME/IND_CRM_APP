@@ -170,13 +170,13 @@
 <body>
   <main>
     <h1>Permisos y visibilidad en Visitas</h1>
-    <p class="meta">Explicación funcional. Actualizado: 2026-06-09.</p>
+    <p class="meta">Explicación funcional. Actualizado: 2026-06-09. Revisado contra el aplicativo: 2026-07-13.</p>
 
     <section>
       <h2>Resumen</h2>
-      <p>En Visitas se combinan dos controles: el permiso del módulo y la jerarquía de usuarios. El permiso del módulo define si una persona puede entrar, consultar, crear o modificar. La jerarquía define qué visitas puede ver.</p>
+      <p>En Visitas se combinan cuatro controles: el permiso del módulo, la visibilidad o jerarquía de usuarios, el propietario y su política de modificación, y la validación final del servidor.</p>
       <div class="callout">
-        <strong>Idea clave:</strong> una persona solo trabaja con las visitas que le corresponden por su permiso y por su posición dentro de la jerarquía.
+        <strong>Idea clave:</strong> poder ver una visita no significa poder modificarla. En una visita propia deben coincidir el permiso del módulo, el propietario AX y la decisión del servidor. En una visita ajena se exige además propietario visible, política delegable y autorización de modificación.
       </div>
     </section>
 
@@ -185,10 +185,12 @@
       <p>Lo primero que se comprueba es si la persona tiene acceso al módulo de Visitas. Según su nivel de permiso, la web le permite unas acciones u otras.</p>
       <ul>
         <li>Si no tiene acceso, no debería poder entrar al módulo.</li>
-        <li>Si solo tiene permiso de consulta, puede ver las visitas que le correspondan, pero no crear ni modificar.</li>
-        <li>Si tiene permiso para crear, la web le muestra la opción de crear nuevas visitas.</li>
-        <li>Si tiene permiso para modificar, puede editar dentro de los límites marcados por la jerarquía y las reglas del sistema.</li>
+        <li><code>Lectura</code>: puede consultar las visitas que le correspondan, pero no crear, modificar ni eliminar.</li>
+        <li><code>Edición</code>: incluye lectura y permite modificar una visita propia cuando el propietario AX coincide y el servidor lo autoriza. Para una visita ajena se aplican controles adicionales.</li>
+        <li><code>Añadir / Crear</code>: incluye los niveles anteriores y permite registrar nuevas visitas.</li>
+        <li><code>Control total</code>: incluye lectura, edición y creación, y habilita la eliminación cuando las reglas del registro también la autorizan.</li>
       </ul>
+      <p>Los niveles son acumulativos: un nivel superior incluye las capacidades de los niveles inferiores, pero nunca sustituye la validación a nivel de registro.</p>
     </section>
 
     <section>
@@ -224,12 +226,12 @@
 
     <section>
       <h2>3. Cómo funciona el filtro de personas</h2>
-      <p>Cuando una persona puede ver visitas de varios usuarios, la web muestra un selector para elegir de quién quiere ver las visitas.</p>
+      <p>El filtro de propietario está presente en el panel del historial. Si el usuario no tiene otros propietarios visibles, queda fijo o deshabilitado; si tiene alcance ampliado, permite elegir una persona.</p>
       <section class="inventory-item">
-        <h4>Filtro en todos</h4>
+        <h4><code>Todos mis subordinados</code></h4>
         <ul>
-          <li>La persona ve todas las visitas permitidas por su jerarquía.</li>
-          <li>No significa ver todas las visitas de la empresa, solo las que entran en su alcance.</li>
+          <li>La web no envía un propietario concreto y deja que el backend aplique la visibilidad autorizada.</li>
+          <li>No significa ver todas las visitas de la empresa.</li>
         </ul>
       </section>
 
@@ -252,7 +254,12 @@
 
       <section class="inventory-item">
         <h4>Modificar</h4>
-        <p>Para modificar una visita, la persona debe tener permiso para editar y la visita debe estar dentro de su alcance. La jerarquía no amplía permisos de edición por sí sola.</p>
+        <p>Para una visita propia se necesita permiso de edición, propietario AX resuelto y coincidente, y una decisión positiva del servidor. Si la visita es ajena, el propietario debe estar visible, la política debe ser <code>Igual que visibilidad</code> o <code>Reglas del módulo</code>, y <code>CanMutate</code> debe ser verdadero.</p>
+      </section>
+
+      <section class="inventory-item">
+        <h4>Eliminar</h4>
+        <p>Eliminar exige todo lo necesario para modificar y, además, permiso de módulo <code>Control total</code>.</p>
       </section>
 
       <section class="inventory-item">
@@ -264,9 +271,9 @@
     <section>
       <h2>Regla sencilla</h2>
       <div class="callout">
-        <strong>Permiso del módulo + jerarquía = lo que puede hacer una persona en Visitas.</strong>
+        <strong>Siempre: permiso del módulo + propietario + validación del servidor. Para visitas ajenas: además visibilidad + política delegable + <code>CanMutate</code>.</strong>
       </div>
-      <p>El permiso del módulo decide si puede entrar, consultar, crear o modificar. La jerarquía decide sobre qué visitas puede aplicar esas acciones. La web une ambas cosas para que cada persona vea y gestione solo lo que le corresponde.</p>
+      <p>La interfaz oculta o deshabilita acciones que no corresponden, pero el servidor vuelve a comprobar cada guardado y eliminación. Esa decisión del servidor es la barrera final.</p>
     </section>
   </main>
 </body>

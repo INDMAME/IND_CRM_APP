@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Martes 02/06/2026
+; Navision Axapta Forms unloaded at Viernes 24/07/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -234,7 +234,7 @@ FORM #CRMUsuarioSubordinadoTable
         
           CONTAINER
             CONTROL STRINGEDIT
-              ;==== controlId:12291, containerId:12290, containerdata: 0   
+              ;==== controlId:12291, containerId:12290, containerdata:12290   
               ;----------------------------------------------------------
               PROPERTIES
                 Name                #CRMUsuarioSubordinadoTable_UserIdJefe
@@ -297,7 +297,7 @@ FORM #CRMUsuarioSubordinadoTable
             ENDCONTROL 
             
             CONTROL STRINGEDIT
-              ;==== controlId:12292, containerId:12290, containerdata: 0   
+              ;==== controlId:12292, containerId:12290, containerdata:12290   
               ;----------------------------------------------------------
               PROPERTIES
                 Name                #CRMUsuarioSubordinadoTable_UserIdSubordinado
@@ -360,7 +360,7 @@ FORM #CRMUsuarioSubordinadoTable
             ENDCONTROL 
             
             CONTROL STRINGEDIT
-              ;==== controlId:12293, containerId:12290, containerdata: 0   
+              ;==== controlId:12293, containerId:12290, containerdata:12290   
               ;----------------------------------------------------------
               PROPERTIES
                 Name                #UserIdSubordinadoName
@@ -419,6 +419,51 @@ FORM #CRMUsuarioSubordinadoTable
                 ArrayIndex          #0
                 DataMethod          #UserIdSubordinadoName
                 SearchMode          #None
+              ENDPROPERTIES
+              
+            ENDCONTROL 
+            
+            CONTROL CHECKBOX
+              ;==== controlId:12294, containerId:12290, containerdata:12290   
+              ;----------------------------------------------------------
+              PROPERTIES
+                Name                #CRMUsuarioSubordinadoTable_ExcluirAprobacionHojaGastos
+                AutoDeclaration     #No
+                Visible             #Yes
+                AllowEdit           #Yes
+                Left                #Auto (left)
+                Top                 #Auto
+                Width               #250
+                Height              #Auto
+                VerticalSpacing     #Auto
+                Enabled             #Yes
+                Skip                #No
+                AlignControl        #Yes
+                HelpText            #
+                ConfigurationKey    #
+                SecurityKey         #
+                DragDrop            #None
+                Value               #0
+                ColorScheme         #Default
+                BackStyle           #Opaque
+                BackgroundColor     #Window background
+                ForegroundColor     #Window text
+                LabelForegroundColor #Window text
+                ShowLabel           #Yes
+                Label               #
+                LabelFont           #
+                LabelFontSize       #0
+                LabelItalic         #No
+                LabelUnderline      #No
+                LabelBold           #Default
+                LabelCharacterSet   #0
+                LabelWidth          #Auto
+                LabelHeight         #Auto
+                LabelPosition       #Left
+                LabelAlignment      #Right
+                DataSource          #CRMUsuarioSubordinadoTable
+                DataField           #ExcluirAprobacionHojaGastos
+                DataMethod          #
               ENDPROPERTIES
               
             ENDCONTROL 

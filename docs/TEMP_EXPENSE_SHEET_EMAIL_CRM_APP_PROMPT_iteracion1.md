@@ -1,5 +1,7 @@
 ﻿# Prompt for Codex: Expense Sheet Email Deep-Link Resolver in IND_CRM_APP
 
+> Historical implementation prompt. It is not a current functional or technical source of truth. Use `docs/expense-sheet-email-link-resolver-2026-05-25.md` for the as-built web resolver.
+
 Use this prompt in project `C:\INDProjects\IND_CRM_APP`.
 
 Date: 2026-05-27

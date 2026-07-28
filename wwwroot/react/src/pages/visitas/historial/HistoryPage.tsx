@@ -240,6 +240,7 @@ export const HistoryPage = ({
     ownerFilterDisabled,
     canManageVisibleOwners,
     selectedOwnerText,
+    visibleVisitUserByOwnerAxUserId,
     effectiveSelectedOwnerAxUserId,
     resolveEffectiveOwnerAxUserId,
   } =
@@ -252,8 +253,18 @@ export const HistoryPage = ({
       onDebug: logHistory,
     });
 
-  const { items, total, currentPage, isLoading, errorMessage, loadActivities, resetActivities, retryOnNetworkErrorRef, lastSignatureRef } =
-    useHistoryActivities({
+  const {
+    items,
+    total,
+    currentPage,
+    isLoading,
+    errorMessage,
+    loadedOwnerAxUserId,
+    loadActivities,
+    resetActivities,
+    retryOnNetworkErrorRef,
+    lastSignatureRef,
+  } = useHistoryActivities({
       fromDateValue,
       toDateValue,
       accountNumValue,
@@ -363,10 +374,13 @@ export const HistoryPage = ({
     formatMonthLabel,
   });
 
+  const showTimelineOwners = canManageVisibleOwners && loadedOwnerAxUserId === "";
   const { timelineItems } = useHistoryTimelineItems({
     items,
     locale,
     noDataText,
+    showOwner: showTimelineOwners,
+    visibleUsersByOwnerAxUserId: visibleVisitUserByOwnerAxUserId,
     logHistory,
     toTitleCase,
     formatDateParts,

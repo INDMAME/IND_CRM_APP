@@ -28,6 +28,9 @@ type DeleteLinkedExpenseLineContext = {
   lineRecId: string;
 };
 
+// Defines whether a ticket save may synchronize its expense-sheet line.
+export type ExpenseTicketSaveStrategy = "ticket-only" | "ticket-and-sheet-line";
+
 type UseExpenseTicketDetailMutationsArgs = {
   busy: boolean;
   isEditing: boolean;
@@ -46,6 +49,7 @@ type UseExpenseTicketDetailMutationsArgs = {
   draftComentario: string;
   draftUrlFile: string;
   draftFileName: string;
+  saveStrategy: ExpenseTicketSaveStrategy;
   linkedExpenseSheetId?: string;
   linkedExpenseLineRecId?: string;
   linkedExpenseLineProjectId?: string;
@@ -109,6 +113,7 @@ export const useExpenseTicketDetailMutations = ({
   draftComentario,
   draftUrlFile,
   draftFileName,
+  saveStrategy,
   linkedExpenseSheetId,
   linkedExpenseLineRecId,
   linkedExpenseLineProjectId,
@@ -165,7 +170,13 @@ export const useExpenseTicketDetailMutations = ({
   ]);
 
   const runHeaderUpdate = useCallback(
-    async ({ syncSheetLine }: { syncSheetLine: boolean }): Promise<boolean> => {
+    async ({
+      syncSheetLine,
+      continueOnSheetSyncFailure = false,
+    }: {
+      syncSheetLine: boolean;
+      continueOnSheetSyncFailure?: boolean;
+    }): Promise<boolean> => {
       if (busy || !isEditing) return false;
       if (!canEditTicket) {
         showPermissionModal();
@@ -230,7 +241,7 @@ export const useExpenseTicketDetailMutations = ({
         return false;
       }
 
-      const validatedSheetId = await validateLinkedSheetBeforeMutation();
+      const validatedSheetId = syncSheetLine ? await validateLinkedSheetBeforeMutation() : "";
       if (validatedSheetId === null) {
         return false;
       }
@@ -275,6 +286,7 @@ export const useExpenseTicketDetailMutations = ({
           }
 
           if (syncSheetLine && validatedSheetId) {
+            let sheetSyncFailureMessage = "";
             try {
               const syncPayload = {
                 fileId,
@@ -307,7 +319,15 @@ export const useExpenseTicketDetailMutations = ({
                 message,
               });
               onLinkedSheetSyncFailure?.(message);
-              throw new Error(message);
+              if (!continueOnSheetSyncFailure) {
+                throw new Error(message);
+              }
+              sheetSyncFailureMessage = message;
+            }
+            if (sheetSyncFailureMessage) {
+              setStatus(sheetSyncFailureMessage);
+              setIsEditing(false);
+              return true;
             }
           }
 
@@ -353,22 +373,27 @@ export const useExpenseTicketDetailMutations = ({
 
   const handleUpdate = useCallback(async () => {
     return runHeaderUpdate({
-      syncSheetLine: true,
+      syncSheetLine: saveStrategy === "ticket-and-sheet-line",
     });
-  }, [runHeaderUpdate]);
+  }, [runHeaderUpdate, saveStrategy]);
 
   const handlePersistHeaderDraft = useCallback(async () => {
+    // Opening a ticket line should persist all possible linked-sheet changes, but
+    // sheet validation failures must not prevent the user from fixing that line.
     return runHeaderUpdate({
       syncSheetLine:
-        linkedExpenseLineProjectIdChanged ||
-        linkedExpenseLineReimbursableExpenseChanged ||
-        !!safeText(linkedExpenseSheetId),
+        saveStrategy === "ticket-and-sheet-line" &&
+        (linkedExpenseLineProjectIdChanged ||
+          linkedExpenseLineReimbursableExpenseChanged ||
+          !!safeText(linkedExpenseSheetId)),
+      continueOnSheetSyncFailure: true,
     });
   }, [
     linkedExpenseLineProjectIdChanged,
     linkedExpenseLineReimbursableExpenseChanged,
     linkedExpenseSheetId,
     runHeaderUpdate,
+    saveStrategy,
   ]);
 
   const resolveLinkedExpenseLineContext = useCallback(async (): Promise<DeleteLinkedExpenseLineContext | null> => {

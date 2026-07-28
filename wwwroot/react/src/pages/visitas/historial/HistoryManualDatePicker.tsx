@@ -46,6 +46,7 @@ type HistoryManualDatePickerProps = {
 };
 
 const MIN_POPOVER_WIDTH_PX = 360;
+const DESKTOP_MAX_POPOVER_WIDTH_PX = 640;
 
 // Presentational date range picker used by the history quick filter.
 const HistoryManualDatePicker = ({
@@ -83,6 +84,7 @@ const HistoryManualDatePicker = ({
     overlayRef: popoverRef,
     autoFitViewport: true,
     minWidth: MIN_POPOVER_WIDTH_PX,
+    desktopMaxWidth: DESKTOP_MAX_POPOVER_WIDTH_PX,
   });
   const popover =
     isOpen && typeof document !== "undefined"
