@@ -41,6 +41,7 @@ import { useExpenseSheetLineTicketPreview } from "./useExpenseSheetLineTicketPre
 import ExpenseSheetLineDetailView from "./ExpenseSheetLineDetailView.tsx";
 import { useExpenseSheetLineTypeValidation } from "./useExpenseSheetLineTypeValidation.ts";
 import { useExpenseTicketDetailState } from "../tickets/detail/useExpenseTicketDetailState.ts";
+import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 
 const LINKED_TICKET_LINES_PAGE_SIZE = 6;
 
@@ -99,6 +100,7 @@ const ExpenseSheetLineDetailContent = () => {
   const amountMSTManualEditRef = useRef(false);
   const linkedTicketLineContainerRef = useRef<HTMLDivElement | null>(null);
   const [exchangeRateInfoMessage, setExchangeRateInfoMessage] = useState("");
+  const { invalidateCachedListForRefetch } = useExpenseSheetsFilterCache();
 
   useEffect(() => {
     if (!startInEditMode) {
@@ -111,6 +113,7 @@ const ExpenseSheetLineDetailContent = () => {
   const {
     header,
     line,
+    companyCurrencyCode,
     isLoading,
     errorMessage,
     lineNavigation,
@@ -220,7 +223,7 @@ const ExpenseSheetLineDetailContent = () => {
     });
   }, []);
 
-  const localCurrencyCode = normalizeExpenseLineCurrencyCode(header?.currencyCode) || "EUR";
+  const localCurrencyCode = normalizeExpenseLineCurrencyCode(companyCurrencyCode);
   const effectiveLineCurrencyCode = normalizeExpenseLineCurrencyCode(isEditing ? draftCurrencyCode : line?.currencyCode) || localCurrencyCode;
   const draftPriceValue = parseDecimalInput(draftPrice);
   const draftQtyValue = parseDecimalInput(draftQty);
@@ -237,12 +240,14 @@ const ExpenseSheetLineDetailContent = () => {
     () => formatAmountWithCurrency(calculatedAmountPreview, effectiveLineCurrencyCode),
     [calculatedAmountPreview, effectiveLineCurrencyCode]
   );
-  const displayAmountMST = isExpenseLineSameReimbursementCurrency(effectiveLineCurrencyCode, localCurrencyCode)
-    ? line?.visibleReimbursableTotal ?? line?.amountMST ?? line?.amount ?? null
-    : line?.visibleReimbursableTotal ?? line?.amountMST ?? null;
+  const displayAmountMST = line?.amountMST ?? null;
   const amountMSTText = useMemo(
     () => formatAmountWithCurrency(displayAmountMST, localCurrencyCode),
     [displayAmountMST, localCurrencyCode]
+  );
+  const reimbursableAmountText = useMemo(
+    () => formatAmountWithCurrency(line?.reimbursableAmount ?? null, localCurrencyCode),
+    [line?.reimbursableAmount, localCurrencyCode]
   );
   const projectValue = safeText(line?.projId || header?.projId);
   const sheetDescription = safeText(header?.description) || "-";
@@ -757,6 +762,17 @@ const ExpenseSheetLineDetailContent = () => {
     });
   }, [isEditing, linkedTicketReturnContext]);
 
+  const handleLineSaveSuccess = useCallback(() => {
+    invalidateCachedListForRefetch();
+    if (isCreateMode) {
+      setIsRedirectingAfterCreate(true);
+      navigateToSheetDetail();
+      return;
+    }
+
+    reloadExpensePage();
+  }, [invalidateCachedListForRefetch, isCreateMode, navigateToSheetDetail]);
+
   useExpenseSheetLineDetailTopbarActions({
     busy: busy || isRedirectingAfterCreate,
     modalOpen: modal.open,
@@ -775,15 +791,8 @@ const ExpenseSheetLineDetailContent = () => {
     canOpenSaveConfirm,
     handleUpdate,
     handleDelete,
-    onSaveSuccess: () => {
-      if (isCreateMode) {
-        setIsRedirectingAfterCreate(true);
-        navigateToSheetDetail();
-        return;
-      }
-
-      reloadExpensePage();
-    },
+    onSaveSuccess: handleLineSaveSuccess,
+    onDeleteSuccess: invalidateCachedListForRefetch,
     openConfirm,
     closeConfirm,
   });
@@ -908,6 +917,7 @@ const ExpenseSheetLineDetailContent = () => {
           amountText={amountText}
           draftAmountCurrency={draftAmountCurrency}
           amountMSTText={amountMSTText}
+          reimbursableAmountText={reimbursableAmountText}
           internacionalLabel={internacionalLabel}
           isKmType={isKmType}
           isFuelPriceLoading={isFuelPriceLoading}

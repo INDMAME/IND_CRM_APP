@@ -1,0 +1,44 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: UTR
+
+; Navision Axapta Real: INDReimbursableAmount descargados en Miércoles 29/07/2026
+; --------------------------------------------------------------------------------
+  USERTYPEVERSION 6
+  
+  USERTYPE #INDReimbursableAmount
+  REAL
+    PROPERTIES
+      Name                #INDReimbursableAmount
+      Label               #Importe reembolsable
+      HelpText            #
+      FormHelp            #
+      ArrayLength         #1
+      DisplayLength       #Auto
+      ConfigurationKey    #
+      ButtonImage         #Arrow
+      Extends             #AmountMST
+      Alignment           #Auto
+      SignDisplay         #Auto
+      RotateSign          #Auto
+      ShowZero            #Auto
+      DisplaceNegative    #Auto
+      AllowNegative       #Auto
+      ThousandSeparator   #Auto
+      DecimalSeparator    #Auto
+      NoOfDecimals        #Auto
+      AutoInsSeparator    #Auto
+      FormatMST           #Auto
+    ENDPROPERTIES
+    
+    TYPEELEMENTS
+    ENDTYPEELEMENTS
+    
+    TYPEREFERENCES
+    ENDTYPEREFERENCES
+    
+  ENDUSERTYPE
+  
+
+***Element: END

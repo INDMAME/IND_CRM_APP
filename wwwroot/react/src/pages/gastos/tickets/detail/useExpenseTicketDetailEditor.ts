@@ -10,7 +10,11 @@ import {
   resolveExpenseLineExchangeRateForCurrency,
 } from "../../utils/expenseLineCurrency.ts";
 import { toExpenseGastoTypeCode } from "../../constants/expenseGastoTypeCatalog.ts";
-import { parseExpenseDate, safeText, toIsoDate } from "../../utils/expenseUiUtils.ts";
+import { safeText } from "../../utils/expenseUiUtils.ts";
+import {
+  normalizeExpenseTicketStoredTime,
+  toExpenseTicketDateInput,
+} from "../../utils/expenseTicketDateTime.ts";
 import {
   areExpenseNumericInputsEquivalent,
   formatExpenseInputNumber,
@@ -82,32 +86,6 @@ const createEmptyDraft = (): DraftState => ({
   urlFile: "",
   fileName: "",
 });
-
-const toInputDate = (raw?: string): string => {
-  const parsed = parseExpenseDate(raw);
-  return parsed ? toIsoDate(parsed) : "";
-};
-
-const toInputTime = (raw?: string): string => {
-  const value = safeText(raw);
-  if (!value || value === "0") return "";
-
-  const secondsValue = Number(value);
-  if (Number.isInteger(secondsValue) && secondsValue >= 0 && secondsValue <= 86399) {
-    const hours = Math.floor(secondsValue / 3600);
-    const minutes = Math.floor((secondsValue % 3600) / 60);
-    const seconds = secondsValue % 60;
-    return [hours, minutes, seconds].map((entry) => String(entry).padStart(2, "0")).join(":");
-  }
-
-  const match = value.match(/^(\d{1,2}):([0-5]\d)(?::([0-5]\d))?$/);
-  if (!match) return "";
-
-  const hours = Number.parseInt(match[1] || "", 10);
-  if (!Number.isInteger(hours) || hours < 0 || hours > 23) return "";
-
-  return `${String(hours).padStart(2, "0")}:${match[2]}:${match[3] || "00"}`;
-};
 
 const normalizeCurrencyCode = (value: unknown): string => safeText(value).toUpperCase();
 
@@ -265,8 +243,8 @@ const createDraftFromHeader = (
     totalAmount: formatEditableMoney(totalAmount),
     amountMST: formatEditableMoney(amountMST),
     exchangeRate: formatEditableExchangeRate(exchangeRate),
-    transDate: toInputDate(header?.ticketDate || header?.transDate),
-    ticketTime: toInputTime(header?.ticketTime),
+    transDate: toExpenseTicketDateInput(header?.ticketDate || header?.transDate),
+    ticketTime: normalizeExpenseTicketStoredTime(header?.ticketTime),
     comentario: safeText(header?.comentario),
     urlFile: safeText(header?.urlFile),
     fileName: safeText(header?.fileName),
@@ -473,6 +451,30 @@ export const useExpenseTicketDetailEditor = ({
     [effectiveLocalCurrencyCode, state.draft.currencyCode, state.draft.exchangeRate, state.draft.totalAmount]
   );
 
+  // Updates the editable ticket date draft.
+  const setDraftTransDate = useCallback<Dispatch<SetStateAction<string>>>(
+    (value) => {
+      dispatch({
+        type: "set_draft_field",
+        field: "transDate",
+        value: resolveSetStateValue(value, state.draft.transDate),
+      });
+    },
+    [state.draft.transDate]
+  );
+
+  // Updates the editable ticket time draft when the original value is zero.
+  const setDraftTicketTime = useCallback<Dispatch<SetStateAction<string>>>(
+    (value) => {
+      dispatch({
+        type: "set_draft_field",
+        field: "ticketTime",
+        value: resolveSetStateValue(value, state.draft.ticketTime),
+      });
+    },
+    [state.draft.ticketTime]
+  );
+
   const setDraftTotalAmount = useCallback<Dispatch<SetStateAction<string>>>(
     (value) => {
       setTotalAmountInvalid(false);
@@ -588,6 +590,20 @@ export const useExpenseTicketDetailEditor = ({
     },
     [effectiveLocalCurrencyCode, state.amountMSTManuallyEdited, state.draft.currencyCode, state.draft.totalAmount]
   );
+
+  // Clears settlement values that no longer match the selected ticket date or currency.
+  const clearDraftCurrencySettlement = useCallback(() => {
+    setExchangeRateInvalid(false);
+    setAmountMSTInvalid(false);
+    dispatch({
+      type: "patch_draft",
+      patch: {
+        exchangeRate: "",
+        amountMST: "",
+      },
+      amountMSTManuallyEdited: false,
+    });
+  }, []);
 
   const handleEnableEdit = useCallback(() => {
     if (!header || isLoading) return;
@@ -769,10 +785,13 @@ export const useExpenseTicketDetailEditor = ({
     setDraftDescription,
     setDraftGastoType,
     setDraftCurrencyCode,
+    setDraftTransDate,
+    setDraftTicketTime,
     setDraftTotalAmount,
     setDraftAmountMST,
     setDraftExchangeRate,
     commitDraftExchangeRate,
+    clearDraftCurrencySettlement,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,

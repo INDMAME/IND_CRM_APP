@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosTable unloaded at Viernes 24/07/2026
+; Navision Axapta Table : CRMHojaGastosTable unloaded at Miércoles 29/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -869,7 +869,7 @@ Formatversion: 1
           Type                #Enum
           Name                #ReimbursableExpense
           Label               #Reembolsable
-          HelpText            #
+          HelpText            #Si incluye las lineas en el reembolso; No las excluye; Ambos indica mezcla
           GroupPrompt         #
           SaveContents        #Yes
           Mandatory           #No
@@ -1245,10 +1245,12 @@ Formatversion: 1
         #        //voucher         = NumberSeq::newGetNumFromCode(journalTable.VoucherSeries).num();
         #    }
         #
+        #    //MMS - La contabilidad usa el indicador de reembolso en lugar del indicador Visa heredado - 2026.07.29
         #    while select forupdate hojaGastosLine
         #    index hint index1
         #    Order by TransDate
-        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId {
+        #    where hojaGastosLine.HojaGastosId        == this.HojaGastosId
+        #       && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes {
         #
         #        //POs si acaso pongo esto para no procesar dos veces la misma línea.
         #        //if (_operacion == 1 && hojaGastosLine.VoucherPhysical)
@@ -1341,8 +1343,8 @@ Formatversion: 1
         #
         #        journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
         #
-        #        journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.LineAmountMST() : 0;
-        #        journalTrans.AmountCurDebit     = _operacion == 1 ? 0                               : hojaGastosLine.LineAmountMST();
+        #        journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.ReimbursableAmount : 0;
+        #        journalTrans.AmountCurDebit     = _operacion == 1 ? 0                                  : hojaGastosLine.ReimbursableAmount;
         #        journalTrans.INDRemesaLineRecId = 0;
         #        journalTrans.INDRefRecId        = hojaGastosLine.RecId;
         #        journalTrans.INDRefTableId      = hojaGastosLine.TableId;
@@ -1456,8 +1458,8 @@ Formatversion: 1
         #
         #    journalTrans.CurrencyCode       = CompanyInfo::standardCurrency();
         #
-        #    journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.LineAmountMST()  : 0;
-        #    journalTrans.AmountCurDebit     = _operacion == 1 ? 0                               : hojaGastosLine.LineAmountMST();
+        #    journalTrans.AmountCurCredit    = _operacion == 1 ? hojaGastosLine.ReimbursableAmount : 0;
+        #    journalTrans.AmountCurDebit     = _operacion == 1 ? 0                                  : hojaGastosLine.ReimbursableAmount;
         #    journalTrans.INDRemesaLineRecId = 0;
         #    journalTrans.INDRefRecId        = this.RecId;
         #    journalTrans.INDRefTableId      = this.TableId;
@@ -1614,8 +1616,9 @@ Formatversion: 1
         #        totalAmountGasolina = this.TotalModalidadPago(CRMHojaGastoModalidadPago::TarjetaGasolina);
         #
         #        select maxOf(TransDate) from hojaGastosLine
-        #        where hojaGastosLine.HojaGastosId == this.HojaGastosId &&
-        #              (hojaGastosLine.Type == CRMGastoType::Km || hojaGastosLine.Type == CRMGastoType::Gasolina);
+        #        where hojaGastosLine.HojaGastosId        == this.HojaGastosId
+        #           && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #           && (hojaGastosLine.Type == CRMGastoType::Km || hojaGastosLine.Type == CRMGastoType::Gasolina);
         #
         #        transDate = hojaGastosLine.TransDate;
         #
@@ -1748,10 +1751,12 @@ Formatversion: 1
         #
         #
         #            if (postJournal){
+        #                //MMS - La contabilidad selecciona las lineas reembolsables mediante ReimbursableExpense, no mediante Visa - 2026.07.29
         #                while select forupdate hojaGastosLine
         #                index hint index1
         #                Order by TransDate
         #                where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #                      && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #                      && (hojaGastosLine.Type        == CRMGastoType::Km ||
         #                          hojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::TarjetaGasolina){
         #
@@ -1774,6 +1779,7 @@ Formatversion: 1
         #        index hint index1
         #        Order by TransDate
         #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
+        #              && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #              && hojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::Efectivo;
         #    }
         #    else {
@@ -1783,6 +1789,7 @@ Formatversion: 1
         #        index hint index1
         #        Order by TransDate
         #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
+        #              && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #              && hojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::Efectivo
         #              && hojaGastosLine.Type            != CRMGastoType::Gasolina
         #              && hojaGastosLine.Type            != CRMGastoType::Km;
@@ -1810,7 +1817,8 @@ Formatversion: 1
         #                throw error(strfmt("La línea con descripción %1 tiene marcada la casilla de FACTURA pero no tiene informado el importe de IVA. Infórmalo por favor.", hojaGastosLine.Description));
         #
         #
-        #            amountAnticipo      = hojaGastosLine.LineAmountMST();
+        #            //MMS - La contabilizacion con factura usa el importe MST reembolsable persistido - 2026.07.29
+        #            amountAnticipo      = hojaGastosLine.ReimbursableAmount;
         #            amountIVA           = hojaGastosLine.AmountIVA;
         #            amountRetencion     = hojaGastosLine.AmountRetencion;
         #            amountGasto         = amountAnticipo + amountRetencion - amountIVA;
@@ -2010,7 +2018,8 @@ Formatversion: 1
         #        else {
         #            //La línea NO Tiene Factura . Asiento es Gasto contra ANTICIPO
         #
-        #            amount      = hojaGastosLine.LineAmountMST();
+        #            //MMS - La contabilizacion sin factura usa el importe MST reembolsable persistido - 2026.07.29
+        #            amount      = hojaGastosLine.ReimbursableAmount;
         #            transDate   = ValidaTransDate(hojaGastosLine.TransDate);
         #
         #            //GASTO
@@ -2045,7 +2054,8 @@ Formatversion: 1
         #            journalTrans.ExchRateSecond     = 100;
         #            journalTrans.ExchRate           = 100;
         #
-        #            journalTrans.INDNoDeducible     = hojaGastosLine.Ticket; //Si tiene marcada la casilla de Ticket debemos marcar que es NO Deducible
+        #            //MMS - Marca como no deducibles los tickets heredados y los vinculados mediante FileId - 2026.07.29
+        #            journalTrans.INDNoDeducible     = hojaGastosLine.hasTicket();
         #            journalTrans.insert();
         #
         #
@@ -2364,7 +2374,7 @@ Formatversion: 1
         #//MMS - Ajustes CRM - 2026.06.26
         #boolean canChangeCurrencyDefaults()
         #{
-        #    // La cabecera ya no propaga divisa a lineas; se conserva por compatibilidad con llamadas legacy.
+        #    // La cabecera ya no propaga divisa a lineas; se conserva por compatibilidad con llamadas heredadas.
         #    return true;
         #}
         #
@@ -2522,7 +2532,7 @@ Formatversion: 1
         #    CRMHojaGastosLine otherLine;
         #    CurrencyCode       firstCurrency;
         #
-        #    // Returns true when this expense sheet has lines with more than one currency.
+        #    // Devuelve true cuando esta hoja de gastos tiene lineas en mas de una divisa.
         #    select firstOnly RecId, Currency from firstLine
         #        where firstLine.HojaGastosId == this.HojaGastosId
         #           && firstLine.UserId       == this.UserId;
@@ -2540,6 +2550,7 @@ Formatversion: 1
         #
         #    return otherLine.RecId != 0;
         #}
+        #
       ENDSOURCE
       SOURCE #initFromUsuarioTable
         #void initFromUsuarioTable()
@@ -2559,6 +2570,9 @@ Formatversion: 1
         #{
         #    super();
         #
+        #    //MMS - Las hojas nuevas son reembolsables salvo que se excluyan explicitamente - 2026.07.29
+        #    this.ReimbursableExpense = INDReimbursableExpense::Yes;
+        #
         #    //MMS - Ajustes CRM - 2026.06.26
         #    this.normalizeReimbursementCurrencyDefaults();
         #}
@@ -2568,7 +2582,7 @@ Formatversion: 1
         #public void insert()
         #{
         #    ;
-        #    this.updateSearchKey();   //IND_MMS - API PROJECT - 2025.11.10
+        #    this.updateSearchKey();   //IND_MMS - PROYECTO API - 2025.11.10
         #    this.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
         #    //this.SelfApproved();      //INDMMS_ExternalCRM - 2026.03.10
         #
@@ -2616,7 +2630,7 @@ Formatversion: 1
         #    PurchParameters      purchParameters   = PurchParameters::find();
         #    ;
         #
-        #    // Identifies the header marker used when line projects are mixed.
+        #    // Identifica el indicador de cabecera usado cuando las lineas tienen proyectos distintos.
         #    return purchParameters.INDProjIdVarious && this.ProjId == purchParameters.INDProjIdVarious;
         #}
         #
@@ -2625,9 +2639,10 @@ Formatversion: 1
         #//INDMMS_ExternalCRM - 2026.05.21
         #boolean isVariousReimbursableExpenseDefault()
         #{
-        #    // Identifies the header marker used when line reimbursable values are mixed.
+        #    // Identifica el indicador de cabecera usado cuando las lineas tienen valores de reembolso distintos.
         #    return this.ReimbursableExpense == INDReimbursableExpense::Both;
         #}
+        #
       ENDSOURCE
       SOURCE #mapDescripcionDiaHojaGastos
         #Map mapDescripcionDiaHojaGastos()
@@ -2641,10 +2656,12 @@ Formatversion: 1
         #    str                     descripcion;
         #    ;
         #
+        #    //MMS - Las descripciones omiten las lineas excluidas del reembolso y del pago - 2026.07.29
         #    while select hojaGastosLineAgrupado
         #    index hint index1
         #    Group by TransDate
-        #    where    hojaGastosLineAgrupado.HojaGastosId    == this.HojaGastosId{
+        #    where hojaGastosLineAgrupado.HojaGastosId        == this.HojaGastosId
+        #       && hojaGastosLineAgrupado.ReimbursableExpense == INDReimbursableExpenseLines::Yes {
         #
         #        mapAmount = new Map(Types::String, Types::Real);
         #
@@ -2652,8 +2669,9 @@ Formatversion: 1
         #        index hint index1
         #        where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
         #              && hojaGastosLine.TransDate       == hojaGastosLineAgrupado.TransDate
+        #           && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #        {
-        #            amountLine          = hojaGastosLine.LineAmountMST();
+        #            amountLine = hojaGastosLine.ReimbursableAmount;
         #
         #            amountAsignadoLineTotal  = 0;
         #
@@ -2702,6 +2720,7 @@ Formatversion: 1
         #    return mapDate;
         #
         #}
+        #
       ENDSOURCE
       SOURCE #MapLedgerDimension_Amount
         #Map MapLedgerDimension_Amount(boolean _ignorarErrores = false)
@@ -2718,7 +2737,7 @@ Formatversion: 1
         #    CRMUsuarioTable         usuarioTable    = CRMUsuarioTable::Find(this.UserId);
         #
         #    //boolean                 dimensionObligatoria;
-        #    Amount                  totalAmountFromHojaGastos   = this.TotalAmountMST();
+        #    Amount                  totalAmountFromHojaGastos   = this.TotalAmountMST(); //MMS - Este metodo MST heredado devuelve intencionadamente el importe reembolsable - 2026.07.29
         #    Amount                  totalEnMapa;
         #    ;
         #
@@ -2733,11 +2752,13 @@ Formatversion: 1
         #    //if (! ledgerAccount)
         #    //    throw error(strfmt("El Empleado %1 no tiene informada la cuenta de Gasto en su pantalla de 'Empleado (Contrato)'", usuarioTable.Name));
         #
+        #    //MMS - La distribucion contable ignora las lineas excluidas y usa su importe MST reembolsable - 2026.07.29
         #    while select hojaGastosLine
         #    index hint index1
-        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId {
+        #    where hojaGastosLine.HojaGastosId        == this.HojaGastosId
+        #       && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes {
         #
-        #        amountLine              = hojaGastosLine.LineAmountMST();
+        #        amountLine              = hojaGastosLine.ReimbursableAmount;
         #        amountLineTotalFromCust = 0;
         #
         #        while select hojaGastosLineCust
@@ -2850,6 +2871,7 @@ Formatversion: 1
         #
         #    return map;
         #}
+        #
       ENDSOURCE
       SOURCE #markHeaderVariousFromLine
         #//MMS - Ajustes CRM - 2026.06.26
@@ -2877,10 +2899,8 @@ Formatversion: 1
         #        mustUpdate = true;
         #    }
         #
-        #    if (!this.isVariousReimbursableExpenseDefault() &&
-        #        any2int(_hojaGastosLine.ReimbursableExpense) != any2int(this.ReimbursableExpense))
+        #    if (this.recalculateReimbursableExpenseFromLines())
         #    {
-        #        this.ReimbursableExpense = INDReimbursableExpense::Both;
         #        mustUpdate = true;
         #    }
         #
@@ -2897,13 +2917,14 @@ Formatversion: 1
         #
         #    switch (_fieldId){
         #
-        #        //IJL.08/08/25. Migración desarrollos México.
+        #        //IJL.08/08/25. Migracion del desarrollo de Mexico.
         #        case FieldNum(CRMHojaGastosTable, TransDateRegistro_Mex):
         #            this.UserIdRegistro_Mex = curUserId();
         #            break;
         #    }
         #
         #}
+        #
       ENDSOURCE
       SOURCE #MostrarParaPago
         #boolean MostrarParaPago()
@@ -2947,6 +2968,47 @@ Formatversion: 1
         #    this.CurrencyCode     = CompanyInfo::standardCurrency();
         #    this.ExchRate         = 100;
         #    this.ExchangeRateMode = INDExchangeRateMode::Manual;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #recalculateReimbursableExpenseFromLines
+        #//MMS - Deriva el estado de reembolso de cabecera a partir de todas las lineas guardadas - 2026.07.29
+        #boolean recalculateReimbursableExpenseFromLines()
+        #{
+        #    CRMHojaGastosLine       excludedLine;
+        #    CRMHojaGastosLine       includedLine;
+        #    INDReimbursableExpense  newReimbursableExpense;
+        #    ;
+        #
+        #    select firstonly RecId from excludedLine
+        #        where excludedLine.HojaGastosId        == this.HojaGastosId
+        #           && excludedLine.ReimbursableExpense == INDReimbursableExpenseLines::No;
+        #
+        #    select firstonly RecId from includedLine
+        #        where includedLine.HojaGastosId        == this.HojaGastosId
+        #           && includedLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes;
+        #
+        #    //MMS - Conserva un valor explicito Yes/No cuando la hoja no tiene lineas - 2026.07.29
+        #    if (!excludedLine.RecId && !includedLine.RecId)
+        #    {
+        #        if (this.ReimbursableExpense == INDReimbursableExpense::No ||
+        #            this.ReimbursableExpense == INDReimbursableExpense::Yes)
+        #            return false;
+        #
+        #        newReimbursableExpense = INDReimbursableExpense::Yes;
+        #    }
+        #    else if (excludedLine.RecId && includedLine.RecId)
+        #        newReimbursableExpense = INDReimbursableExpense::Both;
+        #    else if (includedLine.RecId)
+        #        newReimbursableExpense = INDReimbursableExpense::Yes;
+        #    else
+        #        newReimbursableExpense = INDReimbursableExpense::No;
+        #
+        #    if (this.ReimbursableExpense == newReimbursableExpense)
+        #        return false;
+        #
+        #    this.ReimbursableExpense = newReimbursableExpense;
+        #    return true;
         #}
         #
       ENDSOURCE
@@ -3074,82 +3136,106 @@ Formatversion: 1
         #*/
         #display Amount TotalAmount()
         #{
-        #    Amount  amount;
+        #    INDReimbursableAmount  amount;
         #    ;
-        #    amount = (select sum(Amount) from CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
-        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No).Amount;
+        #    //MMS - ReimbursableExpense sustituye a Visa como indicador de elegibilidad para el pago - 2026.07.29
+        #    amount = (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #                where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId
+        #                   && CRMHojaGastosLine.NoCobrar     == NoYes::No
+        #                   && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #
-        #    //IJL.08/08/25. Migración Desarrollos México.
-        #    amount -=  (select sum(Amount) from CRMHojaGastosLine
-        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
-        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
-        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No            &&
-        #                     CRMHojaGastosLine.Type         == CRMGastoType::Km      &&
-        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina).Amount;
+        #    //IJL.08/08/25. Migracion del desarrollo de Mexico.
+        #    amount -=  (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId        == this.HojaGastosId
+        #                  && CRMHojaGastosLine.NoCobrar            == NoYes::No
+        #                  && CRMHojaGastosLine.Type                == CRMGastoType::Km
+        #                  && CRMHojaGastosLine.ModalidadPago       == CRMHojaGastoModalidadPago::TarjetaGasolina
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #
         #    amount  -= this.TotalEfectivo_Gasolina(); //IJL.17/04/26 //MMS - OJO PORQUE ESTE MÉTODO CALCULA EN MST DESDE EL CÓDIGO ORIGINAL
         #
         #    return amount;
-        #
-        #/*
-        #    return (select sum(Amount) from CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
-        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No).Amount;
-        #*/
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmount_ConTicket
         #display Amount TotalAmount_ConTicket()
         #{
-        #    return (select sum(Amount) from CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #            CRMHojaGastosLine.Ticket             == NoYes::Yes
-        #            && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
+        #    CRMHojaGastosLine       legacyTicketLine;
+        #    CRMHojaGastosLine       linkedTicketLine;
+        #    INDTicketInfoTable      ticketInfo;
+        #    INDReimbursableAmount   amount;
+        #    ;
+        #
+        #    //MMS - Los totales con ticket usan el indicador de reembolso e ignoran el indicador Visa heredado - 2026.07.29
+        #    select sum(ReimbursableAmount) from legacyTicketLine
+        #        where legacyTicketLine.HojaGastosId        == this.HojaGastosId
+        #           && legacyTicketLine.NoCobrar            == NoYes::No
+        #           && legacyTicketLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #           && legacyTicketLine.Ticket              == NoYes::Yes;
+        #
+        #    amount = legacyTicketLine.ReimbursableAmount;
+        #
+        #    //MMS - Agrega los vinculos modernos mediante FileId y excluye las filas heredadas para evitar el doble conteo - 2026.07.29
+        #    select sum(ReimbursableAmount) from linkedTicketLine
+        #        where linkedTicketLine.HojaGastosId        == this.HojaGastosId
+        #           && linkedTicketLine.NoCobrar            == NoYes::No
+        #           && linkedTicketLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #           && linkedTicketLine.Ticket              != NoYes::Yes
+        #           && linkedTicketLine.FileId              != ''
+        #        exists join ticketInfo
+        #            where ticketInfo.FileId == linkedTicketLine.FileId;
+        #
+        #    amount += linkedTicketLine.ReimbursableAmount;
+        #
+        #    return amount;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmount_ConVisa
         #display Amount TotalAmount_ConVisa()
         #{
         #    Amount  amount;
         #    ;
-        #    amount = (select sum(Amount) from CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No
-        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
+        #    //MMS - Visa ya no modifica la elegibilidad para el reembolso - 2026.07.29
+        #    amount = (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #                where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId
+        #                   && CRMHojaGastosLine.NoCobrar     == NoYes::No
+        #                   && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #
-        #    //IJL.08/08/25. Migración Desarrollos México
-        #    amount -=  (select sum(Amount) from CRMHojaGastosLine
-        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
-        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
-        #//                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No            &&
-        #                     CRMHojaGastosLine.Type         == CRMGastoType::Km      &&
-        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina
-        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
+        #    //IJL.08/08/25. Migracion del desarrollo de Mexico
+        #    amount -=  (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #                    where CRMHojaGastosLine.HojaGastosId    == this.HojaGastosId
+        #                       && CRMHojaGastosLine.NoCobrar        == NoYes::No
+        #                       && CRMHojaGastosLine.Type            == CRMGastoType::Km
+        #                       && CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina
+        #                       && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #
         #    return amount;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmount_SoloVisa
         #display Amount TotalAmount_SoloVisa()
         #{
-        #    return (select sum(Amount) from CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
-        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::Yes
-        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
+        #    //MMS - Visa se conserva solo como desglose bruto visible y nunca como criterio de elegibilidad para el reembolso - 2026.07.29
+        #    return (select sum(AmountMST) from CRMHojaGastosLine
+        #                where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId
+        #                   && CRMHojaGastosLine.NoCobrar     == NoYes::No
+        #                   && CRMHojaGastosLine.VisaEmpresa  == NoYes::Yes).AmountMST;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmountFactura
         #display Amount TotalAmountFactura()
         #{
-        #    return (select sum(Amount) from CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.Factura      == NoYes::Yes
-        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
+        #    //MMS - El reembolso con factura sigue el nuevo indicador de reembolso - 2026.07.29
+        #    return (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #                where CRMHojaGastosLine.HojaGastosId        == this.HojaGastosId
+        #                   && CRMHojaGastosLine.Factura             == NoYes::Yes
+        #                   && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmountMST
         #display Amount TotalAmountMST()
@@ -3159,137 +3245,200 @@ Formatversion: 1
         #    if (! this.CurrencyCode)
         #        return 0;
         #
-        #    amount =  (select sum(AmountMST) from CRMHojaGastosLine
-        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
-        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
-        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No
-        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #    //MMS - ReimbursableExpense sustituye a Visa como indicador de elegibilidad para el pago - 2026.07.29
+        #    amount =  (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId         == this.HojaGastosId
+        #                  && CRMHojaGastosLine.NoCobrar             == NoYes::No
+        #                  && CRMHojaGastosLine.ReimbursableExpense  == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #
-        #    //IJL.08/08/25. Migración desarrollos México
-        #    amount -=  (select sum(AmountMST) from CRMHojaGastosLine
-        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
-        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
-        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No            &&
-        #                     CRMHojaGastosLine.Type         == CRMGastoType::Km      &&
-        #                     CRMHojaGastosLine.ModalidadPago   == CRMHojaGastoModalidadPago::TarjetaGasolina
-        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #    //IJL.08/08/25. Migracion del desarrollo de Mexico
+        #    amount -=  (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId         == this.HojaGastosId
+        #                  && CRMHojaGastosLine.NoCobrar             == NoYes::No
+        #                  && CRMHojaGastosLine.Type                 == CRMGastoType::Km
+        #                  && CRMHojaGastosLine.ModalidadPago        == CRMHojaGastoModalidadPago::TarjetaGasolina
+        #                  && CRMHojaGastosLine.ReimbursableExpense  == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #
         #    amount  -= this.TotalEfectivo_GasolinaMST(); //IJL.17/04/26
         #
-        #    return amount; //INDMMS_ExternalCRM - 2026.05.21
-        #    //Currency::amountCur2MST(amount, this.CurrencyCode, this.ExchRate);
+        #    return amount;
         #}
         #
       ENDSOURCE
       SOURCE #TotalAmountMST_Pagar
-        #display Amount TotalAmountMST_Pagar()
+        #display INDReimbursableAmount TotalAmountMST_Pagar()
         #{
-        #    Amount  amount;
+        #    INDReimbursableAmount  amount;
         #    ;
-        #    amount =  (select sum(AmountMST) from CRMHojaGastosLine
-        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
-        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
-        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No
-        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #    //MMS - El pago usa el indicador de reembolso e ignora el indicador Visa heredado - 2026.07.29
+        #    amount =  (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId
+        #                  && CRMHojaGastosLine.NoCobrar     == NoYes::No
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #
         #    amount  = amount - this.AmountAnticipo; //Obsoleto - MMS
         #
         #    return amount; //INDMMS_ExternalCRM - 2026.05.21
         #    //Currency::amountCur2MST(amount, this.CurrencyCode, this.ExchRate);
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmountMST_Type
-        #Amount TotalAmountMST_Type(CRMGastoType _gastoType)
+        #INDReimbursableAmount TotalAmountMST_Type(CRMGastoType _gastoType)
         #{
-        #    Amount  amount;
+        #    INDReimbursableAmount  amount;
         #    ;
         #    if (! this.CurrencyCode)
         #        return 0;
         #
-        #    amount =  (select sum(AmountMST) from CRMHojaGastosLine
-        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId    &&
-        #                     CRMHojaGastosLine.NoCobrar     == NoYes::No            &&
-        #                     CRMHojaGastosLine.VisaEmpresa  == NoYes::No
-        #                     && CRMHojaGastosLine.Type      == _gastoType
-        #                     && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST; //INDMMS_ExternalCRM - 2026.05.21
+        #    //MMS - Los totales por tipo usan el indicador de reembolso e ignoran el indicador Visa heredado - 2026.07.29
+        #    amount =  (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId
+        #                  && CRMHojaGastosLine.NoCobrar     == NoYes::No
+        #                  && CRMHojaGastosLine.Type         == _gastoType
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #
         #
         #    return amount; //INDMMS_ExternalCRM - 2026.05.21
         #    //Currency::amountCur2MST(amount, this.CurrencyCode, this.ExchRate);
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmountNoTicketNoFactura
         #display Amount TotalAmountNoTicketNoFactura()
         #{
-        #    return (select sum(Amount) from CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.Ticket       == NoYes::No &&
-        #                  CRMHojaGastosLine.Factura      == NoYes::No
-        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
+        #    CRMHojaGastosLine       emptyFileLine;
+        #    CRMHojaGastosLine       unlinkedFileLine;
+        #    INDTicketInfoTable      ticketInfo;
+        #    INDReimbursableAmount   amount;
+        #    ;
+        #
+        #    //MMS - Los totales sin ticket usan el indicador de reembolso e ignoran el indicador Visa heredado - 2026.07.29
+        #    select sum(ReimbursableAmount) from emptyFileLine
+        #        where emptyFileLine.HojaGastosId        == this.HojaGastosId
+        #           && emptyFileLine.Factura             == NoYes::No
+        #           && emptyFileLine.NoCobrar            == NoYes::No
+        #           && emptyFileLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #           && emptyFileLine.Ticket              != NoYes::Yes
+        #           && emptyFileLine.FileId              == '';
+        #
+        #    amount = emptyFileLine.ReimbursableAmount;
+        #
+        #    //MMS - Agrega las filas con FileId no vacio solo cuando no existe un ticket relacionado - 2026.07.29
+        #    select sum(ReimbursableAmount) from unlinkedFileLine
+        #        where unlinkedFileLine.HojaGastosId        == this.HojaGastosId
+        #           && unlinkedFileLine.Factura             == NoYes::No
+        #           && unlinkedFileLine.NoCobrar            == NoYes::No
+        #           && unlinkedFileLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #           && unlinkedFileLine.Ticket              != NoYes::Yes
+        #           && unlinkedFileLine.FileId              != ''
+        #        notexists join ticketInfo
+        #            where ticketInfo.FileId == unlinkedFileLine.FileId;
+        #
+        #    amount += unlinkedFileLine.ReimbursableAmount;
+        #
+        #    return amount;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmountPrimasMontaje
         #display Amount TotalAmountPrimasMontaje()
         #{
-        #    CRMHojaGastosLine   CRMHojaGastosLine;
-        #    Amount              amount;
+        #    CRMHojaGastosLine       CRMHojaGastosLine;
+        #    INDReimbursableAmount   amount;
         #    ;
+        #    //MMS - Los totales Premium usan el indicador de reembolso e ignoran el indicador Visa heredado - 2026.07.29
         #    while select CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
-        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No           &&
-        #                  CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional   &&
-        #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo &&
-        #                  CRMHojaGastosLine.Type         != CRMGastoType::Taxi
-        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes {
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId
+        #               && CRMHojaGastosLine.NoCobrar     == NoYes::No
+        #               && CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional
+        #               && CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo
+        #               && CRMHojaGastosLine.Type         != CRMGastoType::Taxi
+        #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #    {
         #
         #
-        #        amount  += CRMHojaGastosLine.Amount;
+        #        amount  += CRMHojaGastosLine.ReimbursableAmount;       //MMS - Usa el importe contable reembolsable - 2026.07.28
         #    }
         #
         #    return amount;
-        #
-        #    return (select sum(Amount) from CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
-        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No           &&
-        #                  CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional   &&
-        #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo
-        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmountPrimasMontajeMST
         #//INDMMS_ExternalCRM - 2026.05.21
         #display Amount TotalAmountPrimasMontajeMST()
         #{
-        #    CRMHojaGastosLine   CRMHojaGastosLine;
-        #    Amount              amount;
+        #    CRMHojaGastosLine       CRMHojaGastosLine;
+        #    INDReimbursableAmount   amount;
         #    ;
+        #    //MMS - Los totales en divisa de empresa usan el indicador de reembolso e ignoran el indicador Visa heredado - 2026.07.29
         #    while select CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.NoCobrar     == NoYes::No           &&
-        #                  CRMHojaGastosLine.VisaEmpresa  == NoYes::No           &&
-        #                  CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional   &&
-        #                  CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo &&
-        #                  CRMHojaGastosLine.Type         != CRMGastoType::Taxi
-        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId
+        #               && CRMHojaGastosLine.NoCobrar     == NoYes::No
+        #               && CRMHojaGastosLine.Type         >= CRMGastoType::MontajeNacional
+        #               && CRMHojaGastosLine.Type         <= CRMGastoType::DiaViajeInternacionalFestivo
+        #               && CRMHojaGastosLine.Type         != CRMGastoType::Taxi
+        #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #    {
         #
         #
-        #        amount  += CRMHojaGastosLine.AmountMST;
+        #        amount  += CRMHojaGastosLine.ReimbursableAmount;   //MMS - Usa el importe contable reembolsable - 2026.07.28
         #    }
         #
         #    return amount;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalAmountTicket
         #display Amount TotalAmountTicket()
         #{
-        #    return (select sum(Amount) from CRMHojaGastosLine
-        #            where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId   &&
-        #                  CRMHojaGastosLine.Ticket       == NoYes::Yes
-        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).Amount;
+        #    return this.TotalAmount_ConTicket();
         #}
+        #
+      ENDSOURCE
+      SOURCE #TotalBrutoAmountMST
+        #//MMS - El importe bruto en divisa de empresa es independiente del reembolso y del indicador Visa heredado - 2026.07.29
+        #display Amount TotalBrutoAmountMST()
+        #{
+        #    AmountMST  amount;
+        #    ;
+        #    if (! this.CurrencyCode)
+        #        return 0;
+        #
+        #    amount =  (select sum(AmountMST) from CRMHojaGastosLine
+        #                   where CRMHojaGastosLine.HojaGastosId == this.HojaGastosId
+        #                      && CRMHojaGastosLine.NoCobrar     == NoYes::No).AmountMST;
+        #
+        #    //IJL.08/08/25. Migracion del desarrollo de Mexico
+        #    amount -=  (select sum(AmountMST) from CRMHojaGastosLine
+        #                   where CRMHojaGastosLine.HojaGastosId     == this.HojaGastosId
+        #                      && CRMHojaGastosLine.NoCobrar         == NoYes::No
+        #                      && CRMHojaGastosLine.Type             == CRMGastoType::Km
+        #                      && CRMHojaGastosLine.ModalidadPago    == CRMHojaGastoModalidadPago::TarjetaGasolina).AmountMST; //MMS - Importe MST bruto - 2026.07.28
+        #
+        #    amount  -= this.TotalBrutoEfectivo_GasolinaMST();
+        #
+        #    return amount;
+        #}
+        #
+      ENDSOURCE
+      SOURCE #TotalBrutoEfectivo_GasolinaMST
+        #//MMS - Mantiene los filtros de gasolina bruta alineados con el total bruto - 2026.07.29
+        #display AmountMST TotalBrutoEfectivo_GasolinaMST()
+        #{
+        #    ;
+        #
+        #    if (this.NoContabilizarGasolina)
+        #        return 0;
+        #
+        #    return (select sum(AmountMST) from CRMHojaGastosLine
+        #            where CRMHojaGastosLine.HojaGastosId  == this.HojaGastosId
+        #               && CRMHojaGastosLine.NoCobrar      == NoYes::No
+        #               && CRMHojaGastosLine.Type          == CRMGastoType::Gasolina
+        #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo).AmountMST;  //MMS - Importe MST bruto - 2026.07.28
+        #}
+        #
       ENDSOURCE
       SOURCE #TotalEfectivo
         #display Amount TotalEfectivo()
@@ -3304,32 +3453,14 @@ Formatversion: 1
         #    if (this.NoContabilizarGasolina)
         #        return 0;
         #
-        #    return (select sum(AmountMST) from CRMHojaGastosLine
+        #    //MMS - La gasolina pagada en efectivo sigue el indicador de reembolso - 2026.07.29
+        #    return (select sum(ReimbursableAmount) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId  == this.HojaGastosId
         #               && CRMHojaGastosLine.Type          == CRMGastoType::Gasolina
         #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo
-        #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST;
+        #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #}
-        #/*
-        #display Amount TotalEfectivo_Gasolina()
-        #{
-        #    CRMHojaGastosLine   hojaGastosLine;
-        #    Amount              amount;
-        #    ;
-        #    if (this.NoContabilizarGasolina)
-        #        return 0;
         #
-        #    while select hojaGastosLine
-        #    index hint index1
-        #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
-        #          && hojaGastosLine.Type == CRMGastoType::Gasolina
-        #          && hojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo {
-        #
-        #        amount  += hojaGastosLine.LineAmountMST();
-        #    }
-        #
-        #    return amount;
-        #}*/
       ENDSOURCE
       SOURCE #TotalEfectivo_GasolinaMST
         #//INDMMS_ExternalCRM - 2026.05.21
@@ -3340,12 +3471,14 @@ Formatversion: 1
         #    if (this.NoContabilizarGasolina)
         #        return 0;
         #
-        #    return (select sum(AmountMST) from CRMHojaGastosLine
+        #    //MMS - La gasolina pagada en efectivo sigue el indicador de reembolso - 2026.07.29
+        #    return (select sum(ReimbursableAmount) from CRMHojaGastosLine
         #            where CRMHojaGastosLine.HojaGastosId  == this.HojaGastosId
         #               && CRMHojaGastosLine.Type          == CRMGastoType::Gasolina
         #               && CRMHojaGastosLine.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo
-        #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).AmountMST;
+        #               && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalModalidadPago
         #Amount TotalModalidadPago(CRMHojaGastoModalidadPago   _modalidadPago)
@@ -3381,6 +3514,7 @@ Formatversion: 1
         #
         #    map = new Map(Types::String, Types::Real);
         #
+        #    //MMS - Los totales por modalidad de pago usan el indicador de reembolso - 2026.07.29
         #    while select hojaGastosLine
         #    where hojaGastosLine.HojaGastosId   == this.HojaGastosId
         #          && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
@@ -3389,18 +3523,18 @@ Formatversion: 1
         #          hojaGastosLine.Ticket         == NoYes::Yes         &&
         #          hojaGastosLine.NoCobrar       == NoYes::No          &&
         #          hojaGastosLine.Internacional  == NoYes::No          &&
-        #          hojaGastosLine.VisaEmpresa    == Noyes::No
         #          */
         #    {
         #        if (map.exists(hojaGastosLine.ModalidadPago)){
-        #            map.insert(hojaGastosLine.ModalidadPago, map.lookup(hojaGastosLine.ModalidadPago) + hojaGastosLine.Amount);
+        #            map.insert(hojaGastosLine.ModalidadPago, map.lookup(hojaGastosLine.ModalidadPago) + hojaGastosLine.ReimbursableAmount);  //MMS - Usa el importe contable reembolsable - 2026.07.28
         #        }
         #        else {
-        #            map.insert(hojaGastosLine.ModalidadPago, hojaGastosLine.Amount);
+        #            map.insert(hojaGastosLine.ModalidadPago, hojaGastosLine.ReimbursableAmount);//MMS - Usa el importe contable reembolsable - 2026.07.28
         #        }
         #    }
         #    return map;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalPorModalidadPagoMST
         #//MMS - Divisa desde línea - 2026.05.21
@@ -3413,12 +3547,13 @@ Formatversion: 1
         #
         #    map = new Map(Types::String, Types::Real);
         #
+        #    //MMS - Los totales por modalidad de pago en divisa de empresa usan el indicador de reembolso - 2026.07.29
         #    while select hojaGastosLine
         #    index hint index1
         #        where hojaGastosLine.HojaGastosId   == this.HojaGastosId
         #              && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #    {
-        #        amount = hojaGastosLine.AmountMST;
+        #        amount = hojaGastosLine.ReimbursableAmount;  //MMS - Usa el importe contable reembolsable - 2026.07.28
         #
         #        if (map.exists(hojaGastosLine.ModalidadPago))
         #            map.insert(hojaGastosLine.ModalidadPago, map.lookup(hojaGastosLine.ModalidadPago) + amount);
@@ -3452,6 +3587,36 @@ Formatversion: 1
         #    */
         #    return amount;
         #}
+      ENDSOURCE
+      SOURCE #TotalReimbursableAmount
+        #display INDReimbursableAmount TotalReimbursableAmount()
+        #{
+        #    INDReimbursableAmount  amount;
+        #    ;
+        #    if (! this.CurrencyCode)
+        #        return 0;
+        #
+        #    //MMS - ReimbursableExpense sustituye a Visa como indicador de elegibilidad para el pago - 2026.07.29
+        #    amount =  (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId        == this.HojaGastosId
+        #                  && CRMHojaGastosLine.NoCobrar            == NoYes::No
+        #                  && CRMHojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
+        #
+        #    //IJL.08/08/25. Migracion del desarrollo de Mexico
+        #    amount -=  (select sum(ReimbursableAmount) from CRMHojaGastosLine
+        #               where CRMHojaGastosLine.HojaGastosId           == this.HojaGastosId
+        #                  && CRMHojaGastosLine.NoCobrar               == NoYes::No
+        #                  && CRMHojaGastosLine.Type                   == CRMGastoType::Km
+        #                  && CRMHojaGastosLine.ModalidadPago          == CRMHojaGastoModalidadPago::TarjetaGasolina
+        #                  && CRMHojaGastosLine.ReimbursableExpense    == INDReimbursableExpenseLines::Yes).ReimbursableAmount;
+        #
+        #    amount  -= this.TotalEfectivo_GasolinaMST();
+        #
+        #
+        #    return amount; //INDMMS_ExternalCRM - 2026.05.21
+        #}
+        #
+        #
       ENDSOURCE
       SOURCE #TotalTAG
         #display Amount TotalTAG()
@@ -3487,15 +3652,15 @@ Formatversion: 1
         #
         #    map = new Map(Types::String, Types::Real);
         #
+        #    //MMS - El reembolso fiscal usa el nuevo indicador de reembolso e ignora el indicador Visa heredado - 2026.07.29
         #    while select hojaGastosLine
-        #    where hojaGastosLine.HojaGastosId   == this.HojaGastosId    &&
-        #          hojaGastosLine.Factura        == NoYes::Yes           &&
-        #//          (hojaGastosLine.Ticket        == NoYes::Yes ||
-        #//           hojaGastosLine.Factura       == NoYes::Yes)          &&
-        #          hojaGastosLine.NoCobrar       == NoYes::No            &&
-        #          hojaGastosLine.Internacional  == NoYes::No            &&
-        #          hojaGastosLine.VisaEmpresa    == Noyes::No
-        #          && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #    where hojaGastosLine.HojaGastosId   == this.HojaGastosId
+        #       && hojaGastosLine.Factura        == NoYes::Yes
+        #//     && (hojaGastosLine.Ticket        == NoYes::Yes
+        #//     ||  hojaGastosLine.Factura       == NoYes::Yes)
+        #       && hojaGastosLine.NoCobrar       == NoYes::No
+        #       && hojaGastosLine.Internacional  == NoYes::No
+        #       && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #    {
         #
         #        taxParameters   = CRMTaxParameters::Find(hojaGastosLine.Type, hojaGastosLine.TransDate);
@@ -3503,7 +3668,8 @@ Formatversion: 1
         #        taxPercent      = hojaGastosLine.TaxPercent ? hojaGastosLine.TaxPercent : taxParameters.TaxPercent;
         #
         #        if (taxPercent){
-        #            taxAmount  = hojaGastosLine.Amount;//(hojaGastosLine.Amount / (1 + taxParameters.TaxPercent / 100)) * (taxParameters.TaxPercent / 100);
+        #            taxAmount  = hojaGastosLine.ReimbursableAmount;//MMS - Usa el importe contable reembolsable - 2026.07.28
+        #            //(hojaGastosLine.Amount / (1 + taxParameters.TaxPercent / 100)) * (taxParameters.TaxPercent / 100);
         #
         #            //taxAmount   = hojaGastosLine.Amount - taxAmount;
         #
@@ -3523,6 +3689,7 @@ Formatversion: 1
         #    map.insert("RESTO", amountTotal - amountPrimas - amountConIVA);
         #    return map;
         #}
+        #
       ENDSOURCE
       SOURCE #TotalTaxAmountMST
         #//MMS - Divisa desde línea - 2026.05.21
@@ -3541,13 +3708,13 @@ Formatversion: 1
         #
         #    map = new Map(Types::String, Types::Real);
         #
+        #    //MMS - El reembolso fiscal usa el nuevo indicador de reembolso e ignora el indicador Visa heredado - 2026.07.29
         #    while select hojaGastosLine
         #        index hint index1
         #        where hojaGastosLine.HojaGastosId   == this.HojaGastosId
         #           && hojaGastosLine.Factura        == NoYes::Yes
         #           && hojaGastosLine.NoCobrar       == NoYes::No
         #           && hojaGastosLine.Internacional  == NoYes::No
-        #           && hojaGastosLine.VisaEmpresa    == NoYes::No
         #           && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #    {
         #        taxParameters = CRMTaxParameters::Find(hojaGastosLine.Type, hojaGastosLine.TransDate);
@@ -3555,7 +3722,7 @@ Formatversion: 1
         #
         #        if (taxPercent)
         #        {
-        #            taxAmount = hojaGastosLine.AmountMST;
+        #            taxAmount = hojaGastosLine.ReimbursableAmount;  //MMS - Usa el importe contable reembolsable - 2026.07.28
         #            tax       = int2str(taxPercent);
         #
         #            if (map.exists(tax))
@@ -3571,6 +3738,7 @@ Formatversion: 1
         #
         #    return map;
         #}
+        #
       ENDSOURCE
       SOURCE #update
         #public void update()
@@ -3578,7 +3746,7 @@ Formatversion: 1
         #    CRMHojaGastosTable   tableOrig    = this.orig();
         #    ;
         #
-        #    this.updateSearchKey();//IND_MMS - API PROJECT - 2025.11.10
+        #    this.updateSearchKey();//IND_MMS - PROYECTO API - 2025.11.10
         #    this.normalizeReimbursementCurrencyDefaults(); //MMS - Ajustes CRM - 2026.06.26
         #
         #    this.NecesariaHGImpresa = this.NecesitaHGFisica();//this.createdBy == "APIAX" ? NoYes::No : NoYes::Yes; //IJL.26/05/26
@@ -3608,7 +3776,7 @@ Formatversion: 1
         #//IJL.14/07/23
         #void UpdateDivisaEnLineas()
         #{
-        #    // Metodo legacy: ya no propaga divisa porque la cabecera es siempre local.
+        #    // Metodo heredado: ya no propaga divisa porque la cabecera es siempre local.
         #    this.updateCurrencyDefaultsInLines(true); //INDMMS_ExternalCRM - 2026.05.21
         #}
         #
@@ -3621,7 +3789,7 @@ Formatversion: 1
         #    int               updated;
         #    ;
         #
-        #    // Applies header project to all current lines. Call only after the user confirms propagation.
+        #    // Aplica el proyecto de cabecera a todas las lineas actuales. Llamar solo despues de que el usuario confirme la propagacion.
         #    if (!this.HojaGastosId)
         #        return 0;
         #
@@ -3651,7 +3819,7 @@ Formatversion: 1
         #//IJL.20/01/26
         #void UpdateProjIdEnLineas()
         #{
-        #    // Keeps the legacy method name, but delegates to the project propagation helper.
+        #    // Conserva el nombre del metodo heredado, pero delega en el auxiliar de propagacion de proyecto.
         #    this.updateProjectDefaultInLines(); //INDMMS_ExternalCRM - 2026.05.21
         #    }
         #
@@ -3664,7 +3832,7 @@ Formatversion: 1
         #    int               updated;
         #    ;
         #
-        #    // Applies header reimbursable value to all current lines. Call only after the user confirms propagation.
+        #    //MMS - Aplica el estado de reembolso de cabecera y recalcula cada importe derivado - 2026.07.29
         #    if (!this.HojaGastosId)
         #        return 0;
         #
@@ -3677,7 +3845,11 @@ Formatversion: 1
         #    where hojaGastosLine.HojaGastosId == this.HojaGastosId
         #    {
         #        hojaGastosLine.ReimbursableExpense = any2int(this.ReimbursableExpense);
+        #        hojaGastosLine.recalculateReimbursableAmount();
         #        hojaGastosLine.doUpdate();
+        #
+        #        //MMS - doUpdate omite el metodo update sobrescrito de la linea, por lo que la contabilidad se actualiza explicitamente - 2026.07.29
+        #        INDProjCostRevenueTable::CreateProjCostFromCommon(hojaGastosLine);
         #        updated++;
         #    }
         #    ttscommit;
@@ -3760,7 +3932,7 @@ Formatversion: 1
         #{
         #    ;
         #
-        #    // No hay propagacion de divisa de cabecera; se conserva para compatibilidad legacy.
+        #    // No hay propagacion de divisa de cabecera; se conserva para compatibilidad heredada.
         #    return true;
         #}
         #
@@ -3965,8 +4137,6 @@ Formatversion: 1
         #                                            Description             _description,
         #                                            CurrencyCode            _currencyCode)
         #{
-        #    //CRMHojaGastosTableVoucher   CRMHojaGastosTableVoucher;
-        #
         #    LedgerVoucher               ledgerVoucher;
         #    LedgerVoucherObject         ledgerVoucherObject;
         #    TransactionTxt              transactionTxt;
@@ -3989,10 +4159,11 @@ Formatversion: 1
         #
         #    ttsbegin;
         #
-        #    while (si.more()){
-        #
+        #    while (si.more())
+        #    {
         #        hojaGastosTable = CRMHojaGastosTable::FindRecId(si.value());
-        #        if (primeraLinea){
+        #        if (primeraLinea)
+        #        {
         #            //Inicializar las variables para crear el asiento
         #            select firstonly journalName
         #            where journalName.JournalType == LedgerJournalType::Daily;
@@ -4018,127 +4189,31 @@ Formatversion: 1
         #
         #            primeraLinea    = false;
         #        }
-        #
         #        amountTotal += hojaGastosTable.TotalAmountMST_Pagar();
         #
         #        //Debemos obtener para cada hoja de gastos el importe por la combinación de Cuenta contable de Gasto y Dimension Contable.
         #        ledgerVoucher.findLedgerVoucherObject().lastTransTxt(_description);
         #
-        #        /*
-        #        ledgerVoucher.addTrans(
-        #            LedgerVoucherTransObject::newCreateTrans(
-        #                                             ledgerVoucher.findLedgerVoucherObject(),
-        #                                             LedgerPostingType::LedgerJournal,
-        #                                             accountDebit,
-        #                                             dimensionOffset,
-        #                                             currencyCode,
-        #                                             amount * -1,
-        #                                             0,
-        #                                             0,
-        #                                             0, //this.fixedExchRate(),
-        #                                             0, //this.fixedExchRateSecondary(),
-        #                                             0, //this.fixedEuroTriangulation(),
-        #                                             false,
-        #                                             null));//projLedger::newInventSales(salesLine.ProjId,salesLine.InventTransId,number,inventMovement.projAdjustRefId())));
-        #        */
         #        si.next();
         #    }
         #
         #    //Línea para el banco
-        #        ledgerVoucher.addTrans(
-        #            LedgerVoucherTransObject::newCreateTrans(
-        #                                             ledgerVoucher.findLedgerVoucherObject(),
-        #                                             LedgerPostingType::LedgerJournal,
-        #                                             bankAccountTable.LedgerAccount,
-        #                                             dimensionBank,
-        #                                             currencyCode,
-        #                                             amountTotal * -1,
-        #                                             0,
-        #                                             0,
-        #                                             0, //this.fixedExchRate(),
-        #                                             0, //this.fixedExchRateSecondary(),
-        #                                             0, //this.fixedEuroTriangulation(),
-        #                                             false,
-        #                                             null));//projLedger::newInventSales(salesLine.ProjId,salesLine.InventTransId,number,inventMovement.projAdjustRefId())));
+        #    ledgerVoucher.addTrans(
+        #        LedgerVoucherTransObject::newCreateTrans(
+        #                                         ledgerVoucher.findLedgerVoucherObject(),
+        #                                         LedgerPostingType::LedgerJournal,
+        #                                         bankAccountTable.LedgerAccount,
+        #                                         dimensionBank,
+        #                                         currencyCode,
+        #                                         amountTotal * -1,
+        #                                         0,
+        #                                         0,
+        #                                         0, //this.fixedExchRate(),
+        #                                         0, //this.fixedExchRateSecondary(),
+        #                                         0, //this.fixedEuroTriangulation(),
+        #                                         false,
+        #                                         null));//projLedger::newInventSales(salesLine.ProjId,salesLine.InventTransId,number,inventMovement.projAdjustRefId())));
         #
-        #/*
-        #    while select forupdate CRMHojaGastosTableVoucher
-        #    where CRMHojaGastosTableVoucher.RefRecId    == this.RecId  &&
-        #          CRMHojaGastosTableVoucher.Posted      == NoYes::No {
-        #
-        #        if (! CRMHojaGastosTableVoucher.LedgerAccount){
-        #            throw error("Falta cuenta contable en una línea.");
-        #        }
-        #
-        #        if (! CRMHojaGastosTableVoucher.TransDate){
-        #            throw error("Falta data en una línea.");
-        #        }
-        #
-        #        if (! CRMHojaGastosTableVoucher.Dimension[1]){
-        #            throw error("Falta la dimension");
-        #        }
-        #
-        #        if (! CRMHojaGastosTableVoucher.DimensionOffset[1]){
-        #            throw error("Falta la dimension en la cuenta de contrapartida");
-        #        }
-        #
-        #        transDate   = CRMHojaGastosTableVoucher.TransDate;
-        #
-        #        if (primeraLinea){
-        #            //Inicializar las variables para crear el asiento
-        #            select firstonly journalName
-        #            where journalName.JournalType == LedgerJournalType::Daily;
-        #
-        #            numberSeq   = NumberSeq::newGetNumFromCode(journalName.VoucherSeries);
-        #
-        #            voucher     = numberSeq.num();
-        #
-        #            ledgerVoucher = ledgerVoucher::newLedgerPost(DetailSummary::Detail,
-        #                                                         SysModule::Purch,
-        #                                                         numberSeq.parmVoucherSequenceCode());
-        #
-        #            ledgerVoucherObject = LedgerVoucherObject::newVoucher(voucher,
-        #                                                                  transDate,
-        #                                                                  SysModule::Ledger,
-        #                                                                  LedgerTransType::None,
-        #                                                                  NoYes::No);
-        #
-        #            //Asignar texto de la transacción.
-        #            ledgerVoucherObject.lastTransTxt("IMPOSTOS IMPORTAÇAO");
-        #
-        #            ledgerVoucher.AddVoucher(ledgerVoucherObject);
-        #
-        #            primeraLinea    = false;
-        #        }
-        #
-        #        ledgerVoucher.findLedgerVoucherObject().lastTransTxt(_description);
-        #
-        #        ledgerVoucher.addTrans(
-        #            LedgerVoucherTransObject::newCreateTrans(
-        #                                             ledgerVoucher.findLedgerVoucherObject(),
-        #                                             LedgerPostingType::LedgerJournal,
-        #                                             accountDebit,
-        #                                             dimensionOffset,
-        #                                             currencyCode,
-        #                                             amount * -1,
-        #                                             0,
-        #                                             0,
-        #                                             0, //this.fixedExchRate(),
-        #                                             0, //this.fixedExchRateSecondary(),
-        #                                             0, //this.fixedEuroTriangulation(),
-        #                                             false,
-        #                                             null));//projLedger::newInventSales(salesLine.ProjId,salesLine.InventTransId,number,inventMovement.projAdjustRefId())));
-        #    }
-        #
-        #    //Cerrar el asiento.
-        #    if (primeraLinea == false)
-        #        ledgerVoucher.end(); //Contabilizar el asiento.
-        #
-        #
-        #    CRMHojaGastosTableVoucher.Posted     = NoYes::Yes;
-        #    CRMHojaGastosTableVoucher.Voucher    = voucher;
-        #    CRMHojaGastosTableVoucher.doUpdate();
-        #*/
         #    ttscommit;
         #
         #    if (primeraLinea == false)

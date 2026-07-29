@@ -87,6 +87,10 @@ import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { resolveEffectiveCompanyId } from "../../../utils/companySelection.ts";
 import { indT } from "../../../utils/indI18n.ts";
+import {
+  toExpenseSheetLineReimbursableExpense,
+  toExpenseSheetReimbursableExpense,
+} from "./expenseSheetTotals.ts";
 
 type ProjectDropdownOption = {
   value?: string;
@@ -118,6 +122,8 @@ type LegacyExpenseListItem = {
   totalAmount?: unknown;
   totalAmountCurrency?: unknown;
   totalAmountMST?: unknown;
+  totalGrossAmountMST?: unknown;
+  totalReimbursableAmount?: unknown;
   exchRate?: unknown;
   userId?: unknown;
   userName?: unknown;
@@ -208,8 +214,8 @@ const normalizeCurrencyCode = (value: unknown): string => safeText(value).trim()
 // Validates the AX line-currency contract before sending a line payload.
 const hasMissingForeignLineSettlement = (line: ExpenseLineCurrencyPayload, localCurrencyCode: string): boolean => {
   const lineCurrencyCode = normalizeCurrencyCode(line.currencyCode);
-  const normalizedLocalCurrencyCode = normalizeCurrencyCode(localCurrencyCode) || "EUR";
-  if (!lineCurrencyCode || lineCurrencyCode === normalizedLocalCurrencyCode) {
+  const normalizedLocalCurrencyCode = normalizeCurrencyCode(localCurrencyCode);
+  if (!lineCurrencyCode || !normalizedLocalCurrencyCode || lineCurrencyCode === normalizedLocalCurrencyCode) {
     return false;
   }
 
@@ -222,8 +228,8 @@ const hasMissingForeignLineSettlement = (line: ExpenseLineCurrencyPayload, local
 const buildForeignLineSettlementError = (): ApiFetchError =>
   new ApiFetchError(
     indT(
-      "ExpenseSheets_Line_Validation_ForeignCurrencySettlement",
-      "Foreign currency lines require an exchange rate greater than 0 or a reimbursement amount."
+      "ExpenseSheets_Line_Validation_ForeignCurrencyGrossAmount",
+      "Foreign currency lines require an exchange rate greater than 0 or a gross amount in company currency."
     )
   );
 const toNullableTicketStatusCode = toNullableTicketStatusCodeTransform;
@@ -239,13 +245,16 @@ const normalizeOptionalTicketProcessedByAI = normalizeOptionalTicketProcessedByA
 const normalizeExpenseSheetListStatusFilter = normalizeExpenseSheetListStatusFilterTransform;
 const toFlagBool = toFlagBoolTransform;
 
-const normalizeExpenseSheetReimbursable = (value: unknown): number | null => {
-  const parsed = toNullableNumber(value);
-  if (parsed === null || !Number.isInteger(parsed) || parsed < 0) {
-    return null;
+const normalizeExpenseSheetReimbursable = toExpenseSheetReimbursableExpense;
+
+// Rejects invalid line enum values instead of forwarding the header-only Both value.
+const normalizeExpenseSheetLineReimbursable = (value: unknown) => {
+  const normalized = toExpenseSheetLineReimbursableExpense(value);
+  if (value !== null && value !== undefined && value !== "" && normalized === null) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
   }
 
-  return parsed;
+  return normalized;
 };
 
 const readExpenseWindowRuntime = (): ExpenseWindowRuntime => {
@@ -731,6 +740,8 @@ const mapLegacyListItemToApiListItem = (item: LegacyExpenseListItem): ExpenseShe
     TotalAmount: toNullableNumber(item.totalAmountCurrency ?? item.totalAmount),
     TotalAmountCurrency: toNullableNumber(item.totalAmountCurrency ?? item.totalAmount),
     TotalAmountMST: toNullableNumber(item.totalAmountMST),
+    TotalGrossAmountMST: toNullableNumber(item.totalGrossAmountMST),
+    TotalReimbursableAmount: toNullableNumber(item.totalReimbursableAmount),
     ExchRate: toNullableNumber(item.exchRate),
     ExchangeRateMode: toNullableNumber(item.exchangeRateMode),
     ReimbursableExpense: normalizeExpenseSheetReimbursable(item.reimbursableExpense),
@@ -1260,12 +1271,12 @@ export const createExpenseSheet = async (
   const context = await ensureExpenseApiContext(options);
   const mode = payload.mode ?? 0;
   const lines = Array.isArray(payload.lines) ? payload.lines : [];
-  const localCurrencyCode = normalizeCurrencyCode(context.defaultCurrencyCode) || "EUR";
+  const localCurrencyCode = normalizeCurrencyCode(context.defaultCurrencyCode);
   const normalizedLines = lines.map((line) => ({
     ...line,
     transDate: normalizeRequiredApiDate(line.transDate),
     typeValue: toExpenseGastoTypeCode(line.typeValue, { allowNone: false }) ?? line.typeValue,
-    reimbursableExpense: normalizeExpenseSheetReimbursable(line.reimbursableExpense),
+    reimbursableExpense: normalizeExpenseSheetLineReimbursable(line.reimbursableExpense),
     currencyCode: safeText(line.currencyCode).toUpperCase() || undefined,
     amountMST: toNullableNumber(line.amountMST),
     exchRate: toNullableNumber(line.exchRate),
@@ -1379,6 +1390,30 @@ export const updateExpenseSheetHeader = async (
   return normalizeApiResponse(response);
 };
 
+// Propagates the current non-mixed header value through the dedicated server endpoint.
+export const propagateExpenseSheetReimbursableExpense = async (
+  hojaGastosId: string,
+  options?: ApiFetchOptions
+): Promise<IndApiResponse<null>> => {
+  const context = await ensureExpenseApiContext(options);
+  const safeSheetId = encodeURIComponent(String(hojaGastosId || "").trim());
+  if (!safeSheetId) {
+    throw new ApiFetchError(indT("Api_RequestFailed", "Request failed."));
+  }
+
+  const response = await fetchJson<IndApiResponse<null>>(
+    `/api/crm/expensesheets/${safeSheetId}/reimbursable-expense/propagate`,
+    {
+      ...options,
+      method: "POST",
+      headers: buildExpenseHeaders(context, options, true),
+      body: "{}",
+    }
+  );
+
+  return normalizeApiResponse(response);
+};
+
 // Deletes a full expense sheet using /api/crm/expensesheets/{hojaGastosId}/lines/0?deleteWholeSheet=true.
 export const deleteExpenseSheet = async (
   hojaGastosId: string,
@@ -1407,13 +1442,13 @@ export const updateExpenseSheetLine = async (
 ): Promise<IndApiResponse<ExpenseSheetLineUpdateResponseData>> => {
   const normalizedTransDate = normalizeRequiredApiDate(payload.transDate);
   const context = await ensureExpenseApiContext(options);
-  const localCurrencyCode = normalizeCurrencyCode(context.defaultCurrencyCode) || "EUR";
+  const localCurrencyCode = normalizeCurrencyCode(context.defaultCurrencyCode);
   const normalizedTypeValue = toExpenseGastoTypeCode(payload.typeValue, { allowNone: false });
   const normalizedPayload: ExpenseSheetLineUpdateRequest = {
     ...payload,
     transDate: normalizedTransDate,
     typeValue: normalizedTypeValue ?? payload.typeValue,
-    reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
+    reimbursableExpense: normalizeExpenseSheetLineReimbursable(payload.reimbursableExpense),
     currencyCode: normalizeCurrencyCode(payload.currencyCode) || undefined,
     amountMST: toNullableNumber(payload.amountMST),
     exchRate: toNullableNumber(payload.exchRate),

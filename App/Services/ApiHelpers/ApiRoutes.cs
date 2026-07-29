@@ -65,6 +65,10 @@ namespace IND_CRM_APP.Services.ApiHelpers
         public static string ExpenseSheetLine(string safeSheetId, string safeLineId) =>
             $"api/crm/expensesheets/{safeSheetId}/lines/{safeLineId}";
 
+        // Builds the route that propagates the current header reimbursement value to all lines.
+        public static string ExpenseSheetReimbursableExpensePropagate(string safeSheetId) =>
+            $"api/crm/expensesheets/{safeSheetId}/reimbursable-expense/propagate";
+
         // Builds the expense sheet ticket by file id route.
         public static string ExpenseSheetTicketByFileId(string safeFileId) =>
             $"api/crm/expensesheets/tickets/{safeFileId}";

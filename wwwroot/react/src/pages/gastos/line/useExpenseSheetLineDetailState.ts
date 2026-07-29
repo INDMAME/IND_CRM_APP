@@ -1,8 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../services/apiService.ts";
 import { indT } from "../../../utils/indI18n.ts";
-import type { ExpenseSheetHeader, ExpenseSheetLine } from "../expenseTypes.ts";
-import { fetchExpenseSheetDetail, getFuelPriceKm, mapExpenseSheetHeader, mapExpenseSheetLine } from "../utils/expenseApi.ts";
+import type {
+  ExpenseSheetHeader,
+  ExpenseSheetLine,
+  ExpenseSheetLineReimbursableExpense,
+} from "../expenseTypes.ts";
+import {
+  fetchExpenseSheetDetail,
+  getExpenseSheetDefaultCurrencyCode,
+  getFuelPriceKm,
+  mapExpenseSheetHeader,
+  mapExpenseSheetLine,
+} from "../utils/expenseApi.ts";
 import {
   clearExpenseNavigationGuard,
   navigateToExpenseUrl,
@@ -17,7 +27,6 @@ import {
   DEFAULT_LINE_REIMBURSABLE_EXPENSE,
   normalizeExpenseLineReimbursableExpense,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
-import { isExpenseLineSameReimbursementCurrency } from "../utils/expenseLineCurrency.ts";
 
 const KM_GASTO_TYPE_CODE = "3";
 const FUEL_PRICE_DEBOUNCE_MS = 300;
@@ -143,7 +152,7 @@ const buildCreateLineDraft = (
   baseDate: string,
   projectId: string,
   currencyCode: string,
-  reimbursableExpense: number = DEFAULT_LINE_REIMBURSABLE_EXPENSE
+  reimbursableExpense: ExpenseSheetLineReimbursableExpense = DEFAULT_LINE_REIMBURSABLE_EXPENSE
 ): ExpenseSheetLine => {
   return {
     lineRecId: "",
@@ -216,8 +225,13 @@ export const useExpenseSheetLineDetailState = ({
   const [fuelPriceMessage, setFuelPriceMessage] = useState("");
   const [fuelPriceMessageIsError, setFuelPriceMessageIsError] = useState(false);
   const [lineNavigation, setLineNavigation] = useState<ExpenseSheetLineNavigation>(EMPTY_LINE_NAVIGATION);
+  const [companyCurrencyCode, setCompanyCurrencyCode] = useState("");
 
-  const hydrateDraftFromLine = useCallback((nextLine: ExpenseSheetLine | null, nextHeader: ExpenseSheetHeader | null) => {
+  const hydrateDraftFromLine = useCallback((
+    nextLine: ExpenseSheetLine | null,
+    nextHeader: ExpenseSheetHeader | null,
+    resolvedCompanyCurrencyCode: string
+  ) => {
     const isExistingLine = !!safeText(nextLine?.lineRecId);
     const normalizedLineProjectId = safeText(nextLine?.projId);
     setDraftDescription(safeText(nextLine?.description));
@@ -228,12 +242,9 @@ export const useExpenseSheetLineDetailState = ({
     setDraftProjectId(isExistingLine ? normalizedLineProjectId : (normalizedLineProjectId || safeText(nextHeader?.projId)));
     setDraftInternational(nextLine?.internacional === true ? "true" : nextLine?.internacional === false ? "false" : "");
     setDraftReimbursableExpense(normalizeExpenseLineReimbursableExpense(nextLine?.reimbursableExpense));
-    const localCurrencyCode = safeText(nextHeader?.currencyCode).toUpperCase() || "EUR";
+    const localCurrencyCode = safeText(resolvedCompanyCurrencyCode).toUpperCase();
     const lineCurrencyCode = safeText(nextLine?.currencyCode).toUpperCase() || localCurrencyCode;
-    const lineAmountMST =
-      nextLine?.visibleReimbursableTotal ??
-      nextLine?.amountMST ??
-      (isExpenseLineSameReimbursementCurrency(lineCurrencyCode, localCurrencyCode) ? nextLine?.amount : null);
+    const lineAmountMST = nextLine?.amountMST ?? null;
     const lineExchangeRate = lineCurrencyCode === localCurrencyCode
       ? 100
       : nextLine?.exchRate;
@@ -243,6 +254,8 @@ export const useExpenseSheetLineDetailState = ({
   }, []);
 
   useEffect(() => {
+    let isCancelled = false;
+
     const loadDetail = async () => {
       if (!hasAccess) {
         onForbidden();
@@ -260,11 +273,24 @@ export const useExpenseSheetLineDetailState = ({
       setIsLoading(true);
       setErrorMessage("");
 
+      let loadedCompanyCurrencyCode = "";
+      try {
+        loadedCompanyCurrencyCode = safeText(
+          await getExpenseSheetDefaultCurrencyCode({ suppressPermissionModal: true })
+        ).toUpperCase();
+      } catch {
+        // Company currency is auxiliary metadata; line detail remains usable without it.
+        loadedCompanyCurrencyCode = "";
+      }
+      if (isCancelled) return;
+      setCompanyCurrencyCode(loadedCompanyCurrencyCode);
+
       try {
         if (isCreateMode) {
           const response = await fetchExpenseSheetDetail(sheetId, {
             suppressPermissionModal: true,
           });
+          if (isCancelled) return;
 
           if (response?.Success === false) {
             setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
@@ -319,13 +345,13 @@ export const useExpenseSheetLineDetailState = ({
           const draftLine = buildCreateLineDraft(
             toIsoDate(new Date()),
             safeText(loadedHeader.projId),
-            safeText(loadedHeader.currencyCode).toUpperCase() || "EUR"
+            loadedCompanyCurrencyCode || safeText(loadedHeader.currencyCode).toUpperCase()
           );
           setHeader(loadedHeader);
           setLine(draftLine);
           setLineNavigation(EMPTY_LINE_NAVIGATION);
           setIsEditing(true);
-          hydrateDraftFromLine(draftLine, loadedHeader);
+          hydrateDraftFromLine(draftLine, loadedHeader, loadedCompanyCurrencyCode);
           setStatus("");
           return;
         }
@@ -341,6 +367,7 @@ export const useExpenseSheetLineDetailState = ({
         const response = await fetchExpenseSheetDetail(sheetId, {
           suppressPermissionModal: true,
         });
+        if (isCancelled) return;
 
         if (response?.Success === false) {
           setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load line detail."));
@@ -409,10 +436,11 @@ export const useExpenseSheetLineDetailState = ({
           loadedPolicy.interactionMode === "full_edit"
         ) {
           setIsEditing(true);
-          hydrateDraftFromLine(selectedLine, mappedHeader);
+          hydrateDraftFromLine(selectedLine, mappedHeader, loadedCompanyCurrencyCode);
           setStatus("");
         }
       } catch (error) {
+        if (isCancelled) return;
         if (error instanceof ApiFetchError && error.status === 403) {
           onForbidden();
           return;
@@ -423,11 +451,16 @@ export const useExpenseSheetLineDetailState = ({
         setLine(null);
         setLineNavigation(EMPTY_LINE_NAVIGATION);
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     void loadDetail();
+    return () => {
+      isCancelled = true;
+    };
   }, [
     allowSelfManagement,
     canManageOtherUsers,
@@ -442,11 +475,6 @@ export const useExpenseSheetLineDetailState = ({
     selectedManagedUserId,
     sheetId,
   ]);
-
-  useEffect(() => {
-    if (!line || isEditing) return;
-    hydrateDraftFromLine(line, header);
-  }, [header, hydrateDraftFromLine, isEditing, line]);
 
   const normalizedDraftTypeValueCode = useMemo(() => safeText(draftTypeValueCode), [draftTypeValueCode]);
   const normalizedFuelTransDate = useMemo(() => normalizeFuelTransDate(draftTransDate), [draftTransDate]);
@@ -602,9 +630,9 @@ export const useExpenseSheetLineDetailState = ({
 
     setModalError("");
     setIsEditing(true);
-    hydrateDraftFromLine(line, header);
+    hydrateDraftFromLine(line, header, companyCurrencyCode);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditExpenseCurrent, header, hydrateDraftFromLine, isCreateMode, isLineEditLocked, isLoading, line, onForbidden]);
+  }, [canEditExpenseCurrent, companyCurrencyCode, header, hydrateDraftFromLine, isCreateMode, isLineEditLocked, isLoading, line, onForbidden]);
 
   const handleCancelEdit = useCallback(() => {
     const targetUrl = `/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`;
@@ -619,9 +647,9 @@ export const useExpenseSheetLineDetailState = ({
 
     setIsEditing(false);
     setModalError("");
-    hydrateDraftFromLine(line, header);
+    hydrateDraftFromLine(line, header, companyCurrencyCode);
     setStatus(indT("Common_Cancel", "Cancel"));
-  }, [header, hydrateDraftFromLine, isCreateMode, isEditing, line, sheetId]);
+  }, [companyCurrencyCode, header, hydrateDraftFromLine, isCreateMode, isEditing, line, sheetId]);
 
   const handleOpenCreateMode = useCallback(() => {
     if (!canCreateExpenseCurrent || !sheetId || isSheetLocked) {
@@ -667,6 +695,7 @@ export const useExpenseSheetLineDetailState = ({
     header,
     line,
     lineNavigation,
+    companyCurrencyCode,
     isLoading,
     errorMessage,
     busy,

@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDTicketExpenseSheetLink descargados en Martes 30/06/2026
+; Navision Axapta Class: INDTicketExpenseSheetLink descargados en Miércoles 29/07/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -50,7 +50,7 @@ Formatversion: 1
       ENDSOURCE
       SOURCE #dialogPostRun
         #/// <summary>
-        #/// Hook post-run del diálogo para habilitar overloads de control.
+        #/// Punto posterior a la ejecucion del dialogo para habilitar sobrecargas de controles.
         #/// </summary>
         #void dialogPostRun(DialogRunbase _dialog)
         #{
@@ -61,9 +61,10 @@ Formatversion: 1
         #
         #    // Ayuda para depuración:
         #    // En AX 3.0 el nombre real del control puede ser Fld1_1, Fld2_1, etc.
-        #    // Descomenta temporalmente si necesitas confirmar el nombre runtime.
+        #    // Descomenta temporalmente si necesitas confirmar el nombre en tiempo de ejecucion.
         #    // info(strFmt("Control name: %1", dlgHojaGastosId.control().name()));
         #}
+        #
       ENDSOURCE
       SOURCE #Fld1_1_lookup
         #void Fld1_1_lookup()
@@ -132,8 +133,8 @@ Formatversion: 1
       SOURCE #parmSelectedTickets
         #/// <summary>
         #/// Recibe o devuelve el Map de tickets seleccionados.
-        #/// key   = RecId
-        #/// value = RecId (o dummy)
+        #/// clave = RecId
+        #/// valor = RecId (o valor auxiliar)
         #/// </summary>
         #Map parmSelectedTickets(Map _selectedTickets = selectedTickets)
         #{
@@ -157,6 +158,7 @@ Formatversion: 1
         #
         #    return selectedTickets;
         #}
+        #
       ENDSOURCE
       SOURCE #run
         #/// <summary>
@@ -211,7 +213,12 @@ Formatversion: 1
         #            hojaGastosLine.Qty         = 1;
         #            hojaGastosLine.Amount      = ticket.TotalAmount;
         #
-        #            // Audit
+        #            //MMS - Copia los valores de divisa del ticket en la nueva linea de gasto - 2026.07.29
+        #            hojaGastosLine.Currency    = ticket.CurrencyCode;
+        #            hojaGastosLine.ExchRate    = ticket.ExchRate;
+        #            hojaGastosLine.AmountMST   = ticket.AmountMST;
+        #
+        #            // Auditoria
         #            hojaGastosLine.INDCreatedByUserId = curUserId();
         #
         #            hojaGastosLine.insert();
@@ -227,6 +234,7 @@ Formatversion: 1
         #
         #    ttscommit;
         #}
+        #
       ENDSOURCE
       SOURCE #unpack
         #public boolean unpack(container _packedClass)
@@ -296,11 +304,12 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #description
-        #// Here goes a description of the class
+        #// Aqui se incluye una descripcion de la clase
         #static ClassDescription description()
         #{
         #    return "Vincular ticket(s)";
         #}
+        #
       ENDSOURCE
       SOURCE #main
         #/// <summary>

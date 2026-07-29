@@ -18,6 +18,7 @@ import {
 } from "../constants/exchangeRateEntryModeCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
+import type { ExpenseSheetOriginalCurrencyTotal } from "../utils/expenseSheetTotals.ts";
 
 type ExpenseSheetHeaderFormMode = {
   isCreateMode: boolean;
@@ -43,7 +44,9 @@ type ExpenseSheetHeaderFormProps = {
   exchangeRateReferenceAmount: number;
   exchangeRateValue: string;
   exchangeRateValidationMessage: string;
-  totalAmountText: string;
+  grossAmountText: string;
+  reimbursableAmountText: string;
+  originalCurrencyTotals: ExpenseSheetOriginalCurrencyTotal[];
   draftDescription: string;
   draftProjectId: string;
   draftCurrencyCode: string;
@@ -76,7 +79,9 @@ const ExpenseSheetHeaderForm = ({
   exchangeRateReferenceAmount,
   exchangeRateValue,
   exchangeRateValidationMessage,
-  totalAmountText,
+  grossAmountText,
+  reimbursableAmountText,
+  originalCurrencyTotals,
   draftDescription,
   draftProjectId,
   draftCurrencyCode,
@@ -301,12 +306,42 @@ const ExpenseSheetHeaderForm = ({
         {!isCreateMode ? (
           <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
             <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_TotalAmount", "Reimbursement amount")}
-              value={totalAmountText}
+              label={indT("ExpenseSheets_Field_GrossJustifiedAmount", "Justified expense")}
+              value={grossAmountText}
               valueAlign="right"
               containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
               labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
             />
+            <ExpenseReadOnlyField
+              label={indT("ExpenseSheets_Field_EmployeeReimbursement", "Reimbursement to employee")}
+              value={reimbursableAmountText}
+              valueAlign="right"
+              containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
+              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
+            />
+          </div>
+        ) : null}
+        {!isCreateMode ? (
+          <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
+            <div className={ALIGNED_FIELD_CONTAINER_CLASS_NAME}>
+              <div className={ALIGNED_FIELD_LABEL_CLASS_NAME}>
+                {indT("ExpenseSheets_Field_OriginalAmounts", "Original amounts")}
+              </div>
+              <div
+                className="form-control min-h-10 py-2 text-right tabular-nums"
+                role="group"
+                aria-label={indT("ExpenseSheets_Field_OriginalAmounts", "Original amounts")}
+              >
+                {originalCurrencyTotals.length > 0
+                  ? originalCurrencyTotals.map((entry) => (
+                      <div key={entry.currencyCode} className="flex justify-between gap-2">
+                        <span>{entry.currencyCode}</span>
+                        <span>{formatExpenseNumber(entry.amount)}</span>
+                      </div>
+                    ))
+                  : "-"}
+              </div>
+            </div>
             {currencyField}
           </div>
         ) : null}

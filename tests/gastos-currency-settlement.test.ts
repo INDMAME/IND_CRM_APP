@@ -24,7 +24,30 @@ import {
   resolveExpenseSheetOwnerAxUserId,
 } from "../Web/wwwroot/react/src/pages/gastos/list/expenseManagedUserSelection.ts";
 import { normalizeExpenseSheetsCachedItems } from "../Web/wwwroot/react/src/pages/gastos/list/useExpenseSheetsFilterCache.ts";
+import { buildExpenseSheetsVisualizationFallbackMessages } from "../Web/wwwroot/react/src/pages/gastos/list/expenseSheetsVisualizationFallback.ts";
+import { getExpenseLineReimbursableExpenseOptions } from "../Web/wwwroot/react/src/pages/gastos/constants/expenseReimbursableExpenseCatalog.ts";
 import { formatUserNameWithId } from "../Web/wwwroot/react/src/utils/userLabels.ts";
+import {
+  groupExpenseSheetOriginalAmounts,
+  resolveExpenseSheetTotals,
+  toExpenseSheetLineReimbursableExpense,
+  toExpenseSheetReimbursableExpense,
+} from "../Web/wwwroot/react/src/pages/gastos/utils/expenseSheetTotals.ts";
+import {
+  normalizeDetailPagedResponse,
+  normalizeListPagedResponse,
+} from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApiResponseNormalizers.ts";
+import {
+  mapExpenseSheetHeader,
+  mapExpenseSheetLine,
+} from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApiMappers.ts";
+import { fetchExpenseSheetListSourceJson } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApi.ts";
+import { getVisibleReimbursableTotal } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseVisibleTotals.ts";
+import type {
+  ExpenseSheetDetailDto,
+  ExpenseSheetListItemDto,
+  IndPagedResponse,
+} from "../Web/wwwroot/react/src/pages/gastos/expenseTypes.ts";
 
 assert.equal(isExpenseLineSameReimbursementCurrency("usd", "USD"), true);
 assert.equal(isExpenseLineForeignCurrency("USD", "EUR"), true);
@@ -189,5 +212,248 @@ assert.equal(cachedExpenseSheet.hojaGastosId, "000653");
 assert.equal(cachedExpenseSheet.userId, "MB");
 assert.equal(cachedExpenseSheet.ownerAxUserId, "ITAMB");
 assert.equal(cachedExpenseSheet.ownerName, "MARCO BONOMELLI");
+
+assert.deepEqual(
+  resolveExpenseSheetTotals({
+    TotalGrossAmountMST: 150,
+    TotalReimbursableAmount: 90,
+    TotalAmountMST: 80,
+  }),
+  { grossCompany: 150, reimbursable: 90 }
+);
+assert.deepEqual(
+  resolveExpenseSheetTotals({ TotalGrossAmountMST: null, TotalReimbursableAmount: null, TotalAmountMST: 80 }),
+  { grossCompany: null, reimbursable: 80 }
+);
+assert.deepEqual(
+  resolveExpenseSheetTotals({ TotalGrossAmountMST: 0, TotalReimbursableAmount: 0, TotalAmountMST: 80 }),
+  { grossCompany: 0, reimbursable: 0 }
+);
+assert.equal(toExpenseSheetReimbursableExpense(2), 2);
+assert.equal(toExpenseSheetLineReimbursableExpense(2), null);
+assert.equal(toExpenseSheetLineReimbursableExpense(1), 1);
+assert.deepEqual(
+  getExpenseLineReimbursableExpenseOptions().map((option) => Number(option.value)),
+  [0, 1]
+);
+
+assert.deepEqual(
+  groupExpenseSheetOriginalAmounts([
+    { amount: 50, currencyCode: "eur" },
+    { amount: 100, currencyCode: "USD" },
+    { amount: 8.7, currencyCode: " usd " },
+    { amount: null, currencyCode: "EUR" },
+    { amount: 25, currencyCode: null },
+  ]),
+  [
+    { currencyCode: "EUR", amount: 50 },
+    { currencyCode: "USD", amount: 108.7 },
+  ]
+);
+
+const normalizedExpenseSheetList = normalizeListPagedResponse({
+  Success: true,
+  Message: "",
+  Items: [
+    {
+      HojaGastosId: "HG-1",
+      Description: "Mixed currencies",
+      ExpenseSheetStatus: 0,
+      EstadoComentarios: null,
+      UserId: "MAME",
+      UserName: "MARCO",
+      Voucher: "",
+      ProjId: "P-1",
+      CurrencyCode: "EUR",
+      TotalAmount: 90,
+      TotalAmountCurrency: 90,
+      TotalAmountMST: 90,
+      TotalGrossAmountMST: null,
+      TotalReimbursableAmount: 0,
+      ExchRate: null,
+      ExchangeRateMode: null,
+      ReimbursableExpense: 2,
+      CreatedDate: "29.07.2026",
+    },
+  ],
+} satisfies IndPagedResponse<ExpenseSheetListItemDto>);
+assert.equal(normalizedExpenseSheetList.Items[0]?.TotalGrossAmountMST, null);
+assert.equal(normalizedExpenseSheetList.Items[0]?.TotalReimbursableAmount, 0);
+assert.equal(normalizedExpenseSheetList.Items[0]?.ReimbursableExpense, 2);
+
+const normalizedExpenseSheetDetail = normalizeDetailPagedResponse({
+  Success: true,
+  Message: "",
+  Items: [
+    {
+      HojaGastosId: "HG-1",
+      TotalGrossAmountMST: 150,
+      TotalReimbursableAmount: 90,
+      TotalAmountMST: 90,
+      ReimbursableExpense: 2,
+      Lines: [
+        {
+          LineRecId: "1",
+          Amount: 100,
+          CurrencyCode: "USD",
+          AmountMST: 92,
+          ReimbursableExpense: 0,
+          ReimbursableAmount: null,
+          TotalAmountCurrency: 100,
+          TotalAmountMST: 92,
+        },
+      ],
+    },
+  ],
+} satisfies IndPagedResponse<ExpenseSheetDetailDto>);
+const normalizedLine = normalizedExpenseSheetDetail.Items[0]?.Lines?.[0];
+assert.equal(normalizedLine?.Amount, 100);
+assert.equal(normalizedLine?.AmountMST, 92);
+assert.equal(normalizedLine?.ReimbursableAmount, null);
+assert.equal(mapExpenseSheetLine(normalizedLine || {}).reimbursableAmount, null);
+
+const allReimbursableHeader = mapExpenseSheetHeader({
+  HojaGastosId: "HG-ALL",
+  TotalGrossAmountMST: 150,
+  TotalReimbursableAmount: 150,
+  TotalAmountMST: 150,
+  ReimbursableExpense: 1,
+});
+const allReimbursableLine = mapExpenseSheetLine({
+  LineRecId: "1",
+  Amount: 100,
+  CurrencyCode: "USD",
+  AmountMST: 92,
+  ReimbursableAmount: 92,
+  ReimbursableExpense: 1,
+});
+assert.equal(allReimbursableHeader.totalGrossAmountMST, 150);
+assert.equal(allReimbursableHeader.totalReimbursableAmount, 150);
+assert.equal(allReimbursableHeader.reimbursableExpense, 1);
+assert.equal(allReimbursableLine.amountMST, 92);
+assert.equal(allReimbursableLine.reimbursableAmount, 92);
+
+const nonReimbursableHeader = mapExpenseSheetHeader({
+  HojaGastosId: "HG-NONE",
+  TotalGrossAmountMST: 150,
+  TotalReimbursableAmount: 0,
+  TotalAmountMST: 0,
+  ReimbursableExpense: 0,
+});
+const nonReimbursableLine = mapExpenseSheetLine({
+  LineRecId: "1",
+  AmountMST: 92,
+  ReimbursableAmount: 0,
+  ReimbursableExpense: 0,
+});
+assert.equal(nonReimbursableHeader.totalGrossAmountMST, 150);
+assert.equal(nonReimbursableHeader.totalReimbursableAmount, 0);
+assert.equal(nonReimbursableHeader.reimbursableExpense, 0);
+assert.equal(nonReimbursableLine.amountMST, 92);
+assert.equal(nonReimbursableLine.reimbursableAmount, 0);
+
+const mixedHeader = mapExpenseSheetHeader({
+  HojaGastosId: "HG-MIXED",
+  TotalGrossAmountMST: 150,
+  TotalReimbursableAmount: 90,
+  TotalAmountMST: 90,
+  ReimbursableExpense: 2,
+});
+assert.equal(mixedHeader.totalGrossAmountMST, 150);
+assert.equal(mixedHeader.totalReimbursableAmount, 90);
+assert.equal(mixedHeader.reimbursableExpense, 2);
+
+const [cachedNullTotals] = normalizeExpenseSheetsCachedItems([
+  {
+    hojaGastosId: "HG-NULL",
+    totalGrossAmountMST: null,
+    totalReimbursableAmount: null,
+    totalAmountMST: null,
+  },
+]);
+assert.equal(cachedNullTotals.totalGrossAmountMST, null);
+assert.equal(cachedNullTotals.totalReimbursableAmount, null);
+assert.equal(cachedNullTotals.totalAmountMST, null);
+
+const [cachedLegacyTotals] = normalizeExpenseSheetsCachedItems([
+  {
+    hojaGastosId: "HG-LEGACY",
+    totalGrossAmountMST: null,
+    totalReimbursableAmount: null,
+    totalAmountMST: 80,
+  },
+]);
+assert.equal(cachedLegacyTotals.totalGrossAmountMST, null);
+assert.equal(cachedLegacyTotals.totalReimbursableAmount, 80);
+
+const [cachedExplicitZeroTotals] = normalizeExpenseSheetsCachedItems([
+  {
+    hojaGastosId: "HG-ZERO",
+    totalReimbursableAmount: 0,
+    totalAmountMST: 80,
+  },
+]);
+assert.equal(cachedExplicitZeroTotals.totalReimbursableAmount, 0);
+
+const legacyAssistantSource = await fetchExpenseSheetListSourceJson(
+  {
+    page: 1,
+    pageSize: 20,
+    filter: "",
+    billedMode: 0,
+    createdDateFrom: null,
+    createdDateTo: null,
+    projId: null,
+    currencyCode: null,
+    expenseSheetStatus: null,
+    reimbursableExpense: null,
+    includeSubordinates: false,
+  },
+  {
+    seedResponse: {
+      ...normalizedExpenseSheetList,
+      Total: 1,
+      Page: 1,
+      PageSize: 20,
+      Items: [
+        {
+          ...normalizedExpenseSheetList.Items[0],
+          TotalGrossAmountMST: 150,
+          TotalReimbursableAmount: 90,
+        },
+      ],
+    },
+  }
+);
+assert.equal(legacyAssistantSource.Items[0]?.TotalGrossAmountMST, 150);
+assert.equal(legacyAssistantSource.Items[0]?.TotalReimbursableAmount, 90);
+
+const visualizationFallback = buildExpenseSheetsVisualizationFallbackMessages({
+  question: "Totales por hoja de gasto",
+  requestedVisualizationType: "table",
+  sourceJson: {
+    ...legacyAssistantSource,
+    Items: [
+      {
+        ...legacyAssistantSource.Items[0],
+        HojaGastosId: "HG-LEGACY",
+        TotalReimbursableAmount: null,
+        TotalAmountMST: 80,
+      },
+    ],
+  },
+  uiLanguage: "es-ES",
+  companyCurrencyCode: "EUR",
+});
+const visualizationTable = visualizationFallback?.find((message) => message.type === "table");
+assert.equal(visualizationTable?.type, "table");
+assert.equal(
+  visualizationTable?.type === "table" ? visualizationTable.payload.rows[0]?.currencyCode : null,
+  "EUR"
+);
+assert.match(String(visualizationTable?.type === "table" ? visualizationTable.payload.rows[0]?.value : ""), /80/);
+
+// Tickets keep their legacy visible-total fallback chain unchanged.
+assert.equal(getVisibleReimbursableTotal({ AmountMST: 35, TotalAmountCurrency: 20 }), 35);
 
 console.log("[ok] Gastos regression rules passed.");

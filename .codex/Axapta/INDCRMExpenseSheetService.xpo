@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Viernes 24/07/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 29/07/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -17,17 +17,18 @@ Formatversion: 1
     METHODS
       Version: 3
       SOURCE #classDeclaration
-        #// Purpose: COM methods for expense sheets and ticket metadata management.
-        #// Notes: All methods return containers with a stable shape for the API layer.
+        #// Proposito: Metodos COM para gestionar hojas de gastos y metadatos de tickets.
+        #// Notas: Todos los metodos devuelven contenedores con una estructura estable para la capa API.
         #public class INDCRMExpenseSheetService
         #{
         #
         #}
+        #
       ENDSOURCE
       SOURCE #adjustExpenseSheetTicketTotalAmount
-        #// Method: adjustExpenseSheetTicketTotalAmount
-        #// Purpose: Updates ticket header total and creates a differential adjustment line.
-        #// Input:
+        #// Metodo: adjustExpenseSheetTicketTotalAmount
+        #// Proposito: Actualiza el total de cabecera del ticket y crea una linea de ajuste por diferencia.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = fileId
@@ -234,24 +235,30 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #buildExpenseSheetListRow
-        #// Purpose: Builds one expense sheet list row with stable output columns.
+        #// Proposito: Construye una fila del listado de hojas de gastos con columnas de salida estables.
         #static server container buildExpenseSheetListRow(CRMHojaGastosTable _hoja)
         #{
         #    int       expenseSheetStatus, exchangeRateMode, reimbursableExpense;
-        #    Amount    totalAmountCurrency;
+        #    Amount    legacyAccountingTotalAmount;
         #    Amount    totalAmountMST;
+        #    Amount    totalGrossAmountMST;
+        #    INDReimbursableAmount totalReimbursableAmount;
         #    str       ownerAxUserId;
         #    str       ownerName;
         #    container conItem;
         #    ;
         #
-        #    totalAmountCurrency = _hoja.TotalAmount();
+        #    //MMS - Conserva la columna de salida heredada y nombra explicitamente su significado contable - 2026.07.29
+        #    legacyAccountingTotalAmount = _hoja.TotalAmount();
         #    totalAmountMST      = _hoja.TotalAmountMST();
+        #    //MMS - Anade totales explicitos en divisa de empresa sin desplazar las columnas heredadas - 2026.07.29
+        #    totalGrossAmountMST     = _hoja.TotalBrutoAmountMST();
+        #    totalReimbursableAmount = _hoja.TotalReimbursableAmount();
         #    exchangeRateMode    = any2int(_hoja.ExchangeRateMode);
         #    expenseSheetStatus  = any2int(_hoja.ExpenseSheetStatus);
         #    reimbursableExpense = any2int(_hoja.ReimbursableExpense);
         #    //MMS - Prioriza el usuario AX actual y conserva el creador historico como respaldo - 2026.07.24
-        #    ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_hoja.UserId);
+        #        ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(_hoja.UserId);
         #    if (!ownerAxUserId)
         #        ownerAxUserId = _hoja.INDCreatedByUserId;
         #    ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ownerAxUserId ? ownerAxUserId : _hoja.UserId);
@@ -264,7 +271,7 @@ Formatversion: 1
         #                 strFmt("%1", _hoja.UserId),
         #                 strFmt("%1", INDPersonaTable::findByCRM(CRMUsuarioTable::Find(_hoja.UserId).RecId).Name),
         #                 strFmt("%1", Currency::find(_hoja.CurrencyCode).CurrencyCodeISO),
-        #                 strFmt("%1", totalAmountCurrency),
+        #                 strFmt("%1", legacyAccountingTotalAmount),
         #                 strFmt("%1", _hoja.ExchRate),
         #                 strFmt("%1", exchangeRateMode),
         #                 strFmt("%1", _hoja.ProjId),
@@ -274,7 +281,9 @@ Formatversion: 1
         #                 strFmt("%1", ownerAxUserId),
         #                 strFmt("%1", ownerName),
         #                 strFmt("%1", totalAmountMST),
-        #                 strFmt("%1", date2Str(_hoja.CreatedDate, 123, 2,2,2,2,4))
+        #                 strFmt("%1", date2Str(_hoja.CreatedDate, 123, 2,2,2,2,4)),
+        #                 strFmt("%1", totalGrossAmountMST),
+        #                 strFmt("%1", totalReimbursableAmount)
         #              ]];
         #
         #    return conItem;
@@ -369,8 +378,8 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #buildExpenseSheetTicketLinkListRow
-        #// Method: buildExpenseSheetTicketLinkListRow
-        #// Purpose: Build one ticket-link row for the linking page contract.
+        #// Metodo: buildExpenseSheetTicketLinkListRow
+        #// Proposito: Construye una fila de vinculacion de ticket para el contrato de la pagina de vinculacion.
         #static server container buildExpenseSheetTicketLinkListRow(INDTicketInfoTable _ticketHeader, DocuRef _docuRef)
         #{
         #    int processedByAIInt;
@@ -403,8 +412,8 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #buildExpenseSheetTicketListRow
-        #// Method: buildExpenseSheetTicketListRow
-        #// Purpose: Build one generic ticket-list row with the reduced contract.
+        #// Metodo: buildExpenseSheetTicketListRow
+        #// Proposito: Construye una fila generica del listado de tickets con el contrato reducido.
         #static server container buildExpenseSheetTicketListRow(INDTicketInfoTable _ticketHeader, DocuRef _docuRef)
         #{
         #    int ticketStatusInt;
@@ -463,8 +472,8 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #calculateTicketTotalAmount
-        #// Method: calculateTicketTotalAmount
-        #// Purpose: Returns sum(TotalAmount) for ticket lines.
+        #// Metodo: calculateTicketTotalAmount
+        #// Proposito: Devuelve sum(TotalAmount) para las lineas del ticket.
         #static server real calculateTicketTotalAmount(INDFileId _fileId, RecId _ticketRecId)
         #{
         #    INDTicketInfoLine ticketLine;
@@ -504,7 +513,7 @@ Formatversion: 1
         #    if (!actorCrmUserId || actorCrmUserId == _ownerCrmUserId)
         #        return false;
         #
-        #    // Require an active expense approval relation in addition to the existing scope checks.
+        #    // Exige una relacion activa de aprobacion de gastos ademas de las comprobaciones de alcance existentes.
         #    if (!CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(actorCrmUserId, _ownerCrmUserId))
         #        return false;
         #
@@ -545,22 +554,22 @@ Formatversion: 1
       ENDSOURCE
       SOURCE #createExpenseSheet
         #/*
-        #    Method: indExpenseSheetCreate (createExpenseSheet)
-        #    Purpose:
-        #      - Mode 0 (default): Create header + lines (existing behavior)
-        #      - Mode 1: Create header only
-        #      - Mode 2: Add line(s) to an existing header (by HojaGastosId)
-        #    Input _data (container):
-        #      1) companyId (handled by INDCRMUtilityService::getCompany)
-        #      2) headerIn (container)
-        #         - Mode 0/1: [axUserId, descr, currencyCode, exchRate, projId, expenseSheetStatus, exchangeRateMode, reimbursableExpense]
-        #         - Mode 2  : at least [axUserId] (other fields ignored)
-        #      3) linesIn (container of line containers)
-        #         - Each line: [transDateStr, typeValue, lineDescr, internacional, fileId, qty, price, lineProjId, reimbursableExpense, currencyCode, amountMST, exchRate]
+        #    Metodo: indExpenseSheetCreate (createExpenseSheet)
+        #    Proposito:
+        #      - Modo 0 (predeterminado): Crea cabecera + lineas (comportamiento existente)
+        #      - Modo 1: Crea solo la cabecera
+        #      - Modo 2: Anade linea(s) a una cabecera existente (por HojaGastosId)
+        #    Entrada _data (contenedor):
+        #      1) companyId (gestionado por INDCRMUtilityService::getCompany)
+        #      2) headerIn (contenedor)
+        #         - Modo 0/1: [axUserId, descr, currencyCode, exchRate, projId, expenseSheetStatus, exchangeRateMode, reimbursableExpense]
+        #         - Modo 2  : al menos [axUserId] (se ignoran los demas campos)
+        #      3) linesIn (contenedor de contenedores de linea)
+        #         - Cada linea: [transDateStr, typeValue, lineDescr, internacional, fileId, qty, price, lineProjId, reimbursableExpense, currencyCode, amountMST, exchRate]
         #         - amount se calcula internamente como qty * price
-        #      4) optionsIn (optional container): [mode, existingHojaGastosId]
+        #      4) optionsIn (contenedor opcional): [mode, existingHojaGastosId]
         #         - mode: 0|1|2
-        #         - existingHojaGastosId required if mode == 2
+        #         - existingHojaGastosId es obligatorio si mode == 2
         #*/
         #static server container createExpenseSheet(container _data)
         #{
@@ -596,7 +605,7 @@ Formatversion: 1
         #    boolean hasExchangeRateMode;
         #    boolean hasReimbursableExpense;
         #
-        #    // Line fields
+        #    // Campos de linea
         #    container lineIn;
         #    str       transDateStr;
         #    date      transDate;
@@ -629,10 +638,10 @@ Formatversion: 1
         #    int       lineCount;
         #
         #    int       startLine;
-        #    NumberSeq numberSeq; // only used when creating a new header
+        #    NumberSeq numberSeq; // Usado solo al crear una cabecera nueva
         #    ;
         #
-        #    // ---- Base validations (backward compatible) ----
+        #    // ---- Validaciones base compatibles con versiones anteriores ----
         #    companyId = INDCRMUtilityService::getCompany(_data);
         #
         #    if (!companyId)
@@ -644,12 +653,12 @@ Formatversion: 1
         #    headerIn = conPeek(_data, 2);
         #    linesIn  = conPeek(_data, 3);
         #
-        #    // Optional optionsIn = 4th element
+        #    // optionsIn opcional = cuarto elemento
         #    optionsIn = conNull();
         #    if (conLen(_data) >= 4)
         #        optionsIn = conPeek(_data, 4);
         #
-        #    // Defaults
+        #    // Valores predeterminados
         #    mode                = #ModeCreateHeaderAndLines;
         #    existingHojaGastosId = '';
         #    hasExpenseSheetStatus  = false;
@@ -663,7 +672,7 @@ Formatversion: 1
         #    if (conLen(optionsIn) >= 2)
         #        existingHojaGastosId = conPeek(optionsIn, 2);
         #
-        #    // Validate mode
+        #    // Valida el modo
         #    if (mode != #ModeCreateHeaderAndLines &&
         #        mode != #ModeCreateHeaderOnly &&
         #        mode != #ModeAddLinesToExisting)
@@ -671,10 +680,10 @@ Formatversion: 1
         #        return [INDCRMUtilityService::buildHeader(false, strFmt('Mode invalido: %1 (valores: 0|1|2).', mode), conNull()), conNull()];
         #    }
         #
-        #    // ---- Header parsing / validation depending on mode ----
+        #    // ---- Analisis y validacion de cabecera segun el modo ----
         #    if (mode == #ModeAddLinesToExisting)
         #    {
-        #        // Only need axUserId at position 1
+        #        // Solo se necesita axUserId en la posicion 1
         #        if (conLen(headerIn) < 1)
         #            return [INDCRMUtilityService::buildHeader(false, 'Header input invalido para modo AddLines. Se espera al menos AxUserId.', conNull()), conNull()];
         #
@@ -688,7 +697,7 @@ Formatversion: 1
         #    }
         #    else
         #    {
-        #        // Existing behavior: expect 5 header fields (plus 2 optional enum fields)
+        #        // Comportamiento existente: se esperan 5 campos de cabecera y 2 campos enumerados opcionales
         #        if (conLen(headerIn) < 5)
         #            return [INDCRMUtilityService::buildHeader(false, 'Header input invalido. Se esperan 5 campos.', conNull()), conNull()];
         #
@@ -738,19 +747,19 @@ Formatversion: 1
         #        // CurrencyCode de entrada queda como compatibilidad para la divisa por defecto de lineas.
         #        currencyCode = strUpr(strLRTrim(currencyCode));
         #
-        #        // Strict: header-only should not receive lines
+        #        // Validacion estricta: el modo de solo cabecera no debe recibir lineas
         #        if (mode == #ModeCreateHeaderOnly && conLen(linesIn) > 0)
         #            return [INDCRMUtilityService::buildHeader(false, 'Modo CreateHeaderOnly: no se deben enviar lineas.', conNull()), conNull()];
         #    }
         #
-        #    // Capture infolog start BEFORE doing anything that may log
+        #    // Captura la linea inicial de infolog ANTES de cualquier operacion que pueda registrar mensajes
         #    startLine = infolog.line();
         #
         #    try
         #    {
         #        changecompany(companyId)
         #        {
-        #            // Convert AX user -> CRM user
+        #            // Convierte el usuario AX en usuario CRM
         #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
         #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
         #
@@ -759,10 +768,10 @@ Formatversion: 1
         #
         #            ttsbegin;
         #
-        #            // ---- Header creation or load existing ----
+        #            // ---- Creacion de cabecera o carga de la existente ----
         #            if (mode == #ModeAddLinesToExisting)
         #            {
-        #                // Lock header row while adding lines
+        #                // Bloquea la fila de cabecera mientras se anaden lineas
         #                select firstOnly forUpdate header
         #                    where header.HojaGastosId == existingHojaGastosId;
         #
@@ -772,14 +781,14 @@ Formatversion: 1
         #                    return [INDCRMUtilityService::buildHeader(false, strFmt('No existe la hoja de gastos: %1', existingHojaGastosId), conNull()), conNull()];
         #                }
         #
-        #                // Must be open sheet
+        #                // La hoja debe estar abierta
         #                if (header.Voucher)
         #                {
         #                    ttsabort;
         #                    return [INDCRMUtilityService::buildHeader(false, 'La hoja de gastos no esta abierta (Voucher informado). No se pueden anadir lineas.', conNull()), conNull()];
         #                }
         #
-        #                // Optional but recommended: enforce ownership
+        #                // Comprobacion opcional pero recomendada: valida la propiedad
         #                if (header.UserId != crmUserId)
         #                {
         #                    ttsabort;
@@ -826,10 +835,10 @@ Formatversion: 1
         #                if (hasReimbursableExpense)
         #                    header.ReimbursableExpense = reimbursableExpense;
         #
-        #                // Must be open sheet
+        #                // La hoja debe estar abierta
         #                header.Voucher      = '';
         #
-        #                // Audit
+        #                // Auditoria
         #                header.INDCreatedByUserId = axUserId;
         #
         #                msg = INDCRMExpenseSheetService::validateExpenseSheetHeaderForApi(header); //MMS - Ajustes CRM - 2026.06.29
@@ -845,7 +854,7 @@ Formatversion: 1
         #                header.insert();
         #            }
         #
-        #            // ---- Insert lines (unless header-only mode) ----
+        #            // ---- Inserta lineas salvo en el modo de solo cabecera ----
         #            if (mode != #ModeCreateHeaderOnly)
         #            {
         #                lineCount = conLen(linesIn);
@@ -1037,7 +1046,7 @@ Formatversion: 1
         #                    if (hasLineReimbursableExpense)
         #                        line.ReimbursableExpense = any2int(lineReimbursableExpense);
         #
-        #                    // Prefer line project else header project
+        #                    // Prefiere el proyecto de linea; si falta, usa el proyecto de cabecera
         #                    if (lineProjId)
         #                    {
         #                        line.ProjId       = lineProjId;
@@ -1049,7 +1058,7 @@ Formatversion: 1
         #                        line.ProjIdHornos = header.ProjId;
         #                    }
         #
-        #                    // Audit
+        #                    // Auditoria
         #                    line.INDCreatedByUserId = axUserId;
         #
         #                    msg = INDCRMExpenseSheetService::validateExpenseSheetLineForApi(line); //MMS - Ajustes CRM - 2026.06.29
@@ -1067,18 +1076,18 @@ Formatversion: 1
         #                    if (fileId)
         #                        INDCRMExpenseSheetService::refreshTicketStatusByFileId(axUserId, fileId);
         #
-        #                    // Append at end (avoids conLen + conIns each iteration)
+        #                    // Anade al final y evita conLen + conIns en cada iteracion
         #                    linesOut += line.RecId;
         #                }
         #            }
         #
-        #            // Mark number as used only on success path
+        #            // Marca el numero como usado solo en la ruta de exito
         #            if (numberSeq)
         #                numberSeq.used();
         #
         #            ttscommit;
         #
-        #            // Message per mode
+        #            // Mensaje segun el modo
         #            if (mode == #ModeCreateHeaderOnly)
         #                message = 'Cabecera de hoja de gastos creada correctamente.';
         #            else if (mode == #ModeAddLinesToExisting)
@@ -1136,19 +1145,19 @@ Formatversion: 1
       ENDSOURCE
       SOURCE #createExpenseSheetTicket
         #/*
-        #    Method: indExpenseSheetTicketCreate (createExpenseSheetTicket)
-        #    Purpose:
-        #      - Mode 0 (default): Create ticket header + lines + DocuRef metadata.
-        #      - Mode 1: Create ticket header + DocuRef metadata only.
-        #      - Mode 2: Add line(s) to an existing ticket (by FileId).
-        #    Input _data (container):
+        #    Metodo: indExpenseSheetTicketCreate (createExpenseSheetTicket)
+        #    Proposito:
+        #      - Modo 0 (predeterminado): Crea la cabecera del ticket + lineas + metadatos de DocuRef.
+        #      - Modo 1: Crea solo la cabecera del ticket + metadatos de DocuRef.
+        #      - Modo 2: Anade linea(s) a un ticket existente (por FileId).
+        #    Entrada _data (contenedor):
         #      1) companyId
         #      2) headerIn
-        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional), ticketDate(optional), ticketTime(optional)]
-        #         - Mode 2  : at least [axUserId]
-        #      3) linesIn (container of line containers)
-        #         - Each line: [lineDescr, qty, price, lineTotal(optional)]
-        #      4) optionsIn (optional): [mode, existingFileId, processedByAI]
+        #         - Modo 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(opcional), ocrJson(opcional), normalizedJson(opcional), ticketDate(opcional), ticketTime(opcional)]
+        #         - Modo 2  : al menos [axUserId]
+        #      3) linesIn (contenedor de contenedores de linea)
+        #         - Cada linea: [lineDescr, qty, price, lineTotal(opcional)]
+        #      4) optionsIn (opcional): [mode, existingFileId, processedByAI]
         #*/
         #static server container createExpenseSheetTicket(container _data)
         #{
@@ -1592,401 +1601,17 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #createExpenseSheetTicket_backup
-        #/*
-        #    Method: indExpenseSheetTicketCreate (createExpenseSheetTicket)
-        #    Purpose:
-        #      - Mode 0 (default): Create ticket header + lines + DocuRef metadata.
-        #      - Mode 1: Create ticket header + DocuRef metadata only.
-        #      - Mode 2: Add line(s) to an existing ticket (by FileId).
-        #    Input _data (container):
-        #      1) companyId
-        #      2) headerIn
-        #         - Mode 0/1: [axUserId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional)]
-        #         - Mode 2  : at least [axUserId]
-        #      3) linesIn (container of line containers)
-        #         - Each line: [lineDescr, qty, price, lineTotal(optional)]
-        #      4) optionsIn (optional): [mode, existingFileId]
-        #*/
-        #static server container createExpenseSheetTicket_backup(container _data)
-        #{
-        #    #define.ModeCreateHeaderAndLines(0)
-        #    #define.ModeCreateHeaderOnly(1)
-        #    #define.ModeAddLinesToExisting(2)
-        #
-        #    DataAreaId         companyId;
-        #    container          headerIn;
-        #    container          linesIn;
-        #    container          optionsIn;
-        #    container          lineIn;
-        #
-        #    int                mode;
-        #    int                i;
-        #    int                lineCount;
-        #    int                startLine;
-        #
-        #    str 20             axUserId;
-        #    CRMUserId          crmUserId;
-        #    INDFileId          existingFileId;
-        #
-        #    str                descr;
-        #    str                currencyCode;
-        #    real               totalAmount;
-        #    str                transDateStr;
-        #    date               transDate;
-        #    str                comentario;
-        #    str                urlFile;
-        #    str                fileName;
-        #
-        #    str                lineDescr;
-        #    real               qty;
-        #    real               price;
-        #    real               lineTotal;
-        #    boolean            hasLineTotal;
-        #    int                gastoType;
-        #    boolean            hasHeaderTotalAmount;
-        #    boolean            hasGastoType;
-        #
-        #    INDTicketInfoTable ticketHeader;
-        #    INDTicketInfoLine  ticketLine;
-        #    DocuRef            docuRef;
-        #
-        #    container          linesOut = conNull();
-        #    str                message;
-        #    str                msg;
-        #    ;
-        #
-        #    companyId = INDCRMUtilityService::getCompany(_data);
-        #
-        #    if (!companyId)
-        #        return [INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull()), conNull()];
-        #
-        #    if (conLen(_data) < 3)
-        #        return [INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan al menos 3 elementos.', conNull()), conNull()];
-        #
-        #    headerIn = conPeek(_data, 2);
-        #    linesIn  = conPeek(_data, 3);
-        #
-        #    optionsIn = conNull();
-        #    if (conLen(_data) >= 4)
-        #        optionsIn = conPeek(_data, 4);
-        #
-        #    mode                 = #ModeCreateHeaderAndLines;
-        #    existingFileId       = '';
-        #    gastoType            = 0;
-        #    hasHeaderTotalAmount = false;
-        #    hasGastoType         = false;
-        #
-        #    if (conLen(optionsIn) >= 1)
-        #        mode = conPeek(optionsIn, 1);
-        #
-        #    if (conLen(optionsIn) >= 2)
-        #        existingFileId = conPeek(optionsIn, 2);
-        #
-        #    if (mode != #ModeCreateHeaderAndLines &&
-        #        mode != #ModeCreateHeaderOnly &&
-        #        mode != #ModeAddLinesToExisting)
-        #    {
-        #        return [INDCRMUtilityService::buildHeader(false, strFmt('Mode invalido: %1 (valores: 0|1|2).', mode), conNull()), conNull()];
-        #    }
-        #
-        #    if (mode == #ModeAddLinesToExisting)
-        #    {
-        #        if (conLen(headerIn) < 1)
-        #            return [INDCRMUtilityService::buildHeader(false, 'Header input invalido para modo AddLines. Se espera al menos AxUserId.', conNull()), conNull()];
-        #
-        #        axUserId = conPeek(headerIn, 1);
-        #
-        #        if (!existingFileId)
-        #            return [INDCRMUtilityService::buildHeader(false, 'existingFileId es obligatorio en modo AddLines (options[2]).', conNull()), conNull()];
-        #
-        #        if (conLen(linesIn) <= 0)
-        #            return [INDCRMUtilityService::buildHeader(false, 'Se espera al menos 1 linea en modo AddLines.', conNull()), conNull()];
-        #    }
-        #    else
-        #    {
-        #        if (conLen(headerIn) < 8)
-        #            return [INDCRMUtilityService::buildHeader(false, 'Header input invalido. Se esperan 8 campos.', conNull()), conNull()];
-        #
-        #        axUserId     = conPeek(headerIn, 1);
-        #        descr        = conPeek(headerIn, 2);
-        #        currencyCode = conPeek(headerIn, 3);
-        #        totalAmount  = conPeek(headerIn, 4);
-        #        transDateStr = conPeek(headerIn, 5);
-        #        comentario   = conPeek(headerIn, 6);
-        #        urlFile      = conPeek(headerIn, 7);
-        #        fileName     = conPeek(headerIn, 8);
-        #
-        #        if (conLen(headerIn) >= 9)
-        #        {
-        #            gastoType = conPeek(headerIn, 9);
-        #            hasGastoType = true;
-        #        }
-        #
-        #        hasHeaderTotalAmount = true;
-        #
-        #        if (!descr)
-        #            return [INDCRMUtilityService::buildHeader(false, 'Description es obligatorio.', conNull()), conNull()];
-        #
-        #        if (!currencyCode)
-        #            return [INDCRMUtilityService::buildHeader(false, 'CurrencyCode es obligatorio.', conNull()), conNull()];
-        #
-        #        if (!urlFile)
-        #            return [INDCRMUtilityService::buildHeader(false, 'INDURLFile es obligatorio.', conNull()), conNull()];
-        #
-        #        if (!fileName)
-        #            return [INDCRMUtilityService::buildHeader(false, 'INDFilename es obligatorio.', conNull()), conNull()];
-        #
-        #        transDate = INDCRMUtilityService::parseYmdDate(transDateStr);
-        #        if (!transDate)
-        #            return [INDCRMUtilityService::buildHeader(false, strFmt('TransDate invalida (yyyymmdd): %1', transDateStr), conNull()), conNull()];
-        #
-        #        currencyCode = strUpr(strLRTrim(currencyCode));
-        #
-        #        if (hasGastoType && !INDCRMExpenseSheetService::isValidGastoType(gastoType))
-        #            return [INDCRMUtilityService::buildHeader(false, strFmt('GastoType invalido: %1.', gastoType), conNull()), conNull()];
-        #
-        #        if (mode == #ModeCreateHeaderOnly && conLen(linesIn) > 0)
-        #            return [INDCRMUtilityService::buildHeader(false, 'Modo CreateHeaderOnly: no se deben enviar lineas.', conNull()), conNull()];
-        #    }
-        #
-        #    if (!axUserId)
-        #        return [INDCRMUtilityService::buildHeader(false, 'AxUserId es obligatorio.', conNull()), conNull()];
-        #
-        #    startLine = infolog.line();
-        #
-        #    try
-        #    {
-        #        changecompany(companyId)
-        #        {
-        #            crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
-        #                        //SysUserInfo::getCRMUsuarioTable(axUserId).UserId;
-        #            if (!crmUserId)
-        #                return [INDCRMUtilityService::buildHeader(false, 'crmUserId es obligatorio.', conNull()), conNull()];
-        #
-        #            if (mode == #ModeAddLinesToExisting)
-        #            {
-        #                select firstonly forupdate ticketHeader
-        #                    where ticketHeader.FileId          == existingFileId
-        #                       && ticketHeader.CreatedByUserId == axUserId;
-        #
-        #                if (!ticketHeader.RecId)
-        #                {
-        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('No existe el ticket: %1', existingFileId), conNull()), conNull()];
-        #                }
-        #            }
-        #            else
-        #            {
-        #                ttsbegin;
-        #                docuRef.clear();
-        #                docuRef.initValue();
-        #                docuRef.RefCompanyId          = companyId;
-        #                docuRef.RefTableId            = tableNum(INDTicketInfoTable);
-        #                docuRef.TypeId                = 'Imagen';
-        #                docuRef.Name                  = fileName;
-        #                docuRef.Notes                 = comentario;
-        #                docuRef.INDDescription        = descr;
-        #                docuRef.INDComentario         = comentario;
-        #                docuRef.INDTransDate          = transDate;
-        #                docuRef.INDFileAllocationType = INDFileAllocationType::ExpenseSheet;
-        #                docuRef.INDFileLocationType   = INDFileLocationType::Cloud;
-        #                docuRef.INDURLFile            = urlFile;
-        #                docuRef.INDFilename           = fileName;
-        #                docuRef.INDCreatedByUserId    = axUserId;
-        #                docuRef.insert();
-        #                ttscommit;
-        #
-        #                ttsbegin;
-        #                ticketHeader.clear();
-        #                ticketHeader.initValue();
-        #                ticketHeader.FileId          = docuRef.INDFileId;
-        #                ticketHeader.Description     = descr;
-        #                ticketHeader.Status          = INDTicketStatus::Pending;
-        #                ticketHeader.CurrencyCode    = currencyCode;
-        #                ticketHeader.TotalAmount     = totalAmount;
-        #                ticketHeader.GastoType       = hasGastoType ? gastoType : 0;
-        #                ticketHeader.CreatedByUserId = axUserId;
-        #
-        #                msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
-        #                if (msg)
-        #                {
-        #                    ttsabort;
-        #                    return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
-        #                }
-        #
-        #                ticketHeader.insert();
-        #                ttscommit;
-        #
-        #                ttsbegin;
-        #                //Actualizo referencia en DocuRef
-        #                docuRef             = DocuRef::findRecId(docuRef.RecId,true);
-        #                docuRef.RefRecId    = ticketHeader.RecId;
-        #                docuRef.update();
-        #                ttscommit;
-        #
-        #                if (!ticketHeader.FileId)
-        #                {
-        #
-        #                    return [INDCRMUtilityService::buildHeader(false, 'No se pudo generar FileId para el ticket.', conNull()), conNull()];
-        #                }
-        #
-        #            }
-        #
-        #            ttsbegin;
-        #            if (mode != #ModeCreateHeaderOnly)
-        #            {
-        #                lineCount = conLen(linesIn);
-        #
-        #                for (i = 1; i <= lineCount; i++)
-        #                {
-        #                    lineIn = conPeek(linesIn, i);
-        #
-        #                    if (conLen(lineIn) < 3)
-        #                    {
-        #
-        #                        return [INDCRMUtilityService::buildHeader(false, 'Linea de ticket invalida. Se esperan al menos 3 campos.', conNull()), conNull()];
-        #                    }
-        #
-        #                    lineDescr = conPeek(lineIn, 1);
-        #                    qty       = conPeek(lineIn, 2);
-        #                    price     = conPeek(lineIn, 3);
-        #
-        #                    lineTotal = qty * price;
-        #                    hasLineTotal = false;
-        #                    if (conLen(lineIn) >= 4)
-        #                    {
-        #                        lineTotal = conPeek(lineIn, 4);
-        #                        hasLineTotal = true;
-        #                    }
-        #
-        #                    if (!lineDescr)
-        #                    {
-        #
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Description es obligatorio en linea %1.', i), conNull()), conNull()];
-        #                    }
-        #
-        #                    if (qty < 0)
-        #                    {
-        #
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty no puede ser negativo en linea %1.', i), conNull()), conNull()];
-        #                    }
-        #
-        #                    if (price == 0)
-        #                    {
-        #
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Price no puede ser 0 en linea %1.', i), conNull()), conNull()];
-        #                    }
-        #
-        #                    if (!hasLineTotal)
-        #                    {
-        #                        if (qty == 0 && price < 0)
-        #                            lineTotal = price;
-        #                        else
-        #                            lineTotal = qty * price;
-        #                    }
-        #
-        #                    if (qty == 0 && lineTotal >= 0)
-        #                    {
-        #
-        #                        return [INDCRMUtilityService::buildHeader(false, strFmt('Qty cero solo se permite en descuentos con total negativo en linea %1.', i), conNull()), conNull()];
-        #                    }
-        #
-        #                    if(lineTotal == 0 && qty > 0)
-        #                        lineTotal = qty * price;
-        #
-        #                    ticketLine.clear();
-        #                    ticketLine.initValue();
-        #
-        #                    ticketLine.FileId          = ticketHeader.FileId;
-        #                    ticketLine.RefRecIdTable   = ticketHeader.RecId;
-        #                    ticketLine.Description     = lineDescr;
-        #                    ticketLine.Qty             = qty;
-        #                    ticketLine.Price           = price;
-        #                    ticketLine.TotalAmount     = lineTotal;
-        #                    ticketLine.CreatedByUserId = axUserId;
-        #
-        #                    ticketLine.insert();
-        #                    linesOut += ticketLine.RecId;
-        #                }
-        #            }
-        #            ttscommit;
-        #
-        #            ttsbegin;
-        #            ticketHeader = INDTicketInfoTable::findByFileId(ticketHeader.FileId,true);
-        #            ticketHeader.calcTotalAmount();
-        #
-        #            if (mode == #ModeCreateHeaderOnly && hasHeaderTotalAmount)
-        #                ticketHeader.TotalAmount = totalAmount;
-        #
-        #            msg = INDCRMExpenseSheetService::validateTicketDateTimeForApi(ticketHeader, startLine);
-        #            if (msg)
-        #            {
-        #                ttsabort;
-        #                return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
-        #            }
-        #
-        #            ticketHeader.update();
-        #
-        #            ttscommit;
-        #
-        #            if (mode == #ModeCreateHeaderOnly)
-        #                message = 'Ticket creado correctamente (solo cabecera).';
-        #            else if (mode == #ModeAddLinesToExisting)
-        #                message = strFmt('Lineas de ticket creadas correctamente para FileId %1.', ticketHeader.FileId);
-        #            else
-        #                message = 'Ticket creado correctamente.';
-        #
-        #            return [INDCRMUtilityService::buildHeader(true, message, [ticketHeader.FileId, strFmt('%1', ticketHeader.RecId), strFmt('%1', ticketHeader.TotalAmount), strFmt('%1', ticketHeader.AmountMST)]), linesOut];
-        #        }
-        #    }
-        #    catch (Exception::Deadlock)
-        #    {
-        #        if (appl.ttsLevel() > 0)
-        #           ttsabort;
-        #
-        #        return [INDCRMUtilityService::buildHeader(false, 'Deadlock detectado. Reintentar la operacion.', conNull()), conNull()];
-        #    }
-        #    catch (Exception::DDEerror)
-        #    {
-        #        if (appl.ttsLevel() > 0)
-        #           ttsabort;
-        #
-        #        return [INDCRMUtilityService::buildHeader(false, INDCRMUtilityService::getInfologMessagesSince(startLine), conNull()), conNull()];
-        #    }
-        #    catch (Exception::Internal)
-        #    {
-        #        if (appl.ttsLevel() > 0)
-        #           ttsabort;
-        #
-        #        return [INDCRMUtilityService::buildHeader(false, 'Error interno del sistema.', conNull()), conNull()];
-        #    }
-        #    catch (Exception::Error)
-        #    {
-        #        if (appl.ttsLevel() > 0)
-        #         ttsabort;
-        #
-        #        msg = INDCRMUtilityService::getInfologMessagesSince(startLine);
-        #        if (!msg)
-        #            msg = 'Error en el proceso. Revisar infolog.';
-        #
-        #        return [INDCRMUtilityService::buildHeader(false, msg, conNull()), conNull()];
-        #    }
-        #
-        #    return [INDCRMUtilityService::buildHeader(false, 'Error no controlado.', conNull()), conNull()];
-        #}
-        #
-      ENDSOURCE
       SOURCE #createExpenseSheetTicketLine
-        #// Method: createExpenseSheetTicketLine
-        #// Purpose: Creates one granular line for an existing ticket by FileId.
-        #// Input:
+        #// Metodo: createExpenseSheetTicketLine
+        #// Proposito: Crea una linea granular para un ticket existente mediante FileId.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = fileId
         #//  - _data[4] = lineDescription
         #//  - _data[5] = qty
         #//  - _data[6] = price
-        #//  - _data[7] = lineTotal (optional)
+        #//  - _data[7] = lineTotal (opcional)
         #static server container createExpenseSheetTicketLine(container _data)
         #{
         #    DataAreaId         companyId;
@@ -2140,13 +1765,13 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #deleteExpenseSheetLine
-        #// Method: deleteExpenseSheetLine
-        #// Purpose: Delete one line or delete whole expense sheet (header + lines) depending on flag.
-        #// Input container:
+        #// Metodo: deleteExpenseSheetLine
+        #// Proposito: Elimina una linea o toda la hoja de gastos (cabecera + lineas) segun el indicador.
+        #// Contenedor de entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = hojaId
-        #//  - _data[4] = lineRecId (can be 0 if deleteWholeSheet = 1)
+        #//  - _data[4] = lineRecId (puede ser 0 si deleteWholeSheet = 1)
         #//  - _data[5] = deleteWholeSheet (0/1)
         #static server container deleteExpenseSheetLine(container _data)
         #{
@@ -2170,7 +1795,7 @@ Formatversion: 1
         #    if (!companyId)
         #        return INDCRMUtilityService::buildHeader(false, 'CompanyId es obligatorio.', conNull());
         #
-        #    // Now we expect 5 fields minimum
+        #    // Ahora se espera un minimo de 5 campos
         #    if (conLen(_data) < 5)
         #        return INDCRMUtilityService::buildHeader(false, 'Input container invalido. Se esperan 5 campos.', conNull());
         #
@@ -2182,11 +1807,11 @@ Formatversion: 1
         #    if (!hojaId)
         #        return INDCRMUtilityService::buildHeader(false, 'HojaGastosId es obligatorio.', conNull());
         #
-        #    // If not deleting whole sheet, lineRecId must be provided
+        #    // Si no se elimina toda la hoja, debe informarse lineRecId
         #    if (!deleteWholeSheet && !lineRecId)
         #        return INDCRMUtilityService::buildHeader(false, 'LineRecId es obligatorio cuando deleteWholeSheet es 0.', conNull());
         #
-        #    // Capture start line before the try for infolog extraction
+        #    // Captura la linea inicial antes del try para extraer infolog
         #    startLine = infolog.line();
         #
         #    try
@@ -2214,7 +1839,7 @@ Formatversion: 1
         #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
         #            }
         #
-        #            // Mode: delete whole sheet (header + all lines)
+        #            // Modo: elimina toda la hoja (cabecera + todas las lineas)
         #            if (deleteWholeSheet)
         #            {
         #                while select forupdate line
@@ -2235,7 +1860,7 @@ Formatversion: 1
         #                return INDCRMUtilityService::buildHeader(true, 'Hoja de gastos eliminada correctamente.', conNull());
         #            }
         #
-        #            // Mode: delete only one line
+        #            // Modo: elimina solo una linea
         #            select firstonly forupdate line
         #                where line.RecId       == lineRecId
         #                   && line.UserId       == crmUserId
@@ -2292,13 +1917,13 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #deleteExpenseSheetTicket
-        #// Method: deleteExpenseSheetTicket
-        #// Purpose: Deletes one ticket line by LineRecId (granular) or full ticket by FileId.
-        #// Input:
+        #// Metodo: deleteExpenseSheetTicket
+        #// Proposito: Elimina una linea de ticket por LineRecId (granular) o el ticket completo por FileId.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = fileId
-        #//  - _data[4] = lineRecId (optional; if informed deletes only one ticket line)
+        #//  - _data[4] = lineRecId (opcional; si se informa, elimina solo una linea de ticket)
         #static server container deleteExpenseSheetTicket(container _data)
         #{
         #    DataAreaId          companyId;
@@ -2391,15 +2016,6 @@ Formatversion: 1
         #                                                         [ticketHeader.FileId, strFmt('%1', lineRecId), strFmt('%1', ticketHeader.TotalAmount), strFmt('%1', ticketHeader.AmountMST)]);
         #            }
         #
-        #            /*select firstonly expenseLine
-        #                where expenseLine.FileId == fileId;
-        #
-        #            if (expenseLine.RecId)
-        #            {
-        #                ttsabort;
-        #                return INDCRMUtilityService::buildHeader(false, 'FileId esta asignado a una linea de gastos. Debe desasignarse antes de eliminar.', conNull());
-        #            } */
-        #
         #            while select forupdate ticketLine
         #                where ticketLine.FileId        == ticketHeader.FileId
         #                   && ticketLine.RefRecIdTable == ticketHeader.RecId
@@ -2452,9 +2068,9 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #deleteExpenseSheetTicketLine
-        #// Method: deleteExpenseSheetTicketLine
-        #// Purpose: Deletes one granular line from ticket detail by FileId + LineRecId.
-        #// Input:
+        #// Metodo: deleteExpenseSheetTicketLine
+        #// Proposito: Elimina una linea granular del detalle del ticket mediante FileId + LineRecId.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = fileId
@@ -2578,12 +2194,12 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #getCurrencyList
-        #// Method: getCurrencyList
-        #// Purpose: Returns currency list with CurrencyCode and CurrencyCodeISO.
-        #// Input container:
+        #// Metodo: getCurrencyList
+        #// Proposito: Devuelve la lista de divisas con CurrencyCode y CurrencyCodeISO.
+        #// Contenedor de entrada:
         #//  - _data[1] = CompanyId
-        #// Output:
-        #//  - Container items: [[CurrencyCode, CurrencyCodeISO], ...]
+        #// Salida:
+        #//  - Elementos del contenedor: [[CurrencyCode, CurrencyCodeISO], ...]
         #static server container getCurrencyList(container _data)
         #{
         #    DataAreaId   _company;
@@ -2613,8 +2229,8 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #getExpenseSheet
-        #// Method: indExpenseSheetGet
-        #// Purpose: Get header + lines by CompanyId + crmUserId + HojaGastosId.
+        #// Metodo: indExpenseSheetGet
+        #// Proposito: Obtiene cabecera + lineas por CompanyId + crmUserId + HojaGastosId.
         #static server container getExpenseSheet(container _data)
         #{
         #    DataAreaId          companyId;
@@ -2629,8 +2245,10 @@ Formatversion: 1
         #    str                 ownerName;
         #    CRMHojaGastosLine   line;
         #    Amount              monto;
-        #    Amount              totalAmountCurrency;
+        #    Amount              legacyAccountingTotalAmount;
         #    Amount              totalAmountMST;
+        #    Amount              totalGrossAmountMST;
+        #    INDReimbursableAmount totalReimbursableAmount;
         #    Price               price;
         #    container           headerOut;
         #    container           linesOut = conNull();
@@ -2678,7 +2296,7 @@ Formatversion: 1
         #        debugSheetCreatedByUserId = '';
         #        debugSheetStatus = '';
         #
-        #        // Diagnostic lookup: detects whether the sheet exists but belongs to another CRM user.
+        #        // Consulta diagnostica: detecta si la hoja existe pero pertenece a otro usuario CRM.
         #        select firstonly debugHeader
         #            where debugHeader.HojaGastosId == hojaId;
         #
@@ -2709,15 +2327,19 @@ Formatversion: 1
         #                                                    strFmt('sheetStatus=%1', debugSheetStatus)
         #                                                   ]), conNull()];
         #
-        #        totalAmountCurrency = header.TotalAmount();
+        #        //MMS - Conserva la columna de salida heredada y nombra explicitamente su significado contable - 2026.07.29
+        #        legacyAccountingTotalAmount = header.TotalAmount();
         #        totalAmountMST      = header.TotalAmountMST();
+        #        //MMS - Anade totales explicitos en divisa de empresa sin desplazar las columnas heredadas - 2026.07.29
+        #        totalGrossAmountMST     = header.TotalBrutoAmountMST();
+        #        totalReimbursableAmount = header.TotalReimbursableAmount();
         #        exchangeRateMode    = any2int(header.ExchangeRateMode);
         #        expenseSheetStatus  = any2int(header.ExpenseSheetStatus);
         #        reimbursableExpense = any2int(header.ReimbursableExpense);
         #        // Resuelve el propietario para exponerlo al detalle web sin cambiar indices anteriores.
         #        ownerUser           = CRMUsuarioTable::Find(header.UserId);
         #        //MMS - Prioriza el usuario AX actual y conserva el creador historico como respaldo - 2026.07.24
-        #        ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(header.UserId);
+        #            ownerAxUserId = INDCRMExpenseSheetService::resolveAxUserIdFromCrmUserId(header.UserId);
         #        if (!ownerAxUserId)
         #            ownerAxUserId = header.INDCreatedByUserId;
         #        ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ownerAxUserId ? ownerAxUserId : header.UserId);
@@ -2732,7 +2354,7 @@ Formatversion: 1
         #                                                      strFmt("%1", header.EstadoComentarios),
         #                                                      strFmt("%1", header.UserId),
         #                                                      strFmt("%1", Currency::find(header.CurrencyCode).CurrencyCodeISO),
-        #                                                      strFmt("%1", totalAmountCurrency),
+        #                                                      strFmt("%1", legacyAccountingTotalAmount),
         #                                                      strFmt("%1", header.ExchRate),
         #                                                      strFmt("%1", exchangeRateMode),
         #                                                      strFmt("%1", header.ProjId),
@@ -2743,7 +2365,9 @@ Formatversion: 1
         #                                                      strFmt("%1", ownerAxUserId),
         #                                                      strFmt("%1", ownerName),
         #                                                      strFmt("%1", totalAmountMST),
-        #                                                      strFmt("%1", date2Str(header.CreatedDate, 123, 2,2,2,2,4))
+        #                                                      strFmt("%1", date2Str(header.CreatedDate, 123, 2,2,2,2,4)),
+        #                                                      strFmt("%1", totalGrossAmountMST),
+        #                                                      strFmt("%1", totalReimbursableAmount)
         #                                                     ]);
         #
         #        while select line
@@ -2770,7 +2394,9 @@ Formatversion: 1
         #                         strFmt("%1", lineReimbursableExpense),
         #                         strFmt("%1", Currency::find(line.Currency ? line.Currency : header.CurrencyCode).CurrencyCodeISO),
         #                         strFmt("%1", line.AmountMST),
-        #                         strFmt("%1", line.ExchRate)
+        #                         strFmt("%1", line.ExchRate),
+        #                         //MMS - Anade el importe MST reembolsable derivado a la estructura heredada de la linea - 2026.07.29
+        #                         strFmt("%1", line.ReimbursableAmount)
         #                       ];
         #
         #            linesOut = conIns(linesOut, conLen(linesOut) + 1, lineRow);
@@ -3052,7 +2678,7 @@ Formatversion: 1
         #                       || (billedMode == 1 && hoja.Voucher != '')
         #                      )
         #
-        #                   // Excluir registros legacy sin CreatedDate real.
+        #                   // Excluir registros heredados sin CreatedDate real.
         #                   && hoja.CreatedDate != dateNull()
         #
         #                   // Fecha creacion opcional
@@ -3082,7 +2708,7 @@ Formatversion: 1
         #        }
         #        else
         #        {
-        #            // Include the current user plus direct subordinates.
+        #            // Incluye el usuario actual y sus subordinados directos.
         #            visibleUserIds = [crmUserId];
         #
         #            while select subordinadoTable
@@ -3109,7 +2735,7 @@ Formatversion: 1
         #                       || (billedMode == 1 && hoja.Voucher != '')
         #                      )
         #
-        #                       // Excluir registros legacy sin CreatedDate real.
+        #                       // Excluir registros heredados sin CreatedDate real.
         #                   && hoja.CreatedDate != dateNull()
         #
         #                       // Fecha creacion opcional
@@ -3147,9 +2773,9 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #getExpenseSheetTicket
-        #// Method: getExpenseSheetTicket
-        #// Purpose: Get one ticket header and lines by FileId.
-        #// Input:
+        #// Metodo: getExpenseSheetTicket
+        #// Proposito: Obtiene una cabecera de ticket y sus lineas por FileId.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = fileId
@@ -3263,21 +2889,21 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #getExpenseSheetTicketsLinkList
-        #// Method: getExpenseSheetTicketsLinkList
-        #// Purpose: Returns linkable ticket list for one user.
-        #// Input:
+        #// Metodo: getExpenseSheetTicketsLinkList
+        #// Proposito: Devuelve la lista de tickets vinculables para un usuario.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
-        #//  - _data[3] = searchKey/filterTxt (optional)
-        #//  - _data[4] = createdDateFrom (optional, yyyymmdd)
-        #//  - _data[5] = createdDateTo   (optional, yyyymmdd)
-        #//  - _data[6] = currencyCode    (optional)
-        #//  - _data[7] = gastoType       (optional)
-        #//  - _data[8] = processedByAI   (optional, 0|1; otros valores = sin filtro)
-        #// Fixed filters:
+        #//  - _data[3] = searchKey/filterTxt (opcional)
+        #//  - _data[4] = createdDateFrom (opcional, yyyymmdd)
+        #//  - _data[5] = createdDateTo   (opcional, yyyymmdd)
+        #//  - _data[6] = currencyCode    (opcional)
+        #//  - _data[7] = gastoType       (opcional)
+        #//  - _data[8] = processedByAI   (opcional, 0|1; otros valores = sin filtro)
+        #// Filtros fijos:
         #//  - Status = Pending
         #//  - TotalAmount != 0
-        #// Output rows:
+        #// Filas de salida:
         #//  - [[FileId, Description, CurrencyCode, TotalAmount, TransDate, FileName, ProcessedByAI, GastoType], ...]
         #static server container getExpenseSheetTicketsLinkList(container _data)
         #{
@@ -3399,19 +3025,19 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #getExpenseSheetTicketsList
-        #// Method: getExpenseSheetTicketsList
-        #// Purpose: Returns ticket list for one user.
-        #// Input:
+        #// Metodo: getExpenseSheetTicketsList
+        #// Proposito: Devuelve la lista de tickets para un usuario.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
-        #//  - _data[3] = searchKey/filterTxt (optional)
-        #//  - _data[4] = statusFilter (optional, 0|1; otros valores = sin filtro)
-        #//  - _data[5] = createdDateFrom (optional, yyyymmdd)
-        #//  - _data[6] = createdDateTo   (optional, yyyymmdd)
-        #//  - _data[7] = currencyCode    (optional)
-        #//  - _data[8] = gastoType       (optional)
-        #//  - _data[9] = processedByAI   (optional, 0|1; otros valores = sin filtro)
-        #// Output rows:
+        #//  - _data[3] = searchKey/filterTxt (opcional)
+        #//  - _data[4] = statusFilter (opcional, 0|1; otros valores = sin filtro)
+        #//  - _data[5] = createdDateFrom (opcional, yyyymmdd)
+        #//  - _data[6] = createdDateTo   (opcional, yyyymmdd)
+        #//  - _data[7] = currencyCode    (opcional)
+        #//  - _data[8] = gastoType       (opcional)
+        #//  - _data[9] = processedByAI   (opcional, 0|1; otros valores = sin filtro)
+        #// Filas de salida:
         #//  - [[FileId, Description, Status, ProcessedByAI, CurrencyCode, TotalAmount, TransDate, FileName, GastoType], ...]
         #static server container getExpenseSheetTicketsList(container _data)
         #{
@@ -3550,17 +3176,17 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #getFuelPriceKm
-        #// Method: getFuelPriceKm
-        #// Purpose: Obtiene el precio por km para un usuario y fecha.
+        #// Metodo: getFuelPriceKm
+        #// Proposito: Obtiene el precio por km para un usuario y fecha.
         #// Prioridad: CRMHojaGastosUserPriceKmFechaTable::FindActive(crmUserId, transDate)
-        #// Fallback: CRMParameters::find().PriceKm
-        #// Input:
+        #// Alternativa: CRMParameters::find().PriceKm
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = transDate (yyyymmdd)
-        #// Output header extras:
+        #// Extras de salida de cabecera:
         #//  - [1] PriceKm
-        #//  - [2] Source (CRMHojaGastosUserPriceKmFechaTable|CRMParameters)
+        #//  - [2] Origen (CRMHojaGastosUserPriceKmFechaTable|CRMParameters)
         #static server container getFuelPriceKm(container _data)
         #{
         #    DataAreaId companyId;
@@ -3773,13 +3399,13 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #getProjectsList
-        #// Method: getProjectsList
-        #// Purpose: Returns container of projects with INDTransDateCierreCostes empty (0D) filtered by INDSearchKey.
-        #// Input container:
+        #// Metodo: getProjectsList
+        #// Proposito: Devuelve un contenedor de proyectos con INDTransDateCierreCostes vacio (0D), filtrado por INDSearchKey.
+        #// Contenedor de entrada:
         #//  - _data[1] = CompanyId
-        #//  - _data[2] = filterTxt (optional)
-        #// Output:
-        #//  - Container items: [[ProjId, ProjectName], ...]
+        #//  - _data[2] = filterTxt (opcional)
+        #// Salida:
+        #//  - Elementos del contenedor: [[ProjId, ProjectName], ...]
         #static server container getProjectsList(container _data)
         #{
         #    DataAreaId   _company;
@@ -3824,12 +3450,12 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #getSubordinatesByUser
-        #// Method: getSubordinatesByUser
-        #// Purpose: Obtiene subordinados de un usuario CRM en una compania.
-        #// Input:
+        #// Metodo: getSubordinatesByUser
+        #// Proposito: Obtiene subordinados de un usuario CRM en una compania.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
-        #// Output rows:
+        #// Filas de salida:
         #//  - [[crmUserId, axUserId, subordinateName], ...]
         #static server container getSubordinatesByUser(container _data)
         #{
@@ -3907,74 +3533,6 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
-      SOURCE #getSubordinatesByUser_backup
-        #// Method: getSubordinatesByUser
-        #// Purpose: Obtiene subordinados de un usuario CRM en una compania.
-        #// Input:
-        #//  - _data[1] = CompanyId
-        #//  - _data[2] = axUserId
-        #// Output rows:
-        #//  - [[subordinateUserId, subordinateName], ...]
-        #static server container getSubordinatesByUser_backup(container _data)
-        #{
-        #    DataAreaId                 companyId;
-        #    str 20                     axUserId;
-        #    CRMUserId                  crmUserId;
-        #    CRMUserId                  subordinateCrmUserId;
-        #    CRMUsuarioTable            crmUsuarioTable;
-        #    CRMUsuarioSubordinadoTable subordinadoTable;
-        #    container                  resultCon, itemCon, subordinateUsersCon;
-        #    str                        subordinateList;
-        #    str                        subordinateUserId;
-        #    int                        i;
-        #    ;
-        #
-        #    companyId = INDCRMUtilityService::getCompany(_data);
-        #    if (!companyId)
-        #        return conNull();
-        #
-        #    if (conLen(_data) < 2)
-        #        return resultCon;
-        #
-        #    axUserId = conPeek(_data, 2);
-        #
-        #    changecompany(companyId)
-        #    {
-        #        crmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(axUserId); //Lo convierto de usuario Axapta al de CRM
-        #                          //SysUserInfo::getCRMUsuarioTable(axUserId);
-        #        if (!crmUserId)
-        #            return resultCon;
-        #
-        #        crmUsuarioTable = CRMUsuarioTable::Find(crmUserId);
-        #
-        #        subordinadoTable.clear();
-        #        subordinadoTable.UserIdJefe = crmUserId;
-        #
-        #        subordinateList = crmUsuarioTable.ListaSubordinadosByPerTable();
-        #        if (!subordinateList)
-        #            return resultCon;
-        #
-        #        subordinateUsersCon = str2con(subordinateList, ',');
-        #
-        #        for (i = 1; i <= conLen(subordinateUsersCon); i++)
-        #        {
-        #            subordinateUserId = strLRTrim(conPeek(subordinateUsersCon, i));
-        #            if (!subordinateUserId)
-        #                continue;
-        #
-        #            subordinateCrmUserId = INDCRMExpenseSheetService::resolveCrmUserIdFromAny(subordinateUserId);
-        #            if (!CRMUsuarioSubordinadoTable::EsAprobadorHojaGastos(crmUserId, subordinateCrmUserId))
-        #                continue;
-        #
-        #            itemCon = [[strFmt("%1", subordinateUserId), strFmt("%1",CRMUsuarioTable::Find(subordinateUserId).Name)]];
-        #            resultCon += itemCon;
-        #        }
-        #    }
-        #
-        #    return resultCon ? resultCon : [["Sin datos."]];
-        #}
-        #
-      ENDSOURCE
       SOURCE #htmlEncodeText
         #// Escapa valores de negocio antes de insertarlos en HTML de plantilla.
         #static server str htmlEncodeText(str _value)
@@ -4003,15 +3561,15 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #isValidGastoType
-        #// Method: isValidGastoType
-        #// Purpose: Validate allowed CRMGastoType int values (hardcoded)
+        #// Metodo: isValidGastoType
+        #// Proposito: Valida los valores int permitidos de CRMGastoType, codificados de forma fija
         #static server boolean isValidGastoType(int _typeValue)
         #{
         #    switch (_typeValue)
         #    {
-        #        case 0:  // None
+        #        case 0:  // Ninguno
         #        case 1:  // Peajes
-        #        case 2:  // Parking
+        #        case 2:  // Aparcamiento
         #        case 3:  // Km
         #        case 4:  // Desayuno
         #        case 5:  // Comida
@@ -4040,8 +3598,8 @@ Formatversion: 1
       ENDSOURCE
       SOURCE #isValidLineReimbursableExpense
         #//MMS - Ajustes CRM - 2026.06.29
-        #// Method: isValidLineReimbursableExpense
-        #// Purpose: Validate allowed INDReimbursableExpenseLines int values.
+        #// Metodo: isValidLineReimbursableExpense
+        #// Proposito: Valida los valores int permitidos de INDReimbursableExpenseLines.
         #static server boolean isValidLineReimbursableExpense(int _value)
         #{
         #    return _value == 0 || _value == 1;
@@ -4049,8 +3607,8 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #isValidReimbursableExpense
-        #// Method: isValidReimbursableExpense
-        #// Purpose: Validate allowed INDReimbursableExpense int values.
+        #// Metodo: isValidReimbursableExpense
+        #// Proposito: Valida los valores int permitidos de INDReimbursableExpense.
         #static server boolean isValidReimbursableExpense(int _value)
         #{
         #    return _value == 0 || _value == 1 || _value == 2;
@@ -4058,14 +3616,14 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #propagateExpenseSheetCurrencyDefaults
-        #// Method: propagateExpenseSheetCurrencyDefaults
-        #// Purpose: Legacy no-op. Header currency is always local; line currencies must not be overwritten.
-        #// Input:
+        #// Metodo: propagateExpenseSheetCurrencyDefaults
+        #// Proposito: Sin operacion heredada. La divisa de cabecera siempre es local; no se deben sobrescribir las divisas de linea.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = HojaGastosId
-        #//  - _data[4] = recalculateAmountMST (optional, kept for response compatibility)
-        #//  - _data[5] = force (optional, ignored)
+        #//  - _data[4] = recalculateAmountMST (opcional, se conserva por compatibilidad de respuesta)
+        #//  - _data[5] = force (opcional, ignorado)
         #static server container propagateExpenseSheetCurrencyDefaults(container _data)
         #{
         #    DataAreaId          companyId;
@@ -4153,9 +3711,9 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #propagateExpenseSheetProjectDefault
-        #// Method: propagateExpenseSheetProjectDefault
-        #// Purpose: Applies header project to all expense sheet lines after external confirmation.
-        #// Input:
+        #// Metodo: propagateExpenseSheetProjectDefault
+        #// Proposito: Aplica el proyecto de cabecera a todas las lineas de la hoja de gastos despues de una confirmacion externa.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = HojaGastosId
@@ -4245,9 +3803,9 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #propagateExpenseSheetReimbursableExpense
-        #// Method: propagateExpenseSheetReimbursableExpense
-        #// Purpose: Applies header reimbursable expense value to all expense sheet lines after external confirmation.
-        #// Input:
+        #// Metodo: propagateExpenseSheetReimbursableExpense
+        #// Proposito: Aplica el estado de reembolso de cabecera a todas las lineas despues de una confirmacion externa.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = HojaGastosId
@@ -4299,7 +3857,7 @@ Formatversion: 1
         #
         #            updated = header.updateReimbursableExpenseInLines();
         #
-        #            return INDCRMUtilityService::buildHeader(true, 'Gasto reembolsable propagado correctamente.',
+        #            return INDCRMUtilityService::buildHeader(true, 'Indicador de reembolso propagado correctamente.',
         #                                                     [header.HojaGastosId, strFmt('%1', updated), '0']);
         #        }
         #    }
@@ -4334,8 +3892,8 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #refreshTicketStatusByFileId
-        #// Method: refreshTicketStatusByFileId
-        #// Purpose: Keeps INDTicketInfoTable.Status in sync with expense-sheet line assignment.
+        #// Metodo: refreshTicketStatusByFileId
+        #// Proposito: Mantiene INDTicketInfoTable.Status sincronizado con la asignacion de la linea de gastos.
         #static server void refreshTicketStatusByFileId(str 20 _axUserId, INDFileId _fileId)
         #{
         #    CRMHojaGastosLine  assignedLine;
@@ -4524,7 +4082,7 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #resolveExpenseSheetManagerCrmUserId
-        #// Conserva el contrato legacy devolviendo la primera jefatura directa encontrada.
+        #// Conserva el contrato heredado devolviendo la primera jefatura directa encontrada.
         #static server CRMUserId resolveExpenseSheetManagerCrmUserId(CRMUserId _ownerCrmUserId)
         #{
         #    container managerCrmUserIds;
@@ -5140,7 +4698,7 @@ Formatversion: 1
         #            if (currencyCode || exchRate != 0)
         #            {
         #                //MMS - Ajustes CRM - 2026.06.26
-        #                // Compatibilidad: se aceptan campos legacy, pero la cabecera siempre queda en divisa local.
+        #                // Compatibilidad: se aceptan campos heredados, pero la cabecera siempre queda en divisa local.
         #
         #            }
         #
@@ -5264,8 +4822,8 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #updateExpenseSheetLine
-        #// Method: indExpenseSheetUpdateLine
-        #// Purpose: Update one line. Block if header Voucher is set.
+        #// Metodo: indExpenseSheetUpdateLine
+        #// Proposito: Actualiza una linea. Bloquea si la cabecera tiene Voucher informado.
         #static server container updateExpenseSheetLine(container _data)
         #{
         #    DataAreaId companyId;
@@ -5472,7 +5030,7 @@ Formatversion: 1
         #            if (hasLineReimbursableExpense)
         #                line.ReimbursableExpense = any2int(lineReimbursableExpense);
         #
-        #            // Keep line project explicit and fall back to the header project when omitted.
+        #            // Mantiene explicito el proyecto de linea y usa el proyecto de cabecera cuando se omite.
         #            if (projId)
         #            {
         #                line.ProjId       = projId;
@@ -5537,29 +5095,29 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #updateExpenseSheetTicket
-        #// Method: updateExpenseSheetTicket
-        #// Purpose: Updates ticket header and DocuRef metadata by FileId.
-        #// Input:
+        #// Metodo: updateExpenseSheetTicket
+        #// Proposito: Actualiza la cabecera del ticket y los metadatos de DocuRef mediante FileId.
+        #// Entrada:
         #//  - _data[1]  = CompanyId
         #//  - _data[2]  = axUserId
         #//  - _data[3]  = fileId
-        #//  - _data[4]  = description (optional)
-        #//  - _data[5]  = currencyCode (optional)
-        #//  - _data[6]  = totalAmount (optional)
-        #//  - _data[7]  = status (optional: 0 Pending, 1 Assigned)
-        #//  - _data[8]  = transDateStr (optional, yyyymmdd)
-        #//  - _data[9]  = comentario (optional)
-        #//  - _data[10] = urlFile (optional)
-        #//  - _data[11] = fileName (optional)
-        #//  - _data[12] = processedByAI (optional: 0|1)
-        #//  - _data[13] = gastoType (optional)
-        #//  - _data[14] = ocrJson (optional)
-        #//  - _data[15] = normalizedJson (optional)
-        #//  - _data[16] = ticketDate (optional, yyyymmdd)
-        #//  - _data[17] = ticketTime (optional, seconds since midnight)
-        #//  - _data[18] = amountMST (optional)
-        #//  - _data[19] = exchRate (optional)
-        #//  - _data[20] = manualTotalAdjustment (optional: 0|1)
+        #//  - _data[4]  = description (opcional)
+        #//  - _data[5]  = currencyCode (opcional)
+        #//  - _data[6]  = totalAmount (opcional)
+        #//  - _data[7]  = status (opcional: 0 Pending, 1 Assigned)
+        #//  - _data[8]  = transDateStr (opcional, yyyymmdd)
+        #//  - _data[9]  = comentario (opcional)
+        #//  - _data[10] = urlFile (opcional)
+        #//  - _data[11] = fileName (opcional)
+        #//  - _data[12] = processedByAI (opcional: 0|1)
+        #//  - _data[13] = gastoType (opcional)
+        #//  - _data[14] = ocrJson (opcional)
+        #//  - _data[15] = normalizedJson (opcional)
+        #//  - _data[16] = ticketDate (opcional, yyyymmdd)
+        #//  - _data[17] = ticketTime (opcional, segundos desde medianoche)
+        #//  - _data[18] = amountMST (opcional)
+        #//  - _data[19] = exchRate (opcional)
+        #//  - _data[20] = manualTotalAdjustment (opcional: 0|1)
         #static server container updateExpenseSheetTicket(container _data)
         #{
         #    DataAreaId         companyId;
@@ -5819,7 +5377,7 @@ Formatversion: 1
         #            {
         #                ticketHeader.syncAdjustmentLineToTotal(axUserId, true);
         #
-        #                // Keep AmountMST intent clear; update() recalculates it unless the caller supplied it.
+        #                // Mantiene clara la intencion de AmountMST; update() lo recalcula salvo que el llamador lo haya informado.
         #                if (!hasAmountMST)
         #                    ticketHeader.AmountMST = ticketHeader.orig().AmountMST;
         #            }
@@ -5951,17 +5509,17 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #updateExpenseSheetTicketFromIA
-        #// Method: updateExpenseSheetTicketFromIA
-        #// Purpose:
-        #//  - Atomic update for IA processing on an existing ticket.
-        #//  - Updates ticket header + DocuRef metadata.
-        #//  - Replaces all ticket detail lines with IA lines (delete + insert).
-        #//  - Marks ticket as ProcessedByAI = 1.
-        #// Input:
+        #// Metodo: updateExpenseSheetTicketFromIA
+        #// Proposito:
+        #//  - Actualizacion atomica para el procesamiento IA de un ticket existente.
+        #//  - Actualiza la cabecera del ticket + los metadatos de DocuRef.
+        #//  - Sustituye todas las lineas de detalle del ticket por lineas IA (elimina + inserta).
+        #//  - Marca el ticket como ProcessedByAI = 1.
+        #// Entrada:
         #//  - _data[1] = CompanyId
-        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(optional), ocrJson(optional), normalizedJson(optional), ticketDate(optional), ticketTime(optional), amountMST(optional), exchRate(optional)]
-        #//  - _data[3] = linesIn  = container of lines [lineDescr, qty, price, lineTotal(optional)]
-        #// Output:
+        #//  - _data[2] = headerIn = [axUserId, fileId, descr, currencyCode, totalAmount, transDateStr, comentario, urlFile, fileName, gastoType(opcional), ocrJson(opcional), normalizedJson(opcional), ticketDate(opcional), ticketTime(opcional), amountMST(opcional), exchRate(opcional)]
+        #//  - _data[3] = linesIn  = contenedor de lineas [lineDescr, qty, price, lineTotal(opcional)]
+        #// Salida:
         #//  - [header, linesOutRecIds]
         #static server container updateExpenseSheetTicketFromIA(container _data)
         #{
@@ -6378,9 +5936,9 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #updateExpenseSheetTicketLine
-        #// Method: updateExpenseSheetTicketLine
-        #// Purpose: Updates one granular line for an existing ticket by FileId + LineRecId.
-        #// Input:
+        #// Metodo: updateExpenseSheetTicketLine
+        #// Proposito: Actualiza una linea granular de un ticket existente mediante FileId + LineRecId.
+        #// Entrada:
         #//  - _data[1] = CompanyId
         #//  - _data[2] = axUserId
         #//  - _data[3] = fileId
@@ -6388,7 +5946,7 @@ Formatversion: 1
         #//  - _data[5] = lineDescription
         #//  - _data[6] = qty
         #//  - _data[7] = price
-        #//  - _data[8] = lineTotal (optional)
+        #//  - _data[8] = lineTotal (opcional)
         #static server container updateExpenseSheetTicketLine(container _data)
         #{
         #    DataAreaId         companyId;
@@ -6556,7 +6114,7 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #urlEncode
-        #// Purpose: Minimal query-string encoder for expense sheet web links.
+        #// Proposito: Codificador minimo de cadena de consulta para enlaces web de hojas de gastos.
         #static server str urlEncode(str _value)
         #{
         #    str encoded = strFmt("%1", _value);
@@ -6641,8 +6199,8 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #validateTicketDateTimeForApi
-        #// Method: validateTicketDateTimeForApi
-        #// Purpose: Runs INDTicketInfoTable date/time uniqueness validation before API writes.
+        #// Metodo: validateTicketDateTimeForApi
+        #// Proposito: Ejecuta la validacion de unicidad de fecha y hora de INDTicketInfoTable antes de escrituras de la API.
         #static server str validateTicketDateTimeForApi(INDTicketInfoTable _ticketHeader, int _startLine)
         #{
         #    str msg;

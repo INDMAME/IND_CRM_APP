@@ -387,6 +387,18 @@
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Valor de reembolso</value>
   </data>
+  <data name="ExpenseSheets_Field_GrossJustifiedAmount" xml:space="preserve">
+    <value>Despesa justificada</value>
+  </data>
+  <data name="ExpenseSheets_Field_EmployeeReimbursement" xml:space="preserve">
+    <value>A reembolsar ao colaborador</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmount" xml:space="preserve">
+    <value>Valor original</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmounts" xml:space="preserve">
+    <value>Valores originais</value>
+  </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>Descrição</value>
   </data>
@@ -437,6 +449,9 @@
   </data>
   <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
     <value>As linhas em moeda estrangeira exigem uma taxa de cambio maior que 0 ou um valor de reembolso.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencyGrossAmount" xml:space="preserve">
+    <value>Uma linha em moeda estrangeira requer uma taxa de câmbio superior a 0 ou um valor bruto na moeda da empresa.</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>Bilhete</value>
@@ -1364,6 +1379,9 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
     <value>100 {0} = {1} {2}\nA taxa de câmbio indica quantas unidades da moeda da despesa equivalem a 100 unidades da moeda de reembolso.</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_ReferenceCompany" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nA taxa de câmbio indica quantas unidades da moeda da despesa equivalem a 100 unidades da moeda da empresa.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Taxa de cambio {0} {1}</value>

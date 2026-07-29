@@ -24,6 +24,7 @@ type ExpenseSheetLineFormProps = {
   amountText: string;
   draftAmountCurrency: string;
   amountMSTText: string;
+  reimbursableAmountText: string;
   internacionalLabel: string;
   isKmType: boolean;
   isFuelPriceLoading: boolean;
@@ -98,7 +99,7 @@ type ExpenseSheetLineCurrencyFieldsProps = {
   onDraftExchangeRateCommit?: (value: string) => void;
 };
 
-// Renders per-line currency and reimbursement controls.
+// Renders per-line currency settlement controls with sheet-specific gross semantics.
 const ExpenseSheetLineCurrencyFields = ({
   line,
   amountText,
@@ -125,7 +126,7 @@ const ExpenseSheetLineCurrencyFields = ({
         useGrouping: true,
         fallback: "-",
       });
-  const reimbursementAmountValue = isEditing ? draftAmountMST : amountMSTText || "-";
+  const grossCompanyAmountValue = isEditing ? draftAmountMST : amountMSTText || "-";
   const amountCurrencyEditable = isEditing && line.ticket !== true;
   const amountCurrencyValue = amountCurrencyEditable ? draftAmountCurrency : amountText || "-";
 
@@ -136,9 +137,11 @@ const ExpenseSheetLineCurrencyFields = ({
       localCurrencyCode={localCurrencyCode}
       exchangeRate={exchangeRateValue}
       exchangeRateInfoMessage={exchangeRateInfoMessage}
+      exchangeRateReferenceKind="company"
       amountCurrency={amountCurrencyValue}
       amountCurrencyMode={amountCurrencyEditable ? "editable" : "readonly"}
-      reimbursementAmount={reimbursementAmountValue}
+      reimbursementAmount={grossCompanyAmountValue}
+      companyAmountLabel={`${indT("ExpenseSheets_Field_GrossJustifiedAmount", "Justified expense")} (${localCurrencyCode || "-"})`}
       onExpenseCurrencyChange={onDraftCurrencyCodeChange}
       onAmountCurrencyChange={onDraftAmountCurrencyChange}
       onExchangeRateChange={onDraftExchangeRateChange}
@@ -158,6 +161,7 @@ const ExpenseSheetLineForm = ({
   amountText,
   draftAmountCurrency,
   amountMSTText,
+  reimbursableAmountText,
   internacionalLabel,
   isKmType,
   isFuelPriceLoading,
@@ -432,6 +436,13 @@ const ExpenseSheetLineForm = ({
             onDraftAmountMSTChange={onDraftAmountMSTChange}
             onDraftExchangeRateChange={onDraftExchangeRateChange}
             onDraftExchangeRateCommit={onDraftExchangeRateCommit}
+          />
+
+          <ExpenseReadOnlyField
+            label={indT("ExpenseSheets_Field_EmployeeReimbursement", "Reimbursement to employee")}
+            value={reimbursableAmountText}
+            valueAlign="right"
+            fullWidth
           />
 
           {dateTypeFields}

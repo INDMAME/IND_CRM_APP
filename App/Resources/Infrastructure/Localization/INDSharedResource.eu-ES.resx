@@ -399,6 +399,18 @@
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Itzulketa zenbatekoa</value>
   </data>
+  <data name="ExpenseSheets_Field_GrossJustifiedAmount" xml:space="preserve">
+    <value>Gastu justifikatua</value>
+  </data>
+  <data name="ExpenseSheets_Field_EmployeeReimbursement" xml:space="preserve">
+    <value>Langileari itzuli beharrekoa</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmount" xml:space="preserve">
+    <value>Jatorrizko zenbatekoa</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmounts" xml:space="preserve">
+    <value>Jatorrizko zenbatekoak</value>
+  </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>Deskribapena</value>
   </data>
@@ -449,6 +461,9 @@
   </data>
   <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
     <value>Atzerriko dibisako lerroek 0 baino handiagoa den kanbio-tasa edo itzulketa zenbatekoa behar dute.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencyGrossAmount" xml:space="preserve">
+    <value>Atzerriko dibisako lerro batek 0 baino handiagoa den kanbio-tasa edo enpresaren monetako zenbateko gordina behar du.</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>Txartela</value>
@@ -1391,6 +1406,9 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
     <value>100 {0} = {1} {2}\nTruke tasak adierazten du gastuaren dibisako zenbat unitate diren itzulketa dibisako 100 unitateren baliokide.</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_ReferenceCompany" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nKanbio-tasak adierazten du gastuaren dibisako zenbat unitate diren enpresaren monetako 100 unitateren baliokide.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Truke tasa {0} {1}</value>

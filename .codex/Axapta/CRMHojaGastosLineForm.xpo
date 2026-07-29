@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Viernes 24/07/2026
+; Navision Axapta Forms unloaded at Miércoles 29/07/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -24,13 +24,19 @@ FORM #CRMHojaGastosLine
     SOURCE #close
       #public void close()
       #{
+      #    Object callerForm;
       #    ;
       #
       #    if (element.args() && element.args().record() && element.args().record().TableId == TableNum(CRMHojaGastosTable))
-      #        element.args().caller().rereadLine();
+      #        callerForm = element.args().caller();
       #
+      #    //MMS - Refresca el formulario llamador despues de guardar los cambios pendientes de la linea - 2026.07.29
       #    super();
+      #
+      #    if (callerForm)
+      #        callerForm.rereadLine();
       #}
+      #
     ENDSOURCE
     SOURCE #RereadLine
       #void RereadLine()
@@ -191,7 +197,6 @@ FORM #CRMHojaGastosLine
       #        case TableNum(CRMHojaGastosTable):
       #            hojaGastosTable = element.args().record();
       #            usuarioTable    = CRMUsuarioTable::Find(hojaGastosTable.UserId);
-      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, VisaEmpresa)).visible(usuarioTable.VisaEmpresa);
       #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, UserID)).visible(false);
       #
       #            //IJL.14/05/14. No muestro la disciplina a los usuarios con categoría predeterminada.
@@ -217,7 +222,6 @@ FORM #CRMHojaGastosLine
       #            }
       #
       #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, UserID)).visible(true);
-      #            CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, VisaEmpresa)).visible(false);
       #            break;
       #    }
       #
@@ -258,7 +262,13 @@ FORM #CRMHojaGastosLine
       #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, AmountRetencion)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
       #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, InvoiceId)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
       #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, VendName)).visible(INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico);
+      #
+      #    //MMS - Ajustes CRM - 2026.07.29
+      #    // Mantiene visible pero en solo lectura el espejo heredado inverso de Visa en todos los contextos del formulario.
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, VisaEmpresa)).visible(true);
+      #    CRMHojaGastosLine_ds.object(FieldNum(CRMHojaGastosLine, VisaEmpresa)).allowEdit(false);
       #}
+      #
     ENDSOURCE
   ENDMETHODS
   OBJECTBANK
@@ -400,6 +410,150 @@ FORM #CRMHojaGastosLine
                 #    super();
                 #
                 #    element.refreshExchangeRateEditState(true);
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD Price
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #//MMS - Refresca el importe reembolsable derivado - 2026.07.29
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    CRMHojaGastosLine_ds.refresh();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD Amount
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #//MMS - Refresca el importe reembolsable derivado - 2026.07.29
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    CRMHojaGastosLine_ds.refresh();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD ReimbursableExpense
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #//MMS - Refresca el importe reembolsable derivado - 2026.07.29
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    CRMHojaGastosLine_ds.refresh();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD VisaEmpresa
+            PROPERTIES
+              AllowEdit           #No
+              Enabled             #Yes
+              Skip                #Yes
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #//MMS - Refresca el valor heredado visible de Visa sin cambiar el reembolso - 2026.07.29
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    CRMHojaGastosLine_ds.refresh();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD ExchRate
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #//MMS - Refresca el importe reembolsable derivado - 2026.07.29
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    CRMHojaGastosLine_ds.refresh();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
+          DATAFIELD AmountMST
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #modified
+                #//MMS - Refresca el importe reembolsable derivado - 2026.07.29
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    CRMHojaGastosLine_ds.refresh();
                 #}
               ENDSOURCE
             ENDMETHODS
@@ -711,14 +865,14 @@ FORM #CRMHojaGastosLine
                         Name                #CRMHojaGastosLine_UserId
                         AutoDeclaration     #No
                         Visible             #Yes
-                        AllowEdit           #Yes
+                        AllowEdit           #No
                         Left                #Auto (left)
                         Top                 #Auto
                         Width               #Auto
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
-                        Skip                #No
+                        Skip                #Yes
                         AlignControl        #Yes
                         HelpText            #
                         ConfigurationKey    #
@@ -838,11 +992,11 @@ FORM #CRMHojaGastosLine
                       PROPERTIES
                         Name                #CRMHojaGastosLine_MediaDieta
                         AutoDeclaration     #No
-                        Visible             #Yes
+                        Visible             #No
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #40
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -950,7 +1104,7 @@ FORM #CRMHojaGastosLine
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #150
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -1128,7 +1282,7 @@ FORM #CRMHojaGastosLine
                       PROPERTIES
                         Name                #CRMHojaGastosLine_Dieta
                         AutoDeclaration     #No
-                        Visible             #Yes
+                        Visible             #No
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
@@ -1240,7 +1394,7 @@ FORM #CRMHojaGastosLine
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #70
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -1276,19 +1430,19 @@ FORM #CRMHojaGastosLine
                     ENDCONTROL 
                     
                     CONTROL CHECKBOX
-                      ;==== controlId:12303, containerId:12292, containerdata:12292   
+                      ;==== controlId:12348, containerId:12292, containerdata: 0   
                       ;----------------------------------------------------------
                       PROPERTIES
-                        Name                #CRMHojaGastosLine_Ticket
+                        Name                #CRMHojaGastosLine_HasTicket
                         AutoDeclaration     #No
                         Visible             #Yes
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #70
                         Height              #Auto
                         VerticalSpacing     #Auto
-                        Enabled             #Yes
+                        Enabled             #No
                         Skip                #No
                         AlignControl        #Yes
                         HelpText            #
@@ -1302,7 +1456,7 @@ FORM #CRMHojaGastosLine
                         ForegroundColor     #Window text
                         LabelForegroundColor #Window text
                         ShowLabel           #Yes
-                        Label               #
+                        Label               #Ticket
                         LabelFont           #
                         LabelFontSize       #0
                         LabelItalic         #No
@@ -1314,8 +1468,8 @@ FORM #CRMHojaGastosLine
                         LabelPosition       #Left
                         LabelAlignment      #Right
                         DataSource          #CRMHojaGastosLine
-                        DataField           #Ticket
-                        DataMethod          #
+                        DataField           #
+                        DataMethod          #hasTicket
                       ENDPROPERTIES
                       
                     ENDCONTROL 
@@ -1330,7 +1484,7 @@ FORM #CRMHojaGastosLine
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #70
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -1638,14 +1792,14 @@ FORM #CRMHojaGastosLine
                         Name                #CRMHojaGastosLine_VisaEmpresa
                         AutoDeclaration     #No
                         Visible             #Yes
-                        AllowEdit           #Yes
+                        AllowEdit           #No
                         Left                #Auto (left)
                         Top                 #Auto
                         Width               #Auto
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
-                        Skip                #No
+                        Skip                #Yes
                         AlignControl        #Yes
                         HelpText            #
                         ConfigurationKey    #
@@ -1686,7 +1840,7 @@ FORM #CRMHojaGastosLine
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #95
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -1756,7 +1910,7 @@ FORM #CRMHojaGastosLine
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #95
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -1889,7 +2043,7 @@ FORM #CRMHojaGastosLine
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #95
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -1959,7 +2113,7 @@ FORM #CRMHojaGastosLine
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #110
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -2029,7 +2183,7 @@ FORM #CRMHojaGastosLine
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #110
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -2099,7 +2253,7 @@ FORM #CRMHojaGastosLine
                         AllowEdit           #Yes
                         Left                #Auto (left)
                         Top                 #Auto
-                        Width               #Auto
+                        Width               #85
                         Height              #Auto
                         VerticalSpacing     #Auto
                         Enabled             #Yes
@@ -2141,6 +2295,76 @@ FORM #CRMHojaGastosLine
                         Border              #Auto
                         ComboType           #Standard
                         AppendNew           #No
+                      ENDPROPERTIES
+                      
+                    ENDCONTROL 
+                    
+                    CONTROL REALEDIT
+                      ;==== controlId:12395, containerId:12292, containerdata: 0   
+                      ;----------------------------------------------------------
+                      PROPERTIES
+                        Name                #CRMHojaGastosLine_ReimbursableAmount
+                        AutoDeclaration     #No
+                        Visible             #Yes
+                        AllowEdit           #No
+                        Left                #Auto (left)
+                        Top                 #Auto
+                        Width               #120
+                        Height              #Auto
+                        VerticalSpacing     #Auto
+                        Enabled             #Yes
+                        Skip                #No
+                        AlignControl        #Yes
+                        HelpText            #
+                        ConfigurationKey    #
+                        SecurityKey         #
+                        DragDrop            #None
+                        LookupButton        #Auto
+                        ReplaceOnLookup     #Yes
+                        LimitText           #Auto
+                        DisplayLength       #Auto
+                        DisplayHeight       #Auto
+                        Border              #Auto
+                        RealValue           #0,00
+                        Alignment           #Auto
+                        SignDisplay         #Auto
+                        RotateSign          #Auto
+                        ShowZero            #Auto
+                        DisplaceNegative    #Auto
+                        AllowNegative       #Auto
+                        ThousandSeparator   #Auto
+                        DecimalSeparator    #Auto
+                        NoOfDecimals        #Auto
+                        AutoInsSeparator    #Auto
+                        FormatMST           #Auto
+                        ColorScheme         #Default
+                        BackStyle           #Opaque
+                        BackgroundColor     #Window background
+                        ForegroundColor     #Window text
+                        Font                #
+                        FontSize            #0
+                        Italic              #No
+                        Underline           #No
+                        Bold                #Default
+                        CharacterSet        #0
+                        LabelForegroundColor #Window text
+                        ShowLabel           #Yes
+                        Label               #
+                        LabelFont           #
+                        LabelFontSize       #0
+                        LabelItalic         #No
+                        LabelUnderline      #No
+                        LabelBold           #Default
+                        LabelCharacterSet   #0
+                        LabelWidth          #Auto
+                        LabelHeight         #Auto
+                        LabelPosition       #Left
+                        LabelAlignment      #Right
+                        DataSource          #CRMHojaGastosLine
+                        DataField           #ReimbursableAmount
+                        Mandatory           #No
+                        ArrayIndex          #0
+                        SearchMode          #None
                       ENDPROPERTIES
                       
                     ENDCONTROL 
@@ -2818,10 +3042,11 @@ FORM #CRMHojaGastosLine
                   RightMargin         #Auto
                   ArrangeWhen         #Default
                   ArrangeMethod       #Vertical
-                  Columns             #2
+                  Columns             #3
                   Columnspace         #Auto
                   ArrangeGuide        
                     ARRAY INDEX Columns 
+                      #0
                       #0
                       #0
                     ENDARRAY

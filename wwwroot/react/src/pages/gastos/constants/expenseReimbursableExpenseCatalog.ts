@@ -1,19 +1,23 @@
 import { indT } from "../../../utils/indI18n.ts";
 import { mapWindowEnumOptions, type ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
+import type {
+  ExpenseSheetLineReimbursableExpense,
+  ExpenseSheetReimbursableExpense,
+} from "../expenseTypes.ts";
 
 export const DEFAULT_REIMBURSABLE_EXPENSE = 0;
 export const DEFAULT_LINE_REIMBURSABLE_EXPENSE = 0;
 export const REIMBURSABLE_EXPENSE_BOTH_VALUE = 2;
 
 const FALLBACK_REIMBURSABLE_OPTIONS: ExpenseSelectOption[] = [
-  { value: "0", text: indT("Common_Yes", "Yes") },
-  { value: "1", text: indT("Common_No", "No") },
+  { value: "0", text: indT("Common_No", "No") },
+  { value: "1", text: indT("Common_Yes", "Yes") },
   { value: String(REIMBURSABLE_EXPENSE_BOTH_VALUE), text: indT("ExpenseSheets_Reimbursable_Both", "Both") },
 ];
 
 const FALLBACK_LINE_REIMBURSABLE_OPTIONS: ExpenseSelectOption[] = [
-  { value: "0", text: indT("Common_Yes", "Yes") },
-  { value: "1", text: indT("Common_No", "No") },
+  { value: "0", text: indT("Common_No", "No") },
+  { value: "1", text: indT("Common_Yes", "Yes") },
 ];
 
 const getCatalogOptions = (source: Array<{ value?: string; Value?: string; text?: string; Text?: string }> = []): ExpenseSelectOption[] => {
@@ -29,7 +33,7 @@ const getHeaderCatalogOptions = (): ExpenseSelectOption[] => {
       ? window.__EXPENSE_REIMBURSABLE_EXPENSES__
       : [];
 
-  return getCatalogOptions(source);
+  return getCatalogOptions(source).filter((option) => Number(option.value) <= REIMBURSABLE_EXPENSE_BOTH_VALUE);
 };
 
 const getLineCatalogOptions = (): ExpenseSelectOption[] => {
@@ -38,7 +42,7 @@ const getLineCatalogOptions = (): ExpenseSelectOption[] => {
       ? window.__EXPENSE_REIMBURSABLE_EXPENSE_LINES__
       : [];
 
-  return getCatalogOptions(source);
+  return getCatalogOptions(source).filter((option) => Number(option.value) <= 1);
 };
 
 // Builds the header reimbursable options, preferring active AX configuration.
@@ -65,11 +69,11 @@ export const getExpenseLineReimbursableExpenseOptions = (): ExpenseSelectOption[
 // Keeps reimbursable header values constrained to numeric AX enum codes.
 export const normalizeExpenseReimbursableExpense = (
   value: unknown,
-  fallback: number = DEFAULT_REIMBURSABLE_EXPENSE
-): number => {
+  fallback: ExpenseSheetReimbursableExpense = DEFAULT_REIMBURSABLE_EXPENSE
+): ExpenseSheetReimbursableExpense => {
   const parsed = Number(value);
-  if (Number.isInteger(parsed) && parsed >= 0) {
-    return parsed;
+  if (parsed === 0 || parsed === 1 || parsed === REIMBURSABLE_EXPENSE_BOTH_VALUE) {
+    return parsed as ExpenseSheetReimbursableExpense;
   }
   return fallback;
 };
@@ -77,11 +81,11 @@ export const normalizeExpenseReimbursableExpense = (
 // Keeps reimbursable line values constrained to numeric AX enum codes.
 export const normalizeExpenseLineReimbursableExpense = (
   value: unknown,
-  fallback: number = DEFAULT_LINE_REIMBURSABLE_EXPENSE
-): number => {
+  fallback: ExpenseSheetLineReimbursableExpense = DEFAULT_LINE_REIMBURSABLE_EXPENSE
+): ExpenseSheetLineReimbursableExpense => {
   const parsed = Number(value);
-  if (Number.isInteger(parsed) && parsed >= 0) {
-    return parsed;
+  if (parsed === 0 || parsed === 1) {
+    return parsed as ExpenseSheetLineReimbursableExpense;
   }
   return fallback;
 };

@@ -138,7 +138,7 @@ export const useExpenseSheetLineDetailMutations = ({
     const parsedAmountMST = parseNumber(draftAmountMST);
     const parsedExchangeRate = parseNumber(draftExchangeRate);
     const normalizedCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
-    const normalizedLocalCurrencyCode = normalizeExpenseLineCurrencyCode(localCurrencyCode) || "EUR";
+    const normalizedLocalCurrencyCode = normalizeExpenseLineCurrencyCode(localCurrencyCode);
     const normalizedDescription = String(draftDescription || "").trim();
 
     if (!normalizedDescription) {
@@ -178,8 +178,8 @@ export const useExpenseSheetLineDetailMutations = ({
       (parsedAmountMST != null && parsedAmountMST > 0);
     if (isForeignCurrency && !hasForeignCurrencySettlement) {
       const validationMessage = indT(
-        "ExpenseSheets_Line_Validation_ForeignCurrencySettlement",
-        "Foreign currency lines require an exchange rate greater than 0 or a reimbursement amount."
+        "ExpenseSheets_Line_Validation_ForeignCurrencyGrossAmount",
+        "Foreign currency lines require an exchange rate greater than 0 or a gross amount in company currency."
       );
       setModalError(validationMessage);
       setStatus(validationMessage);

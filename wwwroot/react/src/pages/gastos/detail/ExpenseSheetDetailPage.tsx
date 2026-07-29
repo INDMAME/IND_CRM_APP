@@ -208,7 +208,9 @@ const ExpenseSheetDetailPageContent = () => {
           exchangeRateReferenceAmount={controller.exchangeRateReferenceAmount}
           exchangeRateValue={controller.exchangeRateValue}
           exchangeRateValidationMessage={controller.exchangeRateValidationMessage}
-          totalAmountText={controller.totalAmountText}
+          grossAmountText={controller.grossAmountText}
+          reimbursableAmountText={controller.reimbursableAmountText}
+          originalCurrencyTotals={controller.originalCurrencyTotals}
           draftDescription={controller.draftDescription}
           draftProjectId={controller.draftProjectId}
           draftCurrencyCode={controller.draftCurrencyCode}
@@ -229,7 +231,7 @@ const ExpenseSheetDetailPageContent = () => {
       {!controller.isCreateMode && !controller.isLoading && !controller.isRedirectingAfterCreate && !controller.errorMessage ? (
         <ExpenseLinesTimeline
           visibleLines={controller.visibleLines}
-          reimbursementCurrencyCode={safeText(controller.exchangeRateBaseCurrency || controller.header?.currencyCode)}
+          companyCurrencyCode={safeText(controller.exchangeRateBaseCurrency)}
           totalLinePages={controller.totalLinePages}
           linePage={controller.linePage}
           linesLabel={indT("ExpenseSheets_Lines", "Lines")}

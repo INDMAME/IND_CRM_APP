@@ -399,6 +399,18 @@
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Importo rimborso</value>
   </data>
+  <data name="ExpenseSheets_Field_GrossJustifiedAmount" xml:space="preserve">
+    <value>Spesa giustificata</value>
+  </data>
+  <data name="ExpenseSheets_Field_EmployeeReimbursement" xml:space="preserve">
+    <value>Da rimborsare al dipendente</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmount" xml:space="preserve">
+    <value>Importo originale</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmounts" xml:space="preserve">
+    <value>Importi originali</value>
+  </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>Descrizione</value>
   </data>
@@ -449,6 +461,9 @@
   </data>
   <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
     <value>Le righe in valuta estera richiedono un tasso di cambio maggiore di 0 o un importo di rimborso.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencyGrossAmount" xml:space="preserve">
+    <value>Una riga in valuta estera richiede un tasso di cambio maggiore di 0 o un importo lordo nella valuta aziendale.</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>Biglietto</value>
@@ -1391,6 +1406,9 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
     <value>100 {0} = {1} {2}\nIl tasso di cambio indica quante unità della valuta della spesa equivalgono a 100 unità della valuta di rimborso.</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_ReferenceCompany" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nIl tasso di cambio indica quante unità della valuta della spesa equivalgono a 100 unità della valuta aziendale.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Tasso di cambio {0} {1}</value>

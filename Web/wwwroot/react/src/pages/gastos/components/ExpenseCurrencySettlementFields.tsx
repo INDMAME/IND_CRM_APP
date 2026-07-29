@@ -15,11 +15,13 @@ type ExpenseCurrencySettlementFieldsProps = {
   exchangeRateInvalid?: boolean;
   exchangeRateInputRef?: React.Ref<HTMLInputElement>;
   exchangeRateInfoMessage?: string;
+  exchangeRateReferenceKind?: "reimbursement" | "company";
   amountCurrency: string;
   amountCurrencyMode: "editable" | "readonly";
   amountCurrencyInvalid?: boolean;
   amountCurrencyInputRef?: React.Ref<HTMLInputElement>;
   reimbursementAmount: string;
+  companyAmountLabel?: string;
   reimbursementAmountInvalid?: boolean;
   reimbursementAmountInputRef?: React.Ref<HTMLInputElement>;
   onExpenseCurrencyChange: (value: string) => void;
@@ -72,11 +74,13 @@ const ExpenseCurrencySettlementFields = ({
   exchangeRateInvalid = false,
   exchangeRateInputRef,
   exchangeRateInfoMessage,
+  exchangeRateReferenceKind = "reimbursement",
   amountCurrency,
   amountCurrencyMode,
   amountCurrencyInvalid = false,
   amountCurrencyInputRef,
   reimbursementAmount,
+  companyAmountLabel,
   reimbursementAmountInvalid = false,
   reimbursementAmountInputRef,
   onExpenseCurrencyChange,
@@ -96,7 +100,7 @@ const ExpenseCurrencySettlementFields = ({
     sameCurrencySettlement ? formatExchangeRateInput("100") : safeText(exchangeRate);
   const effectiveExchangeRateInvalid = exchangeRateInvalid;
   const reimbursementCurrencyLabel = normalizedLocalCurrencyCode || indT("Common_NotAvailable", "N/A");
-  const reimbursementLabel = indFormat(
+  const reimbursementLabel = companyAmountLabel || indFormat(
     "ExpenseSheets_Field_ReimbursementAmount_WithCurrency",
     "Imp. reemb. ({0})",
     reimbursementCurrencyLabel
@@ -108,13 +112,21 @@ const ExpenseCurrencySettlementFields = ({
     useGrouping: true,
     fallback: "-",
   });
-  const exchangeRateReferenceMessage = indFormat(
-    "ExpenseSheets_ExchangeRate_InfoPopover_Reference",
-    "100 {0} = {1} {2}\nEl tipo de cambio indica cuántas unidades de la divisa del gasto equivalen a 100 unidades de la divisa de reembolso.",
-    reimbursementCurrencyLabel,
-    exchangeRateReferenceValue,
-    expenseCurrencyLabel
-  );
+  const exchangeRateReferenceMessage = exchangeRateReferenceKind === "company"
+    ? indFormat(
+        "ExpenseSheets_ExchangeRate_InfoPopover_ReferenceCompany",
+        "100 {0} = {1} {2}\nThe exchange rate shows how many units of the expense currency are equivalent to 100 units of the company currency.",
+        reimbursementCurrencyLabel,
+        exchangeRateReferenceValue,
+        expenseCurrencyLabel
+      )
+    : indFormat(
+        "ExpenseSheets_ExchangeRate_InfoPopover_Reference",
+        "100 {0} = {1} {2}\nEl tipo de cambio indica cuántas unidades de la divisa del gasto equivalen a 100 unidades de la divisa de reembolso.",
+        reimbursementCurrencyLabel,
+        exchangeRateReferenceValue,
+        expenseCurrencyLabel
+      );
   const exchangeRateInfoPopoverContent = safeText(exchangeRateInfoMessage)
     ? `${exchangeRateReferenceMessage}\n\n${safeText(exchangeRateInfoMessage)}`
     : exchangeRateReferenceMessage;

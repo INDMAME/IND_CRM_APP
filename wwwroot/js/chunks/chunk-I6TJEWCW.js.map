@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": ["../../react/src/pages/gastos/utils/expenseVisibleTotals.ts"],
+  "sourcesContent": ["// Selects the reimbursable amount that should be visible in expense summaries.\r\nexport function getVisibleReimbursableTotal(row: {\r\n  TotalAmountMST?: number | null;\r\n  AmountMST?: number | null;\r\n  TotalAmountCurrency?: number | null;\r\n  TotalAmount?: number | null;\r\n  Amount?: number | null;\r\n}) {\r\n  return row.TotalAmountMST\r\n    ?? row.AmountMST\r\n    ?? row.TotalAmountCurrency\r\n    ?? row.TotalAmount\r\n    ?? row.Amount\r\n    ?? null;\r\n}\r\n"],
+  "mappings": "AACO,SAASA,EAA4BC,EAMzC,CACD,OAAOA,EAAI,gBACNA,EAAI,WACJA,EAAI,qBACJA,EAAI,aACJA,EAAI,QACJ,IACP",
+  "names": ["getVisibleReimbursableTotal", "row"]
+}

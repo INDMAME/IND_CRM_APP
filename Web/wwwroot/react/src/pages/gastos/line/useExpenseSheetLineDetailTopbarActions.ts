@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import { useExpenseTopbarCrudActions } from "../hooks/useExpenseTopbarCrudActions.ts";
 import { navigateToExpenseUrl } from "../utils/expenseNavigation.ts";
@@ -21,6 +22,7 @@ type UseExpenseSheetLineDetailTopbarActionsArgs = {
   handleUpdate: () => Promise<boolean>;
   handleDelete: () => Promise<boolean>;
   onSaveSuccess: () => void;
+  onDeleteSuccess?: () => void;
   openConfirm: (opts: {
     title: string;
     message: string;
@@ -51,9 +53,15 @@ export const useExpenseSheetLineDetailTopbarActions = ({
   handleUpdate,
   handleDelete,
   onSaveSuccess,
+  onDeleteSuccess,
   openConfirm,
   closeConfirm,
 }: UseExpenseSheetLineDetailTopbarActionsArgs) => {
+  const handleDeleteSuccess = useCallback(() => {
+    onDeleteSuccess?.();
+    navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`);
+  }, [onDeleteSuccess, sheetId]);
+
   useExpenseTopbarCrudActions({
     actionGroupId: "expense-line-detail-actions",
     ids: {
@@ -90,9 +98,7 @@ export const useExpenseSheetLineDetailTopbarActions = ({
     deleteConfirmMessage: indT("Confirm_Delete_Body", "Do you want to delete this item?"),
     deleteConfirmText: indT("Common_Delete", "Delete"),
     onSaveSuccess,
-    onDeleteSuccess: () => {
-      navigateToExpenseUrl(`/Gastos/ExpenseSheetDetail?hojaGastosId=${encodeURIComponent(sheetId)}`);
-    },
+    onDeleteSuccess: handleDeleteSuccess,
     openConfirm,
     closeConfirm,
   });

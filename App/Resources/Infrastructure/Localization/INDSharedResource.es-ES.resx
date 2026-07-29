@@ -399,6 +399,18 @@
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Importe reembolso</value>
   </data>
+  <data name="ExpenseSheets_Field_GrossJustifiedAmount" xml:space="preserve">
+    <value>Gasto justificado</value>
+  </data>
+  <data name="ExpenseSheets_Field_EmployeeReimbursement" xml:space="preserve">
+    <value>A reembolsar al empleado</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmount" xml:space="preserve">
+    <value>Importe original</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmounts" xml:space="preserve">
+    <value>Importes originales</value>
+  </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>Descripción</value>
   </data>
@@ -449,6 +461,9 @@
   </data>
   <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
     <value>Las lineas en divisa extranjera requieren un tipo de cambio mayor que 0 o un importe de reembolso.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencyGrossAmount" xml:space="preserve">
+    <value>Una línea en divisa extranjera requiere un tipo de cambio mayor que 0 o un importe bruto en moneda de empresa.</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>Ticket</value>
@@ -1391,6 +1406,9 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
     <value>100 {0} = {1} {2}\nEl tipo de cambio indica cuántas unidades de la divisa del gasto equivalen a 100 unidades de la divisa de reembolso.</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_ReferenceCompany" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nEl tipo de cambio indica cuántas unidades de la divisa del gasto equivalen a 100 unidades de la moneda de empresa.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Tipo de cambio {0} {1}</value>

@@ -602,6 +602,13 @@ app.MapControllerRoute(
 );
 
 app.MapControllerRoute(
+    name: "api-expense-sheets-reimbursable-expense-propagate",
+    pattern: "api/crm/expensesheets/{hojaGastosId}/reimbursable-expense/propagate",
+    defaults: new { controller = "Gastos", action = "ApiExpenseSheetReimbursableExpensePropagate" },
+    constraints: new { httpMethod = new HttpMethodRouteConstraint("POST") }
+);
+
+app.MapControllerRoute(
     name: "api-expense-sheets-detail",
     pattern: "api/crm/expensesheets/{hojaGastosId}",
     defaults: new { controller = "Gastos", action = "ApiExpenseSheetDetail" },

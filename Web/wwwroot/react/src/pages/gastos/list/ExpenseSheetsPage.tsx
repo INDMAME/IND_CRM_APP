@@ -56,7 +56,7 @@ const ExpenseSheetsPageContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
-  const [reimbursementCurrencyCode, setReimbursementCurrencyCode] = useState("EUR");
+  const [companyCurrencyCode, setCompanyCurrencyCode] = useState("");
   const {
     currentAxUserId,
     currentCrmUserId,
@@ -255,11 +255,11 @@ const ExpenseSheetsPageContent = () => {
         if (cancelled) return;
         const normalizedCurrency = safeText(currency).toUpperCase();
         if (normalizedCurrency) {
-          setReimbursementCurrencyCode(normalizedCurrency);
+          setCompanyCurrencyCode(normalizedCurrency);
         }
       })
       .catch(() => {
-        // Keep the default MST label if the user context endpoint is unavailable.
+        // Amounts remain unlabelled when company currency context is unavailable.
       });
 
     return () => {
@@ -705,10 +705,14 @@ const ExpenseSheetsPageContent = () => {
               document?.documentElement?.lang || "es-ES",
               { preferMonthFirstOnSlash: true }
             );
-            const currency = safeText(reimbursementCurrencyCode || item.currencyCode);
+            const currency = safeText(companyCurrencyCode);
             const description = safeText(item.description);
             const voucher = safeText(item.voucher);
-            const totalAmountText = formatAmountWithCurrency(item.totalAmount ?? null, currency);
+            const grossAmountText = formatAmountWithCurrency(item.totalGrossAmountMST ?? null, currency);
+            const reimbursableAmountText = formatAmountWithCurrency(
+              item.totalReimbursableAmount ?? null,
+              currency
+            );
             const fallbackStatusCode = hasAssignedVoucher(voucher) ? 4 : 0;
             const statusCode = normalizeExpenseStatusFilterCode(item.expenseSheetStatus, fallbackStatusCode);
             const statusLabel = getExpenseStatusLabel(statusCode);
@@ -733,7 +737,20 @@ const ExpenseSheetsPageContent = () => {
                   dateParts={dateParts}
                   title={description || "-"}
                   subtitle={ownerSubtitle}
-                  amountText={totalAmountText}
+                  amountText={reimbursableAmountText}
+                  amountClassName="mt-1 block w-full text-[11px] font-semibold leading-tight text-[#00296be0] tabular-nums"
+                  amountContent={(
+                    <span className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-2 gap-y-0.5">
+                      <span className="text-left text-[10px] font-medium text-slate-500">
+                        {indT("ExpenseSheets_Field_GrossJustifiedAmount", "Justified expense")}
+                      </span>
+                      <span className="whitespace-nowrap text-right">{grossAmountText}</span>
+                      <span className="text-left text-[10px] font-medium text-slate-500">
+                        {indT("ExpenseSheets_Field_EmployeeReimbursement", "Reimbursement to employee")}
+                      </span>
+                      <span className="whitespace-nowrap text-right">{reimbursableAmountText}</span>
+                    </span>
+                  )}
                   onOpen={() => goToDetail(id, ownerAxUserId)}
                   titleClassName="expense-sheet-card__title timeline-name"
                   statusClassName={statusClass}

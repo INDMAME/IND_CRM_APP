@@ -1364,6 +1364,27 @@ namespace IND_CRM_APP.Services
             return BuildApiResponse<object>(result, "UpdateExpenseSheetLine");
         }
 
+        // Propagates the current header reimbursement value through the dedicated upstream endpoint.
+        public async Task<ApiResponse<object>> PropagateExpenseSheetReimbursableExpenseAsync(
+            string token,
+            string hojaGastosId,
+            string? axUserIdOverride = null)
+        {
+            PrepareRequestHeaders(
+                token,
+                "PropagateExpenseSheetReimbursableExpense",
+                requireCompany: true,
+                includeCompanyHeader: true,
+                includeAxUserHeader: true,
+                axUserIdOverride: axUserIdOverride);
+
+            var safeSheetId = EscapePathSegment(hojaGastosId);
+            var result = await SendPostAsync(
+                ApiRoutes.ExpenseSheetReimbursableExpensePropagate(safeSheetId),
+                "{}");
+            return BuildApiResponse<object>(result, "PropagateExpenseSheetReimbursableExpense");
+        }
+
         public async Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(
             string token,
             string hojaGastosId,
@@ -1407,7 +1428,7 @@ namespace IND_CRM_APP.Services
             var normalizedPageSize = req.PageSize <= 0 ? 50 : req.PageSize;
             var normalizedBilledMode = req.BilledMode is >= 0 and <= 2 ? req.BilledMode.Value : 2;
             var normalizedExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null;
-            var normalizedReimbursableExpense = req.ReimbursableExpense is >= 0 ? req.ReimbursableExpense : null;
+            var normalizedReimbursableExpense = req.ReimbursableExpense is >= 0 and <= 2 ? req.ReimbursableExpense : null;
             var normalizedFilter = NormalizeOptionalText(req.Filter) ?? string.Empty;
             var normalizedCreatedDateFrom = NormalizeAxListDate(req.CreatedDateFrom) ?? string.Empty;
             var normalizedCreatedDateTo = NormalizeAxListDate(req.CreatedDateTo) ?? string.Empty;
@@ -2606,7 +2627,7 @@ namespace IND_CRM_APP.Services
                 ProjId = NormalizeOptionalText(request.ProjId),
                 CurrencyCode = NormalizeOptionalText(request.CurrencyCode)?.ToUpperInvariant(),
                 ExpenseSheetStatus = request.ExpenseSheetStatus is >= 0 ? request.ExpenseSheetStatus : null,
-                ReimbursableExpense = request.ReimbursableExpense is >= 0 ? request.ReimbursableExpense : null,
+                ReimbursableExpense = request.ReimbursableExpense is >= 0 and <= 2 ? request.ReimbursableExpense : null,
                 IncludeSubordinates = request.IncludeSubordinates,
                 Page = request.Page < 1 ? 1 : request.Page,
                 PageSize = request.PageSize <= 0 ? 50 : request.PageSize

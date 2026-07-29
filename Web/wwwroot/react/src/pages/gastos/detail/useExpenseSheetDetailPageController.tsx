@@ -21,6 +21,7 @@ import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "./ExpenseSheetDetailIcons.tsx";
+import { groupExpenseSheetOriginalAmounts } from "../utils/expenseSheetTotals.ts";
 
 const LINES_PAGE_SIZE = 6;
 const EXPENSE_STATUS_APPROVAL_REQUESTED = 1;
@@ -79,6 +80,7 @@ export const useExpenseSheetDetailPageController = () => {
   const [showStatusTransitionCommentField, setShowStatusTransitionCommentField] = useState(false);
   const [confirmedProjectId, setConfirmedProjectId] = useState("");
   const statusTransitionCommentRef = useRef("");
+  const reimbursablePropagationHeaderUpdatedRef = useRef(false);
 
   const paginationLabels = useMemo(
     () => ({
@@ -167,6 +169,10 @@ export const useExpenseSheetDetailPageController = () => {
   const topbarActionMode = !isCreateMode && (isReadOnlyMode || hidesCrudTopbarByStatus) ? "view_only" : "default";
   const detailPermissionsReady = managementBootstrapReady && (isCreateMode || !!header);
   const { invalidateCachedListForRefetch } = useExpenseSheetsFilterCache();
+  const handleReimbursablePropagationHeaderUpdated = useCallback(() => {
+    reimbursablePropagationHeaderUpdatedRef.current = true;
+    invalidateCachedListForRefetch();
+  }, [invalidateCachedListForRefetch]);
 
   const { modal, openConfirm, closeConfirm, cancelConfirm, handleConfirm } = useConfirmDialog({
     defaultConfirmText: indT("Confirm_Yes", "OK"),
@@ -219,11 +225,23 @@ export const useExpenseSheetDetailPageController = () => {
 
   const visibleLines = useMemo(() => pagedSlice(lines, linePage, LINES_PAGE_SIZE), [linePage, lines]);
   const totalLinePages = Math.ceil((lines.length || 0) / LINES_PAGE_SIZE);
-  const totalAmountText = useMemo(
-    () => formatAmountWithCurrency(header?.totalAmount ?? null, safeText(exchangeRateBaseCurrency || header?.currencyCode)),
-    [exchangeRateBaseCurrency, header?.currencyCode, header?.totalAmount]
+  const companyCurrencyCode = safeText(exchangeRateBaseCurrency);
+  const grossAmountText = useMemo(
+    () => formatAmountWithCurrency(header?.totalGrossAmountMST ?? null, companyCurrencyCode),
+    [companyCurrencyCode, header?.totalGrossAmountMST]
   );
-  const hasStatusActionContent = lines.length > 0 || hasPositiveTotalAmount(header?.totalAmount);
+  const reimbursableAmountText = useMemo(
+    () => formatAmountWithCurrency(header?.totalReimbursableAmount ?? null, companyCurrencyCode),
+    [companyCurrencyCode, header?.totalReimbursableAmount]
+  );
+  const originalCurrencyTotals = useMemo(
+    () => groupExpenseSheetOriginalAmounts(lines),
+    [lines]
+  );
+  const hasStatusActionContent =
+    lines.length > 0 ||
+    hasPositiveTotalAmount(header?.totalAmount) ||
+    hasPositiveTotalAmount(header?.totalAmountMST);
   const areStatusActionsDisabled = !hasStatusActionContent;
   const ownerDisplay = useMemo(() => {
     const ownerUserId = safeText(header?.userId);
@@ -265,12 +283,16 @@ export const useExpenseSheetDetailPageController = () => {
     officialExchangeRateValue,
     draftProjectId,
     draftEstadoComentarios,
+    currentDescription: safeText(header?.description),
+    currentProjectId: safeText(header?.projId),
+    currentEstadoComentarios: safeText(header?.estadoComentarios),
     currentExpenseSheetStatus: header?.expenseSheetStatus,
     currentLines: lines,
     exchangeRateBaseCurrency,
     onCreateSuccess: (createdSheetId) => {
       createdSheetIdRef.current = safeText(createdSheetId);
     },
+    onReimbursablePropagationHeaderUpdated: handleReimbursablePropagationHeaderUpdated,
     setModalError,
     setBusy,
     setStatus,
@@ -366,6 +388,7 @@ export const useExpenseSheetDetailPageController = () => {
 
       if (busy || modal.open) return;
 
+      reimbursablePropagationHeaderUpdatedRef.current = false;
       setDraftReimbursableExpense(nextValue);
       openConfirm({
         title: indT("ExpenseSheets_Detail_PropagateReimbursable_Title", "Update lines"),
@@ -375,12 +398,19 @@ export const useExpenseSheetDetailPageController = () => {
         ),
         confirmText: indT("Confirm_Yes", "OK"),
         onCancel: () => {
+          if (reimbursablePropagationHeaderUpdatedRef.current) {
+            reimbursablePropagationHeaderUpdatedRef.current = false;
+            reloadExpensePage();
+            return;
+          }
+
           setDraftReimbursableExpense(previousValue);
         },
         onConfirm: async () => {
           const ok = await handlePropagateReimbursableExpenseToLines(nextValue);
           if (ok) {
-            setIsEditing(true);
+            invalidateCachedListForRefetch();
+            reloadExpensePage();
           }
           return ok;
         },
@@ -391,13 +421,13 @@ export const useExpenseSheetDetailPageController = () => {
       canEditHeaderFieldsCurrent,
       draftReimbursableExpense,
       handlePropagateReimbursableExpenseToLines,
+      invalidateCachedListForRefetch,
       isCreateMode,
       isEditing,
       lines.length,
       modal.open,
       openConfirm,
       setDraftReimbursableExpense,
-      setIsEditing,
     ]
   );
 
@@ -467,6 +497,7 @@ export const useExpenseSheetDetailPageController = () => {
   );
 
   const handleSaveSuccess = useCallback(() => {
+    invalidateCachedListForRefetch();
     if (isCreateMode) {
       const createdSheetId = safeText(createdSheetIdRef.current);
       if (!createdSheetId) return;
@@ -480,7 +511,7 @@ export const useExpenseSheetDetailPageController = () => {
     }
 
     reloadExpensePage();
-  }, [isCreateMode, navigateToCreatedSheet]);
+  }, [invalidateCachedListForRefetch, isCreateMode, navigateToCreatedSheet]);
 
   const handleStatusActionClick = useCallback(
     (action: { labelKey: string; fallback: string; nextStatus: number }) => {
@@ -698,7 +729,9 @@ export const useExpenseSheetDetailPageController = () => {
     areStatusActionsDisabled,
     fabMenuItems,
     paginationLabels,
-    totalAmountText,
+    grossAmountText,
+    reimbursableAmountText,
+    originalCurrencyTotals,
     statusCommentMode,
     ownerDisplay,
     projectValue,

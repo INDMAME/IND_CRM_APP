@@ -399,6 +399,18 @@
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Reimbursement amount</value>
   </data>
+  <data name="ExpenseSheets_Field_GrossJustifiedAmount" xml:space="preserve">
+    <value>Justified expense</value>
+  </data>
+  <data name="ExpenseSheets_Field_EmployeeReimbursement" xml:space="preserve">
+    <value>To reimburse the employee</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmount" xml:space="preserve">
+    <value>Original amount</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmounts" xml:space="preserve">
+    <value>Original amounts</value>
+  </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>Description</value>
   </data>
@@ -449,6 +461,9 @@
   </data>
   <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
     <value>Foreign currency lines require an exchange rate greater than 0 or a reimbursement amount.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencyGrossAmount" xml:space="preserve">
+    <value>A foreign-currency line requires an exchange rate greater than 0 or a gross amount in company currency.</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>Ticket</value>
@@ -1391,6 +1406,9 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
     <value>100 {0} = {1} {2}\nThe exchange rate shows how many units of the expense currency are equivalent to 100 units of the reimbursement currency.</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_ReferenceCompany" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nThe exchange rate shows how many units of the expense currency are equivalent to 100 units of the company currency.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Exchange rate {0} {1}</value>

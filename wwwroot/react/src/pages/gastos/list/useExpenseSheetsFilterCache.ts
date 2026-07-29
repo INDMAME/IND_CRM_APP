@@ -10,6 +10,10 @@ import {
   setSessionValueWithExpiry,
 } from "../../../utils/sessionExpiry.ts";
 import { getExpenseScopeToken } from "../utils/expenseScope.ts";
+import {
+  resolveExpenseSheetTotals,
+  toExpenseSheetReimbursableExpense,
+} from "../utils/expenseSheetTotals.ts";
 
 const EXPENSE_SHEETS_FILTER_KEY_PREFIX = "expense_sheets_filter_v2";
 const EXPENSE_SHEETS_RETURN_FLAG_KEY_PREFIX = "expense_sheets_return_v2";
@@ -36,6 +40,7 @@ const getScopedKeys = () => {
 };
 
 const toNullableNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined) return null;
   const parsed = Number(value);
   return Number.isFinite(parsed) ? parsed : null;
 };
@@ -46,6 +51,13 @@ export const normalizeExpenseSheetsCachedItems = (raw: unknown): ExpenseSheetCar
 
   return raw.map((entry) => {
     const item = (entry || {}) as Partial<ExpenseSheetCard>;
+    const totalAmountMST = toNullableNumber(item.totalAmountMST);
+    const { grossCompany, reimbursable } = resolveExpenseSheetTotals({
+      TotalGrossAmountMST: toNullableNumber(item.totalGrossAmountMST),
+      TotalReimbursableAmount: toNullableNumber(item.totalReimbursableAmount),
+      TotalAmountMST: totalAmountMST,
+    });
+
     return {
       hojaGastosId: String(item.hojaGastosId || "").trim(),
       description: typeof item.description === "string" ? item.description.trim() : undefined,
@@ -59,8 +71,13 @@ export const normalizeExpenseSheetsCachedItems = (raw: unknown): ExpenseSheetCar
       projId: typeof item.projId === "string" ? item.projId.trim() : undefined,
       currencyCode: typeof item.currencyCode === "string" ? item.currencyCode.trim() : undefined,
       totalAmount: toNullableNumber(item.totalAmount),
+      totalAmountCurrency: toNullableNumber(item.totalAmountCurrency),
+      totalAmountMST,
+      totalGrossAmountMST: grossCompany,
+      totalReimbursableAmount: reimbursable,
       exchRate: toNullableNumber(item.exchRate),
       exchangeRateMode: toNullableNumber(item.exchangeRateMode),
+      reimbursableExpense: toExpenseSheetReimbursableExpense(item.reimbursableExpense),
       createdDate: typeof item.createdDate === "string" ? item.createdDate.trim() : undefined,
     };
   });

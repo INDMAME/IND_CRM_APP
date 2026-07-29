@@ -1,8 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import FloatingList from "../../../components/commons/FloatingList.tsx";
 import { ChevronDownSvg, ChevronUpSvg } from "../../../components/commons/chevrons.tsx";
 import { useOutsideClick } from "../../../hooks/useOutsideClick.ts";
 import { classNames } from "../../../utils/classNames.ts";
+import { normalizeExpenseTicketDraftTime } from "../utils/expenseTicketDateTime.ts";
 
 type TimePart = "hour" | "minute" | "second";
 
@@ -32,33 +33,8 @@ const sanitizeTimeText = (value: string): string => {
     .slice(0, 8);
 };
 
-const normalizeTimeText = (value: string): string | null => {
-  const raw = sanitizeTimeText(value).trim();
-  if (!raw) return "";
-
-  const fromParts = raw.includes(":") ? raw.split(":") : [];
-  if (fromParts.length > 0) {
-    if (fromParts.length < 2 || fromParts.length > 3) return null;
-    const [hourText, minuteText, secondText = "00"] = fromParts;
-    if (!hourText || !minuteText || (fromParts.length === 3 && !secondText)) return null;
-    const hour = Number(hourText);
-    const minute = Number(minuteText);
-    const second = Number(secondText);
-    if (!Number.isInteger(hour) || !Number.isInteger(minute) || !Number.isInteger(second)) return null;
-    if (hour < 0 || hour > 23 || minute < 0 || minute > 59 || second < 0 || second > 59) return null;
-    return [hour, minute, second].map((entry) => String(entry).padStart(2, "0")).join(":");
-  }
-
-  if (!/^\d{4}(\d{2})?$/.test(raw)) return null;
-  const hour = Number(raw.slice(0, 2));
-  const minute = Number(raw.slice(2, 4));
-  const second = raw.length === 6 ? Number(raw.slice(4, 6)) : 0;
-  if (hour > 23 || minute > 59 || second > 59) return null;
-  return [hour, minute, second].map((entry) => String(entry).padStart(2, "0")).join(":");
-};
-
 const getTimeParts = (value: string): Record<TimePart, string> => {
-  const normalized = normalizeTimeText(value);
+  const normalized = normalizeExpenseTicketDraftTime(value);
   if (!normalized) {
     return { hour: "00", minute: "00", second: "00" };
   }
@@ -110,10 +86,12 @@ const ExpenseTicketTimeInput = ({
   const currentParts = useMemo(() => getTimeParts(value), [value]);
   const listId = "expense-ticket-time-options";
   const isOpen = open && !readOnlyMode;
-
-  useOutsideClick([containerRef, listRef], () => {
+  const outsideClickRefs = useMemo(() => [containerRef, listRef], []);
+  const handleOutsideClick = useCallback(() => {
     setOpen(false);
-  });
+  }, []);
+
+  useOutsideClick(outsideClickRefs, handleOutsideClick);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -131,8 +109,9 @@ const ExpenseTicketTimeInput = ({
   }, [currentParts.hour, currentParts.minute, currentParts.second, isOpen]);
 
   const commitTextValue = (rawValue: string) => {
-    const normalized = normalizeTimeText(rawValue);
-    onChange(normalized === null ? "" : normalized);
+    const sanitized = sanitizeTimeText(rawValue).trim();
+    const normalized = normalizeExpenseTicketDraftTime(sanitized);
+    onChange(normalized || sanitized);
   };
 
   const updatePart = (part: TimePart, nextValue: string) => {

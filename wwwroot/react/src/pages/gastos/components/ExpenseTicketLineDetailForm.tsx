@@ -2,7 +2,13 @@ import React from "react";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
+import {
+  canEditExpenseTicketTime,
+  formatExpenseTicketTimeDisplay,
+} from "../utils/expenseTicketDateTime.ts";
+import { formatExpenseDisplayDate } from "../utils/expenseUiUtils.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
+import ExpenseTicketDateTimeFields, { type ExpenseTicketDateTimeMode } from "./ExpenseTicketDateTimeFields.tsx";
 
 type ExpenseTicketLineDetailFormProps = {
   header: ExpenseTicketDetailHeader;
@@ -11,11 +17,15 @@ type ExpenseTicketLineDetailFormProps = {
   draftDescription: string;
   draftQty: string;
   draftPrice: string;
+  draftTransDate: string;
+  draftTicketTime: string;
   priceText: string;
   amountText: string;
   onDraftDescriptionChange: (value: string) => void;
   onDraftQtyChange: (value: string) => void;
   onDraftPriceChange: (value: string) => void;
+  onDraftTransDateChange: (value: string) => void;
+  onDraftTicketTimeChange: (value: string) => void;
 };
 
 const formatQtyValue = (value: number | null): string => {
@@ -35,12 +45,24 @@ const ExpenseTicketLineDetailForm = ({
   draftDescription,
   draftQty,
   draftPrice,
+  draftTransDate,
+  draftTicketTime,
   priceText,
   amountText,
   onDraftDescriptionChange,
   onDraftQtyChange,
   onDraftPriceChange,
+  onDraftTransDateChange,
+  onDraftTicketTimeChange,
 }: ExpenseTicketLineDetailFormProps) => {
+  const locale = document?.documentElement?.lang || "es-ES";
+  const dateTimeMode: ExpenseTicketDateTimeMode = !isEditing
+    ? "read"
+    : canEditExpenseTicketTime(header.ticketTime)
+      ? "edit-date-time"
+      : "edit-date";
+  const ticketDateText = formatExpenseDisplayDate(header.ticketDate || header.transDate, locale) || "-";
+  const ticketTimeText = formatExpenseTicketTimeDisplay(header.ticketTime) || "-";
   const quantityField = isEditing ? (
     <div className="space-y-1.5">
       <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>
@@ -107,6 +129,16 @@ const ExpenseTicketLineDetailForm = ({
           <ExpenseReadOnlyField
             label={indT("Tickets_Field_FileId", "Ticket Id.")}
             value={header.fileId || "-"}
+          />
+
+          <ExpenseTicketDateTimeFields
+            mode={dateTimeMode}
+            dateValue={draftTransDate}
+            dateDisplayValue={ticketDateText}
+            timeValue={draftTicketTime}
+            timeDisplayValue={ticketTimeText}
+            onDateChange={onDraftTransDateChange}
+            onTimeChange={onDraftTicketTimeChange}
           />
 
           {isEditing ? (
