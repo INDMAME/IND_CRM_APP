@@ -1242,6 +1242,9 @@
   <data name="Tickets_Validation_CategoryRequired" xml:space="preserve">
     <value>类别是强制性的。</value>
   </data>
+  <data name="Tickets_Validation_TimeFormat" xml:space="preserve">
+    <value>所需格式：HH:mm 或 HH:mm:ss。</value>
+  </data>
   <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
     <value>货币是强制性的。</value>
   </data>

@@ -1,11 +1,26 @@
 import React, { useCallback } from "react";
 import { indT } from "../../../../utils/indI18n.ts";
 import { showPermissionModal } from "../../../../utils/permissions.ts";
+import type { ExpenseSheetTicketUpdateRequest } from "../../expenseTypes.ts";
 import { executeExpenseMutation, parseDecimalInput } from "../../hooks/expenseMutationUtils.ts";
 import { syncExpenseLinkedTicketSheetLine } from "../../utils/expenseLinkedTicketSheetSync.ts";
 import { resolveExpenseSheetEditAccess } from "../../utils/expenseSheetEditAccess.ts";
 import { clearExpenseTicketSheetSyncState, saveExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
-import { createExpenseSheetTicketLine, deleteExpenseSheetTicketLine, updateExpenseSheetTicketLine } from "../../utils/expenseApi.ts";
+import {
+  createExpenseSheetTicketLine,
+  deleteExpenseSheetTicketLine,
+  getExpenseSheetDefaultCurrencyCode,
+  updateExpenseSheetTicket,
+  updateExpenseSheetTicketLine,
+} from "../../utils/expenseApi.ts";
+import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "../../utils/expenseApiDateUtils.ts";
+import {
+  calculateExpenseLineAmountMSTForCurrency,
+  isExpenseLineForeignCurrency,
+  normalizeExpenseLineCurrencyCode,
+} from "../../utils/expenseLineCurrency.ts";
+import { fetchExpenseOfficialExchangeRate } from "../../utils/expenseExchangeRate.ts";
+import { buildExpenseTicketDateTimeUpdate } from "../../utils/expenseTicketDateTime.ts";
 import { isValidTicketLineAmount, resolveTicketLineAmount } from "../../utils/expenseTicketLineAmount.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
@@ -21,6 +36,13 @@ type UseExpenseTicketLineDetailMutationsArgs = {
   draftDescription: string;
   draftQty: string;
   draftPrice: string;
+  draftTransDate: string;
+  draftTicketTime: string;
+  originalTicketDate: string;
+  originalTicketTime: string;
+  headerCurrencyCode: string;
+  headerTotalAmount: number | null;
+  localCurrencyCode: string;
   linkedExpenseSheetId?: string;
   allowSelfManagement: boolean;
   canManageOtherUsers: boolean;
@@ -30,6 +52,7 @@ type UseExpenseTicketLineDetailMutationsArgs = {
   skipLinkedSheetSyncOnCreate?: boolean;
   onLinkedSheetSyncFailure?: (message: string) => void;
   onLinkedSheetSyncSuccess?: () => void;
+  onHeaderUpdateSuccess?: (payload: ExpenseSheetTicketUpdateRequest) => void;
   setModalError: React.Dispatch<React.SetStateAction<string>>;
   setBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setStatus: React.Dispatch<React.SetStateAction<string>>;
@@ -49,6 +72,13 @@ export const useExpenseTicketLineDetailMutations = ({
   draftDescription,
   draftQty,
   draftPrice,
+  draftTransDate,
+  draftTicketTime,
+  originalTicketDate,
+  originalTicketTime,
+  headerCurrencyCode,
+  headerTotalAmount,
+  localCurrencyCode,
   linkedExpenseSheetId,
   allowSelfManagement,
   canManageOtherUsers,
@@ -58,6 +88,7 @@ export const useExpenseTicketLineDetailMutations = ({
   skipLinkedSheetSyncOnCreate = false,
   onLinkedSheetSyncFailure,
   onLinkedSheetSyncSuccess,
+  onHeaderUpdateSuccess,
   setModalError,
   setBusy,
   setStatus,
@@ -126,6 +157,25 @@ export const useExpenseTicketLineDetailMutations = ({
       return false;
     }
 
+    const dateTimeUpdate = buildExpenseTicketDateTimeUpdate({
+      draftDate: draftTransDate,
+      draftTime: draftTicketTime,
+      originalDate: originalTicketDate,
+      originalTime: originalTicketTime,
+    });
+    if (dateTimeUpdate.invalidDate) {
+      setModalError(EXPENSE_API_DATE_FORMAT_MESSAGE);
+      setStatus(EXPENSE_API_DATE_FORMAT_MESSAGE);
+      return false;
+    }
+    if (dateTimeUpdate.invalidTime) {
+      const message = indT("Tickets_Validation_TimeFormat", "Required format: HH:mm or HH:mm:ss.");
+      setModalError(message);
+      setStatus(message);
+      return false;
+    }
+    const hasHeaderChanges = Object.keys(dateTimeUpdate.payload).length > 0;
+
     const validatedSheetId = await validateLinkedSheetBeforeMutation();
     if (validatedSheetId === null) {
       return false;
@@ -140,18 +190,84 @@ export const useExpenseTicketLineDetailMutations = ({
       setBusy,
       setStatus,
       action: async () => {
-        const payload = {
-          description: normalizedDescription,
-          qty: Number(parsedQty),
-          price: Number(parsedPrice),
-          totalAmount: Number(lineAmount),
-        };
-        const response = isCreateMode
-          ? await createExpenseSheetTicketLine(fileId, payload)
-          : await updateExpenseSheetTicketLine(fileId, lineRecId, payload);
+        const headerPayload: ExpenseSheetTicketUpdateRequest = { ...dateTimeUpdate.payload };
+        if (hasHeaderChanges) {
+          if (dateTimeUpdate.dateChanged) {
+            const normalizedHeaderCurrencyCode = normalizeExpenseLineCurrencyCode(headerCurrencyCode);
+            const normalizedLocalCurrencyCode = normalizeExpenseLineCurrencyCode(
+              localCurrencyCode ||
+                await getExpenseSheetDefaultCurrencyCode({
+                  suppressPermissionModal: true,
+                })
+            );
+            if (normalizedHeaderCurrencyCode && !normalizedLocalCurrencyCode) {
+              throw new Error(indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio."));
+            }
+            if (
+              normalizedHeaderCurrencyCode &&
+              normalizedLocalCurrencyCode &&
+              isExpenseLineForeignCurrency(normalizedHeaderCurrencyCode, normalizedLocalCurrencyCode)
+            ) {
+              const officialExchangeRate = await fetchExpenseOfficialExchangeRate({
+                localCurrencyCode: normalizedLocalCurrencyCode,
+                expenseCurrencyCode: normalizedHeaderCurrencyCode,
+                date: draftTransDate,
+              });
+              if (!officialExchangeRate) {
+                throw new Error(indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio."));
+              }
 
-        if (!response.Success) {
-          throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+              headerPayload.exchRate = officialExchangeRate.exchangeRate;
+              const amountMST = headerTotalAmount == null
+                ? null
+                : calculateExpenseLineAmountMSTForCurrency(
+                    headerTotalAmount,
+                    officialExchangeRate.exchangeRate,
+                    normalizedHeaderCurrencyCode,
+                    normalizedLocalCurrencyCode
+                  );
+              if (amountMST != null) {
+                headerPayload.amountMST = amountMST;
+              }
+            }
+          }
+
+          const headerResponse = await updateExpenseSheetTicket(fileId, headerPayload);
+          if (!headerResponse.Success) {
+            throw new Error(headerResponse.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+          }
+          onHeaderUpdateSuccess?.(headerPayload);
+        }
+
+        try {
+          const payload = {
+            description: normalizedDescription,
+            qty: Number(parsedQty),
+            price: Number(parsedPrice),
+            totalAmount: Number(lineAmount),
+          };
+          const response = isCreateMode
+            ? await createExpenseSheetTicketLine(fileId, payload)
+            : await updateExpenseSheetTicketLine(fileId, lineRecId, payload);
+
+          if (!response.Success) {
+            throw new Error(response.Message || indT("ExpenseSheets_Detail_UpdateFailed", "Update failed."));
+          }
+        } catch (error) {
+          if (hasHeaderChanges && validatedSheetId) {
+            const message = indT(
+              "ExpenseTickets_SheetSync_RetryRequired",
+              "Ticket data changed, but we could not sync the expense line. Save again before leaving."
+            );
+            saveExpenseTicketSheetSyncState({
+              fileId,
+              sheetId: validatedSheetId,
+              message,
+            });
+            onLinkedSheetSyncFailure?.(message);
+            throw new Error(message);
+          }
+          throw error;
         }
 
         if (validatedSheetId && !(isCreateMode && skipLinkedSheetSyncOnCreate)) {
@@ -205,12 +321,20 @@ export const useExpenseTicketLineDetailMutations = ({
     draftDescription,
     draftPrice,
     draftQty,
+    draftTicketTime,
+    draftTransDate,
     fileId,
+    headerCurrencyCode,
+    headerTotalAmount,
     isCreateMode,
     isEditing,
     lineRecId,
+    localCurrencyCode,
+    onHeaderUpdateSuccess,
     onLinkedSheetSyncFailure,
     onLinkedSheetSyncSuccess,
+    originalTicketDate,
+    originalTicketTime,
     setBusy,
     setIsEditing,
     setModalError,

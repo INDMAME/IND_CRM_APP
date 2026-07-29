@@ -10,6 +10,15 @@ import {
 import { buildExpenseListPayload } from "../Web/wwwroot/react/src/pages/gastos/utils/expensePayloadBuilders.ts";
 import { resolveExpenseListAxUserIdOverride } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseManagedUserScope.ts";
 import { areExpenseNumericInputsEquivalent } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseNumberFormat.ts";
+import { toExpenseApiDdMmYyyy, toExpenseIsoDate } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApiDateUtils.ts";
+import {
+  buildExpenseTicketDateTimeUpdate,
+  canEditExpenseTicketTime,
+  formatExpenseTicketTimeDisplay,
+  normalizeExpenseTicketDraftTime,
+  normalizeExpenseTicketStoredTime,
+  toExpenseTicketDateInput,
+} from "../Web/wwwroot/react/src/pages/gastos/utils/expenseTicketDateTime.ts";
 import {
   ensureCurrentExpenseManagedUserInList,
   resolveExpenseSheetOwnerAxUserId,
@@ -36,6 +45,58 @@ assert.equal(resolveExpenseLineExchangeRateForCurrency("USD", "EUR", null), null
 assert.equal(areExpenseNumericInputsEquivalent("7.86", "7.86"), true);
 assert.equal(areExpenseNumericInputsEquivalent("7,86", "7.86"), true);
 assert.equal(areExpenseNumericInputsEquivalent("7.87", "7.86"), false);
+assert.equal(toExpenseTicketDateInput("28.07.2026"), "2026-07-28");
+assert.equal(toExpenseIsoDate("28.07.2026"), "2026-07-28");
+assert.equal(toExpenseApiDdMmYyyy("2026-07-28"), "28.07.2026");
+assert.equal(normalizeExpenseTicketStoredTime(39975), "11:06:15");
+assert.equal(normalizeExpenseTicketStoredTime("11:06"), "11:06:00");
+assert.equal(normalizeExpenseTicketStoredTime("0:00"), "00:00:00");
+assert.equal(normalizeExpenseTicketStoredTime("1234"), "00:20:34");
+assert.equal(normalizeExpenseTicketStoredTime(86399), "23:59:59");
+assert.equal(normalizeExpenseTicketStoredTime(86400), "");
+assert.equal(normalizeExpenseTicketDraftTime("1234"), "12:34:00");
+assert.equal(normalizeExpenseTicketDraftTime("123456"), "12:34:56");
+assert.equal(normalizeExpenseTicketDraftTime("24:00"), "");
+assert.equal(formatExpenseTicketTimeDisplay("0"), "");
+assert.equal(formatExpenseTicketTimeDisplay("39975"), "11:06:15");
+for (const missingTime of [undefined, null, "", 0, "0", "0:00", "00:00", "00:00:00"]) {
+  assert.equal(canEditExpenseTicketTime(missingTime), true);
+}
+for (const lockedTime of [1, "00:00:01", "11:06", "11:06:15", "25:00", "invalid", "-0", "0x0", "0e3", "0.0"]) {
+  assert.equal(canEditExpenseTicketTime(lockedTime), false);
+}
+assert.deepEqual(
+  buildExpenseTicketDateTimeUpdate({
+    draftDate: "2026-07-29",
+    draftTime: "12:34",
+    originalDate: "28.07.2026",
+    originalTime: "11:06:15",
+  }),
+  {
+    payload: { transDate: "29.07.2026", ticketDate: "29.07.2026" },
+    dateChanged: true,
+    invalidDate: false,
+    invalidTime: false,
+  }
+);
+assert.deepEqual(
+  buildExpenseTicketDateTimeUpdate({
+    draftDate: "2026-07-28",
+    draftTime: "1234",
+    originalDate: "28.07.2026",
+    originalTime: "0",
+  }).payload,
+  { ticketTime: "12:34:00" }
+);
+assert.equal(
+  buildExpenseTicketDateTimeUpdate({
+    draftDate: "2026-07-28",
+    draftTime: "99:00",
+    originalDate: "28.07.2026",
+    originalTime: "0",
+  }).invalidTime,
+  true
+);
 assert.equal(formatUserNameWithId("Marco Meza Sanchez", "MAME"), "MARCO MEZA SANCHEZ (MAME)");
 assert.equal(formatUserNameWithId("MARCO MEZA", "MAME"), "MARCO MEZA (MAME)");
 assert.equal(formatUserNameWithId("AITOR BILBAO GURRUTXAGA", "ABG"), "AITOR BILBAO GURRUTXAGA (ABG)");

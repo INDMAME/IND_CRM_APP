@@ -216,6 +216,8 @@ const buildExpenseTicketDetailContentView = ({
   setDraftAmountMST,
   setDraftExchangeRate,
   commitDraftExchangeRate,
+  setDraftTransDate,
+  setDraftTicketTime,
   isFromSheetLink,
   linkedLine,
   handleOpenExpenseSheet,
@@ -275,6 +277,8 @@ const buildExpenseTicketDetailContentView = ({
   setDraftAmountMST: (value: string) => void;
   setDraftExchangeRate: (value: string) => void;
   commitDraftExchangeRate: (value: string) => void;
+  setDraftTransDate: (value: string) => void;
+  setDraftTicketTime: (value: string) => void;
   isFromSheetLink: boolean;
   linkedLine: ExpenseTicketLinkedSheetLineView;
   handleOpenExpenseSheet: () => void;
@@ -340,6 +344,8 @@ const buildExpenseTicketDetailContentView = ({
   onDraftAmountMSTChange: setDraftAmountMST,
   onDraftExchangeRateChange: setDraftExchangeRate,
   onDraftExchangeRateCommit: commitDraftExchangeRate,
+  onDraftTransDateChange: setDraftTransDate,
+  onDraftTicketTimeChange: setDraftTicketTime,
   onOpenFile: openFile,
   onOpenExpenseSheet: isFromSheetLink ? undefined : handleOpenExpenseSheet,
   linkedLine,
@@ -534,7 +540,9 @@ const useExpenseTicketDetailPageViewModel = () => {
     safeText(readExpenseTicketSheetSyncState(fileId)?.message)
   );
   const exchangeRateRequestIdRef = useRef(0);
+  const exchangeRateAbortControllerRef = useRef<AbortController | null>(null);
   const [exchangeRateInfoMessage, setExchangeRateInfoMessage] = useState("");
+  const [exchangeRateLoading, setExchangeRateLoading] = useState(false);
   const [contextDefaultCurrencyCode, setContextDefaultCurrencyCode] = useState("");
 
   useEffect(() => {
@@ -633,6 +641,9 @@ const useExpenseTicketDetailPageViewModel = () => {
     setDraftAmountMST,
     setDraftExchangeRate,
     commitDraftExchangeRate,
+    clearDraftCurrencySettlement,
+    setDraftTransDate,
+    setDraftTicketTime,
     canOpenSaveConfirm,
     handleEnableEdit,
     handleCancelEdit,
@@ -648,36 +659,66 @@ const useExpenseTicketDetailPageViewModel = () => {
     isSheetLinkReadOnly: isFromSheetLink && !canEditFromSheetLinkFailure,
     onForbidden: showPermissionModal,
   });
-  const handleTicketCurrencyCodeChange = useCallback(
-    (value: string) => {
-      const nextCurrencyCode = normalizeExpenseLineCurrencyCode(value);
-      setDraftCurrencyCode(nextCurrencyCode);
-      setExchangeRateInfoMessage("");
+  const commitDraftExchangeRateRef = useRef(commitDraftExchangeRate);
+  useEffect(() => {
+    commitDraftExchangeRateRef.current = commitDraftExchangeRate;
+  }, [commitDraftExchangeRate]);
 
-      if (!nextCurrencyCode || !localCurrencyCode) {
-        return;
-      }
+  const cancelOfficialTicketExchangeRate = useCallback(() => {
+    exchangeRateAbortControllerRef.current?.abort();
+    exchangeRateAbortControllerRef.current = null;
+    exchangeRateRequestIdRef.current += 1;
+    setExchangeRateLoading(false);
+  }, []);
 
-      if (nextCurrencyCode === normalizeExpenseLineCurrencyCode(localCurrencyCode)) {
-        exchangeRateRequestIdRef.current += 1;
-        return;
-      }
+  useEffect(() => {
+    return () => {
+      exchangeRateAbortControllerRef.current?.abort();
+      exchangeRateAbortControllerRef.current = null;
+      exchangeRateRequestIdRef.current += 1;
+    };
+  }, []);
 
+  const loadOfficialTicketExchangeRate = useCallback(
+    (currencyCode: string, transDate: string) => {
+      const normalizedCurrencyCode = normalizeExpenseLineCurrencyCode(currencyCode);
+      const normalizedLocalCurrencyCode = normalizeExpenseLineCurrencyCode(localCurrencyCode);
+      exchangeRateAbortControllerRef.current?.abort();
+      exchangeRateAbortControllerRef.current = null;
       const requestId = exchangeRateRequestIdRef.current + 1;
       exchangeRateRequestIdRef.current = requestId;
+      setExchangeRateInfoMessage("");
+
+      if (!normalizedCurrencyCode || !normalizedLocalCurrencyCode || !safeText(transDate)) {
+        setExchangeRateLoading(false);
+        return;
+      }
+
+      if (normalizedCurrencyCode === normalizedLocalCurrencyCode) {
+        setExchangeRateLoading(false);
+        return;
+      }
+
+      const controller = new AbortController();
+      exchangeRateAbortControllerRef.current = controller;
+      setExchangeRateLoading(true);
 
       void (async () => {
         try {
           const officialExchangeRate = await fetchExpenseOfficialExchangeRate({
-            localCurrencyCode,
-            expenseCurrencyCode: nextCurrencyCode,
-            date: draftTransDate || header?.ticketDate || header?.transDate,
+            localCurrencyCode: normalizedLocalCurrencyCode,
+            expenseCurrencyCode: normalizedCurrencyCode,
+            date: transDate,
+            signal: controller.signal,
           });
           if (requestId !== exchangeRateRequestIdRef.current || !officialExchangeRate) {
             return;
           }
 
-          commitDraftExchangeRate(formatExpenseExchangeRateInputValue(officialExchangeRate.exchangeRate), nextCurrencyCode);
+          commitDraftExchangeRateRef.current(
+            formatExpenseExchangeRateInputValue(officialExchangeRate.exchangeRate),
+            normalizedCurrencyCode
+          );
           setExchangeRateInfoMessage(
             buildExpenseExchangeRateInfoMessage({
               rawRate: officialExchangeRate.rawRate,
@@ -689,44 +730,67 @@ const useExpenseTicketDetailPageViewModel = () => {
           if (requestId !== exchangeRateRequestIdRef.current) {
             return;
           }
+          if (error instanceof DOMException && error.name === "AbortError") {
+            return;
+          }
 
           const message =
             error instanceof Error && safeText(error.message)
               ? safeText(error.message)
               : indT("ExpenseSheets_ExchangeRate_Unavailable", "No se pudo obtener el tipo de cambio.");
+          clearDraftCurrencySettlement();
           setExchangeRateInfoMessage(message);
+        } finally {
+          if (requestId === exchangeRateRequestIdRef.current) {
+            exchangeRateAbortControllerRef.current = null;
+            setExchangeRateLoading(false);
+          }
         }
       })();
     },
-    [
-      commitDraftExchangeRate,
-      draftTransDate,
-      header?.ticketDate,
-      header?.transDate,
-      localCurrencyCode,
-      setDraftCurrencyCode,
-    ]
+    [clearDraftCurrencySettlement, localCurrencyCode]
+  );
+  const handleTicketCurrencyCodeChange = useCallback(
+    (value: string) => {
+      const nextCurrencyCode = normalizeExpenseLineCurrencyCode(value);
+      setDraftCurrencyCode(nextCurrencyCode);
+      loadOfficialTicketExchangeRate(
+        nextCurrencyCode,
+        draftTransDate || header?.ticketDate || header?.transDate || ""
+      );
+    },
+    [draftTransDate, header?.ticketDate, header?.transDate, loadOfficialTicketExchangeRate, setDraftCurrencyCode]
+  );
+  const handleTicketTransDateChange = useCallback(
+    (value: string) => {
+      setDraftTransDate(value);
+      loadOfficialTicketExchangeRate(draftCurrencyCode, value);
+    },
+    [draftCurrencyCode, loadOfficialTicketExchangeRate, setDraftTransDate]
   );
   const handleTicketExchangeRateChange = useCallback(
     (value: string) => {
+      cancelOfficialTicketExchangeRate();
       setExchangeRateInfoMessage("");
       setDraftExchangeRate(value);
     },
-    [setDraftExchangeRate]
+    [cancelOfficialTicketExchangeRate, setDraftExchangeRate]
   );
   const handleTicketExchangeRateCommit = useCallback(
     (value: string) => {
+      cancelOfficialTicketExchangeRate();
       setExchangeRateInfoMessage("");
       commitDraftExchangeRate(value);
     },
-    [commitDraftExchangeRate]
+    [cancelOfficialTicketExchangeRate, commitDraftExchangeRate]
   );
   const handleTicketAmountMSTChange = useCallback(
     (value: string) => {
+      cancelOfficialTicketExchangeRate();
       setExchangeRateInfoMessage("");
       setDraftAmountMST(value);
     },
-    [setDraftAmountMST]
+    [cancelOfficialTicketExchangeRate, setDraftAmountMST]
   );
   const handleEnableEditInContext = useCallback(() => {
     if (linkSheetCheckBusy) {
@@ -754,11 +818,25 @@ const useExpenseTicketDetailPageViewModel = () => {
     setStatus,
   ]);
   const handleCancelEditInContext = useCallback(() => {
+    cancelOfficialTicketExchangeRate();
     setExchangeRateInfoMessage("");
     handleCancelEdit();
     linkedSheetLine.resetDraftProjectId();
     linkedSheetLine.resetDraftReimbursableExpense();
-  }, [handleCancelEdit, linkedSheetLine.resetDraftProjectId, linkedSheetLine.resetDraftReimbursableExpense]);
+  }, [
+    cancelOfficialTicketExchangeRate,
+    handleCancelEdit,
+    linkedSheetLine.resetDraftProjectId,
+    linkedSheetLine.resetDraftReimbursableExpense,
+  ]);
+  const canOpenTicketSaveConfirm = useCallback(() => {
+    if (exchangeRateLoading) {
+      setStatus(indT("Common_Loading", "Loading..."));
+      return false;
+    }
+
+    return canOpenSaveConfirm();
+  }, [canOpenSaveConfirm, exchangeRateLoading, setStatus]);
   const { paginationLabels, previewAltText, statusLabel, gastoTypeLabel, totalAmountText, transDateText, ticketTimeText } =
     useExpenseTicketDetailDisplay({
       header,
@@ -819,6 +897,8 @@ const useExpenseTicketDetailPageViewModel = () => {
     localCurrencyCode,
     draftTransDate,
     draftTicketTime,
+    originalTicketDate: safeText(header?.ticketDate || header?.transDate),
+    originalTicketTime: safeText(header?.ticketTime),
     draftComentario,
     draftUrlFile,
     draftFileName,
@@ -917,6 +997,31 @@ const useExpenseTicketDetailPageViewModel = () => {
       : !canEditTicketInContext && !canDeleteTicketInContext
         ? "view_only"
         : "default";
+  const handleTicketSaveSuccess = useCallback(() => {
+    if ((isFromExpenseSheetCreate || isFromExpenseLine) && linkedExpenseSheetId) {
+      clearCachedState();
+      navigateToExpenseUrl(buildExpenseSheetDetailUrl(linkedExpenseSheetId), {
+        bypassGuardOnce: true,
+      });
+      return;
+    }
+
+    void reloadDetail();
+  }, [clearCachedState, isFromExpenseLine, isFromExpenseSheetCreate, linkedExpenseSheetId, reloadDetail]);
+  const handleTicketDeleteSuccess = useCallback(() => {
+    if (ticketReturnContext?.sheetId) {
+      clearCachedState();
+      navigateToExpenseUrl(buildExpenseSheetDetailUrl(ticketReturnContext.sheetId), {
+        bypassGuardOnce: true,
+      });
+      return;
+    }
+
+    markResetFiltersReturn();
+    navigateToExpenseUrl("/Gastos/Tickets", {
+      bypassGuardOnce: true,
+    });
+  }, [clearCachedState, markResetFiltersReturn, ticketReturnContext?.sheetId]);
 
   useExpenseTicketDetailTopbarActions({
     busy,
@@ -932,47 +1037,24 @@ const useExpenseTicketDetailPageViewModel = () => {
     setModalError,
     handleEnableEdit: handleEnableEditInContext,
     handleCancelEdit: handleCancelEditInContext,
-    canOpenSaveConfirm,
+    canOpenSaveConfirm: canOpenTicketSaveConfirm,
     handleUpdate,
     handleDelete,
-    onSaveSuccess: () => {
-      if ((isFromExpenseSheetCreate || isFromExpenseLine) && linkedExpenseSheetId) {
-        clearCachedState();
-        navigateToExpenseUrl(buildExpenseSheetDetailUrl(linkedExpenseSheetId), {
-          bypassGuardOnce: true,
-        });
-        return;
-      }
-
-      void reloadDetail();
-    },
-    onDeleteSuccess: () => {
-      if (ticketReturnContext?.sheetId) {
-        clearCachedState();
-        navigateToExpenseUrl(buildExpenseSheetDetailUrl(ticketReturnContext.sheetId), {
-          bypassGuardOnce: true,
-        });
-        return;
-      }
-
-      markResetFiltersReturn();
-      navigateToExpenseUrl("/Gastos/Tickets", {
-        bypassGuardOnce: true,
-      });
-    },
+    onSaveSuccess: handleTicketSaveSuccess,
+    onDeleteSuccess: handleTicketDeleteSuccess,
     openConfirm,
     closeConfirm,
   });
 
   const { openCreateLineDetail, openLineDetail, resolveClickableCard, openFile, handleOpenExpenseSheet } =
     useExpenseTicketDetailInteractions({
-    busy,
+    busy: busy || exchangeRateLoading,
     fileId,
     contextSheetId: linkedExpenseSheetId,
     isFromSheetLink,
     headerExpenseSheetId: safeText(header?.hojaGastosIdDisplay),
     isEditing,
-    canOpenSaveConfirm,
+    canOpenSaveConfirm: canOpenTicketSaveConfirm,
     handlePersistHeaderDraft,
     bypassWorkflowGuard: shouldHardBlockWorkflowExit,
     lineContainerRef,
@@ -1061,6 +1143,8 @@ const useExpenseTicketDetailPageViewModel = () => {
       setDraftAmountMST: handleTicketAmountMSTChange,
       setDraftExchangeRate: handleTicketExchangeRateChange,
       commitDraftExchangeRate: handleTicketExchangeRateCommit,
+      setDraftTransDate: handleTicketTransDateChange,
+      setDraftTicketTime,
       isFromSheetLink,
       linkedLine: {
         visible: isFromExpenseLine,

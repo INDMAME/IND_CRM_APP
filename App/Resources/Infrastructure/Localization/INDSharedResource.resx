@@ -1329,6 +1329,9 @@
   <data name="Tickets_Validation_CategoryRequired" xml:space="preserve">
     <value>La categoría es obligatoria.</value>
   </data>
+  <data name="Tickets_Validation_TimeFormat" xml:space="preserve">
+    <value>Formato requerido: HH:mm o HH:mm:ss.</value>
+  </data>
   <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
     <value>La divisa es obligatoria.</value>
   </data>

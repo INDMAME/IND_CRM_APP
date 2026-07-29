@@ -1329,6 +1329,9 @@
   <data name="Tickets_Validation_CategoryRequired" xml:space="preserve">
     <value>Kategoria derrigorrezkoa da.</value>
   </data>
+  <data name="Tickets_Validation_TimeFormat" xml:space="preserve">
+    <value>Beharrezko formatua: HH:mm edo HH:mm:ss.</value>
+  </data>
   <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
     <value>Moneta derrigorrezkoa da.</value>
   </data>
