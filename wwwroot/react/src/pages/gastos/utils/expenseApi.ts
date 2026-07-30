@@ -80,7 +80,7 @@ import {
   mapExpenseSheetLine as mapExpenseSheetLineCore,
   mapExpenseSheetListItemToCard as mapExpenseSheetListItemToCardCore,
 } from "./expenseApiMappers.ts";
-import { sanitizeAssistantText } from "./expenseUiUtils.ts";
+import { normalizeDescriptionText, sanitizeAssistantText } from "./expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "./expenseApiDateUtils.ts";
 import { isValidTicketLineAmount } from "./expenseTicketLineAmount.ts";
 import { getExpenseActingUserOverride } from "./expenseActingUser.ts";
@@ -1281,6 +1281,7 @@ export const createExpenseSheet = async (
     ...line,
     transDate: normalizeRequiredApiDate(line.transDate),
     typeValue: toExpenseGastoTypeCode(line.typeValue, { allowNone: false }) ?? line.typeValue,
+    description: normalizeDescriptionText(line.description, ""),
     reimbursableExpense: normalizeExpenseSheetLineReimbursable(line.reimbursableExpense),
     currencyCode: safeText(line.currencyCode).toUpperCase() || undefined,
     amountMST: toNullableNumber(line.amountMST),
@@ -1341,7 +1342,8 @@ export const createExpenseSheet = async (
     ...payload,
     mode,
     existingHojaGastosId: safeText(payload.existingHojaGastosId) || undefined,
-    description: safeText(payload.description) || undefined,
+    description:
+      payload.description === undefined ? undefined : normalizeDescriptionText(payload.description, "") || undefined,
     currencyCode: normalizeCurrencyCode(payload.currencyCode) || undefined,
     exchRate: toNullableNumber(payload.exchRate) ?? undefined,
     projId: safeText(payload.projId) || undefined,
@@ -1380,6 +1382,7 @@ export const updateExpenseSheetHeader = async (
 
   const safePayload: ExpenseSheetHeaderUpdateRequest = {
     ...payload,
+    description: normalizeDescriptionText(payload.description, ""),
     currencyCode: normalizeCurrencyCode(payload.currencyCode) || undefined,
     exchRate: toNullableNumber(payload.exchRate) ?? undefined,
     reimbursableExpense: normalizeExpenseSheetReimbursable(payload.reimbursableExpense),
@@ -1453,6 +1456,7 @@ export const updateExpenseSheetLine = async (
     ...payload,
     transDate: normalizedTransDate,
     typeValue: normalizedTypeValue ?? payload.typeValue,
+    description: normalizeDescriptionText(payload.description, ""),
     reimbursableExpense: normalizeExpenseSheetLineReimbursable(payload.reimbursableExpense),
     currencyCode: normalizeCurrencyCode(payload.currencyCode) || undefined,
     amountMST: toNullableNumber(payload.amountMST),
@@ -1694,7 +1698,7 @@ export const createExpenseSheetTicketQuick = async (
   const context = await ensureExpenseApiContext(fetchOptions);
   const form = new FormData();
   const safeCurrencyCode = safeText(payload?.currencyCode).toUpperCase();
-  const safeDescription = safeText(payload?.description);
+  const safeDescription = normalizeDescriptionText(payload?.description, "");
   const safeComentario = safeText(payload?.comentario);
   const safeSheetId = safeText(payload?.existingHojaGastosId);
   const safeProjectId = safeText(payload?.projId || payload?.projectId);
@@ -1798,9 +1802,17 @@ export const createExpenseSheetTicket = async (
 
   const safePayload: ExpenseSheetTicketCreateRequest = {
     ...payload,
+    description:
+      payload.description === undefined ? undefined : normalizeDescriptionText(payload.description, "") || undefined,
     transDate: normalizedTransDate || undefined,
     ticketDate: normalizedTicketDate || undefined,
     gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
+    lines: Array.isArray(payload.lines)
+      ? payload.lines.map((line) => ({
+          ...line,
+          description: normalizeDescriptionText(line.description, ""),
+        }))
+      : payload.lines,
   };
   const response = await fetchJson<IndApiResponse<object>>("/api/crm/expensesheets/tickets", {
     ...options,
@@ -2058,6 +2070,8 @@ export const updateExpenseSheetTicket = async (
 
   const safePayload: ExpenseSheetTicketUpdateRequest = {
     ...payload,
+    description:
+      payload.description === undefined ? undefined : normalizeDescriptionText(payload.description, "") || undefined,
     transDate: normalizedTransDate || undefined,
     ticketDate: normalizedTicketDate || undefined,
     gastoType: normalizeOptionalTicketGastoType(payload?.gastoType),
@@ -2170,12 +2184,16 @@ export const createExpenseSheetTicketLine = async (
   }
 
   const context = await ensureExpenseApiContext(options);
+  const safePayload: ExpenseSheetTicketLineRequest = {
+    ...payload,
+    description: normalizeDescriptionText(payload.description, ""),
+  };
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
   const response = await fetchJson<IndApiResponse<object>>(`/api/crm/expensesheets/tickets/${safeFileId}/lines`, {
     ...options,
     method: "POST",
     headers: buildExpenseHeaders(context, options, true),
-    body: JSON.stringify(payload),
+    body: JSON.stringify(safePayload),
   });
 
   return normalizeApiResponse(response);
@@ -2193,6 +2211,10 @@ export const updateExpenseSheetTicketLine = async (
   }
 
   const context = await ensureExpenseApiContext(options);
+  const safePayload: ExpenseSheetTicketLineRequest = {
+    ...payload,
+    description: normalizeDescriptionText(payload.description, ""),
+  };
   const safeFileId = encodeURIComponent(String(fileId || "").trim());
   const safeLineId = encodeURIComponent(String(lineRecId || "").trim());
   const response = await fetchJson<IndApiResponse<object>>(
@@ -2201,7 +2223,7 @@ export const updateExpenseSheetTicketLine = async (
       ...options,
       method: "PUT",
       headers: buildExpenseHeaders(context, options, true),
-      body: JSON.stringify(payload),
+      body: JSON.stringify(safePayload),
     }
   );
 

@@ -57,7 +57,10 @@ import { fetchExpenseSheetListSourceJson } from "../Web/wwwroot/react/src/pages/
 import { getVisibleReimbursableTotal } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseVisibleTotals.ts";
 import { toNullableNumber } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApiTransforms.ts";
 import { formatExpenseAmountLabel } from "../Web/wwwroot/react/src/pages/gastos/expenseFormatters.ts";
-import { normalizeCardTitleText } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseUiUtils.ts";
+import {
+  normalizeCardTitleText,
+  normalizeDescriptionText,
+} from "../Web/wwwroot/react/src/pages/gastos/utils/expenseUiUtils.ts";
 import {
   mapExpenseTicketDetailHeader,
   mapExpenseTicketDetailLine,
@@ -79,6 +82,7 @@ assert.equal(normalizeCardTitleText("áRBOL y CAFÉ"), "Árbol Y Café");
 assert.equal(normalizeCardTitleText("", ""), "");
 assert.equal(normalizeCardTitleText("", "") || "HG000080", "HG000080");
 assert.equal(normalizeCardTitleText("", "") || "FACTURA.JPG", "FACTURA.JPG");
+assert.equal(normalizeDescriptionText("  pRUEBA de PROYECTO  ", ""), "Prueba De Proyecto");
 assert.equal(toNullableNumber(null), null);
 assert.equal(toNullableNumber(""), null);
 assert.equal(toNullableNumber(0), 0);

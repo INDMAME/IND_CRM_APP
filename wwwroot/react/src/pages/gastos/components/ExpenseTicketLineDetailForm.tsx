@@ -14,7 +14,7 @@ import {
   canEditExpenseTicketTime,
   formatExpenseTicketTimeDisplay,
 } from "../utils/expenseTicketDateTime.ts";
-import { formatExpenseDisplayDate } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDisplayDate, normalizeDescriptionText } from "../utils/expenseUiUtils.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseTicketDateTimeFields, { type ExpenseTicketDateTimeMode } from "./ExpenseTicketDateTimeFields.tsx";
 
@@ -162,13 +162,14 @@ const ExpenseTicketLineDetailForm = ({
                 className="form-control"
                 value={draftDescription}
                 onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+                onBlur={(event) => onDraftDescriptionChange(normalizeDescriptionText(event.target.value, ""))}
                 aria-label={indT("ExpenseSheets_Field_Description", "Description")}
               />
             </div>
           ) : (
             <ExpenseReadOnlyField
               label={indT("ExpenseSheets_Field_Description", "Description")}
-              value={line?.description || "-"}
+              value={normalizeDescriptionText(line?.description)}
               fullWidth
             />
           )}

@@ -3,7 +3,7 @@ import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import { hasExpenseTicketImagePreviewSource } from "../tickets/detail/expenseTicketPreviewUtils.ts";
-import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDisplayDate, normalizeDescriptionText, safeText } from "../utils/expenseUiUtils.ts";
 import { canEditExpenseTicketTime } from "../utils/expenseTicketDateTime.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseTicketCurrencySettlementFields from "./ExpenseTicketCurrencySettlementFields.tsx";
@@ -178,6 +178,7 @@ const ExpenseTicketDetailHeaderForm = ({
               className={`form-control${descriptionInvalid ? " border-rose-400 bg-rose-50 focus:border-rose-400 focus:ring-rose-200" : ""}`}
               value={draftDescription}
               onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+              onBlur={(event) => onDraftDescriptionChange(normalizeDescriptionText(event.target.value, ""))}
               aria-invalid={descriptionInvalid ? "true" : "false"}
               aria-label={indT("ExpenseSheets_Field_Description", "Description")}
             />
@@ -185,7 +186,7 @@ const ExpenseTicketDetailHeaderForm = ({
         ) : (
           <ExpenseReadOnlyField
             label={indT("ExpenseSheets_Field_Description", "Description")}
-            value={header.description || "-"}
+            value={normalizeDescriptionText(header.description)}
             fullWidth
           />
         )}

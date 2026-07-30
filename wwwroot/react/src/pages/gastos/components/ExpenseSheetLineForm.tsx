@@ -5,7 +5,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
 import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
-import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDisplayDate, normalizeDescriptionText, safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
@@ -291,6 +291,7 @@ const ExpenseSheetLineForm = ({
         }`}
         value={draftDescription}
         onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+        onBlur={(event) => onDraftDescriptionChange(normalizeDescriptionText(event.target.value, ""))}
         aria-invalid={descriptionInvalid ? "true" : "false"}
         aria-label={indT("ExpenseSheets_Field_Description", "Description")}
       />
@@ -298,7 +299,7 @@ const ExpenseSheetLineForm = ({
   ) : (
     <ExpenseReadOnlyField
       label={indT("ExpenseSheets_Field_Description", "Description")}
-      value={safeText(line.description) || "-"}
+      value={normalizeDescriptionText(line.description)}
       fullWidth
     />
   );

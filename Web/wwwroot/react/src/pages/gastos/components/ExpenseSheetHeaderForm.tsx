@@ -17,7 +17,7 @@ import {
   getExpenseExchangeRateModeLabel,
   normalizeExpenseExchangeRateMode,
 } from "../constants/exchangeRateEntryModeCatalog.ts";
-import { safeText } from "../utils/expenseUiUtils.ts";
+import { normalizeDescriptionText, safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
 
 type ExpenseSheetHeaderFormMode = {
@@ -281,13 +281,14 @@ const ExpenseSheetHeaderForm = ({
               className="form-control"
               value={draftDescription}
               onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+              onBlur={(event) => onDraftDescriptionChange(normalizeDescriptionText(event.target.value, ""))}
               aria-label={indT("ExpenseSheets_Field_Description", "Description")}
             />
           </div>
         ) : (
           <ExpenseReadOnlyField
             label={indT("ExpenseSheets_Field_Description", "Description")}
-            value={safeText(header.description) || "-"}
+            value={normalizeDescriptionText(header.description)}
             fullWidth
           />
         )}
@@ -344,6 +345,8 @@ const ExpenseSheetHeaderForm = ({
             <ExpenseReadOnlyField
               label={indT("ExpenseSheets_Detail_Field_Identifier", "Identifier")}
               value={safeText(header.hojaGastosId) || "-"}
+              containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
+              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
             />
             {projectField}
           </div>
