@@ -2644,7 +2644,7 @@ Formatversion: 1
         #        hasExpenseSheetStatusFilter = false;
         #    }
         #
-        #    // INDReimbursableExpense permitido: 0=No, 1=Yes, 2=Both
+        #    // INDReimbursableExpense permitido: 0=Yes, 1=No, 2=Both
         #    if (hasReimbursableExpenseFilter
         #        && !INDCRMExpenseSheetService::isValidReimbursableExpense(reimbursableExpenseFilter))
         #    {
@@ -4567,7 +4567,7 @@ Formatversion: 1
         #//  - _data[8] = ExpenseSheetStatus (opcional, entero >= 0; otros valores = sin cambio)
         #//  - _data[9] = ExchangeRateMode (opcional, entero >= 0; otros valores = sin cambio)
         #//  - _data[10] = estadoComentarios (opcional)
-        #//  - _data[11] = ReimbursableExpense (opcional: 0 No, 1 Yes, 2 Both)
+        #//  - _data[11] = ReimbursableExpense (opcional: 0 Yes, 1 No, 2 Both)
         #//  - _data[12] = actorAxUserId (opcional, solo para notificacion web de jefes)
         #static server container updateExpenseSheetHeader(container _data)
         #{
