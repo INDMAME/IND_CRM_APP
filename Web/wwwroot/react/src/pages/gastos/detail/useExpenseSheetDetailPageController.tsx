@@ -21,7 +21,6 @@ import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
 import { useExpenseSheetQuickTicketFlow } from "./useExpenseSheetQuickTicketFlow.ts";
 import { useExpenseSheetsFilterCache } from "../list/useExpenseSheetsFilterCache.ts";
 import { LinkTicketIcon, NewLineIcon, NewTicketIcon } from "./ExpenseSheetDetailIcons.tsx";
-import { groupExpenseSheetOriginalAmounts } from "../utils/expenseSheetTotals.ts";
 
 const LINES_PAGE_SIZE = 6;
 const EXPENSE_STATUS_APPROVAL_REQUESTED = 1;
@@ -234,14 +233,10 @@ export const useExpenseSheetDetailPageController = () => {
     () => formatAmountWithCurrency(header?.totalReimbursableAmount ?? null, companyCurrencyCode),
     [companyCurrencyCode, header?.totalReimbursableAmount]
   );
-  const originalCurrencyTotals = useMemo(
-    () => groupExpenseSheetOriginalAmounts(lines),
-    [lines]
-  );
   const hasStatusActionContent =
     lines.length > 0 ||
     hasPositiveTotalAmount(header?.totalAmount) ||
-    hasPositiveTotalAmount(header?.totalAmountMST);
+    hasPositiveTotalAmount(header?.totalGrossAmountMST);
   const areStatusActionsDisabled = !hasStatusActionContent;
   const ownerDisplay = useMemo(() => {
     const ownerUserId = safeText(header?.userId);
@@ -731,7 +726,6 @@ export const useExpenseSheetDetailPageController = () => {
     paginationLabels,
     grossAmountText,
     reimbursableAmountText,
-    originalCurrencyTotals,
     statusCommentMode,
     ownerDisplay,
     projectValue,

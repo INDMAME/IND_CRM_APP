@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import path from "node:path";
 import {
   calculateExpenseLineAmountMSTForCurrency,
   calculateExpenseLineExchangeRateForCurrency,
@@ -25,7 +27,10 @@ import {
 } from "../Web/wwwroot/react/src/pages/gastos/list/expenseManagedUserSelection.ts";
 import { normalizeExpenseSheetsCachedItems } from "../Web/wwwroot/react/src/pages/gastos/list/useExpenseSheetsFilterCache.ts";
 import { buildExpenseSheetsVisualizationFallbackMessages } from "../Web/wwwroot/react/src/pages/gastos/list/expenseSheetsVisualizationFallback.ts";
-import { getExpenseLineReimbursableExpenseOptions } from "../Web/wwwroot/react/src/pages/gastos/constants/expenseReimbursableExpenseCatalog.ts";
+import {
+  getExpenseLineReimbursableExpenseLabel,
+  getExpenseLineReimbursableExpenseOptions,
+} from "../Web/wwwroot/react/src/pages/gastos/constants/expenseReimbursableExpenseCatalog.ts";
 import { formatUserNameWithId } from "../Web/wwwroot/react/src/utils/userLabels.ts";
 import {
   groupExpenseSheetOriginalAmounts,
@@ -36,6 +41,7 @@ import {
 import {
   normalizeDetailPagedResponse,
   normalizeListPagedResponse,
+  normalizeTicketDetailPagedResponse,
 } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApiResponseNormalizers.ts";
 import {
   mapExpenseSheetHeader,
@@ -43,14 +49,33 @@ import {
 } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApiMappers.ts";
 import { fetchExpenseSheetListSourceJson } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApi.ts";
 import { getVisibleReimbursableTotal } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseVisibleTotals.ts";
+import { toNullableNumber } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseApiTransforms.ts";
+import { formatExpenseAmountLabel } from "../Web/wwwroot/react/src/pages/gastos/expenseFormatters.ts";
+import { normalizeCardTitleText } from "../Web/wwwroot/react/src/pages/gastos/utils/expenseUiUtils.ts";
+import {
+  mapExpenseTicketDetailHeader,
+  mapExpenseTicketDetailLine,
+} from "../Web/wwwroot/react/src/pages/gastos/tickets/detail/expenseTicketDetailTypes.ts";
 import type {
   ExpenseSheetDetailDto,
   ExpenseSheetListItemDto,
+  ExpenseSheetTicketDetailDto,
   IndPagedResponse,
 } from "../Web/wwwroot/react/src/pages/gastos/expenseTypes.ts";
 
 assert.equal(isExpenseLineSameReimbursementCurrency("usd", "USD"), true);
 assert.equal(isExpenseLineForeignCurrency("USD", "EUR"), true);
+assert.equal(formatExpenseAmountLabel(" eur "), "Amount (EUR)");
+assert.equal(formatExpenseAmountLabel(""), "Amount (-)");
+assert.equal(formatExpenseAmountLabel(" usd "), "Amount (USD)");
+assert.equal(normalizeCardTitleText("cOMIDA de EMPRESA"), "Comida De Empresa");
+assert.equal(normalizeCardTitleText("áRBOL y CAFÉ"), "Árbol Y Café");
+assert.equal(normalizeCardTitleText("", ""), "");
+assert.equal(normalizeCardTitleText("", "") || "HG000080", "HG000080");
+assert.equal(normalizeCardTitleText("", "") || "FACTURA.JPG", "FACTURA.JPG");
+assert.equal(toNullableNumber(null), null);
+assert.equal(toNullableNumber(""), null);
+assert.equal(toNullableNumber(0), 0);
 
 assert.equal(calculateExpenseLineAmountMSTForCurrency(210, 92.5, "USD", "USD"), 210);
 assert.equal(resolveExpenseLineExchangeRateForCurrency("USD", "USD", null), 100);
@@ -232,6 +257,8 @@ assert.deepEqual(
 assert.equal(toExpenseSheetReimbursableExpense(2), 2);
 assert.equal(toExpenseSheetLineReimbursableExpense(2), null);
 assert.equal(toExpenseSheetLineReimbursableExpense(1), 1);
+assert.equal(getExpenseLineReimbursableExpenseLabel(null), "-");
+assert.equal(getExpenseLineReimbursableExpenseLabel(2), "-");
 assert.deepEqual(
   getExpenseLineReimbursableExpenseOptions().map((option) => Number(option.value)),
   [0, 1]
@@ -311,6 +338,67 @@ assert.equal(normalizedLine?.Amount, 100);
 assert.equal(normalizedLine?.AmountMST, 92);
 assert.equal(normalizedLine?.ReimbursableAmount, null);
 assert.equal(mapExpenseSheetLine(normalizedLine || {}).reimbursableAmount, null);
+
+const exactUsdFixture = normalizeDetailPagedResponse({
+  Success: true,
+  Message: "",
+  Items: [
+    {
+      HojaGastosId: "HG000080",
+      TotalGrossAmountMST: 108.11,
+      TotalReimbursableAmount: 0,
+      TotalAmountMST: 108.11,
+      Lines: [
+        {
+          LineRecId: "USD-1",
+          ReimbursableExpense: 1,
+          CurrencyCode: "USD",
+          AmountMST: 108.11,
+          ReimbursableAmount: 0,
+          TotalAmountCurrency: 100,
+          TotalAmountMST: 108.11,
+        },
+      ],
+    },
+  ],
+} satisfies IndPagedResponse<ExpenseSheetDetailDto>);
+const exactUsdMappedLine = mapExpenseSheetLine(exactUsdFixture.Items[0]?.Lines?.[0] || {});
+assert.equal(exactUsdMappedLine.amount, 100);
+assert.equal(exactUsdMappedLine.currencyCode, "USD");
+assert.equal(exactUsdMappedLine.amountMST, 108.11);
+assert.equal(exactUsdMappedLine.reimbursableAmount, 0);
+assert.equal(exactUsdMappedLine.reimbursableExpense, 1);
+
+const camelCaseExpenseFixture = normalizeDetailPagedResponse({
+  success: true,
+  message: "",
+  items: [
+    {
+      hojaGastosId: "HG-CAMEL",
+      totalGrossAmountMST: 108.11,
+      totalReimbursableAmount: null,
+      totalAmountMST: 80,
+      lines: [
+        {
+          lineRecId: "CAMEL-1",
+          amount: 100,
+          currencyCode: "USD",
+          amountMST: 108.11,
+          reimbursableExpense: 2,
+          reimbursableAmount: null,
+          totalAmountCurrency: 100,
+          totalAmountMST: 108.11,
+        },
+      ],
+    },
+  ],
+} as unknown as IndPagedResponse<ExpenseSheetDetailDto>);
+const camelCaseMappedHeader = mapExpenseSheetHeader(camelCaseExpenseFixture.Items[0] || {});
+const camelCaseMappedLine = mapExpenseSheetLine(camelCaseExpenseFixture.Items[0]?.Lines?.[0] || {});
+assert.equal(camelCaseMappedHeader.totalGrossAmountMST, 108.11);
+assert.equal(camelCaseMappedHeader.totalReimbursableAmount, 80);
+assert.equal(camelCaseMappedLine.reimbursableExpense, null);
+assert.equal(camelCaseMappedLine.reimbursableAmount, null);
 
 const allReimbursableHeader = mapExpenseSheetHeader({
   HojaGastosId: "HG-ALL",
@@ -455,5 +543,139 @@ assert.match(String(visualizationTable?.type === "table" ? visualizationTable.pa
 
 // Tickets keep their legacy visible-total fallback chain unchanged.
 assert.equal(getVisibleReimbursableTotal({ AmountMST: 35, TotalAmountCurrency: 20 }), 35);
+
+const normalizedTicketDetail = normalizeTicketDetailPagedResponse({
+  Success: true,
+  Message: "",
+  Items: [
+    {
+      FileId: "F000000161",
+      Description: "USD ticket",
+      Status: 0,
+      HojaGastosIdDisplay: "HG000080",
+      ProcessedByAI: false,
+      CurrencyCode: "USD",
+      TotalAmount: 100,
+      TotalAmountCurrency: 100,
+      TotalAmountMST: 108.11,
+      CreatedByUserId: "MAME",
+      TransDate: "30.07.2026",
+      TicketDate: "30.07.2026",
+      TicketTime: "12:00",
+      Comentario: "",
+      UrlFile: "",
+      FileName: "",
+      GastoType: 0,
+      Lines: [
+        {
+          RecId: "T-1",
+          Description: "Line one",
+          Qty: 1,
+          Price: 100,
+          TotalAmount: 100,
+          RefRecIdTable: "1",
+          CreatedByUserId: "MAME",
+          ReimbursableExpense: 1,
+          ReimbursableAmount: 25,
+        },
+        {
+          RecId: "T-2",
+          Description: "Line two",
+          Qty: 1,
+          Price: 0,
+          TotalAmount: 0,
+          RefRecIdTable: "1",
+          CreatedByUserId: "MAME",
+          ReimbursableExpense: 1,
+          ReimbursableAmount: 25,
+        },
+      ],
+    },
+  ],
+} satisfies IndPagedResponse<ExpenseSheetTicketDetailDto>);
+const mappedTicketHeader = mapExpenseTicketDetailHeader(normalizedTicketDetail.Items[0]);
+const mappedTicketLines = normalizedTicketDetail.Items[0].Lines.map(mapExpenseTicketDetailLine);
+assert.equal(mappedTicketHeader.amountMST, 108.11);
+assert.equal(mappedTicketHeader.visibleReimbursableTotal, 108.11);
+assert.deepEqual(mappedTicketLines.map((line) => line.reimbursableAmount), [25, 25]);
+assert.deepEqual(mappedTicketLines.map((line) => line.reimbursableExpense), [1, 1]);
+
+const camelCaseTicketDetail = normalizeTicketDetailPagedResponse({
+  success: true,
+  message: "",
+  items: [
+    {
+      FileId: "F-CAMEL",
+      CurrencyCode: "USD",
+      TotalAmount: 20,
+      TotalAmountCurrency: 20,
+      TotalAmountMST: null,
+      lines: [
+        {
+          RecId: "TC-1",
+          TotalAmount: 20,
+          reimbursableExpense: 2,
+          reimbursableAmount: 0,
+        },
+        {
+          RecId: "TC-2",
+          TotalAmount: 0,
+          reimbursableExpense: 0,
+          reimbursableAmount: null,
+        },
+      ],
+    },
+  ],
+} as unknown as IndPagedResponse<ExpenseSheetTicketDetailDto>);
+const camelTicketHeader = mapExpenseTicketDetailHeader(camelCaseTicketDetail.Items[0]);
+const camelTicketLines = camelCaseTicketDetail.Items[0].Lines.map(mapExpenseTicketDetailLine);
+assert.equal(camelTicketHeader.visibleReimbursableTotal, 20);
+assert.equal(camelTicketHeader.amountMST, null);
+assert.equal(camelTicketLines[0]?.reimbursableExpense, null);
+assert.equal(camelTicketLines[0]?.reimbursableAmount, 0);
+assert.equal(camelTicketLines[1]?.reimbursableExpense, 0);
+assert.equal(camelTicketLines[1]?.reimbursableAmount, null);
+
+const repositoryRoot = process.cwd();
+const ticketModelsSource = readFileSync(
+  path.join(repositoryRoot, "App", "Models", "CRM", "ExpenseSheetTicketModels.cs"),
+  "utf8"
+);
+const gastosControllerSource = readFileSync(
+  path.join(repositoryRoot, "Web", "Controllers", "Gastos", "GastosController.cs"),
+  "utf8"
+);
+const ticketLineFormSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "components",
+    "ExpenseTicketLineDetailForm.tsx"
+  ),
+  "utf8"
+);
+const ticketProxyMapperStart = gastosControllerSource.indexOf(
+  "private static object ToExpenseSheetTicketApiDetailLine"
+);
+const ticketProxyMapperEnd = gastosControllerSource.indexOf(
+  "\n        private static",
+  ticketProxyMapperStart + 1
+);
+assert.ok(ticketProxyMapperStart >= 0 && ticketProxyMapperEnd > ticketProxyMapperStart);
+const ticketProxyMapperSource = gastosControllerSource.slice(ticketProxyMapperStart, ticketProxyMapperEnd);
+assert.match(ticketModelsSource, /JsonPropertyName\("ReimbursableExpense"\)[\s\S]*int\? ReimbursableExpense/);
+assert.match(ticketModelsSource, /JsonPropertyName\("ReimbursableAmount"\)[\s\S]*decimal\? ReimbursableAmount/);
+assert.match(ticketProxyMapperSource, /ReimbursableExpense\s*=\s*line\.ReimbursableExpense/);
+assert.match(ticketProxyMapperSource, /ReimbursableAmount\s*=\s*line\.ReimbursableAmount/);
+assert.match(
+  ticketLineFormSource,
+  /formatAmountWithCurrency\(line\?\.reimbursableAmount \?\? null, companyCurrencyCode\)/
+);
+assert.doesNotMatch(ticketLineFormSource, /\.reduce\(/);
 
 console.log("[ok] Gastos regression rules passed.");

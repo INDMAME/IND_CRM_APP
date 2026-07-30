@@ -7,6 +7,7 @@ type ExpenseTicketCurrencySettlementFieldsProps = {
   expenseCurrencyInvalid: boolean;
   expenseCurrencyInputRef: React.Ref<HTMLInputElement>;
   localCurrencyCode: string;
+  companyAmountCurrencyCode: string;
   exchangeRate: string;
   exchangeRateInvalid: boolean;
   exchangeRateInputRef: React.Ref<HTMLInputElement>;
@@ -31,6 +32,7 @@ const ExpenseTicketCurrencySettlementFields = ({
   expenseCurrencyInvalid,
   expenseCurrencyInputRef,
   localCurrencyCode,
+  companyAmountCurrencyCode,
   exchangeRate,
   exchangeRateInvalid,
   exchangeRateInputRef,
@@ -54,6 +56,7 @@ const ExpenseTicketCurrencySettlementFields = ({
       expenseCurrencyInvalid={expenseCurrencyInvalid}
       expenseCurrencyInputRef={expenseCurrencyInputRef}
       localCurrencyCode={localCurrencyCode}
+      companyAmountCurrencyCode={companyAmountCurrencyCode}
       exchangeRate={exchangeRate}
       exchangeRateInvalid={exchangeRateInvalid}
       exchangeRateInputRef={exchangeRateInputRef}

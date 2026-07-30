@@ -99,7 +99,9 @@ export const normalizeDetailPagedResponse = (
         RecId: safeText(line?.RecId ?? line?.recId),
         LineRecId: safeText(line?.LineRecId ?? line?.lineRecId),
         ProjId: safeText(line?.ProjId ?? line?.projId),
-        Amount: toNullableNumber(line?.Amount ?? line?.amount),
+        Amount: toNullableNumber(
+          line?.Amount ?? line?.amount ?? line?.TotalAmountCurrency ?? line?.totalAmountCurrency
+        ),
         ReimbursableExpense: toExpenseSheetLineReimbursableExpense(
           line?.ReimbursableExpense ?? line?.reimbursableExpense
         ),
@@ -306,46 +308,58 @@ export const normalizeTicketLinkListPagedResponse = (
 export const normalizeTicketDetailPagedResponse = (
   response: IndPagedResponse<ExpenseSheetTicketDetailDto>
 ): IndPagedResponse<ExpenseSheetTicketDetailDto> => {
-  const items = Array.isArray(response?.Items) ? response.Items : [];
-  const normalizedItems = items.map((item) => ({
-    ...item,
-    Status: toNullableTicketStatusCode(
-      (item as { Status?: unknown; status?: unknown })?.Status ??
-        (item as { Status?: unknown; status?: unknown })?.status
-    ),
-    ProcessedByAI: toNullableBool(
-      (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.ProcessedByAI ??
-        (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.processedByAI
-    ),
-    HojaGastosIdDisplay: safeText(
-      (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.HojaGastosIdDisplay ??
-        (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.hojaGastosIdDisplay
-    ),
-    TotalAmountCurrency: toNullableNumber(
-      (item as { TotalAmountCurrency?: unknown; totalAmountCurrency?: unknown })?.TotalAmountCurrency ??
-        (item as { totalAmountCurrency?: unknown })?.totalAmountCurrency
-    ),
-    TotalAmountMST: toNullableNumber(
-      (item as { TotalAmountMST?: unknown; totalAmountMST?: unknown })?.TotalAmountMST ??
-        (item as { totalAmountMST?: unknown })?.totalAmountMST
-    ),
-    AmountMST: toNullableNumber(item?.TotalAmountMST ?? item?.AmountMST ?? item?.amountMST),
-    GastoType: toNullableGastoTypeCode(
-      (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
-        (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
-    ),
-    OwnerAxUserId: safeText(
-      (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.OwnerAxUserId ??
-        (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.ownerAxUserId
-    ),
-    OwnerName: safeText(
-      (item as { OwnerName?: unknown; ownerName?: unknown })?.OwnerName ??
-        (item as { OwnerName?: unknown; ownerName?: unknown })?.ownerName
-    ) || null,
-    OcrJson: safeText(item?.OcrJson ?? item?.ocrJson) || null,
-    NormalizedJson: safeText(item?.NormalizedJson ?? item?.normalizedJson) || null,
-    Lines: Array.isArray(item?.Lines) ? item.Lines : [],
-  }));
+  const items = getPagedItems(response);
+  const normalizedItems = items.map((item) => {
+    const rawLines = Array.isArray(item?.Lines)
+      ? item.Lines
+      : (Array.isArray(item?.lines) ? item.lines : []);
+
+    return {
+      ...item,
+      Status: toNullableTicketStatusCode(
+        (item as { Status?: unknown; status?: unknown })?.Status ??
+          (item as { Status?: unknown; status?: unknown })?.status
+      ),
+      ProcessedByAI: toNullableBool(
+        (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.ProcessedByAI ??
+          (item as { ProcessedByAI?: unknown; processedByAI?: unknown })?.processedByAI
+      ),
+      HojaGastosIdDisplay: safeText(
+        (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.HojaGastosIdDisplay ??
+          (item as { HojaGastosIdDisplay?: unknown; hojaGastosIdDisplay?: unknown })?.hojaGastosIdDisplay
+      ),
+      TotalAmountCurrency: toNullableNumber(
+        (item as { TotalAmountCurrency?: unknown; totalAmountCurrency?: unknown })?.TotalAmountCurrency ??
+          (item as { totalAmountCurrency?: unknown })?.totalAmountCurrency
+      ),
+      TotalAmountMST: toNullableNumber(
+        (item as { TotalAmountMST?: unknown; totalAmountMST?: unknown })?.TotalAmountMST ??
+          (item as { totalAmountMST?: unknown })?.totalAmountMST
+      ),
+      AmountMST: toNullableNumber(item?.TotalAmountMST ?? item?.AmountMST ?? item?.amountMST),
+      GastoType: toNullableGastoTypeCode(
+        (item as { GastoType?: unknown; gastoType?: unknown })?.GastoType ??
+          (item as { GastoType?: unknown; gastoType?: unknown })?.gastoType
+      ),
+      OwnerAxUserId: safeText(
+        (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.OwnerAxUserId ??
+          (item as { OwnerAxUserId?: unknown; ownerAxUserId?: unknown })?.ownerAxUserId
+      ),
+      OwnerName: safeText(
+        (item as { OwnerName?: unknown; ownerName?: unknown })?.OwnerName ??
+          (item as { OwnerName?: unknown; ownerName?: unknown })?.ownerName
+      ) || null,
+      OcrJson: safeText(item?.OcrJson ?? item?.ocrJson) || null,
+      NormalizedJson: safeText(item?.NormalizedJson ?? item?.normalizedJson) || null,
+      Lines: rawLines.map((line) => ({
+        ...line,
+        ReimbursableExpense: toExpenseSheetLineReimbursableExpense(
+          line?.ReimbursableExpense ?? line?.reimbursableExpense
+        ),
+        ReimbursableAmount: toNullableNumber(line?.ReimbursableAmount ?? line?.reimbursableAmount),
+      })),
+    };
+  });
 
   return {
     ...response,

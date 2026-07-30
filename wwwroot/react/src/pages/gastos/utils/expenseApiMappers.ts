@@ -111,7 +111,9 @@ export const mapExpenseSheetLine = (line: ExpenseSheetLineDto): ExpenseSheetLine
     ticket: toNullableBool(line.Ticket ?? line.ticket),
     price: toNullableNumber(line.Price ?? line.price),
     qty: toNullableNumber(line.Qty ?? line.qty),
-    amount: toNullableNumber(line.Amount ?? line.amount),
+    amount: toNullableNumber(
+      line.Amount ?? line.amount ?? line.TotalAmountCurrency ?? line.totalAmountCurrency
+    ),
     projId: safeText(line.ProjId ?? line.projId),
     reimbursableExpense: toExpenseSheetLineReimbursableExpense(
       line.ReimbursableExpense ?? line.reimbursableExpense

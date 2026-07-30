@@ -1,7 +1,7 @@
 import React from "react";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import { indT } from "../../../utils/indI18n.ts";
-import type { ExpenseDateParts } from "../utils/expenseUiUtils.ts";
+import { normalizeCardTitleText, type ExpenseDateParts } from "../utils/expenseUiUtils.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import { formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import type { ExpenseTicketDetailLine } from "../tickets/detail/expenseTicketDetailTypes.ts";
@@ -84,12 +84,13 @@ const ExpenseTicketLinesList = ({
           {visibleLines.map((line) => {
             const amountText = formatAmountWithCurrency(line.totalAmount, currencyCode);
             const qtyText = formatQtyValue(line.qty);
-            const title = line.description || line.recId || "-";
+            const description = normalizeCardTitleText(line.description, "");
+            const title = description || line.recId || "-";
             const subtitle = `${indT("ExpenseSheets_Field_Qty", "Quantity")}: ${qtyText}`;
             const lineKey =
               String(line.recId || "").trim() ||
               [line.description, line.totalAmount, line.price, line.qty]
-                .map((value) => String(value || "").trim())
+                .map((value) => String(value ?? "").trim())
                 .join("|");
 
             return (

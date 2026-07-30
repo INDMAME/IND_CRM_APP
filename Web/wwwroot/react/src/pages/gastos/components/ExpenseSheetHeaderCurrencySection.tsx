@@ -32,7 +32,7 @@ type ExpenseSheetHeaderCurrencySectionProps = {
   onDraftExchangeRateChange: (value: string) => void;
 };
 
-// Owns the currency and exchange-rate UI so the header form stays compact.
+// Renders the existing read-only local currency field in expense-sheet creation mode.
 const ExpenseSheetHeaderCurrencySection = ({
   headerCurrencyCode,
   baseCurrencyCode,

@@ -16,7 +16,13 @@ import {
 } from "../constants/expenseStatusCatalog.ts";
 import ExpenseFiltersPanel from "../components/ExpenseFiltersPanel.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
-import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText } from "../utils/expenseUiUtils.ts";
+import {
+  formatExpenseDateParts,
+  formatExpenseDisplayDate,
+  hasAssignedVoucher,
+  normalizeCardTitleText,
+  safeText,
+} from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetsListData } from "./useExpenseSheetsListData.ts";
 import { useExpenseSheetsFiltersState } from "./useExpenseSheetsFiltersState.ts";
 import { useExpenseSheetsFilterCache } from "./useExpenseSheetsFilterCache.ts";
@@ -706,13 +712,9 @@ const ExpenseSheetsPageContent = () => {
               { preferMonthFirstOnSlash: true }
             );
             const currency = safeText(companyCurrencyCode);
-            const description = safeText(item.description);
+            const description = normalizeCardTitleText(item.description, "");
             const voucher = safeText(item.voucher);
             const grossAmountText = formatAmountWithCurrency(item.totalGrossAmountMST ?? null, currency);
-            const reimbursableAmountText = formatAmountWithCurrency(
-              item.totalReimbursableAmount ?? null,
-              currency
-            );
             const fallbackStatusCode = hasAssignedVoucher(voucher) ? 4 : 0;
             const statusCode = normalizeExpenseStatusFilterCode(item.expenseSheetStatus, fallbackStatusCode);
             const statusLabel = getExpenseStatusLabel(statusCode);
@@ -737,20 +739,7 @@ const ExpenseSheetsPageContent = () => {
                   dateParts={dateParts}
                   title={description || "-"}
                   subtitle={ownerSubtitle}
-                  amountText={reimbursableAmountText}
-                  amountClassName="mt-1 block w-full text-[11px] font-semibold leading-tight text-[#00296be0] tabular-nums"
-                  amountContent={(
-                    <span className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-2 gap-y-0.5">
-                      <span className="text-left text-[10px] font-medium text-slate-500">
-                        {indT("ExpenseSheets_Field_GrossJustifiedAmount", "Justified expense")}
-                      </span>
-                      <span className="whitespace-nowrap text-right">{grossAmountText}</span>
-                      <span className="text-left text-[10px] font-medium text-slate-500">
-                        {indT("ExpenseSheets_Field_EmployeeReimbursement", "Reimbursement to employee")}
-                      </span>
-                      <span className="whitespace-nowrap text-right">{reimbursableAmountText}</span>
-                    </span>
-                  )}
+                  amountText={grossAmountText}
                   onOpen={() => goToDetail(id, ownerAxUserId)}
                   titleClassName="expense-sheet-card__title timeline-name"
                   statusClassName={statusClass}

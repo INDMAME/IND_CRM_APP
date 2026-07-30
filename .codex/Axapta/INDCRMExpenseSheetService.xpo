@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: CLS
 
-; Navision Axapta Class: INDCRMExpenseSheetService descargados en Miércoles 29/07/2026
+; Navision Axapta Class: INDCRMExpenseSheetService descargados en Jueves 30/07/2026
 ; --------------------------------------------------------------------------------
   CLSVERSION 1
   
@@ -2788,6 +2788,7 @@ Formatversion: 1
         #
         #    INDTicketInfoTable ticketHeader;
         #    INDTicketInfoLine  ticketLine;
+        #    CRMHojaGastosLine  gastosLine;
         #    DocuRef            docuRef;
         #
         #    container          headerOut;
@@ -2797,6 +2798,8 @@ Formatversion: 1
         #    int                processedByAIInt;
         #    int                gastoTypeInt;
         #    str                ownerName;
+        #    str                reimbursableExpenseOut;
+        #    str                reimbursableAmountOut;
         #    ;
         #
         #    companyId = INDCRMUtilityService::getCompany(_data);
@@ -2837,6 +2840,14 @@ Formatversion: 1
         #        gastoTypeInt = any2int(ticketHeader.GastoType);
         #        ownerName = INDCRMExpenseSheetService::getPersonaNameByUserId(ticketHeader.CreatedByUserId);
         #
+        #        //MMS - Expone el reembolso de la linea de gasto vinculada como metadato del detalle del ticket - 2026.07.30
+        #        gastosLine = CRMHojaGastosLine::FindByFileId(ticketHeader.FileId);
+        #        if (gastosLine.RecId)
+        #        {
+        #            reimbursableExpenseOut = strFmt('%1', any2int(gastosLine.ReimbursableExpense));
+        #            reimbursableAmountOut   = strFmt('%1', gastosLine.ReimbursableAmount);
+        #        }
+        #
         #        headerOut = INDCRMUtilityService::buildHeader(true, 'OK',
         #                                                     [
         #                                                      strFmt('%1', ticketHeader.FileId),
@@ -2875,7 +2886,9 @@ Formatversion: 1
         #                        strFmt('%1', ticketLine.TotalAmount),
         #                        strFmt('%1', ticketLine.RefRecIdTable),
         #                        strFmt('%1', ticketLine.CreatedByUserId),
-        #                        strFmt('%1', any2int(ticketLine.Adjustment))
+        #                        strFmt('%1', any2int(ticketLine.Adjustment)),
+        #                        reimbursableExpenseOut,
+        #                        reimbursableAmountOut
         #                      ];
         #
         #            linesOut = conIns(linesOut, conLen(linesOut) + 1, lineRow);

@@ -600,6 +600,10 @@ export type ExpenseSheetTicketLineDto = {
   Qty: number | null;
   Price: number | null;
   TotalAmount: number | null;
+  ReimbursableExpense?: number | null;
+  reimbursableExpense?: number | null;
+  ReimbursableAmount?: number | null;
+  reimbursableAmount?: number | null;
   RefRecIdTable: string;
   CreatedByUserId: string;
   AdjustmentAmount?: boolean | null;
@@ -675,6 +679,7 @@ export type ExpenseSheetTicketDetailDto = {
   OwnerName?: string | null;
   ownerName?: string | null;
   Lines: ExpenseSheetTicketLineDto[];
+  lines?: ExpenseSheetTicketLineDto[];
 };
 
 export type ExpenseSheetTicketLinkBulkIssueDto = {

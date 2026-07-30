@@ -46,6 +46,7 @@ type ExpenseTicketDetailHeaderFormProps = {
   amountMSTInvalid: boolean;
   amountMSTInputRef: React.Ref<HTMLInputElement>;
   localCurrencyCode: string;
+  companyAmountCurrencyCode: string;
   draftTransDate: string;
   draftTicketTime: string;
   draftUrlFile: string;
@@ -95,6 +96,7 @@ const ExpenseTicketDetailHeaderForm = ({
   amountMSTInvalid,
   amountMSTInputRef,
   localCurrencyCode,
+  companyAmountCurrencyCode,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -194,6 +196,7 @@ const ExpenseTicketDetailHeaderForm = ({
           expenseCurrencyInvalid={currencyCodeInvalid}
           expenseCurrencyInputRef={currencyInputRef}
           localCurrencyCode={localCurrencyCode}
+          companyAmountCurrencyCode={companyAmountCurrencyCode}
           exchangeRate={draftExchangeRate}
           exchangeRateInvalid={exchangeRateInvalid}
           exchangeRateInputRef={exchangeRateInputRef}

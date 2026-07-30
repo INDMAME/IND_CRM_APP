@@ -493,6 +493,8 @@ type RawEntraContextCompany = {
   allowSelfManagement?: unknown;
   CrmUserId?: unknown;
   crmUserId?: unknown;
+  CurrencyCode?: unknown;
+  currencyCode?: unknown;
 };
 
 type NormalizedEntraContextCompany = {
@@ -500,6 +502,7 @@ type NormalizedEntraContextCompany = {
   isDefault: boolean;
   allowSelfManagement: boolean;
   crmUserId: string;
+  currencyCode: string;
 };
 
 type RawEntraContextHeader = {
@@ -533,6 +536,7 @@ const mapEntraContextCompany = (item: unknown): NormalizedEntraContextCompany | 
     isDefault: toFlagBool(raw.IsDefault ?? raw.isDefault) === true,
     allowSelfManagement: toFlagBool(raw.AllowSelfManagement ?? raw.allowSelfManagement) === true,
     crmUserId: safeText(raw.CrmUserId ?? raw.crmUserId),
+    currencyCode: safeText(raw.CurrencyCode ?? raw.currencyCode).toUpperCase(),
   };
 };
 
@@ -563,7 +567,7 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
   const axUserId = safeText(header.AxUserId ?? header.axUserId);
   const userName = safeText(header.UserName ?? header.userName);
   const defaultCompany = safeText(header.DefaultCompany ?? header.defaultCompany);
-  const defaultCurrencyCode = safeText(header.DefaultCurrencyCode ?? header.defaultCurrencyCode);
+  const headerDefaultCurrencyCode = safeText(header.DefaultCurrencyCode ?? header.defaultCurrencyCode).toUpperCase();
   const companiesRaw = Array.isArray(first.Companies)
     ? first.Companies
     : (Array.isArray(first.companies) ? first.companies : []);
@@ -592,6 +596,7 @@ const validateContextResponse = (response: IndPagedResponse<EntraContextDto>): E
     selectedCompanyMatch || companies.find((item) => safeText(item.companyId) === companyId) || companies[0];
   const allowSelfManagement = selectedCompany?.allowSelfManagement === true;
   const crmUserId = safeText(selectedCompany?.crmUserId);
+  const defaultCurrencyCode = safeText(selectedCompany?.currencyCode) || headerDefaultCurrencyCode;
 
   if (!axUserId || !companyId) {
     throw new ApiFetchError("Could not resolve Entra company context.");

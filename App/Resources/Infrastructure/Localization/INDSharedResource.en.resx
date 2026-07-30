@@ -426,6 +426,9 @@
   <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
     <value>Reimb. amt. ({0})</value>
   </data>
+  <data name="ExpenseSheets_Reimbursement_RecalculationPending" xml:space="preserve">
+    <value>Reimbursable status is Yes but the reimbursement amount is zero. The AX record may be pending recalculation.</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>Line id</value>
   </data>

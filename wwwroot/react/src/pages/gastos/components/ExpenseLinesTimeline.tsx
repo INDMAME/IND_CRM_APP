@@ -1,9 +1,8 @@
 import React from "react";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
-import { indT } from "../../../utils/indI18n.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
-import { formatExpenseDateParts, safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDateParts, normalizeCardTitleText, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 import ExpenseTimelineCard from "./ExpenseTimelineCard.tsx";
 
@@ -50,13 +49,8 @@ const ExpenseLinesTimeline = ({
         <div ref={containerRef} className="timeline-box">
           {visibleLines.map((line) => {
             const lineId = safeText(line.lineRecId);
-            const description = safeText(line.description);
+            const description = normalizeCardTitleText(line.description, "");
             const grossAmountText = formatAmountWithCurrency(line.amountMST ?? null, companyCurrencyCode);
-            const reimbursableAmountText = formatAmountWithCurrency(
-              line.reimbursableAmount ?? null,
-              companyCurrencyCode
-            );
-            const originalAmountText = formatAmountWithCurrency(line.amount ?? null, safeText(line.currencyCode));
             const linkedTicketFileId = safeText(line.fileId);
             const projectId = safeText(line.projId);
             const dateParts = formatExpenseDateParts(safeText(line.transDate), document?.documentElement?.lang || "es-ES");
@@ -79,32 +73,13 @@ const ExpenseLinesTimeline = ({
             ) : null;
 
             return (
-              <div key={lineId || `${safeText(line.transDate)}-${description}-${originalAmountText}-${projectId}`} className="timeline-item">
+              <div key={lineId || `${safeText(line.transDate)}-${description}-${String(line.amountMST ?? "")}-${projectId}`} className="timeline-item">
                 <ExpenseTimelineCard
                   dateParts={dateParts}
                   title={description || lineId || "-"}
-                  amountText={reimbursableAmountText}
-                  amountClassName="mt-1 block w-full text-[11px] font-semibold leading-tight text-[#00296be0] tabular-nums"
-                  amountContent={(
-                    <span className="grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-2 gap-y-0.5">
-                      <span className="text-left text-[10px] font-medium text-slate-500">
-                        {indT("ExpenseSheets_Field_GrossJustifiedAmount", "Justified expense")}
-                      </span>
-                      <span className="whitespace-nowrap text-right">{grossAmountText}</span>
-                      <span className="text-left text-[10px] font-medium text-slate-500">
-                        {indT("ExpenseSheets_Field_EmployeeReimbursement", "Reimbursement to employee")}
-                      </span>
-                      <span className="whitespace-nowrap text-right">{reimbursableAmountText}</span>
-                    </span>
-                  )}
-                  subtitleContent={(
-                    <span>
-                      {indT("ExpenseSheets_Field_OriginalAmount", "Original amount")}: {originalAmountText}
-                    </span>
-                  )}
+                  amountText={grossAmountText}
                   onOpen={() => onOpenLine(lineId)}
                   titleClassName="timeline-name expense-line-card__title"
-                  subtitleClassName="expense-sheet-card__subtitle expense-line-card__meta"
                   statusIcon={ticketStatusIcon}
                   statusIconClassName="expense-line-card__ticket-icon"
                   statusLabel={linkedTicketFileId || undefined}

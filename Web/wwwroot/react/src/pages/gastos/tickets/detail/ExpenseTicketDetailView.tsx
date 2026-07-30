@@ -85,6 +85,7 @@ type ExpenseTicketDetailViewProps = {
     amountMSTInvalid: boolean;
     amountMSTInputRef: RefObject<HTMLInputElement | null>;
     localCurrencyCode: string;
+    companyAmountCurrencyCode: string;
     draftTransDate: string;
     draftTicketTime: string;
     draftUrlFile: string;
@@ -154,6 +155,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         amountMSTInvalid={content.amountMSTInvalid}
         amountMSTInputRef={content.amountMSTInputRef}
         localCurrencyCode={content.localCurrencyCode}
+        companyAmountCurrencyCode={content.companyAmountCurrencyCode}
         draftTransDate={content.draftTransDate}
         draftTicketTime={content.draftTicketTime}
         draftUrlFile={content.draftUrlFile}

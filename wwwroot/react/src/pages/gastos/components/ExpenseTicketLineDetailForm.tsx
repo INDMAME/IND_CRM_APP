@@ -1,6 +1,11 @@
 import React from "react";
 import { indT } from "../../../utils/indI18n.ts";
+import {
+  formatAmountWithCurrency,
+  formatExpenseAmountLabel,
+} from "../expenseFormatters.ts";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "../tickets/detail/expenseTicketDetailTypes.ts";
+import { getExpenseLineReimbursableExpenseLabel } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import {
   canEditExpenseTicketTime,
@@ -13,6 +18,7 @@ import ExpenseTicketDateTimeFields, { type ExpenseTicketDateTimeMode } from "./E
 type ExpenseTicketLineDetailFormProps = {
   header: ExpenseTicketDetailHeader;
   line: ExpenseTicketDetailLine | null;
+  companyCurrencyCode: string;
   isEditing: boolean;
   draftDescription: string;
   draftQty: string;
@@ -41,6 +47,7 @@ const formatQtyValue = (value: number | null): string => {
 const ExpenseTicketLineDetailForm = ({
   header,
   line,
+  companyCurrencyCode,
   isEditing,
   draftDescription,
   draftQty,
@@ -63,6 +70,10 @@ const ExpenseTicketLineDetailForm = ({
       : "edit-date";
   const ticketDateText = formatExpenseDisplayDate(header.ticketDate || header.transDate, locale) || "-";
   const ticketTimeText = formatExpenseTicketTimeDisplay(header.ticketTime) || "-";
+  const reimbursableAmountText = formatAmountWithCurrency(line?.reimbursableAmount ?? null, companyCurrencyCode);
+  const reimbursableStatusText = getExpenseLineReimbursableExpenseLabel(line?.reimbursableExpense);
+  const hasPendingReimbursementRecalculation =
+    line?.reimbursableExpense === 1 && line?.reimbursableAmount === 0;
   const quantityField = isEditing ? (
     <div className="space-y-1.5">
       <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>
@@ -165,10 +176,38 @@ const ExpenseTicketLineDetailForm = ({
           </div>
 
           <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_Amount", "Amount")}
+            label={formatExpenseAmountLabel(header.currencyCode)}
             value={amountText || "-"}
             valueAlign="right"
+            fullWidth
           />
+
+          {line ? (
+            <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
+              <ExpenseReadOnlyField
+                label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+                value={reimbursableStatusText}
+              />
+              <ExpenseReadOnlyField
+                label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+                value={reimbursableAmountText}
+                valueAlign="right"
+              />
+            </div>
+          ) : null}
+
+          {hasPendingReimbursementRecalculation ? (
+            <p
+              className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 md:col-span-2"
+              role="status"
+              aria-live="polite"
+            >
+              {indT(
+                "ExpenseSheets_Reimbursement_RecalculationPending",
+                "Reimbursable status is Yes but the reimbursement amount is zero. The AX record may be pending recalculation."
+              )}
+            </p>
+          ) : null}
         </div>
       </section>
     </section>

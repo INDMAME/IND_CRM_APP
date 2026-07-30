@@ -5927,6 +5927,8 @@ namespace IND_CRM_APP.Controllers
                 Qty = line.Qty,
                 Price = line.Price,
                 TotalAmount = line.TotalAmount,
+                ReimbursableExpense = line.ReimbursableExpense,
+                ReimbursableAmount = line.ReimbursableAmount,
                 RefRecIdTable = line.RefRecIdTable ?? string.Empty,
                 CreatedByUserId = line.CreatedByUserId ?? string.Empty,
                 AdjustmentAmount = line.AdjustmentAmount

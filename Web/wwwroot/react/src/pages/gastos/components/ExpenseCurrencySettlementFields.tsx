@@ -1,6 +1,7 @@
 import React from "react";
 import InfoPopoverIconButton from "../../../components/commons/InfoPopoverIconButton.tsx";
 import { indFormat, indT } from "../../../utils/indI18n.ts";
+import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseCurrencyFilterSelect from "./ExpenseCurrencyFilterSelect.tsx";
@@ -11,12 +12,14 @@ type ExpenseCurrencySettlementFieldsProps = {
   expenseCurrencyInvalid?: boolean;
   expenseCurrencyInputRef?: React.Ref<HTMLInputElement>;
   localCurrencyCode: string;
+  companyAmountCurrencyCode?: string;
   exchangeRate: string;
   exchangeRateInvalid?: boolean;
   exchangeRateInputRef?: React.Ref<HTMLInputElement>;
   exchangeRateInfoMessage?: string;
   exchangeRateReferenceKind?: "reimbursement" | "company";
   amountCurrency: string;
+  amountCurrencyLabel?: string;
   amountCurrencyMode: "editable" | "readonly";
   amountCurrencyInvalid?: boolean;
   amountCurrencyInputRef?: React.Ref<HTMLInputElement>;
@@ -70,12 +73,14 @@ const ExpenseCurrencySettlementFields = ({
   expenseCurrencyInvalid = false,
   expenseCurrencyInputRef,
   localCurrencyCode,
+  companyAmountCurrencyCode,
   exchangeRate,
   exchangeRateInvalid = false,
   exchangeRateInputRef,
   exchangeRateInfoMessage,
   exchangeRateReferenceKind = "reimbursement",
   amountCurrency,
+  amountCurrencyLabel,
   amountCurrencyMode,
   amountCurrencyInvalid = false,
   amountCurrencyInputRef,
@@ -89,8 +94,13 @@ const ExpenseCurrencySettlementFields = ({
   onAmountCurrencyChange,
   onReimbursementAmountChange,
 }: ExpenseCurrencySettlementFieldsProps) => {
+  const inputIdPrefix = React.useId();
+  const amountCurrencyInputId = `${inputIdPrefix}-original-amount`;
+  const companyAmountInputId = `${inputIdPrefix}-company-amount`;
+  const exchangeRateInputId = `${inputIdPrefix}-exchange-rate`;
   const normalizedExpenseCurrencyCode = safeText(expenseCurrencyCode).toUpperCase();
   const normalizedLocalCurrencyCode = safeText(localCurrencyCode).toUpperCase();
+  const normalizedCompanyAmountCurrencyCode = safeText(companyAmountCurrencyCode ?? localCurrencyCode).toUpperCase();
   const sameCurrencySettlement =
     !!normalizedExpenseCurrencyCode &&
     !!normalizedLocalCurrencyCode &&
@@ -100,11 +110,8 @@ const ExpenseCurrencySettlementFields = ({
     sameCurrencySettlement ? formatExchangeRateInput("100") : safeText(exchangeRate);
   const effectiveExchangeRateInvalid = exchangeRateInvalid;
   const reimbursementCurrencyLabel = normalizedLocalCurrencyCode || indT("Common_NotAvailable", "N/A");
-  const reimbursementLabel = companyAmountLabel || indFormat(
-    "ExpenseSheets_Field_ReimbursementAmount_WithCurrency",
-    "Imp. reemb. ({0})",
-    reimbursementCurrencyLabel
-  );
+  const expenseAmountDisplayLabel = safeText(amountCurrencyLabel) || formatExpenseAmountLabel(normalizedExpenseCurrencyCode);
+  const companyAmountDisplayLabel = safeText(companyAmountLabel) || formatExpenseAmountLabel(normalizedCompanyAmountCurrencyCode);
   const expenseCurrencyLabel = normalizedExpenseCurrencyCode || indT("Common_NotAvailable", "N/A");
   const exchangeRateReferenceValue = formatExpenseInputNumber(effectiveExchangeRate, {
     minimumFractionDigits: 2,
@@ -135,8 +142,9 @@ const ExpenseCurrencySettlementFields = ({
   return (
     <div className="md:col-span-2 grid grid-cols-2 gap-x-4 gap-y-3 items-start">
       <div className={fieldContainerClassName}>
-        <label className={fieldLabelClassName}>{indT("ExpenseSheets_Field_AmountCurrency", "Imp. divisa")}</label>
+        <label className={fieldLabelClassName} htmlFor={amountCurrencyInputId}>{expenseAmountDisplayLabel}</label>
         <input
+          id={amountCurrencyInputId}
           ref={amountCurrencyInputRef}
           className={buildInputClassName(amountCurrencyInvalid, amountCurrencyReadOnly)}
           type="text"
@@ -154,13 +162,14 @@ const ExpenseCurrencySettlementFields = ({
           }
           readOnly={amountCurrencyReadOnly}
           aria-invalid={amountCurrencyInvalid ? "true" : "false"}
-          aria-label={indT("ExpenseSheets_Field_AmountCurrency", "Imp. divisa")}
+          aria-label={expenseAmountDisplayLabel}
         />
       </div>
 
       <div className={fieldContainerClassName}>
-        <label className={fieldLabelClassName}>{reimbursementLabel}</label>
+        <label className={fieldLabelClassName} htmlFor={companyAmountInputId}>{companyAmountDisplayLabel}</label>
         <input
+          id={companyAmountInputId}
           ref={reimbursementAmountInputRef}
           className={buildInputClassName(reimbursementAmountInvalid, !isEditing)}
           type="text"
@@ -170,7 +179,7 @@ const ExpenseCurrencySettlementFields = ({
           onBlur={isEditing ? (event) => onReimbursementAmountChange(formatMoneyInput(event.target.value)) : undefined}
           readOnly={!isEditing}
           aria-invalid={reimbursementAmountInvalid ? "true" : "false"}
-          aria-label={reimbursementLabel}
+          aria-label={companyAmountDisplayLabel}
         />
       </div>
 
@@ -190,7 +199,9 @@ const ExpenseCurrencySettlementFields = ({
 
       <div className={fieldContainerClassName}>
         <div className="flex min-h-6 items-center justify-between gap-2">
-          <label className={fieldLabelClassName}>{indT("ExpenseSheets_Field_ExchangeRate", "Tipo cambio")}</label>
+          <label className={fieldLabelClassName} htmlFor={exchangeRateInputId}>
+            {indT("ExpenseSheets_Field_ExchangeRate", "Tipo cambio")}
+          </label>
           <InfoPopoverIconButton
             content={exchangeRateInfoPopoverContent}
             ariaLabel={indT("ExpenseSheets_ExchangeRate_InfoPopover_Aria", "Exchange rate information")}
@@ -198,6 +209,7 @@ const ExpenseCurrencySettlementFields = ({
           />
         </div>
         <input
+          id={exchangeRateInputId}
           ref={exchangeRateInputRef}
           className={buildInputClassName(effectiveExchangeRateInvalid, exchangeRateReadOnly)}
           type="text"

@@ -339,6 +339,9 @@
   <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
     <value>报销额({0})</value>
   </data>
+  <data name="ExpenseSheets_Reimbursement_RecalculationPending" xml:space="preserve">
+    <value>报销状态为“是”，但可报销金额为零。AX 记录可能仍待重新计算。</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>线路编号</value>
   </data>
@@ -346,7 +349,7 @@
     <value>类别</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
-    <value>进口</value>
+    <value>金额</value>
   </data>
   <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
     <value>币种金额</value>

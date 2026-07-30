@@ -3,6 +3,7 @@ import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
+import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
@@ -139,9 +140,10 @@ const ExpenseSheetLineCurrencyFields = ({
       exchangeRateInfoMessage={exchangeRateInfoMessage}
       exchangeRateReferenceKind="company"
       amountCurrency={amountCurrencyValue}
+      amountCurrencyLabel={formatExpenseAmountLabel(normalizedExpenseCurrencyCode)}
       amountCurrencyMode={amountCurrencyEditable ? "editable" : "readonly"}
       reimbursementAmount={grossCompanyAmountValue}
-      companyAmountLabel={`${indT("ExpenseSheets_Field_GrossJustifiedAmount", "Justified expense")} (${localCurrencyCode || "-"})`}
+      companyAmountLabel={formatExpenseAmountLabel(localCurrencyCode)}
       onExpenseCurrencyChange={onDraftCurrencyCodeChange}
       onAmountCurrencyChange={onDraftAmountCurrencyChange}
       onExchangeRateChange={onDraftExchangeRateChange}
@@ -212,7 +214,12 @@ const ExpenseSheetLineForm = ({
   const reimbursableExpenseValue = normalizeExpenseLineReimbursableExpense(
     isEditing ? draftReimbursableExpense : line.reimbursableExpense
   );
-  const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(reimbursableExpenseValue);
+  const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(
+    isEditing ? draftReimbursableExpense : line.reimbursableExpense
+  );
+  const reimbursableStatusLabel = indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable");
+  const hasPendingReimbursementRecalculation =
+    line.reimbursableExpense === 1 && line.reimbursableAmount === 0;
   const internationalField = isEditing ? (
     <SelectCombobox
       label={indT("ExpenseSheets_Field_International", "International")}
@@ -231,17 +238,17 @@ const ExpenseSheetLineForm = ({
   );
   const reimbursableExpenseField = isEditing ? (
     <SelectCombobox
-      label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      label={reimbursableStatusLabel}
       options={reimbursableExpenseOptions}
       value={String(reimbursableExpenseValue)}
       onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseLineReimbursableExpense(value))}
-      placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      placeholder={reimbursableStatusLabel}
       allowTextInput={false}
       showSearchButton={false}
     />
   ) : (
     <ExpenseReadOnlyField
-      label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      label={reimbursableStatusLabel}
       value={reimbursableExpenseLabel}
     />
   );
@@ -438,19 +445,33 @@ const ExpenseSheetLineForm = ({
             onDraftExchangeRateCommit={onDraftExchangeRateCommit}
           />
 
-          <ExpenseReadOnlyField
-            label={indT("ExpenseSheets_Field_EmployeeReimbursement", "Reimbursement to employee")}
-            value={reimbursableAmountText}
-            valueAlign="right"
-            fullWidth
-          />
-
           {dateTypeFields}
 
-          <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
+          <div className="md:col-span-2">
             {internationalField}
-            {reimbursableExpenseField}
           </div>
+
+          <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
+            {reimbursableExpenseField}
+            <ExpenseReadOnlyField
+              label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+              value={reimbursableAmountText}
+              valueAlign="right"
+            />
+          </div>
+
+          {hasPendingReimbursementRecalculation ? (
+            <p
+              className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 md:col-span-2"
+              role="status"
+              aria-live="polite"
+            >
+              {indT(
+                "ExpenseSheets_Reimbursement_RecalculationPending",
+                "Reimbursable status is Yes but the reimbursement amount is zero. The AX record may be pending recalculation."
+              )}
+            </p>
+          ) : null}
 
           {projectTicketFields}
         </div>

@@ -426,6 +426,9 @@
   <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
     <value>Imp. rimborso ({0})</value>
   </data>
+  <data name="ExpenseSheets_Reimbursement_RecalculationPending" xml:space="preserve">
+    <value>Lo stato rimborsabile &#232; S&#236;, ma l&apos;importo rimborsabile &#232; zero. Il record AX potrebbe essere in attesa di ricalcolo.</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>identificativo della linea</value>
   </data>
@@ -433,7 +436,7 @@
     <value>Categoria</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
-    <value>Importato</value>
+    <value>Importo</value>
   </data>
   <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
     <value>Imp. divisa</value>

@@ -466,6 +466,12 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("TotalAmount")]
         public decimal? TotalAmount { get; set; }
 
+        [JsonPropertyName("ReimbursableExpense")]
+        public int? ReimbursableExpense { get; set; }
+
+        [JsonPropertyName("ReimbursableAmount")]
+        public decimal? ReimbursableAmount { get; set; }
+
         [JsonPropertyName("RefRecIdTable")]
         public string RefRecIdTable { get; set; } = string.Empty;
 

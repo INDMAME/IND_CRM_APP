@@ -210,7 +210,6 @@ const ExpenseSheetDetailPageContent = () => {
           exchangeRateValidationMessage={controller.exchangeRateValidationMessage}
           grossAmountText={controller.grossAmountText}
           reimbursableAmountText={controller.reimbursableAmountText}
-          originalCurrencyTotals={controller.originalCurrencyTotals}
           draftDescription={controller.draftDescription}
           draftProjectId={controller.draftProjectId}
           draftCurrencyCode={controller.draftCurrencyCode}

@@ -6,6 +6,7 @@ import type { ExpenseSheetHeader } from "../expenseTypes.ts";
 import ExpenseSheetHeaderCurrencySection from "./ExpenseSheetHeaderCurrencySection.tsx";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
+import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import {
   getEditableExpenseReimbursableExpenseOptions,
@@ -18,7 +19,6 @@ import {
 } from "../constants/exchangeRateEntryModeCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
-import type { ExpenseSheetOriginalCurrencyTotal } from "../utils/expenseSheetTotals.ts";
 
 type ExpenseSheetHeaderFormMode = {
   isCreateMode: boolean;
@@ -46,7 +46,6 @@ type ExpenseSheetHeaderFormProps = {
   exchangeRateValidationMessage: string;
   grossAmountText: string;
   reimbursableAmountText: string;
-  originalCurrencyTotals: ExpenseSheetOriginalCurrencyTotal[];
   draftDescription: string;
   draftProjectId: string;
   draftCurrencyCode: string;
@@ -81,7 +80,6 @@ const ExpenseSheetHeaderForm = ({
   exchangeRateValidationMessage,
   grossAmountText,
   reimbursableAmountText,
-  originalCurrencyTotals,
   draftDescription,
   draftProjectId,
   draftCurrencyCode,
@@ -108,6 +106,7 @@ const ExpenseSheetHeaderForm = ({
     header.expenseSheetStatus === null || header.expenseSheetStatus === undefined
       ? "-"
       : getExpenseStatusLabel(header.expenseSheetStatus);
+  const companyAmountLabel = formatExpenseAmountLabel(exchangeRateBaseCurrency);
   const headerCurrencyCode = safeText(header.currencyCode).toUpperCase();
   const baseCurrencyCode = safeText(exchangeRateBaseCurrency).toUpperCase();
   const reimbursableExpenseOptions = React.useMemo(() => getEditableExpenseReimbursableExpenseOptions(), []);
@@ -126,7 +125,9 @@ const ExpenseSheetHeaderForm = ({
   const hasEditableReimbursableExpenseValue = reimbursableExpenseOptions.some(
     (option) => Number(option.value) === reimbursableExpenseValue
   );
-  const reimbursableExpenseLabel = getExpenseReimbursableExpenseLabel(reimbursableExpenseValue);
+  const reimbursableExpenseLabel = getExpenseReimbursableExpenseLabel(
+    isEditing ? reimbursableExpenseValue : header.reimbursableExpense
+  );
   const selectedReimbursableExpenseOption = React.useMemo(
     () =>
       hasEditableReimbursableExpenseValue
@@ -306,43 +307,19 @@ const ExpenseSheetHeaderForm = ({
         {!isCreateMode ? (
           <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
             <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_GrossJustifiedAmount", "Justified expense")}
+              label={companyAmountLabel}
               value={grossAmountText}
               valueAlign="right"
               containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
               labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
             />
             <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_EmployeeReimbursement", "Reimbursement to employee")}
+              label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
               value={reimbursableAmountText}
               valueAlign="right"
               containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
               labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
             />
-          </div>
-        ) : null}
-        {!isCreateMode ? (
-          <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
-            <div className={ALIGNED_FIELD_CONTAINER_CLASS_NAME}>
-              <div className={ALIGNED_FIELD_LABEL_CLASS_NAME}>
-                {indT("ExpenseSheets_Field_OriginalAmounts", "Original amounts")}
-              </div>
-              <div
-                className="form-control min-h-10 py-2 text-right tabular-nums"
-                role="group"
-                aria-label={indT("ExpenseSheets_Field_OriginalAmounts", "Original amounts")}
-              >
-                {originalCurrencyTotals.length > 0
-                  ? originalCurrencyTotals.map((entry) => (
-                      <div key={entry.currencyCode} className="flex justify-between gap-2">
-                        <span>{entry.currencyCode}</span>
-                        <span>{formatExpenseNumber(entry.amount)}</span>
-                      </div>
-                    ))
-                  : "-"}
-              </div>
-            </div>
-            {currencyField}
           </div>
         ) : null}
         {isCreateMode ? (
@@ -354,15 +331,15 @@ const ExpenseSheetHeaderForm = ({
         {!isCreateMode ? (
           <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
             <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} />
-            <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Detail_Field_Identifier", "Identifier")}
-              value={safeText(header.hojaGastosId) || "-"}
-            />
+            {reimbursableExpenseField}
           </div>
         ) : null}
         {!isCreateMode ? (
           <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
-            {reimbursableExpenseField}
+            <ExpenseReadOnlyField
+              label={indT("ExpenseSheets_Detail_Field_Identifier", "Identifier")}
+              value={safeText(header.hojaGastosId) || "-"}
+            />
             {projectField}
           </div>
         ) : null}

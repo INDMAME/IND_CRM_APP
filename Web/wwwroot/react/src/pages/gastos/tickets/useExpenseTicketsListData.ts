@@ -4,6 +4,7 @@ import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseGastoTypeCode } from "../expenseTypes.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { fetchExpenseSheetTicketLinkList, fetchExpenseSheetTicketsList } from "../utils/expenseApi.ts";
+import { toNullableNumber } from "../utils/expenseApiTransforms.ts";
 import { getVisibleReimbursableTotal } from "../utils/expenseVisibleTotals.ts";
 import { isExpenseAbortLikeError, runExpenseReadRequestWithRetry } from "../utils/expenseRequestRetry.ts";
 import {
@@ -52,11 +53,6 @@ const buildExpenseTicketsDebugStack = (label: string): string => {
     .split("\n")
     .slice(0, 6)
     .join("\n");
-};
-
-const toNullableNumber = (value: unknown): number | null => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
 };
 
 const toNullableBool = (value: unknown): boolean | null => {

@@ -373,7 +373,7 @@
     <value>Comentario do estado</value>
   </data>
   <data name="ExpenseSheets_Field_ReimbursableExpense" xml:space="preserve">
-    <value>Reembolsavel</value>
+    <value>Reembols&#225;vel</value>
   </data>
   <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
     <value>Ambos</value>
@@ -414,6 +414,9 @@
   <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
     <value>Imp. reemb. ({0})</value>
   </data>
+  <data name="ExpenseSheets_Reimbursement_RecalculationPending" xml:space="preserve">
+    <value>O estado reembols&#225;vel &#233; Sim, mas o valor reembols&#225;vel &#233; zero. O registo AX pode estar pendente de rec&#225;lculo.</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>ID da linha</value>
   </data>
@@ -421,7 +424,7 @@
     <value>Categoria</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
-    <value>Importado</value>
+    <value>Montante</value>
   </data>
   <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
     <value>Imp. divisa</value>

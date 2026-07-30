@@ -1,6 +1,6 @@
 import React from "react";
 import type { ExpenseDateParts } from "../utils/expenseUiUtils.ts";
-import { normalizeCardTitleText, safeText } from "../utils/expenseUiUtils.ts";
+import { safeText } from "../utils/expenseUiUtils.ts";
 
 type ExpenseTimelineCardInteractionProps = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -55,7 +55,7 @@ const ExpenseTimelineCard = ({
   datePanelContent,
   interactionProps,
 }: ExpenseTimelineCardProps) => {
-  const safeTitle = normalizeCardTitleText(title, "-");
+  const safeTitle = safeText(title) || "-";
   const safeAmount = amountText || "-";
   const safeSubtitle = safeText(subtitle);
   const {

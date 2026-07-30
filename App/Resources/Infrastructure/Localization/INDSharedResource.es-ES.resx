@@ -426,6 +426,9 @@
   <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
     <value>Imp. reemb. ({0})</value>
   </data>
+  <data name="ExpenseSheets_Reimbursement_RecalculationPending" xml:space="preserve">
+    <value>El estado reembolsable es S&#237;, pero el importe reembolsable es cero. El registro de AX puede estar pendiente de rec&#225;lculo.</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>Id línea</value>
   </data>

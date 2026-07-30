@@ -205,6 +205,7 @@ const buildExpenseTicketDetailContentView = ({
   exchangeRateInputRef,
   exchangeRateInfoMessage,
   localCurrencyCode,
+  companyAmountCurrencyCode,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -266,6 +267,7 @@ const buildExpenseTicketDetailContentView = ({
   exchangeRateInputRef: React.RefObject<HTMLInputElement | null>;
   exchangeRateInfoMessage: string;
   localCurrencyCode: string;
+  companyAmountCurrencyCode: string;
   draftTransDate: string;
   draftTicketTime: string;
   draftUrlFile: string;
@@ -333,6 +335,7 @@ const buildExpenseTicketDetailContentView = ({
   exchangeRateInputRef,
   exchangeRateInfoMessage,
   localCurrencyCode,
+  companyAmountCurrencyCode,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -1132,6 +1135,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       exchangeRateInputRef,
       exchangeRateInfoMessage,
       localCurrencyCode,
+      companyAmountCurrencyCode: contextDefaultCurrencyCode,
       draftTransDate,
       draftTicketTime,
       draftUrlFile,

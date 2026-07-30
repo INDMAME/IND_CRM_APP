@@ -92,6 +92,9 @@ export const normalizeExpenseLineReimbursableExpense = (
 
 // Resolves a display label for read-only header rendering.
 export const getExpenseReimbursableExpenseLabel = (value: unknown): string => {
+  if (value === null || value === undefined || String(value).trim() === "") return "-";
+  const parsed = Number(value);
+  if (parsed !== 0 && parsed !== 1 && parsed !== REIMBURSABLE_EXPENSE_BOTH_VALUE) return "-";
   const normalized = normalizeExpenseReimbursableExpense(value);
   const match = getExpenseReimbursableExpenseOptions().find((option) => Number(option.value) === normalized);
   return match?.text || String(normalized);
@@ -99,6 +102,9 @@ export const getExpenseReimbursableExpenseLabel = (value: unknown): string => {
 
 // Resolves a display label for read-only line rendering.
 export const getExpenseLineReimbursableExpenseLabel = (value: unknown): string => {
+  if (value === null || value === undefined || String(value).trim() === "") return "-";
+  const parsed = Number(value);
+  if (parsed !== 0 && parsed !== 1) return "-";
   const normalized = normalizeExpenseLineReimbursableExpense(value);
   const match = getExpenseLineReimbursableExpenseOptions().find((option) => Number(option.value) === normalized);
   return match?.text || String(normalized);

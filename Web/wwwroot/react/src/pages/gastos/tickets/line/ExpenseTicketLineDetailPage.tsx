@@ -547,6 +547,7 @@ const useExpenseTicketLineDetailViewModel = () => {
     draftTicketTime,
     priceText,
     amountText,
+    companyCurrencyCode: contextDefaultCurrencyCode,
     setDraftDescription,
     setDraftQty,
     setDraftPrice,
@@ -580,6 +581,7 @@ const ExpenseTicketLineDetailContent = () => {
         <ExpenseTicketLineDetailForm
           header={view.header}
           line={view.line}
+          companyCurrencyCode={view.companyCurrencyCode}
           isEditing={view.isEditing}
           draftDescription={view.draftDescription}
           draftQty={view.draftQty}
