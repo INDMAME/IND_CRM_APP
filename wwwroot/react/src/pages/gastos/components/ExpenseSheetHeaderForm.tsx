@@ -329,8 +329,13 @@ const ExpenseSheetHeaderForm = ({
           </div>
         ) : null}
         {!isCreateMode ? (
-          <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} />
+          <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
+            <ExpenseReadOnlyField
+              label={indT("ExpenseSheets_Field_Status", "Status")}
+              value={statusValue}
+              containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
+              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
+            />
             {reimbursableExpenseField}
           </div>
         ) : null}

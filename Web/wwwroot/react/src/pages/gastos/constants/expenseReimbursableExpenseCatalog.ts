@@ -5,19 +5,24 @@ import type {
   ExpenseSheetReimbursableExpense,
 } from "../expenseTypes.ts";
 
-export const DEFAULT_REIMBURSABLE_EXPENSE = 0;
-export const DEFAULT_LINE_REIMBURSABLE_EXPENSE = 0;
-export const REIMBURSABLE_EXPENSE_BOTH_VALUE = 2;
+export const REIMBURSABLE_EXPENSE_YES_VALUE: ExpenseSheetReimbursableExpense = 0;
+export const REIMBURSABLE_EXPENSE_NO_VALUE: ExpenseSheetReimbursableExpense = 1;
+export const REIMBURSABLE_EXPENSE_BOTH_VALUE: ExpenseSheetReimbursableExpense = 2;
+export const LINE_REIMBURSABLE_EXPENSE_YES_VALUE: ExpenseSheetLineReimbursableExpense = 0;
+export const LINE_REIMBURSABLE_EXPENSE_NO_VALUE: ExpenseSheetLineReimbursableExpense = 1;
+export const DEFAULT_REIMBURSABLE_EXPENSE: ExpenseSheetReimbursableExpense = REIMBURSABLE_EXPENSE_YES_VALUE;
+export const DEFAULT_LINE_REIMBURSABLE_EXPENSE: ExpenseSheetLineReimbursableExpense =
+  LINE_REIMBURSABLE_EXPENSE_YES_VALUE;
 
 const FALLBACK_REIMBURSABLE_OPTIONS: ExpenseSelectOption[] = [
-  { value: "0", text: indT("Common_No", "No") },
-  { value: "1", text: indT("Common_Yes", "Yes") },
+  { value: String(REIMBURSABLE_EXPENSE_YES_VALUE), text: indT("Common_Yes", "Yes") },
+  { value: String(REIMBURSABLE_EXPENSE_NO_VALUE), text: indT("Common_No", "No") },
   { value: String(REIMBURSABLE_EXPENSE_BOTH_VALUE), text: indT("ExpenseSheets_Reimbursable_Both", "Both") },
 ];
 
 const FALLBACK_LINE_REIMBURSABLE_OPTIONS: ExpenseSelectOption[] = [
-  { value: "0", text: indT("Common_No", "No") },
-  { value: "1", text: indT("Common_Yes", "Yes") },
+  { value: String(LINE_REIMBURSABLE_EXPENSE_YES_VALUE), text: indT("Common_Yes", "Yes") },
+  { value: String(LINE_REIMBURSABLE_EXPENSE_NO_VALUE), text: indT("Common_No", "No") },
 ];
 
 const getCatalogOptions = (source: Array<{ value?: string; Value?: string; text?: string; Text?: string }> = []): ExpenseSelectOption[] => {
@@ -72,7 +77,11 @@ export const normalizeExpenseReimbursableExpense = (
   fallback: ExpenseSheetReimbursableExpense = DEFAULT_REIMBURSABLE_EXPENSE
 ): ExpenseSheetReimbursableExpense => {
   const parsed = Number(value);
-  if (parsed === 0 || parsed === 1 || parsed === REIMBURSABLE_EXPENSE_BOTH_VALUE) {
+  if (
+    parsed === REIMBURSABLE_EXPENSE_YES_VALUE ||
+    parsed === REIMBURSABLE_EXPENSE_NO_VALUE ||
+    parsed === REIMBURSABLE_EXPENSE_BOTH_VALUE
+  ) {
     return parsed as ExpenseSheetReimbursableExpense;
   }
   return fallback;
@@ -84,7 +93,7 @@ export const normalizeExpenseLineReimbursableExpense = (
   fallback: ExpenseSheetLineReimbursableExpense = DEFAULT_LINE_REIMBURSABLE_EXPENSE
 ): ExpenseSheetLineReimbursableExpense => {
   const parsed = Number(value);
-  if (parsed === 0 || parsed === 1) {
+  if (parsed === LINE_REIMBURSABLE_EXPENSE_YES_VALUE || parsed === LINE_REIMBURSABLE_EXPENSE_NO_VALUE) {
     return parsed as ExpenseSheetLineReimbursableExpense;
   }
   return fallback;
@@ -94,7 +103,11 @@ export const normalizeExpenseLineReimbursableExpense = (
 export const getExpenseReimbursableExpenseLabel = (value: unknown): string => {
   if (value === null || value === undefined || String(value).trim() === "") return "-";
   const parsed = Number(value);
-  if (parsed !== 0 && parsed !== 1 && parsed !== REIMBURSABLE_EXPENSE_BOTH_VALUE) return "-";
+  if (
+    parsed !== REIMBURSABLE_EXPENSE_YES_VALUE &&
+    parsed !== REIMBURSABLE_EXPENSE_NO_VALUE &&
+    parsed !== REIMBURSABLE_EXPENSE_BOTH_VALUE
+  ) return "-";
   const normalized = normalizeExpenseReimbursableExpense(value);
   const match = getExpenseReimbursableExpenseOptions().find((option) => Number(option.value) === normalized);
   return match?.text || String(normalized);
@@ -104,7 +117,7 @@ export const getExpenseReimbursableExpenseLabel = (value: unknown): string => {
 export const getExpenseLineReimbursableExpenseLabel = (value: unknown): string => {
   if (value === null || value === undefined || String(value).trim() === "") return "-";
   const parsed = Number(value);
-  if (parsed !== 0 && parsed !== 1) return "-";
+  if (parsed !== LINE_REIMBURSABLE_EXPENSE_YES_VALUE && parsed !== LINE_REIMBURSABLE_EXPENSE_NO_VALUE) return "-";
   const normalized = normalizeExpenseLineReimbursableExpense(value);
   const match = getExpenseLineReimbursableExpenseOptions().find((option) => Number(option.value) === normalized);
   return match?.text || String(normalized);

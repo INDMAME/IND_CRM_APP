@@ -5,7 +5,10 @@ import {
   formatExpenseAmountLabel,
 } from "../expenseFormatters.ts";
 import type { ExpenseTicketDetailHeader, ExpenseTicketDetailLine } from "../tickets/detail/expenseTicketDetailTypes.ts";
-import { getExpenseLineReimbursableExpenseLabel } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import {
+  LINE_REIMBURSABLE_EXPENSE_YES_VALUE,
+  getExpenseLineReimbursableExpenseLabel,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import {
   canEditExpenseTicketTime,
@@ -73,7 +76,7 @@ const ExpenseTicketLineDetailForm = ({
   const reimbursableAmountText = formatAmountWithCurrency(line?.reimbursableAmount ?? null, companyCurrencyCode);
   const reimbursableStatusText = getExpenseLineReimbursableExpenseLabel(line?.reimbursableExpense);
   const hasPendingReimbursementRecalculation =
-    line?.reimbursableExpense === 1 && line?.reimbursableAmount === 0;
+    line?.reimbursableExpense === LINE_REIMBURSABLE_EXPENSE_YES_VALUE && line?.reimbursableAmount === 0;
   const quantityField = isEditing ? (
     <div className="space-y-1.5">
       <label className="form-label font-semibold">{indT("ExpenseSheets_Field_Qty", "Quantity")}</label>

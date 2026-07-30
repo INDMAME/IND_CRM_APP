@@ -28,8 +28,14 @@ import {
 import { normalizeExpenseSheetsCachedItems } from "../Web/wwwroot/react/src/pages/gastos/list/useExpenseSheetsFilterCache.ts";
 import { buildExpenseSheetsVisualizationFallbackMessages } from "../Web/wwwroot/react/src/pages/gastos/list/expenseSheetsVisualizationFallback.ts";
 import {
+  LINE_REIMBURSABLE_EXPENSE_NO_VALUE,
+  LINE_REIMBURSABLE_EXPENSE_YES_VALUE,
+  REIMBURSABLE_EXPENSE_BOTH_VALUE,
+  REIMBURSABLE_EXPENSE_NO_VALUE,
+  REIMBURSABLE_EXPENSE_YES_VALUE,
   getExpenseLineReimbursableExpenseLabel,
   getExpenseLineReimbursableExpenseOptions,
+  getExpenseReimbursableExpenseOptions,
 } from "../Web/wwwroot/react/src/pages/gastos/constants/expenseReimbursableExpenseCatalog.ts";
 import { formatUserNameWithId } from "../Web/wwwroot/react/src/utils/userLabels.ts";
 import {
@@ -257,11 +263,20 @@ assert.deepEqual(
 assert.equal(toExpenseSheetReimbursableExpense(2), 2);
 assert.equal(toExpenseSheetLineReimbursableExpense(2), null);
 assert.equal(toExpenseSheetLineReimbursableExpense(1), 1);
+assert.equal(REIMBURSABLE_EXPENSE_YES_VALUE, 0);
+assert.equal(REIMBURSABLE_EXPENSE_NO_VALUE, 1);
+assert.equal(REIMBURSABLE_EXPENSE_BOTH_VALUE, 2);
+assert.equal(LINE_REIMBURSABLE_EXPENSE_YES_VALUE, 0);
+assert.equal(LINE_REIMBURSABLE_EXPENSE_NO_VALUE, 1);
 assert.equal(getExpenseLineReimbursableExpenseLabel(null), "-");
 assert.equal(getExpenseLineReimbursableExpenseLabel(2), "-");
 assert.deepEqual(
-  getExpenseLineReimbursableExpenseOptions().map((option) => Number(option.value)),
-  [0, 1]
+  getExpenseReimbursableExpenseOptions().map((option) => [Number(option.value), option.text]),
+  [[0, "Yes"], [1, "No"], [2, "Both"]]
+);
+assert.deepEqual(
+  getExpenseLineReimbursableExpenseOptions().map((option) => [Number(option.value), option.text]),
+  [[0, "Yes"], [1, "No"]]
 );
 
 assert.deepEqual(
@@ -351,7 +366,7 @@ const exactUsdFixture = normalizeDetailPagedResponse({
       Lines: [
         {
           LineRecId: "USD-1",
-          ReimbursableExpense: 1,
+          ReimbursableExpense: 0,
           CurrencyCode: "USD",
           AmountMST: 108.11,
           ReimbursableAmount: 0,
@@ -367,7 +382,7 @@ assert.equal(exactUsdMappedLine.amount, 100);
 assert.equal(exactUsdMappedLine.currencyCode, "USD");
 assert.equal(exactUsdMappedLine.amountMST, 108.11);
 assert.equal(exactUsdMappedLine.reimbursableAmount, 0);
-assert.equal(exactUsdMappedLine.reimbursableExpense, 1);
+assert.equal(exactUsdMappedLine.reimbursableExpense, 0);
 
 const camelCaseExpenseFixture = normalizeDetailPagedResponse({
   success: true,
@@ -405,7 +420,7 @@ const allReimbursableHeader = mapExpenseSheetHeader({
   TotalGrossAmountMST: 150,
   TotalReimbursableAmount: 150,
   TotalAmountMST: 150,
-  ReimbursableExpense: 1,
+  ReimbursableExpense: 0,
 });
 const allReimbursableLine = mapExpenseSheetLine({
   LineRecId: "1",
@@ -413,11 +428,11 @@ const allReimbursableLine = mapExpenseSheetLine({
   CurrencyCode: "USD",
   AmountMST: 92,
   ReimbursableAmount: 92,
-  ReimbursableExpense: 1,
+  ReimbursableExpense: 0,
 });
 assert.equal(allReimbursableHeader.totalGrossAmountMST, 150);
 assert.equal(allReimbursableHeader.totalReimbursableAmount, 150);
-assert.equal(allReimbursableHeader.reimbursableExpense, 1);
+assert.equal(allReimbursableHeader.reimbursableExpense, 0);
 assert.equal(allReimbursableLine.amountMST, 92);
 assert.equal(allReimbursableLine.reimbursableAmount, 92);
 
@@ -426,17 +441,17 @@ const nonReimbursableHeader = mapExpenseSheetHeader({
   TotalGrossAmountMST: 150,
   TotalReimbursableAmount: 0,
   TotalAmountMST: 0,
-  ReimbursableExpense: 0,
+  ReimbursableExpense: 1,
 });
 const nonReimbursableLine = mapExpenseSheetLine({
   LineRecId: "1",
   AmountMST: 92,
   ReimbursableAmount: 0,
-  ReimbursableExpense: 0,
+  ReimbursableExpense: 1,
 });
 assert.equal(nonReimbursableHeader.totalGrossAmountMST, 150);
 assert.equal(nonReimbursableHeader.totalReimbursableAmount, 0);
-assert.equal(nonReimbursableHeader.reimbursableExpense, 0);
+assert.equal(nonReimbursableHeader.reimbursableExpense, 1);
 assert.equal(nonReimbursableLine.amountMST, 92);
 assert.equal(nonReimbursableLine.reimbursableAmount, 0);
 
@@ -575,7 +590,7 @@ const normalizedTicketDetail = normalizeTicketDetailPagedResponse({
           TotalAmount: 100,
           RefRecIdTable: "1",
           CreatedByUserId: "MAME",
-          ReimbursableExpense: 1,
+          ReimbursableExpense: 0,
           ReimbursableAmount: 25,
         },
         {
@@ -586,7 +601,7 @@ const normalizedTicketDetail = normalizeTicketDetailPagedResponse({
           TotalAmount: 0,
           RefRecIdTable: "1",
           CreatedByUserId: "MAME",
-          ReimbursableExpense: 1,
+          ReimbursableExpense: 0,
           ReimbursableAmount: 25,
         },
       ],
@@ -598,7 +613,7 @@ const mappedTicketLines = normalizedTicketDetail.Items[0].Lines.map(mapExpenseTi
 assert.equal(mappedTicketHeader.amountMST, 108.11);
 assert.equal(mappedTicketHeader.visibleReimbursableTotal, 108.11);
 assert.deepEqual(mappedTicketLines.map((line) => line.reimbursableAmount), [25, 25]);
-assert.deepEqual(mappedTicketLines.map((line) => line.reimbursableExpense), [1, 1]);
+assert.deepEqual(mappedTicketLines.map((line) => line.reimbursableExpense), [0, 0]);
 
 const camelCaseTicketDetail = normalizeTicketDetailPagedResponse({
   success: true,
@@ -620,7 +635,7 @@ const camelCaseTicketDetail = normalizeTicketDetailPagedResponse({
         {
           RecId: "TC-2",
           TotalAmount: 0,
-          reimbursableExpense: 0,
+          reimbursableExpense: 1,
           reimbursableAmount: null,
         },
       ],
@@ -633,7 +648,7 @@ assert.equal(camelTicketHeader.visibleReimbursableTotal, 20);
 assert.equal(camelTicketHeader.amountMST, null);
 assert.equal(camelTicketLines[0]?.reimbursableExpense, null);
 assert.equal(camelTicketLines[0]?.reimbursableAmount, 0);
-assert.equal(camelTicketLines[1]?.reimbursableExpense, 0);
+assert.equal(camelTicketLines[1]?.reimbursableExpense, 1);
 assert.equal(camelTicketLines[1]?.reimbursableAmount, null);
 
 const repositoryRoot = process.cwd();
@@ -645,20 +660,14 @@ const gastosControllerSource = readFileSync(
   path.join(repositoryRoot, "Web", "Controllers", "Gastos", "GastosController.cs"),
   "utf8"
 );
-const ticketLineFormSource = readFileSync(
-  path.join(
-    repositoryRoot,
-    "Web",
-    "wwwroot",
-    "react",
-    "src",
-    "pages",
-    "gastos",
-    "components",
-    "ExpenseTicketLineDetailForm.tsx"
-  ),
+const readExpenseComponentSource = (fileName: string): string => readFileSync(
+  path.join(repositoryRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "components", fileName),
   "utf8"
 );
+const ticketLineFormSource = readExpenseComponentSource("ExpenseTicketLineDetailForm.tsx");
+const expenseSheetHeaderFormSource = readExpenseComponentSource("ExpenseSheetHeaderForm.tsx");
+const expenseSheetLineFormSource = readExpenseComponentSource("ExpenseSheetLineForm.tsx");
+const expenseCurrencySettlementFieldsSource = readExpenseComponentSource("ExpenseCurrencySettlementFields.tsx");
 const ticketProxyMapperStart = gastosControllerSource.indexOf(
   "private static object ToExpenseSheetTicketApiDetailLine"
 );
@@ -677,5 +686,16 @@ assert.match(
   /formatAmountWithCurrency\(line\?\.reimbursableAmount \?\? null, companyCurrencyCode\)/
 );
 assert.doesNotMatch(ticketLineFormSource, /\.reduce\(/);
+assert.match(
+  expenseSheetHeaderFormSource,
+  /label=\{indT\("ExpenseSheets_Field_Status"[\s\S]*?containerClassName=\{ALIGNED_FIELD_CONTAINER_CLASS_NAME\}[\s\S]*?labelClassName=\{ALIGNED_FIELD_LABEL_CLASS_NAME\}/
+);
+assert.match(expenseSheetLineFormSource, /betweenAmountsAndCurrency=\{reimbursementSection\}/);
+const settlementCompanyAmountIndex = expenseCurrencySettlementFieldsSource.indexOf('id={companyAmountInputId}');
+const settlementMiddleContentIndex = expenseCurrencySettlementFieldsSource.indexOf('{betweenAmountsAndCurrency ?');
+const settlementCurrencyIndex = expenseCurrencySettlementFieldsSource.indexOf('<ExpenseCurrencyFilterSelect');
+assert.ok(settlementCompanyAmountIndex >= 0);
+assert.ok(settlementMiddleContentIndex > settlementCompanyAmountIndex);
+assert.ok(settlementCurrencyIndex > settlementMiddleContentIndex);
 
 console.log("[ok] Gastos regression rules passed.");

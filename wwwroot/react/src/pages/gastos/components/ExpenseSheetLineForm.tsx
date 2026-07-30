@@ -11,6 +11,7 @@ import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseCurrencySettlementFields from "./ExpenseCurrencySettlementFields.tsx";
 import {
+  LINE_REIMBURSABLE_EXPENSE_YES_VALUE,
   getExpenseLineReimbursableExpenseLabel,
   getExpenseLineReimbursableExpenseOptions,
   normalizeExpenseLineReimbursableExpense,
@@ -93,6 +94,7 @@ type ExpenseSheetLineCurrencyFieldsProps = {
   draftExchangeRate: string;
   localCurrencyCode: string;
   exchangeRateInfoMessage: string;
+  betweenAmountsAndCurrency: React.ReactNode;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftAmountCurrencyChange: (value: string) => void;
   onDraftAmountMSTChange: (value: string) => void;
@@ -112,6 +114,7 @@ const ExpenseSheetLineCurrencyFields = ({
   draftExchangeRate,
   localCurrencyCode,
   exchangeRateInfoMessage,
+  betweenAmountsAndCurrency,
   onDraftCurrencyCodeChange,
   onDraftAmountCurrencyChange,
   onDraftAmountMSTChange,
@@ -144,6 +147,7 @@ const ExpenseSheetLineCurrencyFields = ({
       amountCurrencyMode={amountCurrencyEditable ? "editable" : "readonly"}
       reimbursementAmount={grossCompanyAmountValue}
       companyAmountLabel={formatExpenseAmountLabel(localCurrencyCode)}
+      betweenAmountsAndCurrency={betweenAmountsAndCurrency}
       onExpenseCurrencyChange={onDraftCurrencyCodeChange}
       onAmountCurrencyChange={onDraftAmountCurrencyChange}
       onExchangeRateChange={onDraftExchangeRateChange}
@@ -219,7 +223,7 @@ const ExpenseSheetLineForm = ({
   );
   const reimbursableStatusLabel = indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable");
   const hasPendingReimbursementRecalculation =
-    line.reimbursableExpense === 1 && line.reimbursableAmount === 0;
+    line.reimbursableExpense === LINE_REIMBURSABLE_EXPENSE_YES_VALUE && line.reimbursableAmount === 0;
   const internationalField = isEditing ? (
     <SelectCombobox
       label={indT("ExpenseSheets_Field_International", "International")}
@@ -251,6 +255,31 @@ const ExpenseSheetLineForm = ({
       label={reimbursableStatusLabel}
       value={reimbursableExpenseLabel}
     />
+  );
+  const reimbursementSection = (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 md:gap-4">
+        {reimbursableExpenseField}
+        <ExpenseReadOnlyField
+          label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+          value={reimbursableAmountText}
+          valueAlign="right"
+        />
+      </div>
+
+      {hasPendingReimbursementRecalculation ? (
+        <p
+          className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+          role="status"
+          aria-live="polite"
+        >
+          {indT(
+            "ExpenseSheets_Reimbursement_RecalculationPending",
+            "Reimbursable status is Yes but the reimbursement amount is zero. The AX record may be pending recalculation."
+          )}
+        </p>
+      ) : null}
+    </div>
   );
   const descriptionField = isEditing ? (
     <div className="sm:col-span-2 space-y-1.5">
@@ -438,6 +467,7 @@ const ExpenseSheetLineForm = ({
             draftExchangeRate={draftExchangeRate}
             localCurrencyCode={localCurrencyCode}
             exchangeRateInfoMessage={exchangeRateInfoMessage}
+            betweenAmountsAndCurrency={reimbursementSection}
             onDraftCurrencyCodeChange={onDraftCurrencyCodeChange}
             onDraftAmountCurrencyChange={onDraftAmountCurrencyChange}
             onDraftAmountMSTChange={onDraftAmountMSTChange}
@@ -450,28 +480,6 @@ const ExpenseSheetLineForm = ({
           <div className="md:col-span-2">
             {internationalField}
           </div>
-
-          <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
-            {reimbursableExpenseField}
-            <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
-              value={reimbursableAmountText}
-              valueAlign="right"
-            />
-          </div>
-
-          {hasPendingReimbursementRecalculation ? (
-            <p
-              className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900 md:col-span-2"
-              role="status"
-              aria-live="polite"
-            >
-              {indT(
-                "ExpenseSheets_Reimbursement_RecalculationPending",
-                "Reimbursable status is Yes but the reimbursement amount is zero. The AX record may be pending recalculation."
-              )}
-            </p>
-          ) : null}
 
           {projectTicketFields}
         </div>

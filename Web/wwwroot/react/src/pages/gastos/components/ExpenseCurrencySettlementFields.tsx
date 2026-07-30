@@ -27,6 +27,7 @@ type ExpenseCurrencySettlementFieldsProps = {
   companyAmountLabel?: string;
   reimbursementAmountInvalid?: boolean;
   reimbursementAmountInputRef?: React.Ref<HTMLInputElement>;
+  betweenAmountsAndCurrency?: React.ReactNode;
   onExpenseCurrencyChange: (value: string) => void;
   onExchangeRateChange: (value: string) => void;
   onExchangeRateCommit?: (value: string) => void;
@@ -88,6 +89,7 @@ const ExpenseCurrencySettlementFields = ({
   companyAmountLabel,
   reimbursementAmountInvalid = false,
   reimbursementAmountInputRef,
+  betweenAmountsAndCurrency,
   onExpenseCurrencyChange,
   onExchangeRateChange,
   onExchangeRateCommit,
@@ -182,6 +184,10 @@ const ExpenseCurrencySettlementFields = ({
           aria-label={companyAmountDisplayLabel}
         />
       </div>
+
+      {betweenAmountsAndCurrency ? (
+        <div className="col-span-2">{betweenAmountsAndCurrency}</div>
+      ) : null}
 
       <ExpenseCurrencyFilterSelect
         label={indT("ExpenseSheets_Field_ExpenseCurrency", "Divisa gasto")}
