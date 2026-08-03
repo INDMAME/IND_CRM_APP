@@ -5,14 +5,13 @@ import type {
   ExpenseSheetCreateRequest,
   ExpenseSheetHeaderUpdateRequest,
   ExpenseSheetLine,
-  ExpenseSheetLineReimbursableExpense,
   ExpenseSheetLineUpdateRequest,
 } from "../expenseTypes.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import {
-  normalizeExpenseLineReimbursableExpense,
   normalizeExpenseReimbursableExpense,
   REIMBURSABLE_EXPENSE_BOTH_VALUE,
+  resolveExpenseReimbursableExpenseForWrite,
 } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { executeExpenseMutation } from "../hooks/expenseMutationUtils.ts";
 import {
@@ -78,7 +77,7 @@ const toPositiveNumber = (value: unknown): number | null => {
 const buildLineUpdatePayload = (
   line: ExpenseSheetLine,
   projectId: string,
-  reimbursableExpense: ExpenseSheetLineReimbursableExpense
+  reimbursableExpense?: ExpenseSheetLineUpdateRequest["reimbursableExpense"]
 ): ExpenseSheetLineUpdateRequest => {
   const typeValue = toExpenseGastoTypeCode(line.typeValueCode || line.typeValue, { allowNone: false });
   const rawQty = toPositiveNumber(line.qty);
@@ -114,11 +113,7 @@ const buildProjectLineUpdatePayload = (
   line: ExpenseSheetLine,
   projectId: string
 ): ExpenseSheetLineUpdateRequest => {
-  return buildLineUpdatePayload(
-    line,
-    projectId,
-    normalizeExpenseLineReimbursableExpense(line.reimbursableExpense)
-  );
+  return buildLineUpdatePayload(line, projectId);
 };
 
 const updateProjectIdOnLines = async (
@@ -203,7 +198,10 @@ export const useExpenseSheetDetailMutations = ({
       const normalizedEstadoComentarios = String(
         statusCommentOverride ?? draftEstadoComentarios ?? ""
       ).trim();
-      const normalizedReimbursableExpense = normalizeExpenseReimbursableExpense(draftReimbursableExpense);
+      const reimbursableExpenseForWrite = resolveExpenseReimbursableExpenseForWrite(
+        draftReimbursableExpense,
+        isCreateMode
+      );
       const resolvedExpenseSheetStatus =
         nextStatus ?? (currentExpenseSheetStatus != null ? Number(currentExpenseSheetStatus) : undefined);
 
@@ -218,7 +216,7 @@ export const useExpenseSheetDetailMutations = ({
           description: normalizedDescription,
           projId: normalizedProjectId || undefined,
           expenseSheetStatus: resolvedExpenseSheetStatus,
-          reimbursableExpense: normalizedReimbursableExpense,
+          reimbursableExpense: reimbursableExpenseForWrite,
           // Preserve explicit empty status comments so the backend can clear the stored value.
           estadoComentarios: hasExplicitStatusCommentOverride
             ? normalizedEstadoComentarios
@@ -227,7 +225,6 @@ export const useExpenseSheetDetailMutations = ({
       };
     },
     [
-      canEditHeaderFields,
       currentExpenseSheetStatus,
       draftDescription,
       draftEstadoComentarios,
@@ -331,7 +328,10 @@ export const useExpenseSheetDetailMutations = ({
       }
 
       const normalizedReimbursableExpense = normalizeExpenseReimbursableExpense(nextReimbursableExpense);
-      if (normalizedReimbursableExpense === REIMBURSABLE_EXPENSE_BOTH_VALUE) {
+      if (
+        normalizedReimbursableExpense === null ||
+        normalizedReimbursableExpense === REIMBURSABLE_EXPENSE_BOTH_VALUE
+      ) {
         return false;
       }
 

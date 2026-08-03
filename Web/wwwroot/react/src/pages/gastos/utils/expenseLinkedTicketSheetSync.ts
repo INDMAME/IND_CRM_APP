@@ -9,7 +9,10 @@ import {
   getDefaultExpenseGastoTypeCode,
   toExpenseGastoTypeCode,
 } from "../constants/expenseGastoTypeCatalog.ts";
-import { normalizeExpenseLineReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import {
+  DEFAULT_LINE_REIMBURSABLE_EXPENSE,
+  normalizeExpenseLineReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 import {
   createExpenseSheet,
   fetchExpenseSheetDetail,
@@ -203,8 +206,10 @@ const buildLinePayload = ({
     ? safeText(projectIdOverride)
     : safeText(existingLine?.projId || sheetProjectId);
   const resolvedReimbursableExpense = hasReimbursableExpenseOverride
-    ? normalizeExpenseLineReimbursableExpense(reimbursableExpenseOverride)
-    : normalizeExpenseLineReimbursableExpense(existingLine?.reimbursableExpense);
+    ? normalizeExpenseLineReimbursableExpense(reimbursableExpenseOverride) ?? undefined
+    : existingLine
+      ? undefined
+      : DEFAULT_LINE_REIMBURSABLE_EXPENSE;
 
   return {
     transDate: ticketSnapshot.transDate,

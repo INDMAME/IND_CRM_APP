@@ -28,6 +28,8 @@ import {
 import { normalizeExpenseSheetsCachedItems } from "../Web/wwwroot/react/src/pages/gastos/list/useExpenseSheetsFilterCache.ts";
 import { buildExpenseSheetsVisualizationFallbackMessages } from "../Web/wwwroot/react/src/pages/gastos/list/expenseSheetsVisualizationFallback.ts";
 import {
+  DEFAULT_LINE_REIMBURSABLE_EXPENSE,
+  DEFAULT_REIMBURSABLE_EXPENSE,
   LINE_REIMBURSABLE_EXPENSE_NO_VALUE,
   LINE_REIMBURSABLE_EXPENSE_YES_VALUE,
   REIMBURSABLE_EXPENSE_BOTH_VALUE,
@@ -36,6 +38,12 @@ import {
   getExpenseLineReimbursableExpenseLabel,
   getExpenseLineReimbursableExpenseOptions,
   getExpenseReimbursableExpenseOptions,
+  isEditableExpenseLineReimbursableExpense,
+  isEditableExpenseReimbursableExpense,
+  normalizeExpenseLineReimbursableExpense,
+  normalizeExpenseReimbursableExpense,
+  resolveExpenseLineReimbursableExpenseForWrite,
+  resolveExpenseReimbursableExpenseForWrite,
 } from "../Web/wwwroot/react/src/pages/gastos/constants/expenseReimbursableExpenseCatalog.ts";
 import { formatUserNameWithId } from "../Web/wwwroot/react/src/utils/userLabels.ts";
 import {
@@ -278,6 +286,32 @@ assert.equal(REIMBURSABLE_EXPENSE_NO_VALUE, 1);
 assert.equal(REIMBURSABLE_EXPENSE_BOTH_VALUE, 2);
 assert.equal(LINE_REIMBURSABLE_EXPENSE_YES_VALUE, 0);
 assert.equal(LINE_REIMBURSABLE_EXPENSE_NO_VALUE, 1);
+assert.equal(normalizeExpenseReimbursableExpense(null), null);
+assert.equal(normalizeExpenseReimbursableExpense(undefined), null);
+assert.equal(normalizeExpenseReimbursableExpense(""), null);
+assert.equal(normalizeExpenseReimbursableExpense(false), null);
+assert.equal(normalizeExpenseReimbursableExpense(99), null);
+assert.equal(normalizeExpenseReimbursableExpense(null, DEFAULT_REIMBURSABLE_EXPENSE), 0);
+assert.equal(isEditableExpenseReimbursableExpense(0), true);
+assert.equal(isEditableExpenseReimbursableExpense(1), true);
+assert.equal(isEditableExpenseReimbursableExpense(2), false);
+assert.equal(isEditableExpenseReimbursableExpense(null), false);
+assert.equal(normalizeExpenseLineReimbursableExpense(null), null);
+assert.equal(normalizeExpenseLineReimbursableExpense(2), null);
+assert.equal(normalizeExpenseLineReimbursableExpense(false), null);
+assert.equal(normalizeExpenseLineReimbursableExpense(null, DEFAULT_LINE_REIMBURSABLE_EXPENSE), 0);
+assert.equal(isEditableExpenseLineReimbursableExpense(0), true);
+assert.equal(isEditableExpenseLineReimbursableExpense(1), true);
+assert.equal(isEditableExpenseLineReimbursableExpense(2), false);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(null, true), 0);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(2, true), 2);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(2, false), undefined);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(null, false), undefined);
+assert.equal(resolveExpenseReimbursableExpenseForWrite(0, false), 0);
+assert.equal(resolveExpenseLineReimbursableExpenseForWrite(null, true), 0);
+assert.equal(resolveExpenseLineReimbursableExpenseForWrite(2, false), undefined);
+assert.equal(resolveExpenseLineReimbursableExpenseForWrite(null, false), undefined);
+assert.equal(resolveExpenseLineReimbursableExpenseForWrite(1, false), 1);
 assert.equal(getExpenseLineReimbursableExpenseLabel(null), "-");
 assert.equal(getExpenseLineReimbursableExpenseLabel(2), "-");
 assert.deepEqual(
@@ -371,7 +405,7 @@ const exactUsdFixture = normalizeDetailPagedResponse({
     {
       HojaGastosId: "HG000080",
       TotalGrossAmountMST: 108.11,
-      TotalReimbursableAmount: 0,
+      TotalReimbursableAmount: 108.11,
       TotalAmountMST: 108.11,
       Lines: [
         {
@@ -379,7 +413,7 @@ const exactUsdFixture = normalizeDetailPagedResponse({
           ReimbursableExpense: 0,
           CurrencyCode: "USD",
           AmountMST: 108.11,
-          ReimbursableAmount: 0,
+          ReimbursableAmount: 108.11,
           TotalAmountCurrency: 100,
           TotalAmountMST: 108.11,
         },
@@ -391,7 +425,7 @@ const exactUsdMappedLine = mapExpenseSheetLine(exactUsdFixture.Items[0]?.Lines?.
 assert.equal(exactUsdMappedLine.amount, 100);
 assert.equal(exactUsdMappedLine.currencyCode, "USD");
 assert.equal(exactUsdMappedLine.amountMST, 108.11);
-assert.equal(exactUsdMappedLine.reimbursableAmount, 0);
+assert.equal(exactUsdMappedLine.reimbursableAmount, 108.11);
 assert.equal(exactUsdMappedLine.reimbursableExpense, 0);
 
 const camelCaseExpenseFixture = normalizeDetailPagedResponse({
@@ -705,6 +739,27 @@ assert.doesNotMatch(ticketLineFormSource, /\.reduce\(/);
 assert.match(
   expenseSheetHeaderFormSource,
   /label=\{indT\("ExpenseSheets_Field_Status"[\s\S]*?containerClassName=\{ALIGNED_FIELD_CONTAINER_CLASS_NAME\}[\s\S]*?labelClassName=\{ALIGNED_FIELD_LABEL_CLASS_NAME\}/
+);
+assert.match(
+  expenseSheetHeaderFormSource,
+  /isEditing\s*&&\s*canEditHeaderFields\s*&&\s*hasEditableReimbursableExpenseValue/
+);
+assert.match(
+  expenseSheetLineFormSource,
+  /isEditing\s*&&\s*hasEditableReimbursableExpenseValue/
+);
+assert.match(gastosControllerSource, /CanUpdateExpenseSheetHeaderReimbursableExpense\([\s\S]*?snapshot\.ReimbursableExpense/);
+assert.match(
+  gastosControllerSource,
+  /IsEditableExpenseSheetHeaderReimbursableExpense\([\s\S]*?mutationGuard\.Snapshot\?\.ReimbursableExpense/
+);
+assert.match(
+  gastosControllerSource,
+  /NormalizeExpenseSheetHeaderReimbursableExpenseForCreate\([\s\S]*?ExpenseSheetReimbursableYes/
+);
+assert.match(
+  gastosControllerSource,
+  /ReimbursableExpense\s*=\s*IsEditableExpenseSheetHeaderReimbursableExpense\(snapshot\.ReimbursableExpense\)[\s\S]*?\?\s*snapshot\.ReimbursableExpense[\s\S]*?:\s*null/
 );
 assert.match(expenseSheetLineFormSource, /betweenAmountsAndCurrency=\{reimbursementSection\}/);
 const settlementCompanyAmountIndex = expenseCurrencySettlementFieldsSource.indexOf('id={companyAmountInputId}');

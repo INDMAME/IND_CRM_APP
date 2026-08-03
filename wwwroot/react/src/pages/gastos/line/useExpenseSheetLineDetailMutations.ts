@@ -8,7 +8,7 @@ import type {
   ExpenseSheetLineUpdateRequest,
 } from "../expenseTypes.ts";
 import { parseExpenseInternationalValue } from "../constants/internationalOptions.ts";
-import { normalizeExpenseLineReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import { resolveExpenseLineReimbursableExpenseForWrite } from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { toExpenseGastoTypeCode } from "../constants/expenseGastoTypeCatalog.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
 import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../utils/expenseApiDateUtils.ts";
@@ -134,7 +134,10 @@ export const useExpenseSheetLineDetailMutations = ({
     const parsedPrice = parseNumber(draftPrice);
     const parsedQty = parseNumber(draftQty);
     const parsedInternational = parseExpenseInternationalValue(draftInternational);
-    const normalizedReimbursableExpense = normalizeExpenseLineReimbursableExpense(draftReimbursableExpense);
+    const reimbursableExpenseForWrite = resolveExpenseLineReimbursableExpenseForWrite(
+      draftReimbursableExpense,
+      isCreateMode
+    );
     const parsedAmountMST = parseNumber(draftAmountMST);
     const parsedExchangeRate = parseNumber(draftExchangeRate);
     const normalizedCurrencyCode = normalizeExpenseLineCurrencyCode(draftCurrencyCode);
@@ -216,7 +219,7 @@ export const useExpenseSheetLineDetailMutations = ({
           qty: Number(parsedQty),
           price: Number(parsedPrice),
           projId: String(draftProjectId || "").trim() || undefined,
-          reimbursableExpense: normalizedReimbursableExpense,
+          reimbursableExpense: reimbursableExpenseForWrite,
           currencyCode: normalizedCurrencyCode || undefined,
           amountMST: payloadAmountMST,
           exchRate: payloadExchangeRate,

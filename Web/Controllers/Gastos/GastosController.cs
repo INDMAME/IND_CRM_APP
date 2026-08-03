@@ -46,6 +46,9 @@ namespace IND_CRM_APP.Controllers
         private const int ExpenseSheetStatusApproved = 2;
         private const int ExpenseSheetStatusRejected = 3;
         private const int ExpenseSheetStatusPaid = 4;
+        private const int ExpenseSheetReimbursableYes = 0;
+        private const int ExpenseSheetReimbursableNo = 1;
+        private const int ExpenseSheetReimbursableBoth = 2;
         private const string ExpenseSheetNotFoundErrorCode = "CRM_EXPENSESHEET_NOT_FOUND";
         private const string ExpenseSheetPaidReadOnlyErrorCode = "CRM_EXPENSESHEET_PAID_READ_ONLY";
         private const string ExpenseSheetReadOnlyByStatusErrorCode = "CRM_EXPENSESHEET_STATUS_READ_ONLY";
@@ -1232,7 +1235,7 @@ namespace IND_CRM_APP.Controllers
                 ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
                 : (decimal?)null;
             var normalizedDescription = (req.Description ?? string.Empty).Trim();
-            if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense))
+            if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpenseForCreate(req.ReimbursableExpense))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -1254,7 +1257,7 @@ namespace IND_CRM_APP.Controllers
                     Qty = line.Qty,
                     Price = line.Price,
                     ProjId = NormalizeOptionalText(line.ProjId),
-                    ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(line.ReimbursableExpense),
+                    ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpenseForCreate(line.ReimbursableExpense),
                     CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
                     AmountMST = line.AmountMST,
                     ExchRate = line.ExchRate > 0 ? line.ExchRate : null,
@@ -1279,7 +1282,9 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjId),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                 ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
-                ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense),
+                ReimbursableExpense = normalizedMode == 2
+                    ? null
+                    : NormalizeExpenseSheetHeaderReimbursableExpenseForCreate(req.ReimbursableExpense),
                 Lines = normalizedLines
             };
 
@@ -1560,7 +1565,8 @@ namespace IND_CRM_APP.Controllers
             if (!mutationGuard.Allowed)
                 return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
 
-            if (mutationGuard.Snapshot?.ReimbursableExpense == 2)
+            if (!IsEditableExpenseSheetHeaderReimbursableExpense(
+                    mutationGuard.Snapshot?.ReimbursableExpense))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -3495,7 +3501,7 @@ namespace IND_CRM_APP.Controllers
                     ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
                     : (decimal?)null;
                 var normalizedDescription = (req.Description ?? string.Empty).Trim();
-                if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense))
+                if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpenseForCreate(req.ReimbursableExpense))
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var sourceLines = req.Lines ?? new List<ExpenseSheetLineRequest>();
@@ -3514,7 +3520,7 @@ namespace IND_CRM_APP.Controllers
                         Qty = line.Qty,
                         Price = line.Price,
                         ProjId = NormalizeOptionalText(line.ProjId),
-                        ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(line.ReimbursableExpense),
+                        ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpenseForCreate(line.ReimbursableExpense),
                         CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
                         AmountMST = line.AmountMST,
                         ExchRate = line.ExchRate > 0 ? line.ExchRate : null,
@@ -3539,7 +3545,9 @@ namespace IND_CRM_APP.Controllers
                     ProjId = NormalizeOptionalText(req.ProjId),
                     ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                     ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
-                    ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense),
+                    ReimbursableExpense = normalizedMode == 2
+                        ? null
+                        : NormalizeExpenseSheetHeaderReimbursableExpenseForCreate(req.ReimbursableExpense),
                     Lines = normalizedLines
                 };
 
@@ -4254,6 +4262,21 @@ namespace IND_CRM_APP.Controllers
                 return BuildExpenseSheetReadOnlyGuard(snapshot, policy);
             }
 
+            if (!CanUpdateExpenseSheetHeaderReimbursableExpense(
+                    snapshot.ReimbursableExpense,
+                    request.ReimbursableExpense))
+            {
+                return new ExpenseSheetMutationGuardResult
+                {
+                    Allowed = false,
+                    StatusCode = StatusCodes.Status409Conflict,
+                    Message = _sr["Api_RequestFailed"].Value,
+                    ErrorCode = "CRM_EXPENSESHEET_REIMBURSABLE_READ_ONLY",
+                    Snapshot = snapshot,
+                    Policy = policy
+                };
+            }
+
             if (policy.InteractionMode == ExpenseSheetInteractionMode.CommentOnlyEdit &&
                 HasExpenseSheetHeaderFieldChanges(snapshot, request))
             {
@@ -4315,7 +4338,9 @@ namespace IND_CRM_APP.Controllers
                 ExpenseSheetStatus = request.ExpenseSheetStatus,
                 ExchangeRateMode = snapshot.ExchangeRateMode,
                 EstadoComentarios = request.EstadoComentarios,
-                ReimbursableExpense = snapshot.ReimbursableExpense
+                ReimbursableExpense = IsEditableExpenseSheetHeaderReimbursableExpense(snapshot.ReimbursableExpense)
+                    ? snapshot.ReimbursableExpense
+                    : null
             };
 
             _logger.LogInformation(
@@ -4348,7 +4373,8 @@ namespace IND_CRM_APP.Controllers
             if (!string.Equals(NormalizeOptionalText(request.Voucher) ?? string.Empty, snapshot.Voucher ?? string.Empty, StringComparison.OrdinalIgnoreCase))
                 return true;
 
-            if (NormalizeExpenseNullableInt(request.ReimbursableExpense) != NormalizeExpenseNullableInt(snapshot.ReimbursableExpense))
+            if (request.ReimbursableExpense.HasValue &&
+                NormalizeExpenseNullableInt(request.ReimbursableExpense) != NormalizeExpenseNullableInt(snapshot.ReimbursableExpense))
                 return true;
 
             return false;
@@ -4717,13 +4743,59 @@ namespace IND_CRM_APP.Controllers
         // Accepts optional header values while rejecting numeric codes outside No, Yes and Both.
         private static bool IsValidExpenseSheetHeaderReimbursableExpense(int? reimbursableExpense)
         {
-            return !reimbursableExpense.HasValue || reimbursableExpense is >= 0 and <= 2;
+            return !reimbursableExpense.HasValue ||
+                   reimbursableExpense == ExpenseSheetReimbursableYes ||
+                   reimbursableExpense == ExpenseSheetReimbursableNo ||
+                   reimbursableExpense == ExpenseSheetReimbursableBoth;
+        }
+
+        // Creation defaults missing reimbursement values to Yes and never accepts the derived Both state.
+        private static bool IsValidExpenseSheetHeaderReimbursableExpenseForCreate(int? reimbursableExpense)
+        {
+            return !reimbursableExpense.HasValue ||
+                   reimbursableExpense == ExpenseSheetReimbursableYes ||
+                   reimbursableExpense == ExpenseSheetReimbursableNo;
+        }
+
+        // Applies the Yes default only when a new header is created.
+        private static int NormalizeExpenseSheetHeaderReimbursableExpenseForCreate(int? reimbursableExpense)
+        {
+            return reimbursableExpense == ExpenseSheetReimbursableNo
+                ? ExpenseSheetReimbursableNo
+                : ExpenseSheetReimbursableYes;
+        }
+
+        // Only concrete Yes/No values can drive header propagation or user edits.
+        private static bool IsEditableExpenseSheetHeaderReimbursableExpense(int? reimbursableExpense)
+        {
+            return reimbursableExpense == ExpenseSheetReimbursableYes ||
+                   reimbursableExpense == ExpenseSheetReimbursableNo;
+        }
+
+        // Allows only explicit Yes/No changes; omitted values preserve the stored server state.
+        private static bool CanUpdateExpenseSheetHeaderReimbursableExpense(
+            int? storedReimbursableExpense,
+            int? requestedReimbursableExpense)
+        {
+            if (!requestedReimbursableExpense.HasValue)
+                return true;
+
+            return IsEditableExpenseSheetHeaderReimbursableExpense(storedReimbursableExpense) &&
+                   IsEditableExpenseSheetHeaderReimbursableExpense(requestedReimbursableExpense);
         }
 
         // Keeps Both out of expense sheet line payloads while preserving optional null values.
         private static int? NormalizeExpenseSheetLineReimbursableExpense(int? reimbursableExpense)
         {
             return reimbursableExpense is >= 0 and <= 1 ? reimbursableExpense : null;
+        }
+
+        // Applies the Yes default only when a new expense line is created.
+        private static int NormalizeExpenseSheetLineReimbursableExpenseForCreate(int? reimbursableExpense)
+        {
+            return reimbursableExpense == ExpenseSheetReimbursableNo
+                ? ExpenseSheetReimbursableNo
+                : ExpenseSheetReimbursableYes;
         }
 
         // Accepts optional line values but rejects the header-only Both enum value.

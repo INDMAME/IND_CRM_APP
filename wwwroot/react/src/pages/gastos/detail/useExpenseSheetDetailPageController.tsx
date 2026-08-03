@@ -14,7 +14,10 @@ import { saveExpenseSheetCreatedReturnContext } from "../utils/expenseSheetCreat
 import { saveExpenseTicketReturnContext } from "../utils/expenseTicketReturnContext.ts";
 import { clearExpenseActingUserOverride } from "../utils/expenseActingUser.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
-import { normalizeExpenseReimbursableExpense } from "../constants/expenseReimbursableExpenseCatalog.ts";
+import {
+  isEditableExpenseReimbursableExpense,
+  normalizeExpenseReimbursableExpense,
+} from "../constants/expenseReimbursableExpenseCatalog.ts";
 import { useExpenseSheetDetailMutations } from "./useExpenseSheetDetailMutations.ts";
 import { useExpenseSheetDetailTopbarActions } from "./useExpenseSheetDetailTopbarActions.ts";
 import { useExpenseSheetDetailState } from "./useExpenseSheetDetailState.ts";
@@ -371,6 +374,8 @@ export const useExpenseSheetDetailPageController = () => {
     (value: number) => {
       const nextValue = normalizeExpenseReimbursableExpense(value);
       const previousValue = normalizeExpenseReimbursableExpense(draftReimbursableExpense);
+      if (!isEditableExpenseReimbursableExpense(nextValue) || nextValue === null) return;
+      if (!isCreateMode && !isEditableExpenseReimbursableExpense(previousValue)) return;
       if (nextValue === previousValue) return;
 
       const shouldConfirmPropagation =

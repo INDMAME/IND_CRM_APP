@@ -160,7 +160,7 @@ const buildExpenseTicketDetailPreviewView = ({
 type ExpenseTicketLinkedSheetLineView = {
   visible: boolean;
   projectId: string;
-  reimbursableExpense: number;
+  reimbursableExpense: number | null;
   isLoading: boolean;
   errorMessage: string;
   disabled: boolean;

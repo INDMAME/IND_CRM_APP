@@ -2,10 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import type { ExpenseSheetDetailDto, ExpenseSheetLine } from "../../expenseTypes.ts";
-import {
-  DEFAULT_LINE_REIMBURSABLE_EXPENSE,
-  normalizeExpenseLineReimbursableExpense,
-} from "../../constants/expenseReimbursableExpenseCatalog.ts";
+import { normalizeExpenseLineReimbursableExpense } from "../../constants/expenseReimbursableExpenseCatalog.ts";
 import { fetchExpenseSheetDetail, mapExpenseSheetLine } from "../../utils/expenseApi.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
@@ -47,8 +44,8 @@ export const useExpenseTicketLinkedSheetLine = ({
   const [line, setLine] = useState<ExpenseSheetLine | null>(null);
   const [originalProjectId, setOriginalProjectId] = useState("");
   const [draftProjectId, setDraftProjectId] = useState("");
-  const [originalReimbursableExpense, setOriginalReimbursableExpense] = useState<number>(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
-  const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number>(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+  const [originalReimbursableExpense, setOriginalReimbursableExpense] = useState<number | null>(null);
+  const [draftReimbursableExpense, setDraftReimbursableExpense] = useState<number | null>(null);
   const [localCurrencyCode, setLocalCurrencyCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -60,8 +57,8 @@ export const useExpenseTicketLinkedSheetLine = ({
       setLine(null);
       setOriginalProjectId("");
       setDraftProjectId("");
-      setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
-      setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+      setOriginalReimbursableExpense(null);
+      setDraftReimbursableExpense(null);
       setLocalCurrencyCode("");
       setErrorMessage("");
       setIsLoading(false);
@@ -80,8 +77,8 @@ export const useExpenseTicketLinkedSheetLine = ({
         setLine(null);
         setOriginalProjectId("");
         setDraftProjectId("");
-        setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
-        setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+        setOriginalReimbursableExpense(null);
+        setDraftReimbursableExpense(null);
         setLocalCurrencyCode("");
         setErrorMessage(response?.Message || indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
         return;
@@ -94,8 +91,8 @@ export const useExpenseTicketLinkedSheetLine = ({
         setLine(null);
         setOriginalProjectId("");
         setDraftProjectId("");
-        setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
-        setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+        setOriginalReimbursableExpense(null);
+        setDraftReimbursableExpense(null);
         setLocalCurrencyCode(sheetLocalCurrencyCode);
         setErrorMessage("");
         return;
@@ -105,8 +102,8 @@ export const useExpenseTicketLinkedSheetLine = ({
         setLine(null);
         setOriginalProjectId("");
         setDraftProjectId("");
-        setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
-        setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+        setOriginalReimbursableExpense(null);
+        setDraftReimbursableExpense(null);
         setLocalCurrencyCode(sheetLocalCurrencyCode);
         setErrorMessage(indT("ExpenseSheets_NotFound", "Expense sheet was not found."));
         return;
@@ -129,8 +126,8 @@ export const useExpenseTicketLinkedSheetLine = ({
       setLine(null);
       setOriginalProjectId("");
       setDraftProjectId("");
-      setOriginalReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
-      setDraftReimbursableExpense(DEFAULT_LINE_REIMBURSABLE_EXPENSE);
+      setOriginalReimbursableExpense(null);
+      setDraftReimbursableExpense(null);
       setLocalCurrencyCode("");
       setErrorMessage(error instanceof Error ? error.message : indT("ExpenseSheets_LoadError", "Could not load expense sheet detail."));
     } finally {

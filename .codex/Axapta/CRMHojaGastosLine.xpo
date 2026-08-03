@@ -1037,7 +1037,7 @@ Formatversion: 1
       FIELD #ReimbursableAmount
         REAL
         PROPERTIES
-          Type                #Real 
+          Type                #Real
           Name                #ReimbursableAmount
           Label               #Importe reembolsable
           HelpText            #
@@ -1050,14 +1050,14 @@ Formatversion: 1
           ConfigurationKey    #
           Table               #CRMHojaGastosLine
           AliasFor            #
-          ExtendedDataType    
-            ARRAY 
+          ExtendedDataType
+            ARRAY
               #INDReimbursableAmount
               #
             ENDARRAY
           FieldUpdate         #Absolute
         ENDPROPERTIES
-        
+
     ENDFIELDS
     GROUPS
       GROUP #AutoReport
@@ -2429,21 +2429,19 @@ Formatversion: 1
         #}
       ENDSOURCE
       SOURCE #recalculateReimbursableAmount
-        #//MMS - Ajustes CRM - 2026.07.29
-        #// ReimbursableExpense es el valor canonico; VisaEmpresa es solo su espejo heredado inverso.
+        #//MMS - Ajustes CRM - 2026.08.03
+        #// Solo Yes incluye AmountMST. Cualquier otro valor excluye la linea; VisaEmpresa conserva el espejo heredado inverso.
         #void recalculateReimbursableAmount()
         #{
-        #    this.VisaEmpresa = this.ReimbursableExpense == INDReimbursableExpenseLines::Yes
-        #                       ? NoYes::No
-        #                       : NoYes::Yes;
-        #
-        #    if (this.ReimbursableExpense == INDReimbursableExpenseLines::No)
+        #    if (this.ReimbursableExpense == INDReimbursableExpenseLines::Yes)
         #    {
-        #        this.ReimbursableAmount = 0;
+        #        this.VisaEmpresa        = NoYes::No;
+        #        this.ReimbursableAmount = this.AmountMST;
         #        return;
         #    }
         #
-        #    this.ReimbursableAmount = this.AmountMST;
+        #    this.VisaEmpresa        = NoYes::Yes;
+        #    this.ReimbursableAmount = 0;
         #}
         #
       ENDSOURCE

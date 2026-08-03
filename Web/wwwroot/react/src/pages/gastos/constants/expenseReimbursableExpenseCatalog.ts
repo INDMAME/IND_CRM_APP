@@ -71,11 +71,16 @@ export const getExpenseLineReimbursableExpenseOptions = (): ExpenseSelectOption[
   return FALLBACK_LINE_REIMBURSABLE_OPTIONS;
 };
 
-// Keeps reimbursable header values constrained to numeric AX enum codes.
+// Keeps stored header values intact while rejecting unknown AX enum codes.
 export const normalizeExpenseReimbursableExpense = (
   value: unknown,
-  fallback: ExpenseSheetReimbursableExpense = DEFAULT_REIMBURSABLE_EXPENSE
-): ExpenseSheetReimbursableExpense => {
+  fallback: ExpenseSheetReimbursableExpense | null = null
+): ExpenseSheetReimbursableExpense | null => {
+  if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) {
+    return fallback;
+  }
+  if (typeof value !== "number" && typeof value !== "string") return fallback;
+
   const parsed = Number(value);
   if (
     parsed === REIMBURSABLE_EXPENSE_YES_VALUE ||
@@ -87,16 +92,62 @@ export const normalizeExpenseReimbursableExpense = (
   return fallback;
 };
 
+// Only Yes and No are editable; Both and legacy values are server-owned states.
+export const isEditableExpenseReimbursableExpense = (value: unknown): boolean => {
+  const normalized = normalizeExpenseReimbursableExpense(value);
+  return normalized === REIMBURSABLE_EXPENSE_YES_VALUE || normalized === REIMBURSABLE_EXPENSE_NO_VALUE;
+};
+
+// Defaults omitted new headers to Yes, but preserves an explicit Both so the API rejects it.
+export const resolveExpenseReimbursableExpenseForWrite = (
+  value: unknown,
+  isCreateMode: boolean
+): ExpenseSheetReimbursableExpense | undefined => {
+  const normalized = normalizeExpenseReimbursableExpense(value);
+  if (isCreateMode) {
+    if (normalized === REIMBURSABLE_EXPENSE_BOTH_VALUE) return normalized;
+    return isEditableExpenseReimbursableExpense(normalized) && normalized !== null
+      ? normalized
+      : DEFAULT_REIMBURSABLE_EXPENSE;
+  }
+  return isEditableExpenseReimbursableExpense(normalized) && normalized !== null
+    ? normalized
+    : undefined;
+};
+
 // Keeps reimbursable line values constrained to numeric AX enum codes.
 export const normalizeExpenseLineReimbursableExpense = (
   value: unknown,
-  fallback: ExpenseSheetLineReimbursableExpense = DEFAULT_LINE_REIMBURSABLE_EXPENSE
-): ExpenseSheetLineReimbursableExpense => {
+  fallback: ExpenseSheetLineReimbursableExpense | null = null
+): ExpenseSheetLineReimbursableExpense | null => {
+  if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) {
+    return fallback;
+  }
+  if (typeof value !== "number" && typeof value !== "string") return fallback;
+
   const parsed = Number(value);
   if (parsed === LINE_REIMBURSABLE_EXPENSE_YES_VALUE || parsed === LINE_REIMBURSABLE_EXPENSE_NO_VALUE) {
     return parsed as ExpenseSheetLineReimbursableExpense;
   }
   return fallback;
+};
+
+// Line edits require one concrete Yes/No value and preserve any legacy state otherwise.
+export const isEditableExpenseLineReimbursableExpense = (value: unknown): boolean => {
+  const normalized = normalizeExpenseLineReimbursableExpense(value);
+  return normalized === LINE_REIMBURSABLE_EXPENSE_YES_VALUE || normalized === LINE_REIMBURSABLE_EXPENSE_NO_VALUE;
+};
+
+// Defaults new lines to Yes and omits locked values from unrelated updates.
+export const resolveExpenseLineReimbursableExpenseForWrite = (
+  value: unknown,
+  isCreateMode: boolean
+): ExpenseSheetLineReimbursableExpense | undefined => {
+  const normalized = normalizeExpenseLineReimbursableExpense(value);
+  if (isCreateMode) return normalized ?? DEFAULT_LINE_REIMBURSABLE_EXPENSE;
+  return isEditableExpenseLineReimbursableExpense(normalized) && normalized !== null
+    ? normalized
+    : undefined;
 };
 
 // Resolves a display label for read-only header rendering.
@@ -109,6 +160,7 @@ export const getExpenseReimbursableExpenseLabel = (value: unknown): string => {
     parsed !== REIMBURSABLE_EXPENSE_BOTH_VALUE
   ) return "-";
   const normalized = normalizeExpenseReimbursableExpense(value);
+  if (normalized === null) return "-";
   const match = getExpenseReimbursableExpenseOptions().find((option) => Number(option.value) === normalized);
   return match?.text || String(normalized);
 };
@@ -119,6 +171,7 @@ export const getExpenseLineReimbursableExpenseLabel = (value: unknown): string =
   const parsed = Number(value);
   if (parsed !== LINE_REIMBURSABLE_EXPENSE_YES_VALUE && parsed !== LINE_REIMBURSABLE_EXPENSE_NO_VALUE) return "-";
   const normalized = normalizeExpenseLineReimbursableExpense(value);
+  if (normalized === null) return "-";
   const match = getExpenseLineReimbursableExpenseOptions().find((option) => Number(option.value) === normalized);
   return match?.text || String(normalized);
 };

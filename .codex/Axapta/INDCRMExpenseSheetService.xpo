@@ -733,10 +733,10 @@ Formatversion: 1
         #            if (reimbursableExpenseRaw == '0' || str2Int(reimbursableExpenseRaw) != 0)
         #            {
         #                reimbursableExpense = str2Int(reimbursableExpenseRaw);
-        #                if (INDCRMExpenseSheetService::isValidReimbursableExpense(reimbursableExpense))
+        #                if (INDCRMExpenseSheetService::isWritableReimbursableExpense(reimbursableExpense))
         #                    hasReimbursableExpense = true;
         #                else
-        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense invalido: %1.', reimbursableExpense), conNull()), conNull()];
+        #                    return [INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense de cabecera no admite escritura manual con valor %1. Use 0=Yes o 1=No; 2=Both se deriva de las lineas.', reimbursableExpense), conNull()), conNull()];
         #            }
         #        }
         #
@@ -3628,6 +3628,14 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #isWritableReimbursableExpense
+        #//MMS - Reserva Both para el calculo derivado y limita la escritura manual a Yes o No - 2026.08.03
+        #static server boolean isWritableReimbursableExpense(int _value)
+        #{
+        #    return _value == 0 || _value == 1;
+        #}
+        #
+      ENDSOURCE
       SOURCE #propagateExpenseSheetCurrencyDefaults
         #// Metodo: propagateExpenseSheetCurrencyDefaults
         #// Proposito: Sin operacion heredada. La divisa de cabecera siempre es local; no se deben sobrescribir las divisas de linea.
@@ -4663,8 +4671,8 @@ Formatversion: 1
         #        if (reimbursableExpenseRaw == '0' || str2Int(reimbursableExpenseRaw) != 0)
         #        {
         #            reimbursableExpense = str2Int(reimbursableExpenseRaw);
-        #            if (!INDCRMExpenseSheetService::isValidReimbursableExpense(reimbursableExpense))
-        #                return INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense invalido: %1.', reimbursableExpense), conNull());
+        #            if (!INDCRMExpenseSheetService::isWritableReimbursableExpense(reimbursableExpense))
+        #                return INDCRMUtilityService::buildHeader(false, strFmt('ReimbursableExpense de cabecera no admite escritura manual con valor %1. Use 0=Yes o 1=No; 2=Both se deriva de las lineas.', reimbursableExpense), conNull());
         #
         #            hasReimbursableExpense = true;
         #        }
@@ -4704,6 +4712,14 @@ Formatversion: 1
         #            {
         #                ttsabort;
         #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
+        #            }
+        #
+        #            //MMS - Impide sobrescribir desde API una cabecera derivada o legacy - 2026.08.03
+        #            if (hasReimbursableExpense &&
+        #                !INDCRMExpenseSheetService::isWritableReimbursableExpense(any2int(header.ReimbursableExpense)))
+        #            {
+        #                ttsabort;
+        #                return INDCRMUtilityService::buildHeader(false, 'ReimbursableExpense de cabecera es un estado derivado o legacy y no admite edicion manual.', conNull());
         #            }
         #
         #            oldExpenseSheetStatus = header.ExpenseSheetStatus;

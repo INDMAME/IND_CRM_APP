@@ -3,10 +3,10 @@ Formatversion: 1
 
 ***Element: JOB
 
-; Navision Axapta Job: INDRecalcularAmountMST_Tickets descargados en Miércoles 29/07/2026
+; Navision Axapta Job: INDRecalcularAmountMST_Tickets descargados en Lunes 03/08/2026
 ; --------------------------------------------------------------------------------
   JOBVERSION 1
-  
+
   SOURCE #INDRecalcularAmountMST_Tickets
     #static void INDRecalcularAmountMST_Tickets(Args _args)
     #{
@@ -92,7 +92,7 @@ Formatversion: 1
     #            }
     #            else
     #            {
-    #                // Foreign currency: do not infer or backfill ExchRate.
+    #                // Divisa extranjera: no se infiere ni se completa ExchRate.
     #                if (!ticketInfoUpdate.AmountMST && ticketInfoUpdate.ExchRate)
     #                {
     #                    newAmountMST = round(ticketInfoUpdate.TotalAmount * 100 / ticketInfoUpdate.ExchRate, 0.01);
@@ -112,7 +112,7 @@ Formatversion: 1
     #                continue;
     #            }
     #
-    #            // Preserve original currency amount data. Only AmountMST and same-currency ExchRate can be backfilled.
+    #            // Conserva los datos originales en divisa; solo completa AmountMST y ExchRate para la misma divisa.
     #            ticketInfoUpdate.TotalAmount  = originalTotalAmount;
     #            ticketInfoUpdate.CurrencyCode = originalCurrencyCode;
     #
@@ -122,6 +122,10 @@ Formatversion: 1
     #            }
     #
     #            ticketInfoUpdate.doUpdate();
+    #
+    #            //MMS - Ajustes CRM - 2026.08.03
+    #            // doUpdate evita la logica de update; sincroniza expresamente la linea vinculada y su importe reembolsable.
+    #            ticketInfoUpdate.syncHojaGastoLine();
     #
     #            updated++;
     #            ttscommit;
@@ -137,6 +141,8 @@ Formatversion: 1
     #    ;
     #
     #
+    #    //MMS - Ajustes CRM - 2026.08.03
+    #    // Conserva el conjunto multiempresa heredado para recalcular y sincronizar cada ticket en su compania.
     #    setCia.add("LAN");
     #    setCia.add("IHI");
     #    setCia.add("RSI");
@@ -149,7 +155,6 @@ Formatversion: 1
     #    setCia.add("CUM");
     #    setCia.add("IST");
     #    setCia.add("ITA");
-    #
     #    setCia.add("ISE");
     #
     #    si = new SetIterator(setCia);
@@ -166,6 +171,7 @@ Formatversion: 1
     #        si.next();
     #    }
     #}
+    #
   ENDSOURCE
 
 ***Element: END
