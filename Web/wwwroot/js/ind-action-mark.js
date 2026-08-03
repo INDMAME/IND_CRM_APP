@@ -1,7 +1,11 @@
 ﻿(function () {
   const colorClasses = ["text-emerald-600", "text-rose-600", "text-amber-500"];
   const shadowClass = "drop-shadow-[0_18px_24px_rgba(0,0,0,0.15)]";
+  const attentionTypes = new Set(["errorProcess", "warningProcess"]);
   let hideTimer = null;
+  let attentionFrame = null;
+  let attentionCommitFrame = null;
+  let attentionFallbackTimer = null;
 
   const buildActionMark = () => {
     if (document.getElementById("indActionMark")) return;
@@ -64,9 +68,73 @@
     resetIcons(nodes);
   };
 
+  // Cancels pending attention work so only the latest ActionMark can move focus.
+  const cancelScheduledAttention = () => {
+    if (attentionFrame !== null && typeof window.cancelAnimationFrame === "function") {
+      window.cancelAnimationFrame(attentionFrame);
+    }
+    if (attentionCommitFrame !== null && typeof window.cancelAnimationFrame === "function") {
+      window.cancelAnimationFrame(attentionCommitFrame);
+    }
+    if (attentionFallbackTimer !== null) {
+      window.clearTimeout(attentionFallbackTimer);
+    }
+    attentionFrame = null;
+    attentionCommitFrame = null;
+    attentionFallbackTimer = null;
+  };
+
+  // Focuses explicit feedback after React has committed it and reveals page feedback immediately.
+  const moveAttentionToFeedback = () => {
+    const candidates = Array.from(document.querySelectorAll("[data-ind-action-feedback]")).filter(
+      (element) =>
+        element instanceof HTMLElement &&
+        element.isConnected &&
+        !element.hidden &&
+        element.getAttribute("aria-hidden") !== "true"
+    );
+    const target =
+      candidates.find((element) => element.getAttribute("data-ind-action-feedback") === "modal") ||
+      candidates[0] ||
+      null;
+
+    if (target) {
+      try {
+        target.focus({ preventScroll: true });
+      } catch {
+        target.focus();
+      }
+      if (target.getAttribute("data-ind-action-feedback") === "modal") {
+        return;
+      }
+    }
+
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  };
+
+  // Waits two frames because callers can publish the feedback after flashing the mark.
+  const scheduleAttention = () => {
+    if (typeof window.requestAnimationFrame !== "function") {
+      attentionFallbackTimer = window.setTimeout(() => {
+        attentionFallbackTimer = null;
+        moveAttentionToFeedback();
+      }, 0);
+      return;
+    }
+
+    attentionFrame = window.requestAnimationFrame(() => {
+      attentionFrame = null;
+      attentionCommitFrame = window.requestAnimationFrame(() => {
+        attentionCommitFrame = null;
+        moveAttentionToFeedback();
+      });
+    });
+  };
+
   const flashActionMark = (payload) => {
     const type = payload && typeof payload.type === "string" ? payload.type : "";
     if (!type) return;
+    cancelScheduledAttention();
     const durationRaw = payload ? Number(payload.durationMs) : NaN;
     const durationMs = Number.isFinite(durationRaw) ? Math.max(0, durationRaw) : 1500;
     const nodes = getNodes();
@@ -114,6 +182,10 @@
     nodes.root.style.setProperty("display", "flex", "important");
     nodes.root.style.setProperty("opacity", "1", "important");
     nodes.root.style.setProperty("visibility", "visible", "important");
+
+    if (attentionTypes.has(type)) {
+      scheduleAttention();
+    }
 
     if (durationMs > 0) {
       hideTimer = setTimeout(() => {

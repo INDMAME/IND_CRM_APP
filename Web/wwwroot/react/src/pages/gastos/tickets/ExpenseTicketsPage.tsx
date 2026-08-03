@@ -1522,6 +1522,11 @@ const ExpenseTicketsPageContent = () => {
 
       {!isLinkMode && quickTicketErrorMessage ? (
         <div
+          data-ind-action-feedback="page"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          tabIndex={-1}
           className={
             hasPartialTicketFailure
               ? "glass-panel shadow-card space-y-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"

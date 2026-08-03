@@ -66,6 +66,7 @@ import {
   mapExpenseTicketDetailLine,
 } from "../Web/wwwroot/react/src/pages/gastos/tickets/detail/expenseTicketDetailTypes.ts";
 import type {
+  ExpenseSheetCreateResponseData,
   ExpenseSheetDetailDto,
   ExpenseSheetListItemDto,
   ExpenseSheetTicketDetailDto,
@@ -86,6 +87,11 @@ assert.equal(normalizeDescriptionText("  pRUEBA de PROYECTO  ", ""), "Prueba De 
 assert.equal(toNullableNumber(null), null);
 assert.equal(toNullableNumber(""), null);
 assert.equal(toNullableNumber(0), 0);
+const numericLineRecIdsResponse: ExpenseSheetCreateResponseData = {
+  HojaGastosId: "HG000001",
+  LineRecIds: [123456789],
+};
+assert.deepEqual(numericLineRecIdsResponse.LineRecIds, [123456789]);
 
 assert.equal(calculateExpenseLineAmountMSTForCurrency(210, 92.5, "USD", "USD"), 210);
 assert.equal(resolveExpenseLineExchangeRateForCurrency("USD", "USD", null), 100);
@@ -660,6 +666,10 @@ const ticketModelsSource = readFileSync(
   path.join(repositoryRoot, "App", "Models", "CRM", "ExpenseSheetTicketModels.cs"),
   "utf8"
 );
+const expenseSheetCreateResponseSource = readFileSync(
+  path.join(repositoryRoot, "App", "Models", "CRM", "ExpenseSheetCreateResponseData.cs"),
+  "utf8"
+);
 const gastosControllerSource = readFileSync(
   path.join(repositoryRoot, "Web", "Controllers", "Gastos", "GastosController.cs"),
   "utf8"
@@ -683,6 +693,8 @@ assert.ok(ticketProxyMapperStart >= 0 && ticketProxyMapperEnd > ticketProxyMappe
 const ticketProxyMapperSource = gastosControllerSource.slice(ticketProxyMapperStart, ticketProxyMapperEnd);
 assert.match(ticketModelsSource, /JsonPropertyName\("ReimbursableExpense"\)[\s\S]*int\? ReimbursableExpense/);
 assert.match(ticketModelsSource, /JsonPropertyName\("ReimbursableAmount"\)[\s\S]*decimal\? ReimbursableAmount/);
+assert.match(expenseSheetCreateResponseSource, /public\s+List<long>\s+LineRecIds\s*\{/);
+assert.doesNotMatch(expenseSheetCreateResponseSource, /public\s+List<string>\s+LineRecIds\s*\{/);
 assert.match(ticketProxyMapperSource, /ReimbursableExpense\s*=\s*line\.ReimbursableExpense/);
 assert.match(ticketProxyMapperSource, /ReimbursableAmount\s*=\s*line\.ReimbursableAmount/);
 assert.match(
