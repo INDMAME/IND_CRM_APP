@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMUsuarioTable unloaded at Viernes 24/07/2026
+; Navision Axapta Table : CRMUsuarioTable unloaded at Jueves 30/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -1367,6 +1367,63 @@ Formatversion: 1
         #    return this.DepartamentoId == "LAB" ? "N152" : "N00";
         #}
       ENDSOURCE
+      SOURCE #construirListaJefes
+        #//MMS - Ajustes CRM - 2026.07.30
+        #// Construye una lista unica de jefes directos o devuelve AUTOGESTIONADO.
+        #private str construirListaJefes(boolean _soloAprobadoresHojaGastos)
+        #{
+        #    CRMUsuarioSubordinadoTable  relacionJefe;
+        #    CRMUsuarioTable             jefe;
+        #    INDPersonaTable             persona;
+        #    Set                         jefesAgregados;
+        #    str                         listaJefes;
+        #    str                         nombreJefe;
+        #    ;
+        #
+        #    persona = INDPersonaTable::findByCRM(this.RecId);
+        #
+        #    // Evita consultar la jerarquia cuando la persona permite autogestion.
+        #    if (persona.RecId && persona.AllowSelfManagement == NoYes::Yes && _soloAprobadoresHojaGastos)
+        #    {
+        #        return "AUTOGESTIONADO";
+        #    }
+        #
+        #    jefesAgregados = new Set(Types::String);
+        #
+        #    while select relacionJefe
+        #        order by UserIdJefe
+        #        where relacionJefe.UserIdSubordinado == this.UserId
+        #    {
+        #        if (!relacionJefe.UserIdJefe
+        #            || (_soloAprobadoresHojaGastos
+        #                && relacionJefe.ExcluirAprobacionHojaGastos != NoYes::No)
+        #            || jefesAgregados.in(relacionJefe.UserIdJefe))
+        #        {
+        #            continue;
+        #        }
+        #
+        #        jefe        = CRMUsuarioTable::Find(relacionJefe.UserIdJefe);
+        #        nombreJefe  = jefe.Name;
+        #
+        #        // Conserva visible el identificador si falta el maestro del jefe.
+        #        if (!nombreJefe)
+        #        {
+        #            nombreJefe = relacionJefe.UserIdJefe;
+        #        }
+        #
+        #        if (listaJefes)
+        #        {
+        #            listaJefes += " - ";
+        #        }
+        #
+        #        listaJefes += strFmt("%1(%2)", nombreJefe, relacionJefe.UserIdJefe);
+        #        jefesAgregados.add(relacionJefe.UserIdJefe);
+        #    }
+        #
+        #    return listaJefes;
+        #}
+        #
+      ENDSOURCE
       SOURCE #CreaLineasDisciplina
         #void CreaLineasDisciplina(FromDate _fromDate, ToDate _toDate)
         #{
@@ -1659,6 +1716,22 @@ Formatversion: 1
         #    super();
         #
         #    INDPersonaTable::updateRefRecIds(INDPersonaTable::Find(this.UserId).RecId,0,0,this.RecId,this);
+        #}
+      ENDSOURCE
+      SOURCE #JefesAprobadoresHojaGastos
+        #//MMS - Ajustes CRM - 2026.07.30
+        #// Muestra solo los jefes habilitados para aprobar hojas de gastos.
+        #display str JefesAprobadoresHojaGastos()
+        #{
+        #    return this.construirListaJefes(true);
+        #}
+      ENDSOURCE
+      SOURCE #JefesAsignados
+        #//MMS - Ajustes CRM - 2026.07.30
+        #// Muestra todos los jefes directos configurados para el usuario.
+        #display str JefesAsignados()
+        #{
+        #    return this.construirListaJefes(false);
         #}
       ENDSOURCE
       SOURCE #KmRealizados

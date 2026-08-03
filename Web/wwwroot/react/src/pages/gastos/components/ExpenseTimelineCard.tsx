@@ -1,6 +1,6 @@
 import React from "react";
 import type { ExpenseDateParts } from "../utils/expenseUiUtils.ts";
-import { normalizeCardTitleText, safeText } from "../utils/expenseUiUtils.ts";
+import { safeText } from "../utils/expenseUiUtils.ts";
 
 type ExpenseTimelineCardInteractionProps = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -21,6 +21,7 @@ type ExpenseTimelineCardProps = {
   dateParts: ExpenseDateParts;
   title: string;
   amountText: string;
+  amountContent?: React.ReactNode;
   onOpen: () => void;
   titleClassName?: string;
   amountClassName?: string;
@@ -40,6 +41,7 @@ const ExpenseTimelineCard = ({
   dateParts,
   title,
   amountText,
+  amountContent,
   onOpen,
   titleClassName = "timeline-name",
   amountClassName = "expense-sheet-card__amount text-right tabular-nums",
@@ -53,7 +55,7 @@ const ExpenseTimelineCard = ({
   datePanelContent,
   interactionProps,
 }: ExpenseTimelineCardProps) => {
-  const safeTitle = normalizeCardTitleText(title, "-");
+  const safeTitle = safeText(title) || "-";
   const safeAmount = amountText || "-";
   const safeSubtitle = safeText(subtitle);
   const {
@@ -101,7 +103,7 @@ const ExpenseTimelineCard = ({
           </p>
         ) : null}
         <span className={amountClassName} data-fulltext={safeAmount}>
-          {safeAmount}
+          {amountContent ?? safeAmount}
         </span>
       </div>
     </button>

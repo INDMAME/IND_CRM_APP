@@ -40,6 +40,10 @@ export const setHistoryFilterForDate = (isoDate: string, force = false): void =>
 };
 
 let actionMarkHideTimer: number | null = null;
+let actionMarkAttentionFrame: number | null = null;
+let actionMarkAttentionCommitFrame: number | null = null;
+let actionMarkAttentionFallbackTimer: number | null = null;
+const actionMarkAttentionTypes = new Set(["errorProcess", "warningProcess"]);
 
 const getActionMarkNodes = () => ({
   root: document.getElementById("indActionMark"),
@@ -65,7 +69,67 @@ const hideActionMark = (nodes: ReturnType<typeof getActionMarkNodes>) => {
   resetActionMark(nodes);
 };
 
+// Cancels pending attention work so only the latest ActionMark can move focus.
+const cancelScheduledActionMarkAttention = () => {
+  if (actionMarkAttentionFrame !== null && typeof window.cancelAnimationFrame === "function") {
+    window.cancelAnimationFrame(actionMarkAttentionFrame);
+  }
+  if (actionMarkAttentionCommitFrame !== null && typeof window.cancelAnimationFrame === "function") {
+    window.cancelAnimationFrame(actionMarkAttentionCommitFrame);
+  }
+  if (actionMarkAttentionFallbackTimer !== null) {
+    window.clearTimeout(actionMarkAttentionFallbackTimer);
+  }
+  actionMarkAttentionFrame = null;
+  actionMarkAttentionCommitFrame = null;
+  actionMarkAttentionFallbackTimer = null;
+};
+
+// Focuses explicit feedback after React has committed it and reveals page feedback immediately.
+const moveActionMarkAttentionToFeedback = () => {
+  const candidates = Array.from(document.querySelectorAll<HTMLElement>("[data-ind-action-feedback]")).filter(
+    (element) => element.isConnected && !element.hidden && element.getAttribute("aria-hidden") !== "true"
+  );
+  const target =
+    candidates.find((element) => element.getAttribute("data-ind-action-feedback") === "modal") ||
+    candidates[0] ||
+    null;
+
+  if (target) {
+    try {
+      target.focus({ preventScroll: true });
+    } catch {
+      target.focus();
+    }
+    if (target.getAttribute("data-ind-action-feedback") === "modal") {
+      return;
+    }
+  }
+
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+};
+
+// Waits two frames because callers can publish the feedback after flashing the mark.
+const scheduleActionMarkAttention = () => {
+  if (typeof window.requestAnimationFrame !== "function") {
+    actionMarkAttentionFallbackTimer = window.setTimeout(() => {
+      actionMarkAttentionFallbackTimer = null;
+      moveActionMarkAttentionToFeedback();
+    }, 0);
+    return;
+  }
+
+  actionMarkAttentionFrame = window.requestAnimationFrame(() => {
+    actionMarkAttentionFrame = null;
+    actionMarkAttentionCommitFrame = window.requestAnimationFrame(() => {
+      actionMarkAttentionCommitFrame = null;
+      moveActionMarkAttentionToFeedback();
+    });
+  });
+};
+
 const flashActionMarkLocal = (type: string, durationMs: number) => {
+  cancelScheduledActionMarkAttention();
   const nodes = getActionMarkNodes();
   if (!nodes.root || !nodes.wrap || !nodes.check || !nodes.warn || !nodes.error) {
     return;
@@ -112,6 +176,10 @@ const flashActionMarkLocal = (type: string, durationMs: number) => {
   nodes.root.style.setProperty("display", "flex", "important");
   nodes.root.style.setProperty("opacity", "1", "important");
   nodes.root.style.setProperty("visibility", "visible", "important");
+
+  if (actionMarkAttentionTypes.has(type)) {
+    scheduleActionMarkAttention();
+  }
 
   if (durationMs > 0) {
     actionMarkHideTimer = window.setTimeout(() => {

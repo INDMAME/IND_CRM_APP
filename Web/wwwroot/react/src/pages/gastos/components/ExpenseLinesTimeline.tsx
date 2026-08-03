@@ -2,7 +2,7 @@ import React from "react";
 import CompactPagination from "../../../components/commons/CompactPagination.tsx";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
-import { formatExpenseDateParts, safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDateParts, normalizeCardTitleText, safeText } from "../utils/expenseUiUtils.ts";
 import ExpenseSectionDivider from "./ExpenseSectionDivider.tsx";
 import ExpenseTimelineCard from "./ExpenseTimelineCard.tsx";
 
@@ -15,7 +15,7 @@ type PaginationLabels = {
 
 type ExpenseLinesTimelineProps = {
   visibleLines: ExpenseSheetLine[];
-  reimbursementCurrencyCode: string;
+  companyCurrencyCode: string;
   totalLinePages: number;
   linePage: number;
   linesLabel: string;
@@ -29,7 +29,7 @@ type ExpenseLinesTimelineProps = {
 // Dumb timeline for expense sheet lines with standard card and pagination layout.
 const ExpenseLinesTimeline = ({
   visibleLines,
-  reimbursementCurrencyCode,
+  companyCurrencyCode,
   totalLinePages,
   linePage,
   linesLabel,
@@ -49,11 +49,8 @@ const ExpenseLinesTimeline = ({
         <div ref={containerRef} className="timeline-box">
           {visibleLines.map((line) => {
             const lineId = safeText(line.lineRecId);
-            const description = safeText(line.description);
-            const amountText = formatAmountWithCurrency(
-              line.visibleReimbursableTotal ?? line.amount ?? null,
-              reimbursementCurrencyCode
-            );
+            const description = normalizeCardTitleText(line.description, "");
+            const grossAmountText = formatAmountWithCurrency(line.amountMST ?? null, companyCurrencyCode);
             const linkedTicketFileId = safeText(line.fileId);
             const projectId = safeText(line.projId);
             const dateParts = formatExpenseDateParts(safeText(line.transDate), document?.documentElement?.lang || "es-ES");
@@ -76,14 +73,13 @@ const ExpenseLinesTimeline = ({
             ) : null;
 
             return (
-              <div key={lineId || `${safeText(line.transDate)}-${description}-${amountText}-${projectId}`} className="timeline-item">
+              <div key={lineId || `${safeText(line.transDate)}-${description}-${String(line.amountMST ?? "")}-${projectId}`} className="timeline-item">
                 <ExpenseTimelineCard
                   dateParts={dateParts}
                   title={description || lineId || "-"}
-                  amountText={amountText}
+                  amountText={grossAmountText}
                   onOpen={() => onOpenLine(lineId)}
                   titleClassName="timeline-name expense-line-card__title"
-                  subtitleClassName="expense-sheet-card__subtitle expense-line-card__meta"
                   statusIcon={ticketStatusIcon}
                   statusIconClassName="expense-line-card__ticket-icon"
                   statusLabel={linkedTicketFileId || undefined}

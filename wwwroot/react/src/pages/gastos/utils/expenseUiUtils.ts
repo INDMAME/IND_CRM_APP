@@ -56,23 +56,21 @@ export const sanitizeAssistantText = (value: unknown): string => {
     .trim();
 };
 
-// Normalizes card title text only when it comes in full upper or full lower case.
-export const normalizeCardTitleText = (value: unknown, fallback = "-"): string => {
+const BUSINESS_DESCRIPTION_WORD_PATTERN = /\p{L}[\p{L}\p{M}]*/gu;
+
+// Formats business descriptions with one uppercase initial per word.
+export const normalizeDescriptionText = (value: unknown, fallback = "-"): string => {
   const source = safeText(value);
   if (!source) return fallback;
 
-  const hasLetters = /[A-Za-zÀ-ÖØ-öø-ÿ]/.test(source);
-  if (!hasLetters) return source;
-
-  const isAllUpper = source === source.toUpperCase() && source !== source.toLowerCase();
-  const isAllLower = source === source.toLowerCase() && source !== source.toUpperCase();
-  if (!isAllUpper && !isAllLower) {
-    return source;
-  }
-
-  const lower = source.toLowerCase();
-  return `${lower.charAt(0).toUpperCase()}${lower.slice(1)}`;
+  return source.replace(BUSINESS_DESCRIPTION_WORD_PATTERN, (word) => {
+    const lowerWord = word.toLocaleLowerCase();
+    return `${lowerWord.charAt(0).toLocaleUpperCase()}${lowerWord.slice(1)}`;
+  });
 };
+
+// Keeps the card-specific name available for existing list and timeline consumers.
+export const normalizeCardTitleText = normalizeDescriptionText;
 
 // Returns true only when voucher has a meaningful assigned value.
 export const hasAssignedVoucher = (value: unknown): boolean => {

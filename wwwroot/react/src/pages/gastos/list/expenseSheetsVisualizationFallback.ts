@@ -5,13 +5,14 @@ import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import { formatAmountWithCurrency } from "../expenseFormatters.ts";
 import type { ExpenseSheetListItemDto, ExpenseSheetListResponseEnvelope } from "../expenseTypes.ts";
 import { safeText } from "../utils/expenseUiUtils.ts";
-import { getVisibleReimbursableTotal } from "../utils/expenseVisibleTotals.ts";
+import { resolveExpenseSheetTotals } from "../utils/expenseSheetTotals.ts";
 
 type ExpenseSheetsVisualizationFallbackArgs = {
   question: string;
   requestedVisualizationType: VisualizationType | null | undefined;
   sourceJson: ExpenseSheetListResponseEnvelope | null | undefined;
   uiLanguage?: string | null;
+  companyCurrencyCode?: string | null;
   parsedMessages?: ChatMessage[] | null;
 };
 
@@ -83,6 +84,10 @@ const toIntentText = (value: unknown): string => {
 };
 
 const toFiniteNumber = (value: unknown): number | null => {
+  if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) {
+    return null;
+  }
+
   const numericValue = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numericValue) ? numericValue : null;
 };
@@ -497,18 +502,20 @@ const buildGroupedCountRows = (
     .map(([label, value]) => ({ label, value }));
 };
 
-const buildCurrencyTotalsRows = (items: ExpenseSheetListItemDto[]): ChartDatum[] => {
+const buildCurrencyTotalsRows = (
+  items: ExpenseSheetListItemDto[],
+  companyCurrencyCode?: string | null
+): ChartDatum[] => {
   const totalsByCurrency = new Map<string, number>();
+  const normalizedCompanyCurrencyCode = safeText(companyCurrencyCode).toUpperCase();
 
   items.forEach((item) => {
-    const currencyCode = toFiniteNumber(item?.TotalAmountMST) !== null
-      ? "MST"
-      : safeText(item?.CurrencyCode).toUpperCase();
-    const totalAmount = getVisibleReimbursableTotal({
+    const { reimbursable: totalAmount } = resolveExpenseSheetTotals({
+      TotalGrossAmountMST: toFiniteNumber(item?.TotalGrossAmountMST),
+      TotalReimbursableAmount: toFiniteNumber(item?.TotalReimbursableAmount),
       TotalAmountMST: toFiniteNumber(item?.TotalAmountMST),
-      TotalAmountCurrency: toFiniteNumber(item?.TotalAmountCurrency),
-      TotalAmount: toFiniteNumber(item?.TotalAmount),
     });
+    const currencyCode = totalAmount !== null ? normalizedCompanyCurrencyCode : safeText(item?.CurrencyCode).toUpperCase();
     if (!currencyCode || totalAmount === null) {
       return;
     }
@@ -545,13 +552,18 @@ const buildExpenseSheetChartLabel = (sheetId: string, currencyCode: string): str
   return sheetId || currencyCode || "-";
 };
 
-const buildExpenseSheetTotalsRows = (items: ExpenseSheetListItemDto[]): ExpenseSheetTotalsRow[] => {
+const buildExpenseSheetTotalsRows = (
+  items: ExpenseSheetListItemDto[],
+  companyCurrencyCode?: string | null
+): ExpenseSheetTotalsRow[] => {
+  const normalizedCompanyCurrencyCode = safeText(companyCurrencyCode).toUpperCase();
+
   return items
     .map((item) => {
-      const value = getVisibleReimbursableTotal({
+      const { reimbursable: value } = resolveExpenseSheetTotals({
+        TotalGrossAmountMST: toFiniteNumber(item?.TotalGrossAmountMST),
+        TotalReimbursableAmount: toFiniteNumber(item?.TotalReimbursableAmount),
         TotalAmountMST: toFiniteNumber(item?.TotalAmountMST),
-        TotalAmountCurrency: toFiniteNumber(item?.TotalAmountCurrency),
-        TotalAmount: toFiniteNumber(item?.TotalAmount),
       });
       if (value === null) {
         return null;
@@ -559,9 +571,7 @@ const buildExpenseSheetTotalsRows = (items: ExpenseSheetListItemDto[]): ExpenseS
 
       const sheetId = safeText(item?.HojaGastosId);
       const description = safeText(item?.Description);
-      const currencyCode = toFiniteNumber(item?.TotalAmountMST) !== null
-        ? "MST"
-        : safeText(item?.CurrencyCode).toUpperCase();
+      const currencyCode = normalizedCompanyCurrencyCode;
 
       return {
         label: buildExpenseSheetChartLabel(sheetId, currencyCode),
@@ -1666,6 +1676,7 @@ export const buildExpenseSheetsVisualizationFallbackMessages = ({
   requestedVisualizationType,
   sourceJson,
   uiLanguage,
+  companyCurrencyCode,
   parsedMessages,
 }: ExpenseSheetsVisualizationFallbackArgs): ChatMessage[] | null => {
   if (!requestedVisualizationType || !sourceJson || !Array.isArray(sourceJson.Items) || sourceJson.Items.length === 0) {
@@ -1684,7 +1695,7 @@ export const buildExpenseSheetsVisualizationFallbackMessages = ({
     });
 
   if (wantsTotalsByCurrency(question)) {
-    const currencyRows = buildCurrencyTotalsRows(sourceJson.Items);
+    const currencyRows = buildCurrencyTotalsRows(sourceJson.Items, companyCurrencyCode);
     if (currencyRows.length === 0) {
       return null;
     }
@@ -1702,7 +1713,7 @@ export const buildExpenseSheetsVisualizationFallbackMessages = ({
   }
 
   if (wantsExpenseSheetBreakdown(question) && (!parsedMessages || shouldReplaceWeakVisualization || !hasRequestedVisualizationMessage(parsedMessages, requestedVisualizationType))) {
-    const expenseSheetRows = buildExpenseSheetTotalsRows(sourceJson.Items);
+    const expenseSheetRows = buildExpenseSheetTotalsRows(sourceJson.Items, companyCurrencyCode);
     if (expenseSheetRows.length === 0) {
       return null;
     }

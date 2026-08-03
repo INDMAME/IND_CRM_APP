@@ -383,7 +383,7 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
-                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
+                ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense),
                 IncludeSubordinates = req.IncludeSubordinates,
                 Page = page,
                 PageSize = pageSize
@@ -481,7 +481,7 @@ namespace IND_CRM_APP.Controllers
                         ProjId = NormalizeOptionalText(req.ListRequest.ProjId),
                         CurrencyCode = NormalizeOptionalText(req.ListRequest.CurrencyCode)?.ToUpperInvariant(),
                         ExpenseSheetStatus = req.ListRequest.ExpenseSheetStatus is >= 0 ? req.ListRequest.ExpenseSheetStatus : null,
-                        ReimbursableExpense = NormalizeReimbursableExpense(req.ListRequest.ReimbursableExpense),
+                        ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ListRequest.ReimbursableExpense),
                         IncludeSubordinates = req.ListRequest.IncludeSubordinates,
                         Page = req.ListRequest.Page < 1 ? 1 : req.ListRequest.Page,
                         PageSize = req.ListRequest.PageSize <= 0 ? 50 : req.ListRequest.PageSize
@@ -1232,7 +1232,16 @@ namespace IND_CRM_APP.Controllers
                 ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
                 : (decimal?)null;
             var normalizedDescription = (req.Description ?? string.Empty).Trim();
-            var normalizedLines = (req.Lines ?? new List<ExpenseSheetLineRequest>())
+            if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var sourceLines = req.Lines ?? new List<ExpenseSheetLineRequest>();
+            var hasInvalidLineReimbursableExpense = sourceLines.Any(line =>
+                line != null && !IsValidExpenseSheetLineReimbursableExpense(line.ReimbursableExpense));
+            var normalizedLines = sourceLines
                 .Where(line => line != null)
                 .Select(line => new ExpenseSheetLineRequest
                 {
@@ -1245,7 +1254,7 @@ namespace IND_CRM_APP.Controllers
                     Qty = line.Qty,
                     Price = line.Price,
                     ProjId = NormalizeOptionalText(line.ProjId),
-                    ReimbursableExpense = NormalizeReimbursableExpense(line.ReimbursableExpense),
+                    ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(line.ReimbursableExpense),
                     CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
                     AmountMST = line.AmountMST,
                     ExchRate = line.ExchRate > 0 ? line.ExchRate : null,
@@ -1270,7 +1279,7 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjId),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                 ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
-                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
+                ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense),
                 Lines = normalizedLines
             };
 
@@ -1279,7 +1288,7 @@ namespace IND_CRM_APP.Controllers
             {
                 request.Lines = new List<ExpenseSheetLineRequest>();
             }
-            else if (hasInvalidLines)
+            else if (hasInvalidLines || hasInvalidLineReimbursableExpense)
             {
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
@@ -1396,7 +1405,9 @@ namespace IND_CRM_APP.Controllers
                     "SESSION_EXPIRED");
 
             var safeSheetId = NormalizeOptionalText(hojaGastosId);
-            if (string.IsNullOrWhiteSpace(safeSheetId) || req == null)
+            if (string.IsNullOrWhiteSpace(safeSheetId) ||
+                req == null ||
+                !IsValidExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -1426,7 +1437,7 @@ namespace IND_CRM_APP.Controllers
                 ExpenseSheetStatus = normalizedExpenseSheetStatus,
                 ExchangeRateMode = normalizedExchangeRateMode,
                 EstadoComentarios = normalizedEstadoComentarios,
-                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense)
+                ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense)
             };
 
             var actingUser = await ResolveExpenseActingUserForCommandAsync(token, nameof(ApiExpenseSheetUpdate));
@@ -1515,6 +1526,83 @@ namespace IND_CRM_APP.Controllers
             }
         }
 
+        // Proxies reimbursement propagation while preserving the existing expense sheet mutation policy.
+        [HttpPost]
+        public async Task<IActionResult> ApiExpenseSheetReimbursableExpensePropagate(string hojaGastosId)
+        {
+            var token = GetToken();
+            if (string.IsNullOrWhiteSpace(token))
+                return CreateApiCommandError(
+                    StatusCodes.Status401Unauthorized,
+                    _sr["Api_SessionExpired"].Value,
+                    "SESSION_EXPIRED");
+
+            var safeSheetId = NormalizeOptionalText(hojaGastosId);
+            if (string.IsNullOrWhiteSpace(safeSheetId))
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            var actingUser = await ResolveExpenseActingUserForCommandAsync(
+                token,
+                nameof(ApiExpenseSheetReimbursableExpensePropagate));
+            if (actingUser.Error != null)
+                return actingUser.Error;
+            var requestAxUserId = actingUser.AxUserId;
+
+            var mutationGuard = await ValidateExpenseSheetMutationAsync(
+                token,
+                safeSheetId,
+                requestAxUserId,
+                nameof(ApiExpenseSheetReimbursableExpensePropagate),
+                ExpenseSheetMutationType.LineMutation);
+            if (!mutationGuard.Allowed)
+                return CreateApiCommandError(mutationGuard.StatusCode, mutationGuard.Message, mutationGuard.ErrorCode);
+
+            if (mutationGuard.Snapshot?.ReimbursableExpense == 2)
+                return CreateApiCommandError(
+                    StatusCodes.Status400BadRequest,
+                    _sr["Api_RequestFailed"].Value,
+                    "INVALID_REQUEST");
+
+            try
+            {
+                var response = await _apiClient.PropagateExpenseSheetReimbursableExpenseAsync(
+                    token,
+                    safeSheetId,
+                    requestAxUserId);
+                var responseErrors = response.Errors?.Cast<object>().ToArray() ?? Array.Empty<object>();
+
+                return CreateApiResponse(
+                    new
+                    {
+                        Success = response.Success,
+                        Message = response.Message ?? string.Empty,
+                        ErrorCode = response.ErrorCode,
+                        Data = response.Data,
+                        Errors = responseErrors,
+                        TraceId = response.TraceId
+                    });
+            }
+            catch (ApiException ex)
+            {
+                _logger.LogError(ex, "Upstream API error in ApiExpenseSheetReimbursableExpensePropagate");
+                return CreateApiCommandError(
+                    StatusCodes.Status502BadGateway,
+                    _sr["Api_RequestFailed"].Value,
+                    "UPSTREAM_ERROR");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unhandled error in ApiExpenseSheetReimbursableExpensePropagate");
+                return CreateApiCommandError(
+                    StatusCodes.Status500InternalServerError,
+                    _sr["Api_RequestFailed"].Value,
+                    "UNHANDLED_ERROR");
+            }
+        }
+
         // API route used by React clients for /api/crm/expensesheets/{hojaGastosId}/lines/{lineRecId}.
         [HttpPut]
         public async Task<IActionResult> ApiExpenseSheetLineUpdate(
@@ -1538,7 +1626,11 @@ namespace IND_CRM_APP.Controllers
                     "INVALID_REQUEST");
 
             var normalizedDate = NormalizeLineTransDate(req.TransDate);
-            if (string.IsNullOrWhiteSpace(normalizedDate) || req.TypeValue <= 0 || req.Qty <= 0 || req.Price <= 0)
+            if (string.IsNullOrWhiteSpace(normalizedDate) ||
+                req.TypeValue <= 0 ||
+                req.Qty <= 0 ||
+                req.Price <= 0 ||
+                !IsValidExpenseSheetLineReimbursableExpense(req.ReimbursableExpense))
                 return CreateApiCommandError(
                     StatusCodes.Status400BadRequest,
                     _sr["Api_RequestFailed"].Value,
@@ -1555,7 +1647,7 @@ namespace IND_CRM_APP.Controllers
                 Qty = req.Qty,
                 Price = req.Price,
                 ProjId = NormalizeOptionalText(req.ProjId),
-                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
+                ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(req.ReimbursableExpense),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                 AmountMST = req.AmountMST,
                 ExchRate = req.ExchRate > 0 ? req.ExchRate : null,
@@ -3403,7 +3495,13 @@ namespace IND_CRM_APP.Controllers
                     ? NormalizeExpenseSheetExchangeRateForWrite(normalizedCurrency, req.ExchRate)
                     : (decimal?)null;
                 var normalizedDescription = (req.Description ?? string.Empty).Trim();
-                var normalizedLines = (req.Lines ?? new List<ExpenseSheetLineRequest>())
+                if (normalizedMode != 2 && !IsValidExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense))
+                    return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
+
+                var sourceLines = req.Lines ?? new List<ExpenseSheetLineRequest>();
+                var hasInvalidLineReimbursableExpense = sourceLines.Any(line =>
+                    line != null && !IsValidExpenseSheetLineReimbursableExpense(line.ReimbursableExpense));
+                var normalizedLines = sourceLines
                     .Where(line => line != null)
                     .Select(line => new ExpenseSheetLineRequest
                     {
@@ -3416,7 +3514,7 @@ namespace IND_CRM_APP.Controllers
                         Qty = line.Qty,
                         Price = line.Price,
                         ProjId = NormalizeOptionalText(line.ProjId),
-                        ReimbursableExpense = NormalizeReimbursableExpense(line.ReimbursableExpense),
+                        ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(line.ReimbursableExpense),
                         CurrencyCode = NormalizeOptionalText(line.CurrencyCode)?.ToUpperInvariant(),
                         AmountMST = line.AmountMST,
                         ExchRate = line.ExchRate > 0 ? line.ExchRate : null,
@@ -3441,7 +3539,7 @@ namespace IND_CRM_APP.Controllers
                     ProjId = NormalizeOptionalText(req.ProjId),
                     ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
                     ExchangeRateMode = req.ExchangeRateMode is >= 0 ? req.ExchangeRateMode : null,
-                    ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
+                    ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense),
                     Lines = normalizedLines
                 };
 
@@ -3450,7 +3548,7 @@ namespace IND_CRM_APP.Controllers
                 {
                     request.Lines = new List<ExpenseSheetLineRequest>();
                 }
-                else if (hasInvalidLines)
+                else if (hasInvalidLines || hasInvalidLineReimbursableExpense)
                 {
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
                 }
@@ -3544,7 +3642,9 @@ namespace IND_CRM_APP.Controllers
                 if (string.IsNullOrWhiteSpace(token))
                     return Unauthorized(new { success = false, message = _sr["Api_SessionExpired"].Value });
 
-                if (string.IsNullOrWhiteSpace(hojaGastosId) || req == null)
+                if (string.IsNullOrWhiteSpace(hojaGastosId) ||
+                    req == null ||
+                    !IsValidExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense))
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var normalizedCurrency = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant();
@@ -3571,7 +3671,7 @@ namespace IND_CRM_APP.Controllers
                     ExpenseSheetStatus = normalizedExpenseSheetStatus,
                     ExchangeRateMode = normalizedExchangeRateMode,
                     EstadoComentarios = normalizedEstadoComentarios,
-                    ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense)
+                    ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense)
                 };
 
                 var actingUser = await ResolveExpenseActingUserForJsonAsync(token, nameof(UpdateExpenseSheetHeader));
@@ -3653,7 +3753,11 @@ namespace IND_CRM_APP.Controllers
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var normalizedDate = NormalizeLineTransDate(req.TransDate);
-                if (string.IsNullOrWhiteSpace(normalizedDate) || req.TypeValue <= 0 || req.Qty <= 0 || req.Price <= 0)
+                if (string.IsNullOrWhiteSpace(normalizedDate) ||
+                    req.TypeValue <= 0 ||
+                    req.Qty <= 0 ||
+                    req.Price <= 0 ||
+                    !IsValidExpenseSheetLineReimbursableExpense(req.ReimbursableExpense))
                     return BadRequest(new { success = false, message = _sr["Api_RequestFailed"].Value });
 
                 var request = new ExpenseSheetLineRequest
@@ -3667,7 +3771,7 @@ namespace IND_CRM_APP.Controllers
                     Qty = req.Qty,
                     Price = req.Price,
                     ProjId = NormalizeOptionalText(req.ProjId),
-                    ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
+                    ReimbursableExpense = NormalizeExpenseSheetLineReimbursableExpense(req.ReimbursableExpense),
                     CurrencyCode = NormalizeOptionalText(req.CurrencyCode)?.ToUpperInvariant(),
                     AmountMST = req.AmountMST,
                     ExchRate = req.ExchRate > 0 ? req.ExchRate : null,
@@ -4574,7 +4678,7 @@ namespace IND_CRM_APP.Controllers
                 ProjId = NormalizeOptionalText(req.ProjectId),
                 CurrencyCode = NormalizeOptionalText(req.CurrencyCode),
                 ExpenseSheetStatus = req.ExpenseSheetStatus is >= 0 ? req.ExpenseSheetStatus : null,
-                ReimbursableExpense = NormalizeReimbursableExpense(req.ReimbursableExpense),
+                ReimbursableExpense = NormalizeExpenseSheetHeaderReimbursableExpense(req.ReimbursableExpense),
                 IncludeSubordinates = req.IncludeSubordinates,
                 Page = page,
                 PageSize = pageSize
@@ -4604,10 +4708,28 @@ namespace IND_CRM_APP.Controllers
             return IsValidTicketGastoType(gastoType) ? gastoType : null;
         }
 
-        // Normalizes AX INDReimbursableExpense enum values before proxying upstream.
-        private static int? NormalizeReimbursableExpense(int? reimbursableExpense)
+        // Keeps only valid AX reimbursement values for expense sheet headers and list filters.
+        private static int? NormalizeExpenseSheetHeaderReimbursableExpense(int? reimbursableExpense)
         {
-            return reimbursableExpense is >= 0 ? reimbursableExpense : null;
+            return reimbursableExpense is >= 0 and <= 2 ? reimbursableExpense : null;
+        }
+
+        // Accepts optional header values while rejecting numeric codes outside No, Yes and Both.
+        private static bool IsValidExpenseSheetHeaderReimbursableExpense(int? reimbursableExpense)
+        {
+            return !reimbursableExpense.HasValue || reimbursableExpense is >= 0 and <= 2;
+        }
+
+        // Keeps Both out of expense sheet line payloads while preserving optional null values.
+        private static int? NormalizeExpenseSheetLineReimbursableExpense(int? reimbursableExpense)
+        {
+            return reimbursableExpense is >= 0 and <= 1 ? reimbursableExpense : null;
+        }
+
+        // Accepts optional line values but rejects the header-only Both enum value.
+        private static bool IsValidExpenseSheetLineReimbursableExpense(int? reimbursableExpense)
+        {
+            return !reimbursableExpense.HasValue || reimbursableExpense is >= 0 and <= 1;
         }
 
         // Validates an optional gastoType field read from a raw JSON payload.
@@ -5495,6 +5617,26 @@ namespace IND_CRM_APP.Controllers
                 "totalamountmst");
         }
 
+        // Reads only the authoritative gross company-currency total returned by the expense sheet API.
+        private static decimal? ResolveExpenseSheetTotalGrossAmountMST(ExpenseSheetDetailDto sheet)
+        {
+            return ReadTypedOrExtraDecimal(
+                sheet.TotalGrossAmountMST,
+                sheet.Extra,
+                "TotalGrossAmountMST",
+                "totalGrossAmountMST");
+        }
+
+        // Reads only the authoritative employee reimbursement total returned by the expense sheet API.
+        private static decimal? ResolveExpenseSheetTotalReimbursableAmount(ExpenseSheetDetailDto sheet)
+        {
+            return ReadTypedOrExtraDecimal(
+                sheet.TotalReimbursableAmount,
+                sheet.Extra,
+                "TotalReimbursableAmount",
+                "totalReimbursableAmount");
+        }
+
         // Resolves the document-currency total for expense sheet lines.
         private static decimal? ResolveExpenseSheetLineTotalAmountCurrency(ExpenseSheetLineDto line)
         {
@@ -5518,6 +5660,16 @@ namespace IND_CRM_APP.Controllers
                 "totalamountmst");
         }
 
+        // Reads the line reimbursement amount without falling back to gross or legacy totals.
+        private static decimal? ResolveExpenseSheetLineReimbursableAmount(ExpenseSheetLineDto line)
+        {
+            return ReadTypedOrExtraDecimal(
+                line.ReimbursableAmount,
+                line.Extra,
+                "ReimbursableAmount",
+                "reimbursableAmount");
+        }
+
         // Maps a list item to a card payload for the list screen.
         private static object ToExpenseSheetCard(ExpenseSheetDetailDto sheet)
         {
@@ -5527,6 +5679,8 @@ namespace IND_CRM_APP.Controllers
                 ReadTypedOrExtraDecimal(sheet.ExchRate, sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
             var totalAmountCurrency = ResolveExpenseSheetTotalAmountCurrency(sheet);
             var totalAmountMST = ResolveExpenseSheetTotalAmountMST(sheet);
+            var totalGrossAmountMST = ResolveExpenseSheetTotalGrossAmountMST(sheet);
+            var totalReimbursableAmount = ResolveExpenseSheetTotalReimbursableAmount(sheet);
 
             return new
             {
@@ -5544,6 +5698,8 @@ namespace IND_CRM_APP.Controllers
                 totalAmount = totalAmountCurrency,
                 totalAmountCurrency = totalAmountCurrency,
                 totalAmountMST = totalAmountMST,
+                totalGrossAmountMST = totalGrossAmountMST,
+                totalReimbursableAmount = totalReimbursableAmount,
                 exchRate = normalizedExchangeRate,
                 exchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 reimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
@@ -5560,6 +5716,8 @@ namespace IND_CRM_APP.Controllers
                 ReadTypedOrExtraDecimal(sheet.ExchRate, sheet.Extra, "exchRate", "exchangeRate", "tipoCambio"));
             var totalAmountCurrency = ResolveExpenseSheetTotalAmountCurrency(sheet);
             var totalAmountMST = ResolveExpenseSheetTotalAmountMST(sheet);
+            var totalGrossAmountMST = ResolveExpenseSheetTotalGrossAmountMST(sheet);
+            var totalReimbursableAmount = ResolveExpenseSheetTotalReimbursableAmount(sheet);
 
             return new
             {
@@ -5577,6 +5735,8 @@ namespace IND_CRM_APP.Controllers
                 TotalAmount = totalAmountCurrency,
                 TotalAmountCurrency = totalAmountCurrency,
                 TotalAmountMST = totalAmountMST,
+                TotalGrossAmountMST = totalGrossAmountMST,
+                TotalReimbursableAmount = totalReimbursableAmount,
                 ExchRate = normalizedExchangeRate,
                 ExchangeRateMode = ReadTypedOrExtraInt(sheet.ExchangeRateMode, sheet.Extra, "exchangeRateMode", "tipoCambioModo"),
                 ReimbursableExpense = ReadTypedOrExtraInt(sheet.ReimbursableExpense, sheet.Extra, "reimbursableExpense", "ReimbursableExpense"),
@@ -5590,6 +5750,8 @@ namespace IND_CRM_APP.Controllers
             var currencyCode = ReadTypedOrExtraString(sheet.CurrencyCode, sheet.Extra, "currencyCode", "currency", "divisa");
             var totalAmountCurrency = ResolveExpenseSheetTotalAmountCurrency(sheet);
             var totalAmountMST = ResolveExpenseSheetTotalAmountMST(sheet);
+            var totalGrossAmountMST = ResolveExpenseSheetTotalGrossAmountMST(sheet);
+            var totalReimbursableAmount = ResolveExpenseSheetTotalReimbursableAmount(sheet);
 
             return new
             {
@@ -5605,6 +5767,8 @@ namespace IND_CRM_APP.Controllers
                 TotalAmount = totalAmountCurrency,
                 TotalAmountCurrency = totalAmountCurrency,
                 TotalAmountMST = totalAmountMST,
+                TotalGrossAmountMST = totalGrossAmountMST,
+                TotalReimbursableAmount = totalReimbursableAmount,
                 ExchRate = NormalizeExpenseSheetExchangeRateText(
                     currencyCode,
                     ReadTypedOrExtraString(sheet.ExchRate?.ToString(CultureInfo.InvariantCulture), sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
@@ -5629,6 +5793,7 @@ namespace IND_CRM_APP.Controllers
                          ?? NormalizeOptionalText(GetExtraString(line.Extra, "fileId", "FileId"));
             var totalAmountCurrency = ResolveExpenseSheetLineTotalAmountCurrency(line);
             var totalAmountMST = ResolveExpenseSheetLineTotalAmountMST(line);
+            var reimbursableAmount = ResolveExpenseSheetLineReimbursableAmount(line);
 
             return new
             {
@@ -5647,6 +5812,7 @@ namespace IND_CRM_APP.Controllers
                 ReimbursableExpense = line.ReimbursableExpense ?? GetExtraInt(line.Extra, "reimbursableExpense", "ReimbursableExpense"),
                 CurrencyCode = ReadTypedOrExtraString(line.CurrencyCode, line.Extra, "currencyCode", "CurrencyCode"),
                 AmountMST = line.AmountMST ?? GetExtraDecimal(line.Extra, "amountMST", "AmountMST", "amountMst"),
+                ReimbursableAmount = reimbursableAmount,
                 TotalAmountCurrency = totalAmountCurrency,
                 TotalAmountMST = totalAmountMST,
                 ExchRate = line.ExchRate ?? GetExtraDecimal(line.Extra, "exchRate", "ExchRate", "exchangeRate")
@@ -5761,6 +5927,8 @@ namespace IND_CRM_APP.Controllers
                 Qty = line.Qty,
                 Price = line.Price,
                 TotalAmount = line.TotalAmount,
+                ReimbursableExpense = line.ReimbursableExpense,
+                ReimbursableAmount = line.ReimbursableAmount,
                 RefRecIdTable = line.RefRecIdTable ?? string.Empty,
                 CreatedByUserId = line.CreatedByUserId ?? string.Empty,
                 AdjustmentAmount = line.AdjustmentAmount
@@ -5829,6 +5997,8 @@ namespace IND_CRM_APP.Controllers
             var currencyCode = ReadTypedOrExtraString(sheet.CurrencyCode, sheet.Extra, "currencyCode", "currency", "divisa");
             var totalAmountCurrency = ResolveExpenseSheetTotalAmountCurrency(sheet);
             var totalAmountMST = ResolveExpenseSheetTotalAmountMST(sheet);
+            var totalGrossAmountMST = ResolveExpenseSheetTotalGrossAmountMST(sheet);
+            var totalReimbursableAmount = ResolveExpenseSheetTotalReimbursableAmount(sheet);
 
             return new
             {
@@ -5844,6 +6014,8 @@ namespace IND_CRM_APP.Controllers
                 totalAmount = totalAmountCurrency,
                 totalAmountCurrency = totalAmountCurrency,
                 totalAmountMST = totalAmountMST,
+                totalGrossAmountMST = totalGrossAmountMST,
+                totalReimbursableAmount = totalReimbursableAmount,
                 exchRate = NormalizeExpenseSheetExchangeRateText(
                     currencyCode,
                     ReadTypedOrExtraString(sheet.ExchRate?.ToString(CultureInfo.InvariantCulture), sheet.Extra, "exchRate", "exchangeRate", "tipoCambio")),
@@ -5867,6 +6039,7 @@ namespace IND_CRM_APP.Controllers
                          ?? NormalizeOptionalText(GetExtraString(line.Extra, "fileId", "FileId"));
             var totalAmountCurrency = ResolveExpenseSheetLineTotalAmountCurrency(line);
             var totalAmountMST = ResolveExpenseSheetLineTotalAmountMST(line);
+            var reimbursableAmount = ResolveExpenseSheetLineReimbursableAmount(line);
 
             return new
             {
@@ -5886,6 +6059,7 @@ namespace IND_CRM_APP.Controllers
                 reimbursableExpense = line.ReimbursableExpense ?? GetExtraInt(line.Extra, "reimbursableExpense", "ReimbursableExpense"),
                 currencyCode = ReadTypedOrExtraString(line.CurrencyCode, line.Extra, "currencyCode", "CurrencyCode"),
                 amountMST = line.AmountMST ?? GetExtraDecimal(line.Extra, "amountMST", "AmountMST", "amountMst"),
+                reimbursableAmount = reimbursableAmount,
                 totalAmountCurrency = totalAmountCurrency,
                 totalAmountMST = totalAmountMST,
                 exchRate = line.ExchRate ?? GetExtraDecimal(line.Extra, "exchRate", "ExchRate", "exchangeRate")

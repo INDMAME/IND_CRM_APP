@@ -55,6 +55,9 @@ namespace IND_CRM_APP.Models.CRM
         [JsonPropertyName("AmountMST")]
         public decimal? AmountMST { get; set; }
 
+        [JsonPropertyName("ReimbursableAmount")]
+        public decimal? ReimbursableAmount { get; set; }
+
         [JsonPropertyName("TotalAmountCurrency")]
         public decimal? TotalAmountCurrency { get; set; }
 

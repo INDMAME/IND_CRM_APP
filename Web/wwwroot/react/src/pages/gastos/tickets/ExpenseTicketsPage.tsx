@@ -35,7 +35,14 @@ import {
   saveExpenseTicketReturnContext,
 } from "../utils/expenseTicketReturnContext.ts";
 import { hasExpenseReturnReferrer, isExpenseHistoryBackForwardNavigation } from "../utils/expenseHistoryNavigation.ts";
-import { formatExpenseDateParts, formatExpenseDisplayDate, safeText, startOfDay, toIsoDate } from "../utils/expenseUiUtils.ts";
+import {
+  formatExpenseDateParts,
+  formatExpenseDisplayDate,
+  normalizeCardTitleText,
+  safeText,
+  startOfDay,
+  toIsoDate,
+} from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetQuickTicketFlow } from "../detail/useExpenseSheetQuickTicketFlow.ts";
 import { TICKET_IMAGE_ACCEPT_ATTRIBUTE } from "../detail/useExpenseSheetQuickTicketFlowCore.ts";
 import { useExpenseTicketsFiltersState } from "./useExpenseTicketsFiltersState.ts";
@@ -180,7 +187,7 @@ const ExpenseTicketsPageContent = () => {
   const hasAccess = canAccess("GASTOS_TICKETS", "View");
   const canCreateTicket = canAccess("GASTOS_TICKETS", "Add");
   const canLinkSheetLines = canAccess("GASTOS_HOJA_GASTO", "Add");
-  const [reimbursementCurrencyCode, setReimbursementCurrencyCode] = useState("EUR");
+  const [reimbursementCurrencyCode, setReimbursementCurrencyCode] = useState("");
   const {
     currentAxUserId,
     currentUserName,
@@ -560,7 +567,7 @@ const ExpenseTicketsPageContent = () => {
         }
       })
       .catch(() => {
-        // Keep the default MST label if the user context endpoint is unavailable.
+        // Leave MST amounts unlabelled when the company currency context is unavailable.
       });
 
     return () => {
@@ -1515,6 +1522,11 @@ const ExpenseTicketsPageContent = () => {
 
       {!isLinkMode && quickTicketErrorMessage ? (
         <div
+          data-ind-action-feedback="page"
+          role="alert"
+          aria-live="assertive"
+          aria-atomic="true"
+          tabIndex={-1}
           className={
             hasPartialTicketFailure
               ? "glass-panel shadow-card space-y-2 rounded-[var(--radius-xl)] border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
@@ -1697,7 +1709,8 @@ const ExpenseTicketsPageContent = () => {
           {items.map((item) => {
             const fileId = safeText(item.fileId);
             const dateParts = formatExpenseDateParts(item.transDate, document?.documentElement?.lang || "es-ES");
-            const title = safeText(item.description) || safeText(item.fileName) || fileId || "-";
+            const description = normalizeCardTitleText(item.description, "");
+            const title = description || safeText(item.fileName) || fileId || "-";
             const amountText = formatAmountWithCurrency(item.totalAmount ?? null, reimbursementCurrencyCode);
             const statusCode = item.kind === "general" ? item.status : null;
             const statusLabel = statusCode === null ? undefined : getExpenseTicketStatusLabel(statusCode);

@@ -43,7 +43,7 @@ const formatExchangeRateInputValue = (value: number): string => {
   });
 };
 
-// Reuses the fixed same-currency rate so EUR sheets stay aligned with the 100 reference amount.
+// Reuses the fixed same-currency rate so local-currency sheets stay aligned with the 100 reference amount.
 const SAME_CURRENCY_EXCHANGE_RATE_INPUT = formatExchangeRateInputValue(EXCHANGE_RATE_REFERENCE_AMOUNT);
 
 const buildCreateHeaderDraft = (): ExpenseSheetHeader => {
@@ -300,7 +300,7 @@ export const useExpenseSheetDetailState = ({
   const showExchangeRate = useMemo(() => shouldShowExchangeRate(exchangeRateValue), [exchangeRateValue]);
   const normalizedDraftCurrency = useMemo(() => draftCurrencyCode.trim().toUpperCase(), [draftCurrencyCode]);
   const normalizedDefaultCurrency = useMemo(() => safeText(defaultCurrencyCode).toUpperCase(), [defaultCurrencyCode]);
-  const exchangeRateBaseCurrency = normalizedDefaultCurrency || "EUR";
+  const exchangeRateBaseCurrency = normalizedDefaultCurrency;
   const uiLocale = useMemo(() => {
     if (typeof document === "undefined") return "es-ES";
     return safeText(document.documentElement?.lang) || "es-ES";

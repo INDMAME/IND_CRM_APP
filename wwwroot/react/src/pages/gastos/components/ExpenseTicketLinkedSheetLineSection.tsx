@@ -34,6 +34,7 @@ const ExpenseTicketLinkedSheetLineSection = ({
   const reimbursableExpenseOptions = React.useMemo(() => getExpenseLineReimbursableExpenseOptions(), []);
   const normalizedReimbursableExpense = normalizeExpenseLineReimbursableExpense(reimbursableExpense);
   const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(normalizedReimbursableExpense);
+  const reimbursableStatusLabel = indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable");
   const projectField = isEditing ? (
     <ExpenseProjectFilterInput
       label={indT("ExpenseSheets_Field_Project", "Project")}
@@ -51,11 +52,11 @@ const ExpenseTicketLinkedSheetLineSection = ({
   );
   const reimbursableExpenseField = isEditing ? (
     <SelectCombobox
-      label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      label={reimbursableStatusLabel}
       options={reimbursableExpenseOptions}
       value={String(normalizedReimbursableExpense)}
       onChange={(value) => onReimbursableExpenseChange(normalizeExpenseLineReimbursableExpense(value))}
-      placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      placeholder={reimbursableStatusLabel}
       disabled={disabled}
       readOnly={disabled}
       allowTextInput={false}
@@ -63,7 +64,7 @@ const ExpenseTicketLinkedSheetLineSection = ({
     />
   ) : (
     <ExpenseReadOnlyField
-      label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      label={reimbursableStatusLabel}
       value={reimbursableExpenseLabel}
     />
   );

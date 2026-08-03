@@ -1,12 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
+import type { ExpenseSheetTicketUpdateRequest } from "../../expenseTypes.ts";
 import {
   clearExpenseNavigationGuard,
   navigateToExpenseUrl,
   setExpenseNavigationGuard,
 } from "../../utils/expenseNavigation.ts";
 import { fetchExpenseSheetTicket } from "../../utils/expenseApi.ts";
+import {
+  normalizeExpenseTicketStoredTime,
+  toExpenseTicketDateInput,
+} from "../../utils/expenseTicketDateTime.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 import {
   mapExpenseTicketDetailHeader,
@@ -45,6 +50,14 @@ export const useExpenseTicketLineDetailState = ({
   const [draftDescription, setDraftDescription] = useState("");
   const [draftQty, setDraftQty] = useState("");
   const [draftPrice, setDraftPrice] = useState("");
+  const [draftTransDate, setDraftTransDate] = useState("");
+  const [draftTicketTime, setDraftTicketTime] = useState("");
+
+  // Hydrates the ticket header fields shown while editing one ticket line.
+  const hydrateDraftFromHeader = useCallback((nextHeader: ExpenseTicketDetailHeader | null) => {
+    setDraftTransDate(toExpenseTicketDateInput(nextHeader?.ticketDate || nextHeader?.transDate));
+    setDraftTicketTime(normalizeExpenseTicketStoredTime(nextHeader?.ticketTime));
+  }, []);
 
   const hydrateDraftFromLine = useCallback((nextLine: ExpenseTicketDetailLine | null) => {
     setDraftDescription(safeText(nextLine?.description));
@@ -66,7 +79,26 @@ export const useExpenseTicketLineDetailState = ({
     );
   }, []);
 
+  // Keeps the loaded header aligned when its partial update succeeds before the line mutation.
+  const applyHeaderUpdate = useCallback((payload: ExpenseSheetTicketUpdateRequest) => {
+    setHeader((currentHeader) => {
+      if (!currentHeader) return currentHeader;
+
+      return {
+        ...currentHeader,
+        transDate: safeText(payload.transDate) || currentHeader.transDate,
+        ticketDate: safeText(payload.ticketDate) || currentHeader.ticketDate,
+        ticketTime: safeText(payload.ticketTime) || currentHeader.ticketTime,
+        exchRate: payload.exchRate ?? currentHeader.exchRate,
+        amountMST: payload.amountMST ?? currentHeader.amountMST,
+      };
+    });
+  }, []);
+
   useEffect(() => {
+    let isCancelled = false;
+    const controller = new AbortController();
+
     const loadDetail = async () => {
       if (!hasAccess) {
         onForbidden();
@@ -86,7 +118,9 @@ export const useExpenseTicketLineDetailState = ({
       try {
         const response = await fetchExpenseSheetTicket(fileId, {
           suppressPermissionModal: true,
+          signal: controller.signal,
         });
+        if (isCancelled) return;
 
         if (response?.Success === false) {
           setErrorMessage(response?.Message || indT("Tickets_Detail_LoadError", "Could not load ticket detail."));
@@ -110,6 +144,7 @@ export const useExpenseTicketLineDetailState = ({
         const mappedLines = (Array.isArray(selectedTicket.Lines) ? selectedTicket.Lines : []).map((entry) =>
           mapExpenseTicketDetailLine(entry)
         );
+        hydrateDraftFromHeader(mappedHeader);
         if (isCreateMode) {
           setHeader(mappedHeader);
           setLine(null);
@@ -129,6 +164,7 @@ export const useExpenseTicketLineDetailState = ({
         setHeader(mappedHeader);
         setLine(selectedLine);
       } catch (error) {
+        if (isCancelled) return;
         if (error instanceof ApiFetchError && error.status === 403) {
           onForbidden();
           return;
@@ -138,12 +174,18 @@ export const useExpenseTicketLineDetailState = ({
         setHeader(null);
         setLine(null);
       } finally {
-        setIsLoading(false);
+        if (!isCancelled) {
+          setIsLoading(false);
+        }
       }
     };
 
     void loadDetail();
-  }, [fileId, hasAccess, isCreateMode, lineRecId, onForbidden]);
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, [fileId, hasAccess, hydrateDraftFromHeader, isCreateMode, lineRecId, onForbidden]);
 
   useEffect(() => {
     if (!line || isEditing) return;
@@ -177,18 +219,20 @@ export const useExpenseTicketLineDetailState = ({
 
     setModalError("");
     setIsEditing(true);
+    hydrateDraftFromHeader(header);
     hydrateDraftFromLine(line);
     setStatus(indT("ExpenseSheets_Detail_EditingEnabled", "Editing enabled"));
-  }, [canEditTicket, header, hydrateDraftFromLine, isCreateMode, isLoading, line, onForbidden]);
+  }, [canEditTicket, header, hydrateDraftFromHeader, hydrateDraftFromLine, isCreateMode, isLoading, line, onForbidden]);
 
   const handleCancelEdit = useCallback(() => {
     if (!isEditing) return;
 
     setIsEditing(false);
     setModalError("");
+    hydrateDraftFromHeader(header);
     hydrateDraftFromLine(line);
     setStatus(indT("Common_Cancel", "Cancel"));
-  }, [hydrateDraftFromLine, isEditing, line]);
+  }, [header, hydrateDraftFromHeader, hydrateDraftFromLine, isEditing, line]);
 
   const navigateToTicketDetail = useCallback(() => {
     const safeFileId = safeText(fileId);
@@ -209,6 +253,8 @@ export const useExpenseTicketLineDetailState = ({
     draftDescription,
     draftQty,
     draftPrice,
+    draftTransDate,
+    draftTicketTime,
     setBusy,
     setStatus,
     setIsEditing,
@@ -216,6 +262,9 @@ export const useExpenseTicketLineDetailState = ({
     setDraftDescription,
     setDraftQty,
     setDraftPrice,
+    setDraftTransDate,
+    setDraftTicketTime,
+    applyHeaderUpdate,
     handleEnableEdit,
     handleCancelEdit,
     navigateToTicketDetail,

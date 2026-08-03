@@ -373,7 +373,7 @@
     <value>Comentario do estado</value>
   </data>
   <data name="ExpenseSheets_Field_ReimbursableExpense" xml:space="preserve">
-    <value>Reembolsavel</value>
+    <value>Reembols&#225;vel</value>
   </data>
   <data name="ExpenseSheets_Reimbursable_Both" xml:space="preserve">
     <value>Ambos</value>
@@ -386,6 +386,18 @@
   </data>
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>Valor de reembolso</value>
+  </data>
+  <data name="ExpenseSheets_Field_GrossJustifiedAmount" xml:space="preserve">
+    <value>Despesa justificada</value>
+  </data>
+  <data name="ExpenseSheets_Field_EmployeeReimbursement" xml:space="preserve">
+    <value>A reembolsar ao colaborador</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmount" xml:space="preserve">
+    <value>Valor original</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmounts" xml:space="preserve">
+    <value>Valores originais</value>
   </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>Descrição</value>
@@ -402,6 +414,9 @@
   <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
     <value>Imp. reemb. ({0})</value>
   </data>
+  <data name="ExpenseSheets_Reimbursement_RecalculationPending" xml:space="preserve">
+    <value>O estado reembols&#225;vel &#233; Sim, mas o valor reembols&#225;vel &#233; zero. O registo AX pode estar pendente de rec&#225;lculo.</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>ID da linha</value>
   </data>
@@ -409,7 +424,7 @@
     <value>Categoria</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
-    <value>Importado</value>
+    <value>Montante</value>
   </data>
   <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
     <value>Imp. divisa</value>
@@ -437,6 +452,9 @@
   </data>
   <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
     <value>As linhas em moeda estrangeira exigem uma taxa de cambio maior que 0 ou um valor de reembolso.</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencyGrossAmount" xml:space="preserve">
+    <value>Uma linha em moeda estrangeira requer uma taxa de câmbio superior a 0 ou um valor bruto na moeda da empresa.</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>Bilhete</value>
@@ -1317,6 +1335,9 @@
   <data name="Tickets_Validation_CategoryRequired" xml:space="preserve">
     <value>A categoria é obrigatória.</value>
   </data>
+  <data name="Tickets_Validation_TimeFormat" xml:space="preserve">
+    <value>Formato obrigatório: HH:mm ou HH:mm:ss.</value>
+  </data>
   <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
     <value>A moeda é obrigatória.</value>
   </data>
@@ -1361,6 +1382,9 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
     <value>100 {0} = {1} {2}\nA taxa de câmbio indica quantas unidades da moeda da despesa equivalem a 100 unidades da moeda de reembolso.</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_ReferenceCompany" xml:space="preserve">
+    <value>100 {0} = {1} {2}\nA taxa de câmbio indica quantas unidades da moeda da despesa equivalem a 100 unidades da moeda da empresa.</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>Taxa de cambio {0} {1}</value>

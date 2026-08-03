@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : INDTicketInfoTable unloaded at Miércoles 01/07/2026
+; Navision Axapta Table : INDTicketInfoTable unloaded at Miércoles 29/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -448,8 +448,8 @@ Formatversion: 1
     METHODS
       Version: 3
       SOURCE #adjustTotalAmount
-        #//MMS - Recalculates a single ticket adjustment line - 2026.06.30
-        #// Updates the header total and reuses the differential adjustment line.
+        #//MMS - Recalcula una unica linea de ajuste del ticket - 2026.06.30
+        #// Actualiza el total de cabecera y reutiliza la linea de ajuste diferencial.
         #public container adjustTotalAmount(Amount _newTotalAmount, str 20 _createdByUserId)
         #{
         #    INDTicketInfoTable ticketInfoTable;
@@ -649,31 +649,6 @@ Formatversion: 1
         #    return docuRef;
         #}
       ENDSOURCE
-      SOURCE #reimbursementCurrencyCode
-        #//MMS - Ajustes CRM - 2026.07.02
-        #CurrencyCode reimbursementCurrencyCode()
-        #{
-        #    CRMHojaGastosLine  gastosLine;
-        #    CRMHojaGastosTable hojaGastosTable;
-        #    ;
-        #
-        #    // Resuelve la divisa de reembolso desde la linea de gasto vinculada; fallback a divisa estandar de empresa.
-        #    if (this.FileId)
-        #    {
-        #        gastosLine = CRMHojaGastosLine::FindByFileId(this.FileId);
-        #
-        #        if (gastosLine && gastosLine.HojaGastosId)
-        #        {
-        #            hojaGastosTable = gastosLine.HojaGastosTable();
-        #
-        #            if (hojaGastosTable && hojaGastosTable.CurrencyCode)
-        #                return hojaGastosTable.CurrencyCode;
-        #        }
-        #    }
-        #
-        #    return CompanyInfo::standardCurrency();
-        #}
-      ENDSOURCE
       SOURCE #existHojaGastosId
         #boolean existHojaGastosId()
         #{
@@ -716,6 +691,9 @@ Formatversion: 1
         #    if (!this.validateCurrencyAmounts())
         #        throw error("Datos de divisa del ticket invalidos.");
         #
+        #    if(this.CurrencyCode)
+        #        this.CurrencyCode = CompanyInfo::standardCurrency();
+        #
         #    super();
         #
         #    //INDMMS_ExternalCRM - 2026.03.25
@@ -738,8 +716,19 @@ Formatversion: 1
         #    {
         #        //MMS - Ajustes CRM - 2026.06.26
         #        case FieldNum(INDTicketInfoTable, TotalAmount),
-        #             FieldNum(INDTicketInfoTable, CurrencyCode),
         #             FieldNum(INDTicketInfoTable, ExchRate):
+        #            this.normalizeCurrencyAmounts(false);
+        #            break;
+        #
+        #        case FieldNum(INDTicketInfoTable, CurrencyCode):
+        #            //MMS - Ajustes CRM - 2026.07.06
+        #            // Al cambiar divisa, evita derivar el tipo desde un AmountMST calculado con la divisa anterior.
+        #            if (this.CurrencyCode != this.orig().CurrencyCode)
+        #            {
+        #                this.ExchRate  = this.CurrencyCode == CompanyInfo::standardCurrency() ? 100 : 0;
+        #                this.AmountMST = 0;
+        #            }
+        #
         #            this.normalizeCurrencyAmounts(false);
         #            break;
         #
@@ -776,9 +765,35 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #reimbursementCurrencyCode
+        #//MMS - Ajustes CRM - 2026.07.02
+        #CurrencyCode reimbursementCurrencyCode()
+        #{
+        #    CRMHojaGastosLine  gastosLine;
+        #    CRMHojaGastosTable hojaGastosTable;
+        #    ;
+        #
+        #    // Resuelve la divisa de reembolso desde la linea de gasto vinculada; si no existe, usa la divisa estandar de la empresa.
+        #    if (this.FileId)
+        #    {
+        #        gastosLine = CRMHojaGastosLine::FindByFileId(this.FileId);
+        #
+        #        if (gastosLine && gastosLine.HojaGastosId)
+        #        {
+        #            hojaGastosTable = gastosLine.HojaGastosTable();
+        #
+        #            if (hojaGastosTable && hojaGastosTable.CurrencyCode)
+        #                return hojaGastosTable.CurrencyCode;
+        #        }
+        #    }
+        #
+        #    return CompanyInfo::standardCurrency();
+        #}
+        #
+      ENDSOURCE
       SOURCE #syncAdjustmentLineToTotal
-        #//MMS - Recalculates a single ticket adjustment line - 2026.06.30
-        #// Keeps the Adjustment line aligned with the manual header total.
+        #//MMS - Recalcula una unica linea de ajuste del ticket - 2026.06.30
+        #// Mantiene alineada con el total manual de cabecera la linea marcada con Adjustment.
         #public container syncAdjustmentLineToTotal(str 20 _createdByUserId = '',
         #                                           boolean _allowCreate = false)
         #{
@@ -807,7 +822,7 @@ Formatversion: 1
         #    if (!adjustmentLine.RecId)
         #    {
         #        //MMS - Ajustes CRM - 2026.06.30
-        #        // Repair legacy adjustment lines that were created without the ticket reference.
+        #        // Repara las lineas historicas de ajuste que se crearon sin la referencia del ticket.
         #        select firstonly forupdate adjustmentLine
         #            where adjustmentLine.FileId     == this.FileId
         #               && adjustmentLine.Adjustment == NoYes::Yes;
@@ -946,6 +961,8 @@ Formatversion: 1
         #        gastosLine.ExchRate    = this.ExchRate;
         #        gastosLine.AmountMST   = this.AmountMST;
         #        gastosLine.normalizeCurrencyAmounts(gastosLine.AmountMST != 0);
+        #        //MMS - Mantiene alineado el reembolso del gasto vinculado antes de doUpdate - 2026.07.29
+        #        gastosLine.recalculateReimbursableAmount();
         #
         #        if (!gastosLine.validateCurrencyAmounts())
         #        {
@@ -998,10 +1015,15 @@ Formatversion: 1
         #
         #    amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST; //MMS - Preserva reembolso informado - 2026.07.01
         #
-        #    if (this.CurrencyCode != this.orig().CurrencyCode && this.ExchRate == this.orig().ExchRate)
+        #    //MMS - Ajustes CRM - 2026.07.09
+        #    // Si el llamador informa AmountMST junto con el cambio de divisa, se conserva como importe manual.
+        #    if (this.CurrencyCode != this.orig().CurrencyCode && this.ExchRate == this.orig().ExchRate && !amountMSTChanged)
         #    {
-        #        this.ExchRate = 0;
-        #        amountMSTChanged = this.AmountMST != 0 && this.orig().AmountMST != this.AmountMST;
+        #        //MMS - Ajustes CRM - 2026.07.06
+        #        // El cambio de divisa no debe interpretar el AmountMST recalculado como importe manual.
+        #        this.ExchRate  = this.CurrencyCode == CompanyInfo::standardCurrency() ? 100 : 0;
+        #        this.AmountMST = 0;
+        #        amountMSTChanged = false;
         #    }
         #
         #    this.updateSearchKey();
@@ -1047,17 +1069,57 @@ Formatversion: 1
         #}
         #
       ENDSOURCE
+      SOURCE #validateField
+        #public boolean validateField(fieldId _fieldIdToCheck)
+        #{
+        #    boolean     ret;
+        #    Price       priceKm;
+        #    CRMUsuarioTable usuarioTable    = CRMUsuarioTable::Find_AxaptaUserId(this.CreatedByUserId);  //IJL.18/04/25
+        #    ;
+        #
+        #
+        #    ret = super(_fieldIdToCheck);
+        #
+        #    switch (_fieldIdToCheck){
+        #
+        #
+        #        case FieldNum(CRMHojaGastosLine, Type):
+        #
+        #            if (this.GastoType == CRMGastoType::Propinas && !INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico)
+        #                ret = checkFailed("Este tipo de gasto no está permitido en tu compañía.");
+        #
+        #
+        #
+        #            if (this.GastoType == CRMGastoType::Gasolina && !INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico)
+        #                ret = checkFailed("Este tipo de gasto no está permitido en tu compañía.");
+        #
+        #
+        #            //IJL.18/04/26. En ISI no permitimos registrar Km a usuarios que no tengan configurado un precio por KM.
+        #            if (curExt() == "ISI" && this.GastoType == CRMGastoType::Km)
+        #            {
+        #                priceKm = usuarioTable.priceKmAFecha(this.TicketDate);
+        #                if (! priceKm){
+        #                    ret = checkFailed("Este usuario en esta fecha no tiene configurado un precio por Km y por tanto no se pueden registrar líneas de Hojas de Gasto de este tipo. ");
+        #                }
+        #            }
+        #            break;
+        #    }
+        #
+        #    return ret;
+        #}
+      ENDSOURCE
       SOURCE #validateUniqueTicketDateTime
+        #//MMS - Valida duplicados solo cuando el ticket tiene una hora valida - 2026.07.29
         #public boolean validateUniqueTicketDateTime()
         #{
         #    INDTicketInfoTable ticketInfoTable;
         #
-        #    if (!this.TicketDate)
+        #    if (!this.TicketDate || !this.TicketTime)
         #    {
         #        return true;
         #    }
         #
-        #    select firstonly RecId
+        #    select firstonly RecId, FileId
         #        from ticketInfoTable
         #        where ticketInfoTable.TicketDate == this.TicketDate
         #           && ticketInfoTable.TicketTime == this.TicketTime
@@ -1067,13 +1129,14 @@ Formatversion: 1
         #    {
         #        return checkFailed(strFmt(
         #            "Ya existe otro ticket (%1) con la misma fecha (%2) y hora (%3).",
-        #            this.FileId,
+        #            ticketInfoTable.FileId,
         #            this.TicketDate,
         #            this.TicketTime));
         #    }
         #
         #    return true;
         #}
+        #
       ENDSOURCE
       SOURCE #validateWrite
         #public boolean validateWrite()

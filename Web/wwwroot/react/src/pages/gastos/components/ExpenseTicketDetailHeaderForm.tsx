@@ -3,9 +3,11 @@ import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseTicketDetailHeader } from "../tickets/detail/expenseTicketDetailTypes.ts";
 import { hasExpenseTicketImagePreviewSource } from "../tickets/detail/expenseTicketPreviewUtils.ts";
-import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDisplayDate, normalizeDescriptionText, safeText } from "../utils/expenseUiUtils.ts";
+import { canEditExpenseTicketTime } from "../utils/expenseTicketDateTime.ts";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseTicketCurrencySettlementFields from "./ExpenseTicketCurrencySettlementFields.tsx";
+import ExpenseTicketDateTimeFields, { type ExpenseTicketDateTimeMode } from "./ExpenseTicketDateTimeFields.tsx";
 
 const hasRealExpenseSheetValue = (value: string): boolean => {
   const normalized = safeText(value).toLowerCase();
@@ -44,6 +46,7 @@ type ExpenseTicketDetailHeaderFormProps = {
   amountMSTInvalid: boolean;
   amountMSTInputRef: React.Ref<HTMLInputElement>;
   localCurrencyCode: string;
+  companyAmountCurrencyCode: string;
   draftTransDate: string;
   draftTicketTime: string;
   draftUrlFile: string;
@@ -55,6 +58,8 @@ type ExpenseTicketDetailHeaderFormProps = {
   onDraftExchangeRateChange: (value: string) => void;
   onDraftExchangeRateCommit?: (value: string) => void;
   onDraftAmountMSTChange: (value: string) => void;
+  onDraftTransDateChange: (value: string) => void;
+  onDraftTicketTimeChange: (value: string) => void;
   onOpenFile: () => void;
   onOpenExpenseSheet?: () => void;
   hideOpenFileAction?: boolean;
@@ -91,6 +96,7 @@ const ExpenseTicketDetailHeaderForm = ({
   amountMSTInvalid,
   amountMSTInputRef,
   localCurrencyCode,
+  companyAmountCurrencyCode,
   draftTransDate,
   draftTicketTime,
   draftUrlFile,
@@ -102,6 +108,8 @@ const ExpenseTicketDetailHeaderForm = ({
   onDraftExchangeRateChange,
   onDraftExchangeRateCommit,
   onDraftAmountMSTChange,
+  onDraftTransDateChange,
+  onDraftTicketTimeChange,
   onOpenFile,
   onOpenExpenseSheet,
   hideOpenFileAction = false,
@@ -115,7 +123,11 @@ const ExpenseTicketDetailHeaderForm = ({
     transDateText ||
     formatExpenseDisplayDate(header.ticketDate || header.transDate, locale) ||
     "-";
-  const lockedDraftDateText = formatExpenseDisplayDate(draftTransDate, locale) || displayDateText;
+  const dateTimeMode: ExpenseTicketDateTimeMode = !isEditing
+    ? "read"
+    : canEditExpenseTicketTime(header.ticketTime)
+      ? "edit-date-time"
+      : "edit-date";
   const categoryField = isEditing ? (
     <SelectCombobox
       label={indT("Tickets_Filter_Category", "Category")}
@@ -166,6 +178,7 @@ const ExpenseTicketDetailHeaderForm = ({
               className={`form-control${descriptionInvalid ? " border-rose-400 bg-rose-50 focus:border-rose-400 focus:ring-rose-200" : ""}`}
               value={draftDescription}
               onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+              onBlur={(event) => onDraftDescriptionChange(normalizeDescriptionText(event.target.value, ""))}
               aria-invalid={descriptionInvalid ? "true" : "false"}
               aria-label={indT("ExpenseSheets_Field_Description", "Description")}
             />
@@ -173,7 +186,7 @@ const ExpenseTicketDetailHeaderForm = ({
         ) : (
           <ExpenseReadOnlyField
             label={indT("ExpenseSheets_Field_Description", "Description")}
-            value={header.description || "-"}
+            value={normalizeDescriptionText(header.description)}
             fullWidth
           />
         )}
@@ -184,6 +197,7 @@ const ExpenseTicketDetailHeaderForm = ({
           expenseCurrencyInvalid={currencyCodeInvalid}
           expenseCurrencyInputRef={currencyInputRef}
           localCurrencyCode={localCurrencyCode}
+          companyAmountCurrencyCode={companyAmountCurrencyCode}
           exchangeRate={draftExchangeRate}
           exchangeRateInvalid={exchangeRateInvalid}
           exchangeRateInputRef={exchangeRateInputRef}
@@ -201,17 +215,15 @@ const ExpenseTicketDetailHeaderForm = ({
           onReimbursementAmountChange={onDraftAmountMSTChange}
         />
 
-        <div className="md:col-span-2 grid grid-cols-2 gap-4">
-          <ExpenseReadOnlyField
-            label={indT("Tickets_Field_TicketDate", "Date")}
-            value={isEditing ? lockedDraftDateText : displayDateText}
-          />
-
-          <ExpenseReadOnlyField
-            label={indT("Tickets_Field_TicketTime", "Time")}
-            value={isEditing ? draftTicketTime || ticketTimeText || "-" : ticketTimeText || "-"}
-          />
-        </div>
+        <ExpenseTicketDateTimeFields
+          mode={dateTimeMode}
+          dateValue={draftTransDate}
+          dateDisplayValue={displayDateText}
+          timeValue={draftTicketTime}
+          timeDisplayValue={ticketTimeText}
+          onDateChange={onDraftTransDateChange}
+          onTimeChange={onDraftTicketTimeChange}
+        />
 
         <div className="md:col-span-2 grid grid-cols-2 gap-4">
           {categoryField}

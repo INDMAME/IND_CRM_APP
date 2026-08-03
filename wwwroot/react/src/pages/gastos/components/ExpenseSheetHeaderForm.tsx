@@ -6,6 +6,7 @@ import type { ExpenseSheetHeader } from "../expenseTypes.ts";
 import ExpenseSheetHeaderCurrencySection from "./ExpenseSheetHeaderCurrencySection.tsx";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
+import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
 import { getExpenseStatusLabel } from "../constants/expenseStatusCatalog.ts";
 import {
   getEditableExpenseReimbursableExpenseOptions,
@@ -16,7 +17,7 @@ import {
   getExpenseExchangeRateModeLabel,
   normalizeExpenseExchangeRateMode,
 } from "../constants/exchangeRateEntryModeCatalog.ts";
-import { safeText } from "../utils/expenseUiUtils.ts";
+import { normalizeDescriptionText, safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseNumber, parseExpenseNumericInput } from "../utils/expenseNumberFormat.ts";
 
 type ExpenseSheetHeaderFormMode = {
@@ -43,7 +44,8 @@ type ExpenseSheetHeaderFormProps = {
   exchangeRateReferenceAmount: number;
   exchangeRateValue: string;
   exchangeRateValidationMessage: string;
-  totalAmountText: string;
+  grossAmountText: string;
+  reimbursableAmountText: string;
   draftDescription: string;
   draftProjectId: string;
   draftCurrencyCode: string;
@@ -76,7 +78,8 @@ const ExpenseSheetHeaderForm = ({
   exchangeRateReferenceAmount,
   exchangeRateValue,
   exchangeRateValidationMessage,
-  totalAmountText,
+  grossAmountText,
+  reimbursableAmountText,
   draftDescription,
   draftProjectId,
   draftCurrencyCode,
@@ -103,6 +106,7 @@ const ExpenseSheetHeaderForm = ({
     header.expenseSheetStatus === null || header.expenseSheetStatus === undefined
       ? "-"
       : getExpenseStatusLabel(header.expenseSheetStatus);
+  const companyAmountLabel = formatExpenseAmountLabel(exchangeRateBaseCurrency);
   const headerCurrencyCode = safeText(header.currencyCode).toUpperCase();
   const baseCurrencyCode = safeText(exchangeRateBaseCurrency).toUpperCase();
   const reimbursableExpenseOptions = React.useMemo(() => getEditableExpenseReimbursableExpenseOptions(), []);
@@ -121,7 +125,9 @@ const ExpenseSheetHeaderForm = ({
   const hasEditableReimbursableExpenseValue = reimbursableExpenseOptions.some(
     (option) => Number(option.value) === reimbursableExpenseValue
   );
-  const reimbursableExpenseLabel = getExpenseReimbursableExpenseLabel(reimbursableExpenseValue);
+  const reimbursableExpenseLabel = getExpenseReimbursableExpenseLabel(
+    isEditing ? reimbursableExpenseValue : header.reimbursableExpense
+  );
   const selectedReimbursableExpenseOption = React.useMemo(
     () =>
       hasEditableReimbursableExpenseValue
@@ -275,13 +281,14 @@ const ExpenseSheetHeaderForm = ({
               className="form-control"
               value={draftDescription}
               onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+              onBlur={(event) => onDraftDescriptionChange(normalizeDescriptionText(event.target.value, ""))}
               aria-label={indT("ExpenseSheets_Field_Description", "Description")}
             />
           </div>
         ) : (
           <ExpenseReadOnlyField
             label={indT("ExpenseSheets_Field_Description", "Description")}
-            value={safeText(header.description) || "-"}
+            value={normalizeDescriptionText(header.description)}
             fullWidth
           />
         )}
@@ -301,13 +308,19 @@ const ExpenseSheetHeaderForm = ({
         {!isCreateMode ? (
           <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
             <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Field_TotalAmount", "Reimbursement amount")}
-              value={totalAmountText}
+              label={companyAmountLabel}
+              value={grossAmountText}
               valueAlign="right"
               containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
               labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
             />
-            {currencyField}
+            <ExpenseReadOnlyField
+              label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+              value={reimbursableAmountText}
+              valueAlign="right"
+              containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
+              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
+            />
           </div>
         ) : null}
         {isCreateMode ? (
@@ -317,17 +330,24 @@ const ExpenseSheetHeaderForm = ({
           </div>
         ) : null}
         {!isCreateMode ? (
-          <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
-            <ExpenseReadOnlyField label={indT("ExpenseSheets_Field_Status", "Status")} value={statusValue} />
+          <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
             <ExpenseReadOnlyField
-              label={indT("ExpenseSheets_Detail_Field_Identifier", "Identifier")}
-              value={safeText(header.hojaGastosId) || "-"}
+              label={indT("ExpenseSheets_Field_Status", "Status")}
+              value={statusValue}
+              containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
+              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
             />
+            {reimbursableExpenseField}
           </div>
         ) : null}
         {!isCreateMode ? (
           <div className="grid grid-cols-2 items-start gap-3 md:col-span-2 md:gap-4">
-            {reimbursableExpenseField}
+            <ExpenseReadOnlyField
+              label={indT("ExpenseSheets_Detail_Field_Identifier", "Identifier")}
+              value={safeText(header.hojaGastosId) || "-"}
+              containerClassName={ALIGNED_FIELD_CONTAINER_CLASS_NAME}
+              labelClassName={ALIGNED_FIELD_LABEL_CLASS_NAME}
+            />
             {projectField}
           </div>
         ) : null}

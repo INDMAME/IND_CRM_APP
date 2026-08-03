@@ -16,7 +16,13 @@ import {
 } from "../constants/expenseStatusCatalog.ts";
 import ExpenseFiltersPanel from "../components/ExpenseFiltersPanel.tsx";
 import { useTimelineCardEffects } from "../../../hooks/useTimelineCardEffects.ts";
-import { formatExpenseDateParts, formatExpenseDisplayDate, hasAssignedVoucher, safeText } from "../utils/expenseUiUtils.ts";
+import {
+  formatExpenseDateParts,
+  formatExpenseDisplayDate,
+  hasAssignedVoucher,
+  normalizeCardTitleText,
+  safeText,
+} from "../utils/expenseUiUtils.ts";
 import { useExpenseSheetsListData } from "./useExpenseSheetsListData.ts";
 import { useExpenseSheetsFiltersState } from "./useExpenseSheetsFiltersState.ts";
 import { useExpenseSheetsFilterCache } from "./useExpenseSheetsFilterCache.ts";
@@ -56,7 +62,7 @@ const ExpenseSheetsPageContent = () => {
   const hasAccess = canAccess("GASTOS_HOJA_GASTO", "View");
   const canCreateExpense = canAccess("GASTOS_HOJA_GASTO", "Add");
   const timelineContainerRef = React.useRef<HTMLDivElement | null>(null);
-  const [reimbursementCurrencyCode, setReimbursementCurrencyCode] = useState("EUR");
+  const [companyCurrencyCode, setCompanyCurrencyCode] = useState("");
   const {
     currentAxUserId,
     currentCrmUserId,
@@ -255,11 +261,11 @@ const ExpenseSheetsPageContent = () => {
         if (cancelled) return;
         const normalizedCurrency = safeText(currency).toUpperCase();
         if (normalizedCurrency) {
-          setReimbursementCurrencyCode(normalizedCurrency);
+          setCompanyCurrencyCode(normalizedCurrency);
         }
       })
       .catch(() => {
-        // Keep the default MST label if the user context endpoint is unavailable.
+        // Amounts remain unlabelled when company currency context is unavailable.
       });
 
     return () => {
@@ -705,10 +711,10 @@ const ExpenseSheetsPageContent = () => {
               document?.documentElement?.lang || "es-ES",
               { preferMonthFirstOnSlash: true }
             );
-            const currency = safeText(reimbursementCurrencyCode || item.currencyCode);
-            const description = safeText(item.description);
+            const currency = safeText(companyCurrencyCode);
+            const description = normalizeCardTitleText(item.description, "");
             const voucher = safeText(item.voucher);
-            const totalAmountText = formatAmountWithCurrency(item.totalAmount ?? null, currency);
+            const grossAmountText = formatAmountWithCurrency(item.totalGrossAmountMST ?? null, currency);
             const fallbackStatusCode = hasAssignedVoucher(voucher) ? 4 : 0;
             const statusCode = normalizeExpenseStatusFilterCode(item.expenseSheetStatus, fallbackStatusCode);
             const statusLabel = getExpenseStatusLabel(statusCode);
@@ -733,7 +739,7 @@ const ExpenseSheetsPageContent = () => {
                   dateParts={dateParts}
                   title={description || "-"}
                   subtitle={ownerSubtitle}
-                  amountText={totalAmountText}
+                  amountText={grossAmountText}
                   onOpen={() => goToDetail(id, ownerAxUserId)}
                   titleClassName="expense-sheet-card__title timeline-name"
                   statusClassName={statusClass}

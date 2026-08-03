@@ -85,6 +85,7 @@ type ExpenseTicketDetailViewProps = {
     amountMSTInvalid: boolean;
     amountMSTInputRef: RefObject<HTMLInputElement | null>;
     localCurrencyCode: string;
+    companyAmountCurrencyCode: string;
     draftTransDate: string;
     draftTicketTime: string;
     draftUrlFile: string;
@@ -96,6 +97,8 @@ type ExpenseTicketDetailViewProps = {
     onDraftExchangeRateChange: (value: string) => void;
     onDraftExchangeRateCommit: (value: string) => void;
     onDraftAmountMSTChange: (value: string) => void;
+    onDraftTransDateChange: (value: string) => void;
+    onDraftTicketTimeChange: (value: string) => void;
     onOpenFile: () => void;
     onOpenExpenseSheet?: () => void;
     linkedLine: {
@@ -152,6 +155,7 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         amountMSTInvalid={content.amountMSTInvalid}
         amountMSTInputRef={content.amountMSTInputRef}
         localCurrencyCode={content.localCurrencyCode}
+        companyAmountCurrencyCode={content.companyAmountCurrencyCode}
         draftTransDate={content.draftTransDate}
         draftTicketTime={content.draftTicketTime}
         draftUrlFile={content.draftUrlFile}
@@ -163,6 +167,8 @@ const ExpenseTicketDetailView = ({ modal, preview, content }: ExpenseTicketDetai
         onDraftExchangeRateChange={content.onDraftExchangeRateChange}
         onDraftExchangeRateCommit={content.onDraftExchangeRateCommit}
         onDraftAmountMSTChange={content.onDraftAmountMSTChange}
+        onDraftTransDateChange={content.onDraftTransDateChange}
+        onDraftTicketTimeChange={content.onDraftTicketTimeChange}
         onOpenFile={content.onOpenFile}
         onOpenExpenseSheet={content.onOpenExpenseSheet}
         hideOpenFileAction={content.showStickyPreview}

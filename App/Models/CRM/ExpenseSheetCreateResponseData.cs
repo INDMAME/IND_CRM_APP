@@ -10,6 +10,6 @@ namespace IND_CRM_APP.Models.CRM
         public string HojaGastosId { get; set; } = string.Empty;
 
         [JsonPropertyName("LineRecIds")]
-        public List<string> LineRecIds { get; set; } = new();
+        public List<long> LineRecIds { get; set; } = new();
     }
 }

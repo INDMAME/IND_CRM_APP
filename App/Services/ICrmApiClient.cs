@@ -167,6 +167,13 @@ namespace IND_CRM_APP.Services
             string? axUserIdOverride = null
         );
 
+        // Propagates the current expense sheet header reimbursement value to its lines.
+        Task<ApiResponse<object>> PropagateExpenseSheetReimbursableExpenseAsync(
+            string token,
+            string hojaGastosId,
+            string? axUserIdOverride = null
+        );
+
         Task<ApiResponse<object>> DeleteExpenseSheetLineAsync(
             string token,
             string hojaGastosId,

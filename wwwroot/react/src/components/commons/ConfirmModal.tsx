@@ -50,7 +50,20 @@ export default function ConfirmModal({
         {showInfo && (
           <div className="flex items-center gap-2 text-sm text-slate-600">
             {busy && <Spinner size="h-4 w-4" />}
-            <span className={error && !busy ? "text-rose-700" : ""}>{infoText}</span>
+            {busy ? (
+              <span>{infoText}</span>
+            ) : (
+              <span
+                className="text-rose-700"
+                data-ind-action-feedback="modal"
+                role="alert"
+                aria-live="assertive"
+                aria-atomic="true"
+                tabIndex={-1}
+              >
+                {infoText}
+              </span>
+            )}
           </div>
         )}
         <div className="flex justify-end gap-2 pt-2">

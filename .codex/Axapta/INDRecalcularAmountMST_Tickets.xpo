@@ -1,0 +1,171 @@
+Exportfile for AOT version 1.0 or later
+Formatversion: 1
+
+***Element: JOB
+
+; Navision Axapta Job: INDRecalcularAmountMST_Tickets descargados en Miércoles 29/07/2026
+; --------------------------------------------------------------------------------
+  JOBVERSION 1
+  
+  SOURCE #INDRecalcularAmountMST_Tickets
+    #static void INDRecalcularAmountMST_Tickets(Args _args)
+    #{
+    #    Set                 setCia  = new Set(Types::String);
+    #    SetIterator         si;
+    #    DataAreaId          id;
+    #
+    #    CurrencyCode localCompanyCurrency()
+    #    {
+    #        return strUpr(CompanyInfo::standardCurrency());
+    #    }
+    #
+    #    void UpdateTickets()
+    #    {
+    #        INDTicketInfoTable ticketInfo;
+    #        INDTicketInfoTable ticketInfoUpdate;
+    #
+    #        CurrencyCode       companyCurrency;
+    #        CurrencyCode       ticketCurrency;
+    #
+    #        Amount             originalTotalAmount;
+    #        CurrencyCode       originalCurrencyCode;
+    #        ExchRate           originalExchRate;
+    #
+    #        Amount             newAmountMST;
+    #        boolean            mustUpdate;
+    #
+    #        int                scanned;
+    #        int                updated;
+    #        int                skippedNoCalculation;
+    #        int                skippedAlreadyFilled;
+    #        ;
+    #
+    #        companyCurrency = localCompanyCurrency();
+    #
+    #        while select ticketInfo
+    #            where ticketInfo.AmountMST == 0 ||
+    #                  ticketInfo.ExchRate   == 0
+    #        {
+    #            scanned++;
+    #            ttsbegin;
+    #
+    #            select firstonly forupdate ticketInfoUpdate
+    #                where ticketInfoUpdate.RecId == ticketInfo.RecId &&
+    #                     (ticketInfoUpdate.AmountMST == 0 ||
+    #                      ticketInfoUpdate.ExchRate   == 0);
+    #
+    #            if (!ticketInfoUpdate.RecId)
+    #            {
+    #                skippedAlreadyFilled++;
+    #                ttscommit;
+    #                continue;
+    #            }
+    #
+    #            originalTotalAmount  = ticketInfoUpdate.TotalAmount;
+    #            originalCurrencyCode = ticketInfoUpdate.CurrencyCode;
+    #            originalExchRate     = ticketInfoUpdate.ExchRate;
+    #
+    #            ticketCurrency = strUpr(ticketInfoUpdate.CurrencyCode);
+    #            mustUpdate     = false;
+    #            newAmountMST   = 0;
+    #
+    #            if (!ticketCurrency || !ticketInfoUpdate.TotalAmount)
+    #            {
+    #                skippedNoCalculation++;
+    #                ttscommit;
+    #                continue;
+    #            }
+    #
+    #            if (ticketCurrency == companyCurrency)
+    #            {
+    #                if (!ticketInfoUpdate.ExchRate)
+    #                {
+    #                    ticketInfoUpdate.ExchRate = 100;
+    #                    mustUpdate = true;
+    #                }
+    #
+    #                if (!ticketInfoUpdate.AmountMST)
+    #                {
+    #                    ticketInfoUpdate.AmountMST = ticketInfoUpdate.TotalAmount;
+    #                    mustUpdate = true;
+    #                }
+    #            }
+    #            else
+    #            {
+    #                // Foreign currency: do not infer or backfill ExchRate.
+    #                if (!ticketInfoUpdate.AmountMST && ticketInfoUpdate.ExchRate)
+    #                {
+    #                    newAmountMST = round(ticketInfoUpdate.TotalAmount * 100 / ticketInfoUpdate.ExchRate, 0.01);
+    #
+    #                    if (newAmountMST)
+    #                    {
+    #                        ticketInfoUpdate.AmountMST = newAmountMST;
+    #                        mustUpdate = true;
+    #                    }
+    #                }
+    #            }
+    #
+    #            if (!mustUpdate)
+    #            {
+    #                skippedNoCalculation++;
+    #                ttscommit;
+    #                continue;
+    #            }
+    #
+    #            // Preserve original currency amount data. Only AmountMST and same-currency ExchRate can be backfilled.
+    #            ticketInfoUpdate.TotalAmount  = originalTotalAmount;
+    #            ticketInfoUpdate.CurrencyCode = originalCurrencyCode;
+    #
+    #            if (ticketCurrency != companyCurrency)
+    #            {
+    #                ticketInfoUpdate.ExchRate = originalExchRate;
+    #            }
+    #
+    #            ticketInfoUpdate.doUpdate();
+    #
+    #            updated++;
+    #            ttscommit;
+    #        }
+    #
+    #        info(strfmt("%5: Tickets revisados: %1. Tickets actualizados: %2. Omitidos sin calculo: %3. Ya rellenos: %4",
+    #                    scanned,
+    #                    updated,
+    #                    skippedNoCalculation,
+    #                    skippedAlreadyFilled,
+    #                    CurExt()));
+    #    }
+    #    ;
+    #
+    #
+    #    setCia.add("LAN");
+    #    setCia.add("IHI");
+    #    setCia.add("RSI");
+    #    setCia.add("SET");
+    #    setCia.add("REF");
+    #    setCia.add("TAZ");
+    #    setCia.add("ISI");
+    #    setCia.add("ISM");
+    #    setCia.add("AZM");
+    #    setCia.add("CUM");
+    #    setCia.add("IST");
+    #    setCia.add("ITA");
+    #
+    #    setCia.add("ISE");
+    #
+    #    si = new SetIterator(setCia);
+    #
+    #    while (si.more())
+    #    {
+    #        id = si.value();
+    #
+    #        changeCompany(id)
+    #        {
+    #            UpdateTickets();
+    #        }
+    #
+    #        si.next();
+    #    }
+    #}
+  ENDSOURCE
+
+***Element: END

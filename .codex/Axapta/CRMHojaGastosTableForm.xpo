@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: FRM
 
-; Navision Axapta Forms unloaded at Viernes 24/07/2026
+; Navision Axapta Forms unloaded at Miércoles 29/07/2026
 ; --------------------------------------------------------------------------------
 FRMVERSION 5
 
@@ -51,6 +51,36 @@ FORM #CRMHojaGastosTable
       #    ;
       #    CRMHojaGastosTable_ds.reread();
       #    CRMHojaGastosTable_ds.refresh();
+      #    element.refreshReimbursableExpenseEditState();
+      #}
+      #
+    ENDSOURCE
+    SOURCE #isEditableReimbursableExpenseValue
+      #//MMS - Mantiene gestionado por el sistema el indicador mixto de cabecera - 2026.07.29
+      #boolean isEditableReimbursableExpenseValue()
+      #{
+      #    int value;
+      #    ;
+      #
+      #    value = any2int(CRMHojaGastosTable.ReimbursableExpense);
+      #
+      #    return value == any2int(INDReimbursableExpense::No)
+      #        || value == any2int(INDReimbursableExpense::Yes);
+      #}
+    ENDSOURCE
+    SOURCE #refreshReimbursableExpenseEditState
+      #//MMS - Aplica las protecciones de edicion por valor, contexto y origen de datos - 2026.07.29
+      #void refreshReimbursableExpenseEditState()
+      #{
+      #    boolean canEdit;
+      #    ;
+      #
+      #    canEdit = element.isEditableReimbursableExpenseValue()
+      #           && CRMHojaGastosTable_ds.allowEdit()
+      #           && !remesaPagoTable.RecId
+      #           && !journalTrans.RecId;
+      #
+      #    CRMHojaGastosTable_ds.object(FieldNum(CRMHojaGastosTable, ReimbursableExpense)).enabled(canEdit);
       #}
     ENDSOURCE
     SOURCE #AmountSeleccionado
@@ -309,15 +339,16 @@ FORM #CRMHojaGastosTable
       #        element.args().caller().RereadLines();
       #    }
       #
-      #    //IND_MMS_MaestroEmpleados - 18.06.2025 - INIT
+      #    //IND_MMS_MaestroEmpleados - 18.06.2025 - INICIO
       #    if (caller && caller.args().name() == formstr(INDPersonaTable))
       #    {
       #        element.args().caller().ExecuteQuery_DataSources();
       #    }
-      #    //IND_MMS_MaestroEmpleados - 18.06.2025 - END
+      #    //IND_MMS_MaestroEmpleados - 18.06.2025 - FIN
       #
       #    super();
       #}
+      #
     ENDSOURCE
   ENDMETHODS
   OBJECTBANK
@@ -366,7 +397,7 @@ FORM #CRMHojaGastosTable
                 #    ret = super();
                 #
                 #    if (CRMHojaGastosTable.ViajeId && ! CRMUserViajeTable::Find(CRMHojaGAstosTAble.UserId, CRMHojaGAstosTAble.ViajeId))
-                #        ret = checkFailed("El viajeno pertenece al usuario seleccionado");
+                #        ret = checkFailed("El viaje no pertenece al usuario seleccionado");
                 #
                 #    return ret;
                 #}
@@ -536,6 +567,53 @@ FORM #CRMHojaGastosTable
             
           ENDDATAFIELD
           
+          DATAFIELD ReimbursableExpense
+            PROPERTIES
+              AllowEdit           #Yes
+              Enabled             #Yes
+              Skip                #No
+              Visible             #Yes
+              AllowAdd            #Restricted
+              Mandatory           #No
+            ENDPROPERTIES
+            
+            METHODS
+              Version: 3
+              SOURCE #validate
+                #public boolean validate()
+                #{
+                #    boolean ret;
+                #    boolean valueChanged;
+                #    int     value;
+                #    ;
+                #
+                #    ret          = super();
+                #    value        = any2int(CRMHojaGastosTable.ReimbursableExpense);
+                #    valueChanged = value != any2int(CRMHojaGastosTable.orig().ReimbursableExpense);
+                #
+                #    //MMS - Rechaza la seleccion manual del indicador mixto - 2026.07.29
+                #    if (ret
+                #        && valueChanged
+                #        && value != any2int(INDReimbursableExpense::No)
+                #        && value != any2int(INDReimbursableExpense::Yes))
+                #    {
+                #        ret = checkFailed("El valor Ambos se calcula desde las lineas y no se puede seleccionar manualmente.");
+                #    }
+                #
+                #    return ret;
+                #}
+              ENDSOURCE
+              SOURCE #modified
+                #public void modified()
+                #{
+                #    super();
+                #
+                #    element.refreshReimbursableExpenseEditState();
+                #}
+              ENDSOURCE
+            ENDMETHODS
+          ENDDATAFIELD
+          
         ENDFIELDLIST
       ENDOBJECTPOOL
       METHODS
@@ -635,8 +713,11 @@ FORM #CRMHojaGastosTable
           #
           #    ButtonPostHojaGastos_MEX.enabled(CRMHojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Draft || CRMHojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::InReview);
           #    ButtonUnPostHojaGastos_MEX.enabled(CRMHojaGastosTable.ExpenseSheetStatus == INDExpenseSheetStatus::Approved);
+          #
+          #    element.refreshReimbursableExpenseEditState();
           #    return ret;
           #}
+          #
         ENDSOURCE
         SOURCE #MarcarLinea
           #edit NoYes MarcarLinea(boolean              set,
@@ -749,7 +830,7 @@ FORM #CRMHojaGastosTable
           #    valorFiltro = FiltroAnno.value();
           #    qbr.value(valorFiltro == 0 ? "" : int2str(valorFiltro));
           #
-          #    //IND_MMS_MaestroEmpleados - 28.05.2025 - INIT
+          #    //IND_MMS_MaestroEmpleados - 28.05.2025 - INICIO
           #    if(element.args().dataset() == tableNum(CRMUsuarioTable))
           #    {
           #        crmUsuarioTable = element.args().record();
@@ -763,64 +844,58 @@ FORM #CRMHojaGastosTable
           #        INDRemesaPagoLine_DS.allowCreate(personaTable ? !personaTable.bloqueado() : INDRemesaPagoLine_DS.allowCreate());
           #        INDRemesaPagoLine_DS.allowEdit  (personaTable ? !personaTable.bloqueado() : INDRemesaPagoLine_DS.allowEdit());
           #    }
-          #    //IND_MMS_MaestroEmpleados - 28.05.2025 - END
+          #    //IND_MMS_MaestroEmpleados - 28.05.2025 - FIN
           #
           #
           #    super();
           #}
+          #
         ENDSOURCE
         SOURCE #write
           #public void write()
           #{
-          #/*
-          #    ;
-          #    element.numberSeqFormHandler().formMethodDataSourceWrite();
-          #    super();
-          #*/
           #    CRMHojaGastosTable tableOrig;
-          #    boolean            currencyDefaultsChanged;
           #    boolean            reimbursableExpenseChanged;
           #    boolean            hasLines;
+          #    boolean            propagateReimbursableExpense;
           #    int                updated;
           #
           #    ;
           #
-          #    /*
           #    tableOrig = CRMHojaGastosTable.orig();
-          #    currencyDefaultsChanged    = false; //MMS - Ajustes CRM - 2026.06.26: cabecera local fija, sin propagacion de divisa.
           #    reimbursableExpenseChanged = CRMHojaGastosTable.RecId && tableOrig.ReimbursableExpense != CRMHojaGastosTable.ReimbursableExpense;
           #    hasLines                   = CRMHojaGastosTable.firstHojaGastosLine().RecId ? true : false;
+          #    propagateReimbursableExpense = false;
           #
-          #    // Keep propagation interactive in the form.
+          #    if (reimbursableExpenseChanged && !element.isEditableReimbursableExpenseValue())
+          #        throw error("El valor Ambos se calcula desde las lineas y no se puede seleccionar manualmente.");
           #
-          #    */
+          #    //MMS - Confirma la propagacion a las lineas antes de guardar la cabecera - 2026.07.29
+          #    if (hasLines && reimbursableExpenseChanged)
+          #    {
+          #        if (BOX::yesNo("Se va a actualizar el indicador de reembolso en todas las lineas. ¿Desea continuar?", DialogButton::No) == DialogButton::Yes)
+          #            propagateReimbursableExpense = true;
+          #        else
+          #            CRMHojaGastosTable.ReimbursableExpense = tableOrig.ReimbursableExpense;
+          #    }
+          #
+          #    ttsbegin;
           #    element.numberSeqFormHandler().formMethodDataSourceWrite();
           #    super();
           #
-          #    /*
-          #    if (hasLines && currencyDefaultsChanged)
-          #    {
-          #        if (BOX::yesNo("Se van a actualizar la divisa, el tipo de cambio y el importe MST en todas las lineas. ¿Desea continuar?", DialogButton::No) == DialogButton::Yes)
-          #        {
-          #            updated = CRMHojaGastosTable.updateCurrencyDefaultsInLines(true);
+          #    if (propagateReimbursableExpense)
+          #        updated = CRMHojaGastosTable.updateReimbursableExpenseInLines();
+          #    ttscommit;
+          #
+          #    if (propagateReimbursableExpense)
           #            info(strFmt("%1 lineas actualizadas.", updated));
           #
-          #}
-          #    }
-          #
-          #    if (hasLines && reimbursableExpenseChanged && !CRMHojaGastosTable.isVariousReimbursableExpenseDefault())
-          #    {
-          #        if (BOX::yesNo("Se va a actualizar el gasto reembolsable en todas las lineas. ¿Desea continuar?", DialogButton::No) == DialogButton::Yes)
-          #        {
-          #            updated = CRMHojaGastosTable.updateReimbursableExpenseInLines();
-          #            info(strFmt("%1 lineas actualizadas.", updated));
-          #        }
-          #    }
-          #    */
           #    CRMHojaGastosTable_ds.reread();
           #    CRMHojaGastosTable_ds.refresh();
+          #    element.refreshReimbursableExpenseEditState();
           #
           #}
+          #
         ENDSOURCE
         SOURCE #delete
           #public void delete()
@@ -861,6 +936,7 @@ FORM #CRMHojaGastosTable
           #                                         "";
           #
           #    CRMHojaGastosTable_ds.allowEdit(true);
+          #    element.refreshReimbursableExpenseEditState();
           #}
           #
         ENDSOURCE
@@ -2707,7 +2783,7 @@ FORM #CRMHojaGastosTable
                               AllowEdit           #No
                               Left                #Auto (left)
                               Top                 #Auto
-                              Width               #Auto
+                              Width               #110
                               Height              #Auto
                               VerticalSpacing     #Auto
                               Enabled             #Yes
@@ -2763,6 +2839,133 @@ FORM #CRMHojaGastosTable
                               Mandatory           #No
                               ArrayIndex          #0
                               DataMethod          #TotalAmountMST
+                              SearchMode          #None
+                            ENDPROPERTIES
+                            
+                          ENDCONTROL 
+                          
+                          CONTROL COMBOBOX
+                            ;==== controlId:12391, containerId:12297, containerdata: 0   
+                            ;----------------------------------------------------------
+                            PROPERTIES
+                              Name                #CRMHojaGastosTable_ReimbursableExpense
+                              AutoDeclaration     #No
+                              Visible             #Yes
+                              AllowEdit           #Yes
+                              Left                #Auto (left)
+                              Top                 #Auto
+                              Width               #80
+                              Height              #Auto
+                              VerticalSpacing     #Auto
+                              Enabled             #Yes
+                              Skip                #No
+                              AlignControl        #Yes
+                              HelpText            #
+                              ConfigurationKey    #
+                              SecurityKey         #
+                              DragDrop            #None
+                              Selection           #0
+                              DisplayLength       #Auto
+                              HideFirstEntry      #No
+                              ColorScheme         #Default
+                              BackStyle           #Opaque
+                              BackgroundColor     #Window background
+                              ForegroundColor     #Window text
+                              Font                #
+                              FontSize            #0
+                              Italic              #No
+                              Underline           #No
+                              Bold                #Default
+                              CharacterSet        #0
+                              LabelForegroundColor #Window text
+                              ShowLabel           #Yes
+                              Label               #
+                              LabelFont           #
+                              LabelFontSize       #0
+                              LabelItalic         #No
+                              LabelUnderline      #No
+                              LabelBold           #Default
+                              LabelCharacterSet   #0
+                              LabelWidth          #Auto
+                              LabelHeight         #Auto
+                              LabelPosition       #Left
+                              LabelAlignment      #Right
+                              DataSource          #CRMHojaGastosTable
+                              DataField           #ReimbursableExpense
+                              ArrayIndex          #0
+                              Border              #Auto
+                              ComboType           #Standard
+                              AppendNew           #No
+                            ENDPROPERTIES
+                            
+                          ENDCONTROL 
+                          
+                          CONTROL REALEDIT
+                            ;==== controlId:12392, containerId:12297, containerdata:12297   
+                            ;----------------------------------------------------------
+                            PROPERTIES
+                              Name                #TotalReimbursableAmount
+                              AutoDeclaration     #Yes
+                              Visible             #Yes
+                              AllowEdit           #No
+                              Left                #Auto (left)
+                              Top                 #Auto
+                              Width               #110
+                              Height              #Auto
+                              VerticalSpacing     #Auto
+                              Enabled             #Yes
+                              Skip                #No
+                              AlignControl        #Yes
+                              HelpText            #
+                              ConfigurationKey    #
+                              SecurityKey         #
+                              DragDrop            #None
+                              LookupButton        #Auto
+                              ReplaceOnLookup     #Yes
+                              LimitText           #Auto
+                              DisplayLength       #Auto
+                              DisplayHeight       #Auto
+                              Border              #Auto
+                              RealValue           #0,00
+                              Alignment           #Auto
+                              SignDisplay         #Auto
+                              RotateSign          #Auto
+                              ShowZero            #Auto
+                              DisplaceNegative    #Auto
+                              AllowNegative       #Auto
+                              ThousandSeparator   #Auto
+                              DecimalSeparator    #Auto
+                              NoOfDecimals        #Auto
+                              AutoInsSeparator    #Auto
+                              FormatMST           #Auto
+                              ColorScheme         #Default
+                              BackStyle           #Opaque
+                              BackgroundColor     #Window background
+                              ForegroundColor     #Window text
+                              Font                #
+                              FontSize            #0
+                              Italic              #No
+                              Underline           #No
+                              Bold                #Default
+                              CharacterSet        #0
+                              LabelForegroundColor #Window text
+                              ShowLabel           #Yes
+                              Label               #
+                              LabelFont           #
+                              LabelFontSize       #0
+                              LabelItalic         #No
+                              LabelUnderline      #No
+                              LabelBold           #Default
+                              LabelCharacterSet   #0
+                              LabelWidth          #Auto
+                              LabelHeight         #Auto
+                              LabelPosition       #Left
+                              LabelAlignment      #Right
+                              DataSource          #CRMHojaGastosTable
+                              DataField           #
+                              Mandatory           #No
+                              ArrayIndex          #0
+                              DataMethod          #TotalReimbursableAmount
                               SearchMode          #None
                             ENDPROPERTIES
                             

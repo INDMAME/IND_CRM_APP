@@ -312,6 +312,18 @@
   <data name="ExpenseSheets_Field_TotalAmount" xml:space="preserve">
     <value>报销金额</value>
   </data>
+  <data name="ExpenseSheets_Field_GrossJustifiedAmount" xml:space="preserve">
+    <value>已核实费用</value>
+  </data>
+  <data name="ExpenseSheets_Field_EmployeeReimbursement" xml:space="preserve">
+    <value>应向员工报销</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmount" xml:space="preserve">
+    <value>原币金额</value>
+  </data>
+  <data name="ExpenseSheets_Field_OriginalAmounts" xml:space="preserve">
+    <value>原币金额明细</value>
+  </data>
   <data name="ExpenseSheets_Field_Description" xml:space="preserve">
     <value>描述</value>
   </data>
@@ -327,6 +339,9 @@
   <data name="ExpenseSheets_Field_ReimbursementAmount_WithCurrency" xml:space="preserve">
     <value>报销额({0})</value>
   </data>
+  <data name="ExpenseSheets_Reimbursement_RecalculationPending" xml:space="preserve">
+    <value>报销状态为“是”，但可报销金额为零。AX 记录可能仍待重新计算。</value>
+  </data>
   <data name="ExpenseSheets_Field_LineId" xml:space="preserve">
     <value>线路编号</value>
   </data>
@@ -334,7 +349,7 @@
     <value>类别</value>
   </data>
   <data name="ExpenseSheets_Field_Amount" xml:space="preserve">
-    <value>进口</value>
+    <value>金额</value>
   </data>
   <data name="ExpenseSheets_Field_AmountCurrency" xml:space="preserve">
     <value>币种金额</value>
@@ -362,6 +377,9 @@
   </data>
   <data name="ExpenseSheets_Line_Validation_ForeignCurrencySettlement" xml:space="preserve">
     <value>外币行需要大于 0 的汇率或报销金额。</value>
+  </data>
+  <data name="ExpenseSheets_Line_Validation_ForeignCurrencyGrossAmount" xml:space="preserve">
+    <value>外币行需要大于 0 的汇率或以公司本位币表示的费用总额。</value>
   </data>
   <data name="ExpenseSheets_Field_Ticket" xml:space="preserve">
     <value>票</value>
@@ -1242,6 +1260,9 @@
   <data name="Tickets_Validation_CategoryRequired" xml:space="preserve">
     <value>类别是强制性的。</value>
   </data>
+  <data name="Tickets_Validation_TimeFormat" xml:space="preserve">
+    <value>所需格式：HH:mm 或 HH:mm:ss。</value>
+  </data>
   <data name="ExpenseSheets_Validation_CurrencyRequired" xml:space="preserve">
     <value>货币是强制性的。</value>
   </data>
@@ -1286,6 +1307,9 @@
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Reference" xml:space="preserve">
     <value>100 {0} = {1} {2}\n汇率表示多少个费用币种单位等于 100 个报销币种单位。</value>
+  </data>
+  <data name="ExpenseSheets_ExchangeRate_InfoPopover_ReferenceCompany" xml:space="preserve">
+    <value>100 {0} = {1} {2}\n汇率表示多少个费用币种单位等于 100 个公司本位币单位。</value>
   </data>
   <data name="ExpenseSheets_ExchangeRate_InfoPopover_Stored" xml:space="preserve">
     <value>汇率 {0} {1}</value>

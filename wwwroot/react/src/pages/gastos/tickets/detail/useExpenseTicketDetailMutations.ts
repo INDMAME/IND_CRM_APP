@@ -12,7 +12,7 @@ import {
   fetchExpenseSheetDetail,
   updateExpenseSheetTicket,
 } from "../../utils/expenseApi.ts";
-import { EXPENSE_API_DATE_FORMAT_MESSAGE, toExpenseApiDdMmYyyy } from "../../utils/expenseApiDateUtils.ts";
+import { EXPENSE_API_DATE_FORMAT_MESSAGE } from "../../utils/expenseApiDateUtils.ts";
 import { syncExpenseLinkedTicketSheetLine } from "../../utils/expenseLinkedTicketSheetSync.ts";
 import {
   isExpenseLineForeignCurrency,
@@ -21,6 +21,7 @@ import {
 } from "../../utils/expenseLineCurrency.ts";
 import { resolveExpenseSheetEditAccess } from "../../utils/expenseSheetEditAccess.ts";
 import { clearExpenseTicketSheetSyncState, saveExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
+import { buildExpenseTicketDateTimeUpdate } from "../../utils/expenseTicketDateTime.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type DeleteLinkedExpenseLineContext = {
@@ -46,6 +47,8 @@ type UseExpenseTicketDetailMutationsArgs = {
   localCurrencyCode: string;
   draftTransDate: string;
   draftTicketTime: string;
+  originalTicketDate: string;
+  originalTicketTime: string;
   draftComentario: string;
   draftUrlFile: string;
   draftFileName: string;
@@ -110,6 +113,8 @@ export const useExpenseTicketDetailMutations = ({
   localCurrencyCode,
   draftTransDate,
   draftTicketTime,
+  originalTicketDate,
+  originalTicketTime,
   draftComentario,
   draftUrlFile,
   draftFileName,
@@ -233,11 +238,22 @@ export const useExpenseTicketDetailMutations = ({
         return false;
       }
 
-      const rawTransDate = String(draftTransDate || "").trim();
-      const normalizedTransDate = rawTransDate ? toExpenseApiDdMmYyyy(rawTransDate) : "";
-      if (rawTransDate && !normalizedTransDate) {
+      const dateTimeUpdate = buildExpenseTicketDateTimeUpdate({
+        draftDate: draftTransDate,
+        draftTime: draftTicketTime,
+        originalDate: originalTicketDate,
+        originalTime: originalTicketTime,
+        includeUnchangedDate: true,
+      });
+      if (dateTimeUpdate.invalidDate) {
         setModalError(EXPENSE_API_DATE_FORMAT_MESSAGE);
         setStatus(EXPENSE_API_DATE_FORMAT_MESSAGE);
+        return false;
+      }
+      if (dateTimeUpdate.invalidTime) {
+        const message = indT("Tickets_Validation_TimeFormat", "Required format: HH:mm or HH:mm:ss.");
+        setModalError(message);
+        setStatus(message);
         return false;
       }
 
@@ -263,9 +279,7 @@ export const useExpenseTicketDetailMutations = ({
         totalAmount: Number(parsedTotalAmount),
         amountMST: payloadAmountMST ?? undefined,
         exchRate: payloadExchangeRate ?? undefined,
-        transDate: normalizedTransDate || undefined,
-        ticketDate: normalizedTransDate || undefined,
-        ticketTime: safeText(draftTicketTime) || undefined,
+        ...dateTimeUpdate.payload,
         comentario: String(draftComentario || "").trim() || undefined,
         urlFile: String(draftUrlFile || "").trim() || undefined,
         fileName: String(draftFileName || "").trim() || undefined,
@@ -363,6 +377,8 @@ export const useExpenseTicketDetailMutations = ({
       linkedExpenseLineRecId,
       onLinkedSheetSyncFailure,
       onLinkedSheetSyncSuccess,
+      originalTicketDate,
+      originalTicketTime,
       setBusy,
       setIsEditing,
       setModalError,

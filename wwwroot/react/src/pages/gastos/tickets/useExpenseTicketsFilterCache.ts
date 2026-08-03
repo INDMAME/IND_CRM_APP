@@ -16,6 +16,7 @@ import {
   setSessionValueWithExpiry,
 } from "../../../utils/sessionExpiry.ts";
 import { getExpenseScopeToken } from "../utils/expenseScope.ts";
+import { toNullableNumber } from "../utils/expenseApiTransforms.ts";
 
 const EXPENSE_TICKETS_FILTER_KEY_PREFIX = "expense_tickets_filter_v1";
 const EXPENSE_TICKETS_RETURN_FLAG_KEY_PREFIX = "expense_tickets_return_v1";
@@ -50,11 +51,6 @@ const getScopedKeys = () => {
     returnFlagKey: `${EXPENSE_TICKETS_RETURN_FLAG_KEY_PREFIX}_${scope}`,
     returnModeKey: `${EXPENSE_TICKETS_RETURN_MODE_KEY_PREFIX}_${scope}`,
   };
-};
-
-const toNullableNumber = (value: unknown): number | null => {
-  const parsed = Number(value);
-  return Number.isFinite(parsed) ? parsed : null;
 };
 
 const normalizeProcessedByAi = (value: unknown): boolean | null => {

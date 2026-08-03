@@ -4,6 +4,7 @@ import type { ExpenseSheetCreateLineDraft } from "../expenseTypes.ts";
 import { getExpenseGastoTypeOptions } from "../constants/expenseGastoTypeCatalog.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
 import { formatExpenseInputNumber } from "../utils/expenseNumberFormat.ts";
+import { normalizeDescriptionText } from "../utils/expenseUiUtils.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 
 type ExpenseSheetCreateLinesEditorProps = {
@@ -100,6 +101,9 @@ const ExpenseSheetCreateLinesEditor = ({
                 className="form-control"
                 value={line.description}
                 onChange={(event) => onLineChange(line.localId, { description: event.target.value || "" })}
+                onBlur={(event) =>
+                  onLineChange(line.localId, { description: normalizeDescriptionText(event.target.value, "") })
+                }
               />
             </div>
 

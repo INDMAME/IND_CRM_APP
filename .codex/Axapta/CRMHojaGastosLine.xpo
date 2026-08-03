@@ -3,7 +3,7 @@ Formatversion: 1
 
 ***Element: DBT
 
-; Navision Axapta Table : CRMHojaGastosLine unloaded at Viernes 24/07/2026
+; Navision Axapta Table : CRMHojaGastosLine unloaded at Miércoles 29/07/2026
 ; --------------------------------------------------------------------------------
   TABLEVERSION 1
   
@@ -407,12 +407,12 @@ Formatversion: 1
           Type                #Enum
           Name                #VisaEmpresa
           Label               #Visa
-          HelpText            #
+          HelpText            #Compatibilidad legacy: inverso de Reembolsable; no interviene en calculos
           GroupPrompt         #
           SaveContents        #Yes
           Mandatory           #No
-          AllowEditOnCreate   #Yes
-          AllowEdit           #Yes
+          AllowEditOnCreate   #No
+          AllowEdit           #No
           Visible             #Yes
           ConfigurationKey    #
           Table               #CRMHojaGastosLine
@@ -992,7 +992,7 @@ Formatversion: 1
           Type                #Enum
           Name                #ReimbursableExpense
           Label               #Reembolsable
-          HelpText            #
+          HelpText            #Si incluye la linea y usa AmountMST; No la excluye y deja el importe a cero
           GroupPrompt         #
           SaveContents        #Yes
           Mandatory           #No
@@ -1015,7 +1015,7 @@ Formatversion: 1
         PROPERTIES
           Type                #Real 
           Name                #AmountMST
-          Label               #Importe Reembolso (EUR)
+          Label               #Importe en EUR
           HelpText            #
           GroupPrompt         #
           SaveContents        #Yes
@@ -1029,6 +1029,30 @@ Formatversion: 1
           ExtendedDataType    
             ARRAY 
               #AmountMST
+              #
+            ENDARRAY
+          FieldUpdate         #Absolute
+        ENDPROPERTIES
+        
+      FIELD #ReimbursableAmount
+        REAL
+        PROPERTIES
+          Type                #Real 
+          Name                #ReimbursableAmount
+          Label               #Importe reembolsable
+          HelpText            #
+          GroupPrompt         #
+          SaveContents        #Yes
+          Mandatory           #No
+          AllowEditOnCreate   #No
+          AllowEdit           #No
+          Visible             #Yes
+          ConfigurationKey    #
+          Table               #CRMHojaGastosLine
+          AliasFor            #
+          ExtendedDataType    
+            ARRAY 
+              #INDReimbursableAmount
               #
             ENDARRAY
           FieldUpdate         #Absolute
@@ -1069,13 +1093,14 @@ Formatversion: 1
           #Type
           #Description
           #Internacional
-          #Ticket
           #Qty
           #Price
+          #AmountMST
           #Amount
+          #ReimbursableExpense
+          #ReimbursableAmount
           #Currency
           #FileId
-          #ReimbursableExpense
         ENDGROUPFIELDS
       ENDGROUP
     ENDGROUPS
@@ -1319,6 +1344,8 @@ Formatversion: 1
         #        //MMS - Ajustes CRM - 2026.06.29
         #        this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense == INDReimbursableExpense::No ? INDReimbursableExpenseLines::No : INDReimbursableExpenseLines::Yes;
         #}
+        #
+        #    this.recalculateReimbursableAmount();
         #}
         #
       ENDSOURCE
@@ -1547,11 +1574,49 @@ Formatversion: 1
         #    ttscommit;
         #}
       ENDSOURCE
+      SOURCE #delete
+        #//MMS - Recalcula el estado de la cabecera despues de eliminar una linea - 2026.07.29
+        #public void delete()
+        #{
+        #    CRMHojaGastosTable hojaGastosTable;
+        #    ;
+        #
+        #    hojaGastosTable = this.HojaGastosTable(true);
+        #    super();
+        #
+        #    if (hojaGastosTable && hojaGastosTable.recalculateReimbursableExpenseFromLines())
+        #        hojaGastosTable.doUpdate();
+        #}
+        #
+      ENDSOURCE
+      SOURCE #hasTicket
+        #//MMS - Admite la deteccion de tickets heredados y vinculados mediante FileId - 2026.07.29
+        #display NoYesId hasTicket()
+        #{
+        #    INDTicketInfoTable ticketInfo;
+        #
+        #    // Los registros heredados aun pueden conservar solo el indicador Ticket persistido.
+        #    if (this.Ticket == NoYes::Yes)
+        #        return NoYes::Yes;
+        #
+        #    if (!this.FileId)
+        #        return NoYes::No;
+        #
+        #    // Los registros nuevos resuelven el ticket vinculado mediante FileId.
+        #    select firstOnly RecId from ticketInfo
+        #        where ticketInfo.FileId == this.FileId;
+        #
+        #    return ticketInfo.RecId != 0 ? NoYes::Yes : NoYes::No;
+        #}
+        #
+      ENDSOURCE
       SOURCE #HayJustificante
         #display boolean HayJustificante()
         #{
-        #    return this.Ticket || this.Factura;
+        #    //MMS - Trata los tickets heredados y vinculados mediante FileId como documentos justificativos - 2026.07.29
+        #    return this.hasTicket() == NoYes::Yes || this.Factura == NoYes::Yes;
         #}
+        #
       ENDSOURCE
       SOURCE #HojaGastosTable
         #CRMHojaGastosTable HojaGastosTable(boolean _forupdate = false)
@@ -1604,7 +1669,7 @@ Formatversion: 1
         #            if (this.Dieta){
         #                this.Price     = crmParameters.PriceDietaDesayuno;
         #                this.Amount    = this.CalcAmount();
-        #                this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
+        #                this.normalizeCurrencyAmounts(false);
         #            }
         #            break;
         #
@@ -1614,7 +1679,7 @@ Formatversion: 1
         #            if (this.Dieta){
         #                this.Price     = crmParameters.PriceDietaComida;
         #                this.Amount    = this.CalcAmount();
-        #                this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
+        #                this.normalizeCurrencyAmounts(false);
         #            }
         #            break;
         #
@@ -1624,7 +1689,7 @@ Formatversion: 1
         #            if (this.Dieta){
         #                this.Price     = crmParameters.PriceDietaCena;
         #                this.Amount    = this.CalcAmount();
-        #                this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
+        #                this.normalizeCurrencyAmounts(false);
         #            }
         #            break;
         #
@@ -1633,63 +1698,24 @@ Formatversion: 1
         #
         #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, CategoriaId, this.TransDate);
         #
-        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - INIT
         #            this.Price  = CRMUserViajeLineTypeTable.Amount;
-        #           /* if (this.MediaDieta)
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;//this.Price / 2;
-        #            else
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;// crmParameters.PriceMontajeNacionalFestivo; */
-        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - END
-        #            this.Amount    = this.CalcAmount();
-        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
+        #            this.Amount = this.CalcAmount();
+        #            this.normalizeCurrencyAmounts(false);
         #            break;
         #
         #        case CRMGastoType::MontajeNacionalFestivo:
         #            this.Qty    = 1;
         #
         #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, CategoriaId, this.TransDate);
-        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - INIT
         #            this.Price  = CRMUserViajeLineTypeTable.Amount;
-        #           /*
-        #            if (this.MediaDieta)
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;//this.Price / 2;
-        #            else
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;// crmParameters.PriceMontajeNacionalFestivo;  */
-        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - END
-        #            this.Amount    = this.CalcAmount();
-        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
+        #            this.Amount = this.CalcAmount();
+        #            this.normalizeCurrencyAmounts(false);
         #            break;
         #
         #        case CRMGastoType::MontajeInternacional:
-        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
-        #
-        #/*
-        #            this.Qty    = 1;
-        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
-        #
-        #            if (this.MediaDieta)
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;//this.Price / 2;
-        #            else
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;// crmParameters.PriceMontajeNacionalFestivo;
-        #
-        #            this.Amount = this.CalcAmount();
-        #*/
         #            break;
         #
         #        case CRMGastoType::MontajeInternacionalFestivo:
-        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
-        #
-        #/*
-        #            this.Qty    = 1;
-        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
-        #
-        #            if (this.MediaDieta)
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
-        #            else
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;
-        #
-        #            this.Amount = this.CalcAmount();
-        #*/
         #            break;
         #
         #        case CRMGastoType::DiaViaje,
@@ -1697,81 +1723,32 @@ Formatversion: 1
         #            this.Qty    = 1;
         #
         #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, CategoriaId, this.TransDate);
-        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - INIT
         #            this.Price  = CRMUserViajeLineTypeTable.Amount;
-        #           /*
-        #            if (this.MediaDieta)
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
-        #            else
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;*/
-        #            //INDMMS_20250917_PrimasProyectos - 2025.10.01 - END
-        #            this.Amount    = this.CalcAmount();
-        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
-        #            break;
-        #
-        #/*
-        #        case CRMGastoType::DiaViajeFestivo:
-        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
-        #/*
-        #            this.Qty    = 1;
-        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
-        #
-        #            if (this.MediaDieta)
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
-        #            else
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;
-        #
         #            this.Amount = this.CalcAmount();
-        #*/
+        #            this.normalizeCurrencyAmounts(false);
         #            break;
-        #*/
         #
         #        case CRMGastoType::DiaViajeInternacional:
-        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
-        #/*
-        #            this.Qty    = 1;
-        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
-        #
-        #            if (this.MediaDieta)
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
-        #            else
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;
-        #
-        #            this.Amount = this.CalcAmount();
-        #*/
         #            break;
         #
         #        case CRMGastoType::DiaViajeInternacionalFestivo:
-        #//            throw error("Este valor no está permitido en las hojas de gastos. Para registrar las primas de extranjero debes hacerlo desde el módulo de viajes");
-        #/*
-        #            this.Qty    = 1;
-        #            CRMUserViajeLineTypeTable   = CRMUserViajeLineTypeTable::FindGastoType(this.Type, usuarioTable.CategoriaId);
-        #
-        #            if (this.MediaDieta)
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountMediaDieta;
-        #            else
-        #                this.Price  = CRMUserViajeLineTypeTable.AmountDietaCompleta;
-        #
-        #            this.Amount = this.CalcAmount();
-        #*/
         #            break;
         #
         #        case CRMGastoType::HorasProyecto:
-        #            this.NoCobrar   = NoYes::Yes;
+        #            this.NoCobrar = NoYes::Yes;
         #            break;
         #
         #        case CRMGastoType::Hotel:
-        #            this.Qty            = 1;
-        #            //this.NochesHotel    = 1;
-        #            this.Amount    = this.CalcAmount();
-        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
+        #            this.Qty     = 1;
+        #            this.Amount  = this.CalcAmount();
+        #            this.normalizeCurrencyAmounts(false);
         #            break;
         #
         #        default:
         #            this.Qty    = 1;
         #            this.Price  = 0;
-        #            this.Amount    = this.CalcAmount();
-        #            this.normalizeCurrencyAmounts(false); //MMS - Ajustes CRM - 2026.06.26
+        #            this.Amount = this.CalcAmount();
+        #            this.normalizeCurrencyAmounts(false);
         #            break;
         #    }
         #}
@@ -1794,7 +1771,7 @@ Formatversion: 1
         #    //MMS - Ajustes CRM - 2026.06.26
         #    // La cabecera siempre aporta la divisa local inicial; la divisa extranjera se informa en la linea.
         #    this.Currency           = hojaGastosTable.CurrencyCode;
-        #    this.ExchRate = hojaGastosTable.ExchRate ? hojaGastosTable.ExchRate : 100;
+        #    this.ExchRate           = hojaGastosTable.ExchRate ? hojaGastosTable.ExchRate : 100;
         #
         #    this.ViajeId            = hojaGastosTable.ViajeId;
         #    this.InformeVisitaId    = hojaGastosTable.InformeVisitaId;
@@ -1806,7 +1783,9 @@ Formatversion: 1
         #    {
         #        //MMS - Ajustes CRM - 2026.06.29
         #        this.ReimbursableExpense = hojaGastosTable.ReimbursableExpense == INDReimbursableExpense::No ? INDReimbursableExpenseLines::No : INDReimbursableExpenseLines::Yes;
-        #}
+        #    }
+        #
+        #    this.recalculateReimbursableAmount();
         #}
         #
       ENDSOURCE
@@ -1814,28 +1793,31 @@ Formatversion: 1
         #void InitFromPreviousLine(CRMHojaGastosLine _hojaGastosLine)
         #{
         #    ;
-        #    this.HojaGastosId   = _hojaGastosLine.HojaGastosId;
-        #    this.UserId         = _hojaGastosLine.UserId;
-        #    this.TransDate      = _hojaGastosLine.TransDate;
-        #    this.Division       = _hojaGastosLine.Division;
-        #    this.AccountNum     = _hojaGastosLine.AccountNum;
-        #    this.Type           = CRMGastoType::None;
-        #    this.Description    = "";
-        #    this.Internacional  = _hojaGastosLine.Internacional;
-        #    this.Ticket         = NoYes::No;
-        #    this.Factura        = NoYes::No;
-        #    this.Qty            = 0;
-        #    this.Price          = 0;
-        #    this.Amount         = 0;
-        #    this.Currency       = _hojaGastosLine.Currency;
-        #    this.Week           = _hojaGastosLine.Week;
-        #    this.ProjIdHornos   = _hojaGastosLine.ProjIdHornos;
-        #    this.DisciplinaId   = "";
+        #    this.HojaGastosId       = _hojaGastosLine.HojaGastosId;
+        #    this.UserId             = _hojaGastosLine.UserId;
+        #    this.TransDate          = _hojaGastosLine.TransDate;
+        #    this.Division           = _hojaGastosLine.Division;
+        #    this.AccountNum         = _hojaGastosLine.AccountNum;
+        #    this.Type               = CRMGastoType::None;
+        #    this.Description        = "";
+        #    this.Internacional      = _hojaGastosLine.Internacional;
+        #    this.Ticket             = NoYes::No;
+        #    this.Factura            = NoYes::No;
+        #    this.Qty                = 0;
+        #    this.Price              = 0;
+        #    this.Amount             = 0;
+        #    this.AmountMST          = 0;
+        #    this.Currency           = _hojaGastosLine.Currency;
+        #    this.Week               = _hojaGastosLine.Week;
+        #    this.ProjIdHornos       = _hojaGastosLine.ProjIdHornos;
+        #    this.DisciplinaId       = "";
         #    //MMS - Divisa desde línea - 2026.05.22
-        #    this.Currency       = _hojaGastosLine.Currency;
-        #    this.ExchRate       = _hojaGastosLine.ExchRate;
+        #    this.Currency           = _hojaGastosLine.Currency;
+        #    this.ExchRate           = _hojaGastosLine.ExchRate;
         #
+        #    this.recalculateReimbursableAmount();
         #}
+        #
       ENDSOURCE
       SOURCE #initFromProjTable
         #void initFromProjTable()
@@ -1872,8 +1854,9 @@ Formatversion: 1
         #    ;
         #    super();
         #
-        #    //MMS - Ajustes CRM - 2026.06.29
+        #    //MMS - Las lineas nuevas son reembolsables salvo que se excluyan explicitamente - 2026.07.29
         #    this.ReimbursableExpense = INDReimbursableExpenseLines::Yes;
+        #    this.recalculateReimbursableAmount();
         #}
         #
       ENDSOURCE
@@ -1893,6 +1876,7 @@ Formatversion: 1
         #
         #    amountMSTWasProvided = this.AmountMST != 0;  //MMS - Preserva reembolso informado - 2026.07.01
         #    this.normalizeCurrencyAmounts(amountMSTWasProvided);  //INDMMS_ExternalCRM - 2026.05.21
+        #    this.recalculateReimbursableAmount();
         #
         #    if (!this.validateCurrencyAmounts())
         #        throw error("Datos de divisa de la linea invalidos.");
@@ -1918,13 +1902,13 @@ Formatversion: 1
         #
       ENDSOURCE
       SOURCE #LineAmountMST
-        #//MMS - Ajustes CRM - 2026.06.26
+        #//MMS - Calcula el importe bruto en divisa de empresa a partir del importe de la linea - 2026.07.29
         #display Amount LineAmountMST()
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
-        #    CurrencyCode currencyCode;
-        #    CurrencyCode       reimbursementCurrencyCode;
-        #    ExchRate     exchRate;
+        #    CurrencyCode        currencyCode;
+        #    CurrencyCode        reimbursementCurrencyCode;
+        #    ExchRate            exchRate;
         #    ;
         #
         #    //MMS - Ajustes CRM - 2026.07.02
@@ -1932,10 +1916,6 @@ Formatversion: 1
         #    currencyCode                = this.Currency;
         #    exchRate                    = this.ExchRate;
         #    reimbursementCurrencyCode   = CompanyInfo::standardCurrency();
-        #
-        #        //IJL.15/07/26. La divisa de reembolso es la divisa de la compañía en todos los casos
-        #    //if (hojaGastosTable && hojaGastosTable.CurrencyCode)
-        #    //    reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
         #
         #    if (!currencyCode && hojaGastosTable)
         #        currencyCode = hojaGastosTable.CurrencyCode;
@@ -1946,19 +1926,8 @@ Formatversion: 1
         #    if (currencyCode == reimbursementCurrencyCode)
         #        return Currency::amount(this.Amount, reimbursementCurrencyCode);
         #
-        #    //IJL.09/07/26. Si no hay exchRate calculamos el importe de todas formas.
-        #    //if (!exchRate)
-        #    //    return 0;
-        #
         #    return Currency::amountCur2MST(this.Amount, CompanyInfo::standardCurrency(), exchRate, this.TransDate); //IJL.02/07/26
-        #
-        #    //return Currency::amount(this.Amount * 100 / exchRate, CompanyInfo::standardCurrency());
         #}
-        #/*display Amount LineAmountMST()
-        #{
-        #    return Currency::amountCur2MST(this.Amount, this.Currency, this.ExchRate ? this.ExchRate : this.HojaGastosTable().ExchRate); // this.HojaGastosTable().ExchRate);   //MMS - Divisa desde línea - 2026.05.22
-        #
-        #} */
         #
       ENDSOURCE
       SOURCE #MapLedgerDimension_Amount_Line
@@ -1976,7 +1945,8 @@ Formatversion: 1
         #    CRMUsuarioTable         usuarioTable    = CRMUsuarioTable::Find(this.UserId);
         #
         #    //boolean                 dimensionObligatoria;
-        #    Amount                  totalAmountFromHojaGastos   = this.LineAmountMST(); //Total de la línea
+        #    //MMS - Los mapas contables usan el importe reembolsable; AmountMST conserva el valor bruto en divisa de empresa - 2026.07.29
+        #    Amount                  totalAmountFromHojaGastos   = this.ReimbursableAmount;
         #    Amount                  totalEnMapa;
         #    ;
         #
@@ -1995,9 +1965,10 @@ Formatversion: 1
         #    index hint index1
         #    where    hojaGastosLine.HojaGastosId    == this.HojaGastosId
         #          && hojaGastosLine.RecId           == this.RecId
+        #       && hojaGastosLine.ReimbursableExpense == INDReimbursableExpenseLines::Yes
         #    {
         #
-        #        amountLine              = hojaGastosLine.LineAmountMST();
+        #        amountLine              = hojaGastosLine.ReimbursableAmount;
         #        amountLineTotalFromCust = 0;
         #
         #        while select hojaGastosLineCust
@@ -2067,7 +2038,8 @@ Formatversion: 1
         #            totalEnMapa += amountLineCust;
         #        }
         #
-        #        if (amountLine != amountLineTotalFromCust){
+        #        if (amountLine != amountLineTotalFromCust)
+        #        {
         #            //Hay importe no asignado a ningún elemento de detalle como proyecto o Evento
         #            ledgerAccount           = ledgerAccountEmpl;
         #            dimension               = dimensionEmpl;
@@ -2111,6 +2083,7 @@ Formatversion: 1
         #    //Este es el detalla del mapa de contabilización de la línea.
         #    return map;
         #}
+        #
       ENDSOURCE
       SOURCE #modifiedField
         #public void modifiedField(fieldId _fieldId)
@@ -2193,12 +2166,17 @@ Formatversion: 1
         #            this.normalizeCurrencyAmounts(true);
         #            break;
         #
+        #        //MMS - Solo el indicador de reembolso controla el importe reembolsable derivado - 2026.07.29
+        #        case FieldNum(CRMHojaGastosLine, ReimbursableExpense):
+        #            this.recalculateReimbursableAmount();
+        #            break;
+        #
         #    }
         #}
         #
       ENDSOURCE
       SOURCE #normalizeCurrencyAmounts
-        #//MMS - Ajustes CRM - 2026.06.26
+        #//MMS - Normaliza los importes en divisa de empresa y los importes reembolsables derivados - 2026.07.29
         #void normalizeCurrencyAmounts(boolean _amountMSTChanged = false)
         #{
         #    CRMHojaGastosTable hojaGastosTable = this.HojaGastosTable();
@@ -2211,9 +2189,6 @@ Formatversion: 1
         #        this.Currency = hojaGastosTable.CurrencyCode;
         #
         #    reimbursementCurrencyCode = CompanyInfo::standardCurrency();
-        #    //IJL.15/07/26. La divisa de reembolso es la divisa de la compañía en todos los casos
-        #    //if (hojaGastosTable && hojaGastosTable.CurrencyCode)
-        #    //    reimbursementCurrencyCode = hojaGastosTable.CurrencyCode;
         #
         #    if (!this.ExchRate && this.Currency == reimbursementCurrencyCode)
         #        this.ExchRate = 100;
@@ -2223,6 +2198,7 @@ Formatversion: 1
         #        if (this.Currency != reimbursementCurrencyCode)
         #            this.ExchRate = this.calcExchRateFromAmountMST();
         #
+        #        this.recalculateReimbursableAmount();
         #        return;
         #    }
         #
@@ -2230,6 +2206,7 @@ Formatversion: 1
         #        this.ExchRate = 100;
         #
         #    this.AmountMST = this.LineAmountMST();
+        #    this.recalculateReimbursableAmount();
         #}
         #
       ENDSOURCE
@@ -2262,7 +2239,7 @@ Formatversion: 1
         #    Dimension               dimension;
         #    LedgerAccount           accountGasto, accountIVA, accountTemporal;
         #    LedgerJournalEngine     ledgerJournalEngine;
-        #    Amount                  amountInvoiceBrutoMST;
+        #    Amount                  amountInvoiceReimbursableMST;
         #
         #
         #    LedgerJournalTrans CrearLinea(Voucher             _voucher,
@@ -2329,6 +2306,10 @@ Formatversion: 1
         #    if (!this.Factura)
         #        return;
         #
+        #    //MMS - Las lineas excluidas no deben crear asientos contables de reembolso - 2026.07.29
+        #    if (this.ReimbursableExpense == INDReimbursableExpenseLines::No)
+        #        return;
+        #
         #    if (! this.Amount){
         #        return;
         #    }
@@ -2340,7 +2321,7 @@ Formatversion: 1
         #    accountIVA      = "";
         #    accountTemporal = "";
         #
-        #    amountInvoiceBrutoMST   = this.LineAmountMST();
+        #    amountInvoiceReimbursableMST = this.ReimbursableAmount;
         #
         #    //Asiento 01 - Línea del proveedor
         #    journalTrans    = CrearLinea(voucher,
@@ -2348,7 +2329,7 @@ Formatversion: 1
         #                                 LedgerJournalACType::Vend,
         #                                 _vendAccount,
         #                                 0,
-        #                                 amountInvoiceBrutoMST,
+        #                                 amountInvoiceReimbursableMST,
         #                                 this.Currency,
         #                                 dimension,
         #                                 strfmt("%1 - %2 - %3", _invoiceId, this.Type, this.Description),
@@ -2363,7 +2344,7 @@ Formatversion: 1
         #                                 _transDate,
         #                                 LedgerJournalACType::Ledger,
         #                                 accountTemporal,
-        #                                 amountInvoiceBrutoMST,
+        #                                 amountInvoiceReimbursableMST,
         #                                 0,
         #                                 CompanyInfo::standardCurrency(),
         #                                 dimension,
@@ -2382,7 +2363,7 @@ Formatversion: 1
         #                                 _transDate,
         #                                 LedgerJournalACType::Vend,
         #                                 _vendAccount,
-        #                                 amountInvoiceBrutoMST,
+        #                                 amountInvoiceReimbursableMST,
         #                                 0,
         #                                 CompanyInfo::standardCurrency(),
         #                                 dimension,
@@ -2398,7 +2379,7 @@ Formatversion: 1
         #                                 LedgerJournalACType::Ledger,
         #                                 accountTemporal,
         #                                 0,
-        #                                 amountInvoiceBrutoMST - amountIVA,
+        #                                 amountInvoiceReimbursableMST - amountIVA,
         #                                 CompanyInfo::standardCurrency(),
         #                                 dimension,
         #                                 strfmt("%1 - %2 - %3", _invoiceId, this.Type, this.Description),
@@ -2426,6 +2407,7 @@ Formatversion: 1
         #    if (journalTable)
         #        journalTable.ContabilizaDiario();
         #}
+        #
       ENDSOURCE
       SOURCE #ProyectosImputados
         #display ProjName ProyectosImputados()
@@ -2445,6 +2427,25 @@ Formatversion: 1
         #
         #    return listaProyectos;
         #}
+      ENDSOURCE
+      SOURCE #recalculateReimbursableAmount
+        #//MMS - Ajustes CRM - 2026.07.29
+        #// ReimbursableExpense es el valor canonico; VisaEmpresa es solo su espejo heredado inverso.
+        #void recalculateReimbursableAmount()
+        #{
+        #    this.VisaEmpresa = this.ReimbursableExpense == INDReimbursableExpenseLines::Yes
+        #                       ? NoYes::No
+        #                       : NoYes::Yes;
+        #
+        #    if (this.ReimbursableExpense == INDReimbursableExpenseLines::No)
+        #    {
+        #        this.ReimbursableAmount = 0;
+        #        return;
+        #    }
+        #
+        #    this.ReimbursableAmount = this.AmountMST;
+        #}
+        #
       ENDSOURCE
       SOURCE #setProjId
         #Set setProjId()
@@ -2473,11 +2474,12 @@ Formatversion: 1
         #    ;
         #    if (! this.Internacional){
         #
-        #        return percent ? (this.Amount / (1 + percent / 100)) * (percent / 100) : 0;
+        #        return percent ? (this.ReimbursableAmount / (1 + percent / 100)) * (percent / 100) : 0; //MMS - Usa el importe contable reembolsable - 2026.07.28
         #    }
         #
         #    return 0;
         #}
+        #
       ENDSOURCE
       SOURCE #syncHojaGastosTable
         #//INDMMS_ExternalCRM - 2026.03.10
@@ -2486,13 +2488,13 @@ Formatversion: 1
         #    CRMHojaGastosTable hojaGastosTable;
         #    ;
         #
-        #    // Updates header markers after a saved line diverges from header defaults.
+        #    // Actualiza los indicadores de cabecera cuando una linea guardada difiere de los valores predeterminados de la cabecera.
         #    ttsbegin;
         #    hojaGastosTable = this.HojaGastosTable(true);
         #    if(hojaGastosTable)
         #        hojaGastosTable.markHeaderVariousFromLine(this);
         #    ttscommit;
-        #    }
+        #}
         #
       ENDSOURCE
       SOURCE #syncLinkedTicket
@@ -2609,6 +2611,7 @@ Formatversion: 1
         #    }
         #
         #    this.normalizeCurrencyAmounts(amountMSTChanged);  //INDMMS_ExternalCRM - 2026.05.21
+        #    this.recalculateReimbursableAmount();
         #
         #    if (!this.validateCurrencyAmounts())
         #        throw error("Datos de divisa de la linea invalidos.");
@@ -2777,10 +2780,14 @@ Formatversion: 1
         #
         #    //IJL.17/04/26
         #    if (INDDataAreaParameterTable::Find().ActivarFuncionalidadesMexico){
-        #        if (this.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo && !this.Ticket && !this.Factura)
+        #        if (this.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo &&
+        #            this.hasTicket() == NoYes::No &&
+        #            this.Factura == NoYes::No)
         #            ret = checkFailed("Debes marcarla casilla de Ticket o de Factura. Las dos casillas no pueden estar vacías");
         #
-        #        if (this.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo && this.Ticket && this.Factura)
+        #        if (this.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo &&
+        #            this.hasTicket() == NoYes::Yes &&
+        #            this.Factura == NoYes::Yes)
         #            ret = checkFailed("No se pueden marcar las casillas de Ticket y factura a la vez. Solamente s edebe marcar una de ellas.");
         #
         #        if (this.HojaGastosTable().NoContabilizarGasolina && this.ModalidadPago == CRMHojaGastoModalidadPago::Efectivo && this.Type == CRMGastoType::Km)

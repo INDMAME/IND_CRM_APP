@@ -3,13 +3,15 @@ import SelectCombobox from "../../../components/commons/SelectCombobox.tsx";
 import SingleDatePicker from "../../../components/commons/SingleDatePicker.tsx";
 import { indT } from "../../../utils/indI18n.ts";
 import type { ExpenseSheetLine } from "../expenseTypes.ts";
+import { formatExpenseAmountLabel } from "../expenseFormatters.ts";
 import type { ExpenseSelectOption } from "../utils/expenseSelectOptions.ts";
-import { formatExpenseDisplayDate, safeText } from "../utils/expenseUiUtils.ts";
+import { formatExpenseDisplayDate, normalizeDescriptionText, safeText } from "../utils/expenseUiUtils.ts";
 import { formatExpenseInputNumber, formatExpenseNumber } from "../utils/expenseNumberFormat.ts";
 import ExpenseProjectFilterInput from "./ExpenseProjectFilterInput.tsx";
 import ExpenseReadOnlyField from "./ExpenseReadOnlyField.tsx";
 import ExpenseCurrencySettlementFields from "./ExpenseCurrencySettlementFields.tsx";
 import {
+  LINE_REIMBURSABLE_EXPENSE_YES_VALUE,
   getExpenseLineReimbursableExpenseLabel,
   getExpenseLineReimbursableExpenseOptions,
   normalizeExpenseLineReimbursableExpense,
@@ -24,6 +26,7 @@ type ExpenseSheetLineFormProps = {
   amountText: string;
   draftAmountCurrency: string;
   amountMSTText: string;
+  reimbursableAmountText: string;
   internacionalLabel: string;
   isKmType: boolean;
   isFuelPriceLoading: boolean;
@@ -91,6 +94,7 @@ type ExpenseSheetLineCurrencyFieldsProps = {
   draftExchangeRate: string;
   localCurrencyCode: string;
   exchangeRateInfoMessage: string;
+  betweenAmountsAndCurrency: React.ReactNode;
   onDraftCurrencyCodeChange: (value: string) => void;
   onDraftAmountCurrencyChange: (value: string) => void;
   onDraftAmountMSTChange: (value: string) => void;
@@ -98,7 +102,7 @@ type ExpenseSheetLineCurrencyFieldsProps = {
   onDraftExchangeRateCommit?: (value: string) => void;
 };
 
-// Renders per-line currency and reimbursement controls.
+// Renders per-line currency settlement controls with sheet-specific gross semantics.
 const ExpenseSheetLineCurrencyFields = ({
   line,
   amountText,
@@ -110,6 +114,7 @@ const ExpenseSheetLineCurrencyFields = ({
   draftExchangeRate,
   localCurrencyCode,
   exchangeRateInfoMessage,
+  betweenAmountsAndCurrency,
   onDraftCurrencyCodeChange,
   onDraftAmountCurrencyChange,
   onDraftAmountMSTChange,
@@ -125,7 +130,7 @@ const ExpenseSheetLineCurrencyFields = ({
         useGrouping: true,
         fallback: "-",
       });
-  const reimbursementAmountValue = isEditing ? draftAmountMST : amountMSTText || "-";
+  const grossCompanyAmountValue = isEditing ? draftAmountMST : amountMSTText || "-";
   const amountCurrencyEditable = isEditing && line.ticket !== true;
   const amountCurrencyValue = amountCurrencyEditable ? draftAmountCurrency : amountText || "-";
 
@@ -136,9 +141,13 @@ const ExpenseSheetLineCurrencyFields = ({
       localCurrencyCode={localCurrencyCode}
       exchangeRate={exchangeRateValue}
       exchangeRateInfoMessage={exchangeRateInfoMessage}
+      exchangeRateReferenceKind="company"
       amountCurrency={amountCurrencyValue}
+      amountCurrencyLabel={formatExpenseAmountLabel(normalizedExpenseCurrencyCode)}
       amountCurrencyMode={amountCurrencyEditable ? "editable" : "readonly"}
-      reimbursementAmount={reimbursementAmountValue}
+      reimbursementAmount={grossCompanyAmountValue}
+      companyAmountLabel={formatExpenseAmountLabel(localCurrencyCode)}
+      betweenAmountsAndCurrency={betweenAmountsAndCurrency}
       onExpenseCurrencyChange={onDraftCurrencyCodeChange}
       onAmountCurrencyChange={onDraftAmountCurrencyChange}
       onExchangeRateChange={onDraftExchangeRateChange}
@@ -158,6 +167,7 @@ const ExpenseSheetLineForm = ({
   amountText,
   draftAmountCurrency,
   amountMSTText,
+  reimbursableAmountText,
   internacionalLabel,
   isKmType,
   isFuelPriceLoading,
@@ -208,7 +218,12 @@ const ExpenseSheetLineForm = ({
   const reimbursableExpenseValue = normalizeExpenseLineReimbursableExpense(
     isEditing ? draftReimbursableExpense : line.reimbursableExpense
   );
-  const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(reimbursableExpenseValue);
+  const reimbursableExpenseLabel = getExpenseLineReimbursableExpenseLabel(
+    isEditing ? draftReimbursableExpense : line.reimbursableExpense
+  );
+  const reimbursableStatusLabel = indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable");
+  const hasPendingReimbursementRecalculation =
+    line.reimbursableExpense === LINE_REIMBURSABLE_EXPENSE_YES_VALUE && line.reimbursableAmount === 0;
   const internationalField = isEditing ? (
     <SelectCombobox
       label={indT("ExpenseSheets_Field_International", "International")}
@@ -227,19 +242,44 @@ const ExpenseSheetLineForm = ({
   );
   const reimbursableExpenseField = isEditing ? (
     <SelectCombobox
-      label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      label={reimbursableStatusLabel}
       options={reimbursableExpenseOptions}
       value={String(reimbursableExpenseValue)}
       onChange={(value) => onDraftReimbursableExpenseChange(normalizeExpenseLineReimbursableExpense(value))}
-      placeholder={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      placeholder={reimbursableStatusLabel}
       allowTextInput={false}
       showSearchButton={false}
     />
   ) : (
     <ExpenseReadOnlyField
-      label={indT("ExpenseSheets_Field_ReimbursableExpense", "Reimbursable")}
+      label={reimbursableStatusLabel}
       value={reimbursableExpenseLabel}
     />
+  );
+  const reimbursementSection = (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-3 md:gap-4">
+        {reimbursableExpenseField}
+        <ExpenseReadOnlyField
+          label={indT("ExpenseSheets_Field_ReimbursementAmount", "Reimbursement amount")}
+          value={reimbursableAmountText}
+          valueAlign="right"
+        />
+      </div>
+
+      {hasPendingReimbursementRecalculation ? (
+        <p
+          className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-sm text-amber-900"
+          role="status"
+          aria-live="polite"
+        >
+          {indT(
+            "ExpenseSheets_Reimbursement_RecalculationPending",
+            "Reimbursable status is Yes but the reimbursement amount is zero. The AX record may be pending recalculation."
+          )}
+        </p>
+      ) : null}
+    </div>
   );
   const descriptionField = isEditing ? (
     <div className="sm:col-span-2 space-y-1.5">
@@ -251,6 +291,7 @@ const ExpenseSheetLineForm = ({
         }`}
         value={draftDescription}
         onChange={(event) => onDraftDescriptionChange(event.target.value || "")}
+        onBlur={(event) => onDraftDescriptionChange(normalizeDescriptionText(event.target.value, ""))}
         aria-invalid={descriptionInvalid ? "true" : "false"}
         aria-label={indT("ExpenseSheets_Field_Description", "Description")}
       />
@@ -258,7 +299,7 @@ const ExpenseSheetLineForm = ({
   ) : (
     <ExpenseReadOnlyField
       label={indT("ExpenseSheets_Field_Description", "Description")}
-      value={safeText(line.description) || "-"}
+      value={normalizeDescriptionText(line.description)}
       fullWidth
     />
   );
@@ -427,6 +468,7 @@ const ExpenseSheetLineForm = ({
             draftExchangeRate={draftExchangeRate}
             localCurrencyCode={localCurrencyCode}
             exchangeRateInfoMessage={exchangeRateInfoMessage}
+            betweenAmountsAndCurrency={reimbursementSection}
             onDraftCurrencyCodeChange={onDraftCurrencyCodeChange}
             onDraftAmountCurrencyChange={onDraftAmountCurrencyChange}
             onDraftAmountMSTChange={onDraftAmountMSTChange}
@@ -436,9 +478,8 @@ const ExpenseSheetLineForm = ({
 
           {dateTypeFields}
 
-          <div className="grid grid-cols-2 gap-3 md:col-span-2 md:gap-4">
+          <div className="md:col-span-2">
             {internationalField}
-            {reimbursableExpenseField}
           </div>
 
           {projectTicketFields}

@@ -9,7 +9,8 @@ import { mountReactIsland, mountWhenDocumentReady } from "../../../../utils/reac
 import ExpenseTicketLineDetailForm from "../../components/ExpenseTicketLineDetailForm.tsx";
 import { formatAmountWithCurrency } from "../../expenseFormatters.ts";
 import { parseDecimalInput } from "../../hooks/expenseMutationUtils.ts";
-import { configureExpenseApiAuth } from "../../utils/expenseApi.ts";
+import { configureExpenseApiAuth, getExpenseSheetDefaultCurrencyCode } from "../../utils/expenseApi.ts";
+import { normalizeExpenseLineCurrencyCode } from "../../utils/expenseLineCurrency.ts";
 import { isManagingOtherExpenseUser } from "../../utils/expenseManagedUserScope.ts";
 import { clearExpenseNavigationGuard, reloadExpensePage, navigateToExpenseUrl, setExpenseNavigationGuard } from "../../utils/expenseNavigation.ts";
 import { readExpenseTicketSheetSyncState } from "../../utils/expenseTicketSheetSyncState.ts";
@@ -158,6 +159,30 @@ const useExpenseTicketLineDetailViewModel = () => {
   const sheetSyncState = readExpenseTicketSheetSyncState(fileId);
   const sheetSyncBlocked = !!sheetSyncState;
   const sheetSyncBlockedMessage = safeText(sheetSyncState?.message);
+  const [contextDefaultCurrencyCode, setContextDefaultCurrencyCode] = React.useState("");
+
+  React.useEffect(() => {
+    let isCancelled = false;
+    const controller = new AbortController();
+
+    const loadDefaultCurrencyCode = async () => {
+      const defaultCurrencyCode = normalizeExpenseLineCurrencyCode(
+        await getExpenseSheetDefaultCurrencyCode({
+          suppressPermissionModal: true,
+          signal: controller.signal,
+        })
+      );
+      if (!isCancelled) {
+        setContextDefaultCurrencyCode(defaultCurrencyCode);
+      }
+    };
+
+    void loadDefaultCurrencyCode();
+    return () => {
+      isCancelled = true;
+      controller.abort();
+    };
+  }, []);
 
   React.useEffect(() => {
     if (!explicitReturnContext) return;
@@ -191,6 +216,8 @@ const useExpenseTicketLineDetailViewModel = () => {
     draftDescription,
     draftQty,
     draftPrice,
+    draftTransDate,
+    draftTicketTime,
     setBusy,
     setStatus,
     setIsEditing,
@@ -198,6 +225,9 @@ const useExpenseTicketLineDetailViewModel = () => {
     setDraftDescription,
     setDraftQty,
     setDraftPrice,
+    setDraftTransDate,
+    setDraftTicketTime,
+    applyHeaderUpdate,
     handleEnableEdit,
     handleCancelEdit,
   } = useExpenseTicketLineDetailState({
@@ -226,6 +256,8 @@ const useExpenseTicketLineDetailViewModel = () => {
   const canEditLinkedTicket = !linkedExpenseSheetId || (!linkSheetCheckBusy && !linkSheetLocked);
   const canCreateLinkedTicketLine = !linkedExpenseSheetId || (!linkSheetCheckBusy && !linkSheetLocked);
   const allowAssignedDraftEdit = detailOrigin === "sheet-create" || (!!linkedExpenseSheetId && canEditLinkedTicket);
+  const isAssignedTicket = header?.status === 1;
+  const isContextLocked = (isAssignedTicket && !allowAssignedDraftEdit) || (!!linkedExpenseSheetId && linkSheetLocked);
   const pendingFirstLink =
     detailOrigin === "sheet-create" && !!safeText(ticketReturnContext?.sheetId || routeSheetId) && !safeText(header?.hojaGastosIdDisplay);
   const workflowBlockedMessage = pendingFirstLink
@@ -252,6 +284,16 @@ const useExpenseTicketLineDetailViewModel = () => {
       return;
     }
 
+    if (isContextLocked) {
+      const message = indT(
+        "ExpenseSheets_Detail_ReadOnlyByStatus",
+        "No se puede editar esta hoja de gastos en el estado actual."
+      );
+      setModalError(message);
+      setStatus(message);
+      return;
+    }
+
     handleEnableEdit();
   }, [
     handleEnableEdit,
@@ -259,6 +301,7 @@ const useExpenseTicketLineDetailViewModel = () => {
     linkSheetCheckBusy,
     linkSheetLocked,
     linkedExpenseSheetId,
+    isContextLocked,
     setModalError,
     setStatus,
   ]);
@@ -302,8 +345,6 @@ const useExpenseTicketLineDetailViewModel = () => {
     () => formatAmountWithCurrency(line?.price ?? null, safeText(header?.currencyCode)),
     [header?.currencyCode, line?.price]
   );
-  const isAssignedTicket = header?.status === 1;
-  const isContextLocked = (isAssignedTicket && !allowAssignedDraftEdit) || (!!linkedExpenseSheetId && linkSheetLocked);
   const ticketDetailUrl = useMemo(() => {
     const safeFileId = safeText(fileId);
     if (!safeFileId) return "";
@@ -418,6 +459,13 @@ const useExpenseTicketLineDetailViewModel = () => {
     draftDescription,
     draftQty,
     draftPrice,
+    draftTransDate,
+    draftTicketTime,
+    originalTicketDate: safeText(header?.ticketDate || header?.transDate),
+    originalTicketTime: safeText(header?.ticketTime),
+    headerCurrencyCode: safeText(header?.currencyCode),
+    headerTotalAmount: header?.totalAmountCurrency ?? header?.totalAmount ?? null,
+    localCurrencyCode: contextDefaultCurrencyCode,
     linkedExpenseSheetId,
     allowSelfManagement,
     canManageOtherUsers,
@@ -428,11 +476,32 @@ const useExpenseTicketLineDetailViewModel = () => {
     onLinkedSheetSyncFailure: (message) => {
       setStatus(message);
     },
+    onHeaderUpdateSuccess: applyHeaderUpdate,
     setModalError,
     setBusy,
     setStatus,
     setIsEditing,
   });
+  const handleTicketLineSaveSuccess = useCallback(() => {
+    if (isCreateMode) {
+      const returnUrl = readExpenseTicketSheetSyncState(fileId) ? ticketDetailEditUrl : preferredTicketDetailUrl;
+      if (!returnUrl) return;
+      navigateToExpenseUrl(returnUrl, {
+        askConfirmation: false,
+        bypassGuardOnce: true,
+      });
+      return;
+    }
+
+    reloadExpensePage();
+  }, [fileId, isCreateMode, preferredTicketDetailUrl, ticketDetailEditUrl]);
+  const handleTicketLineDeleteSuccess = useCallback(() => {
+    if (!preferredTicketDetailUrl) return;
+    navigateToExpenseUrl(preferredTicketDetailUrl, {
+      askConfirmation: false,
+      bypassGuardOnce: true,
+    });
+  }, [preferredTicketDetailUrl]);
   useExpenseTicketLineDetailTopbarActions({
     busy,
     modalOpen: modal.open,
@@ -449,26 +518,8 @@ const useExpenseTicketLineDetailViewModel = () => {
     handleCancelEdit: handleCancelEditInContext,
     handleUpdate,
     handleDelete,
-    onSaveSuccess: () => {
-      if (isCreateMode) {
-        const returnUrl = readExpenseTicketSheetSyncState(fileId) ? ticketDetailEditUrl : preferredTicketDetailUrl;
-        if (!returnUrl) return;
-        navigateToExpenseUrl(returnUrl, {
-          askConfirmation: false,
-          bypassGuardOnce: true,
-        });
-        return;
-      }
-
-      reloadExpensePage();
-    },
-    onDeleteSuccess: () => {
-      if (!preferredTicketDetailUrl) return;
-      navigateToExpenseUrl(preferredTicketDetailUrl, {
-        askConfirmation: false,
-        bypassGuardOnce: true,
-      });
-    },
+    onSaveSuccess: handleTicketLineSaveSuccess,
+    onDeleteSuccess: handleTicketLineDeleteSuccess,
     openConfirm,
     closeConfirm,
   });
@@ -492,11 +543,16 @@ const useExpenseTicketLineDetailViewModel = () => {
     draftDescription,
     draftQty,
     draftPrice,
+    draftTransDate,
+    draftTicketTime,
     priceText,
     amountText,
+    companyCurrencyCode: contextDefaultCurrencyCode,
     setDraftDescription,
     setDraftQty,
     setDraftPrice,
+    setDraftTransDate,
+    setDraftTicketTime,
   };
 };
 
@@ -525,15 +581,20 @@ const ExpenseTicketLineDetailContent = () => {
         <ExpenseTicketLineDetailForm
           header={view.header}
           line={view.line}
+          companyCurrencyCode={view.companyCurrencyCode}
           isEditing={view.isEditing}
           draftDescription={view.draftDescription}
           draftQty={view.draftQty}
           draftPrice={view.draftPrice}
+          draftTransDate={view.draftTransDate}
+          draftTicketTime={view.draftTicketTime}
           priceText={view.priceText}
           amountText={view.amountText}
           onDraftDescriptionChange={view.setDraftDescription}
           onDraftQtyChange={view.setDraftQty}
           onDraftPriceChange={view.setDraftPrice}
+          onDraftTransDateChange={view.setDraftTransDate}
+          onDraftTicketTimeChange={view.setDraftTicketTime}
         />
       ) : null}
     </div>
