@@ -708,6 +708,29 @@ const gastosControllerSource = readFileSync(
   path.join(repositoryRoot, "Web", "Controllers", "Gastos", "GastosController.cs"),
   "utf8"
 );
+const moduleAuthorizeFilterSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "App",
+    "Infrastructure",
+    "Security",
+    "Filters",
+    "INDModuleAuthorizeFilter.cs"
+  ),
+  "utf8"
+);
+const expenseSheetServiceXpoSource = readFileSync(
+  path.join(repositoryRoot, ".codex", "Axapta", "INDCRMExpenseSheetService.xpo"),
+  "utf8"
+);
+const expenseSheetTableXpoSource = readFileSync(
+  path.join(repositoryRoot, ".codex", "Axapta", "CRMHojaGastosTable.xpo"),
+  "utf8"
+);
+const expenseSheetLineXpoSource = readFileSync(
+  path.join(repositoryRoot, ".codex", "Axapta", "CRMHojaGastosLine.xpo"),
+  "utf8"
+);
 const readExpenseComponentSource = (fileName: string): string => readFileSync(
   path.join(repositoryRoot, "Web", "wwwroot", "react", "src", "pages", "gastos", "components", fileName),
   "utf8"
@@ -716,6 +739,50 @@ const ticketLineFormSource = readExpenseComponentSource("ExpenseTicketLineDetail
 const expenseSheetHeaderFormSource = readExpenseComponentSource("ExpenseSheetHeaderForm.tsx");
 const expenseSheetLineFormSource = readExpenseComponentSource("ExpenseSheetLineForm.tsx");
 const expenseCurrencySettlementFieldsSource = readExpenseComponentSource("ExpenseCurrencySettlementFields.tsx");
+const expenseSheetDetailPageControllerSource = readFileSync(
+  path.join(
+    repositoryRoot,
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "detail",
+    "useExpenseSheetDetailPageController.tsx"
+  ),
+  "utf8"
+);
+const expenseTicketDetailPageSource = readFileSync(
+  path.join(
+    process.cwd(),
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "tickets",
+    "detail",
+    "ExpenseTicketDetailPage.tsx"
+  ),
+  "utf8"
+);
+const expenseTicketLinkedSheetLineSource = readFileSync(
+  path.join(
+    process.cwd(),
+    "Web",
+    "wwwroot",
+    "react",
+    "src",
+    "pages",
+    "gastos",
+    "tickets",
+    "detail",
+    "useExpenseTicketLinkedSheetLine.ts"
+  ),
+  "utf8"
+);
 const ticketProxyMapperStart = gastosControllerSource.indexOf(
   "private static object ToExpenseSheetTicketApiDetailLine"
 );
@@ -742,13 +809,46 @@ assert.match(
 );
 assert.match(
   expenseSheetHeaderFormSource,
-  /isEditing\s*&&\s*canEditHeaderFields\s*&&\s*hasEditableReimbursableExpenseValue/
+  /isEditing\s*&&\s*canEditHeaderFields\s*&&\s*hasKnownReimbursableExpenseValue/
+);
+assert.match(expenseSheetHeaderFormSource, /selectedOption=\{selectedReimbursableExpenseOption\}/);
+assert.match(
+  expenseSheetDetailPageControllerSource,
+  /previousValue\s*===\s*null[\s\S]*?ExpenseSheets_Detail_PropagateReimbursable_Title[\s\S]*?handlePropagateReimbursableExpenseToLines\(nextValue\)/
+);
+assert.doesNotMatch(
+  expenseSheetDetailPageControllerSource,
+  /isEditableExpenseReimbursableExpense\(previousValue\)/
 );
 assert.match(
   expenseSheetLineFormSource,
   /isEditing\s*&&\s*hasEditableReimbursableExpenseValue/
 );
 assert.match(gastosControllerSource, /CanUpdateExpenseSheetHeaderReimbursableExpense\([\s\S]*?snapshot\.ReimbursableExpense/);
+assert.match(
+  gastosControllerSource,
+  /IsEditableExpenseSheetHeaderReimbursableExpense\(storedReimbursableExpense\)\s*\|\|\s*storedReimbursableExpense\s*==\s*ExpenseSheetReimbursableBoth/
+);
+assert.match(
+  moduleAuthorizeFilterSource,
+  /reimbursable-expense\/propagate[\s\S]*?return IndAccessRights\.Edit;[\s\S]*?return IndAccessRights\.Add;/
+);
+assert.match(
+  expenseSheetServiceXpoSource,
+  /!INDCRMExpenseSheetService::isWritableReimbursableExpense\(reimbursableExpense\)/
+);
+assert.doesNotMatch(
+  expenseSheetServiceXpoSource,
+  /isWritableReimbursableExpense\(any2int\(header\.ReimbursableExpense\)\)/
+);
+assert.match(
+  expenseSheetTableXpoSource,
+  /SOURCE #updateReimbursableExpenseInLines[\s\S]*?hojaGastosLine\.ReimbursableExpense\s*=\s*any2int\(this\.ReimbursableExpense\);[\s\S]*?hojaGastosLine\.recalculateReimbursableAmount\(\);[\s\S]*?INDProjCostRevenueTable::CreateProjCostFromCommon\(hojaGastosLine\);/
+);
+assert.match(
+  expenseSheetLineXpoSource,
+  /SOURCE #recalculateReimbursableAmount[\s\S]*?INDReimbursableExpenseLines::Yes[\s\S]*?this\.ReimbursableAmount\s*=\s*this\.AmountMST;[\s\S]*?this\.ReimbursableAmount\s*=\s*0;/
+);
 assert.match(
   gastosControllerSource,
   /IsEditableExpenseSheetHeaderReimbursableExpense\([\s\S]*?mutationGuard\.Snapshot\?\.ReimbursableExpense/
@@ -762,6 +862,27 @@ assert.match(
   /ReimbursableExpense\s*=\s*IsEditableExpenseSheetHeaderReimbursableExpense\(snapshot\.ReimbursableExpense\)[\s\S]*?\?\s*snapshot\.ReimbursableExpense[\s\S]*?:\s*null/
 );
 assert.match(expenseSheetLineFormSource, /betweenAmountsAndCurrency=\{reimbursementSection\}/);
+assert.match(expenseTicketDetailPageSource, /visible:\s*isFromExpenseLine \|\| isFromExpenseSheetCreate/);
+assert.match(
+  expenseTicketDetailPageSource,
+  /initializeMissingLine:\s*isFromExpenseSheetCreate/
+);
+assert.equal(
+  (
+    expenseTicketDetailPageSource.match(
+      /\(isFromExpenseLine \|\| isFromExpenseSheetCreate\) && linkedSheetLine\.(?:projectIdChanged|reimbursableExpenseChanged)/g
+    ) || []
+  ).length,
+  2
+);
+assert.match(
+  expenseTicketLinkedSheetLineSource,
+  /initialProjectId[\s\S]*mapExpenseSheetHeader\(sheet\)\.projId/
+);
+assert.match(
+  expenseTicketLinkedSheetLineSource,
+  /initialReimbursableExpense[\s\S]*DEFAULT_LINE_REIMBURSABLE_EXPENSE/
+);
 const settlementCompanyAmountIndex = expenseCurrencySettlementFieldsSource.indexOf('id={companyAmountInputId}');
 const settlementMiddleContentIndex = expenseCurrencySettlementFieldsSource.indexOf('{betweenAmountsAndCurrency ?');
 const settlementCurrencyIndex = expenseCurrencySettlementFieldsSource.indexOf('<ExpenseCurrencyFilterSelect');

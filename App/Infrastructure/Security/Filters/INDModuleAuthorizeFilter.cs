@@ -240,6 +240,11 @@ namespace IND_CRM_APP.Infrastructure.Security.Filters
                     path.Equals("/api/crm/expensesheets/tickets/list", StringComparison.OrdinalIgnoreCase))
                     return IndAccessRights.View;
 
+                // Reimbursement propagation mutates an existing sheet even though the route uses POST.
+                if (HttpMethods.IsPost(method) &&
+                    path.TrimEnd('/').EndsWith("/reimbursable-expense/propagate", StringComparison.OrdinalIgnoreCase))
+                    return IndAccessRights.Edit;
+
                 if (HttpMethods.IsPost(method))
                     return IndAccessRights.Add;
                 if (HttpMethods.IsPut(method) || HttpMethods.IsPatch(method))

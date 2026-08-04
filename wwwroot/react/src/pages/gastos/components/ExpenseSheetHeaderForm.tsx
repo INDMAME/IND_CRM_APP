@@ -124,8 +124,21 @@ const ExpenseSheetHeaderForm = ({
     isEditing ? draftReimbursableExpense : header.reimbursableExpense
   );
   const hasEditableReimbursableExpenseValue = isEditableExpenseReimbursableExpense(reimbursableExpenseValue);
+  const hasKnownReimbursableExpenseValue = reimbursableExpenseValue !== null;
   const reimbursableExpenseLabel = getExpenseReimbursableExpenseLabel(
     isEditing ? draftReimbursableExpense : header.reimbursableExpense
+  );
+  const selectedReimbursableExpenseOption = React.useMemo(
+    () =>
+      hasKnownReimbursableExpenseValue && !hasEditableReimbursableExpenseValue
+        ? { value: String(reimbursableExpenseValue), text: reimbursableExpenseLabel }
+        : undefined,
+    [
+      hasEditableReimbursableExpenseValue,
+      hasKnownReimbursableExpenseValue,
+      reimbursableExpenseLabel,
+      reimbursableExpenseValue,
+    ]
   );
   // Status comment is now edited only in the status transition popup.
   const statusCommentValue = safeText(header.estadoComentarios);
@@ -191,13 +204,14 @@ const ExpenseSheetHeaderForm = ({
     </div>
   );
   const reimbursableExpenseField =
-    isEditing && canEditHeaderFields && hasEditableReimbursableExpenseValue ? (
+    isEditing && canEditHeaderFields && hasKnownReimbursableExpenseValue ? (
       <div className={ALIGNED_FIELD_CONTAINER_CLASS_NAME}>
         {reimbursableExpenseLabelContent}
         <SelectCombobox
           label={reimbursableExpenseTitle}
           placeholder={reimbursableExpenseTitle}
           options={reimbursableExpenseOptions}
+          selectedOption={selectedReimbursableExpenseOption}
           value={String(reimbursableExpenseValue)}
           onChange={(value) => {
             const normalizedValue = normalizeExpenseReimbursableExpense(value);

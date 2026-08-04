@@ -4575,7 +4575,7 @@ Formatversion: 1
         #//  - _data[8] = ExpenseSheetStatus (opcional, entero >= 0; otros valores = sin cambio)
         #//  - _data[9] = ExchangeRateMode (opcional, entero >= 0; otros valores = sin cambio)
         #//  - _data[10] = estadoComentarios (opcional)
-        #//  - _data[11] = ReimbursableExpense (opcional: 0 Yes, 1 No, 2 Both)
+        #//  - _data[11] = ReimbursableExpense (optional: 0 Yes, 1 No; Both is derived)
         #//  - _data[12] = actorAxUserId (opcional, solo para notificacion web de jefes)
         #static server container updateExpenseSheetHeader(container _data)
         #{
@@ -4712,14 +4712,6 @@ Formatversion: 1
         #            {
         #                ttsabort;
         #                return INDCRMUtilityService::buildHeader(false, 'Hoja de gastos bloqueada. Voucher informado.', conNull());
-        #            }
-        #
-        #            //MMS - Impide sobrescribir desde API una cabecera derivada o legacy - 2026.08.03
-        #            if (hasReimbursableExpense &&
-        #                !INDCRMExpenseSheetService::isWritableReimbursableExpense(any2int(header.ReimbursableExpense)))
-        #            {
-        #                ttsabort;
-        #                return INDCRMUtilityService::buildHeader(false, 'ReimbursableExpense de cabecera es un estado derivado o legacy y no admite edicion manual.', conNull());
         #            }
         #
         #            oldExpenseSheetStatus = header.ExpenseSheetStatus;

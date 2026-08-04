@@ -2,14 +2,18 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ApiFetchError } from "../../../../services/apiService.ts";
 import { indT } from "../../../../utils/indI18n.ts";
 import type { ExpenseSheetDetailDto, ExpenseSheetLine } from "../../expenseTypes.ts";
-import { normalizeExpenseLineReimbursableExpense } from "../../constants/expenseReimbursableExpenseCatalog.ts";
-import { fetchExpenseSheetDetail, mapExpenseSheetLine } from "../../utils/expenseApi.ts";
+import {
+  DEFAULT_LINE_REIMBURSABLE_EXPENSE,
+  normalizeExpenseLineReimbursableExpense,
+} from "../../constants/expenseReimbursableExpenseCatalog.ts";
+import { fetchExpenseSheetDetail, mapExpenseSheetHeader, mapExpenseSheetLine } from "../../utils/expenseApi.ts";
 import { safeText } from "../../utils/expenseUiUtils.ts";
 
 type UseExpenseTicketLinkedSheetLineArgs = {
   enabled: boolean;
   sheetId: string;
   lineRecId: string;
+  initializeMissingLine: boolean;
   onForbidden: () => void;
 };
 
@@ -39,6 +43,7 @@ export const useExpenseTicketLinkedSheetLine = ({
   enabled,
   sheetId,
   lineRecId,
+  initializeMissingLine,
   onForbidden,
 }: UseExpenseTicketLinkedSheetLineArgs) => {
   const [line, setLine] = useState<ExpenseSheetLine | null>(null);
@@ -88,11 +93,18 @@ export const useExpenseTicketLinkedSheetLine = ({
       const sheetLocalCurrencyCode = safeText(sheet?.CurrencyCode ?? sheet?.currencyCode).toUpperCase();
       const selectedLine = sheet && safeLineRecId ? selectLine(sheet, safeLineRecId) : null;
       if (!safeLineRecId) {
+        // Prefills line fields during direct ticket creation from an expense sheet.
+        const initialProjectId = initializeMissingLine && sheet
+          ? safeText(mapExpenseSheetHeader(sheet).projId)
+          : "";
+        const initialReimbursableExpense = initializeMissingLine
+          ? DEFAULT_LINE_REIMBURSABLE_EXPENSE
+          : null;
         setLine(null);
-        setOriginalProjectId("");
-        setDraftProjectId("");
-        setOriginalReimbursableExpense(null);
-        setDraftReimbursableExpense(null);
+        setOriginalProjectId(initialProjectId);
+        setDraftProjectId(initialProjectId);
+        setOriginalReimbursableExpense(initialReimbursableExpense);
+        setDraftReimbursableExpense(initialReimbursableExpense);
         setLocalCurrencyCode(sheetLocalCurrencyCode);
         setErrorMessage("");
         return;
@@ -133,7 +145,7 @@ export const useExpenseTicketLinkedSheetLine = ({
     } finally {
       setIsLoading(false);
     }
-  }, [enabled, lineRecId, onForbidden, sheetId]);
+  }, [enabled, initializeMissingLine, lineRecId, onForbidden, sheetId]);
 
   useEffect(() => {
     void reloadLine();

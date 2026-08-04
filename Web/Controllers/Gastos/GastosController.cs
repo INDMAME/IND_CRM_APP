@@ -4772,7 +4772,7 @@ namespace IND_CRM_APP.Controllers
                    reimbursableExpense == ExpenseSheetReimbursableNo;
         }
 
-        // Allows only explicit Yes/No changes; omitted values preserve the stored server state.
+        // Allows Yes/No changes from concrete or derived mixed states; omitted values preserve the stored state.
         private static bool CanUpdateExpenseSheetHeaderReimbursableExpense(
             int? storedReimbursableExpense,
             int? requestedReimbursableExpense)
@@ -4780,7 +4780,8 @@ namespace IND_CRM_APP.Controllers
             if (!requestedReimbursableExpense.HasValue)
                 return true;
 
-            return IsEditableExpenseSheetHeaderReimbursableExpense(storedReimbursableExpense) &&
+            return (IsEditableExpenseSheetHeaderReimbursableExpense(storedReimbursableExpense) ||
+                    storedReimbursableExpense == ExpenseSheetReimbursableBoth) &&
                    IsEditableExpenseSheetHeaderReimbursableExpense(requestedReimbursableExpense);
         }
 

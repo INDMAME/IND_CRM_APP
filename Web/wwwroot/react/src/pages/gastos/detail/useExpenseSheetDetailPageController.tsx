@@ -375,7 +375,7 @@ export const useExpenseSheetDetailPageController = () => {
       const nextValue = normalizeExpenseReimbursableExpense(value);
       const previousValue = normalizeExpenseReimbursableExpense(draftReimbursableExpense);
       if (!isEditableExpenseReimbursableExpense(nextValue) || nextValue === null) return;
-      if (!isCreateMode && !isEditableExpenseReimbursableExpense(previousValue)) return;
+      if (!isCreateMode && previousValue === null) return;
       if (nextValue === previousValue) return;
 
       const shouldConfirmPropagation =

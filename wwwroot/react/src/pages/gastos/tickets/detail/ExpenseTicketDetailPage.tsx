@@ -521,6 +521,7 @@ const useExpenseTicketDetailPageViewModel = () => {
     enabled: !!linkedExpenseSheetId,
     sheetId: linkedExpenseSheetId,
     lineRecId: contextLineRecId,
+    initializeMissingLine: isFromExpenseSheetCreate,
     onForbidden: showPermissionModal,
   });
   const {
@@ -909,9 +910,11 @@ const useExpenseTicketDetailPageViewModel = () => {
     linkedExpenseSheetId,
     linkedExpenseLineRecId: isFromExpenseLine ? contextLineRecId : "",
     linkedExpenseLineProjectId: linkedSheetLine.draftProjectId,
-    linkedExpenseLineProjectIdChanged: isFromExpenseLine && linkedSheetLine.projectIdChanged,
+    linkedExpenseLineProjectIdChanged:
+      (isFromExpenseLine || isFromExpenseSheetCreate) && linkedSheetLine.projectIdChanged,
     linkedExpenseLineReimbursableExpense: linkedSheetLine.draftReimbursableExpense,
-    linkedExpenseLineReimbursableExpenseChanged: isFromExpenseLine && linkedSheetLine.reimbursableExpenseChanged,
+    linkedExpenseLineReimbursableExpenseChanged:
+      (isFromExpenseLine || isFromExpenseSheetCreate) && linkedSheetLine.reimbursableExpenseChanged,
     deleteLinkedExpenseLineContext: isFromExpenseLine && linkedExpenseSheetId && contextLineRecId
       ? {
           sheetId: linkedExpenseSheetId,
@@ -1151,7 +1154,7 @@ const useExpenseTicketDetailPageViewModel = () => {
       setDraftTicketTime,
       isFromSheetLink,
       linkedLine: {
-        visible: isFromExpenseLine,
+        visible: isFromExpenseLine || isFromExpenseSheetCreate,
         projectId: linkedSheetLine.draftProjectId,
         reimbursableExpense: linkedSheetLine.draftReimbursableExpense,
         isLoading: linkedSheetLine.isLoading,
